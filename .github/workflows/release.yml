@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -30,56 +30,61 @@ jobs:
     - name: Install pkg
       run: npm install -g pkg
     
-    - name: Create binaries directory
-      run: mkdir -p binaries
-    
     - name: Build binaries (macOS)
       if: matrix.os == 'macos-latest'
-      run: pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64 --output binaries/prmp
+      run: |
+        mkdir -p binaries
+        pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64 --output binaries/prmp
+        ls -la binaries/
       shell: bash
     
     - name: Build binaries (Linux)
       if: matrix.os == 'ubuntu-latest'
-      run: pkg dist/index.js --targets node18-linux-x64 --output binaries/prmp
+      run: |
+        mkdir -p binaries
+        pkg dist/index.js --targets node18-linux-x64 --output binaries/prmp
+        ls -la binaries/
       shell: bash
     
     - name: Build binaries (Windows)
       if: matrix.os == 'windows-latest'
-      run: pkg dist/index.js --targets node18-win-x64 --output binaries/prmp
+      run: |
+        mkdir -p binaries
+        pkg dist/index.js --targets node18-win-x64 --output binaries/prmp
+        ls -la binaries/
       shell: bash
     
-    - name: Upload binaries
-      uses: actions/upload-artifact@v4
-      with:
-        name: prmp-binaries-${{ matrix.os }}
-        path: binaries/prmp-*
-    
-  release-all:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: ./artifacts
-    
-    - name: Debug artifacts structure
-      run: |
-        echo "Artifacts directory structure:"
-        find ./artifacts -type f -name "*" | head -20
-        echo "Contents of each artifact directory:"
-        for dir in ./artifacts/*/; do
-          echo "Directory: $dir"
-          ls -la "$dir" || echo "Directory not found or empty"
-        done
-    
-    - name: Create Release with all binaries
+    - name: Create Release (macOS)
+      if: matrix.os == 'macos-latest'
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          artifacts/**/prmp-*
+          binaries/prmp-macos-x64
+          binaries/prmp-macos-arm64
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create Release (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          binaries/prmp-linux-x64
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create Release (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          binaries/prmp-win-x64.exe
         draft: false
         prerelease: false
         generate_release_notes: true
