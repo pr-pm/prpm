@@ -15,6 +15,11 @@ Formula/
 !README.md
 jest.config.js
 setup-homebrew-tap.sh
+create-missing-release.sh
+create-release.sh
+update-homebrew.sh
+HOMEBREW_*.md
+ROADMAP.md
 
 # Build artifacts
 dist/prmp-*
@@ -22,6 +27,7 @@ dist/prmp-*
 *.js.map
 *.d.ts.map
 coverage/
+binaries/
 
 # Development dependencies
 node_modules/

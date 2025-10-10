@@ -1,6 +1,6 @@
 {
   "name": "prmp",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Prompt Package Manager - Install and manage prompt-based files like Cursor rules and Claude sub-agents",
   "main": "dist/index.js",
   "bin": {
@@ -19,10 +19,16 @@
     "build:all": "npm run build && npm run build:binary",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["cursor", "claude", "prompts", "cli", "package-manager"],
+  "keywords": [
+    "cursor",
+    "claude",
+    "prompts",
+    "cli",
+    "package-manager"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/khaliqgant/prompt-package-manager.git"
+    "url": "git+https://github.com/khaliqgant/prompt-package-manager.git"
   },
   "bugs": {
     "url": "https://github.com/khaliqgant/prompt-package-manager/issues"
