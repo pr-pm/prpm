@@ -8,6 +8,9 @@ yarn-error.log*
 dist/
 *.tsbuildinfo
 
+# Exclude binaries from npm package
+dist/prmp-*
+
 # Environment files
 .env
 .env.local

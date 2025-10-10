@@ -17,7 +17,7 @@
     "test:ci": "jest --ci --coverage --watchAll=false",
     "build:binary": "pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64,node18-linux-x64,node18-win-x64 --output dist/prmp",
     "build:all": "npm run build && npm run build:binary",
-    "prepublishOnly": "npm run build:all"
+    "prepublishOnly": "npm run build"
   },
   "keywords": ["cursor", "claude", "prompts", "cli", "package-manager"],
   "repository": {

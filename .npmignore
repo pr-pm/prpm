@@ -1,0 +1,48 @@
+# Source files (only include compiled dist/)
+src/
+tests/
+*.ts
+*.tsx
+tsconfig*.json
+
+# Example files
+.promptpm.json
+
+# Development files
+.github/
+Formula/
+*.md
+!README.md
+jest.config.js
+setup-homebrew-tap.sh
+
+# Build artifacts
+dist/prmp-*
+*.tsbuildinfo
+*.js.map
+*.d.ts.map
+coverage/
+
+# Development dependencies
+node_modules/
+
+# Git files
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env*
