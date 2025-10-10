@@ -10,6 +10,7 @@ import { createListCommand } from './commands/list';
 import { createRemoveCommand } from './commands/remove';
 import { createIndexCommand } from './commands/index';
 import { createTelemetryCommand } from './commands/telemetry';
+import { createPopularCommand } from './commands/popular';
 import { telemetry } from './core/telemetry';
 
 const program = new Command();
@@ -17,7 +18,7 @@ const program = new Command();
 program
   .name('prmp')
   .description('Prompt Package Manager - Install and manage prompt-based files')
-  .version('0.1.0');
+  .version('1.0.1');
 
 // Add commands
 program.addCommand(createAddCommand());

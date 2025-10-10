@@ -9,6 +9,27 @@ import { addPackage } from '../core/config';
 import { telemetry } from '../core/telemetry';
 import { Package, PackageType } from '../types';
 
+// Extract repository info from GitHub URL for popularity tracking
+function extractRepoFromUrl(url: string): string {
+  try {
+    // Handle raw GitHub URLs: https://raw.githubusercontent.com/user/repo/branch/path
+    const rawMatch = url.match(/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)/);
+    if (rawMatch) {
+      return `${rawMatch[1]}/${rawMatch[2]}`;
+    }
+    
+    // Handle regular GitHub URLs: https://github.com/user/repo
+    const githubMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+    if (githubMatch) {
+      return `${githubMatch[1]}/${githubMatch[2]}`;
+    }
+    
+    return 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 /**
  * Add a prompt package from a URL
  */
@@ -64,6 +85,10 @@ export async function handleAdd(url: string, type: PackageType): Promise<void> {
         type,
         url: url.substring(0, 100), // Truncate long URLs
         filename: extractFilename(url),
+        // Package popularity tracking
+        packageId: generateId(extractFilename(url)),
+        packageType: type,
+        sourceRepo: extractRepoFromUrl(url),
       },
     });
   }
