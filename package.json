@@ -1,6 +1,6 @@
 {
   "name": "prmp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Prompt Package Manager - Install and manage prompt-based files like Cursor rules and Claude sub-agents",
   "main": "dist/index.js",
   "bin": {
