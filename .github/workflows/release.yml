@@ -65,14 +65,21 @@ jobs:
       with:
         path: ./artifacts
     
+    - name: Debug artifacts structure
+      run: |
+        echo "Artifacts directory structure:"
+        find ./artifacts -type f -name "*" | head -20
+        echo "Contents of each artifact directory:"
+        for dir in ./artifacts/*/; do
+          echo "Directory: $dir"
+          ls -la "$dir" || echo "Directory not found or empty"
+        done
+    
     - name: Create Release with all binaries
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          artifacts/prmp-binaries-macos-latest/prmp-macos-x64
-          artifacts/prmp-binaries-macos-latest/prmp-macos-arm64
-          artifacts/prmp-binaries-ubuntu-latest/prmp-linux-x64
-          artifacts/prmp-binaries-windows-latest/prmp-win-x64.exe
+          artifacts/**/prmp-*
         draft: false
         prerelease: false
         generate_release_notes: true
