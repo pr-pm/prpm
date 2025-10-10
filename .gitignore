@@ -11,6 +11,9 @@ dist/
 # Exclude binaries from npm package
 dist/prmp-*
 
+# Binaries directory (for releases)
+binaries/
+
 # Environment files
 .env
 .env.local

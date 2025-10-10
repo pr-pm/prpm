@@ -43,8 +43,8 @@ npm run build:binary
 
 # Get SHA256 hashes
 echo -e "${BLUE}🔍 Calculating SHA256 hashes...${NC}"
-MACOS_X64_HASH=$(shasum -a 256 dist/prmp-macos-x64 | cut -d' ' -f1)
-MACOS_ARM64_HASH=$(shasum -a 256 dist/prmp-macos-arm64 | cut -d' ' -f1)
+MACOS_X64_HASH=$(shasum -a 256 binaries/prmp-macos-x64 | cut -d' ' -f1)
+MACOS_ARM64_HASH=$(shasum -a 256 binaries/prmp-macos-arm64 | cut -d' ' -f1)
 
 echo -e "${GREEN}✅ SHA256 hashes calculated:${NC}"
 echo -e "   macOS x64: ${MACOS_X64_HASH}"
@@ -103,10 +103,10 @@ fi
 echo -e "${YELLOW}📋 Next steps:${NC}"
 echo -e "1. Create a GitHub release with tag: ${BLUE}v${VERSION}${NC}"
 echo -e "2. Upload these binary files to the release:"
-echo -e "   - ${BLUE}dist/prmp-macos-x64${NC}"
-echo -e "   - ${BLUE}dist/prmp-macos-arm64${NC}"
-echo -e "   - ${BLUE}dist/prmp-linux-x64${NC}"
-echo -e "   - ${BLUE}dist/prmp-win-x64.exe${NC}"
+echo -e "   - ${BLUE}binaries/prmp-macos-x64${NC}"
+echo -e "   - ${BLUE}binaries/prmp-macos-arm64${NC}"
+echo -e "   - ${BLUE}binaries/prmp-linux-x64${NC}"
+echo -e "   - ${BLUE}binaries/prmp-win-x64.exe${NC}"
 echo -e "3. Commit and push the updated formula:"
 echo -e "   ${BLUE}cd ../homebrew-prmp${NC}"
 echo -e "   ${BLUE}git add Formula/prmp.rb${NC}"

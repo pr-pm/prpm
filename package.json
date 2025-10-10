@@ -1,6 +1,6 @@
 {
   "name": "prmp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Prompt Package Manager - Install and manage prompt-based files like Cursor rules and Claude sub-agents",
   "main": "dist/index.js",
   "bin": {
@@ -15,7 +15,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
-    "build:binary": "pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64,node18-linux-x64,node18-win-x64 --output dist/prmp",
+    "build:binary": "mkdir -p binaries && pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64,node18-linux-x64,node18-win-x64 --output binaries/prmp",
     "build:all": "npm run build && npm run build:binary",
     "prepublishOnly": "npm run build"
   },
