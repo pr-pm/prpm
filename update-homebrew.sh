@@ -30,6 +30,9 @@ if [ ! -d "../homebrew-prmp" ]; then
     exit 1
 fi
 
+# Ensure Formula directory exists
+mkdir -p "../homebrew-prmp/Formula"
+
 # Build the project
 echo -e "${BLUE}🔨 Building project...${NC}"
 npm run build
@@ -50,6 +53,12 @@ echo -e "   macOS ARM64: ${MACOS_ARM64_HASH}"
 # Update the formula
 FORMULA_FILE="../homebrew-prmp/Formula/prmp.rb"
 echo -e "${BLUE}📝 Updating formula file: ${FORMULA_FILE}${NC}"
+
+# Backup existing formula if it exists
+if [ -f "$FORMULA_FILE" ]; then
+    cp "$FORMULA_FILE" "$FORMULA_FILE.backup"
+    echo -e "${YELLOW}💾 Backed up existing formula to ${FORMULA_FILE}.backup${NC}"
+fi
 
 # Create the new formula content
 cat > "$FORMULA_FILE" << EOF
@@ -81,7 +90,14 @@ class Prmp < Formula
 end
 EOF
 
-echo -e "${GREEN}✅ Formula updated successfully!${NC}"
+# Verify the file was created successfully
+if [ -f "$FORMULA_FILE" ]; then
+    echo -e "${GREEN}✅ Formula updated successfully!${NC}"
+    echo -e "${BLUE}📄 Formula file size: $(wc -l < "$FORMULA_FILE") lines${NC}"
+else
+    echo -e "${RED}❌ Error: Failed to create formula file${NC}"
+    exit 1
+fi
 
 # Show what needs to be done next
 echo -e "${YELLOW}📋 Next steps:${NC}"

@@ -32,17 +32,17 @@ jobs:
     
     - name: Build binaries (macOS)
       if: matrix.os == 'macos-latest'
-      run: pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64 --output dist/prmp-macos
+      run: pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64 --output dist/prmp
       shell: bash
     
     - name: Build binaries (Linux)
       if: matrix.os == 'ubuntu-latest'
-      run: pkg dist/index.js --targets node18-linux-x64 --output dist/prmp-linux
+      run: pkg dist/index.js --targets node18-linux-x64 --output dist/prmp
       shell: bash
     
     - name: Build binaries (Windows)
       if: matrix.os == 'windows-latest'
-      run: pkg dist/index.js --targets node18-win-x64 --output dist/prmp-windows.exe
+      run: pkg dist/index.js --targets node18-win-x64 --output dist/prmp
       shell: bash
     
     - name: Upload binaries
@@ -51,19 +51,6 @@ jobs:
         name: prmp-binaries-${{ matrix.os }}
         path: dist/prmp-*
     
-    - name: Create Release
-      if: matrix.os == 'macos-latest'
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          dist/prmp-macos-x64
-          dist/prmp-macos-arm64
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   release-all:
     needs: build
     runs-on: ubuntu-latest
@@ -81,8 +68,8 @@ jobs:
         files: |
           artifacts/prmp-binaries-macos-latest/prmp-macos-x64
           artifacts/prmp-binaries-macos-latest/prmp-macos-arm64
-          artifacts/prmp-binaries-ubuntu-latest/prmp-linux
-          artifacts/prmp-binaries-windows-latest/prmp-windows.exe
+          artifacts/prmp-binaries-ubuntu-latest/prmp-linux-x64
+          artifacts/prmp-binaries-windows-latest/prmp-win-x64.exe
         draft: false
         prerelease: false
         generate_release_notes: true
