@@ -2,7 +2,7 @@
  * HTTP file downloading functionality
  */
 
-import fetch from 'node-fetch';
+// Use Node.js built-in fetch (available in Node 18+)
 
 /**
  * Download a file from a URL

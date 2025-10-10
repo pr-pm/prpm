@@ -193,9 +193,8 @@ class Telemetry {
           sessionId: this.config.sessionId,
         },
       });
-      console.log(`📊 Event sent to PostHog: prmp_${event.command}`);
+      // Event sent to PostHog
     } catch (error) {
-      console.log(`❌ Failed to send event to PostHog: ${error}`);
       // Silently fail - don't break the CLI
     }
   }
