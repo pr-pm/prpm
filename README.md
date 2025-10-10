@@ -11,8 +11,8 @@ npm install -g prmp
 
 ### Homebrew (macOS)
 ```bash
-# Add the tap
-brew tap khaliqgant/homebrew-prmp
+# Add the tap (using the main repository)
+brew tap khaliqgant/prompt-package-manager
 
 # Install prmp
 brew install prmp

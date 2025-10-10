@@ -25,8 +25,8 @@ prmp remove package-id
 
 ### **2. Homebrew (macOS)**
 ```bash
-# Add tap (after creating homebrew-prmp repository)
-brew tap khaliqgant/homebrew-prmp
+# Add tap (using the main repository)
+brew tap khaliqgant/prompt-package-manager
 
 # Install
 brew install prmp
@@ -130,7 +130,7 @@ npm install -g prmp
 prmp --version
 
 # Homebrew (after setup)
-brew tap khaliqgant/homebrew-prmp
+brew tap khaliqgant/prompt-package-manager
 brew install prmp
 prmp --version
 
