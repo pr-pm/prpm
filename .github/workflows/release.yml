@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build
+      run: npm run build
+    
+    - name: Install pkg
+      run: npm install -g pkg
+    
+    - name: Build binaries
+      run: |
+        if [ "$RUNNER_OS" = "macOS" ]; then
+          pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64 --output dist/prmp-macos
+        elif [ "$RUNNER_OS" = "Linux" ]; then
+          pkg dist/index.js --targets node18-linux-x64 --output dist/prmp-linux
+        elif [ "$RUNNER_OS" = "Windows" ]; then
+          pkg dist/index.js --targets node18-win-x64 --output dist/prmp-windows.exe
+        fi
+    
+    - name: Upload binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: prmp-binaries-${{ matrix.os }}
+        path: dist/prmp-*
+    
+    - name: Create Release
+      if: matrix.os == 'macOS'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/prmp-macos-x64
+          dist/prmp-macos-arm64
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-all:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+    
+    - name: Create Release with all binaries
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/prmp-binaries-macOS/prmp-macos-x64
+          artifacts/prmp-binaries-macOS/prmp-macos-arm64
+          artifacts/prmp-binaries-Linux/prmp-linux
+          artifacts/prmp-binaries-Windows/prmp-windows.exe
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
