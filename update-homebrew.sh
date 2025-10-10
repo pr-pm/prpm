@@ -23,15 +23,15 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
-# Check if homebrew-prmp directory exists
-if [ ! -d "../homebrew-prmp" ]; then
-    echo -e "${RED}❌ Error: homebrew-prmp directory not found.${NC}"
-    echo -e "${YELLOW}💡 Make sure you have cloned the homebrew-prmp repository to ../homebrew-prmp${NC}"
+# Check if homebrew-prmp tap exists
+TAP_PATH="$(brew --repository khaliqgant/homebrew-prmp 2>/dev/null || echo '')"
+if [ -z "$TAP_PATH" ] || [ ! -d "$TAP_PATH" ]; then
+    echo -e "${RED}❌ Error: homebrew-prmp tap not found.${NC}"
+    echo -e "${YELLOW}💡 Run './setup-homebrew-tap-proper.sh' first to create the tap${NC}"
     exit 1
 fi
 
-# Ensure Formula directory exists
-mkdir -p "../homebrew-prmp/Formula"
+echo -e "${BLUE}📁 Using tap at: ${TAP_PATH}${NC}"
 
 # Build the project
 echo -e "${BLUE}🔨 Building project...${NC}"
@@ -51,7 +51,7 @@ echo -e "   macOS x64: ${MACOS_X64_HASH}"
 echo -e "   macOS ARM64: ${MACOS_ARM64_HASH}"
 
 # Update the formula
-FORMULA_FILE="../homebrew-prmp/Formula/prmp.rb"
+FORMULA_FILE="$TAP_PATH/Formula/prmp.rb"
 echo -e "${BLUE}📝 Updating formula file: ${FORMULA_FILE}${NC}"
 
 # Backup existing formula if it exists
@@ -108,12 +108,11 @@ echo -e "   - ${BLUE}binaries/prmp-macos-arm64${NC}"
 echo -e "   - ${BLUE}binaries/prmp-linux-x64${NC}"
 echo -e "   - ${BLUE}binaries/prmp-win-x64.exe${NC}"
 echo -e "3. Commit and push the updated formula:"
-echo -e "   ${BLUE}cd ../homebrew-prmp${NC}"
+echo -e "   ${BLUE}cd \"$TAP_PATH\"${NC}"
 echo -e "   ${BLUE}git add Formula/prmp.rb${NC}"
 echo -e "   ${BLUE}git commit -m \"Update prmp to v${VERSION}\"${NC}"
 echo -e "   ${BLUE}git push origin main${NC}"
 echo -e "4. Test the installation:"
-echo -e "   ${BLUE}brew tap khaliqgant/prmp${NC}"
-echo -e "   ${BLUE}brew install prmp${NC}"
+echo -e "   ${BLUE}brew install khaliqgant/homebrew-prmp/prmp${NC}"
 
 echo -e "${GREEN}🎉 Homebrew formula update complete!${NC}"

@@ -1,4 +1,4 @@
-# Prompt Package Manager (PPM)
+# Prompt Package Manager (PRPM)
 
 A CLI tool for managing prompt-based files like Cursor rules and Claude sub-agents.
 
@@ -11,10 +11,11 @@ npm install -g prmp
 
 ### Homebrew (macOS)
 ```bash
-# Add the tap (using the main repository)
-brew tap khaliqgant/prompt-package-manager
+# Direct installation (recommended)
+brew install khaliqgant/homebrew-prmp/prmp
 
-# Install prmp
+# Or manual tap installation
+brew tap khaliqgant/homebrew-prmp
 brew install prmp
 ```
 
@@ -134,3 +135,16 @@ The project includes comprehensive testing with:
 - `npm run test:coverage` - Run tests with coverage report
 - `npm run test:watch` - Run tests in watch mode
 - `npm run test:ci` - Run tests for CI/CD environments
+
+## Roadmap
+
+PPM is currently in its early stages (v0.1.x) with basic package management functionality. We have ambitious plans to evolve it into a comprehensive package management ecosystem similar to npm.
+
+**Key Future Features**:
+- 🏪 **Central Registry** - Public package repository with search and discovery
+- 📦 **Package Publishing** - Tools for authors to publish and manage packages
+- 🔍 **Smart Discovery** - AI-powered package recommendations and search
+- 🏢 **Enterprise Features** - Private registries, team management, and compliance
+- 🤖 **AI Integration** - Intelligent package management and quality assessment
+
+See [ROADMAP.md](ROADMAP.md) for detailed development plans and timeline.

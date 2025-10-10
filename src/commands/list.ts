@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { listPackages } from '../core/config';
+import { telemetry } from '../core/telemetry';
 import { Package } from '../types';
 
 /**
@@ -55,12 +56,31 @@ function displayPackages(packages: Package[]): void {
  * Handle the list command
  */
 export async function handleList(): Promise<void> {
+  const startTime = Date.now();
+  let success = false;
+  let error: string | undefined;
+  let packageCount = 0;
+
   try {
     const packages = await listPackages();
+    packageCount = packages.length;
     displayPackages(packages);
-  } catch (error) {
+    success = true;
+  } catch (err) {
+    error = err instanceof Error ? err.message : String(err);
     console.error(`❌ Failed to list packages: ${error}`);
     process.exit(1);
+  } finally {
+    // Track telemetry
+    await telemetry.track({
+      command: 'list',
+      success,
+      error,
+      duration: Date.now() - startTime,
+      data: {
+        packageCount,
+      },
+    });
   }
 }
 
