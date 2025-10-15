@@ -15,8 +15,62 @@ export function getDestinationDir(type: PackageType): string {
       return '.cursor/rules';
     case 'claude':
       return '.claude/agents';
+    case 'windsurf':
+      // Windsurf doesn't have a standardized directory structure
+      // We'll create a conventional location for rules
+      return '.windsurf/rules';
+    case 'continue':
+      return '.continue/prompts';
+    case 'aider':
+      // Aider uses CONVENTIONS.md at repo root or .aider directory
+      return '.aider';
+    case 'copilot':
+      return '.github/prompts';
+    case 'copilot-instructions':
+      // Special case: single file at .github/copilot-instructions.md
+      return '.github';
+    case 'copilot-path':
+      return '.github/instructions';
     default:
       throw new Error(`Unknown package type: ${type}`);
+  }
+}
+
+/**
+ * Get the appropriate file extension for a package type
+ */
+export function getFileExtension(type: PackageType): string {
+  switch (type) {
+    case 'continue':
+      return '.prompt';
+    case 'aider':
+      return '.md'; // Can be .yml for config
+    case 'copilot':
+      return '.prompt.md';
+    case 'copilot-instructions':
+      return '.md';
+    case 'copilot-path':
+      return '.instructions.md';
+    case 'cursor':
+    case 'claude':
+    case 'windsurf':
+    default:
+      return '.md';
+  }
+}
+
+/**
+ * Get the filename for special cases (e.g., copilot-instructions)
+ */
+export function getSpecialFilename(type: PackageType): string | null {
+  switch (type) {
+    case 'copilot-instructions':
+      return 'copilot-instructions.md';
+    case 'aider':
+      // Common convention
+      return 'CONVENTIONS.md';
+    default:
+      return null;
   }
 }
 

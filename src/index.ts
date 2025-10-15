@@ -11,17 +11,35 @@ import { createRemoveCommand } from './commands/remove';
 import { createIndexCommand } from './commands/index';
 import { createTelemetryCommand } from './commands/telemetry';
 import { createPopularCommand } from './commands/popular';
+import { createCreateCommand } from './commands/create';
+import { createLintCommand } from './commands/lint';
+import { createConvertCommand } from './commands/convert';
+import { createTestCommand } from './commands/test';
+import { createMCPCommand } from './commands/mcp';
+import { createPublishCommand } from './commands/publish';
+import { createRegistryCommand } from './commands/registry';
+import { createSearchCommand } from './commands/search';
+import { createInstallCommand } from './commands/install';
 import { telemetry } from './core/telemetry';
 
 const program = new Command();
 
 program
   .name('prmp')
-  .description('Prompt Package Manager - Install and manage prompt-based files')
-  .version('1.0.1');
+  .description('Universal AI Coding Prompt Manager - Federated marketplace with intelligent role-based testing for AI coding prompts')
+  .version('2.3.0');
 
 // Add commands
 program.addCommand(createAddCommand());
+program.addCommand(createInstallCommand());
+program.addCommand(createSearchCommand());
+program.addCommand(createCreateCommand());
+program.addCommand(createTestCommand());
+program.addCommand(createLintCommand());
+program.addCommand(createConvertCommand());
+program.addCommand(createMCPCommand());
+program.addCommand(createPublishCommand());
+program.addCommand(createRegistryCommand());
 program.addCommand(createListCommand());
 program.addCommand(createRemoveCommand());
 program.addCommand(createIndexCommand());
