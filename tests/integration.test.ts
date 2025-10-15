@@ -162,7 +162,7 @@ describe('Full Integration Tests', () => {
       // Invalid type
       const result2 = await runCLI(['add', 'https://example.com/test.md', '--as', 'invalid']);
       expect(result2.code).toBe(1);
-      expect(result2.stderr).toContain('Type must be either "cursor" or "claude"');
+      expect(result2.stderr).toContain('Invalid type. Must be one of:');
     });
 
     it('should validate remove command arguments', async () => {

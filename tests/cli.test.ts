@@ -52,7 +52,7 @@ describe('CLI Integration Tests', () => {
     it('should show help for main command', async () => {
       const result = await runCLI(['--help']);
       expect(result.code).toBe(0);
-      expect(result.stdout).toContain('Prompt Package Manager');
+      expect(result.stdout).toContain('Universal AI Coding Prompt Manager');
       expect(result.stdout).toContain('add');
       expect(result.stdout).toContain('list');
       expect(result.stdout).toContain('remove');
@@ -87,7 +87,7 @@ describe('CLI Integration Tests', () => {
     it('should show version', async () => {
       const result = await runCLI(['--version']);
       expect(result.code).toBe(0);
-      expect(result.stdout.trim()).toBe('0.1.0');
+      expect(result.stdout.trim()).toBe('2.3.0');
     });
   });
 
@@ -109,7 +109,7 @@ describe('CLI Integration Tests', () => {
     it('should fail with invalid type', async () => {
       const result = await runCLI(['add', 'https://raw.githubusercontent.com/user/repo/main/test.md', '--as', 'invalid']);
       expect(result.code).toBe(1);
-      expect(result.stderr).toContain('Type must be either "cursor" or "claude"');
+      expect(result.stderr).toContain('Invalid type. Must be one of:');
     });
 
     it('should fail with missing URL', async () => {

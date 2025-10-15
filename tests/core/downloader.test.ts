@@ -3,12 +3,12 @@
  */
 
 import { downloadFile, extractFilename } from '../../src/core/downloader';
-import { mockFetchSuccess, mockFetchError, mockFetchNetworkError } from '../__mocks__/node-fetch';
-
-// Mock node-fetch
-jest.mock('node-fetch');
 
 describe('Downloader', () => {
+  // Mock global fetch
+  const mockFetch = jest.fn();
+  global.fetch = mockFetch as any;
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -16,7 +16,12 @@ describe('Downloader', () => {
   describe('downloadFile', () => {
     it('should download file successfully', async () => {
       const testContent = '# Test Content\nThis is a test file.';
-      mockFetchSuccess(testContent);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        text: () => Promise.resolve(testContent)
+      });
 
       const result = await downloadFile('https://raw.githubusercontent.com/user/repo/main/test.md');
       expect(result).toBe(testContent);
@@ -32,7 +37,12 @@ describe('Downloader', () => {
 
     it('should accept raw.githubusercontent.com URLs', async () => {
       const testContent = 'test content';
-      mockFetchSuccess(testContent);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        text: () => Promise.resolve(testContent)
+      });
 
       const result = await downloadFile('https://raw.githubusercontent.com/user/repo/main/file.md');
       expect(result).toBe(testContent);
@@ -40,14 +50,24 @@ describe('Downloader', () => {
 
     it('should accept github.com raw URLs', async () => {
       const testContent = 'test content';
-      mockFetchSuccess(testContent);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        text: () => Promise.resolve(testContent)
+      });
 
       const result = await downloadFile('https://github.com/user/repo/raw/main/file.md');
       expect(result).toBe(testContent);
     });
 
     it('should throw error for HTTP error responses', async () => {
-      mockFetchError(404, 'Not Found');
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        text: () => Promise.resolve('')
+      });
 
       await expect(downloadFile('https://raw.githubusercontent.com/user/repo/main/nonexistent.md'))
         .rejects.toThrow('HTTP 404: Not Found');
@@ -55,14 +75,13 @@ describe('Downloader', () => {
 
     it('should throw error for network errors', async () => {
       const networkError = new Error('Network error');
-      mockFetchNetworkError(networkError);
+      mockFetch.mockRejectedValue(networkError);
 
       await expect(downloadFile('https://raw.githubusercontent.com/user/repo/main/file.md'))
         .rejects.toThrow('Failed to download file: Network error');
     });
 
     it('should handle unknown errors', async () => {
-      const mockFetch = require('node-fetch').default as jest.Mock;
       mockFetch.mockRejectedValue('Unknown error');
 
       await expect(downloadFile('https://raw.githubusercontent.com/user/repo/main/file.md'))

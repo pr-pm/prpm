@@ -32,17 +32,19 @@ describe('Add Command', () => {
   it('should add cursor package successfully', async () => {
     const testContent = '# Cursor Rules\nAlways write clean code.';
     const testUrl = 'https://raw.githubusercontent.com/user/repo/main/cursor-rules.md';
-    
+
     mockFetchSuccess(testContent);
 
     // Mock the core functions
     const { downloadFile, extractFilename } = require('../../src/core/downloader');
-    const { getDestinationDir, saveFile, generateId } = require('../../src/core/filesystem');
+    const { getDestinationDir, saveFile, generateId, getFileExtension, getSpecialFilename } = require('../../src/core/filesystem');
     const { addPackage } = require('../../src/core/config');
 
     downloadFile.mockResolvedValue(testContent);
     extractFilename.mockReturnValue('cursor-rules.md');
     getDestinationDir.mockReturnValue('.cursor/rules');
+    getFileExtension.mockReturnValue('.md');
+    getSpecialFilename.mockReturnValue(null);
     generateId.mockReturnValue('cursor-rules');
     saveFile.mockResolvedValue(undefined);
     addPackage.mockResolvedValue(undefined);
@@ -57,24 +59,27 @@ describe('Add Command', () => {
       id: 'cursor-rules',
       type: 'cursor',
       url: testUrl,
-      dest: '.cursor/rules/cursor-rules.md'
+      dest: '.cursor/rules/cursor-rules.md',
+      tools: ['cursor']
     });
   });
 
   it('should add claude package successfully', async () => {
     const testContent = '# Claude Agent\nYou are a helpful assistant.';
     const testUrl = 'https://raw.githubusercontent.com/user/repo/main/agent.md';
-    
+
     mockFetchSuccess(testContent);
 
     // Mock the core functions
     const { downloadFile, extractFilename } = require('../../src/core/downloader');
-    const { getDestinationDir, saveFile, generateId } = require('../../src/core/filesystem');
+    const { getDestinationDir, saveFile, generateId, getFileExtension, getSpecialFilename } = require('../../src/core/filesystem');
     const { addPackage } = require('../../src/core/config');
 
     downloadFile.mockResolvedValue(testContent);
     extractFilename.mockReturnValue('agent.md');
     getDestinationDir.mockReturnValue('.claude/agents');
+    getFileExtension.mockReturnValue('.md');
+    getSpecialFilename.mockReturnValue(null);
     generateId.mockReturnValue('agent');
     saveFile.mockResolvedValue(undefined);
     addPackage.mockResolvedValue(undefined);
@@ -89,7 +94,8 @@ describe('Add Command', () => {
       id: 'agent',
       type: 'claude',
       url: testUrl,
-      dest: '.claude/agents/agent.md'
+      dest: '.claude/agents/agent.md',
+      tools: ['claude']
     });
   });
 
@@ -108,15 +114,18 @@ describe('Add Command', () => {
   it('should handle filesystem errors', async () => {
     const testContent = '# Test Content';
     const testUrl = 'https://raw.githubusercontent.com/user/repo/main/test.md';
-    
+
     mockFetchSuccess(testContent);
 
     // Mock filesystem error
-    const { downloadFile } = require('../../src/core/downloader');
-    const { getDestinationDir, saveFile, generateId } = require('../../src/core/filesystem');
+    const { downloadFile, extractFilename } = require('../../src/core/downloader');
+    const { getDestinationDir, saveFile, generateId, getFileExtension, getSpecialFilename } = require('../../src/core/filesystem');
 
     downloadFile.mockResolvedValue(testContent);
+    extractFilename.mockReturnValue('test.md');
     getDestinationDir.mockReturnValue('.cursor/rules');
+    getFileExtension.mockReturnValue('.md');
+    getSpecialFilename.mockReturnValue(null);
     generateId.mockReturnValue('test');
     saveFile.mockRejectedValue(new Error('Permission denied'));
 
@@ -128,16 +137,19 @@ describe('Add Command', () => {
   it('should handle config errors', async () => {
     const testContent = '# Test Content';
     const testUrl = 'https://raw.githubusercontent.com/user/repo/main/test.md';
-    
+
     mockFetchSuccess(testContent);
 
     // Mock config error
-    const { downloadFile } = require('../../src/core/downloader');
-    const { getDestinationDir, saveFile, generateId } = require('../../src/core/filesystem');
+    const { downloadFile, extractFilename } = require('../../src/core/downloader');
+    const { getDestinationDir, saveFile, generateId, getFileExtension, getSpecialFilename } = require('../../src/core/filesystem');
     const { addPackage } = require('../../src/core/config');
 
     downloadFile.mockResolvedValue(testContent);
+    extractFilename.mockReturnValue('test.md');
     getDestinationDir.mockReturnValue('.cursor/rules');
+    getFileExtension.mockReturnValue('.md');
+    getSpecialFilename.mockReturnValue(null);
     generateId.mockReturnValue('test');
     saveFile.mockResolvedValue(undefined);
     addPackage.mockRejectedValue(new Error('Config write failed'));
