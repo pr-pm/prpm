@@ -1,0 +1,10 @@
+name: prmp-infra
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: PRMP Registry Infrastructure on AWS
+config:
+  aws:region:
+    description: AWS region for deployment
+    default: us-east-1

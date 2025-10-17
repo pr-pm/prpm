@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build
+bin/
+
+# Pulumi
+Pulumi.*.yaml
+!Pulumi.yaml
+.pulumi/
+
+# Logs
+*.log
+
+# OS
+.DS_Store

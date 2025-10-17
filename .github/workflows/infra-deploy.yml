@@ -1,0 +1,78 @@
+name: Infrastructure Deploy
+
+on:
+  push:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra-*.yml'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: 'Pulumi stack to deploy'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.stack || 'dev' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: infra/package-lock.json
+
+      - name: Install dependencies
+        working-directory: infra
+        run: npm ci
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Pulumi
+        uses: pulumi/actions@v5
+
+      - name: Pulumi Up
+        working-directory: infra
+        run: |
+          pulumi stack select ${{ inputs.stack || 'dev' }}
+          pulumi up --yes --non-interactive
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+
+      - name: Export Pulumi Outputs
+        working-directory: infra
+        run: |
+          pulumi stack output --json > stack-outputs.json
+          cat stack-outputs.json
+
+      - name: Upload Outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulumi-outputs-${{ inputs.stack || 'dev' }}
+          path: infra/stack-outputs.json
+          retention-days: 30

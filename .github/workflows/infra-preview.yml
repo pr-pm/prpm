@@ -1,0 +1,58 @@
+name: Infrastructure Preview
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra-*.yml'
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+env:
+  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+  AWS_REGION: us-east-1
+
+jobs:
+  preview:
+    name: Pulumi Preview
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack: [dev, staging]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: infra/package-lock.json
+
+      - name: Install dependencies
+        working-directory: infra
+        run: npm ci
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Pulumi
+        uses: pulumi/actions@v5
+
+      - name: Pulumi Preview
+        working-directory: infra
+        run: |
+          pulumi stack select ${{ matrix.stack }}
+          pulumi preview --diff --non-interactive
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}

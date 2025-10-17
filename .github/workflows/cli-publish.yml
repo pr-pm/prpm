@@ -1,0 +1,169 @@
+name: CLI Publish
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run linter
+        run: npm run lint || echo "Skipping lint (not configured)"
+
+  publish-npm:
+    name: Publish to NPM
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to NPM
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  build-binaries:
+    name: Build Binaries
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+          - os: macos-latest
+            target: macos-x64
+          - os: macos-latest
+            target: macos-arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Build binary
+        run: npm run build:binary
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prmp-${{ matrix.target }}
+          path: binaries/*
+
+  create-release:
+    name: Create GitHub Release
+    needs: [publish-npm, build-binaries]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: binaries/**/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: khaliqgant/homebrew-prmp
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Update formula
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          SHA256=$(curl -sL https://github.com/khaliqgant/prompt-package-manager/archive/refs/tags/v${VERSION}.tar.gz | shasum -a 256 | cut -d ' ' -f 1)
+
+          cat > Formula/prmp.rb <<EOF
+          class Prmp < Formula
+            desc "Prompt Package Manager - Install and manage prompt-based files"
+            homepage "https://github.com/khaliqgant/prompt-package-manager"
+            url "https://github.com/khaliqgant/prompt-package-manager/archive/refs/tags/v${VERSION}.tar.gz"
+            sha256 "${SHA256}"
+            license "MIT"
+
+            depends_on "node@20"
+
+            def install
+              system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+              bin.install_symlink Dir["#{libexec}/bin/*"]
+            end
+
+            test do
+              system "#{bin}/prmp", "--version"
+            end
+          end
+          EOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add Formula/prmp.rb
+          git commit -m "Update prmp to ${GITHUB_REF#refs/tags/v}"
+          git push

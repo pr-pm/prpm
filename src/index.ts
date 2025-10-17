@@ -11,6 +11,10 @@ import { createRemoveCommand } from './commands/remove';
 import { createIndexCommand } from './commands/index';
 import { createTelemetryCommand } from './commands/telemetry';
 import { createPopularCommand } from './commands/popular';
+import { createSearchCommand } from './commands/search';
+import { createInfoCommand } from './commands/info';
+import { createInstallCommand } from './commands/install';
+import { createTrendingCommand } from './commands/trending';
 import { telemetry } from './core/telemetry';
 
 const program = new Command();
@@ -18,9 +22,15 @@ const program = new Command();
 program
   .name('prmp')
   .description('Prompt Package Manager - Install and manage prompt-based files')
-  .version('1.0.1');
+  .version('1.1.0');
 
-// Add commands
+// Registry commands (new)
+program.addCommand(createSearchCommand());
+program.addCommand(createInstallCommand());
+program.addCommand(createInfoCommand());
+program.addCommand(createTrendingCommand());
+
+// Local file commands (existing)
 program.addCommand(createAddCommand());
 program.addCommand(createListCommand());
 program.addCommand(createRemoveCommand());

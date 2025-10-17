@@ -1,0 +1,41 @@
+{
+  "name": "@prmp/infra",
+  "version": "1.0.0",
+  "description": "Pulumi Infrastructure as Code for PRMP Registry",
+  "main": "index.ts",
+  "scripts": {
+    "preview": "pulumi preview",
+    "up": "pulumi up",
+    "destroy": "pulumi destroy",
+    "refresh": "pulumi refresh",
+    "stack:init:dev": "pulumi stack init dev",
+    "stack:init:staging": "pulumi stack init staging",
+    "stack:init:prod": "pulumi stack init prod",
+    "stack:select:dev": "pulumi stack select dev",
+    "stack:select:staging": "pulumi stack select staging",
+    "stack:select:prod": "pulumi stack select prod",
+    "config:set": "pulumi config set",
+    "outputs": "pulumi stack output"
+  },
+  "keywords": [
+    "pulumi",
+    "infrastructure",
+    "aws",
+    "iac"
+  ],
+  "author": "khaliqgant",
+  "license": "MIT",
+  "dependencies": {
+    "@pulumi/aws": "^6.18.2",
+    "@pulumi/awsx": "^2.4.0",
+    "@pulumi/docker": "^4.5.1",
+    "@pulumi/pulumi": "^3.104.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.25",
+    "typescript": "^5.4.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
