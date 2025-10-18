@@ -60,7 +60,7 @@ services:
       minio:
         condition: service_healthy
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3000
       HOST: 0.0.0.0
       DATABASE_URL: postgresql://prmp:prmp@postgres:5432/prmp_registry
@@ -84,10 +84,6 @@ services:
       ENABLE_RATE_LIMITING: "false"
     ports:
       - "3000:3000"
-    volumes:
-      - ./src:/app/src
-      - ./package.json:/app/package.json
-    command: npm run dev
 
 volumes:
   postgres_data:

@@ -27,10 +27,10 @@ async function buildServer() {
           return {
             method: request.method,
             url: request.url,
-            headers: {
+            headers: request.headers ? {
               host: request.headers.host,
               'user-agent': request.headers['user-agent'],
-            },
+            } : undefined,
             remoteAddress: request.ip,
             remotePort: request.socket?.remotePort,
           };
@@ -44,7 +44,7 @@ async function buildServer() {
     },
     requestIdLogLabel: 'reqId',
     requestIdHeader: 'x-request-id',
-    genReqId: (req) => (req.headers['x-request-id'] as string) || crypto.randomUUID(),
+    genReqId: (req) => (req.headers?.['x-request-id'] as string) || crypto.randomUUID(),
   });
 
   // Security headers
