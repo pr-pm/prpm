@@ -37,6 +37,7 @@ async function seedPackages() {
       '../../scraped-darcyegb-agents.json',
       '../../converted-cursor-skills.json',
       '../../scraped-packages-additional.json',
+      '../../new-scraped-packages.json',
     ];
 
     let totalPackages = 0;

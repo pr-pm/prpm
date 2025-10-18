@@ -1,0 +1,227 @@
+[
+  {
+    "id": "nextjs-typescript-tailwind",
+    "name": "Next.js with TypeScript & Tailwind",
+    "description": "Comprehensive cursor rules for Next.js development using TypeScript and Tailwind CSS with best practices",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["nextjs", "typescript", "tailwind", "react", "frontend"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "react-native-expo",
+    "name": "React Native Expo Development",
+    "description": "Complete cursor rules for React Native Expo mobile development with modern patterns",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["react-native", "expo", "mobile", "typescript"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "python-fastapi-best-practices",
+    "name": "Python FastAPI Best Practices",
+    "description": "Professional cursor rules for Python FastAPI backend development following industry standards",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["python", "fastapi", "backend", "api", "rest"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "typescript-cloudflare-workers",
+    "name": "TypeScript Cloudflare Workers",
+    "description": "Cursor rules for TypeScript serverless development on Cloudflare Workers",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["typescript", "cloudflare", "serverless", "edge"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "react-redux-typescript",
+    "name": "React Redux TypeScript",
+    "description": "Advanced state management patterns with React, Redux, and TypeScript",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["react", "redux", "typescript", "state-management"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "cypress-e2e-testing",
+    "name": "Cypress E2E Testing",
+    "description": "Complete end-to-end testing framework setup and best practices with Cypress",
+    "type": "cursor",
+    "category": "testing",
+    "tags": ["cypress", "e2e", "testing", "automation"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "swiftui-guidelines",
+    "name": "SwiftUI Development Guidelines",
+    "description": "iOS development cursor rules following SwiftUI best practices and patterns",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["swift", "swiftui", "ios", "mobile", "apple"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "claude-code-riper-workflow",
+    "name": "RIPER Development Workflow",
+    "description": "Structured development workflow with Research, Innovate, Plan, Execute, and Review phases for Claude Code",
+    "type": "agent",
+    "category": "workflow",
+    "tags": ["claude-code", "workflow", "methodology", "project-management"],
+    "source_url": "https://github.com/hesreallyhim/awesome-claude-code"
+  },
+  {
+    "id": "claude-code-ab-method",
+    "name": "AB Method - Spec-Driven Development",
+    "description": "Transform large problems into focused missions using sub-agents and spec-driven approach",
+    "type": "agent",
+    "category": "workflow",
+    "tags": ["claude-code", "methodology", "specs", "architecture"],
+    "source_url": "https://github.com/hesreallyhim/awesome-claude-code"
+  },
+  {
+    "id": "claude-code-project-manager",
+    "name": "Claude Code Project Manager",
+    "description": "Comprehensive project management workflow with specialized agents and slash commands",
+    "type": "agent",
+    "category": "workflow",
+    "tags": ["claude-code", "project-management", "agile", "automation"],
+    "source_url": "https://github.com/hesreallyhim/awesome-claude-code"
+  },
+  {
+    "id": "claude-pr-submit",
+    "name": "PR Submit Command",
+    "description": "Create pull requests from local changes automatically with Claude Code",
+    "type": "agent",
+    "category": "automation",
+    "tags": ["github", "pr", "automation", "git"],
+    "source_url": "https://github.com/Comfy-Org/comfy-claude-prompt-library"
+  },
+  {
+    "id": "claude-create-issue",
+    "name": "GitHub Issue Creator",
+    "description": "Automatically create GitHub issues and feature requests from Claude Code",
+    "type": "agent",
+    "category": "automation",
+    "tags": ["github", "issues", "automation"],
+    "source_url": "https://github.com/Comfy-Org/comfy-claude-prompt-library"
+  },
+  {
+    "id": "claude-accessibility-scan",
+    "name": "Accessibility Scanner",
+    "description": "Scan for WCAG 2.1 AA compliance and accessibility issues in your codebase",
+    "type": "agent",
+    "category": "code-quality",
+    "tags": ["accessibility", "wcag", "a11y", "validation"],
+    "source_url": "https://github.com/Comfy-Org/comfy-claude-prompt-library"
+  },
+  {
+    "id": "continue-code-review",
+    "name": "Code Review Prompt",
+    "description": "Automated code review and analysis for Continue IDE",
+    "type": "continue",
+    "category": "code-quality",
+    "tags": ["code-review", "quality", "analysis"],
+    "source_url": "https://github.com/continuedev/prompt-file-examples"
+  },
+  {
+    "id": "continue-code-smells",
+    "name": "Code Smells Detector",
+    "description": "Identify code quality issues and suggest refactoring improvements",
+    "type": "continue",
+    "category": "code-quality",
+    "tags": ["refactoring", "code-smells", "quality"],
+    "source_url": "https://github.com/continuedev/prompt-file-examples"
+  },
+  {
+    "id": "continue-unit-tests",
+    "name": "Unit Test Generator",
+    "description": "Generate comprehensive unit test coverage for your code",
+    "type": "continue",
+    "category": "testing",
+    "tags": ["unit-tests", "testing", "coverage"],
+    "source_url": "https://github.com/continuedev/prompt-file-examples"
+  },
+  {
+    "id": "continue-jest-debugger",
+    "name": "Jest Test Debugger",
+    "description": "Debug Jest test suites in terminal with Continue",
+    "type": "continue",
+    "category": "testing",
+    "tags": ["jest", "debugging", "testing", "javascript"],
+    "source_url": "https://github.com/continuedev/prompt-file-examples"
+  },
+  {
+    "id": "continue-ruby-rails",
+    "name": "Ruby on Rails Development",
+    "description": "Complete Ruby on Rails development assistance prompts",
+    "type": "continue",
+    "category": "framework",
+    "tags": ["ruby", "rails", "backend", "mvc"],
+    "source_url": "https://github.com/continuedev/prompt-file-examples"
+  },
+  {
+    "id": "vue3-composition-api",
+    "name": "Vue 3 Composition API",
+    "description": "Modern Vue 3 development with Composition API and TypeScript",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["vue", "vue3", "composition-api", "typescript"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "django-rest-framework",
+    "name": "Django REST Framework",
+    "description": "Professional Django REST API development with best practices",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["django", "python", "rest", "api", "backend"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "flutter-clean-architecture",
+    "name": "Flutter Clean Architecture",
+    "description": "Flutter mobile development following clean architecture principles",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["flutter", "dart", "mobile", "clean-architecture"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "golang-microservices",
+    "name": "Go Microservices",
+    "description": "Build scalable microservices architecture with Go",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["golang", "microservices", "backend", "distributed"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "rust-systems-programming",
+    "name": "Rust Systems Programming",
+    "description": "Low-level systems programming with Rust best practices",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["rust", "systems", "performance", "memory-safety"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "kubernetes-devops",
+    "name": "Kubernetes DevOps",
+    "description": "Container orchestration and DevOps workflows with Kubernetes",
+    "type": "cursor",
+    "category": "devops",
+    "tags": ["kubernetes", "docker", "devops", "orchestration"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  },
+  {
+    "id": "graphql-apollo-server",
+    "name": "GraphQL Apollo Server",
+    "description": "Build modern GraphQL APIs with Apollo Server and TypeScript",
+    "type": "cursor",
+    "category": "framework",
+    "tags": ["graphql", "apollo", "api", "typescript"],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules"
+  }
+]
