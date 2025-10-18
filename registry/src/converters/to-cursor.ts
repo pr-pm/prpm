@@ -16,7 +16,7 @@ import type {
  */
 export function toCursor(
   pkg: CanonicalPackage,
-  options: ConversionOptions = {}
+  options: Partial<ConversionOptions> = {}
 ): ConversionResult {
   const warnings: string[] = [];
   let qualityScore = 100;
@@ -41,7 +41,7 @@ export function toCursor(
       qualityScore,
     };
   } catch (error) {
-    warnings.push(`Conversion error: ${error.message}`);
+    warnings.push(`Conversion error: ${error instanceof Error ? error.message : String(error)}`);
     return {
       content: '',
       format: 'cursor',
@@ -181,7 +181,7 @@ function convertRules(section: {
   lines.push('');
 
   // Rules list
-  section.items.forEach((rule, index) => {
+  section.items.forEach((rule: any, index) => {
     const content = typeof rule === 'string' ? rule : rule.content;
     const prefix = section.ordered ? `${index + 1}.` : '-';
 
@@ -194,7 +194,7 @@ function convertRules(section: {
 
     // Add examples if present
     if (typeof rule === 'object' && rule.examples) {
-      rule.examples.forEach((example: string) => {
+      rule.examples?.forEach((example: string) => {
         lines.push(`   - Example: \`${example}\``);
       });
     }
@@ -218,7 +218,7 @@ function convertExamples(section: {
   lines.push('');
 
   // Examples
-  section.examples.forEach(example => {
+  section.examples.forEach((example: any) => {
     // Example description
     const prefix = example.good === false ? '❌ Bad' : '✅ Good';
     lines.push(`### ${prefix}: ${example.description}`);

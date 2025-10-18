@@ -113,7 +113,7 @@ export async function convertRoutes(server: FastifyInstance) {
         server.log.error(error);
         return reply.code(500).send({
           error: 'Failed to convert package',
-          message: error.message,
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -234,7 +234,7 @@ export async function convertRoutes(server: FastifyInstance) {
         server.log.error(error);
         return reply.code(500).send({
           error: 'Failed to generate tarball',
-          message: error.message,
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -293,7 +293,7 @@ export async function convertRoutes(server: FastifyInstance) {
         server.log.error(error);
         return reply.code(500).send({
           error: 'Conversion failed',
-          message: error.message,
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     }

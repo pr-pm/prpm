@@ -2,10 +2,10 @@
  * Search and discovery routes
  */
 
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { query } from '../db/index.js';
 import { cacheGet, cacheSet } from '../cache/redis.js';
-import { Package } from '../types.js';
+import { Package, PackageType } from '../types.js';
 import { getSearchProvider } from '../search/index.js';
 
 export async function searchRoutes(server: FastifyInstance) {
@@ -27,8 +27,15 @@ export async function searchRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
-    const { q, type, tags, limit = 20, offset = 0, sort = 'downloads' } = request.query;
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { q, type, tags, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
+      q: string;
+      type?: PackageType;
+      tags?: string[];
+      limit?: number;
+      offset?: number;
+      sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
+    };
 
     // Build cache key
     const cacheKey = `search:${JSON.stringify(request.query)}`;
@@ -68,8 +75,11 @@ export async function searchRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
-    const { type, limit = 20 } = request.query;
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { type, limit = 20 } = request.query as {
+      type?: string;
+      limit?: number;
+    };
 
     const cacheKey = `search:trending:${type || 'all'}:${limit}`;
     const cached = await cacheGet<any>(server, cacheKey);
@@ -78,7 +88,7 @@ export async function searchRoutes(server: FastifyInstance) {
     }
 
     const conditions: string[] = ["visibility = 'public'"];
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (type) {
       conditions.push('type = $1');
@@ -117,8 +127,11 @@ export async function searchRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
-    const { type, limit = 20 } = request.query;
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { type, limit = 20 } = request.query as {
+      type?: string;
+      limit?: number;
+    };
 
     const cacheKey = `search:featured:${type || 'all'}:${limit}`;
     const cached = await cacheGet<any>(server, cacheKey);
@@ -127,7 +140,7 @@ export async function searchRoutes(server: FastifyInstance) {
     }
 
     const conditions: string[] = ["visibility = 'public'", 'featured = TRUE'];
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (type) {
       conditions.push('type = $1');

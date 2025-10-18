@@ -94,7 +94,6 @@ export const sampleCanonicalPackage: CanonicalPackage = {
       },
     ],
   },
-  sourceFormat: 'canonical',
 };
 
 /**

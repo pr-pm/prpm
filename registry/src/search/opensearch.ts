@@ -5,7 +5,8 @@
 import { FastifyInstance } from 'fastify';
 import { Client } from '@opensearch-project/opensearch';
 import { AwsSigv4Signer } from '@opensearch-project/opensearch/aws';
-import { SearchProvider, SearchFilters, SearchResult, Package } from '../types.js';
+import { SearchFilters, SearchResult, Package } from '../types.js';
+import { SearchProvider } from './index.js';
 import { query, queryOne } from '../db/index.js';
 
 let client: Client | null = null;
@@ -54,7 +55,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
       const client = getOpenSearchClient();
 
       // Build OpenSearch query
-      const must: any[] = [
+      const must: unknown[] = [
         {
           multi_match: {
             query: searchQuery,
@@ -65,7 +66,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
         },
       ];
 
-      const filter: any[] = [{ term: { visibility: 'public' } }];
+      const filter: unknown[] = [{ term: { visibility: 'public' } }];
 
       if (type) {
         filter.push({ term: { type } });
@@ -88,7 +89,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
       }
 
       // Build sort clause
-      let sortClause: any[];
+      let sortClause: unknown[];
       switch (sort) {
         case 'created':
           sortClause = [{ created_at: { order: 'desc' } }];
@@ -125,7 +126,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
         });
 
         const hits = response.body.hits;
-        const packages = hits.hits.map((hit: any) => hit._source);
+        const packages = hits.hits.map((hit: { _source: unknown }) => hit._source);
         const total = hits.total.value;
 
         return {
@@ -134,7 +135,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
           offset,
           limit,
         };
-      } catch (error) {
+      } catch (error: any) {
         server.log.error('OpenSearch query failed:', error);
         throw new Error('Search failed');
       }
@@ -163,7 +164,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
         });
 
         server.log.info(`Package ${packageId} indexed in OpenSearch`);
-      } catch (error) {
+      } catch (error: any) {
         server.log.error(`Failed to index package ${packageId}:`, error);
         throw error;
       }
@@ -180,7 +181,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
         });
 
         server.log.info(`Package ${packageId} removed from OpenSearch`);
-      } catch (error) {
+      } catch (error: any) {
         if ((error as any).meta?.statusCode === 404) {
           // Package not in index, that's fine
           return;
@@ -236,7 +237,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
         "SELECT * FROM packages WHERE visibility = 'public'"
       );
 
-      const body: any[] = [];
+      const body: Array<Record<string, unknown> | Package> = [];
       for (const pkg of result.rows) {
         body.push({ index: { _index: INDEX_NAME, _id: pkg.id } });
         body.push(pkg);
@@ -244,7 +245,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
 
       if (body.length > 0) {
         await client.bulk({
-          body,
+          body: body as any,
           refresh: true,
         });
       }

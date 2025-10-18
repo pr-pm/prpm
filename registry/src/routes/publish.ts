@@ -26,19 +26,13 @@ export async function publishRoutes(server: FastifyInstance) {
       description: 'Publish a new package or version',
       consumes: ['multipart/form-data'],
     },
-  }, async (request: any, reply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
 
     try {
-      // Parse multipart form data
-      const data = await request.file();
-      if (!data) {
-        return reply.status(400).send({ error: 'Missing package data' });
-      }
-
       // Get manifest and tarball
       let manifest: PackageManifest;
-      let tarball: Buffer;
+      let tarball: Buffer | undefined;
 
       // Parse form fields
       const fields: Record<string, any> = {};
@@ -67,7 +61,7 @@ export async function publishRoutes(server: FastifyInstance) {
         return reply.status(400).send({ error: 'Invalid manifest JSON' });
       }
 
-      if (!tarball!) {
+      if (!tarball) {
         return reply.status(400).send({ error: 'Missing tarball file' });
       }
 
@@ -230,7 +224,7 @@ export async function publishRoutes(server: FastifyInstance) {
         message: `Successfully published ${manifest.name}@${manifest.version}`,
         tarball_url: upload.url,
       });
-    } catch (error) {
+    } catch (error: any) {
       server.log.error('Publish error:', error);
       return reply.status(500).send({
         error: 'Failed to publish package',

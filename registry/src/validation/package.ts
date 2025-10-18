@@ -44,7 +44,7 @@ export type PackageManifest = z.infer<typeof packageManifestSchema>;
 /**
  * Validate package manifest
  */
-export function validateManifest(manifest: any): { valid: boolean; errors?: string[] } {
+export function validateManifest(manifest: unknown): { valid: boolean; errors?: string[] } {
   try {
     packageManifestSchema.parse(manifest);
     return { valid: true };

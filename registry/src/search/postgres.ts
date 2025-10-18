@@ -3,7 +3,8 @@
  */
 
 import { FastifyInstance } from 'fastify';
-import { SearchProvider, SearchFilters, SearchResult, Package } from '../types.js';
+import { SearchFilters, SearchResult, Package } from '../types.js';
+import { SearchProvider } from './index.js';
 import { query, queryOne } from '../db/index.js';
 
 export function postgresSearch(server: FastifyInstance): SearchProvider {
@@ -25,7 +26,7 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
         "visibility = 'public'",
         "to_tsvector('english', display_name || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', $1)",
       ];
-      const params: any[] = [searchQuery];
+      const params: unknown[] = [searchQuery];
       let paramIndex = 2;
 
       if (type) {

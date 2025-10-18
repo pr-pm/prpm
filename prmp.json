@@ -1,0 +1,333 @@
+{
+  "name": "prompt-package-manager",
+  "version": "1.2.0",
+  "description": "Package manager for AI prompts, agents, and cursor rules",
+  "format": "cursor",
+  "dogfoodingSkill": {
+    "id": "@prpm/dogfooding-skill",
+    "version": "1.0.0",
+    "installed": true,
+    "multiFile": true,
+    "formats": {
+      "cursor": {
+        "location": ".cursor/rules/",
+        "files": [
+          "core-principles.cursorrules",
+          "format-conversion.cursorrules",
+          "testing-patterns.cursorrules"
+        ]
+      },
+      "claude": {
+        "location": ".claude/agents/",
+        "files": [
+          "core-principles.md",
+          "format-conversion.md",
+          "testing-patterns.md"
+        ],
+        "mcpServers": [
+          "filesystem",
+          "database",
+          "web_search",
+          "bash"
+        ]
+      }
+    },
+    "description": "PRPM development expertise - dogfooding PRPM on itself",
+    "features": [
+      "Core development principles and architecture",
+      "Format conversion expertise with quality scoring",
+      "Testing patterns with Vitest and MCP integration",
+      "IDE-specific optimizations (Cursor: simple, Claude: MCP-enhanced)"
+    ]
+  },
+  "collections": [
+    {
+      "id": "@collection/typescript-fullstack",
+      "version": "1.0.0",
+      "installed": true,
+      "reason": "Core TypeScript patterns for building PRPM CLI and registry backend",
+      "packages": {
+        "typescript-expert": "latest",
+        "nodejs-backend": "latest",
+        "react-typescript": "latest"
+      }
+    },
+    {
+      "id": "@collection/package-manager-dev",
+      "version": "1.0.0",
+      "installed": true,
+      "reason": "Essential for CLI development, npm publishing, and package management features",
+      "packages": {
+        "cli-development": "latest",
+        "npm-publishing": "latest",
+        "semver-versioning": "latest",
+        "file-system-ops": "latest",
+        "config-management": "latest"
+      }
+    },
+    {
+      "id": "@collection/registry-backend",
+      "version": "1.0.0",
+      "installed": true,
+      "reason": "Powers the PRPM registry with Fastify, PostgreSQL, Redis, and OAuth",
+      "packages": {
+        "fastify-api": "latest",
+        "postgresql-advanced": "latest",
+        "redis-caching": "latest",
+        "oauth-github": "latest",
+        "analytics-tracking": "latest"
+      }
+    },
+    {
+      "id": "@collection/testing-complete",
+      "version": "1.0.0",
+      "installed": true,
+      "reason": "Comprehensive testing with Vitest for format converters and API endpoints",
+      "packages": {
+        "vitest-testing": "latest",
+        "typescript-testing": "latest",
+        "api-testing": "latest",
+        "code-coverage": "latest"
+      }
+    },
+    {
+      "id": "@collection/scraper-automation",
+      "version": "1.0.0",
+      "installed": true,
+      "reason": "Used for scraping cursor rules and Claude agents from GitHub repositories",
+      "packages": {
+        "github-api": "latest",
+        "web-scraping": "latest",
+        "rate-limiting": "latest",
+        "data-extraction": "latest",
+        "markdown-parsing": "latest"
+      }
+    },
+    {
+      "id": "@collection/format-conversion",
+      "version": "1.0.0",
+      "installed": true,
+      "reason": "Critical for converting between Cursor, Claude, Continue, and Windsurf formats",
+      "packages": {
+        "yaml-frontmatter": "latest",
+        "markdown-processing": "latest",
+        "data-validation": "latest",
+        "json-transformation": "latest",
+        "quality-scoring": "latest"
+      }
+    },
+    {
+      "id": "@collection/pulumi-infrastructure",
+      "version": "1.0.0",
+      "installed": false,
+      "reason": "Infrastructure as Code with Pulumi, TypeScript, and MCP server integration (Claude-optimized)",
+      "mcpServers": {
+        "pulumi": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-pulumi"],
+          "description": "Pulumi state inspection and resource queries",
+          "optional": false
+        },
+        "aws": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-aws"],
+          "description": "AWS resource inspection",
+          "optional": true
+        },
+        "kubernetes": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-kubernetes"],
+          "description": "Kubernetes cluster management",
+          "optional": true
+        }
+      },
+      "packages": {
+        "pulumi-typescript": "latest",
+        "pulumi-aws": "latest",
+        "pulumi-state-management": "latest"
+      },
+      "note": "Install with: prpm install @collection/pulumi-infrastructure --as claude"
+    }
+  ],
+  "packages": [
+    {
+      "id": "typescript-expert",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/typescript-fullstack"
+    },
+    {
+      "id": "nodejs-backend",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/typescript-fullstack"
+    },
+    {
+      "id": "cli-development",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/package-manager-dev"
+    },
+    {
+      "id": "npm-publishing",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/package-manager-dev"
+    },
+    {
+      "id": "semver-versioning",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/package-manager-dev"
+    },
+    {
+      "id": "file-system-ops",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/package-manager-dev"
+    },
+    {
+      "id": "config-management",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/package-manager-dev"
+    },
+    {
+      "id": "fastify-api",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/registry-backend"
+    },
+    {
+      "id": "postgresql-advanced",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/registry-backend"
+    },
+    {
+      "id": "redis-caching",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/registry-backend"
+    },
+    {
+      "id": "oauth-github",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/registry-backend"
+    },
+    {
+      "id": "analytics-tracking",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/registry-backend"
+    },
+    {
+      "id": "vitest-testing",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/testing-complete"
+    },
+    {
+      "id": "typescript-testing",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/testing-complete"
+    },
+    {
+      "id": "api-testing",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/testing-complete"
+    },
+    {
+      "id": "code-coverage",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/testing-complete"
+    },
+    {
+      "id": "github-api",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/scraper-automation"
+    },
+    {
+      "id": "web-scraping",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/scraper-automation"
+    },
+    {
+      "id": "rate-limiting",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/scraper-automation"
+    },
+    {
+      "id": "data-extraction",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/scraper-automation"
+    },
+    {
+      "id": "markdown-parsing",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/scraper-automation"
+    },
+    {
+      "id": "yaml-frontmatter",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/format-conversion"
+    },
+    {
+      "id": "markdown-processing",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/format-conversion"
+    },
+    {
+      "id": "data-validation",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/format-conversion"
+    },
+    {
+      "id": "json-transformation",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/format-conversion"
+    },
+    {
+      "id": "quality-scoring",
+      "type": "cursor",
+      "version": "latest",
+      "source": "@collection/format-conversion"
+    }
+  ],
+  "meta": {
+    "totalCollections": 7,
+    "installedCollections": 6,
+    "availableCollections": 1,
+    "totalPackages": 26,
+    "dogfoodingSkill": {
+      "installed": true,
+      "multiFile": true,
+      "filesPerFormat": {
+        "cursor": 3,
+        "claude": 3
+      }
+    },
+    "mcpServersAvailable": {
+      "pulumi-infrastructure": {
+        "required": ["pulumi"],
+        "optional": ["aws", "kubernetes"]
+      }
+    },
+    "lastUpdated": "2025-10-18",
+    "installedWith": "prpm@1.2.0",
+    "note": "Collections are documented but not installed (no registry yet). The dogfooding skill is actually installed locally."
+  }
+}

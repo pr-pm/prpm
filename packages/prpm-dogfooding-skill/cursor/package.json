@@ -1,0 +1,28 @@
+{
+  "name": "@prpm/dogfooding-skill-cursor",
+  "version": "1.0.0",
+  "description": "PRPM development skill package for Cursor - dogfooding PRPM on itself",
+  "type": "cursor",
+  "author": "PRPM Team",
+  "license": "MIT",
+  "tags": [
+    "prpm",
+    "dogfooding",
+    "package-manager",
+    "typescript",
+    "testing"
+  ],
+  "files": [
+    "core-principles.cursorrules",
+    "format-conversion.cursorrules",
+    "testing-patterns.cursorrules"
+  ],
+  "installLocation": ".cursor/rules/",
+  "prpm": {
+    "category": "development",
+    "official": true,
+    "verified": true,
+    "multiFile": true,
+    "installStrategy": "all"
+  }
+}

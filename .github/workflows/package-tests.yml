@@ -1,0 +1,99 @@
+name: Package Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  cli-tests:
+    name: CLI Package Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build registry-client
+        run: npm run build --workspace=@prmp/registry-client
+
+      - name: Run CLI tests
+        run: npm run test --workspace=@prmp/cli
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./packages/cli/coverage/lcov.info
+          flags: cli
+          name: cli-coverage
+        continue-on-error: true
+
+  registry-client-tests:
+    name: Registry Client Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run registry-client tests
+        run: npm run test --workspace=@prmp/registry-client
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./packages/registry-client/coverage/lcov.info
+          flags: registry-client
+          name: registry-client-coverage
+        continue-on-error: true
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all packages
+        run: npm run build --workspaces
+
+      - name: Run all tests
+        run: npm test --workspaces
+
+      - name: Report Test Summary
+        run: |
+          echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| CLI | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Registry Client | ✅ Passed |" >> $GITHUB_STEP_SUMMARY

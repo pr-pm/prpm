@@ -2,7 +2,7 @@
  * User management routes
  */
 
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { query, queryOne } from '../db/index.js';
 import { User, Package } from '../types.js';
 
@@ -19,8 +19,8 @@ export async function userRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
-    const { username } = request.params;
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { username } = request.params as { username: string };
 
     const user = await queryOne<User>(
       server,
@@ -86,9 +86,12 @@ export async function userRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
-    const { username } = request.params;
-    const { limit = 20, offset = 0 } = request.query;
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { username } = request.params as { username: string };
+    const { limit = 20, offset = 0 } = request.query as {
+      limit?: number;
+      offset?: number;
+    };
 
     // Get user ID
     const user = await queryOne<User>(

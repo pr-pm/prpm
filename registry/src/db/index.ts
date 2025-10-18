@@ -17,7 +17,7 @@ export async function setupDatabase(server: FastifyInstance) {
     await client.query('SELECT NOW()');
     client.release();
     server.log.info('✅ Database connected');
-  } catch (error) {
+  } catch (error: any) {
     server.log.error('❌ Database connection failed:', error);
     throw error;
   }
@@ -32,7 +32,7 @@ export interface QueryResult<T> {
 export async function query<T>(
   server: FastifyInstance,
   text: string,
-  params?: any[]
+  params?: unknown[]
 ): Promise<QueryResult<T>> {
   const client = await server.pg.connect();
   try {
@@ -49,7 +49,7 @@ export async function query<T>(
 export async function queryOne<T>(
   server: FastifyInstance,
   text: string,
-  params?: any[]
+  params?: unknown[]
 ): Promise<T | null> {
   const result = await query<T>(server, text, params);
   return result.rows[0] || null;

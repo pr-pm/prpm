@@ -13,10 +13,18 @@ import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { createGunzip } from 'zlib';
 import * as tar from 'tar';
+import {
+  readLockfile,
+  writeLockfile,
+  createLockfile,
+  addToLockfile,
+  setPackageIntegrity,
+  getLockedVersion,
+} from '../core/lockfile';
 
 export async function handleInstall(
   packageSpec: string,
-  options: { version?: string; type?: PackageType; as?: string }
+  options: { version?: string; type?: PackageType; as?: string; frozenLockfile?: boolean }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -25,7 +33,23 @@ export async function handleInstall(
   try {
     // Parse package spec (e.g., "react-rules" or "react-rules@1.2.0")
     const [packageId, specVersion] = packageSpec.split('@');
-    const version = options.version || specVersion || 'latest';
+
+    // Read existing lock file
+    const lockfile = await readLockfile();
+    const lockedVersion = getLockedVersion(lockfile, packageId);
+
+    // Determine version to install
+    let version: string;
+    if (options.frozenLockfile) {
+      // Frozen lockfile mode - must use exact locked version
+      if (!lockedVersion) {
+        throw new Error(`Package ${packageId} not found in lock file. Run without --frozen-lockfile to update.`);
+      }
+      version = lockedVersion;
+    } else {
+      // Normal mode - use specified version or locked version or latest
+      version = options.version || specVersion || lockedVersion || 'latest';
+    }
 
     console.log(`📥 Installing ${packageId}@${version}...`);
 
@@ -72,19 +96,34 @@ export async function handleInstall(
 
     await saveFile(destPath, mainFile);
 
+    // Update or create lock file
+    const updatedLockfile = lockfile || createLockfile();
+    const actualVersion = version === 'latest' ? pkg.latest_version?.version : version;
+
+    addToLockfile(updatedLockfile, packageId, {
+      version: actualVersion || version,
+      tarballUrl,
+      type,
+      format,
+    });
+
+    setPackageIntegrity(updatedLockfile, packageId, tarball);
+    await writeLockfile(updatedLockfile);
+
     // Update configuration
     const packageRecord: Package = {
       id: packageId,
       type,
       url: tarballUrl,
       dest: destPath,
-      version: version === 'latest' ? pkg.latest_version?.version : version,
+      version: actualVersion,
     };
 
     await addPackage(packageRecord);
 
     console.log(`\n✅ Successfully installed ${packageId}`);
     console.log(`   📁 Saved to: ${destPath}`);
+    console.log(`   🔒 Lock file updated`);
     console.log(`\n💡 This package has been downloaded ${pkg.total_downloads.toLocaleString()} times`);
 
     success = true;
@@ -155,6 +194,7 @@ export function createInstallCommand(): Command {
     .option('--version <version>', 'Specific version to install')
     .option('--type <type>', 'Override package type (cursor, claude, continue)')
     .option('--as <format>', 'Download in specific format (cursor, claude, continue, windsurf)')
+    .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
     .action(async (packageSpec: string, options: any) => {
       if (options.type && !['cursor', 'claude', 'continue', 'windsurf', 'generic'].includes(options.type)) {
         console.error('❌ Type must be one of: cursor, claude, continue, windsurf, generic');

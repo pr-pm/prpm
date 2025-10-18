@@ -16,7 +16,7 @@ import type {
  */
 export function toClaude(
   pkg: CanonicalPackage,
-  options: ConversionOptions = {}
+  options: Partial<ConversionOptions> = {}
 ): ConversionResult {
   const warnings: string[] = [];
   let qualityScore = 100;
@@ -41,7 +41,7 @@ export function toClaude(
       qualityScore,
     };
   } catch (error) {
-    warnings.push(`Conversion error: ${error.message}`);
+    warnings.push(`Conversion error: ${error instanceof Error ? error.message : String(error)}`);
     return {
       content: '',
       format: 'claude',
@@ -230,7 +230,7 @@ function convertRules(section: {
   lines.push('');
 
   // For Claude, phrase rules as instructions/guidelines
-  section.items.forEach((rule, index) => {
+  section.items.forEach((rule: any, index) => {
     const content = typeof rule === 'string' ? rule : rule.content;
     const prefix = section.ordered ? `${index + 1}.` : '-';
 
@@ -248,7 +248,7 @@ function convertRules(section: {
 
     // Add examples if present
     if (typeof rule === 'object' && rule.examples) {
-      rule.examples.forEach((example: string) => {
+      rule.examples?.forEach((example: string) => {
         lines.push(`   Example: \`${example}\``);
       });
     }
@@ -270,7 +270,7 @@ function convertExamples(section: {
   lines.push(`## ${section.title}`);
   lines.push('');
 
-  section.examples.forEach(example => {
+  section.examples.forEach((example: any) => {
     // Good/bad indicator
     if (example.good === false) {
       lines.push(`### ❌ Incorrect: ${example.description}`);

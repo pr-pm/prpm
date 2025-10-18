@@ -132,7 +132,7 @@ BEGIN
     p.downloads_last_7_days,
     p.rating_average,
     p.rating_count,
-    p.verified_package,
+    p.verified,
     (p.readme IS NOT NULL AND length(p.readme) > 100) as has_readme,
     (SELECT COUNT(*) FROM unnest(p.tags) as tag),
     EXTRACT(DAY FROM (NOW() - p.updated_at)),
@@ -225,7 +225,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_update_package_score
-BEFORE UPDATE OF total_downloads, rating_average, rating_count, updated_at, verified_package
+BEFORE UPDATE OF total_downloads, rating_average, rating_count, updated_at, verified
 ON packages
 FOR EACH ROW
 EXECUTE FUNCTION update_package_score();

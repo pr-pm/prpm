@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { queryOne, query } from '../db/index.js';
 import { User, JWTPayload } from '../types.js';
 import { nanoid } from 'nanoid';
+import '../types/jwt.js';
 
 export async function authRoutes(server: FastifyInstance) {
   // GitHub OAuth callback
@@ -37,8 +38,13 @@ export async function authRoutes(server: FastifyInstance) {
         },
       });
 
-      const emails = await emailResponse.json();
-      const primaryEmail = emails.find((e: any) => e.primary)?.email || emails[0]?.email;
+      interface GitHubEmail {
+        email: string;
+        primary: boolean;
+        verified: boolean;
+      }
+      const emails = (await emailResponse.json()) as GitHubEmail[];
+      const primaryEmail = emails.find((e) => e.primary)?.email || emails[0]?.email;
 
       if (!primaryEmail) {
         throw new Error('No email found in GitHub account');
@@ -91,7 +97,7 @@ export async function authRoutes(server: FastifyInstance) {
       // Redirect to frontend with token
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       return reply.redirect(`${frontendUrl}/auth/callback?token=${jwtToken}`);
-    } catch (error) {
+    } catch (error: any) {
       server.log.error('GitHub OAuth error:', error);
       return reply.status(500).send({ error: 'Authentication failed' });
     }
@@ -117,7 +123,7 @@ export async function authRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
 
     const user = await queryOne<User>(
@@ -163,9 +169,13 @@ export async function authRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
-    const { name, scopes = ['read:packages'], expires_in = '30d' } = request.body;
+    const { name, scopes = ['read:packages'], expires_in = '30d' } = request.body as {
+      name: string;
+      scopes?: string[];
+      expires_in?: string;
+    };
 
     // Generate random token
     const token = `prmp_${nanoid(32)}`;
@@ -200,7 +210,7 @@ export async function authRoutes(server: FastifyInstance) {
       tags: ['auth'],
       description: 'List all API tokens for current user',
     },
-  }, async (request: any, reply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
 
     const result = await query(
@@ -228,9 +238,9 @@ export async function authRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
-    const { tokenId } = request.params;
+    const { tokenId } = request.params as { tokenId: string };
 
     const result = await query(
       server,

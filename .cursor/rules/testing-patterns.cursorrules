@@ -1,0 +1,413 @@
+# PRPM Testing Patterns
+
+Expert guidance for testing the Prompt Package Manager codebase with Vitest.
+
+## Testing Philosophy
+
+### Test Pyramid for PRPM
+- **70% Unit Tests**: Format converters, parsers, utilities
+- **20% Integration Tests**: API routes, database operations, CLI commands
+- **10% E2E Tests**: Full workflows (install, publish, search)
+
+### Coverage Goals
+- **Format Converters**: 100% coverage (critical path)
+- **CLI Commands**: 90% coverage
+- **API Routes**: 85% coverage
+- **Utilities**: 90% coverage
+
+## Test Structure
+
+### File Organization
+```
+src/
+  converters/
+    to-cursor.ts
+    __tests__/
+      setup.ts          # Fixtures and helpers
+      to-cursor.test.ts # Converter tests
+      roundtrip.test.ts # Round-trip tests
+```
+
+### Naming Conventions
+- Test files: `*.test.ts`
+- Setup/fixtures: `setup.ts` or `fixtures.ts`
+- Test suites: Describe what's being tested
+- Test cases: Start with "should" or use plain English
+
+## Converter Testing Patterns
+
+### Basic Converter Test
+```typescript
+import { describe, it, expect } from 'vitest';
+import { toCursor } from '../to-cursor';
+import { sampleCanonicalPackage } from './setup';
+
+describe('toCursor', () => {
+  it('should convert canonical to cursor format', () => {
+    const result = toCursor(sampleCanonicalPackage);
+
+    expect(result.format).toBe('cursor');
+    expect(result.content).toContain('# Package Name');
+    expect(result.qualityScore).toBeGreaterThan(80);
+    expect(result.lossyConversion).toBe(false);
+  });
+});
+```
+
+### Test Fixtures
+Create realistic test data in `setup.ts`:
+```typescript
+export const sampleCanonicalPackage: CanonicalPackage = {
+  id: 'test-package',
+  version: '1.0.0',
+  name: 'Test Package',
+  description: 'A test package',
+  author: 'test-author',
+  tags: ['test', 'example'],
+  type: 'agent',
+  content: {
+    format: 'canonical',
+    version: '1.0',
+    sections: [
+      {
+        type: 'metadata',
+        data: { name: 'Test', version: '1.0.0' }
+      },
+      {
+        type: 'instructions',
+        data: { text: 'Follow these instructions...' }
+      }
+    ]
+  }
+};
+```
+
+### Round-Trip Testing
+```typescript
+describe('Round-trip conversion', () => {
+  it('should preserve core data through cursor conversion', () => {
+    const original = sampleCanonicalPackage;
+
+    // Convert to cursor
+    const cursor = toCursor(original);
+
+    // Parse back to canonical
+    const parsed = fromCursor(cursor.content);
+
+    // Check semantic equivalence
+    expect(parsed.name).toBe(original.name);
+    expect(parsed.content.sections).toHaveLength(original.content.sections.length);
+
+    // Instructions should be preserved
+    const origInstructions = findSection(original, 'instructions');
+    const parsedInstructions = findSection(parsed, 'instructions');
+    expect(normalizeWhitespace(parsedInstructions.data.text))
+      .toContain(normalizeWhitespace(origInstructions.data.text));
+  });
+});
+```
+
+### Quality Score Testing
+```typescript
+describe('Quality scoring', () => {
+  it('should score high for lossless conversion', () => {
+    const pkg = createPackageWithoutTools();
+    const result = toCursor(pkg);
+    expect(result.qualityScore).toBeGreaterThan(95);
+  });
+
+  it('should score lower when tools are lost', () => {
+    const pkg = createPackageWithTools();
+    const result = toCursor(pkg);
+    expect(result.qualityScore).toBeLessThan(90);
+    expect(result.warnings).toContain('Tools not supported');
+  });
+});
+```
+
+## API Testing Patterns
+
+### Route Testing with Fastify
+```typescript
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { buildTestServer } from '../test-utils';
+
+describe('GET /api/v1/packages/:id', () => {
+  let server;
+
+  beforeAll(async () => {
+    server = await buildTestServer();
+  });
+
+  afterAll(async () => {
+    await server.close();
+  });
+
+  it('should return package details', async () => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/api/v1/packages/test-package'
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body);
+    expect(body.id).toBe('test-package');
+    expect(body.name).toBeDefined();
+  });
+
+  it('should return 404 for non-existent package', async () => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/api/v1/packages/does-not-exist'
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+});
+```
+
+### Database Testing
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
+import { setupTestDatabase, cleanDatabase } from '../test-utils';
+
+describe('Package queries', () => {
+  let db;
+
+  beforeEach(async () => {
+    db = await setupTestDatabase();
+    await cleanDatabase(db);
+  });
+
+  it('should insert and retrieve package', async () => {
+    await db.query(
+      'INSERT INTO packages (id, name, version) VALUES ($1, $2, $3)',
+      ['test-id', 'Test Package', '1.0.0']
+    );
+
+    const result = await db.query(
+      'SELECT * FROM packages WHERE id = $1',
+      ['test-id']
+    );
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0].name).toBe('Test Package');
+  });
+});
+```
+
+## CLI Testing Patterns
+
+### Command Testing
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+import { handleInstall } from '../commands/install';
+
+describe('prpm install', () => {
+  it('should install package successfully', async () => {
+    // Mock registry client
+    const mockClient = {
+      getPackage: vi.fn().mockResolvedValue({
+        id: 'test-pkg',
+        latest_version: { tarball_url: 'http://example.com/pkg.tgz' }
+      }),
+      downloadPackage: vi.fn().mockResolvedValue(Buffer.from('fake tarball'))
+    };
+
+    const consoleSpy = vi.spyOn(console, 'log');
+
+    await handleInstall('test-pkg', { client: mockClient });
+
+    expect(mockClient.getPackage).toHaveBeenCalledWith('test-pkg');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('✅ Successfully installed')
+    );
+  });
+});
+```
+
+## Test Utilities
+
+### Normalize Whitespace
+```typescript
+export function normalizeWhitespace(text: string): string {
+  return text
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+```
+
+### Find Section Helper
+```typescript
+export function findSection(
+  pkg: CanonicalPackage,
+  type: string
+): Section | undefined {
+  return pkg.content.sections.find(s => s.type === type);
+}
+```
+
+### Create Test Package
+```typescript
+export function createTestPackage(overrides?: Partial<CanonicalPackage>): CanonicalPackage {
+  return {
+    ...sampleCanonicalPackage,
+    ...overrides
+  };
+}
+```
+
+## Edge Cases to Test
+
+### Format Converters
+- [ ] Empty package (no sections)
+- [ ] Package with only metadata
+- [ ] Package with all section types
+- [ ] Package with custom sections
+- [ ] Package with tools (Claude vs Cursor)
+- [ ] Package with persona (detailed vs simple)
+- [ ] Package with examples
+- [ ] Malformed input
+- [ ] Special characters in content
+- [ ] Very long content
+- [ ] Unicode and emoji
+
+### CLI Commands
+- [ ] Invalid package name
+- [ ] Network errors (retry logic)
+- [ ] Missing configuration
+- [ ] Invalid version specifier
+- [ ] File system errors
+- [ ] Permission errors
+- [ ] User cancellation
+
+### API Routes
+- [ ] Missing required fields
+- [ ] Invalid authentication token
+- [ ] Rate limiting
+- [ ] Large payloads
+- [ ] Malformed JSON
+- [ ] SQL injection attempts
+- [ ] XSS attempts
+
+## Mock Patterns
+
+### Mock Registry Client
+```typescript
+const mockClient = {
+  search: vi.fn(),
+  getPackage: vi.fn(),
+  downloadPackage: vi.fn(),
+  publish: vi.fn(),
+};
+```
+
+### Mock File System
+```typescript
+vi.mock('fs', () => ({
+  promises: {
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+    mkdir: vi.fn(),
+    readdir: vi.fn(),
+  }
+}));
+```
+
+### Mock HTTP Requests
+```typescript
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+
+const server = setupServer(
+  http.get('https://registry.prpm.dev/api/v1/packages/:id', ({ params }) => {
+    return HttpResponse.json({
+      id: params.id,
+      name: 'Test Package'
+    });
+  })
+);
+
+beforeAll(() => server.listen());
+afterAll(() => server.close());
+```
+
+## Coverage Commands
+
+```bash
+# Run tests with coverage
+npm run test:coverage
+
+# View coverage report
+open coverage/index.html
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run specific test file
+npm run test -- to-cursor.test.ts
+```
+
+## Test Performance
+
+### Fast Tests
+- Keep unit tests under 10ms each
+- Use mocks to avoid I/O
+- Avoid real database in unit tests
+- Cache test fixtures
+
+### Slow Tests (Integration)
+- Mark with `it.concurrent` for parallel execution
+- Use test database (not production)
+- Clean up after tests
+- Timeout appropriately (30s for E2E)
+
+## Common Assertions
+
+### Format Conversion
+```typescript
+expect(result.format).toBe('cursor');
+expect(result.content).toContain('expected text');
+expect(result.qualityScore).toBeGreaterThan(80);
+expect(result.warnings).toHaveLength(0);
+expect(result.lossyConversion).toBe(false);
+```
+
+### API Responses
+```typescript
+expect(response.statusCode).toBe(200);
+expect(response.headers['content-type']).toMatch(/json/);
+expect(body).toHaveProperty('id');
+expect(body.packages).toBeArrayOfSize(10);
+```
+
+### CLI Output
+```typescript
+expect(stdout).toContain('✅ Success');
+expect(stderr).toBe('');
+expect(exitCode).toBe(0);
+```
+
+## Debugging Tests
+
+### Use `it.only` for Focus
+```typescript
+it.only('should test specific case', () => {
+  // Only this test runs
+});
+```
+
+### Use `console.log` in Tests
+```typescript
+it('should debug output', () => {
+  console.log('Result:', result);
+  expect(result).toBeDefined();
+});
+```
+
+### Use Vitest UI
+```bash
+npm run test:ui
+```
+
+Remember: Tests are documentation. Write tests that explain how the code should behave.

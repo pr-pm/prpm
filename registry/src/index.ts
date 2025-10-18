@@ -2,8 +2,12 @@
  * PRMP Registry Server
  */
 
+import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
+import multipart from '@fastify/multipart';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { config } from './config.js';
@@ -11,6 +15,7 @@ import { setupDatabase } from './db/index.js';
 import { setupRedis } from './cache/redis.js';
 import { setupAuth } from './auth/index.js';
 import { registerRoutes } from './routes/index.js';
+import { registerTelemetryPlugin, telemetry } from './telemetry/index.js';
 
 async function buildServer() {
   const server = Fastify({
@@ -19,10 +24,41 @@ async function buildServer() {
     },
   });
 
+  // Security headers
+  await server.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+      },
+    },
+  });
+
+  // Rate limiting
+  await server.register(rateLimit, {
+    max: 100, // 100 requests
+    timeWindow: '1 minute',
+    errorResponseBuilder: () => ({
+      error: 'Too Many Requests',
+      message: 'Rate limit exceeded. Please try again later.',
+      statusCode: 429,
+    }),
+  });
+
   // CORS
   await server.register(cors, {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
+  });
+
+  // Multipart file upload support
+  await server.register(multipart, {
+    limits: {
+      fileSize: 100 * 1024 * 1024, // 100MB max file size
+      files: 1, // Max 1 file per request
+    },
   });
 
   // Swagger documentation
@@ -42,6 +78,7 @@ async function buildServer() {
       tags: [
         { name: 'auth', description: 'Authentication endpoints' },
         { name: 'packages', description: 'Package management' },
+        { name: 'collections', description: 'Package collections' },
         { name: 'search', description: 'Search and discovery' },
         { name: 'users', description: 'User management' },
         { name: 'organizations', description: 'Organization management' },
@@ -65,6 +102,9 @@ async function buildServer() {
 
   // Authentication
   await setupAuth(server);
+
+  // Telemetry & Analytics
+  await registerTelemetryPlugin(server);
 
   // API routes
   await registerRoutes(server);
@@ -108,11 +148,13 @@ Environment: ${process.env.NODE_ENV || 'development'}
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n👋 Shutting down gracefully...');
+  await telemetry.shutdown();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('\n👋 Shutting down gracefully...');
+  await telemetry.shutdown();
   process.exit(0);
 });
 

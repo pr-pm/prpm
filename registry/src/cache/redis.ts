@@ -16,7 +16,7 @@ export async function setupRedis(server: FastifyInstance) {
   try {
     await server.redis.ping();
     server.log.info('✅ Redis connected');
-  } catch (error) {
+  } catch (error: any) {
     server.log.error('❌ Redis connection failed:', error);
     throw error;
   }
@@ -30,7 +30,7 @@ export async function cacheGet<T>(
   try {
     const value = await server.redis.get(key);
     return value ? JSON.parse(value) : null;
-  } catch (error) {
+  } catch (error: any) {
     server.log.warn(`Cache get failed for key ${key}:`, error);
     return null;
   }
@@ -39,12 +39,12 @@ export async function cacheGet<T>(
 export async function cacheSet(
   server: FastifyInstance,
   key: string,
-  value: any,
+  value: unknown,
   ttlSeconds: number = 300
 ): Promise<void> {
   try {
     await server.redis.setex(key, ttlSeconds, JSON.stringify(value));
-  } catch (error) {
+  } catch (error: any) {
     server.log.warn(`Cache set failed for key ${key}:`, error);
   }
 }
@@ -55,7 +55,7 @@ export async function cacheDelete(
 ): Promise<void> {
   try {
     await server.redis.del(key);
-  } catch (error) {
+  } catch (error: any) {
     server.log.warn(`Cache delete failed for key ${key}:`, error);
   }
 }
@@ -69,7 +69,7 @@ export async function cacheDeletePattern(
     if (keys.length > 0) {
       await server.redis.del(...keys);
     }
-  } catch (error) {
+  } catch (error: any) {
     server.log.warn(`Cache delete pattern failed for ${pattern}:`, error);
   }
 }

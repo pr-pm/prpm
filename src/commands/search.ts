@@ -15,13 +15,14 @@ export async function handleSearch(
   const startTime = Date.now();
   let success = false;
   let error: string | undefined;
+  let result: any = null;
 
   try {
     console.log(`🔍 Searching for "${query}"...`);
 
     const config = await getConfig();
     const client = getRegistryClient(config);
-    const result = await client.search(query, {
+    result = await client.search(query, {
       type: options.type,
       limit: options.limit || 20,
     });
@@ -38,7 +39,7 @@ export async function handleSearch(
     console.log(`\n✨ Found ${result.total} package(s):\n`);
 
     // Display results
-    result.packages.forEach((pkg) => {
+    result.packages.forEach((pkg: any) => {
       const verified = pkg.verified ? '✓' : ' ';
       const rating = pkg.rating_average ? `⭐ ${pkg.rating_average.toFixed(1)}` : '';
       const downloads = pkg.total_downloads >= 1000
@@ -74,7 +75,7 @@ export async function handleSearch(
       data: {
         query: query.substring(0, 100),
         type: options.type,
-        resultCount: success ? result.packages.length : 0,
+        resultCount: success && result ? result.packages.length : 0,
       },
     });
   }

@@ -1,0 +1,226 @@
+[
+  {
+    "id": "pulumi-infrastructure",
+    "scope": "collection",
+    "name": "Pulumi Infrastructure as Code",
+    "description": "Complete Pulumi development stack with TypeScript, AWS/GCP/Azure providers, and MCP server for infrastructure management",
+    "version": "1.0.0",
+    "category": "devops",
+    "tags": ["pulumi", "infrastructure", "iac", "cloud", "typescript"],
+    "icon": "☁️",
+    "official": true,
+    "config": {
+      "defaultFormat": "claude",
+      "installOrder": "sequential",
+      "mcpServers": {
+        "pulumi": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-pulumi"],
+          "description": "Pulumi MCP server for infrastructure management and state inspection",
+          "optional": false
+        },
+        "aws": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-aws"],
+          "description": "AWS MCP server for cloud resource inspection",
+          "optional": true
+        },
+        "kubernetes": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-kubernetes"],
+          "description": "Kubernetes MCP server for cluster management",
+          "optional": true
+        }
+      }
+    },
+    "packages": [
+      {
+        "packageId": "pulumi-typescript",
+        "required": true,
+        "reason": "Pulumi infrastructure definitions with TypeScript best practices",
+        "formatSpecific": {
+          "cursor": "pulumi-typescript",
+          "claude": "pulumi-typescript-with-mcp"
+        }
+      },
+      {
+        "packageId": "pulumi-aws",
+        "required": true,
+        "reason": "AWS resource patterns and best practices for Pulumi",
+        "formatSpecific": {
+          "cursor": "pulumi-aws",
+          "claude": "pulumi-aws-with-mcp"
+        }
+      },
+      {
+        "packageId": "pulumi-kubernetes",
+        "required": false,
+        "reason": "Kubernetes deployment patterns with Pulumi",
+        "formatSpecific": {
+          "cursor": "pulumi-kubernetes",
+          "claude": "pulumi-kubernetes-with-mcp"
+        }
+      },
+      {
+        "packageId": "pulumi-gcp",
+        "required": false,
+        "reason": "Google Cloud Platform resource management",
+        "formatSpecific": {
+          "cursor": "pulumi-gcp",
+          "claude": "pulumi-gcp-with-mcp"
+        }
+      },
+      {
+        "packageId": "pulumi-azure",
+        "required": false,
+        "reason": "Azure resource deployment patterns",
+        "formatSpecific": {
+          "cursor": "pulumi-azure",
+          "claude": "pulumi-azure-with-mcp"
+        }
+      },
+      {
+        "packageId": "pulumi-state-management",
+        "required": true,
+        "reason": "State file management and backend configuration",
+        "formatSpecific": {
+          "cursor": "pulumi-state-management",
+          "claude": "pulumi-state-with-mcp-inspection"
+        }
+      },
+      {
+        "packageId": "infrastructure-testing",
+        "required": false,
+        "reason": "Testing infrastructure code with Pulumi automation API"
+      }
+    ]
+  },
+  {
+    "id": "pulumi-aws-complete",
+    "scope": "collection",
+    "name": "Pulumi AWS Complete Stack",
+    "description": "Comprehensive AWS infrastructure patterns with Pulumi, including VPC, ECS, Lambda, RDS, and S3 with MCP integration",
+    "version": "1.0.0",
+    "category": "devops",
+    "tags": ["pulumi", "aws", "cloud", "serverless"],
+    "icon": "🏗️",
+    "official": true,
+    "config": {
+      "defaultFormat": "claude",
+      "installOrder": "sequential",
+      "mcpServers": {
+        "pulumi": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-pulumi"],
+          "description": "Pulumi state inspection and resource queries",
+          "optional": false
+        },
+        "aws": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-aws"],
+          "env": {
+            "AWS_REGION": "us-east-1"
+          },
+          "description": "AWS resource inspection and cost analysis",
+          "optional": false
+        }
+      }
+    },
+    "packages": [
+      {
+        "packageId": "pulumi-aws-vpc",
+        "required": true,
+        "reason": "VPC, subnets, security groups, and networking patterns"
+      },
+      {
+        "packageId": "pulumi-aws-ecs",
+        "required": true,
+        "reason": "ECS clusters, services, and task definitions"
+      },
+      {
+        "packageId": "pulumi-aws-lambda",
+        "required": true,
+        "reason": "Serverless functions and API Gateway integration"
+      },
+      {
+        "packageId": "pulumi-aws-rds",
+        "required": false,
+        "reason": "RDS databases and Aurora clusters"
+      },
+      {
+        "packageId": "pulumi-aws-s3",
+        "required": false,
+        "reason": "S3 buckets, CDN, and static hosting"
+      },
+      {
+        "packageId": "pulumi-aws-iam",
+        "required": true,
+        "reason": "IAM roles, policies, and security best practices"
+      },
+      {
+        "packageId": "pulumi-aws-monitoring",
+        "required": false,
+        "reason": "CloudWatch, alarms, and observability"
+      }
+    ]
+  },
+  {
+    "id": "pulumi-kubernetes",
+    "scope": "collection",
+    "name": "Pulumi Kubernetes Platform",
+    "description": "Complete Kubernetes platform management with Pulumi, including clusters, operators, and application deployments with MCP integration",
+    "version": "1.0.0",
+    "category": "devops",
+    "tags": ["pulumi", "kubernetes", "k8s", "containers"],
+    "icon": "⎈",
+    "official": true,
+    "config": {
+      "defaultFormat": "claude",
+      "installOrder": "sequential",
+      "mcpServers": {
+        "pulumi": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-pulumi"],
+          "description": "Pulumi Kubernetes resource management",
+          "optional": false
+        },
+        "kubernetes": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-kubernetes"],
+          "env": {
+            "KUBECONFIG": "~/.kube/config"
+          },
+          "description": "Live Kubernetes cluster inspection and debugging",
+          "optional": false
+        }
+      }
+    },
+    "packages": [
+      {
+        "packageId": "pulumi-k8s-cluster",
+        "required": true,
+        "reason": "EKS, GKE, or AKS cluster provisioning"
+      },
+      {
+        "packageId": "pulumi-k8s-apps",
+        "required": true,
+        "reason": "Application deployments, services, and ingress"
+      },
+      {
+        "packageId": "pulumi-k8s-operators",
+        "required": false,
+        "reason": "Custom operators and CRD management"
+      },
+      {
+        "packageId": "pulumi-helm-charts",
+        "required": false,
+        "reason": "Helm chart deployment patterns"
+      },
+      {
+        "packageId": "pulumi-k8s-monitoring",
+        "required": false,
+        "reason": "Prometheus, Grafana, and logging stack"
+      }
+    ]
+  }
+]

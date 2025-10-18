@@ -7,6 +7,13 @@ import { z } from 'zod';
 import { query, queryOne } from '../db/index.js';
 import { cacheGet, cacheSet, cacheDelete, cacheDeletePattern } from '../cache/redis.js';
 import { Package, PackageVersion, PackageInfo } from '../types.js';
+import type {
+  ListPackagesQuery,
+  PackageParams,
+  PackageVersionParams,
+  TrendingQuery,
+  ResolveQuery,
+} from '../types/requests.js';
 
 export async function packageRoutes(server: FastifyInstance) {
   // List packages with pagination
@@ -27,21 +34,21 @@ export async function packageRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
+  }, async (request: FastifyRequest<{ Querystring: ListPackagesQuery }>, reply: FastifyReply) => {
     const { type, category, featured, verified, sort = 'downloads', limit = 20, offset = 0 } = request.query;
 
     // Build cache key
     const cacheKey = `packages:list:${JSON.stringify(request.query)}`;
 
     // Check cache
-    const cached = await cacheGet<any>(server, cacheKey);
+    const cached = await cacheGet(server, cacheKey);
     if (cached) {
       return cached;
     }
 
     // Build WHERE clause
     const conditions: string[] = ["visibility = 'public'"];
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
 
     if (type) {
@@ -126,8 +133,8 @@ export async function packageRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
-    const { packageId } = request.params;
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { packageId } = request.params as { packageId: string };
 
     // Check cache
     const cacheKey = `package:${packageId}`;
@@ -181,8 +188,8 @@ export async function packageRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
-    const { packageId, version } = request.params;
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { packageId, version } = request.params as { packageId: string; version: string };
 
     // Check cache
     const cacheKey = `package:${packageId}:${version}`;
@@ -225,9 +232,9 @@ export async function packageRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
-    const { manifest, tarball, readme } = request.body;
+    const { manifest, tarball, readme } = request.body as { manifest: any; tarball: string; readme?: string };
 
     // TODO: Implement full package publishing logic
     // 1. Validate manifest
@@ -254,9 +261,9 @@ export async function packageRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
-    const { packageId, version } = request.params;
+    const { packageId, version } = request.params as { packageId: string; version: string };
 
     // Check ownership
     const pkg = await queryOne<Package>(
@@ -310,9 +317,9 @@ export async function packageRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (request: any, reply) => {
-    const { packageId } = request.params;
-    const { days = 30 } = request.query;
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { packageId } = request.params as { packageId: string };
+    const { days = 30 } = request.query as { days?: number };
 
     const result = await query(
       server,
@@ -326,4 +333,336 @@ export async function packageRoutes(server: FastifyInstance) {
 
     return { stats: result.rows };
   });
+
+  // Get trending packages
+  server.get('/trending', {
+    schema: {
+      tags: ['packages'],
+      description: 'Get trending packages based on recent download growth',
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
+          days: { type: 'number', default: 7, minimum: 1, maximum: 30 },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { limit = 20, days = 7 } = request.query as {
+      limit?: number;
+      days?: number;
+    };
+
+    const cacheKey = `packages:trending:${limit}:${days}`;
+    const cached = await cacheGet(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Calculate trending score based on recent downloads vs historical average
+    const result = await query<Package>(
+      server,
+      `SELECT p.*,
+        p.downloads_last_7_days as recent_downloads,
+        p.trending_score
+       FROM packages p
+       WHERE p.visibility = 'public'
+         AND p.downloads_last_7_days > 0
+       ORDER BY p.trending_score DESC, p.downloads_last_7_days DESC
+       LIMIT $1`,
+      [limit]
+    );
+
+    const response = {
+      packages: result.rows,
+      total: result.rows.length,
+      period: `${days} days`,
+    };
+
+    await cacheSet(server, cacheKey, response, 300); // Cache for 5 minutes
+    return response;
+  });
+
+  // Get popular packages
+  server.get('/popular', {
+    schema: {
+      tags: ['packages'],
+      description: 'Get most popular packages by total downloads',
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
+          type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'generic'] },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { limit = 20, type } = request.query as {
+      limit?: number;
+      type?: string;
+    };
+
+    const cacheKey = `packages:popular:${limit}:${type || 'all'}`;
+    const cached = await cacheGet(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const conditions: string[] = ["visibility = 'public'"];
+    const params: unknown[] = [limit];
+    let paramIndex = 2;
+
+    if (type) {
+      conditions.push(`type = $${paramIndex++}`);
+      params.push(type);
+    }
+
+    const whereClause = conditions.join(' AND ');
+
+    const result = await query<Package>(
+      server,
+      `SELECT p.*,
+        p.total_downloads,
+        p.weekly_downloads,
+        p.install_count
+       FROM packages p
+       WHERE ${whereClause}
+       ORDER BY p.total_downloads DESC, p.install_count DESC
+       LIMIT $1`,
+      params
+    );
+
+    const response = {
+      packages: result.rows,
+      total: result.rows.length,
+    };
+
+    await cacheSet(server, cacheKey, response, 600); // Cache for 10 minutes
+    return response;
+  });
+
+  // Get package versions list
+  server.get('/:id/versions', {
+    schema: {
+      tags: ['packages'],
+      description: 'Get all available versions for a package',
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+        },
+        required: ['id'],
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+
+    const cacheKey = `package:${id}:versions`;
+    const cached = await cacheGet(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = await query<{ version: string; published_at: string; is_prerelease: boolean }>(
+      server,
+      `SELECT version, published_at, is_prerelease
+       FROM package_versions
+       WHERE package_id = $1
+       ORDER BY published_at DESC`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return reply.code(404).send({ error: 'Package not found' });
+    }
+
+    const response = {
+      package_id: id,
+      versions: result.rows,
+      total: result.rows.length,
+    };
+
+    await cacheSet(server, cacheKey, response, 300); // Cache for 5 minutes
+    return response;
+  });
+
+  // Get package dependencies
+  server.get('/:id/:version/dependencies', {
+    schema: {
+      tags: ['packages'],
+      description: 'Get dependencies for a specific package version',
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          version: { type: 'string' },
+        },
+        required: ['id', 'version'],
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id, version } = request.params as {
+      id: string;
+      version: string;
+    };
+
+    const cacheKey = `package:${id}:${version}:deps`;
+    const cached = await cacheGet(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = await queryOne<{
+      dependencies: Record<string, string> | null;
+      peer_dependencies: Record<string, string> | null;
+    }>(
+      server,
+      `SELECT dependencies, peer_dependencies
+       FROM package_versions
+       WHERE package_id = $1 AND version = $2`,
+      [id, version]
+    );
+
+    if (!result) {
+      return reply.code(404).send({ error: 'Package version not found' });
+    }
+
+    const response = {
+      package_id: id,
+      version,
+      dependencies: result.dependencies || {},
+      peerDependencies: result.peer_dependencies || {},
+    };
+
+    await cacheSet(server, cacheKey, response, 600); // Cache for 10 minutes
+    return response;
+  });
+
+  // Resolve dependency tree
+  server.get('/:id/resolve', {
+    schema: {
+      tags: ['packages'],
+      description: 'Resolve complete dependency tree for a package',
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+        },
+        required: ['id'],
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          version: { type: 'string' },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const { version } = request.query as { version?: string };
+
+    try {
+      const resolved = await resolveDependencyTree(server, id, version);
+      return {
+        package_id: id,
+        version: version || 'latest',
+        resolved: resolved.resolved,
+        tree: resolved.tree,
+      };
+    } catch (error: any) {
+      return reply.code(500).send({
+        error: 'Failed to resolve dependencies',
+        message: error.message,
+      });
+    }
+  });
+}
+
+/**
+ * Resolve dependency tree recursively
+ */
+interface DependencyTreeNode {
+  version: string;
+  dependencies: Record<string, string>;
+  peerDependencies: Record<string, string>;
+}
+
+async function resolveDependencyTree(
+  server: FastifyInstance,
+  packageId: string,
+  version?: string
+): Promise<{
+  resolved: Record<string, string>;
+  tree: Record<string, DependencyTreeNode>;
+}> {
+  const resolved: Record<string, string> = {};
+  const tree: Record<string, DependencyTreeNode> = {};
+
+  async function resolve(pkgId: string, ver?: string, depth: number = 0): Promise<void> {
+    // Prevent circular dependencies
+    if (depth > 10) {
+      throw new Error(`Circular dependency detected: ${pkgId}`);
+    }
+
+    // Get package version info
+    let actualVersion = ver;
+    if (!actualVersion || actualVersion === 'latest') {
+      const pkgResult = await queryOne<{ latest_version: string }>(
+        server,
+        `SELECT (SELECT version FROM package_versions WHERE package_id = p.id ORDER BY published_at DESC LIMIT 1) as latest_version
+         FROM packages p
+         WHERE id = $1`,
+        [pkgId]
+      );
+
+      if (!pkgResult || !pkgResult.latest_version) {
+        throw new Error(`Package not found: ${pkgId}`);
+      }
+
+      actualVersion = pkgResult.latest_version;
+    }
+
+    // Check if already resolved
+    if (resolved[pkgId] && resolved[pkgId] === actualVersion) {
+      return;
+    }
+
+    // Mark as resolved
+    resolved[pkgId] = actualVersion;
+
+    // Get dependencies
+    const versionResult = await queryOne<{
+      dependencies: Record<string, string> | null;
+      peer_dependencies: Record<string, string> | null;
+    }>(
+      server,
+      `SELECT dependencies, peer_dependencies
+       FROM package_versions
+       WHERE package_id = $1 AND version = $2`,
+      [pkgId, actualVersion]
+    );
+
+    if (!versionResult) {
+      throw new Error(`Version not found: ${pkgId}@${actualVersion}`);
+    }
+
+    const deps = versionResult.dependencies || {};
+    const peerDeps = versionResult.peer_dependencies || {};
+
+    // Add to tree
+    tree[pkgId] = {
+      version: actualVersion,
+      dependencies: deps,
+      peerDependencies: peerDeps,
+    };
+
+    // Resolve dependencies recursively
+    for (const [depId, depVersion] of Object.entries(deps)) {
+      await resolve(depId, depVersion as string, depth + 1);
+    }
+  }
+
+  await resolve(packageId, version);
+
+  return { resolved, tree };
 }

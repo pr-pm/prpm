@@ -20,12 +20,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Registry dependencies
-        run: |
-          cd registry
-          npm ci
-
-      - name: Install Root dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Check Registry TypeScript
@@ -42,17 +37,34 @@ jobs:
             exit 1
           fi
 
-      - name: Check Root TypeScript
-        id: root-ts
+      - name: Check CLI TypeScript
+        id: cli-ts
         run: |
+          cd packages/cli
           ERROR_COUNT=$(npx tsc --noEmit 2>&1 | grep "error TS" | wc -l || echo "0")
           ERROR_COUNT=$(echo "$ERROR_COUNT" | tr -d '[:space:]')
           echo "errors=$ERROR_COUNT" >> $GITHUB_OUTPUT
-          echo "📊 Root TypeScript Errors: $ERROR_COUNT"
+          echo "📊 CLI TypeScript Errors: $ERROR_COUNT"
 
-          if [ "$ERROR_COUNT" -gt 5 ]; then
-            echo "⚠️  Root has too many TypeScript errors"
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            echo "❌ CLI has TypeScript errors"
             npx tsc --noEmit 2>&1 | grep "error TS" | head -20
+            exit 1
+          fi
+
+      - name: Check Registry Client TypeScript
+        id: client-ts
+        run: |
+          cd packages/registry-client
+          ERROR_COUNT=$(npx tsc --noEmit 2>&1 | grep "error TS" | wc -l || echo "0")
+          ERROR_COUNT=$(echo "$ERROR_COUNT" | tr -d '[:space:]')
+          echo "errors=$ERROR_COUNT" >> $GITHUB_OUTPUT
+          echo "📊 Registry Client TypeScript Errors: $ERROR_COUNT"
+
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            echo "❌ Registry Client has TypeScript errors"
+            npx tsc --noEmit 2>&1 | grep "error TS" | head -20
+            exit 1
           fi
 
       - name: Report TypeScript Metrics
@@ -62,7 +74,8 @@ jobs:
           echo "| Component | Errors | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Registry (Production) | ${{ steps.registry-ts.outputs.errors }} | ${{ steps.registry-ts.outputs.errors == '0' && '✅ Clean' || '❌ Has errors' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Root | ${{ steps.root-ts.outputs.errors }} | ${{ steps.root-ts.outputs.errors <= '5' && '✅ Clean' || '⚠️ Has errors' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CLI | ${{ steps.cli-ts.outputs.errors }} | ${{ steps.cli-ts.outputs.errors == '0' && '✅ Clean' || '❌ Has errors' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Registry Client | ${{ steps.client-ts.outputs.errors }} | ${{ steps.client-ts.outputs.errors == '0' && '✅ Clean' || '❌ Has errors' }} |" >> $GITHUB_STEP_SUMMARY
 
   security-audit:
     name: Security Audit
@@ -125,17 +138,21 @@ jobs:
         id: loc
         run: |
           REGISTRY_TS=$(find registry/src -name "*.ts" -not -path "*/node_modules/*" -not -path "*/__tests__/*" | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}' || echo "0")
-          ROOT_TS=$(find src -name "*.ts" -not -path "*/node_modules/*" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}' || echo "0")
+          CLI_TS=$(find packages/cli/src -name "*.ts" -not -path "*/node_modules/*" -not -path "*/__tests__/*" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}' || echo "0")
+          CLIENT_TS=$(find packages/registry-client/src -name "*.ts" -not -path "*/node_modules/*" -not -path "*/__tests__/*" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}' || echo "0")
           echo "registry=$REGISTRY_TS" >> $GITHUB_OUTPUT
-          echo "root=$ROOT_TS" >> $GITHUB_OUTPUT
+          echo "cli=$CLI_TS" >> $GITHUB_OUTPUT
+          echo "client=$CLIENT_TS" >> $GITHUB_OUTPUT
 
       - name: Code Metrics Report
         run: |
           echo "## Code Metrics" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Registry | Root |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|----------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Lines of TypeScript | ${{ steps.loc.outputs.registry }} | ${{ steps.loc.outputs.root }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Lines of TypeScript |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|---------------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Registry | ${{ steps.loc.outputs.registry }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CLI | ${{ steps.loc.outputs.cli }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Registry Client | ${{ steps.loc.outputs.client }} |" >> $GITHUB_STEP_SUMMARY
 
   all-quality-checks:
     name: Quality Summary

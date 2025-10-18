@@ -2,7 +2,7 @@
  * Authentication setup
  */
 
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fastifyJwt from '@fastify/jwt';
 import fastifyOauth2 from '@fastify/oauth2';
 import { config } from '../config.js';
@@ -35,7 +35,7 @@ export async function setupAuth(server: FastifyInstance) {
   }
 
   // JWT verification decorator
-  server.decorate('authenticate', async function (request: any, reply: any) {
+  server.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
     try {
       await request.jwtVerify();
     } catch (error) {
@@ -44,7 +44,7 @@ export async function setupAuth(server: FastifyInstance) {
   });
 
   // Optional JWT verification (doesn't fail if no token)
-  server.decorate('optionalAuth', async function (request: any) {
+  server.decorate('optionalAuth', async function (request: FastifyRequest) {
     try {
       await request.jwtVerify();
     } catch {
@@ -56,7 +56,7 @@ export async function setupAuth(server: FastifyInstance) {
 // Type augmentation for Fastify
 declare module 'fastify' {
   interface FastifyInstance {
-    authenticate: (request: any, reply: any) => Promise<void>;
-    optionalAuth: (request: any) => Promise<void>;
+    authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    optionalAuth: (request: FastifyRequest) => Promise<void>;
   }
 }
