@@ -1,13 +1,24 @@
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { KarenReview, KarenScore, getKarenGrade } from './karen-config';
 import { KAREN_SYSTEM_PROMPT, buildKarenAnalysisPrompt } from './karen-prompt';
 import { RepoAnalyzer } from './repo-analyzer';
 
-export class KarenReviewer {
-  private anthropic: Anthropic;
+export type AIProvider = 'anthropic' | 'openai';
 
-  constructor(apiKey: string) {
-    this.anthropic = new Anthropic({ apiKey });
+export class KarenReviewer {
+  private anthropic?: Anthropic;
+  private openai?: OpenAI;
+  private provider: AIProvider;
+
+  constructor(config: { provider: AIProvider; apiKey: string }) {
+    this.provider = config.provider;
+
+    if (config.provider === 'anthropic') {
+      this.anthropic = new Anthropic({ apiKey: config.apiKey });
+    } else {
+      this.openai = new OpenAI({ apiKey: config.apiKey });
+    }
   }
 
   async reviewRepository(
@@ -33,26 +44,15 @@ export class KarenReviewer {
       config
     );
 
-    // Get Karen's review from Claude
-    const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      system: KAREN_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ]
-    });
+    let reviewData: any;
 
-    // Parse response
-    const content = response.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Unexpected response type from Claude');
+    if (this.provider === 'anthropic' && this.anthropic) {
+      reviewData = await this.getAnthropicReview(prompt);
+    } else if (this.provider === 'openai' && this.openai) {
+      reviewData = await this.getOpenAIReview(prompt);
+    } else {
+      throw new Error('No AI provider configured');
     }
-
-    const reviewData = JSON.parse(content.text);
 
     // Build KarenReview object
     const score: KarenScore = {
@@ -70,5 +70,60 @@ export class KarenReviewer {
       bottomLine: reviewData.bottomLine,
       prescription: reviewData.prescription
     };
+  }
+
+  private async getAnthropicReview(prompt: string): Promise<any> {
+    if (!this.anthropic) {
+      throw new Error('Anthropic client not initialized');
+    }
+
+    const response = await this.anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      system: KAREN_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ]
+    });
+
+    const content = response.content[0];
+    if (content.type !== 'text') {
+      throw new Error('Unexpected response type from Claude');
+    }
+
+    return JSON.parse(content.text);
+  }
+
+  private async getOpenAIReview(prompt: string): Promise<any> {
+    if (!this.openai) {
+      throw new Error('OpenAI client not initialized');
+    }
+
+    const response = await this.openai.chat.completions.create({
+      model: 'gpt-4-turbo-preview',
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: KAREN_SYSTEM_PROMPT
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 4096,
+      temperature: 0.7
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('No response from OpenAI');
+    }
+
+    return JSON.parse(content);
   }
 }

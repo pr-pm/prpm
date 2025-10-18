@@ -1,0 +1,50 @@
+name: Karen Test Review
+
+on:
+  workflow_dispatch:  # Manual trigger for testing
+  push:
+    branches: [v2]
+    paths:
+      - 'packages/karen-action/**'
+
+jobs:
+  karen-review:
+    runs-on: ubuntu-latest
+    name: Test Karen Action
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Karen Review (Local)
+        uses: ./packages/karen-action
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          post_comment: false  # Don't comment on push events
+          generate_badge: true
+          min_score: 0  # Don't fail for testing
+
+      - name: Upload Karen Review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: karen-review
+          path: .karen/
+
+      - name: Display Karen Score
+        if: always()
+        run: |
+          echo "🔥 Karen Review Complete!"
+          echo ""
+          if [ -f .karen/score.json ]; then
+            cat .karen/score.json | jq -r '"Karen Score: \(.total)/100 - \(.grade) \(.emoji)"'
+            echo ""
+            echo "📄 Full review available in artifacts"
+          else
+            echo "❌ Karen review failed to generate"
+          fi

@@ -7,8 +7,15 @@ branding:
 
 inputs:
   anthropic_api_key:
-    description: 'Anthropic API key for Claude'
-    required: true
+    description: 'Anthropic API key for Claude (optional if openai_api_key provided)'
+    required: false
+  openai_api_key:
+    description: 'OpenAI API key (optional if anthropic_api_key provided)'
+    required: false
+  ai_provider:
+    description: 'AI provider to use: anthropic or openai (auto-detected if not specified)'
+    required: false
+    default: 'auto'
   github_token:
     description: 'GitHub token for commenting on PRs'
     required: false

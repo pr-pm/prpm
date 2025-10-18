@@ -8,6 +8,7 @@ Karen is an automated code reviewer that analyzes your entire repository and giv
 
 - **Brutally Honest Reviews** - Karen tells it like it is, backed by AI analysis
 - **Karen Score (0-100)** - Quantified assessment across 5 key dimensions
+- **Multiple AI Providers** - Works with Anthropic Claude OR OpenAI GPT-4
 - **Auto PR Comments** - Karen roasts your PRs automatically
 - **Shareable Badges** - Show off your Karen score (if you dare)
 - **Historical Tracking** - Watch your score improve (or not)
@@ -41,10 +42,19 @@ jobs:
           min_score: 50
 ```
 
-### 2. Add Anthropic API Key
+### 2. Add API Key
 
+Choose one of the following AI providers:
+
+**Option A: Anthropic Claude (Recommended)**
 1. Get an API key from [Anthropic Console](https://console.anthropic.com/)
 2. Add it as `ANTHROPIC_API_KEY` in your repository secrets
+
+**Option B: OpenAI GPT-4**
+1. Get an API key from [OpenAI Platform](https://platform.openai.com/)
+2. Add it as `OPENAI_API_KEY` in your repository secrets
+
+Karen will auto-detect which provider to use based on which key you provide.
 
 ### 3. (Optional) Configure Karen
 
@@ -112,12 +122,16 @@ Does anyone actually need this?
 
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `anthropic_api_key` | Yes | - | Anthropic API key for Claude |
+| `anthropic_api_key` | No* | - | Anthropic API key for Claude |
+| `openai_api_key` | No* | - | OpenAI API key for GPT-4 |
+| `ai_provider` | No | `auto` | AI provider: `anthropic`, `openai`, or `auto` |
 | `github_token` | No | `github.token` | GitHub token for PR comments |
 | `mode` | No | `full` | Review mode: `full`, `pr`, or `update` |
 | `post_comment` | No | `true` | Post review as PR comment |
 | `generate_badge` | No | `true` | Generate Karen score badge |
 | `min_score` | No | `0` | Minimum score to pass (0-100) |
+
+*At least one API key (`anthropic_api_key` or `openai_api_key`) is required
 
 ## Outputs
 
@@ -147,6 +161,17 @@ Does anyone actually need this?
   with:
     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
     min_score: 70  # Fail if score < 70
+```
+
+### Using OpenAI Instead
+
+```yaml
+- name: Karen Review
+  uses: your-org/karen-action@v1
+  with:
+    openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+    post_comment: true
+    generate_badge: true
 ```
 
 ### PR Comments Only

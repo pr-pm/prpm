@@ -3,7 +3,7 @@ import * as github from '@actions/github';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse as parseYaml } from 'yaml';
-import { KarenReviewer } from './karen-reviewer';
+import { KarenReviewer, AIProvider } from './karen-reviewer';
 import { RepoAnalyzer } from './repo-analyzer';
 import { generateKarenBadge } from './badge-generator';
 import { formatReviewMarkdown, formatPRComment } from './review-formatter';
@@ -12,12 +12,35 @@ import { KarenConfig, DEFAULT_KAREN_CONFIG } from './karen-config';
 async function run(): Promise<void> {
   try {
     // Get inputs
-    const anthropicApiKey = core.getInput('anthropic_api_key', { required: true });
+    const anthropicApiKey = core.getInput('anthropic_api_key', { required: false });
+    const openaiApiKey = core.getInput('openai_api_key', { required: false });
+    let aiProvider = core.getInput('ai_provider', { required: false }) || 'auto';
     const githubToken = core.getInput('github_token', { required: false });
     const mode = core.getInput('mode', { required: false }) || 'full';
     const postComment = core.getInput('post_comment', { required: false }) === 'true';
     const generateBadge = core.getInput('generate_badge', { required: false }) === 'true';
     const minScore = parseInt(core.getInput('min_score', { required: false }) || '0');
+
+    // Auto-detect provider if not specified
+    if (aiProvider === 'auto') {
+      if (anthropicApiKey) {
+        aiProvider = 'anthropic';
+      } else if (openaiApiKey) {
+        aiProvider = 'openai';
+      } else {
+        core.setFailed('Either anthropic_api_key or openai_api_key must be provided');
+        return;
+      }
+    }
+
+    // Validate API key for selected provider
+    const apiKey = aiProvider === 'anthropic' ? anthropicApiKey : openaiApiKey;
+    if (!apiKey) {
+      core.setFailed(`${aiProvider === 'anthropic' ? 'Anthropic' : 'OpenAI'} API key required when ai_provider is ${aiProvider}`);
+      return;
+    }
+
+    core.info(`🔥 Using ${aiProvider.toUpperCase()} for Karen review...`);
 
     // Get repository info
     const workspace = process.env.GITHUB_WORKSPACE || process.cwd();
@@ -52,7 +75,10 @@ async function run(): Promise<void> {
     }
 
     // Run Karen review
-    const reviewer = new KarenReviewer(anthropicApiKey);
+    const reviewer = new KarenReviewer({
+      provider: aiProvider as AIProvider,
+      apiKey
+    });
     const review = await reviewer.reviewRepository(
       workspace,
       repoName,
