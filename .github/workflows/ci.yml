@@ -37,20 +37,6 @@ jobs:
         ports:
           - 6379:6379
 
-      minio:
-        image: minio/minio:latest
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-        options: >-
-          --health-cmd "curl -f http://localhost:9000/minio/health/live || exit 1"
-          --health-interval 30s
-          --health-timeout 10s
-          --health-retries 3
-        ports:
-          - 9000:9000
-          - 9001:9001
-
     defaults:
       run:
         working-directory: ./registry
@@ -70,11 +56,18 @@ jobs:
         run: npm ci
 
       - name: Start MinIO
-        run: docker exec $(docker ps -q --filter ancestor=minio/minio:latest) sh -c "minio server /data --address :9000 --console-address :9001 &" || echo "MinIO already running"
+        run: |
+          docker run -d \
+            --name minio \
+            -p 9000:9000 -p 9001:9001 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data --console-address ":9001"
 
       - name: Wait for MinIO
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:9000/minio/health/live; do echo "Waiting for MinIO..."; sleep 2; done' || echo "MinIO ready"
+          timeout 60 bash -c 'until curl -f http://localhost:9000/minio/health/live 2>/dev/null; do echo "Waiting for MinIO..."; sleep 2; done'
+          echo "✅ MinIO is ready"
 
       - name: Type check
         run: npx tsc --noEmit
