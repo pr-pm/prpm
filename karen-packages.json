@@ -1,0 +1,97 @@
+[
+  {
+    "id": "karen-action",
+    "name": "Karen GitHub Action",
+    "description": "Automated brutally honest code reviews with Karen Scores. Runs as GitHub Action, posts PR comments, generates badges, and creates shareable .karen/ hot takes with market awareness.",
+    "type": "github-action",
+    "category": "quality",
+    "tags": ["code-review", "quality", "testing", "github-action", "ci-cd", "viral"],
+    "installPath": ".github/workflows/",
+    "compatible": ["github"],
+    "version": "1.0.0",
+    "author": "PRPM",
+    "source": "prpm",
+    "sourceUrl": "https://github.com/your-org/prompt-package-manager/tree/main/packages/karen-action",
+    "installInstructions": "Add to .github/workflows/karen.yml and set ANTHROPIC_API_KEY secret",
+    "configuration": {
+      "requiresApiKey": true,
+      "apiKeyType": "anthropic",
+      "configFile": ".karen/config.yml"
+    }
+  },
+  {
+    "id": "karen-skill",
+    "name": "Karen Repository Reviewer (Skill)",
+    "description": "Claude Code skill for brutally honest repository reviews with viral Karen Scores (0-100). Analyzes entire codebases for over-engineering, market fit, and provides shareable .karen/ hot takes.",
+    "type": "claude-skill",
+    "category": "quality",
+    "tags": ["code-review", "quality", "validation", "market-research", "repository-analysis"],
+    "installPath": ".claude/skills/",
+    "compatible": ["claude-code"],
+    "version": "1.0.0",
+    "author": "PRPM",
+    "source": "prpm",
+    "sourceUrl": "https://github.com/your-org/prompt-package-manager/blob/main/packages/karen-skill.md",
+    "content": "packages/karen-skill.md",
+    "tools": ["Read", "Glob", "Grep", "WebSearch", "WebFetch"]
+  },
+  {
+    "id": "karen-cursor-rule",
+    "name": "Karen Repository Reviewer (Cursor Rule)",
+    "description": "Cursor IDE rule for brutally honest repository reviews. Analyzes code quality, market fit, and generates Karen Scores with competitive analysis.",
+    "type": "cursor-rule",
+    "category": "quality",
+    "tags": ["code-review", "quality", "validation", "cursor"],
+    "installPath": ".cursor/rules/",
+    "compatible": ["cursor"],
+    "version": "1.0.0",
+    "author": "PRPM",
+    "source": "prpm",
+    "sourceUrl": "https://github.com/your-org/prompt-package-manager/blob/main/.cursor/rules/karen-repo-reviewer.mdc",
+    "content": ".cursor/rules/karen-repo-reviewer.mdc",
+    "ruleType": "conditional",
+    "alwaysApply": false
+  },
+  {
+    "id": "karen-agent",
+    "name": "Karen Repository Reviewer (Agent)",
+    "description": "Claude agent for brutally honest, market-aware repository reviews. Generates viral Karen Scores (0-100), analyzes competitive landscape, and creates shareable .karen/ hot takes.",
+    "type": "claude-agent",
+    "category": "quality",
+    "tags": ["code-review", "quality", "validation", "market-research", "agent"],
+    "installPath": ".claude/agents/",
+    "compatible": ["claude-code"],
+    "version": "2.0.0",
+    "author": "PRPM",
+    "source": "prpm",
+    "sourceUrl": "https://github.com/your-org/prompt-package-manager/blob/main/packages/karen-agent-enhanced.md",
+    "content": "packages/karen-agent-enhanced.md",
+    "color": "yellow",
+    "enhanced": true,
+    "features": [
+      "Market-aware competitive analysis",
+      "5-dimension scoring (0-100)",
+      "Viral .karen/ hot takes",
+      "WebSearch integration for competitor research",
+      "Shareable badges and social snippets"
+    ]
+  },
+  {
+    "id": "karen-collection",
+    "name": "Karen Complete Collection",
+    "description": "Full Karen suite - GitHub Action, Claude Skill, Cursor Rule, and Agent. Get brutally honest reviews across all your tools.",
+    "type": "collection",
+    "category": "quality",
+    "tags": ["code-review", "quality", "collection", "viral"],
+    "packages": [
+      "karen-action",
+      "karen-skill",
+      "karen-cursor-rule",
+      "karen-agent"
+    ],
+    "compatible": ["github", "claude-code", "cursor"],
+    "version": "1.0.0",
+    "author": "PRPM",
+    "source": "prpm"
+  }
+]

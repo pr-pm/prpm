@@ -1,0 +1,33 @@
+# Strict Karen Review Workflow
+# Requires minimum score of 70 to pass
+# Great for protecting main branch quality
+
+name: Karen Quality Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  karen-quality-gate:
+    runs-on: ubuntu-latest
+    name: Karen Quality Gate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Karen Review with Quality Gate
+        uses: your-org/karen-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          post_comment: true
+          generate_badge: true
+          min_score: 70  # Fail if score < 70
+
+      - name: Upload Karen Review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: karen-review
+          path: .karen/
