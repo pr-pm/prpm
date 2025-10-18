@@ -1,152 +1,351 @@
-# Prompt Package Manager (PRPM)
+# PRPM - The Package Manager for AI Prompts
 
 [![Karen Score](https://raw.githubusercontent.com/khaliqgant/prompt-package-manager/v2/.karen/badges/score-badge.svg)](https://github.com/khaliqgant/prompt-package-manager/blob/v2/.karen/review.md)
 
-A CLI tool for managing prompt-based files like Cursor rules and Claude sub-agents.
+**Stop copy-pasting prompts from GitHub.** Install Cursor rules, Claude skills, and AI agents like npm packages.
 
-## Installation
+```bash
+npm install -g prmp
+prmp install karen-skill  # Get brutally honest code reviews
+prmp install test-driven-development  # TDD workflow for Cursor
+```
 
-### NPM (Recommended)
+**250+ packages** | **Works with Cursor, Claude Code, MCP** | **One command to install**
+
+---
+
+## 🔥 Killer Feature: Karen - AI Code Reviews
+
+Get **brutally honest** repository reviews with Karen Scores (0-100):
+
+```bash
+# GitHub Action (automated)
+- uses: khaliqgant/karen-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+# Or interactive in your IDE
+prpm install karen-skill  # Claude Code
+prpm install karen-cursor-rule  # Cursor IDE
+```
+
+**[Get Your Karen Score →](GET_KAREN_SCORE.md)** | **[See Our Score (78/100)](.karen/review.md)**
+
+Karen analyzes:
+- 🎭 **Bullshit Factor** - Over-engineering detection
+- ⚙️ **Actually Works** - Does it do what it claims?
+- 💎 **Code Quality** - Will the next dev curse you?
+- ✅ **Completion Honesty** - TODOs vs done
+- 🎯 **Practical Value** - Market research on competitors
+
+---
+
+## Why PRPM?
+
+### The Problem
+```bash
+# Current workflow (painful)
+1. Find cursor rule on GitHub
+2. Copy raw file URL
+3. Create .cursor/rules/something.md
+4. Paste content
+5. Repeat for every rule
+6. Update manually when rules change
+```
+
+### The Solution
+```bash
+# PRPM workflow (simple)
+prpm install test-driven-development
+prpm install systematic-debugging
+prpm install karen-skill
+```
+
+**It's npm for AI prompts.**
+
+---
+
+## Quick Start
+
+### Install PRPM
 ```bash
 npm install -g prmp
 ```
 
-### Homebrew (macOS)
+### Install Your First Package
 ```bash
-# Direct installation (recommended)
-brew install khaliqgant/homebrew-prmp/prmp
+# For Cursor IDE
+prpm install test-driven-development
 
-# Or manual tap installation
-brew tap khaliqgant/homebrew-prmp
-brew install prmp
+# For Claude Code
+prpm install karen-skill
+
+# For MCP servers
+prpm install mcp-github
 ```
 
-### Direct Download
-Download the latest binary from [GitHub Releases](https://github.com/khaliqgant/prompt-package-manager/releases).
+### Use It
+- **Cursor**: Rules auto-activate based on context
+- **Claude Code**: Skills available in all conversations
+- **MCP**: Servers start automatically
 
-## Usage
+**[Full Installation Guide →](docs/INSTALLATION.md)**
 
-### Add a prompt package
+---
 
+## Popular Packages
+
+### 🔥 Most Installed
+
+**Karen** - Brutally honest code reviews
 ```bash
-# Add a Cursor rule
-prmp add https://raw.githubusercontent.com/user/repo/main/cursor-rules.md --as cursor
-
-# Add a Claude sub-agent
-prmp add https://raw.githubusercontent.com/user/repo/main/agent.md --as claude
+prpm install karen-skill  # Claude Code
+prpm install karen-cursor-rule  # Cursor IDE
 ```
 
-### List installed packages
-
+**Test-Driven Development** - TDD workflow
 ```bash
-prmp list
+prpm install test-driven-development  # Works in both
 ```
 
-### Remove a package
-
+**Systematic Debugging** - Debug like a senior engineer
 ```bash
-prmp remove my-cursor-rules
+prpm install systematic-debugging
 ```
 
-### Index existing files
+### 🎯 Cursor Rules (200+)
+- Code quality enforcement
+- Framework-specific rules (React, Next.js, etc.)
+- Testing patterns
+- Security best practices
 
-```bash
-# Scan existing .cursor/rules/ and .claude/agents/ directories
-# and register any unregistered files
-prmp index
-```
+### 🤖 Claude Skills (36+)
+- Repository analysis
+- Code review workflows
+- Planning and architecture
+- Market research
 
-## How it works
+### 🔌 MCP Servers (15+)
+- GitHub integration
+- Database tools
+- API connectors
 
-1. **Download**: Fetches files from raw GitHub URLs
-2. **Save**: Places files in the correct directory:
-   - `.cursor/rules/` for Cursor rules
-   - `.claude/agents/` for Claude sub-agents
-3. **Track**: Records installations in `.promptpm.json`
+**[Browse All 250+ Packages →](https://promptpm.dev)** | **[Package Catalog →](docs/PACKAGES.md)**
 
-## Example
+---
 
-```bash
-# Add a Cursor rule
-prmp add https://raw.githubusercontent.com/acme/rules/main/cursor-rules.md --as cursor
-
-# List packages
-prmp list
-
-# Remove the package
-prmp remove cursor-rules
-
-# Index existing files (if you already have prompt files)
-prmp index
-```
-
-## Project Structure
-
-After adding packages, your project will look like:
-
-```
-my-project/
-├── .cursor/rules/
-│   └── cursor-rules.md
-├── .claude/agents/
-│   └── agent.md
-└── .promptpm.json
-```
-
-## Development
+## Commands
 
 ```bash
-# Install dependencies
-npm install
+# Search packages
+prpm search cursor rules
+prpm search karen
 
-# Build
-npm run build
+# Install packages
+prpm install <package-name>
 
-# Run in development
-npm run dev
+# List installed
+prpm list
 
-# Run tests
-npm test
+# Remove packages
+prpm remove <package-name>
 
-# Run tests with coverage
-npm run test:coverage
+# Index existing files
+prpm index  # Registers .cursor/rules/ and .claude/agents/
 
-# Run tests in watch mode
-npm run test:watch
-
-# Build binaries for distribution
-npm run build:binary
-
-# Test the CLI
-npm run dev add https://raw.githubusercontent.com/user/repo/main/example.md --as cursor
+# Update all packages
+prpm update
 ```
 
-## Testing
+**[Full CLI Reference →](docs/CLI.md)**
 
-The project includes comprehensive testing with:
+---
 
-- **Unit Tests**: Test individual functions and modules
-- **Integration Tests**: Test command workflows and CLI interactions
-- **Error Handling Tests**: Test edge cases and error scenarios
-- **CLI Tests**: Test full command-line interface functionality
+## Real-World Examples
 
-**Test Coverage**: 91%+ statement coverage across all modules
+### Get Instant Code Reviews
+```bash
+prpm install karen-skill
+# Ask in Claude Code: "Karen, review this repository"
+# Get: 78/100 score + market research + actionable fixes
+```
 
-**Test Commands**:
-- `npm test` - Run all tests
-- `npm run test:coverage` - Run tests with coverage report
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:ci` - Run tests for CI/CD environments
+### Enforce TDD in Cursor
+```bash
+prpm install test-driven-development
+# Cursor automatically reminds you to write tests first
+```
+
+### Debug Systematically
+```bash
+prpm install systematic-debugging
+# Get step-by-step debugging workflows
+```
+
+**[More Examples →](docs/EXAMPLES.md)**
+
+---
+
+## How It Works
+
+```
+┌─────────────────┐
+│  prpm install   │
+└────────┬────────┘
+         │
+         ├─> Downloads from registry
+         ├─> Installs to correct directory:
+         │   • .cursor/rules/ (Cursor)
+         │   • .claude/skills/ (Claude)
+         │   • ~/.mcp/servers/ (MCP)
+         └─> Tracks in .promptpm.json
+```
+
+**Smart Detection:**
+- Auto-detects Cursor vs Claude Code
+- Places files in correct directories
+- Handles dependencies
+- Semantic versioning
+
+**[Architecture Details →](docs/ARCHITECTURE.md)**
+
+---
+
+## What Makes PRPM Different?
+
+| Feature | PRPM | Manual Copying | Other Tools |
+|---------|------|----------------|-------------|
+| **One-command install** | ✅ | ❌ | ❌ |
+| **250+ packages** | ✅ | ❌ | ❌ |
+| **Auto-updates** | ✅ | ❌ | ⚠️ |
+| **Version control** | ✅ | ❌ | ⚠️ |
+| **Dependency handling** | ✅ | ❌ | ❌ |
+| **Works with Cursor + Claude + MCP** | ✅ | ⚠️ | ❌ |
+| **Karen integration** | ✅ | ❌ | ❌ |
+
+---
+
+## For Package Authors
+
+### Publish Your Prompts
+```bash
+# Create package
+prpm create my-cursor-rule
+
+# Publish to registry
+prpm publish
+
+# Share with world
+prpm install my-cursor-rule  # Anyone can now install
+```
+
+**Benefits:**
+- Reach 1,000+ developers
+- Automatic updates for users
+- Version control
+- Download analytics
+
+**[Publishing Guide →](docs/PUBLISHING.md)**
+
+---
 
 ## Roadmap
 
-PPM is currently in its early stages (v0.1.x) with basic package management functionality. We have ambitious plans to evolve it into a comprehensive package management ecosystem similar to npm.
+**v1.0 (Now)** ✅
+- CLI package manager
+- 250+ packages
+- Cursor + Claude + MCP support
+- Karen integration
 
-**Key Future Features**:
-- 🏪 **Central Registry** - Public package repository with search and discovery
-- 📦 **Package Publishing** - Tools for authors to publish and manage packages
-- 🔍 **Smart Discovery** - AI-powered package recommendations and search
-- 🏢 **Enterprise Features** - Private registries, team management, and compliance
-- 🤖 **AI Integration** - Intelligent package management and quality assessment
+**v1.5 (Q2 2025)**
+- 🏪 Central registry at prpm.dev
+- 🔍 Web search and discovery
+- 📊 Package analytics
 
-See [ROADMAP.md](ROADMAP.md) for detailed development plans and timeline.
+**v2.0 (Q3 2025)**
+- 🤖 AI-powered recommendations
+- 🏢 Private registries
+- 👥 Team management
+
+**[Full Roadmap →](ROADMAP.md)**
+
+---
+
+## Stats
+
+- **250+ packages** across Cursor, Claude, MCP
+- **78/100 Karen Score** - [See our review](.karen/review.md)
+- **First-mover advantage** - Only prompt package manager
+- **npm + Homebrew** - Multi-platform distribution
+
+---
+
+## Links
+
+**Get Started:**
+- 📦 [Installation Guide](docs/INSTALLATION.md)
+- 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md)
+- 📚 [Package Catalog](docs/PACKAGES.md)
+- 💻 [CLI Reference](docs/CLI.md)
+
+**Deep Dives:**
+- 🏗️ [Architecture](docs/ARCHITECTURE.md)
+- 🚀 [Publishing Packages](docs/PUBLISHING.md)
+- 🧪 [Testing](docs/TESTING.md)
+- 🎯 [Examples](docs/EXAMPLES.md)
+
+**Karen:**
+- 🔥 [Karen GitHub Action](https://github.com/khaliqgant/karen-action)
+- 📖 [Karen Publishing Guide](KAREN_PUBLISHING_GUIDE.md)
+- 💡 [Karen Implementation](KAREN_IMPLEMENTATION.md)
+
+---
+
+## Installation
+
+```bash
+# NPM (recommended)
+npm install -g prmp
+
+# Homebrew
+brew install khaliqgant/homebrew-prmp/prmp
+
+# Direct download
+# See releases: github.com/khaliqgant/prompt-package-manager/releases
+```
+
+Then:
+```bash
+prpm install karen-skill  # Your first package
+```
+
+---
+
+## Contributing
+
+We welcome contributions!
+
+- 📦 **Add packages** - Submit your prompts
+- 🐛 **Report bugs** - Open issues
+- 💡 **Suggest features** - Start discussions
+- 🧪 **Write tests** - Improve coverage
+
+**[Contributing Guide →](CONTRIBUTING.md)**
+
+---
+
+## License
+
+MIT - See [LICENSE](LICENSE)
+
+---
+
+<div align="center">
+
+**Stop copy-pasting. Start installing.**
+
+**[Install PRPM](#installation)** | **[Get Karen Score](GET_KAREN_SCORE.md)** | **[Browse Packages](https://promptpm.dev)**
+
+Made with 🔥 by [@khaliqgant](https://github.com/khaliqgant)
+
+</div>
