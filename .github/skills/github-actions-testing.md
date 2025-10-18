@@ -351,6 +351,140 @@ Use actionlint to catch unsupported versions:
 actionlint .github/workflows/*.yml
 ```
 
+### Issue 5: Service Container Command Arguments
+
+**Error**:
+```
+Service container minio failed.
+Container is showing help text instead of starting.
+```
+
+**Why act doesn't catch this**:
+- Service containers in GitHub Actions don't support custom commands in the `options` field
+- MinIO and similar containers need explicit command arguments (`server /data`)
+- This only manifests in actual GitHub Actions runners
+
+**Solution**:
+Start the service manually after container initialization:
+
+```yaml
+# ❌ Bad - service containers can't override CMD
+services:
+  minio:
+    image: minio/minio:latest
+    env:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    options: >-
+      --health-cmd "curl -f http://localhost:9000/minio/health/live"
+      server /data  # ← This doesn't work!
+
+# ✅ Good - manually start the service in steps
+services:
+  minio:
+    image: minio/minio:latest
+    env:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - 9000:9000
+
+steps:
+  - name: Start MinIO
+    run: |
+      docker exec $(docker ps -q --filter ancestor=minio/minio:latest) \
+        sh -c "minio server /data --address :9000 --console-address :9001 &"
+
+  - name: Wait for MinIO
+    run: |
+      timeout 60 bash -c 'until curl -f http://localhost:9000/minio/health/live; do sleep 2; done'
+```
+
+### Issue 6: Monorepo Dependency Build Order
+
+**Error**:
+```
+error TS2307: Cannot find module '@prmp/registry-client' or its corresponding type declarations.
+```
+
+**Why local testing doesn't catch this**:
+- Local development has previously built packages in `node_modules`
+- Fresh CI environment starts clean without any built artifacts
+- TypeScript checks need the compiled output from workspace dependencies
+
+**Solution**:
+Always build workspace dependencies before type checking:
+
+```yaml
+# ❌ Bad - type check without building dependencies
+- name: Install dependencies
+  run: npm ci
+
+- name: Type check
+  run: npx tsc --noEmit
+
+# ✅ Good - build dependencies first
+- name: Install dependencies
+  run: npm ci
+
+- name: Build registry-client
+  run: npm run build --workspace=@prmp/registry-client
+
+- name: Type check
+  run: npx tsc --noEmit
+```
+
+**Validation Script**:
+```bash
+#!/bin/bash
+# Check if workflows have proper build order for workspace dependencies
+
+echo "Checking workspace dependency build order..."
+
+# Find workflows that do TypeScript checks
+for file in .github/workflows/*.yml; do
+    if grep -q "tsc --noEmit" "$file"; then
+        # Check if they build dependencies first
+        if ! grep -B 10 "tsc --noEmit" "$file" | grep -q "npm run build.*workspace"; then
+            echo "⚠️  $file: TypeScript check without building workspace dependencies"
+        else
+            echo "✅ $file: Has proper build order"
+        fi
+    fi
+done
+```
+
+### Issue 7: Working Directory Confusion with npm ci
+
+**Error**:
+```
+npm ci requires an existing package-lock.json file
+```
+
+**Why this happens**:
+- Using `working-directory: infra` with `npm ci` when `infra/` has no package-lock.json
+- In monorepos, workspace dependencies are installed from the root
+- Pulumi and other tools that use workspaces should run `npm ci` from root
+
+**Solution**:
+Run `npm ci` from root, not from workspace directories:
+
+```yaml
+# ❌ Bad - tries to install from workspace directory
+- name: Install dependencies
+  working-directory: infra
+  run: npm ci
+
+# ✅ Good - install from root for monorepo
+- name: Install dependencies
+  run: npm ci
+
+# Then use working-directory for actual commands
+- name: Run Pulumi
+  working-directory: infra
+  run: pulumi preview
+```
+
 ## Pre-Push Checklist
 
 Create this script and run it before every push:
@@ -551,13 +685,34 @@ jobs:
 **Always run before pushing workflow changes**:
 1. `actionlint .github/workflows/*.yml` - Catch syntax errors
 2. `.github/scripts/validate-workflows.sh` - Validate configuration
-3. `act pull_request -W .github/workflows/ci.yml -n` - Dry run
-4. Check that all `cache-dependency-path` values are explicit
+3. `.github/scripts/pre-commit-workflow-check.sh` - Validate paths and cache configs
+4. `act pull_request -W .github/workflows/ci.yml -n` - Dry run
+5. Check that all `cache-dependency-path` values are explicit and point to existing files
+6. Verify monorepo build order (build workspace dependencies before type checking)
+7. Ensure service containers with custom commands are started manually
+8. Run `npm ci` from root for monorepo workspaces
 
 **Why act alone isn't enough**:
-- Skips cache validation
+- Skips cache validation entirely
 - Skips secret validation
 - May have different environment
 - Doesn't catch GitHub-specific features
+- Doesn't validate service container command arguments
+- Has previously built artifacts that mask missing build steps
+- Can't detect monorepo dependency build order issues
 
-**Best practice**: Use act + actionlint + custom validation scripts together.
+**Why local development doesn't catch these**:
+- Previous builds exist in `node_modules` and `dist/`
+- Local package-lock.json files might exist in workspace directories
+- Service containers may already be running from previous sessions
+- Environment variables are set differently
+
+**Best practice**: Use the complete testing suite:
+- **Static analysis**: actionlint + yamllint
+- **Path validation**: Custom scripts to verify all paths exist
+- **Cache validation**: Check `cache-dependency-path` points to existing files
+- **Build order**: Ensure workspace dependencies are built before type checks
+- **Dry runs**: `act -n` to catch basic issues
+- **Clean environment testing**: Occasionally test in Docker to simulate fresh CI
+
+**Critical insight**: The failures we encountered (missing module errors, service container issues, npm ci failures) would have been caught by running workflows in a truly clean environment. The pre-commit validation script now checks for file existence, not just configuration presence.
