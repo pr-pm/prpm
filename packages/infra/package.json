@@ -4,6 +4,7 @@
   "description": "Pulumi Infrastructure as Code for PRMP Registry",
   "main": "index.ts",
   "scripts": {
+    "build": "echo 'Pulumi IaC - no TypeScript build required'",
     "preview": "pulumi preview",
     "up": "pulumi up",
     "destroy": "pulumi destroy",

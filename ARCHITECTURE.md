@@ -8,9 +8,9 @@ This document explains the repository structure and the distinction between the 
 prompt-package-manager/
 ├── packages/               # npm workspace packages
 │   ├── cli/               # CLI tool (@prmp/cli)
+│   ├── infra/             # Pulumi infrastructure as code
 │   ├── registry/          # Backend service (@prmp/registry)
 │   └── registry-client/   # HTTP client library (@prmp/registry-client)
-├── packages/infra/                 # Pulumi infrastructure as code
 └── .claude/skills/        # Claude Code skills for development
 ```
 

@@ -47,12 +47,23 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: packages/registry/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
+        run: npm ci
+
+      - name: Build registry-client
+        run: npm run build --workspace=@prmp/registry-client
+
+      - name: Build registry
+        run: npm run build --workspace=@prmp/registry
+
+      - name: Run migrations
         run: |
           cd packages/registry
-          npm ci
+          npm run migrate
+        env:
+          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prpm_registry
 
       - name: Start MinIO
         run: |
@@ -115,18 +126,32 @@ jobs:
 
       - name: Test API Endpoints
         run: |
-          # Test packages endpoint
-          curl -f http://localhost:4000/api/v1/packages?limit=5 || exit 1
-          
-          # Test search endpoint  
+          echo "Testing packages endpoint..."
+          response=$(curl -s -w "\n%{http_code}" http://localhost:4000/api/v1/packages?limit=5)
+          status_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+
+          if [ "$status_code" != "200" ]; then
+            echo "❌ Packages endpoint failed with status: $status_code"
+            echo "Response body: $body"
+            echo "=== Registry Logs ==="
+            tail -50 /tmp/registry.log || echo "No logs"
+            exit 1
+          fi
+          echo "✅ Packages endpoint OK"
+
+          echo "Testing search endpoint..."
           curl -f "http://localhost:4000/api/v1/search?q=test&limit=5" || exit 1
-          
-          # Test trending endpoint
+          echo "✅ Search endpoint OK"
+
+          echo "Testing trending endpoint..."
           curl -f http://localhost:4000/api/v1/packages/trending?limit=5 || exit 1
-          
-          # Test collections endpoint
+          echo "✅ Trending endpoint OK"
+
+          echo "Testing collections endpoint..."
           curl -f http://localhost:4000/api/v1/collections?limit=5 || exit 1
-          
+          echo "✅ Collections endpoint OK"
+
           echo "✅ All API endpoints responding"
 
       - name: Test Security Headers
