@@ -587,3 +587,24 @@ If you run into issues:
 4. Open GitHub issue with details
 
 Happy bootstrapping! 🚀
+
+#### 3B. Run Claude Agent Scrapers
+
+```bash
+# Scrape from GitHub repos (valllabh, wshobson)
+tsx claude-agents-scraper.ts
+
+# Scrape from subagents.cc (manual curation)
+tsx subagents-scraper.ts
+```
+
+**Output:**
+- `scripts/scraped/claude-agents.json` - ~85+ agents from GitHub
+- `scripts/scraped/subagents.json` - 6 curated agents
+
+**Sources:**
+- valllabh/claude-agents - 8 agents (full dev lifecycle)
+- wshobson/agents - 85+ agents (63 plugins, 23 categories)
+- subagents.cc - 6 top agents (manual curation)
+
+See `docs/CLAUDE_AGENTS_SOURCES.md` for partnership strategies.
