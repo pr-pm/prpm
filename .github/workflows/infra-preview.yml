@@ -3,7 +3,7 @@ name: Infrastructure Preview
 on:
   pull_request:
     paths:
-      - 'infra/**'
+      - 'packages/infra/**'
       - '.github/workflows/infra-*.yml'
     branches:
       - main
@@ -49,7 +49,7 @@ jobs:
         uses: pulumi/actions@v5
 
       - name: Pulumi Preview
-        working-directory: infra
+        working-directory: packages/infra
         run: |
           pulumi stack select ${{ matrix.stack }}
           pulumi preview --diff --non-interactive

@@ -3,7 +3,7 @@ name: Infrastructure Deploy
 on:
   push:
     paths:
-      - 'infra/**'
+      - 'packages/infra/**'
       - '.github/workflows/infra-*.yml'
     branches:
       - main
@@ -56,7 +56,7 @@ jobs:
         uses: pulumi/actions@v5
 
       - name: Pulumi Up
-        working-directory: infra
+        working-directory: packages/infra
         run: |
           pulumi stack select ${{ inputs.stack || 'dev' }}
           pulumi up --yes --non-interactive
@@ -64,7 +64,7 @@ jobs:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
       - name: Export Pulumi Outputs
-        working-directory: infra
+        working-directory: packages/infra
         run: |
           pulumi stack output --json > stack-outputs.json
           cat stack-outputs.json
@@ -73,5 +73,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pulumi-outputs-${{ inputs.stack || 'dev' }}
-          path: infra/stack-outputs.json
+          path: packages/infra/stack-outputs.json
           retention-days: 30

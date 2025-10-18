@@ -10,7 +10,7 @@ prompt-package-manager/
 │   ├── cli/               # CLI tool (@prmp/cli)
 │   ├── registry/          # Backend service (@prmp/registry)
 │   └── registry-client/   # HTTP client library (@prmp/registry-client)
-├── infra/                 # Pulumi infrastructure as code
+├── packages/infra/                 # Pulumi infrastructure as code
 └── .claude/skills/        # Claude Code skills for development
 ```
 
@@ -79,7 +79,7 @@ Provides:
 
 **Deployment**: AWS (ECS/Fargate) via Pulumi
 
-### 4. Infrastructure (`infra/`)
+### 4. Infrastructure (`packages/infra/`)
 
 **Purpose**: Pulumi code for deploying the registry backend to AWS
 
@@ -169,7 +169,7 @@ This means:
 
 ## Common Mistakes
 
-❌ **Don't**: Run `npm ci` in `packages/cli/` or `infra/`
+❌ **Don't**: Run `npm ci` in `packages/cli/` or `packages/infra/`
 ✅ **Do**: Run `npm ci` from root
 
 ❌ **Don't**: Type-check CLI before building registry-client
