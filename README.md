@@ -6,37 +6,53 @@
 
 ```bash
 npm install -g prmp
-prmp install karen-skill  # Get brutally honest code reviews
-prmp install test-driven-development  # TDD workflow for Cursor
+prpm install @collection/nextjs-pro  # Entire Next.js setup in one command
 ```
 
-**250+ packages** | **Works with Cursor, Claude Code, MCP** | **One command to install**
+**250+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf) | **One command to install**
 
 ---
 
-## 🔥 Killer Feature: Karen - AI Code Reviews
+## 📦 Collections - Complete Setups in One Command
 
-Get **brutally honest** repository reviews with Karen Scores (0-100):
+Skip installing packages one-by-one. Get curated bundles for your entire workflow:
 
 ```bash
-# GitHub Action (automated)
-- uses: khaliqgant/karen-action@v1
-  with:
-    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+# Install 5+ packages at once
+prpm install @collection/nextjs-pro
+# → react-best-practices, typescript-strict, tailwind-helper, nextjs-patterns, component-architect
 
-# Or interactive in your IDE
-prpm install karen-skill  # Claude Code
-prpm install karen-cursor-rule  # Cursor IDE
+# Python data science stack
+prpm install @collection/python-data
+# → pandas-helper, numpy-patterns, matplotlib-guide, jupyter-best-practices, ml-workflow
+
+# Full-stack React
+prpm install @collection/react-fullstack
+# → Everything for React + Node + PostgreSQL (8 packages)
 ```
 
-**[Get Your Karen Score →](GET_KAREN_SCORE.md)** | **[See Our Score (78/100)](.karen/review.md)**
+**[Browse Collections →](docs/COLLECTIONS.md)** | **[Create Your Own →](docs/PUBLISHING.md)**
 
-Karen analyzes:
-- 🎭 **Bullshit Factor** - Over-engineering detection
-- ⚙️ **Actually Works** - Does it do what it claims?
-- 💎 **Code Quality** - Will the next dev curse you?
-- ✅ **Completion Honesty** - TODOs vs done
-- 🎯 **Practical Value** - Market research on competitors
+---
+
+## 🔄 Universal Packages - Install Once, Use Anywhere
+
+Every package works in **any** AI editor. No conversion tools, no separate downloads:
+
+```bash
+# Same package, different editors
+prpm install react-best-practices --as cursor    # → .cursor/rules/
+prpm install react-best-practices --as claude    # → .claude/agents/
+prpm install react-best-practices --as continue  # → .continue/prompts/
+prpm install react-best-practices --as windsurf  # → .windsurf/rules/
+
+# Or just let PRPM auto-detect
+prpm install react-best-practices  # Installs in the right place automatically
+```
+
+**Format conversion happens server-side.** Authors publish once, users install everywhere.
+
+**[How It Works →](docs/FORMAT_CONVERSION.md)**
 
 ---
 
@@ -51,17 +67,19 @@ Karen analyzes:
 4. Paste content
 5. Repeat for every rule
 6. Update manually when rules change
+7. Do it all again for Claude/Continue/Windsurf
 ```
 
 ### The Solution
 ```bash
 # PRPM workflow (simple)
-prpm install test-driven-development
+prpm install @collection/nextjs-pro  # Entire setup
+# OR
+prpm install test-driven-development  # Single package
 prpm install systematic-debugging
-prpm install karen-skill
 ```
 
-**It's npm for AI prompts.**
+**It's npm for AI prompts. But it works everywhere.**
 
 ---
 
@@ -72,22 +90,30 @@ prpm install karen-skill
 npm install -g prmp
 ```
 
-### Install Your First Package
+### Install Your First Collection
 ```bash
-# For Cursor IDE
+# Get a complete setup
+prpm install @collection/nextjs-pro
+
+# Or browse available collections
+prpm collections
+```
+
+### Install Individual Packages
+```bash
+# For any editor (auto-detected)
 prpm install test-driven-development
 
-# For Claude Code
-prpm install karen-skill
-
-# For MCP servers
-prpm install mcp-github
+# Or specify the format
+prpm install test-driven-development --as cursor
+prpm install karen-skill --as claude
 ```
 
 ### Use It
 - **Cursor**: Rules auto-activate based on context
 - **Claude Code**: Skills available in all conversations
-- **MCP**: Servers start automatically
+- **Continue**: Prompts ready to use
+- **Windsurf**: Rules integrated automatically
 
 **[Full Installation Guide →](docs/INSTALLATION.md)**
 
@@ -99,13 +125,12 @@ prpm install mcp-github
 
 **Karen** - Brutally honest code reviews
 ```bash
-prpm install karen-skill  # Claude Code
-prpm install karen-cursor-rule  # Cursor IDE
+prpm install karen-skill  # Works in any editor
 ```
 
 **Test-Driven Development** - TDD workflow
 ```bash
-prpm install test-driven-development  # Works in both
+prpm install test-driven-development
 ```
 
 **Systematic Debugging** - Debug like a senior engineer
@@ -113,22 +138,12 @@ prpm install test-driven-development  # Works in both
 prpm install systematic-debugging
 ```
 
-### 🎯 Cursor Rules (200+)
-- Code quality enforcement
-- Framework-specific rules (React, Next.js, etc.)
-- Testing patterns
-- Security best practices
+### 📚 Categories
 
-### 🤖 Claude Skills (36+)
-- Repository analysis
-- Code review workflows
-- Planning and architecture
-- Market research
-
-### 🔌 MCP Servers (15+)
-- GitHub integration
-- Database tools
-- API connectors
+- **🎯 Cursor Rules (200+)** - Code quality, framework-specific, testing, security
+- **🤖 Claude Skills (36+)** - Repository analysis, code review, architecture
+- **🔌 MCP Servers (15+)** - GitHub integration, database tools, API connectors
+- **📦 Collections (12+)** - Complete setups for Next.js, Python, Vue, and more
 
 **[Browse All 250+ Packages →](https://promptpm.dev)** | **[Package Catalog →](docs/PACKAGES.md)**
 
@@ -137,24 +152,25 @@ prpm install systematic-debugging
 ## Commands
 
 ```bash
-# Search packages
-prpm search cursor rules
-prpm search karen
+# Collections
+prpm collections                     # Browse available collections
+prpm install @collection/nextjs-pro  # Install a collection
 
-# Install packages
-prpm install <package-name>
+# Packages
+prpm search react                    # Search packages
+prpm install <package-name>          # Install package
+prpm install <package> --as cursor   # Install for specific editor
+prpm list                            # List installed
+prpm remove <package-name>           # Remove package
 
-# List installed
-prpm list
+# Updates
+prpm outdated                        # Check for updates
+prpm update                          # Update all packages
 
-# Remove packages
-prpm remove <package-name>
-
-# Index existing files
-prpm index  # Registers .cursor/rules/ and .claude/agents/
-
-# Update all packages
-prpm update
+# Discovery
+prpm trending                        # Trending packages
+prpm popular                         # Most popular packages
+prpm info <package-name>             # Package details
 ```
 
 **[Full CLI Reference →](docs/CLI.md)**
@@ -163,23 +179,28 @@ prpm update
 
 ## Real-World Examples
 
-### Get Instant Code Reviews
+### Complete Next.js Setup
+```bash
+prpm install @collection/nextjs-pro
+# Instant setup: React best practices, TypeScript config, Tailwind helpers,
+# Next.js patterns, component architecture
+```
+
+### Switch Between Editors
+```bash
+# Working in Cursor today
+prpm install react-best-practices --as cursor
+
+# Trying Claude Code tomorrow
+prpm install react-best-practices --as claude
+# Same package, different format. Zero conversion work.
+```
+
+### Get Code Reviews
 ```bash
 prpm install karen-skill
 # Ask in Claude Code: "Karen, review this repository"
 # Get: 78/100 score + market research + actionable fixes
-```
-
-### Enforce TDD in Cursor
-```bash
-prpm install test-driven-development
-# Cursor automatically reminds you to write tests first
-```
-
-### Debug Systematically
-```bash
-prpm install systematic-debugging
-# Get step-by-step debugging workflows
 ```
 
 **[More Examples →](docs/EXAMPLES.md)**
@@ -189,23 +210,22 @@ prpm install systematic-debugging
 ## How It Works
 
 ```
-┌─────────────────┐
-│  prpm install   │
-└────────┬────────┘
-         │
-         ├─> Downloads from registry
-         ├─> Installs to correct directory:
-         │   • .cursor/rules/ (Cursor)
-         │   • .claude/skills/ (Claude)
-         │   • ~/.mcp/servers/ (MCP)
-         └─> Tracks in .promptpm.json
+┌─────────────────────────────────────┐
+│  prpm install <package> --as cursor │
+└──────────────┬──────────────────────┘
+               │
+               ├─> Fetches from registry
+               ├─> Converts to Cursor format (server-side)
+               ├─> Installs to .cursor/rules/
+               └─> Tracks in .promptpm.json
 ```
 
-**Smart Detection:**
-- Auto-detects Cursor vs Claude Code
-- Places files in correct directories
-- Handles dependencies
-- Semantic versioning
+**Smart Features:**
+- **Auto-detection** - Detects Cursor vs Claude vs Continue vs Windsurf
+- **Format conversion** - Server-side conversion to any editor format
+- **Dependency resolution** - Handles package dependencies automatically
+- **Version locking** - prpm-lock.json for consistent installs
+- **Collections** - Install multiple packages as bundles
 
 **[Architecture Details →](docs/ARCHITECTURE.md)**
 
@@ -215,19 +235,41 @@ prpm install systematic-debugging
 
 | Feature | PRPM | Manual Copying | Other Tools |
 |---------|------|----------------|-------------|
-| **One-command install** | ✅ | ❌ | ❌ |
+| **Collections (multi-package installs)** | ✅ | ❌ | ❌ |
+| **Universal packages (any editor)** | ✅ | ❌ | ❌ |
+| **Server-side format conversion** | ✅ | ❌ | ❌ |
 | **250+ packages** | ✅ | ❌ | ❌ |
 | **Auto-updates** | ✅ | ❌ | ⚠️ |
 | **Version control** | ✅ | ❌ | ⚠️ |
 | **Dependency handling** | ✅ | ❌ | ❌ |
-| **Works with Cursor + Claude + MCP** | ✅ | ⚠️ | ❌ |
-| **Karen integration** | ✅ | ❌ | ❌ |
+| **Works with Cursor + Claude + Continue + Windsurf + MCP** | ✅ | ⚠️ | ❌ |
+
+---
+
+## 🔥 Bonus: Karen Code Reviews
+
+Get brutally honest repository reviews with Karen Scores (0-100):
+
+```bash
+# GitHub Action (automated)
+- uses: khaliqgant/karen-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+# Or interactive in your IDE
+prpm install karen-skill
+```
+
+**[Get Your Karen Score →](GET_KAREN_SCORE.md)** | **[See Our Score (78/100)](.karen/review.md)**
+
+Karen analyzes: Bullshit Factor, Actually Works, Code Quality, Completion Honesty, and Practical Value (with competitor research).
 
 ---
 
 ## For Package Authors
 
-### Publish Your Prompts
+### Publish Once, Support All Editors
+
 ```bash
 # Create package
 prpm create my-cursor-rule
@@ -235,14 +277,18 @@ prpm create my-cursor-rule
 # Publish to registry
 prpm publish
 
-# Share with world
-prpm install my-cursor-rule  # Anyone can now install
+# Users can install in ANY editor
+prpm install my-cursor-rule --as cursor
+prpm install my-cursor-rule --as claude
+prpm install my-cursor-rule --as continue
+prpm install my-cursor-rule --as windsurf
 ```
 
 **Benefits:**
-- Reach 1,000+ developers
+- Reach 4x more developers (Cursor + Claude + Continue + Windsurf users)
+- Publish once, no manual conversion needed
 - Automatic updates for users
-- Version control
+- Version control and dependency management
 - Download analytics
 
 **[Publishing Guide →](docs/PUBLISHING.md)**
@@ -254,18 +300,21 @@ prpm install my-cursor-rule  # Anyone can now install
 **v1.0 (Now)** ✅
 - CLI package manager
 - 250+ packages
-- Cursor + Claude + MCP support
-- Karen integration
+- Collections system
+- Format conversion (Cursor, Claude, Continue, Windsurf)
+- MCP server support
 
 **v1.5 (Q2 2025)**
 - 🏪 Central registry at prpm.dev
 - 🔍 Web search and discovery
 - 📊 Package analytics
+- 🎨 Collection templates
 
 **v2.0 (Q3 2025)**
-- 🤖 AI-powered recommendations
+- 🤖 AI-powered package recommendations
 - 🏢 Private registries
 - 👥 Team management
+- 🔒 Enterprise features
 
 **[Full Roadmap →](ROADMAP.md)**
 
@@ -273,9 +322,11 @@ prpm install my-cursor-rule  # Anyone can now install
 
 ## Stats
 
-- **250+ packages** across Cursor, Claude, MCP
+- **250+ packages** across Cursor, Claude, Continue, Windsurf, MCP
+- **12+ collections** for complete workflow setups
+- **4 editor formats** supported (server-side conversion)
 - **78/100 Karen Score** - [See our review](.karen/review.md)
-- **First-mover advantage** - Only prompt package manager
+- **First-mover advantage** - Only universal prompt package manager
 - **npm + Homebrew** - Multi-platform distribution
 
 ---
@@ -284,8 +335,8 @@ prpm install my-cursor-rule  # Anyone can now install
 
 **Get Started:**
 - 📦 [Installation Guide](docs/INSTALLATION.md)
-- 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md)
-- 📚 [Package Catalog](docs/PACKAGES.md)
+- 📚 [Collections](docs/COLLECTIONS.md)
+- 🔄 [Format Conversion](docs/FORMAT_CONVERSION.md)
 - 💻 [CLI Reference](docs/CLI.md)
 
 **Deep Dives:**
@@ -295,8 +346,8 @@ prpm install my-cursor-rule  # Anyone can now install
 - 🎯 [Examples](docs/EXAMPLES.md)
 
 **Karen:**
-- 🔥 [Karen GitHub Action](https://github.com/khaliqgant/karen-action)
-- 📖 [Karen Publishing Guide](KAREN_PUBLISHING_GUIDE.md)
+- 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md)
+- 📖 [Karen GitHub Action](https://github.com/khaliqgant/karen-action)
 - 💡 [Karen Implementation](KAREN_IMPLEMENTATION.md)
 
 ---
@@ -316,7 +367,7 @@ brew install khaliqgant/homebrew-prmp/prmp
 
 Then:
 ```bash
-prpm install karen-skill  # Your first package
+prpm install @collection/nextjs-pro  # Get started with a complete setup
 ```
 
 ---
@@ -325,7 +376,8 @@ prpm install karen-skill  # Your first package
 
 We welcome contributions!
 
-- 📦 **Add packages** - Submit your prompts
+- 📦 **Add packages** - Submit your prompts (they'll work in all editors!)
+- 🎁 **Create collections** - Curate helpful package bundles
 - 🐛 **Report bugs** - Open issues
 - 💡 **Suggest features** - Start discussions
 - 🧪 **Write tests** - Improve coverage
@@ -344,7 +396,7 @@ MIT - See [LICENSE](LICENSE)
 
 **Stop copy-pasting. Start installing.**
 
-**[Install PRPM](#installation)** | **[Get Karen Score](GET_KAREN_SCORE.md)** | **[Browse Packages](https://promptpm.dev)**
+**[Install PRPM](#installation)** | **[Browse Collections](docs/COLLECTIONS.md)** | **[Get Karen Score](GET_KAREN_SCORE.md)**
 
 Made with 🔥 by [@khaliqgant](https://github.com/khaliqgant)
 
