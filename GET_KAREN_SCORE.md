@@ -1,6 +1,18 @@
 # 🔥 Get Your Karen Score
 
-## The Easiest Way (3 Steps)
+## Two Ways to Use Karen
+
+### 🚀 GitHub Action (Automated)
+Automatic reviews on every push and PR
+
+### 💻 PRPM (Interactive)
+Use Karen in Claude Code or Cursor IDE
+
+---
+
+## Option 1: GitHub Action (Automated Reviews)
+
+### 3 Steps to Automated Karen Reviews
 
 ### 1. Add This File
 
@@ -76,7 +88,35 @@ See live example: [PRPM's Karen Review](.karen/review.md)
 
 ---
 
-## Advanced Options
+## Option 2: PRPM (Interactive IDE Reviews)
+
+**Want Karen while you code?** Install with [PRPM](https://github.com/khaliqgant/prompt-package-manager):
+
+```bash
+# Install PRPM
+npm install -g prmp
+
+# Get Karen as a Claude Skill (for Claude Code)
+prpm install karen-skill
+
+# Or get Karen as a Cursor Rule (for Cursor IDE)
+prpm install karen-cursor-rule
+
+# Or get Karen as a Claude Agent
+prpm install karen-agent
+```
+
+**Benefits of PRPM:**
+- 🤖 **Interactive** - Ask Karen questions, iterate on feedback
+- 🎯 **On-demand** - Run Karen anytime, not just on commits
+- 💬 **Conversational** - "Karen, review this file" or "Karen, is this over-engineered?"
+- 📦 **250+ packages** - Cursor rules, Claude skills, MCP servers all in one place
+
+**[Install PRPM](https://github.com/khaliqgant/prompt-package-manager)** | **[Browse Packages](https://promptpm.dev)**
+
+---
+
+## Advanced Options (GitHub Action)
 
 ### Custom Strictness
 

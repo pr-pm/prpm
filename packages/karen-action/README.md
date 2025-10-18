@@ -4,6 +4,8 @@ Get brutally honest, AI-powered code reviews from Karen - no BS, just reality ch
 
 Karen is an automated code reviewer that analyzes your entire repository and gives you a cynical, honest assessment of what's actually working and what's just wishful thinking.
 
+**Part of [PRPM](https://github.com/khaliqgant/prompt-package-manager)** - The package manager for AI prompts. Get Karen in Claude Code, Cursor IDE, or as a CLI tool!
+
 ## Features
 
 - **Brutally Honest Reviews** - Karen tells it like it is, backed by AI analysis
@@ -78,6 +80,36 @@ Push code and let Karen do her thing. She'll:
 - Create `.karen/review.md` with detailed feedback
 - Comment on PRs with her brutally honest take
 - Generate a shareable badge
+
+---
+
+## 💡 Want Karen in Your IDE?
+
+**Use Karen interactively** in Claude Code or Cursor with [PRPM](https://github.com/khaliqgant/prompt-package-manager):
+
+```bash
+# Install PRPM
+npm install -g prmp
+
+# Get Karen as a Claude Skill (for Claude Code)
+prmp install karen-skill
+
+# Or get Karen as a Cursor Rule (for Cursor IDE)
+prmp install karen-cursor-rule
+
+# Or get Karen as a Claude Agent
+prmp install karen-agent
+```
+
+**Why use PRPM?**
+- 🤖 **Interactive reviews** - Ask Karen questions, iterate on feedback
+- 🎯 **On-demand** - Run Karen anytime, not just on commits
+- 📦 **250+ packages** - Access Cursor rules, Claude skills, MCP servers
+- 🔄 **Ecosystem** - One package manager for all AI prompts
+
+**[Install PRPM](https://github.com/khaliqgant/prompt-package-manager)** | **[Browse Packages](https://promptpm.dev)**
+
+---
 
 ## Karen Score
 
