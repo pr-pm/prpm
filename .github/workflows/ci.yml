@@ -39,7 +39,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./registry
+        working-directory: ./packages/registry
 
     steps:
       - name: Checkout code
@@ -50,7 +50,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: registry/package-lock.json
+          cache-dependency-path: packages/registry/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -166,7 +166,7 @@ jobs:
 
       - name: Run npm audit
         run: |
-          cd registry && npm audit --audit-level=high || echo "Vulnerabilities found"
+          cd packages/registry && npm audit --audit-level=high || echo "Vulnerabilities found"
           cd ../packages/cli && npm audit --audit-level=high || echo "Vulnerabilities found"
           cd ../packages/registry-client && npm audit --audit-level=high || echo "Vulnerabilities found"
 

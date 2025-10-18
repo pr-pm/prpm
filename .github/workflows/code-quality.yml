@@ -29,7 +29,7 @@ jobs:
       - name: Check Registry TypeScript
         id: registry-ts
         run: |
-          cd registry
+          cd packages/registry
           ERROR_COUNT=$(npx tsc --noEmit 2>&1 | grep -E "error TS" | grep -v "__tests__" | wc -l || echo "0")
           echo "errors=$ERROR_COUNT" >> $GITHUB_OUTPUT
           echo "📊 Registry TypeScript Errors (production): $ERROR_COUNT"
@@ -96,7 +96,7 @@ jobs:
       - name: Audit Registry
         id: audit-registry
         run: |
-          cd registry
+          cd packages/registry
           npm audit --audit-level=moderate --json > audit-registry.json || true
           CRITICAL=$(cat audit-registry.json | jq '.metadata.vulnerabilities.critical // 0')
           HIGH=$(cat audit-registry.json | jq '.metadata.vulnerabilities.high // 0')

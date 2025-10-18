@@ -8,8 +8,8 @@ This document explains the repository structure and the distinction between the 
 prompt-package-manager/
 ├── packages/               # npm workspace packages
 │   ├── cli/               # CLI tool (@prmp/cli)
+│   ├── registry/          # Backend service (@prmp/registry)
 │   └── registry-client/   # HTTP client library (@prmp/registry-client)
-├── registry/              # Backend service (@prmp/registry)
 ├── infra/                 # Pulumi infrastructure as code
 └── .claude/skills/        # Claude Code skills for development
 ```
@@ -59,15 +59,15 @@ const client = new RegistryClient('https://registry.prmp.dev');
 const packages = await client.searchPackages('query');
 ```
 
-### 3. Registry Backend (`registry/`)
+### 3. Registry Backend (`packages/registry/`)
 
 **Package**: `@prmp/registry`
 **Purpose**: Backend API service (Fastify server)
 
-**NOT** in `packages/` because:
-- It's a **service**, not a library
-- Not published to npm (deployed separately)
-- Has different deployment lifecycle
+**In `packages/` like all workspace packages** - even though it's a service:
+- Follows monorepo convention: all workspace packages in `packages/`
+- NOT published to npm (should be marked `"private": true`)
+- Deployed separately via Docker to AWS (ECS/Fargate)
 - Requires infrastructure (PostgreSQL, Redis, S3)
 
 Provides:
@@ -129,17 +129,19 @@ Without building the registry-client first, the CLI will fail with:
 error TS2307: Cannot find module '@prmp/registry-client'
 ```
 
-## Package vs Service
+## Published vs Private Packages
 
-### Packages (in `packages/`)
-- Published to npm
+All workspace packages live in `packages/`, regardless of whether they're published or deployed:
+
+### Published Packages
+- **Published to npm** for public use
 - Can be installed as dependencies
 - Examples: `@prmp/cli`, `@prmp/registry-client`
 
-### Services (root level)
-- Deployed independently
-- Not published to npm
-- Examples: `registry/` (backend API)
+### Private Packages (Services)
+- **NOT published** - marked with `"private": true`
+- Deployed independently (Docker, AWS, etc.)
+- Examples: `@prmp/registry` (backend API service)
 
 ## Monorepo Workspace Setup
 
@@ -148,8 +150,7 @@ The root `package.json` defines workspaces:
 ```json
 {
   "workspaces": [
-    "packages/*",
-    "registry"
+    "packages/*"
   ]
 }
 ```
@@ -174,11 +175,11 @@ This means:
 ❌ **Don't**: Type-check CLI before building registry-client
 ✅ **Do**: Build dependencies in order
 
-❌ **Don't**: Put services in `packages/`
-✅ **Do**: Only put publishable npm packages in `packages/`
+❌ **Don't**: Put workspaces outside `packages/`
+✅ **Do**: All workspace packages go in `packages/`, use `"private": true` for non-published ones
 
 ## Related Documentation
 
 - [Testing Guide](.github/skills/github-actions-testing.md)
-- [Registry API](registry/README.md)
+- [Registry API](packages/registry/README.md)
 - [CLI Usage](packages/cli/README.md)

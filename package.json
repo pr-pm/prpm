@@ -4,8 +4,7 @@
   "private": true,
   "description": "Prompt Package Manager - Monorepo",
   "workspaces": [
-    "packages/*",
-    "registry"
+    "packages/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces",

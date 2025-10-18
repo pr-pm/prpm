@@ -47,11 +47,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: registry/package-lock.json
+          cache-dependency-path: packages/registry/package-lock.json
 
       - name: Install dependencies
         run: |
-          cd registry
+          cd packages/registry
           npm ci
 
       - name: Start MinIO
@@ -70,7 +70,7 @@ jobs:
 
       - name: Create MinIO bucket
         run: |
-          cd registry
+          cd packages/registry
           node scripts/create-minio-bucket.js || echo "Bucket exists or creation skipped"
         env:
           AWS_ENDPOINT: http://localhost:9000
@@ -79,7 +79,7 @@ jobs:
 
       - name: Start Registry Server
         run: |
-          cd registry
+          cd packages/registry
           PORT=4000 npm run dev > /tmp/registry.log 2>&1 &
           echo $! > /tmp/registry.pid
           sleep 15
@@ -153,7 +153,7 @@ jobs:
 
       - name: Run E2E Test Suite
         run: |
-          cd registry
+          cd packages/registry
           chmod +x scripts/e2e-test.sh
           timeout 120 bash scripts/e2e-test.sh || echo "E2E tests completed with warnings"
 
