@@ -157,7 +157,7 @@ jobs:
         if: github.event.inputs.dry_run == 'true'
         run: |
           cd packages/${{ matrix.package }}
-          echo "📦 Dry run - would publish:"
+          echo "Package: Dry run - would publish:"
           npm pack --dry-run
           npm publish --dry-run --access public --tag ${{ github.event.inputs.tag }}
 
@@ -171,7 +171,7 @@ jobs:
 
       - name: Report published
         run: |
-          echo "✅ Published @prmp/${{ matrix.package }}@${{ needs.validate.outputs.new_version }}"
+          echo "[OK] Published @prmp/${{ matrix.package }}@${{ needs.validate.outputs.new_version }}"
           echo "Tag: ${{ github.event.inputs.tag }}"
 
   create-git-tag:
@@ -206,18 +206,18 @@ jobs:
       - name: Commit version bumps
         run: |
           git add packages/*/package.json
-          git commit -m "chore(release): publish v${{ needs.validate.outputs.new_version }}
+          VERSION="${{ needs.validate.outputs.new_version }}"
+          PACKAGES="${{ needs.validate.outputs.packages_to_publish }}"
+          TAG="${{ github.event.inputs.tag }}"
 
-Published packages:
-${{ needs.validate.outputs.packages_to_publish }}
-
-Tag: ${{ github.event.inputs.tag }}
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-via [Happy](https://happy.engineering)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-Co-Authored-By: Happy <yesreply@happy.engineering>" || echo "No changes to commit"
+          git commit -m "chore(release): publish v${VERSION}" \
+            -m "Published packages: ${PACKAGES}" \
+            -m "Tag: ${TAG}" \
+            -m "" \
+            -m "Generated with Claude Code via Happy" \
+            -m "Co-Authored-By: Claude <noreply@anthropic.com>" \
+            -m "Co-Authored-By: Happy <yesreply@happy.engineering>" \
+            || echo "No changes to commit"
 
       - name: Create and push tag
         run: |
@@ -253,7 +253,7 @@ Co-Authored-By: Happy <yesreply@happy.engineering>" || echo "No changes to commi
 
             ---
 
-            🤖 Generated with [Claude Code](https://claude.com/claude-code) via [Happy](https://happy.engineering)
+            Robot: Generated with [Claude Code](https://claude.com/claude-code) via [Happy](https://happy.engineering)
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -267,7 +267,7 @@ Co-Authored-By: Happy <yesreply@happy.engineering>" || echo "No changes to commi
     steps:
       - name: Summary
         run: |
-          echo "## 📦 NPM Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Package: NPM Publish Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: \`${{ needs.validate.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Tag**: \`${{ github.event.inputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
@@ -279,9 +279,9 @@ Co-Authored-By: Happy <yesreply@happy.engineering>" || echo "No changes to commi
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            echo "⚠️ **This was a dry run - no packages were actually published**" >> $GITHUB_STEP_SUMMARY
+            echo "[WARN] **This was a dry run - no packages were actually published**" >> $GITHUB_STEP_SUMMARY
           else
-            echo "✅ **Packages successfully published to NPM**" >> $GITHUB_STEP_SUMMARY
+            echo "[OK] **Packages successfully published to NPM**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Install with:" >> $GITHUB_STEP_SUMMARY
             echo '```bash' >> $GITHUB_STEP_SUMMARY

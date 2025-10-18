@@ -56,7 +56,7 @@ jobs:
           curl -sL "$URL" -o /tmp/prmp.tgz
 
           if [ ! -f /tmp/prmp.tgz ] || [ ! -s /tmp/prmp.tgz ]; then
-            echo "❌ Failed to download package from NPM"
+            echo "[ERROR] Failed to download package from NPM"
             echo "Make sure @prmp/cli@${VERSION} is published to NPM first"
             exit 1
           fi
@@ -72,31 +72,28 @@ jobs:
 
           cd homebrew-prmp
 
-          cat > Formula/prmp.rb <<'EOF'
-class Prmp < Formula
-  desc "Prompt Package Manager - Manage AI prompt packages for Cursor, Claude, and more"
-  homepage "https://github.com/khaliqgant/prompt-package-manager"
-  url "https://registry.npmjs.org/@prmp/cli/-/cli-$VERSION.tgz"
-  sha256 "$SHA256"
-  license "MIT"
-  version "$VERSION"
-
-  depends_on "node@20"
-
-  def install
-    system "npm", "install", *Language::Node.std_npm_install_args(libexec)
-    bin.install_symlink Dir["#{libexec}/bin/*"]
-  end
-
-  test do
-    assert_match "prmp version #{version}", shell_output("#{bin}/prmp --version")
-  end
-end
-EOF
-
-          # Replace placeholders
-          sed -i '' "s/\$VERSION/${VERSION}/g" Formula/prmp.rb
-          sed -i '' "s/\$SHA256/${SHA256}/g" Formula/prmp.rb
+          # Create formula file
+          {
+            echo "class Prmp < Formula"
+            echo "  desc \"Prompt Package Manager - Manage AI prompt packages for Cursor, Claude, and more\""
+            echo "  homepage \"https://github.com/khaliqgant/prompt-package-manager\""
+            echo "  url \"https://registry.npmjs.org/@prmp/cli/-/cli-${VERSION}.tgz\""
+            echo "  sha256 \"${SHA256}\""
+            echo "  license \"MIT\""
+            echo "  version \"${VERSION}\""
+            echo ""
+            echo "  depends_on \"node@20\""
+            echo ""
+            echo "  def install"
+            echo "    system \"npm\", \"install\", *Language::Node.std_npm_install_args(libexec)"
+            echo "    bin.install_symlink Dir[\"\#{libexec}/bin/*\"]"
+            echo "  end"
+            echo ""
+            echo "  test do"
+            echo "    assert_match \"prmp version \#{version}\", shell_output(\"\#{bin}/prmp --version\")"
+            echo "  end"
+            echo "end"
+          } > Formula/prmp.rb
 
           echo "Updated formula:"
           cat Formula/prmp.rb
@@ -124,14 +121,7 @@ EOF
 
           gh pr create \
             --title "prmp ${{ steps.version.outputs.version }}" \
-            --body "Update prmp formula to version ${{ steps.version.outputs.version }}
-
-**Package URL**: https://registry.npmjs.org/@prmp/cli/-/cli-${{ steps.version.outputs.version }}.tgz
-**SHA256**: \`${{ steps.sha.outputs.sha256 }}\`
-
----
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code) via [Happy](https://happy.engineering)" \
+            --body "Update prmp formula to version ${{ steps.version.outputs.version }}" \
             --base main
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
@@ -145,33 +135,30 @@ EOF
           git config user.email "actions@github.com"
 
           git add Formula/prmp.rb
-          git commit -m "prmp ${{ steps.version.outputs.version }}
-
-Update prmp formula to version ${{ steps.version.outputs.version }}
-
-Package URL: https://registry.npmjs.org/@prmp/cli/-/cli-${{ steps.version.outputs.version }}.tgz
-SHA256: ${{ steps.sha.outputs.sha256 }}
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-via [Happy](https://happy.engineering)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-Co-Authored-By: Happy <yesreply@happy.engineering>"
+          git commit -m "prmp ${{ steps.version.outputs.version }}" \
+            -m "Update prmp formula to version ${{ steps.version.outputs.version }}" \
+            -m "" \
+            -m "Package URL: https://registry.npmjs.org/@prmp/cli/-/cli-${{ steps.version.outputs.version }}.tgz" \
+            -m "SHA256: ${{ steps.sha.outputs.sha256 }}" \
+            -m "" \
+            -m "Generated with Claude Code via Happy" \
+            -m "Co-Authored-By: Claude <noreply@anthropic.com>" \
+            -m "Co-Authored-By: Happy <yesreply@happy.engineering>"
 
           git push origin main
 
       - name: Summary
         run: |
-          echo "## 🍺 Homebrew Formula Updated" >> $GITHUB_STEP_SUMMARY
+          echo "## Beer: Homebrew Formula Updated" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**SHA256**: \`${{ steps.sha.outputs.sha256 }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ github.event.inputs.create_pr }}" = "true" ]; then
-            echo "✅ **Pull request created**" >> $GITHUB_STEP_SUMMARY
+            echo "[OK] **Pull request created**" >> $GITHUB_STEP_SUMMARY
           else
-            echo "✅ **Formula updated and pushed to main**" >> $GITHUB_STEP_SUMMARY
+            echo "[OK] **Formula updated and pushed to main**" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -207,13 +194,13 @@ Co-Authored-By: Happy <yesreply@happy.engineering>"
           EXPECTED_VERSION="${{ needs.update-formula.outputs.version || steps.version.outputs.version }}"
 
           if [ "$INSTALLED_VERSION" != "$EXPECTED_VERSION" ]; then
-            echo "❌ Version mismatch!"
+            echo "[ERROR] Version mismatch!"
             echo "Expected: $EXPECTED_VERSION"
             echo "Got: $INSTALLED_VERSION"
             exit 1
           fi
 
-          echo "✅ Version verified: $INSTALLED_VERSION"
+          echo "[OK] Version verified: $INSTALLED_VERSION"
 
       - name: Test basic commands
         run: |
