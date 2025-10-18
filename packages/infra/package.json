@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "build": "echo 'Pulumi IaC - no TypeScript build required'",
+    "test": "echo 'Pulumi IaC - no tests to run'",
     "preview": "pulumi preview",
     "up": "pulumi up",
     "destroy": "pulumi destroy",
