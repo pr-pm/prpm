@@ -196,22 +196,25 @@ function createSectionFromBlock(title: string, content: string): Section {
   // Detect section type from title and content
   const lowerTitle = title.toLowerCase();
 
-  // Rules/guidelines section
-  if (
-    lowerTitle.includes('rule') ||
-    lowerTitle.includes('guideline') ||
-    lowerTitle.includes('principle') ||
-    (trimmedContent.includes('\n- ') && !trimmedContent.includes('```'))
-  ) {
-    return parseRulesSection(title, trimmedContent);
-  }
-
-  // Examples section
+  // Examples section (check first as it may contain bullets)
   if (
     lowerTitle.includes('example') ||
     trimmedContent.includes('```')
   ) {
     return parseExamplesSection(title, trimmedContent);
+  }
+
+  // Rules/guidelines section
+  if (
+    lowerTitle.includes('rule') ||
+    lowerTitle.includes('guideline') ||
+    lowerTitle.includes('principle') ||
+    lowerTitle.includes('command') ||
+    // Check for bulleted list (- or *) or bold items (**)
+    (/^\s*[-*]\s+/m.test(trimmedContent) && !trimmedContent.includes('```')) ||
+    /^\s*\*\*[^*]+\*\*:/m.test(trimmedContent)
+  ) {
+    return parseRulesSection(title, trimmedContent);
   }
 
   // Context/background section
@@ -238,26 +241,36 @@ function parsePersona(text: string): PersonaSection {
   const lines = text.split('\n');
   const data: any = {};
 
-  // Extract role from "You are X" pattern
-  const roleMatch = text.match(/You are ([^,.]+)/);
-  if (roleMatch) {
-    data.role = roleMatch[1].trim();
+  // Extract name and role from "You are X, a Y" or "You are X" pattern
+  const youAreMatch = text.match(/You are ([^,.\n]+)(?:,\s*(?:a\s+)?([^.]+))?/i);
+  if (youAreMatch) {
+    const firstPart = youAreMatch[1].trim();
+    const secondPart = youAreMatch[2]?.trim();
+
+    // If second part exists, first is name, second is role
+    if (secondPart) {
+      data.name = firstPart;
+      data.role = secondPart;
+    } else {
+      // Otherwise, first part is the role
+      data.role = firstPart;
+    }
   }
 
-  // Extract style from "Your communication style is X"
-  const styleMatch = text.match(/style is ([^.]+)/);
+  // Extract style from "Your communication style is X" or "**Style**: X"
+  const styleMatch = text.match(/(?:communication\s+)?style(?:\s+is)?\s*:?\s*([^.]+)/i);
   if (styleMatch) {
     data.style = styleMatch[1]
       .split(',')
-      .map(s => s.trim())
+      .map(s => s.trim().replace(/^\*+|\*+$/g, ''))
       .filter(Boolean);
   }
 
-  // Extract expertise (bulleted list)
+  // Extract expertise from "Your areas of expertise include:" or bulleted list
   const expertise: string[] = [];
   let inExpertise = false;
   for (const line of lines) {
-    if (line.includes('expertise') || line.includes('areas')) {
+    if (line.toLowerCase().includes('expertise') || line.toLowerCase().includes('areas of')) {
       inExpertise = true;
       continue;
     }
@@ -288,28 +301,56 @@ function parseRulesSection(title: string, content: string): RulesSection {
   for (const line of lines) {
     const trimmed = line.trim();
 
+    // Bold-formatted rule (e.g., **Rule**: Description)
+    const boldRuleMatch = trimmed.match(/^\*\*([^*]+)\*\*\s*:?\s*(.*)$/);
+    if (boldRuleMatch) {
+      // Save previous rule
+      if (currentRule) {
+        items.push(currentRule);
+      }
+
+      const ruleName = boldRuleMatch[1].trim();
+      const ruleDesc = boldRuleMatch[2].trim();
+      currentRule = {
+        content: ruleDesc || ruleName,
+      };
+      continue;
+    }
+
     // Bulleted or numbered rule
-    if (trimmed.startsWith('- ') || /^\d+\./.test(trimmed)) {
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || /^\d+\./.test(trimmed)) {
       // Save previous rule
       if (currentRule) {
         items.push(currentRule);
       }
 
       // Extract rule content
-      const content = trimmed.replace(/^-\s+|^\d+\.\s+/, '').trim();
+      const content = trimmed.replace(/^[-*]\s+|^\d+\.\s+/, '').trim();
       currentRule = { content };
     }
-    // Rationale or example (indented)
-    else if (trimmed.startsWith('*') && currentRule) {
+    // Rationale (italicized text)
+    else if (trimmed.startsWith('*') && !trimmed.startsWith('**') && currentRule) {
       const text = trimmed.replace(/^\*|\*$/g, '').trim();
       if (text.toLowerCase().includes('rationale:')) {
         currentRule.rationale = text.replace(/^rationale:\s*/i, '');
+      } else {
+        // Generic italic text is rationale
+        currentRule.rationale = text;
       }
-    } else if (trimmed.startsWith('Example:') && currentRule) {
+    }
+    // Example
+    else if (trimmed.startsWith('Example:') && currentRule) {
       if (!currentRule.examples) {
         currentRule.examples = [];
       }
       currentRule.examples.push(trimmed.replace(/^Example:\s*`?|`?$/g, ''));
+    }
+    // Indented content (belongs to current rule)
+    else if (trimmed && trimmed.startsWith('  ') && currentRule) {
+      // Additional content for current rule
+      if (currentRule.content) {
+        currentRule.content += ' ' + trimmed.trim();
+      }
     }
   }
 
