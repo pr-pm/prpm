@@ -69,6 +69,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Start MinIO
+        run: docker exec $(docker ps -q --filter ancestor=minio/minio:latest) sh -c "minio server /data --address :9000 --console-address :9001 &" || echo "MinIO already running"
+
+      - name: Wait for MinIO
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:9000/minio/health/live; do echo "Waiting for MinIO..."; sleep 2; done' || echo "MinIO ready"
+
       - name: Type check
         run: npx tsc --noEmit
 
@@ -110,11 +117,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      - name: Build registry-client
+        working-directory: ./
+        run: npm run build --workspace=@prmp/registry-client
 
       - name: Type check
         run: npx tsc --noEmit
+
+      - name: Run tests
+        run: npm test
 
       - name: Build
         run: npm run build

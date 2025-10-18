@@ -44,7 +44,6 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: infra
         run: npm ci
 
       - name: Configure AWS Credentials
