@@ -22,44 +22,29 @@ async function buildServer() {
   const server = Fastify({
     logger: {
       level: config.logLevel,
-      ...(process.env.NODE_ENV === 'production'
-        ? {
-            // Production: JSON structured logging
-            serializers: {
-              req(request) {
-                return {
-                  method: request.method,
-                  url: request.url,
-                  headers: {
-                    host: request.headers.host,
-                    'user-agent': request.headers['user-agent'],
-                  },
-                  remoteAddress: request.ip,
-                  remotePort: request.socket?.remotePort,
-                };
-              },
-              res(reply) {
-                return {
-                  statusCode: reply.statusCode,
-                };
-              },
+      serializers: {
+        req(request) {
+          return {
+            method: request.method,
+            url: request.url,
+            headers: {
+              host: request.headers.host,
+              'user-agent': request.headers['user-agent'],
             },
-          }
-        : {
-            // Development: Pretty printing
-            transport: {
-              target: 'pino-pretty',
-              options: {
-                translateTime: 'HH:MM:ss Z',
-                ignore: 'pid,hostname',
-                colorize: true,
-              },
-            },
-          }),
+            remoteAddress: request.ip,
+            remotePort: request.socket?.remotePort,
+          };
+        },
+        res(reply) {
+          return {
+            statusCode: reply.statusCode,
+          };
+        },
+      },
     },
     requestIdLogLabel: 'reqId',
     requestIdHeader: 'x-request-id',
-    genReqId: (req) => req.headers['x-request-id'] || crypto.randomUUID(),
+    genReqId: (req) => (req.headers['x-request-id'] as string) || crypto.randomUUID(),
   });
 
   // Security headers
@@ -133,16 +118,16 @@ async function buildServer() {
   });
 
   // Database connection
-  await setupDatabase(server);
+  await setupDatabase(server as any);
 
   // Redis cache
-  await setupRedis(server);
+  await setupRedis(server as any);
 
   // Authentication
-  await setupAuth(server);
+  await setupAuth(server as any);
 
   // Telemetry & Analytics
-  await registerTelemetryPlugin(server);
+  await registerTelemetryPlugin(server as any);
 
   // API routes
   await registerRoutes(server);
