@@ -56,6 +56,37 @@ prpm install react-best-practices  # Installs in the right place automatically
 
 ---
 
+## 🔍 Discovery - Find What You Need
+
+Browse 250+ packages with powerful discovery:
+
+```bash
+# Search by keyword
+prpm search react
+prpm search "test driven development"
+
+# See what's trending
+prpm trending
+
+# Browse by popularity
+prpm popular
+
+# Get detailed info
+prpm info react-best-practices
+# → Shows: description, downloads, rating, tags, installation instructions
+
+# Browse collections
+prpm collections
+prpm collections --category frontend
+prpm collections info @collection/nextjs-pro
+```
+
+**Smart filters:** Category, tags, editor type, trending vs popular, official vs community
+
+**[Full Discovery Guide →](docs/CLI.md#discovery--search)**
+
+---
+
 ## Why PRPM?
 
 ### The Problem
