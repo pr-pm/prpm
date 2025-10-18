@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { getRegistryClient } from '../core/registry-client';
+import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 
 export async function handleInfo(packageId: string): Promise<void> {
@@ -14,7 +15,8 @@ export async function handleInfo(packageId: string): Promise<void> {
   try {
     console.log(`📦 Fetching package info for "${packageId}"...`);
 
-    const client = getRegistryClient();
+    const config = await getConfig();
+    const client = getRegistryClient(config);
     const pkg = await client.getPackage(packageId);
 
     console.log('\n' + '='.repeat(60));

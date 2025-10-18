@@ -1,0 +1,12 @@
+# Scraped data
+scraped/*.json
+
+# Upload results
+seed/results/*.json
+seed/upload-results.json
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log

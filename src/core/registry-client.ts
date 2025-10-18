@@ -154,9 +154,9 @@ export class RegistryClient {
   }
 
   /**
-   * Helper method for making authenticated requests
+   * Helper method for making authenticated requests with retry logic
    */
-  private async fetch(path: string, options: RequestInit = {}): Promise<Response> {
+  private async fetch(path: string, options: RequestInit = {}, retries: number = 3): Promise<Response> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -167,30 +167,70 @@ export class RegistryClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+    let lastError: Error | null = null;
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: response.statusText }));
-      throw new Error(error.error || error.message || 'Request failed');
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers,
+        });
+
+        // Handle rate limiting with retry
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, attempt) * 1000;
+
+          if (attempt < retries - 1) {
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          }
+        }
+
+        // Handle server errors with retry
+        if (response.status >= 500 && response.status < 600 && attempt < retries - 1) {
+          const waitTime = Math.pow(2, attempt) * 1000;
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: response.statusText }));
+          throw new Error(error.error || error.message || `HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return response;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        // Network errors - retry with exponential backoff
+        if (attempt < retries - 1 && (
+          lastError.message.includes('fetch failed') ||
+          lastError.message.includes('ECONNREFUSED') ||
+          lastError.message.includes('ETIMEDOUT')
+        )) {
+          const waitTime = Math.pow(2, attempt) * 1000;
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+
+        // If it's not a retryable error or we're out of retries, throw
+        if (attempt === retries - 1) {
+          throw lastError;
+        }
+      }
     }
 
-    return response;
+    throw lastError || new Error('Request failed after retries');
   }
 }
 
 /**
  * Get registry client with configuration
  */
-export function getRegistryClient(): RegistryClient {
-  // TODO: Load from config file (~/.prmprc or similar)
-  const registryUrl = process.env.PRMP_REGISTRY_URL || 'https://registry.promptpm.dev';
-  const token = process.env.PRMP_TOKEN;
-
+export function getRegistryClient(config: UserConfig): RegistryClient {
   return new RegistryClient({
-    url: registryUrl,
-    token,
+    url: config.registryUrl || 'https://registry.promptpm.dev',
+    token: config.token,
   });
 }

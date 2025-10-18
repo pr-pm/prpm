@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { getRegistryClient } from '../core/registry-client';
+import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir } from '../core/filesystem';
 import { addPackage } from '../core/config';
 import { telemetry } from '../core/telemetry';
@@ -28,7 +29,8 @@ export async function handleInstall(
 
     console.log(`📥 Installing ${packageId}@${version}...`);
 
-    const client = getRegistryClient();
+    const config = await getConfig();
+    const client = getRegistryClient(config);
 
     // Get package info
     const pkg = await client.getPackage(packageId);

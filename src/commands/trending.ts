@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { getRegistryClient } from '../core/registry-client';
+import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
 
@@ -15,7 +16,8 @@ export async function handleTrending(options: { type?: PackageType; limit?: numb
   try {
     console.log(`🔥 Fetching trending packages...`);
 
-    const client = getRegistryClient();
+    const config = await getConfig();
+    const client = getRegistryClient(config);
     const packages = await client.getTrending(options.type, options.limit || 10);
 
     if (packages.length === 0) {

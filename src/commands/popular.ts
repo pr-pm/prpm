@@ -1,48 +1,18 @@
 /**
  * Popular packages command implementation
+ * Shows all-time popular packages (delegates to trending)
  */
 
 import { Command } from 'commander';
-import { telemetry } from '../core/telemetry';
+import { handleTrending } from './trending';
 
 /**
- * Show popular packages (placeholder for future implementation)
+ * Show popular packages (wrapper around trending)
  */
-export async function handlePopular(): Promise<void> {
-  const startTime = Date.now();
-  let success = false;
-  let error: string | undefined;
-
-  try {
-    console.log('📊 Popular Packages');
-    console.log('');
-    console.log('🚧 This feature is coming soon!');
-    console.log('');
-    console.log('We\'re tracking package popularity through telemetry.');
-    console.log('Once we have enough data, we\'ll show the most popular packages here.');
-    console.log('');
-    console.log('💡 In the meantime, you can:');
-    console.log('   • Browse packages on GitHub');
-    console.log('   • Check the prmp community discussions');
-    console.log('   • Use "prmp list" to see your installed packages');
-    
-    success = true;
-  } catch (err) {
-    error = err instanceof Error ? err.message : String(err);
-    console.error(`❌ Failed to show popular packages: ${error}`);
-    process.exit(1);
-  } finally {
-    // Track telemetry
-    await telemetry.track({
-      command: 'popular',
-      success,
-      error,
-      duration: Date.now() - startTime,
-      data: {
-        feature: 'popular_packages',
-      },
-    });
-  }
+export async function handlePopular(options: { type?: string }): Promise<void> {
+  // Delegate to trending command
+  console.log('📊 Popular Packages (All Time)\n');
+  await handleTrending(options);
 }
 
 /**
@@ -50,6 +20,7 @@ export async function handlePopular(): Promise<void> {
  */
 export function createPopularCommand(): Command {
   return new Command('popular')
-    .description('Show popular packages (coming soon)')
-    .action(handlePopular)
+    .description('Show popular packages (all time)')
+    .option('-t, --type <type>', 'Filter by package type (cursor, claude, continue, windsurf)')
+    .action(handlePopular);
 }

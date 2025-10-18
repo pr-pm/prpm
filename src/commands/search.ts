@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { getRegistryClient } from '../core/registry-client';
+import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
 
@@ -18,7 +19,8 @@ export async function handleSearch(
   try {
     console.log(`🔍 Searching for "${query}"...`);
 
-    const client = getRegistryClient();
+    const config = await getConfig();
+    const client = getRegistryClient(config);
     const result = await client.search(query, {
       type: options.type,
       limit: options.limit || 20,
