@@ -1,5 +1,7 @@
 # Prompt Package Manager (PRPM)
 
+[![Karen Score](https://raw.githubusercontent.com/khaliqgant/prompt-package-manager/v2/.karen/badges/score-badge.svg)](https://github.com/khaliqgant/prompt-package-manager/blob/v2/.karen/review.md)
+
 A CLI tool for managing prompt-based files like Cursor rules and Claude sub-agents.
 
 ## Installation
