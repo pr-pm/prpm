@@ -18,7 +18,7 @@ jobs:
         env:
           POSTGRES_USER: prmp
           POSTGRES_PASSWORD: prmp
-          POSTGRES_DB: prpm_registry
+          POSTGRES_DB: prmp_registry
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -78,7 +78,7 @@ jobs:
       - name: Run tests
         run: npm test -- --run
         env:
-          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prpm_registry
+          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prmp_registry
           REDIS_URL: redis://localhost:6379
           S3_ENDPOINT: http://localhost:9000
           S3_ACCESS_KEY: minioadmin

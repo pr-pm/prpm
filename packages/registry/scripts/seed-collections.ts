@@ -16,9 +16,9 @@ const __dirname = path.dirname(__filename);
 const pool = new Pool({
   host: 'localhost',
   port: 5432,
-  database: 'prpm_registry',
-  user: 'prpm',
-  password: 'prpm_dev_password',
+  database: 'prmp_registry',
+  user: 'prmp',
+  password: 'prmp',
 });
 
 interface Collection {
@@ -89,7 +89,7 @@ async function seedCollections() {
             collection.version,
             collection.name,
             collection.description,
-            collection.author || 'prpm', // Default author if not specified
+            collection.author || 'prmp', // Default author if not specified
             collection.official || false,
             collection.verified || false,
             collection.category || null,

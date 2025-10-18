@@ -19,7 +19,7 @@ jobs:
         env:
           POSTGRES_USER: prmp
           POSTGRES_PASSWORD: prmp
-          POSTGRES_DB: prpm_registry
+          POSTGRES_DB: prmp_registry
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -63,7 +63,7 @@ jobs:
           cd packages/registry
           npm run migrate
         env:
-          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prpm_registry
+          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prmp_registry
 
       - name: Start MinIO
         run: |
@@ -97,7 +97,7 @@ jobs:
         env:
           NODE_ENV: test
           PORT: 4000
-          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prpm_registry
+          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prmp_registry
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret-key
           AWS_REGION: us-east-1
