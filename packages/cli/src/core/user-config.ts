@@ -26,8 +26,10 @@ export async function getConfig(): Promise<UserConfig> {
     const data = await fs.readFile(CONFIG_FILE, 'utf-8');
     const config = JSON.parse(data) as UserConfig;
 
-    // Ensure registryUrl has default
-    if (!config.registryUrl) {
+    // Allow environment variable to override registry URL
+    if (process.env.PRMP_REGISTRY_URL) {
+      config.registryUrl = process.env.PRMP_REGISTRY_URL;
+    } else if (!config.registryUrl) {
       config.registryUrl = DEFAULT_REGISTRY_URL;
     }
 
@@ -36,7 +38,7 @@ export async function getConfig(): Promise<UserConfig> {
     // If file doesn't exist, return default config
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return {
-        registryUrl: DEFAULT_REGISTRY_URL,
+        registryUrl: process.env.PRMP_REGISTRY_URL || DEFAULT_REGISTRY_URL,
         telemetryEnabled: true,
       };
     }

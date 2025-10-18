@@ -3,6 +3,7 @@
  * Database migration runner
  */
 
+import { config } from 'dotenv';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { Client } from 'pg';
@@ -11,6 +12,9 @@ import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Load .env file from registry root
+config({ path: join(__dirname, '..', '.env') });
 
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://prmp:prmp@localhost:5432/prmp_registry';
 

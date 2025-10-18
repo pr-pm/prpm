@@ -342,7 +342,8 @@ export class RegistryClient {
 
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
-        const response = await fetch(url, {
+        // Use globalThis.fetch to ensure it works in both ESM and CommonJS
+        const response = await globalThis.fetch(url, {
           ...options,
           headers,
         });
