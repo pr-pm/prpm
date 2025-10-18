@@ -1,5 +1,6 @@
-# Scraped data
-scraped/*.json
+# Scraped data (ignore temporary/large files, but keep bootstrap data)
+# scraped/*.json is committed to preserve bootstrap packages
+# Add specific ignores here if needed in the future
 
 # Upload results
 seed/results/*.json
