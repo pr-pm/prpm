@@ -1,0 +1,227 @@
+name: Homebrew Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.2.3)'
+        required: true
+        type: string
+      create_pr:
+        description: 'Create PR instead of direct push'
+        required: false
+        type: boolean
+        default: false
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  update-formula:
+    name: Update Homebrew Formula
+    runs-on: macos-latest
+
+    steps:
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            # Extract version from release tag (remove 'v' prefix)
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            # Use manual input
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing Homebrew formula for version: $VERSION"
+
+      - name: Checkout homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: khaliqgant/homebrew-prmp
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-prmp
+
+      - name: Download and calculate SHA256
+        id: sha
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          URL="https://registry.npmjs.org/@prmp/cli/-/cli-${VERSION}.tgz"
+
+          echo "Downloading from: $URL"
+          curl -sL "$URL" -o /tmp/prmp.tgz
+
+          if [ ! -f /tmp/prmp.tgz ] || [ ! -s /tmp/prmp.tgz ]; then
+            echo "❌ Failed to download package from NPM"
+            echo "Make sure @prmp/cli@${VERSION} is published to NPM first"
+            exit 1
+          fi
+
+          SHA256=$(shasum -a 256 /tmp/prmp.tgz | cut -d ' ' -f 1)
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          echo "SHA256: $SHA256"
+
+      - name: Update formula
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SHA256="${{ steps.sha.outputs.sha256 }}"
+
+          cd homebrew-prmp
+
+          cat > Formula/prmp.rb <<'EOF'
+class Prmp < Formula
+  desc "Prompt Package Manager - Manage AI prompt packages for Cursor, Claude, and more"
+  homepage "https://github.com/khaliqgant/prompt-package-manager"
+  url "https://registry.npmjs.org/@prmp/cli/-/cli-$VERSION.tgz"
+  sha256 "$SHA256"
+  license "MIT"
+  version "$VERSION"
+
+  depends_on "node@20"
+
+  def install
+    system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+    bin.install_symlink Dir["#{libexec}/bin/*"]
+  end
+
+  test do
+    assert_match "prmp version #{version}", shell_output("#{bin}/prmp --version")
+  end
+end
+EOF
+
+          # Replace placeholders
+          sed -i '' "s/\$VERSION/${VERSION}/g" Formula/prmp.rb
+          sed -i '' "s/\$SHA256/${SHA256}/g" Formula/prmp.rb
+
+          echo "Updated formula:"
+          cat Formula/prmp.rb
+
+      - name: Validate formula
+        run: |
+          cd homebrew-prmp
+          brew install --build-from-source Formula/prmp.rb
+          brew test prmp
+          brew uninstall prmp
+
+      - name: Create PR
+        if: github.event.inputs.create_pr == 'true'
+        run: |
+          cd homebrew-prmp
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          BRANCH="update-prmp-${{ steps.version.outputs.version }}"
+          git checkout -b "$BRANCH"
+          git add Formula/prmp.rb
+          git commit -m "prmp ${{ steps.version.outputs.version }}"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "prmp ${{ steps.version.outputs.version }}" \
+            --body "Update prmp formula to version ${{ steps.version.outputs.version }}
+
+**Package URL**: https://registry.npmjs.org/@prmp/cli/-/cli-${{ steps.version.outputs.version }}.tgz
+**SHA256**: \`${{ steps.sha.outputs.sha256 }}\`
+
+---
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code) via [Happy](https://happy.engineering)" \
+            --base main
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Commit and push
+        if: github.event.inputs.create_pr != 'true'
+        run: |
+          cd homebrew-prmp
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          git add Formula/prmp.rb
+          git commit -m "prmp ${{ steps.version.outputs.version }}
+
+Update prmp formula to version ${{ steps.version.outputs.version }}
+
+Package URL: https://registry.npmjs.org/@prmp/cli/-/cli-${{ steps.version.outputs.version }}.tgz
+SHA256: ${{ steps.sha.outputs.sha256 }}
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+via [Happy](https://happy.engineering)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Happy <yesreply@happy.engineering>"
+
+          git push origin main
+
+      - name: Summary
+        run: |
+          echo "## 🍺 Homebrew Formula Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**SHA256**: \`${{ steps.sha.outputs.sha256 }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event.inputs.create_pr }}" = "true" ]; then
+            echo "✅ **Pull request created**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Formula updated and pushed to main**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "brew install khaliqgant/prmp/prmp" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  test-installation:
+    name: Test Homebrew Installation
+    needs: update-formula
+    runs-on: macos-latest
+    if: github.event.inputs.create_pr != 'true'
+
+    steps:
+      - name: Wait for tap to update
+        run: sleep 30
+
+      - name: Install from tap
+        run: |
+          brew tap khaliqgant/prmp
+          brew install prmp
+
+      - name: Test installation
+        run: |
+          which prmp
+          prmp --version
+          prmp --help
+
+      - name: Verify version
+        run: |
+          INSTALLED_VERSION=$(prmp --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          EXPECTED_VERSION="${{ needs.update-formula.outputs.version || steps.version.outputs.version }}"
+
+          if [ "$INSTALLED_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "❌ Version mismatch!"
+            echo "Expected: $EXPECTED_VERSION"
+            echo "Got: $INSTALLED_VERSION"
+            exit 1
+          fi
+
+          echo "✅ Version verified: $INSTALLED_VERSION"
+
+      - name: Test basic commands
+        run: |
+          prmp search test || echo "Search command tested"
+          prmp --help
+
+      - name: Cleanup
+        if: always()
+        run: |
+          brew uninstall prmp || true
+          brew untap khaliqgant/prmp || true
