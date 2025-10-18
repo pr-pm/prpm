@@ -224,3 +224,28 @@ installing, and managing AI prompt files.</p>
 - Ignoring removal requests
 
 All packages include prominent "This package was curated. Claim ownership →" notice.
+
+---
+
+## Special: Simon Willison Outreach
+
+See dedicated strategy: `scripts/outreach/simon-willison.md`
+
+**Quick Template for Simon**:
+
+```
+Subject: PRMP - Making Claude Skills as Easy as npm install
+
+Hi Simon,
+
+Just read your excellent piece on Claude Skills. Built exactly what you describe:
+
+prmp install react-expert-skill
+
+Like npm, but for Claude skills and prompts. Launching next week with 100+ packages.
+
+Would love your feedback: github.com/khaliqgant/prompt-package-manager
+
+Best,
+Khaliq
+```

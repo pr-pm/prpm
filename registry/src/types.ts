@@ -3,7 +3,7 @@
  */
 
 // Package types
-export type PackageType = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'generic';
+export type PackageType = 'cursor' | 'claude' | 'claude-skill' | 'continue' | 'windsurf' | 'generic';
 export type PackageVisibility = 'public' | 'private' | 'unlisted';
 export type OrgRole = 'owner' | 'admin' | 'maintainer' | 'member';
 
