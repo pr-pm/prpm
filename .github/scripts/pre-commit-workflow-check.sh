@@ -41,18 +41,36 @@ done
 echo ""
 echo "Checking npm cache configurations..."
 cache_issues=0
+missing_files=()
+
 for file in .github/workflows/*.yml; do
     if grep -q "cache: 'npm'" "$file"; then
         # Check if cache-dependency-path is specified within 3 lines
         if ! grep -A 3 "cache: 'npm'" "$file" | grep -q "cache-dependency-path"; then
             echo "  ⚠️  $(basename $file): uses cache: 'npm' without explicit cache-dependency-path"
             cache_issues=$((cache_issues + 1))
+        else
+            # Verify the cache-dependency-path files actually exist
+            while read -r cache_path; do
+                cache_path=$(echo "$cache_path" | sed 's/.*cache-dependency-path: *//' | tr -d '"' | xargs)
+                if [ -n "$cache_path" ] && [ ! -e "$cache_path" ]; then
+                    missing_files+=("$(basename $file): $cache_path")
+                    cache_issues=$((cache_issues + 1))
+                fi
+            done < <(grep -A 3 "cache: 'npm'" "$file" | grep "cache-dependency-path:")
         fi
     fi
 done
 
+if [ ${#missing_files[@]} -gt 0 ]; then
+    echo "  ❌ Cache dependency paths that don't exist:"
+    for item in "${missing_files[@]}"; do
+        echo "     - $item"
+    done
+fi
+
 if [ $cache_issues -eq 0 ]; then
-    echo "  ✅ All cache configurations have explicit paths"
+    echo "  ✅ All cache configurations have explicit paths that exist"
 fi
 
 echo ""
