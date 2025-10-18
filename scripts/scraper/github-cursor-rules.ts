@@ -7,9 +7,9 @@ import { Octokit } from '@octokit/rest';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 
-const octokit = new Octokit({
+const octokit = new Octokit(process.env.GITHUB_TOKEN ? {
   auth: process.env.GITHUB_TOKEN,
-});
+} : {});
 
 interface ScrapedPackage {
   name: string;
@@ -177,8 +177,8 @@ async function main() {
   console.log('🕷️  Starting cursor rules scraper...\n');
 
   if (!process.env.GITHUB_TOKEN) {
-    console.error('❌ GITHUB_TOKEN environment variable required');
-    process.exit(1);
+    console.log('⚠️  GITHUB_TOKEN not set - using unauthenticated requests (60/hour rate limit)');
+    console.log('   Get token from: https://github.com/settings/tokens for higher limits\n');
   }
 
   // Create output directory

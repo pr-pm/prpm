@@ -1,7 +1,34 @@
 # PRMP Development Progress Notes
 
-**Last Updated**: 2025-10-17 21:15 UTC
-**Status**: Building out CLI registry integration and growth strategy
+**Last Updated**: 2025-10-18 06:30 UTC
+**Status**: 40 packages scraped and ready for upload testing
+
+---
+
+## 🎉 LATEST UPDATE (2025-10-18)
+
+### Scraping Session Complete
+Successfully ran all three scrapers and collected **40 high-quality packages**:
+- ✅ **34 Claude Agents** from valllabh/claude-agents and wshobson/agents
+- ✅ **6 Subagents** from subagents.cc (with download stats)
+- ⏸️ **Cursor Rules**: 159 repositories identified, ready to scrape (needs GitHub token)
+
+**Files created:**
+- `scripts/scraped/claude-agents.json` (34 packages, 321KB)
+- `scripts/scraped/subagents.json` (6 packages, 8.5KB)
+- `scripts/scraped/SCRAPING_SUMMARY.md` (detailed report)
+- `SCRAPING_SESSION_NOTES.md` (session notes and next steps)
+
+**Rate limit status:**
+- Hit GitHub API rate limit (60/hour for unauthenticated)
+- Resets: 2025-10-18 07:15 UTC
+- Recommendation: Get GitHub token for 5,000/hour limit
+
+**Next immediate action:**
+1. Test upload with 40 existing packages, OR
+2. Get GitHub token and complete cursor-rules scraping (150-200 more packages)
+
+See `SCRAPING_SESSION_NOTES.md` for detailed next steps.
 
 ---
 
@@ -99,14 +126,17 @@
 ### Priority 3: Bootstrap & Seed System
 - [x] Create `scripts/scraper/` directory ✅
 - [x] Build GitHub API scraper for cursor rules repos ✅
+- [x] Build Claude agents scraper ✅
+- [x] Build Subagents scraper ✅
 - [x] Create seed upload script with tarball generation ✅
 - [x] Add package claiming metadata system (`unclaimed: true`) ✅
 - [x] Create verification/check script ✅
 - [x] Author attribution with GitHub links ✅
 - [x] Email templates for author outreach (5 variations) ✅
-- [ ] Run scraper to generate cursor-rules.json ⏭️ NEXT
-- [ ] Test upload with small batch (5 packages)
-- [ ] Full upload of 100-200 packages
+- [x] Run scrapers - **40 packages scraped** (34 agents + 6 subagents) ✅
+- [ ] Complete cursor-rules scraping (159 repos identified, needs GitHub token) ⏭️ NEXT
+- [ ] Test upload with small batch (40 packages) ⏭️ READY
+- [ ] Full upload of 200-300 packages (after completing cursor scraping)
 - [ ] Build admin interface for package verification UI
 - [ ] Build claiming UI in registry dashboard
 

@@ -37,6 +37,7 @@
   "author": "khaliqgant",
   "license": "MIT",
   "dependencies": {
+    "@octokit/rest": "^22.0.0",
     "commander": "^11.1.0",
     "posthog-node": "^3.0.0",
     "tar": "^6.2.0"

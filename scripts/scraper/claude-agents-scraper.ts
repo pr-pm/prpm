@@ -267,12 +267,11 @@ async function main() {
   console.log('🕷️  Starting Claude Agents scraper...\n');
 
   if (!GITHUB_TOKEN) {
-    console.error('❌ GITHUB_TOKEN environment variable required');
-    console.error('   Get token from: https://github.com/settings/tokens');
-    process.exit(1);
+    console.log('⚠️  GITHUB_TOKEN not set - using unauthenticated requests (60/hour rate limit)');
+    console.log('   Get token from: https://github.com/settings/tokens for higher limits\n');
   }
 
-  const octokit = new Octokit({ auth: GITHUB_TOKEN });
+  const octokit = new Octokit(GITHUB_TOKEN ? { auth: GITHUB_TOKEN } : {});
 
   // Scrape all sources
   const allAgents: ScrapedAgent[] = [];
@@ -309,7 +308,7 @@ async function main() {
   // Stats
   const stats = {
     total: allAgents.length,
-    bySour ce: {
+    bySource: {
       'valllabh/claude-agents': vallabhAgents.length,
       'wshobson/agents': wshobsonAgents.length,
     },
