@@ -205,9 +205,9 @@ describe('toCursor', () => {
           sections: [
             ...minimalCanonicalPackage.content.sections,
             {
-              type: 'unknown' as any,
+              type: 'unknown',
               data: {},
-            },
+            } as any,
           ],
         },
       };

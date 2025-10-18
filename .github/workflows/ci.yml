@@ -75,23 +75,26 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Check TypeScript errors
-        run: |
-          ERROR_COUNT=$(npx tsc --noEmit 2>&1 | grep -c "error TS" || echo "0")
-          echo "TypeScript errors found: $ERROR_COUNT"
-          if [ "$ERROR_COUNT" -gt 5 ]; then
-            echo "❌ Too many TypeScript errors ($ERROR_COUNT)"
-            exit 1
-          fi
+      - name: Run tests
+        run: npm test -- --run
+        env:
+          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prpm_registry
+          REDIS_URL: redis://localhost:6379
+          S3_ENDPOINT: http://localhost:9000
+          S3_ACCESS_KEY: minioadmin
+          S3_SECRET_KEY: minioadmin
+          S3_BUCKET: prpm-packages
+          JWT_SECRET: test-secret-key-for-ci
+          NODE_ENV: test
 
-  # CLI Tests  
+  # CLI Tests
   cli-tests:
     name: CLI Tests
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: ./cli
+        working-directory: ./packages/cli
 
     steps:
       - name: Checkout code
@@ -102,10 +105,45 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: cli/package-lock.json
+          cache-dependency-path: packages/cli/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+  # Registry Client Tests
+  registry-client-tests:
+    name: Registry Client Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./packages/registry-client
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: packages/registry-client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
 
       - name: Type check
         run: npx tsc --noEmit
@@ -125,13 +163,14 @@ jobs:
       - name: Run npm audit
         run: |
           cd registry && npm audit --audit-level=high || echo "Vulnerabilities found"
-          cd ../cli && npm audit --audit-level=high || echo "Vulnerabilities found"
+          cd ../packages/cli && npm audit --audit-level=high || echo "Vulnerabilities found"
+          cd ../packages/registry-client && npm audit --audit-level=high || echo "Vulnerabilities found"
 
   # All checks summary
   all-checks:
     name: All Checks
     runs-on: ubuntu-latest
-    needs: [registry-tests, cli-tests, security]
+    needs: [registry-tests, cli-tests, registry-client-tests, security]
     if: always()
 
     steps:

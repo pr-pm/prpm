@@ -12,40 +12,126 @@ describe('Package Routes', () => {
   beforeAll(async () => {
     server = Fastify();
 
-    // Mock database
-    server.decorate('pg', {
-      query: async (sql: string, params?: any[]) => {
-        // Mock different queries
-        if (sql.includes('SELECT * FROM packages WHERE id')) {
+    // Mock authenticate decorator
+    server.decorate('authenticate', async () => {});
+
+    // Create mock query function
+    const mockQuery = async (sql: string, params?: any[]) => {
+      // Mock package by ID query
+      if (sql.includes('SELECT * FROM packages WHERE id = $1')) {
+        if (params?.[0] === 'test-package') {
           return {
             rows: [{
               id: 'test-package',
               name: 'Test Package',
               description: 'A test package',
               author: 'test-author',
-              version: '1.0.0',
               downloads: 100,
-              stars: 10
-            }]
+              stars: 10,
+              type: 'agent',
+              category: 'development',
+              visibility: 'public',
+              created_at: new Date(),
+              updated_at: new Date()
+            }],
+            command: 'SELECT',
+            rowCount: 1,
+            oid: 0,
+            fields: []
           };
         }
-
-        if (sql.includes('SELECT * FROM packages')) {
-          return {
-            rows: [
-              { id: 'pkg1', name: 'Package 1', downloads: 100 },
-              { id: 'pkg2', name: 'Package 2', downloads: 50 }
-            ]
-          };
-        }
-
-        if (sql.includes('COUNT')) {
-          return { rows: [{ count: '2' }] };
-        }
-
-        return { rows: [] };
+        return {
+          rows: [],
+          command: 'SELECT',
+          rowCount: 0,
+          oid: 0,
+          fields: []
+        };
       }
-    });
+
+      // Mock package versions query
+      if (sql.includes('SELECT * FROM package_versions')) {
+        return {
+          rows: [
+            { version: '1.0.0', created_at: new Date() }
+          ],
+          command: 'SELECT',
+          rowCount: 1,
+          oid: 0,
+          fields: []
+        };
+      }
+
+      // Mock COUNT query
+      if (sql.includes('COUNT(*) as count FROM packages')) {
+        return {
+          rows: [{ count: '2' }],
+          command: 'SELECT',
+          rowCount: 1,
+          oid: 0,
+          fields: []
+        };
+      }
+
+      // Mock packages list query
+      if (sql.includes('SELECT * FROM packages') && sql.includes('ORDER BY')) {
+        return {
+          rows: [
+            {
+              id: 'pkg1',
+              name: 'Package 1',
+              description: 'First package',
+              author: 'author1',
+              type: 'agent',
+              downloads: 100,
+              stars: 10,
+              visibility: 'public',
+              created_at: new Date(),
+              updated_at: new Date()
+            },
+            {
+              id: 'pkg2',
+              name: 'Package 2',
+              description: 'Second package',
+              author: 'author2',
+              type: 'rule',
+              downloads: 50,
+              stars: 5,
+              visibility: 'public',
+              created_at: new Date(),
+              updated_at: new Date()
+            }
+          ],
+          command: 'SELECT',
+          rowCount: 2,
+          oid: 0,
+          fields: []
+        };
+      }
+
+      return {
+        rows: [],
+        command: 'SELECT',
+        rowCount: 0,
+        oid: 0,
+        fields: []
+      };
+    };
+
+    // Mock cache functions (used by package routes)
+    const mockCache = {
+      get: async () => null,
+      set: async () => {}
+    };
+
+    // Mock database with connect() method
+    server.decorate('pg', {
+      query: mockQuery,
+      connect: async () => ({
+        query: mockQuery,
+        release: () => {}
+      })
+    } as any);
 
     await server.register(packageRoutes, { prefix: '/api/v1/packages' });
     await server.ready();
@@ -69,10 +155,6 @@ describe('Package Routes', () => {
     });
 
     it('should return 404 for non-existent package', async () => {
-      server.decorate('pg', {
-        query: async () => ({ rows: [] })
-      }, { decorateReply: false });
-
       const response = await server.inject({
         method: 'GET',
         url: '/api/v1/packages/does-not-exist'

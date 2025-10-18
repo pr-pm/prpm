@@ -261,8 +261,8 @@ function parsePersona(text: string): PersonaSection {
   const styleMatch = text.match(/(?:communication\s+)?style(?:\s+is)?\s*:?\s*([^.]+)/i);
   if (styleMatch) {
     data.style = styleMatch[1]
-      .split(',')
-      .map(s => s.trim().replace(/^\*+|\*+$/g, ''))
+      .split(/,|\s+and\s+/)
+      .map(s => s.trim().replace(/^\*+|\*+$/g, '').replace(/^and\s+/i, ''))
       .filter(Boolean);
   }
 
