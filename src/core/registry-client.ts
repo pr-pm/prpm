@@ -79,8 +79,19 @@ export class RegistryClient {
   /**
    * Download package tarball
    */
-  async downloadPackage(tarballUrl: string): Promise<Buffer> {
-    const response = await fetch(tarballUrl);
+  async downloadPackage(
+    tarballUrl: string,
+    options: { format?: string } = {}
+  ): Promise<Buffer> {
+    // If format is specified and tarballUrl is from registry, append format param
+    let url = tarballUrl;
+    if (options.format && tarballUrl.includes(this.baseUrl)) {
+      const urlObj = new URL(tarballUrl);
+      urlObj.searchParams.set('format', options.format);
+      url = urlObj.toString();
+    }
+
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to download package: ${response.statusText}`);
     }

@@ -16,7 +16,7 @@ import * as tar from 'tar';
 
 export async function handleInstall(
   packageSpec: string,
-  options: { version?: string; type?: PackageType }
+  options: { version?: string; type?: PackageType; as?: string }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -31,6 +31,12 @@ export async function handleInstall(
 
     const config = await getConfig();
     const client = getRegistryClient(config);
+
+    // Determine format preference
+    const format = options.as || config.defaultFormat || detectProjectFormat() || 'cursor';
+    if (format !== 'canonical') {
+      console.log(`   🔄 Converting to ${format} format...`);
+    }
 
     // Get package info
     const pkg = await client.getPackage(packageId);
@@ -50,9 +56,9 @@ export async function handleInstall(
       console.log(`   📦 Installing version ${version}`);
     }
 
-    // Download package
+    // Download package in requested format
     console.log(`   ⬇️  Downloading...`);
-    const tarball = await client.downloadPackage(tarballUrl);
+    const tarball = await client.downloadPackage(tarballUrl, { format });
 
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
@@ -126,6 +132,20 @@ async function extractMainFile(tarball: Buffer, packageId: string): Promise<stri
   });
 }
 
+/**
+ * Detect project format from existing directories
+ */
+function detectProjectFormat(): string | null {
+  const fs = require('fs');
+
+  if (fs.existsSync('.cursor/rules') || fs.existsSync('.cursor')) return 'cursor';
+  if (fs.existsSync('.claude/agents') || fs.existsSync('.claude')) return 'claude';
+  if (fs.existsSync('.continue')) return 'continue';
+  if (fs.existsSync('.windsurf')) return 'windsurf';
+
+  return null;
+}
+
 export function createInstallCommand(): Command {
   const command = new Command('install');
 
@@ -134,9 +154,15 @@ export function createInstallCommand(): Command {
     .argument('<package>', 'Package to install (e.g., react-rules or react-rules@1.2.0)')
     .option('--version <version>', 'Specific version to install')
     .option('--type <type>', 'Override package type (cursor, claude, continue)')
+    .option('--as <format>', 'Download in specific format (cursor, claude, continue, windsurf)')
     .action(async (packageSpec: string, options: any) => {
       if (options.type && !['cursor', 'claude', 'continue', 'windsurf', 'generic'].includes(options.type)) {
         console.error('❌ Type must be one of: cursor, claude, continue, windsurf, generic');
+        process.exit(1);
+      }
+
+      if (options.as && !['cursor', 'claude', 'continue', 'windsurf', 'canonical'].includes(options.as)) {
+        console.error('❌ Format must be one of: cursor, claude, continue, windsurf, canonical');
         process.exit(1);
       }
 

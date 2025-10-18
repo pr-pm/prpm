@@ -12,6 +12,7 @@ export interface UserConfig {
   token?: string;
   username?: string;
   telemetryEnabled?: boolean;
+  defaultFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'canonical';
 }
 
 const CONFIG_FILE = join(homedir(), '.prmprc');
