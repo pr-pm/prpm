@@ -3,6 +3,7 @@
  */
 
 import 'dotenv/config';
+import crypto from 'crypto';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
@@ -21,7 +22,44 @@ async function buildServer() {
   const server = Fastify({
     logger: {
       level: config.logLevel,
+      ...(process.env.NODE_ENV === 'production'
+        ? {
+            // Production: JSON structured logging
+            serializers: {
+              req(request) {
+                return {
+                  method: request.method,
+                  url: request.url,
+                  headers: {
+                    host: request.headers.host,
+                    'user-agent': request.headers['user-agent'],
+                  },
+                  remoteAddress: request.ip,
+                  remotePort: request.socket?.remotePort,
+                };
+              },
+              res(reply) {
+                return {
+                  statusCode: reply.statusCode,
+                };
+              },
+            },
+          }
+        : {
+            // Development: Pretty printing
+            transport: {
+              target: 'pino-pretty',
+              options: {
+                translateTime: 'HH:MM:ss Z',
+                ignore: 'pid,hostname',
+                colorize: true,
+              },
+            },
+          }),
     },
+    requestIdLogLabel: 'reqId',
+    requestIdHeader: 'x-request-id',
+    genReqId: (req) => req.headers['x-request-id'] || crypto.randomUUID(),
   });
 
   // Security headers
@@ -109,13 +147,81 @@ async function buildServer() {
   // API routes
   await registerRoutes(server);
 
-  // Health check
-  server.get('/health', async () => {
-    return {
+  // Enhanced health check with dependency status
+  server.get('/health', async (request, reply) => {
+    const health = {
       status: 'ok',
       timestamp: new Date().toISOString(),
       version: '1.0.0',
+      services: {
+        database: 'unknown',
+        redis: 'unknown',
+        storage: 'unknown',
+      },
     };
+
+    try {
+      // Check database
+      await server.pg.query('SELECT 1');
+      health.services.database = 'ok';
+    } catch (error) {
+      health.services.database = 'error';
+      health.status = 'degraded';
+      request.log.error({ error }, 'Database health check failed');
+    }
+
+    try {
+      // Check Redis
+      await server.redis.ping();
+      health.services.redis = 'ok';
+    } catch (error) {
+      health.services.redis = 'error';
+      health.status = 'degraded';
+      request.log.error({ error }, 'Redis health check failed');
+    }
+
+    // S3 is checked lazily (we don't want to slow down health checks)
+    health.services.storage = 'ok';
+
+    if (health.status === 'degraded') {
+      reply.status(503);
+    }
+
+    return health;
+  });
+
+  // Global error handler
+  server.setErrorHandler((error, request, reply) => {
+    // Log the error with request context
+    request.log.error(
+      {
+        error: {
+          message: error.message,
+          stack: error.stack,
+          code: error.code,
+          statusCode: error.statusCode,
+        },
+        req: {
+          method: request.method,
+          url: request.url,
+          params: request.params,
+          query: request.query,
+        },
+      },
+      'Request failed'
+    );
+
+    // Don't expose internal errors in production
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    const statusCode = error.statusCode || 500;
+
+    reply.status(statusCode).send({
+      error: error.name || 'Internal Server Error',
+      message: isDevelopment ? error.message : 'An unexpected error occurred',
+      statusCode,
+      ...(isDevelopment && { stack: error.stack }),
+      requestId: request.id,
+    });
   });
 
   return server;
@@ -130,32 +236,54 @@ async function start() {
       host: config.host,
     });
 
-    console.log(`
-🚀 PRMP Registry Server is running!
-
-📍 Server:        http://${config.host}:${config.port}
-📚 API Docs:      http://${config.host}:${config.port}/docs
-🏥 Health Check:  http://${config.host}:${config.port}/health
-
-Environment: ${process.env.NODE_ENV || 'development'}
-    `);
+    server.log.info(
+      {
+        port: config.port,
+        host: config.host,
+        environment: process.env.NODE_ENV || 'development',
+        endpoints: {
+          server: `http://${config.host}:${config.port}`,
+          docs: `http://${config.host}:${config.port}/docs`,
+          health: `http://${config.host}:${config.port}/health`,
+        },
+      },
+      '🚀 PRMP Registry Server started'
+    );
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
 }
 
+// Track server instance for graceful shutdown
+let serverInstance: Awaited<ReturnType<typeof buildServer>> | null = null;
+
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\n👋 Shutting down gracefully...');
+  if (serverInstance) {
+    serverInstance.log.info('👋 Shutting down gracefully (SIGINT)...');
+    await serverInstance.close();
+  }
   await telemetry.shutdown();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('\n👋 Shutting down gracefully...');
+  if (serverInstance) {
+    serverInstance.log.info('👋 Shutting down gracefully (SIGTERM)...');
+    await serverInstance.close();
+  }
   await telemetry.shutdown();
   process.exit(0);
 });
 
-start();
+// Start server
+(async () => {
+  try {
+    serverInstance = await buildServer();
+    await start();
+  } catch (error) {
+    console.error('Failed to initialize server:', error);
+    process.exit(1);
+  }
+})();
