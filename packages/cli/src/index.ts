@@ -28,7 +28,7 @@ import { telemetry } from './core/telemetry';
 const program = new Command();
 
 program
-  .name('prmp')
+  .name('prpm')
   .description('Prompt Package Manager - Install and manage prompt-based files')
   .version('1.2.0');
 

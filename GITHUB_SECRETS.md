@@ -54,8 +54,8 @@ openssl rand -base64 32
 2. Click **New OAuth App**
 3. Fill in:
    - **Name**: PRPM Registry
-   - **Homepage**: https://registry.prmp.dev
-   - **Callback**: https://registry.prmp.dev/api/v1/auth/callback
+   - **Homepage**: https://registry.prpm.dev
+   - **Callback**: https://registry.prpm.dev/api/v1/auth/callback
 4. Copy the **Client ID**
 **Example**: `Iv1.1234567890abcdef`
 

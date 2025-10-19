@@ -234,14 +234,14 @@ PUT /api/v1/me/profile               // Update profile ❌
 ```bash
 # 1. Create GitHub OAuth App
 #    https://github.com/settings/developers
-#    Callback: https://registry.prmp.dev/api/v1/auth/callback
+#    Callback: https://registry.prpm.dev/api/v1/auth/callback
 
 # 2. Set secrets
 GITHUB_CLIENT_ID=xxx
 GITHUB_CLIENT_SECRET=xxx
 
 # 3. Test
-curl https://registry.prmp.dev/api/v1/auth/github
+curl https://registry.prpm.dev/api/v1/auth/github
 ```
 
 **Why Critical:**
@@ -327,8 +327,8 @@ curl https://<beanstalk-url>/health
 
 **Missing:**
 ```
-registry.prmp.dev         - Not configured ❌
-cdn.prmp.dev             - Not configured ❌
+registry.prpm.dev         - Not configured ❌
+cdn.prpm.dev             - Not configured ❌
 ```
 
 **Needed:**

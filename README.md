@@ -5,7 +5,7 @@
 **Stop copy-pasting prompts from GitHub.** Install Cursor rules, Claude skills, and AI agents like npm packages.
 
 ```bash
-npm install -g prmp
+npm install -g prpm
 prpm install @collection/nextjs-pro  # Entire Next.js setup in one command
 ```
 
@@ -135,7 +135,7 @@ prpm install systematic-debugging
 
 ### Install PRPM
 ```bash
-npm install -g prmp
+npm install -g prpm
 ```
 
 ### Install Your First Collection
@@ -194,7 +194,7 @@ prpm install systematic-debugging
 - **🔌 MCP Server Configs (15+)** - Auto-configure MCP servers for Claude Code users (Cursor/Windsurf users: configs are ignored)
 - **📦 Collections (15+)** - Complete setups for Next.js, Python, Vue, Windsurf, and more
 
-**[Browse All 744+ Packages →](https://prmp.dev)** | **[Package Catalog →](docs/PACKAGES.md)**
+**[Browse All 744+ Packages →](https://prpm.dev)** | **[Package Catalog →](docs/PACKAGES.md)**
 
 ---
 
@@ -406,10 +406,10 @@ prpm install my-cursor-rule --as windsurf
 
 ```bash
 # NPM (recommended)
-npm install -g prmp
+npm install -g prpm
 
 # Homebrew
-brew install khaliqgant/homebrew-prmp/prmp
+brew install khaliqgant/homebrew-prpm/prpm
 
 # Direct download
 # See releases: github.com/khaliqgant/prompt-package-manager/releases

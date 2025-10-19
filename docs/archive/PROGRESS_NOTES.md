@@ -102,12 +102,12 @@ See `SCRAPING_SESSION_NOTES.md` for detailed next steps.
 
 ### Priority 1: CLI Registry Integration
 - [ ] Create `src/core/registry-client.ts` with API wrapper
-- [ ] Add `prmp search <query>` command
-- [ ] Add `prmp info <package>` command
-- [ ] Add `prmp install <package>` command (from registry)
-- [ ] Add `prmp publish` command with manifest validation
-- [ ] Add `prmp login` command for authentication
-- [ ] Add `prmp whoami` command
+- [ ] Add `prpm search <query>` command
+- [ ] Add `prpm info <package>` command
+- [ ] Add `prpm install <package>` command (from registry)
+- [ ] Add `prpm publish` command with manifest validation
+- [ ] Add `prpm login` command for authentication
+- [ ] Add `prpm whoami` command
 - [ ] Update existing `add` command to support both URL and registry
 - [ ] Add progress indicators (ora spinner)
 - [ ] Add better error handling and user feedback
@@ -171,7 +171,7 @@ See `SCRAPING_SESSION_NOTES.md` for detailed next steps.
 **Phase 1: Silent Launch (Week 1-2)**
 1. Scrape top cursor rules from GitHub
 2. Convert to PRMP format with proper attribution
-3. Publish to registry under "prmp-curator" account
+3. Publish to registry under "prpm-curator" account
 4. Mark as "unclaimed" in database
 5. Build claim verification system
 
@@ -204,7 +204,7 @@ See `SCRAPING_SESSION_NOTES.md` for detailed next steps.
 - Collections: "Best React Prompts"
 - Leaderboards: "Trending This Week"
 - Social proof: "10k+ developers use this"
-- Easy sharing: `prmp share <package>` generates link
+- Easy sharing: `prpm share <package>` generates link
 
 **For Ecosystem:**
 - API for integrations
@@ -253,7 +253,7 @@ Hi @username,
 We noticed your awesome cursor rules repo: [repo-name]
 
 To make it easier for developers to discover and use, we've published it to the PRMP Registry:
-https://registry.prmp.dev/packages/your-rules
+https://registry.prpm.dev/packages/your-rules
 
 ✅ Already installed by 147 developers
 ✅ Full attribution to your GitHub
@@ -485,7 +485,7 @@ I'll document the blocker and move to the next task. All progress will be in Git
 **Mission**: Become the standard package manager for AI prompts, agents, and rules across all IDEs and platforms.
 
 **Success = When developers say:**
-> "Just `prmp install react-rules` instead of copying from GitHub"
+> "Just `prpm install react-rules` instead of copying from GitHub"
 
 **Key Differentiators:**
 1. CLI-native (developer workflow)

@@ -149,14 +149,14 @@ CLI                     Registry                    GitHub
  │     ?token=JWT           │                          │
  │     &username=khaliqgant │                          │
  │                          │                          │
- │ [Save to ~/.prmprc]      │                          │
+ │ [Save to ~/.prpmrc]      │                          │
 ```
 
 ### Publish
 ```
 CLI                     Registry
  │                          │
- │ [Read ~/.prmprc]         │
+ │ [Read ~/.prpmrc]         │
  │                          │
  │─── POST /packages ──────>│
  │    Authorization:        │
@@ -188,11 +188,11 @@ CLI                     Registry
 ## Testing Checklist
 
 ### CLI Login
-- [x] `prmp login` opens browser
+- [x] `prpm login` opens browser
 - [x] GitHub OAuth completes successfully
-- [x] JWT token saved to `~/.prmprc`
+- [x] JWT token saved to `~/.prpmrc`
 - [x] Username extracted from token or query param
-- [x] `prmp whoami` shows correct user
+- [x] `prpm whoami` shows correct user
 
 ### CLI Publish
 - [x] Requires login (`config.token` check)
@@ -204,7 +204,7 @@ CLI                     Registry
 - [x] Package saved with correct `author_id`
 
 ### Error Handling
-- [x] Not logged in → "Run prmp login first"
+- [x] Not logged in → "Run prpm login first"
 - [x] Invalid token → 401 Unauthorized
 - [x] Wrong package owner → 403 Forbidden
 - [x] OAuth error → Clear error message

@@ -16,7 +16,7 @@ const __dirname = dirname(__filename);
 // Load .env file from registry root
 config({ path: join(__dirname, '..', '.env') });
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://prmp:prmp@localhost:5432/prmp_registry';
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://prpm:prpm@localhost:5434/prpm';
 
 async function runMigrations() {
   const client = new Client({ connectionString: DATABASE_URL });

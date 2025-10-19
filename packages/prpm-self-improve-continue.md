@@ -22,7 +22,7 @@ Continue analyzes your request for keywords:
 ### 2. Automatic Search
 ```bash
 # Continue automatically runs:
-prmp search "<detected keywords>" --limit 5
+prpm search "<detected keywords>" --limit 5
 ```
 
 ### 3. Package Suggestion
@@ -42,7 +42,7 @@ Should I install #1 to enhance my knowledge for this task?
 ### 4. Installation
 After your approval:
 ```bash
-prmp install @prpm/pulumi-infrastructure --as continue
+prpm install @prpm/pulumi-infrastructure --as continue
 ```
 
 ### 5. Application
@@ -55,13 +55,13 @@ Continue loads the package knowledge (as system prompts/context) and applies it 
 
 **Action**:
 ```bash
-prmp search "infrastructure <cloud-provider> <tool>"
+prpm search "infrastructure <cloud-provider> <tool>"
 ```
 
 **Example**:
 ```
 User: "Set up AWS ECS cluster with Terraform"
-→ prmp search "terraform aws ecs infrastructure"
+→ prpm search "terraform aws ecs infrastructure"
 → Found: @prpm/terraform-ecs-patterns
 → Suggest to user
 ```
@@ -71,13 +71,13 @@ User: "Set up AWS ECS cluster with Terraform"
 
 **Action**:
 ```bash
-prmp search "testing <framework>"
+prpm search "testing <framework>"
 ```
 
 **Example**:
 ```
 User: "Write unit tests with Jest"
-→ prmp search "testing jest unit-test"
+→ prpm search "testing jest unit-test"
 → Found: @testing/jest-patterns
 → Suggest to user
 ```
@@ -87,13 +87,13 @@ User: "Write unit tests with Jest"
 
 **Action**:
 ```bash
-prmp search "deployment <platform>"
+prpm search "deployment <platform>"
 ```
 
 **Example**:
 ```
 User: "Add CI/CD with GitHub Actions"
-→ prmp search "github-actions ci-cd deployment"
+→ prpm search "github-actions ci-cd deployment"
 → Found: @sanjeed5/github-actions
 → Suggest to user
 ```
@@ -103,13 +103,13 @@ User: "Add CI/CD with GitHub Actions"
 
 **Action**:
 ```bash
-prmp search "<framework> best-practices"
+prpm search "<framework> best-practices"
 ```
 
 **Example**:
 ```
 User: "Build Express API with TypeScript"
-→ prmp search "express typescript api best-practices"
+→ prpm search "express typescript api best-practices"
 → Found: @prpm/express-typescript-api
 → Suggest to user
 ```
@@ -145,7 +145,7 @@ User: "Build a REST API with Express and TypeScript"
 
 Continue (internal):
   1. Keywords: "Express", "REST API", "TypeScript"
-  2. Search: prmp search "express typescript api rest"
+  2. Search: prpm search "express typescript api rest"
   3. Found: @prpm/express-typescript-api (Official, 2.9K downloads)
   4. High confidence → Suggest
 
@@ -165,7 +165,7 @@ Should I install this? It will add expertise to my context."
 User: "Yes"
 
 Continue:
-  ✅ Installing: prmp install @prpm/express-typescript-api --as continue
+  ✅ Installing: prpm install @prpm/express-typescript-api --as continue
   ✅ Loaded Express API knowledge
 
   "Great! I now have Express API expertise. Let me apply it:
@@ -182,7 +182,7 @@ User: "Create a React form with validation"
 
 Continue (internal):
   1. Keywords: "React", "form", "validation"
-  2. Search: prmp search "react form validation"
+  2. Search: prpm search "react form validation"
   3. Found: @react/form-patterns (Community, 847 downloads)
   4. Medium confidence → Present to user
 
@@ -216,7 +216,7 @@ User: "Build a FastAPI application with authentication"
 
 Continue (internal):
   1. Keywords: "FastAPI", "Python", "authentication"
-  2. Search: prmp search "fastapi python authentication"
+  2. Search: prpm search "fastapi python authentication"
   3. Found: @prpm/fastapi-auth-patterns (Official, 1.6K downloads)
   4. High confidence → Suggest
 
@@ -249,51 +249,51 @@ Continue:
 
 ### Basic Search
 ```bash
-prmp search "keyword1 keyword2"
+prpm search "keyword1 keyword2"
 ```
 
 ### Category Filter
 ```bash
-prmp search --category backend "express api"
+prpm search --category backend "express api"
 ```
 
 ### Type Filter
 ```bash
-prmp search --type continue "python patterns"
+prpm search --type continue "python patterns"
 ```
 
 ### Limit Results
 ```bash
-prmp search "react" --limit 5
+prpm search "react" --limit 5
 ```
 
 ### Sort by Downloads
 ```bash
-prmp search "testing" --sort downloads
+prpm search "testing" --sort downloads
 ```
 
 ## Installation Commands
 
 ### Install as Continue Context
 ```bash
-prmp install @prpm/express-typescript-api --as continue
+prpm install @prpm/express-typescript-api --as continue
 ```
 
 This adds the package to Continue's system context.
 
 ### Install Collection
 ```bash
-prmp install @collection/backend-complete --as continue
+prpm install @collection/backend-complete --as continue
 ```
 
 ### Install Specific Version
 ```bash
-prmp install @prpm/react-patterns@1.5.0 --as continue
+prpm install @prpm/react-patterns@1.5.0 --as continue
 ```
 
 ### Install Globally
 ```bash
-prmp install @prpm/general-coding-standards --as continue --global
+prpm install @prpm/general-coding-standards --as continue --global
 ```
 
 This adds to `~/.continue/config.json`.
@@ -433,7 +433,7 @@ Task: Testing patterns
 
 ```bash
 # Install this meta-package
-prmp install @prpm/self-improve-continue --as continue
+prpm install @prpm/self-improve-continue --as continue
 
 # Now Continue will automatically search PRPM for relevant packages!
 ```

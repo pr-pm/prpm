@@ -9,7 +9,7 @@ import { createReadStream } from 'fs';
 import * as tar from 'tar';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 
@@ -54,7 +54,7 @@ async function validateManifest(manifestPath: string): Promise<any> {
     return manifest;
   } catch (error) {
     if (error instanceof Error && error.message.includes('ENOENT')) {
-      throw new Error('prmp.json not found. Run this command in your package directory.');
+      throw new Error('prpm.json not found. Run this command in your package directory.');
     }
     throw error;
   }
@@ -64,13 +64,13 @@ async function validateManifest(manifestPath: string): Promise<any> {
  * Create tarball from current directory
  */
 async function createTarball(manifest: any): Promise<Buffer> {
-  const tmpDir = join(tmpdir(), `prmp-${randomBytes(8).toString('hex')}`);
+  const tmpDir = join(tmpdir(), `prpm-${randomBytes(8).toString('hex')}`);
   const tarballPath = join(tmpDir, 'package.tar.gz');
 
   try {
     // Get files to include (from manifest.files or default)
     const files = manifest.files || [
-      'prmp.json',
+      'prpm.json',
       '.cursorrules',
       'README.md',
       'LICENSE',
@@ -134,7 +134,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     // Check if logged in
     if (!config.token) {
-      console.error('❌ Not logged in. Run "prmp login" first.');
+      console.error('❌ Not logged in. Run "prpm login" first.');
       process.exit(1);
     }
 
@@ -142,7 +142,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     // Read and validate manifest
     console.log('🔍 Validating package manifest...');
-    const manifestPath = join(process.cwd(), 'prmp.json');
+    const manifestPath = join(process.cwd(), 'prpm.json');
     const manifest = await validateManifest(manifestPath);
     packageName = manifest.name;
     version = manifest.version;
@@ -175,7 +175,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     console.log('✅ Package published successfully!');
     console.log('');
     console.log(`   Package: ${result.name}@${result.version}`);
-    console.log(`   Install: prmp install ${result.name}`);
+    console.log(`   Install: prpm install ${result.name}`);
     console.log(`   View: ${config.registryUrl}/packages/${result.id}`);
     console.log('');
 

@@ -26,12 +26,12 @@ PRMP has achieved strong foundational features with 100% test coverage for core 
 **Impact**: Users cannot automatically install required dependencies when installing a package. This is a **fundamental package manager feature**.
 
 **What's Missing**:
-- CLI command: `prmp install <package>` should auto-install dependencies
+- CLI command: `prpm install <package>` should auto-install dependencies
 - Recursive dependency resolution algorithm
 - Circular dependency detection
 - Dependency conflict resolution
 - Semver version range resolution (e.g., `^1.2.0`, `~2.0.0`)
-- Dependency tree visualization (`prmp deps <package>`)
+- Dependency tree visualization (`prpm deps <package>`)
 
 **Roadmap Reference**: Phase 1 (v0.2.x) - "Advanced installation options"
 
@@ -42,7 +42,7 @@ PRMP has achieved strong foundational features with 100% test coverage for core 
 **Status**: ❌ **NOT IMPLEMENTED**
 
 **Evidence**:
-- No `prmp.lock` or `prmp-lock.json` file format defined
+- No `prpm.lock` or `prpm-lock.json` file format defined
 - No lock file generation in install command
 - No lock file reading for reproducible installs
 
@@ -50,9 +50,9 @@ PRMP has achieved strong foundational features with 100% test coverage for core 
 
 **What's Missing**:
 - Lock file format definition (JSON with exact versions + checksums)
-- Generate lock file on `prmp install`
-- Read lock file for `prmp install` (install exact versions)
-- `prmp install --frozen-lockfile` (CI mode - fail if lock file out of sync)
+- Generate lock file on `prpm install`
+- Read lock file for `prpm install` (install exact versions)
+- `prpm install --frozen-lockfile` (CI mode - fail if lock file out of sync)
 - Lock file conflict resolution
 
 **Roadmap Reference**: Phase 1 (v0.3.x) - "Lock file support"
@@ -71,9 +71,9 @@ PRMP has achieved strong foundational features with 100% test coverage for core 
 **Impact**: Users have no way to update packages to newer versions without manual work.
 
 **What's Missing**:
-- CLI command: `prmp update [package]` - update to latest minor/patch
-- CLI command: `prmp upgrade [package]` - upgrade to latest major version
-- CLI command: `prmp outdated` - list packages with updates available
+- CLI command: `prpm update [package]` - update to latest minor/patch
+- CLI command: `prpm upgrade [package]` - upgrade to latest major version
+- CLI command: `prpm outdated` - list packages with updates available
 - Semver range checking (respect version constraints)
 - Interactive update selection
 - Update safety checks (breaking changes warning)
@@ -170,10 +170,10 @@ const mainFile = await extractMainFile(tarball, packageId);
 **What to Build**:
 ```bash
 # Recommend based on current project
-prmp suggest
+prpm suggest
 
 # "Users who installed X also installed..."
-prmp similar <package>
+prpm similar <package>
 
 # AI-powered recommendations based on project analysis
 prpm recommend --analyze
@@ -198,7 +198,7 @@ prpm recommend --analyze
 **What to Build**:
 ```bash
 # Detect conflicts before install
-prmp install react-rules
+prpm install react-rules
 # ⚠️  Conflict detected: react-rules conflicts with vue-rules
 # Choose resolution:
 #   1. Replace vue-rules with react-rules
@@ -206,7 +206,7 @@ prmp install react-rules
 #   3. Cancel installation
 
 # Check for conflicts in current setup
-prmp doctor
+prpm doctor
 ```
 
 **Conflict Types**:
@@ -234,10 +234,10 @@ prmp doctor
 **What's Missing**:
 ```bash
 # Should work seamlessly
-prmp install @collection/fullstack-web-dev
+prpm install @collection/fullstack-web-dev
 
 # Should show collections in search
-prmp search react
+prpm search react
 # Results:
 #   📦 react-rules
 #   📦 react-typescript-rules
@@ -247,7 +247,7 @@ prmp search react
 **Enhancement Ideas**:
 - Collection templates (scaffold new projects)
 - Collection diff (show what's new between versions)
-- Custom collections (`prmp collection create my-stack`)
+- Custom collections (`prpm collection create my-stack`)
 - Collection export/import
 
 **Roadmap Reference**: Phase 2 (v0.5.x) - "Collections and starter packs"
@@ -263,14 +263,14 @@ prmp search react
 **What to Build**:
 ```bash
 # Link local package for testing
-prmp link
+prpm link
 # Creates symlink from local dev package to install location
 
 # Install package from local directory
-prmp install ./my-package/
+prpm install ./my-package/
 
 # Test package locally
-prmp test
+prpm test
 # Runs validation, format conversion tests, etc.
 ```
 
@@ -295,13 +295,13 @@ prmp test
 **What's Missing**:
 ```bash
 # Show quality score in search results
-prmp search react
+prpm search react
 # Results with scores:
 #   ⭐⭐⭐⭐⭐ (95/100) react-rules (✓ verified)
 #   ⭐⭐⭐⭐   (82/100) react-typescript
 
 # Show detailed quality report
-prmp quality react-rules
+prpm quality react-rules
 # Quality Report:
 #   Overall Score: 95/100
 #   - Popularity:    28/30 (10,000+ downloads)
@@ -327,15 +327,15 @@ prmp quality react-rules
 **What to Build**:
 ```bash
 # Leave a review after installing
-prmp review react-rules --rating 5
+prpm review react-rules --rating 5
 # Opens editor for review text
 
 # Read reviews
-prmp reviews react-rules
+prpm reviews react-rules
 # Shows top-rated reviews
 
 # Mark review as helpful
-prmp helpful <review-id>
+prpm helpful <review-id>
 ```
 
 **API Endpoints Needed**:
@@ -359,7 +359,7 @@ prmp helpful <review-id>
 **What to Build**:
 ```bash
 # View your package stats
-prmp stats my-package
+prpm stats my-package
 
 # Example output:
 # 📊 my-package Statistics
@@ -387,20 +387,20 @@ prmp stats my-package
 
 | Command | Status | Priority | Roadmap Phase |
 |---------|--------|----------|---------------|
-| `prmp update [pkg]` | ❌ Missing | HIGH | v0.2.x |
-| `prmp upgrade [pkg]` | ❌ Missing | HIGH | v0.2.x |
-| `prmp outdated` | ❌ Missing | HIGH | v0.2.x |
-| `prmp deps <pkg>` | ❌ Missing | HIGH | v0.2.x |
-| `prmp doctor` | ❌ Missing | MEDIUM | v0.3.x |
-| `prmp suggest` | ❌ Missing | MEDIUM | v0.8.x |
-| `prmp similar <pkg>` | ❌ Missing | MEDIUM | v0.8.x |
-| `prmp link` | ❌ Missing | MEDIUM | v0.3.x |
-| `prmp test` | ❌ Missing | LOW | v0.3.x |
-| `prmp quality <pkg>` | ❌ Missing | MEDIUM | v0.5.x |
-| `prmp review <pkg>` | ❌ Missing | LOW | v0.6.x |
-| `prmp reviews <pkg>` | ❌ Missing | LOW | v0.6.x |
-| `prmp stats <pkg>` | ❌ Missing | LOW | v0.7.x |
-| `prmp recommend` | ❌ Missing | MEDIUM | v0.8.x |
+| `prpm update [pkg]` | ❌ Missing | HIGH | v0.2.x |
+| `prpm upgrade [pkg]` | ❌ Missing | HIGH | v0.2.x |
+| `prpm outdated` | ❌ Missing | HIGH | v0.2.x |
+| `prpm deps <pkg>` | ❌ Missing | HIGH | v0.2.x |
+| `prpm doctor` | ❌ Missing | MEDIUM | v0.3.x |
+| `prpm suggest` | ❌ Missing | MEDIUM | v0.8.x |
+| `prpm similar <pkg>` | ❌ Missing | MEDIUM | v0.8.x |
+| `prpm link` | ❌ Missing | MEDIUM | v0.3.x |
+| `prpm test` | ❌ Missing | LOW | v0.3.x |
+| `prpm quality <pkg>` | ❌ Missing | MEDIUM | v0.5.x |
+| `prpm review <pkg>` | ❌ Missing | LOW | v0.6.x |
+| `prpm reviews <pkg>` | ❌ Missing | LOW | v0.6.x |
+| `prpm stats <pkg>` | ❌ Missing | LOW | v0.7.x |
+| `prpm recommend` | ❌ Missing | MEDIUM | v0.8.x |
 
 **Current Commands**: 14 implemented
 **Missing Critical Commands**: 4 (update, upgrade, outdated, deps)
@@ -484,15 +484,15 @@ DELETE /api/v1/collections/:scope/:id/star
    - Update install command to handle dependencies
 
 2. ✅ **Lock File Support** (2 days)
-   - Define `prmp.lock` format
+   - Define `prpm.lock` format
    - Generate on install
    - Read on install (exact versions)
    - Add `--frozen-lockfile` flag
 
 3. ✅ **Update/Upgrade Commands** (2 days)
-   - `prmp outdated` command
-   - `prmp update` command
-   - `prmp upgrade` command
+   - `prpm outdated` command
+   - `prpm update` command
+   - `prpm upgrade` command
    - Semver constraint checking
 
 4. ✅ **Proper Tarball Extraction** (1 day)
@@ -510,13 +510,13 @@ DELETE /api/v1/collections/:scope/:id/star
 
 1. ✅ **Quality Scores Integration** (2 days)
    - Display scores in search results
-   - Add `prmp quality <pkg>` command
+   - Add `prpm quality <pkg>` command
    - Show badges in package info
    - API endpoints for quality data
 
 2. ✅ **Conflict Detection** (3 days)
    - Pre-install conflict checking
-   - `prmp doctor` diagnostic tool
+   - `prpm doctor` diagnostic tool
    - Conflict resolution prompts
    - Conflict database schema
 
@@ -527,8 +527,8 @@ DELETE /api/v1/collections/:scope/:id/star
    - Integration with installation tracking
 
 4. ✅ **Reviews & Ratings** (3 days)
-   - `prmp review` command
-   - `prmp reviews` command
+   - `prpm review` command
+   - `prpm reviews` command
    - API endpoints
    - Rating display in search
 
@@ -540,8 +540,8 @@ DELETE /api/v1/collections/:scope/:id/star
 
 **Timeline**: Ongoing
 
-1. Local package development (`prmp link`)
-2. Package testing (`prmp test`)
+1. Local package development (`prpm link`)
+2. Package testing (`prpm test`)
 3. Analytics dashboard (web UI)
 4. Search indexing (Meilisearch)
 5. Continue/Windsurf converters
@@ -619,7 +619,7 @@ Most tables exist but have **no API or CLI integration**:
 ### Long Term (2-3 Months)
 
 10. **Analytics dashboard** (web UI)
-11. **Local development tools** (`prmp link`, `prmp test`)
+11. **Local development tools** (`prpm link`, `prpm test`)
 12. **Custom collections** (user-created)
 
 ---

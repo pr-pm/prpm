@@ -3,11 +3,11 @@
  */
 
 import { handleCollectionsList, handleCollectionInfo } from '../commands/collections';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 
 // Mock dependencies
-jest.mock('@prmp/registry-client');
+jest.mock('@prpm/registry-client');
 jest.mock('../core/user-config');
 jest.mock('../core/telemetry', () => ({
   telemetry: {
@@ -50,7 +50,7 @@ describe('collections command', () => {
             name: 'React Essentials',
             description: 'Essential React packages',
             version: '1.0.0',
-            author: 'prmp',
+            author: 'prpm',
             official: true,
             verified: true,
             tags: ['react'],
@@ -152,7 +152,7 @@ describe('collections command', () => {
             name: 'Official Collection',
             description: 'An official collection',
             version: '1.0.0',
-            author: 'prmp',
+            author: 'prpm',
             official: true,
             verified: true,
             tags: [],
@@ -219,7 +219,7 @@ describe('collections command', () => {
         name: 'React Essentials',
         description: 'Essential React packages for development',
         version: '1.0.0',
-        author: 'prmp',
+        author: 'prpm',
         official: true,
         verified: true,
         category: 'development',
@@ -282,7 +282,7 @@ describe('collections command', () => {
         name: 'Test Collection',
         description: 'Test',
         version: '2.0.0',
-        author: 'prmp',
+        author: 'prpm',
         official: true,
         verified: true,
         tags: [],
@@ -306,7 +306,7 @@ describe('collections command', () => {
         name: 'Test Collection',
         description: 'Test',
         version: '1.0.0',
-        author: 'prmp',
+        author: 'prpm',
         official: true,
         verified: true,
         tags: [],

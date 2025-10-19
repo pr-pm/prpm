@@ -199,9 +199,9 @@ $ curl -f http://localhost:9000/minio/health/live
 ```bash
 $ docker ps
 CONTAINER          STATUS                  PORTS
-prmp-postgres      Up (healthy)            5432:5432
-prmp-redis         Up (healthy)            6379:6379
-prmp-minio         Up (healthy)            9000-9001:9000-9001
+prpm-postgres      Up (healthy)            5432:5432
+prpm-redis         Up (healthy)            6379:6379
+prpm-minio         Up (healthy)            9000-9001:9000-9001
 ```
 
 ### Registry Server

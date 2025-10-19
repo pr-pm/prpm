@@ -24,7 +24,7 @@ if [ ! -f "package.json" ]; then
 fi
 
 # Check if binaries exist
-if [ ! -f "binaries/prmp-macos-x64" ] || [ ! -f "binaries/prmp-macos-arm64" ]; then
+if [ ! -f "binaries/prpm-macos-x64" ] || [ ! -f "binaries/prpm-macos-arm64" ]; then
     echo -e "${RED}❌ Error: Binary files not found. Run 'npm run build:binary' first.${NC}"
     exit 1
 fi
@@ -33,20 +33,20 @@ echo -e "${BLUE}📋 Release will be created with:${NC}"
 echo -e "   Tag: ${BLUE}v${VERSION}${NC}"
 echo -e "   Title: ${BLUE}v${VERSION}${NC}"
 echo -e "   Files:"
-echo -e "     - ${BLUE}binaries/prmp-macos-x64${NC}"
-echo -e "     - ${BLUE}binaries/prmp-macos-arm64${NC}"
-echo -e "     - ${BLUE}binaries/prmp-linux-x64${NC}"
-echo -e "     - ${BLUE}binaries/prmp-win-x64.exe${NC}"
+echo -e "     - ${BLUE}binaries/prpm-macos-x64${NC}"
+echo -e "     - ${BLUE}binaries/prpm-macos-arm64${NC}"
+echo -e "     - ${BLUE}binaries/prpm-linux-x64${NC}"
+echo -e "     - ${BLUE}binaries/prpm-win-x64.exe${NC}"
 
 echo -e "${YELLOW}📋 Manual steps:${NC}"
 echo -e "1. Go to: ${BLUE}https://github.com/khaliqgant/prompt-package-manager/releases/new${NC}"
 echo -e "2. Set tag version to: ${BLUE}v${VERSION}${NC}"
 echo -e "3. Set release title to: ${BLUE}v${VERSION}${NC}"
 echo -e "4. Upload these files:"
-echo -e "   - ${BLUE}binaries/prmp-macos-x64${NC}"
-echo -e "   - ${BLUE}binaries/prmp-macos-arm64${NC}"
-echo -e "   - ${BLUE}binaries/prmp-linux-x64${NC}"
-echo -e "   - ${BLUE}binaries/prmp-win-x64.exe${NC}"
+echo -e "   - ${BLUE}binaries/prpm-macos-x64${NC}"
+echo -e "   - ${BLUE}binaries/prpm-macos-arm64${NC}"
+echo -e "   - ${BLUE}binaries/prpm-linux-x64${NC}"
+echo -e "   - ${BLUE}binaries/prpm-win-x64.exe${NC}"
 echo -e "5. Click 'Publish release'"
 
 echo -e "${GREEN}✅ Ready to create release!${NC}"

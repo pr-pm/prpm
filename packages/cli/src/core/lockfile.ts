@@ -1,6 +1,6 @@
 /**
  * Lock file management for reproducible installations
- * prmp.lock format similar to package-lock.json
+ * prpm.lock format similar to package-lock.json
  */
 
 import { promises as fs } from 'fs';
@@ -23,7 +23,7 @@ export interface Lockfile {
   generated: string; // Timestamp
 }
 
-const LOCKFILE_NAME = 'prmp.lock';
+const LOCKFILE_NAME = 'prpm.lock';
 const LOCKFILE_VERSION = 1;
 
 /**

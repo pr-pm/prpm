@@ -37,7 +37,7 @@ function getOpenSearchClient(): Client {
 }
 
 export function openSearchSearch(server: FastifyInstance): SearchProvider {
-  const INDEX_NAME = 'prmp-packages';
+  const INDEX_NAME = 'prpm-packages';
 
   return {
     async search(searchQuery: string, filters: SearchFilters): Promise<SearchResult> {

@@ -149,7 +149,7 @@ export async function handleLogin(options: LoginOptions): Promise<void> {
 
   try {
     const config = await getConfig();
-    const registryUrl = config.registryUrl || 'https://registry.prmp.dev';
+    const registryUrl = config.registryUrl || 'https://registry.prpm.dev';
 
     console.log('🔑 PRMP Login\n');
 
@@ -174,13 +174,13 @@ export async function handleLogin(options: LoginOptions): Promise<void> {
     console.log('✅ Successfully logged in!\n');
     console.log(`   Username: ${result.username}`);
     console.log(`   Registry: ${registryUrl}\n`);
-    console.log('💡 You can now publish packages with "prmp publish"\n');
+    console.log('💡 You can now publish packages with "prpm publish"\n');
 
     success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Login failed: ${error}\n`);
-    console.error('💡 Try again or use "prmp login --token YOUR_TOKEN"\n');
+    console.error('💡 Try again or use "prpm login --token YOUR_TOKEN"\n');
     process.exit(1);
   } finally {
     // Track telemetry

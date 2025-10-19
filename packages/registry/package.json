@@ -1,7 +1,7 @@
 {
-  "name": "@prmp/registry",
+  "name": "@prpm/registry",
   "version": "0.1.0",
-  "description": "PRMP Registry Backend - Central package registry for prompts, agents, and cursor rules",
+  "description": "PRPM Registry Backend - Central package registry for prompts, agents, and cursor rules",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -10,7 +10,9 @@
     "start": "node dist/index.js",
     "migrate": "node --import tsx migrations/run.ts",
     "migrate:create": "node --import tsx migrations/create.ts",
-    "seed:skills": "tsx scripts/seed-new-skills.ts",
+    "seed:packages": "tsx scripts/seed-packages.ts",
+    "seed:collections": "tsx scripts/seed-collections.ts",
+    "seed:all": "npm run seed:packages && npm run seed:collections",
     "test": "vitest run",
     "test:coverage": "vitest --coverage",
     "lint": "eslint src/**/*.ts",

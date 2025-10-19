@@ -65,7 +65,7 @@ cp .env.example .env
 Edit `.env` with your configuration:
 
 ```env
-DATABASE_URL=postgresql://prmp:prmp@localhost:5432/prmp_registry
+DATABASE_URL=postgresql://prpm:prpm@localhost:5432/prpm
 REDIS_URL=redis://localhost:6379
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
@@ -78,7 +78,7 @@ S3_SECRET_ACCESS_KEY=your_secret_key
 3. Create the database:
 
 ```bash
-createdb prmp_registry
+createdb prpm
 ```
 
 4. Run migrations:

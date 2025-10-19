@@ -1,8 +1,8 @@
 {
-  "name": "@prmp/webapp",
+  "name": "@prpm/webapp",
   "version": "0.1.0",
   "private": true,
-  "description": "PRMP Web Application - Author invite claims and package browsing",
+  "description": "PRPM Web Application - Author invite claims and package browsing",
   "scripts": {
     "dev": "next dev -p 5173",
     "build": "next build",

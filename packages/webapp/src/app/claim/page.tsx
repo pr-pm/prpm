@@ -22,7 +22,7 @@ function ClaimForm() {
 
   return (
     <div className="max-w-md w-full">
-      <Link href="/" className="text-prmp-purple hover:text-prmp-purple-dark mb-8 inline-block">
+      <Link href="/" className="text-prpm-purple hover:text-prpm-purple-dark mb-8 inline-block">
         ← Back to home
       </Link>
 
@@ -45,7 +45,7 @@ function ClaimForm() {
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder="Enter your invite token"
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-prmp-purple focus:border-transparent dark:bg-gray-700"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-prpm-purple focus:border-transparent dark:bg-gray-700"
               required
             />
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -55,7 +55,7 @@ function ClaimForm() {
 
           <button
             type="submit"
-            className="w-full px-6 py-3 bg-prmp-purple text-white rounded-lg hover:bg-prmp-purple-dark transition-colors font-medium"
+            className="w-full px-6 py-3 bg-prpm-purple text-white rounded-lg hover:bg-prpm-purple-dark transition-colors font-medium"
           >
             Continue
           </button>

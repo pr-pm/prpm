@@ -36,9 +36,9 @@
 ```
 
 **Marketplace Integration (Planned):**
-- `prmp import claude-marketplace <skill-id>`
-- `prmp export claude-marketplace my-skill`
-- `prmp convert cursor-rules --to claude-skill`
+- `prpm import claude-marketplace <skill-id>`
+- `prpm export claude-marketplace my-skill`
+- `prpm convert cursor-rules --to claude-skill`
 
 **Files Modified:**
 - `src/types.ts` - Added 'claude-skill' type
@@ -55,8 +55,8 @@
 
 **Docker Compose Services:**
 1. **PostgreSQL 15** (port 5432)
-   - Database: prmp_registry
-   - User: prmp
+   - Database: prpm_registry
+   - User: prpm
    - Health checks
 
 2. **Redis 7** (port 6379)
@@ -66,7 +66,7 @@
 3. **MinIO** (ports 9000, 9001) - NEW
    - S3-compatible storage
    - Console UI at http://localhost:9001
-   - Bucket: prmp-packages
+   - Bucket: prpm-packages
    - Health checks
 
 4. **Registry API** (port 3000)
@@ -198,7 +198,7 @@ Hi Simon,
 Just read your excellent article on Claude Skills. Built exactly
 what you describe:
 
-prmp install react-expert-skill
+prpm install react-expert-skill
 
 Like npm, but for Claude skills, cursor rules, and AI prompts.
 Launching next week with 100+ packages.
@@ -287,7 +287,7 @@ cat > skill.json << 'EOF'
 }
 EOF
 
-cat > prmp.json << 'EOF'
+cat > prpm.json << 'EOF'
 {
   "name": "react-expert-skill",
   "type": "claude-skill",
@@ -296,7 +296,7 @@ cat > prmp.json << 'EOF'
 EOF
 
 # Publish
-prmp publish
+prpm publish
 ```
 
 ### 3. Reach Out to Simon

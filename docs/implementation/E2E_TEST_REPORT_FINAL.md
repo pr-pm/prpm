@@ -27,10 +27,10 @@
 
 | Service | Status | Health Check | Ports | Uptime |
 |---------|--------|--------------|-------|--------|
-| `prmp-postgres` | ✅ HEALTHY | Passing | 5432 | 2+ hours |
-| `prmp-redis` | ✅ HEALTHY | Passing | 6379 | 2+ hours |
-| `prmp-minio` | ✅ HEALTHY | Passing | 9000-9001 | 2+ hours |
-| `prmp-registry` | ✅ RUNNING | Passing | 3000 | 21+ minutes |
+| `prpm-postgres` | ✅ HEALTHY | Passing | 5432 | 2+ hours |
+| `prpm-redis` | ✅ HEALTHY | Passing | 6379 | 2+ hours |
+| `prpm-minio` | ✅ HEALTHY | Passing | 9000-9001 | 2+ hours |
+| `prpm-registry` | ✅ RUNNING | Passing | 3000 | 21+ minutes |
 
 **Health Endpoint Response:**
 ```json
@@ -185,7 +185,7 @@ GET /api/v1/packages/@obra/skill-brainstorming
   "versions": [
     {
       "version": "1.0.0",
-      "tarball_url": "https://registry.prmp.dev/packages/@obra/skill-brainstorming/1.0.0.tar.gz",
+      "tarball_url": "https://registry.prpm.dev/packages/@obra/skill-brainstorming/1.0.0.tar.gz",
       "file_size": 7382,
       "published_at": "2025-10-19T09:43:28.303Z"
     }
@@ -549,7 +549,7 @@ real    0m0.005s  # ~5ms (from Redis)
 ### Cache Key Validation
 
 ```bash
-$ docker exec prmp-redis redis-cli KEYS 'packages:*' | wc -l
+$ docker exec prpm-redis redis-cli KEYS 'packages:*' | wc -l
 42
 ```
 
@@ -567,12 +567,12 @@ $ curl -s http://localhost:9000/minio/health/live
 OK
 
 # Check bucket exists
-$ docker exec prmp-minio mc ls local/
-[2025-10-19 10:00:00 UTC]     0B prmp-packages/
+$ docker exec prpm-minio mc ls local/
+[2025-10-19 10:00:00 UTC]     0B prpm-packages/
 ```
 
 **MinIO Status:** ✅ HEALTHY
-**Bucket Created:** ✅ prmp-packages
+**Bucket Created:** ✅ prpm-packages
 
 ---
 
@@ -640,9 +640,9 @@ $ curl "http://localhost:3000/api/v1/packages/%40obra%2Fskill-brainstorming"
 ### Memory Usage
 
 ```bash
-$ docker stats --no-stream prmp-registry
+$ docker stats --no-stream prpm-registry
 CONTAINER       CPU %     MEM USAGE / LIMIT     MEM %
-prmp-registry   0.5%      180MiB / 16GiB        1.12%
+prpm-registry   0.5%      180MiB / 16GiB        1.12%
 ```
 
 **Memory:** 180MB (well within limits) ✅

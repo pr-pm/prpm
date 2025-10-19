@@ -1,7 +1,7 @@
 {
-  "name": "@prmp/infra",
+  "name": "@prpm/infra",
   "version": "1.0.0",
-  "description": "Pulumi Infrastructure as Code for PRMP Registry",
+  "description": "Pulumi Infrastructure as Code for PRPM Registry",
   "main": "index.ts",
   "scripts": {
     "build": "echo 'Pulumi IaC - no TypeScript build required'",

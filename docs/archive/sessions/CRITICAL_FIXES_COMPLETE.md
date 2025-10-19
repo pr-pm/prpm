@@ -17,7 +17,7 @@ Error: relation "packages" does not exist
 **Solution:** Ran all database migrations
 ```bash
 # Executed:
-docker compose exec -T postgres psql -U prmp -d prmp_registry \
+docker compose exec -T postgres psql -U prpm -d prpm_registry \
   -f migrations/001_initial_schema.sql
 ```
 
@@ -104,9 +104,9 @@ ports:
 **Verification:**
 ```bash
 $ docker ps --format "table {{.Names}}\t{{.Ports}}"
-prmp-redis      127.0.0.1:6379->6379/tcp        ✅
-prmp-postgres   127.0.0.1:5432->5432/tcp        ✅
-prmp-minio      127.0.0.1:9000-9001->9000-9001/tcp  ✅
+prpm-redis      127.0.0.1:6379->6379/tcp        ✅
+prpm-postgres   127.0.0.1:5432->5432/tcp        ✅
+prpm-minio      127.0.0.1:9000-9001->9000-9001/tcp  ✅
 
 $ telnet 142.93.37.105 6379
 Connection refused  ✅ GOOD

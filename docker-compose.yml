@@ -4,17 +4,17 @@ services:
   # Shared PostgreSQL database for all services
   postgres:
     image: postgres:15-alpine
-    container_name: prmp-postgres
+    container_name: prpm-postgres
     environment:
-      POSTGRES_USER: prmp
-      POSTGRES_PASSWORD: prmp
-      POSTGRES_DB: prmp_registry
+      POSTGRES_USER: prpm
+      POSTGRES_PASSWORD: prpm
+      POSTGRES_DB: prpm
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U prmp"]
+      test: ["CMD-SHELL", "pg_isready -U prpm"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,7 +22,7 @@ services:
   # Shared Redis for all services
   redis:
     image: redis:7-alpine
-    container_name: prmp-redis
+    container_name: prpm-redis
     ports:
       - "6379:6379"
     volumes:
@@ -36,7 +36,7 @@ services:
   # Shared MinIO for all services
   minio:
     image: minio/minio:latest
-    container_name: prmp-minio
+    container_name: prpm-minio
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -54,10 +54,10 @@ services:
 
   # Registry service
   registry:
-    build:
-      context: ./packages/registry
-      dockerfile: Dockerfile
-    container_name: prmp-registry
+    image: node:20-alpine
+    container_name: prpm-registry
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,7 +69,7 @@ services:
       NODE_ENV: development
       PORT: 3000
       HOST: 0.0.0.0
-      DATABASE_URL: postgresql://prmp:prmp@postgres:5432/prmp_registry
+      DATABASE_URL: postgresql://prpm:prpm@postgres:5432/prpm
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-secret-change-in-production
       # GitHub OAuth (optional)
@@ -81,7 +81,7 @@ services:
       AWS_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
-      S3_BUCKET: prmp-packages
+      S3_BUCKET: prpm-packages
       AWS_FORCE_PATH_STYLE: "true"
       # Search
       SEARCH_ENGINE: postgres
@@ -98,13 +98,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # Webapp service
   webapp:
-    build:
-      context: ./packages/webapp
-      dockerfile: Dockerfile
-    container_name: prmp-webapp
+    image: node:20-alpine
+    container_name: prpm-webapp
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
     depends_on:
       registry:
         condition: service_healthy
@@ -113,15 +114,16 @@ services:
       NEXT_PUBLIC_REGISTRY_URL: http://registry:3000
       NEXT_PUBLIC_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
     ports:
-      - "3001:3000"
+      - "5173:5173"
     volumes:
       - ./packages/webapp:/app
       - /app/node_modules
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5173"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
 volumes:
   postgres_data:

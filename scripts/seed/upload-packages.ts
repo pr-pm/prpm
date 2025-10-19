@@ -27,7 +27,7 @@ interface UploadResult {
   error?: string;
 }
 
-const REGISTRY_URL = process.env.PRMP_REGISTRY_URL || 'https://registry.prmp.dev';
+const REGISTRY_URL = process.env.PRMP_REGISTRY_URL || 'https://registry.prpm.dev';
 const CURATOR_TOKEN = process.env.PRMP_CURATOR_TOKEN; // Special token for curator account
 
 /**
@@ -56,7 +56,7 @@ function createManifest(pkg: ScrapedPackage): any {
       scrapedAt: new Date().toISOString(),
       lastUpdate: pkg.lastUpdate,
       unclaimed: true, // Flag for "claim your package" system
-      curatedBy: 'prmp-curator',
+      curatedBy: 'prpm-curator',
     },
     files: [
       '.cursorrules'
@@ -70,12 +70,12 @@ function createManifest(pkg: ScrapedPackage): any {
  * Create tarball for package
  */
 async function createTarball(pkg: ScrapedPackage, manifest: any): Promise<Buffer> {
-  const tmpDir = join(tmpdir(), `prmp-${randomBytes(8).toString('hex')}`);
+  const tmpDir = join(tmpdir(), `prpm-${randomBytes(8).toString('hex')}`);
   await mkdir(tmpDir, { recursive: true });
 
   try {
     // Write files to temp directory
-    const manifestPath = join(tmpDir, 'prmp.json');
+    const manifestPath = join(tmpDir, 'prpm.json');
     const rulesPath = join(tmpDir, '.cursorrules');
 
     await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
@@ -89,7 +89,7 @@ async function createTarball(pkg: ScrapedPackage, manifest: any): Promise<Buffer
         file: tarballPath,
         cwd: tmpDir,
       },
-      ['prmp.json', '.cursorrules']
+      ['prpm.json', '.cursorrules']
     );
 
     // Read tarball into buffer

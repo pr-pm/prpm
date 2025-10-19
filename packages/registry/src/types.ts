@@ -94,7 +94,7 @@ export interface PackageVersion {
   published_at: Date;
 }
 
-// Package manifest (from prmp.json)
+// Package manifest (from prpm.json)
 export interface PackageManifest {
   name: string;
   version: string;

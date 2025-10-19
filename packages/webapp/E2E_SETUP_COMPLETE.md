@@ -311,7 +311,7 @@ sudo npx playwright install-deps
 **Fix:**
 ```bash
 # Check registry status
-docker ps | grep prmp-registry
+docker ps | grep prpm-registry
 
 # Restart if needed
 cd packages/registry

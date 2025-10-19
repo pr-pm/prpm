@@ -42,7 +42,7 @@
 - API Key: `phc_aO5lXLILeylHfb1ynszVwKbQKSzO91UGdXNhN5Q0Snl`
 - Host: `https://app.posthog.com`
 - Distinct ID: `userId` or `sessionId`
-- Event naming: `prmp_{command}`
+- Event naming: `prpm_{command}`
 
 ### ❌ Registry Telemetry (NOT IMPLEMENTED)
 

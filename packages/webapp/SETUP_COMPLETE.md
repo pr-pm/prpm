@@ -85,7 +85,7 @@ Visit [http://localhost:5173](http://localhost:5173)
 
 ```bash
 npm run build:webapp
-npm start --workspace=@prmp/webapp
+npm start --workspace=@prpm/webapp
 ```
 
 ## Build Output
@@ -226,7 +226,7 @@ test-token-123
 **Fix:** Add `export const dynamic = 'force-dynamic'` to page
 
 **Issue:** `workspace:* protocol not supported`
-**Fix:** Remove `@prmp/registry-client` dependency (not needed yet)
+**Fix:** Remove `@prpm/registry-client` dependency (not needed yet)
 
 ### Runtime Errors
 
@@ -260,7 +260,7 @@ Added to root `package.json` scripts:
 ```json
 {
   "dev:webapp": "npm run dev --workspace=@prpm/webapp",
-  "build:webapp": "npm run build --workspace=@prmp/webapp"
+  "build:webapp": "npm run build --workspace=@prpm/webapp"
 }
 ```
 

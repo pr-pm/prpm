@@ -12,7 +12,7 @@ Share your Cursor rules, Claude skills, or AI agents with the community.
 
 ```bash
 # Install PRPM
-npm install -g prmp
+npm install -g prpm
 
 # Login to the registry
 prpm login
@@ -202,7 +202,7 @@ chore: update dependencies
 
 ## 🔐 Security
 
-**Report vulnerabilities privately** to security@prmp.dev
+**Report vulnerabilities privately** to security@prpm.dev
 
 **Do NOT:**
 - Commit API keys or secrets
@@ -253,7 +253,7 @@ Top contributors get:
 - **GitHub Issues** - Bug reports, feature requests
 - **Discussions** - Questions, ideas, community chat
 - **Discord** - Real-time help (coming soon)
-- **Email** - support@prmp.dev
+- **Email** - support@prpm.dev
 
 ## 📄 License
 

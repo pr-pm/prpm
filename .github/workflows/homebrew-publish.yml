@@ -42,26 +42,26 @@ jobs:
       - name: Checkout homebrew tap
         uses: actions/checkout@v4
         with:
-          repository: khaliqgant/homebrew-prmp
+          repository: khaliqgant/homebrew-prpm
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          path: homebrew-prmp
+          path: homebrew-prpm
 
       - name: Download and calculate SHA256
         id: sha
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          URL="https://registry.npmjs.org/@prmp/cli/-/cli-${VERSION}.tgz"
+          URL="https://registry.npmjs.org/prpm/-/cli-${VERSION}.tgz"
 
           echo "Downloading from: $URL"
-          curl -sL "$URL" -o /tmp/prmp.tgz
+          curl -sL "$URL" -o /tmp/prpm.tgz
 
-          if [ ! -f /tmp/prmp.tgz ] || [ ! -s /tmp/prmp.tgz ]; then
+          if [ ! -f /tmp/prpm.tgz ] || [ ! -s /tmp/prpm.tgz ]; then
             echo "[ERROR] Failed to download package from NPM"
-            echo "Make sure @prmp/cli@${VERSION} is published to NPM first"
+            echo "Make sure prpm@${VERSION} is published to NPM first"
             exit 1
           fi
 
-          SHA256=$(shasum -a 256 /tmp/prmp.tgz | cut -d ' ' -f 1)
+          SHA256=$(shasum -a 256 /tmp/prpm.tgz | cut -d ' ' -f 1)
           echo "sha256=$SHA256" >> $GITHUB_OUTPUT
           echo "SHA256: $SHA256"
 
@@ -70,14 +70,14 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           SHA256="${{ steps.sha.outputs.sha256 }}"
 
-          cd homebrew-prmp
+          cd homebrew-prpm
 
           # Create formula file
           {
             echo "class Prmp < Formula"
             echo "  desc \"Prompt Package Manager - Manage AI prompt packages for Cursor, Claude, and more\""
             echo "  homepage \"https://github.com/khaliqgant/prompt-package-manager\""
-            echo "  url \"https://registry.npmjs.org/@prmp/cli/-/cli-${VERSION}.tgz\""
+            echo "  url \"https://registry.npmjs.org/prpm/-/cli-${VERSION}.tgz\""
             echo "  sha256 \"${SHA256}\""
             echo "  license \"MIT\""
             echo "  version \"${VERSION}\""
@@ -90,38 +90,38 @@ jobs:
             echo "  end"
             echo ""
             echo "  test do"
-            echo "    assert_match \"prmp version \#{version}\", shell_output(\"\#{bin}/prmp --version\")"
+            echo "    assert_match \"prpm version \#{version}\", shell_output(\"\#{bin}/prpm --version\")"
             echo "  end"
             echo "end"
-          } > Formula/prmp.rb
+          } > Formula/prpm.rb
 
           echo "Updated formula:"
-          cat Formula/prmp.rb
+          cat Formula/prpm.rb
 
       - name: Validate formula
         run: |
-          cd homebrew-prmp
-          brew install --build-from-source Formula/prmp.rb
-          brew test prmp
-          brew uninstall prmp
+          cd homebrew-prpm
+          brew install --build-from-source Formula/prpm.rb
+          brew test prpm
+          brew uninstall prpm
 
       - name: Create PR
         if: github.event.inputs.create_pr == 'true'
         run: |
-          cd homebrew-prmp
+          cd homebrew-prpm
 
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-          BRANCH="update-prmp-${{ steps.version.outputs.version }}"
+          BRANCH="update-prpm-${{ steps.version.outputs.version }}"
           git checkout -b "$BRANCH"
-          git add Formula/prmp.rb
-          git commit -m "prmp ${{ steps.version.outputs.version }}"
+          git add Formula/prpm.rb
+          git commit -m "prpm ${{ steps.version.outputs.version }}"
           git push origin "$BRANCH"
 
           gh pr create \
-            --title "prmp ${{ steps.version.outputs.version }}" \
-            --body "Update prmp formula to version ${{ steps.version.outputs.version }}" \
+            --title "prpm ${{ steps.version.outputs.version }}" \
+            --body "Update prpm formula to version ${{ steps.version.outputs.version }}" \
             --base main
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
@@ -129,16 +129,16 @@ jobs:
       - name: Commit and push
         if: github.event.inputs.create_pr != 'true'
         run: |
-          cd homebrew-prmp
+          cd homebrew-prpm
 
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-          git add Formula/prmp.rb
-          git commit -m "prmp ${{ steps.version.outputs.version }}" \
-            -m "Update prmp formula to version ${{ steps.version.outputs.version }}" \
+          git add Formula/prpm.rb
+          git commit -m "prpm ${{ steps.version.outputs.version }}" \
+            -m "Update prpm formula to version ${{ steps.version.outputs.version }}" \
             -m "" \
-            -m "Package URL: https://registry.npmjs.org/@prmp/cli/-/cli-${{ steps.version.outputs.version }}.tgz" \
+            -m "Package URL: https://registry.npmjs.org/prpm/-/cli-${{ steps.version.outputs.version }}.tgz" \
             -m "SHA256: ${{ steps.sha.outputs.sha256 }}" \
             -m "" \
             -m "Generated with Claude Code via Happy" \
@@ -164,7 +164,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Installation" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "brew install khaliqgant/prmp/prmp" >> $GITHUB_STEP_SUMMARY
+          echo "brew install khaliqgant/prpm/prpm" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   test-installation:
@@ -179,18 +179,18 @@ jobs:
 
       - name: Install from tap
         run: |
-          brew tap khaliqgant/prmp
-          brew install prmp
+          brew tap khaliqgant/prpm
+          brew install prpm
 
       - name: Test installation
         run: |
-          which prmp
-          prmp --version
-          prmp --help
+          which prpm
+          prpm --version
+          prpm --help
 
       - name: Verify version
         run: |
-          INSTALLED_VERSION=$(prmp --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          INSTALLED_VERSION=$(prpm --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
           EXPECTED_VERSION="${{ needs.update-formula.outputs.version || steps.version.outputs.version }}"
 
           if [ "$INSTALLED_VERSION" != "$EXPECTED_VERSION" ]; then
@@ -204,11 +204,11 @@ jobs:
 
       - name: Test basic commands
         run: |
-          prmp search test || echo "Search command tested"
-          prmp --help
+          prpm search test || echo "Search command tested"
+          prpm --help
 
       - name: Cleanup
         if: always()
         run: |
-          brew uninstall prmp || true
-          brew untap khaliqgant/prmp || true
+          brew uninstall prpm || true
+          brew untap khaliqgant/prpm || true

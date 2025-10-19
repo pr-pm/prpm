@@ -158,16 +158,16 @@ Get PRPM listed on every major awesome list, directory, and community platform r
 
 **Universal package manager for AI coding prompts** - Works with Cursor, Claude Code, Continue, and Windsurf.
 
-- **🌐 Website**: https://prmp.dev (coming soon)
+- **🌐 Website**: https://prpm.dev (coming soon)
 - **📦 GitHub**: https://github.com/khaliqgant/prompt-package-manager
 - **📚 Packages**: 784+ cursor rules, Claude agents, Windsurf rules, and MCP configs
-- **⚡ Install**: `npm install -g @prpm/cli` or `brew install prpm`
+- **⚡ Install**: `npm install -g prpm` or `brew install prpm`
 - **🎯 Features**:
   - One command to install any AI prompt package
   - Cross-editor format conversion (Cursor ↔ Claude ↔ Continue ↔ Windsurf)
   - 25+ curated collections for complete stacks
   - Semantic versioning and lock files
-  - Central registry at prmp.dev
+  - Central registry at prpm.dev
 
 **Example**:
 ```bash
@@ -208,7 +208,7 @@ PRPM is the first universal package manager for AI coding prompts, supporting Cu
 
 **Links**:
 - GitHub: https://github.com/khaliqgant/prompt-package-manager
-- Website: https://prmp.dev (launching soon)
+- Website: https://prpm.dev (launching soon)
 
 **Suggested placement**: Under "Tools" or "Package Managers" section
 
@@ -251,7 +251,7 @@ prpm install @collection/nextjs-pro
 ```
 
 🚀 **Get Started**:
-npm install -g @prpm/cli
+npm install -g prpm
 prpm search <keyword>
 
 **Why we built this**:
@@ -296,7 +296,7 @@ PRPM (Prompt Package Manager) - think npm but for AI prompts.
 
 **Example**:
 ```bash
-npm install -g @prpm/cli
+npm install -g prpm
 prpm search react
 prpm install cursor-react-best-practices
 prpm install @collection/python-backend-complete
@@ -321,7 +321,7 @@ Would love your feedback! 🙏
 **Stats**:
 - 784 packages (vs Claude's 313 across 7 repos)
 - Works in Cursor, Claude Code, Continue, Windsurf
-- Central registry (launching at prmp.dev soon)
+- Central registry (launching at prpm.dev soon)
 ```
 
 ### Template 5: Twitter/X Thread
@@ -359,7 +359,7 @@ Largest collection vs all competitors combined
 ✅ After: One registry, auto-converts to your editor
 
 5/ 🚀 Try it:
-npm install -g @prpm/cli
+npm install -g prpm
 prpm search <your-framework>
 prpm install <package>
 

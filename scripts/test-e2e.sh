@@ -75,7 +75,7 @@ sleep 10
 # Test 1: PostgreSQL
 echo ""
 echo "Test 1: PostgreSQL Connection"
-if docker exec prmp-postgres psql -U prmp -d prmp_registry -c "SELECT 1" &>/dev/null; then
+if docker exec prpm-postgres psql -U prpm -d prpm_registry -c "SELECT 1" &>/dev/null; then
   test_pass "PostgreSQL connection"
 else
   test_fail "PostgreSQL connection"
@@ -83,7 +83,7 @@ fi
 
 # Test 2: Redis
 echo "Test 2: Redis Connection"
-if docker exec prmp-redis redis-cli ping 2>/dev/null | grep -q "PONG"; then
+if docker exec prpm-redis redis-cli ping 2>/dev/null | grep -q "PONG"; then
   test_pass "Redis connection"
 else
   test_fail "Redis connection"
@@ -136,7 +136,7 @@ echo "=========="
 test_info "Creating test user..."
 
 # Create user via SQL
-docker exec prmp-postgres psql -U prmp -d prmp_registry -c "
+docker exec prpm-postgres psql -U prpm -d prpm_registry -c "
 INSERT INTO users (id, github_id, username, email, role, created_at)
 VALUES ('test-user-e2e', 99999, 'e2e-test', 'e2e@test.com', 'user', NOW())
 ON CONFLICT (github_id) DO NOTHING;
@@ -170,7 +170,7 @@ fi
 
 # Configure CLI
 test_info "Configuring CLI..."
-cat > ~/.prmprc << EOF
+cat > ~/.prpmrc << EOF
 {
   "registryUrl": "http://localhost:3000",
   "token": "$TEST_TOKEN",
@@ -203,7 +203,7 @@ fi
 # Test 6: CLI Version
 echo ""
 echo "Test 6: CLI Version"
-if prmp --version 2>/dev/null | grep -q "1.2.0"; then
+if prpm --version 2>/dev/null | grep -q "1.2.0"; then
   test_pass "CLI version"
 else
   test_fail "CLI version"
@@ -211,7 +211,7 @@ fi
 
 # Test 7: CLI Whoami
 echo "Test 7: CLI Whoami"
-if prmp whoami 2>/dev/null | grep -q "e2e-test"; then
+if prpm whoami 2>/dev/null | grep -q "e2e-test"; then
   test_pass "CLI whoami"
 else
   test_fail "CLI whoami"
@@ -236,7 +236,7 @@ This is an end-to-end test package for PRMP.
 - Package lifecycle testing
 EOF
 
-cat > prmp.json << 'EOF'
+cat > prpm.json << 'EOF'
 {
   "name": "e2e-test-package",
   "version": "1.0.0",
@@ -255,7 +255,7 @@ EOF
 
 # Test 8: Publish Package
 echo "Test 8: Publish Package"
-if prmp publish 2>&1 | grep -q "published successfully"; then
+if prpm publish 2>&1 | grep -q "published successfully"; then
   test_pass "Package published"
 else
   test_fail "Package published"
@@ -264,7 +264,7 @@ fi
 # Test 9: Search for Package
 echo "Test 9: Search for Package"
 sleep 2  # Wait for indexing
-if prmp search "e2e" 2>/dev/null | grep -q "e2e-test-package"; then
+if prpm search "e2e" 2>/dev/null | grep -q "e2e-test-package"; then
   test_pass "Package searchable"
 else
   test_fail "Package searchable"
@@ -272,7 +272,7 @@ fi
 
 # Test 10: Get Package Info
 echo "Test 10: Get Package Info"
-if prmp info e2e-test-package 2>/dev/null | grep -q "E2E Test Package"; then
+if prpm info e2e-test-package 2>/dev/null | grep -q "E2E Test Package"; then
   test_pass "Package info"
 else
   test_fail "Package info"
@@ -283,7 +283,7 @@ echo "Test 11: Install Package"
 INSTALL_DIR=$(mktemp -d)
 cd "$INSTALL_DIR"
 
-if prmp install e2e-test-package 2>&1 | grep -q "installed successfully"; then
+if prpm install e2e-test-package 2>&1 | grep -q "installed successfully"; then
   test_pass "Package installed"
 else
   test_fail "Package installed"
@@ -307,7 +307,7 @@ fi
 
 # Test 14: List Packages
 echo "Test 14: List Installed Packages"
-if prmp list 2>/dev/null | grep -q "e2e-test-package"; then
+if prpm list 2>/dev/null | grep -q "e2e-test-package"; then
   test_pass "Package listed"
 else
   test_fail "Package listed"
@@ -315,7 +315,7 @@ fi
 
 # Test 15: Trending
 echo "Test 15: Trending Packages"
-if prmp trending 2>/dev/null | grep -q "Trending"; then
+if prpm trending 2>/dev/null | grep -q "Trending"; then
   test_pass "Trending command works"
 else
   test_fail "Trending command works"
@@ -330,7 +330,7 @@ rm -rf "$TEST_PKG_DIR" "$INSTALL_DIR"
 test_pass "Test directories cleaned"
 
 test_info "Unlinking CLI..."
-npm unlink prmp &>/dev/null || true
+npm unlink prpm &>/dev/null || true
 test_pass "CLI unlinked"
 
 # Summary

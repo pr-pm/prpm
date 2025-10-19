@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { listPackages } from '../core/config';
 import { telemetry } from '../core/telemetry';
@@ -102,8 +102,8 @@ export async function handleOutdated(): Promise<void> {
       console.log('');
     }
 
-    console.log('💡 Run "prmp update" to update to latest minor/patch versions');
-    console.log('💡 Run "prmp upgrade" to upgrade to latest major versions\n');
+    console.log('💡 Run "prpm update" to update to latest minor/patch versions');
+    console.log('💡 Run "prpm upgrade" to upgrade to latest major versions\n');
 
     success = true;
   } catch (err) {

@@ -11,7 +11,7 @@ export function loadConfig(): RegistryConfig {
     logLevel: process.env.LOG_LEVEL || 'info',
 
     database: {
-      url: process.env.DATABASE_URL || 'postgresql://prmp:prmp@localhost:5432/prmp_registry',
+      url: process.env.DATABASE_URL || 'postgresql://prpm:prpm@localhost:5432/prpm_registry',
     },
 
     redis: {
@@ -40,7 +40,7 @@ export function loadConfig(): RegistryConfig {
     s3: {
       endpoint: process.env.S3_ENDPOINT || 'https://s3.amazonaws.com',
       region: process.env.S3_REGION || 'us-east-1',
-      bucket: process.env.S3_BUCKET || 'prmp-packages',
+      bucket: process.env.S3_BUCKET || 'prpm-packages',
       accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
       secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
     },

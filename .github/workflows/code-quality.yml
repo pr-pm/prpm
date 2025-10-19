@@ -24,7 +24,7 @@ jobs:
         run: npm ci
 
       - name: Build registry-client
-        run: npm run build --workspace=@prmp/registry-client
+        run: npm run build --workspace=@prpm/registry-client
 
       - name: Check Registry TypeScript
         id: registry-ts

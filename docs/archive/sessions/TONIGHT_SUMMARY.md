@@ -19,10 +19,10 @@
   - Verified all endpoints: health, packages, collections, search, trending, popular
 
 ### 3. Database Naming Consistency
-- **Issue**: Inconsistent `prmp` vs `prpm` throughout codebase
+- **Issue**: Inconsistent `prpm` vs `prpm` throughout codebase
 - **Fixed**:
-  - Database: `prpm_registry` → `prmp_registry` everywhere
-  - User/password: `prpm` → `prmp` consistently
+  - Database: `prpm_registry` → `prpm_registry` everywhere
+  - User/password: `prpm` → `prpm` consistently
   - GitHub Actions workflows updated
   - Seed scripts corrected
   - Collections author names fixed
@@ -138,7 +138,7 @@
 
 1. **Registry is production-ready** - All Docker/API bugs fixed
 2. **README is marketing-focused** - Collections/format conversion highlighted
-3. **Naming consistency** - No more prmp/prpm confusion
+3. **Naming consistency** - No more prpm/prpm confusion
 4. **Contributor-ready** - CONTRIBUTING.md + seed script
 5. **Documentation cleaned** - Removed 10K lines of clutter
 

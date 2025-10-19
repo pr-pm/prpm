@@ -32,7 +32,7 @@ This guide explains how to configure GitHub Secrets required for PRPM deployment
 **GITHUB_CLIENT_ID** and **GITHUB_CLIENT_SECRET**
 - Go to https://github.com/settings/developers
 - Create a new OAuth App or use existing one
-- Set Authorization callback URL to: `https://registry.prmp.dev/api/auth/github/callback`
+- Set Authorization callback URL to: `https://registry.prpm.dev/api/auth/github/callback`
 - Copy Client ID and generate a new Client Secret
 
 ### 4. Pulumi Credentials
@@ -89,7 +89,7 @@ After adding all secrets, you can verify by:
 
 If you see errors like:
 ```
-error: Missing required configuration variable 'prmp-infra:db:password'
+error: Missing required configuration variable 'prpm-infra:db:password'
 ```
 
 This means the secret wasn't properly set or the workflow isn't passing it correctly. Check:

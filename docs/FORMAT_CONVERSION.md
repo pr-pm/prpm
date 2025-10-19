@@ -18,20 +18,20 @@ Instead of storing separate packages for each editor (cursor, claude, continue, 
 
 ```bash
 # Install for Cursor
-prmp install react-best-practices --as cursor
+prpm install react-best-practices --as cursor
 # Downloads: .cursor/rules/react-best-practices.md
 
 # Install for Claude
-prmp install react-best-practices --as claude
+prpm install react-best-practices --as claude
 # Downloads: .claude/agents/react-best-practices.md
 
 # Install for Continue
-prmp install react-best-practices --as continue
+prpm install react-best-practices --as continue
 # Downloads: .continue/prompts/react-best-practices.md
 
 # Auto-detect (reads from config)
-prmp install react-best-practices
-# Uses default from ~/.prmprc or auto-detects from project
+prpm install react-best-practices
+# Uses default from ~/.prpmrc or auto-detects from project
 ```
 
 ---
@@ -407,7 +407,7 @@ function getTargetDirectory(format: string): string {
     case 'claude': return '.claude/agents';
     case 'continue': return '.continue/prompts';
     case 'windsurf': return '.windsurf/rules';
-    default: return '.prmp/packages';
+    default: return '.prpm/packages';
   }
 }
 ```
@@ -415,9 +415,9 @@ function getTargetDirectory(format: string): string {
 ### Config File Enhancement
 
 ```typescript
-// ~/.prmprc
+// ~/.prpmrc
 {
-  "registryUrl": "https://registry.prmp.dev",
+  "registryUrl": "https://registry.prpm.dev",
   "token": "...",
   "username": "...",
   "defaultFormat": "cursor", // NEW: default format preference

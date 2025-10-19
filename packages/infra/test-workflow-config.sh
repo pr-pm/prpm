@@ -65,10 +65,10 @@ check_config_requirement "github:clientSecret" "GitHub OAuth client secret (REQU
 
 echo ""
 echo "Optional configurations:"
-check_config_requirement "db:username" "Database username (default: prmp)"
+check_config_requirement "db:username" "Database username (default: prpm)"
 check_config_requirement "db:instanceClass" "RDS instance class (default: db.t4g.micro)"
 check_config_requirement "db:allocatedStorage" "Database storage in GB (default: 20)"
-check_config_requirement "app:image" "Docker image name (default: prmp-registry:latest)"
+check_config_requirement "app:image" "Docker image name (default: prpm-registry:latest)"
 check_config_requirement "app:cpu" "ECS task CPU (default: 256)"
 check_config_requirement "app:memory" "ECS task memory in MB (default: 512)"
 check_config_requirement "app:desiredCount" "Number of ECS tasks (default: 2)"

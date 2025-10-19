@@ -124,7 +124,7 @@ pulumi stack select dev
 pulumi config set aws:region us-east-1
 
 # Database credentials
-pulumi config set db:username prmp
+pulumi config set db:username prpm
 pulumi config set --secret db:password $(openssl rand -base64 32)
 
 # GitHub OAuth (get from https://github.com/settings/developers)
@@ -132,7 +132,7 @@ pulumi config set --secret github:clientId YOUR_GITHUB_CLIENT_ID
 pulumi config set --secret github:clientSecret YOUR_GITHUB_CLIENT_SECRET
 
 # Optional: Custom domain
-pulumi config set app:domainName registry.prmp.dev
+pulumi config set app:domainName registry.prpm.dev
 
 # Optional: App configuration
 pulumi config set app:cpu 256
@@ -214,10 +214,10 @@ aws ecr get-login-password --region us-east-1 | \
 
 # Build image
 cd ../registry
-docker build -t prmp-registry:latest .
+docker build -t prpm-registry:latest .
 
 # Tag and push
-docker tag prmp-registry:latest $ECR_REPO:latest
+docker tag prpm-registry:latest $ECR_REPO:latest
 docker push $ECR_REPO:latest
 ```
 
@@ -229,7 +229,7 @@ CLUSTER=$(pulumi stack output ecsClusterName)
 TASK_DEF=$(pulumi stack output ecsServiceName | sed 's/-service/-task/')
 SUBNET=$(pulumi stack output privateSubnetIds | jq -r '.[0]')
 SG=$(aws ec2 describe-security-groups \
-  --filters "Name=tag:Name,Values=prmp-dev-ecs-sg" \
+  --filters "Name=tag:Name,Values=prpm-dev-ecs-sg" \
   --query 'SecurityGroups[0].GroupId' --output text)
 
 # Run migration task
@@ -238,7 +238,7 @@ aws ecs run-task \
   --task-definition $TASK_DEF \
   --launch-type FARGATE \
   --network-configuration "awsvpcConfiguration={subnets=[$SUBNET],securityGroups=[$SG],assignPublicIp=DISABLED}" \
-  --overrides '{"containerOverrides":[{"name":"prmp-registry","command":["npm","run","migrate"]}]}'
+  --overrides '{"containerOverrides":[{"name":"prpm-registry","command":["npm","run","migrate"]}]}'
 ```
 
 ### 4.4 Deploy ECS Service
@@ -329,7 +329,7 @@ For staging or production:
 ```bash
 # Create hosted zone
 aws route53 create-hosted-zone \
-  --name prmp.dev \
+  --name prpm.dev \
   --caller-reference $(date +%s)
 
 # Get name servers
@@ -345,7 +345,7 @@ aws route53 list-resource-record-sets \
 ```bash
 # Request certificate
 aws acm request-certificate \
-  --domain-name registry.prmp.dev \
+  --domain-name registry.prpm.dev \
   --validation-method DNS \
   --region us-east-1
 
@@ -360,7 +360,7 @@ aws acm describe-certificate \
 
 ```bash
 # Update Pulumi config
-pulumi config set app:domainName registry.prmp.dev
+pulumi config set app:domainName registry.prpm.dev
 pulumi config set app:certificateArn arn:aws:acm:us-east-1:...:certificate/xxxxx
 
 # Deploy
@@ -398,7 +398,7 @@ pulumi config set app:searchEngine opensearch
 
 ```bash
 # ECS logs
-aws logs tail /ecs/prmp-dev --follow
+aws logs tail /ecs/prpm-dev --follow
 
 # Pulumi logs
 pulumi logs --follow
@@ -416,8 +416,8 @@ pulumi up
 
 # Or via AWS CLI
 aws ecs update-service \
-  --cluster prmp-dev-cluster \
-  --service prmp-dev-service \
+  --cluster prpm-dev-cluster \
+  --service prpm-dev-service \
   --desired-count 4
 ```
 
@@ -426,8 +426,8 @@ aws ecs update-service \
 ```bash
 # Manual snapshot
 aws rds create-db-snapshot \
-  --db-instance-identifier prmp-dev-db \
-  --db-snapshot-identifier prmp-dev-manual-$(date +%Y%m%d)
+  --db-instance-identifier prpm-dev-db \
+  --db-snapshot-identifier prpm-dev-manual-$(date +%Y%m%d)
 ```
 
 ### Rollback Deployment
@@ -435,9 +435,9 @@ aws rds create-db-snapshot \
 ```bash
 # Rollback to previous image
 aws ecs update-service \
-  --cluster prmp-dev-cluster \
+  --cluster prpm-dev-cluster \
   --service prpm-dev-service \
-  --task-definition prmp-dev-task:PREVIOUS_REVISION
+  --task-definition prpm-dev-task:PREVIOUS_REVISION
 ```
 
 ## Monitoring
@@ -490,12 +490,12 @@ Enable cost allocation tags in Billing console.
 ```bash
 # Check task stopped reason
 aws ecs describe-tasks \
-  --cluster prmp-dev-cluster \
+  --cluster prpm-dev-cluster \
   --tasks TASK_ARN \
   --query 'tasks[0].stoppedReason'
 
 # Check logs
-aws logs tail /ecs/prmp-dev --follow
+aws logs tail /ecs/prpm-dev --follow
 ```
 
 ### Database Connection Failed
@@ -507,9 +507,9 @@ aws ec2 describe-security-groups \
 
 # Test connection from ECS task
 aws ecs execute-command \
-  --cluster prmp-dev-cluster \
+  --cluster prpm-dev-cluster \
   --task TASK_ARN \
-  --container prmp-registry \
+  --container prpm-registry \
   --interactive \
   --command "/bin/sh"
 ```

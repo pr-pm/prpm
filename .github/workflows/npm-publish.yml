@@ -70,10 +70,10 @@ jobs:
         run: npm ci
 
       - name: Build registry-client
-        run: npm run build --workspace=@prmp/registry-client
+        run: npm run build --workspace=@prpm/registry-client
 
       - name: Build CLI
-        run: npm run build --workspace=@prmp/cli
+        run: npm run build --workspace=prpm
 
       - name: Run tests
         run: npm test --workspaces --if-present
@@ -143,7 +143,7 @@ jobs:
       - name: Build dependencies
         run: |
           # Build registry-client first (CLI depends on it)
-          npm run build --workspace=@prmp/registry-client
+          npm run build --workspace=@prpm/registry-client
 
       - name: Update version
         run: |
@@ -151,7 +151,7 @@ jobs:
           npm version ${{ needs.validate.outputs.new_version }} --no-git-tag-version --allow-same-version
 
       - name: Build package
-        run: npm run build --workspace=@prmp/${{ matrix.package }}
+        run: npm run build --workspace=@prpm/${{ matrix.package }}
 
       - name: Dry run check
         if: github.event.inputs.dry_run == 'true'
@@ -171,7 +171,7 @@ jobs:
 
       - name: Report published
         run: |
-          echo "[OK] Published @prmp/${{ matrix.package }}@${{ needs.validate.outputs.new_version }}"
+          echo "[OK] Published @prpm/${{ matrix.package }}@${{ needs.validate.outputs.new_version }}"
           echo "Tag: ${{ github.event.inputs.tag }}"
 
   create-git-tag:
@@ -245,10 +245,10 @@ jobs:
 
             ```bash
             # CLI
-            npm install -g @prmp/cli@${{ needs.validate.outputs.new_version }}
+            npm install -g prpm@${{ needs.validate.outputs.new_version }}
 
             # Registry Client (for developers)
-            npm install @prmp/registry-client@${{ needs.validate.outputs.new_version }}
+            npm install @prpm/registry-client@${{ needs.validate.outputs.new_version }}
             ```
 
             ---
@@ -275,7 +275,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Published Packages" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo '${{ needs.validate.outputs.packages_to_publish }}' | jq -r '.[] | "- @prmp/" + .'  >> $GITHUB_STEP_SUMMARY || echo "- Error parsing packages"
+          echo '${{ needs.validate.outputs.packages_to_publish }}' | jq -r '.[] | "- @prpm/" + .'  >> $GITHUB_STEP_SUMMARY || echo "- Error parsing packages"
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
@@ -285,6 +285,6 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Install with:" >> $GITHUB_STEP_SUMMARY
             echo '```bash' >> $GITHUB_STEP_SUMMARY
-            echo "npm install -g @prmp/cli@${{ needs.validate.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+            echo "npm install -g prpm@${{ needs.validate.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           fi

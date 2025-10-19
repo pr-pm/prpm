@@ -7,7 +7,7 @@ export default function Home() {
       <div className="flex min-h-screen flex-col items-center justify-center p-8 lg:p-24">
         <div className="z-10 max-w-5xl w-full">
           <div className="text-center mb-16">
-            <h1 className="text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-prmp-purple to-prmp-purple-dark bg-clip-text text-transparent">
+            <h1 className="text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-prpm-purple to-prpm-purple-dark bg-clip-text text-transparent">
               PRPM
             </h1>
             <p className="text-2xl lg:text-3xl mb-6 text-gray-600 dark:text-gray-300 font-semibold">
@@ -23,13 +23,13 @@ export default function Home() {
                 href="https://github.com/khaliqgant/prompt-package-manager"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-4 bg-prmp-purple text-white rounded-lg hover:bg-prmp-purple-dark transition-colors font-medium text-lg"
+                className="px-8 py-4 bg-prpm-purple text-white rounded-lg hover:bg-prpm-purple-dark transition-colors font-medium text-lg"
               >
                 View on GitHub
               </a>
               <Link
                 href="/claim"
-                className="px-8 py-4 border-2 border-prmp-purple text-prmp-purple rounded-lg hover:bg-prmp-purple hover:text-white transition-colors font-medium text-lg"
+                className="px-8 py-4 border-2 border-prpm-purple text-prpm-purple rounded-lg hover:bg-prpm-purple hover:text-white transition-colors font-medium text-lg"
               >
                 Claim Invite
               </Link>
@@ -88,20 +88,20 @@ export default function Home() {
           </div>
 
           {/* Quick Start */}
-          <div className="bg-gradient-to-br from-prmp-purple/10 to-prmp-purple-dark/10 rounded-lg p-8 mb-16 border border-prmp-purple/20">
+          <div className="bg-gradient-to-br from-prpm-purple/10 to-prpm-purple-dark/10 rounded-lg p-8 mb-16 border border-prpm-purple/20">
             <h2 className="text-3xl font-bold mb-6 text-center">Quick Start</h2>
             <div className="space-y-4 max-w-2xl mx-auto">
               <div className="bg-gray-900 dark:bg-black rounded-lg p-4 text-green-400 font-mono text-sm overflow-x-auto">
                 <div className="mb-2"># Install the CLI</div>
-                <div>npm install -g @prmp/cli</div>
+                <div>npm install -g @prpm/cli</div>
               </div>
               <div className="bg-gray-900 dark:bg-black rounded-lg p-4 text-green-400 font-mono text-sm overflow-x-auto">
                 <div className="mb-2"># Search for packages</div>
-                <div>prmp search react</div>
+                <div>prpm search react</div>
               </div>
               <div className="bg-gray-900 dark:bg-black rounded-lg p-4 text-green-400 font-mono text-sm overflow-x-auto">
                 <div className="mb-2"># Install a package</div>
-                <div>prmp install @sanjeed5/react-best-practices</div>
+                <div>prpm install @sanjeed5/react-best-practices</div>
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function Home() {
             </p>
             <Link
               href="/claim"
-              className="inline-flex items-center gap-2 text-prmp-purple hover:text-prmp-purple-dark text-lg font-semibold"
+              className="inline-flex items-center gap-2 text-prpm-purple hover:text-prpm-purple-dark text-lg font-semibold"
             >
               Claim your verified author username →
             </Link>

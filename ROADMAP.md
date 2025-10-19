@@ -1,10 +1,10 @@
-# prmp Roadmap
+# prpm Roadmap
 
-This document outlines the future development plans for the Prompt Package Manager (prmp), evolving it from a simple CLI tool into a comprehensive package management ecosystem similar to npm.
+This document outlines the future development plans for the Prompt Package Manager (prpm), evolving it from a simple CLI tool into a comprehensive package management ecosystem similar to npm.
 
 ## Current State (v0.1.x)
 
-prmp currently provides basic functionality for managing prompt-based files:
+prpm currently provides basic functionality for managing prompt-based files:
 
 - ✅ **CLI Commands**: `add`, `list`, `remove`, `index`
 - ✅ **GitHub Integration**: Direct file downloads from raw GitHub URLs
@@ -91,4 +91,4 @@ We welcome community contributions and feedback:
 
 ---
 
-*This roadmap is a living document that will evolve as prmp grows and the needs of the community become clearer.*
+*This roadmap is a living document that will evolve as prpm grows and the needs of the community become clearer.*

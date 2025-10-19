@@ -116,9 +116,9 @@ pulumi login  # Or: pulumi login --local for file-based state
 
 pulumi stack init dev
 pulumi config set aws:region us-east-1
-pulumi config set prmp:environment dev
-pulumi config set --secret prmp:jwtSecret "$(openssl rand -base64 32)"
-pulumi config set --secret prmp:githubClientSecret "your-github-oauth-secret"
+pulumi config set prpm:environment dev
+pulumi config set --secret prpm:jwtSecret "$(openssl rand -base64 32)"
+pulumi config set --secret prpm:githubClientSecret "your-github-oauth-secret"
 ```
 
 #### 3. Deploy Infrastructure
@@ -166,13 +166,13 @@ aws ecr get-login-password --region us-east-1 | \
   YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
 
 # Build image
-docker build -t prmp-registry .
+docker build -t prpm-registry .
 
 # Tag and push
-docker tag prmp-registry:latest \
-  YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/prmp-registry:latest
+docker tag prpm-registry:latest \
+  YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/prpm-registry:latest
 
-docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/prmp-registry:latest
+docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/prpm-registry:latest
 ```
 
 Or use GitHub Actions:
@@ -184,11 +184,11 @@ git push origin main  # Triggers registry-deploy.yml workflow
 ```bash
 # Via ECS task
 aws ecs run-task \
-  --cluster prmp-dev-cluster \
-  --task-definition prmp-registry-task \
+  --cluster prpm-dev-cluster \
+  --task-definition prpm-registry-task \
   --launch-type FARGATE \
   --network-configuration "..." \
-  --overrides '{"containerOverrides":[{"name":"prmp-registry","command":["npm","run","migrate"]}]}'
+  --overrides '{"containerOverrides":[{"name":"prpm-registry","command":["npm","run","migrate"]}]}'
 
 # Or locally (if you have DB access)
 cd registry
@@ -199,7 +199,7 @@ npm run migrate
 
 Connect to database:
 ```bash
-psql -h your-rds-endpoint.rds.amazonaws.com -U prmp -d prmp
+psql -h your-rds-endpoint.rds.amazonaws.com -U prpm -d prpm
 ```
 
 Create curator:
@@ -208,8 +208,8 @@ INSERT INTO users (id, github_id, username, email, role, created_at)
 VALUES (
   '00000000-0000-0000-0000-000000000001',
   0,
-  'prmp-curator',
-  'curator@prmp.dev',
+  'prpm-curator',
+  'curator@prpm.dev',
   'curator',
   NOW()
 );
@@ -220,7 +220,7 @@ Generate curator token (run in registry directory):
 node -e "
 const jwt = require('jsonwebtoken');
 const token = jwt.sign(
-  { userId: '00000000-0000-0000-0000-000000000001', username: 'prmp-curator', role: 'curator' },
+  { userId: '00000000-0000-0000-0000-000000000001', username: 'prpm-curator', role: 'curator' },
   process.env.JWT_SECRET,
   { expiresIn: '365d' }
 );
@@ -256,7 +256,7 @@ npm install
 
 #### 2. Configure Environment
 ```bash
-export PRMP_REGISTRY_URL="https://your-registry-url.com"
+export PRPM_REGISTRY_URL="https://your-registry-url.com"
 export PRMP_CURATOR_TOKEN="your-curator-jwt-token"
 ```
 
@@ -307,8 +307,8 @@ Should show all 5 packages verified.
 
 Also test via CLI:
 ```bash
-prmp search react
-prmp info react-patrickjs
+prpm search react
+prpm info react-patrickjs
 ```
 
 #### 5. Full Upload
@@ -331,8 +331,8 @@ npm run check
 
 Test search:
 ```bash
-prmp search typescript
-prmp trending
+prpm search typescript
+prpm trending
 ```
 
 ---
@@ -444,9 +444,9 @@ Create spreadsheet with columns:
    ❌ Manually updating rules
 
    Just:
-   ✅ prmp install react-rules
+   ✅ prpm install react-rules
 
-   500+ packages available: https://registry.prmp.dev
+   500+ packages available: https://registry.prpm.dev
 
    🧵 Thread...
    ```
@@ -538,7 +538,7 @@ Create spreadsheet with columns:
 
 **Registry returns 500 errors**
 - Check database connection: `psql -h...`
-- View logs: `aws logs tail /ecs/prmp-registry --follow`
+- View logs: `aws logs tail /ecs/prpm-registry --follow`
 - Check secrets are configured
 
 **Packages not appearing in search**

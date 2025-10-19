@@ -38,13 +38,13 @@ Instead of copying skills from GitHub or manually creating them:
 
 ```bash
 # Install a Claude skill
-prmp install react-expert-skill
+prpm install react-expert-skill
 
 # Publish your own
 prpm publish
 
 # Search for skills
-prmp search "data analysis"
+prpm search "data analysis"
 ```
 
 ## Why I'm reaching out
@@ -79,8 +79,8 @@ P.S. If you're interested, I can set you up with early access before the public 
 
 Built exactly what he describes - a package manager for prompts:
 
-npm install -g prmp
-prmp install react-expert-skill
+npm install -g prpm
+prpm install react-expert-skill
 
 Like npm, but for Claude skills, cursor rules, and AI prompts.
 
@@ -94,11 +94,11 @@ Launching next week with 100+ packages.
 ```
 @simonw Demo of installing the Claude skills you described:
 
-[GIF of: prmp search, prmp install, prmp info]
+[GIF of: prpm search, prpm install, prpm info]
 
 Would love your feedback! Early access available.
 
-github.com/khaliqgant/prmp
+github.com/khaliqgant/prpm
 ```
 
 ### Phase 3: Hacker News Comment (Week 2)
@@ -108,8 +108,8 @@ When he posts next article (or post yourself):
 ```
 Relevant to this - I just launched PRMP (Prompt Package Manager):
 
-npm install -g prmp
-prmp install react-expert-skill
+npm install -g prpm
+prpm install react-expert-skill
 
 Like npm but for Claude skills, cursor rules, and prompts. Simon's article on Claude Skills (https://simonwillison.net/2025/Oct/16/claude-skills/) inspired part of the design.
 

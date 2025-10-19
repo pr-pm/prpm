@@ -31,7 +31,7 @@ Services Running:
   ✅ PRMP Registry (API Server) - Port 3000
 
 Configuration:
-  - DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prmp_registry
+  - DATABASE_URL: postgresql://prpm:prpm@localhost:5432/prpm_registry
   - REDIS_URL: redis://localhost:6379
   - Search Engine: PostgreSQL Full-Text Search
   - Cache: Redis with 5-10 minute TTL

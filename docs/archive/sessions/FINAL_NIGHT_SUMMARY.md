@@ -15,7 +15,7 @@
    - Fixed logger serialization bugs
    - Docker deployment now works
    - All 6 endpoints tested and working
-   - Database naming consistency (`prmp` everywhere)
+   - Database naming consistency (`prpm` everywhere)
 
 3. **Documentation Cleanup**
    - Removed 5 obsolete markdown files (~10K lines)
@@ -77,7 +77,7 @@
 1. Deploy registry to cloud (AWS/Railway/Fly.io)
 2. Run seed-packages.ts and seed-collections.ts
 3. Test API with real data
-4. Publish CLI to npm as `prmp`
+4. Publish CLI to npm as `prpm`
 5. Launch Karen GitHub Action marketplace
 
 ## 📦 Package Sources
@@ -101,7 +101,7 @@
 
 1. **Production-Ready Registry** - All bugs fixed, Docker working
 2. **Marketing-Focused README** - Collections/format conversion highlighted
-3. **Naming Consistency** - No more prmp/prpm confusion
+3. **Naming Consistency** - No more prpm/prpm confusion
 4. **Contributor Infrastructure** - CONTRIBUTING.md + seed scripts
 5. **275+ Packages Ready** - Comprehensive ecosystem coverage
 6. **20+ Collections** - Practical workflow bundles

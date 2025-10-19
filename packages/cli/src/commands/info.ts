@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 
@@ -50,8 +50,8 @@ export async function handleInfo(packageId: string): Promise<void> {
 
     // Installation
     console.log('\n💻 Installation:');
-    console.log(`   prmp install ${pkg.id}`);
-    console.log(`   prmp install ${pkg.id}@${pkg.latest_version?.version || 'latest'}`);
+    console.log(`   prpm install ${pkg.id}`);
+    console.log(`   prpm install ${pkg.id}@${pkg.latest_version?.version || 'latest'}`);
 
     console.log('\n' + '='.repeat(60));
 
@@ -61,8 +61,8 @@ export async function handleInfo(packageId: string): Promise<void> {
     console.error(`\n❌ Failed to fetch package info: ${error}`);
     console.log(`\n💡 Tips:`);
     console.log(`   - Check the package ID spelling`);
-    console.log(`   - Search for packages: prmp search <query>`);
-    console.log(`   - View trending: prmp trending`);
+    console.log(`   - Search for packages: prpm search <query>`);
+    console.log(`   - View trending: prpm trending`);
     process.exit(1);
   } finally {
     await telemetry.track({

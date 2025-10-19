@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir } from '../core/filesystem';
 import { addPackage } from '../core/config';
@@ -171,9 +171,9 @@ export async function handleInstall(
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Installation failed: ${error}`);
     console.log(`\n💡 Tips:`);
-    console.log(`   - Check package name: prmp search <query>`);
-    console.log(`   - Get package info: prmp info <package>`);
-    console.log(`   - Install from URL: prmp add <url> --as <type>`);
+    console.log(`   - Check package name: prpm search <query>`);
+    console.log(`   - Get package info: prpm info <package>`);
+    console.log(`   - Install from URL: prpm add <url> --as <type>`);
     process.exit(1);
   } finally {
     await telemetry.track({

@@ -191,7 +191,7 @@ update_package_score()          -- Trigger on updates
 ### Search with Quality
 
 ```bash
-$ prmp search react
+$ prpm search react
 
 [✓🏆⭐] react-rules
 by @cursor-rules-org • 10k downloads • ⭐ 4.8 • Score: 92/100
@@ -205,7 +205,7 @@ Expert React guidance
 ### Install with Disambiguation
 
 ```bash
-$ prmp install react-rules
+$ prpm install react-rules
 
 Multiple packages found:
 1. [✓🏆] react-rules (recommended) Score: 92/100
@@ -218,7 +218,7 @@ Install which? [1]:
 ### Package Info
 
 ```bash
-$ prmp info react-rules
+$ prpm info react-rules
 
 react-rules v2.1.0
 

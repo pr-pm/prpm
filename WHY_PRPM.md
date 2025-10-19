@@ -103,7 +103,7 @@ prpm install testing-automation
 - Must manually add each marketplace
 
 **PRPM:**
-- Central registry at `registry.prmp.dev`
+- Central registry at `registry.prpm.dev`
 - Searchable catalog of 265+ packages
 - Quality scoring and verification (Karen Score)
 - Semantic versioning (1.2.0)
@@ -559,7 +559,7 @@ prpm install testing-suite
 /plugin install my-favorite-claude-plugin
 
 # Add PRPM for cross-editor tools
-npm install -g prmp
+npm install -g prpm
 prpm install @collection/testing-suite
 prpm install cursor-react-rules
 
@@ -679,7 +679,7 @@ prpm import-marketplace wshobson/agents
 
 ```bash
 # Install PRPM
-npm install -g prmp
+npm install -g prpm
 
 # Install packages that work everywhere
 prpm install @collection/testing-complete
@@ -717,6 +717,6 @@ prpm install claude-workflows
 
 ### PRPM Resources
 - [PRPM Documentation](https://github.com/khaliqgant/prompt-package-manager)
-- [PRPM Registry](https://registry.prmp.dev)
+- [PRPM Registry](https://registry.prpm.dev)
 - [Package Catalog](https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/PACKAGES.md)
 - [Collections Guide](https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/COLLECTIONS.md)

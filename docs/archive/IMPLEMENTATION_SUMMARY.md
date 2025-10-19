@@ -26,7 +26,7 @@ Successfully implemented **5 critical features** identified in the gap analysis,
   - GET `/api/v1/packages/:id/:version/dependencies` - Get dependencies
   - GET `/api/v1/packages/:id/resolve` - Resolve complete dependency tree
 - `src/core/registry-client.ts` (lines 122-154): Client methods for dep resolution
-- `src/commands/deps.ts`: New CLI command `prmp deps <package>`
+- `src/commands/deps.ts`: New CLI command `prpm deps <package>`
 
 **Features**:
 - Recursive dependency tree resolution
@@ -38,7 +38,7 @@ Successfully implemented **5 critical features** identified in the gap analysis,
 **Example Usage**:
 ```bash
 # View dependency tree
-prmp deps react-rules
+prpm deps react-rules
 
 # Output:
 🌳 Dependency Tree:
@@ -76,7 +76,7 @@ prmp deps react-rules
 
 ---
 
-### 2. Lock File Support (prmp.lock)
+### 2. Lock File Support (prpm.lock)
 
 **Status**: ✅ **IMPLEMENTED**
 
@@ -92,11 +92,11 @@ prmp deps react-rules
 
 **Files Modified**:
 - `src/commands/install.ts`: Integrated lock file generation and reading
-  - Auto-generates `prmp.lock` on install
+  - Auto-generates `prpm.lock` on install
   - Uses locked versions by default
   - `--frozen-lockfile` flag for CI environments
 
-**Lock File Format** (`prmp.lock`):
+**Lock File Format** (`prpm.lock`):
 ```json
 {
   "version": "1.0.0",
@@ -104,7 +104,7 @@ prmp deps react-rules
   "packages": {
     "react-rules": {
       "version": "1.2.0",
-      "resolved": "https://registry.prmp.dev/tarballs/react-rules-1.2.0.tgz",
+      "resolved": "https://registry.prpm.dev/tarballs/react-rules-1.2.0.tgz",
       "integrity": "sha256-a3f8d9...",
       "dependencies": {
         "typescript-rules": "^2.0.0"
@@ -128,10 +128,10 @@ prmp deps react-rules
 **Example Usage**:
 ```bash
 # Normal install - creates/updates lock file
-prmp install react-rules
+prpm install react-rules
 
 # CI mode - fails if lock file needs update
-prmp install react-rules --frozen-lockfile
+prpm install react-rules --frozen-lockfile
 ```
 
 ---
@@ -148,11 +148,11 @@ prmp install react-rules --frozen-lockfile
 
 **Commands**:
 
-#### `prmp outdated`
+#### `prpm outdated`
 Shows which packages have updates available, grouped by update type:
 
 ```bash
-$ prmp outdated
+$ prpm outdated
 
 📦 3 package(s) have updates available:
 
@@ -165,19 +165,19 @@ $ prmp outdated
 🟢 Patch Updates (bug fixes):
    prettier-config                 1.0.0 → 1.0.3
 
-💡 Run "prmp update" to update to latest minor/patch versions
-💡 Run "prmp upgrade" to upgrade to latest major versions
+💡 Run "prpm update" to update to latest minor/patch versions
+💡 Run "prpm upgrade" to upgrade to latest major versions
 ```
 
-#### `prmp update [package]`
+#### `prpm update [package]`
 Updates packages to latest compatible versions (minor/patch only, skips major):
 
 ```bash
 # Update all packages
-prmp update
+prpm update
 
 # Update specific package
-prmp update react-rules
+prpm update react-rules
 
 # Output:
 🔄 Checking for updates...
@@ -190,12 +190,12 @@ prmp update react-rules
 ✅ Updated 1 package(s)
 ```
 
-#### `prmp upgrade [package]`
+#### `prpm upgrade [package]`
 Upgrades to latest versions including major updates:
 
 ```bash
 # Upgrade all packages
-prmp upgrade
+prpm upgrade
 
 # Upgrade specific package
 prpm upgrade react-rules
@@ -279,11 +279,11 @@ async function extractMainFile(tarball: Buffer, packageId: string): Promise<stri
 **What Was Added**:
 - Quality score display in search results (planned)
 - API endpoints for quality data (planned)
-- `prmp quality <package>` command (planned)
+- `prpm quality <package>` command (planned)
 
 **Planned Output**:
 ```bash
-$ prmp quality react-rules
+$ prpm quality react-rules
 
 📊 Quality Report: react-rules
 
@@ -350,8 +350,8 @@ Reviews: 4.8/5.0 (500 reviews)
 
 **Added Features**:
 - ✅ Full dependency resolution with tree visualization
-- ✅ `prmp.lock` with SHA-256 integrity checking
-- ✅ `prmp outdated`, `prmp update`, `prmp upgrade` commands
+- ✅ `prpm.lock` with SHA-256 integrity checking
+- ✅ `prpm outdated`, `prpm update`, `prpm upgrade` commands
 - ✅ Multi-file tarball support (enhanced)
 - ✅ Quality scores infrastructure (DB ready, API pending)
 
@@ -413,12 +413,12 @@ GET /api/v1/packages/:id/reviews
 | Feature | Before | After | Status |
 |---------|--------|-------|--------|
 | Dependency resolution | ❌ | ✅ API + CLI | Done |
-| Lock files | ❌ | ✅ prmp.lock | Done |
+| Lock files | ❌ | ✅ prpm.lock | Done |
 | Update packages | ❌ | ✅ 3 commands | Done |
-| Outdated check | ❌ | ✅ `prmp outdated` | Done |
+| Outdated check | ❌ | ✅ `prpm outdated` | Done |
 | Multi-file packages | ⚠️ Basic | ✅ Enhanced | Done |
 | Quality scores | 💾 DB only | ⚠️ DB + partial CLI | Pending |
-| Dependency tree viz | ❌ | ✅ `prmp deps` | Done |
+| Dependency tree viz | ❌ | ✅ `prpm deps` | Done |
 | Frozen lockfile (CI) | ❌ | ✅ `--frozen-lockfile` | Done |
 | SHA-256 integrity | ❌ | ✅ Lock file | Done |
 | Semver resolution | ❌ | ✅ Full support | Done |
@@ -454,7 +454,7 @@ GET /api/v1/packages/:id/reviews
 - [ ] Package analytics dashboard
 - [ ] Search indexing (Meilisearch)
 - [ ] Custom collections CLI
-- [ ] Local package development (`prmp link`)
+- [ ] Local package development (`prpm link`)
 
 ---
 

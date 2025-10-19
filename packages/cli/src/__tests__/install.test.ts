@@ -3,7 +3,7 @@
  */
 
 import { handleInstall } from '../commands/install';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
 import { addPackage } from '../core/config';
@@ -11,7 +11,7 @@ import { readLockfile, writeLockfile } from '../core/lockfile';
 import { gzipSync } from 'zlib';
 
 // Mock dependencies
-jest.mock('@prmp/registry-client');
+jest.mock('@prpm/registry-client');
 jest.mock('../core/user-config');
 jest.mock('../core/filesystem', () => ({
   getDestinationDir: jest.fn(() => '.cursor/rules'),

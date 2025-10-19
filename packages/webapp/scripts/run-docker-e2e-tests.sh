@@ -114,7 +114,7 @@ echo ""
 
 # Step 2: Run migrations
 echo -e "${BLUE}Step 2/7: Running database migrations...${NC}"
-docker compose exec -T postgres psql -U prmp -d prmp_registry -c "\dt" > /dev/null 2>&1 || {
+docker compose exec -T postgres psql -U prpm -d prpm_registry -c "\dt" > /dev/null 2>&1 || {
   echo -e "${YELLOW}  Note: Some tables may not exist yet, this is expected${NC}"
 }
 echo -e "  ${GREEN}✓ Database ready${NC}"
@@ -127,7 +127,7 @@ cd "$WEBAPP_DIR"
 
 # Create test invites
 echo "  Creating test invites..."
-docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U prmp -d prmp_registry <<'EOF'
+docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U prpm -d prpm_registry <<'EOF'
 -- Create test invites
 DO $$
 BEGIN

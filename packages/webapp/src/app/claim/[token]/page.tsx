@@ -76,7 +76,7 @@ export default function ClaimTokenPage() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-prmp-purple mb-4"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-prpm-purple mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Loading invite...</p>
         </div>
       </main>
@@ -87,7 +87,7 @@ export default function ClaimTokenPage() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-8">
         <div className="max-w-md w-full">
-          <Link href="/claim" className="text-prmp-purple hover:text-prmp-purple-dark mb-8 inline-block">
+          <Link href="/claim" className="text-prpm-purple hover:text-prpm-purple-dark mb-8 inline-block">
             ← Try another token
           </Link>
 
@@ -97,7 +97,7 @@ export default function ClaimTokenPage() {
             <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
             <Link
               href="/claim"
-              className="inline-block px-6 py-3 bg-prmp-purple text-white rounded-lg hover:bg-prmp-purple-dark transition-colors"
+              className="inline-block px-6 py-3 bg-prpm-purple text-white rounded-lg hover:bg-prpm-purple-dark transition-colors"
             >
               Try Another Token
             </Link>
@@ -118,7 +118,7 @@ export default function ClaimTokenPage() {
               Your author account has been verified successfully.
             </p>
 
-            <div className="bg-prmp-purple/10 rounded-lg p-4 mb-6 text-left">
+            <div className="bg-prpm-purple/10 rounded-lg p-4 mb-6 text-left">
               <h3 className="font-semibold mb-2">What&apos;s next?</h3>
               <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                 <li>✓ Your {invite?.package_count} packages are now linked to your account</li>
@@ -131,7 +131,7 @@ export default function ClaimTokenPage() {
             <div className="space-y-3">
               <Link
                 href="/"
-                className="block w-full px-6 py-3 border border-prmp-purple text-prmp-purple rounded-lg hover:bg-prmp-purple hover:text-white transition-colors"
+                className="block w-full px-6 py-3 border border-prpm-purple text-prpm-purple rounded-lg hover:bg-prpm-purple hover:text-white transition-colors"
               >
                 Back to Home
               </Link>
@@ -145,7 +145,7 @@ export default function ClaimTokenPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="max-w-md w-full">
-        <Link href="/claim" className="text-prmp-purple hover:text-prmp-purple-dark mb-8 inline-block">
+        <Link href="/claim" className="text-prpm-purple hover:text-prpm-purple-dark mb-8 inline-block">
           ← Back
         </Link>
 
@@ -160,10 +160,10 @@ export default function ClaimTokenPage() {
 
           {invite && (
             <>
-              <div className="bg-gradient-to-br from-prmp-purple/20 to-prmp-purple-dark/20 rounded-lg p-6 mb-6">
+              <div className="bg-gradient-to-br from-prpm-purple/20 to-prpm-purple-dark/20 rounded-lg p-6 mb-6">
                 <div className="text-center">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Username</p>
-                  <p className="text-2xl font-bold text-prmp-purple mb-4">
+                  <p className="text-2xl font-bold text-prpm-purple mb-4">
                     @{invite.author_username}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Packages</p>
@@ -183,23 +183,23 @@ export default function ClaimTokenPage() {
                 <h3 className="font-semibold text-sm">Benefits:</h3>
                 <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                   <li className="flex items-start">
-                    <span className="text-prmp-purple mr-2">✓</span>
+                    <span className="text-prpm-purple mr-2">✓</span>
                     <span>Verified author badge on all your packages</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-prmp-purple mr-2">✓</span>
+                    <span className="text-prpm-purple mr-2">✓</span>
                     <span>Full control over your {invite.package_count} existing packages</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-prmp-purple mr-2">✓</span>
+                    <span className="text-prpm-purple mr-2">✓</span>
                     <span>Publish updates and new versions</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-prmp-purple mr-2">✓</span>
+                    <span className="text-prpm-purple mr-2">✓</span>
                     <span>Access to download analytics and insights</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-prmp-purple mr-2">✓</span>
+                    <span className="text-prpm-purple mr-2">✓</span>
                     <span>Priority support and early access to features</span>
                   </li>
                 </ul>

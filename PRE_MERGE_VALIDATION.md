@@ -34,15 +34,15 @@ docs/
 
 ### Services Running
 ```bash
-$ docker ps | grep prmp
+$ docker ps | grep prpm
 ```
 
 | Container | Image | Status | Ports |
 |-----------|-------|--------|-------|
-| prmp-registry | registry-registry | Up 37 min | 0.0.0.0:3000->3000/tcp |
-| prmp-postgres | postgres:15-alpine | Up 42 min (healthy) | 127.0.0.1:5432->5432/tcp |
-| prmp-redis | redis:7-alpine | Up 42 min (healthy) | 127.0.0.1:6379->6379/tcp |
-| prmp-minio | minio/minio:latest | Up 42 min (healthy) | 127.0.0.1:9000-9001->9000-9001/tcp |
+| prpm-registry | registry-registry | Up 37 min | 0.0.0.0:3000->3000/tcp |
+| prpm-postgres | postgres:15-alpine | Up 42 min (healthy) | 127.0.0.1:5432->5432/tcp |
+| prpm-redis | redis:7-alpine | Up 42 min (healthy) | 127.0.0.1:6379->6379/tcp |
+| prpm-minio | minio/minio:latest | Up 42 min (healthy) | 127.0.0.1:9000-9001->9000-9001/tcp |
 
 ---
 
@@ -125,7 +125,7 @@ $ curl "http://localhost:3000/api/v1/search/trending?limit=3"
 
 ### 5. Database Verification
 ```bash
-$ docker exec prmp-postgres psql -U prmp -d prmp_registry \
+$ docker exec prpm-postgres psql -U prpm -d prpm_registry \
   -c "SELECT COUNT(*) as total_packages FROM packages;"
 ```
 
@@ -212,10 +212,10 @@ $ PRMP_REGISTRY_URL=http://localhost:3000 \
 **Domain Configuration:**
 ```yaml
 # Production
-pulumi config set app:domainName registry.prmp.dev
+pulumi config set app:domainName registry.prpm.dev
 
 # Staging
-pulumi config set app:domainName staging.prmp.dev
+pulumi config set app:domainName staging.prpm.dev
 ```
 ✅ **PASS** - All secrets properly configured
 
@@ -230,7 +230,7 @@ pulumi config set app:domainName staging.prmp.dev
 
 **Route 53 Configuration:**
 - ✅ Located in `packages/infra/modules/beanstalk.ts:436-479`
-- ✅ Auto-detects hosted zone for `prmp.dev`
+- ✅ Auto-detects hosted zone for `prpm.dev`
 - ✅ Creates CNAME record → Beanstalk endpoint
 - ✅ Creates DNS validation record for ACM
 
@@ -238,17 +238,17 @@ pulumi config set app:domainName staging.prmp.dev
 ```typescript
 // CLI default registry URL
 packages/cli/src/core/user-config.ts:19
-const DEFAULT_REGISTRY_URL = 'https://registry.prmp.dev';
+const DEFAULT_REGISTRY_URL = 'https://registry.prpm.dev';
 
 // Infrastructure domain config
 packages/infra/modules/beanstalk.ts:429
-// Extract base domain (e.g., "prmp.dev" from "registry.prmp.dev")
+// Extract base domain (e.g., "prpm.dev" from "registry.prpm.dev")
 
 // Workflow domain config
 .github/workflows/deploy-pulumi-beanstalk.yml:112
-pulumi config set app:domainName registry.prmp.dev
+pulumi config set app:domainName registry.prpm.dev
 ```
-✅ **PASS** - All domain references use `prmp.dev`
+✅ **PASS** - All domain references use `prpm.dev`
 
 ---
 
@@ -287,7 +287,7 @@ pulumi config set app:domainName registry.prmp.dev
 
 ### Completed Features
 
-1. **Domain Migration**: ✅ All references updated to `prmp.dev`
+1. **Domain Migration**: ✅ All references updated to `prpm.dev`
 2. **ACM Integration**: ✅ Auto-creates SSL certificates
 3. **Route 53 Integration**: ✅ Auto-configures DNS
 4. **GitHub Actions**: ✅ Fully automated deployment
@@ -311,7 +311,7 @@ pulumi config set app:domainName registry.prmp.dev
 - [x] CLI trending working
 - [x] GitHub Actions workflow configured
 - [x] All secrets referenced
-- [x] Domain configured (prmp.dev)
+- [x] Domain configured (prpm.dev)
 - [x] ACM certificate setup
 - [x] Route 53 DNS setup
 - [x] Dogfooding packages installed
@@ -331,8 +331,8 @@ After merge to `main`:
 
 3. **Verify Deployment**:
    ```bash
-   curl https://registry.prmp.dev/health
-   curl https://registry.prmp.dev/api/v1/packages?limit=5
+   curl https://registry.prpm.dev/health
+   curl https://registry.prpm.dev/api/v1/packages?limit=5
    ```
 
 ---

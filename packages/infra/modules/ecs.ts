@@ -334,7 +334,7 @@ function createFargateService(
 
         containerDefinitions: JSON.stringify([
           {
-            name: "prmp-registry",
+            name: "prpm-registry",
             image: `${repoUrl}:latest`,
             essential: true,
             portMappings: [
@@ -413,7 +413,7 @@ function createFargateService(
         loadBalancers: [
           {
             targetGroupArn: targetGroup.arn,
-            containerName: "prmp-registry",
+            containerName: "prpm-registry",
             containerPort: 3000,
           },
         ],

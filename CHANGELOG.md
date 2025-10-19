@@ -8,16 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2025-10-18
 
 ### Added
-- **`prmp publish`** - Publish packages to the PRMP registry
-  - Manifest validation (prmp.json)
+- **`prpm publish`** - Publish packages to the PRMP registry
+  - Manifest validation (prpm.json)
   - Tarball creation and size limits (10MB max)
   - Dry-run mode for testing
-  - Requires authentication via `prmp login`
+  - Requires authentication via `prpm login`
 
-- **`prmp login`** - Authenticate with the registry
+- **`prpm login`** - Authenticate with the registry
   - GitHub OAuth flow with local callback server
   - Manual token authentication option (`--token`)
-  - Stores credentials in `~/.prmprc`
+  - Stores credentials in `~/.prpmrc`
 
 - **`prpm whoami`** - Show currently logged-in user
 
@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Registry client** now requires user config parameter
   - All search/install/info/trending commands updated
-  - Configuration loaded from `~/.prmprc`
+  - Configuration loaded from `~/.prpmrc`
 
 - **Popular command** now delegates to trending
   - Shows all-time popular packages
@@ -58,10 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Registry integration** - Complete CLI integration with PRMP registry
-  - `prmp search <query>` - Search packages
-  - `prmp install <package>` - Install from registry
-  - `prmp info <package>` - Package details
-  - `prmp trending` - Trending packages
+  - `prpm search <query>` - Search packages
+  - `prpm install <package>` - Install from registry
+  - `prpm info <package>` - Package details
+  - `prpm trending` - Trending packages
 
 - **Registry backend** - Complete Fastify-based API
   - PostgreSQL database with full-text search
@@ -96,9 +96,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Initial release** - CLI for managing prompt files
-  - `prmp add <url>` - Add prompts from URL
-  - `prmp list` - List installed prompts
-  - `prmp remove <id>` - Remove prompts
+  - `prpm add <url>` - Add prompts from URL
+  - `prpm list` - List installed prompts
+  - `prpm remove <id>` - Remove prompts
   - `prpm index` - Generate index of prompts
 
 - **Package types supported:**
@@ -108,7 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Windsurf rules (`.windsurfrules`)
 
 - **Telemetry** - PostHog integration
-  - Opt-in/opt-out via `prmp telemetry`
+  - Opt-in/opt-out via `prpm telemetry`
   - Anonymous usage tracking
 
 - **Binary builds** - Native executables
@@ -149,19 +149,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 1. **Update CLI:**
    ```bash
-   npm install -g prmp@1.2.0
+   npm install -g prpm@1.2.0
    ```
 
 2. **Login to registry:**
    ```bash
-   prmp login
+   prpm login
    ```
-   This creates `~/.prmprc` with your credentials.
+   This creates `~/.prpmrc` with your credentials.
 
 3. **Publish your packages:**
    ```bash
    cd your-package-directory
-   prmp publish
+   prpm publish
    ```
 
 ### Breaking Changes
@@ -173,6 +173,6 @@ None. This release is fully backward compatible with 1.1.0.
 ## Links
 
 - [GitHub Repository](https://github.com/khaliqgant/prompt-package-manager)
-- [Registry](https://registry.prmp.dev)
-- [Documentation](https://docs.prmp.dev)
+- [Registry](https://registry.prpm.dev)
+- [Documentation](https://docs.prpm.dev)
 - [Report Issues](https://github.com/khaliqgant/prompt-package-manager/issues)

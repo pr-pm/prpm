@@ -98,7 +98,7 @@ Consider migrating when:
      │  │  Domain      │
      │  │              │
      │  │ ┌──────────┐ │
-     │  │ │prmp-pkgs │ │
+     │  │ │prpm-pkgs │ │
      │  │ │  index   │ │
      │  │ └──────────┘ │
      │  └──────────────┘
@@ -157,8 +157,8 @@ pulumi up
 
 **Outputs:**
 ```
-opensearchEndpoint: https://search-prmp-prod-xxxxx.us-east-1.es.amazonaws.com
-opensearchDashboardUrl: https://search-prmp-prod-xxxxx.us-east-1.es.amazonaws.com/_dashboards
+opensearchEndpoint: https://search-prpm-prod-xxxxx.us-east-1.es.amazonaws.com
+opensearchDashboardUrl: https://search-prpm-prod-xxxxx.us-east-1.es.amazonaws.com/_dashboards
 ```
 
 **Deployment time:** ~15-20 minutes
@@ -170,17 +170,17 @@ opensearchDashboardUrl: https://search-prmp-prod-xxxxx.us-east-1.es.amazonaws.co
 ```bash
 # For ECS deployment, update task definition environment:
 SEARCH_ENGINE=opensearch
-OPENSEARCH_ENDPOINT=https://search-prmp-prod-xxxxx.us-east-1.es.amazonaws.com
+OPENSEARCH_ENDPOINT=https://search-prpm-prod-xxxxx.us-east-1.es.amazonaws.com
 AWS_REGION=us-east-1
 ```
 
 **Or via AWS Secrets Manager (preferred):**
 ```bash
 aws secretsmanager update-secret \
-  --secret-id prmp-prod-secrets \
+  --secret-id prpm-prod-secrets \
   --secret-string '{
     "SEARCH_ENGINE": "opensearch",
-    "OPENSEARCH_ENDPOINT": "https://search-prmp-prod-xxxxx.us-east-1.es.amazonaws.com"
+    "OPENSEARCH_ENDPOINT": "https://search-prpm-prod-xxxxx.us-east-1.es.amazonaws.com"
   }'
 ```
 
@@ -190,7 +190,7 @@ aws secretsmanager update-secret \
 
 ```bash
 # Call the reindex endpoint (requires admin auth)
-curl -X POST https://api.prmp.dev/admin/search/reindex \
+curl -X POST https://api.prpm.dev/admin/search/reindex \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 
@@ -214,17 +214,17 @@ await searchProvider.reindexAll();
 **Test search queries:**
 ```bash
 # Before migration (PostgreSQL)
-curl "https://api.prmp.dev/api/v1/search?q=react"
+curl "https://api.prpm.dev/api/v1/search?q=react"
 # Response time: ~50ms
 
 # After migration (OpenSearch)
-curl "https://api.prmp.dev/api/v1/search?q=react"
+curl "https://api.prpm.dev/api/v1/search?q=react"
 # Expected response time: ~20-30ms
 ```
 
 **Check OpenSearch dashboard:**
 ```
-https://search-prmp-prod-xxxxx.us-east-1.es.amazonaws.com/_dashboards
+https://search-prpm-prod-xxxxx.us-east-1.es.amazonaws.com/_dashboards
 ```
 
 ### Step 6: Monitor Performance
@@ -239,7 +239,7 @@ https://search-prmp-prod-xxxxx.us-east-1.es.amazonaws.com/_dashboards
 ```bash
 # Alarm if search latency > 200ms
 aws cloudwatch put-metric-alarm \
-  --alarm-name prmp-opensearch-high-latency \
+  --alarm-name prpm-opensearch-high-latency \
   --metric-name SearchLatency \
   --namespace AWS/ES \
   --statistic Average \
@@ -262,8 +262,8 @@ export SEARCH_ENGINE=postgres
 
 # 2. Restart ECS service
 aws ecs update-service \
-  --cluster prmp-prod \
-  --service prmp-registry-prod \
+  --cluster prpm-prod \
+  --service prpm-registry-prod \
   --force-new-deployment
 
 # 3. Clear Redis cache
@@ -497,7 +497,7 @@ await cacheDeletePattern(`*`);
 
 ```bash
 # Cron job on ECS
-0 2 * * 0 curl -X POST https://api.prmp.dev/admin/search/reindex
+0 2 * * 0 curl -X POST https://api.prpm.dev/admin/search/reindex
 ```
 
 **Purpose:**
@@ -556,7 +556,7 @@ WHERE indexname LIKE '%search%';
 **Load test PostgreSQL FTS:**
 ```bash
 # Generate realistic search traffic
-ab -n 10000 -c 100 "https://api.prmp.dev/api/v1/search?q=react"
+ab -n 10000 -c 100 "https://api.prpm.dev/api/v1/search?q=react"
 
 # Measure:
 # - 95th percentile latency

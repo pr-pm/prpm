@@ -404,7 +404,7 @@ steps:
 
 **Error**:
 ```
-error TS2307: Cannot find module '@prmp/registry-client' or its corresponding type declarations.
+error TS2307: Cannot find module '@prpm/registry-client' or its corresponding type declarations.
 ```
 
 **Why local testing doesn't catch this**:
@@ -428,7 +428,7 @@ Always build workspace dependencies before type checking:
   run: npm ci
 
 - name: Build registry-client
-  run: npm run build --workspace=@prmp/registry-client
+  run: npm run build --workspace=@prpm/registry-client
 
 - name: Type check
   run: npx tsc --noEmit

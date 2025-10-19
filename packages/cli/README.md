@@ -6,17 +6,17 @@ A comprehensive CLI tool for managing AI prompt packages across multiple platfor
 
 ### NPM (Recommended)
 ```bash
-npm install -g @prmp/cli
+npm install -g prpm
 ```
 
 ### Homebrew (macOS)
 ```bash
 # Direct installation (recommended)
-brew install khaliqgant/homebrew-prmp/prmp
+brew install khaliqgant/homebrew-prpm/prpm
 
 # Or manual tap installation
-brew tap khaliqgant/homebrew-prmp
-brew install prmp
+brew tap khaliqgant/homebrew-prpm
+brew install prpm
 ```
 
 ### Direct Download
@@ -26,35 +26,35 @@ Download the latest binary from [GitHub Releases](https://github.com/khaliqgant/
 
 ```bash
 # Search for packages
-prmp search react
+prpm search react
 
 # Install a package from the registry
-prmp install react-rules
+prpm install react-rules
 
 # Add a package from a URL
-prmp add https://raw.githubusercontent.com/user/repo/main/rules.md --as cursor
+prpm add https://raw.githubusercontent.com/user/repo/main/rules.md --as cursor
 
 # List installed packages
-prmp list
+prpm list
 
 # Check for updates
-prmp outdated
+prpm outdated
 ```
 
 ## Commands
 
 ### Package Management
 
-#### `prmp install <package>`
+#### `prpm install <package>`
 
 Install a package from the PRPM registry.
 
 ```bash
 # Install latest version
-prmp install react-rules
+prpm install react-rules
 
 # Install specific version
-prmp install react-rules@1.2.0
+prpm install react-rules@1.2.0
 
 # Install with custom format
 prpm install react-rules --as claude
@@ -83,16 +83,16 @@ prpm install typescript-rules --frozen-lockfile
 
 ---
 
-#### `prmp add <url>`
+#### `prpm add <url>`
 
 Add a package directly from a raw GitHub URL.
 
 ```bash
 # Add a Cursor rule
-prmp add https://raw.githubusercontent.com/user/repo/main/rules.md --as cursor
+prpm add https://raw.githubusercontent.com/user/repo/main/rules.md --as cursor
 
 # Add a Claude agent
-prmp add https://raw.githubusercontent.com/user/repo/main/agent.md --as claude
+prpm add https://raw.githubusercontent.com/user/repo/main/agent.md --as claude
 ```
 
 **Options:**
@@ -109,12 +109,12 @@ prpm add https://example.com/my-rules.md --as claude
 
 ---
 
-#### `prmp remove <id>`
+#### `prpm remove <id>`
 
 Remove an installed package.
 
 ```bash
-prmp remove react-rules
+prpm remove react-rules
 ```
 
 **Examples:**
@@ -128,12 +128,12 @@ prpm remove cursor-rules
 
 ---
 
-#### `prmp list`
+#### `prpm list`
 
 List all installed packages.
 
 ```bash
-prmp list
+prpm list
 ```
 
 Displays a formatted table showing:
@@ -145,20 +145,20 @@ Displays a formatted table showing:
 **Example output:**
 ```
 ID              TYPE    URL                                          DESTINATION
-react-rules     cursor  https://registry.prmp.dev/...            .cursor/rules/react-rules.md
-typescript-best claude  https://registry.prmp.dev/...            .claude/agents/typescript-best.md
+react-rules     cursor  https://registry.prpm.dev/...            .cursor/rules/react-rules.md
+typescript-best claude  https://registry.prpm.dev/...            .claude/agents/typescript-best.md
 
 Total: 2 packages
 ```
 
 ---
 
-#### `prmp index`
+#### `prpm index`
 
 Scan existing `.cursor/rules/` and `.claude/agents/` directories and register any unregistered files.
 
 ```bash
-prmp index
+prpm index
 ```
 
 This is useful when:
@@ -182,13 +182,13 @@ Summary: 2 new packages added, 1 already registered
 
 ### Discovery & Search
 
-#### `prmp search <query>`
+#### `prpm search <query>`
 
 Search for packages in the registry.
 
 ```bash
 # Basic search
-prmp search react
+prpm search react
 
 # Filter by type
 prpm search typescript --type cursor
@@ -215,13 +215,13 @@ prpm search best-practices --limit 5
 
 ---
 
-#### `prmp trending`
+#### `prpm trending`
 
 Show trending packages from the last 7 days.
 
 ```bash
 # Show trending packages
-prmp trending
+prpm trending
 
 # Filter by type
 prpm trending --type cursor
@@ -248,13 +248,13 @@ prpm trending --limit 5
 
 ---
 
-#### `prmp popular`
+#### `prpm popular`
 
 Show all-time popular packages.
 
 ```bash
 # Show popular packages
-prmp popular
+prpm popular
 
 # Filter by type
 prpm popular --type cursor
@@ -274,12 +274,12 @@ prpm popular --type cursor
 
 ---
 
-#### `prmp info <package>`
+#### `prpm info <package>`
 
 Display detailed information about a package.
 
 ```bash
-prmp info react-rules
+prpm info react-rules
 ```
 
 Shows:
@@ -305,21 +305,21 @@ Latest Version: 2.1.0
 Tags: react, javascript, best-practices
 
 Installation:
-   prmp install react-rules
-   prmp install react-rules@2.1.0
+   prpm install react-rules
+   prpm install react-rules@2.1.0
 ```
 
 ---
 
 ### Collections
 
-#### `prmp collections` / `prmp collections list`
+#### `prpm collections` / `prpm collections list`
 
 List available package collections.
 
 ```bash
 # List all collections
-prmp collections
+prpm collections
 
 # Filter by category
 prpm collections list --category frontend
@@ -328,7 +328,7 @@ prpm collections list --category frontend
 prpm collections list --official
 
 # Filter by scope
-prpm collections list --scope prmp
+prpm collections list --scope prpm
 ```
 
 **Options:**
@@ -351,16 +351,16 @@ prpm collections list --category frontend
 
 ---
 
-#### `prmp collections info <collection>`
+#### `prpm collections info <collection>`
 
 Show detailed information about a collection.
 
 ```bash
 # View collection details
-prmp collections info @prmp/react-starter
+prpm collections info @prpm/react-starter
 
 # View specific version
-prpm collections info @prmp/react-starter@1.0.0
+prpm collections info @prpm/react-starter@1.0.0
 ```
 
 Shows:
@@ -392,19 +392,19 @@ Included Packages:
       TypeScript configuration for React
 
 Install:
-   prmp install @prmp/react-starter
+   prpm install @prpm/react-starter
 ```
 
 ---
 
 ### Updates & Upgrades
 
-#### `prmp outdated`
+#### `prpm outdated`
 
 Check for package updates.
 
 ```bash
-prmp outdated
+prpm outdated
 ```
 
 Shows which packages have updates available, grouped by:
@@ -423,19 +423,19 @@ Minor Updates (new features):
 Patch Updates (bug fixes):
    eslint-config                  1.0.0 → 1.0.1
 
-Run "prmp update" to update to latest minor/patch versions
-Run "prmp upgrade" to upgrade to latest major versions
+Run "prpm update" to update to latest minor/patch versions
+Run "prpm upgrade" to upgrade to latest major versions
 ```
 
 ---
 
-#### `prmp update [package]`
+#### `prpm update [package]`
 
 Update packages to latest compatible versions (minor/patch only, skips major versions).
 
 ```bash
 # Update all packages
-prmp update
+prpm update
 
 # Update specific package
 prpm update react-rules
@@ -455,13 +455,13 @@ prpm update typescript-rules
 
 ---
 
-#### `prmp upgrade [package]`
+#### `prpm upgrade [package]`
 
 Upgrade packages to latest versions (including major updates).
 
 ```bash
 # Upgrade all packages
-prmp upgrade
+prpm upgrade
 
 # Upgrade specific package
 prpm upgrade react-rules
@@ -490,13 +490,13 @@ prpm upgrade --force
 
 ### Dependencies
 
-#### `prmp deps <package>`
+#### `prpm deps <package>`
 
 Show dependency tree for a package.
 
 ```bash
 # View dependencies
-prmp deps react-rules
+prpm deps react-rules
 
 # View dependencies for specific version
 prpm deps react-rules@1.2.0
@@ -527,13 +527,13 @@ Dependency Tree:
 
 ### Authentication & Publishing
 
-#### `prmp login`
+#### `prpm login`
 
 Login to the PRPM registry.
 
 ```bash
 # OAuth login (opens browser)
-prmp login
+prpm login
 
 # Login with token
 prpm login --token YOUR_TOKEN
@@ -559,12 +559,12 @@ prpm login --token ghp_xxxxxxxxxxxx
 
 ---
 
-#### `prmp whoami`
+#### `prpm whoami`
 
 Show current logged-in user.
 
 ```bash
-prmp whoami
+prpm whoami
 ```
 
 **Example output:**
@@ -576,18 +576,18 @@ If not logged in:
 ```
 Not logged in
 
-Run "prmp login" to authenticate
+Run "prpm login" to authenticate
 ```
 
 ---
 
-#### `prmp publish`
+#### `prpm publish`
 
 Publish a package to the registry.
 
 ```bash
 # Publish package
-prmp publish
+prpm publish
 
 # Dry run (validate without publishing)
 prpm publish --dry-run
@@ -602,11 +602,11 @@ prpm publish --tag beta
 - `--dry-run` - Validate package without publishing
 
 **Requirements:**
-- Must be logged in (`prmp login`)
-- Must have `prmp.json` manifest in current directory
+- Must be logged in (`prpm login`)
+- Must have `prpm.json` manifest in current directory
 - Package files must exist
 
-**prmp.json format:**
+**prpm.json format:**
 ```json
 {
   "name": "my-package",
@@ -615,7 +615,7 @@ prpm publish --tag beta
   "type": "cursor",
   "tags": ["react", "javascript"],
   "files": [
-    "prmp.json",
+    "prpm.json",
     ".cursorrules",
     "README.md"
   ]
@@ -638,24 +638,24 @@ prpm publish --tag beta
 
 ### Telemetry
 
-#### `prmp telemetry enable`
+#### `prpm telemetry enable`
 
 Enable anonymous usage analytics.
 
 ```bash
-prmp telemetry enable
+prpm telemetry enable
 ```
 
 Helps improve PRPM by collecting anonymous usage data via PostHog.
 
 ---
 
-#### `prmp telemetry disable`
+#### `prpm telemetry disable`
 
 Disable telemetry and analytics.
 
 ```bash
-prmp telemetry disable
+prpm telemetry disable
 ```
 
 ---
@@ -666,7 +666,7 @@ PRPM stores configuration in `~/.prpmrc`:
 
 ```json
 {
-  "registryUrl": "https://registry.prmp.dev",
+  "registryUrl": "https://registry.prpm.dev",
   "token": "your-auth-token",
   "username": "your-username",
   "defaultFormat": "cursor",
@@ -684,7 +684,7 @@ PRPM stores configuration in `~/.prpmrc`:
 
 ### Environment Variables
 
-- `PRMP_REGISTRY_URL` - Override registry URL
+- `PRPM_REGISTRY_URL` - Override registry URL
 - `PRPM_NO_TELEMETRY` - Disable telemetry (set to "1" or "true")
 
 ## Project Structure
@@ -700,7 +700,7 @@ my-project/
 ├── .continue/              # Continue configs
 ├── .windsurf/              # Windsurf configs
 ├── .promptpm.json          # Package registry
-└── prmp-lock.json          # Lock file
+└── prpm-lock.json          # Lock file
 ```
 
 ### Package Registry (`.promptpm.json`)
@@ -713,7 +713,7 @@ Tracks installed packages:
     {
       "id": "react-rules",
       "type": "cursor",
-      "url": "https://registry.prmp.dev/packages/react-rules",
+      "url": "https://registry.prpm.dev/packages/react-rules",
       "dest": ".cursor/rules/react-rules.md",
       "version": "2.1.0"
     }
@@ -731,7 +731,7 @@ Ensures consistent installations:
   "packages": {
     "react-rules": {
       "version": "2.1.0",
-      "tarballUrl": "https://registry.prmp.dev/...",
+      "tarballUrl": "https://registry.prpm.dev/...",
       "integrity": "sha512-...",
       "type": "cursor",
       "format": "cursor"
@@ -746,82 +746,82 @@ Ensures consistent installations:
 
 ```bash
 # Initialize with popular packages
-prmp install @prpm/starter-kit
+prpm install @prpm/starter-kit
 
 # Or install individually
-prmp search react
-prmp install react-rules
-prmp install typescript-rules
+prpm search react
+prpm install react-rules
+prpm install typescript-rules
 ```
 
 ### Keeping Packages Updated
 
 ```bash
 # Check for updates
-prmp outdated
+prpm outdated
 
 # Update safe changes (minor/patch)
-prmp update
+prpm update
 
 # Upgrade to latest (including major)
-prmp upgrade
+prpm upgrade
 ```
 
 ### Working with Collections
 
 ```bash
 # Browse collections
-prmp collections
+prpm collections
 
 # View collection details
-prmp collections info @prpm/react-starter
+prpm collections info @prpm/react-starter
 
 # Install collection
-prmp install @prpm/react-starter
+prpm install @prpm/react-starter
 ```
 
 ### Publishing Your Own Package
 
 ```bash
-# 1. Create prmp.json
-cat > prmp.json << EOF
+# 1. Create prpm.json
+cat > prpm.json << EOF
 {
   "name": "my-rules",
   "version": "1.0.0",
   "description": "My custom rules",
   "type": "cursor",
-  "files": ["prmp.json", ".cursorrules", "README.md"]
+  "files": ["prpm.json", ".cursorrules", "README.md"]
 }
 EOF
 
 # 2. Login to registry
-prmp login
+prpm login
 
 # 3. Test package
-prmp publish --dry-run
+prpm publish --dry-run
 
 # 4. Publish
-prmp publish
+prpm publish
 ```
 
 ### Adding Existing Files
 
 ```bash
 # If you already have prompt files
-prmp index
+prpm index
 
 # Or add specific files
-prmp add ./my-rules.md --as cursor
+prpm add ./my-rules.md --as cursor
 ```
 
 ### CI/CD Integration
 
 ```bash
 # In CI pipeline - use frozen lockfile
-prmp install --frozen-lockfile
+prpm install --frozen-lockfile
 
 # Or install all from lock file
-prmp install
+prpm install
 ```
 
 ## Supported Formats
@@ -842,10 +842,10 @@ PRPM automatically converts packages between formats:
 
 ```bash
 # Install Cursor package as Claude format
-prmp install cursor-rules --as claude
+prpm install cursor-rules --as claude
 
 # Install Claude package as Cursor format
-prmp install claude-agent --as cursor
+prpm install claude-agent --as cursor
 ```
 
 ## Troubleshooting
@@ -854,7 +854,7 @@ prmp install claude-agent --as cursor
 
 ```bash
 # Reinstall globally
-npm install -g @prmp/cli
+npm install -g prpm
 
 # Or check PATH
 echo $PATH
@@ -864,20 +864,20 @@ echo $PATH
 
 ```bash
 # Re-login
-prmp login
+prpm login
 
 # Check current user
-prmp whoami
+prpm whoami
 
 # Use token directly
-prmp login --token YOUR_TOKEN
+prpm login --token YOUR_TOKEN
 ```
 
 ### Installation Failures
 
 ```bash
 # Check package exists
-prmp search package-name
+prpm search package-name
 
 # Get package info
 prpm info package-name
@@ -890,7 +890,7 @@ prpm install package-name@1.0.0
 
 ```bash
 # Update lock file
-prmp install
+prpm install
 
 # In CI, ensure lock file exists
 prpm install --frozen-lockfile
@@ -903,14 +903,14 @@ prpm install --frozen-lockfile
 cat ~/.prpmrc
 
 # Set custom registry
-export PRMP_REGISTRY_URL=https://custom-registry.com
+export PRPM_REGISTRY_URL=https://custom-registry.com
 ```
 
 ## Support & Resources
 
 - **GitHub**: https://github.com/khaliqgant/prompt-package-manager
 - **Issues**: https://github.com/khaliqgant/prompt-package-manager/issues
-- **Registry**: https://registry.prmp.dev
+- **Registry**: https://registry.prpm.dev
 - **Documentation**: https://github.com/khaliqgant/prompt-package-manager#readme
 
 ## Contributing

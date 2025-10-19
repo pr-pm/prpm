@@ -575,7 +575,7 @@ REFRESH MATERIALIZED VIEW similar_packages;
 ### Search with Quality Indicators
 
 ```bash
-$ prmp search react
+$ prpm search react
 
 Results for "react":
 
@@ -601,7 +601,7 @@ Showing 4 of 24 results. Use --all to see more.
 ### Installing with Disambiguation
 
 ```bash
-$ prmp install react-rules
+$ prpm install react-rules
 
 Multiple packages found for "react-rules":
 
@@ -620,7 +620,7 @@ Install which one? [1]:
 ### Package Info with Scores
 
 ```bash
-$ prmp info react-rules
+$ prpm info react-rules
 
 react-rules v2.1.0
 
@@ -646,7 +646,7 @@ Badges:
   🔄 Actively Maintained
   🔒 Security Verified
 
-Install: prmp install react-rules
+Install: prpm install react-rules
 Repository: github.com/cursor-rules-org/react-rules
 ```
 

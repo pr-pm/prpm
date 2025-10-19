@@ -14,9 +14,9 @@ We're building [PRMP (Prompt Package Manager)](https://github.com/khaliqgant/pro
 
 **Your cursor rules are now available on our registry!** 🎉
 
-📦 **Package:** [{package-name}](https://registry.prmp.dev/packages/{package-name})
+📦 **Package:** [{package-name}](https://registry.prpm.dev/packages/{package-name})
 ⭐ **Your Stars:** {stars}
-📥 **Install:** `prmp install {package-name}`
+📥 **Install:** `prpm install {package-name}`
 
 ### Why we published your rules
 
@@ -30,7 +30,7 @@ To bootstrap our registry with high-quality content, we've published popular cur
 
 You can claim ownership and verify your package by:
 
-1. Visiting: https://registry.prmp.dev/claim/{package-name}
+1. Visiting: https://registry.prpm.dev/claim/{package-name}
 2. Logging in with GitHub (OAuth)
 3. Getting a verified ✓ badge on your package
 
@@ -48,8 +48,8 @@ No problem! Just let us know and we'll remove it immediately. We respect your wi
 ### Learn more
 
 - [Project Repo](https://github.com/khaliqgant/prompt-package-manager)
-- [Documentation](https://docs.prmp.dev)
-- [How it Works](https://docs.prmp.dev/how-it-works)
+- [Documentation](https://docs.prpm.dev)
+- [How it Works](https://docs.prpm.dev/how-it-works)
 
 Thanks for creating awesome cursor rules! 🙏
 
@@ -63,9 +63,9 @@ Thanks for creating awesome cursor rules! 🙏
 Hey! We published your cursor rules on PRMP Registry (npm for AI prompts).
 
 📦 {package-name}
-📥 prmp install {package-name}
+📥 prpm install {package-name}
 
-Claim your package & get verified: https://registry.prmp.dev/claim/{package-name}
+Claim your package & get verified: https://registry.prpm.dev/claim/{package-name}
 
 Full attribution + benefits for verified authors. LMK if you have questions!
 ```
@@ -86,11 +86,11 @@ the ecosystem with quality content. Your package has full attribution and links
 back to your repo.
 
 📦 Package: {package-name}
-📥 Install: prmp install {package-name}
-🔗 View: https://registry.prmp.dev/packages/{package-name}
+📥 Install: prpm install {package-name}
+🔗 View: https://registry.prpm.dev/packages/{package-name}
 
 Would love for you to claim ownership and get verified! It takes 30 seconds:
-→ https://registry.prmp.dev/claim/{package-name}
+→ https://registry.prpm.dev/claim/{package-name}
 
 Benefits:
 ✅ Verified badge
@@ -120,16 +120,16 @@ I'm building PRMP (Prompt Package Manager) - a CLI for managing AI prompts.
 To bootstrap the registry, I've published popular cursor rules with full attribution.
 If you're a cursor rules author, you can now:
 
-1. Find your package: https://registry.prmp.dev/search?q={your-username}
+1. Find your package: https://registry.prpm.dev/search?q={your-username}
 2. Claim ownership: Log in with GitHub
 3. Get verified: Add ✓ badge and analytics
 
 Example install:
 ```
-prmp install react-cursor-rules
+prpm install react-cursor-rules
 ```
 
-Full list of published packages: https://registry.prmp.dev/explore
+Full list of published packages: https://registry.prpm.dev/explore
 
 All packages include original author attribution, repo links, and star counts.
 If you want your package removed, just let me know.
@@ -151,7 +151,7 @@ Feedback welcome!
 with full attribution to original authors.</p>
 
 <h3>Install Any Package:</h3>
-<pre>prmp install react-rules</pre>
+<pre>prpm install react-rules</pre>
 
 <h3>For Authors:</h3>
 <ul>
@@ -161,11 +161,11 @@ with full attribution to original authors.</p>
   <li>🌟 Featured creator placement</li>
 </ul>
 
-<a href="https://registry.prmp.dev/explore">Browse All Packages →</a>
+<a href="https://registry.prpm.dev/explore">Browse All Packages →</a>
 
 <p>If you're a cursor rules author, check if your rules are published
-and claim verification at: <a href="https://registry.prmp.dev/claim">
-registry.prmp.dev/claim</a></p>
+and claim verification at: <a href="https://registry.prpm.dev/claim">
+registry.prpm.dev/claim</a></p>
 
 <h3>What is PRMP?</h3>
 <p>PRMP (Prompt Package Manager) is like npm but for AI prompts - cursor rules,
@@ -240,7 +240,7 @@ Hi Simon,
 
 Just read your excellent piece on Claude Skills. Built exactly what you describe:
 
-prmp install react-expert-skill
+prpm install react-expert-skill
 
 Like npm, but for Claude skills and prompts. Launching next week with 100+ packages.
 

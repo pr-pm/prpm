@@ -55,7 +55,7 @@ jobs:
         id: ecr-repo
         run: |
           STACK="${{ inputs.environment || 'dev' }}"
-          REPO_NAME="prmp-${STACK}-registry"
+          REPO_NAME="prpm-${STACK}-registry"
           echo "repo-name=${REPO_NAME}" >> $GITHUB_OUTPUT
           echo "registry=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_OUTPUT
 
@@ -100,8 +100,8 @@ jobs:
       - name: Run migrations via ECS task
         run: |
           STACK="${{ inputs.environment || 'dev' }}"
-          CLUSTER="prmp-${STACK}-cluster"
-          TASK_DEF="prmp-${STACK}-task"
+          CLUSTER="prpm-${STACK}-cluster"
+          TASK_DEF="prpm-${STACK}-task"
 
           # Get VPC configuration
           SUBNET=$(aws ec2 describe-subnets \
@@ -110,7 +110,7 @@ jobs:
             --output text)
 
           SECURITY_GROUP=$(aws ec2 describe-security-groups \
-            --filters "Name=tag:Name,Values=prmp-${STACK}-ecs-sg" \
+            --filters "Name=tag:Name,Values=prpm-${STACK}-ecs-sg" \
             --query 'SecurityGroups[0].GroupId' \
             --output text)
 
@@ -120,7 +120,7 @@ jobs:
             --task-definition ${TASK_DEF} \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[${SUBNET}],securityGroups=[${SECURITY_GROUP}],assignPublicIp=DISABLED}" \
-            --overrides '{"containerOverrides":[{"name":"prmp-registry","command":["npm","run","migrate"]}]}' \
+            --overrides '{"containerOverrides":[{"name":"prpm-registry","command":["npm","run","migrate"]}]}' \
             --query 'tasks[0].taskArn' \
             --output text)
 
@@ -160,8 +160,8 @@ jobs:
       - name: Force new deployment
         run: |
           STACK="${{ inputs.environment || 'dev' }}"
-          CLUSTER="prmp-${STACK}-cluster"
-          SERVICE="prmp-${STACK}-service"
+          CLUSTER="prpm-${STACK}-cluster"
+          SERVICE="prpm-${STACK}-service"
 
           aws ecs update-service \
             --cluster ${CLUSTER} \
@@ -195,7 +195,7 @@ jobs:
         run: |
           STACK="${{ inputs.environment || 'dev' }}"
           DNS_NAME=$(aws elbv2 describe-load-balancers \
-            --names "prmp-${STACK}-alb" \
+            --names "prpm-${STACK}-alb" \
             --query 'LoadBalancers[0].DNSName' \
             --output text)
           echo "dns-name=${DNS_NAME}" >> $GITHUB_OUTPUT

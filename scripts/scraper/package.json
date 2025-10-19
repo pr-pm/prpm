@@ -1,5 +1,5 @@
 {
-  "name": "@prmp/scraper",
+  "name": "@prpm/scraper",
   "version": "1.0.0",
   "private": true,
   "description": "GitHub scraper for cursor rules repositories",

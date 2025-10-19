@@ -29,9 +29,9 @@ function createStatusCommand() {
       if (enabled) {
         console.log('\n💡 Telemetry helps us improve the tool by collecting anonymous usage data.');
         console.log('   Data is sent to PostHog for analysis.');
-        console.log('   Run "prmp telemetry disable" to opt out.');
+        console.log('   Run "prpm telemetry disable" to opt out.');
       } else {
-        console.log('\n💡 Telemetry is disabled. Run "prmp telemetry enable" to help improve the tool.');
+        console.log('\n💡 Telemetry is disabled. Run "prpm telemetry enable" to help improve the tool.');
       }
     });
 }
@@ -89,7 +89,7 @@ function createTestCommand() {
         });
         
         console.log('✅ Test event sent successfully!');
-        console.log('📈 Check your PostHog dashboard for the event: prmp_test');
+        console.log('📈 Check your PostHog dashboard for the event: prpm_test');
         console.log('🔗 Dashboard: https://app.posthog.com');
         console.log('⏰ Note: Events may take 1-2 minutes to appear in the dashboard');
         
@@ -101,7 +101,7 @@ function createTestCommand() {
         
         console.log('\n🔍 Troubleshooting tips:');
         console.log('1. Check the "Live Events" section in PostHog');
-        console.log('2. Look for events with name "prmp_test"');
+        console.log('2. Look for events with name "prpm_test"');
         console.log('3. Make sure you\'re in the correct PostHog project');
         console.log('4. Events may take 1-2 minutes to appear');
         

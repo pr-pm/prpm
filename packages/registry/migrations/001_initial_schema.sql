@@ -407,5 +407,5 @@ ON CONFLICT DO NOTHING;
 
 -- Create test organization
 INSERT INTO organizations (name, display_name, description, is_verified)
-VALUES ('prmp', 'PRMP Official', 'Official PRMP packages', TRUE)
+VALUES ('prpm', 'PRMP Official', 'Official PRMP packages', TRUE)
 ON CONFLICT DO NOTHING;

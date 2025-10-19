@@ -242,8 +242,8 @@ None required for CI workflows! All tests use:
 
 #### PostgreSQL
 ```yaml
-POSTGRES_USER: prmp
-POSTGRES_PASSWORD: prmp
+POSTGRES_USER: prpm
+POSTGRES_PASSWORD: prpm
 POSTGRES_DB: prpm_registry
 ```
 

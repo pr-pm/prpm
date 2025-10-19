@@ -301,7 +301,7 @@ PRPM is a **feature-complete package manager** for AI prompts, agents, and curso
 ### Data
 - `registry/scripts/seed/pulumi-collection.json` - 3 Pulumi collections
 - `registry/scripts/seed/prpm-collections.json` - 7 PRPM collections
-- `prmp.json` - Real-world usage example
+- `prpm.json` - Real-world usage example
 
 ### Total
 - **12 new documentation files**

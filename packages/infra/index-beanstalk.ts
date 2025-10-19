@@ -33,7 +33,7 @@ const config = new pulumi.Config();
 const awsConfig = new pulumi.Config("aws");
 const region = awsConfig.require("region");
 
-const projectName = "prmp";
+const projectName = "prpm";
 const environment = pulumi.getStack(); // dev, staging, prod
 
 // Tags to apply to all resources
@@ -47,7 +47,7 @@ const tags = {
 
 // Configuration values
 const dbConfig = {
-  username: config.get("db:username") || "prmp",
+  username: config.get("db:username") || "prpm",
   password: config.requireSecret("db:password"),
   instanceClass: config.get("db:instanceClass") || "db.t4g.micro",
   allocatedStorage: parseInt(config.get("db:allocatedStorage") || "20"),
@@ -62,7 +62,7 @@ const appConfig = {
   instanceType: config.get("app:instanceType") || "t3.micro",
   minSize: parseInt(config.get("app:minSize") || "1"),
   maxSize: parseInt(config.get("app:maxSize") || "2"),
-  domainName: config.get("app:domainName"), // e.g., registry.prmp.dev
+  domainName: config.get("app:domainName"), // e.g., registry.prpm.dev
 };
 
 // 1. Network Infrastructure

@@ -7,10 +7,10 @@ This document explains the repository structure and the distinction between the 
 ```
 prompt-package-manager/
 ├── packages/               # npm workspace packages
-│   ├── cli/               # CLI tool (@prmp/cli)
+│   ├── cli/               # CLI tool (prpm)
 │   ├── infra/             # Pulumi infrastructure as code
-│   ├── registry/          # Backend service (@prmp/registry)
-│   └── registry-client/   # HTTP client library (@prmp/registry-client)
+│   ├── registry/          # Backend service (@prpm/registry)
+│   └── registry-client/   # HTTP client library (@prpm/registry-client)
 └── .claude/skills/        # Claude Code skills for development
 ```
 
@@ -18,7 +18,7 @@ prompt-package-manager/
 
 ### 1. CLI (`packages/cli/`)
 
-**Package**: `@prmp/cli`
+**Package**: `prpm`
 **Purpose**: Command-line interface for users to interact with PRMP
 
 The CLI provides commands for:
@@ -29,14 +29,14 @@ The CLI provides commands for:
 
 **Usage**:
 ```bash
-npx @prmp/cli install <package-name>
-npx @prmp/cli search <query>
-npx @prmp/cli publish
+npx prpm install <package-name>
+npx prpm search <query>
+npx prpm publish
 ```
 
 ### 2. Registry Client (`packages/registry-client/`)
 
-**Package**: `@prmp/registry-client`
+**Package**: `@prpm/registry-client`
 **Purpose**: Shared HTTP client library for interacting with the registry API
 
 This is a **dependency** of the CLI that provides:
@@ -53,15 +53,15 @@ This is a **dependency** of the CLI that provides:
 
 **Usage** (programmatic):
 ```typescript
-import { RegistryClient } from '@prmp/registry-client';
+import { RegistryClient } from '@prpm/registry-client';
 
-const client = new RegistryClient('https://registry.prmp.dev');
+const client = new RegistryClient('https://registry.prpm.dev');
 const packages = await client.searchPackages('query');
 ```
 
 ### 3. Registry Backend (`packages/registry/`)
 
-**Package**: `@prmp/registry`
+**Package**: `@prpm/registry`
 **Purpose**: Backend API service (Fastify server)
 
 **In `packages/` like all workspace packages** - even though it's a service:
@@ -112,21 +112,21 @@ registry-client → cli
 
 ### Why This Matters for CI
 
-The CLI depends on `@prmp/registry-client`, so when running TypeScript type checks or builds:
+The CLI depends on `@prpm/registry-client`, so when running TypeScript type checks or builds:
 
-1. **First**: Build `@prmp/registry-client`
+1. **First**: Build `@prpm/registry-client`
    ```bash
-   npm run build --workspace=@prmp/registry-client
+   npm run build --workspace=@prpm/registry-client
    ```
 
-2. **Then**: Build or type-check `@prmp/cli`
+2. **Then**: Build or type-check `prpm`
    ```bash
    cd packages/cli && npx tsc --noEmit
    ```
 
 Without building the registry-client first, the CLI will fail with:
 ```
-error TS2307: Cannot find module '@prmp/registry-client'
+error TS2307: Cannot find module '@prpm/registry-client'
 ```
 
 ## Published vs Private Packages
@@ -136,12 +136,12 @@ All workspace packages live in `packages/`, regardless of whether they're publis
 ### Published Packages
 - **Published to npm** for public use
 - Can be installed as dependencies
-- Examples: `@prmp/cli`, `@prmp/registry-client`
+- Examples: `prpm`, `@prpm/registry-client`
 
 ### Private Packages (Services)
 - **NOT published** - marked with `"private": true`
 - Deployed independently (Docker, AWS, etc.)
-- Examples: `@prmp/registry` (backend API service)
+- Examples: `@prpm/registry` (backend API service)
 
 ## Monorepo Workspace Setup
 

@@ -22,7 +22,7 @@ Cursor analyzes your request for keywords:
 ### 2. Automatic Search
 ```bash
 # Cursor automatically runs:
-prmp search "<detected keywords>" --limit 5
+prpm search "<detected keywords>" --limit 5
 ```
 
 ### 3. Package Suggestion
@@ -40,7 +40,7 @@ Should I install #1 to enhance my knowledge for this task?
 ### 4. Installation
 After your approval:
 ```bash
-prmp install @prpm/pulumi-infrastructure --as cursor
+prpm install @prpm/pulumi-infrastructure --as cursor
 ```
 
 ### 5. Application
@@ -53,13 +53,13 @@ Cursor loads the package knowledge (as a .cursorrules file) and applies it to yo
 
 **Action**:
 ```bash
-prmp search "infrastructure <cloud-provider> <tool>"
+prpm search "infrastructure <cloud-provider> <tool>"
 ```
 
 **Example**:
 ```
 User: "Set up AWS infrastructure with Terraform"
-→ prmp search "infrastructure aws terraform"
+→ prpm search "infrastructure aws terraform"
 → Found: @prpm/terraform-aws-patterns
 → Suggest to user
 ```
@@ -69,13 +69,13 @@ User: "Set up AWS infrastructure with Terraform"
 
 **Action**:
 ```bash
-prmp search "testing <framework>"
+prpm search "testing <framework>"
 ```
 
 **Example**:
 ```
 User: "Write E2E tests with Playwright"
-→ prmp search "testing playwright e2e"
+→ prpm search "testing playwright e2e"
 → Found: @testing/playwright-patterns
 → Suggest to user
 ```
@@ -85,13 +85,13 @@ User: "Write E2E tests with Playwright"
 
 **Action**:
 ```bash
-prmp search "deployment <platform>"
+prpm search "deployment <platform>"
 ```
 
 **Example**:
 ```
 User: "Add GitHub Actions for deployment"
-→ prmp search "github-actions deployment ci-cd"
+→ prpm search "github-actions deployment ci-cd"
 → Found: @sanjeed5/github-actions
 → Suggest to user
 ```
@@ -101,13 +101,13 @@ User: "Add GitHub Actions for deployment"
 
 **Action**:
 ```bash
-prmp search "<framework> best-practices"
+prpm search "<framework> best-practices"
 ```
 
 **Example**:
 ```
 User: "Build a React app with TypeScript"
-→ prmp search "react typescript best-practices"
+→ prpm search "react typescript best-practices"
 → Found: @react/typescript-patterns
 → Suggest to user
 ```
@@ -143,7 +143,7 @@ User: "Help me build AWS infrastructure with Terraform"
 
 Cursor (internal):
   1. Keywords: "Terraform", "AWS", "infrastructure"
-  2. Search: prmp search "terraform aws infrastructure"
+  2. Search: prpm search "terraform aws infrastructure"
   3. Found: @prpm/terraform-aws-patterns (Official, 2.8K downloads)
   4. High confidence → Suggest
 
@@ -161,7 +161,7 @@ Should I install this? It will add a .cursorrules file with Terraform + AWS expe
 User: "Yes"
 
 Cursor:
-  ✅ Installing: prmp install @prpm/terraform-aws-patterns --as cursor
+  ✅ Installing: prpm install @prpm/terraform-aws-patterns --as cursor
   ✅ Loaded Terraform knowledge into .cursorrules
 
   "Great! I now have access to Terraform AWS patterns. Let me apply them:
@@ -177,7 +177,7 @@ User: "Build a React dashboard with charts"
 
 Cursor:
   1. Keywords: "React", "dashboard", "charts"
-  2. Search: prmp search "react dashboard components"
+  2. Search: prpm search "react dashboard components"
   3. Found: @react/dashboard-patterns (Community, 456 downloads)
   4. Medium confidence → Present to user
 
@@ -205,7 +205,7 @@ User: "Add Playwright tests for the login flow"
 
 Cursor:
   1. Keywords: "Playwright", "tests", "login"
-  2. Search: prmp search "playwright testing e2e"
+  2. Search: prpm search "playwright testing e2e"
   3. Found: @testing/playwright-best-practices (Official, 1.2K downloads)
   4. High confidence → Suggest
 
@@ -235,51 +235,51 @@ Cursor:
 
 ### Basic Search
 ```bash
-prmp search "keyword1 keyword2"
+prpm search "keyword1 keyword2"
 ```
 
 ### Category Filter
 ```bash
-prmp search --category devops "terraform"
+prpm search --category devops "terraform"
 ```
 
 ### Type Filter
 ```bash
-prmp search --type cursor "react patterns"
+prpm search --type cursor "react patterns"
 ```
 
 ### Limit Results
 ```bash
-prmp search "github actions" --limit 5
+prpm search "github actions" --limit 5
 ```
 
 ### Sort by Downloads
 ```bash
-prmp search "testing" --sort downloads
+prpm search "testing" --sort downloads
 ```
 
 ## Installation Commands
 
 ### Install as Cursor Rule
 ```bash
-prmp install @prpm/terraform-aws-patterns --as cursor
+prpm install @prpm/terraform-aws-patterns --as cursor
 ```
 
 This adds the package to `.cursorrules` in your project.
 
 ### Install Collection
 ```bash
-prmp install @collection/infrastructure-complete --as cursor
+prpm install @collection/infrastructure-complete --as cursor
 ```
 
 ### Install Specific Version
 ```bash
-prmp install @prpm/testing-patterns@1.2.0 --as cursor
+prpm install @prpm/testing-patterns@1.2.0 --as cursor
 ```
 
 ### Install Globally
 ```bash
-prmp install @prpm/general-coding-standards --as cursor --global
+prpm install @prpm/general-coding-standards --as cursor --global
 ```
 
 This adds to `~/.cursor/rules/`.
@@ -377,7 +377,7 @@ Task: Testing patterns
 
 ```bash
 # Install this meta-package
-prmp install @prpm/self-improve-cursor --as cursor
+prpm install @prpm/self-improve-cursor --as cursor
 
 # Now Cursor will automatically search PRPM for relevant packages!
 ```

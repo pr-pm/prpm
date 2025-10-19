@@ -520,7 +520,7 @@ DROP FUNCTION IF EXISTS update_collection_stars_count();
 
 **Command used:**
 ```bash
-docker compose exec -T postgres psql -U prmp -d prmp_registry < seed-collections.sql
+docker compose exec -T postgres psql -U prpm -d prpm_registry < seed-collections.sql
 ```
 
 **Result:** 3 collections, 8 package relationships created ✅

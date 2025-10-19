@@ -80,10 +80,10 @@ minio:
 ```bash
 $ docker ps --format "table {{.Names}}\t{{.Ports}}"
 NAMES           PORTS
-prmp-redis      127.0.0.1:6379->6379/tcp        ✅
-prmp-postgres   127.0.0.1:5432->5432/tcp        ✅
-prmp-minio      127.0.0.1:9000-9001->9000-9001/tcp  ✅
-prmp-registry   0.0.0.0:3000->3000/tcp          ✅ (Public API - expected)
+prpm-redis      127.0.0.1:6379->6379/tcp        ✅
+prpm-postgres   127.0.0.1:5432->5432/tcp        ✅
+prpm-minio      127.0.0.1:9000-9001->9000-9001/tcp  ✅
+prpm-registry   0.0.0.0:3000->3000/tcp          ✅ (Public API - expected)
 ```
 
 **External Access Test:**
@@ -179,7 +179,7 @@ telnet 142.93.37.105 6379  # Connection refused ✅
    nmap -sT -O localhost
 
    # Verify Docker security
-   docker scan prmp-registry
+   docker scan prpm-registry
 
    # Check for CVEs
    trivy image postgres:15-alpine

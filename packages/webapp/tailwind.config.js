@@ -8,8 +8,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'prmp-purple': '#8b5cf6',
-        'prmp-purple-dark': '#7c3aed',
+        'prpm-purple': '#8b5cf6',
+        'prpm-purple-dark': '#7c3aed',
       },
     },
   },

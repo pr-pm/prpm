@@ -59,7 +59,7 @@ The PRPM project has been successfully restructured into a proper npm monorepo w
 | CLI Collections Category | ❌ FAILED | Missing `--category` option |
 
 **Critical Issue:**
-- **CLI Registry URL Hardcoded:** CLI uses `https://registry.prmp.dev` instead of configurable registry URL
+- **CLI Registry URL Hardcoded:** CLI uses `https://registry.prpm.dev` instead of configurable registry URL
 - **Resolution Required:** Add `PRPM_REGISTRY_URL` environment variable support
 
 **Missing Features:**
@@ -118,7 +118,7 @@ The PRPM project has been successfully restructured into a proper npm monorepo w
 - **Issue:** CLI hardcoded to production URL
 - **Fix:** Add environment variable support
 ```typescript
-const registryUrl = process.env.PRPM_REGISTRY_URL || config.get('registryUrl') || 'https://registry.prmp.dev';
+const registryUrl = process.env.PRPM_REGISTRY_URL || config.get('registryUrl') || 'https://registry.prpm.dev';
 ```
 
 **2. API Response Format Standardization**
@@ -152,9 +152,9 @@ const registryUrl = process.env.PRPM_REGISTRY_URL || config.get('registryUrl') |
 **Package Structure:**
 ```
 ├── packages/
-│   ├── cli/                    # @prmp/cli
+│   ├── cli/                    # prpm
 │   │   └── 36 unit tests ✅
-│   └── registry-client/        # @prmp/registry-client
+│   └── registry-client/        # @prpm/registry-client
 │       └── 35 unit tests ✅
 └── registry/                   # Registry server
 ```

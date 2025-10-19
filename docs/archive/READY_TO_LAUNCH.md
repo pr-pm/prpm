@@ -5,13 +5,13 @@
 ## What Was Missing (All Fixed ✅)
 
 ### 1. ✅ CLI Commands
-- **prmp publish** - Complete package publishing with validation
-- **prmp login** - GitHub OAuth authentication with callback server
-- **prmp whoami** - Show current user
+- **prpm publish** - Complete package publishing with validation
+- **prpm login** - GitHub OAuth authentication with callback server
+- **prpm whoami** - Show current user
 
 ### 2. ✅ Configuration System
-- **~/.prmprc** - User configuration file
-- Registry URL configuration (defaults to registry.prmp.dev)
+- **~/.prpmrc** - User configuration file
+- Registry URL configuration (defaults to registry.prpm.dev)
 - Token storage for authentication
 - Telemetry preferences
 
@@ -42,18 +42,18 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | **CLI Commands** | | |
-| prmp add | ✅ | Add from URL |
-| prmp list | ✅ | List installed |
-| prmp remove | ✅ | Remove package |
-| prmp index | ✅ | Generate index |
-| prmp search | ✅ | Search registry |
-| prmp install | ✅ | Install from registry |
-| prmp info | ✅ | Package details |
-| prmp trending | ✅ | Trending packages |
-| prmp popular | ✅ | Popular packages |
-| prmp publish | ✅ | Publish to registry |
-| prmp login | ✅ | Authenticate |
-| prmp whoami | ✅ | Show user |
+| prpm add | ✅ | Add from URL |
+| prpm list | ✅ | List installed |
+| prpm remove | ✅ | Remove package |
+| prpm index | ✅ | Generate index |
+| prpm search | ✅ | Search registry |
+| prpm install | ✅ | Install from registry |
+| prpm info | ✅ | Package details |
+| prpm trending | ✅ | Trending packages |
+| prpm popular | ✅ | Popular packages |
+| prpm publish | ✅ | Publish to registry |
+| prpm login | ✅ | Authenticate |
+| prpm whoami | ✅ | Show user |
 | **Registry Backend** | | |
 | Database schema | ✅ | PostgreSQL |
 | Migrations | ✅ | run.ts + create.ts |
@@ -134,7 +134,7 @@ pulumi up
 ### 3. Deploy Registry (30 mins)
 ```bash
 cd registry
-docker build -t prmp-registry .
+docker build -t prpm-registry .
 # Push to ECR and deploy via GitHub Actions
 npm run migrate
 ```
@@ -145,7 +145,7 @@ npm run migrate
 # Generate JWT token
 cd scripts/seed
 npm install
-export PRMP_REGISTRY_URL="https://..."
+export PRPM_REGISTRY_URL="https://..."
 export PRMP_CURATOR_TOKEN="..."
 npm run upload
 ```
@@ -176,15 +176,15 @@ npm run upload
 Before deploying to production:
 
 ### CLI Tests
-- [ ] prmp add works with URL
-- [ ] prmp list shows packages
-- [ ] prmp search finds packages
-- [ ] prmp install downloads and extracts
-- [ ] prmp info shows details
-- [ ] prmp trending shows packages
-- [ ] prmp publish uploads tarball
-- [ ] prmp login saves token
-- [ ] prmp whoami shows username
+- [ ] prpm add works with URL
+- [ ] prpm list shows packages
+- [ ] prpm search finds packages
+- [ ] prpm install downloads and extracts
+- [ ] prpm info shows details
+- [ ] prpm trending shows packages
+- [ ] prpm publish uploads tarball
+- [ ] prpm login saves token
+- [ ] prpm whoami shows username
 
 ### Registry Tests
 - [ ] GET /api/v1/search returns results
@@ -273,7 +273,7 @@ Before deploying to production:
 ## Support & Links
 
 - **GitHub**: https://github.com/khaliqgant/prompt-package-manager
-- **Registry**: https://registry.prmp.dev (when deployed)
+- **Registry**: https://registry.prpm.dev (when deployed)
 - **Issues**: https://github.com/khaliqgant/prompt-package-manager/issues
 - **Docs**: See BOOTSTRAP_GUIDE.md, DEPLOYMENT_GUIDE.md
 

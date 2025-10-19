@@ -245,8 +245,8 @@ steps:
       cache-dependency-path: package-lock.json  # Root lockfile
 
   - run: npm ci  # Installs all workspaces
-  - run: npm run build --workspace=@prmp/cli
-  - run: npm run test --workspace=@prmp/registry-client
+  - run: npm run build --workspace=prpm
+  - run: npm run test --workspace=@prpm/registry-client
 ```
 
 ### Pattern 2: Different Lockfiles Per Job

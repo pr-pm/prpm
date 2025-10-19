@@ -71,7 +71,7 @@ Create `.env` file in registry directory:
 ```bash
 cat > registry/.env.local << 'EOF'
 # Database
-DATABASE_URL=postgresql://prmp:prmp_dev_password@localhost:5432/prmp
+DATABASE_URL=postgresql://prpm:prpm_dev_password@localhost:5432/prpm
 
 # Redis
 REDIS_URL=redis://localhost:6379
@@ -81,7 +81,7 @@ AWS_REGION=us-east-1
 AWS_ENDPOINT=http://localhost:9000
 AWS_ACCESS_KEY_ID=minioadmin
 AWS_SECRET_ACCESS_KEY=minioadmin
-S3_BUCKET=prmp-packages
+S3_BUCKET=prpm-packages
 
 # JWT
 JWT_SECRET=local_dev_secret_change_in_production
@@ -115,7 +115,7 @@ npm install
 npm run migrate
 
 # Verify tables created
-docker exec -it prmp-postgres psql -U prmp -d prmp -c "\dt"
+docker exec -it prpm-postgres psql -U prpm -d prpm -c "\dt"
 
 # Should show:
 # packages, package_versions, users, downloads, ratings, etc.
@@ -125,7 +125,7 @@ docker exec -it prmp-postgres psql -U prmp -d prmp -c "\dt"
 
 ```bash
 # Connect to database
-docker exec -it prmp-postgres psql -U prmp -d prmp
+docker exec -it prpm-postgres psql -U prpm -d prpm
 
 # Create test user
 INSERT INTO users (id, github_id, username, email, role, created_at)
@@ -152,13 +152,13 @@ const token = jwt.sign(
 );
 console.log('\nYour test token:');
 console.log(token);
-console.log('\nSave this to ~/.prmprc');
+console.log('\nSave this to ~/.prpmrc');
 "
 ```
 
 ### 5. Configure CLI for Local Registry
 
-Create or edit `~/.prmprc`:
+Create or edit `~/.prpmrc`:
 
 ```json
 {
@@ -172,7 +172,7 @@ Create or edit `~/.prmprc`:
 Or use environment variables:
 
 ```bash
-export PRMP_REGISTRY_URL=http://localhost:3000
+export PRPM_REGISTRY_URL=http://localhost:3000
 export PRMP_TOKEN=your-jwt-token-from-above
 ```
 
@@ -187,7 +187,7 @@ npm run build
 npm link
 
 # Verify
-prmp --version
+prpm --version
 # Should show: 1.2.0
 ```
 
@@ -207,7 +207,7 @@ curl http://localhost:3000/health
 ### Test 2: Search (Empty Registry)
 
 ```bash
-prmp search react
+prpm search react
 
 # Expected: No packages found
 ```
@@ -232,7 +232,7 @@ You are a React expert. Always:
 EOF
 
 # Create manifest
-cat > prmp.json << 'EOF'
+cat > prpm.json << 'EOF'
 {
   "name": "test-react-rules",
   "version": "1.0.0",
@@ -250,7 +250,7 @@ cat > prmp.json << 'EOF'
 EOF
 
 # Publish
-prmp publish
+prpm publish
 
 # Expected: ✅ Package published successfully!
 ```
@@ -258,7 +258,7 @@ prmp publish
 ### Test 4: Search for Published Package
 
 ```bash
-prmp search react
+prpm search react
 
 # Expected: Shows test-react-rules package
 ```
@@ -266,7 +266,7 @@ prmp search react
 ### Test 5: Get Package Info
 
 ```bash
-prmp info test-react-rules
+prpm info test-react-rules
 
 # Expected: Package details, version, downloads, etc.
 ```
@@ -277,7 +277,7 @@ prmp info test-react-rules
 mkdir -p /tmp/test-project
 cd /tmp/test-project
 
-prmp install test-react-rules
+prpm install test-react-rules
 
 # Expected: Package installed to cursor_rules/
 ```
@@ -294,7 +294,7 @@ cat cursor_rules/.cursorrules
 ### Test 8: Trending Packages
 
 ```bash
-prmp trending
+prpm trending
 
 # Expected: Shows test-react-rules (if it has downloads)
 ```
@@ -341,7 +341,7 @@ fi
 
 # Test 2: Database connection
 echo "Test 2: Database connection..."
-if docker exec prmp-postgres psql -U prmp -d prmp -c "SELECT 1" &>/dev/null; then
+if docker exec prpm-postgres psql -U prpm -d prpm -c "SELECT 1" &>/dev/null; then
   test_pass "Database connection"
 else
   test_fail "Database connection"
@@ -349,7 +349,7 @@ fi
 
 # Test 3: Redis connection
 echo "Test 3: Redis connection..."
-if docker exec prmp-redis redis-cli ping | grep -q "PONG"; then
+if docker exec prpm-redis redis-cli ping | grep -q "PONG"; then
   test_pass "Redis connection"
 else
   test_fail "Redis connection"
@@ -381,7 +381,7 @@ fi
 
 # Test 7: CLI version
 echo "Test 7: CLI version..."
-if prmp --version | grep -q "1.2.0"; then
+if prpm --version | grep -q "1.2.0"; then
   test_pass "CLI version"
 else
   test_fail "CLI version"
@@ -397,7 +397,7 @@ cat > .cursorrules << 'EOF'
 This is a test package.
 EOF
 
-cat > prmp.json << 'EOF'
+cat > prpm.json << 'EOF'
 {
   "name": "e2e-test-package",
   "version": "1.0.0",
@@ -409,7 +409,7 @@ cat > prmp.json << 'EOF'
 }
 EOF
 
-if prmp publish 2>&1 | grep -q "published successfully"; then
+if prpm publish 2>&1 | grep -q "published successfully"; then
   test_pass "Publish test package"
 else
   test_fail "Publish test package"
@@ -417,7 +417,7 @@ fi
 
 # Test 9: Search for published package
 echo "Test 9: Search for package..."
-if prmp search "e2e-test" | grep -q "e2e-test-package"; then
+if prpm search "e2e-test" | grep -q "e2e-test-package"; then
   test_pass "Search for package"
 else
   test_fail "Search for package"
@@ -428,7 +428,7 @@ echo "Test 10: Install package..."
 INSTALL_DIR=$(mktemp -d)
 cd "$INSTALL_DIR"
 
-if prmp install e2e-test-package 2>&1 | grep -q "installed successfully"; then
+if prpm install e2e-test-package 2>&1 | grep -q "installed successfully"; then
   test_pass "Install package"
 else
   test_fail "Install package"
@@ -475,7 +475,7 @@ docker-compose logs -f registry
 ### View Database Tables
 
 ```bash
-docker exec -it prmp-postgres psql -U prmp -d prmp
+docker exec -it prpm-postgres psql -U prpm -d prpm
 
 # List tables
 \dt
@@ -493,7 +493,7 @@ SELECT id, username, email, role FROM users;
 ### View Redis Cache
 
 ```bash
-docker exec -it prmp-redis redis-cli
+docker exec -it prpm-redis redis-cli
 
 # List all keys
 KEYS *
@@ -527,7 +527,7 @@ mc alias set local http://localhost:9000 minioadmin minioadmin
 mc ls local
 
 # List files
-mc ls local/prmp-packages
+mc ls local/prpm-packages
 ```
 
 ### Reset Everything
@@ -567,7 +567,7 @@ kill -9 <PID>
 docker ps | grep postgres
 
 # Check logs
-docker logs prmp-postgres
+docker logs prpm-postgres
 
 # Restart
 docker-compose restart postgres
@@ -580,10 +580,10 @@ docker-compose restart postgres
 curl http://localhost:9000/minio/health/live
 
 # Create bucket manually
-docker exec -it prmp-minio mc mb local/prpm-packages
+docker exec -it prpm-minio mc mb local/prpm-packages
 
 # Check bucket policy
-docker exec -it prmp-minio mc policy get local/prmp-packages
+docker exec -it prpm-minio mc policy get local/prpm-packages
 ```
 
 ---
@@ -607,7 +607,7 @@ ab -n 1000 -c 10 http://localhost:3000/api/v1/packages/test-react-rules
 ### Database Query Performance
 
 ```bash
-docker exec -it prmp-postgres psql -U prmp -d prmp
+docker exec -it prpm-postgres psql -U prpm -d prpm
 
 # Enable query timing
 \timing
@@ -639,9 +639,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: prmp
-          POSTGRES_PASSWORD: prmp_test
-          POSTGRES_DB: prmp_test
+          POSTGRES_USER: prpm
+          POSTGRES_PASSWORD: prpm_test
+          POSTGRES_DB: prpm_test
         ports:
           - 5432:5432
 
@@ -668,12 +668,12 @@ jobs:
         working-directory: registry
         run: npm run migrate
         env:
-          DATABASE_URL: postgresql://prmp:prmp_test@localhost:5432/prmp_test
+          DATABASE_URL: postgresql://prpm:prpm_test@localhost:5432/prpm_test
 
       - name: Run E2E tests
         run: ./scripts/test-e2e.sh
         env:
-          DATABASE_URL: postgresql://prmp:prmp_test@localhost:5432/prmp_test
+          DATABASE_URL: postgresql://prpm:prpm_test@localhost:5432/prpm_test
           REDIS_URL: redis://localhost:6379
 ```
 

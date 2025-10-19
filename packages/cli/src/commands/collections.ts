@@ -3,10 +3,116 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { handleInstall } from './install';
 import { telemetry } from '../core/telemetry';
+
+/**
+ * Search collections by query
+ */
+export async function handleCollectionsSearch(
+  query: string,
+  options: {
+    category?: string;
+    tag?: string;
+    official?: boolean;
+    limit?: number;
+  }
+): Promise<void> {
+  const startTime = Date.now();
+
+  try {
+    const config = await getConfig();
+    const client = getRegistryClient(config);
+
+    console.log(`🔍 Searching collections for "${query}"...\n`);
+
+    // Get all collections and filter by query
+    const result = await client.getCollections({
+      category: options.category,
+      tag: options.tag,
+      official: options.official,
+      limit: options.limit || 50,
+    });
+
+    // Filter collections by search query (name, description, tags)
+    const queryLower = query.toLowerCase();
+    const filtered = result.collections.filter(c =>
+      c.name.toLowerCase().includes(queryLower) ||
+      c.description.toLowerCase().includes(queryLower) ||
+      c.tags.some(tag => tag.toLowerCase().includes(queryLower)) ||
+      c.id.toLowerCase().includes(queryLower)
+    );
+
+    if (filtered.length === 0) {
+      console.log('No collections found matching your search.');
+      console.log('\n💡 Try:');
+      console.log('  - Broadening your search terms');
+      console.log('  - Checking spelling');
+      console.log('  - Browsing all: prpm collections list');
+      return;
+    }
+
+    console.log(`✨ Found ${filtered.length} collection(s):\n`);
+
+    // Group by official vs community
+    const official = filtered.filter(c => c.official);
+    const community = filtered.filter(c => !c.official);
+
+    if (official.length > 0) {
+      console.log('📦 Official Collections:\n');
+      official.forEach(c => {
+        const fullName = `@${c.scope}/${c.id}`.padEnd(35);
+        const pkgCount = `(${c.package_count} packages)`.padEnd(15);
+        console.log(`   ${c.icon || '📦'} ${fullName} ${pkgCount} ${c.name}`);
+        if (c.description) {
+          console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
+        }
+        console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
+        console.log('');
+      });
+    }
+
+    if (community.length > 0) {
+      console.log('\n🌟 Community Collections:\n');
+      community.forEach(c => {
+        const fullName = `@${c.scope}/${c.id}`.padEnd(35);
+        const pkgCount = `(${c.package_count} packages)`.padEnd(15);
+        console.log(`   ${c.icon || '📦'} ${fullName} ${pkgCount} ${c.name}`);
+        if (c.description) {
+          console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
+        }
+        console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
+        console.log('');
+      });
+    }
+
+    console.log(`\n💡 View details: prpm collection info <collection>`);
+    console.log(`💡 Install: prpm install @collection/<name>`);
+
+    await telemetry.track({
+      command: 'collections:search',
+      success: true,
+      duration: Date.now() - startTime,
+      data: {
+        query: query.substring(0, 100),
+        count: filtered.length,
+        filters: options,
+      },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`\n❌ Failed to search collections: ${errorMessage}`);
+    await telemetry.track({
+      command: 'collections:search',
+      success: false,
+      error: errorMessage,
+      duration: Date.now() - startTime,
+    });
+    process.exit(1);
+  }
+}
 
 /**
  * List available collections
@@ -70,8 +176,8 @@ export async function handleCollectionsList(options: {
       });
     }
 
-    console.log(`\n💡 View details: prmp collection info <collection>`);
-    console.log(`💡 Install: prmp install @collection/<name>`);
+    console.log(`\n💡 View details: prpm collection info <collection>`);
+    console.log(`💡 Install: prpm install @collection/<name>`);
 
     await telemetry.track({
       command: 'collections:list',
@@ -176,9 +282,9 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
 
     // Installation
     console.log('💡 Install:');
-    console.log(`   prmp install @${scope}/${id}`);
+    console.log(`   prpm install @${scope}/${id}`);
     if (optionalPkgs.length > 0) {
-      console.log(`   prmp install @${scope}/${id} --skip-optional  # Skip optional packages`);
+      console.log(`   prpm install @${scope}/${id} --skip-optional  # Skip optional packages`);
     }
     console.log('');
 
@@ -332,6 +438,23 @@ export function createCollectionsCommand(): Command {
     .alias('collection')
     .action(async (options) => {
       await handleCollectionsList(options);
+    });
+
+  // Search subcommand
+  command
+    .command('search <query>')
+    .description('Search for collections')
+    .option('--category <category>', 'Filter by category')
+    .option('--tag <tag>', 'Filter by tag')
+    .option('--official', 'Show only official collections')
+    .option('--limit <number>', 'Number of results to show', '50')
+    .action(async (query: string, options: any) => {
+      await handleCollectionsSearch(query, {
+        category: options.category,
+        tag: options.tag,
+        official: options.official,
+        limit: parseInt(options.limit, 10),
+      });
     });
 
   // List subcommand

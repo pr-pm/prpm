@@ -224,7 +224,7 @@ docker run -d \
   -p 443:443 \
   -v caddy_data:/data \
   caddy:latest \
-  caddy reverse-proxy --from registry.prmp.dev --to localhost:3000
+  caddy reverse-proxy --from registry.prpm.dev --to localhost:3000
 ```
 
 **Pros:**
@@ -254,7 +254,7 @@ docker run -d \
 version: '3.8'
 services:
   registry:
-    image: prmp-registry:latest
+    image: prpm-registry:latest
     depends_on: [postgres, redis]
     ports: ["3000:3000"]
     restart: always
@@ -366,14 +366,14 @@ aws rds create-db-instance \
   --db-instance-class db.t4g.micro \
   --engine postgres \
   --engine-version 15.4 \
-  --master-username prmp \
+  --master-username prpm \
   --master-user-password <secure-password> \
   --allocated-storage 20 \
   --backup-retention-period 7 \
   --publicly-accessible false
 
 # Add to Beanstalk
-eb setenv DATABASE_URL=postgresql://prmp:password@endpoint:5432/prmp_registry
+eb setenv DATABASE_URL=postgresql://prpm:password@endpoint:5432/prpm_registry
 ```
 
 ### Step 3: Deploy & Test

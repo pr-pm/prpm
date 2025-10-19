@@ -32,8 +32,8 @@ async function seedCollections() {
   const pool = new Pool({
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'prmp_registry',
-    user: process.env.DB_USER || 'prmp',
+    database: process.env.DB_NAME || 'prpm_registry',
+    user: process.env.DB_USER || 'prpm',
     password: process.env.DB_PASSWORD,
   });
 
@@ -71,7 +71,7 @@ async function seedCollections() {
           collection.name,
           collection.description,
           collection.version,
-          'prmp-admin', // author
+          'prpm-admin', // author
           collection.official,
           collection.official, // verified if official
           collection.category,

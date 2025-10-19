@@ -64,8 +64,8 @@ function createSecrets(
           password: password,
           host: endpoint,
           port: "5432",
-          database: "prmp_registry",
-          url: `postgresql://${config.dbUsername}:${password}@${endpoint}:5432/prmp_registry`,
+          database: "prpm_registry",
+          url: `postgresql://${config.dbUsername}:${password}@${endpoint}:5432/prpm_registry`,
         })
       ),
   });

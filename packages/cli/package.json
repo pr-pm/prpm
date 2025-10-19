@@ -1,10 +1,10 @@
 {
-  "name": "@prmp/cli",
+  "name": "prpm",
   "version": "1.2.0",
   "description": "Prompt Package Manager CLI - Install and manage prompt-based files",
   "main": "dist/index.js",
   "bin": {
-    "prmp": "dist/index.js"
+    "prpm": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -14,7 +14,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
-    "build:binary": "mkdir -p ../../binaries && pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64,node18-linux-x64,node18-win-x64 --output ../../binaries/prmp",
+    "build:binary": "mkdir -p ../../binaries && pkg dist/index.js --targets node18-macos-x64,node18-macos-arm64,node18-linux-x64,node18-win-x64 --output ../../binaries/prpm",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -36,7 +36,7 @@
   "author": "khaliqgant",
   "license": "MIT",
   "dependencies": {
-    "@prmp/registry-client": "^1.2.0",
+    "@prpm/registry-client": "^1.2.0",
     "@octokit/rest": "^22.0.0",
     "commander": "^11.1.0",
     "posthog-node": "^3.0.0",

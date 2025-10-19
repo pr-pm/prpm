@@ -1,5 +1,5 @@
 {
-  "name": "@prmp/seed-scripts",
+  "name": "@prpm/seed-scripts",
   "version": "1.0.0",
   "private": true,
   "description": "Scripts for seeding the PRMP registry with packages",

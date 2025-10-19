@@ -16,9 +16,9 @@ jobs:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: prmp
-          POSTGRES_PASSWORD: prmp
-          POSTGRES_DB: prmp_registry
+          POSTGRES_USER: prpm
+          POSTGRES_PASSWORD: prpm
+          POSTGRES_DB: prpm_registry
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -78,7 +78,7 @@ jobs:
       - name: Run tests
         run: npm test -- --run
         env:
-          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prmp_registry
+          DATABASE_URL: postgresql://prpm:prpm@localhost:5432/prpm_registry
           REDIS_URL: redis://localhost:6379
           S3_ENDPOINT: http://localhost:9000
           S3_ACCESS_KEY: minioadmin
@@ -112,7 +112,7 @@ jobs:
 
       - name: Build registry-client
         working-directory: ./
-        run: npm run build --workspace=@prmp/registry-client
+        run: npm run build --workspace=@prpm/registry-client
 
       - name: Type check
         run: npx tsc --noEmit

@@ -101,13 +101,13 @@ pulumi config set --secret github:clientId <GITHUB_CLIENT_ID>
 pulumi config set --secret github:clientSecret <GITHUB_CLIENT_SECRET>
 
 # Optional configuration (with defaults shown)
-pulumi config set db:username prmp                    # default: prmp
+pulumi config set db:username prpm                    # default: prpm
 pulumi config set db:instanceClass db.t4g.micro      # default: db.t4g.micro
 pulumi config set db:allocatedStorage 20              # default: 20 (GB)
 pulumi config set app:cpu 256                         # default: 256
 pulumi config set app:memory 512                      # default: 512 (MB)
 pulumi config set app:desiredCount 2                  # default: 2
-pulumi config set app:domainName registry.prmp.dev # optional
+pulumi config set app:domainName registry.prpm.dev # optional
 
 # Enable OpenSearch (optional, for Phase 2)
 pulumi config set search:enabled false                # default: false
@@ -207,10 +207,10 @@ aws ecr get-login-password --region $AWS_REGION | \\
 
 # Build image
 cd ../registry
-docker build -t prmp-registry:latest .
+docker build -t prpm-registry:latest .
 
 # Tag and push
-docker tag prmp-registry:latest $ECR_REPO:latest
+docker tag prpm-registry:latest $ECR_REPO:latest
 docker push $ECR_REPO:latest
 ```
 
@@ -235,13 +235,13 @@ aws ecs run-task \\
   --network-configuration "awsvpcConfiguration={subnets=[$SUBNET],securityGroups=[$SG],assignPublicIp=DISABLED}" \\
   --overrides '{
     "containerOverrides": [{
-      "name": "prmp-registry",
+      "name": "prpm-registry",
       "command": ["npm", "run", "migrate"]
     }]
   }'
 
 # Watch task logs
-aws logs tail /ecs/prmp-prod --follow
+aws logs tail /ecs/prpm-prod --follow
 ```
 
 **Option B: Via Bastion/Local**
@@ -250,8 +250,8 @@ aws logs tail /ecs/prmp-prod --follow
 # Get database endpoint
 DB_HOST=$(pulumi stack output dbEndpoint | cut -d: -f1)
 DB_PORT=$(pulumi stack output dbPort)
-DB_NAME=prmp_registry
-DB_USER=prmp
+DB_NAME=prpm_registry
+DB_USER=prpm
 DB_PASS=<from pulumi config>
 
 # Run migrations
@@ -322,7 +322,7 @@ PORT=3000
 HOST=0.0.0.0
 
 # Database (from Secrets Manager)
-DATABASE_URL=postgresql://prmp:***@<rds-endpoint>:5432/prmp_registry
+DATABASE_URL=postgresql://prpm:***@<rds-endpoint>:5432/prpm_registry
 
 # Redis (from Secrets Manager)
 REDIS_URL=redis://<elasticache-endpoint>:6379
@@ -391,7 +391,7 @@ curl "$API_URL/api/v1/packages/%40jhonma82%2Fnextjs-typescript-tailwind" | jq '.
 aws ecs execute-command \\
   --cluster $CLUSTER \\
   --task <task-id> \\
-  --container prmp-registry \\
+  --container prpm-registry \\
   --interactive \\
   --command "psql $DATABASE_URL -c 'SELECT COUNT(*) FROM packages;'"
 ```
@@ -410,11 +410,11 @@ aws elbv2 describe-target-health \\
 
 ```bash
 # Tail application logs
-aws logs tail /ecs/prmp-prod --follow
+aws logs tail /ecs/prpm-prod --follow
 
 # Search for errors
 aws logs filter-log-events \\
-  --log-group-name /ecs/prmp-prod \\
+  --log-group-name /ecs/prpm-prod \\
   --filter-pattern "ERROR"
 ```
 
@@ -456,22 +456,22 @@ Pulumi automatically creates CloudWatch alarms for:
 ```bash
 # List all alarms
 aws cloudwatch describe-alarms \\
-  --alarm-name-prefix prmp-prod
+  --alarm-name-prefix prpm-prod
 
 # Get alarm state
 aws cloudwatch describe-alarms \\
-  --alarm-names prmp-prod-high-cpu
+  --alarm-names prpm-prod-high-cpu
 ```
 
 ### Set Up SNS Notifications
 
 ```bash
 # Create SNS topic for alerts
-aws sns create-topic --name prmp-prod-alerts
+aws sns create-topic --name prpm-prod-alerts
 
 # Subscribe email
 aws sns subscribe \\
-  --topic-arn arn:aws:sns:us-east-1:ACCOUNT:prmp-prod-alerts \\
+  --topic-arn arn:aws:sns:us-east-1:ACCOUNT:prpm-prod-alerts \\
   --protocol email \\
   --notification-endpoint your-email@example.com
 
@@ -488,14 +488,14 @@ aws sns subscribe \\
 ```bash
 # Get previous task definition revision
 aws ecs describe-task-definition \\
-  --task-definition prmp-prod-task \\
+  --task-definition prpm-prod-task \\
   --query 'taskDefinition.revision'
 
 # Update service to use previous revision
 aws ecs update-service \\
   --cluster $CLUSTER \\
   --service $(pulumi stack output ecsServiceName) \\
-  --task-definition prmp-prod-task:PREVIOUS_REVISION
+  --task-definition prpm-prod-task:PREVIOUS_REVISION
 ```
 
 ### Database Rollback
@@ -503,8 +503,8 @@ aws ecs update-service \\
 ```bash
 # Restore from RDS automated backup
 aws rds restore-db-instance-to-point-in-time \\
-  --source-db-instance-identifier prmp-prod-db \\
-  --target-db-instance-identifier prmp-prod-db-restored \\
+  --source-db-instance-identifier prpm-prod-db \\
+  --target-db-instance-identifier prpm-prod-db-restored \\
   --restore-time 2025-10-19T12:00:00Z
 
 # Update application to point to restored DB
@@ -546,7 +546,7 @@ aws ecs describe-tasks \\
 **Solution:**
 ```bash
 # View logs
-aws logs tail /ecs/prmp-prod --follow
+aws logs tail /ecs/prpm-prod --follow
 
 # Check health endpoint
 curl http://<task-private-ip>:3000/health
@@ -576,12 +576,12 @@ pulumi up
 ```bash
 # Database performance
 aws rds describe-db-instances \\
-  --db-instance-identifier prmp-prod-db \\
+  --db-instance-identifier prpm-prod-db \\
   --query 'DBInstances[0].DBInstanceStatus'
 
 # Redis status
 aws elasticache describe-cache-clusters \\
-  --cache-cluster-id prmp-prod-redis
+  --cache-cluster-id prpm-prod-redis
 ```
 
 **Solution:**
@@ -660,7 +660,7 @@ aws ecs describe-services \\
 
 ### Monitoring
 - **CloudWatch Dashboard:** AWS Console → CloudWatch → Dashboards
-- **Logs:** AWS Console → CloudWatch → Log Groups → `/ecs/prmp-prod`
+- **Logs:** AWS Console → CloudWatch → Log Groups → `/ecs/prpm-prod`
 - **Metrics:** AWS Console → CloudWatch → Metrics
 
 ### Commands Reference
@@ -670,7 +670,7 @@ aws ecs describe-services \\
 pulumi stack output apiUrl && curl $(pulumi stack output apiUrl)/health
 
 # View logs
-aws logs tail /ecs/prmp-prod --follow
+aws logs tail /ecs/prpm-prod --follow
 
 # Force deployment
 aws ecs update-service --cluster $CLUSTER --service $SERVICE --force-new-deployment

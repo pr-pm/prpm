@@ -1,6 +1,6 @@
 /**
  * Registry API Client
- * Handles all communication with the PRMP Registry
+ * Handles all communication with the PRPM Registry
  */
 
 import { PackageType } from './types';
@@ -206,7 +206,7 @@ export class RegistryClient {
    */
   async publish(manifest: any, tarball: Buffer): Promise<any> {
     if (!this.token) {
-      throw new Error('Authentication required. Run `prmp login` first.');
+      throw new Error('Authentication required. Run `prpm login` first.');
     }
 
     const formData = new FormData();
@@ -235,7 +235,7 @@ export class RegistryClient {
    */
   async whoami(): Promise<any> {
     if (!this.token) {
-      throw new Error('Not authenticated. Run `prmp login` first.');
+      throw new Error('Not authenticated. Run `prpm login` first.');
     }
 
     const response = await this.fetch('/api/v1/auth/me');
@@ -314,7 +314,7 @@ export class RegistryClient {
     icon?: string;
   }): Promise<Collection> {
     if (!this.token) {
-      throw new Error('Authentication required. Run `prmp login` first.');
+      throw new Error('Authentication required. Run `prpm login` first.');
     }
 
     const response = await this.fetch('/api/v1/collections', {
@@ -408,7 +408,7 @@ export class RegistryClient {
  */
 export function getRegistryClient(config: { registryUrl?: string; token?: string }): RegistryClient {
   return new RegistryClient({
-    url: config.registryUrl || 'https://registry.prmp.dev',
+    url: config.registryUrl || 'https://registry.prpm.dev',
     token: config.token,
   });
 }

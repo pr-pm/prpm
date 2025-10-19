@@ -100,7 +100,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: prmp-${{ matrix.target }}
+          name: prpm-${{ matrix.target }}
           path: binaries/*
 
   create-release:
@@ -134,7 +134,7 @@ jobs:
       - name: Checkout homebrew tap
         uses: actions/checkout@v4
         with:
-          repository: khaliqgant/homebrew-prmp
+          repository: khaliqgant/homebrew-prpm
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       - name: Update formula
@@ -142,7 +142,7 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           SHA256=$(curl -sL https://github.com/khaliqgant/prompt-package-manager/archive/refs/tags/v${VERSION}.tar.gz | shasum -a 256 | cut -d ' ' -f 1)
 
-          cat > Formula/prmp.rb <<EOF
+          cat > Formula/prpm.rb <<EOF
           class Prmp < Formula
             desc "Prompt Package Manager - Install and manage prompt-based files"
             homepage "https://github.com/khaliqgant/prompt-package-manager"
@@ -158,7 +158,7 @@ jobs:
             end
 
             test do
-              system "#{bin}/prmp", "--version"
+              system "#{bin}/prpm", "--version"
             end
           end
           EOF
@@ -167,6 +167,6 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add Formula/prmp.rb
-          git commit -m "Update prmp to ${GITHUB_REF#refs/tags/v}"
+          git add Formula/prpm.rb
+          git commit -m "Update prpm to ${GITHUB_REF#refs/tags/v}"
           git push

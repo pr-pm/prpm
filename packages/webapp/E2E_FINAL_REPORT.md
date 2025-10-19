@@ -268,7 +268,7 @@ INSERT INTO invites VALUES
 ### Verification
 
 ```bash
-$ docker compose exec -T postgres psql -U prmp -d prpm_registry \
+$ docker compose exec -T postgres psql -U prpm -d prpm_registry \
   -c "SELECT token, author_username, status FROM invites"
 
         token         | author_username | status

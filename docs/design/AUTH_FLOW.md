@@ -9,7 +9,7 @@
 │   CLI   │                    │ Registry │                 │ GitHub │
 └────┬────┘                    └────┬─────┘                 └───┬────┘
      │                              │                            │
-     │ 1. prmp login                │                            │
+     │ 1. prpm login                │                            │
      │----------------------------->│                            │
      │                              │                            │
      │ 2. Opens browser:            │                            │
@@ -43,7 +43,7 @@
      │     ?token=xxx&username=yyy  │                            │
      │<-----------------------------|                            │
      │                              │                            │
-     │ 11. Save token to ~/.prmprc  │                            │
+     │ 11. Save token to ~/.prpmrc  │                            │
      │                              │                            │
 ```
 
@@ -57,7 +57,7 @@
 6. **Registry creates/updates user** in database
 7. **Registry generates JWT token** with user info
 8. **Registry redirects to CLI** callback URL with JWT token
-9. **CLI saves token** to `~/.prmprc`
+9. **CLI saves token** to `~/.prpmrc`
 
 ### 2. Publish Flow (CLI → Registry)
 
@@ -66,9 +66,9 @@
 │   CLI   │                    │ Registry │
 └────┬────┘                    └────┬─────┘
      │                              │
-     │ 1. prmp publish              │
+     │ 1. prpm publish              │
      │                              │
-     │ 2. Read ~/.prmprc            │
+     │ 2. Read ~/.prpmrc            │
      │    (get JWT token)           │
      │                              │
      │ 3. POST /api/v1/packages     │
@@ -99,7 +99,7 @@
 
 **Key Steps:**
 
-1. **CLI reads token** from `~/.prmprc` (saved during login)
+1. **CLI reads token** from `~/.prpmrc` (saved during login)
 2. **CLI creates tarball** with package files
 3. **CLI sends multipart request** with `Authorization: Bearer <JWT>` header
 4. **Registry verifies JWT** using `server.authenticate` decorator
@@ -158,7 +158,7 @@ exec(`open "${authUrl}"`);
 // 3. Wait for callback with token
 const { token, username } = await callbackServer;
 
-// 4. Save to ~/.prmprc
+// 4. Save to ~/.prpmrc
 await saveConfig({ token, username });
 ```
 
@@ -167,7 +167,7 @@ await saveConfig({ token, username });
 // 1. Check authentication
 const config = await getConfig();
 if (!config.token) {
-  console.error('Not logged in. Run "prmp login" first.');
+  console.error('Not logged in. Run "prpm login" first.');
   process.exit(1);
 }
 
@@ -186,7 +186,7 @@ class RegistryClient {
   private token?: string;
 
   constructor(config: RegistryConfig) {
-    this.token = config.token;  // From ~/.prmprc
+    this.token = config.token;  // From ~/.prpmrc
   }
 
   private async fetch(path, options) {
@@ -253,10 +253,10 @@ class RegistryClient {
 
 ### 6. Token Storage
 
-#### CLI (`~/.prmprc`)
+#### CLI (`~/.prpmrc`)
 ```json
 {
-  "registryUrl": "https://registry.prmp.dev",
+  "registryUrl": "https://registry.prpm.dev",
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "username": "khaliqgant",
   "telemetryEnabled": true
@@ -266,7 +266,7 @@ class RegistryClient {
 #### Environment Variables
 ```bash
 # Override registry URL
-export PRMP_REGISTRY_URL="http://localhost:3000"
+export PRPM_REGISTRY_URL="http://localhost:3000"
 
 # Set custom token for CI/CD
 export PRMP_TOKEN="your-token-here"
@@ -278,19 +278,19 @@ export PRMP_TOKEN="your-token-here"
 
 ```bash
 # 1. Login
-prmp login
+prpm login
 # → Opens browser
 # → Authenticate with GitHub
-# → Token saved to ~/.prmprc
+# → Token saved to ~/.prpmrc
 
 # 2. Verify login
-prmp whoami
+prpm whoami
 # → khaliqgant
 
 # 3. Create package
 mkdir my-package
 cd my-package
-cat > prmp.json <<EOF
+cat > prpm.json <<EOF
 {
   "name": "@khaliqgant/test-package",
   "version": "1.0.0",
@@ -300,7 +300,7 @@ cat > prmp.json <<EOF
 EOF
 
 # 4. Publish
-prmp publish
+prpm publish
 # → ✅ Package published successfully!
 ```
 
@@ -335,7 +335,7 @@ The authentication flow is **flawless** with these components:
 
 ✅ **Secure OAuth flow** - GitHub authentication with state parameter
 ✅ **JWT tokens** - Stateless authentication
-✅ **Token persistence** - Saved in `~/.prmprc`
+✅ **Token persistence** - Saved in `~/.prpmrc`
 ✅ **Automatic authorization** - Registry client adds `Authorization` header
 ✅ **Ownership validation** - Only authors can publish their packages
 ✅ **Proper Content-Type** - FormData handled correctly for publish

@@ -38,7 +38,7 @@ Internet
 - AWS Account
 - AWS CLI configured
 - Docker installed
-- Domain name (e.g., prmp.dev)
+- Domain name (e.g., prpm.dev)
 
 ## Step-by-Step Deployment
 
@@ -48,7 +48,7 @@ Internet
 ```bash
 aws ec2 create-vpc \
   --cidr-block 10.0.0.0/16 \
-  --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=prmp-vpc}]'
+  --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=prpm-vpc}]'
 
 # Create public subnets (for ALB)
 aws ec2 create-subnet \
@@ -77,7 +77,7 @@ aws ec2 create-subnet \
 ```bash
 # ALB security group
 aws ec2 create-security-group \
-  --group-name prmp-alb-sg \
+  --group-name prpm-alb-sg \
   --description "Security group for PRMP ALB" \
   --vpc-id vpc-xxxxx
 
@@ -89,7 +89,7 @@ aws ec2 authorize-security-group-ingress \
 
 # ECS security group
 aws ec2 create-security-group \
-  --group-name prmp-ecs-sg \
+  --group-name prpm-ecs-sg \
   --description "Security group for PRMP ECS" \
   --vpc-id vpc-xxxxx
 
@@ -101,7 +101,7 @@ aws ec2 authorize-security-group-ingress \
 
 # RDS security group
 aws ec2 create-security-group \
-  --group-name prmp-rds-sg \
+  --group-name prpm-rds-sg \
   --description "Security group for PRMP RDS" \
   --vpc-id vpc-xxxxx
 
@@ -118,20 +118,20 @@ aws ec2 authorize-security-group-ingress \
 ```bash
 # Create DB subnet group
 aws rds create-db-subnet-group \
-  --db-subnet-group-name prmp-db-subnet \
+  --db-subnet-group-name prpm-db-subnet \
   --db-subnet-group-description "PRMP DB subnet group" \
   --subnet-ids subnet-xxxxx subnet-yyyyy
 
 # Create RDS instance
 aws rds create-db-instance \
-  --db-instance-identifier prmp-db \
+  --db-instance-identifier prpm-db \
   --db-instance-class db.t4g.micro \
   --engine postgres \
   --engine-version 15.5 \
-  --master-username prmp \
+  --master-username prpm \
   --master-user-password "YOUR_SECURE_PASSWORD" \
   --allocated-storage 20 \
-  --db-subnet-group-name prmp-db-subnet \
+  --db-subnet-group-name prpm-db-subnet \
   --vpc-security-group-ids sg-rds-xxxxx \
   --backup-retention-period 7 \
   --preferred-backup-window "03:00-04:00" \
@@ -142,11 +142,11 @@ aws rds create-db-instance \
   --enable-cloudwatch-logs-exports '["postgresql"]'
 
 # Wait for instance to be available
-aws rds wait db-instance-available --db-instance-identifier prmp-db
+aws rds wait db-instance-available --db-instance-identifier prpm-db
 
 # Get endpoint
 aws rds describe-db-instances \
-  --db-instance-identifier prmp-db \
+  --db-instance-identifier prpm-db \
   --query 'DBInstances[0].Endpoint.Address'
 ```
 
@@ -154,18 +154,18 @@ aws rds describe-db-instances \
 ```bash
 # Create cache subnet group
 aws elasticache create-cache-subnet-group \
-  --cache-subnet-group-name prmp-cache-subnet \
+  --cache-subnet-group-name prpm-cache-subnet \
   --cache-subnet-group-description "PRMP cache subnet group" \
   --subnet-ids subnet-xxxxx subnet-yyyyy
 
 # Create Redis cluster
 aws elasticache create-cache-cluster \
-  --cache-cluster-id prmp-redis \
+  --cache-cluster-id prpm-redis \
   --cache-node-type cache.t4g.micro \
   --engine redis \
   --engine-version 7.0 \
   --num-cache-nodes 1 \
-  --cache-subnet-group-name prmp-cache-subnet \
+  --cache-subnet-group-name prpm-cache-subnet \
   --security-group-ids sg-redis-xxxxx \
   --preferred-maintenance-window "mon:05:00-mon:06:00" \
   --snapshot-retention-limit 5 \
@@ -173,7 +173,7 @@ aws elasticache create-cache-cluster \
 
 # Get endpoint
 aws elasticache describe-cache-clusters \
-  --cache-cluster-id prmp-redis \
+  --cache-cluster-id prpm-redis \
   --show-cache-node-info \
   --query 'CacheClusters[0].CacheNodes[0].Endpoint.Address'
 ```
@@ -182,22 +182,22 @@ aws elasticache describe-cache-clusters \
 
 ```bash
 # Create S3 bucket
-aws s3 mb s3://prmp-packages --region us-east-1
+aws s3 mb s3://prpm-packages --region us-east-1
 
 # Enable versioning
 aws s3api put-bucket-versioning \
-  --bucket prmp-packages \
+  --bucket prpm-packages \
   --versioning-configuration Status=Enabled
 
 # Block public access (we'll use CloudFront)
 aws s3api put-public-access-block \
-  --bucket prmp-packages \
+  --bucket prpm-packages \
   --public-access-block-configuration \
     "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
 
 # Enable server-side encryption
 aws s3api put-bucket-encryption \
-  --bucket prmp-packages \
+  --bucket prpm-packages \
   --server-side-encryption-configuration '{
     "Rules": [{
       "ApplyServerSideEncryptionByDefault": {
@@ -208,7 +208,7 @@ aws s3api put-bucket-encryption \
 
 # Create lifecycle policy (delete old versions after 90 days)
 aws s3api put-bucket-lifecycle-configuration \
-  --bucket prmp-packages \
+  --bucket prpm-packages \
   --lifecycle-configuration file://s3-lifecycle.json
 ```
 
@@ -217,23 +217,23 @@ aws s3api put-bucket-lifecycle-configuration \
 ```bash
 # Database credentials
 aws secretsmanager create-secret \
-  --name prmp/database \
+  --name prpm/database \
   --secret-string '{
-    "username": "prmp",
+    "username": "prpm",
     "password": "YOUR_SECURE_PASSWORD",
-    "host": "prmp-db.xxxxx.us-east-1.rds.amazonaws.com",
+    "host": "prpm-db.xxxxx.us-east-1.rds.amazonaws.com",
     "port": "5432",
-    "database": "prmp_registry"
+    "database": "prpm_registry"
   }'
 
 # JWT secret
 aws secretsmanager create-secret \
-  --name prmp/jwt-secret \
+  --name prpm/jwt-secret \
   --secret-string "$(openssl rand -base64 32)"
 
 # GitHub OAuth
 aws secretsmanager create-secret \
-  --name prmp/github-oauth \
+  --name prpm/github-oauth \
   --secret-string '{
     "client_id": "your_github_client_id",
     "client_secret": "your_github_client_secret"
@@ -241,9 +241,9 @@ aws secretsmanager create-secret \
 
 # Redis URL
 aws secretsmanager create-secret \
-  --name prmp/redis \
+  --name prpm/redis \
   --secret-string '{
-    "url": "redis://prmp-redis.xxxxx.cache.amazonaws.com:6379"
+    "url": "redis://prpm-redis.xxxxx.cache.amazonaws.com:6379"
   }'
 ```
 
@@ -252,7 +252,7 @@ aws secretsmanager create-secret \
 ```bash
 # Create ECR repository
 aws ecr create-repository \
-  --repository-name prmp-registry \
+  --repository-name prpm-registry \
   --image-scanning-configuration scanOnPush=true \
   --encryption-configuration encryptionType=AES256
 
@@ -263,12 +263,12 @@ aws ecr get-login-password --region us-east-1 | \
 
 # Build and push image
 cd registry
-docker build -t prmp-registry:latest .
+docker build -t prpm-registry:latest .
 
-docker tag prmp-registry:latest \
-  123456789012.dkr.ecr.us-east-1.amazonaws.com/prmp-registry:latest
+docker tag prpm-registry:latest \
+  123456789012.dkr.ecr.us-east-1.amazonaws.com/prpm-registry:latest
 
-docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/prmp-registry:latest
+docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/prpm-registry:latest
 ```
 
 ### 6. Create IAM Role for ECS Tasks
@@ -276,27 +276,27 @@ docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/prmp-registry:latest
 ```bash
 # Create task execution role (for pulling images, writing logs)
 aws iam create-role \
-  --role-name prmpEcsTaskExecutionRole \
+  --role-name prpmEcsTaskExecutionRole \
   --assume-role-policy-document file://ecs-task-execution-role.json
 
 aws iam attach-role-policy \
-  --role-name prmpEcsTaskExecutionRole \
+  --role-name prpmEcsTaskExecutionRole \
   --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
 # Create task role (for accessing AWS services)
 aws iam create-role \
-  --role-name prmpEcsTaskRole \
+  --role-name prpmEcsTaskRole \
   --assume-role-policy-document file://ecs-task-role.json
 
 # Attach policies for S3, Secrets Manager, OpenSearch
 aws iam put-role-policy \
-  --role-name prmpEcsTaskRole \
-  --policy-name prmp-s3-access \
+  --role-name prpmEcsTaskRole \
+  --policy-name prpm-s3-access \
   --policy-document file://s3-policy.json
 
 aws iam put-role-policy \
-  --role-name prmpEcsTaskRole \
-  --policy-name prmp-secrets-access \
+  --role-name prpmEcsTaskRole \
+  --policy-name prpm-secrets-access \
   --policy-document file://secrets-policy.json
 ```
 
@@ -304,14 +304,14 @@ aws iam put-role-policy \
 
 ```bash
 # Create ECS cluster
-aws ecs create-cluster --cluster-name prmp-cluster
+aws ecs create-cluster --cluster-name prpm-cluster
 
 # Register task definition
 aws ecs register-task-definition --cli-input-json file://task-definition.json
 
 # Create Application Load Balancer
 aws elbv2 create-load-balancer \
-  --name prmp-alb \
+  --name prpm-alb \
   --subnets subnet-xxxxx subnet-yyyyy \
   --security-groups sg-alb-xxxxx \
   --scheme internet-facing \
@@ -319,7 +319,7 @@ aws elbv2 create-load-balancer \
 
 # Create target group
 aws elbv2 create-target-group \
-  --name prmp-tg \
+  --name prpm-tg \
   --protocol HTTP \
   --port 3000 \
   --vpc-id vpc-xxxxx \
@@ -337,13 +337,13 @@ aws elbv2 create-listener \
 
 # Create ECS service
 aws ecs create-service \
-  --cluster prmp-cluster \
-  --service-name prmp-service \
-  --task-definition prmp-registry:1 \
+  --cluster prpm-cluster \
+  --service-name prpm-service \
+  --task-definition prpm-registry:1 \
   --desired-count 2 \
   --launch-type FARGATE \
   --network-configuration "awsvpcConfiguration={subnets=[subnet-xxxxx,subnet-yyyyy],securityGroups=[sg-ecs-xxxxx],assignPublicIp=DISABLED}" \
-  --load-balancers "targetGroupArn=arn:aws:elasticloadbalancing:...,containerName=prmp-registry,containerPort=3000"
+  --load-balancers "targetGroupArn=arn:aws:elasticloadbalancing:...,containerName=prpm-registry,containerPort=3000"
 ```
 
 ### 8. Run Database Migrations
@@ -351,13 +351,13 @@ aws ecs create-service \
 ```bash
 # Connect to ECS task and run migrations
 aws ecs run-task \
-  --cluster prmp-cluster \
-  --task-definition prmp-registry:1 \
+  --cluster prpm-cluster \
+  --task-definition prpm-registry:1 \
   --launch-type FARGATE \
   --network-configuration "awsvpcConfiguration={subnets=[subnet-xxxxx],securityGroups=[sg-ecs-xxxxx],assignPublicIp=ENABLED}" \
   --overrides '{
     "containerOverrides": [{
-      "name": "prmp-registry",
+      "name": "prpm-registry",
       "command": ["npm", "run", "migrate"]
     }]
   }'
@@ -375,7 +375,7 @@ aws cloudfront create-distribution --distribution-config file://cloudfront-confi
 ```bash
 # Create OpenSearch domain
 aws opensearch create-domain \
-  --domain-name prmp-search \
+  --domain-name prpm-search \
   --engine-version OpenSearch_2.11 \
   --cluster-config \
     InstanceType=t3.small.search,InstanceCount=1 \
@@ -390,7 +390,7 @@ aws opensearch create-domain \
 
 # Update ECS task definition to enable OpenSearch
 # Set SEARCH_ENGINE=opensearch
-# Set OPENSEARCH_ENDPOINT=https://search-prmp-xxxxx.us-east-1.es.amazonaws.com
+# Set OPENSEARCH_ENDPOINT=https://search-prpm-xxxxx.us-east-1.es.amazonaws.com
 ```
 
 ## Environment Variables for ECS
@@ -405,29 +405,29 @@ Add to task definition:
     { "name": "HOST", "value": "0.0.0.0" },
     { "name": "SEARCH_ENGINE", "value": "postgres" },
     { "name": "AWS_REGION", "value": "us-east-1" },
-    { "name": "S3_BUCKET", "value": "prmp-packages" },
-    { "name": "FRONTEND_URL", "value": "https://prmp.dev" }
+    { "name": "S3_BUCKET", "value": "prpm-packages" },
+    { "name": "FRONTEND_URL", "value": "https://prpm.dev" }
   ],
   "secrets": [
     {
       "name": "DATABASE_URL",
-      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prmp/database"
+      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prpm/database"
     },
     {
       "name": "REDIS_URL",
-      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prmp/redis"
+      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prpm/redis"
     },
     {
       "name": "JWT_SECRET",
-      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prmp/jwt-secret"
+      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prpm/jwt-secret"
     },
     {
       "name": "GITHUB_CLIENT_ID",
-      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prmp/github-oauth:client_id::"
+      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prpm/github-oauth:client_id::"
     },
     {
       "name": "GITHUB_CLIENT_SECRET",
-      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prmp/github-oauth:client_secret::"
+      "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prpm/github-oauth:client_secret::"
     }
   ]
 }
@@ -440,7 +440,7 @@ Add to task definition:
 ```bash
 # High CPU alarm
 aws cloudwatch put-metric-alarm \
-  --alarm-name prmp-high-cpu \
+  --alarm-name prpm-high-cpu \
   --alarm-description "Alert when CPU exceeds 80%" \
   --metric-name CPUUtilization \
   --namespace AWS/ECS \
@@ -452,7 +452,7 @@ aws cloudwatch put-metric-alarm \
 
 # High memory alarm
 aws cloudwatch put-metric-alarm \
-  --alarm-name prmp-high-memory \
+  --alarm-name prpm-high-memory \
   --alarm-description "Alert when memory exceeds 80%" \
   --metric-name MemoryUtilization \
   --namespace AWS/ECS \
@@ -476,7 +476,7 @@ aws cloudwatch put-metric-alarm \
 # Enable auto-scaling
 aws application-autoscaling register-scalable-target \
   --service-namespace ecs \
-  --resource-id service/prmp-cluster/prmp-service \
+  --resource-id service/prpm-cluster/prpm-service \
   --scalable-dimension ecs:service:DesiredCount \
   --min-capacity 2 \
   --max-capacity 10
@@ -484,7 +484,7 @@ aws application-autoscaling register-scalable-target \
 # CPU-based scaling
 aws application-autoscaling put-scaling-policy \
   --service-namespace ecs \
-  --resource-id service/prmp-cluster/prmp-service \
+  --resource-id service/prpm-cluster/prpm-service \
   --scalable-dimension ecs:service:DesiredCount \
   --policy-name cpu-scaling \
   --policy-type TargetTrackingScaling \
@@ -513,21 +513,21 @@ aws application-autoscaling put-scaling-policy \
 
 ### Check ECS logs
 ```bash
-aws logs tail /ecs/prmp-registry --follow
+aws logs tail /ecs/prpm-registry --follow
 ```
 
 ### Check RDS connectivity
 ```bash
 # From ECS task
 aws ecs execute-command \
-  --cluster prmp-cluster \
+  --cluster prpm-cluster \
   --task task-id \
-  --container prmp-registry \
+  --container prpm-registry \
   --interactive \
   --command "/bin/sh"
 
 # Then inside container
-nc -zv prmp-db.xxxxx.us-east-1.rds.amazonaws.com 5432
+nc -zv prpm-db.xxxxx.us-east-1.rds.amazonaws.com 5432
 ```
 
 ## Support

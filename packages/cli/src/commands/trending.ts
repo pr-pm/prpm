@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
@@ -40,7 +40,7 @@ export async function handleTrending(options: { type?: PackageType; limit?: numb
       console.log();
     });
 
-    console.log(`💡 Install a package: prmp install <package-id>`);
+    console.log(`💡 Install a package: prpm install <package-id>`);
 
     success = true;
   } catch (err) {

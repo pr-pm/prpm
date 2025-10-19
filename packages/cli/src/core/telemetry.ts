@@ -31,7 +31,7 @@ class Telemetry {
   private posthog: PostHog | null = null;
 
   constructor() {
-    this.configPath = path.join(os.homedir(), '.prmp', 'telemetry.json');
+    this.configPath = path.join(os.homedir(), '.prpm', 'telemetry.json');
     this.config = this.loadConfig();
     this.initializePostHog();
   }
@@ -108,7 +108,7 @@ class Telemetry {
 
   private async saveEvents(): Promise<void> {
     try {
-      const eventsPath = path.join(os.homedir(), '.prmp', 'events.json');
+      const eventsPath = path.join(os.homedir(), '.prpm', 'events.json');
       await fs.mkdir(path.dirname(eventsPath), { recursive: true });
       await fs.writeFile(eventsPath, JSON.stringify(this.events, null, 2));
     } catch (error) {
@@ -137,7 +137,7 @@ class Telemetry {
 
   async getStats(): Promise<{ totalEvents: number; lastEvent?: string }> {
     try {
-      const eventsPath = path.join(os.homedir(), '.prmp', 'events.json');
+      const eventsPath = path.join(os.homedir(), '.prpm', 'events.json');
       const data = await fs.readFile(eventsPath, 'utf8');
       const savedEvents = JSON.parse(data);
       return {
@@ -171,7 +171,7 @@ class Telemetry {
       
       this.posthog.capture({
         distinctId,
-        event: `prmp_${event.command}`,
+        event: `prpm_${event.command}`,
         properties: {
           // Core event data
           command: event.command,

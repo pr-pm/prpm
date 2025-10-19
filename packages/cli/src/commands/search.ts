@@ -3,10 +3,13 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
+
+// User-friendly CLI types
+type CLIPackageType = 'skill' | 'agent' | 'rule' | 'plugin' | 'prompt' | 'workflow' | 'tool' | 'template' | 'mcp';
 
 /**
  * Get icon for package type
@@ -44,9 +47,27 @@ function getTypeLabel(type: string): string {
   return labels[type] || type;
 }
 
+/**
+ * Map user-friendly CLI types to registry schema
+ */
+function mapTypeToRegistry(cliType: CLIPackageType): { type?: PackageType; tags?: string[] } {
+  const typeMap: Record<CLIPackageType, { type?: PackageType; tags?: string[] }> = {
+    rule: { type: 'cursor', tags: ['cursor-rule'] },
+    skill: { type: 'claude-skill' },
+    agent: { type: 'claude' },
+    mcp: { type: 'generic', tags: ['mcp', 'mcp-server'] },
+    plugin: { type: 'generic', tags: ['plugin'] },
+    prompt: { type: 'generic', tags: ['prompt'] },
+    workflow: { type: 'generic', tags: ['workflow'] },
+    tool: { type: 'generic', tags: ['tool'] },
+    template: { type: 'generic', tags: ['template'] },
+  };
+  return typeMap[cliType] || {};
+}
+
 export async function handleSearch(
   query: string,
-  options: { type?: PackageType; limit?: number }
+  options: { type?: CLIPackageType; limit?: number }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -58,17 +79,30 @@ export async function handleSearch(
 
     const config = await getConfig();
     const client = getRegistryClient(config);
-    result = await client.search(query, {
-      type: options.type,
+
+    // Map CLI type to registry schema
+    const searchOptions: any = {
       limit: options.limit || 20,
-    });
+    };
+
+    if (options.type) {
+      const mapped = mapTypeToRegistry(options.type);
+      if (mapped.type) {
+        searchOptions.type = mapped.type;
+      }
+      if (mapped.tags) {
+        searchOptions.tags = mapped.tags;
+      }
+    }
+
+    result = await client.search(query, searchOptions);
 
     if (result.packages.length === 0) {
       console.log('\n❌ No packages found');
       console.log(`\nTry:`);
       console.log(`  - Broadening your search terms`);
       console.log(`  - Checking spelling`);
-      console.log(`  - Browsing trending: prmp trending`);
+      console.log(`  - Browsing trending: prpm trending`);
       return;
     }
 
@@ -90,8 +124,8 @@ export async function handleSearch(
       console.log();
     });
 
-    console.log(`\n💡 Install a package: prmp install <package-id>`);
-    console.log(`   Get more info: prmp info <package-id>`);
+    console.log(`\n💡 Install a package: prpm install <package-id>`);
+    console.log(`   Get more info: prpm info <package-id>`);
 
     if (result.total > result.packages.length) {
       console.log(`\n   Showing ${result.packages.length} of ${result.total} results`);
@@ -102,7 +136,7 @@ export async function handleSearch(
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Search failed: ${error}`);
     console.log(`\n💡 Tip: Make sure you have internet connection`);
-    console.log(`   Registry: ${process.env.PRMP_REGISTRY_URL || 'https://registry.prmp.dev'}`);
+    console.log(`   Registry: ${process.env.PRPM_REGISTRY_URL || 'https://registry.prpm.dev'}`);
     process.exit(1);
   } finally {
     await telemetry.track({
@@ -128,10 +162,10 @@ export function createSearchCommand(): Command {
     .option('--type <type>', 'Filter by package type (skill, agent, rule, plugin, prompt, workflow, tool, template, mcp)')
     .option('--limit <number>', 'Number of results to show', '20')
     .action(async (query: string, options: any) => {
-      const type = options.type as PackageType | undefined;
+      const type = options.type as CLIPackageType | undefined;
       const limit = parseInt(options.limit, 10);
 
-      const validTypes = ['skill', 'agent', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
+      const validTypes: CLIPackageType[] = ['skill', 'agent', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
       if (options.type && !validTypes.includes(type!)) {
         console.error(`❌ Type must be one of: ${validTypes.join(', ')}`);
         console.log(`\n💡 Examples:`);

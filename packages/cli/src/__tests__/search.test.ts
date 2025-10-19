@@ -3,11 +3,11 @@
  */
 
 import { handleSearch } from '../commands/search';
-import { getRegistryClient } from '@prmp/registry-client';
+import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 
 // Mock dependencies
-jest.mock('@prmp/registry-client');
+jest.mock('@prpm/registry-client');
 jest.mock('../core/user-config');
 jest.mock('../core/telemetry', () => ({
   telemetry: {

@@ -3,6 +3,7 @@
  * Run: npx tsx scripts/seed-packages.ts
  */
 
+import { config } from 'dotenv';
 import { Pool } from 'pg';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -11,12 +12,13 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Load .env file from registry root
+config({ path: join(__dirname, '..', '.env') });
+
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://prpm:prpm@localhost:5434/prpm';
+
 const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  database: 'prmp_registry',
-  user: 'prmp',
-  password: 'prmp',
+  connectionString: DATABASE_URL,
 });
 
 interface ScrapedPackage {
@@ -35,25 +37,33 @@ async function seedPackages() {
   try {
     console.log('🌱 Starting package seeding...');
 
-    // Load scraped data
+    // Load scraped data from centralized data directory
     const scrapedFiles = [
-      '../../../scraped-claude-skills.json',
-      '../../../scraped-darcyegb-agents.json',
-      '../../../converted-cursor-skills.json',
-      '../../../scraped-packages-additional.json',
-      '../../../new-scraped-packages.json',
-      '../../../scraped-windsurf-packages.json',
-      '../../../scraped-volt-agent-subagents.json',
-      '../../../scraped-additional-agents.json',
-      '../../../scraped-mdc-packages.json',
-      'seed/new-skills.json', // New troubleshooting skills
-      '../../../scraped-mcp-servers-all.json', // MCP servers (will be re-scraped to 10K)
-      '../../../scraped-lst97-agents.json',
-      '../../../converted-cursor-rules-all.json', // 553 cursor rules with content
-      '../../../scraped-aaronontheweb-dotnet.json',
+      '../../../data/scraped/scraped-claude-skills.json',
+      '../../../data/scraped/scraped-darcyegb-agents.json',
+      '../../../data/scraped/converted-cursor-skills.json',
+      '../../../data/scraped/scraped-packages-additional.json',
+      '../../../data/scraped/new-scraped-packages.json',
+      '../../../data/scraped/scraped-windsurf-packages.json',
+      '../../../data/scraped/scraped-volt-agent-subagents.json',
+      '../../../data/scraped/scraped-additional-agents.json',
+      '../../../data/scraped/scraped-mdc-packages.json',
+      '../../../data/scraped/scraped-lst97-agents.json',
+      '../../../data/scraped/converted-cursor-rules-all.json', // 553 cursor rules with content
+      '../../../data/scraped/scraped-mcp-servers-official.json', // Official MCP servers
+      '../../../data/scraped/scraped-aaronontheweb-dotnet.json',
+      '../../../data/scraped/scraped-jhonma82-cursorrules.json',
+      '../../../data/scraped/scraped-blefnk-cursorrules.json',
+      '../../../data/scraped/scraped-patrickjs-cursorrules.json',
+      '../../../data/scraped/scraped-ivangrynenko-cursorrules.json',
+      '../../../data/scraped/scraped-flyeric-cursorrules.json',
+      '../../../data/scraped/scraped-cursor-directory.json',
+      '../../../data/scraped/scraped-cursor-official-rules.json',
     ];
 
     let totalPackages = 0;
+    let totalAttempted = 0;
+    let totalSkipped = 0;
 
     for (const file of scrapedFiles) {
       const filePath = join(__dirname, file);
@@ -64,10 +74,17 @@ async function seedPackages() {
         console.log(`\n📦 Processing ${packages.length} packages from ${file}...`);
 
         for (const pkg of packages) {
+          totalAttempted++;
           try {
             // Extract author and create namespaced package ID
             // Format: @author/package-name
-            const author = (pkg.author || 'unknown')
+            // Try author_id first (with @ sign), then author, then fallback to unknown
+            let authorRaw = pkg.author_id || pkg.author || 'unknown';
+            // Remove @ prefix if it exists
+            if (authorRaw.startsWith('@')) {
+              authorRaw = authorRaw.substring(1);
+            }
+            const author = authorRaw
               .toLowerCase()
               .replace(/[^a-z0-9-]/g, '-')
               .replace(/-+/g, '-')
@@ -128,7 +145,7 @@ async function seedPackages() {
             const isVerified = !!(pkg.verified || pkg.official);
 
             // Insert package
-            await pool.query(
+            const pkgResult = await pool.query(
               `INSERT INTO packages (
                 id,
                 display_name,
@@ -143,7 +160,8 @@ async function seedPackages() {
                 created_at,
                 updated_at
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-              ON CONFLICT (id) DO NOTHING`,
+              ON CONFLICT (id) DO NOTHING
+              RETURNING id`,
               [
                 packageId,
                 pkg.name || packageId,
@@ -157,6 +175,12 @@ async function seedPackages() {
                 isOfficial,  // Now maps to 'featured' column
               ]
             );
+
+            // If package already exists, skip version insert
+            if (pkgResult.rows.length === 0) {
+              totalSkipped++;
+              continue;
+            }
 
             // Insert initial version (using metadata to store content)
             await pool.query(
@@ -174,7 +198,7 @@ async function seedPackages() {
               [
                 packageId,
                 '1.0.0',
-                `https://registry.prmp.dev/packages/${packageId}/1.0.0.tar.gz`, // placeholder
+                `https://registry.prpm.dev/packages/${packageId}/1.0.0.tar.gz`, // placeholder
                 'placeholder-hash',
                 (pkg.content?.length || 0),
                 'Initial version',
@@ -189,6 +213,7 @@ async function seedPackages() {
             totalPackages++;
           } catch (err: any) {
             console.error(`  ⚠️  Failed to insert package: ${err.message}`);
+            totalSkipped++;
           }
         }
       } catch (err: any) {
@@ -197,6 +222,8 @@ async function seedPackages() {
     }
 
     console.log(`\n✅ Successfully seeded ${totalPackages} packages!`);
+    console.log(`⏭️  Skipped ${totalSkipped} duplicates`);
+    console.log(`📋 Total attempted: ${totalAttempted}`);
 
     // Show stats
     const stats = await pool.query(`

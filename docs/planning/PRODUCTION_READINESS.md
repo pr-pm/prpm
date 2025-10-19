@@ -330,7 +330,7 @@ Materialized view:  0.9-4.4ms ✅
 3. **Deploy Application** (15 min)
    ```bash
    # Build and push Docker image
-   docker build -t prmp-registry .
+   docker build -t prpm-registry .
    docker push <ecr-url>:latest
    ```
 
@@ -418,7 +418,7 @@ Materialized view:  0.9-4.4ms ✅
 ## 📞 Post-Deployment Support
 
 ### Monitoring
-- CloudWatch: `/ecs/prmp-prod`
+- CloudWatch: `/ecs/prpm-prod`
 - Metrics: CloudWatch Dashboard
 - Logs: Real-time via `aws logs tail`
 

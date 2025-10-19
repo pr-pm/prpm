@@ -1,7 +1,7 @@
 {
-  "name": "@prmp/registry-client",
+  "name": "@prpm/registry-client",
   "version": "1.2.0",
-  "description": "Registry client library for PRMP",
+  "description": "Registry client library for PRPM",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -14,7 +14,7 @@
     "prepublishOnly": "npm run build"
   },
   "keywords": [
-    "prmp",
+    "prpm",
     "registry",
     "client",
     "prompts"

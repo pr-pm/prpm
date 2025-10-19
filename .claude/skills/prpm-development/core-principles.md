@@ -20,7 +20,7 @@ mcpServers:
       - "-y"
       - "@modelcontextprotocol/server-postgres"
     env:
-      DATABASE_URL: "postgresql://prmp:password@localhost:5432/prmp_registry"
+      DATABASE_URL: "postgresql://prpm:password@localhost:5432/prpm_registry"
 ---
 
 # PRPM Development - Core Principles

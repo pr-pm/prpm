@@ -19,7 +19,7 @@ export async function handleWhoami(): Promise<void> {
 
     if (!config.token || !config.username) {
       console.log('Not logged in');
-      console.log('\n💡 Run "prmp login" to authenticate\n');
+      console.log('\n💡 Run "prpm login" to authenticate\n');
       success = true;
       return;
     }

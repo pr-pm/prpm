@@ -107,7 +107,7 @@ function createRdsPostgres(
       storageType: "gp3",
       storageEncrypted: true,
 
-      dbName: "prmp_registry",
+      dbName: "prpm_registry",
       username: config.username,
       password: config.password,
 

@@ -7,9 +7,9 @@ The PRMP project has been successfully restructured into a proper npm workspaces
 ## 📦 Package Structure
 
 ```
-prmp-monorepo/
+prpm-monorepo/
 ├── packages/
-│   ├── cli/                    # @prmp/cli - Command-line interface
+│   ├── cli/                    # prpm - Command-line interface
 │   │   ├── src/
 │   │   │   ├── commands/       # CLI commands (install, search, etc.)
 │   │   │   ├── core/           # Core utilities
@@ -21,7 +21,7 @@ prmp-monorepo/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   └── registry-client/        # @prmp/registry-client - Shared client library
+│   └── registry-client/        # @prpm/registry-client - Shared client library
 │       ├── src/
 │       │   ├── __tests__/      # Client tests (35 tests)
 │       │   ├── index.ts        # Public API
@@ -56,7 +56,7 @@ prmp-monorepo/
 
 ## 📋 Packages
 
-### 1. @prmp/cli (packages/cli/)
+### 1. prpm (packages/cli/)
 
 The command-line interface package.
 
@@ -66,7 +66,7 @@ The command-line interface package.
 - `src/__tests__/` - Comprehensive tests
 
 **Dependencies:**
-- `@prmp/registry-client` - Uses the shared client library
+- `@prpm/registry-client` - Uses the shared client library
 - `commander` - CLI framework
 - `tar` - Archive handling
 - `@octokit/rest` - GitHub API
@@ -78,7 +78,7 @@ The command-line interface package.
 - Collections command (listing, info)
 - Login command
 
-### 2. @prmp/registry-client (packages/registry-client/)
+### 2. @prpm/registry-client (packages/registry-client/)
 
 Shared library for interacting with the PRPM Registry.
 
@@ -133,12 +133,12 @@ npm run build:registry
 npm test
 
 # Test specific package
-npm test --workspace=@prmp/cli
-npm test --workspace=@prmp/registry-client
+npm test --workspace=prpm
+npm test --workspace=@prpm/registry-client
 npm test --workspace=registry
 
 # Watch mode
-npm run test:watch --workspace=@prmp/cli
+npm run test:watch --workspace=prpm
 ```
 
 ### Development
@@ -167,7 +167,7 @@ npm run clean
 
 ## 🧪 Test Coverage
 
-### CLI Package (@prmp/cli)
+### CLI Package (prpm)
 - **36 tests** across 4 test suites
 - Coverage: Commands, error handling, lockfile management
 - Test files:
@@ -176,7 +176,7 @@ npm run clean
   - `collections.test.ts` - Collections management
   - `login.test.ts` - Authentication
 
-### Registry Client (@prmp/registry-client)
+### Registry Client (@prpm/registry-client)
 - **35 tests** in 1 comprehensive suite
 - Coverage: API methods, retry logic, authentication
 - Test file:
@@ -230,7 +230,7 @@ npm publish
 
 ### 3. **Reusability**
 - Registry client can be imported by other projects
-- Published as `@prmp/registry-client`
+- Published as `@prpm/registry-client`
 - Type definitions included
 
 ### 4. **Development Experience**
@@ -256,7 +256,7 @@ import { RegistryClient } from '../core/registry-client';
 
 **After:**
 ```typescript
-import { RegistryClient } from '@prmp/registry-client';
+import { RegistryClient } from '@prpm/registry-client';
 ```
 
 All imports have been updated in the CLI package.
@@ -266,11 +266,11 @@ All imports have been updated in the CLI package.
 The registry client is now available as a standalone package:
 
 ```bash
-npm install @prmp/registry-client
+npm install @prpm/registry-client
 ```
 
 ```typescript
-import { RegistryClient, getRegistryClient } from '@prmp/registry-client';
+import { RegistryClient, getRegistryClient } from '@prpm/registry-client';
 
 // Create a client
 const client = getRegistryClient({

@@ -306,7 +306,7 @@ export function createBeanstalkApp(
         name: "DATABASE_URL",
         value: pulumi.all([config.dbEndpoint, config.dbPassword]).apply(
           ([endpoint, password]) =>
-            `postgresql://${config.dbUsername}:${password}@${endpoint}/prmp_registry`
+            `postgresql://${config.dbUsername}:${password}@${endpoint}/prpm_registry`
         ),
       },
 
@@ -430,7 +430,7 @@ export function createBeanstalkApp(
   let dnsRecord: aws.route53.Record | undefined;
 
   if (config.domainName) {
-    // Extract base domain (e.g., "prmp.dev" from "registry.prmp.dev")
+    // Extract base domain (e.g., "prpm.dev" from "registry.prpm.dev")
     const domainParts = config.domainName.split(".");
     const baseDomain =
       domainParts.length >= 2

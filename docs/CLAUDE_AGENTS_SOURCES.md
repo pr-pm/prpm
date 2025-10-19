@@ -266,7 +266,7 @@ This will:
 ### Mutual Benefits
 
 - **Wider Reach**: More developers discover their agents
-- **Easier Access**: `prmp install` vs manual download
+- **Easier Access**: `prpm install` vs manual download
 - **Versioning**: Proper semver and updates
 - **Community**: Unified ecosystem for Claude agents
 - **Cross-Promotion**: Link to original sources
@@ -290,7 +290,7 @@ exactly what developers need.
 
 Would love to partner with you to make these agents available via:
 
-prmp install frontend-developer-subagents
+prpm install frontend-developer-subagents
 
 Benefits for you:
 - Wider distribution (CLI install vs manual download)
@@ -352,8 +352,8 @@ is the most comprehensive collection I've seen.
 I'm building PRMP (Prompt Package Manager) and would love to
 distribute your agents via CLI:
 
-prmp install backend-architect-wshobson
-prmp install typescript-expert-wshobson
+prpm install backend-architect-wshobson
+prpm install typescript-expert-wshobson
 
 What I'm proposing:
 1. Import all your agents (with full attribution)

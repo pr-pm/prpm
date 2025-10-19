@@ -100,6 +100,15 @@ export async function authRoutes(server: FastifyInstance) {
 
   // Override GitHub OAuth start to support custom redirect parameter
   server.get('/github', async (request: FastifyRequest, reply: FastifyReply) => {
+    // Check if GitHub OAuth is configured
+    // @ts-ignore - fastify-oauth2 types
+    if (!server.githubOAuth2) {
+      return reply.status(503).send({
+        error: 'GitHub OAuth not configured',
+        message: 'GitHub authentication is not available. Please configure GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables.',
+      });
+    }
+
     const { redirect } = request.query as { redirect?: string };
 
     // Generate state parameter for security
@@ -233,7 +242,7 @@ export async function authRoutes(server: FastifyInstance) {
     };
 
     // Generate random token
-    const token = `prmp_${nanoid(32)}`;
+    const token = `prpm_${nanoid(32)}`;
 
     // Hash token for storage
     const crypto = await import('crypto');

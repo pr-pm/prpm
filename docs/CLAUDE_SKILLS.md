@@ -33,7 +33,7 @@ Claude Skills packages should include:
 
 ```
 my-claude-skill/
-├── prmp.json          # PRMP package manifest
+├── prpm.json          # PRMP package manifest
 ├── skill.json         # Claude skill definition
 ├── README.md          # Documentation
 └── examples/          # Optional: usage examples
@@ -44,13 +44,13 @@ my-claude-skill/
 
 ```bash
 # Search for Claude skills
-prmp search "react" --type claude-skill
+prpm search "react" --type claude-skill
 
 # Install a skill
-prmp install react-expert-skill
+prpm install react-expert-skill
 
 # List installed skills
-prmp list --type claude-skill
+prpm list --type claude-skill
 ```
 
 ## Creating a Claude Skill Package
@@ -78,7 +78,7 @@ prmp list --type claude-skill
 }
 ```
 
-2. **Create prmp.json**
+2. **Create prpm.json**
 
 ```json
 {
@@ -103,8 +103,8 @@ prmp list --type claude-skill
 3. **Publish**
 
 ```bash
-prmp login
-prmp publish
+prpm login
+prpm publish
 ```
 
 ## Claude Marketplace Integration
@@ -115,7 +115,7 @@ PRMP can help you discover skills from the Claude Marketplace and convert them t
 
 ```bash
 # Coming soon
-prmp import claude-marketplace <skill-id>
+prpm import claude-marketplace <skill-id>
 ```
 
 This will:
@@ -128,7 +128,7 @@ This will:
 
 ```bash
 # Coming soon
-prmp export claude-marketplace my-skill
+prpm export claude-marketplace my-skill
 ```
 
 This will:
@@ -185,8 +185,8 @@ This will:
 Browse popular skills on the registry:
 
 ```bash
-prmp trending --type claude-skill
-prmp search "expert" --type claude-skill
+prpm trending --type claude-skill
+prpm search "expert" --type claude-skill
 ```
 
 ## Converting Between Formats
@@ -195,14 +195,14 @@ prmp search "expert" --type claude-skill
 
 ```bash
 # Coming soon
-prmp convert react-cursor-rules --to claude-skill
+prpm convert react-cursor-rules --to claude-skill
 ```
 
 ### Claude Agent → Claude Skill
 
 ```bash
 # Coming soon
-prmp convert my-claude-agent --to claude-skill
+prpm convert my-claude-agent --to claude-skill
 ```
 
 ## Skill Templates
@@ -211,8 +211,8 @@ Get started quickly with templates:
 
 ```bash
 # Coming soon
-prmp init --template claude-skill
-prmp init --template claude-skill-with-tools
+prpm init --template claude-skill
+prpm init --template claude-skill-with-tools
 ```
 
 ## Testing Your Skill
@@ -221,7 +221,7 @@ Before publishing, test your skill:
 
 1. **Install locally**
    ```bash
-   prmp add . --type claude-skill
+   prpm add . --type claude-skill
    ```
 
 2. **Try in Claude**
@@ -232,7 +232,7 @@ Before publishing, test your skill:
 
 3. **Validate**
    ```bash
-   prmp publish --dry-run
+   prpm publish --dry-run
    ```
 
 ## Contributing
@@ -240,7 +240,7 @@ Before publishing, test your skill:
 Have a great Claude Skill? Share it!
 
 1. **Create your skill** following this guide
-2. **Publish to PRMP** with `prmp publish`
+2. **Publish to PRMP** with `prpm publish`
 3. **Share** on social media with `#ClaudeSkills` `#PRMP`
 4. **Get featured** - popular skills get showcased
 

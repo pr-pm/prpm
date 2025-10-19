@@ -23,7 +23,7 @@ Windsurf analyzes your request for keywords:
 ### 2. Automatic Search
 ```bash
 # Windsurf automatically runs:
-prmp search "<detected keywords>" --limit 5
+prpm search "<detected keywords>" --limit 5
 ```
 
 ### 3. Package Suggestion
@@ -43,7 +43,7 @@ Install #1 to enhance my capabilities?
 ### 4. Installation
 After your approval:
 ```bash
-prmp install @prpm/pulumi-infrastructure --as windsurf
+prpm install @prpm/pulumi-infrastructure --as windsurf
 ```
 
 ### 5. Application
@@ -56,13 +56,13 @@ Windsurf loads the package knowledge (as a Windsurf agent/cascade) and applies i
 
 **Action**:
 ```bash
-prmp search "infrastructure <cloud-provider> <tool>"
+prpm search "infrastructure <cloud-provider> <tool>"
 ```
 
 **Example**:
 ```
 User: "Build Kubernetes infrastructure with Pulumi"
-→ prmp search "kubernetes pulumi infrastructure"
+→ prpm search "kubernetes pulumi infrastructure"
 → Found: @prpm/pulumi-kubernetes
 → Suggest in Flow panel
 ```
@@ -72,13 +72,13 @@ User: "Build Kubernetes infrastructure with Pulumi"
 
 **Action**:
 ```bash
-prmp search "ai-ml <framework>"
+prpm search "ai-ml <framework>"
 ```
 
 **Example**:
 ```
 User: "Build a RAG system with LangChain"
-→ prmp search "langchain rag embeddings"
+→ prpm search "langchain rag embeddings"
 → Found: @ai/langchain-rag-patterns
 → Suggest to user
 ```
@@ -88,13 +88,13 @@ User: "Build a RAG system with LangChain"
 
 **Action**:
 ```bash
-prmp search "testing <framework>"
+prpm search "testing <framework>"
 ```
 
 **Example**:
 ```
 User: "Write integration tests for the API"
-→ prmp search "testing api integration jest"
+→ prpm search "testing api integration jest"
 → Found: @testing/api-integration-patterns
 → Suggest to user
 ```
@@ -104,13 +104,13 @@ User: "Write integration tests for the API"
 
 **Action**:
 ```bash
-prmp search "deployment <platform>"
+prpm search "deployment <platform>"
 ```
 
 **Example**:
 ```
 User: "Set up CI/CD with GitHub Actions"
-→ prmp search "github-actions ci-cd deployment"
+→ prpm search "github-actions ci-cd deployment"
 → Found: @sanjeed5/github-actions
 → Suggest to user
 ```
@@ -120,7 +120,7 @@ User: "Set up CI/CD with GitHub Actions"
 
 **Action**:
 ```bash
-prmp search "<framework> patterns"
+prpm search "<framework> patterns"
 ```
 
 ## Decision Rules
@@ -154,7 +154,7 @@ User: "Build a RAG system with LangChain and Pinecone"
 
 Windsurf (internal Flow):
   1. Keywords: "LangChain", "RAG", "Pinecone", "embeddings"
-  2. Search: prmp search "langchain rag embeddings vector-db"
+  2. Search: prpm search "langchain rag embeddings vector-db"
   3. Found: @ai/langchain-rag-complete (Official, 3.4K downloads)
   4. High confidence → Suggest in Flow
 
@@ -173,7 +173,7 @@ Should I install this to enhance my RAG knowledge?"
 User: "Yes"
 
 Windsurf:
-  ✅ Installing: prmp install @ai/langchain-rag-complete --as windsurf
+  ✅ Installing: prpm install @ai/langchain-rag-complete --as windsurf
   ✅ Loaded RAG expertise into Cascade
 
   🌊 "Great! I now have RAG expertise. Let me apply it:
@@ -189,7 +189,7 @@ User: "Build a Next.js 14 app with server components"
 
 Windsurf (internal Flow):
   1. Keywords: "Next.js", "server components", "React"
-  2. Search: prmp search "nextjs server-components react"
+  2. Search: prpm search "nextjs server-components react"
   3. Found: @prpm/nextjs-14-patterns (Official, 2.1K downloads)
   4. High confidence → Suggest
 
@@ -222,7 +222,7 @@ User: "Create Lambda functions for user authentication"
 
 Windsurf (internal Flow):
   1. Keywords: "Lambda", "AWS", "authentication", "serverless"
-  2. Search: prmp search "aws lambda serverless authentication"
+  2. Search: prpm search "aws lambda serverless authentication"
   3. Found: @prpm/aws-lambda-patterns (Official, 1.8K downloads)
   4. High confidence → Suggest
 
@@ -254,51 +254,51 @@ Windsurf:
 
 ### Basic Search
 ```bash
-prmp search "keyword1 keyword2"
+prpm search "keyword1 keyword2"
 ```
 
 ### Category Filter
 ```bash
-prmp search --category ai-ml "langchain"
+prpm search --category ai-ml "langchain"
 ```
 
 ### Type Filter
 ```bash
-prmp search --type windsurf "react patterns"
+prpm search --type windsurf "react patterns"
 ```
 
 ### Limit Results
 ```bash
-prmp search "kubernetes" --limit 5
+prpm search "kubernetes" --limit 5
 ```
 
 ### Sort by Downloads
 ```bash
-prmp search "testing" --sort downloads
+prpm search "testing" --sort downloads
 ```
 
 ## Installation Commands
 
 ### Install as Windsurf Agent
 ```bash
-prmp install @prpm/langchain-rag-complete --as windsurf
+prpm install @prpm/langchain-rag-complete --as windsurf
 ```
 
 This adds the package to your Windsurf Cascade.
 
 ### Install Collection
 ```bash
-prmp install @collection/ai-ml-complete --as windsurf
+prpm install @collection/ai-ml-complete --as windsurf
 ```
 
 ### Install Specific Version
 ```bash
-prmp install @prpm/nextjs-patterns@2.0.0 --as windsurf
+prpm install @prpm/nextjs-patterns@2.0.0 --as windsurf
 ```
 
 ### Install Globally
 ```bash
-prmp install @prpm/general-coding-standards --as windsurf --global
+prpm install @prpm/general-coding-standards --as windsurf --global
 ```
 
 This adds to Windsurf's global agent configuration.
@@ -423,7 +423,7 @@ Task: Testing patterns
 
 ```bash
 # Install this meta-package
-prmp install @prpm/self-improve-windsurf --as windsurf
+prpm install @prpm/self-improve-windsurf --as windsurf
 
 # Now Windsurf will automatically search PRPM for relevant packages!
 ```

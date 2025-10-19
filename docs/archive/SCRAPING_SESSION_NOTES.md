@@ -236,7 +236,7 @@ Update these sections:
 2. Start Docker Compose stack: `cd registry && docker-compose up -d`
 3. Test upload: `cd scripts/seed && tsx upload.ts`
 4. Verify packages in registry
-5. Test CLI commands: `prmp search`, `prmp install`, etc.
+5. Test CLI commands: `prpm search`, `prpm install`, etc.
 
 This validates the entire pipeline before investing time in full scraping.
 

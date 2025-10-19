@@ -26,17 +26,17 @@ Configure these secrets in GitHub repository settings:
    # Create at: https://github.com/settings/tokens
    # Permissions needed:
    #   - repo (full control)
-   # For repository: khaliqgant/homebrew-prmp
+   # For repository: khaliqgant/homebrew-prpm
    ```
 
 ### Publishable Packages
 
-- **`@prmp/cli`** - Command-line interface (public)
-- **`@prmp/registry-client`** - HTTP client library (public)
+- **`prpm`** - Command-line interface (public)
+- **`@prpm/registry-client`** - HTTP client library (public)
 
 **Not published:**
-- `@prmp/registry` - Backend service (private, deployed via Docker)
-- `@prmp/infra` - Pulumi IaC (private, not a package)
+- `@prpm/registry` - Backend service (private, deployed via Docker)
+- `@prpm/infra` - Pulumi IaC (private, not a package)
 
 ## NPM Publishing
 
@@ -67,10 +67,10 @@ Configure these secrets in GitHub repository settings:
 
 | Tag | Purpose | Usage |
 |-----|---------|-------|
-| `latest` | Stable releases | `npm install @prmp/cli` |
-| `next` | Next version preview | `npm install @prmp/cli@next` |
-| `beta` | Beta testing | `npm install @prmp/cli@beta` |
-| `alpha` | Alpha testing | `npm install @prmp/cli@alpha` |
+| `latest` | Stable releases | `npm install prpm` |
+| `next` | Next version preview | `npm install prpm@next` |
+| `beta` | Beta testing | `npm install prpm@beta` |
+| `alpha` | Alpha testing | `npm install prpm@alpha` |
 
 ### Publishing Options
 
@@ -99,7 +99,7 @@ Tag: latest
 Dry run: false
 ```
 
-This will only publish `@prmp/cli`.
+This will only publish `prpm`.
 
 #### Test Before Publishing (Dry Run)
 
@@ -184,9 +184,9 @@ If you need to manually update Homebrew:
 
 1. Downloads package from NPM
 2. Calculates SHA256 hash
-3. Updates `Formula/prmp.rb` in homebrew tap
+3. Updates `Formula/prpm.rb` in homebrew tap
 4. Tests formula installation
-5. Pushes to `khaliqgant/homebrew-prmp`
+5. Pushes to `khaliqgant/homebrew-prpm`
 
 ### Formula Template
 
@@ -196,7 +196,7 @@ The workflow generates:
 class Prmp < Formula
   desc "Prompt Package Manager - Manage AI prompt packages"
   homepage "https://github.com/khaliqgant/prompt-package-manager"
-  url "https://registry.npmjs.org/@prmp/cli/-/cli-1.2.3.tgz"
+  url "https://registry.npmjs.org/prpm/-/cli-1.2.3.tgz"
   sha256 "abc123..."
   license "MIT"
   version "1.2.3"
@@ -209,7 +209,7 @@ class Prmp < Formula
   end
 
   test do
-    assert_match "prmp version 1.2.3", shell_output("#{bin}/prmp --version")
+    assert_match "prpm version 1.2.3", shell_output("#{bin}/prpm --version")
   end
 end
 ```
@@ -243,8 +243,8 @@ npm run build --workspaces
 3. Wait for workflow to complete
 4. Verify packages published:
    ```bash
-   npm view @prmp/cli version
-   npm view @prmp/registry-client version
+   npm view prpm version
+   npm view @prpm/registry-client version
    ```
 
 ### 3. Verify GitHub Release
@@ -257,13 +257,13 @@ npm run build --workspaces
 
 ```bash
 # NPM
-npm install -g @prmp/cli@latest
-prmp --version
+npm install -g prpm@latest
+prpm --version
 
 # Homebrew (wait ~5 minutes for tap to update)
 brew update
-brew install khaliqgant/prmp/prmp
-prmp --version
+brew install khaliqgant/prpm/prpm
+prpm --version
 ```
 
 ### 5. Announce Release
@@ -292,8 +292,8 @@ This creates version like `1.3.0-beta.0`.
 ### 2. Test Pre-release
 
 ```bash
-npm install -g @prmp/cli@beta
-prmp --version
+npm install -g prpm@beta
+prpm --version
 # Should show: 1.3.0-beta.0
 ```
 
@@ -329,7 +329,7 @@ Dry run: false
 **Solution**:
 1. Verify `NPM_TOKEN` secret is set
 2. Verify token has publish permissions
-3. Verify you're a collaborator on the `@prmp` organization
+3. Verify you're a collaborator on the `@prpm` organization
 
 **Error**: `E402: You must sign up for private packages`
 
@@ -380,9 +380,9 @@ npm publish --access public
 
 ```bash
 # Calculate SHA256
-curl -sL https://registry.npmjs.org/@prmp/cli/-/cli-1.2.3.tgz | shasum -a 256
+curl -sL https://registry.npmjs.org/prpm/-/cli-1.2.3.tgz | shasum -a 256
 
-# Update Formula/prmp.rb manually
+# Update Formula/prpm.rb manually
 # Push to homebrew tap
 ```
 

@@ -6,7 +6,7 @@
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 
-const REGISTRY_URL = process.env.PRMP_REGISTRY_URL || 'https://registry.prmp.dev';
+const REGISTRY_URL = process.env.PRMP_REGISTRY_URL || 'https://registry.prpm.dev';
 
 interface UploadResult {
   success: boolean;

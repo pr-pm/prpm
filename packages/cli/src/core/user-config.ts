@@ -1,5 +1,5 @@
 /**
- * User configuration management for ~/.prmprc
+ * User configuration management for ~/.prpmrc
  * Stores global settings like registry URL and authentication token
  */
 
@@ -15,8 +15,8 @@ export interface UserConfig {
   defaultFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'canonical';
 }
 
-const CONFIG_FILE = join(homedir(), '.prmprc');
-const DEFAULT_REGISTRY_URL = 'https://registry.prmp.dev';
+const CONFIG_FILE = join(homedir(), '.prpmrc');
+const DEFAULT_REGISTRY_URL = 'https://registry.prpm.dev';
 
 /**
  * Get user configuration
@@ -27,8 +27,8 @@ export async function getConfig(): Promise<UserConfig> {
     const config = JSON.parse(data) as UserConfig;
 
     // Allow environment variable to override registry URL
-    if (process.env.PRMP_REGISTRY_URL) {
-      config.registryUrl = process.env.PRMP_REGISTRY_URL;
+    if (process.env.PRPM_REGISTRY_URL) {
+      config.registryUrl = process.env.PRPM_REGISTRY_URL;
     } else if (!config.registryUrl) {
       config.registryUrl = DEFAULT_REGISTRY_URL;
     }
@@ -38,7 +38,7 @@ export async function getConfig(): Promise<UserConfig> {
     // If file doesn't exist, return default config
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return {
-        registryUrl: process.env.PRMP_REGISTRY_URL || DEFAULT_REGISTRY_URL,
+        registryUrl: process.env.PRPM_REGISTRY_URL || DEFAULT_REGISTRY_URL,
         telemetryEnabled: true,
       };
     }

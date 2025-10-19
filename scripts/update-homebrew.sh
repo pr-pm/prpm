@@ -23,10 +23,10 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
-# Check if homebrew-prmp tap exists
-TAP_PATH="$(brew --repository khaliqgant/homebrew-prmp 2>/dev/null || echo '')"
+# Check if homebrew-prpm tap exists
+TAP_PATH="$(brew --repository khaliqgant/homebrew-prpm 2>/dev/null || echo '')"
 if [ -z "$TAP_PATH" ] || [ ! -d "$TAP_PATH" ]; then
-    echo -e "${RED}❌ Error: homebrew-prmp tap not found.${NC}"
+    echo -e "${RED}❌ Error: homebrew-prpm tap not found.${NC}"
     echo -e "${YELLOW}💡 Run './setup-homebrew-tap-proper.sh' first to create the tap${NC}"
     exit 1
 fi
@@ -43,15 +43,15 @@ npm run build:binary
 
 # Get SHA256 hashes
 echo -e "${BLUE}🔍 Calculating SHA256 hashes...${NC}"
-MACOS_X64_HASH=$(shasum -a 256 binaries/prmp-macos-x64 | cut -d' ' -f1)
-MACOS_ARM64_HASH=$(shasum -a 256 binaries/prmp-macos-arm64 | cut -d' ' -f1)
+MACOS_X64_HASH=$(shasum -a 256 binaries/prpm-macos-x64 | cut -d' ' -f1)
+MACOS_ARM64_HASH=$(shasum -a 256 binaries/prpm-macos-arm64 | cut -d' ' -f1)
 
 echo -e "${GREEN}✅ SHA256 hashes calculated:${NC}"
 echo -e "   macOS x64: ${MACOS_X64_HASH}"
 echo -e "   macOS ARM64: ${MACOS_ARM64_HASH}"
 
 # Update the formula
-FORMULA_FILE="$TAP_PATH/Formula/prmp.rb"
+FORMULA_FILE="$TAP_PATH/Formula/prpm.rb"
 echo -e "${BLUE}📝 Updating formula file: ${FORMULA_FILE}${NC}"
 
 # Backup existing formula if it exists
@@ -65,27 +65,27 @@ cat > "$FORMULA_FILE" << EOF
 class Prmp < Formula
   desc "Prompt Package Manager - Install and manage prompt-based files like Cursor rules and Claude sub-agents"
   homepage "https://github.com/khaliqgant/prompt-package-manager"
-  url "https://github.com/khaliqgant/prompt-package-manager/releases/download/v${VERSION}/prmp-macos-x64"
+  url "https://github.com/khaliqgant/prompt-package-manager/releases/download/v${VERSION}/prpm-macos-x64"
   sha256 "${MACOS_X64_HASH}"
   version "${VERSION}"
   license "MIT"
   
   # Support both Intel and Apple Silicon Macs
   if Hardware::CPU.arm?
-    url "https://github.com/khaliqgant/prompt-package-manager/releases/download/v${VERSION}/prmp-macos-arm64"
+    url "https://github.com/khaliqgant/prompt-package-manager/releases/download/v${VERSION}/prpm-macos-arm64"
     sha256 "${MACOS_ARM64_HASH}"
   end
   
   def install
     if Hardware::CPU.arm?
-      bin.install "prmp-macos-arm64" => "prmp"
+      bin.install "prpm-macos-arm64" => "prpm"
     else
-      bin.install "prmp-macos-x64" => "prmp"
+      bin.install "prpm-macos-x64" => "prpm"
     end
   end
   
   test do
-    system "#{bin}/prmp", "--version"
+    system "#{bin}/prpm", "--version"
   end
 end
 EOF
@@ -103,16 +103,16 @@ fi
 echo -e "${YELLOW}📋 Next steps:${NC}"
 echo -e "1. Create a GitHub release with tag: ${BLUE}v${VERSION}${NC}"
 echo -e "2. Upload these binary files to the release:"
-echo -e "   - ${BLUE}binaries/prmp-macos-x64${NC}"
-echo -e "   - ${BLUE}binaries/prmp-macos-arm64${NC}"
-echo -e "   - ${BLUE}binaries/prmp-linux-x64${NC}"
-echo -e "   - ${BLUE}binaries/prmp-win-x64.exe${NC}"
+echo -e "   - ${BLUE}binaries/prpm-macos-x64${NC}"
+echo -e "   - ${BLUE}binaries/prpm-macos-arm64${NC}"
+echo -e "   - ${BLUE}binaries/prpm-linux-x64${NC}"
+echo -e "   - ${BLUE}binaries/prpm-win-x64.exe${NC}"
 echo -e "3. Commit and push the updated formula:"
 echo -e "   ${BLUE}cd \"$TAP_PATH\"${NC}"
-echo -e "   ${BLUE}git add Formula/prmp.rb${NC}"
-echo -e "   ${BLUE}git commit -m \"Update prmp to v${VERSION}\"${NC}"
+echo -e "   ${BLUE}git add Formula/prpm.rb${NC}"
+echo -e "   ${BLUE}git commit -m \"Update prpm to v${VERSION}\"${NC}"
 echo -e "   ${BLUE}git push origin main${NC}"
 echo -e "4. Test the installation:"
-echo -e "   ${BLUE}brew install khaliqgant/homebrew-prmp/prmp${NC}"
+echo -e "   ${BLUE}brew install khaliqgant/homebrew-prpm/prpm${NC}"
 
 echo -e "${GREEN}🎉 Homebrew formula update complete!${NC}"

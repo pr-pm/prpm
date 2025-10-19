@@ -49,7 +49,7 @@ pulumi stack select prod
 pulumi config set aws:region us-east-1
 
 # Database credentials
-pulumi config set db:username prmp
+pulumi config set db:username prpm
 pulumi config set --secret db:password $(openssl rand -base64 32)
 
 # GitHub OAuth (create app at github.com/settings/developers)
@@ -57,7 +57,7 @@ pulumi config set --secret github:clientId YOUR_GITHUB_CLIENT_ID
 pulumi config set --secret github:clientSecret YOUR_GITHUB_CLIENT_SECRET
 
 # Optional: Custom domain
-pulumi config set app:domainName registry.prmp.dev
+pulumi config set app:domainName registry.prpm.dev
 
 # Optional: Instance size (default: t3.micro)
 pulumi config set app:instanceType t3.micro
@@ -163,7 +163,7 @@ aws rds create-db-instance \
   --db-instance-class db.t4g.micro \
   --engine postgres \
   --engine-version 15.4 \
-  --master-username prmp \
+  --master-username prpm \
   --master-user-password <secure-password> \
   --allocated-storage 20 \
   --backup-retention-period 7 \
@@ -196,7 +196,7 @@ eb create prpm-production \
   --instance-type t3.micro \
   --envvars \
     NODE_ENV=production,\
-    DATABASE_URL=postgresql://prmp:password@your-rds-endpoint:5432/prmp_registry,\
+    DATABASE_URL=postgresql://prpm:password@your-rds-endpoint:5432/prpm_registry,\
     JWT_SECRET=$(openssl rand -hex 32),\
     GITHUB_CLIENT_ID=your_client_id,\
     GITHUB_CLIENT_SECRET=your_client_secret
@@ -388,7 +388,7 @@ aws rds describe-db-snapshots \
 
 # Restore from snapshot
 aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier prmp-db-restored \
+  --db-instance-identifier prpm-db-restored \
   --db-snapshot-identifier prpm-db-manual-20251019
 ```
 
@@ -426,7 +426,7 @@ eb ssh
 psql $DATABASE_URL -c "SELECT 1"
 
 # 3. Verify RDS endpoint
-aws rds describe-db-instances --db-instance-identifier prmp-db
+aws rds describe-db-instances --db-instance-identifier prpm-db
 ```
 
 ### Deployment Failures
@@ -531,11 +531,11 @@ eb config save prpm-production --cfg production-config
 ```bash
 # 1. Restore database
 aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier prmp-db-new \
+  --db-instance-identifier prpm-db-new \
   --db-snapshot-identifier prpm-backup-20251019
 
 # 2. Update DATABASE_URL
-eb setenv DATABASE_URL=postgresql://prmp:pass@new-endpoint:5432/prpm_registry
+eb setenv DATABASE_URL=postgresql://prpm:pass@new-endpoint:5432/prpm_registry
 
 # 3. Redeploy
 eb deploy

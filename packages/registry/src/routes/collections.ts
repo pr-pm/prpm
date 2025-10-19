@@ -731,9 +731,24 @@ export async function collectionRoutes(server: FastifyInstance) {
         [scope, id, version]
       );
 
+      // Map packages to camelCase for client consumption
+      const packages = packagesResult.rows.map(row => ({
+        packageId: row.package_id,
+        version: row.package_version,
+        required: row.required,
+        reason: row.reason,
+        installOrder: row.install_order,
+        package: row.display_name ? {
+          displayName: row.display_name,
+          description: row.description,
+          type: row.type,
+          tags: row.tags,
+        } : null,
+      }));
+
       return reply.send({
         ...collection,
-        packages: packagesResult.rows,
+        packages,
         package_count: packagesResult.rows.length,
       });
     } catch (error) {

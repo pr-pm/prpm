@@ -67,7 +67,7 @@ export function validateManifest(manifest: unknown): { valid: boolean; errors?: 
  */
 export function validatePackageName(name: string): { valid: boolean; error?: string } {
   // Reserved names
-  const reserved = ['prmp', 'npm', 'node', 'admin', 'api', 'www'];
+  const reserved = ['prpm', 'npm', 'node', 'admin', 'api', 'www'];
   if (reserved.includes(name.toLowerCase())) {
     return {
       valid: false,

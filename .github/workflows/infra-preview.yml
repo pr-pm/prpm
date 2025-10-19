@@ -74,7 +74,7 @@ jobs:
           pulumi config set aws:region ${{ env.AWS_REGION }}
 
           # Database credentials
-          pulumi config set db:username prmp
+          pulumi config set db:username prpm
           pulumi config set --secret db:password "${{ secrets.DB_PASSWORD }}"
 
           # GitHub OAuth
@@ -88,7 +88,7 @@ jobs:
 
           # Domain configuration
           if [ "$STACK" = "prod" ]; then
-            pulumi config set app:domainName registry.prmp.dev
+            pulumi config set app:domainName registry.prpm.dev
           fi
 
       - name: Pulumi Preview

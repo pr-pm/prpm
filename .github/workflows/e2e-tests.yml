@@ -17,9 +17,9 @@ jobs:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: prmp
-          POSTGRES_PASSWORD: prmp
-          POSTGRES_DB: prmp_registry
+          POSTGRES_USER: prpm
+          POSTGRES_PASSWORD: prpm
+          POSTGRES_DB: prpm_registry
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -53,17 +53,17 @@ jobs:
         run: npm ci
 
       - name: Build registry-client
-        run: npm run build --workspace=@prmp/registry-client
+        run: npm run build --workspace=@prpm/registry-client
 
       - name: Build registry
-        run: npm run build --workspace=@prmp/registry
+        run: npm run build --workspace=@prpm/registry
 
       - name: Run migrations
         run: |
           cd packages/registry
           npm run migrate
         env:
-          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prmp_registry
+          DATABASE_URL: postgresql://prpm:prpm@localhost:5432/prpm_registry
 
       - name: Start MinIO
         run: |
@@ -97,7 +97,7 @@ jobs:
         env:
           NODE_ENV: test
           PORT: 4000
-          DATABASE_URL: postgresql://prmp:prmp@localhost:5432/prmp_registry
+          DATABASE_URL: postgresql://prpm:prpm@localhost:5432/prpm_registry
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret-key
           AWS_REGION: us-east-1

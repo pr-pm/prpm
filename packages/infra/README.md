@@ -69,7 +69,7 @@ pulumi config set --secret github:clientSecret YOUR_GITHUB_CLIENT_SECRET
 # Optional configuration
 pulumi config set db:instanceClass db.t4g.micro
 pulumi config set app:desiredCount 2
-pulumi config set app:domainName registry.prmp.dev  # if you have a domain
+pulumi config set app:domainName registry.prpm.dev  # if you have a domain
 
 # For Phase 2 (OpenSearch)
 pulumi config set search:enabled true
@@ -116,7 +116,7 @@ pulumi stack output dbEndpoint
 ### Database
 
 ```bash
-pulumi config set db:username prmp                    # Database username
+pulumi config set db:username prpm                    # Database username
 pulumi config set --secret db:password <password>     # Database password
 pulumi config set db:instanceClass db.t4g.micro       # Instance size
 pulumi config set db:allocatedStorage 20              # Storage in GB
@@ -125,11 +125,11 @@ pulumi config set db:allocatedStorage 20              # Storage in GB
 ### Application
 
 ```bash
-pulumi config set app:image prmp-registry:latest      # Docker image
+pulumi config set app:image prpm-registry:latest      # Docker image
 pulumi config set app:cpu 256                         # CPU units
 pulumi config set app:memory 512                      # Memory in MB
 pulumi config set app:desiredCount 2                  # Number of tasks
-pulumi config set app:domainName registry.prmp.dev # Custom domain
+pulumi config set app:domainName registry.prpm.dev # Custom domain
 ```
 
 ### GitHub OAuth
@@ -161,8 +161,8 @@ ECR_REPO=$(pulumi stack output ecrRepositoryUrl)
 # 3. Build and push Docker image
 cd ../registry
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REPO
-docker build -t prmp-registry:latest .
-docker tag prmp-registry:latest $ECR_REPO:latest
+docker build -t prpm-registry:latest .
+docker tag prpm-registry:latest $ECR_REPO:latest
 docker push $ECR_REPO:latest
 
 # 4. Run database migrations
@@ -171,7 +171,7 @@ aws ecs run-task \
   --task-definition $(pulumi stack output ecsServiceName | sed 's/-service/-task/') \
   --launch-type FARGATE \
   --network-configuration "awsvpcConfiguration={subnets=[$(pulumi stack output privateSubnetIds | jq -r '.[0]')],securityGroups=[...],assignPublicIp=DISABLED}" \
-  --overrides '{"containerOverrides":[{"name":"prmp-registry","command":["npm","run","migrate"]}]}'
+  --overrides '{"containerOverrides":[{"name":"prpm-registry","command":["npm","run","migrate"]}]}'
 
 # 5. Force new deployment
 aws ecs update-service \
@@ -265,7 +265,7 @@ pulumi logs --follow
 ### Check ECS Logs
 
 ```bash
-aws logs tail /ecs/prmp-dev --follow
+aws logs tail /ecs/prpm-dev --follow
 ```
 
 ### Check Resources

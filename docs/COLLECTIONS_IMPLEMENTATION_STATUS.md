@@ -85,7 +85,7 @@ Complete CLI interface:
 - `docs/COLLECTIONS.md` - Complete design spec
 - `docs/COLLECTIONS_USAGE.md` - User guide with examples
 - `docs/MCP_SERVERS_IN_COLLECTIONS.md` - MCP integration guide
-- `prmp.json` - Real-world usage example
+- `prpm.json` - Real-world usage example
 
 **Status**: Comprehensive documentation complete
 
@@ -114,9 +114,9 @@ Complete test suite:
 docker-compose up -d postgres
 
 # Option 2: Local PostgreSQL
-createdb prmp_registry
-psql prmp_registry < registry/migrations/001_initial_schema.sql
-psql prmp_registry < registry/migrations/002_add_quality_scoring.sql
+createdb prpm_registry
+psql prpm_registry < registry/migrations/001_initial_schema.sql
+psql prpm_registry < registry/migrations/002_add_quality_scoring.sql
 psql prpm_registry < registry/migrations/003_add_collections.sql
 ```
 
@@ -172,7 +172,7 @@ npm run dev
 
 ## Why Collections Are "Documented Only"
 
-The note in `prmp.json` says:
+The note in `prpm.json` says:
 ```json
 "note": "Collections are documented but not installed (no registry yet)"
 ```

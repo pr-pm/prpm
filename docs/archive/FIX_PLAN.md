@@ -312,10 +312,10 @@ echo "All $TOTAL_TESTS tests passing"
 - [ ] GET /api/v1/packages/popular (200 OK)
 
 ### CLI Commands
-- [ ] `prmp deps <package>` works
-- [ ] `prmp outdated` works
-- [ ] `prmp update` works
-- [ ] `prmp upgrade` works
+- [ ] `prpm deps <package>` works
+- [ ] `prpm outdated` works
+- [ ] `prpm update` works
+- [ ] `prpm upgrade` works
 - [ ] Lock file generated on install
 
 ---

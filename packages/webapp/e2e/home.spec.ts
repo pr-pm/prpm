@@ -57,9 +57,9 @@ test.describe('Home Page', () => {
     await expect(page.getByRole('heading', { name: 'Quick Start' })).toBeVisible();
 
     // Check CLI commands are visible
-    await expect(page.getByText('npm install -g @prmp/cli')).toBeVisible();
-    await expect(page.getByText('prmp search react')).toBeVisible();
-    await expect(page.getByText('prmp install @sanjeed5/react-best-practices')).toBeVisible();
+    await expect(page.getByText('npm install -g @prpm/cli')).toBeVisible();
+    await expect(page.getByText('prpm search react')).toBeVisible();
+    await expect(page.getByText('prpm install @sanjeed5/react-best-practices')).toBeVisible();
   });
 
   test('should display supported AI tools section', async ({ page }) => {

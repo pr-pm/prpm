@@ -31,20 +31,20 @@ All services run in GitHub Actions using:
 ```bash
 # Start PostgreSQL, Redis, and MinIO
 docker run -d \
-  --name prmp-postgres \
+  --name prpm-postgres \
   -p 5432:5432 \
-  -e POSTGRES_USER=prmp \
-  -e POSTGRES_PASSWORD=prmp_dev_password \
+  -e POSTGRES_USER=prpm \
+  -e POSTGRES_PASSWORD=prpm_dev_password \
   -e POSTGRES_DB=prpm_registry \
   postgres:15-alpine
 
 docker run -d \
-  --name prmp-redis \
+  --name prpm-redis \
   -p 6379:6379 \
   redis:7-alpine
 
 docker run -d \
-  --name prmp-minio \
+  --name prpm-minio \
   -p 9000:9000 -p 9001:9001 \
   -e MINIO_ROOT_USER=minioadmin \
   -e MINIO_ROOT_PASSWORD=minioadmin \
@@ -55,13 +55,13 @@ docker run -d \
 
 ```bash
 # Wait for PostgreSQL
-until docker exec prmp-postgres pg_isready -U prmp; do
+until docker exec prpm-postgres pg_isready -U prpm; do
   echo "Waiting for PostgreSQL..."
   sleep 2
 done
 
 # Wait for Redis
-until docker exec prmp-redis redis-cli ping; do
+until docker exec prpm-redis redis-cli ping; do
   echo "Waiting for Redis..."
   sleep 2
 done
@@ -79,13 +79,13 @@ echo "✅ All services ready"
 
 ```bash
 # Build registry-client first (dependency)
-npm run build --workspace=@prmp/registry-client
+npm run build --workspace=@prpm/registry-client
 
 # Build registry
-npm run build --workspace=@prmp/registry
+npm run build --workspace=@prpm/registry
 
 # Build CLI
-npm run build --workspace=@prmp/cli
+npm run build --workspace=prpm
 ```
 
 ### 4. Run Database Migrations
@@ -154,8 +154,8 @@ npm run dev collections
 # Stop registry (Ctrl+C in terminal)
 
 # Stop and remove Docker containers
-docker stop prmp-postgres prmp-redis prmp-minio
-docker rm prmp-postgres prmp-redis prmp-minio
+docker stop prpm-postgres prpm-redis prpm-minio
+docker rm prpm-postgres prpm-redis prpm-minio
 ```
 
 ## Environment Variables
@@ -173,7 +173,7 @@ docker rm prmp-postgres prmp-redis prmp-minio
 | `AWS_ENDPOINT` | S3 endpoint (use for MinIO) | - | **Yes (MinIO)** |
 | `AWS_ACCESS_KEY_ID` | AWS/MinIO access key | - | **Yes** |
 | `AWS_SECRET_ACCESS_KEY` | AWS/MinIO secret key | - | **Yes** |
-| `S3_BUCKET` | S3 bucket name | prmp-packages | No |
+| `S3_BUCKET` | S3 bucket name | prpm-packages | No |
 | `AWS_FORCE_PATH_STYLE` | Use path-style URLs (MinIO) | false | **Yes (MinIO)** |
 | `SEARCH_ENGINE` | Search backend (postgres/elasticsearch) | postgres | No |
 | `ENABLE_TELEMETRY` | Enable PostHog telemetry | false | No |
@@ -183,7 +183,7 @@ docker rm prmp-postgres prmp-redis prmp-minio
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PRPM_REGISTRY_URL` | Registry URL override | https://registry.prmp.dev |
+| `PRPM_REGISTRY_URL` | Registry URL override | https://registry.prpm.dev |
 
 ## Expected Behavior
 
@@ -229,7 +229,7 @@ Error: connect ECONNREFUSED 127.0.0.1:5432
 **Solution**: Ensure PostgreSQL container is running and healthy:
 ```bash
 docker ps | grep postgres
-docker exec prmp-postgres pg_isready -U prmp
+docker exec prpm-postgres pg_isready -U prpm
 ```
 
 ### Redis Connection Failed
@@ -240,7 +240,7 @@ Error: connect ECONNREFUSED 127.0.0.1:6379
 **Solution**: Ensure Redis container is running:
 ```bash
 docker ps | grep redis
-docker exec prmp-redis redis-cli ping
+docker exec prpm-redis redis-cli ping
 ```
 
 ### MinIO Connection Failed

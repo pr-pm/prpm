@@ -145,10 +145,10 @@ These are **Pulumi stack configurations** (not GitHub secrets), set via `pulumi 
 | `db:password` | Secret | ✅ YES | - | PostgreSQL password |
 | `github:clientId` | Secret | ✅ YES | - | GitHub OAuth client ID |
 | `github:clientSecret` | Secret | ✅ YES | - | GitHub OAuth secret |
-| `db:username` | String | No | `prmp` | Database username |
+| `db:username` | String | No | `prpm` | Database username |
 | `db:instanceClass` | String | No | `db.t4g.micro` | RDS instance type |
 | `db:allocatedStorage` | Number | No | `20` | Database storage (GB) |
-| `app:image` | String | No | `prmp-registry:latest` | Docker image |
+| `app:image` | String | No | `prpm-registry:latest` | Docker image |
 | `app:cpu` | Number | No | `256` | ECS task CPU |
 | `app:memory` | Number | No | `512` | ECS task memory (MB) |
 | `app:desiredCount` | Number | No | `2` | Number of ECS tasks |
@@ -161,7 +161,7 @@ These are **Pulumi stack configurations** (not GitHub secrets), set via `pulumi 
 
 ### ✅ Pulumi Project Setup
 
-**Project Name:** `prmp-infra`
+**Project Name:** `prpm-infra`
 **Runtime:** Node.js with TypeScript
 **Location:** `packages/infra/`
 
@@ -490,18 +490,18 @@ After successful deployment, the following outputs are available:
 | `vpcId` | String | VPC ID | `vpc-0123456789abcdef` |
 | `publicSubnetIds` | Array | Public subnet IDs | `["subnet-abc", "subnet-def"]` |
 | `privateSubnetIds` | Array | Private subnet IDs | `["subnet-ghi", "subnet-jkl"]` |
-| `dbEndpoint` | String | RDS endpoint | `prmp-prod.abc.us-east-1.rds.amazonaws.com` |
+| `dbEndpoint` | String | RDS endpoint | `prpm-prod.abc.us-east-1.rds.amazonaws.com` |
 | `dbPort` | Number | Database port | `5432` |
-| `dbName` | String | Database name | `prmp` |
-| `redisEndpoint` | String | Redis endpoint | `prmp-prod.abc.cache.amazonaws.com` |
+| `dbName` | String | Database name | `prpm` |
+| `redisEndpoint` | String | Redis endpoint | `prpm-prod.abc.cache.amazonaws.com` |
 | `redisPort` | Number | Redis port | `6379` |
-| `s3BucketName` | String | S3 bucket name | `prmp-packages-prod` |
+| `s3BucketName` | String | S3 bucket name | `prpm-packages-prod` |
 | `cloudfrontDistributionUrl` | String | CloudFront CDN URL | `d1234567890.cloudfront.net` |
-| `albDnsName` | String | Load balancer DNS | `prmp-alb-prod-123.us-east-1.elb.amazonaws.com` |
-| `apiUrl` | String | API endpoint | `https://registry.prmp.dev` or ALB URL |
-| `ecsClusterName` | String | ECS cluster name | `prmp-prod` |
-| `ecsServiceName` | String | ECS service name | `prmp-registry-prod` |
-| `ecrRepositoryUrl` | String | ECR repository URL | `123456789.dkr.ecr.us-east-1.amazonaws.com/prmp-prod` |
+| `albDnsName` | String | Load balancer DNS | `prpm-alb-prod-123.us-east-1.elb.amazonaws.com` |
+| `apiUrl` | String | API endpoint | `https://registry.prpm.dev` or ALB URL |
+| `ecsClusterName` | String | ECS cluster name | `prpm-prod` |
+| `ecsServiceName` | String | ECS service name | `prpm-registry-prod` |
+| `ecrRepositoryUrl` | String | ECR repository URL | `123456789.dkr.ecr.us-east-1.amazonaws.com/prpm-prod` |
 
 ### Next Steps Output
 
@@ -510,8 +510,8 @@ The Pulumi program also provides helpful next-step commands:
 1. **Push Docker Image:**
    ```bash
    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ecr-url>
-   docker build -t prmp-registry:latest .
-   docker tag prmp-registry:latest <ecr-url>:latest
+   docker build -t prpm-registry:latest .
+   docker tag prpm-registry:latest <ecr-url>:latest
    docker push <ecr-url>:latest
    ```
 
@@ -521,14 +521,14 @@ The Pulumi program also provides helpful next-step commands:
      --cluster <cluster-name> \
      --task-definition <task-def> \
      --launch-type FARGATE \
-     --overrides '{"containerOverrides":[{"name":"prmp-registry","command":["npm","run","migrate"]}]}'
+     --overrides '{"containerOverrides":[{"name":"prpm-registry","command":["npm","run","migrate"]}]}'
    ```
 
 3. **Access API:** Visit the `apiUrl` output
 
 4. **View Logs:**
    ```bash
-   aws logs tail /ecs/prmp-prod --follow
+   aws logs tail /ecs/prpm-prod --follow
    ```
 
 ---

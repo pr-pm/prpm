@@ -15,20 +15,20 @@
 - `src/commands/whoami.ts` (51 lines) - Show logged-in user
 
 **Features:**
-- Package manifest validation (prmp.json)
+- Package manifest validation (prpm.json)
 - Tarball creation with size limits (10MB max)
 - Dry-run mode for testing (`--dry-run`)
 - OAuth flow with local callback server (port 8765)
 - Manual token authentication option
-- Credential storage in `~/.prmprc`
+- Credential storage in `~/.prpmrc`
 
 ### 2. ✅ User Configuration System
 **Files Created:**
 - `src/core/user-config.ts` (83 lines) - Configuration management
 
 **Features:**
-- `~/.prmprc` file for global settings
-- Registry URL configuration (default: registry.prmp.dev)
+- `~/.prpmrc` file for global settings
+- Registry URL configuration (default: registry.prpm.dev)
 - Authentication token storage
 - Telemetry preferences
 - Auto-loading in all CLI commands
@@ -178,7 +178,7 @@ cd infra && npm install
 pulumi stack init dev && pulumi up
 
 # 3. Deploy registry
-cd registry && docker build -t prmp-registry .
+cd registry && docker build -t prpm-registry .
 npm run migrate
 
 # 4. Upload packages
@@ -215,10 +215,10 @@ npm run check
 ### After Deployment
 - [ ] Health endpoint returns 200 (`curl /health`)
 - [ ] Search API works (`curl /api/v1/search?q=react`)
-- [ ] CLI can search (`prmp search react`)
-- [ ] CLI can install (`prmp install test-package`)
-- [ ] Login flow works (`prmp login`)
-- [ ] Publish works (`prmp publish`)
+- [ ] CLI can search (`prpm search react`)
+- [ ] CLI can install (`prpm install test-package`)
+- [ ] Login flow works (`prpm login`)
+- [ ] Publish works (`prpm publish`)
 
 ---
 
@@ -277,7 +277,7 @@ npm run check
 
 - **Repository**: https://github.com/khaliqgant/prompt-package-manager
 - **Issues**: https://github.com/khaliqgant/prompt-package-manager/issues
-- **Registry** (when deployed): https://registry.prmp.dev
+- **Registry** (when deployed): https://registry.prpm.dev
 
 ---
 

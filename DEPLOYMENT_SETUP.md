@@ -1,13 +1,13 @@
 # Deployment Setup Guide
 
-Complete automated deployment via GitHub Actions for prmp.dev infrastructure.
+Complete automated deployment via GitHub Actions for prpm.dev infrastructure.
 
 ## Prerequisites
 
 1. **AWS Account** with programmatic access
 2. **Pulumi Account** (free tier works)
 3. **GitHub Repository** with Actions enabled
-4. **Domain**: prmp.dev with Route 53 hosted zone
+4. **Domain**: prpm.dev with Route 53 hosted zone
 
 ## Required GitHub Secrets
 
@@ -55,9 +55,9 @@ Save the `AccessKeyId` and `SecretAccessKey` as GitHub secrets.
 If you don't have a hosted zone yet:
 
 ```bash
-# Create hosted zone for prmp.dev
+# Create hosted zone for prpm.dev
 aws route53 create-hosted-zone \
-  --name prmp.dev \
+  --name prpm.dev \
   --caller-reference $(date +%s)
 
 # Get nameservers
@@ -89,8 +89,8 @@ For user authentication via GitHub:
 2. Click "New OAuth App"
 3. Fill in:
    - **Application name**: PRPM Registry
-   - **Homepage URL**: https://registry.prmp.dev
-   - **Callback URL**: https://registry.prmp.dev/api/v1/auth/callback
+   - **Homepage URL**: https://registry.prpm.dev
+   - **Callback URL**: https://registry.prpm.dev/api/v1/auth/callback
 4. Click "Register application"
 5. Copy **Client ID** → GitHub secret `GITHUB_CLIENT_ID`
 6. Click "Generate a new client secret"
@@ -127,16 +127,16 @@ This will automatically run `pulumi preview`.
 ### Deployment Environments
 
 #### Production
-- **Domain**: https://registry.prmp.dev
+- **Domain**: https://registry.prpm.dev
 - **Stack**: `prod`
-- **ACM Certificate**: Auto-created for registry.prmp.dev
+- **ACM Certificate**: Auto-created for registry.prpm.dev
 - **Route 53**: CNAME record auto-created
 - **Database**: RDS PostgreSQL db.t4g.micro
 - **Compute**: Elastic Beanstalk t3.micro
 - **Cost**: ~$32.50/month
 
 #### Staging
-- **Domain**: https://staging.prmp.dev
+- **Domain**: https://staging.prpm.dev
 - **Stack**: `staging`
 - **Same setup as prod** but separate resources
 
@@ -155,7 +155,7 @@ When you run the workflow, it automatically:
 4. ✅ Switches to Beanstalk infrastructure config
 5. ✅ Selects/creates Pulumi stack
 6. ✅ Configures stack with all secrets
-7. ✅ Sets domain (prod: registry.prmp.dev, staging: staging.prmp.dev)
+7. ✅ Sets domain (prod: registry.prpm.dev, staging: staging.prpm.dev)
 8. ✅ Runs Pulumi (preview/up/destroy)
 9. ✅ Creates ACM certificate
 10. ✅ Validates certificate via DNS
@@ -169,17 +169,17 @@ When you run the workflow, it automatically:
 
 After deployment completes, the GitHub Action will:
 
-1. Test health endpoint: `https://registry.prmp.dev/health`
-2. Test packages endpoint: `https://registry.prmp.dev/api/v1/packages`
+1. Test health endpoint: `https://registry.prpm.dev/health`
+2. Test packages endpoint: `https://registry.prpm.dev/api/v1/packages`
 
 You can also manually verify:
 
 ```bash
 # Health check
-curl https://registry.prmp.dev/health
+curl https://registry.prpm.dev/health
 
 # API test
-curl https://registry.prmp.dev/api/v1/packages?limit=5 | jq
+curl https://registry.prpm.dev/api/v1/packages?limit=5 | jq
 ```
 
 ## Monitoring
@@ -203,7 +203,7 @@ Logs are automatically streamed to CloudWatch:
 
 ```bash
 # Via AWS Console
-# CloudWatch Logs → /aws/elasticbeanstalk/prmp-prod-env
+# CloudWatch Logs → /aws/elasticbeanstalk/prpm-prod-env
 
 # Via GitHub Actions
 # The workflow outputs all deployment logs
@@ -259,7 +259,7 @@ Check the GitHub Action logs:
 Common issues:
 - **IAM permissions**: Ensure IAM user has AdministratorAccess
 - **Secrets missing**: Double-check all GitHub secrets are set
-- **Domain**: Ensure Route 53 hosted zone exists for prmp.dev
+- **Domain**: Ensure Route 53 hosted zone exists for prpm.dev
 
 ### Database Connection Failed
 
@@ -291,7 +291,7 @@ After deployment:
 1. **Seed Database**:
    ```bash
    # SSH into Beanstalk instance
-   eb ssh prmp-prod-env
+   eb ssh prpm-prod-env
    cd /var/app/current
    npm run migrate
    npm run seed

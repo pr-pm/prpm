@@ -241,7 +241,7 @@ Categories help users discover relevant packages by organizing them into logical
 ### For Existing Packages
 
 1. **Auto-categorization**: Use tags/keywords to suggest category
-2. **Manual Review**: Package authors can update via `prmp update`
+2. **Manual Review**: Package authors can update via `prpm update`
 3. **Default**: Uncategorized packages → `general/misc`
 
 ### Implementation

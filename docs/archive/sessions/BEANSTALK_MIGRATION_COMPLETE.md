@@ -122,7 +122,7 @@ cp index-beanstalk.ts index.ts
 
 # Configure
 pulumi config set aws:region us-east-1
-pulumi config set db:username prmp
+pulumi config set db:username prpm
 pulumi config set --secret db:password $(openssl rand -base64 32)
 pulumi config set --secret github:clientId YOUR_ID
 pulumi config set --secret github:clientSecret YOUR_SECRET

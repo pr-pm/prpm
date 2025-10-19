@@ -47,7 +47,7 @@ echo -e "${YELLOW}═══ PART 1: Unit Tests ═══${NC}"
 echo ""
 
 test_start "CLI Package Unit Tests"
-if npm test --workspace=@prmp/cli > /tmp/cli-tests.log 2>&1; then
+if npm test --workspace=@prpm/cli > /tmp/cli-tests.log 2>&1; then
     CLI_TESTS=$(cat /tmp/cli-tests.log | grep "Tests:" | awk '{print $2}')
     test_pass "CLI tests - $CLI_TESTS tests passed"
 else
@@ -55,7 +55,7 @@ else
 fi
 
 test_start "Registry Client Unit Tests"
-if npm test --workspace=@prmp/registry-client > /tmp/client-tests.log 2>&1; then
+if npm test --workspace=@prpm/registry-client > /tmp/client-tests.log 2>&1; then
     CLIENT_TESTS=$(cat /tmp/client-tests.log | grep "Tests:" | awk '{print $2}')
     test_pass "Registry Client tests - $CLIENT_TESTS tests passed"
 else

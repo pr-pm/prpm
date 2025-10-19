@@ -28,7 +28,7 @@ const config = new pulumi.Config();
 const awsConfig = new pulumi.Config("aws");
 const region = awsConfig.require("region");
 
-const projectName = "prmp";
+const projectName = "prpm";
 const environment = pulumi.getStack(); // dev, staging, prod
 
 // Tags to apply to all resources
@@ -40,7 +40,7 @@ const tags = {
 
 // Configuration values
 const dbConfig = {
-  username: config.get("db:username") || "prmp",
+  username: config.get("db:username") || "prpm",
   password: config.requireSecret("db:password"),
   instanceClass: config.get("db:instanceClass") || "db.t4g.micro",
   allocatedStorage: parseInt(config.get("db:allocatedStorage") || "20"),
@@ -52,11 +52,11 @@ const githubOAuth = {
 };
 
 const appConfig = {
-  image: config.get("app:image") || "prmp-registry:latest",
+  image: config.get("app:image") || "prpm-registry:latest",
   cpu: parseInt(config.get("app:cpu") || "256"),
   memory: parseInt(config.get("app:memory") || "512"),
   desiredCount: parseInt(config.get("app:desiredCount") || "2"),
-  domainName: config.get("app:domainName"), // e.g., registry.prmp.dev
+  domainName: config.get("app:domainName"), // e.g., registry.prpm.dev
 };
 
 const searchConfig = {
@@ -172,8 +172,8 @@ export const nextSteps = pulumi.output({
 
     # Build and push
     cd ../registry
-    docker build -t prmp-registry:latest .
-    docker tag prmp-registry:latest ${app.ecrRepo.repositoryUrl}:latest
+    docker build -t prpm-registry:latest .
+    docker tag prpm-registry:latest ${app.ecrRepo.repositoryUrl}:latest
     docker push ${app.ecrRepo.repositoryUrl}:latest
   `,
   "2_run_migrations": pulumi.interpolate`
@@ -183,7 +183,7 @@ export const nextSteps = pulumi.output({
       --task-definition ${app.taskDefinition.family} \\
       --launch-type FARGATE \\
       --network-configuration "awsvpcConfiguration={subnets=[${vpc.privateSubnets[0].id}],securityGroups=[${app.ecsSecurityGroup.id}],assignPublicIp=DISABLED}" \\
-      --overrides '{"containerOverrides":[{"name":"prmp-registry","command":["npm","run","migrate"]}]}'
+      --overrides '{"containerOverrides":[{"name":"prpm-registry","command":["npm","run","migrate"]}]}'
   `,
   "3_access_api": apiUrl,
   "4_view_logs": pulumi.interpolate`

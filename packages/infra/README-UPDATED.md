@@ -84,7 +84,7 @@ pulumi stack select prod
 pulumi config set aws:region us-east-1
 
 # Database credentials
-pulumi config set db:username prmp
+pulumi config set db:username prpm
 pulumi config set --secret db:password $(openssl rand -base64 32)
 
 # GitHub OAuth (create at github.com/settings/developers)
@@ -92,7 +92,7 @@ pulumi config set --secret github:clientId YOUR_CLIENT_ID
 pulumi config set --secret github:clientSecret YOUR_CLIENT_SECRET
 
 # Optional: Custom domain
-pulumi config set app:domainName registry.prmp.dev
+pulumi config set app:domainName registry.prpm.dev
 ```
 
 ### 4. Deploy
@@ -158,7 +158,7 @@ curl $(pulumi stack output apiUrl --cwd ../infra)/health
 ### Database Settings
 
 ```bash
-pulumi config set db:username prmp
+pulumi config set db:username prpm
 pulumi config set --secret db:password <secure-password>
 pulumi config set db:instanceClass db.t4g.micro  # or db.t4g.small
 pulumi config set db:allocatedStorage 20         # GB
@@ -170,13 +170,13 @@ pulumi config set db:allocatedStorage 20         # GB
 pulumi config set app:instanceType t3.micro  # or t3.small
 pulumi config set app:minSize 1              # Minimum instances
 pulumi config set app:maxSize 2              # Maximum instances
-pulumi config set app:domainName registry.prmp.dev
+pulumi config set app:domainName registry.prpm.dev
 ```
 
 ### Application Settings (ECS)
 
 ```bash
-pulumi config set app:image prmp-registry:latest
+pulumi config set app:image prpm-registry:latest
 pulumi config set app:cpu 256        # CPU units
 pulumi config set app:memory 512     # Memory in MB
 pulumi config set app:desiredCount 2 # Number of tasks

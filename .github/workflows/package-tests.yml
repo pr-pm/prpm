@@ -26,10 +26,10 @@ jobs:
         run: npm ci
 
       - name: Build registry-client
-        run: npm run build --workspace=@prmp/registry-client
+        run: npm run build --workspace=@prpm/registry-client
 
       - name: Run CLI tests
-        run: npm run test --workspace=@prmp/cli
+        run: npm run test --workspace=prpm
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -58,7 +58,7 @@ jobs:
         run: npm ci
 
       - name: Run registry-client tests
-        run: npm run test --workspace=@prmp/registry-client
+        run: npm run test --workspace=@prpm/registry-client
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -87,7 +87,7 @@ jobs:
         run: npm ci
 
       - name: Build registry-client first
-        run: npm run build --workspace=@prmp/registry-client
+        run: npm run build --workspace=@prpm/registry-client
 
       - name: Build remaining packages
         run: npm run build --workspaces --if-present

@@ -27,9 +27,9 @@ interface ScrapedAgent {
 const pool = new Pool({
   host: 'localhost',
   port: 5432,
-  database: 'prmp_registry',
-  user: 'prmp',
-  password: 'prmp',
+  database: 'prpm_registry',
+  user: 'prpm',
+  password: 'prpm',
 });
 
 async function importAgents() {

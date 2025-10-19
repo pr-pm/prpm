@@ -137,7 +137,7 @@ cd registry
 docker-compose up -d minio
 
 # Create bucket
-aws --endpoint-url=http://localhost:9000 s3 mb s3://prmp-packages
+aws --endpoint-url=http://localhost:9000 s3 mb s3://prpm-packages
 
 # Or use MinIO console: http://localhost:9001
 ```
@@ -445,7 +445,7 @@ S3_BUCKET=prpm-packages
 
 2. **Start MinIO** (15 min)
    - `docker-compose up -d minio`
-   - Create `prmp-packages` bucket
+   - Create `prpm-packages` bucket
    - Verify connection
 
 ### This Week (8 hours)

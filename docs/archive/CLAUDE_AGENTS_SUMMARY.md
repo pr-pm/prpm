@@ -173,7 +173,7 @@ See `docs/CLAUDE_AGENTS_SOURCES.md` for email templates:
 - Tags and categories
 
 ### After Upload
-- All agents installable via `prmp install`
+- All agents installable via `prpm install`
 - Searchable by name, tag, category
 - Marked as "unclaimed"
 - Attribution to original authors
