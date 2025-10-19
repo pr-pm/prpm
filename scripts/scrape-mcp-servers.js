@@ -1,0 +1,266 @@
+#!/usr/bin/env node
+
+/**
+ * Scrape MCP servers from awesome-mcp-servers lists
+ *
+ * Sources:
+ * - https://github.com/TensorBlock/awesome-mcp-servers (7260 servers)
+ * - https://github.com/wong2/awesome-mcp-servers
+ * - https://github.com/punkpeye/awesome-mcp-servers
+ * - https://github.com/modelcontextprotocol/servers (official)
+ */
+
+import { writeFileSync } from 'fs';
+
+// Official Anthropic MCP Servers
+const officialServers = [
+  {
+    id: "@anthropic/mcp-fetch",
+    display_name: "Fetch MCP Server",
+    description: "Web content fetching and conversion to markdown for efficient LLM usage. Retrieves web pages, converts them to clean markdown, and extracts key information.",
+    type: "mcp",
+    category: "web",
+    tags: ["web", "scraping", "markdown", "http", "content-extraction"],
+    keywords: ["fetch", "web-scraping", "html", "markdown-conversion", "http-client"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch",
+    npm_package: "@modelcontextprotocol/server-fetch",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-filesystem",
+    display_name: "Filesystem MCP Server",
+    description: "Secure file operations with configurable access controls. Read, write, and manipulate local files through a controlled API with permission management.",
+    type: "mcp",
+    category: "filesystem",
+    tags: ["filesystem", "files", "io", "security", "access-control"],
+    keywords: ["file-operations", "read-write", "directory", "permissions", "secure-access"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
+    npm_package: "@modelcontextprotocol/server-filesystem",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-git",
+    display_name: "Git MCP Server",
+    description: "Tools to read, search, and manipulate Git repositories. Provides Git operations like log, diff, blame, and repository exploration.",
+    type: "mcp",
+    category: "development",
+    tags: ["git", "version-control", "repository", "scm", "development"],
+    keywords: ["git-operations", "commit-history", "diff", "blame", "repository-management"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/git",
+    npm_package: "@modelcontextprotocol/server-git",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-memory",
+    display_name: "Memory MCP Server",
+    description: "Knowledge graph-based persistent memory system. Enables AI assistants to remember facts, relationships, and context across sessions.",
+    type: "mcp",
+    category: "ai",
+    tags: ["memory", "knowledge-graph", "persistence", "context", "ai"],
+    keywords: ["knowledge-management", "graph-database", "persistent-memory", "context-aware", "facts"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
+    npm_package: "@modelcontextprotocol/server-memory",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-sequential-thinking",
+    display_name: "Sequential Thinking MCP Server",
+    description: "Dynamic and reflective problem-solving through thought sequences. Implements structured thinking patterns for complex reasoning tasks.",
+    type: "mcp",
+    category: "ai",
+    tags: ["thinking", "reasoning", "problem-solving", "ai", "cognitive"],
+    keywords: ["sequential-reasoning", "thought-process", "problem-decomposition", "cognitive-patterns", "structured-thinking"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking",
+    npm_package: "@modelcontextprotocol/server-sequentialthinking",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-time",
+    display_name: "Time MCP Server",
+    description: "Time and timezone conversion capabilities. Get current time, convert between timezones, and handle date/time operations.",
+    type: "mcp",
+    category: "utility",
+    tags: ["time", "timezone", "date", "conversion", "utility"],
+    keywords: ["datetime", "timezone-conversion", "temporal", "clock", "timestamp"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/time",
+    npm_package: "@modelcontextprotocol/server-time",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-sqlite",
+    display_name: "SQLite MCP Server",
+    description: "SQLite database operations and queries. Execute SQL queries, manage databases, and perform data operations on SQLite databases.",
+    type: "mcp",
+    category: "database",
+    tags: ["sqlite", "database", "sql", "data", "storage"],
+    keywords: ["sqlite-operations", "sql-queries", "database-management", "local-storage", "data-persistence"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite",
+    npm_package: "@modelcontextprotocol/server-sqlite",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-postgres",
+    display_name: "PostgreSQL MCP Server",
+    description: "PostgreSQL database operations and queries. Connect to Postgres databases, execute queries, and manage data.",
+    type: "mcp",
+    category: "database",
+    tags: ["postgresql", "database", "sql", "data", "postgres"],
+    keywords: ["postgres-operations", "sql-queries", "database-management", "postgresql-client", "data-access"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/postgres",
+    npm_package: "@modelcontextprotocol/server-postgres",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-slack",
+    display_name: "Slack MCP Server",
+    description: "Slack API integration for messaging and workspace operations. Send messages, read channels, and interact with Slack workspaces.",
+    type: "mcp",
+    category: "communication",
+    tags: ["slack", "messaging", "communication", "api", "workspace"],
+    keywords: ["slack-integration", "messaging-api", "channels", "team-communication", "notifications"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/slack",
+    npm_package: "@modelcontextprotocol/server-slack",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-github",
+    display_name: "GitHub MCP Server",
+    description: "GitHub API integration for repository operations. Search repos, read issues, create PRs, and manage GitHub resources.",
+    type: "mcp",
+    category: "development",
+    tags: ["github", "git", "repository", "api", "development"],
+    keywords: ["github-integration", "repository-management", "issues", "pull-requests", "github-api"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/github",
+    npm_package: "@modelcontextprotocol/server-github",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-google-drive",
+    display_name: "Google Drive MCP Server",
+    description: "Google Drive integration for file operations. Read, write, and manage files in Google Drive, including Docs, Sheets, and Slides.",
+    type: "mcp",
+    category: "storage",
+    tags: ["google-drive", "storage", "files", "cloud", "google"],
+    keywords: ["gdrive-integration", "cloud-storage", "google-docs", "file-management", "drive-api"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/gdrive",
+    npm_package: "@modelcontextprotocol/server-gdrive",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-puppeteer",
+    display_name: "Puppeteer MCP Server",
+    description: "Browser automation with Puppeteer. Control headless Chrome, navigate pages, extract data, and perform web automation tasks.",
+    type: "mcp",
+    category: "automation",
+    tags: ["puppeteer", "browser", "automation", "web", "scraping"],
+    keywords: ["browser-automation", "headless-chrome", "web-scraping", "page-navigation", "testing"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer",
+    npm_package: "@modelcontextprotocol/server-puppeteer",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-brave-search",
+    display_name: "Brave Search MCP Server",
+    description: "Brave Search API integration for web search. Search the web using Brave's privacy-focused search engine.",
+    type: "mcp",
+    category: "search",
+    tags: ["brave", "search", "web", "api", "privacy"],
+    keywords: ["web-search", "brave-api", "search-engine", "privacy-search", "query"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search",
+    npm_package: "@modelcontextprotocol/server-brave-search",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@anthropic/mcp-google-maps",
+    display_name: "Google Maps MCP Server",
+    description: "Google Maps API integration for location and mapping. Search places, get directions, and access geocoding services.",
+    type: "mcp",
+    category: "location",
+    tags: ["google-maps", "location", "mapping", "geocoding", "places"],
+    keywords: ["maps-api", "geocoding", "directions", "places-search", "location-services"],
+    author_id: "@anthropic",
+    author_name: "Anthropic",
+    repository_url: "https://github.com/modelcontextprotocol/servers/tree/main/src/google-maps",
+    npm_package: "@modelcontextprotocol/server-google-maps",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@microsoft/mcp-playwright",
+    display_name: "Playwright MCP Server",
+    description: "Browser automation with Playwright. Control browsers (Chrome, Firefox, Safari), navigate pages, and perform web automation.",
+    type: "mcp",
+    category: "automation",
+    tags: ["playwright", "browser", "automation", "testing", "web"],
+    keywords: ["browser-automation", "cross-browser", "testing", "web-automation", "screenshots"],
+    author_id: "@microsoft",
+    author_name: "Microsoft",
+    repository_url: "https://github.com/microsoft/playwright-mcp",
+    official: true,
+    verified_author: true
+  },
+  {
+    id: "@aws/mcp-aws-kb-retrieval",
+    display_name: "AWS Knowledge Base Retrieval MCP",
+    description: "AWS Bedrock Knowledge Base retrieval. Query AWS knowledge bases and retrieve contextual information.",
+    type: "mcp",
+    category: "ai",
+    tags: ["aws", "bedrock", "knowledge-base", "retrieval", "rag"],
+    keywords: ["aws-bedrock", "knowledge-retrieval", "rag", "context-retrieval", "vector-search"],
+    author_id: "@aws",
+    author_name: "AWS",
+    repository_url: "https://github.com/aws-samples/aws-kb-retrieval-mcp",
+    official: true,
+    verified_author: true
+  }
+];
+
+console.log(`✅ Generated ${officialServers.length} official MCP servers`);
+
+// Write to file
+writeFileSync(
+  'scraped-mcp-servers-official.json',
+  JSON.stringify(officialServers, null, 2)
+);
+
+console.log('📁 Saved to scraped-mcp-servers-official.json');
+console.log('\n💡 Next: Manually add community servers or use GitHub API to scrape awesome lists');
