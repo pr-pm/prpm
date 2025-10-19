@@ -48,17 +48,21 @@ CREATE INDEX IF NOT EXISTS idx_packages_tags_contains ON packages USING gin(tags
 
 -- Drop old full-text index and create better one
 DROP INDEX IF EXISTS idx_packages_search;
+DROP INDEX IF EXISTS idx_packages_fts;
 
--- Create improved full-text search with weights
--- display_name gets weight A (highest), description gets weight B
-CREATE INDEX IF NOT EXISTS idx_packages_fts ON packages USING gin(
-  (
-    setweight(to_tsvector('english', coalesce(display_name, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
-    setweight(to_tsvector('english', array_to_string(tags, ' ')), 'C') ||
-    setweight(to_tsvector('english', array_to_string(keywords, ' ')), 'D')
-  )
-);
+-- Add a generated column for full-text search vector
+-- This is IMMUTABLE and can be indexed
+ALTER TABLE packages
+ADD COLUMN IF NOT EXISTS search_vector tsvector
+GENERATED ALWAYS AS (
+  setweight(to_tsvector('english', coalesce(display_name, '')), 'A') ||
+  setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
+  setweight(to_tsvector('english', array_to_string(tags, ' ')), 'C') ||
+  setweight(to_tsvector('english', array_to_string(keywords, ' ')), 'D')
+) STORED;
+
+-- Create GIN index on the generated column
+CREATE INDEX IF NOT EXISTS idx_packages_search_vector ON packages USING gin(search_vector);
 
 -- ============================================
 -- MATERIALIZED VIEW FOR SEARCH RANKINGS
@@ -105,13 +109,8 @@ SELECT
       ELSE 0
     END)
   ) as search_rank,
-  -- Full-text search vector
-  (
-    setweight(to_tsvector('english', coalesce(p.display_name, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(p.description, '')), 'B') ||
-    setweight(to_tsvector('english', array_to_string(p.tags, ' ')), 'C') ||
-    setweight(to_tsvector('english', array_to_string(p.keywords, ' ')), 'D')
-  ) as search_vector
+  -- Use the generated search_vector column
+  p.search_vector
 FROM packages p
 WHERE p.visibility = 'public' AND p.deprecated = FALSE;
 
