@@ -14,6 +14,7 @@ export interface RegistryPackage {
   total_downloads: number;
   rating_average?: number;
   verified: boolean;
+  official?: boolean;
   latest_version?: {
     version: string;
     tarball_url: string;
