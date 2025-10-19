@@ -14,8 +14,8 @@ describe('Analytics Routes', () => {
     server = Fastify();
 
     // Mock postgres plugin
-    server.decorate('pg', {
-      query: async (sql: string, params?: any[]) => {
+    (server as any).pg = {
+      query: async (sql: string, params?: any[]): Promise<any> => {
         // Track download - INSERT into package_stats
         if (sql.includes('INSERT INTO package_stats')) {
           return { rows: [], command: 'INSERT', rowCount: 1, oid: 0, fields: [] };
@@ -150,7 +150,7 @@ describe('Analytics Routes', () => {
 
         return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] };
       },
-    });
+    };
 
     // Mock optional auth middleware
     server.decorateRequest('user', null);

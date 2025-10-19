@@ -2,7 +2,7 @@
  * Tests for PostgreSQL search implementation
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { Pool } from 'pg';
 import { postgresSearch } from '../postgres';
 import { FastifyInstance } from 'fastify';
@@ -139,7 +139,7 @@ describe('Postgres Search', () => {
 
       expect(result.packages).toHaveLength(2);
       expect(result.packages.every(p =>
-        p.display_name.includes('Python') || p.description.includes('Python')
+        p.display_name.includes('Python') || p.description?.includes('Python')
       )).toBe(true);
     });
 
