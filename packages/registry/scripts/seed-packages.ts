@@ -48,6 +48,7 @@ async function seedPackages() {
       '../../../scraped-additional-agents.json',
       '../../../scraped-mdc-packages.json',
       '../../../scraped-cursor-official-rules.json',
+      'seed/new-skills.json', // New troubleshooting skills
       '../../../scraped-lst97-agents.json',
       '../../../scraped-jhonma82-cursorrules.json',
       '../../../scraped-patrickjs-cursorrules.json',
