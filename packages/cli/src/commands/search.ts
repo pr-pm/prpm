@@ -125,14 +125,19 @@ export function createSearchCommand(): Command {
   command
     .description('Search for packages in the registry')
     .argument('<query>', 'Search query')
-    .option('--type <type>', 'Filter by package type (cursor, claude, continue)')
+    .option('--type <type>', 'Filter by package type (skill, agent, rule, plugin, prompt, workflow, tool, template, mcp)')
     .option('--limit <number>', 'Number of results to show', '20')
     .action(async (query: string, options: any) => {
       const type = options.type as PackageType | undefined;
       const limit = parseInt(options.limit, 10);
 
-      if (options.type && !['cursor', 'claude', 'continue', 'windsurf', 'generic'].includes(type!)) {
-        console.error('❌ Type must be one of: cursor, claude, continue, windsurf, generic');
+      const validTypes = ['skill', 'agent', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
+      if (options.type && !validTypes.includes(type!)) {
+        console.error(`❌ Type must be one of: ${validTypes.join(', ')}`);
+        console.log(`\n💡 Examples:`);
+        console.log(`   prpm search postgres --type skill`);
+        console.log(`   prpm search debugging --type agent`);
+        console.log(`   prpm search react --type rule`);
         process.exit(1);
       }
 
