@@ -15,6 +15,7 @@
     "dev:cli": "npm run dev --workspace=@prmp/cli",
     "dev:registry": "npm run dev --workspace=registry",
     "dev:webapp": "npm run dev --workspace=@prmp/webapp",
+    "docker:up": "cd packages/registry && docker compose -f docker-compose.local.yml up",
     "test": "npm run test --workspaces",
     "test:cli": "npm run test --workspace=@prmp/cli",
     "test:client": "npm run test --workspace=@prmp/registry-client",
