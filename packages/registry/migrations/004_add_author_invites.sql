@@ -140,33 +140,38 @@ WHERE ai.status = 'pending'
 
 -- View for top unclaimed authors
 CREATE OR REPLACE VIEW top_unclaimed_authors AS
+WITH author_stats AS (
+  SELECT
+    SPLIT_PART(p.id, '/', 1) as author_username,
+    COUNT(*) as package_count,
+    ARRAY_AGG(DISTINCT p.type) as package_types,
+    ARRAY_AGG(DISTINCT p.category) as categories,
+    MIN(p.created_at) as first_package_date,
+    MAX(p.created_at) as latest_package_date,
+    SUM(p.total_downloads) as total_downloads
+  FROM packages p
+  WHERE p.id LIKE '@%/%'  -- Only namespaced packages
+  GROUP BY SPLIT_PART(p.id, '/', 1)
+  HAVING COUNT(*) >= 5  -- Only authors with 5+ packages
+)
 SELECT
-  SPLIT_PART(p.id, '/', 1) as author_username,
-  COUNT(*) as package_count,
-  ARRAY_AGG(DISTINCT p.type) as package_types,
-  ARRAY_AGG(DISTINCT p.category) as categories,
-  MIN(p.created_at) as first_package_date,
-  MAX(p.created_at) as latest_package_date,
-  SUM(p.total_downloads) as total_downloads,
-  CASE
-    WHEN EXISTS (
-      SELECT 1 FROM users u
-      WHERE u.claimed_author_username = SPLIT_PART(p.id, '/', 1)
-    ) THEN TRUE
-    ELSE FALSE
-  END as is_claimed,
-  CASE
-    WHEN EXISTS (
-      SELECT 1 FROM author_invites ai
-      WHERE ai.author_username = SPLIT_PART(p.id, '/', 1)
-        AND ai.status = 'pending'
-    ) THEN TRUE
-    ELSE FALSE
-  END as has_pending_invite
-FROM packages p
-WHERE p.id LIKE '@%/%'  -- Only namespaced packages
-GROUP BY SPLIT_PART(p.id, '/', 1)
-HAVING COUNT(*) >= 5  -- Only authors with 5+ packages
+  author_username,
+  package_count,
+  package_types,
+  categories,
+  first_package_date,
+  latest_package_date,
+  total_downloads,
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.claimed_author_username = author_stats.author_username
+  ) as is_claimed,
+  EXISTS (
+    SELECT 1 FROM author_invites ai
+    WHERE ai.author_username = author_stats.author_username
+      AND ai.status = 'pending'
+  ) as has_pending_invite
+FROM author_stats
 ORDER BY package_count DESC, total_downloads DESC;
 
 -- ============================================
