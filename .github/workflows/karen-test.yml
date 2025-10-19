@@ -21,8 +21,8 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Run Karen Review (Local)
-        uses: ./packages/karen-action
+      - name: Run Karen Review
+        uses: khaliqgant/karen-action@v1.0.1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           post_comment: false  # Don't comment on push events

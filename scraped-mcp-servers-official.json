@@ -24,7 +24,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch",
     "npm_package": "@modelcontextprotocol/server-fetch",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-filesystem",
@@ -51,7 +53,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
     "npm_package": "@modelcontextprotocol/server-filesystem",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-git",
@@ -78,7 +82,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/git",
     "npm_package": "@modelcontextprotocol/server-git",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-memory",
@@ -105,7 +111,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
     "npm_package": "@modelcontextprotocol/server-memory",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-sequential-thinking",
@@ -132,7 +140,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking",
     "npm_package": "@modelcontextprotocol/server-sequentialthinking",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-time",
@@ -159,7 +169,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/time",
     "npm_package": "@modelcontextprotocol/server-time",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-sqlite",
@@ -186,7 +198,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite",
     "npm_package": "@modelcontextprotocol/server-sqlite",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-postgres",
@@ -213,7 +227,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/postgres",
     "npm_package": "@modelcontextprotocol/server-postgres",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-slack",
@@ -240,7 +256,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/slack",
     "npm_package": "@modelcontextprotocol/server-slack",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-github",
@@ -267,7 +285,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/github",
     "npm_package": "@modelcontextprotocol/server-github",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-google-drive",
@@ -294,7 +314,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/gdrive",
     "npm_package": "@modelcontextprotocol/server-gdrive",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-puppeteer",
@@ -321,7 +343,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer",
     "npm_package": "@modelcontextprotocol/server-puppeteer",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-brave-search",
@@ -348,7 +372,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search",
     "npm_package": "@modelcontextprotocol/server-brave-search",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@anthropic/mcp-google-maps",
@@ -375,7 +401,9 @@
     "repository_url": "https://github.com/modelcontextprotocol/servers/tree/main/src/google-maps",
     "npm_package": "@modelcontextprotocol/server-google-maps",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@microsoft/mcp-playwright",
@@ -401,7 +429,9 @@
     "author_name": "Microsoft",
     "repository_url": "https://github.com/microsoft/playwright-mcp",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   },
   {
     "id": "@aws/mcp-aws-kb-retrieval",
@@ -427,6 +457,8 @@
     "author_name": "AWS",
     "repository_url": "https://github.com/aws-samples/aws-kb-retrieval-mcp",
     "official": true,
-    "verified_author": true
+    "verified_author": true,
+    "transport_type": "stdio",
+    "remote_server": false
   }
 ]

@@ -20,6 +20,12 @@
  * - Without token: 60 requests/hour
  * - With token: 5,000 requests/hour
  *
+ * RESUME CAPABILITY:
+ * - Script saves progress to scrape-checkpoint.json after each source
+ * - If interrupted, re-run the same command to resume from checkpoint
+ * - Checkpoint tracks: completed sources, current search page
+ * - Automatically clears checkpoint on successful completion
+ *
  * This will scrape:
  * - github.com/modelcontextprotocol/servers (official)
  * - github.com/TensorBlock/awesome-mcp-servers (7260+ servers)
@@ -56,6 +62,27 @@ if (existsSync('scraped-mcp-servers-all.json')) {
 const existingIds = new Set(existingServers.map(s => s.id));
 const newServers = [];
 
+// Load checkpoint for resume capability
+const CHECKPOINT_FILE = 'scrape-checkpoint.json';
+let checkpoint = {
+  completed_sources: [],
+  last_search_page: {}
+};
+
+if (existsSync(CHECKPOINT_FILE)) {
+  checkpoint = JSON.parse(readFileSync(CHECKPOINT_FILE, 'utf-8'));
+  console.log(`📍 Resuming from checkpoint: ${checkpoint.completed_sources.length} sources completed`);
+}
+
+function saveCheckpoint() {
+  writeFileSync(CHECKPOINT_FILE, JSON.stringify(checkpoint, null, 2));
+}
+
+function markSourceComplete(sourceName) {
+  checkpoint.completed_sources.push(sourceName);
+  saveCheckpoint();
+}
+
 /**
  * Fetch README content from a GitHub repo
  */
@@ -74,6 +101,14 @@ async function fetchReadme(owner, repo) {
  * Parse awesome-mcp-servers list
  */
 async function scrapeAwesomeList(owner, repo) {
+  const sourceName = `awesome:${owner}/${repo}`;
+
+  // Skip if already completed
+  if (checkpoint.completed_sources.includes(sourceName)) {
+    console.log(`\n⏭️  Skipping ${owner}/${repo} (already completed)`);
+    return 0;
+  }
+
   console.log(`\n📖 Scraping ${owner}/${repo}...`);
 
   const readme = await fetchReadme(owner, repo);
@@ -107,11 +142,10 @@ async function scrapeAwesomeList(owner, repo) {
         repo: repoName
       });
 
-      // Determine if it's a remote server (look for keywords)
-      const isRemote = description.toLowerCase().includes('remote') ||
-                       description.toLowerCase().includes('sse') ||
-                       description.toLowerCase().includes('websocket') ||
-                       repoData.description?.toLowerCase().includes('remote');
+      // Fetch README to determine transport type
+      const repoReadme = await fetchReadme(repoOwner, repoName) || '';
+      const transportType = inferTransportType(description, repoReadme);
+      const isRemote = isRemoteServer(description, repoReadme, transportType);
 
       const server = {
         id,
@@ -133,7 +167,7 @@ async function scrapeAwesomeList(owner, repo) {
         quality_score: calculateQualityScore(repoData),
         remote_server: isRemote,
         remote_url: isRemote ? `${repoData.html_url}#remote` : undefined,
-        transport_type: inferTransportType(description, readme),
+        transport_type: transportType,
         stars: repoData.stargazers_count,
         forks: repoData.forks_count,
         last_updated: repoData.updated_at,
@@ -163,6 +197,8 @@ async function scrapeAwesomeList(owner, repo) {
     }
   }
 
+  // Mark source as complete
+  markSourceComplete(sourceName);
   return count;
 }
 
@@ -170,10 +206,22 @@ async function scrapeAwesomeList(owner, repo) {
  * Search GitHub for MCP server repositories
  */
 async function searchGitHub(query, maxResults = 1000) {
+  const sourceName = `search:${query}`;
+
+  // Skip if already completed
+  if (checkpoint.completed_sources.includes(sourceName)) {
+    console.log(`\n⏭️  Skipping search "${query}" (already completed)`);
+    return 0;
+  }
+
   console.log(`\n🔍 Searching GitHub for: "${query}"...`);
   let count = 0;
-  let page = 1;
+  let page = checkpoint.last_search_page[query] || 1;
   const perPage = 100;
+
+  if (page > 1) {
+    console.log(`   📍 Resuming from page ${page}`);
+  }
 
   while (count < maxResults) {
     try {
@@ -198,9 +246,8 @@ async function searchGitHub(query, maxResults = 1000) {
           continue;
         }
 
-        const isRemote = readme.toLowerCase().includes('remote') ||
-                         readme.toLowerCase().includes('sse') ||
-                         readme.toLowerCase().includes('websocket');
+        const transportType = inferTransportType(repo.description || '', readme);
+        const isRemote = isRemoteServer(repo.description || '', readme, transportType);
 
         const server = {
           id,
@@ -221,7 +268,7 @@ async function searchGitHub(query, maxResults = 1000) {
           quality_score: calculateQualityScore(repo),
           remote_server: isRemote,
           remote_url: isRemote ? `${repo.html_url}#remote` : undefined,
-          transport_type: inferTransportType(repo.description, readme),
+          transport_type: transportType,
           stars: repo.stargazers_count,
           forks: repo.forks_count,
           last_updated: repo.updated_at,
@@ -236,6 +283,10 @@ async function searchGitHub(query, maxResults = 1000) {
       }
 
       page++;
+
+      // Save progress after each page
+      checkpoint.last_search_page[query] = page;
+      saveCheckpoint();
 
       // GitHub search rate limit: 30 requests/minute
       if (page % 5 === 0) {
@@ -253,6 +304,11 @@ async function searchGitHub(query, maxResults = 1000) {
       }
     }
   }
+
+  // Mark search as complete
+  markSourceComplete(sourceName);
+  delete checkpoint.last_search_page[query]; // Clean up page tracking
+  saveCheckpoint();
 
   return count;
 }
@@ -312,11 +368,16 @@ function calculateQualityScore(repo) {
 function inferTransportType(description, readme) {
   const text = `${description} ${readme}`.toLowerCase();
 
-  if (text.includes('websocket') || text.includes('ws://')) return 'websocket';
-  if (text.includes('sse') || text.includes('server-sent')) return 'sse';
-  if (text.includes('stdio') || text.includes('stdin')) return 'stdio';
+  if (text.includes('websocket') || text.includes('ws://') || text.includes('wss://')) return 'websocket';
+  if (text.includes('sse') || text.includes('server-sent events') || text.includes('eventsource')) return 'sse';
 
-  return 'stdio'; // default
+  return 'stdio'; // default - most MCP servers use stdio
+}
+
+function isRemoteServer(description, readme, transportType) {
+  // A server is only remote if it supports SSE or WebSocket transport
+  // Stdio servers are always local (run as subprocesses)
+  return transportType === 'sse' || transportType === 'websocket';
 }
 
 /**
@@ -341,10 +402,17 @@ async function main() {
   totalNew += await scrapeAwesomeList('habitoai', 'awesome-mcp-servers');
   totalNew += await scrapeAwesomeList('appcypher', 'awesome-mcp-servers');
 
-  // 2. Search GitHub for MCP servers
-  totalNew += await searchGitHub('mcp server', 500);
-  totalNew += await searchGitHub('model context protocol', 500);
-  totalNew += await searchGitHub('anthropic mcp', 200);
+  // 2. Search GitHub for MCP servers (expanded for 10K goal)
+  totalNew += await searchGitHub('mcp server', 1000);
+  totalNew += await searchGitHub('model context protocol', 1000);
+  totalNew += await searchGitHub('anthropic mcp', 500);
+  totalNew += await searchGitHub('mcp-server', 1000);
+  totalNew += await searchGitHub('modelcontextprotocol', 500);
+  totalNew += await searchGitHub('claude mcp', 500);
+  totalNew += await searchGitHub('mcp typescript', 500);
+  totalNew += await searchGitHub('mcp python', 500);
+  totalNew += await searchGitHub('mcp tool', 500);
+  totalNew += await searchGitHub('mcp integration', 500);
 
   // 3. Combine and save
   const allServers = [...existingServers, ...newServers];
@@ -367,6 +435,15 @@ async function main() {
   console.log(`🌐 Remote servers: ${remoteServers.length}`);
   console.log(`📁 Saved to scraped-mcp-servers-all.json`);
   console.log(`📁 Remote servers: scraped-mcp-servers-remote.json`);
+
+  // Clean up checkpoint file on successful completion
+  if (existsSync(CHECKPOINT_FILE)) {
+    writeFileSync(CHECKPOINT_FILE, JSON.stringify({
+      completed_sources: [],
+      last_search_page: {}
+    }, null, 2));
+    console.log(`\n🧹 Checkpoint cleared (run completed successfully)`);
+  }
 
   // Final rate limit check
   const { data: finalRateLimit } = await octokit.rateLimit.get();
