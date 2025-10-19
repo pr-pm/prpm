@@ -243,19 +243,43 @@ $$ LANGUAGE plpgsql STABLE;
 -- PERFORMANCE MONITORING
 -- ============================================
 
--- View for monitoring slow queries
-CREATE OR REPLACE VIEW slow_queries AS
-SELECT
-  query,
-  calls,
-  total_exec_time,
-  mean_exec_time,
-  max_exec_time,
-  stddev_exec_time
-FROM pg_stat_statements
-WHERE mean_exec_time > 100  -- queries taking more than 100ms on average
-ORDER BY mean_exec_time DESC
-LIMIT 20;
+-- Enable pg_stat_statements extension if available (optional)
+-- This is for performance monitoring and is not critical for functionality
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_extension WHERE extname = 'pg_stat_statements'
+  ) THEN
+    -- Try to create the extension, but ignore if we don't have permission
+    BEGIN
+      CREATE EXTENSION pg_stat_statements;
+    EXCEPTION
+      WHEN insufficient_privilege OR feature_not_supported THEN
+        RAISE NOTICE 'pg_stat_statements extension not available - skipping slow query monitoring';
+    END;
+  END IF;
+END $$;
+
+-- View for monitoring slow queries (only if pg_stat_statements is available)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_stat_statements') THEN
+    EXECUTE '
+      CREATE OR REPLACE VIEW slow_queries AS
+      SELECT
+        query,
+        calls,
+        total_exec_time,
+        mean_exec_time,
+        max_exec_time,
+        stddev_exec_time
+      FROM pg_stat_statements
+      WHERE mean_exec_time > 100
+      ORDER BY mean_exec_time DESC
+      LIMIT 20
+    ';
+  END IF;
+END $$;
 
 -- ============================================
 -- COMMENTS FOR DOCUMENTATION
