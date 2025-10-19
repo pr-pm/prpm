@@ -81,6 +81,22 @@ const connectionString = pulumi.all([host, port, db]).apply(
 const message = pulumi.interpolate`Server at ${endpoint}:${port}`;
 ```
 
+**Nested Outputs** (Properties that are themselves Outputs):
+```typescript
+// ❌ Bad - resource.property might be an Output<string>
+const endpoint = instance.apply(i => i.endpoint.split(":")[0]); // ERROR: Property 'split' does not exist
+
+// ✅ Good - unwrap nested Output with pulumi.output()
+const endpoint = instance.apply(i =>
+  pulumi.output(i.endpoint).apply(e => e.split(":")[0])
+);
+
+// ✅ Alternative - use pulumi.all to flatten
+const endpoint = pulumi.all([instance]).apply(([inst]) =>
+  pulumi.output(inst.endpoint).apply(e => e.split(":")[0])
+);
+```
+
 ### 6. Beanstalk Environment Variables
 
 **Issue**: Complex objects or arrays need to be serialized.
