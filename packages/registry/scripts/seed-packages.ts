@@ -43,20 +43,14 @@ async function seedPackages() {
       '../../../scraped-packages-additional.json',
       '../../../new-scraped-packages.json',
       '../../../scraped-windsurf-packages.json',
-      '../../../scraped-cursor-directory.json',
       '../../../scraped-volt-agent-subagents.json',
       '../../../scraped-additional-agents.json',
       '../../../scraped-mdc-packages.json',
-      '../../../scraped-cursor-official-rules.json',
       'seed/new-skills.json', // New troubleshooting skills
-      '../../../scraped-mcp-servers-all.json', // MCP servers (108+ servers)
+      '../../../scraped-mcp-servers-all.json', // MCP servers (will be re-scraped to 10K)
       '../../../scraped-lst97-agents.json',
-      '../../../scraped-jhonma82-cursorrules.json',
-      '../../../scraped-patrickjs-cursorrules.json',
-      '../../../scraped-flyeric-cursorrules.json',
-      '../../../scraped-blefnk-cursorrules.json',
+      '../../../converted-cursor-rules-all.json', // 553 cursor rules with content
       '../../../scraped-aaronontheweb-dotnet.json',
-      '../../../scraped-ivangrynenko-cursorrules.json',
     ];
 
     let totalPackages = 0;
