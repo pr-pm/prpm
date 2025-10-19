@@ -22,6 +22,42 @@ import {
   getLockedVersion,
 } from '../core/lockfile';
 
+/**
+ * Get icon for package type
+ */
+function getTypeIcon(type: string): string {
+  const icons: Record<string, string> = {
+    skill: '🎓',
+    agent: '🤖',
+    rule: '📋',
+    plugin: '🔌',
+    prompt: '💬',
+    workflow: '⚡',
+    tool: '🔧',
+    template: '📄',
+    mcp: '🔗',
+  };
+  return icons[type] || '📦';
+}
+
+/**
+ * Get human-readable label for package type
+ */
+function getTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    skill: 'Skill',
+    agent: 'Agent',
+    rule: 'Rule',
+    plugin: 'Plugin',
+    prompt: 'Prompt',
+    workflow: 'Workflow',
+    tool: 'Tool',
+    template: 'Template',
+    mcp: 'MCP Server',
+  };
+  return labels[type] || type;
+}
+
 export async function handleInstall(
   packageSpec: string,
   options: { version?: string; type?: PackageType; as?: string; frozenLockfile?: boolean }
@@ -64,7 +100,11 @@ export async function handleInstall(
 
     // Get package info
     const pkg = await client.getPackage(packageId);
-    console.log(`   ${pkg.display_name} - ${pkg.description || 'No description'}`);
+    const typeIcon = getTypeIcon(pkg.type);
+    const typeLabel = getTypeLabel(pkg.type);
+    console.log(`   ${pkg.display_name} ${pkg.official ? '🏅' : ''}`);
+    console.log(`   ${pkg.description || 'No description'}`);
+    console.log(`   ${typeIcon} Type: ${typeLabel}`);
 
     // Determine version to install
     let tarballUrl: string;

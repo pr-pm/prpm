@@ -8,6 +8,42 @@ import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
 
+/**
+ * Get icon for package type
+ */
+function getTypeIcon(type: string): string {
+  const icons: Record<string, string> = {
+    skill: '🎓',
+    agent: '🤖',
+    rule: '📋',
+    plugin: '🔌',
+    prompt: '💬',
+    workflow: '⚡',
+    tool: '🔧',
+    template: '📄',
+    mcp: '🔗',
+  };
+  return icons[type] || '📦';
+}
+
+/**
+ * Get human-readable label for package type
+ */
+function getTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    skill: 'Skill',
+    agent: 'Agent',
+    rule: 'Rule',
+    plugin: 'Plugin',
+    prompt: 'Prompt',
+    workflow: 'Workflow',
+    tool: 'Tool',
+    template: 'Template',
+    mcp: 'MCP Server',
+  };
+  return labels[type] || type;
+}
+
 export async function handleSearch(
   query: string,
   options: { type?: PackageType; limit?: number }
@@ -45,10 +81,12 @@ export async function handleSearch(
       const downloads = pkg.total_downloads >= 1000
         ? `${(pkg.total_downloads / 1000).toFixed(1)}k`
         : pkg.total_downloads;
+      const typeIcon = getTypeIcon(pkg.type);
+      const typeLabel = getTypeLabel(pkg.type);
 
-      console.log(`[${verified}] ${pkg.display_name} ${rating}`);
+      console.log(`[${verified}] ${pkg.display_name} ${rating} ${pkg.official ? '🏅' : ''}`);
       console.log(`    ${pkg.description || 'No description'}`);
-      console.log(`    📦 ${pkg.id} | 📥 ${downloads} downloads | 🏷️  ${pkg.tags.join(', ')}`);
+      console.log(`    📦 ${pkg.id} | ${typeIcon} ${typeLabel} | 📥 ${downloads} | 🏷️  ${pkg.tags.slice(0, 3).join(', ')}`);
       console.log();
     });
 
