@@ -49,6 +49,7 @@ async function seedPackages() {
       '../../../scraped-mdc-packages.json',
       '../../../scraped-cursor-official-rules.json',
       'seed/new-skills.json', // New troubleshooting skills
+      '../../../scraped-mcp-servers-all.json', // MCP servers (108+ servers)
       '../../../scraped-lst97-agents.json',
       '../../../scraped-jhonma82-cursorrules.json',
       '../../../scraped-patrickjs-cursorrules.json',
