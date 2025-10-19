@@ -6,33 +6,33 @@
 -- ============================================
 
 -- Composite index for common search patterns (type + tags)
-CREATE INDEX idx_packages_type_tags ON packages(type, tags) WHERE visibility = 'public';
+CREATE INDEX IF NOT EXISTS idx_packages_type_tags ON packages(type, tags) WHERE visibility = 'public';
 
 -- Composite index for filtering by category and quality
-CREATE INDEX idx_packages_category_quality ON packages(category, quality_score DESC NULLS LAST) WHERE visibility = 'public';
+CREATE INDEX IF NOT EXISTS idx_packages_category_quality ON packages(category, quality_score DESC NULLS LAST) WHERE visibility = 'public';
 
 -- Index for official/verified packages
-CREATE INDEX idx_packages_official ON packages(verified) WHERE verified = TRUE AND visibility = 'public';
+CREATE INDEX IF NOT EXISTS idx_packages_official ON packages(verified) WHERE verified = TRUE AND visibility = 'public';
 
 -- Composite index for trending packages (downloads + recency)
-CREATE INDEX idx_packages_trending ON packages(weekly_downloads DESC, created_at DESC) WHERE visibility = 'public';
+CREATE INDEX IF NOT EXISTS idx_packages_trending ON packages(weekly_downloads DESC, created_at DESC) WHERE visibility = 'public';
 
 -- Index for author search
-CREATE INDEX idx_packages_author_name ON packages(author_id, display_name);
+CREATE INDEX IF NOT EXISTS idx_packages_author_name ON packages(author_id, display_name);
 
 -- Trigram index for fuzzy name matching
-CREATE INDEX idx_packages_name_trgm ON packages USING gin(display_name gin_trgm_ops);
-CREATE INDEX idx_packages_desc_trgm ON packages USING gin(description gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_packages_name_trgm ON packages USING gin(display_name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_packages_desc_trgm ON packages USING gin(description gin_trgm_ops);
 
 -- ============================================
 -- CATEGORY-SPECIFIC INDEXES
 -- ============================================
 
 -- For filtering by specific categories (will be common with 784 packages)
-CREATE INDEX idx_packages_category ON packages(category) WHERE visibility = 'public';
+CREATE INDEX IF NOT EXISTS idx_packages_category ON packages(category) WHERE visibility = 'public';
 
 -- Multi-column index for category + downloads (popular in category)
-CREATE INDEX idx_packages_category_downloads ON packages(category, total_downloads DESC) WHERE visibility = 'public';
+CREATE INDEX IF NOT EXISTS idx_packages_category_downloads ON packages(category, total_downloads DESC) WHERE visibility = 'public';
 
 -- ============================================
 -- TAG SEARCH OPTIMIZATION
@@ -40,7 +40,7 @@ CREATE INDEX idx_packages_category_downloads ON packages(category, total_downloa
 
 -- Index for tag array contains queries
 -- Already have GIN index on tags, but add one for common patterns
-CREATE INDEX idx_packages_tags_contains ON packages USING gin(tags array_ops);
+CREATE INDEX IF NOT EXISTS idx_packages_tags_contains ON packages USING gin(tags array_ops);
 
 -- ============================================
 -- FULL-TEXT SEARCH IMPROVEMENTS
@@ -51,7 +51,7 @@ DROP INDEX IF EXISTS idx_packages_search;
 
 -- Create improved full-text search with weights
 -- display_name gets weight A (highest), description gets weight B
-CREATE INDEX idx_packages_fts ON packages USING gin(
+CREATE INDEX IF NOT EXISTS idx_packages_fts ON packages USING gin(
   (
     setweight(to_tsvector('english', coalesce(display_name, '')), 'A') ||
     setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
@@ -63,6 +63,9 @@ CREATE INDEX idx_packages_fts ON packages USING gin(
 -- ============================================
 -- MATERIALIZED VIEW FOR SEARCH RANKINGS
 -- ============================================
+
+-- Drop existing materialized view if it exists
+DROP MATERIALIZED VIEW IF EXISTS package_search_rankings CASCADE;
 
 -- Create materialized view for pre-computed search rankings
 CREATE MATERIALIZED VIEW package_search_rankings AS
@@ -113,12 +116,12 @@ FROM packages p
 WHERE p.visibility = 'public' AND p.deprecated = FALSE;
 
 -- Indexes on materialized view
-CREATE INDEX idx_search_rankings_rank ON package_search_rankings(search_rank DESC);
-CREATE INDEX idx_search_rankings_fts ON package_search_rankings USING gin(search_vector);
-CREATE INDEX idx_search_rankings_type ON package_search_rankings(type);
-CREATE INDEX idx_search_rankings_category ON package_search_rankings(category);
-CREATE INDEX idx_search_rankings_tags ON package_search_rankings USING gin(tags);
-CREATE INDEX idx_search_rankings_downloads ON package_search_rankings(total_downloads DESC);
+CREATE INDEX IF NOT EXISTS idx_search_rankings_rank ON package_search_rankings(search_rank DESC);
+CREATE INDEX IF NOT EXISTS idx_search_rankings_fts ON package_search_rankings USING gin(search_vector);
+CREATE INDEX IF NOT EXISTS idx_search_rankings_type ON package_search_rankings(type);
+CREATE INDEX IF NOT EXISTS idx_search_rankings_category ON package_search_rankings(category);
+CREATE INDEX IF NOT EXISTS idx_search_rankings_tags ON package_search_rankings USING gin(tags);
+CREATE INDEX IF NOT EXISTS idx_search_rankings_downloads ON package_search_rankings(total_downloads DESC);
 
 -- Function to refresh search rankings
 CREATE OR REPLACE FUNCTION refresh_search_rankings()
