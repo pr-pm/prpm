@@ -264,12 +264,16 @@ export function createBeanstalkApp(
       {
         namespace: "aws:ec2:vpc",
         name: "Subnets",
-        value: pulumi.all(config.vpc.publicSubnets.map((s: any) => s.id)).apply(ids => ids.join(",")),
+        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: any[]) =>
+          pulumi.all(subnets.map((s: any) => s.id)).apply(ids => ids.join(","))
+        ),
       },
       {
         namespace: "aws:ec2:vpc",
         name: "ELBSubnets",
-        value: pulumi.all(config.vpc.publicSubnets.map((s: any) => s.id)).apply(ids => ids.join(",")),
+        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: any[]) =>
+          pulumi.all(subnets.map((s: any) => s.id)).apply(ids => ids.join(","))
+        ),
       },
 
       // Node.js settings
