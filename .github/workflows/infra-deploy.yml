@@ -69,12 +69,37 @@ jobs:
           cp index-beanstalk.ts index.ts
           echo "✅ Switched to Beanstalk configuration"
 
-      - name: Pulumi Up
+      - name: Configure Stack
         working-directory: packages/infra
         run: |
           STACK="${{ inputs.stack || 'prod' }}"
           pulumi stack select $STACK || pulumi stack init $STACK
+
+          # AWS region
           pulumi config set aws:region ${{ env.AWS_REGION }}
+
+          # Database credentials
+          pulumi config set db:username prmp
+          pulumi config set --secret db:password "${{ secrets.DB_PASSWORD }}"
+
+          # GitHub OAuth
+          pulumi config set --secret github:clientId "${{ secrets.GITHUB_CLIENT_ID }}"
+          pulumi config set --secret github:clientSecret "${{ secrets.GITHUB_CLIENT_SECRET }}"
+
+          # Beanstalk configuration
+          pulumi config set app:instanceType t3.micro
+          pulumi config set app:minSize 1
+          pulumi config set app:maxSize 2
+
+          # Domain configuration
+          if [ "$STACK" = "prod" ]; then
+            pulumi config set app:domainName registry.prmp.dev
+          fi
+
+      - name: Pulumi Up
+        working-directory: packages/infra
+        run: |
+          STACK="${{ inputs.stack || 'prod' }}"
           pulumi up --yes --non-interactive
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
