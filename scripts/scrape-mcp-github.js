@@ -186,13 +186,15 @@ async function scrapeAwesomeList(owner, repo) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     } catch (error) {
-      if (error.status === 404) {
+      const status = error.status || error.response?.status;
+      if (status === 404) {
         console.log(`   ⏭️  Skipping ${id} (not found)`);
-      } else if (error.status === 403) {
-        console.log(`   ⏸️  Rate limit hit, waiting 60s...`);
+      } else if (status === 403 || error.message?.includes('rate limit') || error.message?.includes('API rate limit')) {
+        console.log(`   ⏸️  Rate limit hit (status: ${status}), waiting 60s...`);
+        console.log(`   Error: ${error.message}`);
         await new Promise(resolve => setTimeout(resolve, 60000));
       } else {
-        console.error(`   ❌ Error fetching ${id}:`, error.message);
+        console.error(`   ❌ Error fetching ${id} (status: ${status}):`, error.message);
       }
     }
   }
@@ -295,11 +297,13 @@ async function searchGitHub(query, maxResults = 1000) {
       }
 
     } catch (error) {
-      if (error.status === 403) {
-        console.log(`   ⏸️  Rate limit hit, waiting 60s...`);
+      const status = error.status || error.response?.status;
+      if (status === 403 || error.message?.includes('rate limit') || error.message?.includes('API rate limit')) {
+        console.log(`   ⏸️  Rate limit hit (status: ${status}), waiting 60s...`);
+        console.log(`   Error: ${error.message}`);
         await new Promise(resolve => setTimeout(resolve, 60000));
       } else {
-        console.error(`   ❌ Search error:`, error.message);
+        console.error(`   ❌ Search error (status: ${status}):`, error.message);
         break;
       }
     }
