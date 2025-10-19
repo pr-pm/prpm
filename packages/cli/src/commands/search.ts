@@ -53,7 +53,7 @@ function getTypeLabel(type: string): string {
 function mapTypeToRegistry(cliType: CLIPackageType): { type?: PackageType; tags?: string[] } {
   const typeMap: Record<CLIPackageType, { type?: PackageType; tags?: string[] }> = {
     rule: { type: 'cursor', tags: ['cursor-rule'] },
-    skill: { type: 'claude-skill' },
+    skill: { type: 'claude', tags: ['claude-skill'] },
     agent: { type: 'claude' },
     mcp: { type: 'generic', tags: ['mcp', 'mcp-server'] },
     plugin: { type: 'generic', tags: ['plugin'] },
@@ -75,7 +75,19 @@ export async function handleSearch(
   let result: any = null;
 
   try {
-    console.log(`🔍 Searching for "${query}"...`);
+    // Allow empty query when filtering by type
+    if (query) {
+      console.log(`🔍 Searching for "${query}"...`);
+    } else if (options.type) {
+      console.log(`🔍 Listing ${options.type} packages...`);
+    } else {
+      console.log('❌ Please provide a search query or use --type to filter by package type');
+      console.log('\n💡 Examples:');
+      console.log('   prpm search react');
+      console.log('   prpm search --type skill');
+      console.log('   prpm search react --type rule');
+      return;
+    }
 
     const config = await getConfig();
     const client = getRegistryClient(config);
@@ -95,7 +107,7 @@ export async function handleSearch(
       }
     }
 
-    result = await client.search(query, searchOptions);
+    result = await client.search(query || '', searchOptions);
 
     if (result.packages.length === 0) {
       console.log('\n❌ No packages found');
@@ -110,7 +122,11 @@ export async function handleSearch(
 
     // Display results
     result.packages.forEach((pkg: any) => {
-      const verified = pkg.verified ? '✓' : ' ';
+      const badges: string[] = [];
+      if (pkg.featured || pkg.official) badges.push('Official');
+      if (pkg.verified && !pkg.featured && !pkg.official) badges.push('Verified');
+
+      const badgeStr = badges.length > 0 ? `[${badges.join(', ')}] ` : '';
       const rating = pkg.rating_average ? `⭐ ${pkg.rating_average.toFixed(1)}` : '';
       const downloads = pkg.total_downloads >= 1000
         ? `${(pkg.total_downloads / 1000).toFixed(1)}k`
@@ -118,7 +134,7 @@ export async function handleSearch(
       const typeIcon = getTypeIcon(pkg.type);
       const typeLabel = getTypeLabel(pkg.type);
 
-      console.log(`[${verified}] ${pkg.display_name} ${rating} ${pkg.official ? '🏅' : ''}`);
+      console.log(`${badgeStr}${pkg.display_name} ${rating}`);
       console.log(`    ${pkg.description || 'No description'}`);
       console.log(`    📦 ${pkg.id} | ${typeIcon} ${typeLabel} | 📥 ${downloads} | 🏷️  ${pkg.tags.slice(0, 3).join(', ')}`);
       console.log();
@@ -158,10 +174,10 @@ export function createSearchCommand(): Command {
 
   command
     .description('Search for packages in the registry')
-    .argument('<query>', 'Search query')
+    .argument('[query]', 'Search query (optional when using --type)')
     .option('--type <type>', 'Filter by package type (skill, agent, rule, plugin, prompt, workflow, tool, template, mcp)')
     .option('--limit <number>', 'Number of results to show', '20')
-    .action(async (query: string, options: any) => {
+    .action(async (query: string | undefined, options: any) => {
       const type = options.type as CLIPackageType | undefined;
       const limit = parseInt(options.limit, 10);
 
@@ -172,10 +188,11 @@ export function createSearchCommand(): Command {
         console.log(`   prpm search postgres --type skill`);
         console.log(`   prpm search debugging --type agent`);
         console.log(`   prpm search react --type rule`);
+        console.log(`   prpm search --type skill  # List all skills`);
         process.exit(1);
       }
 
-      await handleSearch(query, { type, limit });
+      await handleSearch(query || '', { type, limit });
     });
 
   return command;

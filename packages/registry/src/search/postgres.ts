@@ -22,12 +22,15 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       } = filters;
 
       // Build WHERE clause
-      const conditions: string[] = [
-        "visibility = 'public'",
-        "to_tsvector('english', display_name || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', $1)",
-      ];
-      const params: unknown[] = [searchQuery];
-      let paramIndex = 2;
+      const conditions: string[] = ["visibility = 'public'"];
+      const params: unknown[] = [];
+      let paramIndex = 1;
+
+      // Only add text search if query is provided
+      if (searchQuery && searchQuery.trim()) {
+        conditions.push(`to_tsvector('english', display_name || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', $${paramIndex++})`);
+        params.push(searchQuery);
+      }
 
       if (type) {
         conditions.push(`type = $${paramIndex++}`);
@@ -77,12 +80,14 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
           break;
       }
 
-      // Search with ranking
+      // Search with ranking (only calculate rank if there's a search query)
+      const rankColumn = (searchQuery && searchQuery.trim())
+        ? `ts_rank(to_tsvector('english', display_name || ' ' || COALESCE(description, '')), plainto_tsquery('english', $1)) as rank`
+        : '0 as rank';
+
       const result = await query<Package & { rank: number }>(
         server,
-        `SELECT *,
-           ts_rank(to_tsvector('english', display_name || ' ' || COALESCE(description, '')),
-                   plainto_tsquery('english', $1)) as rank
+        `SELECT *, ${rankColumn}
          FROM packages
          WHERE ${whereClause}
          ORDER BY ${orderBy}

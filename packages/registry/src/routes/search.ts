@@ -13,12 +13,11 @@ export async function searchRoutes(server: FastifyInstance) {
   server.get('/', {
     schema: {
       tags: ['search'],
-      description: 'Search packages by name, description, tags, or keywords',
+      description: 'Search packages by name, description, tags, or keywords. Query optional when using type filter.',
       querystring: {
         type: 'object',
-        required: ['q'],
         properties: {
-          q: { type: 'string', minLength: 2 },
+          q: { type: 'string' },
           type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'generic'] },
           tags: { type: 'array', items: { type: 'string' } },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
@@ -29,13 +28,21 @@ export async function searchRoutes(server: FastifyInstance) {
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { q, type, tags, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
-      q: string;
+      q?: string;
       type?: PackageType;
       tags?: string[];
       limit?: number;
       offset?: number;
       sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
     };
+
+    // If no query and no filters, return error
+    if (!q && !type && (!tags || tags.length === 0)) {
+      return reply.status(400).send({
+        error: 'Bad Request',
+        message: 'Please provide a search query (q) or filter (type/tags)',
+      });
+    }
 
     // Build cache key
     const cacheKey = `search:${JSON.stringify(request.query)}`;
@@ -48,7 +55,7 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // Use search provider (PostgreSQL or OpenSearch)
     const searchProvider = getSearchProvider(server);
-    const response = await searchProvider.search(q, {
+    const response = await searchProvider.search(q || '', {
       type,
       tags,
       sort,
