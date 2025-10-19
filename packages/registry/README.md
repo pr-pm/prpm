@@ -28,20 +28,35 @@ Central package registry for prompts, agents, and cursor rules.
 ### Prerequisites
 
 - Node.js 20+
-- PostgreSQL 15+
-- Redis 7+
-- S3-compatible storage (AWS S3, Cloudflare R2, etc.)
+- Docker and Docker Compose (for local development)
+- OR manually: PostgreSQL 15+, Redis 7+, S3-compatible storage
 
-### Installation
+### Quick Start with Docker
+
+From the **project root** (not the registry directory):
 
 ```bash
-cd registry
+# Start all services (PostgreSQL, Redis, MinIO, Registry)
+docker compose up -d
+
+# Run migrations
+cd packages/registry
+npm run migrate
+```
+
+The registry will be available at http://localhost:3000
+
+### Manual Setup (without Docker)
+
+If you prefer to run services manually:
+
+1. Install dependencies:
+```bash
+cd packages/registry
 npm install
 ```
 
-### Configuration
-
-Copy `.env.example` to `.env` and configure:
+2. Copy `.env.example` to `.env` and configure:
 
 ```bash
 cp .env.example .env
@@ -60,15 +75,13 @@ S3_ACCESS_KEY_ID=your_access_key
 S3_SECRET_ACCESS_KEY=your_secret_key
 ```
 
-### Database Setup
-
-1. Create the database:
+3. Create the database:
 
 ```bash
 createdb prmp_registry
 ```
 
-2. Run migrations:
+4. Run migrations:
 
 ```bash
 npm run migrate

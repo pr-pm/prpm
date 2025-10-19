@@ -109,6 +109,9 @@ npm install
 # Build all packages
 npm run build
 
+# Start Docker services (PostgreSQL, Redis, MinIO)
+docker compose up -d
+
 # Run tests
 npm test
 
@@ -158,11 +161,11 @@ npm test
 ### E2E Tests
 
 ```bash
-# Start Docker services
-cd packages/registry
+# Start Docker services from project root
 docker compose up -d
 
 # Run migrations
+cd packages/registry
 npm run migrate
 
 # Run E2E tests

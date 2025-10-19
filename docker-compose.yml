@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Shared PostgreSQL database for all services
   postgres:
     image: postgres:15-alpine
     container_name: prmp-postgres
@@ -9,7 +10,7 @@ services:
       POSTGRES_PASSWORD: prmp
       POSTGRES_DB: prmp_registry
     ports:
-      - "127.0.0.1:5432:5432"  # Bind to localhost only for security
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,11 +19,12 @@ services:
       timeout: 5s
       retries: 5
 
+  # Shared Redis for all services
   redis:
     image: redis:7-alpine
     container_name: prmp-redis
     ports:
-      - "127.0.0.1:6379:6379"  # Bind to localhost only for security
+      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -31,12 +33,13 @@ services:
       timeout: 5s
       retries: 5
 
+  # Shared MinIO for all services
   minio:
     image: minio/minio:latest
     container_name: prmp-minio
     ports:
-      - "127.0.0.1:9000:9000"  # Bind to localhost only for security
-      - "127.0.0.1:9001:9001"  # Bind to localhost only for security
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -49,8 +52,11 @@ services:
       timeout: 5s
       retries: 5
 
+  # Registry service
   registry:
-    build: .
+    build:
+      context: ./packages/registry
+      dockerfile: Dockerfile
     container_name: prmp-registry
     depends_on:
       postgres:
@@ -60,7 +66,7 @@ services:
       minio:
         condition: service_healthy
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3000
       HOST: 0.0.0.0
       DATABASE_URL: postgresql://prmp:prmp@postgres:5432/prmp_registry
@@ -84,6 +90,38 @@ services:
       ENABLE_RATE_LIMITING: "false"
     ports:
       - "3000:3000"
+    volumes:
+      - ./packages/registry:/app
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Webapp service
+  webapp:
+    build:
+      context: ./packages/webapp
+      dockerfile: Dockerfile
+    container_name: prmp-webapp
+    depends_on:
+      registry:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_REGISTRY_URL: http://registry:3000
+      NEXT_PUBLIC_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./packages/webapp:/app
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
