@@ -10,7 +10,7 @@
     "start": "node dist/index.js",
     "migrate": "node --import tsx migrations/run.ts",
     "migrate:create": "node --import tsx migrations/create.ts",
-    "test": "vitest",
+    "test": "vitest run",
     "test:coverage": "vitest --coverage",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts"

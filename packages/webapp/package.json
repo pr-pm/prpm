@@ -9,6 +9,7 @@
     "start": "next start -p 5173",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "test": "echo 'No unit tests - use test:e2e for end-to-end tests'",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",

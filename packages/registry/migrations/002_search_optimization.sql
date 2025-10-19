@@ -50,15 +50,24 @@ CREATE INDEX IF NOT EXISTS idx_packages_tags_contains ON packages USING gin(tags
 DROP INDEX IF EXISTS idx_packages_search;
 DROP INDEX IF EXISTS idx_packages_fts;
 
+-- Drop the search_vector column if it exists (from previous attempts)
+ALTER TABLE packages DROP COLUMN IF EXISTS search_vector;
+
+-- Create an IMMUTABLE function to convert arrays to strings
+CREATE OR REPLACE FUNCTION immutable_array_to_string(text[], text)
+RETURNS text AS $$
+  SELECT array_to_string($1, $2)
+$$ LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+
 -- Add a generated column for full-text search vector
--- This is IMMUTABLE and can be indexed
+-- Using immutable wrapper function
 ALTER TABLE packages
-ADD COLUMN IF NOT EXISTS search_vector tsvector
+ADD COLUMN search_vector tsvector
 GENERATED ALWAYS AS (
   setweight(to_tsvector('english', coalesce(display_name, '')), 'A') ||
   setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
-  setweight(to_tsvector('english', array_to_string(tags, ' ')), 'C') ||
-  setweight(to_tsvector('english', array_to_string(keywords, ' ')), 'D')
+  setweight(to_tsvector('english', immutable_array_to_string(tags, ' ')), 'C') ||
+  setweight(to_tsvector('english', immutable_array_to_string(keywords, ' ')), 'D')
 ) STORED;
 
 -- Create GIN index on the generated column

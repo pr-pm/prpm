@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        stack: [dev, staging]
+        stack: [prod]
 
     steps:
       - name: Checkout code
@@ -48,6 +48,21 @@ jobs:
 
       - name: Setup Pulumi
         uses: pulumi/actions@v5
+
+      - name: Switch to Beanstalk configuration
+        working-directory: packages/infra
+        run: |
+          if [ ! -f index-beanstalk.ts ]; then
+            echo "Error: index-beanstalk.ts not found"
+            exit 1
+          fi
+          # Backup current index.ts if it's not already beanstalk
+          if ! grep -q "Elastic Beanstalk" index.ts 2>/dev/null; then
+            cp index.ts index-ecs-backup.ts
+            echo "ℹ️  Backed up ECS configuration to index-ecs-backup.ts"
+          fi
+          cp index-beanstalk.ts index.ts
+          echo "✅ Switched to Beanstalk configuration"
 
       - name: Pulumi Preview
         working-directory: packages/infra

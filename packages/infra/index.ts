@@ -161,10 +161,8 @@ export const ecrRepositoryUrl = app.ecrRepo.repositoryUrl;
 
 export const secretsManagerArn = secretsData.secretsArn;
 
-if (opensearch) {
-  export const opensearchEndpoint = opensearch.endpoint;
-  export const opensearchDashboardUrl = opensearch.kibanaEndpoint;
-}
+export const opensearchEndpoint = opensearch?.endpoint;
+export const opensearchDashboardUrl = opensearch?.kibanaEndpoint;
 
 // Output instructions for next steps
 export const nextSteps = pulumi.output({

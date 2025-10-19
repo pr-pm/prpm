@@ -14,8 +14,6 @@ on:
         required: true
         type: choice
         options:
-          - dev
-          - staging
           - prod
 
 permissions:
@@ -30,7 +28,7 @@ jobs:
   deploy:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
-    environment: ${{ inputs.stack || 'dev' }}
+    environment: ${{ inputs.stack || 'prod' }}
 
     steps:
       - name: Checkout code
@@ -56,10 +54,25 @@ jobs:
       - name: Setup Pulumi
         uses: pulumi/actions@v5
 
+      - name: Switch to Beanstalk configuration
+        working-directory: packages/infra
+        run: |
+          if [ ! -f index-beanstalk.ts ]; then
+            echo "Error: index-beanstalk.ts not found"
+            exit 1
+          fi
+          # Backup current index.ts if it's not already beanstalk
+          if ! grep -q "Elastic Beanstalk" index.ts 2>/dev/null; then
+            cp index.ts index-ecs-backup.ts
+            echo "ℹ️  Backed up ECS configuration to index-ecs-backup.ts"
+          fi
+          cp index-beanstalk.ts index.ts
+          echo "✅ Switched to Beanstalk configuration"
+
       - name: Pulumi Up
         working-directory: packages/infra
         run: |
-          STACK="${{ inputs.stack || 'dev' }}"
+          STACK="${{ inputs.stack || 'prod' }}"
           pulumi stack select $STACK || pulumi stack init $STACK
           pulumi config set aws:region ${{ env.AWS_REGION }}
           pulumi up --yes --non-interactive
@@ -75,6 +88,6 @@ jobs:
       - name: Upload Outputs
         uses: actions/upload-artifact@v4
         with:
-          name: pulumi-outputs-${{ inputs.stack || 'dev' }}
+          name: pulumi-outputs-${{ inputs.stack || 'prod' }}
           path: packages/infra/stack-outputs.json
           retention-days: 30
