@@ -59,7 +59,9 @@ jobs:
       - name: Pulumi Up
         working-directory: packages/infra
         run: |
-          pulumi stack select ${{ inputs.stack || 'dev' }}
+          STACK="${{ inputs.stack || 'dev' }}"
+          pulumi stack select $STACK || pulumi stack init $STACK
+          pulumi config set aws:region ${{ env.AWS_REGION }}
           pulumi up --yes --non-interactive
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}

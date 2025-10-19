@@ -52,7 +52,9 @@ jobs:
       - name: Pulumi Preview
         working-directory: packages/infra
         run: |
-          pulumi stack select ${{ matrix.stack }}
+          STACK="${{ matrix.stack }}"
+          pulumi stack select $STACK || pulumi stack init $STACK
+          pulumi config set aws:region ${{ env.AWS_REGION }}
           pulumi preview --diff --non-interactive
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
