@@ -92,7 +92,15 @@ async function fetchReadme(owner, repo) {
     const content = Buffer.from(data.content, 'base64').toString('utf-8');
     return content;
   } catch (error) {
-    console.error(`   ⚠️  Could not fetch README for ${owner}/${repo}`);
+    const status = error.status || error.response?.status;
+
+    // Propagate rate limit errors so caller can handle them
+    if (status === 403 || error.message?.includes('rate limit') || error.message?.includes('API rate limit')) {
+      throw error;
+    }
+
+    // For other errors (404, etc), just return null
+    console.error(`   ⚠️  Could not fetch README for ${owner}/${repo} (status: ${status})`);
     return null;
   }
 }
