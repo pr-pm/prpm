@@ -121,11 +121,14 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('react', { type: 'cursor' });
+      await handleSearch('react', { type: 'rule' });
 
       expect(mockClient.search).toHaveBeenCalledWith(
         'react',
-        expect.objectContaining({ type: 'cursor' })
+        expect.objectContaining({
+          type: 'cursor',
+          tags: ['cursor-rule']
+        })
       );
     });
 
@@ -170,12 +173,12 @@ describe('search command', () => {
 
       await handleSearch('test', {});
 
-      // Check that verified symbol is displayed
+      // Check that verified badge is displayed
       const logCalls = (console.log as jest.Mock).mock.calls;
-      const hasVerifiedSymbol = logCalls.some(call =>
-        call[0] && call[0].includes('✓')
+      const hasVerifiedBadge = logCalls.some(call =>
+        call[0] && (call[0].includes('Verified') || call[0].includes('✓'))
       );
-      expect(hasVerifiedSymbol).toBe(true);
+      expect(hasVerifiedBadge).toBe(true);
     });
 
     it('should format large download counts', async () => {
