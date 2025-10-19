@@ -401,7 +401,7 @@ export class RegistryClient {
  */
 export function getRegistryClient(config: { registryUrl?: string; token?: string }): RegistryClient {
   return new RegistryClient({
-    url: config.registryUrl || 'https://registry.promptpm.dev',
+    url: config.registryUrl || 'https://registry.prmp.dev',
     token: config.token,
   });
 }

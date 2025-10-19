@@ -17,7 +17,7 @@ These scripts support the bootstrap strategy of pre-populating the registry with
 ### 1. Set Environment Variables
 
 ```bash
-export PRMP_REGISTRY_URL="https://registry.promptpm.dev"
+export PRMP_REGISTRY_URL="https://registry.prmp.dev"
 export PRMP_CURATOR_TOKEN="your-curator-token-here"
 ```
 
@@ -75,7 +75,7 @@ Once packages are uploaded:
 1. **Notification**: Email/DM original authors
    ```
    Hi! We published your cursor rules on PRMP Registry.
-   Claim your package at: https://registry.promptpm.dev/claim/your-package
+   Claim your package at: https://registry.prmp.dev/claim/your-package
    ```
 
 2. **Verification**: User logs in with GitHub OAuth
@@ -132,7 +132,7 @@ The curator token should:
 Create via SQL:
 ```sql
 INSERT INTO users (github_id, username, email, role)
-VALUES (0, 'prmp-curator', 'curator@promptpm.dev', 'curator');
+VALUES (0, 'prmp-curator', 'curator@prmp.dev', 'curator');
 
 -- Generate token and add to secrets
 ```

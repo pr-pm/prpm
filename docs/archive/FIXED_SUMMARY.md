@@ -28,7 +28,7 @@
 
 **Features:**
 - `~/.prmprc` file for global settings
-- Registry URL configuration (default: registry.promptpm.dev)
+- Registry URL configuration (default: registry.prmp.dev)
 - Authentication token storage
 - Telemetry preferences
 - Auto-loading in all CLI commands
@@ -277,7 +277,7 @@ npm run check
 
 - **Repository**: https://github.com/khaliqgant/prompt-package-manager
 - **Issues**: https://github.com/khaliqgant/prompt-package-manager/issues
-- **Registry** (when deployed): https://registry.promptpm.dev
+- **Registry** (when deployed): https://registry.prmp.dev
 
 ---
 

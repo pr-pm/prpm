@@ -14,14 +14,15 @@ interface LoginOptions {
 /**
  * Start OAuth callback server
  */
-function startCallbackServer(): Promise<string> {
+function startCallbackServer(): Promise<{ token?: string; username?: string }> {
   return new Promise((resolve, reject) => {
     const server = createServer((req, res) => {
       const url = new URL(req.url || '', 'http://localhost:8765');
 
       if (url.pathname === '/callback') {
-        const code = url.searchParams.get('code');
-        const error = url.searchParams.get('error');
+        const token = url.searchParams.get('token') || undefined;
+        const username = url.searchParams.get('username') || undefined;
+        const error = url.searchParams.get('error') || undefined;
 
         if (error) {
           res.writeHead(400, { 'Content-Type': 'text/html' });
@@ -39,7 +40,7 @@ function startCallbackServer(): Promise<string> {
           return;
         }
 
-        if (code) {
+        if (token) {
           res.writeHead(200, { 'Content-Type': 'text/html' });
           res.end(`
             <html>
@@ -50,19 +51,19 @@ function startCallbackServer(): Promise<string> {
             </html>
           `);
           server.close();
-          resolve(code);
+          resolve({ token, username });
         } else {
           res.writeHead(400, { 'Content-Type': 'text/html' });
           res.end(`
             <html>
               <body>
                 <h1>❌ Invalid Request</h1>
-                <p>No authorization code received.</p>
+                <p>No token received from authentication.</p>
               </body>
             </html>
           `);
           server.close();
-          reject(new Error('No authorization code received'));
+          reject(new Error('No token received'));
         }
       }
     });
@@ -80,32 +81,14 @@ function startCallbackServer(): Promise<string> {
 }
 
 /**
- * Exchange OAuth code for JWT token
- */
-async function exchangeCodeForToken(code: string, registryUrl: string): Promise<{ token: string; username: string }> {
-  const response = await fetch(`${registryUrl}/api/v1/auth/callback?code=${code}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const error: any = await response.json().catch(() => ({ error: 'Authentication failed' }));
-    throw new Error(error.error || error.message || 'Failed to exchange code for token');
-  }
-
-  return (await response.json()) as { token: string; username: string };
-}
-
-/**
  * Login with GitHub OAuth
  */
 async function loginWithOAuth(registryUrl: string): Promise<{ token: string; username: string }> {
   console.log('\n🔐 Opening browser for GitHub authentication...\n');
 
-  // Open browser to registry OAuth page
-  const authUrl = `${registryUrl}/api/v1/auth/github`;
+  // Open browser to registry OAuth page with CLI redirect
+  const callbackUrl = 'http://localhost:8765/callback';
+  const authUrl = `${registryUrl}/api/v1/auth/github?redirect=${encodeURIComponent(callbackUrl)}`;
   console.log(`   If browser doesn't open, visit: ${authUrl}\n`);
 
   // Try to open browser
@@ -114,12 +97,27 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
   const cmd = platform === 'darwin' ? 'open' : platform === 'win32' ? 'start' : 'xdg-open';
   exec(`${cmd} "${authUrl}"`);
 
-  // Start callback server
-  const code = await startCallbackServer();
+  // Start callback server and receive token directly
+  console.log('   Waiting for authentication...\n');
+  const result = await startCallbackServer();
 
-  // Exchange code for token
-  console.log('\n🔄 Exchanging authorization code for token...\n');
-  return await exchangeCodeForToken(code, registryUrl);
+  if (!result.token) {
+    throw new Error('No token received from authentication');
+  }
+
+  // Extract username from token if not provided
+  let username = result.username || '';
+  if (!username) {
+    // Decode JWT to get username (basic JWT decode without verification)
+    try {
+      const payload = JSON.parse(Buffer.from(result.token.split('.')[1], 'base64').toString());
+      username = payload.username || 'unknown';
+    } catch (e) {
+      username = 'unknown';
+    }
+  }
+
+  return { token: result.token, username: username || 'unknown' };
 }
 
 /**
@@ -151,7 +149,7 @@ export async function handleLogin(options: LoginOptions): Promise<void> {
 
   try {
     const config = await getConfig();
-    const registryUrl = config.registryUrl || 'https://registry.promptpm.dev';
+    const registryUrl = config.registryUrl || 'https://registry.prmp.dev';
 
     console.log('🔑 PRMP Login\n');
 

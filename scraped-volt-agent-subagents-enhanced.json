@@ -1,0 +1,3005 @@
+[
+  {
+    "name": "claude-api-designer",
+    "description": "REST and GraphQL API architect for Claude Code",
+    "author": "VoltAgent",
+    "tags": [
+      "api",
+      "rest",
+      "graphql",
+      "backend",
+      "architecture",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "other",
+    "keywords": [
+      "claude",
+      "api",
+      "designer",
+      "rest",
+      "graphql",
+      "architect",
+      "code",
+      "backend",
+      "architecture",
+      "core-development",
+      "other"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "api",
+        "rest",
+        "graphql",
+        "backend",
+        "architecture"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-backend-developer",
+    "description": "Server-side expert for scalable APIs",
+    "author": "VoltAgent",
+    "tags": [
+      "backend",
+      "api",
+      "server",
+      "scalability",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "other",
+    "keywords": [
+      "claude",
+      "backend",
+      "developer",
+      "server",
+      "side",
+      "expert",
+      "scalable",
+      "apis",
+      "api",
+      "scalability",
+      "core-development",
+      "other"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "backend",
+        "api",
+        "server",
+        "scalability"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-electron-pro",
+    "description": "Desktop application expert for Electron apps",
+    "author": "VoltAgent",
+    "tags": [
+      "electron",
+      "desktop",
+      "cross-platform",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "electron",
+      "pro",
+      "desktop",
+      "application",
+      "expert",
+      "apps",
+      "cross-platform",
+      "core-development",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "electron",
+        "desktop",
+        "cross-platform"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-frontend-developer",
+    "description": "UI/UX specialist for React, Vue, and Angular",
+    "author": "VoltAgent",
+    "tags": [
+      "frontend",
+      "react",
+      "vue",
+      "angular",
+      "ui",
+      "ux",
+      "javascript",
+      "web",
+      "typescript",
+      "types",
+      "type-safety",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "frontend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "react-ecosystem",
+    "keywords": [
+      "claude",
+      "frontend",
+      "developer",
+      "specialist",
+      "react",
+      "angular",
+      "vue",
+      "ui",
+      "ux",
+      "javascript",
+      "web",
+      "typescript",
+      "types",
+      "type-safety",
+      "core-development",
+      "react-ecosystem"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "frontend",
+        "react",
+        "vue",
+        "angular",
+        "ui",
+        "ux"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-fullstack-developer",
+    "description": "End-to-end feature development specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "fullstack",
+      "frontend",
+      "backend",
+      "complete",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "other",
+    "keywords": [
+      "claude",
+      "fullstack",
+      "developer",
+      "feature",
+      "development",
+      "specialist",
+      "frontend",
+      "backend",
+      "complete",
+      "core-development",
+      "other"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "fullstack",
+        "frontend",
+        "backend",
+        "complete"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-graphql-architect",
+    "description": "GraphQL schema and federation expert",
+    "author": "VoltAgent",
+    "tags": [
+      "graphql",
+      "schema",
+      "federation",
+      "api",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "other",
+    "keywords": [
+      "claude",
+      "graphql",
+      "architect",
+      "schema",
+      "federation",
+      "expert",
+      "api",
+      "core-development",
+      "other"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "graphql",
+        "schema",
+        "federation",
+        "api"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-microservices-architect",
+    "description": "Distributed systems designer",
+    "author": "VoltAgent",
+    "tags": [
+      "microservices",
+      "distributed",
+      "architecture",
+      "scalability",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "microservices",
+      "architect",
+      "distributed",
+      "systems",
+      "designer",
+      "architecture",
+      "scalability",
+      "core-development",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "microservices",
+        "distributed",
+        "architecture",
+        "scalability"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-mobile-developer",
+    "description": "Cross-platform mobile specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "mobile",
+      "ios",
+      "android",
+      "cross-platform",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "mobile-development",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "ios",
+    "keywords": [
+      "claude",
+      "mobile",
+      "developer",
+      "cross",
+      "platform",
+      "specialist",
+      "ios",
+      "android",
+      "cross-platform",
+      "core-development"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "mobile",
+        "ios",
+        "android",
+        "cross-platform"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-ui-designer",
+    "description": "Visual design and interaction specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "ui",
+      "design",
+      "visual",
+      "interaction",
+      "ux",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "ui",
+      "designer",
+      "visual",
+      "design",
+      "interaction",
+      "specialist",
+      "ux",
+      "core-development",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "ui",
+        "design",
+        "visual",
+        "interaction",
+        "ux"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-websocket-engineer",
+    "description": "Real-time communication specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "websocket",
+      "realtime",
+      "communication",
+      "networking",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "websocket",
+      "engineer",
+      "real",
+      "time",
+      "communication",
+      "specialist",
+      "realtime",
+      "networking",
+      "core-development",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "websocket",
+        "realtime",
+        "communication",
+        "networking"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-wordpress-master",
+    "description": "WordPress development and optimization expert",
+    "author": "VoltAgent",
+    "tags": [
+      "wordpress",
+      "php",
+      "cms",
+      "optimization",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "wordpress",
+      "master",
+      "development",
+      "optimization",
+      "expert",
+      "php",
+      "cms",
+      "core-development",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "wordpress",
+        "php",
+        "cms",
+        "optimization"
+      ],
+      "category": "core-development"
+    }
+  },
+  {
+    "name": "claude-typescript-pro",
+    "description": "TypeScript language specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "typescript",
+      "javascript",
+      "types",
+      "language",
+      "type-safety",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "typescript",
+      "pro",
+      "language",
+      "specialist",
+      "javascript",
+      "types",
+      "type-safety",
+      "language-specialists",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "typescript",
+        "javascript",
+        "types",
+        "language"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-sql-pro",
+    "description": "SQL database query expert",
+    "author": "VoltAgent",
+    "tags": [
+      "sql",
+      "database",
+      "queries",
+      "optimization",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "sql",
+      "pro",
+      "database",
+      "query",
+      "expert",
+      "queries",
+      "optimization",
+      "language-specialists",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "sql",
+        "database",
+        "queries",
+        "optimization"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-swift-expert",
+    "description": "Swift iOS development specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "swift",
+      "ios",
+      "mobile",
+      "apple",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "mobile-development",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "ios",
+    "keywords": [
+      "claude",
+      "swift",
+      "expert",
+      "development",
+      "specialist",
+      "ios",
+      "mobile",
+      "apple",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "swift",
+        "ios",
+        "mobile",
+        "apple"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-vue-expert",
+    "description": "Vue.js framework expert",
+    "author": "VoltAgent",
+    "tags": [
+      "vue",
+      "frontend",
+      "javascript",
+      "ui",
+      "web",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "frontend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "vue-ecosystem",
+    "keywords": [
+      "claude",
+      "vue",
+      "expert",
+      "framework",
+      "frontend",
+      "javascript",
+      "ui",
+      "web",
+      "language-specialists",
+      "vue-ecosystem"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "vue",
+        "vuejs",
+        "frontend",
+        "javascript"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-angular-architect",
+    "description": "Angular framework specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "angular",
+      "typescript",
+      "frontend",
+      "spa",
+      "ui",
+      "web",
+      "javascript",
+      "types",
+      "type-safety",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "frontend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "angular",
+    "keywords": [
+      "claude",
+      "angular",
+      "architect",
+      "framework",
+      "specialist",
+      "typescript",
+      "frontend",
+      "spa",
+      "ui",
+      "web",
+      "javascript",
+      "types",
+      "type-safety",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "angular",
+        "typescript",
+        "frontend",
+        "spa"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-cpp-pro",
+    "description": "C++ systems programming expert",
+    "author": "VoltAgent",
+    "tags": [
+      "cpp",
+      "systems",
+      "performance",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "cpp",
+      "pro",
+      "systems",
+      "programming",
+      "expert",
+      "performance",
+      "language-specialists",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "cpp",
+        "c++",
+        "systems",
+        "performance"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-csharp-developer",
+    "description": "C# .NET development specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "csharp",
+      "dotnet",
+      "microsoft",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "csharp",
+      "developer",
+      "development",
+      "specialist",
+      "dotnet",
+      "microsoft",
+      "language-specialists",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "csharp",
+        "c#",
+        "dotnet",
+        "microsoft"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-django-developer",
+    "description": "Django Python web framework expert",
+    "author": "VoltAgent",
+    "tags": [
+      "django",
+      "python",
+      "web",
+      "backend",
+      "mvc",
+      "orm",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "python",
+    "keywords": [
+      "claude",
+      "django",
+      "developer",
+      "python",
+      "framework",
+      "expert",
+      "web",
+      "backend",
+      "mvc",
+      "orm",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "django",
+        "python",
+        "web",
+        "backend"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-dotnet-core-expert",
+    "description": ".NET Core modern application specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "dotnet",
+      "core",
+      "csharp",
+      "microsoft",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "dotnet",
+      "core",
+      "expert",
+      "modern",
+      "application",
+      "specialist",
+      "csharp",
+      "microsoft",
+      "language-specialists",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "dotnet",
+        "core",
+        "csharp",
+        "microsoft"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-dotnet-framework-expert",
+    "description": ".NET Framework 4.8 specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "dotnet",
+      "framework",
+      "legacy",
+      "microsoft",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "dotnet",
+      "framework",
+      "expert",
+      "specialist",
+      "legacy",
+      "microsoft",
+      "language-specialists",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "dotnet",
+        "framework",
+        "legacy",
+        "microsoft"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-flutter-expert",
+    "description": "Flutter cross-platform mobile development specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "flutter",
+      "dart",
+      "mobile",
+      "cross-platform",
+      "ios",
+      "android",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "mobile-development",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "flutter",
+    "keywords": [
+      "claude",
+      "flutter",
+      "expert",
+      "cross",
+      "platform",
+      "mobile",
+      "development",
+      "specialist",
+      "dart",
+      "cross-platform",
+      "ios",
+      "android",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "flutter",
+        "dart",
+        "mobile",
+        "cross-platform"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-golang-pro",
+    "description": "Go language systems programming expert",
+    "author": "VoltAgent",
+    "tags": [
+      "go",
+      "backend",
+      "systems",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "go",
+    "keywords": [
+      "claude",
+      "golang",
+      "pro",
+      "language",
+      "systems",
+      "programming",
+      "expert",
+      "go",
+      "backend",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "go",
+        "golang",
+        "backend",
+        "systems"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-java-architect",
+    "description": "Java enterprise development specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "java",
+      "jvm",
+      "enterprise",
+      "backend",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "java",
+    "keywords": [
+      "claude",
+      "java",
+      "architect",
+      "enterprise",
+      "development",
+      "specialist",
+      "jvm",
+      "backend",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "java",
+        "jvm",
+        "enterprise",
+        "backend"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-javascript-pro",
+    "description": "JavaScript language and ecosystem expert",
+    "author": "VoltAgent",
+    "tags": [
+      "javascript",
+      "frontend",
+      "nodejs",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "javascript",
+      "pro",
+      "language",
+      "ecosystem",
+      "expert",
+      "frontend",
+      "nodejs",
+      "language-specialists",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "javascript",
+        "js",
+        "frontend",
+        "nodejs"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-kotlin-specialist",
+    "description": "Kotlin Android and backend development expert",
+    "author": "VoltAgent",
+    "tags": [
+      "kotlin",
+      "android",
+      "jvm",
+      "mobile",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "mobile-development",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "android",
+    "keywords": [
+      "claude",
+      "kotlin",
+      "specialist",
+      "android",
+      "backend",
+      "development",
+      "expert",
+      "jvm",
+      "mobile",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "kotlin",
+        "android",
+        "jvm",
+        "mobile"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-laravel-specialist",
+    "description": "Laravel PHP framework specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "laravel",
+      "php",
+      "web",
+      "backend",
+      "mvc",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "php",
+    "keywords": [
+      "claude",
+      "laravel",
+      "specialist",
+      "framework",
+      "php",
+      "web",
+      "backend",
+      "mvc",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "laravel",
+        "php",
+        "web",
+        "backend"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-nextjs-developer",
+    "description": "Next.js React framework specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "nextjs",
+      "react",
+      "ssr",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "fullstack",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "frontend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "react-ecosystem",
+    "keywords": [
+      "claude",
+      "nextjs",
+      "developer",
+      "next",
+      "react",
+      "framework",
+      "specialist",
+      "ssr",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "fullstack",
+      "language-specialists",
+      "react-ecosystem"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "nextjs",
+        "react",
+        "ssr",
+        "frontend"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-php-pro",
+    "description": "PHP language and web development expert",
+    "author": "VoltAgent",
+    "tags": [
+      "php",
+      "web",
+      "backend",
+      "server",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "php",
+    "keywords": [
+      "claude",
+      "php",
+      "pro",
+      "language",
+      "development",
+      "expert",
+      "web",
+      "backend",
+      "server",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "php",
+        "web",
+        "backend",
+        "server"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-python-pro",
+    "description": "Python language and ecosystem specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "python",
+      "backend",
+      "data",
+      "scripting",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "python",
+    "keywords": [
+      "claude",
+      "python",
+      "pro",
+      "language",
+      "ecosystem",
+      "specialist",
+      "backend",
+      "data",
+      "scripting",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "python",
+        "backend",
+        "data",
+        "scripting"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-rails-expert",
+    "description": "Ruby on Rails web framework specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "rails",
+      "ruby",
+      "web",
+      "mvc",
+      "backend",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "ruby",
+    "keywords": [
+      "claude",
+      "rails",
+      "expert",
+      "ruby",
+      "framework",
+      "specialist",
+      "web",
+      "mvc",
+      "backend",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "rails",
+        "ruby",
+        "web",
+        "mvc"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-react-specialist",
+    "description": "React library and ecosystem expert",
+    "author": "VoltAgent",
+    "tags": [
+      "react",
+      "jsx",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "frontend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "react-ecosystem",
+    "keywords": [
+      "claude",
+      "react",
+      "specialist",
+      "library",
+      "ecosystem",
+      "expert",
+      "jsx",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "language-specialists",
+      "react-ecosystem"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "react",
+        "jsx",
+        "frontend",
+        "ui"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-rust-engineer",
+    "description": "Rust systems programming specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "rust",
+      "systems",
+      "performance",
+      "safety",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "rust",
+      "engineer",
+      "systems",
+      "programming",
+      "specialist",
+      "performance",
+      "safety",
+      "language-specialists",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "rust",
+        "systems",
+        "performance",
+        "safety"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-spring-boot-engineer",
+    "description": "Spring Boot Java framework specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "spring",
+      "springboot",
+      "java",
+      "backend",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "backend-frameworks",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "java",
+    "keywords": [
+      "claude",
+      "spring",
+      "boot",
+      "engineer",
+      "java",
+      "framework",
+      "specialist",
+      "springboot",
+      "backend",
+      "language-specialists"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "spring",
+        "springboot",
+        "java",
+        "backend"
+      ],
+      "category": "language-specialists"
+    }
+  },
+  {
+    "name": "claude-cloud-architect",
+    "description": "AWS/GCP/Azure multi-cloud specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "cloud",
+      "aws",
+      "gcp",
+      "azure",
+      "infrastructure",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "cloud",
+    "keywords": [
+      "claude",
+      "cloud",
+      "architect",
+      "azure",
+      "multi",
+      "specialist",
+      "aws",
+      "gcp",
+      "infrastructure"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "cloud",
+        "aws",
+        "gcp",
+        "azure",
+        "infrastructure"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-database-administrator",
+    "description": "Database management and optimization expert",
+    "author": "VoltAgent",
+    "tags": [
+      "database",
+      "dba",
+      "sql",
+      "optimization",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "database",
+      "administrator",
+      "management",
+      "optimization",
+      "expert",
+      "dba",
+      "sql",
+      "infrastructure",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "database",
+        "dba",
+        "sql",
+        "optimization"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-deployment-engineer",
+    "description": "Deployment automation and orchestration specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "deployment",
+      "automation",
+      "cicd",
+      "release",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "cicd",
+    "keywords": [
+      "claude",
+      "deployment",
+      "engineer",
+      "automation",
+      "orchestration",
+      "specialist",
+      "cicd",
+      "release",
+      "infrastructure"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "deployment",
+        "automation",
+        "cicd",
+        "release"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-devops-engineer",
+    "description": "CI/CD and infrastructure automation expert",
+    "author": "VoltAgent",
+    "tags": [
+      "devops",
+      "cicd",
+      "automation",
+      "infrastructure",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "cicd",
+    "keywords": [
+      "claude",
+      "devops",
+      "engineer",
+      "infrastructure",
+      "automation",
+      "expert",
+      "cicd"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "devops",
+        "cicd",
+        "automation",
+        "infrastructure"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-devops-incident-responder",
+    "description": "DevOps incident management specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "devops",
+      "incident",
+      "response",
+      "monitoring",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "devops",
+    "keywords": [
+      "claude",
+      "devops",
+      "incident",
+      "responder",
+      "management",
+      "specialist",
+      "response",
+      "monitoring",
+      "infrastructure"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "devops",
+        "incident",
+        "response",
+        "monitoring"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-incident-responder",
+    "description": "System incident response and troubleshooting expert",
+    "author": "VoltAgent",
+    "tags": [
+      "incident",
+      "response",
+      "troubleshooting",
+      "emergency",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "incident",
+      "responder",
+      "system",
+      "response",
+      "troubleshooting",
+      "expert",
+      "emergency",
+      "infrastructure",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "incident",
+        "response",
+        "troubleshooting",
+        "emergency"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-kubernetes-specialist",
+    "description": "Container orchestration and Kubernetes master",
+    "author": "VoltAgent",
+    "tags": [
+      "kubernetes",
+      "k8s",
+      "containers",
+      "orchestration",
+      "infrastructure",
+      "devops",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "containers",
+    "keywords": [
+      "claude",
+      "kubernetes",
+      "specialist",
+      "container",
+      "orchestration",
+      "master",
+      "k8s",
+      "containers",
+      "infrastructure",
+      "devops"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "kubernetes",
+        "k8s",
+        "containers",
+        "orchestration"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-network-engineer",
+    "description": "Network infrastructure and topology specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "network",
+      "infrastructure",
+      "topology",
+      "connectivity",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "devops",
+    "keywords": [
+      "claude",
+      "network",
+      "engineer",
+      "infrastructure",
+      "topology",
+      "specialist",
+      "connectivity",
+      "devops"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "network",
+        "infrastructure",
+        "topology",
+        "connectivity"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-platform-engineer",
+    "description": "Platform architecture and internal tools expert",
+    "author": "VoltAgent",
+    "tags": [
+      "platform",
+      "architecture",
+      "internal-tools",
+      "infrastructure",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "devops",
+    "keywords": [
+      "claude",
+      "platform",
+      "engineer",
+      "architecture",
+      "internal",
+      "tools",
+      "expert",
+      "internal-tools",
+      "infrastructure",
+      "devops"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "platform",
+        "architecture",
+        "internal-tools",
+        "infrastructure"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-security-engineer",
+    "description": "Infrastructure security and hardening specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "security",
+      "infrastructure",
+      "hardening",
+      "protection",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "devops",
+    "keywords": [
+      "claude",
+      "security",
+      "engineer",
+      "infrastructure",
+      "hardening",
+      "specialist",
+      "protection",
+      "devops"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "security",
+        "infrastructure",
+        "hardening",
+        "protection"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-sre-engineer",
+    "description": "Site reliability engineering and monitoring expert",
+    "author": "VoltAgent",
+    "tags": [
+      "sre",
+      "reliability",
+      "monitoring",
+      "availability",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "sre",
+      "engineer",
+      "site",
+      "reliability",
+      "engineering",
+      "monitoring",
+      "expert",
+      "availability",
+      "infrastructure",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "sre",
+        "reliability",
+        "monitoring",
+        "availability"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-terraform-engineer",
+    "description": "Infrastructure as Code with Terraform specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "terraform",
+      "iac",
+      "infrastructure",
+      "automation",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "iac",
+    "keywords": [
+      "claude",
+      "terraform",
+      "engineer",
+      "infrastructure",
+      "code",
+      "with",
+      "specialist",
+      "iac",
+      "automation"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "terraform",
+        "iac",
+        "infrastructure",
+        "automation"
+      ],
+      "category": "infrastructure"
+    }
+  },
+  {
+    "name": "claude-accessibility-tester",
+    "description": "A11y compliance and WCAG specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "accessibility",
+      "a11y",
+      "wcag",
+      "testing",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "quality-testing",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "testing",
+    "keywords": [
+      "claude",
+      "accessibility",
+      "tester",
+      "compliance",
+      "wcag",
+      "specialist",
+      "a11y",
+      "testing",
+      "quality-security"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "accessibility",
+        "a11y",
+        "wcag",
+        "testing"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-architect-reviewer",
+    "description": "Architecture review and design patterns specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "architecture",
+      "review",
+      "design-patterns",
+      "quality",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "quality-testing",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "code-quality",
+    "keywords": [
+      "claude",
+      "architect",
+      "reviewer",
+      "architecture",
+      "review",
+      "design",
+      "patterns",
+      "specialist",
+      "design-patterns",
+      "quality",
+      "quality-security",
+      "code-quality"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "architecture",
+        "review",
+        "design-patterns",
+        "quality"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-chaos-engineer",
+    "description": "System resilience and chaos testing expert",
+    "author": "VoltAgent",
+    "tags": [
+      "chaos",
+      "resilience",
+      "testing",
+      "reliability",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "quality-testing",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "testing",
+    "keywords": [
+      "claude",
+      "chaos",
+      "engineer",
+      "system",
+      "resilience",
+      "testing",
+      "expert",
+      "reliability",
+      "quality-security"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "chaos",
+        "resilience",
+        "testing",
+        "reliability"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-code-reviewer",
+    "description": "Code quality and best practices guardian",
+    "author": "VoltAgent",
+    "tags": [
+      "code-review",
+      "quality",
+      "best-practices",
+      "standards",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "quality-testing",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "code-quality",
+    "keywords": [
+      "claude",
+      "code",
+      "reviewer",
+      "quality",
+      "best",
+      "practices",
+      "guardian",
+      "code-review",
+      "best-practices",
+      "standards",
+      "quality-security",
+      "code-quality"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "code-review",
+        "quality",
+        "best-practices",
+        "standards"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-compliance-auditor",
+    "description": "Regulatory compliance and security auditing expert",
+    "author": "VoltAgent",
+    "tags": [
+      "compliance",
+      "audit",
+      "regulation",
+      "security",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "compliance",
+      "auditor",
+      "regulatory",
+      "security",
+      "auditing",
+      "expert",
+      "audit",
+      "regulation",
+      "quality-security",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "compliance",
+        "audit",
+        "regulation",
+        "security"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-debugger",
+    "description": "Advanced debugging and problem-solving specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "debugging",
+      "troubleshooting",
+      "problem-solving",
+      "errors",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "debugger",
+      "advanced",
+      "debugging",
+      "problem",
+      "solving",
+      "specialist",
+      "troubleshooting",
+      "problem-solving",
+      "errors",
+      "quality-security",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "debugging",
+        "troubleshooting",
+        "problem-solving",
+        "errors"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-error-detective",
+    "description": "Error tracking and root cause analysis expert",
+    "author": "VoltAgent",
+    "tags": [
+      "errors",
+      "tracking",
+      "analysis",
+      "debugging",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "error",
+      "detective",
+      "tracking",
+      "root",
+      "cause",
+      "analysis",
+      "expert",
+      "errors",
+      "debugging",
+      "quality-security",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "errors",
+        "tracking",
+        "analysis",
+        "debugging"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-penetration-tester",
+    "description": "Security penetration testing and vulnerability assessment specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "pentesting",
+      "security",
+      "vulnerability",
+      "assessment",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "penetration",
+      "tester",
+      "security",
+      "testing",
+      "vulnerability",
+      "assessment",
+      "specialist",
+      "pentesting",
+      "quality-security",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "pentesting",
+        "security",
+        "vulnerability",
+        "assessment"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-performance-engineer",
+    "description": "Application performance optimization expert",
+    "author": "VoltAgent",
+    "tags": [
+      "performance",
+      "optimization",
+      "speed",
+      "efficiency",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "performance",
+      "engineer",
+      "application",
+      "optimization",
+      "expert",
+      "speed",
+      "efficiency",
+      "quality-security",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "performance",
+        "optimization",
+        "speed",
+        "efficiency"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-qa-expert",
+    "description": "Quality assurance and testing strategy specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "qa",
+      "testing",
+      "quality",
+      "strategy",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "quality-testing",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "code-quality",
+    "keywords": [
+      "claude",
+      "qa",
+      "expert",
+      "quality",
+      "assurance",
+      "testing",
+      "strategy",
+      "specialist",
+      "quality-security",
+      "code-quality"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "qa",
+        "testing",
+        "quality",
+        "strategy"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-security-auditor",
+    "description": "Application security auditing and threat modeling expert",
+    "author": "VoltAgent",
+    "tags": [
+      "security",
+      "audit",
+      "threats",
+      "vulnerability",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "security",
+      "auditor",
+      "application",
+      "auditing",
+      "threat",
+      "modeling",
+      "expert",
+      "audit",
+      "threats",
+      "vulnerability",
+      "quality-security",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "security",
+        "audit",
+        "threats",
+        "vulnerability"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-test-automator",
+    "description": "Test automation framework and strategy specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "testing",
+      "automation",
+      "framework",
+      "qa",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "quality-testing",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "testing",
+    "keywords": [
+      "claude",
+      "test",
+      "automator",
+      "automation",
+      "framework",
+      "strategy",
+      "specialist",
+      "testing",
+      "qa",
+      "quality-security"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "testing",
+        "automation",
+        "framework",
+        "qa"
+      ],
+      "category": "quality-security"
+    }
+  },
+  {
+    "name": "claude-ai-engineer",
+    "description": "AI systems and model development specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "ai",
+      "machine-learning",
+      "models",
+      "neural-networks",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "data-ai",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "machine-learning",
+    "keywords": [
+      "claude",
+      "ai",
+      "engineer",
+      "systems",
+      "model",
+      "development",
+      "specialist",
+      "machine-learning",
+      "models",
+      "neural-networks",
+      "data-ai"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "ai",
+        "machine-learning",
+        "models",
+        "neural-networks"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-data-analyst",
+    "description": "Data analysis and business intelligence expert",
+    "author": "VoltAgent",
+    "tags": [
+      "data",
+      "analysis",
+      "bi",
+      "insights",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "data",
+      "analyst",
+      "analysis",
+      "business",
+      "intelligence",
+      "expert",
+      "bi",
+      "insights",
+      "data-ai",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "data",
+        "analysis",
+        "bi",
+        "insights"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-data-engineer",
+    "description": "Data pipelines and ETL specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "data",
+      "etl",
+      "pipelines",
+      "engineering",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "data",
+      "engineer",
+      "pipelines",
+      "specialist",
+      "etl",
+      "engineering",
+      "data-ai",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "data",
+        "etl",
+        "pipelines",
+        "engineering"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-data-scientist",
+    "description": "Statistical analysis and predictive modeling expert",
+    "author": "VoltAgent",
+    "tags": [
+      "data-science",
+      "statistics",
+      "modeling",
+      "analytics",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "data-ai",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "analytics",
+    "keywords": [
+      "claude",
+      "data",
+      "scientist",
+      "statistical",
+      "analysis",
+      "predictive",
+      "modeling",
+      "expert",
+      "data-science",
+      "statistics",
+      "analytics",
+      "data-ai"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "data-science",
+        "statistics",
+        "modeling",
+        "analytics"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-database-optimizer",
+    "description": "Database query and performance optimization specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "database",
+      "optimization",
+      "performance",
+      "queries",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "database",
+      "optimizer",
+      "query",
+      "performance",
+      "optimization",
+      "specialist",
+      "queries",
+      "data-ai",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "database",
+        "optimization",
+        "performance",
+        "queries"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-llm-architect",
+    "description": "Large language model architecture and deployment expert",
+    "author": "VoltAgent",
+    "tags": [
+      "llm",
+      "language-models",
+      "architecture",
+      "ai",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "data-ai",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "llm-nlp",
+    "keywords": [
+      "claude",
+      "llm",
+      "architect",
+      "large",
+      "language",
+      "model",
+      "architecture",
+      "deployment",
+      "expert",
+      "language-models",
+      "ai",
+      "data-ai",
+      "llm-nlp"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "llm",
+        "language-models",
+        "architecture",
+        "ai"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-machine-learning-engineer",
+    "description": "ML model development and deployment specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "ml",
+      "machine-learning",
+      "models",
+      "deployment",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "data-ai",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "machine-learning",
+    "keywords": [
+      "claude",
+      "machine",
+      "learning",
+      "engineer",
+      "model",
+      "development",
+      "deployment",
+      "specialist",
+      "ml",
+      "machine-learning",
+      "models",
+      "data-ai"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "ml",
+        "machine-learning",
+        "models",
+        "deployment"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-ml-engineer",
+    "description": "Machine learning systems and infrastructure expert",
+    "author": "VoltAgent",
+    "tags": [
+      "ml",
+      "infrastructure",
+      "systems",
+      "production",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "infrastructure",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "devops",
+    "keywords": [
+      "claude",
+      "ml",
+      "engineer",
+      "machine",
+      "learning",
+      "systems",
+      "infrastructure",
+      "expert",
+      "production",
+      "data-ai",
+      "devops"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "ml",
+        "infrastructure",
+        "systems",
+        "production"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-mlops-engineer",
+    "description": "ML operations and model lifecycle management specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "mlops",
+      "ml",
+      "operations",
+      "lifecycle",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "data-ai",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "machine-learning",
+    "keywords": [
+      "claude",
+      "mlops",
+      "engineer",
+      "operations",
+      "model",
+      "lifecycle",
+      "management",
+      "specialist",
+      "ml",
+      "data-ai",
+      "machine-learning"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "mlops",
+        "ml",
+        "operations",
+        "lifecycle"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-nlp-engineer",
+    "description": "Natural language processing and text analysis expert",
+    "author": "VoltAgent",
+    "tags": [
+      "nlp",
+      "text",
+      "language",
+      "processing",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "data-ai",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "llm-nlp",
+    "keywords": [
+      "claude",
+      "nlp",
+      "engineer",
+      "natural",
+      "language",
+      "processing",
+      "text",
+      "analysis",
+      "expert",
+      "data-ai",
+      "llm-nlp"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "nlp",
+        "text",
+        "language",
+        "processing"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-postgresql-pro",
+    "description": "PostgreSQL database specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "postgresql",
+      "database",
+      "sql",
+      "relational",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "claude-agents",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "general",
+    "keywords": [
+      "claude",
+      "postgresql",
+      "pro",
+      "database",
+      "specialist",
+      "sql",
+      "relational",
+      "data-ai",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "postgresql",
+        "database",
+        "sql",
+        "relational"
+      ],
+      "category": "data-ai"
+    }
+  },
+  {
+    "name": "claude-prompt-engineer",
+    "description": "AI prompt design and optimization specialist",
+    "author": "VoltAgent",
+    "tags": [
+      "prompts",
+      "ai",
+      "llm",
+      "optimization",
+      "claude",
+      "claude-agent"
+    ],
+    "type": "agent",
+    "category": "data-ai",
+    "sourceUrl": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "subcategory": "llm-nlp",
+    "keywords": [
+      "claude",
+      "prompt",
+      "engineer",
+      "design",
+      "optimization",
+      "specialist",
+      "prompts",
+      "ai",
+      "llm",
+      "data-ai",
+      "llm-nlp"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "prompts",
+        "ai",
+        "llm",
+        "optimization"
+      ],
+      "category": "data-ai"
+    }
+  }
+]

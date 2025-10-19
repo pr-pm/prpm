@@ -292,5 +292,152 @@
         "reason": "RSpec and unit test generation"
       }
     ]
+  },
+  {
+    "scope": "@collection",
+    "id": "windsurf-fullstack-pro",
+    "version": "1.0.0",
+    "name": "Windsurf Full-Stack Professional",
+    "description": "Complete Windsurf setup for professional full-stack development with React, TypeScript, and Python",
+    "author": "prmp",
+    "official": true,
+    "verified": true,
+    "category": "fullstack",
+    "tags": ["windsurf", "fullstack", "react", "typescript", "python", "nextjs"],
+    "framework": "windsurf",
+    "packages": [
+      {
+        "id": "windsurf-cascade-core-principles",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Core Windsurf Cascade AI assistant operating principles"
+      },
+      {
+        "id": "windsurf-project-workflow-best-practices",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "General project workflow and development best practices"
+      },
+      {
+        "id": "windsurf-nextjs-typescript-fullstack",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Next.js 15 with App Router and TypeScript"
+      },
+      {
+        "id": "windsurf-react-best-practices",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "React development with hooks and modern patterns"
+      },
+      {
+        "id": "windsurf-typescript-strict",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Strict TypeScript configuration and type safety"
+      },
+      {
+        "id": "windsurf-fastapi-modern",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Python backend API development"
+      },
+      {
+        "id": "windsurf-github-collaboration-rules",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "GitHub PR and collaboration workflows"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "windsurf-backend-python",
+    "version": "1.0.0",
+    "name": "Windsurf Backend Python Stack",
+    "description": "Professional Python backend development with Django, FastAPI, and Flask for Windsurf",
+    "author": "prmp",
+    "official": true,
+    "verified": true,
+    "category": "backend",
+    "tags": ["windsurf", "python", "backend", "django", "fastapi", "flask"],
+    "framework": "windsurf",
+    "packages": [
+      {
+        "id": "windsurf-cascade-core-principles",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Core Windsurf Cascade AI assistant principles"
+      },
+      {
+        "id": "windsurf-vibe-coding-global-rules",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Universal AI coding standards and security"
+      },
+      {
+        "id": "windsurf-fastapi-modern",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "FastAPI with async patterns and Pydantic V2"
+      },
+      {
+        "id": "windsurf-django-python",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Django development with async ORM and type hints"
+      },
+      {
+        "id": "windsurf-flask-microservices",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Flask microservices with blueprints"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "windsurf-frontend-frameworks",
+    "version": "1.0.0",
+    "name": "Windsurf Modern Frontend Frameworks",
+    "description": "Complete frontend development setup with React, Vue, and Angular for Windsurf",
+    "author": "prmp",
+    "official": true,
+    "verified": true,
+    "category": "frontend",
+    "tags": ["windsurf", "frontend", "react", "vue", "angular", "typescript"],
+    "framework": "windsurf",
+    "packages": [
+      {
+        "id": "windsurf-react-best-practices",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "React with TypeScript and hooks"
+      },
+      {
+        "id": "windsurf-vue-composition-api",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Vue 3 Composition API with Pinia"
+      },
+      {
+        "id": "windsurf-angular-enterprise",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Enterprise Angular with RxJS and signals"
+      },
+      {
+        "id": "windsurf-typescript-strict",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Strict TypeScript for all frameworks"
+      },
+      {
+        "id": "windsurf-vibe-coding-global-rules",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Universal coding standards"
+      }
+    ]
   }
 ]

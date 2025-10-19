@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: prmp
       POSTGRES_DB: prmp_registry
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"  # Bind to localhost only for security
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     image: redis:7-alpine
     container_name: prmp-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"  # Bind to localhost only for security
     volumes:
       - redis_data:/data
     healthcheck:
@@ -35,8 +35,8 @@ services:
     image: minio/minio:latest
     container_name: prmp-minio
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"  # Bind to localhost only for security
+      - "127.0.0.1:9001:9001"  # Bind to localhost only for security
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin

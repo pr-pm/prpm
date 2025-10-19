@@ -1,0 +1,362 @@
+[
+  {
+    "name": "claude-build-engineer",
+    "description": "Build systems and compilation optimization specialist",
+    "author": "community",
+    "tags": ["build", "compilation", "optimization", "tooling"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-cli-developer",
+    "description": "Command-line interface and tool development expert",
+    "author": "community",
+    "tags": ["cli", "terminal", "tools", "command-line"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-dependency-manager",
+    "description": "Package dependency resolution and management specialist",
+    "author": "community",
+    "tags": ["dependencies", "packages", "npm", "management"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-documentation-engineer",
+    "description": "Technical documentation and API docs specialist",
+    "author": "community",
+    "tags": ["documentation", "docs", "technical-writing", "api"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-dx-optimizer",
+    "description": "Developer experience optimization expert",
+    "author": "community",
+    "tags": ["dx", "developer-experience", "tooling", "workflow"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-git-workflow-manager",
+    "description": "Git branching strategy and workflow specialist",
+    "author": "community",
+    "tags": ["git", "workflow", "branching", "version-control"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-legacy-modernizer",
+    "description": "Legacy code modernization and migration expert",
+    "author": "community",
+    "tags": ["legacy", "modernization", "migration", "refactoring"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-mcp-developer",
+    "description": "Model Context Protocol integration specialist",
+    "author": "community",
+    "tags": ["mcp", "protocol", "integration", "tools"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-refactoring-specialist",
+    "description": "Code refactoring and optimization expert",
+    "author": "community",
+    "tags": ["refactoring", "optimization", "code-quality", "cleanup"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-tooling-engineer",
+    "description": "Development tooling and automation specialist",
+    "author": "community",
+    "tags": ["tooling", "automation", "development", "efficiency"],
+    "type": "agent",
+    "category": "developer-experience",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-api-documenter",
+    "description": "API documentation and OpenAPI specification expert",
+    "author": "community",
+    "tags": ["api", "documentation", "openapi", "swagger"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-blockchain-developer",
+    "description": "Blockchain and smart contract development specialist",
+    "author": "community",
+    "tags": ["blockchain", "web3", "smart-contracts", "ethereum"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-chatbot-developer",
+    "description": "Conversational AI and chatbot development expert",
+    "author": "community",
+    "tags": ["chatbot", "conversational-ai", "nlp", "dialogue"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-e-commerce-specialist",
+    "description": "E-commerce platform and payment integration expert",
+    "author": "community",
+    "tags": ["ecommerce", "payments", "shopping", "retail"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-embedded-engineer",
+    "description": "Embedded systems and IoT development specialist",
+    "author": "community",
+    "tags": ["embedded", "iot", "hardware", "firmware"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-game-developer",
+    "description": "Game development and engine programming expert",
+    "author": "community",
+    "tags": ["game-dev", "unity", "unreal", "gaming"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-healthcare-developer",
+    "description": "Healthcare software and HIPAA compliance specialist",
+    "author": "community",
+    "tags": ["healthcare", "hipaa", "medical", "compliance"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-fintech-specialist",
+    "description": "Financial technology and payment systems expert",
+    "author": "community",
+    "tags": ["fintech", "finance", "payments", "banking"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-seo-specialist",
+    "description": "Search engine optimization and web analytics expert",
+    "author": "community",
+    "tags": ["seo", "analytics", "search", "optimization"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-localization-specialist",
+    "description": "Internationalization and localization expert",
+    "author": "community",
+    "tags": ["i18n", "l10n", "localization", "translation"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-monitoring-specialist",
+    "description": "Application monitoring and observability expert",
+    "author": "community",
+    "tags": ["monitoring", "observability", "apm", "logging"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-migration-specialist",
+    "description": "System and data migration expert",
+    "author": "community",
+    "tags": ["migration", "data", "systems", "transition"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-websecurity-specialist",
+    "description": "Web application security and OWASP specialist",
+    "author": "community",
+    "tags": ["security", "web", "owasp", "vulnerabilities"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-cache-specialist",
+    "description": "Caching strategies and Redis optimization expert",
+    "author": "community",
+    "tags": ["caching", "redis", "performance", "optimization"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-message-queue-specialist",
+    "description": "Message queue and event-driven architecture expert",
+    "author": "community",
+    "tags": ["messaging", "queue", "kafka", "rabbitmq"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-search-specialist",
+    "description": "Search engines and ElasticSearch specialist",
+    "author": "community",
+    "tags": ["search", "elasticsearch", "solr", "indexing"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-auth-specialist",
+    "description": "Authentication and authorization systems expert",
+    "author": "community",
+    "tags": ["authentication", "authorization", "oauth", "jwt"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-email-specialist",
+    "description": "Email systems and deliverability expert",
+    "author": "community",
+    "tags": ["email", "smtp", "deliverability", "templates"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-webscraping-specialist",
+    "description": "Web scraping and data extraction expert",
+    "author": "community",
+    "tags": ["scraping", "extraction", "automation", "crawling"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-video-processing-specialist",
+    "description": "Video processing and streaming specialist",
+    "author": "community",
+    "tags": ["video", "streaming", "processing", "encoding"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-image-processing-specialist",
+    "description": "Image processing and computer vision expert",
+    "author": "community",
+    "tags": ["images", "processing", "vision", "opencv"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-pdf-specialist",
+    "description": "PDF generation and processing expert",
+    "author": "community",
+    "tags": ["pdf", "documents", "generation", "processing"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-reporting-specialist",
+    "description": "Business reporting and dashboard creation expert",
+    "author": "community",
+    "tags": ["reporting", "dashboards", "analytics", "bi"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-notification-specialist",
+    "description": "Push notifications and alerts systems expert",
+    "author": "community",
+    "tags": ["notifications", "push", "alerts", "messaging"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-scheduler-specialist",
+    "description": "Job scheduling and cron systems expert",
+    "author": "community",
+    "tags": ["scheduling", "cron", "jobs", "automation"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-workflow-automation-specialist",
+    "description": "Business workflow automation expert",
+    "author": "community",
+    "tags": ["workflow", "automation", "business-process", "orchestration"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-integration-specialist",
+    "description": "Third-party API integration expert",
+    "author": "community",
+    "tags": ["integration", "api", "third-party", "connectors"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-crm-specialist",
+    "description": "CRM systems and customer data management expert",
+    "author": "community",
+    "tags": ["crm", "customer", "salesforce", "management"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-erp-specialist",
+    "description": "ERP systems integration specialist",
+    "author": "community",
+    "tags": ["erp", "enterprise", "integration", "systems"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  },
+  {
+    "name": "claude-backup-specialist",
+    "description": "Backup and disaster recovery specialist",
+    "author": "community",
+    "tags": ["backup", "disaster-recovery", "redundancy", "availability"],
+    "type": "agent",
+    "category": "specialized-domains",
+    "sourceUrl": "https://github.com/wshobson/agents"
+  }
+]

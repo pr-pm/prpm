@@ -9,94 +9,149 @@ import { User, JWTPayload } from '../types.js';
 import { nanoid } from 'nanoid';
 import '../types/jwt.js';
 
+/**
+ * Helper function to fetch user data from GitHub and create/update user
+ */
+async function authenticateWithGitHub(server: FastifyInstance, accessToken: string): Promise<{ user: User; jwtToken: string }> {
+  // Fetch user data from GitHub
+  const userResponse = await fetch('https://api.github.com/user', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/vnd.github.v3+json',
+    },
+  });
+
+  if (!userResponse.ok) {
+    throw new Error('Failed to fetch GitHub user data');
+  }
+
+  const githubUser = await userResponse.json();
+
+  // Fetch user email
+  const emailResponse = await fetch('https://api.github.com/user/emails', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/vnd.github.v3+json',
+    },
+  });
+
+  interface GitHubEmail {
+    email: string;
+    primary: boolean;
+    verified: boolean;
+  }
+  const emails = (await emailResponse.json()) as GitHubEmail[];
+  const primaryEmail = emails.find((e) => e.primary)?.email || emails[0]?.email;
+
+  if (!primaryEmail) {
+    throw new Error('No email found in GitHub account');
+  }
+
+  // Find or create user
+  let user = await queryOne<User>(
+    server,
+    'SELECT * FROM users WHERE github_id = $1',
+    [String(githubUser.id)]
+  );
+
+  if (!user) {
+    // Create new user
+    user = await queryOne<User>(
+      server,
+      `INSERT INTO users (username, email, github_id, github_username, avatar_url, last_login_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       RETURNING *`,
+      [
+        githubUser.login,
+        primaryEmail,
+        String(githubUser.id),
+        githubUser.login,
+        githubUser.avatar_url,
+      ]
+    );
+  } else {
+    // Update last login
+    await query(
+      server,
+      'UPDATE users SET last_login_at = NOW() WHERE id = $1',
+      [user.id]
+    );
+  }
+
+  if (!user) {
+    throw new Error('Failed to create or fetch user');
+  }
+
+  // Generate JWT
+  const jwtToken = server.jwt.sign({
+    user_id: user.id,
+    username: user.username,
+    email: user.email,
+    is_admin: user.is_admin,
+    scopes: ['read:packages', 'write:packages'],
+  } as JWTPayload);
+
+  return { user, jwtToken };
+}
+
 export async function authRoutes(server: FastifyInstance) {
+  // Store redirect URLs temporarily (keyed by state parameter)
+  const pendingRedirects = new Map<string, string>();
+
+  // Override GitHub OAuth start to support custom redirect parameter
+  server.get('/github', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { redirect } = request.query as { redirect?: string };
+
+    // Generate state parameter for security
+    const state = nanoid(32);
+
+    // Store redirect URL if provided
+    if (redirect) {
+      pendingRedirects.set(state, redirect);
+      // Clean up after 10 minutes
+      setTimeout(() => pendingRedirects.delete(state), 10 * 60 * 1000);
+    }
+
+    // Get the OAuth authorization URL
+    // @ts-ignore - fastify-oauth2 types
+    const authUrl = await server.githubOAuth2.generateAuthorizationUri(request, reply);
+
+    // Add state parameter
+    const urlWithState = new URL(authUrl);
+    urlWithState.searchParams.set('state', state);
+
+    return reply.redirect(urlWithState.toString());
+  });
+
   // GitHub OAuth callback
   server.get('/github/callback', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      const { state } = request.query as { state?: string };
+
       // @ts-ignore - fastify-oauth2 types
       const token = await server.githubOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
 
-      // Fetch user data from GitHub
-      const userResponse = await fetch('https://api.github.com/user', {
-        headers: {
-          Authorization: `Bearer ${token.access_token}`,
-          Accept: 'application/vnd.github.v3+json',
-        },
-      });
+      const { user, jwtToken } = await authenticateWithGitHub(server, token.access_token);
 
-      if (!userResponse.ok) {
-        throw new Error('Failed to fetch GitHub user data');
+      // Check if there's a pending redirect for this state
+      let redirectUrl = state ? pendingRedirects.get(state) : undefined;
+
+      // Clean up
+      if (state) {
+        pendingRedirects.delete(state);
       }
 
-      const githubUser = await userResponse.json();
-
-      // Fetch user email
-      const emailResponse = await fetch('https://api.github.com/user/emails', {
-        headers: {
-          Authorization: `Bearer ${token.access_token}`,
-          Accept: 'application/vnd.github.v3+json',
-        },
-      });
-
-      interface GitHubEmail {
-        email: string;
-        primary: boolean;
-        verified: boolean;
-      }
-      const emails = (await emailResponse.json()) as GitHubEmail[];
-      const primaryEmail = emails.find((e) => e.primary)?.email || emails[0]?.email;
-
-      if (!primaryEmail) {
-        throw new Error('No email found in GitHub account');
+      if (redirectUrl) {
+        // CLI or custom redirect - include token and username
+        const url = new URL(redirectUrl);
+        url.searchParams.set('token', jwtToken);
+        url.searchParams.set('username', user.username);
+        return reply.redirect(url.toString());
       }
 
-      // Find or create user
-      let user = await queryOne<User>(
-        server,
-        'SELECT * FROM users WHERE github_id = $1',
-        [String(githubUser.id)]
-      );
-
-      if (!user) {
-        // Create new user
-        user = await queryOne<User>(
-          server,
-          `INSERT INTO users (username, email, github_id, github_username, avatar_url, last_login_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())
-           RETURNING *`,
-          [
-            githubUser.login,
-            primaryEmail,
-            String(githubUser.id),
-            githubUser.login,
-            githubUser.avatar_url,
-          ]
-        );
-      } else {
-        // Update last login
-        await query(
-          server,
-          'UPDATE users SET last_login_at = NOW() WHERE id = $1',
-          [user.id]
-        );
-      }
-
-      if (!user) {
-        throw new Error('Failed to create or fetch user');
-      }
-
-      // Generate JWT
-      const jwtToken = server.jwt.sign({
-        user_id: user.id,
-        username: user.username,
-        email: user.email,
-        is_admin: user.is_admin,
-        scopes: ['read:packages', 'write:packages'],
-      } as JWTPayload);
-
-      // Redirect to frontend with token
+      // Default: redirect to frontend with token
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      return reply.redirect(`${frontendUrl}/auth/callback?token=${jwtToken}`);
+      return reply.redirect(`${frontendUrl}/auth/callback?token=${jwtToken}&username=${user.username}`);
     } catch (error: any) {
       server.log.error('GitHub OAuth error:', error);
       return reply.status(500).send({ error: 'Authentication failed' });

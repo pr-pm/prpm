@@ -1,0 +1,37 @@
+{
+  "name": "@prmp/webapp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PRMP Web Application - Author invite claims and package browsing",
+  "scripts": {
+    "dev": "next dev -p 5173",
+    "build": "next build",
+    "start": "next start -p 5173",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:real": "USE_REAL_API=true playwright test",
+    "test:docker": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit",
+    "test:docker:down": "docker-compose -f docker-compose.test.yml down -v",
+    "seed:test": "tsx scripts/seed-test-data.ts"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.2.0",
+    "@playwright/test": "^1.40.0"
+  }
+}

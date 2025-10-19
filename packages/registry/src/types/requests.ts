@@ -6,6 +6,7 @@ import { PackageType, PackageVisibility } from '../types.js';
 
 // Query string types
 export interface ListPackagesQuery {
+  search?: string;
   type?: PackageType;
   category?: string;
   featured?: boolean;

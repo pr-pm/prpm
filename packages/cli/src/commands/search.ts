@@ -64,7 +64,7 @@ export async function handleSearch(
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Search failed: ${error}`);
     console.log(`\n💡 Tip: Make sure you have internet connection`);
-    console.log(`   Registry: ${process.env.PRMP_REGISTRY_URL || 'https://registry.promptpm.dev'}`);
+    console.log(`   Registry: ${process.env.PRMP_REGISTRY_URL || 'https://registry.prmp.dev'}`);
     process.exit(1);
   } finally {
     await telemetry.track({

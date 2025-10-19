@@ -18,9 +18,12 @@ export function loadConfig(): RegistryConfig {
       url: process.env.REDIS_URL || 'redis://localhost:6379',
     },
 
-    meilisearch: {
-      host: process.env.MEILISEARCH_HOST || 'http://localhost:7700',
-      apiKey: process.env.MEILISEARCH_API_KEY || '',
+    search: {
+      engine: (process.env.SEARCH_ENGINE || 'postgres') as 'postgres' | 'opensearch',
+      opensearch: {
+        endpoint: process.env.OPENSEARCH_ENDPOINT || '',
+        region: process.env.AWS_REGION || 'us-east-1',
+      },
     },
 
     jwt: {

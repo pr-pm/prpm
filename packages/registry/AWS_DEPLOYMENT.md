@@ -38,7 +38,7 @@ Internet
 - AWS Account
 - AWS CLI configured
 - Docker installed
-- Domain name (e.g., promptpm.dev)
+- Domain name (e.g., prmp.dev)
 
 ## Step-by-Step Deployment
 
@@ -406,7 +406,7 @@ Add to task definition:
     { "name": "SEARCH_ENGINE", "value": "postgres" },
     { "name": "AWS_REGION", "value": "us-east-1" },
     { "name": "S3_BUCKET", "value": "prmp-packages" },
-    { "name": "FRONTEND_URL", "value": "https://promptpm.dev" }
+    { "name": "FRONTEND_URL", "value": "https://prmp.dev" }
   ],
   "secrets": [
     {

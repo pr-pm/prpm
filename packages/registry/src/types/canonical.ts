@@ -29,6 +29,11 @@ export interface CanonicalPackage {
   // Source information
   sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'generic';
   sourceUrl?: string;
+
+  // Quality & verification flags
+  official?: boolean;    // Official package from cursor.directory, claude.ai, etc.
+  verified?: boolean;    // Verified by PRPM team for quality/safety
+  karenScore?: number;   // 0-100 quality score from Karen
 }
 
 export interface CanonicalContent {

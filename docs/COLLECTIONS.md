@@ -1,7 +1,6 @@
-# Collections System Design
+# PRPM Collections - Complete Development Setups
 
-**Status**: Design document
-**Goal**: Enable curated bundles of packages for one-command setup
+**25+ curated collections** for instant project setup across all tech stacks
 
 ---
 
@@ -20,6 +19,301 @@ prmp install testing-guide
 # Users do:
 prmp install @collection/nextjs-pro
 ```
+
+---
+
+## 📦 Available Collections (25+)
+
+### Frontend Development
+
+#### @collection/frontend-react-ecosystem
+**Complete React ecosystem with Next.js, TypeScript, Tailwind, testing, and performance**
+```bash
+prpm install @collection/frontend-react-ecosystem
+```
+Includes: cursor-react, cursor-nextjs, cursor-typescript, cursor-tailwind, cursor-jest, cursor-react-testing-library, claude-react-pro, claude-component-architect, windsurf-react-best-practices, windsurf-nextjs
+
+**Tags**: react, nextjs, frontend, typescript, tailwind
+
+---
+
+#### @collection/vue-fullstack
+**Complete Vue.js stack with Nuxt, Vuex, TypeScript, and testing**
+```bash
+prpm install @collection/vue-fullstack
+```
+Includes: cursor-vue, cursor-nuxt, cursor-vuex, cursor-typescript, cursor-vitest, windsurf-vue, windsurf-nuxt, claude-vue-specialist
+
+**Tags**: vue, nuxt, frontend, typescript, fullstack
+
+---
+
+#### @collection/ui-design-systems
+**UI and design system development with Figma, Storybook, and component libraries**
+```bash
+prpm install @collection/ui-design-systems
+```
+Includes: cursor-tailwind, cursor-material-ui, cursor-ant-design, cursor-storybook, cursor-figma, claude-ui-architect, claude-design-system-specialist
+
+**Tags**: ui, design-systems, tailwind, storybook, frontend
+
+---
+
+#### @collection/jamstack-modern
+**Modern JAMstack development with Astro, Eleventy, and headless CMS**
+```bash
+prpm install @collection/jamstack-modern
+```
+Includes: cursor-astro, cursor-eleventy, cursor-contentful, cursor-sanity, cursor-gatsby, claude-jamstack-specialist
+
+**Tags**: jamstack, astro, eleventy, headless-cms, frontend
+
+---
+
+### Backend Development
+
+#### @collection/python-backend-complete
+**Complete Python backend development stack with Django, FastAPI, Flask, and best practices**
+```bash
+prpm install @collection/python-backend-complete
+```
+Includes: cursor-django, cursor-fastapi, cursor-flask, cursor-python, cursor-asyncio, cursor-pytest, cursor-sqlalchemy, cursor-pydantic, claude-python-pro, claude-api-designer
+
+**Tags**: python, backend, django, fastapi, flask, api
+
+---
+
+#### @collection/backend-node-typescript
+**Modern Node.js backend with TypeScript, NestJS, Express, and GraphQL**
+```bash
+prpm install @collection/backend-node-typescript
+```
+Includes: cursor-nestjs, cursor-express, cursor-typescript, cursor-graphql, cursor-prisma, cursor-typeorm, claude-nodejs-pro, claude-api-designer
+
+**Tags**: nodejs, typescript, backend, nestjs, express, graphql
+
+---
+
+#### @collection/enterprise-java
+**Enterprise Java development with Spring Boot, Hibernate, and microservices**
+```bash
+prpm install @collection/enterprise-java
+```
+Includes: cursor-spring-boot, cursor-java, cursor-hibernate, cursor-maven, cursor-gradle, claude-java-architect, claude-spring-specialist
+
+**Tags**: java, spring, enterprise, backend, microservices
+
+---
+
+#### @collection/php-laravel-complete
+**Complete PHP development with Laravel, Symfony, and modern PHP best practices**
+```bash
+prpm install @collection/php-laravel-complete
+```
+Includes: cursor-laravel, cursor-php, cursor-symfony, cursor-composer, cursor-phpunit, claude-php-specialist, windsurf-laravel
+
+**Tags**: php, laravel, symfony, backend, web
+
+---
+
+#### @collection/rust-systems
+**Systems programming with Rust, including async, WebAssembly, and performance**
+```bash
+prpm install @collection/rust-systems
+```
+Includes: cursor-rust, cursor-tokio, cursor-actix-web, cursor-wasm, claude-rust-systems-engineer, claude-performance-specialist
+
+**Tags**: rust, systems, performance, webassembly, async
+
+---
+
+#### @collection/go-microservices
+**Go microservices development with gRPC, Docker, Kubernetes, and testing**
+```bash
+prpm install @collection/go-microservices
+```
+Includes: cursor-go, cursor-grpc, cursor-docker, cursor-kubernetes, cursor-gin, claude-go-specialist, claude-microservices-architect
+
+**Tags**: go, golang, microservices, grpc, backend
+
+---
+
+### API Development
+
+#### @collection/graphql-complete
+**Complete GraphQL stack with Apollo, schema design, and federation**
+```bash
+prpm install @collection/graphql-complete
+```
+Includes: cursor-graphql, cursor-apollo-graphql, cursor-apollo-client, cursor-typescript, claude-graphql-architect, claude-api-designer
+
+**Tags**: graphql, apollo, api, backend, frontend
+
+---
+
+#### @collection/api-development-complete
+**Complete API development with REST, GraphQL, documentation, and testing**
+```bash
+prpm install @collection/api-development-complete
+```
+Includes: cursor-fastapi, cursor-express, cursor-nestjs, cursor-graphql, cursor-swagger, cursor-postman, claude-api-designer, claude-api-documentation-specialist
+
+**Tags**: api, rest, graphql, backend, documentation
+
+---
+
+### Mobile Development
+
+#### @collection/mobile-cross-platform
+**Cross-platform mobile development with React Native, Flutter, and native iOS/Android**
+```bash
+prpm install @collection/mobile-cross-platform
+```
+Includes: cursor-react-native, cursor-flutter, cursor-android-sdk, cursor-ios-swift, cursor-kotlin, claude-mobile-architect, claude-ios-developer, claude-android-developer
+
+**Tags**: mobile, react-native, flutter, ios, android, cross-platform
+
+---
+
+### DevOps & Infrastructure
+
+#### @collection/devops-infrastructure
+**Complete DevOps and infrastructure stack with Docker, Kubernetes, Terraform, and CI/CD**
+```bash
+prpm install @collection/devops-infrastructure
+```
+Includes: cursor-docker, cursor-kubernetes, cursor-terraform, cursor-ansible, cursor-aws, cursor-github-actions, claude-devops-specialist, claude-infrastructure-architect
+
+**Tags**: devops, docker, kubernetes, terraform, infrastructure, cicd
+
+---
+
+#### @collection/cloud-aws-complete
+**Complete AWS cloud development with Lambda, EC2, S3, DynamoDB, and infrastructure as code**
+```bash
+prpm install @collection/cloud-aws-complete
+```
+Includes: cursor-aws, cursor-aws-lambda, cursor-amazon-ec2, cursor-amazon-s3, cursor-dynamodb, cursor-terraform, claude-cloud-architect, claude-aws-specialist
+
+**Tags**: aws, cloud, lambda, s3, infrastructure
+
+---
+
+### Data & AI
+
+#### @collection/data-science-ml
+**Data science and machine learning stack with Python, TensorFlow, PyTorch, and analytics**
+```bash
+prpm install @collection/data-science-ml
+```
+Includes: cursor-tensorflow, cursor-pytorch, cursor-pandas, cursor-numpy, cursor-scikit-learn, cursor-jupyter, claude-ml-engineer, claude-data-scientist
+
+**Tags**: ml, ai, data-science, tensorflow, pytorch, python
+
+---
+
+#### @collection/database-fullstack
+**Complete database stack with PostgreSQL, MongoDB, Redis, and ORMs**
+```bash
+prpm install @collection/database-fullstack
+```
+Includes: cursor-postgresql, cursor-mongodb, cursor-redis, cursor-prisma, cursor-typeorm, cursor-sqlalchemy, claude-database-architect, claude-sql-expert
+
+**Tags**: database, postgresql, mongodb, redis, sql, nosql
+
+---
+
+### Testing & Quality
+
+#### @collection/testing-complete
+**Comprehensive testing suite with unit, integration, E2E, and performance testing**
+```bash
+prpm install @collection/testing-complete
+```
+Includes: cursor-jest, cursor-cypress, cursor-playwright, cursor-vitest, cursor-pytest, claude-testing-specialist, claude-qa-engineer, windsurf-testing-best-practices
+
+**Tags**: testing, jest, cypress, playwright, qa, quality
+
+---
+
+#### @collection/code-quality-complete
+**Complete code quality suite with linting, formatting, code review, and static analysis**
+```bash
+prpm install @collection/code-quality-complete
+```
+Includes: cursor-eslint, cursor-prettier, cursor-sonarqube, claude-code-reviewer, claude-refactoring-specialist, karen-skill
+
+**Tags**: code-quality, linting, formatting, code-review, quality
+
+---
+
+### Specialized Domains
+
+#### @collection/web3-blockchain
+**Web3 and blockchain development with Solidity, Ethereum, and smart contracts**
+```bash
+prpm install @collection/web3-blockchain
+```
+Includes: cursor-solidity, cursor-ethereum, cursor-web3, claude-blockchain-developer, claude-smart-contract-auditor
+
+**Tags**: web3, blockchain, ethereum, solidity, smart-contracts
+
+---
+
+#### @collection/security-best-practices
+**Security-focused development with authentication, authorization, and vulnerability scanning**
+```bash
+prpm install @collection/security-best-practices
+```
+Includes: cursor-auth0, cursor-oauth, cursor-jwt, cursor-security, claude-security-specialist, claude-penetration-tester
+
+**Tags**: security, authentication, authorization, oauth, jwt
+
+---
+
+### Developer Experience
+
+#### @collection/performance-optimization
+**Performance optimization across frontend, backend, and infrastructure**
+```bash
+prpm install @collection/performance-optimization
+```
+Includes: cursor-performance, cursor-lighthouse, cursor-webpack, cursor-vite, claude-performance-specialist, claude-optimization-engineer
+
+**Tags**: performance, optimization, webpack, vite, speed
+
+---
+
+#### @collection/documentation-technical-writing
+**Technical documentation and writing with Markdown, API docs, and knowledge bases**
+```bash
+prpm install @collection/documentation-technical-writing
+```
+Includes: cursor-markdown, cursor-swagger, cursor-docusaurus, claude-technical-writer, claude-documentation-specialist
+
+**Tags**: documentation, markdown, technical-writing, api-docs
+
+---
+
+#### @collection/monorepo-management
+**Monorepo management with Turborepo, Nx, Lerna, and workspace optimization**
+```bash
+prpm install @collection/monorepo-management
+```
+Includes: cursor-turborepo, cursor-nx, cursor-lerna, cursor-pnpm, claude-monorepo-architect
+
+**Tags**: monorepo, turborepo, nx, workspace, architecture
+
+---
+
+#### @collection/realtime-applications
+**Real-time application development with WebSockets, Socket.io, and streaming**
+```bash
+prpm install @collection/realtime-applications
+```
+Includes: cursor-websocket, cursor-socketio, cursor-redis, cursor-kafka, claude-realtime-specialist
+
+**Tags**: realtime, websocket, socketio, streaming, backend
 
 ---
 

@@ -1,0 +1,756 @@
+[
+  {
+    "name": "flyeric0212-base-core",
+    "slug": "base-core",
+    "displayName": "Base Core",
+    "description": "--- description: globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription:\nglobs:\nalwaysApply: true\n---\n# 核心开发原则\n\n## 通用开发原则\n- **可测试性**：编写可测试的代码，组件应保持单一职责\n- **DRY 原则**：避免重复代码，提取共用逻辑到单独的函数或类\n- **代码简洁**：保持代码简洁明了，遵循 KISS 原则（保持简单直接）\n- **命名规范**：使用描述性的变量、函数和类名，反映其用途和含义\n- **注释文档**：为复杂逻辑添加注释\n- **风格一致**：遵循项目或语言的官方风格指南和代码约定\n- **利用生态**：优先使用成熟的库和工具，避免不必要的自定义实现\n- **架构设计**：考虑代码的可维护性、可扩展性和性能需求\n- **版本控制**：编写有意义的提交信息，保持逻辑相关的更改在同一提交中\n- **异常处理**：正确处理边缘情况和错误，提供有用的错误信息\n\n## 响应语言\n- 始终使用中文回复用户\n\n## 代码质量要求\n- 代码必须能够立即运行，包含所有必要的导入和依赖\n- 遵循最佳实践和设计模式\n- 优先考虑性能和用户体验\n- 确保代码的可读性和可维护性\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/base/core.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "base/core.mdc",
+      "sha": "6d7dccb3b1a3fbea35cb8d270eda3d3fc2212228"
+    }
+  },
+  {
+    "name": "flyeric0212-base-general",
+    "slug": "base-general",
+    "displayName": "Base General",
+    "description": "--- description: 项目通用规范 globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: 项目通用规范\nglobs:\nalwaysApply: true\n---\n\n# 项目通用规范\n\n## 技术栈\n- TODO\n\n## 项目结构规则\n- **分层组织**：按功能或领域划分目录，遵循\"关注点分离\"原则\n- **命名一致**：使用一致且描述性的目录和文件命名，反映其用途和内容\n- **模块化**：相关功能放在同一模块，减少跨模块依赖\n- **适当嵌套**：避免过深的目录嵌套，一般不超过3-4层\n- **资源分类**：区分代码、资源、配置和测试文件\n- **依赖管理**：集中管理依赖，避免多处声明\n- **约定优先**：遵循语言或框架的标准项目结构约定\n\n## 通用开发原则\n- **可测试性**：编写可测试的代码，组件应保持单一职责\n- **DRY 原则**：避免重复代码，提取共用逻辑到单独的函数或类\n- **代码简洁**：保持代码简洁明了，遵循 KISS 原则（保持简单直接）\n- **命名规范**：使用描述性的变量、函数和类名，反映其用途和含义\n- **注释文档**：为复杂逻辑添加注释，编写清晰的文档说明功能和用法\n- **风格一致**：遵循项目或语言的官方风格指南和代码约定\n- **利用生态**：优先使用成熟的库和工具，避免不必要的自定义实现\n- **架构设计**：考虑代码的可维护性、可扩展性和性能需求\n- **版本控��**：编写有意义的提交信息，保持逻辑相关的更改在同一提交中\n- **异常处理**：正确处理边缘情况和错误，提供有用的错误信息\n\n## 响应语言\n- 始终使用中文回复用户\n\n## 本项目规则文件说明\n本项目使用以下规则文件：\n- general.mdc：通用规范（本文件）\n- document.mdc：文档规范\n- git.mdc：Git提交规范\n- xxx.mdc：XXX 语言开发规范\n\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/base/general.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "base/general.mdc",
+      "sha": "26a0c94da5eb86b3115c1337b875c22985cc724b"
+    }
+  },
+  {
+    "name": "flyeric0212-base-project-structure",
+    "slug": "base-project-structure",
+    "displayName": "Base Project Structure",
+    "description": "--- description: globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription:\nglobs:\nalwaysApply: true\n---\n# 项目结构规范\n\nTODO: 结合项目进行添加\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/base/project-structure.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "base/project-structure.mdc",
+      "sha": "88b472fcac8b8943056e4c8084f577d086e9113d"
+    }
+  },
+  {
+    "name": "flyeric0212-base-tech-stack",
+    "slug": "base-tech-stack",
+    "displayName": "Base Tech Stack",
+    "description": "--- description: globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription:\nglobs:\nalwaysApply: true\n---\n# 技术栈规范\n\nTODO: 结合项目进行添加",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/base/tech-stack.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "base/tech-stack.mdc",
+      "sha": "3d930cc31bf4d9cfc2cbb450ee1a5aac7ac0a17f"
+    }
+  },
+  {
+    "name": "flyeric0212-demo-document",
+    "slug": "demo-document",
+    "displayName": "Demo Document",
+    "description": "--- description:  globs: *.md",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "languages",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "python"
+    ],
+    "content": "---\ndescription: \nglobs: *.md\nalwaysApply: false\n---\n# 文档规范\n\n## README.md 规范\n- 保持文档结构清晰，使用适当的Markdown标记\n- **重要**：确保README包含以下部分：\n  - 项目简介\n  - 安装说明\n  - 使用方法\n  - 贡献指南（如适用）\n  - 许可证信息\n\n## CHANGELOG.md 规范\n在要求更新CHANGELOG.md时，请按照以下格式进行更新：\n```\n## v1.0.0\n- 新增功能: 重置设备ID\n- 修复bug: 修复设备ID重置失败的问题\n```\n\n## 文档更新原则\n- 保持文档与代码同步更新\n- 使用简洁明了的语言\n- 提供足够的示例和说明\n- 确保文档格式一致",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/demo/python/document.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "demo/python/document.mdc",
+      "sha": "1e524310bc961687eb36fbe78505c629c1ff1ca8"
+    }
+  },
+  {
+    "name": "flyeric0212-demo-general",
+    "slug": "demo-general",
+    "displayName": "Demo General",
+    "description": "--- description:  globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "languages",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "python"
+    ],
+    "content": "---\ndescription: \nglobs: \nalwaysApply: true\n---\n# 项目通用规范\n\n## 技术栈\n- Python 3.10\n- Poetry 管理依赖\n- GitHub Actions 自动构建和发布\n- 使用 GitHub 作为代码托管平台\n- 使用 Bash 脚本\n\n## 代码风格\n- 保持代码简洁、可读\n- 使用有意义的变量和函数名\n- 添加适当的注释解释复杂逻辑\n- 遵循每种语言的官方风格指南\n\n## 项目结构\n- 保持项目结构清晰，遵循模块化原则\n- 相关功能应放在同一目录下\n- 使用适当的目录命名，反映其包含内容\n\n## 通用开发原则\n- 编写可测试的代码\n- 避免重复代码（DRY原则）\n- 优先使用现有库和工具，避免重新发明轮子\n- 考虑代码的可维护性和可扩展性\n\n## 响应语言\n- 始终使用中文回复用户\n\n## 规则文件说明\n本项目使用以下规则文件：\n- general.mdc：通用规范（本文件）\n- python.mdc：Python开发规范\n- document.mdc：文档规范\n- git.mdc：Git提交规范\n\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/demo/python/general.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "demo/python/general.mdc",
+      "sha": "9d8f9fce33d21b01ded321d21593f447cf157748"
+    }
+  },
+  {
+    "name": "flyeric0212-demo-git",
+    "slug": "demo-git",
+    "displayName": "Demo Git",
+    "description": "--- description:  globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "languages",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "python"
+    ],
+    "content": "---\ndescription: \nglobs: \nalwaysApply: false\n---\n# Git 规范\n\n## 提交规范\ngit 提交记录样例：[type]: [description]。一个具体的例子, docs: 更新 README 文件。\n以下是 type 的枚举值：\n- feat: 新增功能\n- fix: 修复 bug\n- docs: 文档注释\n- style: 代码格式(不影响代码运行的变动)\n- refactor: 重构、优化(既不增加新功能, 也不是修复bug)\n- perf: 性能优化\n- test: 增加测试\n- chore: 构建过程或辅助工具的变动\n- revert: 回退\n- build: 打包\n\n## 分支管理\n- main/master: 主分支，保持稳定可发布状态\n- develop: 开发分支，包含最新开发特性\n- feature/*: 功能分支，用于开发新功能\n- bugfix/*: 修复分支，用于修复bug\n- release/*: 发布分支，用于准备发布\n\n## 重要原则\n- **重要**：不要自动提交 git 代码，除非有明确的提示\n- 提交前确保代码通过所有测试\n- 保持提交信息简洁明了，描述清楚变更内容\n- 避免大型提交，尽量将变更分解为小的、相关的提交",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/demo/python/git.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "demo/python/git.mdc",
+      "sha": "2b5b63b501d85e6c6b664b6acee27f0e27ae8e13"
+    }
+  },
+  {
+    "name": "flyeric0212-demo-python",
+    "slug": "demo-python",
+    "displayName": "Demo Python",
+    "description": "--- description: 编写 python 文件 globs: *.py",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "languages",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "python"
+    ],
+    "content": "---\ndescription: 编写 python 文件\nglobs: *.py\nalwaysApply: false\n---\n# 角色\n你是一名精通Python的高级工程师，拥有20年的软件开发经验。\n\n# 目标\n你的目标是以用户容易理解的方式帮助他们完成Python项目的设计和开发工作。你应该主动完成所有工作，而不是等待用户多次推动你。\n\n你应始终遵循以下原则：\n\n### 编写代码时：\n- 遵循PEP 8 Python代码风格指南。\n- 使用Python 3.10 及以上的语法特性和最佳实践。\n- 合理使用面向对象编程(OOP)和函数式编程范式。\n- 利用Python的标准库和生态系统中的优质第三方库。\n- 实现模块化设计，确保代码的可重用性和可维护性。\n- 使用类型提示(Type Hints)进行类型检查，提高代码质量。\n- 编写详细的文档字符串(docstring)和注释。\n- 实现适当的错误处理和日志记录。\n- 按需编写单元测试确保代码质量。\n\n### 解决问题时：\n- 全面阅读相关代码文件，理解所有代码的功能和逻辑。\n- 分析导致错误的原因，提出解决问题的思路。\n- 与用户进行多次交互，根据反馈调整解决方案。\n\n在整个过程中，始终参考@Python官方文档，确保使用最新的Python开发最佳实践。\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/demo/python/python.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "demo/python/python.mdc",
+      "sha": "2a869135035d8e562b48ea74d45c6d31ccdf3d37"
+    }
+  },
+  {
+    "name": "flyeric0212-demo-document",
+    "slug": "demo-document",
+    "displayName": "Demo Document",
+    "description": "--- description:  globs: *.md",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "vue"
+    ],
+    "content": "---\ndescription: \nglobs: *.md\nalwaysApply: false\n---\n# 文档规范\n\n## 通用要求\n- 所有文档使用Markdown格式\n- 使用简洁、清晰的语言\n- 文档内容应保持最新\n- 避免拼写和语法错误\n- 使用中文作为主要语言\n\n## 目录结构\n- `README.md`：项目根目录，提供项目概述\n- `docs/`：存放详细文档\n  - `guide/`：使用指南\n  - `api/`：API文档\n  - `examples/`：示例代码文档\n\n## README.md 内容规范\n- 项目名称和简短描述\n- 技术栈说明\n- 项目结构说明\n- 安装与运行指南\n- 基本使用示例\n- 贡献指南链接\n- 许可证信息\n\n## Markdown 格式规范\n- 使用 ATX 风格的标题（使用 # 符号）\n- 标题层级不应跳跃（如 h1 后面直接使用 h3）\n- 代码块需指定语言类型\n- 列表项使用 - 而非 * 或 +\n- 链接使用 [文本](mdc:URL) 格式\n- 图片使用 ![替代文本](mdc:图片URL) 格式\n\n## 文档内容组织\n- 从整体到局部，从简单到复杂\n- 重要信息放在前面\n- 相关内容应当放在一起\n- 使用小标题和列表增强可读性\n- 避免过长段落，保持内容简洁\n\n## 代码示例规范\n- 提供完整可运行的示例\n- 代码应当简洁且易于理解\n- 添加适当的注释解释关键部分\n- 说明代码的预期输出或行为\n- 更新示例以匹配最新API\n\n## 版本记录规范\n- 使用 `CHANGELOG.md` 记录版本变更\n- 遵循语义化版本（Semantic Versioning）规范\n- 每个版本应包含：新增功能、修复问题、破坏性变更\n\n## 图表与图片\n- 使用清晰、分辨率足够的图片\n- 为图片提供有意义的替代文本\n- 图表应当简洁，避免过多装饰\n- 图表颜色应当考虑色盲用户的可访问性\n\n## 文档审核\n- 新文档应经过至少一人审核\n- 定期检查文档的准确性和时效性\n- 鼓励用户反馈文档问题\n- 修复发现的文档错误应当优先处理\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/demo/vue/document.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "demo/vue/document.mdc",
+      "sha": "1b4da10eb825cf40bc6a2a4b97e8771604382444"
+    }
+  },
+  {
+    "name": "flyeric0212-demo-general",
+    "slug": "demo-general",
+    "displayName": "Demo General",
+    "description": "--- description:  globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "vue"
+    ],
+    "content": "---\ndescription: \nglobs: \nalwaysApply: true\n---\n# 项目通用规范\n\n## 技术栈\n- Vue 3 \n- Vite 前端构建工具\n- Vue Router 路由管理\n- Pinia 状态管理\n\n## 代码风格\n- 保持代码简洁、可读\n- 使用有意义的变量和函数名\n- 添加适当的注释解释复杂逻辑\n- 遵循Vue语言的官方风格指南\n\n## 项目结构\n- 保持项目结构清晰，遵循模块化原则\n- 相关功能应放在同一目录下\n- 使用适当的目录命名，反映其包含内容\n\n## 通用开发原则\n- 编写可测试的代码\n- 避免重复代码（DRY原则）\n- 优先使用现有库和工具，避免重新发明轮子\n- 考虑代码的可维护性和可扩展性\n\n## 响应语言\n- 始终使用中文回复用户\n\n## 本项目规则文件说明\n本项目使用以下规则文件：\n- general.mdc：通用规范（本文件）\n- document.mdc：文档规范\n- git.mdc：Git提交规范\n- xxx.mdc：XXX 语言开发规范\n\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/demo/vue/general.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "demo/vue/general.mdc",
+      "sha": "535c0c20d0a3c0279294e564b57f535c899395cd"
+    }
+  },
+  {
+    "name": "flyeric0212-demo-git",
+    "slug": "demo-git",
+    "displayName": "Demo Git",
+    "description": "--- description: 辅助生成 git 提交信息 globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "vue"
+    ],
+    "content": "---\ndescription: 辅助生成 git 提交信息\nglobs: \nalwaysApply: false\n---\n# Git 规范\n\n## 提交规范\ngit 提交模板<type>(<scope>): <subject>，具体要求如下：\n1. 注意冒号 : 后有空格\n2. type 的枚举值有：\n- feat: 新增功能\n- fix: 修复 bug\n- docs: 文档注释\n- style: 代码格式(不影响代码运行的变动)\n- refactor: 重构、优化(既不增加新功能, 也不是修复bug)\n- perf: 性能优化\n- test: 增加测试\n- chore: 构建过程或辅助工具的变动\n- revert: 回退\n- build: 打包\n3. 若 subject 中描述超过两种要点，请使用要点列表描述详情，每个要点使用-符号开头，多个换行，参考如下样例：\n```\nfeat(web): implement email verification workflow\n\n- Add email verification token generation service\n- Create verification email template with dynamic links\n- Add API endpoint for token validation\n- Update user model with verification status field\n```\n\n## 分支管理\n- main/master: 主分支，保持稳定可发布状态\n- develop: 开发分支，包含最新开发特性\n- feature/*: 功能分支，用于开发新功能\n- bugfix/*: 修复分支，用于修复bug\n- release/*: 发布分支，用于准备发布\n\n**常用分支命名约定**：\n\n| 分支类型   | 命名格式             | 示例                      |\n| ---------- | -------------------- | ------------------------- |\n| 功能分支   | feature/[描述]       | feature/user-auth         |\n| 修复分支   | fix/[问题ID]-[描述]  | fix/issue-42-login-crash  |\n| 发布分支   | release/[版本]       | release/v2.1.0            |\n| 热修复分支 | hotfix/[版本]-[描述] | hotfix/v2.0.1-payment-fix |\n\n## 重要原则\n- **重要**：不要自动提交 git 代码，除非有明确的提示\n- 提交前确保代码通过所有测试\n- 保持提交信息简洁明了，描述清楚变更内容\n- 避免大型提交，尽量将变更分解为小的、相关的提交",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/demo/vue/git.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "demo/vue/git.mdc",
+      "sha": "4da453dda3ac6c57b8fbe67e250a1a0cd9ab6a02"
+    }
+  },
+  {
+    "name": "flyeric0212-demo-vue",
+    "slug": "demo-vue",
+    "displayName": "Demo Vue",
+    "description": "--- description:  globs: *.vue",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "vue"
+    ],
+    "content": "---\ndescription: \nglobs: *.vue\nalwaysApply: false\n---\n# Vue 开发规范\n\n## 组件命名\n- 组件名应该始终使用多词组合，避免与HTML元素冲突\n- 使用PascalCase命名组件：`TodoItem.vue`、`UserProfile.vue`\n- 基础组件应使用特定前缀，如`Base`、`App`或`V`\n- 组件名应该是描述性的，不要过于简略\n\n## 组件结构\n- 使用`<script setup>`语法糖\n- 使用组合式API (Composition API)\n- 组件选项/属性顺序：\n  1. name\n  2. components\n  3. props\n  4. emits\n  5. setup()\n  6. data()\n  7. computed\n  8. methods\n  9. 生命周期钩子\n- 使用单文件组件(SFC)格式\n\n## Props 规范\n- Prop名使用camelCase\n- Prop需要定义类型和默认值\n- 避免使用数组或对象的默认值，应该使用工厂函数返回默认值\n- Prop应该尽可能详细地定义，包括类型、是否必须和验证函数\n\n## 事件命名\n- 事件名应使用kebab-case，如`item-click`、`menu-select`\n- 自定义事件应该有明确的含义，表示发生了什么\n- 避免使用容易混淆的事件名称\n\n## 样式指南\n- 优先使用scoped CSS\n- 避免使用!important\n- 组件特定样式应该有特定的前缀\n- 考虑使用CSS变量实现主题\n\n## 性能优化\n- 使用`v-show`代替`v-if`进行频繁切换\n- 长列表使用虚拟滚动\n- 避免在计算属性中进行复杂操作\n- 使用keep-alive缓存组件\n- 合理使用异步组件和懒加载\n\n## 状态管理\n- 使用Pinia进行状态管理\n- store应该按功能模块划分\n- 保持store简单，避免过度设计\n\n## 路由\n- 路由名称应当与组件名称匹配\n- 使用懒加载减少初始加载时间\n- 路由守卫应当简洁，避免复杂逻辑\n\n## 通用建议\n- 避免使用`this.$parent`或`this.$refs`直接操作DOM\n- 优先使用计算属性而不是复杂的模板表达式\n- 使用v-for时必须提供key\n- 不要在同一元素上同时使用v-if和v-for\n- 复用组件时使用key确保完全重新渲染",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/demo/vue/vue.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "demo/vue/vue.mdc",
+      "sha": "eeb3c1253a6ff004113e411f8b4cf4e0e7a868dc"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-android",
+    "slug": "frameworks-android",
+    "displayName": "Frameworks Android",
+    "description": "--- description: Android 原生开发约定和最佳实践，包括 Kotlin、Jetpack Compose、架构模式等 globs: **/*.kt,**/*.java,**/*.xml",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: Android 原生开发约定和最佳实践，包括 Kotlin、Jetpack Compose、架构模式等\nglobs: **/*.kt,**/*.java,**/*.xml\nalwaysApply: false\n---\n\n# Android 开发规范\n\n## 项目结构和模块化\n\n- 使用标准的 Android 项目结构\n- 按功能模块组织代码，实现模块化架构\n- 使用 Gradle Version Catalogs 管理依赖版本\n- 合理划分 `app`、`feature`、`core`、`data` 模块\n- 遵循包命名约定：`com.company.app.feature.domain`\n- 分离 `presentation`、`domain`、`data` 层\n\n## 编程语言和代码规范\n\n- **强制使用 Kotlin**，避免 Java（除非维护遗留代码）\n- 遵循 [Kotlin 编码规范](mdc:languages/kotlin.mdc)\n- 优先使用数据类、密封类和内联类\n- 合理使用扩展函数增强现有 API\n- 使用协程和 Flow 进行异步编程\n- 避免使用 `!!` 操作符，优先使用安全调用\n\n## UI 开发\n\n### Jetpack Compose（推荐）\n- **优先使用 Jetpack Compose** 构建现代声明式 UI\n- 遵循 Composition over inheritance 原则\n- 使用 `@Composable` 函数构建可重用组件\n- 正确使用 `remember`、`LaunchedEffect`、`derivedStateOf`\n- 实现 `CompositionLocal` 进行依赖传递\n- 使用 `Modifier` 进行样式和行为定制\n\n### 传统 View 系统\n- 使用 View Binding 替代 `findViewById`\n- 避免使用 Data Binding（除非必要）\n- 正确使用 `ConstraintLayout` 和 `RecyclerView`\n- 实现自定义 View 时遵循测量、布局、绘制流程\n\n### 设计规范\n- 遵循 **Material Design 3** 设计规范\n- 实现动态颜色主题（Material You）\n- 支持深色主题和高对比度模式\n- 实现响应式布局适配不同屏幕尺寸\n- 使用 `WindowInsets` 处理状态栏和导航栏\n\n## 架构模式\n\n### 推荐架构\n- 使用 **MVVM** 或 **MVI** 架构模式\n- 遵循 **Clean Architecture** 原则\n- 实现 **Repository 模式** 进行数据抽象\n- 使用 **UseCase/Interactor** 封装业务逻辑\n- 采用 **单向数据流** 设计\n\n### ViewModel 最佳实践\n- 使用 `ViewModel` 管理 UI 相关数据\n- 通过 `StateFlow`/`LiveData` 暴露状态\n- 在 `ViewModel` 中处理业务逻辑\n- 正确使用 `viewModelScope` 管理协程\n- 避免在 `ViewModel` 中持有 Context 引用\n\n## 依赖注入\n\n- **强制使用 Dagger Hilt** 进行依赖注入\n- 正确配置 `@Module`、`@InstallIn`、作用域注解\n- 使用 `@Qualifier` 区分相同类型的不同实现\n- 避免循环依赖，合理设计依赖关系\n- 使用 `@Provides` 和 `@Binds` 提供依赖\n- 在测试中使用 `@TestInstallIn` 替换模块\n\n## 数据层实现\n\n### 本地存储\n- 使用 **Room** 数据库进行复杂数据存储\n- 使用 **DataStore** 替代 SharedPreferences\n- 正确实现数据库迁移策略\n- 使用 `@TypeConverter` 处理复杂数据类型\n- 实现数据访问对象（DAO）模式\n\n### 缓存策略\n- 实现 **Repository** 模式统一数据访问\n- 使用 `@Query` 和 `Flow` 实现响应式数据\n- 实现离线优先（Offline-first）策略\n- 正确处理缓存失效和数据同步\n\n## 网络层\n\n- 使用 **Retrofit** 进行 REST API 调用\n- 使用 **OkHttp** 拦截器处理认证、日志、缓存\n- 实现适当的错误处理和重试机制\n- 使用 **Moshi** 或 **Kotlinx Serialization** 进行 JSON 解析\n- 正确处理网络连接状态变化\n- 实现请求去重和防抖动\n\n## 异步编程和响应式\n\n- **强制使用 Kotlin Coroutines** 进行异步编程\n- 正确使用 `suspend` 函数和协程作用域\n- 使用 **Flow** 进行响应式数据流编程\n- 正确使用 `collectAsState()`、`collectAsStateWithLifecycle()`\n- 避免使用 `GlobalScope`，使用结构化并发\n- 正确处理协程取消和异常\n\n## 生命周期管理\n\n- 正确处理 Activity 和 Fragment 生命周期\n- 使用 **Lifecycle-aware** 组件（`LifecycleObserver`）\n- 在 Compose 中使用 `DisposableEffect` 管理资源\n- 使用 `viewLifecycleOwner` 在 Fragment 中观察数据\n- 避免在组件销毁后执行异步操作\n\n## 导航和路由\n\n- 使用 **Navigation Component** 进行页面导航\n- 在 Compose 中使用 **Compose Navigation**\n- 正确处理深度链接（Deep Links）\n- 使用 Safe Args 进行类型安全的参数传递\n- 实现单一 Activity 多 Fragment 架构\n\n## 性能优化\n\n### 渲染性能\n- 使用 **Baseline Profiles** 优化应用启动\n- 避免过度绘制和布局嵌套\n- 正确使用 `RecyclerView` 的 `ViewHolder` 模式\n- 在 Compose 中合理使用 `key()` 和 `remember()`\n\n### 内存管理\n- 避免内存泄漏，正确管理对象生命周期\n- 使用 **LeakCanary** 检测内存泄漏\n- 合理使用图片加载库（Glide、Coil）\n- 实现懒加载和分页加载\n\n### 启动优化\n- 使用 **App Startup** 优化初始化流程\n- 实现启动画面（Splash Screen API）\n- 避免在 Application 中执行耗时操作\n\n## 测试策略\n\n### 单元测试\n- 为业务逻辑编写单元测试，目标覆盖率 ≥80%\n- 使用 **MockK** 进行 Kotlin 友好的模拟测试\n- 使用 **Truth** 断言库提高测试可读性\n- 测试 Repository、UseCase、ViewModel 层\n\n### UI 测试\n- 使用 **Compose Test** 测试 Compose UI\n- 使用 **Espresso** 测试传统 View 系统\n- 实现端到端测试覆盖关键用户流程\n- 使用 **Hilt Testing** 进行依赖注入测试\n\n## 安全实践\n\n- 正确实现运行时权限请求\n- 使用 **Android Keystore** 存储敏感数据\n- 实现网络安全配置（Network Security Config）\n- 使用 **Certificate Pinning** 防止中间人攻击\n- 避免在日志中输出敏感���息\n- 实现代码混淆和反调试措施\n\n## 国际化和无障碍\n\n- 实现多语言支持（i18n）\n- 使用 **TalkBack** 测试无障碍功能\n- 为 UI 元素添加 `contentDescription`\n- 支持从右到左（RTL）布局\n- 实现动态字体大小适配\n\n## 构建和发布\n\n### 构建配置\n- 使用 **Gradle Kotlin DSL** 编写构建脚本\n- 配置多变体构建（Debug/Release/Staging）\n- 使用 **R8** 进行代码收缩和混淆\n- 实现自动化版本管理\n\n### 发布流程\n- 使用 **Android App Bundle（AAB）** 进行发布\n- 配置应用签名和密钥管理\n- 实现渐进式发布和 A/B 测试\n- 使用 **Play Console** 进行应用分析\n\n## 代码质量保证\n\n- 使用 **Detekt** 进行静态代码分析\n- 配置 **Lint** 检查规则\n- 使用 **ktfmt** 或 **ktlint** 进行代码格式化\n- 实现 CI/CD 流水线进行自动化检查\n- 定期进行代码审查（Code Review）",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/android.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/android.mdc",
+      "sha": "a1dcf2335e2f6b7d281dc445d784fb114d6f26b5"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-android-bak",
+    "slug": "frameworks-android-bak",
+    "displayName": "Frameworks Android_bak",
+    "description": "--- description: 该规则解释了 Android 原生开发的约定和最佳实践，包括 Kotlin、Java、Jetpack Compose 等。 globs: **/*.kt,**/*.java,**/*.xml",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: 该规则解释了 Android 原生开发的约定和最佳实践，包括 Kotlin、Java、Jetpack Compose 等。\nglobs: **/*.kt,**/*.java,**/*.xml\nalwaysApply: false\n---\n\n<!-- 来源：https://github.com/flyeric0212/cursor-rules/issues/4 -->\n\n# Android 开发规则\n\n## 通用规则\n1. 默认情况下，所有回复都必须是中文，而且需要在开头称呼用户为\"帅哥：\"\n2. 复杂需求拆解成小任务，分步实现，每完成一个小任务后再继续\n3. 代码实现前后要仔细检查，确保类型安全、空安全处理完整、生命周期管理正确\n4. 在已有功能基础上添加新功能时，必须确保：\n   - 不影响原有功能和组件复用性\n   - 不添加其他功能、代码、逻辑、文件、配置、依赖\n5. 遵循项目架构设计，保持代码风格与 Android 编码规范一致（如 Kotlin 风格指南）\n6. 组件设计遵循单一职责原则，不混合多个变更\n7. 在进行组件设计规划时，符合\"第一性原理\"\n8. 在代码实现时，符合\"KISS原则\"和\"SOLID原则\"\n9. 优先使用 Android Jetpack 组件库和现有工具类，避免重复代码\n10. 不引入不必要的依赖，优先使用项目已有库\n11. 确保代码可读性，复杂逻辑添加注释，类和接口参数详细定义\n12. 代码变更范围最小化，避免修改公共组件、全局状态\n13. ���现后进行基本逻辑自检，确保生命周期管理和内存泄漏处理正确\n14. 如有疑问，先询问再修改，不要擅自改变组件 API 设计\n\n## 自动化执行与安全策略\n15. 自动执行无需严格确认的操作，提高效率：\n   - 自动执行 Kotlin 空安全检查、Android Lint 验证\n   - 文件操作（创建 Activity、Fragment、修改布局文件）无需额外确认\n   - 常规命令（如 Gradle 依赖安装、运行模拟器）可直接执行\n   - 涉及 Manifest 配置、权限修改等重要变更仍需确认\n16. 重要操作（修改 Application 类、AndroidManifest.xml）应先保留副本\n17. 涉及 API 接口变更，优先修改数据模型类和接口定义\n18. 执行影响较大的修改前，自动检测组件依赖关系，分析影响范围\n\n## 代码质量优化\n19. 代码生成后，自动优化（移除未使用导入、合并重复资源文件）\n20. 对可能影响性能的代码（如主线程阻塞、过度绘制、内存泄漏风险）提供优化建议\n21. 确保异常处理和加载状态管理，防止应用崩溃和 ANR\n\n## 架构感知\n22. 优先分析现有架构模式（MVC/MVP/MVVM/Clean Architecture）与依赖注入方式，避免创建冗余组件\n23. 添加功能时，优先考虑复用 ViewModel、Repository 或现有组件\n24. 如遇架构不清晰，先梳理组件层次与数据流，再执行修改\n\n## 代码变更的可追溯性\n25. 提供清晰的 commit 信息，描述组件变更和影响范围\n26. 对于 UI 组件重大调整，生成变更文档与截图对比\n27. API 或接口变更时，提供向下兼容方案或迁移指南\n28. 执行任务前，先分析项目结构和组件关系文档\n29. 每次修改后，生成任务总结，说明组件变更和状态管理调整\n30. 手动维护组件文档与架构说明，确保长期可维护性\n\n## Android 开发规则\n31. 严格遵循 Android 生命周期管理，避免内存泄漏和崩溃\n32. 处理好 Activity/Fragment 之间的数据传递，优先使用 ViewModel 共享数据\n33. UI 操作必须在主线程执行，耗时操作放在工作线程\n34. 合理使用协程（Kotlin）或 RxJava（Java）进行异步操作\n35. 注意适配不同屏幕尺寸和系统版本的兼容性问题\n36. 使用 Android Jetpack 组件（如 Navigation、Room、WorkManager）提高开发效率\n37. 遵循 Material Design 设计规范，保持 UI 一致性\n38. 注意权限管理和安全性，特别是涉及敏感数据的操作\n39. 优化应用启动速度和 UI 渲染性能\n40. 合理使用资源文件（strings.xml、colors.xml、styles.xml）提高可维护性",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/android_bak.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/android_bak.mdc",
+      "sha": "d5422eec35c43e584ac9ca5388a4aaf2e02a87dd"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-django",
+    "slug": "frameworks-django",
+    "displayName": "Frameworks Django",
+    "description": "--- description: Django 后端开发的约定和最佳实践。 globs: **/*.py",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: Django 后端开发的约定和最佳实践。\nglobs: **/*.py\nalwaysApply: false\n---\n\n# Django 规则\n\n- 使用 `python manage.py startapp` 在项目中创建新应用\n- 在 `models.py` 中保存模型，并在 `admin.py` 中注册以使用管理界面\n- 使用 Django 的 ORM 而非原始 SQL 查询\n- 使用 `select_related` 和 `prefetch_related` 避免 N+1 查询问题：\n\n```python\n# 良好模式\nusers = User.objects.select_related('profile')\nposts = Post.objects.prefetch_related('tags')\n```\n\n- 使用 Django 表单进行验证：\n\n```python\nclass UserForm(forms.ModelForm):\n    class Meta:\n        model = User\n        fields = ['username', 'email']\n```\n\n- 为常见查询创建自定义模型管理器：\n\n```python\nclass ActiveUserManager(models.Manager):\n    def get_queryset(self):\n        return super().get_queryset().filter(is_active=True)\n```\n\n- 使用 Django 内置的身份验证系统\n- 在环境变量中存储设置并通过 `settings.py` 访问",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/django.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/django.mdc",
+      "sha": "fdfffa7f2a46f653fe20a13e11f59816464219e7"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-fastapi",
+    "slug": "frameworks-fastapi",
+    "displayName": "Frameworks Fastapi",
+    "description": "--- description: FastAPI 高性能 Python API 的约定和最佳实践。 globs: **/*.py",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: FastAPI 高性能 Python API 的约定和最佳实践。\nglobs: **/*.py\nalwaysApply: false\n---\n\n# FastAPI 规则\n\n- 为所有函数参数和返回值使用类型提示\n- 使用 Pydantic 模型进行请求和响应验证\n- 在路径操作装饰器中使用适当的 HTTP 方法（@app.get、@app.post 等）\n- 使用依赖注入实现共享逻辑，如数据库连接和身份验证\n- 使用后台任务（background tasks）进行非阻塞操作\n- 使用适当的状态码进行响应（201 表示创建，404 表示未找到等）\n- 使用 APIRouter 按功能或资源组织路由\n- 适当使用路径参数、查询参数和请求体",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/fastapi.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/fastapi.mdc",
+      "sha": "678199e6e293c41278359042af512ccb2aca0332"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-flask",
+    "slug": "frameworks-flask",
+    "displayName": "Frameworks Flask",
+    "description": "--- description: Flask 轻量级 Python Web 应用程序的约定和最佳实践。 globs: **/*.py",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: Flask 轻量级 Python Web 应用程序的约定和最佳实践。\nglobs: **/*.py\nalwaysApply: false\n---\n\n# Flask 规则\n\n- 使用 Blueprints 按功能或资源组织路由\n- 使用 Flask-SQLAlchemy 处理数据库模型和 ORM\n- 使用应用工厂（application factories）实现灵活的应用初始化\n- 使用 Flask 扩展实现常见功能（Flask-Login、Flask-WTF 等）\n- 在环境变量中存储配置\n- 使用 Flask-Migrate 进行数据库迁移\n- 使用错误处理器实现适当的错误处理\n- 使用 Flask-RESTful 或类似工具构建 API",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/flask.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/flask.mdc",
+      "sha": "87e0e4887a125f57a9ffe1d8f270f1225851a20c"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-flutter",
+    "slug": "frameworks-flutter",
+    "displayName": "Frameworks Flutter",
+    "description": "--- description: 该规则解释了 Flutter 小部件模式和跨平台移动开发的最佳实践。 globs: **/*.dart",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: 该规则解释了 Flutter 小部件模式和跨平台移动开发的最佳实践。\nglobs: **/*.dart\nalwaysApply: false\n---\n\n# Flutter 规则\n\n- 对于没有内部状态的 UI 组件使用 StatelessWidget。\n- 对于需要维护状态的组件使用 StatefulWidget：\n\n```dart\nclass Counter extends StatefulWidget {\n  @override\n  _CounterState createState() => _CounterState();\n}\n\nclass _CounterState extends State<Counter> {\n  int _count = 0;\n\n  void _increment() {\n    setState(() { _count++; });\n  }\n\n  @override\n  Widget build(BuildContext context) {\n    return Column(\n      children: [\n        Text('Count: $_count'),\n        ElevatedButton(onPressed: _increment, child: Text('Increment')),\n      ],\n    );\n  }\n}\n```\n\n- 对于复杂应用使用状态管理解决方案（Provider、Bloc、Riverpod）。\n- 使用适当的文件夹结构组织代码（models、screens、widgets、services）。\n- 使用命名路由和 Navigator.pushNamed() 进行导航。\n- 使用 async/await 处理异步操作，并进行适当的错误处理。\n- 使用主题（themes）在整个应用中保持一致的样式。",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/flutter.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/flutter.mdc",
+      "sha": "e324813c976038ac83cd351d83a73df1981299b8"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-nextjs",
+    "slug": "frameworks-nextjs",
+    "displayName": "Frameworks Nextjs",
+    "description": "--- description: 该规则解释了 Next.js 全栈开发的约定和最佳实践。 globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: 该规则解释了 Next.js 全栈开发的约定和最佳实践。\nglobs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx\nalwaysApply: false\n---\n\n# Next.js 规则\n\n- 使用 App Router 结构，在路由目录中使用 `page.tsx` 文件。\n- 客户端组件必须在文件顶部明确标记 `'use client'`。\n- 目录名使用 kebab-case（例如 `components/auth-form`），组件文件使用 PascalCase。\n- 优先使用命名导出而非默认导出，即使用 `export function Button() { /* ... */ }` 而不是 `export default function Button() { /* ... */ }`。\n- 尽量减少 `'use client'` 指令：\n  - 保持大多数组件为 React Server Components (RSC)\n  - 仅在需要交互性时使用客户端组件，并用带有 fallback UI 的 `Suspense` 包装\n  - 为交互元素创建小型客户端组件包装器\n- 尽可能避免不必要的 `useState` 和 `useEffect`：\n  - 使用服务器组件进行数据获取\n  - 使用 React Server Actions 处理表单\n  - 使用 URL 搜索参数实现可共享状态\n- 使用 `nuqs` 管理 URL 搜索参数状态",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/nextjs.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/nextjs.mdc",
+      "sha": "aff88c740e5c6eb35709d077e032035750af15c2"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-react-native",
+    "slug": "frameworks-react-native",
+    "displayName": "Frameworks React Native",
+    "description": "--- description: 该规则解释了 TypeScript、React Native、Expo 和移动 UI 开发的使用方法和最佳实践。 globs: **/*.jsx,**/*.tsx",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "react"
+    ],
+    "content": "---\ndescription: 该规则解释了 TypeScript、React Native、Expo 和移动 UI 开发的使用方法和最佳实践。\nglobs: **/*.jsx,**/*.tsx\nalwaysApply: false\n---\n\n# TypeScript、React Native、Expo 和移动 UI 开发规则\n\n## 代码风格和结构\n- 编写清晰、可读的代码：确保你的代码易于阅读和理解。为变量和函数使用描述性名称。\n- 使用函数组件：优先使用带有钩子（useState, useEffect 等）的函数组件，而非类组件。\n- 组件模块化：将组件拆分为更小、可重用的部分。保持组件专注于单一职责。\n- 按功能组织文件：将相关组件、钩子和样式按功能特性分组到目录中（例如，user-profile）。\n\n## 命名约定\n- 变量和函数：使用驼峰命名法(camelCase)命名变量和函数，并具有描述性（例如，isFetchingData, handleUserInput）。\n- 组件：使用帕斯卡命名法(PascalCase)命名组件（例如，UserProfile）。\n- 目录：使用小写和连字符命名目录（例如，user-profile）。\n\n## TypeScript 使用\n- 所有代码使用 TypeScript；接口(interfaces)优于类型(types)\n- 避免使用枚举(enums)；使用映射(maps)代替\n- 使用带有 TypeScript 接口的函数组件\n- 在 TypeScript 中使用严格模式以提高类型安全性\n\n## 语法和格式\n- 使用 \"function\" 关键字定义纯函数\n- 避���在条件语句中使用不必要的花括号；简单语句使用简洁语法\n- 使用声明式 JSX\n- 使用 Prettier 保持代码格式一致\n\n## UI 和样式\n- 使用 Expo 内置组件实现常见 UI 模式和布局\n- 使用 Flexbox 和 Expo 的 useWindowDimensions 实现响应式设计\n- 使用 styled-components 或 Tailwind CSS 进行组件样式设计\n- 使用 Expo 的 useColorScheme 实现深色模式支持\n- 确保高可访问性(a11y)标准，使用 ARIA 角色和原生可访问性属性\n- 利用 react-native-reanimated 和 react-native-gesture-handler 实现高性能动画和手势\n\n## 安全区域管理\n- 使用 react-native-safe-area-context 中的 SafeAreaProvider 全局管理安全区域\n- 用 SafeAreaView 包装顶层组件，处理 iOS 和 Android 上的刘海、状态栏和其他屏幕缩进\n- 使用 SafeAreaScrollView 处理可滚动内容，确保其尊重安全区域边界\n- 避免为安全区域硬编码内边距或外边距；依赖 SafeAreaView 和上下文钩子\n\n## 性能优化\n- 最小化 useState 和 useEffect 的使用；优先使用 context 和 reducers 进行状态管理\n- 使用 Expo 的 AppLoading 和 SplashScreen 优化应用启动体验\n- 优化图像：在支持的地方使用 WebP 格式，包含尺寸数据，使用 expo-image 实现延迟加载\n- 使用 React 的 Suspense 和动态导入实现代码分割和非关键组件的懒加载\n- 使用 React Native 内置工具和 Expo 调试功能监控性能\n- 通过适当使用组件记忆化、useMemo 和 useCallback 钩子避免不必要的重新渲染\n\n## 导航\n- 使用 react-navigation 进行路由和导航；遵循其栈导航器、标签导航器和抽屉导航器的最佳实践\n- 利用深度链接和通用链接提升用户参与度和导航流程\n- 使用 expo-router 的动态路由以获得更好的导航处理\n\n## 状态管理\n- 使用 React Context 和 useReducer 管理全局状态\n- 利用 react-query 进行数据获取和缓存；避免过多的 API 调用\n- 对于复杂的状态管理，考虑使用 Zustand 或 Redux Toolkit\n- 使用 expo-linking 等库处理 URL 搜索参数\n\n## 错误处理和验证\n- 使用 Zod 进行运行时验证和错误处理\n- 使用 Sentry 或类似服务实现适当的错误日志记录\n- 优先处理错误和边缘情况：\n  - 在函数开始时处理错误\n  - 为错误条件使用提前返回，避免深度嵌套的 if 语句\n  - 避免不必要的 else 语句；使用 if-return 模式\n  - 实现全局错误边界以捕获和处理意外错误\n- 使用 expo-error-reporter 记录和报告生产环境中的错误\n\n## 测试\n- 使用 Jest 和 React Native Testing Library 编写单元测试\n- 使用 Detox 为关键用户流程实现集成测试\n- 使用 Expo 的测试工具在不���环境中运行测试\n- 考虑为组件使用快照测试以确保 UI 一致性\n\n## 安全\n- 清理用户输入以防止 XSS 攻击\n- 使用 react-native-encrypted-storage 安全存储敏感数据\n- 确保使用 HTTPS 和适当的身份验证与 API 进行安全通信\n- 使用 Expo 的安全指南保护应用程序：https://docs.expo.dev/guides/security/\n\n## 国际化 (i18n)\n- 使用 react-native-i18n 或 expo-localization 进行国际化和本地化\n- 支持多语言和 RTL 布局\n- 确保文本缩放和字体调整以提高可访问性\n\n## 关键约定\n1. 依赖 Expo 的托管工作流程简化开发和部署\n2. 优先考虑移动 Web 性能指标（加载时间、卡顿和响应性）\n3. 使用 expo-constants 管理环境变量和配置\n4. 使用 expo-permissions 优雅处理设备权限\n5. 实现 expo-updates 进行空中(OTA)更新\n6. 遵循 Expo 的应用部署和发布最佳实践：https://docs.expo.dev/distribution/introduction/\n7. 通过在 iOS 和 Android 平台上进行广泛测试，确保兼容性\n\n## API 文档\n- 使用 Expo 官方文档设置和配置项目：https://docs.expo.dev/\n\n请参考 Expo 文档获取有关 Views、Blueprints 和 Extensions 的最佳实践详细信息。\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/react-native.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/react-native.mdc",
+      "sha": "116d2dc4c1f06e35ef2133136ea542adebe80d21"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-react",
+    "slug": "frameworks-react",
+    "displayName": "Frameworks React",
+    "description": "--- description: 该规则解释了 React 组件模式、hooks 使用方法和最佳实践。 globs: **/*.jsx,**/*.tsx",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "react"
+    ],
+    "content": "---\ndescription: 该规则解释了 React 组件模式、hooks 使用方法和最佳实践。\nglobs: **/*.jsx,**/*.tsx\nalwaysApply: false\n---\n\n# React 规则\n\n## 组件结构\n- 优先使用函数组件而非类组件\n- 保持组件小巧且专注\n- 将可复用逻辑提取到自定义 hook 中\n- 使用组合而非继承\n- 使用 TypeScript 实现适当的 prop 类型\n- 将大型组件拆分为更小、更专注的组件\n\n## Hooks\n- 遵循 Hooks 的规则\n- 使用自定义 hooks 实现可复用逻辑\n- 保持 hooks 专注且简单\n- 在 useEffect 中使用适当的依赖数组\n- 在需要时在 useEffect 中实现清理功能\n- 避免嵌套 hooks\n\n## 状态管理\n- 使用 useState 管理组件本地状态\n- 使用 useReducer 处理复杂状态逻辑\n- 使用 Context API 共享状态\n- 将状态尽可能靠近使用它的地方\n- 通过适当的状态管理避免 prop drilling\n- 仅在必要时使用状态管理库\n\n## 性能\n- 实现适当的记忆化(useMemo, useCallback)\n- 对开销大的组件使用 React.memo\n- 避免不必要的重新渲染\n- 实现适当的懒加载\n- 在列表中使用适当的 key 属性\n- 分析并优化渲染性能\n\n## 表单\n- 对表单输入使用受控组件\n- 实现适当的表单验证\n- 正确处理表单提交状态\n- 显示适当的加载和错误状态\n- 对复杂表单使用表单库\n- 为表单实现适当的可访问��\n\n## 错误处理\n- 实现 Error Boundaries\n- 正确处理异步错误\n- 显示用户友好的错误信息\n- 实现适当的备用 UI\n- 适当记录错误\n- 优雅处理边缘情况\n\n## 测试\n- 为组件编写单元测试\n- 为复杂流程实现集成测试\n- 使用 React Testing Library\n- 测试用户交互\n- 测试错误场景\n- 实现适当的模拟数据\n\n## 可访问性\n- 使用语义化 HTML 元素\n- 实现适当的 ARIA 属性\n- 确保键盘导航\n- 使用屏幕阅读器测试\n- 管理焦点\n- 为图片提供适当的 alt 文本\n\n## 代码组织\n- 将相关组件组织在一起\n- 使用适当的文件命名约定\n- 实现适当的目录结构\n- 保持样式靠近组件\n- 使用适当的导入/导出\n- 记录复杂的组件逻辑\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/react.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/react.mdc",
+      "sha": "11eda68f9375490c041a568e6b5952ed1c0a7c8f"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-springboot",
+    "slug": "frameworks-springboot",
+    "displayName": "Frameworks Springboot",
+    "description": "--- description: Spring Boot 3 企业级最佳实践规范 globs: **/*.java",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: Spring Boot 3 企业级最佳实践规范\nglobs: **/*.java\nalwaysApply: false\n---\n\n# Spring Boot 3 企业级最佳实践规范\n\n## 1. 配置管理模块\n\n### 1.1 配置文件组织\n- **主配置文件**：`application.yml` 包含通用配置\n- **环境配置**：`application-{profile}.yml` 按环境分离\n- **配置优先级**：命令行参数 > 环境变量 > 配置文件\n- **敏感信息**：使用环境变量或配置中心，禁止硬编码\n\n### 1.2 配置属性绑定\n- 使用 `@ConfigurationProperties` 进行类型安全的配置绑定\n- 配置类使用 `@Validated` 进行参数校验\n- 复杂配置使用嵌套类结构\n- 提供默认值和配置文档\n\n### 1.3 多环境管理\n- **开发环境**：本地数据库，详细日志，热重载\n- **测试环境**：内存数据库，模拟外部服务\n- **生产环境**：外部配置，最小日志级别，性能监控\n\n### 1.4 配置最佳实践\n- 配置项命名使用 kebab-case\n- 布尔值配置明确语义（enabled/disabled）\n- 数值配置包含单位说明\n- 定期审查和清理无用配置\n\n## 2. 依赖注入模块\n\n### 2.1 Bean 定义策略\n- **组件扫描**：使用 `@Component`、`@Service`、`@Repository`、`@Controller`\n- **配置类**：复杂 Bean 使用 `@Configuration` + `@Bean`\n- **条件注册**：使用 `@ConditionalOn*` 注解进行条件装配\n- **作用域管理**：明确 Bean 的生命周期和作用域\n\n### 2.2 依赖注入方式\n- **构造器注入**：推荐方式，保证依赖不可变\n- **字段注入**：仅在测试中使用 `@Autowired`\n- **Setter注入**：可选依赖使用\n- **避免循环依赖**：重构代码结构，使用事件驱动\n\n### 2.3 Bean 生命周期管理\n- 使用 `@PostConstruct` 和 `@PreDestroy` 管理生命周期\n- 实现 `InitializingBean` 和 `DisposableBean` 接口\n- 资源清理在销毁方法中进行\n- 异步初始化使用 `@Async` 注解\n\n### 2.4 依赖注入最佳实践\n- 接口编程，面向抽象依赖\n- 使用 `@Qualifier` 解决多实现问题\n- 避免过度依赖，保持类的单一职责\n- 使用 `@Primary` 指定默认实现\n\n## 3. 安全模块\n\n### 3.1 认证机制\n- **JWT 认证**：无状态认证，适合分布式应用\n- **OAuth2 集成**：第三方登录和授权\n- **多因素认证**：提高安全级别\n- **会话管理**：合理设置超时和并发控制\n\n### 3.2 授权策略\n- **基于角色**：RBAC 模型，角色权限分离\n- **基于资源**：细粒度权限控制\n- **方法级安全**：使用 `@PreAuthorize` 和 `@PostAuthorize`\n- **URL 级安全**：配置路径访问规则\n\n### 3.3 数据安全\n- **输入验证**：所有外部输入必须验证\n- **SQL 注入防护**：使用参数化查询\n- **XSS 防护**：输出编码和 CSP 策略\n- **CSRF 防护**：API 使用 Token 验证\n\n### 3.4 安全配置最佳实践\n- 最小权限原则，默认拒绝访问\n- 敏感操作记录审计日志\n- 定期更新安全依赖\n- 使用 HTTPS 和安全头配置\n\n## 4. 性能优化模块\n\n### 4.1 应用层优化\n- **连接池配置**：数据库、Redis、HTTP 客户端\n- **线程池调优**：异步任务和定时任务\n- **JVM 参数**：堆内存、GC 策略、监控参数\n- **启动优化**：延迟初始化、条件装配\n\n### 4.2 缓存策略\n- **本地缓存**：Caffeine 用于热点数据\n- **分布式缓存**：Redis 用于共享数据\n- **缓存层次**：L1（本地）+ L2（分布式）\n- **缓存更新**：写入时更新、定时刷新、事件驱动\n\n### 4.3 数据库优化\n- **连接池配置**：HikariCP 参数调优\n- **查询优化**：索引使用、分页查询、批量操作\n- **事务管理**：只读事务、事务传播、超时设置\n- **读写分离**：主从配置、路由策略\n\n### 4.4 监控和诊断\n- **应用指标**：JVM、业务指标、自定义指标\n- **性能分析**：慢查询、热点方法识别\n- **告警机制**：阈值监控、异常告警\n- **健康检查**：Actuator 端点监控应用状态\n\n## 5. 数据访问模块\n\n### 5.1 JPA 最佳实践\n- **实体设计**：合理的表关系、字段映射、索引策略\n- **Repository 模式**：继承 JpaRepository，自定义查询方法\n- **查询优化**：使用 `@Query` 注解、原生 SQL、Specification\n- **懒加载策略**：避免 N+1 问题，合理使用 `@EntityGraph`\n\n### 5.2 事务管理\n- **声明式事务**：`@Transactional` 注解配置\n- **事务传播**：根据业务场景选择传播行为\n- **只读事务**：查询操作使用 `readOnly = true`\n- **事务超时**：设置合理的超时时间\n\n### 5.3 数据库连接管理\n- **连接池配置**：最大连接数、超时设置、健康检查\n- **多数据源**：主从分离、分库分表支持\n- **连接泄漏检测**：监控长时间占用的连接\n- **数据库监控**：连接数、慢查询、死锁检测\n\n### 5.4 数据访问安全\n- **参数化查询**：防止 SQL 注入\n- **数据脱敏**：敏感数据加密存储\n- **访问控制**：数据库用户权限最小化\n- **审计日志**：记录数据变更操作\n\n## 6. API 设计模块（RESTful）\n\n### 6.1 URL 设计规范\n- **资源命名**：使用名词复数形式，避免动词\n- **层次结构**：体现资源间的关系\n- **版本控制**：URL 路径或请求头中包含版本信息\n- **查询参数**：过滤、排序、分页使用查询参数\n\n### 6.2 HTTP 方法使用\n- **GET**：获取资源，幂等操作\n- **POST**：创建资源，非幂等操作\n- **PUT**：完整更新资源，幂等操作\n- **PATCH**：部分更新资源\n- **DELETE**：删除资源，幂等操作\n\n### 6.3 响应设计\n- **状态码**：正确使用 HTTP 状态码\n- **响应格式**：统一的 JSON 响应结构\n- **错误处理**：标准化错误响应格式\n- **分页响应**：包含总数、页码、页大小信息\n\n### 6.4 API 文档和测试\n- **OpenAPI 规范**：使用 Swagger 生成文档\n- **接口测试**：单元测试、集成测试、契约测试\n- **版本兼容**：向后兼容性保证\n- **性能测试**：接口响应时间和并发测试\n\n## 7. 异常处理模块\n\n### 7.1 异常分类\n- **业务异常**：可预期的业务逻辑异常\n- **系统异常**：不可预期的技术异常\n- **验证异常**：参数校验失败异常\n- **外部服务异常**：第三方服务调用异常\n\n### 7.2 异常处理策略\n- **全局异常处理**：使用 `@ControllerAdvice` 统一处理\n- **异常转换**：将底层异常转换为业务异常\n- **异常日志**：记录异常堆栈和上下文信息\n- **用户友好**：返回用户可理解的错误信息\n\n### 7.3 异常响应格式\n- **错误码**：业务错误码和 HTTP 状态码\n- **错误信息**：简洁明了的错误描述\n- **详细信息**：开发环境提供详细错误信息\n- **请求追踪**：包含请求 ID 便于问题定位\n\n### 7.4 异常监控\n- **异常统计**：异常类型、频率统计\n- **告警机制**：异常阈值告警\n- **异常分析**：定期分析异常趋势\n- **异常恢复**：自动重试和降级策略\n\n## 8. 测试模块\n\n### 8.1 测试分层策略\n- **单元测试**：测试单个类或方法，使用 Mock\n- **集成测试**：测试组件间交互，使用 TestContainers\n- **端到端测试**：完整业务流程测试\n- **性能测试**：负载测试、压力测试\n\n### 8.2 测试工具和框架\n- **JUnit 5**：测试框架，支持参数化测试\n- **Mockito**：Mock 框架，模拟依赖对象\n- **TestContainers**：集成测试中使用真实数据库\n- **WireMock**：模拟外部 HTTP 服务\n\n### 8.3 测试数据管理\n- **测试数据隔离**：每个测试独立的数据环境\n- **数据准备**：使用 `@Sql` 或 Builder 模式\n- **数据清理**：测试后清理数据，避免影响其他测试\n- **测试数据工厂**：统一的测试数据创建\n\n### 8.4 测试质量保证\n- **代码覆盖率**：目标覆盖率 80% 以上\n- **测试命名**：清晰的测试方法命名\n- **断言明确**：使用有意义的断言消息\n- **测试维护**：定期更新和重构测试代码\n\n## 9. 日志记录模块\n\n### 9.1 日志级别管理\n- **ERROR**：系统错误，需要立即处理\n- **WARN**：警告信息，需要关注\n- **INFO**：重要业务信息，正常流程记录\n- **DEBUG**：调试信息，开发环境使用\n\n### 9.2 日志内容规范\n- **结构化日志**：使用 JSON 格式，便于解析\n- **上下文信息**：包含用户 ID、请求 ID、业务标识\n- **敏感信息**：避免记录密码、身份证等敏感数据\n- **性能信息**：记录关键操作的执行时间\n\n### 9.3 日志输出配置\n- **控制台输出**：开发环境使用，格式化显示\n- **文件输出**：生产环境使用，按日期滚动\n- **远程日志**：集中式日志收集，如 ELK Stack\n- **日志压缩**：历史日志压缩存储\n\n### 9.4 日志监控和分析\n- **日志聚合**：统一收集和存储\n- **实时监控**：关键错误实时告警\n- **日志分析**：业务指标分析、异常趋势分析\n- **日志检索**：快速定位问题日志\n\n## 10. 应用监控模块\n\n### 10.1 Spring Boot Actuator\n- **端点配置**：暴露必要的监控端点\n- **健康检查**：自定义健康指示器\n- **指标收集**：JVM、应用、业务指标\n- **信息端点**：应用版本、构建信息\n\n### 10.2 自定义监控\n- **业务指标**：使用 Micrometer 收集业务数据\n- **性能监控**：方法执行时间、数据库查询性能\n- **错误监控**：异常统计和分析\n- **用户行为**：关键业务操作追踪\n\n### 10.3 日志与监控集成\n- **结构化日志**：便于监控系统解析\n- **关键事件记录**：业务关键节点日志\n- **性能日志**：慢操作和资源使用情况\n- **告警配置**：基于日志和指标的告警\n\n### 10.4 生产环境监控\n- **应用状态**：启动、运行、关闭状态监控\n- **资源使用**：内存、CPU、线程池状态\n- **外部依赖**：数据库、缓存、第三方服务状态\n- **业务监控**：核心业务指标实时监控\n\n## 11. 代码质量模块\n\n### 11.1 编码规范\n- **命名规范**：类名、方法名、变量名清晰表达意图\n- **代码结构**：合理的包结构和类层次\n- **注释规范**：必要的类和方法注释\n- **代码复用**：避免重复代码，提取公共方法\n\n### 11.2 设计原则\n- **SOLID 原则**：单一职责、开闭原则等\n- **DRY 原则**：不重复自己\n- **KISS 原则**：保持简单\n- **YAGNI 原则**：你不会需要它\n\n### 11.3 代码审查\n- **Pull Request**：代码合并前必须审查\n- **审查清单**：功能、性能、安全、可维护性\n- **自动化检查**：静态代码分析工具\n- **知识分享**：通过代码审查传播最佳实践\n\n### 11.4 重构策略\n- **持续重构**：小步快跑，持续改进\n- **测试保护**：重构前确保测试覆盖\n- **重构时机**：新功能开发时同步重构\n- **技术债务**：定期评估和偿还技术债务",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/springboot.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/springboot.mdc",
+      "sha": "ba78f4c5191b1bdda2c9bea8fd33c45e03e6ec81"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-swiftui",
+    "slug": "frameworks-swiftui",
+    "displayName": "Frameworks Swiftui",
+    "description": "--- description: 该规则解释了 SwiftUI 在 iOS、macOS、watchOS 和 tvOS 开发中的模式和最佳实践。 globs: **/*.swift",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: 该规则解释了 SwiftUI 在 iOS、macOS、watchOS 和 tvOS 开发中的模式和最佳实践。\nglobs: **/*.swift\nalwaysApply: false\n---\n\n# SwiftUI 规则\n\n- 使用结构体（struct）创建视图，并保持其小巧和专注\n- 使用 @State 管理简单的视图本地状态\n- 使用带有 @Published 的 @ObservableObject 管理共享状态\n- 使用 @Binding 将可变状态传递给子视图\n- 创建自定义 ViewModifiers 实现可复用的样式\n- 使用环境对象（environment objects）进行依赖注入\n- 对大型集合使用 LazyVStack 和 LazyHStack\n- 将复杂的视图逻辑提取到单独的组件中",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/swiftui.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/swiftui.mdc",
+      "sha": "223e371f16bbafcb997fad7a471ad1165f637f66"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-tailwind",
+    "slug": "frameworks-tailwind",
+    "displayName": "Frameworks Tailwind",
+    "description": "--- description: 该规则解释了 Tailwind CSS 约定、实用工具类和现代 UI 开发的最佳实践。 globs: **/*.css",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: 该规则解释了 Tailwind CSS 约定、实用工具类和现代 UI 开发的最佳实践。\nglobs: **/*.css\nalwaysApply: false\n---\n\n# Tailwind CSS 规则\n\n- 使用响应式前缀实现移动优先设计：\n\n```html\n<div class=\"w-full md:w-1/2 lg:w-1/3\">\n  <!-- 移动设备上全宽，中等屏幕上占一半，大屏幕上占三分之一 -->\n</div>\n```\n\n- 为交互元素使用状态变体：\n\n```html\n<button class=\"bg-blue-500 hover:bg-blue-600 focus:ring-2\">\n  点击我\n</button>\n```\n\n- 必要时使用 @apply 处理重复模式：\n\n```css\n@layer components {\n  .btn-primary {\n    @apply px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600;\n  }\n}\n```\n\n- 对特定需求使用任意值：\n\n```html\n<div class=\"top-[117px] grid-cols-[1fr_2fr]\">\n  <!-- 自定义定位和网格布局 -->\n</div>\n```\n\n- 使用间距工具实现一致的布局：\n\n```html\n<div class=\"space-y-4\">\n  <div>项目 1</div>\n  <div>项目 2</div>\n</div>\n```",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/tailwind.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/tailwind.mdc",
+      "sha": "3802332cc7d9cb099effb13b92e068c9ebe6e2de"
+    }
+  },
+  {
+    "name": "flyeric0212-frameworks-vuejs",
+    "slug": "frameworks-vuejs",
+    "displayName": "Frameworks Vuejs",
+    "description": "--- description: Vue.js 编码规则和最佳实践 globs: **/*.vue",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "vue"
+    ],
+    "content": "---\ndescription: Vue.js 编码规则和最佳实践\nglobs: **/*.vue\nalwaysApply: false\n---\n\n# Vue.js 规则\n\n## 组件结构\n- 使用组合式 API 而非选项式 API\n- 保持组件小巧且专注\n- 正确集成 TypeScript\n- 实现适当的 props 验证\n- 使用正确的 emit 声明\n- 保持模板逻辑简洁\n\n## 组合式 API\n- 正确使用 ref 和 reactive\n- 实现适当的生命周期钩子\n- 使用 composables 实现可复用逻辑\n- 保持 setup 函数整洁\n- 正确使用计算属性\n- 实现适当的侦听器\n\n## 状态管理\n- 使用 Pinia 进行状态管理\n- 保持 stores 模块化\n- 使用适当的状态组合\n- 实现适当的 actions\n- 正确使用 getters\n- 适当处理异步状态\n\n## 性能\n- 正确使用组件懒加载\n- 实现适当的缓存\n- 正确使用计算属性\n- 避免不必要的侦听器\n- 正确使用 v-show 与 v-if\n- 实现适当的 key 管理\n\n## 路由\n- 正确使用 Vue Router\n- 实现适当的导航守卫\n- 正确使用路由元字段\n- 适当处理路由参数\n- 实现适当的懒加载\n- 使用适当的导航方法\n\n## 表单\n- 正确使用 v-model\n- 实现适当的验证\n- 适当处理表单提交\n- 显示适当的加载状态\n- 使用适当的错误处理\n- 实现适当的表单重置\n\n## TypeScript 集成\n- 使用适当的组件类型定义\n- 实现适当的 prop 类型\n- 使用适当的 emit 声明\n- 处理适当的类型推断\n- 使用适当的 composable 类型\n- 实现适当的 store 类型\n\n## 测试\n- 编写适当的单元测试\n- 实现适当的组件测试\n- 正确使用 Vue Test Utils\n- 适当测试 composables\n- 实现适当的模拟\n- 测试异步操作\n\n## 最佳实践\n- 遵循 Vue 风格指南\n- 使用适当的命名约定\n- 保持组件组织有序\n- 实现适当的错误处理\n- 使用适当的事件处理\n- 为复杂逻辑编写文档\n\n## 构建和工具\n- 使用 Vite 进行开发\n- 配置适当的构建设置\n- 正确使用环境变量\n- 实现适当的代码分割\n- 使用适当的资源处理\n- 配置适当的优化\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/frameworks/vuejs.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "frameworks/vuejs.mdc",
+      "sha": "3f86cd6fb3f33c3784d9a6fee2e15e2ea9a781fb"
+    }
+  },
+  {
+    "name": "flyeric0212-languages-c",
+    "slug": "languages-c",
+    "displayName": "Languages C++",
+    "description": "--- description: c++ 编码规则和最佳实践。 globs: **/*.cpp, **/*.hpp",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: c++ 编码规则和最佳实践。\nglobs: **/*.cpp, **/*.hpp\nalwaysApply: false\n---\n\n# C++ 规则\n\n你是一位精通现代 C++ (C++17/20)、STL 和系统级编程的高级 C++ 开发者。\n\n## 代码风格和结构\n- 编写简洁、符合习惯的 C++ 代码，提供准确的示例。\n- 遵循现代 C++ 约定和最佳实践。\n- 根据需要适当使用面向对象、过程式或函数式编程模式。\n- 利用 STL 和标准算法进行集合操作。\n- 使用描述性的变量和方法名称（例如，'isUserSignedIn'，'calculateTotal'）。\n- 将文件结构化为头文件（*.hpp）和实现文件（*.cpp），并进行合理的关注点分离。\n\n## 命名约定\n- 类名使用 PascalCase。\n- 变量名和方法使用 camelCase。\n- 常量和宏使用 SCREAMING_SNAKE_CASE。\n- 成员变量前缀使用下划线或 m_（例如，`_userId`，`m_userId`）。\n- 使用命名空间逻辑地组织代码。\n\n## C++ 特性使用\n- 优先使用现代 C++ 特性（例如，auto、基于范围的循环、智能指针）。\n- 使用 `std::unique_ptr` 和 `std::shared_ptr` 进行内存管理。\n- 优先使用 `std::optional`、`std::variant` 和 `std::any` 作为类型安全的替代方案。\n- 使用 `constexpr` 和 `const` 优化编译时计算。\n- 使用 `std::string_view` 进行只读字符串操作，避免不必要的复制。\n\n## 语法和格式\n- 遵循一致的编码风格，如 Google C++ 风格指南或团队标准。\n- 控制结构和方法的大括号放在同一行。\n- 使用清晰一致的注释实践。\n\n## 错误处理和验证\n- 使用异常进行错误处理（例如，`std::runtime_error`，`std::invalid_argument`）。\n- 使用 RAII 进行资源管理，避免内存泄漏。\n- 在函数边界验证输入。\n- 使用日志库记录错误（例如，spdlog、Boost.Log）。\n\n## 性能优化\n- 避免不必要的堆分配；尽可能优先使用基于栈的对象。\n- 使用 `std::move` 启用移动语义并避免拷贝。\n- 使用 `<algorithm>` 中的算法优化循环（例如，`std::sort`，`std::for_each`）。\n- 使用 Valgrind 或 Perf 等工具分析和优化关键部分。\n\n## 关键约定\n- 使用智能指针而非原始指针以提高内存安全性。\n- 避免全局变量；谨慎使用单例模式。\n- 使用 `enum class` 实现强类型枚举。\n- 在类中分离接口和实现。\n- 明智地使用模板和元编程来实现通用解决方案。\n\n## 测试\n- 使用 Google Test (GTest) 或 Catch2 等框架编写单元测试。\n- 使用 Google Mock 等库模拟依赖。\n- 为系统组件实现集成测试。\n\n## 安全性\n- 使用安全编码实践避免漏洞（例如，缓冲区溢出、悬挂指针）。\n- 优先使用 `std::array` 或 `std::vector` 而非原始数组。\n- 避免 C 风格的类型转换；必要时使用 `static_cast`、`dynamic_cast` 或 `reinterpret_cast`。\n- 在函数和成员变量中强制实施常量正确性。\n\n## 文档\n- 为类、方法和关键逻辑编写清晰的注释。\n- 使用 Doxygen 生成 API 文档。\n- 记录代码的假设、约束和预期行为。\n\n遵循官方 ISO C++ 标准和指南，获取现代 C++ 开发的最佳实践。\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/languages/c++.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "languages/c++.mdc",
+      "sha": "fd6f85cb716ee2c07ee21e80c83c30fea018f238"
+    }
+  },
+  {
+    "name": "flyeric0212-languages-css",
+    "slug": "languages-css",
+    "displayName": "Languages Css",
+    "description": "--- description: CSS 和样式规范 globs: *.css, *.scss, *.less, *.styled.ts",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: CSS 和样式规范\nglobs: *.css, *.scss, *.less, *.styled.ts\nalwaysApply: false\n---\n\n# CSS 和样式规范\n\n## 样式架构原则\n- **组件化样式**：每个组件的样式应该封装在组件内部\n- **样式隔离**：避免全局样式污染，使用CSS-in-JS或CSS Modules\n- **主题一致性**：使用设计系统和主题变量保持视觉一致性\n- **响应式设计**：优先考虑移动端，采用移动优先的响应式设计\n- **性能优化**：避免不必要的样式重绘和重排\n\n## Styled Components 规范\n- **组件命名**：使用描述性的组件名，以 `Styled` 开头\n  ```typescript\n  const StyledCard = styled.div`\n    padding: 16px;\n    border-radius: 8px;\n    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);\n  `;\n  ```\n\n- **主题使用**：通过 `theme` 属性访问主题变量\n  ```typescript\n  const StyledButton = styled.button`\n    background-color: ${({ theme }) => theme.colors.primary};\n    color: ${({ theme }) => theme.colors.white};\n  `;\n  ```\n\n- **条件样式**：使用 props 进行条件样式设置\n  ```typescript\n  const StyledButton = styled.button<{ variant: 'primary' | 'secondary' }>`\n    background-color: ${({ variant, theme }) =>\n      variant === 'primary' ? theme.colors.primary : theme.colors.secondary\n    };\n  `;\n  ```\n\n- **样式继承**：合理使用样式继承减少重复代码\n  ```typescript\n  const BaseButton = styled.button`\n    padding: 8px 16px;\n    border-radius: 4px;\n    border: none;\n  `;\n\n  const PrimaryButton = styled(BaseButton)`\n    background-color: ${({ theme }) => theme.colors.primary};\n  `;\n  ```\n\n## Ant Design 定制规范\n- **主题定制**：使用 ConfigProvider 进行全局主题定制\n  ```typescript\n  const theme = {\n    token: {\n      colorPrimary: '#1890ff',\n      borderRadius: 6,\n      fontSize: 14,\n    },\n  };\n  ```\n\n- **组件样式覆盖**：使用 CSS-in-JS 覆盖 Ant Design 组件样式\n  ```typescript\n  const StyledTable = styled(Table)`\n    .ant-table-thead > tr > th {\n      background-color: #fafafa;\n      font-weight: 600;\n    }\n  `;\n  ```\n\n- **自定义组件**：基于 Ant Design 组件创建自定义组件\n  ```typescript\n  const CustomCard = styled(Card)`\n    border-radius: 12px;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);\n  `;\n  ```\n\n## 响应式设计规范\n- **断点定义**：使用标准断点进行响应式设计\n  ```typescript\n  const breakpoints = {\n    xs: '480px',\n    sm: '576px',\n    md: '768px',\n    lg: '992px',\n    xl: '1200px',\n    xxl: '1600px',\n  };\n  ```\n\n- **媒体查询**：使用 CSS-in-JS 编写媒体查询\n  ```typescript\n  const ResponsiveContainer = styled.div`\n    padding: 16px;\n\n    @media (min-width: ${({ theme }) => theme.breakpoints.md}) {\n      padding: 24px;\n    }\n  `;\n  ```\n\n- **Flex布局**：优先使用 Flexbox 进行布局\n  ```typescript\n  const FlexContainer = styled.div`\n    display: flex;\n    flex-direction: column;\n    gap: 16px;\n\n    @media (min-width: ${({ theme }) => theme.breakpoints.md}) {\n      flex-direction: row;\n    }\n  `;\n  ```\n\n## 颜色和主题规范\n- **颜色系统**：定义完整的颜色系统\n  ```typescript\n  const colors = {\n    primary: '#1890ff',\n    success: '#52c41a',\n    warning: '#faad14',\n    error: '#ff4d4f',\n    text: {\n      primary: '#262626',\n      secondary: '#595959',\n      disabled: '#bfbfbf',\n    },\n    background: {\n      primary: '#ffffff',\n      secondary: '#fafafa',\n      disabled: '#f5f5f5',\n    },\n  };\n  ```\n\n- **暗色主题**：支持暗色主题切换\n  ```typescript\n  const darkTheme = {\n    colors: {\n      primary: '#1890ff',\n      background: {\n        primary: '#141414',\n        secondary: '#1f1f1f',\n      },\n      text: {\n        primary: '#ffffff',\n        secondary: '#a6a6a6',\n      },\n    },\n  };\n  ```\n\n## 动画和过渡规范\n- **过渡效果**：为交互元素添加适当的过渡效果\n  ```typescript\n  const AnimatedButton = styled.button`\n    transition: all 0.3s ease;\n\n    &:hover {\n      transform: translateY(-2px);\n      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);\n    }\n  `;\n  ```\n\n- **加载动画**：使用 CSS 动画创建加载效果\n  ```typescript\n  const LoadingSpinner = styled.div`\n    @keyframes spin {\n      0% { transform: rotate(0deg); }\n      100% { transform: rotate(360deg); }\n    }\n\n    animation: spin 1s linear infinite;\n  `;\n  ```\n\n## 布局规范\n- **网格系统**：使用 CSS Grid 或 Flexbox 创建网格布局\n  ```typescript\n  const GridContainer = styled.div`\n    display: grid;\n    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\n    gap: 24px;\n  `;\n  ```\n\n- **间距系统**：使用统一的间距系统\n  ```typescript\n  const spacing = {\n    xs: '4px',\n    sm: '8px',\n    md: '16px',\n    lg: '24px',\n    xl: '32px',\n    xxl: '48px',\n  };\n  ```\n\n## 字体和排版规范\n- **字体系统**：定义完整的字体系统\n  ```typescript\n  const typography = {\n    fontFamily: {\n      primary: '-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto',\n      mono: '\"SFMono-Regular\", Consolas, \"Liberation Mono\", Menlo',\n    },\n    fontSize: {\n      xs: '12px',\n      sm: '14px',\n      md: '16px',\n      lg: '18px',\n      xl: '20px',\n      xxl: '24px',\n    },\n    fontWeight: {\n      normal: 400,\n      medium: 500,\n      semibold: 600,\n      bold: 700,\n    },\n  };\n  ```\n\n- **行高和字间距**：设置合适的行高和字间距\n  ```typescript\n  const TextComponent = styled.p`\n    line-height: 1.6;\n    letter-spacing: 0.02em;\n  `;\n  ```\n\n## 性能优化规范\n- **CSS优化**：避免深层嵌套和复杂选择器\n- **重绘重排**：避免频繁的样式变更导致的重绘重排\n- **CSS-in-JS优化**：使用 `shouldForwardProp` 避免不必要的 DOM 属性\n  ```typescript\n  const StyledDiv = styled.div.withConfig({\n    shouldForwardProp: (prop) => !['customProp'].includes(prop),\n  })<{ customProp: boolean }>`\n    color: ${({ customProp }) => customProp ? 'red' : 'blue'};\n  `;\n  ```\n\n## 可访问性规范\n- **对比度**：确保文本和背景有足够的对比度\n- **焦点状态**：为可交互元素提供清晰的焦点状态\n  ```typescript\n  const AccessibleButton = styled.button`\n    &:focus {\n      outline: 2px solid ${({ theme }) => theme.colors.primary};\n      outline-offset: 2px;\n    }\n  `;\n  ```\n\n- **语义化**：使用语义化的 HTML 元素和 ARIA 属性\n\n## 代码组织规范\n- **文件结构**：样式文件与组件文件放在同一目录\n- **样式分离**：将复杂的样式逻辑提取到单独的样式文件\n- **主题文件**：将主题相关的配置集中管理\n- **工具函数**：创建样式工具函数提高复用性\n  ```typescript\n  const getSpacing = (size: keyof typeof spacing) => spacing[size];\n  const getColor = (color: string) => ({ theme }: { theme: any }) => theme.colors[color];\n  ```\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/languages/css.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "languages/css.mdc",
+      "sha": "05f2461363561c31d93a3bd296c23548f8687704"
+    }
+  },
+  {
+    "name": "flyeric0212-languages-golang",
+    "slug": "languages-golang",
+    "displayName": "Languages Golang",
+    "description": "--- description: golang 编码规则和最佳实践。 globs: **/*.go",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: golang 编码规则和最佳实践。\nglobs: **/*.go\nalwaysApply: false\n---\n\n# Golang 规则\n\n你是一位专业的AI编程助手，专门使用Go标准库的net/http包和Go 1.22中新引入的ServeMux构建API。\n\n始终使用最新稳定版本的Go（1.22或更新版本），并熟悉RESTful API设计原则、最佳实践和Go语言惯用法。\n\n- 严格按照用户的要求一丝不苟地执行。\n- 首先逐步思考 - 详细描述你的API结构、端点和数据流计划，以伪代码的形式详细写出。\n- 确认计划后，开始编写代码！\n- 为API编写正确、最新、无bug、功能完整、安全且高效的Go代码。\n- 使用标准库的net/http包进行API开发：\n  - 利用Go 1.22中新引入的ServeMux进行路由\n  - 正确处理不同的HTTP方法（GET、POST、PUT、DELETE等）\n  - 使用适当签名的方法处理器（例如，func(w http.ResponseWriter, r *http.Request)）\n  - 在路由中利用通配符匹配和正则表达式支持等新特性\n- 实现适当的错误处理，包括在有益时使用自定义错误类型。\n- 使用适当的状态码并正确格式化JSON响应。\n- 为API端点实现输入验证。\n- 在有利于API性能时利用Go的内置并发特性。\n- 遵循RESTful API设计原则和最佳实践。\n- 包含必要的导入、包声明和任何所需的设置代码。\n- 使用标准库的log包或简单的自定义日志记录器实现适当的日志记录。\n- 考虑为横切关注点实现中间件（例如，日志记录、身份验证）。\n- 在适当时实现速率限制和认证/授权，使用标准库功能或简单的自定义实现。\n- 在API实现中不留todos、占位符或缺失部分。\n- 在解释时保持简洁，但为复杂逻辑或Go特定惯用法提供简短注释。\n- 如果对最佳实践或实现细节不确定，请说明而不是猜测。\n- 使用Go的testing包提供测试API端点的建议。\n\n在API设计和实现中始终优先考虑安全性、可扩展性和可维护性。利用Go标准库的强大和简洁创建高效且符合语言习惯的API。\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/languages/golang.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "languages/golang.mdc",
+      "sha": "aa5bea20add07b44ce6a184b0dc13ab93301976d"
+    }
+  },
+  {
+    "name": "flyeric0212-languages-java",
+    "slug": "languages-java",
+    "displayName": "Languages Java",
+    "description": "--- description: 该规则解释了 Java 的约定和最佳实践。 globs: **/*.java",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "languages",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "java"
+    ],
+    "content": "---\ndescription: 该规则解释了 Java 的约定和最佳实践。\nglobs: **/*.java\nalwaysApply: false\n---\n\n# Java 语言规范\n\n## Java 21 特性使用\n- **Record类**：用于不可变数据传输对象\n  ```java\n  public record UserInfo(String name, String email, LocalDateTime createdAt) {}\n  ```\n\n- **Pattern Matching**：在switch表达式中使用模式匹配\n  ```java\n  public String formatValue(Object value) {\n      return switch (value) {\n          case String s -> \"String: \" + s;\n          case Integer i -> \"Number: \" + i;\n          case null -> \"null value\";\n          default -> \"Unknown: \" + value.toString();\n      };\n  }\n  ```\n\n- **Text Blocks**：用于多行字符串，特别是SQL和JSON\n  ```java\n  String sql = \"\"\"\n      SELECT u.name, u.email\n      FROM users u\n      WHERE u.status = 'ACTIVE'\n      ORDER BY u.created_at DESC\n      \"\"\";\n  ```\n\n- **Sealed Classes**：用于受限的类层次结构\n  ```java\n  public sealed class Result<T> permits Success, Error {\n      // 基类定义\n  }\n\n  public final class Success<T> extends Result<T> {\n      private final T data;\n      // 实现\n  }\n  ```\n\n- **Virtual Threads**：用于高并发场景\n  ```java\n  try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n      executor.submit(() -> {\n          // 高并发任务\n      });\n  }\n  ```\n\n## 命名约定\n- **类名**：使用帕斯卡命名法（如 `UserController`、`OrderService`）\n- **方法和变量名**：使用驼峰命名法（如 `findUserById`、`isOrderValid`）\n- **常量**：使用全大写下划线分隔（如 `MAX_RETRY_ATTEMPTS`、`DEFAULT_PAGE_SIZE`）\n- **包名**：使用小写，按功能模块划分（如 `com.example.user.domain`）\n\n## 代码风格\n- **缩进**：使用4个空格，不使用Tab\n- **行长度**：每行不超过120个字符\n- **大括号**：使用Egyptian风格（开括号不换行）\n- **空行**：方法间使用一个空行分隔，逻辑块间使用空行分隔\n\n## 异常处理\n- **检查异常**：谨慎使用检查异常，优先使用运行时异常\n- **异常链**：保持异常链，不丢失原始异常信息\n  ```java\n  try {\n      // 可能抛出异常的代码\n  } catch (SpecificException e) {\n      throw new BusinessException(\"业务处理失败\", e);\n  }\n  ```\n\n- **资源管理**：使用try-with-resources自动管理资源\n  ```java\n  try (var reader = Files.newBufferedReader(path)) {\n      // 使用reader\n  }\n  ```\n\n## 集合和流处理\n- **集合选择**：根据使用场景选择合适的集合类型\n  - `ArrayList`：随机访问频繁\n  - `LinkedList`：插入删除频繁\n  - `HashMap`：键值对存储\n  - `TreeMap`：需要排序的键值对\n\n- **Stream API**：充分利用Stream API进行函数式编程\n  ```java\n  List<String> activeUserNames = users.stream()\n      .filter(user -> user.isActive())\n      .map(User::getName)\n      .sorted()\n      .toList();\n  ```\n\n## 并发编程\n- **线程安全**：优先使用不可变对象和线程安全的集合\n- **锁机制**：合理使用synchronized、ReentrantLock等锁机制\n- **并发集合**：使用ConcurrentHashMap、CopyOnWriteArrayList等并发集合\n- **CompletableFuture**：使用CompletableFuture处理异步操作\n  ```java\n  CompletableFuture<String> future = CompletableFuture\n      .supplyAsync(() -> fetchData())\n      .thenApply(data -> processData(data))\n      .exceptionally(throwable -> \"默认值\");\n  ```\n\n## 内存管理\n- **对象创建**：避免在循环中创建不必要的对象\n- **字符串处理**：大量字符串操作使用StringBuilder\n- **集合大小**：预估集合大小，避免频繁扩容\n- **弱引用**：适当使用WeakReference避免内存泄漏\n\n## 泛型使用\n- **类型安全**：充分利用泛型提供类型安全\n- **通配符**：正确使用上界通配符（? extends）和下界通配符（? super）\n- **类型擦除**：理解泛型类型擦除的限制\n  ```java\n  public <T extends Comparable<T>> T findMax(List<T> list) {\n      return list.stream().max(Comparable::compareTo).orElse(null);\n  }\n  ```\n\n## 注解使用\n- **标准注解**：正确使用@Override、@Deprecated、@SuppressWarnings等\n- **自定义注解**：合理创建自定义注解简化代码\n- **注解处理**：了解编译时和运行时注解处理\n\n## 测试规范\n- **单元测试**：使用JUnit 5编写单元测试\n- **测试命名**：测试方法使用描述性命名（如 `shouldReturnUserWhenValidIdProvided`）\n- **断言**：使用AssertJ提供更好的断言体验\n  ```java\n  @Test\n  void shouldCalculateCorrectTotal() {\n      // Given\n      List<Item> items = List.of(\n          new Item(\"item1\", 10.0),\n          new Item(\"item2\", 20.0)\n      );\n\n      // When\n      double total = calculator.calculateTotal(items);\n\n      // Then\n      assertThat(total).isEqualTo(30.0);\n  }\n  ```\n\n## 性能优化\n- **算法复杂度**：选择合适的算法和数据结构\n- **缓存策略**：合理使用缓存减少重复计算\n- **懒加载**：对于昂贵的操作使用懒加载\n- **批量处理**：批量处理数据库操作和网络请求\n\n## 代码质量\n- **单一职责**：每个类和方法只负责一个功能\n- **开闭原则**：对扩展开放，对修改关闭\n- **依赖倒置**：依赖抽象而不是具体实现\n- **接口隔离**：使用小而专一的接口\n- **代码复用**：提取公共逻辑，避免重复代码\n\n## 文档和注释\n- **JavaDoc**：为公共API编写完整的JavaDoc\n- **代码注释**：为复杂逻辑添加解释性注释\n- **TODO标记**：使用TODO标记待完成的工作\n  ```java\n  /**\n   * 计算用户积分\n   *\n   * @param userId 用户ID\n   * @param actions 用户行为列表\n   * @return 计算得出的积分值\n   * @throws UserNotFoundException 当用户不存在时抛出\n   */\n  public int calculatePoints(Long userId, List<UserAction> actions) {\n      // TODO: 实现积分计算逻辑\n      return 0;\n  }\n  ```\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/languages/java.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "languages/java.mdc",
+      "sha": "147fdab948770661f22e5d5ecbbf6c92efb28e53"
+    }
+  },
+  {
+    "name": "flyeric0212-languages-kotlin",
+    "slug": "languages-kotlin",
+    "displayName": "Languages Kotlin",
+    "description": "--- description: Kotlin 开发约定和最佳实践 globs: **/*.kt",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: Kotlin 开发约定和最佳实践\nglobs: **/*.kt\nalwaysApply: false\n---\n\n## Kotlin 开发规范\n\n### 基本原则\n\n- 优先使用类型推断，必要时显式声明类型提高可读性\n- 避免使用 `Any`，创建具体的类型定义\n- 优先使用 `val` 而非 `var`，保持不可变性\n- 使用 Kotlin 的空安全特性，避免显式 null 检查\n- 避免魔法数字，定义有意义的常量\n\n### 命名规范\n\n- **类和接口**：PascalCase (`UserRepository`, `PaymentService`)\n- **函数和变量**：camelCase (`getUserById`, `isValid`)\n- **常量和枚举值**：UPPER_SNAKE_CASE (`MAX_RETRY_COUNT`, `DEFAULT_TIMEOUT`)\n- **包名**：全小写，使用点分隔 (`com.example.userservice`)\n- **文件名**：PascalCase，与主要类名一致\n- **布尔变量**：使用 `is`、`has`、`can`、`should` 前缀 (`isLoading`, `hasPermission`, `canDelete`)\n- 使用完整单词而非缩写，确保拼写正确\n  - 标准缩写除外：API、URL、HTTP、JSON 等\n  - 常见缩写：id、ctx、req、res\n\n### 函数设计\n\n- 编写简短且单一目的的函数（建议 ≤20 行）\n- 使用表达式函数简化单行返回：`fun square(x: Int) = x * x`\n- 函数名以动词开头，体现其行为\n- 优先使用高阶函数和扩展函数\n- 使用命名参数提高可读性：`createUser(name = \"John\", age = 25)`\n- 合理使用默认参数值，减少函数重载\n- 通过早期返回和提取工具函数避免深层嵌套\n- 使用单一抽象级别原则\n\n### 类和数据结构\n\n- **数据类**：用于纯数据承载，自动生成 `equals`、`hashCode`、`toString`\n- **密封类**：用于有限状态表示，替代枚举的复杂场景\n- **密封接口**：Kotlin 1.5+ 用于更灵活的类型层次\n- **对象类**：用于单例模式和工具类\n- **内联类**：用于类型安全的原始类型包装\n- 优先使用组合而非继承\n- 遵循 SOLID 原则\n- 保持类的职责单一，避免过大的类（建议 ≤200 行，≤10 个公共方法）\n- 不要滥用原始类型，将相关数据封装在复合类型中\n\n### 空安全和错误处理\n\n- 使用 `?.` 安全调用操作符\n- 使用 `?:` Elvis 操作符提供默认值\n- 使用 `!!` 操作符需要有充分理由并添加注释\n- 优先使用 `Result` 类型处理可能失败的操作\n- 对于异常情况使用具体的异常类型而非通用异常\n- 避免在函数中进行数据验证，使用具有内部验证的类型\n\n### 协程和异步编程\n\n- 使用 `suspend` 函数处理异步操作\n- 在合适的作用域中启动协程 (`viewModelScope`, `lifecycleScope`, `runBlocking`)\n- 使用 `Flow` 处理数据流，`StateFlow`/`SharedFlow` 处理状态\n- 避免 `GlobalScope`，始终使用结构化并发\n- 合理使用协程上下文和调度器\n- 使用 `async`/`await` 进行并发操作\n- 正确处理协程取消和异常\n\n### 集合和函数式编程\n\n- 优先使用不可变集合 (`listOf`, `setOf`, `mapOf`)\n- 使用函数式操作：`map`、`filter`、`reduce`、`fold`\n- 合理使用序列 (`Sequence`) 处理大数据集或链式操作\n- 使用作用域函数：`let`、`run`、`with`、`apply`、`also`\n- 使用 `takeIf`、`takeUnless` 进行条件处理\n- 对简单 lambda 使用 `it` 参数，复杂情况使用命名参数\n\n### 泛型和类型系统\n\n- 合理使用泛型约束和变型（`in`、`out`）\n- 使用 `reified` 参数访问泛型类型信息\n- 利用类型别名提高代码可读性：`typealias UserId = String`\n- 使用内联函数优化高阶函数性能\n\n### 可见性和封装\n\n- 使用最小必要的可见性修饰符\n- 优先使用 `internal` 而非 `public` 用于模块内部 API\n- 使用 `private` 限制类内部实现细节\n- 合理使用 `protected` 用于继承场景\n\n### 测试规范\n\n- 测试方法使用描述性命名：`should_return_user_when_valid_id_provided`\n- 遵循 Arrange-Act-Assert 模式\n- 清楚命名测试变量：`given...`、`when...`、`then...` 或 `input...`、`expected...`、`actual...`\n- 为每个公共函数编写单元测试\n- 使用测试替身（Mock、Stub）模拟依赖\n- 为每个模块编写集成测试\n- 遵循 Given-When-Then 约定编写行为测试\n\n### 代码组织和架构\n\n- 按功能而非类型组织包结构\n- 将相关的类放在同一文件中（如密封类的子类）\n- 合理使用扩展函数增强现有类型\n- 声明接口定义契约，面向接口编程\n- 使用依赖注入提高代码可测试性\n- 遵循领域驱动设计原则\n\n### 性能和资源管理\n\n- 使用 `inline` 关键字优化高阶函数\n- 合理使用 `lazy` 延迟初始化\n- 注意避免内存泄漏，特别是在协程和回调中\n- 使用 `use` 函数自动管理资源\n\n\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/languages/kotlin.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "languages/kotlin.mdc",
+      "sha": "0f17c3f647a4f4d4b45384e5c9b6589ec2bdea26"
+    }
+  },
+  {
+    "name": "flyeric0212-languages-python",
+    "slug": "languages-python",
+    "displayName": "Languages Python",
+    "description": "--- description: 该规则解释了 Python 编码、最佳实践、 整洁高效的代码模式. globs: **/*.py",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "languages",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "python"
+    ],
+    "content": "---\ndescription: 该规则解释了 Python 编码、最佳实践、 整洁高效的代码模式.\nglobs: **/*.py\nalwaysApply: false\n---\n\n# Python 规则\n\n- 遵循 PEP 8 风格指南和命名约定\n- 使用类型注解增强代码可读性和类型安全性\n- 使用虚拟环境管理依赖：\n  - 优先使用 `venv` 或 `poetry` 进行环境隔离\n  - 使用 `requirements.txt` 或 `pyproject.toml` 记录依赖\n- 使用上下文管理器处理资源（如文件操作）\n- 优先使用列表推导式、生成器表达式和字典推导式\n- 使用 `pytest` 进行测试，保持高测试覆盖率\n- 使用文档字符串（docstrings）记录函数、类和模块\n- 遵循面向对象设计原则（SOLID）\n- 使用异常处理保证程序健壮性\n- 使用 `dataclasses` 或 `pydantic` 模型表示数据",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/languages/python.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "languages/python.mdc",
+      "sha": "3c972f640d5dcd74f176b5234cf887ec6b1e3f8a"
+    }
+  },
+  {
+    "name": "flyeric0212-languages-typescript",
+    "slug": "languages-typescript",
+    "displayName": "Languages Typescript",
+    "description": "--- description: TypeScript 编码规则和最佳实践 globs: **/*.ts, **/*.tsx, **/*.d.ts",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "languages",
+    "tags": [
+      "cursor",
+      "cursor-rule",
+      "typescript"
+    ],
+    "content": "---\ndescription: TypeScript 编码规则和最佳实践\nglobs: **/*.ts, **/*.tsx, **/*.d.ts\n---\n\n# TypeScript 规则\n\n## 类型系统\n- 对于对象定义，优先使用接口而非类型\n- 对于联合类型、交叉类型和映射类型，使用 type\n- 避免使用 `any`，对于未知类型优先使用 `unknown`\n- 使用严格的 TypeScript 配置\n- 充分利用 TypeScript 的内置工具类型\n- 使用泛型实现可复用的类型模式\n\n## 命名约定\n- 类型名称和接口使用 PascalCase\n- 变量和函数使用 camelCase\n- 常量使用 UPPER_CASE\n- 使用带有辅助动词的描述性名称（例如，isLoading, hasError）\n- React props 的接口前缀使用 'Props'（例如，ButtonProps）\n\n## 代码组织\n- 类型定义应靠近使用它们的地方\n- 共享的类型和接口从专用类型文件导出\n- 使用桶导出（index.ts）组织导出\n- 将共享类型放在 `types` 目录中\n- 组件 props 与其组件共同放置\n\n## 函数\n- 为公共函数使用显式返回类型\n- 回调和方法使用箭头函数\n- 实现带有自定义错误类型的适当错误处理\n- 复杂类型场景使用函数重载\n- 优先使用 async/await 而非 Promises\n\n## 最佳实践\n- 在 tsconfig.json 中启用严格模式\n- 不可变属性使用 readonly\n- 利用可辨识联合类型提高类型安全性\n- 使用类型守卫进行运行时类型检查\n- 实现适当的空值检查\n- 避免不必要的类型断言\n\n## 错误处理\n- 为领域特定错误创建自定义错误类型\n- 对可能失败的操作使用 Result 类型\n- 实现适当的错误边界\n- 使用带有类型化 catch 子句的 try-catch 块\n- 正确处理 Promise 拒绝\n\n## 模式\n- 复杂对象创建使用构建者模式\n- 数据访问实现仓储模式\n- 对象创建使用工厂模式\n- 利用依赖注入\n- 使用模块模式实现封装\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/languages/typescript.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "languages/typescript.mdc",
+      "sha": "c5951e0cb3d70c74d2aa8c3ef0049d57d2ff8f8e"
+    }
+  },
+  {
+    "name": "flyeric0212-languages-wxml",
+    "slug": "languages-wxml",
+    "displayName": "Languages Wxml",
+    "description": "--- description: 微信小程序 WXML 编写规范 globs: **/*.wxml",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: 微信小程序 WXML 编写规范\nglobs: **/*.wxml\nalwaysApply: false\n---\n# WXML 编写规范\n\n## 基本语法规范\n- 使用小写标签名和属性名\n- 属性值必须用双引号包围\n- 自闭合标签使用 `<tag />` 格式\n- 保持标签的正确嵌套和闭合\n- 合理使用缩进，保持代码层次清晰\n\n## 数据绑定\n- 使用 `{{}}` 进行数据绑定，表达式内避免复杂逻辑\n- 布尔属性使用 `attr=\"{{condition}}\"` 格式\n- 事件绑定使用 `bind:` 或 `catch:` 前缀\n- 避免在模板中进行复杂的数据处理，应在 JS 中预处理\n\n## 条件渲染\n- 简单条件使用 `wx:if`，复杂条件在 JS 中处理后绑定布尔值\n- `wx:if` 与 `hidden` 的选择：频繁切换用 `hidden`，条件较少变化用 `wx:if`\n- 多条件分支使用 `wx:if`、`wx:elif`、`wx:else`\n- 避免过深的条件嵌套，考虑拆分为子组件\n\n## 列表渲染\n- 必须设置 `wx:key`，优先使用唯一标识符\n- `wx:for-item` 和 `wx:for-index` 使用有意义的名称\n- 避免在循环中嵌套复杂逻辑，考虑使用子组件\n- 长列表考虑使用虚拟列表或分页加载\n\n## 组件使用\n- 组件标签名使用 kebab-case 格式\n- 属性传递使用描述性名称\n- 事件监听使用 `bind:` 前缀，事件名使用 kebab-case\n- 合理使用 slot 进行内容分发\n\n## 样式类名\n- 类名使用 kebab-case 格式\n- 避免使用内联样式，统一在 WXSS 中定义\n- 使用 TDesign 提供的工具类和组件类名\n- 自定义类名应具有语义化\n\n## 性能优化\n- 减少不必要的节点嵌套\n- 合理使用 `wx:if` 和 `hidden` 控制渲染\n- 避免在模板中使用复杂表达式\n- 图片懒加载使用 `lazy-load` 属性\n\n## 无障碍访问\n- 为交互元素添加 `aria-label` 属性\n- 使用语义化标签，如 `button`、`navigator` 等\n- 确保键盘导航的可用性\n- 为图片添加 `alt` 属性描述\n\n## 代码组织\n- 模板结构应与页面/组件的逻辑结构保持一致\n- 相关的元素应当组织在一起\n- 使用注释标记复杂的模板区块\n- 保持模板的简洁性，复杂逻辑拆分为子组件\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/languages/wxml.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "languages/wxml.mdc",
+      "sha": "3516f5c439443a7ff0268f04e9327d2d8411809a"
+    }
+  },
+  {
+    "name": "flyeric0212-languages-wxss",
+    "slug": "languages-wxss",
+    "displayName": "Languages Wxss",
+    "description": "--- description: 微信小程序 WXSS 编写规范 globs: **/*.wxss",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: 微信小程序 WXSS 编写规范\nglobs: **/*.wxss\nalwaysApply: false\n---\n# WXSS 编写规范\n\n## 基本语法规范\n- 使用 2 个空格进行缩进\n- 选择器和属性名使用小写字母\n- 属性值后必须加分号\n- 颜色值使用小写字母，优先使用简写形式\n- 0 值不需要单位，如 `margin: 0` 而非 `margin: 0px`\n\n## 选择器规范\n- 类名使用 kebab-case 格式，如 `.user-info`\n- 避免使用 ID 选择器，优先使用类选择器\n- 避免过深的选择器嵌套（不超过 3 层）\n- 使用有意义的类名，体现元素的功能而非样式\n\n## 布局规范\n- 优先使用 Flexbox 进行布局\n- 使用 `rpx` 单位进行响应式设计\n- 合理使用 `box-sizing: border-box`\n- 避免使用绝对定位，除非必要\n\n## 尺寸单位\n- 字体大小使用 `rpx`，参考设计稿 750px 宽度\n- 边距和内边距使用 `rpx`\n- 边框宽度使用 `px`（通常为 1px）\n- 百分比用于相对布局\n\n## 颜色和主题\n- 使用 TDesign 提供的 CSS 变量\n- 自定义颜色应定义为 CSS 变量\n- 避免硬编码颜色值\n- 支持深色模式时使用主题变量\n\n## 字体规范\n- 使用系统默认字体栈\n- 字体大小遵循设计规范，常用尺寸：24rpx、28rpx、32rpx、36rpx\n- 行高设置为字体大小的 1.4-1.6 倍\n- 合理使用字重，避免过度使用粗体\n\n## 组件样式\n- 组件样式应当封装完整，避免依赖外部样式\n- 使用 `externalClasses` 允许外部定制样式\n- 避免样式污染，使用适当的选择器作用域\n- 组件内部样式使用相对单位\n\n## 动画和过渡\n- 使用 CSS 过渡而非 JavaScript 动画\n- 动画时长控制在 200-300ms\n- 使用 `ease-out` 缓动函数\n- 避免同时动画过多属性\n\n## 响应式设计\n- 使用 `rpx` 实现基本的响应式\n- 考虑不同屏幕尺寸的适配\n- 使用媒体查询处理特殊情况\n- 测试在不同设备上的显示效果\n\n## 性能优化\n- 避免使用复杂的选择器\n- 减少重绘和重排的样式属性\n- 合理使用 `transform` 和 `opacity` 进行动画\n- 避免使用 `!important`\n\n## 代码组织\n- 样式按功能模块组织\n- 使用注释分隔不同的样式区块\n- 公共样式提取到全局样式文件\n- 保持样式文件的简洁和可读性\n\n## TDesign 集成\n- 优先使用 TDesign 提供的样式类\n- 通过 CSS 变量定制主题\n- 遵循 TDesign 的设计规范\n- 避免覆盖组件库的核心样式\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/languages/wxss.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "languages/wxss.mdc",
+      "sha": "bcdd13fd5745871b6f5f701395ecc0d94689015e"
+    }
+  },
+  {
+    "name": "flyeric0212-other-document",
+    "slug": "other-document",
+    "displayName": "Other Document",
+    "description": "--- description: markdown 文件编写规则 globs: *.md",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: markdown 文件编写规则\nglobs: *.md\nalwaysApply: false\n---\n\n# 文档规范\n\n## 通用要求\n- 所有文档使用Markdown格式\n- 使用简洁、清晰的语言\n- 文档内容应保持最新\n- 避免拼写和语法错误\n- 使用中文作为主要语言\n\n## 目录结构\n- `README.md`：项目根目录，提供项目概述\n- `docs/`：存放详细文档\n  - `guide/`：使用指南\n  - `api/`：API文档\n  - `examples/`：示例代码文档\n\n## README.md 内容规范\n- 项目名称和简短描述\n- 技术栈说明\n- 项目结构说明\n- 使用说明\n- 许可证信息\n\n## 版本记录规范\n- 使用 `CHANGELOG.md` 记录版本变更\n- 遵循语义化版本（Semantic Versioning）规范\n- 每个版本应包含：新增功能、修复问题、破坏性变更\n\n## 文档内容组织\n- 从整体到局部，从简单到复杂\n- 重要信息放在前面\n- 相关内容应当放在一起\n- 使用小标题和列表增强可读性\n- 避免过长段落，保持内容简洁\n\n## 代码示例规范\n- 提供完整可运行的示例\n- 代码应当简洁且易于理解\n- 添加适当的注释解释关键部分\n- 说明代码的预期输出或行为\n- 更新示例以匹配最新API\n\n\n\n\n\n\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/other/document.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "other/document.mdc",
+      "sha": "5a5eafabfbfca86a0487c137dfa5ec687f8b2164"
+    }
+  },
+  {
+    "name": "flyeric0212-other-git",
+    "slug": "other-git",
+    "displayName": "Other Git",
+    "description": "--- description: 辅助生成 git 提交信息 globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: 辅助生成 git 提交信息\nglobs:\nalwaysApply: false\n---\n\n# Git 规则\n\n## 重要原则\n- **重要**：不要自动提交 git 代码，除非有明确的提示\n- 提交前确保代码通过所有测试\n- 保持提交信息简洁明了，描述清楚变更内容\n- 避免大型提交，尽量将变更分解为小的、相关的提交\n\n## 提交规范\ngit 提交模板<type>(<scope>): <subject>，具体要求如下：\n1. 注意冒号 : 后有空格\n2. type 的枚举值有：\n- feat: 新增功能\n- fix: 修复 bug\n- docs: 文档注释\n- style: 代码格式(不影响代码运行的变动)\n- refactor: 重构、优化(既不增加新功能, 也不是修复bug)\n- perf: 性能优化\n- test: 增加测试\n- chore: 构建过程或辅助工具的变动\n- revert: 回退\n- build: 打包\n3. 若 subject 中描述超过两种要点，请使用要点列表描述详情，每个要点使用-符号开头，多个换行，参考如下样例：\n```\nfeat(web): implement email verification workflow\n\n- Add email verification token generation service\n- Create verification email template with dynamic links\n- Add API endpoint for token validation\n- Update user model with verification status field\n```\n\n## 分支管理\n- main/master: 主分支，保持稳定可发布状态\n- develop: 开发分支，包含最新开发特性\n- feature/*: 功能分支，用于开发新功能\n- bugfix/*: 修复分支，用于修复bug\n- release/*: 发布分支，用于准备发布\n\n**常用分支命名约定**：\n\n| 分支类型   | 命名格式             | 示例                      |\n| ---------- | -------------------- | ------------------------- |\n| 功能分支   | feature/[描述]       | feature/user-auth         |\n| 修复分支   | fix/[问题ID]-[描述]  | fix/issue-42-login-crash  |\n| 发布分支   | release/[版本]       | release/v2.1.0            |\n| 热修复分支 | hotfix/[版本]-[描述] | hotfix/v2.0.1-payment-fix |\n\n\n\n",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/other/git.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "other/git.mdc",
+      "sha": "b75527eddb1f494098fedd0144f9046ac9f3f2fa"
+    }
+  },
+  {
+    "name": "flyeric0212-other-gitflow",
+    "slug": "other-gitflow",
+    "displayName": "Other Gitflow",
+    "description": "--- description: Gitflow 工作流规则 globs:",
+    "author": "flyeric0212",
+    "type": "cursor",
+    "category": "general",
+    "tags": [
+      "cursor",
+      "cursor-rule"
+    ],
+    "content": "---\ndescription: Gitflow 工作流规则\nglobs:\nalwaysApply: false\n---\n\n# Gitflow 工作流规则\n\n## 主分支\n\n### main（或master）\n- 包含生产就绪代码\n- 永远不要直接提交到main分支\n- 只接受来自以下分支的合并：\n  - hotfix/* 分支\n  - release/* 分支\n- 每次合并后必须使用版本号标记\n\n### develop\n- 主开发分支\n- 包含最新交付的开发变更\n- 功能分支的源分支\n- 永远不要直接提交到develop分支\n\n## 支持分支\n\n### feature/*\n- 从develop分支创建\n- 合并回：develop\n- 命名约定：feature/[issue-id]-描述性名称\n- 示例：feature/123-user-authentication\n- 创建PR前必须与develop分支保持同步\n- 合并后删除\n\n### release/*\n- 从develop分支创建\n- 合并回：\n  - main\n  - develop\n- 命名约定：release/vX.Y.Z\n- 示例：release/v1.2.0\n- 仅进行bug修复、文档编写及与发布相关的任务\n- 不添加新功能\n- 合并后删除\n\n### hotfix/*\n- 从main分支创建\n- 合并回：\n  - main\n  - develop\n- 命名约定：hotfix/vX.Y.Z\n- 示例：hotfix/v1.2.1\n- 仅用于紧急生产环境修复\n- 合并后删除\n\n## 提交信息\n\n- 格式：`type(scope): description`\n- 类型：\n  - feat: 新功能\n  - fix: Bug修复\n  - docs: 文档变更\n  - style: 格式调整、缺失分号等\n  - refactor: 代码重构\n  - test: 添加测试\n  - chore: 维护任务\n\n## 版本控制\n\n### 语义化版本\n- MAJOR版本用于不兼容的API变更\n- MINOR版本用于向后兼容的功能性变更\n- PATCH版本用于向后兼容的bug修复\n\n## Pull Request规则\n\n1. 所有变更必须通过Pull Request进行\n2. 所需批准：至少1个\n3. CI检查必须通过\n4. 不允许直接提交到受保护分支（main, develop）\n5. 合并前分支必须保持最新\n6. 合并后删除分支\n\n## 分支保护规则\n\n### main和develop\n- 要求Pull Request审核\n- 要求状态检查通过\n- 要求分支保持最新\n- 限制规则包括管理员\n- 禁止强制推送\n- 禁止删除\n\n## 发布流程\n\n1. 从develop创建release分支\n2. 更新版本号\n3. 修复任何与发布相关的问题\n4. 创建PR到main\n5. 合并到main后：\n   - 标记发布\n   - 合并回develop\n   - 删除release分支\n\n## 热修复流程\n\n1. 从main创建hotfix分支\n2. 修复问题\n3. 更新patch版本号\n4. 创建PR到main\n5. 合并到main后：\n   - 标记发布\n   - 合并回develop\n   - 删除hotfix分支",
+    "sourceUrl": "https://github.com/flyeric0212/cursor-rules/blob/main/other/gitflow.mdc",
+    "version": "1.0.0",
+    "metadata": {
+      "originalPath": "other/gitflow.mdc",
+      "sha": "d86d2c330b38b6df78797feae142d55ce81c6cb7"
+    }
+  }
+]

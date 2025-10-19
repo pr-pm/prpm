@@ -24,6 +24,7 @@ export async function packageRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
+          search: { type: 'string' },
           type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'generic'] },
           category: { type: 'string' },
           featured: { type: 'boolean' },
@@ -35,7 +36,7 @@ export async function packageRoutes(server: FastifyInstance) {
       },
     },
   }, async (request: FastifyRequest<{ Querystring: ListPackagesQuery }>, reply: FastifyReply) => {
-    const { type, category, featured, verified, sort = 'downloads', limit = 20, offset = 0 } = request.query;
+    const { search, type, category, featured, verified, sort = 'downloads', limit = 20, offset = 0 } = request.query;
 
     // Build cache key
     const cacheKey = `packages:list:${JSON.stringify(request.query)}`;
@@ -69,6 +70,16 @@ export async function packageRoutes(server: FastifyInstance) {
     if (verified !== undefined) {
       conditions.push(`verified = $${paramIndex++}`);
       params.push(verified);
+    }
+
+    if (search) {
+      conditions.push(`(
+        to_tsvector('english', coalesce(display_name, '') || ' ' || coalesce(description, '')) @@ websearch_to_tsquery('english', $${paramIndex}) OR
+        display_name ILIKE $${paramIndex + 1} OR
+        $${paramIndex + 2} = ANY(tags)
+      )`);
+      params.push(search, `%${search}%`, search.toLowerCase());
+      paramIndex += 3;
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

@@ -231,9 +231,12 @@ export interface RegistryConfig {
   redis: {
     url: string;
   };
-  meilisearch: {
-    host: string;
-    apiKey: string;
+  search: {
+    engine: 'postgres' | 'opensearch';
+    opensearch: {
+      endpoint: string;
+      region: string;
+    };
   };
   jwt: {
     secret: string;

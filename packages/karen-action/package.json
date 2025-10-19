@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
-    "test": "jest",
+    "test": "echo 'No tests defined for GitHub Action'",
     "lint": "eslint src --ext .ts"
   },
   "keywords": [

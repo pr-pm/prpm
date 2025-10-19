@@ -11,7 +11,7 @@
 
 ### 2. ✅ Configuration System
 - **~/.prmprc** - User configuration file
-- Registry URL configuration (defaults to registry.promptpm.dev)
+- Registry URL configuration (defaults to registry.prmp.dev)
 - Token storage for authentication
 - Telemetry preferences
 
@@ -273,7 +273,7 @@ Before deploying to production:
 ## Support & Links
 
 - **GitHub**: https://github.com/khaliqgant/prompt-package-manager
-- **Registry**: https://registry.promptpm.dev (when deployed)
+- **Registry**: https://registry.prmp.dev (when deployed)
 - **Issues**: https://github.com/khaliqgant/prompt-package-manager/issues
 - **Docs**: See BOOTSTRAP_GUIDE.md, DEPLOYMENT_GUIDE.md
 

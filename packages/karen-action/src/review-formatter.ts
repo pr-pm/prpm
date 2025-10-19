@@ -78,7 +78,7 @@ prpm install karen-agent
 - 🎯 **Cursor IDE** - Karen reviews while you code
 - 💬 **CLI** - Run Karen anytime with \`prpm karen review\`
 
-**[Install PRPM](https://github.com/khaliqgant/prompt-package-manager)** | **[Browse 250+ Packages](https://promptpm.dev)**
+**[Install PRPM](https://github.com/khaliqgant/prompt-package-manager)** | **[Browse 250+ Packages](https://prmp.dev)**
 
 ---
 

@@ -1,11 +1,19 @@
-# Why Use PRPM Instead of Claude Code Plugins?
+# PRPM vs Claude Code: Why Choose a Universal Package Manager?
 
 ## TL;DR
 
-**Claude Code Plugins** = Custom bundles for Claude Code only (slash commands, subagents, MCP servers, hooks)
-**PRPM** = Universal package manager for ALL AI editors (Cursor, Claude, Continue, Windsurf, MCP)
+**Claude Code Plugins/Marketplaces** = 313+ plugins across 7+ scattered repos, Claude Code only
+**PRPM** = 744+ packages in 1 centralized registry, works in ALL AI editors
 
-PRPM is **cross-editor**, **centrally managed**, and works with **any AI coding tool**, not just Claude Code.
+| Feature | PRPM | Claude Code Marketplaces |
+|---------|------|--------------------------|
+| **Editors** | Cursor, Claude, Continue, Windsurf, MCP | Claude Code only |
+| **Discovery** | Unified search | 7+ separate repos |
+| **Quality** | Karen Score, verified | No standards |
+| **Versioning** | Semantic + lock files | None |
+| **Collections** | 15+ curated bundles | Individual plugins only |
+
+PRPM is **cross-editor**, **centrally managed**, and **version controlled**. Claude Code is **native**, but **locked to one editor**.
 
 ---
 
@@ -76,35 +84,48 @@ prpm install testing-automation
 # One command, works everywhere
 ```
 
-### 2. Centralized Registry vs Scattered Repos
+### 2. Centralized Registry vs Scattered Marketplaces
 
 **Claude Code Plugins:**
 - Each marketplace is a separate GitHub repo
-- No central discovery
-- No quality control
-- No versioning standards
+- 7+ known marketplaces (per claudemarketplaces.com):
+  - davila7/claude-code-templates (10 plugins)
+  - wshobson/agents (64 plugins)
+  - anthropics/claude-code (5 official plugins)
+  - ruvnet/claude-flow (1 plugin)
+  - exa-labs/exa-mcp-server (1 plugin)
+  - ananddtyagi/claude-code-marketplace (115 plugins)
+  - ccplugins/awesome-claude-code-plugins (118 plugins)
+- No cross-marketplace search
+- No central quality control
+- No unified versioning standards
 - No download stats or ratings
+- Must manually add each marketplace
 
 **PRPM:**
-- Central registry at `registry.promptpm.dev`
-- Searchable catalog of 275+ packages
-- Quality scoring and verification
+- Central registry at `registry.prmp.dev`
+- Searchable catalog of 265+ packages
+- Quality scoring and verification (Karen Score)
 - Semantic versioning (1.2.0)
 - Download stats, ratings, trending
 - Official collections curated by PRPM team
+- Single source of truth
 
 ```bash
 # Claude Code Plugins - Fragmented discovery
-/plugin marketplace add dan-avila/plugins
-/plugin marketplace add seth-hobson/agents
-/plugin marketplace add company-internal/tools
-# Search across all three? No way.
+/plugin marketplace add davila7/claude-code-templates
+/plugin marketplace add wshobson/agents
+/plugin marketplace add ananddtyagi/claude-code-marketplace
+/plugin marketplace add ccplugins/awesome-claude-code-plugins
+# Now search manually across 4+ separate repos
+# No unified search, no comparison
 
 # PRPM - Unified discovery
 prpm search testing
 prpm trending
 prpm popular
-# Search across ALL 275+ packages at once
+# Search across ALL 265+ packages at once
+# Compare ratings, downloads, versions instantly
 ```
 
 ### 3. Package Management Features
@@ -204,22 +225,34 @@ prpm install @collection/nextjs-pro
 ### 6. Content Volume & Diversity
 
 **Claude Code Plugins:**
-- ~2 community marketplaces (Dan Ávila, Seth Hobson)
-- ~80-100 total plugins estimated
+- 7+ community marketplaces (per claudemarketplaces.com)
+- ~313+ total plugins across all marketplaces
+  - davila7/claude-code-templates: 10 plugins
+  - wshobson/agents: 64 plugins
+  - anthropics/claude-code: 5 official plugins
+  - ananddtyagi/claude-code-marketplace: 115 plugins
+  - ccplugins/awesome-claude-code-plugins: 118 plugins
+  - Others: 1-10 plugins each
 - All Claude Code specific
 - No Cursor rules
 - No Continue prompts
 - No Windsurf configs
+- Fragmented across multiple repos
 
 **PRPM:**
-- 275+ packages and growing
-- 20+ curated collections
+- 744+ packages and growing
+- 15+ curated collections
 - Sources from:
-  - awesome-cursorrules (879 rules)
+  - awesome-cursor-rules-mdc (239 .mdc rules)
+  - cursor.directory (114 official rules)
+  - awesome-cursorrules (many more rules)
+  - VoltAgent subagents (70+ Claude agents)
   - awesome-claude-code (agents, workflows)
+  - awesome-windsurfrules (16+ configs)
   - continue-dev (prompts)
   - Community submissions
 - Works with 5+ editors
+- Single unified registry
 
 **Diversity:**
 ```bash
@@ -310,7 +343,7 @@ prpm upgrade
 
 **PRPM:**
 ```bash
-prpm search react              # Search all 275+ packages
+prpm search react              # Search all 744+ packages
 prpm trending                  # See what's hot
 prpm popular                   # Most downloaded
 prpm collections --category frontend
@@ -362,7 +395,7 @@ prpm install
 - ✅ You need **version control** and team consistency
 - ✅ You want **package management** features (outdated, update, lock files)
 - ✅ You want **collections** that work across all tools
-- ✅ You want access to **275+ packages** not just Claude Code plugins
+- ✅ You want access to **744+ packages** not just Claude Code plugins
 
 ### Use Both!
 
@@ -552,9 +585,78 @@ prpm install @collection/claude-pro
 
 ---
 
+## PRPM vs Claude Code Marketplaces: Direct Competition
+
+### The Numbers
+
+| Metric | PRPM | All Claude Marketplaces Combined |
+|--------|------|----------------------------------|
+| **Total Packages** | 744+ | ~313+ |
+| **Sources** | 1 centralized registry | 7+ scattered repos |
+| **Editors Supported** | 5+ (Cursor, Claude, Continue, Windsurf, MCP) | 1 (Claude Code only) |
+| **Search** | Unified search across all packages | Manual search per marketplace |
+| **Quality Control** | Karen Score, verification | None (decentralized) |
+| **Versioning** | Semantic versioning + lock files | No standards |
+| **Collections** | 15+ curated bundles | Individual plugins only |
+| **Update Management** | `prpm update` command | Manual per marketplace |
+| **Team Consistency** | Lock files guarantee same versions | No consistency mechanism |
+
+### What PRPM Does Better
+
+**1. Single Source of Truth**
+- Claude Code has 7+ marketplaces with duplicate/conflicting content
+- PRPM has 1 registry with curated, non-duplicate packages
+- No confusion about "which marketplace has the best testing plugin?"
+
+**2. Cross-Marketplace Search**
+- Claude Code: Must know which marketplace to search
+- PRPM: Search everything at once with `prpm search`
+
+**3. Quality Signals**
+- Claude Code: No ratings, no downloads, no verification
+- PRPM: Karen Scores, download counts, trending, verified badges
+
+**4. Future-Proof**
+- Claude Code plugins die if you switch editors
+- PRPM packages work in any editor you switch to
+
+### What Claude Code Does Better
+
+**1. Native Integration**
+- Deep Claude Code feature access (hooks, native commands)
+- First-party Anthropic support
+- Tighter integration with Claude Code workflows
+
+**2. Official Marketplace**
+- anthropics/claude-code has official Anthropic plugins
+- Blessed by Anthropic team
+
+### The Competitive Angle
+
+**PRPM can aggregate Claude Code plugins:**
+
+```bash
+# PRPM could scrape all 313+ Claude Code plugins
+# Convert them to work in ALL editors
+# Offer unified discovery + cross-editor support
+# Become the "npm for AI prompts" while Claude stays "VS Code extensions"
+```
+
+**Future PRPM Feature:**
+```bash
+# Import from Claude Code marketplaces
+prpm import-marketplace wshobson/agents
+# → Converts all 64 agents to work in Cursor, Continue, Windsurf too
+# → Now searchable in unified PRPM registry
+# → Version controlled
+# → Available to non-Claude users
+```
+
+---
+
 ## The Bottom Line
 
-**Claude Code Plugins**: Official, native, powerful... **but only for Claude Code users.**
+**Claude Code Plugins/Marketplaces**: Official, native, powerful... **but only for Claude Code users.**
 
 **PRPM**: Universal, managed, cross-editor... **for anyone using AI coding tools.**
 
@@ -599,7 +701,22 @@ prpm install claude-workflows
 ---
 
 **Key Resources:**
+
+### Claude Code Resources
 - [Claude Code Plugins Announcement](https://www.anthropic.com/news/claude-code-plugins)
+- [Claude Code Plugin Documentation](https://docs.claude.com/en/docs/claude-code/plugins)
+- [Claude Code Plugin Marketplaces](https://docs.claude.com/en/docs/claude-code/plugin-marketplaces)
+- [Claude Marketplaces Directory](https://claudemarketplaces.com/)
+
+### Popular Claude Code Marketplaces
+- [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) - 10 workflow templates
+- [wshobson/agents](https://github.com/wshobson/agents) - 64 production-ready agents
+- [anthropics/claude-code](https://github.com/anthropics/claude-code) - 5 official Anthropic plugins
+- [ananddtyagi/claude-code-marketplace](https://github.com/ananddtyagi/claude-code-marketplace) - 115 community plugins
+- [ccplugins/awesome-claude-code-plugins](https://github.com/ccplugins/awesome-claude-code-plugins) - 118 curated plugins
+
+### PRPM Resources
 - [PRPM Documentation](https://github.com/khaliqgant/prompt-package-manager)
-- [Dan Ávila's Plugin Marketplace](https://github.com/dan-avila/plugins)
-- [Seth Hobson's Subagents](https://github.com/seth-hobson/agents)
+- [PRPM Registry](https://registry.prmp.dev)
+- [Package Catalog](https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/PACKAGES.md)
+- [Collections Guide](https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/COLLECTIONS.md)

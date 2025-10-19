@@ -9,7 +9,7 @@ npm install -g prmp
 prpm install @collection/nextjs-pro  # Entire Next.js setup in one command
 ```
 
-**250+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf) | **One command to install**
+**744+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf) | **One command to install**
 
 ---
 
@@ -52,13 +52,30 @@ prpm install react-best-practices  # Installs in the right place automatically
 
 **Format conversion happens server-side.** Authors publish once, users install everywhere.
 
-**[How It Works →](docs/FORMAT_CONVERSION.md)**
+### What About MCP Servers?
+
+**PRPM doesn't install MCP servers** - it configures them for Claude Code users:
+
+```bash
+# Install collection with MCP server configs (Claude Code only)
+prpm install @collection/pulumi-infrastructure --as claude
+# → Writes MCP server config to .claude/mcp_servers.json
+# → Claude Code then runs: npx @modelcontextprotocol/server-pulumi
+
+# Same collection for Cursor (MCP configs ignored)
+prpm install @collection/pulumi-infrastructure --as cursor
+# → Only installs Cursor rules, no MCP configuration
+```
+
+**MCP servers are external tools** that Claude Code runs separately. PRPM just writes the config file.
+
+**[How It Works →](docs/FORMAT_CONVERSION.md)** | **[MCP Server Details →](docs/MCP_SERVERS_IN_COLLECTIONS.md)**
 
 ---
 
 ## 🔍 Discovery - Find What You Need
 
-Browse 250+ packages with powerful discovery:
+Browse 744+ packages with powerful discovery:
 
 ```bash
 # Search by keyword
@@ -171,12 +188,13 @@ prpm install systematic-debugging
 
 ### 📚 Categories
 
-- **🎯 Cursor Rules (200+)** - Code quality, framework-specific, testing, security
-- **🤖 Claude Skills (36+)** - Repository analysis, code review, architecture
-- **🔌 MCP Servers (15+)** - GitHub integration, database tools, API connectors
-- **📦 Collections (12+)** - Complete setups for Next.js, Python, Vue, and more
+- **🎯 Cursor Rules (667+)** - Official cursor.directory + awesome-cursorrules + MDC rules (Android, Laravel, Next.js, Python, React, Vue, etc.)
+- **🤖 Claude Skills (146+)** - Repository analysis, code review, architecture
+- **🌊 Windsurf Rules (255+)** - React, Vue, Django, FastAPI, TypeScript, workflow best practices
+- **🔌 MCP Server Configs (15+)** - Auto-configure MCP servers for Claude Code users (Cursor/Windsurf users: configs are ignored)
+- **📦 Collections (15+)** - Complete setups for Next.js, Python, Vue, Windsurf, and more
 
-**[Browse All 250+ Packages →](https://promptpm.dev)** | **[Package Catalog →](docs/PACKAGES.md)**
+**[Browse All 744+ Packages →](https://prmp.dev)** | **[Package Catalog →](docs/PACKAGES.md)**
 
 ---
 
@@ -273,7 +291,8 @@ prpm install karen-skill
 | **Auto-updates** | ✅ | ❌ | ⚠️ |
 | **Version control** | ✅ | ❌ | ⚠️ |
 | **Dependency handling** | ✅ | ❌ | ❌ |
-| **Works with Cursor + Claude + Continue + Windsurf + MCP** | ✅ | ⚠️ | ❌ |
+| **Works with Cursor + Claude + Continue + Windsurf** | ✅ | ⚠️ | ❌ |
+| **Configures MCP servers (Claude Code)** | ✅ | ❌ | ❌ |
 
 ---
 
@@ -330,10 +349,10 @@ prpm install my-cursor-rule --as windsurf
 
 **v1.0 (Now)** ✅
 - CLI package manager
-- 250+ packages
+- 744+ packages
 - Collections system
 - Format conversion (Cursor, Claude, Continue, Windsurf)
-- MCP server support
+- MCP server configuration (Claude Code only)
 
 **v1.5 (Q2 2025)**
 - 🏪 Central registry at prpm.dev
@@ -353,8 +372,8 @@ prpm install my-cursor-rule --as windsurf
 
 ## Stats
 
-- **250+ packages** across Cursor, Claude, Continue, Windsurf, MCP
-- **12+ collections** for complete workflow setups
+- **744+ packages** across Cursor, Claude, Continue, Windsurf (+ MCP server configs for Claude)
+- **15+ collections** for complete workflow setups
 - **4 editor formats** supported (server-side conversion)
 - **78/100 Karen Score** - [See our review](.karen/review.md)
 - **First-mover advantage** - Only universal prompt package manager

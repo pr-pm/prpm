@@ -27,7 +27,7 @@ interface UploadResult {
   error?: string;
 }
 
-const REGISTRY_URL = process.env.PRMP_REGISTRY_URL || 'https://registry.promptpm.dev';
+const REGISTRY_URL = process.env.PRMP_REGISTRY_URL || 'https://registry.prmp.dev';
 const CURATOR_TOKEN = process.env.PRMP_CURATOR_TOKEN; // Special token for curator account
 
 /**

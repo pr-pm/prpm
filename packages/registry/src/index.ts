@@ -105,6 +105,7 @@ async function buildServer() {
         { name: 'search', description: 'Search and discovery' },
         { name: 'users', description: 'User management' },
         { name: 'organizations', description: 'Organization management' },
+        { name: 'Analytics', description: 'Download tracking, stats, and trending' },
       ],
     },
   });

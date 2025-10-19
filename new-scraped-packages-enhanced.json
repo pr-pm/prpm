@@ -1,0 +1,1184 @@
+[
+  {
+    "id": "nextjs-typescript-tailwind",
+    "name": "Next.js with TypeScript & Tailwind",
+    "description": "Comprehensive cursor rules for Next.js development using TypeScript and Tailwind CSS with best practices",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "nextjs",
+      "typescript",
+      "tailwind",
+      "react",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "ssr",
+      "fullstack",
+      "types",
+      "type-safety",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "react-ecosystem",
+    "keywords": [
+      "next.js with typescript & tailwind",
+      "comprehensive",
+      "cursor",
+      "rules",
+      "next",
+      "development",
+      "using",
+      "typescript",
+      "tailwind",
+      "with",
+      "best",
+      "nextjs",
+      "react",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "ssr",
+      "fullstack",
+      "types",
+      "type-safety",
+      "framework",
+      "react-ecosystem"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "nextjs",
+        "typescript",
+        "tailwind",
+        "react",
+        "frontend"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "react-native-expo",
+    "name": "React Native Expo Development",
+    "description": "Complete cursor rules for React Native Expo mobile development with modern patterns",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "react-native",
+      "expo",
+      "mobile",
+      "typescript",
+      "react",
+      "cross-platform",
+      "ios",
+      "android",
+      "javascript",
+      "types",
+      "type-safety",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "react-ecosystem",
+    "keywords": [
+      "react native expo development",
+      "complete",
+      "cursor",
+      "rules",
+      "react",
+      "native",
+      "expo",
+      "mobile",
+      "development",
+      "with",
+      "modern",
+      "react-native",
+      "typescript",
+      "cross-platform",
+      "ios",
+      "android",
+      "javascript",
+      "types",
+      "type-safety",
+      "framework",
+      "react-ecosystem"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "react-native",
+        "expo",
+        "mobile",
+        "typescript"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "python-fastapi-best-practices",
+    "name": "Python FastAPI Best Practices",
+    "description": "Professional cursor rules for Python FastAPI backend development following industry standards",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "python",
+      "fastapi",
+      "backend",
+      "api",
+      "rest",
+      "async",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "python",
+    "keywords": [
+      "python fastapi best practices",
+      "professional",
+      "cursor",
+      "rules",
+      "python",
+      "fastapi",
+      "backend",
+      "development",
+      "following",
+      "industry",
+      "standards",
+      "api",
+      "rest",
+      "async",
+      "framework"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "python",
+        "fastapi",
+        "backend",
+        "api",
+        "rest"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "typescript-cloudflare-workers",
+    "name": "TypeScript Cloudflare Workers",
+    "description": "Cursor rules for TypeScript serverless development on Cloudflare Workers",
+    "type": "cursor",
+    "category": "cursor-rules",
+    "tags": [
+      "typescript",
+      "cloudflare",
+      "serverless",
+      "edge",
+      "javascript",
+      "types",
+      "type-safety",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "general",
+    "keywords": [
+      "typescript cloudflare workers",
+      "cursor",
+      "rules",
+      "typescript",
+      "serverless",
+      "development",
+      "cloudflare",
+      "workers",
+      "edge",
+      "javascript",
+      "types",
+      "type-safety",
+      "framework",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "typescript",
+        "cloudflare",
+        "serverless",
+        "edge"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "react-redux-typescript",
+    "name": "React Redux TypeScript",
+    "description": "Advanced state management patterns with React, Redux, and TypeScript",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "react",
+      "redux",
+      "typescript",
+      "state-management",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "types",
+      "type-safety",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "react-ecosystem",
+    "keywords": [
+      "react redux typescript",
+      "advanced",
+      "state",
+      "management",
+      "patterns",
+      "with",
+      "react",
+      "redux",
+      "typescript",
+      "state-management",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "types",
+      "type-safety",
+      "framework",
+      "react-ecosystem"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "react",
+        "redux",
+        "typescript",
+        "state-management"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "cypress-e2e-testing",
+    "name": "Cypress E2E Testing",
+    "description": "Complete end-to-end testing framework setup and best practices with Cypress",
+    "type": "cursor",
+    "category": "quality-testing",
+    "tags": [
+      "cypress",
+      "e2e",
+      "testing",
+      "automation",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "e2e-testing",
+    "keywords": [
+      "cypress e2e testing",
+      "complete",
+      "testing",
+      "framework",
+      "setup",
+      "best",
+      "practices",
+      "with",
+      "cypress",
+      "e2e",
+      "automation",
+      "e2e-testing"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "cypress",
+        "e2e",
+        "testing",
+        "automation"
+      ],
+      "category": "testing"
+    }
+  },
+  {
+    "id": "swiftui-guidelines",
+    "name": "SwiftUI Development Guidelines",
+    "description": "iOS development cursor rules following SwiftUI best practices and patterns",
+    "type": "cursor",
+    "category": "mobile-development",
+    "tags": [
+      "swift",
+      "swiftui",
+      "ios",
+      "mobile",
+      "apple",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "ios",
+    "keywords": [
+      "swiftui development guidelines",
+      "development",
+      "cursor",
+      "rules",
+      "following",
+      "swiftui",
+      "best",
+      "practices",
+      "patterns",
+      "swift",
+      "ios",
+      "mobile",
+      "apple",
+      "framework"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "swift",
+        "swiftui",
+        "ios",
+        "mobile",
+        "apple"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "claude-code-riper-workflow",
+    "name": "RIPER Development Workflow",
+    "description": "Structured development workflow with Research, Innovate, Plan, Execute, and Review phases for Claude Code",
+    "type": "agent",
+    "category": "developer-experience",
+    "tags": [
+      "claude-code",
+      "workflow",
+      "methodology",
+      "project-management",
+      "claude",
+      "claude-agent"
+    ],
+    "source_url": "https://github.com/hesreallyhim/awesome-claude-code",
+    "subcategory": "tooling",
+    "keywords": [
+      "riper development workflow",
+      "structured",
+      "development",
+      "workflow",
+      "with",
+      "research",
+      "innovate",
+      "plan",
+      "execute",
+      "review",
+      "phases",
+      "claude-code",
+      "methodology",
+      "project-management",
+      "tooling"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "claude-code",
+        "workflow",
+        "methodology",
+        "project-management"
+      ],
+      "category": "workflow"
+    }
+  },
+  {
+    "id": "claude-code-ab-method",
+    "name": "AB Method - Spec-Driven Development",
+    "description": "Transform large problems into focused missions using sub-agents and spec-driven approach",
+    "type": "agent",
+    "category": "claude-agents",
+    "tags": [
+      "claude-code",
+      "methodology",
+      "specs",
+      "architecture",
+      "claude",
+      "claude-agent"
+    ],
+    "source_url": "https://github.com/hesreallyhim/awesome-claude-code",
+    "subcategory": "general",
+    "keywords": [
+      "ab method ",
+      " spec",
+      "driven development",
+      "transform",
+      "large",
+      "problems",
+      "into",
+      "focused",
+      "missions",
+      "using",
+      "agents",
+      "spec",
+      "driven",
+      "claude-code",
+      "methodology",
+      "specs",
+      "architecture",
+      "workflow",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "claude-code",
+        "methodology",
+        "specs",
+        "architecture"
+      ],
+      "category": "workflow"
+    }
+  },
+  {
+    "id": "claude-code-project-manager",
+    "name": "Claude Code Project Manager",
+    "description": "Comprehensive project management workflow with specialized agents and slash commands",
+    "type": "agent",
+    "category": "developer-experience",
+    "tags": [
+      "claude-code",
+      "project-management",
+      "agile",
+      "automation",
+      "claude",
+      "claude-agent"
+    ],
+    "source_url": "https://github.com/hesreallyhim/awesome-claude-code",
+    "subcategory": "tooling",
+    "keywords": [
+      "claude code project manager",
+      "comprehensive",
+      "project",
+      "management",
+      "workflow",
+      "with",
+      "specialized",
+      "agents",
+      "slash",
+      "commands",
+      "claude-code",
+      "project-management",
+      "agile",
+      "automation",
+      "tooling"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "claude-code",
+        "project-management",
+        "agile",
+        "automation"
+      ],
+      "category": "workflow"
+    }
+  },
+  {
+    "id": "claude-pr-submit",
+    "name": "PR Submit Command",
+    "description": "Create pull requests from local changes automatically with Claude Code",
+    "type": "agent",
+    "category": "developer-experience",
+    "tags": [
+      "github",
+      "pr",
+      "automation",
+      "git",
+      "claude",
+      "claude-agent"
+    ],
+    "source_url": "https://github.com/Comfy-Org/comfy-claude-prompt-library",
+    "subcategory": "tooling",
+    "keywords": [
+      "pr submit command",
+      "create",
+      "pull",
+      "requests",
+      "from",
+      "local",
+      "changes",
+      "automatically",
+      "with",
+      "claude",
+      "code",
+      "github",
+      "pr",
+      "automation",
+      "git",
+      "tooling"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "github",
+        "pr",
+        "automation",
+        "git"
+      ],
+      "category": "automation"
+    }
+  },
+  {
+    "id": "claude-create-issue",
+    "name": "GitHub Issue Creator",
+    "description": "Automatically create GitHub issues and feature requests from Claude Code",
+    "type": "agent",
+    "category": "developer-experience",
+    "tags": [
+      "github",
+      "issues",
+      "automation",
+      "claude",
+      "claude-agent"
+    ],
+    "source_url": "https://github.com/Comfy-Org/comfy-claude-prompt-library",
+    "subcategory": "tooling",
+    "keywords": [
+      "github issue creator",
+      "automatically",
+      "create",
+      "github",
+      "issues",
+      "feature",
+      "requests",
+      "from",
+      "claude",
+      "code",
+      "automation",
+      "tooling"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "github",
+        "issues",
+        "automation"
+      ],
+      "category": "automation"
+    }
+  },
+  {
+    "id": "claude-accessibility-scan",
+    "name": "Accessibility Scanner",
+    "description": "Scan for WCAG 2.1 AA compliance and accessibility issues in your codebase",
+    "type": "agent",
+    "category": "claude-agents",
+    "tags": [
+      "accessibility",
+      "wcag",
+      "a11y",
+      "validation",
+      "claude",
+      "claude-agent"
+    ],
+    "source_url": "https://github.com/Comfy-Org/comfy-claude-prompt-library",
+    "subcategory": "general",
+    "keywords": [
+      "accessibility scanner",
+      "scan",
+      "wcag",
+      "compliance",
+      "accessibility",
+      "issues",
+      "your",
+      "codebase",
+      "a11y",
+      "validation",
+      "code-quality",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "accessibility",
+        "wcag",
+        "a11y",
+        "validation"
+      ],
+      "category": "code-quality"
+    }
+  },
+  {
+    "id": "continue-code-review",
+    "name": "Code Review Prompt",
+    "description": "Automated code review and analysis for Continue IDE",
+    "type": "continue",
+    "category": "quality-testing",
+    "tags": [
+      "code-review",
+      "quality",
+      "analysis"
+    ],
+    "source_url": "https://github.com/continuedev/prompt-file-examples",
+    "subcategory": "code-quality",
+    "keywords": [
+      "code review prompt",
+      "automated",
+      "code",
+      "review",
+      "analysis",
+      "continue",
+      "code-review",
+      "quality",
+      "code-quality"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "code-review",
+        "quality",
+        "analysis"
+      ],
+      "category": "code-quality"
+    }
+  },
+  {
+    "id": "continue-code-smells",
+    "name": "Code Smells Detector",
+    "description": "Identify code quality issues and suggest refactoring improvements",
+    "type": "continue",
+    "category": "quality-testing",
+    "tags": [
+      "refactoring",
+      "code-smells",
+      "quality"
+    ],
+    "source_url": "https://github.com/continuedev/prompt-file-examples",
+    "subcategory": "code-quality",
+    "keywords": [
+      "code smells detector",
+      "identify",
+      "code",
+      "quality",
+      "issues",
+      "suggest",
+      "refactoring",
+      "improvements",
+      "code-smells",
+      "code-quality"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "refactoring",
+        "code-smells",
+        "quality"
+      ],
+      "category": "code-quality"
+    }
+  },
+  {
+    "id": "continue-unit-tests",
+    "name": "Unit Test Generator",
+    "description": "Generate comprehensive unit test coverage for your code",
+    "type": "continue",
+    "category": "quality-testing",
+    "tags": [
+      "unit-tests",
+      "testing",
+      "coverage"
+    ],
+    "source_url": "https://github.com/continuedev/prompt-file-examples",
+    "subcategory": "testing",
+    "keywords": [
+      "unit test generator",
+      "generate",
+      "comprehensive",
+      "unit",
+      "test",
+      "coverage",
+      "your",
+      "code",
+      "unit-tests",
+      "testing"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "unit-tests",
+        "testing",
+        "coverage"
+      ],
+      "category": "testing"
+    }
+  },
+  {
+    "id": "continue-jest-debugger",
+    "name": "Jest Test Debugger",
+    "description": "Debug Jest test suites in terminal with Continue",
+    "type": "continue",
+    "category": "quality-testing",
+    "tags": [
+      "jest",
+      "debugging",
+      "testing",
+      "javascript"
+    ],
+    "source_url": "https://github.com/continuedev/prompt-file-examples",
+    "subcategory": "testing",
+    "keywords": [
+      "jest test debugger",
+      "debug",
+      "jest",
+      "test",
+      "suites",
+      "terminal",
+      "with",
+      "continue",
+      "debugging",
+      "testing",
+      "javascript"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "jest",
+        "debugging",
+        "testing",
+        "javascript"
+      ],
+      "category": "testing"
+    }
+  },
+  {
+    "id": "continue-ruby-rails",
+    "name": "Ruby on Rails Development",
+    "description": "Complete Ruby on Rails development assistance prompts",
+    "type": "continue",
+    "category": "backend-frameworks",
+    "tags": [
+      "ruby",
+      "rails",
+      "backend",
+      "mvc",
+      "web"
+    ],
+    "source_url": "https://github.com/continuedev/prompt-file-examples",
+    "subcategory": "ruby",
+    "keywords": [
+      "ruby on rails development",
+      "complete",
+      "ruby",
+      "rails",
+      "development",
+      "assistance",
+      "prompts",
+      "backend",
+      "mvc",
+      "web",
+      "framework"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "ruby",
+        "rails",
+        "backend",
+        "mvc"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "vue3-composition-api",
+    "name": "Vue 3 Composition API",
+    "description": "Modern Vue 3 development with Composition API and TypeScript",
+    "type": "cursor",
+    "category": "frontend-frameworks",
+    "tags": [
+      "vue",
+      "vue3",
+      "composition-api",
+      "typescript",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "types",
+      "type-safety",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "vue-ecosystem",
+    "keywords": [
+      "vue 3 composition api",
+      "modern",
+      "development",
+      "with",
+      "composition",
+      "typescript",
+      "vue",
+      "vue3",
+      "composition-api",
+      "frontend",
+      "ui",
+      "javascript",
+      "web",
+      "types",
+      "type-safety",
+      "framework",
+      "vue-ecosystem"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "vue",
+        "vue3",
+        "composition-api",
+        "typescript"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "django-rest-framework",
+    "name": "Django REST Framework",
+    "description": "Professional Django REST API development with best practices",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "django",
+      "python",
+      "rest",
+      "api",
+      "backend",
+      "web",
+      "mvc",
+      "orm",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "python",
+    "keywords": [
+      "django rest framework",
+      "professional",
+      "django",
+      "rest",
+      "development",
+      "with",
+      "best",
+      "practices",
+      "python",
+      "api",
+      "backend",
+      "web",
+      "mvc",
+      "orm",
+      "framework"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "django",
+        "python",
+        "rest",
+        "api",
+        "backend"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "flutter-clean-architecture",
+    "name": "Flutter Clean Architecture",
+    "description": "Flutter mobile development following clean architecture principles",
+    "type": "cursor",
+    "category": "mobile-development",
+    "tags": [
+      "flutter",
+      "dart",
+      "mobile",
+      "clean-architecture",
+      "cross-platform",
+      "ios",
+      "android",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "flutter",
+    "keywords": [
+      "flutter clean architecture",
+      "flutter",
+      "mobile",
+      "development",
+      "following",
+      "clean",
+      "architecture",
+      "principles",
+      "dart",
+      "clean-architecture",
+      "cross-platform",
+      "ios",
+      "android",
+      "framework"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "flutter",
+        "dart",
+        "mobile",
+        "clean-architecture"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "golang-microservices",
+    "name": "Go Microservices",
+    "description": "Build scalable microservices architecture with Go",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "go",
+      "microservices",
+      "backend",
+      "distributed",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "go",
+    "keywords": [
+      "go microservices",
+      "build",
+      "scalable",
+      "microservices",
+      "architecture",
+      "with",
+      "go",
+      "backend",
+      "distributed",
+      "framework"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "golang",
+        "microservices",
+        "backend",
+        "distributed"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "rust-systems-programming",
+    "name": "Rust Systems Programming",
+    "description": "Low-level systems programming with Rust best practices",
+    "type": "cursor",
+    "category": "cursor-rules",
+    "tags": [
+      "rust",
+      "systems",
+      "performance",
+      "memory-safety",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "general",
+    "keywords": [
+      "rust systems programming",
+      "level",
+      "systems",
+      "programming",
+      "with",
+      "rust",
+      "best",
+      "practices",
+      "performance",
+      "memory-safety",
+      "framework",
+      "general"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "rust",
+        "systems",
+        "performance",
+        "memory-safety"
+      ],
+      "category": "framework"
+    }
+  },
+  {
+    "id": "kubernetes-devops",
+    "name": "Kubernetes DevOps",
+    "description": "Container orchestration and DevOps workflows with Kubernetes",
+    "type": "cursor",
+    "category": "infrastructure",
+    "tags": [
+      "kubernetes",
+      "docker",
+      "devops",
+      "orchestration",
+      "infrastructure",
+      "containers",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "containers",
+    "keywords": [
+      "kubernetes devops",
+      "container",
+      "orchestration",
+      "devops",
+      "workflows",
+      "with",
+      "kubernetes",
+      "docker",
+      "infrastructure",
+      "containers"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "kubernetes",
+        "docker",
+        "devops",
+        "orchestration"
+      ],
+      "category": "devops"
+    }
+  },
+  {
+    "id": "graphql-apollo-server",
+    "name": "GraphQL Apollo Server",
+    "description": "Build modern GraphQL APIs with Apollo Server and TypeScript",
+    "type": "cursor",
+    "category": "backend-frameworks",
+    "tags": [
+      "graphql",
+      "apollo",
+      "api",
+      "typescript",
+      "javascript",
+      "types",
+      "type-safety",
+      "cursor",
+      "cursor-rule"
+    ],
+    "source_url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "subcategory": "other",
+    "keywords": [
+      "graphql apollo server",
+      "build",
+      "modern",
+      "graphql",
+      "apis",
+      "with",
+      "apollo",
+      "server",
+      "typescript",
+      "api",
+      "javascript",
+      "types",
+      "type-safety",
+      "framework",
+      "other"
+    ],
+    "verified": false,
+    "karenScore": null,
+    "downloads": 0,
+    "stars": 0,
+    "_original": {
+      "tags": [
+        "graphql",
+        "apollo",
+        "api",
+        "typescript"
+      ],
+      "category": "framework"
+    }
+  }
+]

@@ -11,15 +11,17 @@
     "build:cli": "npm run build --workspace=@prmp/cli",
     "build:client": "npm run build --workspace=@prmp/registry-client",
     "build:registry": "npm run build --workspace=registry",
+    "build:webapp": "npm run build --workspace=@prmp/webapp",
     "dev:cli": "npm run dev --workspace=@prmp/cli",
     "dev:registry": "npm run dev --workspace=registry",
+    "dev:webapp": "npm run dev --workspace=@prmp/webapp",
     "test": "npm run test --workspaces",
     "test:cli": "npm run test --workspace=@prmp/cli",
     "test:client": "npm run test --workspace=@prmp/registry-client",
     "test:registry": "npm run test --workspace=registry",
     "test:ci": "npm run test:ci --workspaces",
     "build:binary": "npm run build:binary --workspace=@prmp/cli",
-    "clean": "rm -rf packages/*/dist registry/dist node_modules packages/*/node_modules registry/node_modules",
+    "clean": "rm -rf packages/*/dist packages/*/.next registry/dist node_modules packages/*/node_modules registry/node_modules",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "keywords": [

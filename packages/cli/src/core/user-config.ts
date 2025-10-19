@@ -16,7 +16,7 @@ export interface UserConfig {
 }
 
 const CONFIG_FILE = join(homedir(), '.prmprc');
-const DEFAULT_REGISTRY_URL = 'https://registry.promptpm.dev';
+const DEFAULT_REGISTRY_URL = 'https://registry.prmp.dev';
 
 /**
  * Get user configuration

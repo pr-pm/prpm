@@ -132,7 +132,7 @@ pulumi config set --secret github:clientId YOUR_GITHUB_CLIENT_ID
 pulumi config set --secret github:clientSecret YOUR_GITHUB_CLIENT_SECRET
 
 # Optional: Custom domain
-pulumi config set app:domainName registry.promptpm.dev
+pulumi config set app:domainName registry.prmp.dev
 
 # Optional: App configuration
 pulumi config set app:cpu 256
@@ -329,7 +329,7 @@ For staging or production:
 ```bash
 # Create hosted zone
 aws route53 create-hosted-zone \
-  --name promptpm.dev \
+  --name prmp.dev \
   --caller-reference $(date +%s)
 
 # Get name servers
@@ -345,7 +345,7 @@ aws route53 list-resource-record-sets \
 ```bash
 # Request certificate
 aws acm request-certificate \
-  --domain-name registry.promptpm.dev \
+  --domain-name registry.prmp.dev \
   --validation-method DNS \
   --region us-east-1
 
@@ -360,7 +360,7 @@ aws acm describe-certificate \
 
 ```bash
 # Update Pulumi config
-pulumi config set app:domainName registry.promptpm.dev
+pulumi config set app:domainName registry.prmp.dev
 pulumi config set app:certificateArn arn:aws:acm:us-east-1:...:certificate/xxxxx
 
 # Deploy

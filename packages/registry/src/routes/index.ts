@@ -8,6 +8,8 @@ import { packageRoutes } from './packages.js';
 import { searchRoutes } from './search.js';
 import { userRoutes } from './users.js';
 import { collectionRoutes } from './collections.js';
+import { inviteRoutes } from './invites.js';
+import analyticsRoutes from './analytics.js';
 
 export async function registerRoutes(server: FastifyInstance) {
   // API v1 routes
@@ -18,6 +20,8 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(searchRoutes, { prefix: '/search' });
       await api.register(userRoutes, { prefix: '/users' });
       await api.register(collectionRoutes, { prefix: '/collections' });
+      await api.register(inviteRoutes, { prefix: '/invites' });
+      await api.register(analyticsRoutes, { prefix: '/analytics' });
     },
     { prefix: '/api/v1' }
   );

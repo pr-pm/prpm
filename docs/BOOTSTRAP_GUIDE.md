@@ -209,7 +209,7 @@ VALUES (
   '00000000-0000-0000-0000-000000000001',
   0,
   'prmp-curator',
-  'curator@promptpm.dev',
+  'curator@prmp.dev',
   'curator',
   NOW()
 );
@@ -446,7 +446,7 @@ Create spreadsheet with columns:
    Just:
    ✅ prmp install react-rules
 
-   500+ packages available: https://registry.promptpm.dev
+   500+ packages available: https://registry.prmp.dev
 
    🧵 Thread...
    ```

@@ -1,0 +1,37 @@
+{
+  "name": "prompt-package-manager",
+  "version": "1.0.0",
+  "description": "PRPM dogfooding - Using our own packages to build PRPM",
+  "packages": {
+    "@prpm/self-improve-claude": {
+      "version": "1.0.0",
+      "installedAt": "2025-10-19T14:01:00.000Z",
+      "reason": "Meta-package teaching Claude to autonomously search and install PRPM packages",
+      "location": ".claude/self-improve.md"
+    },
+    "@prpm/self-improve-cursor": {
+      "version": "1.0.0",
+      "installedAt": "2025-10-19T14:01:00.000Z",
+      "reason": "Meta-package teaching Cursor to autonomously search and install PRPM packages",
+      "location": ".cursorrules/self-improve.md"
+    },
+    "@prpm/self-improve-windsurf": {
+      "version": "1.0.0",
+      "installedAt": "2025-10-19T14:01:00.000Z",
+      "reason": "Meta-package teaching Windsurf to autonomously search and install PRPM packages",
+      "location": "packages/prpm-self-improve-windsurf.md"
+    },
+    "@prpm/self-improve-continue": {
+      "version": "1.0.0",
+      "installedAt": "2025-10-19T14:01:00.000Z",
+      "reason": "Meta-package teaching Continue to autonomously search and install PRPM packages",
+      "location": "packages/prpm-self-improve-continue.md"
+    }
+  },
+  "meta": {
+    "totalPackages": 4,
+    "registryRunning": true,
+    "registryUrl": "http://localhost:3000",
+    "packagesSeeded": 1042
+  }
+}

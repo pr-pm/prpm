@@ -145,8 +145,8 @@ Displays a formatted table showing:
 **Example output:**
 ```
 ID              TYPE    URL                                          DESTINATION
-react-rules     cursor  https://registry.promptpm.dev/...            .cursor/rules/react-rules.md
-typescript-best claude  https://registry.promptpm.dev/...            .claude/agents/typescript-best.md
+react-rules     cursor  https://registry.prmp.dev/...            .cursor/rules/react-rules.md
+typescript-best claude  https://registry.prmp.dev/...            .claude/agents/typescript-best.md
 
 Total: 2 packages
 ```
@@ -666,7 +666,7 @@ PRPM stores configuration in `~/.prpmrc`:
 
 ```json
 {
-  "registryUrl": "https://registry.promptpm.dev",
+  "registryUrl": "https://registry.prmp.dev",
   "token": "your-auth-token",
   "username": "your-username",
   "defaultFormat": "cursor",
@@ -713,7 +713,7 @@ Tracks installed packages:
     {
       "id": "react-rules",
       "type": "cursor",
-      "url": "https://registry.promptpm.dev/packages/react-rules",
+      "url": "https://registry.prmp.dev/packages/react-rules",
       "dest": ".cursor/rules/react-rules.md",
       "version": "2.1.0"
     }
@@ -731,7 +731,7 @@ Ensures consistent installations:
   "packages": {
     "react-rules": {
       "version": "2.1.0",
-      "tarballUrl": "https://registry.promptpm.dev/...",
+      "tarballUrl": "https://registry.prmp.dev/...",
       "integrity": "sha512-...",
       "type": "cursor",
       "format": "cursor"
@@ -910,7 +910,7 @@ export PRMP_REGISTRY_URL=https://custom-registry.com
 
 - **GitHub**: https://github.com/khaliqgant/prompt-package-manager
 - **Issues**: https://github.com/khaliqgant/prompt-package-manager/issues
-- **Registry**: https://registry.promptpm.dev
+- **Registry**: https://registry.prmp.dev
 - **Documentation**: https://github.com/khaliqgant/prompt-package-manager#readme
 
 ## Contributing

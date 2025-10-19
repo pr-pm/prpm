@@ -199,7 +199,7 @@ chore: update dependencies
 
 ## 🔐 Security
 
-**Report vulnerabilities privately** to security@promptpm.dev
+**Report vulnerabilities privately** to security@prmp.dev
 
 **Do NOT:**
 - Commit API keys or secrets
@@ -250,7 +250,7 @@ Top contributors get:
 - **GitHub Issues** - Bug reports, feature requests
 - **Discussions** - Questions, ideas, community chat
 - **Discord** - Real-time help (coming soon)
-- **Email** - support@promptpm.dev
+- **Email** - support@prmp.dev
 
 ## 📄 License
 

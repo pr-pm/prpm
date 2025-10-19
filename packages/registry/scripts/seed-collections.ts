@@ -38,27 +38,71 @@ interface Collection {
 
 async function seedCollections() {
   try {
-    console.log('📦 Seeding collections...\n');
+    console.log('📦 Seeding sample collections...\n');
 
-    const seedDir = path.join(__dirname, 'seed');
-    const files = await fs.readdir(seedDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f.includes('collection'));
-
-    console.log(`Found ${jsonFiles.length} collection files:\n`);
+    // Sample collections with actual packages from the database
+    const sampleCollections = [
+      {
+        scope: 'collection',
+        id: 'react-best-practices',
+        version: '1.0.0',
+        name: 'React Best Practices',
+        description: 'Essential collection of React development best practices, patterns, and rules for building modern web applications',
+        author: 'prpm',
+        official: true,
+        verified: true,
+        category: 'frontend',
+        tags: ['react', 'frontend', 'javascript', 'best-practices'],
+        framework: 'react',
+        icon: '⚛️',
+        packages: [
+          { packageId: '@sanjeed5/react', required: true, order: 1 },
+          { packageId: '@sanjeed5/react-redux', required: false, order: 2 },
+          { packageId: '@sanjeed5/react-query', required: false, order: 3 },
+        ],
+      },
+      {
+        scope: 'collection',
+        id: 'python-fullstack',
+        version: '1.0.0',
+        name: 'Python Full Stack',
+        description: 'Complete Python development collection covering backend, database, containerization, and best practices',
+        author: 'prpm',
+        official: true,
+        verified: true,
+        category: 'backend',
+        tags: ['python', 'backend', 'fullstack'],
+        framework: 'python',
+        icon: '🐍',
+        packages: [
+          { packageId: '@sanjeed5/python', required: true, order: 1 },
+          { packageId: '@jhonma82/python-containerization', required: true, order: 2 },
+        ],
+      },
+      {
+        scope: 'collection',
+        id: 'claude-superpowers',
+        version: '1.0.0',
+        name: 'Claude Superpowers',
+        description: 'Essential Claude skills for brainstorming, planning, and executing complex development tasks',
+        author: 'obra',
+        official: true,
+        verified: true,
+        category: 'ai-assistant',
+        tags: ['claude', 'claude-skill', 'productivity'],
+        icon: '🦾',
+        packages: [
+          { packageId: '@obra/skill-brainstorming', required: true, order: 1 },
+          { packageId: '@obra/skill-executing-plans', required: true, order: 2 },
+          { packageId: '@obra/skill-defense-in-depth', required: false, order: 3 },
+        ],
+      },
+    ];
 
     let totalImported = 0;
     let totalSkipped = 0;
 
-    for (const file of jsonFiles) {
-      console.log(`📄 Processing ${file}...`);
-      const filePath = path.join(seedDir, file);
-      const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      // Handle both single collection and array of collections
-      const collections: Collection[] = Array.isArray(data) ? data : [data];
-
-      for (const collection of collections) {
+    for (const collection of sampleCollections) {
         try {
           // Check if collection already exists
           const existing = await pool.query(

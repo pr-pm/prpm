@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: prmp-webapp-test-postgres
+    environment:
+      POSTGRES_USER: prmp
+      POSTGRES_PASSWORD: prmp
+      POSTGRES_DB: prmp_registry
+    ports:
+      - "127.0.0.1:5433:5432"  # Bind to localhost only for security
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prmp"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: prmp-webapp-test-redis
+    ports:
+      - "127.0.0.1:6380:6379"  # Bind to localhost only for security
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: prmp-webapp-test-minio
+    ports:
+      - "127.0.0.1:9002:9000"  # Bind to localhost only for security
+      - "127.0.0.1:9003:9001"  # Bind to localhost only for security
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - test_minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  registry:
+    build:
+      context: ../registry
+      dockerfile: Dockerfile
+    container_name: prmp-webapp-test-registry
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://prmp:prmp@postgres:5432/prmp_registry
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: test-secret-key-for-e2e-testing
+      # GitHub OAuth
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-test-client-id}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-test-client-secret}
+      GITHUB_CALLBACK_URL: http://localhost:5173/auth/callback
+      # S3/MinIO
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      S3_BUCKET: prmp-packages
+      AWS_FORCE_PATH_STYLE: "true"
+      # Search
+      SEARCH_ENGINE: postgres
+      # Features
+      ENABLE_TELEMETRY: "false"
+      ENABLE_RATE_LIMITING: "false"
+    ports:
+      - "3001:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: prmp-webapp-test
+    depends_on:
+      registry:
+        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      NEXT_PUBLIC_REGISTRY_URL: http://registry:3000
+      NEXT_PUBLIC_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-test-client-id}
+    ports:
+      - "5173:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Playwright test runner
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.40.0-jammy
+    container_name: prmp-playwright-tests
+    depends_on:
+      webapp:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      CI: "true"
+      PLAYWRIGHT_BASE_URL: http://webapp:3000
+      REGISTRY_API_URL: http://registry:3000
+    command: npx playwright test --reporter=html,list
+    network_mode: service:webapp
+
+volumes:
+  test_postgres_data:
+  test_minio_data:

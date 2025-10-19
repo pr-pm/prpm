@@ -112,7 +112,7 @@ prpm install karen-agent
 - 💬 **Conversational** - "Karen, review this file" or "Karen, is this over-engineered?"
 - 📦 **250+ packages** - Cursor rules, Claude skills, MCP servers all in one place
 
-**[Install PRPM](https://github.com/khaliqgant/prompt-package-manager)** | **[Browse Packages](https://promptpm.dev)**
+**[Install PRPM](https://github.com/khaliqgant/prompt-package-manager)** | **[Browse Packages](https://prmp.dev)**
 
 ---
 

@@ -56,7 +56,7 @@ const appConfig = {
   cpu: parseInt(config.get("app:cpu") || "256"),
   memory: parseInt(config.get("app:memory") || "512"),
   desiredCount: parseInt(config.get("app:desiredCount") || "2"),
-  domainName: config.get("app:domainName"), // e.g., registry.promptpm.dev
+  domainName: config.get("app:domainName"), // e.g., registry.prmp.dev
 };
 
 const searchConfig = {

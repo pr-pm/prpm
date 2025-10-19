@@ -104,7 +104,7 @@ prmp deps react-rules
   "packages": {
     "react-rules": {
       "version": "1.2.0",
-      "resolved": "https://registry.promptpm.dev/tarballs/react-rules-1.2.0.tgz",
+      "resolved": "https://registry.prmp.dev/tarballs/react-rules-1.2.0.tgz",
       "integrity": "sha256-a3f8d9...",
       "dependencies": {
         "typescript-rules": "^2.0.0"

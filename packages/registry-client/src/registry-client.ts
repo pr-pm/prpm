@@ -330,10 +330,15 @@ export class RegistryClient {
   private async fetch(path: string, options: RequestInit = {}, retries: number = 3): Promise<Response> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       ...options.headers as Record<string, string>,
     };
 
+    // Only set Content-Type if not already set and body is not FormData
+    if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    // Always add Authorization if we have a token
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
@@ -402,7 +407,7 @@ export class RegistryClient {
  */
 export function getRegistryClient(config: { registryUrl?: string; token?: string }): RegistryClient {
   return new RegistryClient({
-    url: config.registryUrl || 'https://registry.promptpm.dev',
+    url: config.registryUrl || 'https://registry.prmp.dev',
     token: config.token,
   });
 }

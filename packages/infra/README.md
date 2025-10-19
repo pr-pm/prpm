@@ -69,7 +69,7 @@ pulumi config set --secret github:clientSecret YOUR_GITHUB_CLIENT_SECRET
 # Optional configuration
 pulumi config set db:instanceClass db.t4g.micro
 pulumi config set app:desiredCount 2
-pulumi config set app:domainName registry.promptpm.dev  # if you have a domain
+pulumi config set app:domainName registry.prmp.dev  # if you have a domain
 
 # For Phase 2 (OpenSearch)
 pulumi config set search:enabled true
@@ -129,7 +129,7 @@ pulumi config set app:image prmp-registry:latest      # Docker image
 pulumi config set app:cpu 256                         # CPU units
 pulumi config set app:memory 512                      # Memory in MB
 pulumi config set app:desiredCount 2                  # Number of tasks
-pulumi config set app:domainName registry.promptpm.dev # Custom domain
+pulumi config set app:domainName registry.prmp.dev # Custom domain
 ```
 
 ### GitHub OAuth

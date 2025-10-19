@@ -253,7 +253,7 @@ Hi @username,
 We noticed your awesome cursor rules repo: [repo-name]
 
 To make it easier for developers to discover and use, we've published it to the PRMP Registry:
-https://registry.promptpm.dev/packages/your-rules
+https://registry.prmp.dev/packages/your-rules
 
 ✅ Already installed by 147 developers
 ✅ Full attribution to your GitHub

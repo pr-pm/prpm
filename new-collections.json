@@ -1,0 +1,428 @@
+[
+  {
+    "name": "@collection/python-backend-complete",
+    "description": "Complete Python backend development stack with Django, FastAPI, Flask, and best practices",
+    "packages": [
+      "cursor-django",
+      "cursor-fastapi",
+      "cursor-flask",
+      "cursor-python",
+      "cursor-asyncio",
+      "cursor-pytest",
+      "cursor-sqlalchemy",
+      "cursor-pydantic",
+      "claude-python-pro",
+      "claude-api-designer"
+    ],
+    "tags": ["python", "backend", "django", "fastapi", "flask", "api"],
+    "category": "backend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/frontend-react-ecosystem",
+    "description": "Complete React ecosystem with Next.js, TypeScript, Tailwind, testing, and performance",
+    "packages": [
+      "cursor-react",
+      "cursor-nextjs",
+      "cursor-typescript",
+      "cursor-tailwind",
+      "cursor-jest",
+      "cursor-react-testing-library",
+      "claude-react-pro",
+      "claude-component-architect",
+      "windsurf-react-best-practices",
+      "windsurf-nextjs"
+    ],
+    "tags": ["react", "nextjs", "frontend", "typescript", "tailwind"],
+    "category": "frontend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/vue-fullstack",
+    "description": "Complete Vue.js stack with Nuxt, Vuex, TypeScript, and testing",
+    "packages": [
+      "cursor-vue",
+      "cursor-nuxt",
+      "cursor-vuex",
+      "cursor-typescript",
+      "cursor-vitest",
+      "windsurf-vue",
+      "windsurf-nuxt",
+      "claude-vue-specialist"
+    ],
+    "tags": ["vue", "nuxt", "frontend", "typescript", "fullstack"],
+    "category": "frontend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/mobile-cross-platform",
+    "description": "Cross-platform mobile development with React Native, Flutter, and native iOS/Android",
+    "packages": [
+      "cursor-react-native",
+      "cursor-flutter",
+      "cursor-android-sdk",
+      "cursor-ios-swift",
+      "cursor-kotlin",
+      "claude-mobile-architect",
+      "claude-ios-developer",
+      "claude-android-developer"
+    ],
+    "tags": ["mobile", "react-native", "flutter", "ios", "android", "cross-platform"],
+    "category": "mobile-development",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/devops-infrastructure",
+    "description": "Complete DevOps and infrastructure stack with Docker, Kubernetes, Terraform, and CI/CD",
+    "packages": [
+      "cursor-docker",
+      "cursor-kubernetes",
+      "cursor-terraform",
+      "cursor-ansible",
+      "cursor-aws",
+      "cursor-github-actions",
+      "claude-devops-specialist",
+      "claude-infrastructure-architect"
+    ],
+    "tags": ["devops", "docker", "kubernetes", "terraform", "infrastructure", "cicd"],
+    "category": "infrastructure",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/data-science-ml",
+    "description": "Data science and machine learning stack with Python, TensorFlow, PyTorch, and analytics",
+    "packages": [
+      "cursor-tensorflow",
+      "cursor-pytorch",
+      "cursor-pandas",
+      "cursor-numpy",
+      "cursor-scikit-learn",
+      "cursor-jupyter",
+      "claude-ml-engineer",
+      "claude-data-scientist"
+    ],
+    "tags": ["ml", "ai", "data-science", "tensorflow", "pytorch", "python"],
+    "category": "data-ai",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/testing-complete",
+    "description": "Comprehensive testing suite with unit, integration, E2E, and performance testing",
+    "packages": [
+      "cursor-jest",
+      "cursor-cypress",
+      "cursor-playwright",
+      "cursor-vitest",
+      "cursor-pytest",
+      "claude-testing-specialist",
+      "claude-qa-engineer",
+      "windsurf-testing-best-practices"
+    ],
+    "tags": ["testing", "jest", "cypress", "playwright", "qa", "quality"],
+    "category": "quality-testing",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/backend-node-typescript",
+    "description": "Modern Node.js backend with TypeScript, NestJS, Express, and GraphQL",
+    "packages": [
+      "cursor-nestjs",
+      "cursor-express",
+      "cursor-typescript",
+      "cursor-graphql",
+      "cursor-prisma",
+      "cursor-typeorm",
+      "claude-nodejs-pro",
+      "claude-api-designer"
+    ],
+    "tags": ["nodejs", "typescript", "backend", "nestjs", "express", "graphql"],
+    "category": "backend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/cloud-aws-complete",
+    "description": "Complete AWS cloud development with Lambda, EC2, S3, DynamoDB, and infrastructure as code",
+    "packages": [
+      "cursor-aws",
+      "cursor-aws-lambda",
+      "cursor-amazon-ec2",
+      "cursor-amazon-s3",
+      "cursor-dynamodb",
+      "cursor-terraform",
+      "claude-cloud-architect",
+      "claude-aws-specialist"
+    ],
+    "tags": ["aws", "cloud", "lambda", "s3", "infrastructure"],
+    "category": "infrastructure",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/database-fullstack",
+    "description": "Complete database stack with PostgreSQL, MongoDB, Redis, and ORMs",
+    "packages": [
+      "cursor-postgresql",
+      "cursor-mongodb",
+      "cursor-redis",
+      "cursor-prisma",
+      "cursor-typeorm",
+      "cursor-sqlalchemy",
+      "claude-database-architect",
+      "claude-sql-expert"
+    ],
+    "tags": ["database", "postgresql", "mongodb", "redis", "sql", "nosql"],
+    "category": "data-ai",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/enterprise-java",
+    "description": "Enterprise Java development with Spring Boot, Hibernate, and microservices",
+    "packages": [
+      "cursor-spring-boot",
+      "cursor-java",
+      "cursor-hibernate",
+      "cursor-maven",
+      "cursor-gradle",
+      "claude-java-architect",
+      "claude-spring-specialist"
+    ],
+    "tags": ["java", "spring", "enterprise", "backend", "microservices"],
+    "category": "backend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/web3-blockchain",
+    "description": "Web3 and blockchain development with Solidity, Ethereum, and smart contracts",
+    "packages": [
+      "cursor-solidity",
+      "cursor-ethereum",
+      "cursor-web3",
+      "claude-blockchain-developer",
+      "claude-smart-contract-auditor"
+    ],
+    "tags": ["web3", "blockchain", "ethereum", "solidity", "smart-contracts"],
+    "category": "specialized-domains",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/php-laravel-complete",
+    "description": "Complete PHP development with Laravel, Symfony, and modern PHP best practices",
+    "packages": [
+      "cursor-laravel",
+      "cursor-php",
+      "cursor-symfony",
+      "cursor-composer",
+      "cursor-phpunit",
+      "claude-php-specialist",
+      "windsurf-laravel"
+    ],
+    "tags": ["php", "laravel", "symfony", "backend", "web"],
+    "category": "backend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/rust-systems",
+    "description": "Systems programming with Rust, including async, WebAssembly, and performance",
+    "packages": [
+      "cursor-rust",
+      "cursor-tokio",
+      "cursor-actix-web",
+      "cursor-wasm",
+      "claude-rust-systems-engineer",
+      "claude-performance-specialist"
+    ],
+    "tags": ["rust", "systems", "performance", "webassembly", "async"],
+    "category": "backend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/go-microservices",
+    "description": "Go microservices development with gRPC, Docker, Kubernetes, and testing",
+    "packages": [
+      "cursor-go",
+      "cursor-grpc",
+      "cursor-docker",
+      "cursor-kubernetes",
+      "cursor-gin",
+      "claude-go-specialist",
+      "claude-microservices-architect"
+    ],
+    "tags": ["go", "golang", "microservices", "grpc", "backend"],
+    "category": "backend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/ui-design-systems",
+    "description": "UI and design system development with Figma, Storybook, and component libraries",
+    "packages": [
+      "cursor-tailwind",
+      "cursor-material-ui",
+      "cursor-ant-design",
+      "cursor-storybook",
+      "cursor-figma",
+      "claude-ui-architect",
+      "claude-design-system-specialist"
+    ],
+    "tags": ["ui", "design-systems", "tailwind", "storybook", "frontend"],
+    "category": "frontend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/security-best-practices",
+    "description": "Security-focused development with authentication, authorization, and vulnerability scanning",
+    "packages": [
+      "cursor-auth0",
+      "cursor-oauth",
+      "cursor-jwt",
+      "cursor-security",
+      "claude-security-specialist",
+      "claude-penetration-tester"
+    ],
+    "tags": ["security", "authentication", "authorization", "oauth", "jwt"],
+    "category": "specialized-domains",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/graphql-complete",
+    "description": "Complete GraphQL stack with Apollo, schema design, and federation",
+    "packages": [
+      "cursor-graphql",
+      "cursor-apollo-graphql",
+      "cursor-apollo-client",
+      "cursor-typescript",
+      "claude-graphql-architect",
+      "claude-api-designer"
+    ],
+    "tags": ["graphql", "apollo", "api", "backend", "frontend"],
+    "category": "backend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/jamstack-modern",
+    "description": "Modern JAMstack development with Astro, Eleventy, and headless CMS",
+    "packages": [
+      "cursor-astro",
+      "cursor-eleventy",
+      "cursor-contentful",
+      "cursor-sanity",
+      "cursor-gatsby",
+      "claude-jamstack-specialist"
+    ],
+    "tags": ["jamstack", "astro", "eleventy", "headless-cms", "frontend"],
+    "category": "frontend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/api-development-complete",
+    "description": "Complete API development with REST, GraphQL, documentation, and testing",
+    "packages": [
+      "cursor-fastapi",
+      "cursor-express",
+      "cursor-nestjs",
+      "cursor-graphql",
+      "cursor-swagger",
+      "cursor-postman",
+      "claude-api-designer",
+      "claude-api-documentation-specialist"
+    ],
+    "tags": ["api", "rest", "graphql", "backend", "documentation"],
+    "category": "backend-frameworks",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/performance-optimization",
+    "description": "Performance optimization across frontend, backend, and infrastructure",
+    "packages": [
+      "cursor-performance",
+      "cursor-lighthouse",
+      "cursor-webpack",
+      "cursor-vite",
+      "claude-performance-specialist",
+      "claude-optimization-engineer"
+    ],
+    "tags": ["performance", "optimization", "webpack", "vite", "speed"],
+    "category": "developer-experience",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/documentation-technical-writing",
+    "description": "Technical documentation and writing with Markdown, API docs, and knowledge bases",
+    "packages": [
+      "cursor-markdown",
+      "cursor-swagger",
+      "cursor-docusaurus",
+      "claude-technical-writer",
+      "claude-documentation-specialist"
+    ],
+    "tags": ["documentation", "markdown", "technical-writing", "api-docs"],
+    "category": "developer-experience",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/code-quality-complete",
+    "description": "Complete code quality suite with linting, formatting, code review, and static analysis",
+    "packages": [
+      "cursor-eslint",
+      "cursor-prettier",
+      "cursor-sonarqube",
+      "claude-code-reviewer",
+      "claude-refactoring-specialist",
+      "karen-skill"
+    ],
+    "tags": ["code-quality", "linting", "formatting", "code-review", "quality"],
+    "category": "quality-testing",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/monorepo-management",
+    "description": "Monorepo management with Turborepo, Nx, Lerna, and workspace optimization",
+    "packages": [
+      "cursor-turborepo",
+      "cursor-nx",
+      "cursor-lerna",
+      "cursor-pnpm",
+      "claude-monorepo-architect"
+    ],
+    "tags": ["monorepo", "turborepo", "nx", "workspace", "architecture"],
+    "category": "developer-experience",
+    "author": "prpm",
+    "verified": true
+  },
+  {
+    "name": "@collection/realtime-applications",
+    "description": "Real-time application development with WebSockets, Socket.io, and streaming",
+    "packages": [
+      "cursor-websocket",
+      "cursor-socketio",
+      "cursor-redis",
+      "cursor-kafka",
+      "claude-realtime-specialist"
+    ],
+    "tags": ["realtime", "websocket", "socketio", "streaming", "backend"],
+    "category": "backend-frameworks",
+    "author": "prpm",
+    "verified": true
+  }
+]

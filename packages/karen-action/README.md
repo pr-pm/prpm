@@ -107,7 +107,7 @@ prmp install karen-agent
 - 📦 **250+ packages** - Access Cursor rules, Claude skills, MCP servers
 - 🔄 **Ecosystem** - One package manager for all AI prompts
 
-**[Install PRPM](https://github.com/khaliqgant/prompt-package-manager)** | **[Browse Packages](https://promptpm.dev)**
+**[Install PRPM](https://github.com/khaliqgant/prompt-package-manager)** | **[Browse Packages](https://prmp.dev)**
 
 ---
 
