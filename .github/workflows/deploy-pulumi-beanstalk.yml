@@ -93,23 +93,23 @@ jobs:
           pulumi config set aws:region ${{ env.AWS_REGION }}
 
           # Database credentials (from secrets)
-          pulumi config set prpm-infra:db:username prpm
-          pulumi config set --secret prpm-infra:db:password "${{ secrets.DB_PASSWORD }}"
+          pulumi config set db:username prpm
+          pulumi config set --secret db:password "${{ secrets.DB_PASSWORD }}"
 
           # GitHub OAuth (from secrets)
-          pulumi config set --secret prpm-infra:github:clientId "${{ secrets.GITHUB_CLIENT_ID }}"
-          pulumi config set --secret prpm-infra:github:clientSecret "${{ secrets.GITHUB_CLIENT_SECRET }}"
+          pulumi config set --secret github:clientId "${{ secrets.GITHUB_CLIENT_ID }}"
+          pulumi config set --secret github:clientSecret "${{ secrets.GITHUB_CLIENT_SECRET }}"
 
           # Beanstalk configuration
-          pulumi config set prpm-infra:app:instanceType t3.micro
-          pulumi config set prpm-infra:app:minSize 1
-          pulumi config set prpm-infra:app:maxSize 2
+          pulumi config set app:instanceType t3.micro
+          pulumi config set app:minSize 1
+          pulumi config set app:maxSize 2
 
           # Domain configuration
           if [ "$STACK" = "prod" ]; then
-            pulumi config set prpm-infra:app:domainName registry.prpm.dev
+            pulumi config set app:domainName registry.prpm.dev
           elif [ "$STACK" = "staging" ]; then
-            pulumi config set prpm-infra:app:domainName staging.prpm.dev
+            pulumi config set app:domainName staging.prpm.dev
           fi
 
           echo "✅ Stack configured for $STACK"
