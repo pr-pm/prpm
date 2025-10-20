@@ -14,7 +14,39 @@ Just run `npm run dev` and start coding!
 
 ## Quick Start
 
-### Start Full Development Environment
+### 1. Environment Setup (First Time)
+
+**Copy and configure environment variables:**
+```bash
+# Copy example environment file
+cp .env.example .env
+
+# Edit .env with your configuration
+# At minimum, set:
+# - DATABASE_URL (PostgreSQL connection)
+# - REDIS_URL (Redis connection)
+# - JWT_SECRET (generate with: openssl rand -base64 32)
+# - GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET (for OAuth)
+```
+
+**Install dependencies:**
+```bash
+npm install
+```
+
+**Start Docker services:**
+```bash
+# Start PostgreSQL, Redis, and MinIO
+npm run docker:start
+```
+
+**Run database migrations:**
+```bash
+cd packages/registry
+npm run migrate:up
+```
+
+### 2. Start Full Development Environment
 ```bash
 # Automatically starts Docker services, then runs CLI, registry and webapp with watch mode
 npm run dev
@@ -243,11 +275,38 @@ npm run services:logs
   - User: `prpm`
   - Password: `prpm`
   - Database: `prpm`
+  - Connection String: `postgresql://prpm:prpm@localhost:5434/prpm`
 - **Redis**: localhost:6379
-- **MinIO**: http://localhost:9000
+  - Connection String: `redis://localhost:6379`
+- **MinIO** (S3-compatible storage): http://localhost:9000
   - Console: http://localhost:9001
-  - User: `minioadmin`
-  - Password: `minioadmin`
+  - Access Key: `minioadmin`
+  - Secret Key: `minioadmin`
+  - Bucket: Create `prpm-packages` bucket via console
+
+### Environment Variables
+
+See `.env.example` for all available configuration options. Key variables:
+
+**Required:**
+- `DATABASE_URL` - PostgreSQL connection string
+- `REDIS_URL` - Redis connection string
+- `JWT_SECRET` - Secret for JWT token signing
+- `GITHUB_CLIENT_ID` - GitHub OAuth app client ID
+- `GITHUB_CLIENT_SECRET` - GitHub OAuth app secret
+
+**Storage:**
+- `S3_ENDPOINT` - MinIO/S3 endpoint (default: http://localhost:9000)
+- `S3_BUCKET` - Storage bucket name (default: prpm-packages)
+- `S3_ACCESS_KEY_ID` - MinIO/S3 access key
+- `S3_SECRET_ACCESS_KEY` - MinIO/S3 secret key
+
+**Optional:**
+- `AI_EVALUATION_ENABLED` - Enable AI quality scoring (requires ANTHROPIC_API_KEY)
+- `SEARCH_ENGINE` - Use 'postgres' (default) or 'opensearch'
+- `ENABLE_TELEMETRY` - Enable PostHog telemetry (default: true)
+
+For complete list, see `.env.example`.
 
 ## Build Flags Explained
 

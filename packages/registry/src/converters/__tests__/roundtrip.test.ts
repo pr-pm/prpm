@@ -126,11 +126,12 @@ describe('Round-trip conversions', () => {
       // Convert to Cursor
       const cursorResult = toCursor(canonical);
 
-      // Verify Cursor format
+      // Verify Cursor format with MDC header
+      expect(cursorResult.content).toContain('---'); // Has MDC header
+      expect(cursorResult.content).toMatch(/^---\n[\s\S]*?\n---\n/); // Valid YAML frontmatter
       expect(cursorResult.content).toContain('# 📊');
       expect(cursorResult.content).toContain('## Core Principles');
       expect(cursorResult.content).toContain('## Available Commands');
-      expect(cursorResult.content).not.toContain('---'); // No frontmatter
     });
   });
 
