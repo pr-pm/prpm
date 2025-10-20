@@ -50,7 +50,6 @@ describe('RegistryClient', () => {
       packages: [
         {
           id: 'test-package',
-          display_name: 'Test Package',
           description: 'A test package',
           type: 'cursor' as PackageType,
           tags: ['test'],
@@ -144,7 +143,6 @@ describe('RegistryClient', () => {
   describe('getPackage', () => {
     const mockPackage = {
       id: 'test-package',
-      display_name: 'Test Package',
       description: 'A test package',
       type: 'cursor' as PackageType,
       tags: ['test'],
@@ -357,7 +355,6 @@ describe('RegistryClient', () => {
     const mockPackages = [
       {
         id: 'trending-1',
-        display_name: 'Trending Package 1',
         type: 'cursor' as PackageType,
         tags: [],
         total_downloads: 1000,

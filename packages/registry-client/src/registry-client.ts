@@ -13,7 +13,7 @@ import type {
 
 export interface RegistryPackage {
   id: string;
-  display_name: string;
+  name: string;
   description?: string;
   type: PackageType;
   tags: string[];
@@ -98,12 +98,14 @@ export class RegistryClient {
   async search(query: string, options?: {
     type?: PackageType;
     tags?: string[];
+    author?: string;
     limit?: number;
     offset?: number;
   }): Promise<SearchResult> {
     const params = new URLSearchParams({ q: query });
     if (options?.type) params.append('type', options.type);
     if (options?.tags) options.tags.forEach(tag => params.append('tags', tag));
+    if (options?.author) params.append('author', options.author);
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.offset) params.append('offset', options.offset.toString());
 
@@ -115,7 +117,7 @@ export class RegistryClient {
    * Get package information
    */
   async getPackage(packageId: string): Promise<RegistryPackage> {
-    const response = await this.fetch(`/api/v1/packages/${packageId}`);
+    const response = await this.fetch(`/api/v1/packages/${encodeURIComponent(packageId)}`);
     return response.json() as Promise<RegistryPackage>;
   }
 
@@ -123,7 +125,7 @@ export class RegistryClient {
    * Get specific package version
    */
   async getPackageVersion(packageId: string, version: string): Promise<any> {
-    const response = await this.fetch(`/api/v1/packages/${packageId}/${version}`);
+    const response = await this.fetch(`/api/v1/packages/${encodeURIComponent(packageId)}/${version}`);
     return response.json();
   }
 
@@ -135,7 +137,7 @@ export class RegistryClient {
     peerDependencies: Record<string, string>;
   }> {
     const versionPath = version ? `/${version}` : '';
-    const response = await this.fetch(`/api/v1/packages/${packageId}${versionPath}/dependencies`);
+    const response = await this.fetch(`/api/v1/packages/${encodeURIComponent(packageId)}${versionPath}/dependencies`);
     return response.json() as Promise<{ dependencies: Record<string, string>; peerDependencies: Record<string, string> }>;
   }
 
@@ -143,7 +145,7 @@ export class RegistryClient {
    * Get all versions for a package
    */
   async getPackageVersions(packageId: string): Promise<{ versions: string[] }> {
-    const response = await this.fetch(`/api/v1/packages/${packageId}/versions`);
+    const response = await this.fetch(`/api/v1/packages/${encodeURIComponent(packageId)}/versions`);
     return response.json() as Promise<{ versions: string[] }>;
   }
 
@@ -157,7 +159,7 @@ export class RegistryClient {
     const params = new URLSearchParams();
     if (version) params.append('version', version);
 
-    const response = await this.fetch(`/api/v1/packages/${packageId}/resolve?${params}`);
+    const response = await this.fetch(`/api/v1/packages/${encodeURIComponent(packageId)}/resolve?${params}`);
     return response.json() as Promise<{ resolved: Record<string, string>; tree: DependencyTree }>;
   }
 

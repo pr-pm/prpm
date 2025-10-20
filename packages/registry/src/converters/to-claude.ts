@@ -9,6 +9,8 @@ import type {
   ConversionOptions,
   ConversionResult,
   Section,
+  Rule,
+  Example,
 } from '../types/canonical.js';
 
 /**
@@ -173,16 +175,16 @@ function convertPersona(section: {
   }
 
   // Style
-  if (style && style.length > 0) {
+  if (style && Array.isArray(style) && style.length > 0) {
     lines.push('');
     lines.push(`Your communication style is ${style.join(', ')}.`);
   }
 
   // Expertise
-  if (expertise && expertise.length > 0) {
+  if (expertise && Array.isArray(expertise) && expertise.length > 0) {
     lines.push('');
     lines.push('Your areas of expertise include:');
-    expertise.forEach((area: string) => {
+    expertise.forEach((area: unknown) => {
       lines.push(`- ${area}`);
     });
   }
@@ -221,7 +223,7 @@ function convertInstructions(section: {
 function convertRules(section: {
   type: 'rules';
   title: string;
-  items: RuleItem[];
+  items: Rule[];
   ordered?: boolean;
 }): string {
   const lines: string[] = [];
@@ -231,7 +233,7 @@ function convertRules(section: {
 
   // For Claude, phrase rules as instructions/guidelines
   section.items.forEach((rule, index) => {
-    const content = typeof rule === 'string' ? rule : rule.content;
+    const content = rule.content;
     const prefix = section.ordered ? `${index + 1}.` : '-';
 
     // Rephrase as directive if it's a simple rule
@@ -242,13 +244,13 @@ function convertRules(section: {
     }
 
     // Add rationale if present
-    if (typeof rule === 'object' && rule.rationale) {
+    if (rule.rationale) {
       lines.push(`   *${rule.rationale}*`);
     }
 
     // Add examples if present
-    if (typeof rule === 'object' && rule.examples) {
-      rule.examples?.forEach((example: string) => {
+    if (rule.examples) {
+      rule.examples.forEach((example: string) => {
         lines.push(`   Example: \`${example}\``);
       });
     }
@@ -263,7 +265,7 @@ function convertRules(section: {
 function convertExamples(section: {
   type: 'examples';
   title: string;
-  examples: ExampleItem[];
+  examples: Example[];
 }): string {
   const lines: string[] = [];
 

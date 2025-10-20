@@ -17,8 +17,8 @@ function AuthCallbackContent() {
       localStorage.setItem('prpm_token', token)
       localStorage.setItem('prpm_username', username)
 
-      // Redirect to home or intended destination
-      const returnTo = localStorage.getItem('prpm_return_to') || '/'
+      // Redirect to dashboard or intended destination
+      const returnTo = localStorage.getItem('prpm_return_to') || '/dashboard'
       localStorage.removeItem('prpm_return_to')
       window.location.href = returnTo
     }

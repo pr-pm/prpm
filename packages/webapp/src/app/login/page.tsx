@@ -24,8 +24,8 @@ export default function LoginPage() {
       localStorage.setItem('prpm_token', token)
       localStorage.setItem('prpm_username', user.username)
 
-      // Redirect to home or intended destination
-      const returnTo = localStorage.getItem('prpm_return_to') || '/'
+      // Redirect to dashboard or intended destination
+      const returnTo = localStorage.getItem('prpm_return_to') || '/dashboard'
       localStorage.removeItem('prpm_return_to')
       router.push(returnTo)
     } catch (err: any) {

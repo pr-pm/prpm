@@ -15,6 +15,14 @@ export function getDestinationDir(type: PackageType): string {
       return '.cursor/rules';
     case 'claude':
       return '.claude/agents';
+    case 'claude-skill':
+      return '.claude/skills';
+    case 'continue':
+      return '.continue/rules';
+    case 'windsurf':
+      return '.windsurf/rules';
+    case 'generic':
+      return '.prompts';
     default:
       throw new Error(`Unknown package type: ${type}`);
   }

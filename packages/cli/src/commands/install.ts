@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir } from '../core/filesystem';
-import { addPackage } from '../core/config';
+import { addPackage, readConfig } from '../core/config';
 import { telemetry } from '../core/telemetry';
 import { Package, PackageType } from '../types';
 import { createWriteStream } from 'fs';
@@ -21,6 +21,7 @@ import {
   setPackageIntegrity,
   getLockedVersion,
 } from '../core/lockfile';
+import { applyCursorConfig, hasMDCHeader } from '../core/cursor-config';
 
 /**
  * Get icon for package type
@@ -102,7 +103,7 @@ export async function handleInstall(
     const pkg = await client.getPackage(packageId);
     const typeIcon = getTypeIcon(pkg.type);
     const typeLabel = getTypeLabel(pkg.type);
-    console.log(`   ${pkg.display_name} ${pkg.official ? '🏅' : ''}`);
+    console.log(`   ${pkg.id} ${pkg.official ? '🏅' : ''}`);
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 
@@ -131,8 +132,17 @@ export async function handleInstall(
 
     // For MVP, assume single file in tarball
     // TODO: Implement proper tar extraction
-    const mainFile = await extractMainFile(tarball, packageId);
+    let mainFile = await extractMainFile(tarball, packageId);
     const destPath = `${destDir}/${packageId}.md`;
+
+    // Apply cursor config if downloading in cursor format
+    if (format === 'cursor' && hasMDCHeader(mainFile)) {
+      const localConfig = await readConfig();
+      if (localConfig.cursor) {
+        console.log(`   ⚙️  Applying cursor config...`);
+        mainFile = applyCursorConfig(mainFile, localConfig.cursor);
+      }
+    }
 
     await saveFile(destPath, mainFile);
 

@@ -142,7 +142,7 @@ WHERE ai.status = 'pending'
 CREATE OR REPLACE VIEW top_unclaimed_authors AS
 WITH author_stats AS (
   SELECT
-    SPLIT_PART(p.id, '/', 1) as author_username,
+    SPLIT_PART(p.name, '/', 1) as author_username,
     COUNT(*) as package_count,
     ARRAY_AGG(DISTINCT p.type) as package_types,
     ARRAY_AGG(DISTINCT p.category) as categories,
@@ -150,8 +150,8 @@ WITH author_stats AS (
     MAX(p.created_at) as latest_package_date,
     SUM(p.total_downloads) as total_downloads
   FROM packages p
-  WHERE p.id LIKE '@%/%'  -- Only namespaced packages
-  GROUP BY SPLIT_PART(p.id, '/', 1)
+  WHERE p.name LIKE '@%/%'  -- Only namespaced packages
+  GROUP BY SPLIT_PART(p.name, '/', 1)
   HAVING COUNT(*) >= 5  -- Only authors with 5+ packages
 )
 SELECT
@@ -220,7 +220,7 @@ BEGIN
   -- Get package count for this author
   SELECT COUNT(*) INTO v_package_count
   FROM packages
-  WHERE id LIKE '@' || p_author_username || '/%';
+  WHERE name LIKE '@' || p_author_username || '/%';
 
   -- Generate token
   v_token := generate_invite_token();
@@ -250,22 +250,13 @@ BEGIN
   SELECT
     v_invite_id,
     v_token,
-    'https://prpm.ai/claim/' || v_token AS claim_url;
+    'https://prpm.dev/claim/' || v_token AS claim_url;
 END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
--- SEED DATA (for testing)
+-- TABLE COMMENTS
 -- ============================================
-
--- Create admin user if not exists (for development)
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin') THEN
-    INSERT INTO users (username, email, is_admin, verified_author)
-    VALUES ('admin', 'admin@prpm.ai', TRUE, TRUE);
-  END IF;
-END $$;
 
 COMMENT ON TABLE author_invites IS 'White carpet onboarding system for top package authors';
 COMMENT ON TABLE author_claims IS 'Track author identity claims and verification';

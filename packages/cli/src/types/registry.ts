@@ -45,7 +45,7 @@ export interface PublishResponse {
 
 export interface SearchPackage {
   id: string;
-  display_name: string;
+  name: string;
   description?: string;
   type: PackageType;
   tags: string[];

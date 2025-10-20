@@ -24,7 +24,6 @@ vi.mock('../../db/index.js', () => ({
       return Promise.resolve({
         rows: [{
           id: 'test-package',
-          display_name: 'Test Package',
           description: 'A comprehensive test package with detailed description',
           documentation_url: 'https://example.com/docs',
           repository_url: 'https://github.com/test/repo',
@@ -88,7 +87,6 @@ describe('Quality Scorer', () => {
     it('should calculate score for a complete package', () => {
       const pkg: PackageQualityData = {
         id: 'test-pkg',
-        display_name: 'Test Package',
         description: 'A detailed test package description',
         documentation_url: 'https://docs.example.com',
         repository_url: 'https://github.com/test/repo',
@@ -126,7 +124,6 @@ describe('Quality Scorer', () => {
     it('should give higher scores to verified authors', () => {
       const unverified: PackageQualityData = {
         id: 'test-1',
-        display_name: 'Test',
         author_id: 'author-1',
         verified: false,
         official: false,
@@ -154,7 +151,6 @@ describe('Quality Scorer', () => {
     it('should give higher scores to official packages', () => {
       const unofficial: PackageQualityData = {
         id: 'test-1',
-        display_name: 'Test',
         author_id: 'author-1',
         verified: false,
         official: false,
@@ -182,7 +178,6 @@ describe('Quality Scorer', () => {
     it('should score based on downloads (logarithmic)', () => {
       const low: PackageQualityData = {
         id: 'test-1',
-        display_name: 'Test',
         author_id: 'author-1',
         verified: false,
         official: false,
@@ -209,7 +204,6 @@ describe('Quality Scorer', () => {
     it('should score based on content quality', () => {
       const minimal: PackageQualityData = {
         id: 'test-1',
-        display_name: 'Test',
         author_id: 'author-1',
         verified: false,
         official: false,
@@ -249,7 +243,6 @@ describe('Quality Scorer', () => {
     it('should cap scores at 5.0', () => {
       const perfect: PackageQualityData = {
         id: 'test-1',
-        display_name: 'Perfect Package',
         description: 'A'.repeat(200),
         documentation_url: 'https://docs.example.com',
         repository_url: 'https://github.com/test/repo',
@@ -286,7 +279,6 @@ describe('Quality Scorer', () => {
     it('should use AI evaluation for prompt content', async () => {
       const pkg: PackageQualityData = {
         id: 'test-pkg',
-        display_name: 'Test',
         author_id: 'author-1',
         verified: false,
         official: false,
@@ -315,7 +307,6 @@ describe('Quality Scorer', () => {
 
       const pkg: PackageQualityData = {
         id: 'test-pkg',
-        display_name: 'Test',
         author_id: 'author-1',
         verified: false,
         official: false,
@@ -414,7 +405,6 @@ describe('Quality Scorer', () => {
       tests.forEach(({ downloads, expected }) => {
         const pkg: PackageQualityData = {
           id: 'test',
-          display_name: 'Test',
           author_id: 'author-1',
           verified: false,
           official: false,
@@ -436,7 +426,6 @@ describe('Quality Scorer', () => {
     it('should score ratings properly', () => {
       const lowRating: PackageQualityData = {
         id: 'test',
-        display_name: 'Test',
         author_id: 'author-1',
         verified: false,
         official: false,
@@ -465,7 +454,6 @@ describe('Quality Scorer', () => {
     it('should require minimum ratings for credibility', () => {
       const fewRatings: PackageQualityData = {
         id: 'test',
-        display_name: 'Test',
         author_id: 'author-1',
         verified: false,
         official: false,
@@ -493,7 +481,6 @@ describe('Quality Scorer', () => {
     it('should score recency', () => {
       const old: PackageQualityData = {
         id: 'test',
-        display_name: 'Test',
         author_id: 'author-1',
         verified: false,
         official: false,

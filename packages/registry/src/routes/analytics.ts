@@ -67,16 +67,31 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
       const { packageId, version, format, client } = request.body;
 
       try {
+        // Lookup package UUID by name
+        const pkgResult = await fastify.pg.query(
+          'SELECT id FROM packages WHERE name = $1',
+          [packageId]
+        );
+
+        if (pkgResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: 'Package not found',
+          });
+        }
+
+        const pkgUuid = pkgResult.rows[0].id;
+
         // Get client info for anonymous tracking
         const clientId = request.user?.user_id ||
           request.headers['x-client-id'] as string ||
           'anonymous';
-        
+
         const ipHash = request.ip ?
           createHash('sha256').update(request.ip).digest('hex').substring(0, 16) :
           null;
 
-        // Record download event in enhanced analytics table
+        // Record download event in enhanced analytics table (use UUID for FK)
         await fastify.pg.query(
           `INSERT INTO download_events (
             package_id,
@@ -90,7 +105,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
             referrer
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
           [
-            packageId,
+            pkgUuid,
             version || null,
             client || 'api',
             format || 'generic',
@@ -102,22 +117,22 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           ]
         );
 
-        // Update package download counts
+        // Update package download counts (use UUID)
         await fastify.pg.query(
-          `UPDATE packages 
-           SET 
+          `UPDATE packages
+           SET
              total_downloads = total_downloads + 1,
              weekly_downloads = weekly_downloads + 1,
              monthly_downloads = monthly_downloads + 1,
              updated_at = NOW()
            WHERE id = $1`,
-          [packageId]
+          [pkgUuid]
         );
 
-        // Get updated total
+        // Get updated total (use UUID)
         const result = await fastify.pg.query(
           'SELECT total_downloads FROM packages WHERE id = $1',
-          [packageId]
+          [pkgUuid]
         );
 
         const totalDownloads = result.rows[0]?.total_downloads || 0;
@@ -174,22 +189,32 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
       const { packageId, referrer } = request.body;
 
       try {
-        // Record view event (fire and forget, don't block response)
-        const userId = request.user?.user_id || null;
-        const ipHash = request.ip ?
-          createHash('sha256').update(request.ip).digest('hex').substring(0, 16) :
-          null;
+        // Lookup package UUID by name
+        const pkgResult = await fastify.pg.query(
+          'SELECT id FROM packages WHERE name = $1',
+          [packageId]
+        );
 
-        fastify.pg.query(
-          `INSERT INTO package_views (
-            package_id,
-            user_id,
-            ip_hash,
-            user_agent,
-            referrer
-          ) VALUES ($1, $2, $3, $4, $5)`,
-          [packageId, userId, ipHash, request.headers['user-agent'], referrer]
-        ).catch(err => fastify.log.error({ err }, 'Failed to record view'));
+        if (pkgResult.rows.length > 0) {
+          const pkgUuid = pkgResult.rows[0].id;
+
+          // Record view event (fire and forget, don't block response)
+          const userId = request.user?.user_id || null;
+          const ipHash = request.ip ?
+            createHash('sha256').update(request.ip).digest('hex').substring(0, 16) :
+            null;
+
+          fastify.pg.query(
+            `INSERT INTO package_views (
+              package_id,
+              user_id,
+              ip_hash,
+              user_agent,
+              referrer
+            ) VALUES ($1, $2, $3, $4, $5)`,
+            [pkgUuid, userId, ipHash, request.headers['user-agent'], referrer]
+          ).catch(err => fastify.log.error({ err }, 'Failed to record view'));
+        }
 
         return reply.send({ success: true });
       } catch (error) {
@@ -237,27 +262,35 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
       const { packageId } = request.params;
 
       try {
-        // Get package download counts
-        const pkgResult = await fastify.pg.query(
-          `SELECT 
-            total_downloads,
-            weekly_downloads,
-            monthly_downloads
-          FROM packages 
-          WHERE id = $1`,
+        // Lookup package UUID by name
+        const pkgLookup = await fastify.pg.query(
+          'SELECT id FROM packages WHERE name = $1',
           [packageId]
         );
 
-        if (pkgResult.rows.length === 0) {
+        if (pkgLookup.rows.length === 0) {
           return reply.code(404).send({
             error: 'Not Found',
             message: 'Package not found',
           });
         }
 
+        const pkgUuid = pkgLookup.rows[0].id;
+
+        // Get package download counts (use UUID)
+        const pkgResult = await fastify.pg.query(
+          `SELECT
+            total_downloads,
+            weekly_downloads,
+            monthly_downloads
+          FROM packages
+          WHERE id = $1`,
+          [pkgUuid]
+        );
+
         const pkg = pkgResult.rows[0];
 
-        // Get downloads by format from download events
+        // Get downloads by format from download events (use UUID)
         const formatResult = await fastify.pg.query(
           `SELECT
             format,
@@ -265,7 +298,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           FROM download_events
           WHERE package_id = $1
           GROUP BY format`,
-          [packageId]
+          [pkgUuid]
         );
 
         const downloadsByFormat = formatResult.rows.reduce((acc, row) => {
@@ -273,7 +306,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           return acc;
         }, {} as Record<string, number>);
 
-        // Get downloads by client from download events
+        // Get downloads by client from download events (use UUID)
         const clientResult = await fastify.pg.query(
           `SELECT
             client_type,
@@ -281,7 +314,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           FROM download_events
           WHERE package_id = $1
           GROUP BY client_type`,
-          [packageId]
+          [pkgUuid]
         );
 
         const downloadsByClient = clientResult.rows.reduce((acc, row) => {
@@ -289,7 +322,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           return acc;
         }, {} as Record<string, number>);
 
-        // Calculate trend (simple: compare this week vs last week)
+        // Calculate trend (simple: compare this week vs last week) (use UUID)
         const trendResult = await fastify.pg.query(
           `SELECT
             SUM(CASE WHEN created_at >= NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) as this_week,
@@ -297,7 +330,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
                       AND created_at < NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) as last_week
           FROM download_events
           WHERE package_id = $1`,
-          [packageId]
+          [pkgUuid]
         );
 
         const thisWeek = parseInt(trendResult.rows[0]?.this_week || '0');
@@ -363,7 +396,6 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
         const result = await fastify.pg.query(
           `SELECT
             p.id,
-            p.display_name,
             p.description,
             p.type,
             p.category,
@@ -419,9 +451,8 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
 
       try {
         let query = `
-          SELECT 
+          SELECT
             id,
-            display_name,
             description,
             type,
             category,

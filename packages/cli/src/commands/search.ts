@@ -3,13 +3,13 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient, SearchResult } from '@prpm/registry-client';
+import { getRegistryClient, SearchResult, RegistryPackage } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
 
 // User-friendly CLI types
-type CLIPackageType = 'skill' | 'agent' | 'rule' | 'plugin' | 'prompt' | 'workflow' | 'tool' | 'template' | 'mcp';
+type CLIPackageType = 'skill' | 'agent' | 'command' | 'slash-command' | 'rule' | 'plugin' | 'prompt' | 'workflow' | 'tool' | 'template' | 'mcp';
 
 /**
  * Get icon for package type
@@ -18,6 +18,9 @@ function getTypeIcon(type: string): string {
   const icons: Record<string, string> = {
     skill: '🎓',
     agent: '🤖',
+    command: '⚡',
+    'slash-command': '⚡',
+    'claude-slash-command': '⚡',
     rule: '📋',
     plugin: '🔌',
     prompt: '💬',
@@ -36,6 +39,10 @@ function getTypeLabel(type: string): string {
   const labels: Record<string, string> = {
     skill: 'Skill',
     agent: 'Agent',
+    command: 'Slash Command',
+    'slash-command': 'Slash Command',
+    'claude-slash-command': 'Slash Command',
+    'claude-agent': 'Agent',
     rule: 'Rule',
     plugin: 'Plugin',
     prompt: 'Prompt',
@@ -53,9 +60,14 @@ function getTypeLabel(type: string): string {
 function mapTypeToRegistry(cliType: CLIPackageType): { type?: PackageType; tags?: string[] } {
   const typeMap: Record<CLIPackageType, { type?: PackageType; tags?: string[] }> = {
     rule: { type: 'cursor', tags: ['cursor-rule'] },
-    skill: { type: 'claude', tags: ['claude-skill'] },
-    agent: { type: 'claude' },
-    mcp: { type: 'generic', tags: ['mcp', 'mcp-server'] },
+    // Skills are packages with type=claude-skill
+    skill: { type: 'claude-skill' },
+    // Agents are packages with type=claude-agent or claude (not claude-skill)
+    agent: { type: 'claude-agent' },
+    // Slash commands are packages with type=claude-slash-command
+    command: { type: 'claude-slash-command' },
+    'slash-command': { type: 'claude-slash-command' },
+    mcp: { type: 'mcp' },
     plugin: { type: 'generic', tags: ['plugin'] },
     prompt: { type: 'generic', tags: ['prompt'] },
     workflow: { type: 'generic', tags: ['workflow'] },
@@ -67,7 +79,7 @@ function mapTypeToRegistry(cliType: CLIPackageType): { type?: PackageType; tags?
 
 export async function handleSearch(
   query: string,
-  options: { type?: CLIPackageType; limit?: number }
+  options: { type?: CLIPackageType; author?: string; limit?: number }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -75,16 +87,19 @@ export async function handleSearch(
   let result: SearchResult | null = null;
 
   try {
-    // Allow empty query when filtering by type
+    // Allow empty query when filtering by type or author
     if (query) {
       console.log(`🔍 Searching for "${query}"...`);
     } else if (options.type) {
       console.log(`🔍 Listing ${options.type} packages...`);
+    } else if (options.author) {
+      console.log(`🔍 Listing packages by @${options.author}...`);
     } else {
-      console.log('❌ Please provide a search query or use --type to filter by package type');
+      console.log('❌ Please provide a search query or use --type/--author to filter');
       console.log('\n💡 Examples:');
       console.log('   prpm search react');
       console.log('   prpm search --type skill');
+      console.log('   prpm search --author prpm');
       console.log('   prpm search react --type rule');
       return;
     }
@@ -107,6 +122,10 @@ export async function handleSearch(
       }
     }
 
+    if (options.author) {
+      searchOptions.author = options.author;
+    }
+
     result = await client.search(query || '', searchOptions);
 
     if (!result || result.packages.length === 0) {
@@ -122,11 +141,6 @@ export async function handleSearch(
 
     // Display results
     result.packages.forEach((pkg) => {
-      const badges: string[] = [];
-      if (pkg.featured || pkg.official) badges.push('Official');
-      if (pkg.verified && !pkg.featured && !pkg.official) badges.push('Verified');
-
-      const badgeStr = badges.length > 0 ? `[${badges.join(', ')}] ` : '';
       const rating = pkg.rating_average ? `⭐ ${pkg.rating_average.toFixed(1)}` : '';
       const downloads = pkg.total_downloads >= 1000
         ? `${(pkg.total_downloads / 1000).toFixed(1)}k`
@@ -134,9 +148,15 @@ export async function handleSearch(
       const typeIcon = getTypeIcon(pkg.type);
       const typeLabel = getTypeLabel(pkg.type);
 
-      console.log(`${badgeStr}${pkg.display_name} ${rating}`);
+      // Add verified badge to footer line
+      let verifiedBadge = '';
+      if (pkg.featured || pkg.official || pkg.verified) {
+        verifiedBadge = ' | ✅ Verified';
+      }
+
+      console.log(`${pkg.name} ${rating}`);
       console.log(`    ${pkg.description || 'No description'}`);
-      console.log(`    📦 ${pkg.id} | ${typeIcon} ${typeLabel} | 📥 ${downloads} | 🏷️  ${pkg.tags.slice(0, 3).join(', ')}`);
+      console.log(`    ${typeIcon} ${typeLabel} | 📥 ${downloads} | 🏷️  ${pkg.tags.slice(0, 3).join(', ')}${verifiedBadge}`);
       console.log();
     });
 
@@ -174,25 +194,30 @@ export function createSearchCommand(): Command {
 
   command
     .description('Search for packages in the registry')
-    .argument('[query]', 'Search query (optional when using --type)')
-    .option('--type <type>', 'Filter by package type (skill, agent, rule, plugin, prompt, workflow, tool, template, mcp)')
+    .argument('[query]', 'Search query (optional when using --type or --author)')
+    .option('--type <type>', 'Filter by package type (skill, agent, command, slash-command, rule, plugin, prompt, workflow, tool, template, mcp)')
+    .option('--author <username>', 'Filter by author username')
     .option('--limit <number>', 'Number of results to show', '20')
-    .action(async (query: string | undefined, options: { type?: string; limit?: string; tags?: string }) => {
+    .action(async (query: string | undefined, options: { type?: string; author?: string; limit?: string; tags?: string }) => {
       const type = options.type as CLIPackageType | undefined;
+      const author = options.author;
       const limit = options.limit ? parseInt(options.limit, 10) : 20;
 
-      const validTypes: CLIPackageType[] = ['skill', 'agent', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
+      const validTypes: CLIPackageType[] = ['skill', 'agent', 'command', 'slash-command', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
       if (options.type && !validTypes.includes(type!)) {
         console.error(`❌ Type must be one of: ${validTypes.join(', ')}`);
         console.log(`\n💡 Examples:`);
         console.log(`   prpm search postgres --type skill`);
         console.log(`   prpm search debugging --type agent`);
+        console.log(`   prpm search refactor --type command`);
         console.log(`   prpm search react --type rule`);
+        console.log(`   prpm search --type command  # List all slash commands`);
         console.log(`   prpm search --type skill  # List all skills`);
+        console.log(`   prpm search --author prpm  # List packages by @prpm`);
         process.exit(1);
       }
 
-      await handleSearch(query || '', { type, limit });
+      await handleSearch(query || '', { type, author, limit });
     });
 
   return command;

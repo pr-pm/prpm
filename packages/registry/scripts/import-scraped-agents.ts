@@ -67,7 +67,7 @@ async function importAgents() {
         // For this import, we're just creating packages without version entries
         await pool.query(`
           INSERT INTO packages (
-            id, display_name, type, description,
+            id,  type, description,
             tags, author_id,
             verified, featured, total_downloads,
             version_count,

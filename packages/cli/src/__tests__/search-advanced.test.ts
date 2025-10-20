@@ -45,7 +45,6 @@ describe('search command - advanced features', () => {
         packages: [
           {
             id: 'skill-1',
-            display_name: 'Test Skill',
             description: 'A test skill',
             type: 'claude',
             tags: ['claude-skill'],
@@ -65,8 +64,7 @@ describe('search command - advanced features', () => {
       expect(mockClient.search).toHaveBeenCalledWith(
         '',
         expect.objectContaining({
-          type: 'claude',
-          tags: ['claude-skill'],
+          type: 'claude-skill',
         })
       );
 
@@ -84,7 +82,6 @@ describe('search command - advanced features', () => {
       const mockResults = {
         packages: Array(5).fill({
           id: 'mcp-server',
-          display_name: 'MCP Server',
           type: 'generic',
           tags: ['mcp', 'mcp-server'],
           total_downloads: 50,
@@ -102,8 +99,7 @@ describe('search command - advanced features', () => {
       expect(mockClient.search).toHaveBeenCalledWith(
         '',
         expect.objectContaining({
-          type: 'generic',
-          tags: ['mcp', 'mcp-server'],
+          type: 'mcp',
         })
       );
     });
@@ -125,7 +121,7 @@ describe('search command - advanced features', () => {
       );
     });
 
-    it('should map "skill" to claude type with claude-skill tag', async () => {
+    it('should map "skill" to claude-skill type', async () => {
       const mockResults = { packages: [], total: 0, offset: 0, limit: 20 };
       mockClient.search.mockResolvedValue(mockResults);
 
@@ -134,13 +130,12 @@ describe('search command - advanced features', () => {
       expect(mockClient.search).toHaveBeenCalledWith(
         'python',
         expect.objectContaining({
-          type: 'claude',
-          tags: ['claude-skill'],
+          type: 'claude-skill',
         })
       );
     });
 
-    it('should map "agent" to claude type without tags', async () => {
+    it('should map "agent" to claude-agent type', async () => {
       const mockResults = { packages: [], total: 0, offset: 0, limit: 20 };
       mockClient.search.mockResolvedValue(mockResults);
 
@@ -149,7 +144,7 @@ describe('search command - advanced features', () => {
       expect(mockClient.search).toHaveBeenCalledWith(
         'coding',
         expect.objectContaining({
-          type: 'claude',
+          type: 'claude-agent',
         })
       );
     });
@@ -176,12 +171,12 @@ describe('search command - advanced features', () => {
   });
 
   describe('badge display', () => {
-    it('should show [Official] badge for official packages', async () => {
+    it('should show ✅ Verified badge for official packages', async () => {
       const mockResults = {
         packages: [
           {
             id: 'official-package',
-            display_name: 'Official Package',
+            name: 'official-package',
             type: 'cursor',
             tags: [],
             total_downloads: 1000,
@@ -198,18 +193,18 @@ describe('search command - advanced features', () => {
       await handleSearch('test', {});
 
       const logCalls = (console.log as jest.Mock).mock.calls;
-      const hasOfficialBadge = logCalls.some(call =>
-        call[0] && call[0].includes('[Official]')
+      const hasVerifiedBadge = logCalls.some(call =>
+        call[0] && call[0].includes('✅ Verified')
       );
-      expect(hasOfficialBadge).toBe(true);
+      expect(hasVerifiedBadge).toBe(true);
     });
 
-    it('should show [Verified] badge for verified but not official packages', async () => {
+    it('should show ✅ Verified badge for verified but not official packages', async () => {
       const mockResults = {
         packages: [
           {
             id: 'verified-package',
-            display_name: 'Verified Package',
+            name: 'verified-package',
             type: 'cursor',
             tags: [],
             total_downloads: 500,
@@ -228,22 +223,23 @@ describe('search command - advanced features', () => {
 
       const logCalls = (console.log as jest.Mock).mock.calls;
       const hasVerifiedBadge = logCalls.some(call =>
-        call[0] && call[0].includes('[Verified]')
+        call[0] && call[0].includes('✅ Verified')
       );
       expect(hasVerifiedBadge).toBe(true);
     });
 
-    it('should prioritize Official over Verified badge', async () => {
+    it('should show ✅ Verified badge for featured packages', async () => {
       const mockResults = {
         packages: [
           {
-            id: 'official-verified-package',
-            display_name: 'Official and Verified',
+            id: 'featured-package',
+            name: 'featured-package',
             type: 'cursor',
             tags: [],
             total_downloads: 2000,
-            verified: true,
-            official: true,
+            verified: false,
+            official: false,
+            featured: true,
           },
         ],
         total: 1,
@@ -255,15 +251,10 @@ describe('search command - advanced features', () => {
       await handleSearch('test', {});
 
       const logCalls = (console.log as jest.Mock).mock.calls;
-      const hasOfficialBadge = logCalls.some(call =>
-        call[0] && call[0].includes('[Official]')
+      const hasVerifiedBadge = logCalls.some(call =>
+        call[0] && call[0].includes('✅ Verified')
       );
-      const hasOnlyVerifiedBadge = logCalls.some(call =>
-        call[0] && call[0].includes('[Verified]') && !call[0].includes('[Official]')
-      );
-
-      expect(hasOfficialBadge).toBe(true);
-      expect(hasOnlyVerifiedBadge).toBe(false);
+      expect(hasVerifiedBadge).toBe(true);
     });
 
     it('should show no badges for unverified packages', async () => {
@@ -271,7 +262,7 @@ describe('search command - advanced features', () => {
         packages: [
           {
             id: 'regular-package',
-            display_name: 'Regular Package',
+            name: 'regular-package',
             type: 'cursor',
             tags: [],
             total_downloads: 100,
@@ -289,7 +280,7 @@ describe('search command - advanced features', () => {
 
       const logCalls = (console.log as jest.Mock).mock.calls;
       const hasBadge = logCalls.some(call =>
-        call[0] && (call[0].includes('[Official]') || call[0].includes('[Verified]'))
+        call[0] && call[0].includes('✅ Verified')
       );
       expect(hasBadge).toBe(false);
     });
@@ -301,8 +292,8 @@ describe('search command - advanced features', () => {
         packages: [
           {
             id: 'test-mcp',
-            display_name: 'MCP Server',
-            type: 'generic',
+            name: 'test-mcp',
+            type: 'mcp',
             tags: ['mcp'],
             total_downloads: 100,
             verified: false,
@@ -317,12 +308,17 @@ describe('search command - advanced features', () => {
       await handleSearch('test', {});
 
       const logCalls = (console.log as jest.Mock).mock.calls;
+      // Check that the package name appears in output
       const packageLine = logCalls.find(call =>
-        call[0] && call[0].includes('📦 test-mcp')
+        call[0] && call[0].includes('test-mcp')
       );
 
       expect(packageLine).toBeDefined();
-      expect(packageLine[0]).toContain('📦'); // Package ID line
+      // Check that MCP icon appears in the type line
+      const typeLine = logCalls.find(call =>
+        call[0] && call[0].includes('🔗')
+      );
+      expect(typeLine).toBeDefined();
     });
   });
 

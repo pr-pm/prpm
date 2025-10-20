@@ -69,7 +69,7 @@ export default function Home() {
                   <button className="text-xs text-gray-500 hover:text-prpm-accent transition-colors">Copy</button>
                 </div>
                 <code className="block font-mono text-prpm-accent-light text-left">
-                  <span className="text-gray-600">$</span> npm install -g @prpm/cli
+                  <span className="text-gray-600">$</span> npm install -g prpm
                 </code>
               </div>
             </div>

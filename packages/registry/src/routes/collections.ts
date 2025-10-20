@@ -57,7 +57,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             c.version,
             c.name,
             c.description,
-            c.author,
+            u.username as author,
             c.official,
             c.verified,
             c.category,
@@ -70,6 +70,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             c.updated_at,
             COALESCE(cp.package_count, 0) as package_count
           FROM collections c
+          LEFT JOIN users u ON c.author_id = u.id
           LEFT JOIN (
             SELECT collection_scope, collection_id, collection_version, COUNT(*) as package_count
             FROM collection_packages
@@ -116,7 +117,7 @@ export async function collectionRoutes(server: FastifyInstance) {
         }
 
         if (query.author) {
-          sql += ` AND c.author = $${paramIndex++}`;
+          sql += ` AND u.username = $${paramIndex++}`;
           params.push(query.author);
         }
 
@@ -251,7 +252,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             cp.reason,
             cp.install_order,
             cp.format_override,
-            p.display_name as package_name,
+            p.id as package_id_full,
             p.description as package_description,
             p.type as package_type,
             pv.version as latest_version
@@ -274,7 +275,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           installOrder: row.install_order,
           formatOverride: row.format_override,
           package: {
-            name: row.package_name,
+            name: row.package_id_full,
             description: row.package_description,
             type: row.package_type,
           },
@@ -353,7 +354,7 @@ export async function collectionRoutes(server: FastifyInstance) {
         // Validate all packages exist
         for (const pkg of input.packages) {
           const pkgResult = await server.pg.query(
-            `SELECT id FROM packages WHERE id = $1`,
+            `SELECT id FROM packages WHERE name = $1`,
             [pkg.packageId]
           );
 
@@ -627,7 +628,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           c.version,
           c.name,
           c.description,
-          c.author,
+          u.username as author,
           c.official,
           c.verified,
           c.category,
@@ -640,6 +641,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           c.updated_at,
           COALESCE(cp.package_count, 0) as package_count
         FROM collections c
+        LEFT JOIN users u ON c.author_id = u.id
         LEFT JOIN (
           SELECT collection_scope, collection_id, collection_version, COUNT(*) as package_count
           FROM collection_packages
@@ -686,7 +688,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           c.version,
           c.name,
           c.description,
-          c.author,
+          u.username as author,
           c.official,
           c.verified,
           c.category,
@@ -698,6 +700,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           c.created_at,
           c.updated_at
         FROM collections c
+        LEFT JOIN users u ON c.author_id = u.id
         WHERE c.scope = $1 AND c.id = $2 AND c.version = $3`,
         [scope, id, version]
       );
@@ -718,7 +721,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           cp.required,
           cp.reason,
           cp.install_order,
-          p.display_name,
+          p.name as package_name,
           p.description,
           p.type,
           p.tags
@@ -738,8 +741,8 @@ export async function collectionRoutes(server: FastifyInstance) {
         required: row.required,
         reason: row.reason,
         installOrder: row.install_order,
-        package: row.display_name ? {
-          displayName: row.display_name,
+        package: row.package_name ? {
+          name: row.package_name,
           description: row.description,
           type: row.type,
           tags: row.tags,

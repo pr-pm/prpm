@@ -207,10 +207,10 @@ describe('toCursor', () => {
             {
               type: 'unknown',
               data: {},
-            } as unknown,
+            } as any,
           ],
         },
-      };
+      } as any;
 
       const result = toCursor(pkg);
 

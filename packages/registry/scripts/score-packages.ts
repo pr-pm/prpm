@@ -83,7 +83,7 @@ async function main() {
     // Get all packages
     const result = await pool.query(`
       SELECT
-        id, display_name, description, documentation_url, repository_url,
+        id,  description, documentation_url, repository_url,
         homepage_url, keywords, tags, author_id, verified, official,
         total_downloads, stars, rating_average, rating_count, version_count,
         last_published_at, created_at
@@ -136,7 +136,7 @@ async function main() {
 
     // Top packages
     const topResult = await pool.query(`
-      SELECT id, display_name, type, quality_score, total_downloads
+      SELECT id,  type, quality_score, total_downloads
       FROM packages
       WHERE quality_score IS NOT NULL
       ORDER BY quality_score DESC, total_downloads DESC
@@ -145,7 +145,7 @@ async function main() {
 
     console.log('🏆 Top 15 packages by quality score:\n');
     topResult.rows.forEach((pkg: any, i: number) => {
-      console.log(`   ${i + 1}. ${pkg.display_name} (${pkg.type})`);
+      console.log(`   ${i + 1}. ${pkg.id} (${pkg.type})`);
       console.log(`      Score: ${pkg.quality_score} | Downloads: ${pkg.total_downloads} | ID: ${pkg.id}\n`);
     });
 

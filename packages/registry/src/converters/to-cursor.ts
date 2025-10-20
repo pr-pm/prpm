@@ -9,20 +9,34 @@ import type {
   ConversionOptions,
   ConversionResult,
   Section,
+  Rule,
+  Example,
 } from '../types/canonical.js';
+
+export interface CursorMDCConfig {
+  version?: string;
+  globs?: string[];
+  alwaysApply?: boolean;
+  author?: string;
+  tags?: string[];
+}
 
 /**
  * Convert canonical package to Cursor format
  */
 export function toCursor(
   pkg: CanonicalPackage,
-  options: Partial<ConversionOptions> = {}
+  options: Partial<ConversionOptions & { cursorConfig?: CursorMDCConfig }> = {}
 ): ConversionResult {
   const warnings: string[] = [];
   let qualityScore = 100;
 
   try {
+    const mdcHeader = generateMDCHeader(pkg, options.cursorConfig);
     const content = convertContent(pkg.content, warnings);
+
+    // Combine MDC header with content
+    const fullContent = `${mdcHeader}\n\n${content}`;
 
     // Check for lossy conversion
     const lossyConversion = warnings.some(w =>
@@ -34,7 +48,7 @@ export function toCursor(
     }
 
     return {
-      content,
+      content: fullContent,
       format: 'cursor',
       warnings: warnings.length > 0 ? warnings : undefined,
       lossyConversion,
@@ -50,6 +64,59 @@ export function toCursor(
       qualityScore: 0,
     };
   }
+}
+
+/**
+ * Generate MDC (Model Context) header for Cursor rules
+ * Format: YAML frontmatter with metadata
+ * Config values take precedence over package metadata
+ */
+function generateMDCHeader(pkg: CanonicalPackage, config?: CursorMDCConfig): string {
+  const lines: string[] = ['---'];
+
+  // Name/title (from package metadata, not configurable)
+  if (pkg.metadata?.title) {
+    lines.push(`name: "${pkg.metadata.title}"`);
+  } else if (pkg.id) {
+    lines.push(`name: "${pkg.id}"`);
+  }
+
+  // Description (from package metadata, not configurable)
+  if (pkg.metadata?.description) {
+    lines.push(`description: "${pkg.metadata.description}"`);
+  }
+
+  // Version - config takes precedence
+  const version = config?.version || pkg.metadata?.version || '1.0.0';
+  lines.push(`version: "${version}"`);
+
+  // Globs - config takes precedence
+  const globs = config?.globs || (pkg.metadata?.globs as string[] | undefined) || ['**/*'];
+  lines.push('globs:');
+  globs.forEach(glob => {
+    lines.push(`  - "${glob}"`);
+  });
+
+  // Always apply flag - config takes precedence
+  const alwaysApply = config?.alwaysApply ?? pkg.metadata?.alwaysApply ?? false;
+  lines.push(`alwaysApply: ${alwaysApply}`);
+
+  // Author - from config if provided
+  if (config?.author) {
+    lines.push(`author: "${config.author}"`);
+  }
+
+  // Tags - from config if provided
+  if (config?.tags && config.tags.length > 0) {
+    lines.push('tags:');
+    config.tags.forEach(tag => {
+      lines.push(`  - "${tag}"`);
+    });
+  }
+
+  lines.push('---');
+
+  return lines.join('\n');
 }
 
 /**
@@ -123,14 +190,14 @@ function convertMetadata(section: { type: "metadata"; data: Record<string, unkno
   const lines: string[] = [];
 
   // Title with optional icon
-  if (icon) {
+  if (icon && typeof icon === 'string' && typeof title === 'string') {
     lines.push(`# ${icon} ${title}`);
-  } else {
+  } else if (typeof title === 'string') {
     lines.push(`# ${title}`);
   }
 
   // Description
-  if (description) {
+  if (description && typeof description === 'string') {
     lines.push('');
     lines.push(description);
   }
@@ -171,7 +238,7 @@ function convertInstructions(section: {
 function convertRules(section: {
   type: 'rules';
   title: string;
-  items: RuleItem[];
+  items: Rule[];
   ordered?: boolean;
 }): string {
   const lines: string[] = [];
@@ -182,19 +249,19 @@ function convertRules(section: {
 
   // Rules list
   section.items.forEach((rule, index) => {
-    const content = typeof rule === 'string' ? rule : rule.content;
+    const content = rule.content;
     const prefix = section.ordered ? `${index + 1}.` : '-';
 
     lines.push(`${prefix} ${content}`);
 
     // Add rationale if present
-    if (typeof rule === 'object' && rule.rationale) {
+    if (rule.rationale) {
       lines.push(`   - *Rationale: ${rule.rationale}*`);
     }
 
     // Add examples if present
-    if (typeof rule === 'object' && rule.examples) {
-      rule.examples?.forEach((example: string) => {
+    if (rule.examples) {
+      rule.examples.forEach((example: string) => {
         lines.push(`   - Example: \`${example}\``);
       });
     }
@@ -209,7 +276,7 @@ function convertRules(section: {
 function convertExamples(section: {
   type: 'examples';
   title: string;
-  examples: ExampleItem[];
+  examples: Example[];
 }): string {
   const lines: string[] = [];
 
@@ -248,23 +315,23 @@ function convertPersona(section: {
   lines.push('## Role');
   lines.push('');
 
-  if (icon && name) {
+  if (icon && typeof icon === 'string' && name && typeof name === 'string' && typeof role === 'string') {
     lines.push(`${icon} **${name}** - ${role}`);
-  } else if (name) {
+  } else if (name && typeof name === 'string' && typeof role === 'string') {
     lines.push(`**${name}** - ${role}`);
-  } else {
+  } else if (typeof role === 'string') {
     lines.push(role);
   }
 
-  if (style && style.length > 0) {
+  if (style && Array.isArray(style) && style.length > 0) {
     lines.push('');
     lines.push(`**Style:** ${style.join(', ')}`);
   }
 
-  if (expertise && expertise.length > 0) {
+  if (expertise && Array.isArray(expertise) && expertise.length > 0) {
     lines.push('');
     lines.push('**Expertise:**');
-    expertise.forEach((area: string) => {
+    expertise.forEach((area: unknown) => {
       lines.push(`- ${area}`);
     });
   }

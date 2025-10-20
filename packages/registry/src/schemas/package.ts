@@ -9,9 +9,12 @@ export const PackageTypeSchema = z.enum([
   'cursor',
   'claude',
   'claude-skill',
+  'claude-agent',
+  'claude-slash-command',
   'continue',
   'windsurf',
   'generic',
+  'mcp',
 ]);
 
 export const PackageVisibilitySchema = z.enum(['public', 'private', 'unlisted']);
@@ -92,7 +95,6 @@ export const ResolveResponseSchema = z.object({
 // Package info response
 export const PackageInfoSchema = z.object({
   id: z.string(),
-  display_name: z.string(),
   description: z.string().nullable(),
   author_id: z.string().nullable(),
   org_id: z.string().nullable(),

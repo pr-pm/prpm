@@ -43,7 +43,6 @@ export interface QualityScoreFactors {
 
 export interface PackageQualityData {
   id: string;
-  display_name: string;
   description?: string;
   documentation_url?: string;
   repository_url?: string;
@@ -402,7 +401,7 @@ export async function updatePackageQualityScore(
   const pkgResult = await query<PackageQualityData>(
     server,
     `SELECT
-      id, display_name, description, documentation_url, repository_url,
+      id, description, documentation_url, repository_url,
       homepage_url, keywords, tags, author_id, verified, official,
       total_downloads, stars, rating_average, rating_count, version_count,
       last_published_at, created_at,
@@ -420,7 +419,6 @@ export async function updatePackageQualityScore(
 
   server.log.info({
     packageId,
-    packageName: pkg.display_name,
     type: 'metadata',
     verified: pkg.verified,
     official: pkg.official,
@@ -463,7 +461,6 @@ export async function updatePackageQualityScore(
 
   server.log.info({
     packageId,
-    packageName: pkg.display_name,
     finalScore: score,
     scoreBreakdown: {
       base: (score - authorBonus).toFixed(2),
@@ -545,7 +542,7 @@ export async function getQualityScoreBreakdown(
   const pkgResult = await query<PackageQualityData>(
     server,
     `SELECT
-      id, display_name, description, documentation_url, repository_url,
+      id, description, documentation_url, repository_url,
       homepage_url, keywords, tags, author_id, verified, official,
       total_downloads, stars, rating_average, rating_count, version_count,
       last_published_at, created_at,

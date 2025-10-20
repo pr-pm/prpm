@@ -60,7 +60,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
         {
           multi_match: {
             query: searchQuery,
-            fields: ['display_name^3', 'description', 'tags^2', 'keywords'],
+            fields: ['id^3', 'description', 'tags^2', 'keywords'],
             type: 'best_fields',
             fuzziness: 'AUTO',
           },
@@ -212,7 +212,6 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
           mappings: {
             properties: {
               id: { type: 'keyword' },
-              display_name: { type: 'text', analyzer: 'english' },
               description: { type: 'text', analyzer: 'english' },
               type: { type: 'keyword' },
               category: { type: 'keyword' },

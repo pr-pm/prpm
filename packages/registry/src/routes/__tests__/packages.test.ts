@@ -17,13 +17,45 @@ describe('Package Routes', () => {
 
     // Create mock query function
     const mockQuery = async (sql: string, params?: unknown[]) => {
-      // Mock package by ID query
-      if (sql.includes('SELECT * FROM packages WHERE id = $1')) {
+      // Mock package by name query (used by GET /packages/:packageName)
+      if (sql.includes('SELECT * FROM packages WHERE name = $1')) {
         if (params?.[0] === 'test-package') {
           return {
             rows: [{
-              id: 'test-package',
-              name: 'Test Package',
+              id: 'test-package-uuid',
+              name: 'test-package',
+              description: 'A test package',
+              author: 'test-author',
+              downloads: 100,
+              stars: 10,
+              type: 'agent',
+              category: 'development',
+              visibility: 'public',
+              created_at: new Date(),
+              updated_at: new Date()
+            }],
+            command: 'SELECT',
+            rowCount: 1,
+            oid: 0,
+            fields: []
+          };
+        }
+        return {
+          rows: [],
+          command: 'SELECT',
+          rowCount: 0,
+          oid: 0,
+          fields: []
+        };
+      }
+
+      // Mock package by ID query (UUID)
+      if (sql.includes('SELECT * FROM packages WHERE id = $1')) {
+        if (params?.[0] === 'test-package-uuid') {
+          return {
+            rows: [{
+              id: 'test-package-uuid',
+              name: 'test-package',
               description: 'A test package',
               author: 'test-author',
               downloads: 100,
@@ -125,13 +157,13 @@ describe('Package Routes', () => {
     };
 
     // Mock database with connect() method
-    server.decorate('pg', {
+    (server as any).decorate('pg', {
       query: mockQuery,
       connect: async () => ({
         query: mockQuery,
         release: () => {}
       })
-    } as unknown);
+    } as any);
 
     await server.register(packageRoutes, { prefix: '/api/v1/packages' });
     await server.ready();
@@ -150,8 +182,9 @@ describe('Package Routes', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.id).toBe('test-package');
-      expect(body.name).toBe('Test Package');
+      expect(body.id).toBe('test-package-uuid');
+      expect(body.name).toBe('test-package');
+      expect(body.description).toBe('A test package');
     });
 
     it('should return 404 for non-existent package', async () => {

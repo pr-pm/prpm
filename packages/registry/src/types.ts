@@ -3,7 +3,7 @@
  */
 
 // Package types
-export type PackageType = 'cursor' | 'claude' | 'claude-skill' | 'continue' | 'windsurf' | 'generic';
+export type PackageType = 'cursor' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'generic' | 'mcp';
 export type PackageVisibility = 'public' | 'private' | 'unlisted';
 export type OrgRole = 'owner' | 'admin' | 'maintainer' | 'member';
 
@@ -27,7 +27,6 @@ export interface User {
 export interface Organization {
   id: string;
   name: string;
-  display_name: string;
   description?: string;
   avatar_url?: string;
   website_url?: string;
@@ -46,7 +45,7 @@ export interface OrganizationMember {
 // Package
 export interface Package {
   id: string;
-  display_name: string;
+  name: string;
   description?: string;
   author_id?: string;
   org_id?: string;
@@ -162,6 +161,7 @@ export interface SearchFilters {
   type?: PackageType;
   tags?: string[];
   category?: string;
+  author?: string;  // Filter by author username
   verified?: boolean;
   featured?: boolean;
   sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';

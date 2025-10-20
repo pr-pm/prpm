@@ -2,7 +2,7 @@
  * Core types for the Prompt Package Manager
  */
 
-export type PackageType = 'cursor' | 'claude' | 'claude-skill' | 'continue' | 'windsurf' | 'generic';
+export type PackageType = 'cursor' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'generic' | 'mcp';
 
 export interface Package {
   id: string;
@@ -17,11 +17,21 @@ export interface Package {
   metadata?: Record<string, any>;
 }
 
+export interface CursorMDCConfig {
+  version?: string;
+  globs?: string[];
+  alwaysApply?: boolean;
+  author?: string;
+  tags?: string[];
+}
+
 export interface Config {
   sources: Package[];
   // Future expansion fields
   registry?: string;
   settings?: Record<string, any>;
+  // Cursor MDC header configuration
+  cursor?: CursorMDCConfig;
 }
 
 export interface AddOptions {
