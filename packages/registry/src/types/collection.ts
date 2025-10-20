@@ -5,8 +5,9 @@
 
 export interface Collection {
   // Identity
-  id: string;
+  id: string;                        // UUID
   scope: string;                     // 'collection' or username
+  name_slug: string;                 // URL-friendly slug (e.g., "startup-mvp")
   name: string;
   description: string;
   version: string;

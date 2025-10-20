@@ -12,6 +12,7 @@ jest.mock('../core/user-config');
 jest.mock('../core/telemetry', () => ({
   telemetry: {
     track: jest.fn(),
+    shutdown: jest.fn(),
   },
 }));
 
@@ -45,8 +46,9 @@ describe('collections command', () => {
       const mockCollections = {
         collections: [
           {
-            id: 'react-essentials',
+            id: 'uuid-react-essentials',
             scope: 'official',
+            name_slug: 'react-essentials',
             name: 'React Essentials',
             description: 'Essential React packages',
             version: '1.0.0',
@@ -147,8 +149,9 @@ describe('collections command', () => {
       const mockCollections = {
         collections: [
           {
-            id: 'official-coll',
+            id: 'uuid-official-coll',
             scope: 'official',
+            name_slug: 'official-coll',
             name: 'Official Collection',
             description: 'An official collection',
             version: '1.0.0',
@@ -162,8 +165,9 @@ describe('collections command', () => {
             package_count: 5,
           },
           {
-            id: 'community-coll',
+            id: 'uuid-community-coll',
             scope: 'user',
+            name_slug: 'community-coll',
             name: 'Community Collection',
             description: 'A community collection',
             version: '1.0.0',

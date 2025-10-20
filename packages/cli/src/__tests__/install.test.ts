@@ -6,7 +6,7 @@ import { handleInstall } from '../commands/install';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
-import { readLockfile, writeLockfile, addPackage } from '../core/lockfile';
+import { readLockfile, writeLockfile, addPackage, addToLockfile, createLockfile } from '../core/lockfile';
 import { gzipSync } from 'zlib';
 
 // Mock dependencies
@@ -35,6 +35,7 @@ jest.mock('../core/lockfile', () => ({
 jest.mock('../core/telemetry', () => ({
   telemetry: {
     track: jest.fn(),
+    shutdown: jest.fn(),
   },
 }));
 
@@ -58,6 +59,8 @@ describe('install command', () => {
     (writeLockfile as jest.Mock).mockResolvedValue(undefined);
     (saveFile as jest.Mock).mockResolvedValue(undefined);
     (addPackage as jest.Mock).mockResolvedValue(undefined);
+    (addToLockfile as jest.Mock).mockImplementation(() => {});
+    (createLockfile as jest.Mock).mockReturnValue({ packages: {} });
 
     // Mock console methods
     jest.spyOn(console, 'log').mockImplementation();
@@ -97,7 +100,7 @@ describe('install command', () => {
       expect(mockClient.getPackage).toHaveBeenCalledWith('test-package');
       expect(mockClient.downloadPackage).toHaveBeenCalled();
       expect(saveFile).toHaveBeenCalled();
-      expect(addPackage).toHaveBeenCalled();
+      expect(addToLockfile).toHaveBeenCalled();
     });
 
     it('should install specific version', async () => {
@@ -275,7 +278,7 @@ describe('install command', () => {
   });
 
   describe('type overrides', () => {
-    it('should allow type override', async () => {
+    it('should use format parameter for format conversion', async () => {
       const mockPackage = {
         id: 'test-package',
         type: 'cursor',
@@ -291,11 +294,14 @@ describe('install command', () => {
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.downloadPackage.mockResolvedValue(gzipSync('test-content'));
 
-      await handleInstall('test-package', { type: 'claude' });
+      await handleInstall('test-package', { as: 'claude' });
 
-      expect(addPackage).toHaveBeenCalledWith(
+      expect(addToLockfile).toHaveBeenCalledWith(
+        expect.any(Object),
+        'test-package',
         expect.objectContaining({
-          type: 'claude',
+          type: 'cursor',  // Type from package, not from --as
+          format: 'claude',  // Format from --as parameter
         })
       );
     });

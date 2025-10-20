@@ -71,8 +71,8 @@ describe('Collection Routes', () => {
         };
       }
 
-      // Mock specific collection query (GET /:scope/:id with or without version)
-      if (sql.includes('SELECT c.*') && sql.includes('WHERE c.scope = $1 AND c.id = $2')) {
+      // Mock specific collection query (GET /:scope/:name_slug with or without version)
+      if (sql.includes('SELECT c.*') && sql.includes('WHERE c.scope = $1 AND c.name_slug = $2')) {
         if (params?.[0] === 'collection' && params?.[1] === 'test-collection') {
           // Check if version parameter is provided
           if (params?.length === 3 && params[2] === '1.0.0') {
@@ -103,8 +103,9 @@ describe('Collection Routes', () => {
           // Without version, return latest
           return {
             rows: [{
-              id: 'test-collection',
+              id: 'uuid-test-collection',
               scope: 'collection',
+              name_slug: 'test-collection',
               name: 'Test Collection',
               description: 'A test collection',
               version: '1.0.0',
@@ -309,7 +310,7 @@ describe('Collection Routes', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.id).toBe('test-collection');
+      expect(body.name_slug).toBe('test-collection');
       expect(body.name).toBe('Test Collection');
       expect(Array.isArray(body.packages)).toBe(true);
       expect(body.packages.length).toBeGreaterThan(0);

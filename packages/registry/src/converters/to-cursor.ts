@@ -99,6 +99,10 @@ function generateMDCHeader(pkg: CanonicalPackage, config?: CursorMDCConfig): str
 
   // Always apply flag - config takes precedence
   const alwaysApply = config?.alwaysApply ?? pkg.metadata?.alwaysApply ?? false;
+
+  // Rule type - determines when the rule is applied
+  const ruleType = alwaysApply ? 'always' : 'on-demand';
+  lines.push(`ruleType: ${ruleType}`);
   lines.push(`alwaysApply: ${alwaysApply}`);
 
   // Author - from config if provided

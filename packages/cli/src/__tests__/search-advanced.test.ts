@@ -12,6 +12,7 @@ jest.mock('../core/user-config');
 jest.mock('../core/telemetry', () => ({
   telemetry: {
     track: jest.fn(),
+    shutdown: jest.fn(),
   },
 }));
 

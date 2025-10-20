@@ -55,7 +55,7 @@ export async function handleCollectionsSearch(
     if (official.length > 0) {
       console.log(`📦 Official Collections (${official.length}):\n`);
       official.forEach(c => {
-        const fullName = `@${c.scope}/${c.id}`.padEnd(35);
+        const fullName = c.name_slug.padEnd(35);
         const pkgCount = `(${c.package_count} packages)`.padEnd(15);
         console.log(`   ${c.icon || '📦'} ${fullName} ${pkgCount} ${c.name}`);
         if (c.description) {
@@ -69,7 +69,7 @@ export async function handleCollectionsSearch(
     if (community.length > 0) {
       console.log(`\n🌟 Community Collections (${community.length}):\n`);
       community.forEach(c => {
-        const fullName = `@${c.scope}/${c.id}`.padEnd(35);
+        const fullName = c.name_slug.padEnd(35);
         const pkgCount = `(${c.package_count} packages)`.padEnd(15);
         console.log(`   ${c.icon || '📦'} ${fullName} ${pkgCount} ${c.name}`);
         if (c.description) {
@@ -83,7 +83,7 @@ export async function handleCollectionsSearch(
     // Show results count
     console.log(`\n📊 Found: ${result.collections.length} matching collection${result.collections.length === 1 ? '' : 's'} (searched ${result.total} total)\n`);
     console.log(`💡 View details: prpm collection info <collection>`);
-    console.log(`💡 Install: prpm install @collection/<name>`);
+    console.log(`💡 Install: prpm install <collection>`);
 
     await telemetry.track({
       command: 'collections:search',
@@ -148,7 +148,7 @@ export async function handleCollectionsList(options: {
     if (official.length > 0) {
       console.log(`📦 Official Collections (${official.length}):\n`);
       official.forEach(c => {
-        const fullName = `@${c.scope}/${c.id}`.padEnd(35);
+        const fullName = c.name_slug.padEnd(35);
         const pkgCount = `(${c.package_count} packages)`.padEnd(15);
         console.log(`   ${c.icon || '📦'} ${fullName} ${pkgCount} ${c.name}`);
         if (c.description) {
@@ -162,7 +162,7 @@ export async function handleCollectionsList(options: {
     if (community.length > 0) {
       console.log(`\n🌟 Community Collections (${community.length}):\n`);
       community.forEach(c => {
-        const fullName = `@${c.scope}/${c.id}`.padEnd(35);
+        const fullName = c.name_slug.padEnd(35);
         const pkgCount = `(${c.package_count} packages)`.padEnd(15);
         console.log(`   ${c.icon || '📦'} ${fullName} ${pkgCount} ${c.name}`);
         if (c.description) {
@@ -184,7 +184,7 @@ export async function handleCollectionsList(options: {
     }
 
     console.log(`💡 View details: prpm collection info <collection>`);
-    console.log(`💡 Install: prpm install @collection/<name>`);
+    console.log(`💡 Install: prpm install <collection>`);
 
     await telemetry.track({
       command: 'collections:list',
@@ -218,20 +218,20 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
   const startTime = Date.now();
 
   try {
-    // Parse collection spec: @scope/id or scope/id
+    // Parse collection spec: @scope/name_slug or scope/name_slug
     const match = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
     if (!match) {
-      throw new Error('Invalid collection format. Use: @scope/id or scope/id[@version]');
+      throw new Error('Invalid collection format. Use: @scope/name or scope/name[@version]');
     }
 
-    const [, scope, id, version] = match;
+    const [, scope, name_slug, version] = match;
 
     const config = await getConfig();
     const client = getRegistryClient(config);
 
-    console.log(`📦 Loading collection: @${scope}/${id}...\n`);
+    console.log(`📦 Loading collection: ${scope === 'collection' ? name_slug : `@${scope}/${name_slug}`}...\n`);
 
-    const collection = await client.getCollection(scope, id, version);
+    const collection = await client.getCollection(scope, name_slug, version);
 
     // Header
     console.log(`${collection.icon || '📦'} ${collection.name}`);
@@ -292,9 +292,16 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
 
     // Installation
     console.log('💡 Install:');
-    console.log(`   prpm install @${scope}/${id}`);
-    if (optionalPkgs.length > 0) {
-      console.log(`   prpm install @${scope}/${id} --skip-optional  # Skip optional packages`);
+    if (scope === 'collection') {
+      console.log(`   prpm install ${name_slug}`);
+      if (optionalPkgs.length > 0) {
+        console.log(`   prpm install ${name_slug} --skip-optional  # Skip optional packages`);
+      }
+    } else {
+      console.log(`   prpm install @${scope}/${name_slug}`);
+      if (optionalPkgs.length > 0) {
+        console.log(`   prpm install @${scope}/${name_slug} --skip-optional  # Skip optional packages`);
+      }
     }
     console.log('');
 
@@ -304,7 +311,7 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
       duration: Date.now() - startTime,
       data: {
         scope,
-        id,
+        name_slug,
         packageCount: collection.packages.length,
       },
     });
@@ -342,20 +349,20 @@ export async function handleCollectionInstall(
     // Parse collection spec
     const match = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
     if (!match) {
-      throw new Error('Invalid collection format. Use: @scope/id or scope/id[@version]');
+      throw new Error('Invalid collection format. Use: @scope/name or scope/name[@version]');
     }
 
-    const [, scope, id, version] = match;
+    const [, scope, name_slug, version] = match;
 
     const config = await getConfig();
     const client = getRegistryClient(config);
 
     // Get collection installation plan
-    console.log(`📦 Installing collection: @${scope}/${id}...\n`);
+    console.log(`📦 Installing collection: ${scope === 'collection' ? name_slug : `@${scope}/${name_slug}`}...\n`);
 
     const installResult = await client.installCollection({
       scope,
-      id,
+      id: name_slug,
       version,
       format: options.format,
       skipOptional: options.skipOptional,
@@ -415,7 +422,7 @@ export async function handleCollectionInstall(
       duration: Date.now() - startTime,
       data: {
         scope,
-        id,
+        name_slug,
         packageCount: packages.length,
         installed: packagesInstalled,
         failed: packagesFailed,

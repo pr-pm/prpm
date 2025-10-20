@@ -163,13 +163,21 @@ export async function handleInstall(
 
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
-    const type = options.type || pkg.type;
-    const destDir = getDestinationDir(type);
+    // Use format to determine directory, not package type
+    const effectiveType = format === 'claude' ? 'claude' :
+                          format === 'cursor' ? 'cursor' :
+                          format === 'continue' ? 'continue' :
+                          format === 'windsurf' ? 'windsurf' :
+                          (options.type || pkg.type);
+    const destDir = getDestinationDir(effectiveType as PackageType);
 
     // For MVP, assume single file in tarball
     // TODO: Implement proper tar extraction
     let mainFile = await extractMainFile(tarball, packageId);
-    const destPath = `${destDir}/${packageId}.md`;
+
+    // Determine file extension based on format
+    const fileExtension = format === 'cursor' ? 'mdc' : 'md';
+    const destPath = `${destDir}/${packageId}.${fileExtension}`;
 
     // Apply cursor config if downloading in cursor format
     if (format === 'cursor' && hasMDCHeader(mainFile)) {
@@ -196,7 +204,7 @@ export async function handleInstall(
     addToLockfile(updatedLockfile, packageId, {
       version: actualVersion || version,
       tarballUrl,
-      type,
+      type: pkg.type,
       format,
     });
 

@@ -37,14 +37,20 @@ export default function Home() {
 
             <div className="flex gap-4 justify-center flex-wrap mb-12">
               <Link
-                href="/signup"
+                href="/search"
                 className="px-8 py-4 bg-prpm-accent text-white rounded-lg hover:bg-prpm-accent-light transition-all font-semibold text-lg hover-lift"
+              >
+                Browse Packages
+              </Link>
+              <Link
+                href="/signup"
+                className="px-8 py-4 bg-prpm-dark-card border-2 border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift"
               >
                 Get Started
               </Link>
               <Link
                 href="/login"
-                className="px-8 py-4 bg-prpm-dark-card border-2 border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift"
+                className="px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift"
               >
                 Sign In
               </Link>

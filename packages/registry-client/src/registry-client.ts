@@ -44,8 +44,9 @@ export interface CollectionPackage {
 }
 
 export interface Collection {
-  id: string;
+  id: string;                 // UUID
   scope: string;
+  name_slug: string;          // URL-friendly slug
   name: string;
   description: string;
   version: string;

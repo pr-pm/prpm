@@ -20,7 +20,10 @@ export async function searchRoutes(server: FastifyInstance) {
           q: { type: 'string' },
           type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
           tags: { type: 'array', items: { type: 'string' } },
+          category: { type: 'string' },
           author: { type: 'string' },
+          verified: { type: 'boolean' },
+          featured: { type: 'boolean' },
           hasSlashCommands: { type: 'boolean', description: 'Filter for packages with slash commands (claude-slash-command type)' },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
           offset: { type: 'number', default: 0, minimum: 0 },
@@ -29,24 +32,22 @@ export async function searchRoutes(server: FastifyInstance) {
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { q, type, tags, author, hasSlashCommands, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
+    const { q, type, tags, category, author, verified, featured, hasSlashCommands, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
       q?: string;
       type?: PackageType;
       tags?: string[];
+      category?: string;
       author?: string;
+      verified?: boolean;
+      featured?: boolean;
       hasSlashCommands?: boolean;
       limit?: number;
       offset?: number;
       sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
     };
 
-    // If no query and no filters, return error
-    if (!q && !type && (!tags || tags.length === 0) && !author && hasSlashCommands === undefined) {
-      return reply.status(400).send({
-        error: 'Bad Request',
-        message: 'Please provide a search query (q) or filter (type/tags/author/hasSlashCommands)',
-      });
-    }
+    // Allow browsing all packages if no filters provided
+    // This enables the search page to show all packages by default
 
     // If hasSlashCommands is true, override type to claude-slash-command
     const effectiveType = hasSlashCommands === true ? 'claude-slash-command' : type;
@@ -65,7 +66,10 @@ export async function searchRoutes(server: FastifyInstance) {
     const response = await searchProvider.search(q || '', {
       type: effectiveType,
       tags,
+      category,
       author,
+      verified,
+      featured,
       sort,
       limit,
       offset,
