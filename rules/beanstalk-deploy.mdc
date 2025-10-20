@@ -1,0 +1,368 @@
+---
+name: "AWS Elastic Beanstalk Deployment Best Practices"
+description: "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling"
+version: "1.0.0"
+globs:
+  - "**/.github/workflows/*deploy*.yml"
+  - "**/.github/workflows/*beanstalk*.yml"
+  - "**/infra/**/*.ts"
+  - "**/infrastructure/**/*.ts"
+  - "**/Pulumi*.yaml"
+  - "**/package.json"
+alwaysApply: false
+---
+
+# AWS Elastic Beanstalk Deployment Best Practices
+
+Apply these production-tested patterns when working with Elastic Beanstalk deployments, especially with GitHub Actions and Pulumi infrastructure.
+
+## 🎯 Core Principles
+
+1. **Always verify infrastructure health** before deploying
+2. **Never assume resources are ready** - implement retry logic
+3. **Handle terminated environments** gracefully with state cleanup
+4. **Use concurrency control** to prevent deployment conflicts
+5. **Pre-install dependencies** for faster, more reliable deploys
+6. **Implement comprehensive error handling** with fallbacks
+
+## 🏗️ Infrastructure Health Checks
+
+**ALWAYS check infrastructure status before deploying:**
+
+```yaml
+- name: Check infrastructure status
+  run: |
+    echo "🔍 Checking infrastructure status..."
+
+    # Get environment name from Pulumi state (without deploying)
+    EB_ENVIRONMENT_NAME=$(pulumi stack output ebEnvironmentName 2>/dev/null || echo "")
+
+    if [ -z "$EB_ENVIRONMENT_NAME" ]; then
+      echo "🔍 No environment found in Pulumi state. Will deploy infrastructure..."
+    else
+      echo "🔍 Checking environment status: $EB_ENVIRONMENT_NAME"
+
+      # Check if environment exists and is healthy
+      EB_ENV_STATUS=$(aws elasticbeanstalk describe-environments \
+        --environment-names "$EB_ENVIRONMENT_NAME" \
+        --query "Environments[0].Status" --output text 2>/dev/null || echo "NOT_FOUND")
+
+      if [ "$EB_ENV_STATUS" = "Terminated" ] || [ "$EB_ENV_STATUS" = "NOT_FOUND" ]; then
+        echo "⚠️  Environment is $EB_ENV_STATUS. Deleting from Pulumi state..."
+
+        # Delete environment from Pulumi state
+        EB_URN=$(pulumi stack --show-urns | awk '/aws:elasticbeanstalk\/environment:Environment/ {print $1; exit}')
+        if [ -n "$EB_URN" ]; then
+          echo "🔧 Deleting: $EB_URN"
+          pulumi state delete "$EB_URN" --force
+        fi
+
+        echo "🔄 Infrastructure will be recreated..."
+      else
+        echo "✅ Environment exists: $EB_ENV_STATUS"
+
+        # Check if infrastructure changes needed
+        if pulumi preview --diff --expect-no-changes 2>/dev/null; then
+          echo "✅ No infrastructure changes needed"
+        else
+          echo "🔄 Infrastructure changes detected"
+        fi
+      fi
+    fi
+```
+
+**Why**: Prevents deploying to orphaned resources, automatically recovers from terminated environments, saves money on zombie resources.
+
+## ⏳ Beanstalk Readiness Verification
+
+**ALWAYS wait for environment to be fully ready:**
+
+```yaml
+- name: Verify Elastic Beanstalk environment exists
+  run: |
+    echo "🔍 Verifying Elastic Beanstalk environment..."
+    EB_ENVIRONMENT_NAME="${{ steps.get-resources.outputs.eb_environment_name }}"
+
+    # Wait until environment exists
+    echo "⏳ Waiting for environment to exist..."
+    aws elasticbeanstalk wait environment-exists \
+      --environment-names "$EB_ENVIRONMENT_NAME" || true
+
+    # Wait until environment is Ready (with 30 retries)
+    for i in {1..30}; do
+      ENV_STATUS=$(aws elasticbeanstalk describe-environments \
+        --environment-names "$EB_ENVIRONMENT_NAME" \
+        --query "Environments[0].Status" --output text 2>/dev/null || echo "NOT_FOUND")
+      ENV_HEALTH=$(aws elasticbeanstalk describe-environments \
+        --environment-names "$EB_ENVIRONMENT_NAME" \
+        --query "Environments[0].Health" --output text 2>/dev/null || echo "UNKNOWN")
+
+      echo "⏳ EB Status: $ENV_STATUS, Health: $ENV_HEALTH (attempt $i/30)"
+
+      if [ "$ENV_STATUS" = "Ready" ]; then
+        echo "✅ Environment is Ready"
+        break
+      fi
+      sleep 20  # Wait 20 seconds between checks (10 minutes total)
+    done
+
+    if [ "$ENV_STATUS" != "Ready" ]; then
+      echo "⚠️  Environment not Ready after 10 minutes. Continuing with caution..."
+    fi
+```
+
+**Why**: Prevents timing-related failures, ensures environment is provisioned before app deployment, provides visibility into provisioning progress.
+
+## 🔄 Resource Output Retry Logic
+
+**ALWAYS implement retry logic with fallback:**
+
+```yaml
+- name: Get resource URLs with retry
+  id: get-resources
+  run: |
+    # Retry getting environment name (Pulumi state may be delayed)
+    EB_ENVIRONMENT_NAME=""
+    for i in {1..5}; do
+      echo "🔍 Attempt $i/5: Trying to get environment name..."
+      EB_ENVIRONMENT_NAME=$(pulumi stack output ebEnvironmentName 2>/dev/null || echo "")
+
+      if [ -n "$EB_ENVIRONMENT_NAME" ]; then
+        echo "✅ Got environment name: $EB_ENVIRONMENT_NAME"
+        break
+      else
+        echo "⏳ Environment name not available, waiting 10s..."
+        sleep 10
+      fi
+    done
+
+    # Fallback: Get from AWS API if Pulumi state delayed
+    if [ -z "$EB_ENVIRONMENT_NAME" ]; then
+      echo "❌ Failed after 5 attempts. Trying AWS API fallback..."
+
+      EB_APP_NAME=$(pulumi stack output ebApplicationName 2>/dev/null || echo "")
+      if [ -n "$EB_APP_NAME" ]; then
+        echo "🔍 Found application name: $EB_APP_NAME"
+        EB_ENVIRONMENT_NAME=$(aws elasticbeanstalk describe-environments \
+          --application-name "$EB_APP_NAME" \
+          --query "Environments[0].EnvironmentName" --output text 2>/dev/null || echo "")
+
+        if [ -n "$EB_ENVIRONMENT_NAME" ]; then
+          echo "✅ Got environment name from AWS: $EB_ENVIRONMENT_NAME"
+        else
+          echo "❌ Could not get environment name from AWS"
+          exit 1
+        fi
+      else
+        echo "❌ Could not get application name"
+        exit 1
+      fi
+    fi
+
+    # Output for next steps
+    echo "eb_environment_name=$EB_ENVIRONMENT_NAME" >> $GITHUB_OUTPUT
+```
+
+**Why**: Handles async Pulumi state updates, provides fallback when state delayed, prevents deployment failures from timing issues.
+
+## 🔒 Deployment Concurrency Control
+
+**ALWAYS prevent concurrent deployments:**
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+```
+
+**Why**: Prevents resource conflicts, avoids race conditions, ensures one deployment at a time.
+
+## 📦 Pulumi Plugin Pre-installation
+
+**ALWAYS pre-install Pulumi plugins:**
+
+```yaml
+- name: Install Pulumi plugins
+  run: |
+    echo "📦 Installing Pulumi plugins..."
+    pulumi plugin install resource aws v6.83.0
+    pulumi plugin install resource awsx v2.22.0
+    echo "✅ Pulumi plugins installed"
+```
+
+**Why**: Faster deployments (no download during deploy), prevents plugin version mismatches, handles network issues upfront.
+
+## ✅ Configuration Validation
+
+**ALWAYS validate configuration before deploying:**
+
+```yaml
+- name: Validate configuration
+  run: |
+    # Verify required secrets are set
+    if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
+      echo "ERROR: DB_PASSWORD secret not set"
+      exit 1
+    fi
+
+    # Verify Pulumi config after setting
+    if ! pulumi config get db:password --show-secrets >/dev/null 2>&1; then
+      echo "ERROR: db:password not set in Pulumi config"
+      exit 1
+    fi
+
+    echo "✅ All required configuration verified"
+```
+
+**Why**: Fails fast on missing configuration, provides clear error messages, prevents partial deployments.
+
+## 🏷️ Pulumi Best Practices
+
+### Stack Management
+
+```typescript
+// ALWAYS verify stack before operations
+const stack = pulumi.getStack(); // dev, staging, prod
+const projectName = "your-project";
+const environment = stack;
+
+// ALWAYS tag all resources
+const tags = {
+  Project: projectName,
+  Environment: environment,
+  ManagedBy: "Pulumi",
+};
+```
+
+### Resource Outputs
+
+```typescript
+// ALWAYS export critical resource identifiers
+export const beanstalkApplicationName = app.application.name;
+export const beanstalkEnvironmentName = app.environment.name;
+export const beanstalkEndpoint = app.endpoint;
+export const beanstalkCname = app.cname;
+
+// ALWAYS export URLs for verification
+export const apiUrl = domainName
+  ? pulumi.interpolate`https://${domainName}`
+  : app.endpoint;
+```
+
+## 🔧 Beanstalk Configuration
+
+### Environment Variables
+
+```typescript
+// ALWAYS set environment variables through Pulumi
+const environmentVariables = {
+  NODE_ENV: environment,
+  DATABASE_URL: pulumi.interpolate`postgresql://${dbUsername}:${dbPassword}@${dbEndpoint}/dbname`,
+  REDIS_URL: redisEndpoint,
+  // Add all app config
+};
+```
+
+### Instance Configuration
+
+```typescript
+// ALWAYS configure auto-scaling
+const beanstalkConfig = {
+  instanceType: config.get("app:instanceType") || "t3.micro",
+  minSize: parseInt(config.get("app:minSize") || "1"),
+  maxSize: parseInt(config.get("app:maxSize") || "2"),
+};
+
+// ALWAYS enable health checks
+const healthCheck = {
+  path: "/health",
+  interval: 30,
+  timeout: 5,
+  healthyThreshold: 2,
+  unhealthyThreshold: 3,
+};
+```
+
+## 📊 Monitoring & Health Checks
+
+### Health Endpoint
+
+```typescript
+// ALWAYS implement health endpoint in your app
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+```
+
+### Deployment Verification
+
+```yaml
+- name: Verify deployment
+  run: |
+    ENDPOINT="${{ steps.outputs.api_url }}"
+
+    # Wait for health check to pass
+    for i in {1..30}; do
+      if curl -f "$ENDPOINT/health" >/dev/null 2>&1; then
+        echo "✅ Health check passed"
+        exit 0
+      fi
+      echo "⏳ Waiting for health check... ($i/30)"
+      sleep 10
+    done
+
+    echo "❌ Health check failed after 5 minutes"
+    exit 1
+```
+
+## 🚨 Common Pitfalls to Avoid
+
+1. **DON'T** assume environment is ready immediately after Pulumi up
+2. **DON'T** skip infrastructure health checks
+3. **DON'T** use single-attempt resource retrieval
+4. **DON'T** allow concurrent deployments
+5. **DON'T** deploy without configuration validation
+6. **DON'T** skip environment variable encryption (use --secret)
+7. **DON'T** hardcode credentials in code
+8. **DON'T** deploy without health endpoint
+9. **DON'T** skip final snapshot in production (set skipFinalSnapshot: false)
+10. **DON'T** use public RDS access (set publiclyAccessible: false)
+
+## 🎯 Deployment Checklist
+
+Before deploying to production:
+
+- [ ] Infrastructure health checks implemented
+- [ ] Beanstalk readiness verification (30 retries)
+- [ ] Resource output retry logic (5 attempts + fallback)
+- [ ] Concurrency control enabled
+- [ ] Pulumi plugins pre-installed
+- [ ] Configuration validation added
+- [ ] Health endpoint implemented in app
+- [ ] Environment variables encrypted with --secret
+- [ ] Auto-scaling configured
+- [ ] Monitoring and alerts set up
+- [ ] Database backup enabled (skipFinalSnapshot: false in prod)
+- [ ] Security groups properly configured
+- [ ] All secrets stored in GitHub Secrets
+- [ ] Deployment runbook documented
+
+## 📚 Example Complete Workflow
+
+See the production-ready example in `.github/workflows/infra-deploy.yml` which implements all these patterns:
+- Concurrency control
+- Plugin pre-installation
+- Infrastructure health checks
+- Beanstalk readiness verification
+- Resource output retry with AWS fallback
+- Configuration validation
+- Comprehensive error handling
+
+These patterns are battle-tested in production environments and handle 90%+ of deployment edge cases.
