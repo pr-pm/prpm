@@ -13,18 +13,26 @@ import type {
   Example,
 } from '../types/canonical.js';
 
+export interface CursorMDCConfig {
+  version?: string;
+  globs?: string[];
+  alwaysApply?: boolean;
+  author?: string;
+  tags?: string[];
+}
+
 /**
  * Convert canonical package to Cursor format
  */
 export function toCursor(
   pkg: CanonicalPackage,
-  options: Partial<ConversionOptions> = {}
+  options: Partial<ConversionOptions & { cursorConfig?: CursorMDCConfig }> = {}
 ): ConversionResult {
   const warnings: string[] = [];
   let qualityScore = 100;
 
   try {
-    const mdcHeader = generateMDCHeader(pkg);
+    const mdcHeader = generateMDCHeader(pkg, options.cursorConfig);
     const content = convertContent(pkg.content, warnings);
 
     // Combine MDC header with content
@@ -61,46 +69,50 @@ export function toCursor(
 /**
  * Generate MDC (Model Context) header for Cursor rules
  * Format: YAML frontmatter with metadata
+ * Config values take precedence over package metadata
  */
-function generateMDCHeader(pkg: CanonicalPackage): string {
+function generateMDCHeader(pkg: CanonicalPackage, config?: CursorMDCConfig): string {
   const lines: string[] = ['---'];
 
-  // Name/title
+  // Name/title (from package metadata, not configurable)
   if (pkg.metadata?.title) {
     lines.push(`name: "${pkg.metadata.title}"`);
   } else if (pkg.id) {
     lines.push(`name: "${pkg.id}"`);
   }
 
-  // Description
+  // Description (from package metadata, not configurable)
   if (pkg.metadata?.description) {
     lines.push(`description: "${pkg.metadata.description}"`);
   }
 
-  // Version
-  if (pkg.metadata?.version) {
-    lines.push(`version: "${pkg.metadata.version}"`);
-  } else {
-    lines.push(`version: "1.0.0"`);
-  }
+  // Version - config takes precedence
+  const version = config?.version || pkg.metadata?.version || '1.0.0';
+  lines.push(`version: "${version}"`);
 
-  // Globs - file patterns this rule applies to
-  // Default to all files if not specified
-  const globs = pkg.metadata?.globs as string[] | undefined;
-  if (globs && globs.length > 0) {
-    lines.push('globs:');
-    globs.forEach(glob => {
-      lines.push(`  - "${glob}"`);
-    });
-  } else {
-    // Default to all files
-    lines.push('globs:');
-    lines.push('  - "**/*"');
-  }
+  // Globs - config takes precedence
+  const globs = config?.globs || (pkg.metadata?.globs as string[] | undefined) || ['**/*'];
+  lines.push('globs:');
+  globs.forEach(glob => {
+    lines.push(`  - "${glob}"`);
+  });
 
-  // Always apply flag
-  const alwaysApply = pkg.metadata?.alwaysApply ?? false;
+  // Always apply flag - config takes precedence
+  const alwaysApply = config?.alwaysApply ?? pkg.metadata?.alwaysApply ?? false;
   lines.push(`alwaysApply: ${alwaysApply}`);
+
+  // Author - from config if provided
+  if (config?.author) {
+    lines.push(`author: "${config.author}"`);
+  }
+
+  // Tags - from config if provided
+  if (config?.tags && config.tags.length > 0) {
+    lines.push('tags:');
+    config.tags.forEach(tag => {
+      lines.push(`  - "${tag}"`);
+    });
+  }
 
   lines.push('---');
 
