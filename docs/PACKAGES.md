@@ -2,15 +2,16 @@
 
 Browse available packages in the PRPM registry.
 
-## Package Count
+## Package Library (1,300+)
 
-- **667+ Cursor Rules**
-- **146+ Claude Skills/Agents**
-- **255+ Windsurf Rules**
-- **15+ MCP Server Configs**
-- **15+ Collections**
+PRPM provides packages for all major AI coding editors:
 
-**Total: 744+ packages**
+- **Cursor Rules** - MDC format rules from cursor.directory, awesome-cursorrules, and community sources
+- **Claude Skills & Agents** - Skills and agents for Claude Code
+- **Windsurf Rules** - Rules and workflows for Windsurf
+- **Continue Prompts** - Prompts for Continue
+- **MCP Server Configs** - Auto-configure MCP servers for Claude Code
+- **Collections** - Multi-package bundles for complete workflow setups
 
 ## Categories
 

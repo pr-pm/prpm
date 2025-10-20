@@ -9,7 +9,7 @@ npm install -g prpm
 prpm install @collection/nextjs-pro  # Entire Next.js setup in one command
 ```
 
-**744+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf) | **One command to install**
+**1,300+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf) | **One command to install**
 
 ---
 
@@ -75,7 +75,7 @@ prpm install @collection/pulumi-infrastructure --as cursor
 
 ## 🔍 Discovery - Find What You Need
 
-Browse 744+ packages with powerful discovery:
+Browse packages with powerful discovery:
 
 ```bash
 # Search by keyword
@@ -198,13 +198,15 @@ prpm install test-driven-development
 prpm install systematic-debugging
 ```
 
-### 📚 Categories
+### 📚 Package Library (1,300+)
 
-- **🎯 Cursor Rules (667+)** - Official cursor.directory + awesome-cursorrules + MDC rules (Android, Laravel, Next.js, Python, React, Vue, etc.)
-- **🤖 Claude Skills (146+)** - Repository analysis, code review, architecture
-- **🌊 Windsurf Rules (255+)** - React, Vue, Django, FastAPI, TypeScript, workflow best practices
-- **🔌 MCP Server Configs (15+)** - Auto-configure MCP servers for Claude Code users (Cursor/Windsurf users: configs are ignored)
-- **📦 Collections (15+)** - Complete setups for Next.js, Python, Vue, Windsurf, and more
+- **🎯 Cursor Rules** - Next.js, React, Vue, Python, Laravel, TypeScript, mobile, testing, and hundreds more
+- **🤖 Claude Skills & Agents** - Repository analysis, code review, architecture, specialized workflows
+- **🌊 Windsurf Rules** - Frontend, backend, mobile, DevOps, and full-stack development
+- **🔌 MCP Server Configs** - Auto-configure MCP servers for Claude Code
+- **📦 Collections** - Multi-package bundles for complete workflow setups
+
+**Categories:** Frontend frameworks, Backend frameworks, Programming languages, Testing, Mobile development, Cloud & DevOps, AI & ML, Databases, Web3, Best practices, and more
 
 **[Package Catalog →](docs/PACKAGES.md)** | **[Browse at prpm.dev →](https://prpm.dev)**
 
@@ -299,7 +301,6 @@ prpm install karen-skill
 | **Collections (multi-package installs)** | ✅ | ❌ | ❌ |
 | **Universal packages (any editor)** | ✅ | ❌ | ❌ |
 | **Server-side format conversion** | ✅ | ❌ | ❌ |
-| **250+ packages** | ✅ | ❌ | ❌ |
 | **Auto-updates** | ✅ | ❌ | ⚠️ |
 | **Version control** | ✅ | ❌ | ⚠️ |
 | **Dependency handling** | ✅ | ❌ | ❌ |
@@ -353,7 +354,6 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 
 **v1.0 (Now)** ✅
 - CLI package manager
-- 744+ packages
 - Collections system
 - Format conversion (Cursor, Claude, Continue, Windsurf)
 - MCP server configuration (Claude Code only)
@@ -376,8 +376,9 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 
 ## Stats
 
-- **744+ packages** across Cursor, Claude, Continue, Windsurf (+ MCP server configs for Claude)
-- **15+ collections** for complete workflow setups
+- **1,300+ packages** - Cursor rules, Claude skills/agents, Windsurf rules, MCP configs
+- **Universal package manager** - Works with Cursor, Claude, Continue, Windsurf
+- **Collections** - Complete workflow setups in one command
 - **4 editor formats** supported (server-side conversion)
 - **78/100 Karen Score** - [See our review](.karen/review.md)
 - **First-mover advantage** - Only universal prompt package manager
@@ -398,7 +399,7 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 - 🏗️ [Architecture](docs/ARCHITECTURE.md) - System design and components
 - 🧪 [Testing](docs/TESTING.md) - Testing guide for developers
 - 🎯 [Examples](docs/EXAMPLES.md) - Real-world usage examples
-- 📦 [Package Catalog](docs/PACKAGES.md) - Browse 744+ packages
+- 📦 [Package Catalog](docs/PACKAGES.md) - Browse available packages
 
 **Karen:**
 - 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md)
