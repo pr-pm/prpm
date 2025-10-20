@@ -438,7 +438,7 @@ We welcome contributions!
 
 ## License
 
-MIT - See [LICENSE](LICENSE)
+Elastic License 2.0 - See [LICENSE](LICENSE)
 
 ---
 

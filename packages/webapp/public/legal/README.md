@@ -86,7 +86,7 @@ This directory contains all legal and compliance documents for PRPM (Prompt Pack
 ### Additional Resources
 - **[Contributing Guide](../../CONTRIBUTING.md)** - Open source contribution guidelines
 - **[Code of Conduct](../../CODE_OF_CONDUCT.md)** - Community standards (planned)
-- **[License](../../LICENSE)** - MIT License for CLI code
+- **[License](../../LICENSE)** - Elastic License 2.0
 - **[Deployment Guide](../../DEPLOYMENT_SETUP.md)** - For self-hosted deployments
 
 ### External Links
