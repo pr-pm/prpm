@@ -29,6 +29,9 @@ jobs:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     environment: ${{ inputs.stack || 'prod' }}
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
       - name: Checkout code
@@ -53,6 +56,14 @@ jobs:
 
       - name: Setup Pulumi
         uses: pulumi/actions@v5
+
+      - name: Install Pulumi plugins
+        working-directory: packages/infra
+        run: |
+          echo "📦 Installing Pulumi plugins..."
+          pulumi plugin install resource aws v6.83.0
+          pulumi plugin install resource awsx v2.22.0
+          echo "✅ Pulumi plugins installed"
 
       - name: Switch to Beanstalk configuration
         working-directory: packages/infra
@@ -129,17 +140,157 @@ jobs:
           fi
           echo "✓ All required configuration verified"
 
+      - name: Check infrastructure status
+        working-directory: packages/infra
+        run: |
+          echo "🔍 Checking infrastructure status..."
+
+          # Get the environment name from Pulumi state (without deploying)
+          EB_ENVIRONMENT_NAME=$(pulumi stack output beanstalkEnvironmentName 2>/dev/null || echo "")
+
+          if [ -z "$EB_ENVIRONMENT_NAME" ]; then
+            echo "🔍 No environment found in Pulumi state. Will deploy infrastructure..."
+          else
+            echo "🔍 Checking environment status: $EB_ENVIRONMENT_NAME"
+
+            # Check if the environment exists and is healthy
+            EB_ENV_STATUS=$(aws elasticbeanstalk describe-environments --environment-names "$EB_ENVIRONMENT_NAME" --query "Environments[0].Status" --output text 2>/dev/null || echo "NOT_FOUND")
+
+            if [ "$EB_ENV_STATUS" = "Terminated" ] || [ "$EB_ENV_STATUS" = "NOT_FOUND" ]; then
+              echo "⚠️  Environment is $EB_ENV_STATUS. Deleting from Pulumi state and recreating..."
+
+              # Delete the environment from Pulumi state
+              EB_URN=$(pulumi stack --show-urns | awk '/aws:elasticbeanstalk\/environment:Environment/ {print $1; exit}')
+              if [ -n "$EB_URN" ]; then
+                echo "🔧 Deleting environment from Pulumi state: $EB_URN"
+                pulumi state delete "$EB_URN" --force
+              fi
+
+              echo "🔄 Infrastructure will be recreated..."
+            else
+              echo "✅ Environment exists and is in state: $EB_ENV_STATUS"
+              echo "🔍 Checking if infrastructure changes are needed..."
+
+              # Check if there are any changes to apply
+              if pulumi preview --diff --expect-no-changes 2>/dev/null; then
+                echo "✅ No infrastructure changes needed"
+              else
+                echo "🔄 Infrastructure changes detected"
+              fi
+            fi
+          fi
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+
       - name: Pulumi Up
         working-directory: packages/infra
         run: |
           STACK="${{ inputs.stack || 'prod' }}"
+          echo "🚀 Deploying infrastructure..."
           pulumi up --yes --non-interactive
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
+      - name: Ensure Pulumi stack is selected
+        working-directory: packages/infra
+        run: |
+          export PULUMI_CONFIG_PASSPHRASE="${{ secrets.PULUMI_CONFIG_PASSPHRASE }}"
+          STACK="${{ inputs.stack || 'prod' }}"
+          echo "Current directory: $(pwd)"
+          echo "Listing available stacks:"
+          pulumi stack ls
+          echo "Environment: $STACK"
+          # Ensure the correct stack is selected
+          pulumi stack select $STACK
+          echo "✅ Pulumi stack selected: $STACK"
+
+      - name: Get resource URLs with retry
+        id: get-resources
+        working-directory: packages/infra
+        run: |
+          export PULUMI_CONFIG_PASSPHRASE="${{ secrets.PULUMI_CONFIG_PASSPHRASE }}"
+
+          # Debug: Check current stack and available outputs
+          echo "🔍 Debug: Current Pulumi stack:"
+          pulumi stack --show-urns
+          echo "🔍 Debug: Available stack outputs:"
+          pulumi stack output --show-secrets || echo "No outputs available"
+
+          # Retry getting the environment name with a few attempts
+          EB_ENVIRONMENT_NAME=""
+          for i in {1..5}; do
+            echo "🔍 Attempt $i/5: Trying to get beanstalkEnvironmentName..."
+            EB_ENVIRONMENT_NAME=$(pulumi stack output beanstalkEnvironmentName 2>/dev/null || echo "")
+            echo "🔍 Raw output: '$EB_ENVIRONMENT_NAME'"
+            if [ -n "$EB_ENVIRONMENT_NAME" ]; then
+              echo "✅ Got environment name: $EB_ENVIRONMENT_NAME"
+              break
+            else
+              echo "⏳ Attempt $i/5: Environment name not available yet, waiting..."
+              sleep 10
+            fi
+          done
+
+          if [ -z "$EB_ENVIRONMENT_NAME" ]; then
+            echo "❌ Failed to get environment name after 5 attempts"
+            echo "🔍 Trying to get environment name from AWS directly..."
+
+            # Try to get environment name from AWS if Pulumi output is not available
+            EB_APP_NAME=$(pulumi stack output beanstalkApplicationName 2>/dev/null || echo "")
+            if [ -n "$EB_APP_NAME" ]; then
+              echo "🔍 Found application name: $EB_APP_NAME"
+              EB_ENVIRONMENT_NAME=$(aws elasticbeanstalk describe-environments --application-name "$EB_APP_NAME" --query "Environments[0].EnvironmentName" --output text 2>/dev/null || echo "")
+              if [ -n "$EB_ENVIRONMENT_NAME" ]; then
+                echo "✅ Got environment name from AWS: $EB_ENVIRONMENT_NAME"
+              else
+                echo "❌ Could not get environment name from AWS either"
+                exit 1
+              fi
+            else
+              echo "❌ Could not get application name from Pulumi"
+              exit 1
+            fi
+          fi
+
+          EB_APPLICATION_NAME=$(pulumi stack output beanstalkApplicationName 2>/dev/null || echo "")
+          S3_BUCKET_NAME=$(pulumi stack output s3BucketName 2>/dev/null || echo "")
+          echo "eb_environment_name=$EB_ENVIRONMENT_NAME" >> $GITHUB_OUTPUT
+          echo "eb_application_name=$EB_APPLICATION_NAME" >> $GITHUB_OUTPUT
+          echo "s3_bucket_name=$S3_BUCKET_NAME" >> $GITHUB_OUTPUT
+
+      - name: Verify Elastic Beanstalk environment exists
+        run: |
+          echo "🔍 Verifying Elastic Beanstalk environment exists..."
+          EB_ENVIRONMENT_NAME="${{ steps.get-resources.outputs.eb_environment_name }}"
+          EB_APPLICATION_NAME="${{ steps.get-resources.outputs.eb_application_name }}"
+
+          echo "Environment name: $EB_ENVIRONMENT_NAME"
+          echo "Application name: $EB_APPLICATION_NAME"
+
+          # Wait until environment exists
+          echo "⏳ Waiting for environment to exist..."
+          aws elasticbeanstalk wait environment-exists --environment-names "$EB_ENVIRONMENT_NAME" || true
+
+          # Wait until environment is Ready (with retries)
+          for i in {1..30}; do
+            ENV_STATUS=$(aws elasticbeanstalk describe-environments --environment-names "$EB_ENVIRONMENT_NAME" --query "Environments[0].Status" --output text 2>/dev/null || echo "NOT_FOUND")
+            ENV_HEALTH=$(aws elasticbeanstalk describe-environments --environment-names "$EB_ENVIRONMENT_NAME" --query "Environments[0].Health" --output text 2>/dev/null || echo "UNKNOWN")
+            echo "⏳ EB Status: $ENV_STATUS, Health: $ENV_HEALTH (attempt $i/30)"
+            if [ "$ENV_STATUS" = "Ready" ]; then
+              echo "✅ Environment is Ready"
+              break
+            fi
+            sleep 20
+          done
+
+          if [ "$ENV_STATUS" != "Ready" ]; then
+            echo "⚠️  Environment is not Ready after waiting. Continuing but app deploy may take longer."
+          fi
+
       - name: Export Pulumi Outputs
         working-directory: packages/infra
         run: |
+          export PULUMI_CONFIG_PASSPHRASE="${{ secrets.PULUMI_CONFIG_PASSPHRASE }}"
           pulumi stack output --json > stack-outputs.json
           cat stack-outputs.json
 
