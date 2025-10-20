@@ -2,7 +2,7 @@
  * Cursor MDC header configuration utilities
  */
 
-import { CursorMDCConfig } from '../types';
+import { CursorMDCConfig } from './user-config';
 
 /**
  * Apply cursor config to MDC header in content
@@ -40,7 +40,7 @@ export function applyCursorConfig(content: string, config: CursorMDCConfig): str
     } else if (line.startsWith('globs:') && config.globs) {
       // Replace globs array
       updatedHeaderLines.push('globs:');
-      config.globs.forEach(glob => {
+      config.globs.forEach((glob: string) => {
         updatedHeaderLines.push(`  - "${glob}"`);
       });
       // Skip existing globs in the original header
@@ -58,7 +58,7 @@ export function applyCursorConfig(content: string, config: CursorMDCConfig): str
     } else if (line.startsWith('tags:') && config.tags) {
       // Replace tags array
       updatedHeaderLines.push('tags:');
-      config.tags.forEach(tag => {
+      config.tags.forEach((tag: string) => {
         updatedHeaderLines.push(`  - "${tag}"`);
       });
       // Skip existing tags in the original header
@@ -83,7 +83,7 @@ export function applyCursorConfig(content: string, config: CursorMDCConfig): str
 
   if (config.tags && !hasTags) {
     updatedHeaderLines.push('tags:');
-    config.tags.forEach(tag => {
+    config.tags.forEach((tag: string) => {
       updatedHeaderLines.push(`  - "${tag}"`);
     });
   }

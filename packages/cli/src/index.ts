@@ -28,7 +28,7 @@ const program = new Command();
 program
   .name('prpm')
   .description('Prompt Package Manager - Install and manage prompt-based files')
-  .version('1.2.0');
+  .version('0.0.1');
 
 // Registry commands (new)
 program.addCommand(createSearchCommand());

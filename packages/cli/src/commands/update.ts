@@ -74,7 +74,7 @@ export async function handleUpdate(
 
         // Install new version
         await handleInstall(`${pkg.id}@${latestVersion}`, {
-          type: pkg.type,
+          type: pkg.type as 'cursor' | 'claude' | 'continue' | 'windsurf' | 'generic' | undefined,
         });
 
         updatedCount++;

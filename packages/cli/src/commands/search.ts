@@ -171,7 +171,6 @@ export async function handleSearch(
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Search failed: ${error}`);
-    console.log(`\n💡 Tip: Make sure you have internet connection`);
     console.log(`   Registry: ${process.env.PRPM_REGISTRY_URL || 'https://registry.prpm.dev'}`);
     process.exit(1);
   } finally {

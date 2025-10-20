@@ -168,16 +168,8 @@ export async function handleInstall(
     setPackageIntegrity(updatedLockfile, packageId, tarball);
     await writeLockfile(updatedLockfile);
 
-    // Update configuration
-    const packageRecord: Package = {
-      id: packageId,
-      type,
-      url: tarballUrl,
-      dest: destPath,
-      version: actualVersion,
-    };
-
-    await addPackage(packageRecord);
+    // Update lockfile (already done above via addToLockfile + writeLockfile)
+    // No need to call addPackage again as it would be redundant
 
     console.log(`\n✅ Successfully installed ${packageId}`);
     console.log(`   📁 Saved to: ${destPath}`);
