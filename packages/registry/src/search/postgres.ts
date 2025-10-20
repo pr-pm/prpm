@@ -103,7 +103,6 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
          LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
         [...params, limit, offset]
       );
-      console.log(result)
 
       // Get total count
       const countResult = await queryOne<{ count: string }>(

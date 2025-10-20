@@ -59,6 +59,7 @@ export async function handleTrending(options: { type?: PackageType; limit?: numb
         limit: options.limit || 10,
       },
     });
+    await telemetry.shutdown();
   }
 }
 

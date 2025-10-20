@@ -105,6 +105,7 @@ export async function handleUpdate(
         updatedCount,
       },
     });
+    await telemetry.shutdown();
   }
 }
 

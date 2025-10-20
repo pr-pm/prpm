@@ -193,6 +193,7 @@ export async function handleLogin(options: LoginOptions): Promise<void> {
         method: options.token ? 'token' : 'oauth',
       },
     });
+    await telemetry.shutdown();
   }
 }
 

@@ -183,7 +183,6 @@ export async function handleInstall(
     console.log(`\n💡 Tips:`);
     console.log(`   - Check package name: prpm search <query>`);
     console.log(`   - Get package info: prpm info <package>`);
-    console.log(`   - Install from URL: prpm add <url> --as <type>`);
     process.exit(1);
   } finally {
     await telemetry.track({
@@ -197,6 +196,7 @@ export async function handleInstall(
         type: options.type,
       },
     });
+    await telemetry.shutdown();
   }
 }
 

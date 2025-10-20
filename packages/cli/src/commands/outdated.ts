@@ -117,6 +117,7 @@ export async function handleOutdated(): Promise<void> {
       error,
       duration: Date.now() - startTime,
     });
+    await telemetry.shutdown();
   }
 }
 

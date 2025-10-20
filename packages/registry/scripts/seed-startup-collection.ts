@@ -74,7 +74,6 @@ async function seedStartupCollection() {
 
     if (existing.rows.length > 0) {
       console.log(`  ⏭️  Skipped: @${collection.scope}/${collection.id}@${collection.version} (already exists)`);
-      await pool.end();
       return;
     }
 

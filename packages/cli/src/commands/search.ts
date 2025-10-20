@@ -85,6 +85,7 @@ export async function handleSearch(
   let success = false;
   let error: string | undefined;
   let result: SearchResult | null = null;
+  let registryUrl = '';
 
   try {
     // Allow empty query when filtering by type or author
@@ -105,6 +106,7 @@ export async function handleSearch(
     }
 
     const config = await getConfig();
+    registryUrl = config.registryUrl || 'https://registry.prpm.dev';
     const client = getRegistryClient(config);
 
     // Map CLI type to registry schema
@@ -171,7 +173,14 @@ export async function handleSearch(
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Search failed: ${error}`);
-    console.log(`   Registry: ${process.env.PRPM_REGISTRY_URL || 'https://registry.prpm.dev'}`);
+    console.log(`   Registry: ${registryUrl}`);
+
+    // Provide helpful hint if using localhost
+    if (registryUrl.includes('localhost')) {
+      console.log(`\n💡 Tip: You're using a local registry. Make sure it's running or update ~/.prpmrc`);
+      console.log(`   To use the production registry, remove the registryUrl from ~/.prpmrc`);
+    }
+
     process.exit(1);
   } finally {
     await telemetry.track({
@@ -185,6 +194,9 @@ export async function handleSearch(
         resultCount: success && result ? result.packages.length : 0,
       },
     });
+
+    // Ensure telemetry is flushed before exit
+    await telemetry.shutdown();
   }
 }
 

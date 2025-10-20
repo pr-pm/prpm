@@ -61,7 +61,7 @@ export async function handleCollectionsSearch(
     const community = filtered.filter(c => !c.official);
 
     if (official.length > 0) {
-      console.log('📦 Official Collections:\n');
+      console.log(`📦 Official Collections (${official.length}):\n`);
       official.forEach(c => {
         const fullName = `@${c.scope}/${c.id}`.padEnd(35);
         const pkgCount = `(${c.package_count} packages)`.padEnd(15);
@@ -75,7 +75,7 @@ export async function handleCollectionsSearch(
     }
 
     if (community.length > 0) {
-      console.log('\n🌟 Community Collections:\n');
+      console.log(`\n🌟 Community Collections (${community.length}):\n`);
       community.forEach(c => {
         const fullName = `@${c.scope}/${c.id}`.padEnd(35);
         const pkgCount = `(${c.package_count} packages)`.padEnd(15);
@@ -88,7 +88,9 @@ export async function handleCollectionsSearch(
       });
     }
 
-    console.log(`\n💡 View details: prpm collection info <collection>`);
+    // Show results count
+    console.log(`\n📊 Found: ${filtered.length} matching collection${filtered.length === 1 ? '' : 's'} (searched ${result.total} total)\n`);
+    console.log(`💡 View details: prpm collection info <collection>`);
     console.log(`💡 Install: prpm install @collection/<name>`);
 
     await telemetry.track({
@@ -98,6 +100,7 @@ export async function handleCollectionsSearch(
       data: {
         query: query.substring(0, 100),
         count: filtered.length,
+        total: result.total,
         filters: options,
       },
     });
@@ -111,6 +114,8 @@ export async function handleCollectionsSearch(
       duration: Date.now() - startTime,
     });
     process.exit(1);
+  } finally {
+    await telemetry.shutdown();
   }
 }
 
@@ -136,7 +141,7 @@ export async function handleCollectionsList(options: {
       tag: options.tag,
       official: options.official,
       scope: options.scope,
-      limit: 50,
+      limit: 500, // Increased limit to show more collections
     });
 
     if (result.collections.length === 0) {
@@ -149,7 +154,7 @@ export async function handleCollectionsList(options: {
     const community = result.collections.filter(c => !c.official);
 
     if (official.length > 0) {
-      console.log('📦 Official Collections:\n');
+      console.log(`📦 Official Collections (${official.length}):\n`);
       official.forEach(c => {
         const fullName = `@${c.scope}/${c.id}`.padEnd(35);
         const pkgCount = `(${c.package_count} packages)`.padEnd(15);
@@ -163,7 +168,7 @@ export async function handleCollectionsList(options: {
     }
 
     if (community.length > 0) {
-      console.log('\n🌟 Community Collections:\n');
+      console.log(`\n🌟 Community Collections (${community.length}):\n`);
       community.forEach(c => {
         const fullName = `@${c.scope}/${c.id}`.padEnd(35);
         const pkgCount = `(${c.package_count} packages)`.padEnd(15);
@@ -176,7 +181,17 @@ export async function handleCollectionsList(options: {
       });
     }
 
-    console.log(`\n💡 View details: prpm collection info <collection>`);
+    // Show total from API (which includes all collections, not just the ones returned)
+    const showing = result.collections.length;
+    const total = result.total;
+
+    if (showing < total) {
+      console.log(`\n📊 Showing ${showing} of ${total} collection${total === 1 ? '' : 's'}\n`);
+    } else {
+      console.log(`\n📊 Total: ${total} collection${total === 1 ? '' : 's'}\n`);
+    }
+
+    console.log(`💡 View details: prpm collection info <collection>`);
     console.log(`💡 Install: prpm install @collection/<name>`);
 
     await telemetry.track({
@@ -185,6 +200,7 @@ export async function handleCollectionsList(options: {
       duration: Date.now() - startTime,
       data: {
         count: result.collections.length,
+        total: result.total,
         filters: options,
       },
     });
@@ -198,6 +214,8 @@ export async function handleCollectionsList(options: {
       duration: Date.now() - startTime,
     });
     process.exit(1);
+  } finally {
+    await telemetry.shutdown();
   }
 }
 
@@ -255,7 +273,7 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
     if (requiredPkgs.length > 0) {
       console.log('   Required:');
       requiredPkgs.forEach((pkg, i) => {
-        console.log(`   ${i + 1}. ✓ ${pkg.packageId}@${pkg.version || 'latest'}`);
+        console.log(`   ${i + 1}. ✓ ${pkg?.package?.name}@${pkg.version || 'latest'}`);
         if (pkg.package && pkg.package.description) {
           console.log(`      ${pkg.package.description}`);
         }
@@ -269,7 +287,7 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
     if (optionalPkgs.length > 0) {
       console.log('   Optional:');
       optionalPkgs.forEach((pkg, i) => {
-        console.log(`   ${i + 1}. ○ ${pkg.packageId}@${pkg.version || 'latest'}`);
+        console.log(`   ${i + 1}. ○ ${pkg?.package?.name}@${pkg.version || 'latest'}`);
         if (pkg.package && pkg.package.description) {
           console.log(`      ${pkg.package.description}`);
         }
@@ -308,102 +326,8 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
       duration: Date.now() - startTime,
     });
     process.exit(1);
-  }
-}
-
-/**
- * Show dependency tree for a collection
- */
-export async function handleCollectionDeps(collectionSpec: string): Promise<void> {
-  const startTime = Date.now();
-  let success = false;
-  let error: string | undefined;
-
-  try {
-    // Parse collection spec: @scope/id or scope/id
-    const match = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
-    if (!match) {
-      throw new Error('Invalid collection format. Use: @scope/id or scope/id[@version]');
-    }
-
-    const [, scope, id, version] = match;
-    const fullId = `@${scope}/${id}`;
-
-    console.log(`📦 Resolving dependencies for ${fullId}${version ? `@${version}` : ''}...\n`);
-
-    const config = await getConfig();
-    const client = getRegistryClient(config);
-
-    // Get collection details
-    const collection = await client.getCollection(scope, id, version);
-
-    if (collection.packages.length === 0) {
-      console.log('✅ No packages in this collection\n');
-      success = true;
-      return;
-    }
-
-    // Display collection info
-    console.log(`${collection.icon || '📦'} ${collection.name}`);
-    console.log(`   Version: ${collection.version}`);
-    console.log('');
-
-    // Display packages
-    console.log('📋 Included Packages:\n');
-
-    const requiredPkgs = collection.packages.filter(p => p.required);
-    const optionalPkgs = collection.packages.filter(p => !p.required);
-
-    if (requiredPkgs.length > 0) {
-      console.log('   ✓ Required:\n');
-      requiredPkgs.forEach((pkg) => {
-        console.log(`      ${pkg.packageId}@${pkg.version || 'latest'}`);
-        if (pkg.reason) {
-          console.log(`      💡 ${pkg.reason}`);
-        }
-      });
-      console.log('');
-    }
-
-    if (optionalPkgs.length > 0) {
-      console.log('   ○ Optional:\n');
-      optionalPkgs.forEach((pkg) => {
-        console.log(`      ${pkg.packageId}@${pkg.version || 'latest'}`);
-        if (pkg.reason) {
-          console.log(`      💡 ${pkg.reason}`);
-        }
-      });
-      console.log('');
-    }
-
-    console.log(`📊 Total: ${collection.packages.length} packages (${requiredPkgs.length} required, ${optionalPkgs.length} optional)\n`);
-
-    success = true;
-    await telemetry.track({
-      command: 'collections:deps',
-      success,
-      duration: Date.now() - startTime,
-      data: {
-        scope,
-        id,
-        packageCount: collection.packages.length,
-      },
-    });
-  } catch (err) {
-    error = err instanceof Error ? err.message : String(err);
-    console.error(`\n❌ Failed to resolve dependencies: ${error}`);
-
-    if (error.includes('not found')) {
-      console.log(`\n💡 Tip: Check the collection name is correct. Use: prpm collections list`);
-    }
-
-    await telemetry.track({
-      command: 'collections:deps',
-      success: false,
-      error,
-      duration: Date.now() - startTime,
-    });
-    process.exit(1);
+  } finally {
+    await telemetry.shutdown();
   }
 }
 
@@ -520,6 +444,8 @@ export async function handleCollectionInstall(
       },
     });
     process.exit(1);
+  } finally {
+    await telemetry.shutdown();
   }
 }
 
@@ -568,12 +494,6 @@ export function createCollectionsCommand(): Command {
     .command('info <collection>')
     .description('Show collection details')
     .action(handleCollectionInfo);
-
-  // Deps subcommand
-  command
-    .command('deps <collection>')
-    .description('Show packages included in a collection')
-    .action(handleCollectionDeps);
 
   // Install handled by main install command with @scope/id syntax
 

@@ -5,191 +5,218 @@
  * Run: npm run seed:skills
  */
 
-import pg from "pg";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { config } from 'dotenv';
+import { Pool } from 'pg';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const { Pool } = pg;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Database connection
+// Load .env file from registry root
+config({ path: join(__dirname, '..', '.env') });
+
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://prpm:prpm@localhost:5434/prpm';
+
 const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
-  port: parseInt(process.env.DB_PORT || "5432"),
-  database: process.env.DB_NAME || "prpm_registry",
-  user: process.env.DB_USER || "prpm",
-  password: process.env.DB_PASSWORD || "prpm_dev_password",
+  connectionString: DATABASE_URL,
 });
 
-interface PackageData {
-  id: string;
-  description: string;
-  version: string;
-  type: string;
-  category: string;
-  tags: string[];
-  keywords: string[];
-  author_id: string;
-  author_name: string;
-  license: string;
-  visibility: string;
-  verified_author: boolean;
-  official: boolean;
-  content: string;
-  content_url: string;
-  repository_url: string;
-  homepage_url: string;
-  documentation_url: string;
-  download_url: string;
-  file_path: string;
-  install_location: string;
-  quality_score: number;
-  metadata: Record<string, any>;
+interface ScrapedPackage {
+  id?: string;
+  name: string;
+  description?: string;
+  content?: string;
+  author?: string;
+  author_id?: string;
+  tags?: string[];
+  category?: string;
+  type?: string;
+  source_url?: string;
+  version?: string;
+  official?: boolean;
+  verified?: boolean;
 }
 
 async function seedSkills() {
-  const client = await pool.connect();
-
   try {
-    console.log("🌱 Seeding new skills...");
+    console.log('🌱 Seeding new skills...');
 
     // Load skills data
-    const skillsPath = join(__dirname, "seed", "new-skills.json");
-    const skills: PackageData[] = JSON.parse(readFileSync(skillsPath, "utf-8"));
+    const skillsPath = join(__dirname, 'seed', 'new-skills.json');
+    const skills: ScrapedPackage[] = JSON.parse(readFileSync(skillsPath, 'utf-8'));
 
     console.log(`📦 Found ${skills.length} skills to seed`);
 
-    let inserted = 0;
-    let updated = 0;
-    let skipped = 0;
+    let totalPackages = 0;
+    let totalAttempted = 0;
+    let totalSkipped = 0;
 
-    for (const skill of skills) {
+    for (const pkg of skills) {
+      totalAttempted++;
       try {
-        // Check if package already exists
-        const existing = await client.query(
-          "SELECT id, version FROM packages WHERE id = $1",
-          [skill.id]
+        // Determine package ID
+        let packageId: string;
+
+        // If pkg.id already looks like a proper namespaced package (starts with @scope/),
+        // use it as-is
+        if (pkg.id && pkg.id.startsWith('@') && pkg.id.includes('/')) {
+          packageId = pkg.id;
+        } else {
+          // Extract author and create namespaced package ID
+          // Format: @author/package-name
+          let authorRaw = pkg.author_id || pkg.author || 'unknown';
+          // Remove @ prefix if it exists
+          if (authorRaw.startsWith('@')) {
+            authorRaw = authorRaw.substring(1);
+          }
+          const author = authorRaw
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, '-')
+            .replace(/-+/g, '-')
+            .substring(0, 50);
+
+          const baseName = (pkg.id || pkg.name || `package-${totalPackages}`)
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, '-')
+            .replace(/-+/g, '-')
+            .substring(0, 80);
+
+          // Create namespaced ID: @author/package
+          packageId = `@${author}/${baseName}`;
+        }
+
+        // Extract author from packageId for author_id field
+        const author = packageId.split('/')[0].substring(1); // Remove @ and get scope
+
+        // Map package type to valid database type
+        let type = pkg.type || 'claude-skill';
+
+        // Initialize tags array
+        let tags = Array.isArray(pkg.tags) ? [...pkg.tags] : [];
+        if (type === 'claude-skill' && !tags.includes('claude-skill')) {
+          tags.push('claude-skill');
+        }
+
+        // Determine if package is official and verified
+        const isOfficial = !!(pkg.official);
+        const isVerified = !!(pkg.verified || pkg.official);
+
+        // Create or get user for this author
+        let authorUserId: string | null = null;
+        try {
+          const userResult = await pool.query(
+            `INSERT INTO users (username, verified_author, created_at, updated_at)
+             VALUES ($1, $2, NOW(), NOW())
+             ON CONFLICT (username) DO UPDATE SET updated_at = NOW()
+             RETURNING id`,
+            [author, isVerified]
+          );
+          authorUserId = userResult.rows[0]?.id || null;
+        } catch (err) {
+          console.error(`  ⚠️  Failed to create/get user for author ${author}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+
+        // Insert package
+        const pkgResult = await pool.query(
+          `INSERT INTO packages (
+            name,
+            description,
+            author_id,
+            type,
+            category,
+            tags,
+            repository_url,
+            visibility,
+            verified,
+            featured,
+            created_at,
+            updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+          ON CONFLICT (name) DO NOTHING
+          RETURNING id`,
+          [
+            packageId,
+            pkg.description || `${pkg.name} - AI prompt package`,
+            authorUserId,
+            type,
+            pkg.category || 'general',
+            tags,
+            pkg.source_url || null,
+            'public',
+            isVerified,
+            isOfficial,
+          ]
         );
 
-        if (existing.rows.length > 0) {
-          console.log(`⚠️  Package ${skill.id} already exists, updating...`);
-
-          await client.query(
-            `UPDATE packages SET
-              
-              description = $3,
-              version = $4,
-              type = $5,
-              category = $6,
-              tags = $7,
-              keywords = $8,
-              author_id = $9,
-              author_name = $10,
-              license = $11,
-              visibility = $12,
-              verified_author = $13,
-              official = $14,
-              content = $15,
-              content_url = $16,
-              repository_url = $17,
-              homepage_url = $18,
-              documentation_url = $19,
-              download_url = $20,
-              file_path = $21,
-              install_location = $22,
-              quality_score = $23,
-              metadata = $24,
-              updated_at = NOW()
-            WHERE id = $1`,
-            [
-              skill.id,
-              
-              skill.description
-              skill.version,
-              skill.type,
-              skill.category,
-              skill.tags,
-              skill.keywords,
-              skill.author_id,
-              skill.author_name,
-              skill.license,
-              skill.visibility,
-              skill.verified_author,
-              skill.official,
-              skill.content,
-              skill.content_url,
-              skill.repository_url,
-              skill.homepage_url,
-              skill.documentation_url,
-              skill.download_url,
-              skill.file_path,
-              skill.install_location,
-              skill.quality_score,
-              JSON.stringify(skill.metadata),
-            ]
-          );
-
-          updated++;
-        } else {
-          await client.query(
-            `INSERT INTO packages (
-              id, description version, type, category,
-              tags, keywords, author_id, author_name, license, visibility,
-              verified_author, official, content, content_url, repository_url,
-              homepage_url, documentation_url, download_url, file_path,
-              install_location, quality_score, metadata
-            ) VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
-            )`,
-            [
-              skill.id,
-              
-              skill.description
-              skill.version,
-              skill.type,
-              skill.category,
-              skill.tags,
-              skill.keywords,
-              skill.author_id,
-              skill.author_name,
-              skill.license,
-              skill.visibility,
-              skill.verified_author,
-              skill.official,
-              skill.content,
-              skill.content_url,
-              skill.repository_url,
-              skill.homepage_url,
-              skill.documentation_url,
-              skill.download_url,
-              skill.file_path,
-              skill.install_location,
-              skill.quality_score,
-              JSON.stringify(skill.metadata),
-            ]
-          );
-
-          console.log(`✅ Inserted: ${skill.id} - ${skill.id}`);
-          inserted++;
+        // If package already exists, skip version insert
+        if (pkgResult.rows.length === 0) {
+          totalSkipped++;
+          console.log(`  ⏭️  Skipped: ${packageId} (already exists)`);
+          continue;
         }
-      } catch (error) {
-        console.error(`❌ Failed to seed ${skill.id}:`, error);
-        skipped++;
+
+        // Get the UUID package_id from the insert result
+        const dbPackageId = pkgResult.rows[0].id;
+
+        // Insert initial version (using metadata to store content)
+        await pool.query(
+          `INSERT INTO package_versions (
+            package_id,
+            version,
+            tarball_url,
+            content_hash,
+            file_size,
+            changelog,
+            metadata,
+            published_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+          ON CONFLICT (package_id, version) DO NOTHING`,
+          [
+            dbPackageId,
+            pkg.version || '1.0.0',
+            `https://registry.prpm.dev/packages/${packageId}/${pkg.version || '1.0.0'}.tar.gz`,
+            'placeholder-hash',
+            (pkg.content?.length || 0),
+            'Initial version',
+            JSON.stringify({
+              content: pkg.content || pkg.description || '',
+              sourceUrl: pkg.source_url || null,
+              originalType: pkg.type,
+            }),
+          ]
+        );
+
+        // Update version_count for the package
+        await pool.query(
+          `UPDATE packages
+           SET version_count = (SELECT COUNT(*) FROM package_versions WHERE package_id = $1)
+           WHERE id = $1`,
+          [dbPackageId]
+        );
+
+        console.log(`  ✅ Inserted: ${packageId}`);
+        totalPackages++;
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error(`  ⚠️  Failed to insert package: ${error.message}`);
+        totalSkipped++;
       }
     }
 
-    console.log("\n📊 Summary:");
-    console.log(`   ✅ Inserted: ${inserted}`);
-    console.log(`   🔄 Updated: ${updated}`);
-    console.log(`   ⚠️  Skipped: ${skipped}`);
-    console.log(`   📦 Total: ${skills.length}`);
-  } catch (error) {
-    console.error("❌ Seeding failed:", error);
-    process.exit(1);
+    console.log(`\n✅ Successfully seeded ${totalPackages} packages!`);
+    console.log(`⏭️  Skipped ${totalSkipped} duplicates`);
+    console.log(`📋 Total attempted: ${totalAttempted}`);
+  } catch (error: unknown) {
+    console.error('❌ Seed failed:', error);
+    throw error;
   } finally {
-    client.release();
     await pool.end();
   }
 }
 
-seedSkills();
+seedSkills().catch((error) => {
+  console.error('Fatal error:', error);
+  process.exit(1);
+});

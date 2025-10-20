@@ -32,6 +32,22 @@ export function toCursor(
   let qualityScore = 100;
 
   try {
+    // Check if content already has MDC header in raw metadata
+    const metadata = pkg.content.sections.find(s => s.type === 'metadata');
+    if (metadata?.type === 'metadata' && metadata.data.raw) {
+      const raw = metadata.data.raw;
+      if (raw.trim().startsWith('---\n') && raw.includes('\n---\n')) {
+        // Content already has MDC header, return as-is
+        return {
+          content: raw,
+          format: 'cursor',
+          warnings: warnings.length > 0 ? warnings : undefined,
+          lossyConversion: false,
+          qualityScore: 100,
+        };
+      }
+    }
+
     const mdcHeader = generateMDCHeader(pkg, options.cursorConfig);
     const content = convertContent(pkg.content, warnings);
 

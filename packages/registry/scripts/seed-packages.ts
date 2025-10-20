@@ -41,7 +41,7 @@ async function seedPackages() {
     const scrapedFiles = [
       '../../../data/scraped/scraped-claude-skills.json',
       '../../../data/scraped/scraped-darcyegb-agents.json',
-      '../../../data/scraped/converted-cursor-skills.json',
+      '../../../data/scraped/converted-cursor-skills.json', // Converted cursor skills with proper IDs
       '../../../data/scraped/scraped-packages-additional.json',
       '../../../data/scraped/new-scraped-packages.json',
       '../../../data/scraped/scraped-windsurf-packages.json',
@@ -59,6 +59,7 @@ async function seedPackages() {
       '../../../data/scraped/scraped-flyeric-cursorrules.json',
       '../../../data/scraped/scraped-cursor-directory.json',
       '../../../data/scraped/scraped-cursor-official-rules.json',
+      '../../../data/scraped/prpm-beanstalk-packages.json', // PRPM team AWS Beanstalk packages
       '../../../scraped-claude-agents.json', // Claude agents and slash commands
     ];
 

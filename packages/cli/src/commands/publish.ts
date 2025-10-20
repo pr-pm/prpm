@@ -198,6 +198,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         dryRun: options.dryRun,
       },
     });
+    await telemetry.shutdown();
   }
 }
 

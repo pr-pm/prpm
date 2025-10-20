@@ -155,9 +155,13 @@ class Telemetry {
   async shutdown(): Promise<void> {
     if (this.posthog) {
       try {
+        // Flush any pending events before shutdown
+        await this.posthog.flush();
         await this.posthog.shutdown();
       } catch (error) {
         // Silently fail
+      } finally {
+        this.posthog = null;
       }
     }
   }

@@ -48,7 +48,35 @@ async function seedCollections() {
   try {
     console.log('📦 Seeding curated collections...\n');
 
-    // Sample collections with actual packages from the database
+    // Load collections from JSON files
+    const collectionFiles = [
+      'seed/scraped-collections.json',
+      'seed/prpm-collections.json',
+      'seed/new-collections.json',
+      'seed/curated-collections.json',
+      'seed/collections.json',
+      'seed/pulumi-collection.json',
+    ];
+
+    let allCollections: Collection[] = [];
+
+    // Load all collection files
+    for (const file of collectionFiles) {
+      try {
+        const filePath = path.join(__dirname, file);
+        const data = await fs.readFile(filePath, 'utf-8');
+        const collections = JSON.parse(data);
+        const collectionArray = Array.isArray(collections) ? collections : [collections];
+        allCollections = allCollections.concat(collectionArray);
+        console.log(`  📄 Loaded ${collectionArray.length} collections from ${file}`);
+      } catch (err) {
+        console.log(`  ⚠️  Could not load ${file}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    console.log(`\n📊 Total collections to seed: ${allCollections.length}\n`);
+
+    // Sample collections with actual packages from the database (fallback if files don't load)
     const workingCollections = [
       {
         scope: 'collection',
@@ -266,24 +294,31 @@ async function seedCollections() {
       },
     ];
 
-    // Load curated collections from JSON file (but they have invalid package IDs)
-    // const curatedPath = path.join(__dirname, 'seed', 'curated-collections.json');
-    // const curatedData = await fs.readFile(curatedPath, 'utf-8');
-    // const curatedCollections = JSON.parse(curatedData);
+    // Merge loaded collections with hardcoded working collections as fallback
+    const collectionsToSeed = allCollections.length > 0 ? allCollections : workingCollections;
 
     let totalImported = 0;
     let totalSkipped = 0;
 
-    for (const collection of workingCollections) {
+    for (const collection of collectionsToSeed) {
         try {
+          // Normalize scope: handle @collection/id format vs separate scope/id
+          let scope = collection.scope || 'collection';
+          let collectionId = collection.id;
+
+          // Handle @collection format in scope
+          if (scope.startsWith('@')) {
+            scope = scope.substring(1);
+          }
+
           // Check if collection already exists
           const existing = await pool.query(
             'SELECT scope, id, version FROM collections WHERE scope = $1 AND id = $2 AND version = $3',
-            [collection.scope, collection.id, collection.version]
+            [scope, collectionId, collection.version]
           );
 
           if (existing.rows.length > 0) {
-            console.log(`  ⏭️  Skipped: ${collection.scope}/${collection.id}@${collection.version} (already exists)`);
+            console.log(`  ⏭️  Skipped: ${scope}/${collectionId}@${collection.version} (already exists)`);
             totalSkipped++;
             continue;
           }
@@ -311,8 +346,8 @@ async function seedCollections() {
               $12, $13, NOW(), NOW()
             )
           `, [
-            collection.scope,
-            collection.id,
+            scope,
+            collectionId,
             collection.version,
             collection.name,
             collection.description,
@@ -332,7 +367,7 @@ async function seedCollections() {
             for (let i = 0; i < collection.packages.length; i++) {
               const pkg = collection.packages[i];
               // Handle both string format and object format
-              const packageIdentifier = typeof pkg === 'string' ? pkg : pkg.packageId; // may be a UUID or a name
+              const packageIdentifier = typeof pkg === 'string' ? pkg : (pkg.packageId || (pkg as any).id); // may be a UUID or a name
               const required = typeof pkg === 'string' ? true : (pkg.required !== false);
               const order = typeof pkg === 'string' ? i + 1 : (pkg.order || i + 1);
 
@@ -373,11 +408,11 @@ async function seedCollections() {
             }
           }
 
-          console.log(`  ✅ Imported: ${collection.scope}/${collection.id}@${collection.version}`);
+          console.log(`  ✅ Imported: ${scope}/${collectionId}@${collection.version}`);
           totalImported++;
 
         } catch (error) {
-          console.error(`  ❌ Error importing ${collection.scope}/${collection.id}:`, error);
+          console.error(`  ❌ Error importing ${scope}/${collectionId}:`, error);
         }
       }
 

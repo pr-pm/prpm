@@ -156,6 +156,7 @@ export async function handleList(): Promise<void> {
         packageCount,
       },
     });
+    await telemetry.shutdown();
   }
 }
 

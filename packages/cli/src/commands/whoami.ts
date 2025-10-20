@@ -38,6 +38,7 @@ export async function handleWhoami(): Promise<void> {
       error,
       duration: Date.now() - startTime,
     });
+    await telemetry.shutdown();
   }
 }
 

@@ -104,6 +104,7 @@ export async function handleUpgrade(
         upgradedCount,
       },
     });
+    await telemetry.shutdown();
   }
 }
 

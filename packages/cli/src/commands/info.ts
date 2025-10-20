@@ -75,6 +75,7 @@ export async function handleInfo(packageName: string): Promise<void> {
         packageName,
       },
     });
+    await telemetry.shutdown();
   }
 }
 
