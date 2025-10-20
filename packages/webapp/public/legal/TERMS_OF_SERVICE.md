@@ -85,8 +85,8 @@ Packages must:
 
 ### 5.3 PRPM Intellectual Property
 - The PRPM name, logo, and service are owned by us
-- The PRPM CLI and source code is under Elastic License 2.0
-- The registry service and infrastructure are proprietary
+- PRPM is open source under MIT License
+- You may fork, modify, and distribute PRPM per the MIT License
 - You may not use our trademarks without permission
 
 ### 5.4 DMCA Policy
@@ -349,17 +349,24 @@ Previous versions available at: https://github.com/[org]/prompt-package-manager/
 ## 18. Open Source
 
 ### 18.1 PRPM Software
-- PRPM is source-available under Elastic License 2.0
+- PRPM is fully open source under MIT License
 - Source: https://github.com/[org]/prompt-package-manager
 - Contributions welcome per CONTRIBUTING.md
-- Free to use, modify, and self-host for internal use
-- Cannot be offered as a competing hosted service to third parties
+- Free to use, modify, distribute, and self-host without restriction
+- You may fork and create derivative works
+- Commercial use is explicitly permitted
 
 ### 18.2 User Packages
 - Packages published to PRPM have their own licenses
 - Package authors choose their own license (MIT, Apache, proprietary, etc.)
 - Users must comply with package licenses
-- PRPM license does not apply to user-submitted packages
+- PRPM's MIT license does not apply to user-submitted packages
+
+### 18.3 Future License Changes
+- We reserve the right to change the license for future versions
+- Existing versions remain under their original license (MIT)
+- This allows flexibility if cloud vendor competition emerges
+- Changes will be announced with 90 days notice
 
 ---
 

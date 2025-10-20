@@ -20,7 +20,7 @@
 - ✅ CLI always free
 - ✅ Public packages always free
 - ✅ Basic search/install/publish always free
-- ✅ Source-available forever (Elastic License 2.0)
+- ✅ Open source forever (MIT License)
 
 **Why?** Network effects. More free users = more packages = more value = more premium conversions.
 
@@ -502,10 +502,10 @@ prpm search database
 - [ ] GDPR compliance (EU users)
 
 ### IP Considerations
+- PRPM is MIT licensed (fully open source)
 - User packages have their own licenses (MIT, Apache, etc.)
-- Registry code is open source
-- Commercial hosting is the product
-- Similar to npm, GitHub Packages
+- Commercial hosting is the business model (like npm, GitHub Packages)
+- Can switch to hybrid/restrictive license if cloud vendors threaten (like Redis, Elasticsearch)
 
 ---
 
