@@ -276,17 +276,13 @@ describe('toClaude', () => {
 
   describe('error handling', () => {
     it('should handle conversion errors gracefully', () => {
+      // Create package with content that will cause an actual error during conversion
       const invalidPkg = {
         ...minimalCanonicalPackage,
         content: {
           format: 'canonical' as const,
           version: '1.0' as const,
-          sections: [
-            {
-              type: 'metadata' as const,
-              data: { title: "test", description: "test" },
-            },
-          ],
+          sections: null as any, // This will cause an error when trying to iterate
         },
       };
 
@@ -295,6 +291,8 @@ describe('toClaude', () => {
       expect(result.qualityScore).toBe(0);
       expect(result.lossyConversion).toBe(true);
       expect(result.warnings).toBeDefined();
+      expect(result.warnings!.length).toBeGreaterThan(0);
+      expect(result.warnings![0]).toContain('Conversion error');
     });
   });
 });

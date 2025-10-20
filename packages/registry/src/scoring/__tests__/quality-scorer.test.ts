@@ -343,9 +343,14 @@ describe('Quality Scorer', () => {
 
       expect(score).toBeGreaterThan(0);
       expect(score).toBeLessThanOrEqual(5.0);
+      // Check for the final log message with score information
       expect(mockServer.log.info).toHaveBeenCalledWith(
-        expect.objectContaining({ packageId: 'test-package', score }),
-        expect.stringContaining('quality score')
+        expect.objectContaining({
+          packageId: 'test-package',
+          finalScore: score,
+          scoreBreakdown: expect.any(Object)
+        }),
+        expect.stringContaining('Quality score updated')
       );
     });
 

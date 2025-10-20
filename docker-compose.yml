@@ -68,7 +68,6 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      HOST: 0.0.0.0
       DATABASE_URL: postgresql://prpm:prpm@postgres:5432/prpm
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-secret-change-in-production

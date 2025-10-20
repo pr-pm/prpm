@@ -28,7 +28,7 @@ export async function evaluatePromptWithAI(
   // Check if AI evaluation is enabled and API key is configured
   if (!config.ai.evaluationEnabled || !config.ai.anthropicApiKey) {
     server.log.info('🤖 AI evaluation disabled, using heuristic scoring');
-    return evaluatePromptHeuristic(content);
+    return evaluatePromptHeuristic(content, server);
   }
 
   try {
@@ -46,7 +46,7 @@ export async function evaluatePromptWithAI(
         promptLength: promptText?.length || 0,
         minRequired: 50
       }, '⚠️  Prompt too short for AI evaluation, using fallback');
-      return evaluatePromptHeuristic(content);
+      return evaluatePromptHeuristic(content, server);
     }
 
     server.log.info({
@@ -102,7 +102,7 @@ export async function evaluatePromptWithAI(
       },
       '⚠️  AI evaluation failed, falling back to heuristic scoring'
     );
-    return evaluatePromptHeuristic(content);
+    return evaluatePromptHeuristic(content, server);
   }
 }
 
@@ -242,8 +242,11 @@ function parseEvaluationResponse(response: string): AIEvaluationResult {
  * Fallback heuristic evaluation when AI is unavailable
  * Uses same logic as scorePromptContent but returns 0-1 scale
  */
-function evaluatePromptHeuristic(content: any): number {
-  if (!content) return 0;
+function evaluatePromptHeuristic(content: any, server?: FastifyInstance): number {
+  if (!content) {
+    server?.log.debug('Empty content provided for evaluation');
+    return 0;
+  }
 
   let score = 0;
 

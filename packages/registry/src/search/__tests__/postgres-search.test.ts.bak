@@ -99,7 +99,7 @@ describe('Postgres Search', () => {
       expect(result.packages.every(p => p.type === 'claude')).toBe(true);
     });
 
-    it.skipIf(!dbAvailable)('should filter by tags with empty query', async () => {
+    it('should filter by tags with empty query', async () => {
       const result = await search.search('', {
         tags: ['mcp'],
         limit: 20,
@@ -110,7 +110,7 @@ describe('Postgres Search', () => {
       expect(result.packages[0].id).toBe('mcp-1');
     });
 
-    it.skipIf(!dbAvailable)('should filter by category with empty query', async () => {
+    it('should filter by category with empty query', async () => {
       const result = await search.search('', {
         category: 'programming',
         limit: 20,
@@ -121,7 +121,7 @@ describe('Postgres Search', () => {
       expect(result.packages.every(p => p.category === 'programming')).toBe(true);
     });
 
-    it.skipIf(!dbAvailable)('should combine type and tags filters with empty query', async () => {
+    it('should combine type and tags filters with empty query', async () => {
       const result = await search.search('', {
         type: 'claude',
         tags: ['claude-skill'],
@@ -138,7 +138,6 @@ describe('Postgres Search', () => {
 
   describe('text search with filters', () => {
     beforeEach(async () => {
-      if (!dbAvailable) return;
       await testPool.query(`
         INSERT INTO packages (id, display_name, description, type, tags, category, visibility)
         VALUES
@@ -148,7 +147,7 @@ describe('Postgres Search', () => {
       `);
     });
 
-    it.skipIf(!dbAvailable)('should search by text query', async () => {
+    it('should search by text query', async () => {
       const result = await search.search('Python', {
         limit: 20,
         offset: 0,
@@ -160,7 +159,7 @@ describe('Postgres Search', () => {
       )).toBe(true);
     });
 
-    it.skipIf(!dbAvailable)('should combine text query with type filter', async () => {
+    it('should combine text query with type filter', async () => {
       const result = await search.search('Python', {
         type: 'claude',
         limit: 20,
@@ -171,7 +170,7 @@ describe('Postgres Search', () => {
       expect(result.packages[0].id).toBe('python-skill');
     });
 
-    it.skipIf(!dbAvailable)('should combine text query with tags filter', async () => {
+    it('should combine text query with tags filter', async () => {
       const result = await search.search('Python', {
         tags: ['cursor-rule'],
         limit: 20,
@@ -185,7 +184,6 @@ describe('Postgres Search', () => {
 
   describe('verified and featured filtering', () => {
     beforeEach(async () => {
-      if (!dbAvailable) return;
       await testPool.query(`
         INSERT INTO packages (id, display_name, description, type, tags, verified, featured, visibility)
         VALUES
@@ -195,7 +193,7 @@ describe('Postgres Search', () => {
       `);
     });
 
-    it.skipIf(!dbAvailable)('should filter by verified status', async () => {
+    it('should filter by verified status', async () => {
       const result = await search.search('', {
         verified: true,
         limit: 20,
@@ -206,7 +204,7 @@ describe('Postgres Search', () => {
       expect(result.packages.every(p => p.verified === true)).toBe(true);
     });
 
-    it.skipIf(!dbAvailable)('should filter by featured status', async () => {
+    it('should filter by featured status', async () => {
       const result = await search.search('', {
         featured: true,
         limit: 20,
@@ -217,7 +215,7 @@ describe('Postgres Search', () => {
       expect(result.packages[0].id).toBe('official-1');
     });
 
-    it.skipIf(!dbAvailable)('should combine verified and featured filters', async () => {
+    it('should combine verified and featured filters', async () => {
       const result = await search.search('', {
         verified: true,
         featured: true,
@@ -232,7 +230,6 @@ describe('Postgres Search', () => {
 
   describe('sorting', () => {
     beforeEach(async () => {
-      if (!dbAvailable) return;
       await testPool.query(`
         INSERT INTO packages (id, display_name, description, type, tags, total_downloads, quality_score, rating_average, visibility, created_at)
         VALUES
@@ -242,7 +239,7 @@ describe('Postgres Search', () => {
       `);
     });
 
-    it.skipIf(!dbAvailable)('should sort by downloads (default)', async () => {
+    it('should sort by downloads (default)', async () => {
       const result = await search.search('', {
         sort: 'downloads',
         limit: 20,
@@ -254,7 +251,7 @@ describe('Postgres Search', () => {
       expect(result.packages[2].id).toBe('pkg-2'); // 500 downloads
     });
 
-    it.skipIf(!dbAvailable)('should sort by quality score', async () => {
+    it('should sort by quality score', async () => {
       const result = await search.search('', {
         sort: 'quality',
         limit: 20,
@@ -266,7 +263,7 @@ describe('Postgres Search', () => {
       expect(result.packages[2].id).toBe('pkg-3'); // 80 quality
     });
 
-    it.skipIf(!dbAvailable)('should sort by rating', async () => {
+    it('should sort by rating', async () => {
       const result = await search.search('', {
         sort: 'rating',
         limit: 20,
@@ -278,7 +275,7 @@ describe('Postgres Search', () => {
       expect(result.packages[2].id).toBe('pkg-3'); // 4.2 rating
     });
 
-    it.skipIf(!dbAvailable)('should sort by created date', async () => {
+    it('should sort by created date', async () => {
       const result = await search.search('', {
         sort: 'created',
         limit: 20,
@@ -292,7 +289,6 @@ describe('Postgres Search', () => {
 
   describe('pagination', () => {
     beforeEach(async () => {
-      if (!dbAvailable) return;
       // Insert 25 packages
       const values = Array.from({ length: 25 }, (_, i) =>
         `('pkg-${i}', 'Package ${i}', 'Description ${i}', 'cursor', ARRAY['test'], 'test', 'public')`
@@ -304,7 +300,7 @@ describe('Postgres Search', () => {
       `);
     });
 
-    it.skipIf(!dbAvailable)('should respect limit parameter', async () => {
+    it('should respect limit parameter', async () => {
       const result = await search.search('', {
         limit: 10,
         offset: 0,
@@ -316,7 +312,7 @@ describe('Postgres Search', () => {
       expect(result.offset).toBe(0);
     });
 
-    it.skipIf(!dbAvailable)('should respect offset parameter', async () => {
+    it('should respect offset parameter', async () => {
       const result = await search.search('', {
         limit: 10,
         offset: 10,
@@ -327,7 +323,7 @@ describe('Postgres Search', () => {
       expect(result.offset).toBe(10);
     });
 
-    it.skipIf(!dbAvailable)('should handle offset beyond total', async () => {
+    it('should handle offset beyond total', async () => {
       const result = await search.search('', {
         limit: 10,
         offset: 30,
