@@ -26,7 +26,7 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           search: { type: 'string' },
-          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'continue', 'windsurf', 'generic', 'mcp'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
           category: { type: 'string' },
           featured: { type: 'boolean' },
           verified: { type: 'boolean' },
@@ -422,7 +422,7 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
-          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'continue', 'windsurf', 'generic', 'mcp'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
         },
       },
     },
