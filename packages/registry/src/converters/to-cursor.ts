@@ -24,7 +24,11 @@ export function toCursor(
   let qualityScore = 100;
 
   try {
+    const mdcHeader = generateMDCHeader(pkg);
     const content = convertContent(pkg.content, warnings);
+
+    // Combine MDC header with content
+    const fullContent = `${mdcHeader}\n\n${content}`;
 
     // Check for lossy conversion
     const lossyConversion = warnings.some(w =>
@@ -36,7 +40,7 @@ export function toCursor(
     }
 
     return {
-      content,
+      content: fullContent,
       format: 'cursor',
       warnings: warnings.length > 0 ? warnings : undefined,
       lossyConversion,
@@ -52,6 +56,55 @@ export function toCursor(
       qualityScore: 0,
     };
   }
+}
+
+/**
+ * Generate MDC (Model Context) header for Cursor rules
+ * Format: YAML frontmatter with metadata
+ */
+function generateMDCHeader(pkg: CanonicalPackage): string {
+  const lines: string[] = ['---'];
+
+  // Name/title
+  if (pkg.metadata?.title) {
+    lines.push(`name: "${pkg.metadata.title}"`);
+  } else if (pkg.id) {
+    lines.push(`name: "${pkg.id}"`);
+  }
+
+  // Description
+  if (pkg.metadata?.description) {
+    lines.push(`description: "${pkg.metadata.description}"`);
+  }
+
+  // Version
+  if (pkg.metadata?.version) {
+    lines.push(`version: "${pkg.metadata.version}"`);
+  } else {
+    lines.push(`version: "1.0.0"`);
+  }
+
+  // Globs - file patterns this rule applies to
+  // Default to all files if not specified
+  const globs = pkg.metadata?.globs as string[] | undefined;
+  if (globs && globs.length > 0) {
+    lines.push('globs:');
+    globs.forEach(glob => {
+      lines.push(`  - "${glob}"`);
+    });
+  } else {
+    // Default to all files
+    lines.push('globs:');
+    lines.push('  - "**/*"');
+  }
+
+  // Always apply flag
+  const alwaysApply = pkg.metadata?.alwaysApply ?? false;
+  lines.push(`alwaysApply: ${alwaysApply}`);
+
+  lines.push('---');
+
+  return lines.join('\n');
 }
 
 /**
