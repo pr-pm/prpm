@@ -3,51 +3,50 @@
  */
 
 import { Command } from 'commander';
-import { listPackages } from '../core/config';
+import { listPackages } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
-import { Package } from '../types';
 
 /**
  * Display packages in a formatted table
  */
-function displayPackages(packages: Package[]): void {
+function displayPackages(packages: Array<{id: string; version: string; resolved: string; type?: string; format?: string}>): void {
   if (packages.length === 0) {
     console.log('📦 No packages installed');
     return;
   }
-  
+
   console.log('📦 Installed packages:');
   console.log('');
-  
+
   // Calculate column widths
   const idWidth = Math.max(8, ...packages.map(p => p.id.length));
-  const typeWidth = Math.max(6, ...packages.map(p => p.type.length));
-  const urlWidth = Math.max(20, ...packages.map(p => p.url.length));
-  const destWidth = Math.max(15, ...packages.map(p => p.dest.length));
-  
+  const versionWidth = Math.max(7, ...packages.map(p => p.version.length));
+  const typeWidth = Math.max(6, ...packages.map(p => (p.type || '').length));
+  const formatWidth = Math.max(6, ...packages.map(p => (p.format || '').length));
+
   // Header
   const header = [
     'ID'.padEnd(idWidth),
+    'VERSION'.padEnd(versionWidth),
     'TYPE'.padEnd(typeWidth),
-    'URL'.padEnd(urlWidth),
-    'DESTINATION'.padEnd(destWidth)
+    'FORMAT'.padEnd(formatWidth)
   ].join(' | ');
-  
+
   console.log(header);
   console.log('-'.repeat(header.length));
-  
+
   // Rows
   packages.forEach(pkg => {
     const row = [
       pkg.id.padEnd(idWidth),
-      pkg.type.padEnd(typeWidth),
-      pkg.url.padEnd(urlWidth),
-      pkg.dest.padEnd(destWidth)
+      pkg.version.padEnd(versionWidth),
+      (pkg.type || '').padEnd(typeWidth),
+      (pkg.format || '').padEnd(formatWidth)
     ].join(' | ');
-    
+
     console.log(row);
   });
-  
+
   console.log('');
   console.log(`Total: ${packages.length} package${packages.length === 1 ? '' : 's'}`);
 }

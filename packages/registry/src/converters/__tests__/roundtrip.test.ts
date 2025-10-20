@@ -280,5 +280,63 @@ describe('Round-trip conversions', () => {
       );
       expect(personaIndex).toBeGreaterThan(-1);
     });
+
+    it('should preserve model field through round-trip', () => {
+      const agentWithModel = `---
+name: test-agent
+description: Test agent with model preference
+model: opus
+tools: Read, Write
+---
+
+# Test Agent
+
+Agent with model preference.`;
+
+      const metadata = {
+        id: 'test-agent',
+        version: '1.0.0',
+        author: 'test',
+        tags: ['test'],
+      };
+
+      // Parse from Claude
+      const canonical = fromClaude(agentWithModel, metadata);
+
+      // Convert back to Claude
+      const backToClaude = toClaude(canonical);
+
+      // Should preserve model field
+      expect(backToClaude.content).toContain('model: opus');
+    });
+
+    it('should allow config override of model field', () => {
+      const agentWithModel = `---
+name: test-agent
+description: Test agent
+model: opus
+---
+
+# Test Agent`;
+
+      const metadata = {
+        id: 'test-agent',
+        version: '1.0.0',
+        author: 'test',
+        tags: ['test'],
+      };
+
+      // Parse from Claude
+      const canonical = fromClaude(agentWithModel, metadata);
+
+      // Convert back to Claude with config override
+      const backToClaude = toClaude(canonical, {
+        claudeConfig: { model: 'haiku' },
+      });
+
+      // Should use config override
+      expect(backToClaude.content).toContain('model: haiku');
+      expect(backToClaude.content).not.toContain('model: opus');
+    });
   });
 });

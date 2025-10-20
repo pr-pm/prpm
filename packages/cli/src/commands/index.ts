@@ -5,9 +5,9 @@
 import { Command } from 'commander';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { listPackages, addPackage } from '../core/config';
+import { listPackages, addPackage } from '../core/lockfile';
 import { generateId } from '../core/filesystem';
-import { Package, PackageType } from '../types';
+import { PackageType } from '../types';
 
 /**
  * Scan directory for files and return file information
@@ -39,10 +39,8 @@ async function scanDirectory(dirPath: string, type: PackageType): Promise<Array<
 /**
  * Check if a package is already registered
  */
-function isPackageRegistered(packages: Package[], id: string, filePath: string): boolean {
-  return packages.some(pkg => 
-    pkg.id === id || pkg.dest === filePath
-  );
+function isPackageRegistered(packages: Array<{id: string}>, id: string): boolean {
+  return packages.some(pkg => pkg.id === id);
 }
 
 /**
@@ -77,15 +75,14 @@ export async function handleIndex(): Promise<void> {
       totalFound += files.length;
 
       for (const file of files) {
-        if (!isPackageRegistered(existingPackages, file.id, file.filePath)) {
-          const pkg: Package = {
+        if (!isPackageRegistered(existingPackages, file.id)) {
+          await addPackage({
             id: file.id,
+            version: '0.0.0', // Local files don't have versions
+            tarballUrl: `file://${path.resolve(file.filePath)}`,
             type: dir.type,
-            url: `file://${path.resolve(file.filePath)}`, // Use file:// URL for local files
-            dest: file.filePath
-          };
-
-          await addPackage(pkg);
+            format: dir.type,
+          });
           console.log(`  ✅ Added: ${file.filename} (${file.id})`);
           totalAdded++;
         } else {

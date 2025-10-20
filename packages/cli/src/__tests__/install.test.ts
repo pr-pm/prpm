@@ -6,8 +6,7 @@ import { handleInstall } from '../commands/install';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
-import { addPackage } from '../core/config';
-import { readLockfile, writeLockfile } from '../core/lockfile';
+import { readLockfile, writeLockfile, addPackage } from '../core/lockfile';
 import { gzipSync } from 'zlib';
 
 // Mock dependencies
@@ -21,14 +20,6 @@ jest.mock('../core/filesystem', () => ({
   fileExists: jest.fn(() => Promise.resolve(false)),
   generateId: jest.fn((name) => name),
 }));
-jest.mock('../core/config', () => ({
-  readConfig: jest.fn(),
-  writeConfig: jest.fn(),
-  addPackage: jest.fn(),
-  removePackage: jest.fn(),
-  getPackage: jest.fn(),
-  listPackages: jest.fn(() => Promise.resolve([])),
-}));
 jest.mock('../core/lockfile', () => ({
   readLockfile: jest.fn(),
   writeLockfile: jest.fn(),
@@ -36,6 +27,10 @@ jest.mock('../core/lockfile', () => ({
   addToLockfile: jest.fn(),
   setPackageIntegrity: jest.fn(),
   getLockedVersion: jest.fn(() => null),
+  addPackage: jest.fn(),
+  removePackage: jest.fn(),
+  getPackage: jest.fn(),
+  listPackages: jest.fn(() => Promise.resolve([])),
 }));
 jest.mock('../core/telemetry', () => ({
   telemetry: {

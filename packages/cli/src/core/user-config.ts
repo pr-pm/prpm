@@ -7,12 +7,31 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 
+export interface CursorMDCConfig {
+  version?: string;
+  globs?: string[];
+  alwaysApply?: boolean;
+  author?: string;
+  tags?: string[];
+}
+
+export interface ClaudeAgentConfig {
+  /** Tools available to the agent (comma-separated). If omitted, inherits all tools */
+  tools?: string;
+  /** Model to use: 'sonnet', 'opus', 'haiku', or 'inherit' */
+  model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
+}
+
 export interface UserConfig {
   registryUrl?: string;
   token?: string;
   username?: string;
   telemetryEnabled?: boolean;
   defaultFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'canonical';
+  /** Cursor MDC header configuration */
+  cursor?: CursorMDCConfig;
+  /** Claude agent header configuration */
+  claude?: ClaudeAgentConfig;
 }
 
 const CONFIG_FILE = join(homedir(), '.prpmrc');

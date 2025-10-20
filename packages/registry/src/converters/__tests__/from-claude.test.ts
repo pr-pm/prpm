@@ -46,6 +46,45 @@ describe('fromClaude', () => {
         expect(metadataSection.data.icon).toBe('📊');
       }
     });
+
+    it('should extract model field from frontmatter', () => {
+      const agentWithModel = `---
+name: test-agent
+description: Test agent with model
+model: opus
+---
+
+# Test Agent`;
+
+      const result = fromClaude(agentWithModel, metadata);
+
+      const metadataSection = result.content.sections.find(
+        s => s.type === 'metadata'
+      );
+      expect(metadataSection?.type).toBe('metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.claudeAgent?.model).toBe('opus');
+      }
+    });
+
+    it('should handle agents without model field', () => {
+      const agentWithoutModel = `---
+name: test-agent
+description: Test agent without model
+---
+
+# Test Agent`;
+
+      const result = fromClaude(agentWithoutModel, metadata);
+
+      const metadataSection = result.content.sections.find(
+        s => s.type === 'metadata'
+      );
+      expect(metadataSection?.type).toBe('metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.claudeAgent).toBeUndefined();
+      }
+    });
   });
 
   describe('persona parsing', () => {

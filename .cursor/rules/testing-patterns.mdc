@@ -1,16 +1,16 @@
 ---
-name: prpm-testing-patterns
-description: Expert agent for testing PRPM codebase with Vitest - applies testing patterns, coverage standards, and provides MCP-assisted test execution guidance
-tools: Read, Write, Edit, Grep, Glob, Bash
+ruleType: always
+alwaysApply: true
+description: Testing patterns and best practices for PRPM codebase with Vitest
 ---
 
 # PRPM Testing Patterns
 
-Expert guidance for testing the Prompt Package Manager codebase with Vitest.
+Expert guidance for testing the Prompt Package Manager codebase.
 
 ## Testing Philosophy
 
-### Test Pyramid for PRPM
+### Test Pyramid
 - **70% Unit Tests**: Format converters, parsers, utilities
 - **20% Integration Tests**: API routes, database operations, CLI commands
 - **10% E2E Tests**: Full workflows (install, publish, search)
@@ -20,19 +20,6 @@ Expert guidance for testing the Prompt Package Manager codebase with Vitest.
 - **CLI Commands**: 90% coverage
 - **API Routes**: 85% coverage
 - **Utilities**: 90% coverage
-
-## Test Structure
-
-### Organize Test Files
-```
-src/
-  converters/
-    to-cursor.ts
-    __tests__/
-      setup.ts          # Shared fixtures
-      to-cursor.test.ts # Converter tests
-      roundtrip.test.ts # Round-trip validation
-```
 
 ## Key Testing Patterns
 
@@ -100,12 +87,4 @@ npm run test:coverage
 npm run test -- to-cursor.test.ts
 ```
 
-## Debugging Failed Tests
-
-1. **Read Error Message**: Vitest provides clear stack traces
-2. **Isolate Test**: Use `it.only()` to run single test
-3. **Add Console Logs**: Debug with console.log (remove after)
-4. **Check Fixtures**: Verify test data is correct
-5. **Validate Mocks**: Ensure mocks return expected values
-
-Remember: High test coverage ensures PRPM stays reliable as a critical developer tool.
+Remember: High test coverage ensures PRPM stays reliable as critical infrastructure.

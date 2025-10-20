@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir } from '../core/filesystem';
-import { addPackage, readConfig } from '../core/config';
+import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { Package, PackageType } from '../types';
 import { createWriteStream } from 'fs';
@@ -22,6 +22,7 @@ import {
   getLockedVersion,
 } from '../core/lockfile';
 import { applyCursorConfig, hasMDCHeader } from '../core/cursor-config';
+import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
 
 /**
  * Get icon for package type
@@ -137,10 +138,17 @@ export async function handleInstall(
 
     // Apply cursor config if downloading in cursor format
     if (format === 'cursor' && hasMDCHeader(mainFile)) {
-      const localConfig = await readConfig();
-      if (localConfig.cursor) {
+      if (config.cursor) {
         console.log(`   ⚙️  Applying cursor config...`);
-        mainFile = applyCursorConfig(mainFile, localConfig.cursor);
+        mainFile = applyCursorConfig(mainFile, config.cursor);
+      }
+    }
+
+    // Apply Claude config if downloading in Claude format
+    if (format === 'claude' && hasClaudeHeader(mainFile)) {
+      if (config.claude) {
+        console.log(`   ⚙️  Applying Claude agent config...`);
+        mainFile = applyClaudeConfig(mainFile, config.claude);
       }
     }
 

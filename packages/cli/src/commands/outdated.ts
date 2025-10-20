@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
-import { listPackages } from '../core/config';
+import { listPackages } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 
 /**

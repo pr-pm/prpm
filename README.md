@@ -136,6 +136,18 @@ prpm install systematic-debugging
 ### Install PRPM
 ```bash
 npm install -g prpm
+
+# Login to access registry
+prpm login
+```
+
+### Configure (Optional)
+```bash
+# Set default format
+prpm config set defaultFormat cursor
+
+# Customize Cursor/Claude headers
+# See Configuration Guide for details
 ```
 
 ### Install Your First Collection
@@ -163,7 +175,7 @@ prpm install karen-skill --as claude
 - **Continue**: Prompts ready to use
 - **Windsurf**: Rules integrated automatically
 
-**[Full Installation Guide →](docs/INSTALLATION.md)**
+**[Full Installation Guide →](docs/INSTALLATION.md)** | **[Configuration Guide →](docs/CONFIGURATION.md)**
 
 ---
 
@@ -385,6 +397,7 @@ prpm install my-cursor-rule --as windsurf
 
 **Get Started:**
 - 📦 [Installation Guide](docs/INSTALLATION.md)
+- ⚙️ [Configuration Guide](docs/CONFIGURATION.md) - **~/.prpmrc, prpm.lock, format customization**
 - 📚 [Collections](docs/COLLECTIONS.md)
 - 🔄 [Format Conversion](docs/FORMAT_CONVERSION.md)
 - 💻 [CLI Reference](docs/CLI.md)

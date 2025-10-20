@@ -239,3 +239,67 @@ export function pruneLockfile(
   pruned.generated = new Date().toISOString();
   return pruned;
 }
+
+/**
+ * Add package to lock file (convenience wrapper)
+ */
+export async function addPackage(packageInfo: {
+  id: string;
+  version: string;
+  tarballUrl: string;
+  dependencies?: Record<string, string>;
+  type?: string;
+  format?: string;
+}): Promise<void> {
+  const lockfile = (await readLockfile()) || createLockfile();
+  addToLockfile(lockfile, packageInfo.id, {
+    version: packageInfo.version,
+    tarballUrl: packageInfo.tarballUrl,
+    dependencies: packageInfo.dependencies,
+    type: packageInfo.type,
+    format: packageInfo.format,
+  });
+  await writeLockfile(lockfile);
+}
+
+/**
+ * Remove package from lock file
+ */
+export async function removePackage(packageId: string): Promise<LockfilePackage | null> {
+  const lockfile = await readLockfile();
+  if (!lockfile || !lockfile.packages[packageId]) {
+    return null;
+  }
+
+  const removed = lockfile.packages[packageId];
+  delete lockfile.packages[packageId];
+  lockfile.generated = new Date().toISOString();
+  await writeLockfile(lockfile);
+  return removed;
+}
+
+/**
+ * List all packages in lock file
+ */
+export async function listPackages(): Promise<Array<{ id: string } & LockfilePackage>> {
+  const lockfile = await readLockfile();
+  if (!lockfile) {
+    return [];
+  }
+
+  return Object.entries(lockfile.packages).map(([id, pkg]) => ({
+    id,
+    ...pkg,
+  }));
+}
+
+/**
+ * Get a specific package from lock file
+ */
+export async function getPackage(packageId: string): Promise<LockfilePackage | null> {
+  const lockfile = await readLockfile();
+  if (!lockfile || !lockfile.packages[packageId]) {
+    return null;
+  }
+  return lockfile.packages[packageId];
+}

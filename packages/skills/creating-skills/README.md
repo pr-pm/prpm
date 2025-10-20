@@ -30,10 +30,13 @@ Use when:
 
 - **Skill Structure**: Required frontmatter and sections
 - **CSO (Claude Search Optimization)**: How Claude finds your skills
-- **Naming Conventions**: Active voice, verb-first patterns
+- **Naming Conventions**: Gerund form (verb + -ing), avoid vague names
 - **Code Examples**: One excellent example > many mediocre ones
-- **Token Efficiency**: Keep frequently-loaded skills concise
+- **Token Efficiency**: Keep SKILL.md under 500 lines, challenge each piece
 - **File Organization**: When to split into multiple files
+- **Degrees of Freedom**: Match specificity to task complexity
+- **Workflow Patterns**: Sequential steps, feedback loops, checklists
+- **Advanced Practices**: Iterative development, evaluations-first approach
 
 ## Quick Example
 
@@ -58,9 +61,11 @@ Core principle in 1-2 sentences.
 
 ## Key Principles
 
-1. **Discoverable**: Future Claude can find it (CSO optimization)
-2. **Scannable**: Quick to evaluate relevance (headers, tables)
-3. **Actionable**: Clear examples to adapt
+1. **Concise**: Only add context Claude doesn't already have (<500 lines)
+2. **Discoverable**: Future Claude can find it (CSO optimization)
+3. **Scannable**: Quick to evaluate relevance (headers, tables)
+4. **Actionable**: Clear examples to adapt
+5. **Right Specificity**: Match degrees of freedom to task complexity
 
 ## Real-World Impact
 

@@ -3,8 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { removePackage } from '../core/config';
-import { deleteFile } from '../core/filesystem';
+import { removePackage } from '../core/lockfile';
 
 /**
  * Handle the remove command
@@ -12,20 +11,17 @@ import { deleteFile } from '../core/filesystem';
 export async function handleRemove(id: string): Promise<void> {
   try {
     console.log(`🗑️  Removing package: ${id}`);
-    
-    // Remove from config and get package info
+
+    // Remove from lockfile and get package info
     const pkg = await removePackage(id);
-    
+
     if (!pkg) {
       console.error(`❌ Package "${id}" not found`);
       process.exit(1);
     }
-    
-    // Delete the file
-    console.log(`📁 Deleting file: ${pkg.dest}`);
-    await deleteFile(pkg.dest);
-    
-    console.log(`✅ Successfully removed ${id} (${pkg.type})`);
+
+    console.log(`✅ Successfully removed ${id} from lockfile`);
+    console.log(`💡 Note: File is not deleted. Remove manually if needed.`);
   } catch (error) {
     console.error(`❌ Failed to remove package: ${error}`);
     process.exit(1);

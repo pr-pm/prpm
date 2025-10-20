@@ -18,13 +18,13 @@ import type {
  */
 export function toClaude(
   pkg: CanonicalPackage,
-  options: Partial<ConversionOptions> = {}
+  options: Partial<ConversionOptions> & { claudeConfig?: { tools?: string; model?: string } } = {}
 ): ConversionResult {
   const warnings: string[] = [];
   let qualityScore = 100;
 
   try {
-    const content = convertContent(pkg, warnings);
+    const content = convertContent(pkg, warnings, options);
 
     // Check for lossy conversion
     const lossyConversion = warnings.some(w =>
@@ -59,7 +59,8 @@ export function toClaude(
  */
 function convertContent(
   pkg: CanonicalPackage,
-  warnings: string[]
+  warnings: string[],
+  options?: { claudeConfig?: { tools?: string; model?: string } }
 ): string {
   const lines: string[] = [];
 
@@ -79,8 +80,17 @@ function convertContent(
     }
   }
 
-  if (tools?.type === 'tools') {
-    lines.push(`tools: ${tools.tools.join(', ')}`);
+  // Tools field - use config override if provided, otherwise use package tools
+  const toolsValue = options?.claudeConfig?.tools || (tools?.type === 'tools' ? tools.tools.join(', ') : undefined);
+  if (toolsValue) {
+    lines.push(`tools: ${toolsValue}`);
+  }
+
+  // Model field - use config override if provided, otherwise use stored model from metadata
+  const storedModel = metadata?.type === 'metadata' ? metadata.data.claudeAgent?.model : undefined;
+  const modelValue = options?.claudeConfig?.model || storedModel;
+  if (modelValue) {
+    lines.push(`model: ${modelValue}`);
   }
 
   lines.push('---');

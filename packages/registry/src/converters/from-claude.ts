@@ -62,6 +62,15 @@ export function fromClaude(
     }
   }
 
+  // Extract model if present (optional field)
+  if (frontmatter.model) {
+    // Store model preference in metadata for roundtrip conversion
+    if (metadataSection.data.claudeAgent === undefined) {
+      metadataSection.data.claudeAgent = {};
+    }
+    metadataSection.data.claudeAgent.model = frontmatter.model;
+  }
+
   // Parse body content
   const bodySections = parseMarkdownBody(body);
   sections.push(...bodySections);
