@@ -1,0 +1,4469 @@
+[
+  {
+    "id": "@wshobson/agents/README",
+    "display_name": "Claude Code Plugins: Orchestration and Automation",
+    "description": "> **⚡ Updated for Sonnet 4.5 & Haiku 4.5** — All agents optimized for latest models with hybrid orchestration",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude"
+    ],
+    "keywords": [
+      "claude",
+      "code",
+      "plugins",
+      "orchestration",
+      "automation",
+      "updated",
+      "sonnet",
+      "haiku",
+      "agents",
+      "optimized",
+      "latest",
+      "models",
+      "with",
+      "hybrid"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/README.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 75,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/accessibility-compliance/ui-visual-validator",
+    "display_name": "accessibility-compliance: ui visual validator",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "accessibility-compliance"
+    ],
+    "keywords": [
+      "visual",
+      "validator"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/accessibility-compliance/agents/ui-visual-validator.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/agent-orchestration/context-manager",
+    "display_name": "agent-orchestration: context manager",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "agent-orchestration"
+    ],
+    "keywords": [
+      "context",
+      "manager"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/agent-orchestration/agents/context-manager.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/api-scaffolding/backend-architect",
+    "display_name": "api-scaffolding: backend architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "api-scaffolding"
+    ],
+    "keywords": [
+      "backend",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/api-scaffolding/agents/backend-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/api-scaffolding/django-pro",
+    "display_name": "api-scaffolding: django pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "api-scaffolding"
+    ],
+    "keywords": [
+      "django"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/api-scaffolding/agents/django-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/api-scaffolding/fastapi-pro",
+    "display_name": "api-scaffolding: fastapi pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "api-scaffolding"
+    ],
+    "keywords": [
+      "fastapi"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/api-scaffolding/agents/fastapi-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/api-scaffolding/graphql-architect",
+    "display_name": "api-scaffolding: graphql architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "api-scaffolding"
+    ],
+    "keywords": [
+      "graphql",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/api-scaffolding/agents/graphql-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/api-testing-observability/api-documenter",
+    "display_name": "api-testing-observability: api documenter",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "api-testing-observability"
+    ],
+    "keywords": [
+      "documenter"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/api-testing-observability/agents/api-documenter.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/application-performance/frontend-developer",
+    "display_name": "application-performance: frontend developer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "application-performance"
+    ],
+    "keywords": [
+      "frontend",
+      "developer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/application-performance/agents/frontend-developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/application-performance/observability-engineer",
+    "display_name": "application-performance: observability engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "application-performance"
+    ],
+    "keywords": [
+      "observability",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/application-performance/agents/observability-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/application-performance/performance-engineer",
+    "display_name": "application-performance: performance engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "application-performance"
+    ],
+    "keywords": [
+      "performance",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/application-performance/agents/performance-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/arm-cortex-microcontrollers/arm-cortex-expert",
+    "display_name": "arm-cortex-microcontrollers: @arm-cortex-expert",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "arm-cortex-microcontrollers"
+    ],
+    "keywords": [
+      "cortex",
+      "expert"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/arm-cortex-microcontrollers/agents/arm-cortex-expert.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/backend-api-security/backend-architect",
+    "display_name": "backend-api-security: backend architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "backend-api-security"
+    ],
+    "keywords": [
+      "backend",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/backend-api-security/agents/backend-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/backend-api-security/backend-security-coder",
+    "display_name": "backend-api-security: backend security coder",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "backend-api-security"
+    ],
+    "keywords": [
+      "backend",
+      "security",
+      "coder"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/backend-api-security/agents/backend-security-coder.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/backend-development/backend-architect",
+    "display_name": "backend-development: backend architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "backend-development"
+    ],
+    "keywords": [
+      "backend",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/backend-development/agents/backend-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/backend-development/graphql-architect",
+    "display_name": "backend-development: graphql architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "backend-development"
+    ],
+    "keywords": [
+      "graphql",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/backend-development/agents/graphql-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/backend-development/tdd-orchestrator",
+    "display_name": "backend-development: tdd orchestrator",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "backend-development"
+    ],
+    "keywords": [
+      "orchestrator"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/backend-development/agents/tdd-orchestrator.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/blockchain-web3/blockchain-developer",
+    "display_name": "blockchain-web3: blockchain developer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "blockchain-web3"
+    ],
+    "keywords": [
+      "blockchain",
+      "developer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/blockchain-web3/agents/blockchain-developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/business-analytics/business-analyst",
+    "display_name": "business-analytics: business analyst",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "business-analytics"
+    ],
+    "keywords": [
+      "business",
+      "analyst"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/business-analytics/agents/business-analyst.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cicd-automation/cloud-architect",
+    "display_name": "cicd-automation: cloud architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cicd-automation"
+    ],
+    "keywords": [
+      "cloud",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cicd-automation/agents/cloud-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cicd-automation/deployment-engineer",
+    "display_name": "cicd-automation: deployment engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cicd-automation"
+    ],
+    "keywords": [
+      "deployment",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cicd-automation/agents/deployment-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cicd-automation/devops-troubleshooter",
+    "display_name": "cicd-automation: devops troubleshooter",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cicd-automation"
+    ],
+    "keywords": [
+      "devops",
+      "troubleshooter"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cicd-automation/agents/devops-troubleshooter.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cicd-automation/kubernetes-architect",
+    "display_name": "cicd-automation: kubernetes architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cicd-automation"
+    ],
+    "keywords": [
+      "kubernetes",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cicd-automation/agents/kubernetes-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cicd-automation/terraform-specialist",
+    "display_name": "cicd-automation: terraform specialist",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cicd-automation"
+    ],
+    "keywords": [
+      "terraform",
+      "specialist"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cicd-automation/agents/terraform-specialist.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cloud-infrastructure/cloud-architect",
+    "display_name": "cloud-infrastructure: cloud architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cloud-infrastructure"
+    ],
+    "keywords": [
+      "cloud",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cloud-infrastructure/agents/cloud-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cloud-infrastructure/deployment-engineer",
+    "display_name": "cloud-infrastructure: deployment engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cloud-infrastructure"
+    ],
+    "keywords": [
+      "deployment",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cloud-infrastructure/agents/deployment-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cloud-infrastructure/hybrid-cloud-architect",
+    "display_name": "cloud-infrastructure: hybrid cloud architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cloud-infrastructure"
+    ],
+    "keywords": [
+      "hybrid",
+      "cloud",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cloud-infrastructure/agents/hybrid-cloud-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cloud-infrastructure/kubernetes-architect",
+    "display_name": "cloud-infrastructure: kubernetes architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cloud-infrastructure"
+    ],
+    "keywords": [
+      "kubernetes",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cloud-infrastructure/agents/kubernetes-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cloud-infrastructure/network-engineer",
+    "display_name": "cloud-infrastructure: network engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cloud-infrastructure"
+    ],
+    "keywords": [
+      "network",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cloud-infrastructure/agents/network-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/cloud-infrastructure/terraform-specialist",
+    "display_name": "cloud-infrastructure: terraform specialist",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "cloud-infrastructure"
+    ],
+    "keywords": [
+      "terraform",
+      "specialist"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/cloud-infrastructure/agents/terraform-specialist.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/code-documentation/code-reviewer",
+    "display_name": "code-documentation: code reviewer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "code-documentation"
+    ],
+    "keywords": [
+      "code",
+      "reviewer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/code-documentation/agents/code-reviewer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/code-documentation/docs-architect",
+    "display_name": "code-documentation: docs architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "code-documentation"
+    ],
+    "keywords": [
+      "docs",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/code-documentation/agents/docs-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/code-documentation/tutorial-engineer",
+    "display_name": "code-documentation: tutorial engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "code-documentation"
+    ],
+    "keywords": [
+      "tutorial",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/code-documentation/agents/tutorial-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/code-refactoring/code-reviewer",
+    "display_name": "code-refactoring: code reviewer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "code-refactoring"
+    ],
+    "keywords": [
+      "code",
+      "reviewer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/code-refactoring/agents/code-reviewer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/code-refactoring/legacy-modernizer",
+    "display_name": "code-refactoring: legacy modernizer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "code-refactoring"
+    ],
+    "keywords": [
+      "legacy",
+      "modernizer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/code-refactoring/agents/legacy-modernizer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/code-review-ai/architect-review",
+    "display_name": "code-review-ai: architect review",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "code-review-ai"
+    ],
+    "keywords": [
+      "architect",
+      "review"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/code-review-ai/agents/architect-review.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/codebase-cleanup/code-reviewer",
+    "display_name": "codebase-cleanup: code reviewer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "codebase-cleanup"
+    ],
+    "keywords": [
+      "code",
+      "reviewer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/codebase-cleanup/agents/code-reviewer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/codebase-cleanup/test-automator",
+    "display_name": "codebase-cleanup: test automator",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "codebase-cleanup"
+    ],
+    "keywords": [
+      "test",
+      "automator"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/codebase-cleanup/agents/test-automator.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/comprehensive-review/architect-review",
+    "display_name": "comprehensive-review: architect review",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "comprehensive-review"
+    ],
+    "keywords": [
+      "architect",
+      "review"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/comprehensive-review/agents/architect-review.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/comprehensive-review/code-reviewer",
+    "display_name": "comprehensive-review: code reviewer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "comprehensive-review"
+    ],
+    "keywords": [
+      "code",
+      "reviewer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/comprehensive-review/agents/code-reviewer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/comprehensive-review/security-auditor",
+    "display_name": "comprehensive-review: security auditor",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "comprehensive-review"
+    ],
+    "keywords": [
+      "security",
+      "auditor"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/comprehensive-review/agents/security-auditor.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/content-marketing/content-marketer",
+    "display_name": "content-marketing: content marketer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "content-marketing"
+    ],
+    "keywords": [
+      "content",
+      "marketer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/content-marketing/agents/content-marketer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/content-marketing/search-specialist",
+    "display_name": "content-marketing: search specialist",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "content-marketing"
+    ],
+    "keywords": [
+      "search",
+      "specialist"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/content-marketing/agents/search-specialist.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/context-management/context-manager",
+    "display_name": "context-management: context manager",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "context-management"
+    ],
+    "keywords": [
+      "context",
+      "manager"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/context-management/agents/context-manager.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/customer-sales-automation/customer-support",
+    "display_name": "customer-sales-automation: customer support",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "customer-sales-automation"
+    ],
+    "keywords": [
+      "customer",
+      "support"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/customer-sales-automation/agents/customer-support.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/customer-sales-automation/sales-automator",
+    "display_name": "customer-sales-automation: sales automator",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "testing",
+    "tags": [
+      "agent",
+      "claude",
+      "customer-sales-automation"
+    ],
+    "keywords": [
+      "sales",
+      "automator"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/customer-sales-automation/agents/sales-automator.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/data-engineering/backend-architect",
+    "display_name": "data-engineering: backend architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "data-engineering"
+    ],
+    "keywords": [
+      "backend",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/data-engineering/agents/backend-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/data-engineering/data-engineer",
+    "display_name": "data-engineering: data engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "data-engineering"
+    ],
+    "keywords": [
+      "data",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/data-engineering/agents/data-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/data-validation-suite/backend-security-coder",
+    "display_name": "data-validation-suite: backend security coder",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "data-validation-suite"
+    ],
+    "keywords": [
+      "backend",
+      "security",
+      "coder"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/data-validation-suite/agents/backend-security-coder.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/database-cloud-optimization/backend-architect",
+    "display_name": "database-cloud-optimization: backend architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "database-cloud-optimization"
+    ],
+    "keywords": [
+      "backend",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/database-cloud-optimization/agents/backend-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/database-cloud-optimization/cloud-architect",
+    "display_name": "database-cloud-optimization: cloud architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "database-cloud-optimization"
+    ],
+    "keywords": [
+      "cloud",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/database-cloud-optimization/agents/cloud-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/database-cloud-optimization/database-architect",
+    "display_name": "database-cloud-optimization: database architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "database-cloud-optimization"
+    ],
+    "keywords": [
+      "database",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/database-cloud-optimization/agents/database-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/database-cloud-optimization/database-optimizer",
+    "display_name": "database-cloud-optimization: database optimizer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "database-cloud-optimization"
+    ],
+    "keywords": [
+      "database",
+      "optimizer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/database-cloud-optimization/agents/database-optimizer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/database-design/database-architect",
+    "display_name": "database-design: database architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "database-design"
+    ],
+    "keywords": [
+      "database",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/database-design/agents/database-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/database-design/sql-pro",
+    "display_name": "database-design: sql pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "database-design"
+    ],
+    "keywords": [],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/database-design/agents/sql-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/database-migrations/database-admin",
+    "display_name": "database-migrations: database admin",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "database-migrations"
+    ],
+    "keywords": [
+      "database",
+      "admin"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/database-migrations/agents/database-admin.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/database-migrations/database-optimizer",
+    "display_name": "database-migrations: database optimizer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "database-migrations"
+    ],
+    "keywords": [
+      "database",
+      "optimizer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/database-migrations/agents/database-optimizer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/debugging-toolkit/debugger",
+    "display_name": "debugging-toolkit: debugger",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "debugging-toolkit"
+    ],
+    "keywords": [
+      "debugger"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/debugging-toolkit/agents/debugger.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/debugging-toolkit/dx-optimizer",
+    "display_name": "debugging-toolkit: dx optimizer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "debugging-toolkit"
+    ],
+    "keywords": [
+      "optimizer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/debugging-toolkit/agents/dx-optimizer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/dependency-management/legacy-modernizer",
+    "display_name": "dependency-management: legacy modernizer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "dependency-management"
+    ],
+    "keywords": [
+      "legacy",
+      "modernizer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/dependency-management/agents/legacy-modernizer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/deployment-strategies/deployment-engineer",
+    "display_name": "deployment-strategies: deployment engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "deployment-strategies"
+    ],
+    "keywords": [
+      "deployment",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/deployment-strategies/agents/deployment-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/deployment-strategies/terraform-specialist",
+    "display_name": "deployment-strategies: terraform specialist",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "deployment-strategies"
+    ],
+    "keywords": [
+      "terraform",
+      "specialist"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/deployment-strategies/agents/terraform-specialist.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/deployment-validation/cloud-architect",
+    "display_name": "deployment-validation: cloud architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "deployment-validation"
+    ],
+    "keywords": [
+      "cloud",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/deployment-validation/agents/cloud-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/distributed-debugging/devops-troubleshooter",
+    "display_name": "distributed-debugging: devops troubleshooter",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "distributed-debugging"
+    ],
+    "keywords": [
+      "devops",
+      "troubleshooter"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/distributed-debugging/agents/devops-troubleshooter.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/distributed-debugging/error-detective",
+    "display_name": "distributed-debugging: error detective",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "distributed-debugging"
+    ],
+    "keywords": [
+      "error",
+      "detective"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/distributed-debugging/agents/error-detective.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/documentation-generation/api-documenter",
+    "display_name": "documentation-generation: api documenter",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "documentation-generation"
+    ],
+    "keywords": [
+      "documenter"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/documentation-generation/agents/api-documenter.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/documentation-generation/docs-architect",
+    "display_name": "documentation-generation: docs architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "documentation-generation"
+    ],
+    "keywords": [
+      "docs",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/documentation-generation/agents/docs-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/documentation-generation/mermaid-expert",
+    "display_name": "documentation-generation: mermaid expert",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "documentation-generation"
+    ],
+    "keywords": [
+      "mermaid",
+      "expert"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/documentation-generation/agents/mermaid-expert.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/documentation-generation/reference-builder",
+    "display_name": "documentation-generation: reference builder",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "documentation-generation"
+    ],
+    "keywords": [
+      "reference",
+      "builder"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/documentation-generation/agents/reference-builder.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/documentation-generation/tutorial-engineer",
+    "display_name": "documentation-generation: tutorial engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "documentation-generation"
+    ],
+    "keywords": [
+      "tutorial",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/documentation-generation/agents/tutorial-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/error-debugging/debugger",
+    "display_name": "error-debugging: debugger",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "error-debugging"
+    ],
+    "keywords": [
+      "debugger"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/error-debugging/agents/debugger.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/error-debugging/error-detective",
+    "display_name": "error-debugging: error detective",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "error-debugging"
+    ],
+    "keywords": [
+      "error",
+      "detective"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/error-debugging/agents/error-detective.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/error-diagnostics/debugger",
+    "display_name": "error-diagnostics: debugger",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "error-diagnostics"
+    ],
+    "keywords": [
+      "debugger"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/error-diagnostics/agents/debugger.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/error-diagnostics/error-detective",
+    "display_name": "error-diagnostics: error detective",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "error-diagnostics"
+    ],
+    "keywords": [
+      "error",
+      "detective"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/error-diagnostics/agents/error-detective.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/framework-migration/architect-review",
+    "display_name": "framework-migration: architect review",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "framework-migration"
+    ],
+    "keywords": [
+      "architect",
+      "review"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/framework-migration/agents/architect-review.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/framework-migration/legacy-modernizer",
+    "display_name": "framework-migration: legacy modernizer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "framework-migration"
+    ],
+    "keywords": [
+      "legacy",
+      "modernizer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/framework-migration/agents/legacy-modernizer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/frontend-mobile-development/frontend-developer",
+    "display_name": "frontend-mobile-development: frontend developer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "frontend-mobile-development"
+    ],
+    "keywords": [
+      "frontend",
+      "developer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/frontend-mobile-development/agents/frontend-developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/frontend-mobile-development/mobile-developer",
+    "display_name": "frontend-mobile-development: mobile developer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "frontend-mobile-development"
+    ],
+    "keywords": [
+      "mobile",
+      "developer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/frontend-mobile-development/agents/mobile-developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/frontend-mobile-security/frontend-developer",
+    "display_name": "frontend-mobile-security: frontend developer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "frontend-mobile-security"
+    ],
+    "keywords": [
+      "frontend",
+      "developer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/frontend-mobile-security/agents/frontend-developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/frontend-mobile-security/frontend-security-coder",
+    "display_name": "frontend-mobile-security: frontend security coder",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "frontend-mobile-security"
+    ],
+    "keywords": [
+      "frontend",
+      "security",
+      "coder"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/frontend-mobile-security/agents/frontend-security-coder.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/frontend-mobile-security/mobile-security-coder",
+    "display_name": "frontend-mobile-security: mobile security coder",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "frontend-mobile-security"
+    ],
+    "keywords": [
+      "mobile",
+      "security",
+      "coder"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/frontend-mobile-security/agents/mobile-security-coder.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/full-stack-orchestration/deployment-engineer",
+    "display_name": "full-stack-orchestration: deployment engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "full-stack-orchestration"
+    ],
+    "keywords": [
+      "deployment",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/full-stack-orchestration/agents/deployment-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/full-stack-orchestration/performance-engineer",
+    "display_name": "full-stack-orchestration: performance engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "full-stack-orchestration"
+    ],
+    "keywords": [
+      "performance",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/full-stack-orchestration/agents/performance-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/full-stack-orchestration/security-auditor",
+    "display_name": "full-stack-orchestration: security auditor",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "full-stack-orchestration"
+    ],
+    "keywords": [
+      "security",
+      "auditor"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/full-stack-orchestration/agents/security-auditor.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/full-stack-orchestration/test-automator",
+    "display_name": "full-stack-orchestration: test automator",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "full-stack-orchestration"
+    ],
+    "keywords": [
+      "test",
+      "automator"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/full-stack-orchestration/agents/test-automator.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/functional-programming/elixir-pro",
+    "display_name": "functional-programming: elixir pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "functional-programming"
+    ],
+    "keywords": [
+      "elixir"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/functional-programming/agents/elixir-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/game-development/minecraft-bukkit-pro",
+    "display_name": "game-development: minecraft bukkit pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "game-development"
+    ],
+    "keywords": [
+      "minecraft",
+      "bukkit"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/game-development/agents/minecraft-bukkit-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/game-development/unity-developer",
+    "display_name": "game-development: unity developer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "game-development"
+    ],
+    "keywords": [
+      "unity",
+      "developer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/game-development/agents/unity-developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/git-pr-workflows/code-reviewer",
+    "display_name": "git-pr-workflows: code reviewer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "git-pr-workflows"
+    ],
+    "keywords": [
+      "code",
+      "reviewer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/git-pr-workflows/agents/code-reviewer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/hr-legal-compliance/hr-pro",
+    "display_name": "hr-legal-compliance: hr pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "hr-legal-compliance"
+    ],
+    "keywords": [],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/hr-legal-compliance/agents/hr-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/hr-legal-compliance/legal-advisor",
+    "display_name": "hr-legal-compliance: legal advisor",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "hr-legal-compliance"
+    ],
+    "keywords": [
+      "legal",
+      "advisor"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/hr-legal-compliance/agents/legal-advisor.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/incident-response/devops-troubleshooter",
+    "display_name": "incident-response: devops troubleshooter",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "incident-response"
+    ],
+    "keywords": [
+      "devops",
+      "troubleshooter"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/incident-response/agents/devops-troubleshooter.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/incident-response/incident-responder",
+    "display_name": "incident-response: incident responder",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "incident-response"
+    ],
+    "keywords": [
+      "incident",
+      "responder"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/incident-response/agents/incident-responder.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/javascript-typescript/javascript-pro",
+    "display_name": "javascript-typescript: javascript pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "testing",
+    "tags": [
+      "agent",
+      "claude",
+      "javascript-typescript"
+    ],
+    "keywords": [
+      "javascript"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/javascript-typescript/agents/javascript-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/javascript-typescript/typescript-pro",
+    "display_name": "javascript-typescript: typescript pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "javascript-typescript"
+    ],
+    "keywords": [
+      "typescript"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/javascript-typescript/agents/typescript-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/jvm-languages/csharp-pro",
+    "display_name": "jvm-languages: csharp pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "jvm-languages"
+    ],
+    "keywords": [
+      "csharp"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/jvm-languages/agents/csharp-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/jvm-languages/java-pro",
+    "display_name": "jvm-languages: java pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "jvm-languages"
+    ],
+    "keywords": [
+      "java"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/jvm-languages/agents/java-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/jvm-languages/scala-pro",
+    "display_name": "jvm-languages: scala pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "jvm-languages"
+    ],
+    "keywords": [
+      "scala"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/jvm-languages/agents/scala-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/kubernetes-operations/kubernetes-architect",
+    "display_name": "kubernetes-operations: kubernetes architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "kubernetes-operations"
+    ],
+    "keywords": [
+      "kubernetes",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/kubernetes-operations/agents/kubernetes-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/llm-application-dev/ai-engineer",
+    "display_name": "llm-application-dev: ai engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "llm-application-dev"
+    ],
+    "keywords": [
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/llm-application-dev/agents/ai-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/llm-application-dev/prompt-engineer",
+    "display_name": "llm-application-dev: prompt engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "llm-application-dev"
+    ],
+    "keywords": [
+      "prompt",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/llm-application-dev/agents/prompt-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/machine-learning-ops/data-scientist",
+    "display_name": "machine-learning-ops: data scientist",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "machine-learning-ops"
+    ],
+    "keywords": [
+      "data",
+      "scientist"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/machine-learning-ops/agents/data-scientist.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/machine-learning-ops/ml-engineer",
+    "display_name": "machine-learning-ops: ml engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "machine-learning-ops"
+    ],
+    "keywords": [
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/machine-learning-ops/agents/ml-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/machine-learning-ops/mlops-engineer",
+    "display_name": "machine-learning-ops: mlops engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "machine-learning-ops"
+    ],
+    "keywords": [
+      "mlops",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/machine-learning-ops/agents/mlops-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/multi-platform-apps/backend-architect",
+    "display_name": "multi-platform-apps: backend architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "multi-platform-apps"
+    ],
+    "keywords": [
+      "backend",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/multi-platform-apps/agents/backend-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/multi-platform-apps/flutter-expert",
+    "display_name": "multi-platform-apps: flutter expert",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "multi-platform-apps"
+    ],
+    "keywords": [
+      "flutter",
+      "expert"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/multi-platform-apps/agents/flutter-expert.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/multi-platform-apps/frontend-developer",
+    "display_name": "multi-platform-apps: frontend developer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "multi-platform-apps"
+    ],
+    "keywords": [
+      "frontend",
+      "developer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/multi-platform-apps/agents/frontend-developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/multi-platform-apps/ios-developer",
+    "display_name": "multi-platform-apps: ios developer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "multi-platform-apps"
+    ],
+    "keywords": [
+      "developer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/multi-platform-apps/agents/ios-developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/multi-platform-apps/mobile-developer",
+    "display_name": "multi-platform-apps: mobile developer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "multi-platform-apps"
+    ],
+    "keywords": [
+      "mobile",
+      "developer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/multi-platform-apps/agents/mobile-developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/multi-platform-apps/ui-ux-designer",
+    "display_name": "multi-platform-apps: ui ux designer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "multi-platform-apps"
+    ],
+    "keywords": [
+      "designer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/multi-platform-apps/agents/ui-ux-designer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/observability-monitoring/database-optimizer",
+    "display_name": "observability-monitoring: database optimizer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "observability-monitoring"
+    ],
+    "keywords": [
+      "database",
+      "optimizer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/observability-monitoring/agents/database-optimizer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/observability-monitoring/network-engineer",
+    "display_name": "observability-monitoring: network engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "observability-monitoring"
+    ],
+    "keywords": [
+      "network",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/observability-monitoring/agents/network-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/observability-monitoring/observability-engineer",
+    "display_name": "observability-monitoring: observability engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "observability-monitoring"
+    ],
+    "keywords": [
+      "observability",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/observability-monitoring/agents/observability-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/observability-monitoring/performance-engineer",
+    "display_name": "observability-monitoring: performance engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "observability-monitoring"
+    ],
+    "keywords": [
+      "performance",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/observability-monitoring/agents/performance-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/payment-processing/payment-integration",
+    "display_name": "payment-processing: payment integration",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "payment-processing"
+    ],
+    "keywords": [
+      "payment",
+      "integration"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/payment-processing/agents/payment-integration.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/performance-testing-review/performance-engineer",
+    "display_name": "performance-testing-review: performance engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "performance-testing-review"
+    ],
+    "keywords": [
+      "performance",
+      "engineer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/performance-testing-review/agents/performance-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/performance-testing-review/test-automator",
+    "display_name": "performance-testing-review: test automator",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "performance-testing-review"
+    ],
+    "keywords": [
+      "test",
+      "automator"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/performance-testing-review/agents/test-automator.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/python-development/django-pro",
+    "display_name": "python-development: django pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "python-development"
+    ],
+    "keywords": [
+      "django"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/python-development/agents/django-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/python-development/fastapi-pro",
+    "display_name": "python-development: fastapi pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "python-development"
+    ],
+    "keywords": [
+      "fastapi"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/python-development/agents/fastapi-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/python-development/python-pro",
+    "display_name": "python-development: python pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "python-development"
+    ],
+    "keywords": [
+      "python"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/python-development/agents/python-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/quantitative-trading/quant-analyst",
+    "display_name": "quantitative-trading: quant analyst",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "quantitative-trading"
+    ],
+    "keywords": [
+      "quant",
+      "analyst"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/quantitative-trading/agents/quant-analyst.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/quantitative-trading/risk-manager",
+    "display_name": "quantitative-trading: risk manager",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "quantitative-trading"
+    ],
+    "keywords": [
+      "risk",
+      "manager"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/quantitative-trading/agents/risk-manager.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/security-compliance/security-auditor",
+    "display_name": "security-compliance: security auditor",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "security-compliance"
+    ],
+    "keywords": [
+      "security",
+      "auditor"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/security-compliance/agents/security-auditor.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/security-scanning/security-auditor",
+    "display_name": "security-scanning: security auditor",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "security-scanning"
+    ],
+    "keywords": [
+      "security",
+      "auditor"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/security-scanning/agents/security-auditor.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-analysis-monitoring/seo-authority-builder",
+    "display_name": "seo-analysis-monitoring: seo authority builder",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-analysis-monitoring"
+    ],
+    "keywords": [
+      "authority",
+      "builder"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-analysis-monitoring/agents/seo-authority-builder.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-analysis-monitoring/seo-cannibalization-detector",
+    "display_name": "seo-analysis-monitoring: seo cannibalization detector",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-analysis-monitoring"
+    ],
+    "keywords": [
+      "cannibalization",
+      "detector"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-analysis-monitoring/agents/seo-cannibalization-detector.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-analysis-monitoring/seo-content-refresher",
+    "display_name": "seo-analysis-monitoring: seo content refresher",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-analysis-monitoring"
+    ],
+    "keywords": [
+      "content",
+      "refresher"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-analysis-monitoring/agents/seo-content-refresher.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-content-creation/seo-content-auditor",
+    "display_name": "seo-content-creation: seo content auditor",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-content-creation"
+    ],
+    "keywords": [
+      "content",
+      "auditor"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-content-creation/agents/seo-content-auditor.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-content-creation/seo-content-planner",
+    "display_name": "seo-content-creation: seo content planner",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-content-creation"
+    ],
+    "keywords": [
+      "content",
+      "planner"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-content-creation/agents/seo-content-planner.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-content-creation/seo-content-writer",
+    "display_name": "seo-content-creation: seo content writer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-content-creation"
+    ],
+    "keywords": [
+      "content",
+      "writer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-content-creation/agents/seo-content-writer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-technical-optimization/seo-keyword-strategist",
+    "display_name": "seo-technical-optimization: seo keyword strategist",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-technical-optimization"
+    ],
+    "keywords": [
+      "keyword",
+      "strategist"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-technical-optimization/agents/seo-keyword-strategist.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-technical-optimization/seo-meta-optimizer",
+    "display_name": "seo-technical-optimization: seo meta optimizer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-technical-optimization"
+    ],
+    "keywords": [
+      "meta",
+      "optimizer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-technical-optimization/agents/seo-meta-optimizer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-technical-optimization/seo-snippet-hunter",
+    "display_name": "seo-technical-optimization: seo snippet hunter",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-technical-optimization"
+    ],
+    "keywords": [
+      "snippet",
+      "hunter"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-technical-optimization/agents/seo-snippet-hunter.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/seo-technical-optimization/seo-structure-architect",
+    "display_name": "seo-technical-optimization: seo structure architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "seo-technical-optimization"
+    ],
+    "keywords": [
+      "structure",
+      "architect"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/seo-technical-optimization/agents/seo-structure-architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/shell-scripting/bash-pro",
+    "display_name": "shell-scripting: bash pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "shell-scripting"
+    ],
+    "keywords": [
+      "bash"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/shell-scripting/agents/bash-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/shell-scripting/posix-shell-pro",
+    "display_name": "shell-scripting: posix shell pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "shell-scripting"
+    ],
+    "keywords": [
+      "posix",
+      "shell"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/shell-scripting/agents/posix-shell-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/systems-programming/c-pro",
+    "display_name": "systems-programming: c pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "systems-programming"
+    ],
+    "keywords": [],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/systems-programming/agents/c-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/systems-programming/cpp-pro",
+    "display_name": "systems-programming: cpp pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "documentation",
+    "tags": [
+      "agent",
+      "claude",
+      "systems-programming"
+    ],
+    "keywords": [],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/systems-programming/agents/cpp-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/systems-programming/golang-pro",
+    "display_name": "systems-programming: golang pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "systems-programming"
+    ],
+    "keywords": [
+      "golang"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/systems-programming/agents/golang-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/systems-programming/rust-pro",
+    "display_name": "systems-programming: rust pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "systems-programming"
+    ],
+    "keywords": [
+      "rust"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/systems-programming/agents/rust-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/tdd-workflows/code-reviewer",
+    "display_name": "tdd-workflows: code reviewer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "tdd-workflows"
+    ],
+    "keywords": [
+      "code",
+      "reviewer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/tdd-workflows/agents/code-reviewer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/tdd-workflows/tdd-orchestrator",
+    "display_name": "tdd-workflows: tdd orchestrator",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "tdd-workflows"
+    ],
+    "keywords": [
+      "orchestrator"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/tdd-workflows/agents/tdd-orchestrator.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/team-collaboration/dx-optimizer",
+    "display_name": "team-collaboration: dx optimizer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "team-collaboration"
+    ],
+    "keywords": [
+      "optimizer"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/team-collaboration/agents/dx-optimizer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/unit-testing/debugger",
+    "display_name": "unit-testing: debugger",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "unit-testing"
+    ],
+    "keywords": [
+      "debugger"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/unit-testing/agents/debugger.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/unit-testing/test-automator",
+    "display_name": "unit-testing: test automator",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude",
+      "unit-testing"
+    ],
+    "keywords": [
+      "test",
+      "automator"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/unit-testing/agents/test-automator.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/web-scripting/php-pro",
+    "display_name": "web-scripting: php pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "web-scripting"
+    ],
+    "keywords": [],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/web-scripting/agents/php-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@wshobson/agents/web-scripting/ruby-pro",
+    "display_name": "web-scripting: ruby pro",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude",
+      "web-scripting"
+    ],
+    "keywords": [
+      "ruby"
+    ],
+    "author_id": "@wshobson",
+    "author_name": "wshobson",
+    "repository_url": "https://github.com/wshobson/agents/blob/main/plugins/web-scripting/agents/ruby-pro.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 80,
+    "stars": 18528,
+    "forks": 2067,
+    "last_updated": "2025-10-20T14:59:37Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@valllabh/claude-agents/analyst",
+    "display_name": "Mary - Business Analyst",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude"
+    ],
+    "keywords": [
+      "mary",
+      "business",
+      "analyst"
+    ],
+    "author_id": "@valllabh",
+    "author_name": "valllabh",
+    "repository_url": "https://github.com/valllabh/claude-agents/blob/main/claude/agents/analyst.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 75,
+    "stars": 2,
+    "forks": 0,
+    "last_updated": "2025-10-11T06:27:13Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@valllabh/claude-agents/architect",
+    "display_name": "Winston - System Architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude"
+    ],
+    "keywords": [
+      "winston",
+      "system",
+      "architect"
+    ],
+    "author_id": "@valllabh",
+    "author_name": "valllabh",
+    "repository_url": "https://github.com/valllabh/claude-agents/blob/main/claude/agents/architect.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 75,
+    "stars": 2,
+    "forks": 0,
+    "last_updated": "2025-10-11T06:27:13Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@valllabh/claude-agents/developer",
+    "display_name": "James - Senior Software Engineer",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude"
+    ],
+    "keywords": [
+      "james",
+      "senior",
+      "software",
+      "engineer"
+    ],
+    "author_id": "@valllabh",
+    "author_name": "valllabh",
+    "repository_url": "https://github.com/valllabh/claude-agents/blob/main/claude/agents/developer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 75,
+    "stars": 2,
+    "forks": 0,
+    "last_updated": "2025-10-11T06:27:13Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@valllabh/claude-agents/product-manager",
+    "display_name": "John - Product Manager",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "data",
+    "tags": [
+      "agent",
+      "claude"
+    ],
+    "keywords": [
+      "john",
+      "product",
+      "manager"
+    ],
+    "author_id": "@valllabh",
+    "author_name": "valllabh",
+    "repository_url": "https://github.com/valllabh/claude-agents/blob/main/claude/agents/product-manager.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 75,
+    "stars": 2,
+    "forks": 0,
+    "last_updated": "2025-10-11T06:27:13Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@valllabh/claude-agents/product-owner",
+    "display_name": "Sarah - Product Owner",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "documentation",
+    "tags": [
+      "agent",
+      "claude"
+    ],
+    "keywords": [
+      "sarah",
+      "product",
+      "owner"
+    ],
+    "author_id": "@valllabh",
+    "author_name": "valllabh",
+    "repository_url": "https://github.com/valllabh/claude-agents/blob/main/claude/agents/product-owner.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 75,
+    "stars": 2,
+    "forks": 0,
+    "last_updated": "2025-10-11T06:27:13Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@valllabh/claude-agents/qa-engineer",
+    "display_name": "Quinn - Senior Developer & QA Architect",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude"
+    ],
+    "keywords": [
+      "quinn",
+      "senior",
+      "developer",
+      "architect"
+    ],
+    "author_id": "@valllabh",
+    "author_name": "valllabh",
+    "repository_url": "https://github.com/valllabh/claude-agents/blob/main/claude/agents/qa-engineer.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 75,
+    "stars": 2,
+    "forks": 0,
+    "last_updated": "2025-10-11T06:27:13Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@valllabh/claude-agents/scrum-master",
+    "display_name": "Bob - Scrum Master",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude"
+    ],
+    "keywords": [
+      "scrum",
+      "master"
+    ],
+    "author_id": "@valllabh",
+    "author_name": "valllabh",
+    "repository_url": "https://github.com/valllabh/claude-agents/blob/main/claude/agents/scrum-master.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 75,
+    "stars": 2,
+    "forks": 0,
+    "last_updated": "2025-10-11T06:27:13Z",
+    "language": "Markdown"
+  },
+  {
+    "id": "@valllabh/claude-agents/ux-expert",
+    "display_name": "Sally - UX Expert",
+    "description": "---",
+    "type": "claude-agent",
+    "category": "security",
+    "tags": [
+      "agent",
+      "claude"
+    ],
+    "keywords": [
+      "sally",
+      "expert"
+    ],
+    "author_id": "@valllabh",
+    "author_name": "valllabh",
+    "repository_url": "https://github.com/valllabh/claude-agents/blob/main/claude/agents/ux-expert.md",
+    "official": false,
+    "verified_author": false,
+    "version": "1.0.0",
+    "license": "MIT",
+    "visibility": "public",
+    "quality_score": 75,
+    "stars": 2,
+    "forks": 0,
+    "last_updated": "2025-10-11T06:27:13Z",
+    "language": "Markdown"
+  }
+]

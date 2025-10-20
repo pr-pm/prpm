@@ -59,6 +59,7 @@ async function seedPackages() {
       '../../../data/scraped/scraped-flyeric-cursorrules.json',
       '../../../data/scraped/scraped-cursor-directory.json',
       '../../../data/scraped/scraped-cursor-official-rules.json',
+      '../../../scraped-claude-agents.json', // Claude agents and slash commands
     ];
 
     let totalPackages = 0;
@@ -114,14 +115,24 @@ async function seedPackages() {
             const author = packageId.split('/')[0].substring(1); // Remove @ and get scope
 
             // Map package type to valid database type
-            // Valid types: 'cursor', 'claude', 'claude-skill', 'continue', 'windsurf', 'generic', 'mcp'
+            // Valid types: 'cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'
             let type = 'generic';
 
             // Initialize tags array
             let tags = Array.isArray(pkg.tags) ? [...pkg.tags] : [];
 
             // Map based on pkg.type and tags
-            if (pkg.type === 'claude-skill' || tags.includes('claude-skill') ||
+            if (pkg.type === 'claude-agent' || tags.includes('claude-agent')) {
+              type = 'claude-agent';
+              if (!tags.includes('agent')) {
+                tags.push('agent');
+              }
+            } else if (pkg.type === 'claude-slash-command' || tags.includes('claude-slash-command') || tags.includes('slash-command')) {
+              type = 'claude-slash-command';
+              if (!tags.includes('slash-command')) {
+                tags.push('slash-command');
+              }
+            } else if (pkg.type === 'claude-skill' || tags.includes('claude-skill') ||
                 pkg.name?.includes('claude-skill') || pkg.name?.includes('skill-')) {
               type = 'claude-skill';
               if (!tags.includes('claude-skill')) {

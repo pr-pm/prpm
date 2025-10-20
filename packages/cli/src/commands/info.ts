@@ -21,7 +21,7 @@ export async function handleInfo(packageName: string): Promise<void> {
     console.log(pkg)
 
     console.log('\n' + '='.repeat(60));
-    console.log(`  ${pkg.id} ${pkg.verified ? '✓ Verified' : ''}`);
+    console.log(`  ${pkg.name} ${pkg.verified ? '✓ Verified' : ''}`);
     console.log('='.repeat(60));
 
     // Description

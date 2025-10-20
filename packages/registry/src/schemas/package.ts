@@ -9,9 +9,12 @@ export const PackageTypeSchema = z.enum([
   'cursor',
   'claude',
   'claude-skill',
+  'claude-agent',
+  'claude-slash-command',
   'continue',
   'windsurf',
   'generic',
+  'mcp',
 ]);
 
 export const PackageVisibilitySchema = z.enum(['public', 'private', 'unlisted']);
