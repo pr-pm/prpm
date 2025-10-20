@@ -58,48 +58,39 @@ export async function handleIndex(): Promise<void> {
     
     let totalFound = 0;
     let totalAdded = 0;
-    
-    // Scan .cursor/rules directory
-    console.log('\n📁 Scanning .cursor/rules/...');
-    const cursorFiles = await scanDirectory('.cursor/rules', 'cursor');
-    totalFound += cursorFiles.length;
-    
-    for (const file of cursorFiles) {
-      if (!isPackageRegistered(existingPackages, file.id, file.filePath)) {
-        const pkg: Package = {
-          id: file.id,
-          type: 'cursor',
-          url: `file://${path.resolve(file.filePath)}`, // Use file:// URL for local files
-          dest: file.filePath
-        };
-        
-        await addPackage(pkg);
-        console.log(`  ✅ Added: ${file.filename} (${file.id})`);
-        totalAdded++;
-      } else {
-        console.log(`  ⏭️  Skipped: ${file.filename} (already registered)`);
-      }
-    }
-    
-    // Scan .claude/agents directory
-    console.log('\n📁 Scanning .claude/agents/...');
-    const claudeFiles = await scanDirectory('.claude/agents', 'claude');
-    totalFound += claudeFiles.length;
-    
-    for (const file of claudeFiles) {
-      if (!isPackageRegistered(existingPackages, file.id, file.filePath)) {
-        const pkg: Package = {
-          id: file.id,
-          type: 'claude',
-          url: `file://${path.resolve(file.filePath)}`, // Use file:// URL for local files
-          dest: file.filePath
-        };
-        
-        await addPackage(pkg);
-        console.log(`  ✅ Added: ${file.filename} (${file.id})`);
-        totalAdded++;
-      } else {
-        console.log(`  ⏭️  Skipped: ${file.filename} (already registered)`);
+
+    // Define directories to scan with their types
+    const dirsToScan: Array<{ path: string; type: PackageType; label: string }> = [
+      { path: '.cursor/rules', type: 'cursor', label: 'Cursor Rules' },
+      { path: '.claude/agents', type: 'claude', label: 'Claude Agents' },
+      { path: '.claude/skills', type: 'claude-skill', label: 'Claude Skills' },
+      { path: '.continue/rules', type: 'continue', label: 'Continue Rules' },
+      { path: '.windsurf/rules', type: 'windsurf', label: 'Windsurf Rules' },
+      { path: '.prompts', type: 'generic', label: 'Generic Prompts' },
+      { path: '.mcp', type: 'mcp', label: 'MCP Servers' },
+    ];
+
+    // Scan each directory
+    for (const dir of dirsToScan) {
+      console.log(`\n📁 Scanning ${dir.path}/ (${dir.label})...`);
+      const files = await scanDirectory(dir.path, dir.type);
+      totalFound += files.length;
+
+      for (const file of files) {
+        if (!isPackageRegistered(existingPackages, file.id, file.filePath)) {
+          const pkg: Package = {
+            id: file.id,
+            type: dir.type,
+            url: `file://${path.resolve(file.filePath)}`, // Use file:// URL for local files
+            dest: file.filePath
+          };
+
+          await addPackage(pkg);
+          console.log(`  ✅ Added: ${file.filename} (${file.id})`);
+          totalAdded++;
+        } else {
+          console.log(`  ⏭️  Skipped: ${file.filename} (already registered)`);
+        }
       }
     }
     

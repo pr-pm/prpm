@@ -102,7 +102,7 @@ export async function handleInstall(
     const pkg = await client.getPackage(packageId);
     const typeIcon = getTypeIcon(pkg.type);
     const typeLabel = getTypeLabel(pkg.type);
-    console.log(`   ${pkg.display_name} ${pkg.official ? '🏅' : ''}`);
+    console.log(`   ${pkg.id} ${pkg.official ? '🏅' : ''}`);
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 

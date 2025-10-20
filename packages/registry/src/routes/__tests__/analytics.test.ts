@@ -107,7 +107,7 @@ describe('Analytics Routes', () => {
             rows: [
               {
                 id: 'trending-1',
-                display_name: 'Trending Package 1',
+                
                 description: 'Hot package',
                 type: 'cursor',
                 category: 'development',
@@ -130,7 +130,7 @@ describe('Analytics Routes', () => {
             rows: [
               {
                 id: 'popular-1',
-                display_name: 'Popular Package',
+                
                 description: 'Most downloaded',
                 type: 'cursor',
                 category: 'development',

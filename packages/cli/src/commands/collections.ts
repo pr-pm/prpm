@@ -256,8 +256,8 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
       console.log('   Required:');
       requiredPkgs.forEach((pkg, i) => {
         console.log(`   ${i + 1}. ✓ ${pkg.packageId}@${pkg.version || 'latest'}`);
-        if (pkg.package) {
-          console.log(`      ${pkg.package.description || pkg.package.display_name}`);
+        if (pkg.package && pkg.package.description) {
+          console.log(`      ${pkg.package.description}`);
         }
         if (pkg.reason) {
           console.log(`      💡 ${pkg.reason}`);
@@ -270,8 +270,8 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
       console.log('   Optional:');
       optionalPkgs.forEach((pkg, i) => {
         console.log(`   ${i + 1}. ○ ${pkg.packageId}@${pkg.version || 'latest'}`);
-        if (pkg.package) {
-          console.log(`      ${pkg.package.description || pkg.package.display_name}`);
+        if (pkg.package && pkg.package.description) {
+          console.log(`      ${pkg.package.description}`);
         }
         if (pkg.reason) {
           console.log(`      💡 ${pkg.reason}`);

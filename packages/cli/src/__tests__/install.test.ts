@@ -83,7 +83,6 @@ describe('install command', () => {
     it('should install package successfully', async () => {
       const mockPackage = {
         id: 'test-package',
-        display_name: 'Test Package',
         description: 'A test package',
         type: 'cursor',
         tags: ['test'],
@@ -109,7 +108,6 @@ describe('install command', () => {
     it('should install specific version', async () => {
       const mockPackage = {
         id: 'test-package',
-        display_name: 'Test Package',
         type: 'cursor',
         tags: [],
         total_downloads: 100,
@@ -133,7 +131,6 @@ describe('install command', () => {
     it('should use specified format', async () => {
       const mockPackage = {
         id: 'test-package',
-        display_name: 'Test Package',
         type: 'cursor',
         tags: [],
         total_downloads: 100,
@@ -184,7 +181,6 @@ describe('install command', () => {
     it('should handle download failures', async () => {
       const mockPackage = {
         id: 'test-package',
-        display_name: 'Test Package',
         type: 'cursor',
         tags: [],
         total_downloads: 100,
@@ -212,7 +208,6 @@ describe('install command', () => {
     it('should create lockfile entry', async () => {
       const mockPackage = {
         id: 'test-package',
-        display_name: 'Test Package',
         type: 'cursor',
         tags: [],
         total_downloads: 100,
@@ -249,7 +244,6 @@ describe('install command', () => {
 
       const mockPackage = {
         id: 'test-package',
-        display_name: 'Test Package',
         type: 'cursor',
         tags: [],
         total_downloads: 100,
@@ -289,7 +283,6 @@ describe('install command', () => {
     it('should allow type override', async () => {
       const mockPackage = {
         id: 'test-package',
-        display_name: 'Test Package',
         type: 'cursor',
         tags: [],
         total_downloads: 100,

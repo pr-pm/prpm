@@ -36,7 +36,7 @@ describe('Postgres Search', () => {
     await testPool.query(`
       CREATE TABLE IF NOT EXISTS packages (
         id VARCHAR(255) PRIMARY KEY,
-        display_name VARCHAR(255) NOT NULL,
+        
         description TEXT,
         type VARCHAR(50) NOT NULL,
         category VARCHAR(100),
@@ -71,7 +71,7 @@ describe('Postgres Search', () => {
       if (!dbAvailable) return;
       // Insert test data
       await testPool.query(`
-        INSERT INTO packages (id, display_name, description, type, tags, category, visibility)
+        INSERT INTO packages (id,  description, type, tags, category, visibility)
         VALUES
           ('skill-1', 'Python Skill', 'Learn Python', 'claude', ARRAY['python', 'claude-skill'], 'programming', 'public'),
           ('skill-2', 'JavaScript Skill', 'Learn JavaScript', 'claude', ARRAY['javascript', 'claude-skill'], 'programming', 'public'),
@@ -140,7 +140,7 @@ describe('Postgres Search', () => {
     beforeEach(async () => {
       if (!dbAvailable) return;
       await testPool.query(`
-        INSERT INTO packages (id, display_name, description, type, tags, category, visibility)
+        INSERT INTO packages (id,  description, type, tags, category, visibility)
         VALUES
           ('python-skill', 'Python Skill', 'Learn Python programming', 'claude', ARRAY['python', 'claude-skill'], 'programming', 'public'),
           ('python-rule', 'Python Rule', 'Python best practices', 'cursor', ARRAY['python', 'cursor-rule'], 'programming', 'public'),
@@ -156,7 +156,7 @@ describe('Postgres Search', () => {
 
       expect(result.packages).toHaveLength(2);
       expect(result.packages.every(p =>
-        p.display_name.includes('Python') || p.description?.includes('Python')
+        p.id.includes('Python') || p.description?.includes('Python')
       )).toBe(true);
     });
 
@@ -187,7 +187,7 @@ describe('Postgres Search', () => {
     beforeEach(async () => {
       if (!dbAvailable) return;
       await testPool.query(`
-        INSERT INTO packages (id, display_name, description, type, tags, verified, featured, visibility)
+        INSERT INTO packages (id,  description, type, tags, verified, featured, visibility)
         VALUES
           ('official-1', 'Official Package', 'Official', 'cursor', ARRAY['official'], true, true, 'public'),
           ('verified-1', 'Verified Package', 'Verified', 'claude', ARRAY['verified'], true, false, 'public'),
@@ -234,7 +234,7 @@ describe('Postgres Search', () => {
     beforeEach(async () => {
       if (!dbAvailable) return;
       await testPool.query(`
-        INSERT INTO packages (id, display_name, description, type, tags, total_downloads, quality_score, rating_average, visibility, created_at)
+        INSERT INTO packages (id,  description, type, tags, total_downloads, quality_score, rating_average, visibility, created_at)
         VALUES
           ('pkg-1', 'Package 1', 'First', 'cursor', ARRAY['test'], 1000, 90, 4.5, 'public', NOW() - INTERVAL '1 day'),
           ('pkg-2', 'Package 2', 'Second', 'claude', ARRAY['test'], 500, 95, 4.8, 'public', NOW() - INTERVAL '2 days'),
@@ -299,7 +299,7 @@ describe('Postgres Search', () => {
       ).join(',');
 
       await testPool.query(`
-        INSERT INTO packages (id, display_name, description, type, tags, category, visibility)
+        INSERT INTO packages (id,  description, type, tags, category, visibility)
         VALUES ${values}
       `);
     });

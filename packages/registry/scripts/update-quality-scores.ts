@@ -64,7 +64,7 @@ async function main() {
     // Show top packages by quality score
     console.log('\n🏆 Top 10 packages by quality score:');
     const topResult = await server.pg.query(`
-      SELECT id, display_name, type, quality_score, total_downloads
+      SELECT id,  type, quality_score, total_downloads
       FROM packages
       WHERE quality_score IS NOT NULL
       ORDER BY quality_score DESC, total_downloads DESC
@@ -74,7 +74,7 @@ async function main() {
     for (let i = 0; i < topResult.rows.length; i++) {
       const pkg = topResult.rows[i];
       console.log(
-        `   ${i + 1}. ${pkg.display_name} (${pkg.type}) - Score: ${pkg.quality_score}, Downloads: ${pkg.total_downloads}`
+        `   ${i + 1}. ${pkg.id} (${pkg.type}) - Score: ${pkg.quality_score}, Downloads: ${pkg.total_downloads}`
       );
     }
 

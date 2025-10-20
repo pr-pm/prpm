@@ -11,7 +11,7 @@ CREATE TABLE collections (
   version VARCHAR(50) NOT NULL,
 
   -- Ownership
-  author VARCHAR(255) NOT NULL,
+  author_id UUID REFERENCES users(id) NOT NULL,  -- Foreign key to users table
   maintainers TEXT[],                 -- Array of usernames
   official BOOLEAN DEFAULT FALSE,
   verified BOOLEAN DEFAULT FALSE,
@@ -47,7 +47,7 @@ CREATE INDEX idx_collections_category ON collections(category);
 CREATE INDEX idx_collections_tags ON collections USING GIN(tags);
 CREATE INDEX idx_collections_downloads ON collections(downloads DESC);
 CREATE INDEX idx_collections_official ON collections(official);
-CREATE INDEX idx_collections_author ON collections(author);
+CREATE INDEX idx_collections_author_id ON collections(author_id);
 CREATE INDEX idx_collections_created ON collections(created_at DESC);
 
 -- Collection packages (many-to-many relationship)
@@ -56,7 +56,7 @@ CREATE TABLE collection_packages (
   collection_id VARCHAR(255) NOT NULL,
   collection_version VARCHAR(50) NOT NULL,
 
-  package_id VARCHAR(255) NOT NULL,
+  package_id UUID NOT NULL,
   package_version VARCHAR(50),        -- NULL means 'latest'
 
   required BOOLEAN DEFAULT TRUE,
@@ -166,7 +166,7 @@ SELECT DISTINCT ON (scope, id)
   version,
   name,
   description,
-  author,
+  author_id,
   official,
   verified,
   category,
@@ -187,4 +187,5 @@ COMMENT ON TABLE collection_installs IS 'Tracks collection installations for ana
 COMMENT ON TABLE collection_stars IS 'User favorites/stars for collections';
 COMMENT ON COLUMN collections.scope IS 'Namespace: "collection" for official, username for community';
 COMMENT ON COLUMN collections.official IS 'Official PRPM-curated collection';
+COMMENT ON COLUMN collections.author_id IS 'Foreign key to users table - the collection creator';
 COMMENT ON COLUMN collections.config IS 'JSON configuration: defaultFormat, installOrder, postInstall, etc.';

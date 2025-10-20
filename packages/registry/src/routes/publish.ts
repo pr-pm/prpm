@@ -147,12 +147,11 @@ export async function publishRoutes(server: FastifyInstance) {
         await query(
           server,
           `INSERT INTO packages (
-            id, display_name, description, author_id, type, license,
+            id, description, author_id, type, license,
             repository_url, homepage_url, documentation_url,
             tags, keywords, category, last_published_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())`,
           [
-            manifest.name,
             manifest.name,
             manifest.description,
             userId,

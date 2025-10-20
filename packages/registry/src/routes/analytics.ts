@@ -363,7 +363,6 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
         const result = await fastify.pg.query(
           `SELECT
             p.id,
-            p.display_name,
             p.description,
             p.type,
             p.category,
@@ -419,9 +418,8 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
 
       try {
         let query = `
-          SELECT 
+          SELECT
             id,
-            display_name,
             description,
             type,
             category,

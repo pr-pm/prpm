@@ -45,7 +45,6 @@ describe('search command - advanced features', () => {
         packages: [
           {
             id: 'skill-1',
-            display_name: 'Test Skill',
             description: 'A test skill',
             type: 'claude',
             tags: ['claude-skill'],
@@ -84,7 +83,6 @@ describe('search command - advanced features', () => {
       const mockResults = {
         packages: Array(5).fill({
           id: 'mcp-server',
-          display_name: 'MCP Server',
           type: 'generic',
           tags: ['mcp', 'mcp-server'],
           total_downloads: 50,
@@ -181,7 +179,6 @@ describe('search command - advanced features', () => {
         packages: [
           {
             id: 'official-package',
-            display_name: 'Official Package',
             type: 'cursor',
             tags: [],
             total_downloads: 1000,
@@ -209,7 +206,6 @@ describe('search command - advanced features', () => {
         packages: [
           {
             id: 'verified-package',
-            display_name: 'Verified Package',
             type: 'cursor',
             tags: [],
             total_downloads: 500,
@@ -238,7 +234,6 @@ describe('search command - advanced features', () => {
         packages: [
           {
             id: 'official-verified-package',
-            display_name: 'Official and Verified',
             type: 'cursor',
             tags: [],
             total_downloads: 2000,
@@ -271,7 +266,6 @@ describe('search command - advanced features', () => {
         packages: [
           {
             id: 'regular-package',
-            display_name: 'Regular Package',
             type: 'cursor',
             tags: [],
             total_downloads: 100,
@@ -301,7 +295,6 @@ describe('search command - advanced features', () => {
         packages: [
           {
             id: 'test-mcp',
-            display_name: 'MCP Server',
             type: 'generic',
             tags: ['mcp'],
             total_downloads: 100,

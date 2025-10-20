@@ -17,7 +17,7 @@ CREATE INDEX idx_packages_type_score ON packages(type, score_total DESC);
 
 -- Add badge system
 CREATE TABLE badges (
-  package_id VARCHAR(255) REFERENCES packages(id) ON DELETE CASCADE,
+  package_id UUID REFERENCES packages(id) ON DELETE CASCADE,
   badge_type VARCHAR(50) NOT NULL,  -- verified, official, popular, maintained, secure, featured
   awarded_at TIMESTAMP DEFAULT NOW(),
   expires_at TIMESTAMP,
@@ -31,7 +31,7 @@ CREATE INDEX idx_badges_type ON badges(badge_type);
 -- Add ratings and reviews
 CREATE TABLE ratings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  package_id VARCHAR(255) REFERENCES packages(id) ON DELETE CASCADE,
+  package_id UUID REFERENCES packages(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   review TEXT,
@@ -61,7 +61,7 @@ CREATE TABLE review_votes (
 CREATE TABLE installations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  package_id VARCHAR(255) REFERENCES packages(id) ON DELETE CASCADE,
+  package_id UUID REFERENCES packages(id) ON DELETE CASCADE,
   installed_at TIMESTAMP DEFAULT NOW(),
   client_info JSONB  -- CLI version, OS, etc.
 );

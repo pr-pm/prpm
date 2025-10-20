@@ -76,42 +76,64 @@ async function seedPackages() {
         for (const pkg of packages) {
           totalAttempted++;
           try {
-            // Extract author and create namespaced package ID
-            // Format: @author/package-name
-            // Try author_id first (with @ sign), then author, then fallback to unknown
-            let authorRaw = pkg.author_id || pkg.author || 'unknown';
-            // Remove @ prefix if it exists
-            if (authorRaw.startsWith('@')) {
-              authorRaw = authorRaw.substring(1);
+            // Determine package ID
+            let packageId: string;
+
+            // If pkg.id already looks like a proper namespaced package (starts with @scope/),
+            // use it as-is (for MCP packages and others that already have proper IDs)
+            if (pkg.id && pkg.id.startsWith('@') && pkg.id.includes('/')) {
+              packageId = pkg.id;
+            } else {
+              // Extract author and create namespaced package ID
+              // Format: @author/package-name
+              // Try author_id first (with @ sign), then author, then fallback to unknown
+              let authorRaw = pkg.author_id || pkg.author || 'unknown';
+              // Remove @ prefix if it exists
+              if (authorRaw.startsWith('@')) {
+                authorRaw = authorRaw.substring(1);
+              }
+              const author = authorRaw
+                .toLowerCase()
+                .replace(/[^a-z0-9-]/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 50);
+
+              const baseName = (pkg.id || pkg.name || `package-${totalPackages}`)
+                .toLowerCase()
+                .replace(/[^a-z0-9-]/g, '-')
+                .replace(/-+/g, '-')
+                // Remove author prefix if it exists (e.g., jhonma82-, cursor-, claude-)
+                .replace(/^(jhonma82-|cursor-|claude-|windsurf-|lst97-)/g, '')
+                .substring(0, 80);
+
+              // Create namespaced ID: @author/package
+              packageId = `@${author}/${baseName}`;
             }
-            const author = authorRaw
-              .toLowerCase()
-              .replace(/[^a-z0-9-]/g, '-')
-              .replace(/-+/g, '-')
-              .substring(0, 50);
 
-            const baseName = (pkg.id || pkg.name || `package-${totalPackages}`)
-              .toLowerCase()
-              .replace(/[^a-z0-9-]/g, '-')
-              .replace(/-+/g, '-')
-              // Remove author prefix if it exists (e.g., jhonma82-, cursor-, claude-)
-              .replace(/^(jhonma82-|cursor-|claude-|windsurf-|lst97-)/g, '')
-              .substring(0, 80);
-
-            // Create namespaced ID: @author/package
-            const packageId = `@${author}/${baseName}`;
+            // Extract author from packageId for author_id field
+            const author = packageId.split('/')[0].substring(1); // Remove @ and get scope
 
             // Map package type to valid database type
-            // Valid types: 'cursor', 'claude', 'continue', 'windsurf', 'generic'
+            // Valid types: 'cursor', 'claude', 'claude-skill', 'continue', 'windsurf', 'generic', 'mcp'
             let type = 'generic';
 
-            // Map based on pkg.type
-            if (pkg.type === 'agent' || pkg.type === 'skill' || pkg.type === 'claude-skill') {
+            // Initialize tags array
+            let tags = Array.isArray(pkg.tags) ? [...pkg.tags] : [];
+
+            // Map based on pkg.type and tags
+            if (pkg.type === 'claude-skill' || tags.includes('claude-skill') ||
+                pkg.name?.includes('claude-skill') || pkg.name?.includes('skill-')) {
+              type = 'claude-skill';
+              if (!tags.includes('claude-skill')) {
+                tags.push('claude-skill');
+              }
+            } else if (pkg.type === 'agent' || pkg.type === 'skill' || file.includes('agent')) {
+              // Agents (without skill tag)
               type = 'claude';
             } else if (pkg.type === 'cursor' || pkg.type === 'rule') {
               // Check if it's actually a windsurf rule
               if (file.includes('windsurf') || pkg.name?.includes('windsurf') ||
-                  pkg.tags?.includes('windsurf') || pkg.tags?.includes('windsurf-rule')) {
+                  tags.includes('windsurf') || tags.includes('windsurf-rule')) {
                 type = 'windsurf';
               } else {
                 type = 'cursor';
@@ -120,6 +142,11 @@ async function seedPackages() {
               type = 'continue';
             } else if (pkg.type === 'windsurf') {
               type = 'windsurf';
+            } else if (pkg.type === 'mcp' || file.includes('mcp') || tags.includes('mcp')) {
+              type = 'mcp';
+              if (!tags.includes('mcp')) {
+                tags.push('mcp');
+              }
             }
 
             // Fallback based on filename
@@ -135,6 +162,16 @@ async function seedPackages() {
               }
             }
 
+            // Add 'meta' tag for packages about writing skills/rules/agents
+            const name = pkg.name?.toLowerCase() || '';
+            const desc = pkg.description?.toLowerCase() || '';
+            if (name.includes('writing') && (name.includes('skill') || name.includes('rule') || name.includes('agent')) ||
+                desc.includes('writing skill') || desc.includes('writing rule') || desc.includes('create skill') || desc.includes('create rule')) {
+              if (!tags.includes('meta')) {
+                tags.push('meta');
+              }
+            }
+
             // Determine if package is official
             const isOfficial = !!(pkg.official ||
               file.includes('official') ||
@@ -144,12 +181,28 @@ async function seedPackages() {
             // Determine if package is verified
             const isVerified = !!(pkg.verified || pkg.official);
 
+            // Create or get user for this author (using author name as username)
+            // For seeding, we create stub users with no email (they can claim and set it later)
+            let authorUserId: string | null = null;
+            try {
+              const userResult = await pool.query(
+                `INSERT INTO users (username, verified_author, created_at, updated_at)
+                 VALUES ($1, $2, NOW(), NOW())
+                 ON CONFLICT (username) DO UPDATE SET updated_at = NOW()
+                 RETURNING id`,
+                [author, isVerified]
+              );
+              authorUserId = userResult.rows[0]?.id || null;
+            } catch (err) {
+              console.error(`  ⚠️  Failed to create/get user for author ${author}: ${err instanceof Error ? err.message : String(err)}`);
+            }
+
             // Insert package
             const pkgResult = await pool.query(
               `INSERT INTO packages (
-                id,
-                display_name,
+                name,
                 description,
+                author_id,
                 type,
                 category,
                 tags,
@@ -160,15 +213,15 @@ async function seedPackages() {
                 created_at,
                 updated_at
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-              ON CONFLICT (id) DO NOTHING
+              ON CONFLICT (name) DO NOTHING
               RETURNING id`,
               [
                 packageId,
-                pkg.name || packageId,
                 pkg.description || `${pkg.name} - AI prompt package`,
+                authorUserId,
                 type,
                 pkg.category || 'general',
-                pkg.tags || [],
+                tags,
                 pkg.source_url || pkg.url || null,
                 'public',
                 isVerified,
@@ -181,6 +234,9 @@ async function seedPackages() {
               totalSkipped++;
               continue;
             }
+
+            // Get the UUID package_id from the insert result
+            const dbPackageId = pkgResult.rows[0].id;
 
             // Insert initial version (using metadata to store content)
             await pool.query(
@@ -196,7 +252,7 @@ async function seedPackages() {
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
               ON CONFLICT (package_id, version) DO NOTHING`,
               [
-                packageId,
+                dbPackageId,
                 '1.0.0',
                 `https://registry.prpm.dev/packages/${packageId}/1.0.0.tar.gz`, // placeholder
                 'placeholder-hash',
@@ -208,6 +264,14 @@ async function seedPackages() {
                   originalType: pkg.type,
                 }),
               ]
+            );
+
+            // Update version_count for the package
+            await pool.query(
+              `UPDATE packages
+               SET version_count = (SELECT COUNT(*) FROM package_versions WHERE package_id = $1)
+               WHERE id = $1`,
+              [dbPackageId]
             );
 
             totalPackages++;

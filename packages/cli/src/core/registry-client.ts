@@ -13,7 +13,6 @@ import type {
 
 export interface RegistryPackage {
   id: string;
-  display_name: string;
   description?: string;
   type: PackageType;
   tags: string[];

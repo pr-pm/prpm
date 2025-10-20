@@ -35,7 +35,7 @@ interface Collection {
   version: string;
   name: string;
   description: string;
-  author: string;
+  author: string;  // Username - will be converted to author_id
   official?: boolean;
   verified?: boolean;
   category?: string;
@@ -288,10 +288,21 @@ async function seedCollections() {
             continue;
           }
 
+          // Get or create user for author
+          const authorUsername = collection.author || 'prpm';
+          const userResult = await pool.query(
+            `INSERT INTO users (username, verified_author, created_at, updated_at)
+             VALUES ($1, $2, NOW(), NOW())
+             ON CONFLICT (username) DO UPDATE SET updated_at = NOW()
+             RETURNING id`,
+            [authorUsername, collection.verified || false]
+          );
+          const authorUserId = userResult.rows[0].id;
+
           // Insert collection
           await pool.query(`
             INSERT INTO collections (
-              scope, id, version, name, description, author,
+              scope, id, version, name, description, author_id,
               official, verified, category, tags, framework,
               downloads, stars, created_at, updated_at
             ) VALUES (
@@ -305,7 +316,7 @@ async function seedCollections() {
             collection.version,
             collection.name,
             collection.description,
-            collection.author || 'prpm', // Default author if not specified
+            authorUserId,
             collection.official || false,
             collection.verified || false,
             collection.category || null,

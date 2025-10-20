@@ -146,7 +146,7 @@ describe('Collection Routes', () => {
               reason: 'Core package',
               install_order: 1,
               package_name: 'Package 1',
-              display_name: 'Package 1',
+              
               package_description: 'First package',
               description: 'First package',
               package_type: 'agent',
@@ -161,7 +161,7 @@ describe('Collection Routes', () => {
               reason: 'Optional enhancement',
               install_order: 2,
               package_name: 'Package 2',
-              display_name: 'Package 2',
+              
               package_description: 'Second package',
               description: 'Second package',
               package_type: 'rule',

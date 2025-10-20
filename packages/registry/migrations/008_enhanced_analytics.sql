@@ -8,7 +8,7 @@
 -- Individual download events (for detailed analytics)
 CREATE TABLE IF NOT EXISTS download_events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  package_id VARCHAR(255) REFERENCES packages(id) ON DELETE CASCADE,
+  package_id UUID REFERENCES packages(id) ON DELETE CASCADE,
   version VARCHAR(50),
 
   -- Client information
@@ -42,7 +42,7 @@ CREATE INDEX idx_download_events_package_date ON download_events(package_id, cre
 
 CREATE TABLE IF NOT EXISTS package_views (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  package_id VARCHAR(255) REFERENCES packages(id) ON DELETE CASCADE,
+  package_id UUID REFERENCES packages(id) ON DELETE CASCADE,
 
   -- User tracking
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -73,7 +73,7 @@ DROP TABLE IF EXISTS package_stats CASCADE;
 
 CREATE TABLE package_stats (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  package_id VARCHAR(255) REFERENCES packages(id) ON DELETE CASCADE,
+  package_id UUID REFERENCES packages(id) ON DELETE CASCADE,
   date DATE NOT NULL,
 
   -- Download counts
@@ -142,7 +142,7 @@ CREATE TABLE author_stats (
   total_ratings INTEGER DEFAULT 0,
 
   -- Most popular package
-  most_popular_package_id VARCHAR(255),
+  most_popular_package_id UUID,
   most_popular_package_downloads INTEGER DEFAULT 0,
 
   last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()

@@ -405,6 +405,8 @@ export async function authRoutes(server: FastifyInstance) {
             avatar_url: { type: 'string' },
             verified_author: { type: 'boolean' },
             is_admin: { type: 'boolean' },
+            package_count: { type: 'number' },
+            total_downloads: { type: 'number' },
           },
         },
       },
@@ -422,7 +424,22 @@ export async function authRoutes(server: FastifyInstance) {
       return reply.status(404).send({ error: 'User not found' });
     }
 
-    return user;
+    // Get user's package count and total downloads
+    const stats = await queryOne<{ package_count: string; total_downloads: string }>(
+      server,
+      `SELECT
+        COUNT(p.id)::text as package_count,
+        COALESCE(SUM(p.total_downloads), 0)::text as total_downloads
+       FROM packages p
+       WHERE p.author_id = $1`,
+      [userId]
+    );
+
+    return {
+      ...user,
+      package_count: parseInt(stats?.package_count || '0', 10),
+      total_downloads: parseInt(stats?.total_downloads || '0', 10),
+    };
   });
 
   // Generate API token

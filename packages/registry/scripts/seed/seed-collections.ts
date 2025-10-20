@@ -95,6 +95,19 @@ async function seedCollections() {
       for (let i = 0; i < collection.packages.length; i++) {
         const pkg = collection.packages[i];
 
+        // Look up package UUID by name
+        const pkgLookup = await pool.query(
+          `SELECT id FROM packages WHERE name = $1`,
+          [pkg.packageId]
+        );
+
+        if (pkgLookup.rows.length === 0) {
+          console.warn(`  ⚠️  Package not found: ${pkg.packageId}`);
+          continue;
+        }
+
+        const dbPackageId = pkgLookup.rows[0].id;
+
         await pool.query(
           `
           INSERT INTO collection_packages (
@@ -112,7 +125,7 @@ async function seedCollections() {
             scope,
             id,
             version,
-            pkg.packageId,
+            dbPackageId,
             pkg.version || null,
             pkg.required,
             pkg.reason,

@@ -26,7 +26,6 @@ const pool = new Pool({
 interface Package {
   id: string;
   type: 'cursor' | 'claude-skill' | 'windsurf' | 'continue' | 'generic';
-  display_name: string;
   description: string;
   author: string;
   content: string;
@@ -49,16 +48,22 @@ async function seedSkills() {
         path: path.join(rootDir, 'pulumi-troubleshooting-skill.md'),
         id: '@prpm/pulumi-troubleshooting-skill',
         type: 'cursor' as const,
-        display_name: 'Pulumi Troubleshooting Skill',
         description: 'Comprehensive guide to troubleshooting common Pulumi TypeScript errors, infrastructure issues, and best practices',
         tags: ['pulumi', 'infrastructure', 'troubleshooting', 'typescript', 'aws', 'devops'],
+        category: 'devops',
+      },
+      {
+        path: path.join(rootDir, 'postgres-migrations-skill.md'),
+        id: '@prpm/postgres-migrations-skill',
+        type: 'cursor' as const,
+        description: 'Complete guide to PostgreSQL migrations: common errors, generated columns, full-text search, indexes, and best practices',
+        tags: ['postgresql', 'database', 'migrations', 'sql', 'devops', 'troubleshooting'],
         category: 'devops',
       },
       {
         path: path.join(rootDir, 'packages', 'prpm-self-improve-cursor.md'),
         id: '@prpm/self-improve-cursor',
         type: 'cursor' as const,
-        display_name: 'PRPM Self-Improve (Cursor)',
         description: 'Teaches Cursor to automatically search and install PRPM packages to improve itself during tasks',
         tags: ['prpm', 'autonomous', 'self-improvement', 'discovery', 'cursor', 'meta'],
         category: 'meta',
@@ -67,7 +72,6 @@ async function seedSkills() {
         path: path.join(rootDir, 'packages', 'prpm-self-improve-windsurf.md'),
         id: '@prpm/self-improve-windsurf',
         type: 'windsurf' as const,
-        display_name: 'PRPM Self-Improve (Windsurf)',
         description: 'Teaches Windsurf to automatically search and install PRPM packages to improve itself during tasks',
         tags: ['prpm', 'autonomous', 'self-improvement', 'discovery', 'windsurf', 'meta'],
         category: 'meta',
@@ -76,7 +80,6 @@ async function seedSkills() {
         path: path.join(rootDir, 'packages', 'prpm-self-improve-continue.md'),
         id: '@prpm/self-improve-continue',
         type: 'continue' as const,
-        display_name: 'PRPM Self-Improve (Continue)',
         description: 'Teaches Continue to automatically search and install PRPM packages to improve itself during tasks',
         tags: ['prpm', 'autonomous', 'self-improvement', 'discovery', 'continue', 'meta'],
         category: 'meta',
@@ -84,8 +87,7 @@ async function seedSkills() {
       {
         path: path.join(rootDir, 'packages', 'prpm-self-improve-claude.md'),
         id: '@prpm/self-improve-claude',
-        type: 'claude' as const,
-        display_name: 'PRPM Self-Improve (Claude Code)',
+        type: 'claude-skill' as const,
         description: 'Teaches Claude Code to automatically search and install PRPM packages to improve itself during tasks',
         tags: ['prpm', 'autonomous', 'self-improvement', 'discovery', 'claude', 'meta', 'claude-skill'],
         category: 'meta',
@@ -102,7 +104,7 @@ async function seedSkills() {
 
         // Check if package already exists
         const existing = await pool.query(
-          'SELECT id FROM packages WHERE id = $1',
+          'SELECT id FROM packages WHERE name = $1',
           [skill.id]
         );
 
@@ -112,24 +114,34 @@ async function seedSkills() {
           continue;
         }
 
+        // Create or get prpm user
+        const userResult = await pool.query(
+          `INSERT INTO users (username, email, verified_author, is_admin, created_at, updated_at)
+           VALUES ('prpm', 'team@prpm.dev', TRUE, TRUE, NOW(), NOW())
+           ON CONFLICT (username) DO UPDATE SET updated_at = NOW()
+           RETURNING id`,
+          []
+        );
+        const prpmUserId = userResult.rows[0].id;
+
         // Insert package
         const pkgResult = await pool.query(`
           INSERT INTO packages (
-            id, type, display_name, description,
-            tags, category, verified, featured,
+            name, type, description,
+            author_id, tags, category, verified, featured,
             visibility, created_at, updated_at
           ) VALUES (
-            $1, $2, $3, $4,
-            $5, $6, $7, $8,
+            $1, $2, $3,
+            $4, $5, $6, $7, $8,
             $9, NOW(), NOW()
           )
-          ON CONFLICT (id) DO NOTHING
+          ON CONFLICT (name) DO NOTHING
           RETURNING id
         `, [
           skill.id,
           skill.type,
-          skill.display_name,
           skill.description,
+          prpmUserId,
           skill.tags,
           skill.category,
           true, // verified
@@ -144,6 +156,9 @@ async function seedSkills() {
           continue;
         }
 
+        // Get the UUID package_id from the insert result
+        const dbPackageId = pkgResult.rows[0].id;
+
         // Insert version with content in metadata
         await pool.query(`
           INSERT INTO package_versions (
@@ -154,7 +169,7 @@ async function seedSkills() {
           )
           ON CONFLICT (package_id, version) DO NOTHING
         `, [
-          skill.id,
+          dbPackageId,
           '1.0.0',
           `https://registry.prpm.dev/packages/${skill.id}/1.0.0.tar.gz`,
           'placeholder-hash',
@@ -166,6 +181,13 @@ async function seedSkills() {
             originalType: skill.type,
           }),
         ]);
+
+        // Update version_count for the package
+        await pool.query(`
+          UPDATE packages
+          SET version_count = (SELECT COUNT(*) FROM package_versions WHERE package_id = $1)
+          WHERE id = $1
+        `, [dbPackageId]);
 
         console.log(`  ✅ Imported: ${skill.id}`);
         imported++;

@@ -22,7 +22,6 @@ const pool = new Pool({
 
 interface PackageData {
   id: string;
-  display_name: string;
   description: string;
   version: string;
   type: string;
@@ -76,7 +75,7 @@ async function seedSkills() {
 
           await client.query(
             `UPDATE packages SET
-              display_name = $2,
+              
               description = $3,
               version = $4,
               type = $5,
@@ -103,8 +102,8 @@ async function seedSkills() {
             WHERE id = $1`,
             [
               skill.id,
-              skill.display_name,
-              skill.description,
+              
+              skill.description
               skill.version,
               skill.type,
               skill.category,
@@ -133,7 +132,7 @@ async function seedSkills() {
         } else {
           await client.query(
             `INSERT INTO packages (
-              id, display_name, description, version, type, category,
+              id, description version, type, category,
               tags, keywords, author_id, author_name, license, visibility,
               verified_author, official, content, content_url, repository_url,
               homepage_url, documentation_url, download_url, file_path,
@@ -144,8 +143,8 @@ async function seedSkills() {
             )`,
             [
               skill.id,
-              skill.display_name,
-              skill.description,
+              
+              skill.description
               skill.version,
               skill.type,
               skill.category,
@@ -170,7 +169,7 @@ async function seedSkills() {
             ]
           );
 
-          console.log(`✅ Inserted: ${skill.id} - ${skill.display_name}`);
+          console.log(`✅ Inserted: ${skill.id} - ${skill.id}`);
           inserted++;
         }
       } catch (error) {

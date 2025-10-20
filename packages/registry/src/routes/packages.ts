@@ -26,7 +26,7 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           search: { type: 'string' },
-          type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'generic'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'continue', 'windsurf', 'generic', 'mcp'] },
           category: { type: 'string' },
           featured: { type: 'boolean' },
           verified: { type: 'boolean' },
@@ -83,8 +83,8 @@ export async function packageRoutes(server: FastifyInstance) {
 
     if (search) {
       conditions.push(`(
-        to_tsvector('english', coalesce(display_name, '') || ' ' || coalesce(description, '')) @@ websearch_to_tsquery('english', $${paramIndex}) OR
-        display_name ILIKE $${paramIndex + 1} OR
+        to_tsvector('english', coalesce(id, '') || ' ' || coalesce(description, '')) @@ websearch_to_tsquery('english', $${paramIndex}) OR
+        id ILIKE $${paramIndex + 1} OR
         $${paramIndex + 2} = ANY(tags)
       )`);
       params.push(search, `%${search}%`, search.toLowerCase());
@@ -411,7 +411,7 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
-          type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'generic'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'continue', 'windsurf', 'generic', 'mcp'] },
         },
       },
     },

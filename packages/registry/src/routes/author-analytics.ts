@@ -83,7 +83,7 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
         let mostPopular = null;
         if (stats.most_popular_package_id) {
           const pkgResult = await fastify.pg.query(
-            `SELECT id, display_name, total_downloads
+            `SELECT id, total_downloads
              FROM packages
              WHERE id = $1`,
             [stats.most_popular_package_id]
@@ -93,7 +93,7 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
             const pkg = pkgResult.rows[0];
             mostPopular = {
               package_id: pkg.id,
-              package_name: pkg.display_name,
+              package_name: pkg.id,
               downloads: pkg.total_downloads,
             };
           }
@@ -101,7 +101,7 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
 
         // Get recent packages (last 5)
         const recentResult = await fastify.pg.query(
-          `SELECT id, display_name, type, total_downloads, created_at
+          `SELECT id, type, total_downloads, created_at
            FROM packages
            WHERE author_id = $1
            ORDER BY created_at DESC
@@ -185,7 +185,6 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
         const result = await fastify.pg.query(
           `SELECT
              id,
-             display_name,
              description,
              type,
              visibility,
@@ -261,7 +260,7 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
       try {
         // Verify package ownership
         const pkgResult = await fastify.pg.query(
-          `SELECT id, display_name, author_id, total_downloads, weekly_downloads, monthly_downloads
+          `SELECT id, author_id, total_downloads, weekly_downloads, monthly_downloads
            FROM packages
            WHERE id = $1`,
           [packageId]
@@ -361,7 +360,7 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
         return reply.send({
           package: {
             id: pkg.id,
-            name: pkg.display_name,
+            name: pkg.id,
             total_downloads: pkg.total_downloads,
             weekly_downloads: pkg.weekly_downloads,
             monthly_downloads: pkg.monthly_downloads,

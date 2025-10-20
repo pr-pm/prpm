@@ -134,7 +134,7 @@ export default function AuthorsPage() {
             {authors.map((author, index) => (
               <div
                 key={author.author}
-                className={`px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors ${
+                className={`px-6 py-4 hover:bg-prpm-purple/5 dark:hover:bg-prpm-purple/10 transition-colors ${
                   index < 3 ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''
                 }`}
               >

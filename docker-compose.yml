@@ -52,12 +52,12 @@ services:
       timeout: 5s
       retries: 5
 
-  # Registry service (development mode - uses host node_modules)
+  # Registry service (development mode - installs deps once, cached in volume)
   registry:
     image: node:20-alpine
     container_name: prpm-registry
     working_dir: /app
-    command: sh -c "export PATH=/app/node_modules/.bin:$PATH && npm run dev"
+    command: sh -c "test -f node_modules/.installed || (npm install && touch node_modules/.installed); npm run dev"
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,21 +90,23 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      # Mount entire registry directory (including node_modules from host)
+      # Mount source code (without node_modules)
       - ./packages/registry:/app
+      # Use named volume for node_modules (persisted, fast)
+      - registry_node_modules:/app/node_modules
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 60s  # Give time for npm install on first run
 
-  # Webapp service (development mode - uses host node_modules)
+  # Webapp service (development mode - installs deps once, cached in volume)
   webapp:
     image: node:20-alpine
     container_name: prpm-webapp
     working_dir: /app
-    command: sh -c "export PATH=/app/node_modules/.bin:$PATH && npm run dev"
+    command: sh -c "test -f node_modules/.installed || (npm install && touch node_modules/.installed); npm run dev"
     depends_on:
       registry:
         condition: service_healthy
@@ -115,16 +117,20 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      # Mount entire webapp directory (including node_modules from host)
+      # Mount source code (without node_modules)
       - ./packages/webapp:/app
+      # Use named volume for node_modules (persisted, fast)
+      - webapp_node_modules:/app/node_modules
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:5173"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 60s  # Give time for npm install on first run
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
+  registry_node_modules:
+  webapp_node_modules:

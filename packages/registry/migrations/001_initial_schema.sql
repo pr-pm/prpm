@@ -12,7 +12,8 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";  -- For fuzzy text search
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   username VARCHAR(100) UNIQUE NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE,  -- Made optional - users set email when they claim account
+  password_hash VARCHAR(255),  -- For email/password auth
 
   -- OAuth provider data
   github_id VARCHAR(100) UNIQUE,
@@ -41,7 +42,6 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE TABLE organizations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) UNIQUE NOT NULL,
-  display_name VARCHAR(255) NOT NULL,
   description TEXT,
   avatar_url TEXT,
   website_url TEXT,
@@ -75,8 +75,8 @@ CREATE INDEX idx_org_members_org ON organization_members(org_id);
 -- ============================================
 
 CREATE TABLE packages (
-  id VARCHAR(255) PRIMARY KEY,  -- Package name (e.g., "react-rules" or "@org/react-rules")
-  display_name VARCHAR(255) NOT NULL,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) UNIQUE NOT NULL,  -- Package name (e.g., "react-rules" or "@org/react-rules")
   description TEXT,
 
   -- Ownership
@@ -133,7 +133,7 @@ CREATE INDEX idx_packages_created ON packages(created_at DESC);
 
 -- Full-text search index
 CREATE INDEX idx_packages_search ON packages USING gin(
-  to_tsvector('english', coalesce(display_name, '') || ' ' || coalesce(description, ''))
+  to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, ''))
 );
 
 -- ============================================
@@ -142,7 +142,7 @@ CREATE INDEX idx_packages_search ON packages USING gin(
 
 CREATE TABLE package_versions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  package_id VARCHAR(255) REFERENCES packages(id) ON DELETE CASCADE,
+  package_id UUID REFERENCES packages(id) ON DELETE CASCADE,
   version VARCHAR(50) NOT NULL,  -- Semantic versioning (e.g., "1.2.3")
 
   -- Version metadata
@@ -189,7 +189,7 @@ CREATE INDEX idx_versions_downloads ON package_versions(downloads DESC);
 
 -- Aggregated daily download counts
 CREATE TABLE package_stats (
-  package_id VARCHAR(255) REFERENCES packages(id) ON DELETE CASCADE,
+  package_id UUID REFERENCES packages(id) ON DELETE CASCADE,
   version VARCHAR(50),
   date DATE NOT NULL,
   downloads INTEGER DEFAULT 0,
@@ -206,7 +206,7 @@ CREATE INDEX idx_stats_date ON package_stats(date DESC);
 
 CREATE TABLE package_reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  package_id VARCHAR(255) REFERENCES packages(id) ON DELETE CASCADE,
+  package_id UUID REFERENCES packages(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
 
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
@@ -400,12 +400,12 @@ CREATE TRIGGER package_rating_updated
 -- SEED DATA (Development Only)
 -- ============================================
 
--- Create admin user (for development)
+-- Create prpm team user (for development and official packages)
 INSERT INTO users (username, email, is_admin, verified_author)
-VALUES ('admin', 'admin@promptpm.dev', TRUE, TRUE)
+VALUES ('prpm', 'team@prpm.dev', TRUE, TRUE)
 ON CONFLICT DO NOTHING;
 
 -- Create test organization
-INSERT INTO organizations (name, display_name, description, is_verified)
-VALUES ('prpm', 'PRMP Official', 'Official PRMP packages', TRUE)
+INSERT INTO organizations (name, description, is_verified)
+VALUES ('prpm', 'Official PRPM packages', TRUE)
 ON CONFLICT DO NOTHING;

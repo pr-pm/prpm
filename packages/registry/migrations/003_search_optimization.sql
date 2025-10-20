@@ -18,10 +18,10 @@ CREATE INDEX IF NOT EXISTS idx_packages_official ON packages(verified) WHERE ver
 CREATE INDEX IF NOT EXISTS idx_packages_trending ON packages(weekly_downloads DESC, created_at DESC) WHERE visibility = 'public';
 
 -- Index for author search
-CREATE INDEX IF NOT EXISTS idx_packages_author_name ON packages(author_id, display_name);
+CREATE INDEX IF NOT EXISTS idx_packages_author_name ON packages(author_id, name);
 
 -- Trigram index for fuzzy name matching
-CREATE INDEX IF NOT EXISTS idx_packages_name_trgm ON packages USING gin(display_name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_packages_name_trgm ON packages USING gin(name gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_packages_desc_trgm ON packages USING gin(description gin_trgm_ops);
 
 -- ============================================
@@ -64,7 +64,7 @@ $$ LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 ALTER TABLE packages
 ADD COLUMN search_vector tsvector
 GENERATED ALWAYS AS (
-  setweight(to_tsvector('english', coalesce(display_name, '')), 'A') ||
+  setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
   setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
   setweight(to_tsvector('english', immutable_array_to_string(tags, ' ')), 'C') ||
   setweight(to_tsvector('english', immutable_array_to_string(keywords, ' ')), 'D')
@@ -84,7 +84,7 @@ DROP MATERIALIZED VIEW IF EXISTS package_search_rankings CASCADE;
 CREATE MATERIALIZED VIEW package_search_rankings AS
 SELECT
   p.id,
-  p.display_name,
+  p.name,
   p.description,
   p.type,
   p.category,
@@ -155,8 +155,8 @@ CREATE OR REPLACE FUNCTION search_packages(
   offset_count INTEGER DEFAULT 0
 )
 RETURNS TABLE (
-  id VARCHAR,
-  display_name VARCHAR,
+  id UUID,
+  name VARCHAR,
   description TEXT,
   type VARCHAR,
   category VARCHAR,
@@ -171,7 +171,7 @@ BEGIN
   RETURN QUERY
   SELECT
     psr.id,
-    psr.display_name,
+    psr.name,
     psr.description,
     psr.type,
     psr.category,

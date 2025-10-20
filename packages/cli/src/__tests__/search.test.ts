@@ -45,7 +45,6 @@ describe('search command', () => {
         packages: [
           {
             id: 'react-rules',
-            display_name: 'React Rules',
             description: 'React coding rules',
             type: 'cursor',
             tags: ['react', 'javascript'],
@@ -87,7 +86,6 @@ describe('search command', () => {
         packages: [
           {
             id: 'test-package',
-            display_name: 'Test Package',
             description: 'A test package',
             type: 'cursor',
             tags: ['test'],
@@ -157,7 +155,6 @@ describe('search command', () => {
         packages: [
           {
             id: 'verified-package',
-            display_name: 'Verified Package',
             type: 'cursor',
             tags: [],
             total_downloads: 1000,
@@ -186,7 +183,6 @@ describe('search command', () => {
         packages: [
           {
             id: 'popular-package',
-            display_name: 'Popular Package',
             type: 'cursor',
             tags: [],
             total_downloads: 5000,
@@ -214,7 +210,6 @@ describe('search command', () => {
         packages: [
           {
             id: 'rated-package',
-            display_name: 'Rated Package',
             type: 'cursor',
             tags: [],
             total_downloads: 100,
@@ -274,7 +269,6 @@ describe('search command', () => {
       const mockResults = {
         packages: Array(20).fill({
           id: 'test',
-          display_name: 'Test',
           type: 'cursor',
           tags: [],
           total_downloads: 100,
@@ -299,7 +293,6 @@ describe('search command', () => {
         packages: [
           {
             id: 'test',
-            display_name: 'Test',
             type: 'cursor',
             tags: [],
             total_downloads: 100,

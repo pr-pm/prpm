@@ -18,8 +18,9 @@ export async function searchRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           q: { type: 'string' },
-          type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'generic'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'continue', 'windsurf', 'generic', 'mcp'] },
           tags: { type: 'array', items: { type: 'string' } },
+          author: { type: 'string' },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
           offset: { type: 'number', default: 0, minimum: 0 },
           sort: { type: 'string', enum: ['downloads', 'created', 'updated', 'quality', 'rating'], default: 'downloads' },
@@ -27,20 +28,21 @@ export async function searchRoutes(server: FastifyInstance) {
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { q, type, tags, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
+    const { q, type, tags, author, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
       q?: string;
       type?: PackageType;
       tags?: string[];
+      author?: string;
       limit?: number;
       offset?: number;
       sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
     };
 
     // If no query and no filters, return error
-    if (!q && !type && (!tags || tags.length === 0)) {
+    if (!q && !type && (!tags || tags.length === 0) && !author) {
       return reply.status(400).send({
         error: 'Bad Request',
-        message: 'Please provide a search query (q) or filter (type/tags)',
+        message: 'Please provide a search query (q) or filter (type/tags/author)',
       });
     }
 
@@ -58,6 +60,7 @@ export async function searchRoutes(server: FastifyInstance) {
     const response = await searchProvider.search(q || '', {
       type,
       tags,
+      author,
       sort,
       limit,
       offset,
@@ -77,7 +80,7 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'generic'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'continue', 'windsurf', 'generic', 'mcp'] },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },
@@ -129,7 +132,7 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'generic'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'continue', 'windsurf', 'generic', 'mcp'] },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },
@@ -239,6 +242,72 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // Cache for 1 hour
     await cacheSet(server, cacheKey, response, 3600);
+
+    return response;
+  });
+
+  // Get top authors (leaderboard)
+  server.get('/authors', {
+    schema: {
+      tags: ['search'],
+      description: 'Get top package authors with their stats',
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', default: 50, minimum: 1, maximum: 500 },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { limit = 50 } = request.query as { limit?: number };
+
+    const cacheKey = `search:authors:${limit}`;
+    const cached = await cacheGet<any>(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get author stats by aggregating packages
+    const result = await query<{
+      author: string;
+      package_count: string;
+      total_downloads: string;
+      verified: boolean;
+      latest_package: string;
+    }>(
+      server,
+      `SELECT
+        u.username as author,
+        COUNT(p.id)::text as package_count,
+        COALESCE(SUM(p.total_downloads), 0)::text as total_downloads,
+        u.verified_author as verified,
+        (SELECT p2.id FROM packages p2
+         WHERE p2.author_id = u.id
+         ORDER BY p2.created_at DESC
+         LIMIT 1) as latest_package
+       FROM users u
+       INNER JOIN packages p ON p.author_id = u.id
+       WHERE p.visibility = 'public'
+       GROUP BY u.id, u.username, u.verified_author
+       HAVING COUNT(p.id) > 0
+       ORDER BY COUNT(p.id) DESC, SUM(p.total_downloads) DESC
+       LIMIT $1`,
+      [limit]
+    );
+
+    const response = {
+      authors: result.rows.map(row => ({
+        author: row.author,
+        package_count: parseInt(row.package_count, 10),
+        total_downloads: parseInt(row.total_downloads, 10),
+        verified: row.verified,
+        latest_package: row.latest_package,
+      })),
+      total: result.rows.length,
+    };
+
+    // Cache for 10 minutes
+    await cacheSet(server, cacheKey, response, 600);
 
     return response;
   });

@@ -20,7 +20,7 @@ export async function handleInfo(packageId: string): Promise<void> {
     const pkg = await client.getPackage(packageId);
 
     console.log('\n' + '='.repeat(60));
-    console.log(`  ${pkg.display_name} ${pkg.verified ? '✓ Verified' : ''}`);
+    console.log(`  ${pkg.id} ${pkg.verified ? '✓ Verified' : ''}`);
     console.log('='.repeat(60));
 
     // Description
