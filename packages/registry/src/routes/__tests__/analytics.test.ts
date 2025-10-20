@@ -16,6 +16,21 @@ describe('Analytics Routes', () => {
     // Mock postgres plugin
     (server as any).pg = {
       query: async (sql: string, params?: unknown[]): Promise<unknown> => {
+        // Lookup package by name (for analytics download tracking)
+        if (sql.includes('SELECT id FROM packages WHERE name = $1')) {
+          const packageName = params?.[0];
+          if (packageName === 'test-package') {
+            return {
+              rows: [{ id: 'test-package-uuid' }],
+              command: 'SELECT',
+              rowCount: 1,
+              oid: 0,
+              fields: [],
+            };
+          }
+          return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] };
+        }
+
         // Track download - INSERT into download_events
         if (sql.includes('INSERT INTO download_events')) {
           return { rows: [], command: 'INSERT', rowCount: 1, oid: 0, fields: [] };
@@ -32,37 +47,61 @@ describe('Analytics Routes', () => {
         }
 
         // Get downloads by format (check before general SELECT to be more specific)
-        if (sql.includes('GROUP BY format')) {
-          return {
-            rows: [
-              { format: 'cursor', count: '60' },
-              { format: 'claude', count: '40' },
-            ],
-            command: 'SELECT',
-            rowCount: 2,
-            oid: 0,
-            fields: [],
-          };
+        if (sql.includes('GROUP BY format') && sql.includes('download_events')) {
+          const packageUuid = params?.[0];
+          if (packageUuid === 'test-package-uuid') {
+            return {
+              rows: [
+                { format: 'cursor', count: '60' },
+                { format: 'claude', count: '40' },
+              ],
+              command: 'SELECT',
+              rowCount: 2,
+              oid: 0,
+              fields: [],
+            };
+          }
+          return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] };
         }
 
         // Get downloads by client
-        if (sql.includes('GROUP BY client_type')) {
-          return {
-            rows: [
-              { client_type: 'cli', count: '70' },
-              { client_type: 'web', count: '30' },
-            ],
-            command: 'SELECT',
-            rowCount: 2,
-            oid: 0,
-            fields: [],
-          };
+        if (sql.includes('GROUP BY client_type') && sql.includes('download_events')) {
+          const packageUuid = params?.[0];
+          if (packageUuid === 'test-package-uuid') {
+            return {
+              rows: [
+                { client_type: 'cli', count: '70' },
+                { client_type: 'web', count: '30' },
+              ],
+              command: 'SELECT',
+              rowCount: 2,
+              oid: 0,
+              fields: [],
+            };
+          }
+          return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] };
         }
 
         // Trend calculation
         if (sql.includes('this_week') && sql.includes('last_week')) {
+          const packageUuid = params?.[0];
+          if (packageUuid === 'test-package-uuid') {
+            return {
+              rows: [{ this_week: '30', last_week: '20' }],
+              command: 'SELECT',
+              rowCount: 1,
+              oid: 0,
+              fields: [],
+            };
+          }
+          return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] };
+        }
+
+        // Get total downloads by UUID
+        if (sql.includes('SELECT total_downloads FROM packages WHERE id = $1')) {
+          const packageUuid = params?.[0];
           return {
-            rows: [{ this_week: '30', last_week: '20' }],
+            rows: [{ total_downloads: packageUuid === 'test-package-uuid' ? 100 : 0 }],
             command: 'SELECT',
             rowCount: 1,
             oid: 0,
@@ -84,8 +123,8 @@ describe('Analytics Routes', () => {
 
         // Get package stats - main query (check after more specific queries)
         if (sql.includes('total_downloads') && sql.includes('weekly_downloads') && sql.includes('monthly_downloads')) {
-          const packageId = params?.[0];
-          if (packageId === 'test-package') {
+          const packageUuid = params?.[0];
+          if (packageUuid === 'test-package-uuid' || packageUuid === 'test-package') {
             return {
               rows: [{
                 total_downloads: 1000,
