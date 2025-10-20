@@ -45,6 +45,7 @@ describe('search command', () => {
         packages: [
           {
             id: 'react-rules',
+            name: 'react-rules',
             description: 'React coding rules',
             type: 'cursor',
             tags: ['react', 'javascript'],
@@ -86,6 +87,7 @@ describe('search command', () => {
         packages: [
           {
             id: 'test-package',
+            name: 'test-package',
             description: 'A test package',
             type: 'cursor',
             tags: ['test'],
@@ -102,9 +104,8 @@ describe('search command', () => {
 
       await handleSearch('test', {});
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Test Package'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('A test package'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('test-package'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('A test package'));
     });
   });
 
