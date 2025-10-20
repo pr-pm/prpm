@@ -125,13 +125,13 @@ describe('Package Routes', () => {
     };
 
     // Mock database with connect() method
-    server.decorate('pg', {
+    (server as any).decorate('pg', {
       query: mockQuery,
       connect: async () => ({
         query: mockQuery,
         release: () => {}
       })
-    } as unknown);
+    } as any);
 
     await server.register(packageRoutes, { prefix: '/api/v1/packages' });
     await server.ready();

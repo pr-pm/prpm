@@ -5,7 +5,6 @@
  */
 
 import { Command } from 'commander';
-import { createAddCommand } from './commands/add';
 import { createListCommand } from './commands/list';
 import { createRemoveCommand } from './commands/remove';
 import { createIndexCommand } from './commands/index';
@@ -19,7 +18,6 @@ import { createPublishCommand } from './commands/publish';
 import { createLoginCommand } from './commands/login';
 import { createWhoamiCommand } from './commands/whoami';
 import { createCollectionsCommand } from './commands/collections';
-import { createDepsCommand } from './commands/deps';
 import { createOutdatedCommand } from './commands/outdated';
 import { createUpdateCommand } from './commands/update';
 import { createUpgradeCommand } from './commands/upgrade';
@@ -41,13 +39,11 @@ program.addCommand(createPublishCommand());
 program.addCommand(createLoginCommand());
 program.addCommand(createWhoamiCommand());
 program.addCommand(createCollectionsCommand());
-program.addCommand(createDepsCommand());
 program.addCommand(createOutdatedCommand());
 program.addCommand(createUpdateCommand());
 program.addCommand(createUpgradeCommand());
 
 // Local file commands (existing)
-program.addCommand(createAddCommand());
 program.addCommand(createListCommand());
 program.addCommand(createRemoveCommand());
 program.addCommand(createIndexCommand());

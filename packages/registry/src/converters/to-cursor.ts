@@ -9,6 +9,8 @@ import type {
   ConversionOptions,
   ConversionResult,
   Section,
+  Rule,
+  Example,
 } from '../types/canonical.js';
 
 /**
@@ -123,14 +125,14 @@ function convertMetadata(section: { type: "metadata"; data: Record<string, unkno
   const lines: string[] = [];
 
   // Title with optional icon
-  if (icon) {
+  if (icon && typeof icon === 'string' && typeof title === 'string') {
     lines.push(`# ${icon} ${title}`);
-  } else {
+  } else if (typeof title === 'string') {
     lines.push(`# ${title}`);
   }
 
   // Description
-  if (description) {
+  if (description && typeof description === 'string') {
     lines.push('');
     lines.push(description);
   }
@@ -171,7 +173,7 @@ function convertInstructions(section: {
 function convertRules(section: {
   type: 'rules';
   title: string;
-  items: RuleItem[];
+  items: Rule[];
   ordered?: boolean;
 }): string {
   const lines: string[] = [];
@@ -182,19 +184,19 @@ function convertRules(section: {
 
   // Rules list
   section.items.forEach((rule, index) => {
-    const content = typeof rule === 'string' ? rule : rule.content;
+    const content = rule.content;
     const prefix = section.ordered ? `${index + 1}.` : '-';
 
     lines.push(`${prefix} ${content}`);
 
     // Add rationale if present
-    if (typeof rule === 'object' && rule.rationale) {
+    if (rule.rationale) {
       lines.push(`   - *Rationale: ${rule.rationale}*`);
     }
 
     // Add examples if present
-    if (typeof rule === 'object' && rule.examples) {
-      rule.examples?.forEach((example: string) => {
+    if (rule.examples) {
+      rule.examples.forEach((example: string) => {
         lines.push(`   - Example: \`${example}\``);
       });
     }
@@ -209,7 +211,7 @@ function convertRules(section: {
 function convertExamples(section: {
   type: 'examples';
   title: string;
-  examples: ExampleItem[];
+  examples: Example[];
 }): string {
   const lines: string[] = [];
 
@@ -248,23 +250,23 @@ function convertPersona(section: {
   lines.push('## Role');
   lines.push('');
 
-  if (icon && name) {
+  if (icon && typeof icon === 'string' && name && typeof name === 'string' && typeof role === 'string') {
     lines.push(`${icon} **${name}** - ${role}`);
-  } else if (name) {
+  } else if (name && typeof name === 'string' && typeof role === 'string') {
     lines.push(`**${name}** - ${role}`);
-  } else {
+  } else if (typeof role === 'string') {
     lines.push(role);
   }
 
-  if (style && style.length > 0) {
+  if (style && Array.isArray(style) && style.length > 0) {
     lines.push('');
     lines.push(`**Style:** ${style.join(', ')}`);
   }
 
-  if (expertise && expertise.length > 0) {
+  if (expertise && Array.isArray(expertise) && expertise.length > 0) {
     lines.push('');
     lines.push('**Expertise:**');
-    expertise.forEach((area: string) => {
+    expertise.forEach((area: unknown) => {
       lines.push(`- ${area}`);
     });
   }

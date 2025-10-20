@@ -45,6 +45,7 @@ export interface OrganizationMember {
 // Package
 export interface Package {
   id: string;
+  name: string;
   description?: string;
   author_id?: string;
   org_id?: string;

@@ -4,8 +4,8 @@
 
 **Goal**: Change the packages table structure from using package name as VARCHAR primary key to using UUID as primary key with name as a separate field.
 
-**Status**: Database schema and seed scripts complete ✅
-**Remaining**: TypeScript interfaces, API routes, search implementation, final testing
+**Status**: Database schema, seed scripts, TypeScript interfaces, API routes, and search complete ✅
+**Remaining**: CLI/client updates, final end-to-end testing
 
 ---
 
@@ -202,9 +202,76 @@ WHERE p.name LIKE '@prpm%' LIMIT 3;
 
 ---
 
+### 4. TypeScript Interfaces & API Routes (ALL UPDATED)
+
+#### TypeScript Interfaces ✅
+**File**: `packages/registry/src/types.ts`
+
+The Package interface was already correctly defined with both `id` (UUID) and `name` (string) fields. No changes needed.
+
+#### Search Implementation ✅
+**Files Updated**:
+- ✅ `packages/registry/src/search/postgres.ts`
+  - Line 32: Text search updated to use `name` field
+  - Line 94: Ranking updated to use `name` instead of `id`
+- ✅ `packages/registry/src/routes/packages.ts`
+  - Line 86: List packages search updated to use `name` field
+
+#### API Routes - Package Endpoints ✅
+**File**: `packages/registry/src/routes/packages.ts`
+
+All routes updated to accept package names and lookup by name:
+- ✅ Line 145: `GET /:packageName` - Looks up by name
+- ✅ Line 199: `GET /:packageName/:version` - Looks up by name
+- ✅ Line 271: `DELETE /:packageName/:version` - Looks up by name, uses UUID for FK
+- ✅ Line 323: `GET /:packageName/stats` - Looks up by name, uses UUID for FK
+- ✅ Line 475: `GET /:packageName/versions` - Looks up by name
+- ✅ Line 532: `GET /:packageName/:version/dependencies` - Looks up by name
+- ✅ Line 596: `GET /:packageName/resolve` - Looks up by name
+- ✅ Line 645: `resolveDependencyTree()` function - Handles package names
+
+#### API Routes - Analytics Endpoints ✅
+**File**: `packages/registry/src/routes/analytics.ts`
+
+All analytics routes updated to lookup by name:
+- ✅ Line 67: `POST /download` - Looks up by name (line 71-73), uses UUID for FK
+- ✅ Line 188: `POST /view` - Looks up by name (line 193-196), uses UUID for FK
+- ✅ Line 261: `GET /stats/:packageId` - Looks up by name (line 265-278), uses UUID for FK
+
+#### Pattern Applied
+All routes now follow this pattern:
+```typescript
+// 1. Accept package NAME in route parameter
+server.get('/:packageName', async (request, reply) => {
+  const { packageName } = request.params;
+
+  // 2. Look up package by name to get UUID
+  const pkg = await queryOne<Package>(
+    server,
+    'SELECT id FROM packages WHERE name = $1',
+    [packageName]
+  );
+
+  // 3. Use UUID for foreign key relationships
+  const versions = await query(
+    server,
+    'SELECT * FROM package_versions WHERE package_id = $1',
+    [pkg.id]  // UUID
+  );
+});
+```
+
+**Build Verification**:
+```bash
+✅ npm run typecheck --workspace=@prpm/registry
+✅ npm run build:registry
+```
+
+---
+
 ## 🔲 Remaining Work
 
-### 1. Update TypeScript Interfaces
+### 1. Update Client/CLI Code
 
 **Files to Update**:
 - `packages/registry/src/types/*.ts`

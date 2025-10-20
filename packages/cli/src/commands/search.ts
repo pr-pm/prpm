@@ -144,7 +144,7 @@ export async function handleSearch(
         verifiedBadge = ' | ✅ Verified';
       }
 
-      console.log(`${pkg.id} ${rating}`);
+      console.log(`${pkg.name} ${rating}`);
       console.log(`    ${pkg.description || 'No description'}`);
       console.log(`    ${typeIcon} ${typeLabel} | 📥 ${downloads} | 🏷️  ${pkg.tags.slice(0, 3).join(', ')}${verifiedBadge}`);
       console.log();

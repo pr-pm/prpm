@@ -34,7 +34,7 @@ export async function handleTrending(options: { type?: PackageType; limit?: numb
         ? `${(pkg.total_downloads / 1000).toFixed(1)}k`
         : pkg.total_downloads;
 
-      console.log(`${index + 1}. [${verified}] ${pkg.id} ${rating}`);
+      console.log(`${index + 1}. [${verified}] ${pkg.name} ${rating}`);
       console.log(`   ${pkg.description || 'No description'}`);
       console.log(`   📥 ${downloads} downloads`);
       console.log();

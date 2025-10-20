@@ -237,13 +237,13 @@ describe('Collection Routes', () => {
     };
 
     // Mock database with both query() and connect() methods
-    server.decorate('pg', {
+    (server as any).decorate('pg', {
       query: mockQuery,
       connect: async () => ({
         query: mockQuery,
         release: () => {}
       })
-    } as unknown);
+    } as any);
 
     await server.register(collectionRoutes, { prefix: '/api/v1/collections' });
     await server.ready();
@@ -283,7 +283,7 @@ describe('Collection Routes', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.collections.every((c) => c.official === true));
+      expect(body.collections.every((c: any) => c.official === true));
     });
 
     it('should support pagination', async () => {
@@ -316,13 +316,17 @@ describe('Collection Routes', () => {
     });
 
     it('should return 404 for non-existent collection', async () => {
-      (server.pg) = {
+      (server as any).pg = {
         query: async () => ({
           rows: [],
           command: 'SELECT',
           rowCount: 0,
           oid: 0,
           fields: []
+        }),
+        connect: async () => ({
+          query: async () => ({ rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] }),
+          release: () => {}
         })
       };
 

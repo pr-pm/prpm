@@ -7,17 +7,18 @@ import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 
-export async function handleInfo(packageId: string): Promise<void> {
+export async function handleInfo(packageName: string): Promise<void> {
   const startTime = Date.now();
   let success = false;
   let error: string | undefined;
 
   try {
-    console.log(`📦 Fetching package info for "${packageId}"...`);
+    console.log(`📦 Fetching package info for "${packageName}"...`);
 
     const config = await getConfig();
     const client = getRegistryClient(config);
-    const pkg = await client.getPackage(packageId);
+    const pkg = await client.getPackage(packageName);
+    console.log(pkg)
 
     console.log('\n' + '='.repeat(60));
     console.log(`  ${pkg.id} ${pkg.verified ? '✓ Verified' : ''}`);
@@ -50,8 +51,8 @@ export async function handleInfo(packageId: string): Promise<void> {
 
     // Installation
     console.log('\n💻 Installation:');
-    console.log(`   prpm install ${pkg.id}`);
-    console.log(`   prpm install ${pkg.id}@${pkg.latest_version?.version || 'latest'}`);
+    console.log(`   prpm install ${pkg.name}`);
+    console.log(`   prpm install ${pkg.name}@${pkg.latest_version?.version || 'latest'}`);
 
     console.log('\n' + '='.repeat(60));
 
@@ -71,7 +72,7 @@ export async function handleInfo(packageId: string): Promise<void> {
       error,
       duration: Date.now() - startTime,
       data: {
-        packageId,
+        packageName,
       },
     });
   }

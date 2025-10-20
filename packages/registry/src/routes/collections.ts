@@ -354,7 +354,7 @@ export async function collectionRoutes(server: FastifyInstance) {
         // Validate all packages exist
         for (const pkg of input.packages) {
           const pkgResult = await server.pg.query(
-            `SELECT id FROM packages WHERE id = $1`,
+            `SELECT id FROM packages WHERE name = $1`,
             [pkg.packageId]
           );
 
@@ -721,7 +721,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           cp.required,
           cp.reason,
           cp.install_order,
-          p.id as package_id_full,
+          p.name as package_name,
           p.description,
           p.type,
           p.tags
@@ -741,8 +741,8 @@ export async function collectionRoutes(server: FastifyInstance) {
         required: row.required,
         reason: row.reason,
         installOrder: row.install_order,
-        package: row.package_id_full ? {
-          id: row.package_id_full,
+        package: row.package_name ? {
+          name: row.package_name,
           description: row.description,
           type: row.type,
           tags: row.tags,

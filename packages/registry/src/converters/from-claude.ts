@@ -12,6 +12,9 @@ import type {
   RulesSection,
   ToolsSection,
   PersonaSection,
+  ExamplesSection,
+  Rule,
+  Example,
 } from '../types/canonical.js';
 
 /**
@@ -295,8 +298,8 @@ function parsePersona(text: string): PersonaSection {
  */
 function parseRulesSection(title: string, content: string): RulesSection {
   const lines = content.split('\n');
-  const items: Array<{ title?: string; content: string; examples?: string[] }> = [];
-  let currentRule: { title?: string; content: string; examples?: string[] } | null = null;
+  const items: Rule[] = [];
+  let currentRule: { content: string; rationale?: string; examples?: string[] } | null = null;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -369,8 +372,8 @@ function parseRulesSection(title: string, content: string): RulesSection {
 /**
  * Parse examples section
  */
-function parseExamplesSection(title: string, content: string): { type: "examples"; title: string; examples: Array<{ title?: string; description?: string; code?: string; input?: string; output?: string }> } {
-  const examples: Array<{ title?: string; description?: string; code?: string; input?: string; output?: string }> = [];
+function parseExamplesSection(title: string, content: string): ExamplesSection {
+  const examples: Example[] = [];
   const sections = content.split(/###\s+/);
 
   for (const section of sections) {
@@ -386,7 +389,7 @@ function parseExamplesSection(title: string, content: string): { type: "examples
     const description = header
       .replace(/^[✓❌]\s*/, '')
       .replace(/^(Good|Bad|Incorrect):\s*/i, '')
-      .trim();
+      .trim() || 'Example'; // Fallback to 'Example' if description is empty
 
     // Extract code blocks
     const codeMatch = section.match(/```(\w+)?\n([\s\S]*?)```/);

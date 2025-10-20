@@ -29,7 +29,7 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
 
       // Only add text search if query is provided
       if (searchQuery && searchQuery.trim()) {
-        conditions.push(`to_tsvector('english', id || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', $${paramIndex++})`);
+        conditions.push(`to_tsvector('english', name || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', $${paramIndex++})`);
         params.push(searchQuery);
       }
 
@@ -91,7 +91,7 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
 
       // Search with ranking (only calculate rank if there's a search query)
       const rankColumn = (searchQuery && searchQuery.trim())
-        ? `ts_rank(to_tsvector('english', id || ' ' || COALESCE(description, '')), plainto_tsquery('english', $1)) as rank`
+        ? `ts_rank(to_tsvector('english', name || ' ' || COALESCE(description, '')), plainto_tsquery('english', $1)) as rank`
         : '0 as rank';
 
       const result = await query<Package & { rank: number }>(

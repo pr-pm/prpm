@@ -332,17 +332,23 @@ async function seedCollections() {
             for (let i = 0; i < collection.packages.length; i++) {
               const pkg = collection.packages[i];
               // Handle both string format and object format
-              const packageId = typeof pkg === 'string' ? pkg : pkg.packageId;
+              const packageIdentifier = typeof pkg === 'string' ? pkg : pkg.packageId; // may be a UUID or a name
               const required = typeof pkg === 'string' ? true : (pkg.required !== false);
               const order = typeof pkg === 'string' ? i + 1 : (pkg.order || i + 1);
 
-              // Check if package exists
-              const pkgExists = await pool.query(
-                'SELECT id FROM packages WHERE id = $1',
-                [packageId]
-              );
+              // Resolve package UUID: try exact id, then name lookup
+              let resolvedPackageId: string | null = null;
+              const byId = await pool.query('SELECT id FROM packages WHERE name = $1', [packageIdentifier]);
+              if (byId.rows.length > 0) {
+                resolvedPackageId = byId.rows[0].id;
+              } else {
+                const byName = await pool.query('SELECT id FROM packages WHERE name = $1', [packageIdentifier]);
+                if (byName.rows.length > 0) {
+                  resolvedPackageId = byName.rows[0].id;
+                }
+              }
 
-              if (pkgExists.rows.length > 0) {
+              if (resolvedPackageId) {
                 await pool.query(`
                   INSERT INTO collection_packages (
                     collection_scope, collection_id, collection_version,
@@ -354,7 +360,7 @@ async function seedCollections() {
                   collection.scope,
                   collection.id,
                   collection.version,
-                  packageId,
+                  resolvedPackageId,
                   'latest', // Use latest version
                   required,
                   order,

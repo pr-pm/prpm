@@ -14,7 +14,7 @@ describe('Analytics Routes', () => {
     server = Fastify();
 
     // Mock postgres plugin
-    (server.pg) = {
+    (server as any).pg = {
       query: async (sql: string, params?: unknown[]): Promise<unknown> => {
         // Track download - INSERT into download_events
         if (sql.includes('INSERT INTO download_events')) {
