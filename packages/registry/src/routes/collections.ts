@@ -334,7 +334,7 @@ export async function collectionRoutes(server: FastifyInstance) {
     },
     async (request, reply) => {
       const input = request.body as CollectionCreateInput;
-      const user = (request as any).user;
+      const user = request.user;
 
       try {
         // Check if collection ID already exists for this user
@@ -464,7 +464,7 @@ export async function collectionRoutes(server: FastifyInstance) {
     async (request, reply) => {
       const { scope, id } = request.params as { scope: string; id: string };
       const input = request.body as CollectionInstallInput;
-      const user = (request as any).user;
+      const user = request.user;
 
       try {
         // Get collection
@@ -514,7 +514,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             user_id, format
           ) VALUES ($1, $2, $3, $4, $5)
         `,
-          [scope, id, collection.version, user?.id || null, input.format]
+          [scope, id, collection.version, user?.user_id || null, input.format]
         );
 
         const result: CollectionInstallResult = {
@@ -569,7 +569,7 @@ export async function collectionRoutes(server: FastifyInstance) {
     async (request, reply) => {
       const { scope, id } = request.params as { scope: string; id: string };
       const { starred } = request.body as { starred: boolean };
-      const user = (request as any).user;
+      const user = request.user;
 
       try {
         if (starred) {
@@ -580,7 +580,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             VALUES ($1, $2, $3)
             ON CONFLICT DO NOTHING
           `,
-            [scope, id, user.id]
+            [scope, id, user.user_id]
           );
         } else {
           // Remove star
@@ -589,7 +589,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             DELETE FROM collection_stars
             WHERE collection_scope = $1 AND collection_id = $2 AND user_id = $3
           `,
-            [scope, id, user.id]
+            [scope, id, user.user_id]
           );
         }
 

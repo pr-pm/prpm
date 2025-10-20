@@ -19,29 +19,48 @@ import { registerRoutes } from './routes/index.js';
 import { registerTelemetryPlugin, telemetry } from './telemetry/index.js';
 
 async function buildServer() {
+  // Configure logger with pino-pretty for colored output
+  const loggerConfig = process.env.NODE_ENV === 'production'
+    ? {
+        level: config.logLevel,
+      }
+    : {
+        level: config.logLevel,
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            translateTime: 'HH:MM:ss.l',
+            ignore: 'pid,hostname',
+            colorize: true,
+            levelFirst: true,
+            messageFormat: '{msg}',
+            customColors: 'info:blue,warn:yellow,error:red,debug:gray',
+            customLevels: 'debug:10,info:20,warn:30,error:40',
+          },
+        },
+        serializers: {
+          req(request: any) {
+            return {
+              method: request.method,
+              url: request.url,
+              headers: request.headers ? {
+                host: request.headers.host,
+                'user-agent': request.headers['user-agent'],
+              } : undefined,
+              remoteAddress: request.ip,
+              remotePort: request.socket?.remotePort,
+            };
+          },
+          res(reply: any) {
+            return {
+              statusCode: reply.statusCode,
+            };
+          },
+        },
+      };
+
   const server = Fastify({
-    logger: {
-      level: config.logLevel,
-      serializers: {
-        req(request) {
-          return {
-            method: request.method,
-            url: request.url,
-            headers: request.headers ? {
-              host: request.headers.host,
-              'user-agent': request.headers['user-agent'],
-            } : undefined,
-            remoteAddress: request.ip,
-            remotePort: request.socket?.remotePort,
-          };
-        },
-        res(reply) {
-          return {
-            statusCode: reply.statusCode,
-          };
-        },
-      },
-    },
+    logger: loggerConfig,
     requestIdLogLabel: 'reqId',
     requestIdHeader: 'x-request-id',
     genReqId: (req) => (req.headers?.['x-request-id'] as string) || crypto.randomUUID(),
@@ -119,19 +138,49 @@ async function buildServer() {
   });
 
   // Database connection
-  await setupDatabase(server as any);
+  server.log.info('🔌 Connecting to database...');
+  await setupDatabase(server);
+  server.log.info('✅ Database connected');
 
   // Redis cache
-  await setupRedis(server as any);
+  server.log.info('🔌 Connecting to Redis...');
+  await setupRedis(server);
+  server.log.info('✅ Redis connected');
 
   // Authentication
-  await setupAuth(server as any);
+  server.log.info('🔐 Setting up authentication...');
+  await setupAuth(server);
+  server.log.info('✅ Authentication configured');
 
   // Telemetry & Analytics
-  await registerTelemetryPlugin(server as any);
+  server.log.info('📊 Initializing telemetry...');
+  await registerTelemetryPlugin(server);
+  server.log.info('✅ Telemetry initialized');
 
   // API routes
+  server.log.info('🛣️  Registering API routes...');
   await registerRoutes(server);
+  server.log.info('✅ Routes registered');
+
+  // Request logging hook
+  server.addHook('onRequest', async (request, reply) => {
+    request.log.info({
+      method: request.method,
+      url: request.url,
+      ip: request.ip,
+      userAgent: request.headers['user-agent']
+    }, `➡️  ${request.method} ${request.url}`);
+  });
+
+  // Response logging hook
+  server.addHook('onResponse', async (request, reply) => {
+    request.log.info({
+      method: request.method,
+      url: request.url,
+      statusCode: reply.statusCode,
+      responseTime: reply.getResponseTime()
+    }, `⬅️  ${request.method} ${request.url} - ${reply.statusCode} (${Math.round(reply.getResponseTime())}ms)`);
+  });
 
   // Enhanced health check with dependency status
   server.get('/health', async (request, reply) => {

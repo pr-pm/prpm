@@ -46,7 +46,7 @@ pulumi stack select prod
 
 ```bash
 # AWS region
-pulumi config set aws:region us-east-1
+pulumi config set aws:region us-west-2
 
 # Database credentials
 pulumi config set db:username prpm
@@ -103,7 +103,7 @@ EB_ENV=$(pulumi stack output beanstalkEnvironmentName)
 cd ../registry
 
 # Initialize EB CLI
-eb init --region us-east-1
+eb init --region us-west-2
 
 # Link to environment
 eb use $EB_ENV
@@ -180,7 +180,7 @@ cd packages/registry
 eb init
 
 # Follow prompts:
-# - Region: us-east-1
+# - Region: us-west-2
 # - Application name: prpm
 # - Platform: Node.js
 # - Platform version: Node.js 20 on Amazon Linux 2023
@@ -328,7 +328,7 @@ jobs:
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: prpm
           environment_name: prpm-production
-          region: us-east-1
+          region: us-west-2
           version_label: ${{ github.sha }}
           deployment_package: packages/registry
 ```

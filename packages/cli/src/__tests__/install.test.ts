@@ -71,7 +71,7 @@ describe('install command', () => {
     // Mock process.exit to prevent actual exit during tests
     jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
       throw new Error(`Process exited with code ${code}`);
-    }) as any);
+    }) as unknown);
   });
 
   afterEach(() => {

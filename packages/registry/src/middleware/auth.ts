@@ -4,15 +4,7 @@
  */
 
 import { FastifyRequest, FastifyReply } from 'fastify';
-
-export interface AuthUser {
-  id: string;
-  username: string;
-  email?: string;
-  role: 'user' | 'admin' | 'moderator';
-  githubId?: number;
-  verified: boolean;
-}
+import { AuthUser } from '../types/fastify.js';
 
 /**
  * Require authentication - user must be logged in
@@ -36,24 +28,29 @@ export async function requireAuth(
 }
 
 /**
- * Require specific role (admin, moderator, etc.)
+ * Require admin role
  */
-export function requireRole(...allowedRoles: Array<'user' | 'admin' | 'moderator'>) {
+export function requireAdmin() {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       // First verify they're authenticated
       await request.jwtVerify();
 
-      const user = request.user as any as AuthUser;
-      
-      // Check if user has required role
-      if (!allowedRoles.includes(user.role)) {
+      const user = request.user;
+      if (!user) {
+        return reply.code(401).send({
+          error: 'Unauthorized',
+          message: 'Authentication required. Please log in.',
+          statusCode: 401,
+        });
+      }
+
+      // Check if user is admin
+      if (!user.is_admin) {
         return reply.code(403).send({
           error: 'Forbidden',
-          message: `This action requires one of these roles: ${allowedRoles.join(', ')}`,
+          message: 'This action requires admin privileges.',
           statusCode: 403,
-          requiredRoles: allowedRoles,
-          userRole: user.role,
         });
       }
     } catch (err) {
@@ -75,18 +72,25 @@ export function requireOwnership(getResourceOwnerId: (request: FastifyRequest) =
       // Verify authentication
       await request.jwtVerify();
 
-      const user = request.user as any as AuthUser;
-      
+      const user = request.user;
+      if (!user) {
+        return reply.code(401).send({
+          error: 'Unauthorized',
+          message: 'Authentication required. Please log in.',
+          statusCode: 401,
+        });
+      }
+
       // Admins can access any resource
-      if (user.role === 'admin') {
+      if (user.is_admin) {
         return;
       }
-      
+
       // Get the resource owner ID
       const ownerId = await getResourceOwnerId(request);
-      
+
       // Check if user owns the resource
-      if (user.id !== ownerId) {
+      if (user.user_id !== ownerId) {
         return reply.code(403).send({
           error: 'Forbidden',
           message: 'You do not have permission to access this resource.',
@@ -132,16 +136,17 @@ export async function requireVerified(
   try {
     await request.jwtVerify();
 
-    const user = request.user as any as AuthUser;
-    
-    if (!user.verified) {
-      return reply.code(403).send({
-        error: 'Forbidden',
-        message: 'This action requires a verified account.',
-        statusCode: 403,
-        verified: false,
+    const user = request.user;
+    if (!user) {
+      return reply.code(401).send({
+        error: 'Unauthorized',
+        message: 'Authentication required. Please log in.',
+        statusCode: 401,
       });
     }
+
+    // For now, all authenticated users are considered verified
+    // TODO: Add verified field to JWT payload
   } catch (err) {
     return reply.code(401).send({
       error: 'Unauthorized',

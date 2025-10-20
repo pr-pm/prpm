@@ -276,7 +276,7 @@ export async function convertRoutes(server: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { content, from, to, metadata = {} } = request.body as any;
+      const { content, from, to, metadata = {} } = request.body as { content: string; from: string; to: string; metadata?: Record<string, unknown> };
 
       try {
         // TODO: Implement parsers for each format

@@ -211,13 +211,15 @@ async function seedPackages() {
             );
 
             totalPackages++;
-          } catch (err: any) {
-            console.error(`  ⚠️  Failed to insert package: ${err.message}`);
+          } catch (err: unknown) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            console.error(`  ⚠️  Failed to insert package: ${error.message}`);
             totalSkipped++;
           }
         }
-      } catch (err: any) {
-        console.error(`⚠️  Failed to load ${file}: ${err.message}`);
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error(`⚠️  Failed to load ${file}: ${error.message}`);
       }
     }
 
@@ -243,7 +245,7 @@ async function seedPackages() {
 
     const total = await pool.query('SELECT COUNT(*) as count FROM packages');
     console.log(`\n📦 Total packages in registry: ${total.rows[0].count}`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Seed failed:', error);
     throw error;
   } finally {

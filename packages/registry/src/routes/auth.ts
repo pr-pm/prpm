@@ -7,7 +7,11 @@ import { z } from 'zod';
 import { queryOne, query } from '../db/index.js';
 import { User, JWTPayload } from '../types.js';
 import { nanoid } from 'nanoid';
+import { hash, compare } from 'bcrypt';
+import { toError, getErrorMessage } from '../types/errors.js';
 import '../types/jwt.js';
+
+const SALT_ROUNDS = 10;
 
 /**
  * Helper function to fetch user data from GitHub and create/update user
@@ -98,6 +102,223 @@ export async function authRoutes(server: FastifyInstance) {
   // Store redirect URLs temporarily (keyed by state parameter)
   const pendingRedirects = new Map<string, string>();
 
+  /**
+   * Register with email/password
+   * POST /api/v1/auth/register
+   */
+  server.post('/register', {
+    schema: {
+      tags: ['auth'],
+      description: 'Register a new user with email and password',
+      body: {
+        type: 'object',
+        required: ['username', 'email', 'password'],
+        properties: {
+          username: { type: 'string', minLength: 3, maxLength: 39 },
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 8 },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                username: { type: 'string' },
+                email: { type: 'string' },
+              },
+            },
+            token: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { username, email, password } = request.body as {
+      username: string;
+      email: string;
+      password: string;
+    };
+
+    try {
+      // Check if username already exists
+      const existingUsername = await queryOne<User>(
+        server,
+        'SELECT id FROM users WHERE username = $1',
+        [username]
+      );
+
+      if (existingUsername) {
+        return reply.status(400).send({
+          error: 'Username already taken',
+          message: 'This username is already registered',
+        });
+      }
+
+      // Check if email already exists
+      const existingEmail = await queryOne<User>(
+        server,
+        'SELECT id FROM users WHERE email = $1',
+        [email]
+      );
+
+      if (existingEmail) {
+        return reply.status(400).send({
+          error: 'Email already registered',
+          message: 'This email is already registered',
+        });
+      }
+
+      // Hash password
+      const passwordHash = await hash(password, SALT_ROUNDS);
+
+      // Create user
+      const user = await queryOne<User>(
+        server,
+        `INSERT INTO users (username, email, password_hash, last_login_at)
+         VALUES ($1, $2, $3, NOW())
+         RETURNING id, username, email, avatar_url, verified_author, is_admin`,
+        [username, email, passwordHash]
+      );
+
+      if (!user) {
+        return reply.status(500).send({
+          error: 'Failed to create user',
+        });
+      }
+
+      // Generate JWT
+      const jwtToken = server.jwt.sign({
+        user_id: user.id,
+        username: user.username,
+        email: user.email,
+        is_admin: user.is_admin,
+        scopes: ['read:packages', 'write:packages'],
+      } as JWTPayload);
+
+      return {
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        },
+        token: jwtToken,
+      };
+    } catch (error: unknown) {
+      const err = toError(error);
+      server.log.error({ error: err.message }, 'Registration error');
+      return reply.status(500).send({
+        error: 'Registration failed',
+        message: err.message,
+      });
+    }
+  });
+
+  /**
+   * Login with email/password
+   * POST /api/v1/auth/login
+   */
+  server.post('/login', {
+    schema: {
+      tags: ['auth'],
+      description: 'Login with email and password',
+      body: {
+        type: 'object',
+        required: ['email', 'password'],
+        properties: {
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                username: { type: 'string' },
+                email: { type: 'string' },
+                avatar_url: { type: 'string' },
+                verified_author: { type: 'boolean' },
+              },
+            },
+            token: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { email, password } = request.body as {
+      email: string;
+      password: string;
+    };
+
+    try {
+      // Find user by email
+      const user = await queryOne<User>(
+        server,
+        'SELECT * FROM users WHERE email = $1',
+        [email]
+      );
+
+      if (!user || !user.password_hash) {
+        return reply.status(401).send({
+          error: 'Invalid credentials',
+          message: 'Email or password is incorrect',
+        });
+      }
+
+      // Verify password
+      const passwordValid = await compare(password, user.password_hash);
+
+      if (!passwordValid) {
+        return reply.status(401).send({
+          error: 'Invalid credentials',
+          message: 'Email or password is incorrect',
+        });
+      }
+
+      // Update last login
+      await query(
+        server,
+        'UPDATE users SET last_login_at = NOW() WHERE id = $1',
+        [user.id]
+      );
+
+      // Generate JWT
+      const jwtToken = server.jwt.sign({
+        user_id: user.id,
+        username: user.username,
+        email: user.email,
+        is_admin: user.is_admin,
+        scopes: ['read:packages', 'write:packages'],
+      } as JWTPayload);
+
+      return {
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          avatar_url: user.avatar_url,
+          verified_author: user.verified_author,
+        },
+        token: jwtToken,
+      };
+    } catch (error: unknown) {
+      const err = toError(error);
+      server.log.error({ error: err.message }, 'Login error');
+      return reply.status(500).send({
+        error: 'Login failed',
+        message: err.message,
+      });
+    }
+  });
+
   // Override GitHub OAuth start to support custom redirect parameter
   server.get('/github', async (request: FastifyRequest, reply: FastifyReply) => {
     // Check if GitHub OAuth is configured
@@ -161,8 +382,9 @@ export async function authRoutes(server: FastifyInstance) {
       // Default: redirect to frontend with token
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       return reply.redirect(`${frontendUrl}/auth/callback?token=${jwtToken}&username=${user.username}`);
-    } catch (error: any) {
-      server.log.error('GitHub OAuth error:', error);
+    } catch (error: unknown) {
+      const err = toError(error);
+      server.log.error({ error: err.message }, 'GitHub OAuth error');
       return reply.status(500).send({ error: 'Authentication failed' });
     }
   });

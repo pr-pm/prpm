@@ -8,16 +8,16 @@ import analyticsRoutes from '../analytics';
 
 describe('Analytics Routes', () => {
   let server: FastifyInstance;
-  const mockDbRows: any[] = [];
+  const mockDbRows: unknown[] = [];
 
   beforeAll(async () => {
     server = Fastify();
 
     // Mock postgres plugin
-    (server as any).pg = {
-      query: async (sql: string, params?: any[]): Promise<any> => {
-        // Track download - INSERT into package_stats
-        if (sql.includes('INSERT INTO package_stats')) {
+    (server.pg) = {
+      query: async (sql: string, params?: unknown[]): Promise<unknown> => {
+        // Track download - INSERT into download_events
+        if (sql.includes('INSERT INTO download_events')) {
           return { rows: [], command: 'INSERT', rowCount: 1, oid: 0, fields: [] };
         }
 

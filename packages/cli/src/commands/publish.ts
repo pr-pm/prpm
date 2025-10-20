@@ -12,6 +12,7 @@ import { randomBytes } from 'crypto';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
+import type { PackageManifest } from '../types/registry.js';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -22,7 +23,7 @@ interface PublishOptions {
 /**
  * Validate package manifest
  */
-async function validateManifest(manifestPath: string): Promise<any> {
+async function validateManifest(manifestPath: string): Promise<PackageManifest> {
   try {
     const content = await readFile(manifestPath, 'utf-8');
     const manifest = JSON.parse(content);
@@ -63,7 +64,7 @@ async function validateManifest(manifestPath: string): Promise<any> {
 /**
  * Create tarball from current directory
  */
-async function createTarball(manifest: any): Promise<Buffer> {
+async function createTarball(manifest: PackageManifest): Promise<Buffer> {
   const tmpDir = join(tmpdir(), `prpm-${randomBytes(8).toString('hex')}`);
   const tarballPath = join(tmpDir, 'package.tar.gz');
 
@@ -174,9 +175,9 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     console.log('');
     console.log('✅ Package published successfully!');
     console.log('');
-    console.log(`   Package: ${result.name}@${result.version}`);
-    console.log(`   Install: prpm install ${result.name}`);
-    console.log(`   View: ${config.registryUrl}/packages/${result.id}`);
+    console.log(`   Package: ${manifest.name}@${result.version}`);
+    console.log(`   Install: prpm install ${manifest.name}`);
+    console.log(`   View: ${config.registryUrl}/packages/${result.package_id}`);
     console.log('');
 
     success = true;

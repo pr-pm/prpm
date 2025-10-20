@@ -5,6 +5,7 @@
 import { FastifyInstance } from 'fastify';
 import fastifyRedis from '@fastify/redis';
 import { config } from '../config.js';
+import { toError } from '../types/errors.js';
 
 export async function setupRedis(server: FastifyInstance) {
   await server.register(fastifyRedis, {
@@ -16,9 +17,10 @@ export async function setupRedis(server: FastifyInstance) {
   try {
     await server.redis.ping();
     server.log.info('✅ Redis connected');
-  } catch (error: any) {
-    server.log.error('❌ Redis connection failed:', error);
-    throw error;
+  } catch (error: unknown) {
+    const err = toError(error);
+    server.log.error({ error: err.message }, '❌ Redis connection failed');
+    throw err;
   }
 }
 
@@ -30,8 +32,8 @@ export async function cacheGet<T>(
   try {
     const value = await server.redis.get(key);
     return value ? JSON.parse(value) : null;
-  } catch (error: any) {
-    server.log.warn(`Cache get failed for key ${key}:`, error);
+  } catch (error: unknown) {
+    server.log.warn(`Cache get failed for key ${key}: ${toError(error).message}`);
     return null;
   }
 }
@@ -44,8 +46,8 @@ export async function cacheSet(
 ): Promise<void> {
   try {
     await server.redis.setex(key, ttlSeconds, JSON.stringify(value));
-  } catch (error: any) {
-    server.log.warn(`Cache set failed for key ${key}:`, error);
+  } catch (error: unknown) {
+    server.log.warn(`Cache set failed for key ${key}: ${toError(error).message}`);
   }
 }
 
@@ -55,8 +57,8 @@ export async function cacheDelete(
 ): Promise<void> {
   try {
     await server.redis.del(key);
-  } catch (error: any) {
-    server.log.warn(`Cache delete failed for key ${key}:`, error);
+  } catch (error: unknown) {
+    server.log.warn(`Cache delete failed for key ${key}: ${toError(error).message}`);
   }
 }
 
@@ -69,7 +71,7 @@ export async function cacheDeletePattern(
     if (keys.length > 0) {
       await server.redis.del(...keys);
     }
-  } catch (error: any) {
-    server.log.warn(`Cache delete pattern failed for ${pattern}:`, error);
+  } catch (error: unknown) {
+    server.log.warn(`Cache delete pattern failed for ${pattern}: ${toError(error).message}`);
   }
 }

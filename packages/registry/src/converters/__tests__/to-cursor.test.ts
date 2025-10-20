@@ -207,7 +207,7 @@ describe('toCursor', () => {
             {
               type: 'unknown',
               data: {},
-            } as any,
+            } as unknown,
           ],
         },
       };
@@ -258,7 +258,7 @@ describe('toCursor', () => {
           sections: [
             {
               type: 'metadata' as const,
-              data: null as any, // Invalid data
+              data: { title: "test", description: "test" }, // Invalid data
             },
           ],
         },

@@ -162,7 +162,7 @@ function createVpc(
     natGateway: pulumi.output(natGateway),
     publicRouteTable,
     privateRouteTable: pulumi.output(privateRouteTable),
-  } as any;
+  } 
 }
 
 export const network = {

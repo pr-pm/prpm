@@ -13,9 +13,11 @@ import {
   validateFileExtensions,
   PackageManifest,
 } from '../validation/package.js';
+import { toError } from '../types/errors.js';
 import { config } from '../config.js';
 import { Package, PackageVersion } from '../types.js';
 import * as semver from 'semver';
+import { updatePackageQualityScore } from '../scoring/quality-scorer.js';
 
 export async function publishRoutes(server: FastifyInstance) {
   // Publish package
@@ -212,6 +214,15 @@ export async function publishRoutes(server: FastifyInstance) {
       await cacheDeletePattern(server, 'packages:list:*');
       await cacheDeletePattern(server, 'search:*');
 
+      // Update quality score
+      try {
+        const qualityScore = await updatePackageQualityScore(server, manifest.name);
+        server.log.info({ packageId: manifest.name, qualityScore }, 'Updated quality score after publish');
+      } catch (err) {
+        const error = toError(err);
+        server.log.warn({ error: error.message, packageId: manifest.name }, 'Failed to update quality score');
+      }
+
       // Index in search engine if available
       // TODO: Add search indexing
 
@@ -224,11 +235,12 @@ export async function publishRoutes(server: FastifyInstance) {
         message: `Successfully published ${manifest.name}@${manifest.version}`,
         tarball_url: upload.url,
       });
-    } catch (error: any) {
-      server.log.error('Publish error:', error);
+    } catch (error: unknown) {
+      const err = toError(error);
+      server.log.error({ error: err.message }, 'Publish error');
       return reply.status(500).send({
         error: 'Failed to publish package',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: err.message,
       });
     }
   });

@@ -69,9 +69,9 @@ export function createTrendingCommand(): Command {
     .description('Show trending packages')
     .option('--type <type>', 'Filter by package type (cursor, claude, continue)')
     .option('--limit <number>', 'Number of packages to show', '10')
-    .action(async (options: any) => {
+    .action(async (options: { limit?: string; type?: string }) => {
       const type = options.type as PackageType | undefined;
-      const limit = parseInt(options.limit, 10);
+      const limit = options.limit ? parseInt(options.limit, 10) : 10;
 
       if (options.type && !['cursor', 'claude', 'continue', 'windsurf', 'generic'].includes(type!)) {
         console.error('❌ Type must be one of: cursor, claude, continue, windsurf, generic');

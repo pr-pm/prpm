@@ -17,7 +17,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 
 interface BeanstalkConfig {
-  vpc: any;
+  vpc: ReturnType<typeof createNetwork>;
   dbEndpoint: pulumi.Output<string>;
   dbUsername: string;
   dbPassword: pulumi.Output<string>;
@@ -264,15 +264,15 @@ export function createBeanstalkApp(
       {
         namespace: "aws:ec2:vpc",
         name: "Subnets",
-        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: any[]) =>
-          pulumi.all(subnets.map((s: any) => s.id)).apply(ids => ids.join(","))
+        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: unknown[]) =>
+          pulumi.all(subnets.map((s: { id: pulumi.Output<string> }) => s.id)).apply(ids => ids.join(","))
         ),
       },
       {
         namespace: "aws:ec2:vpc",
         name: "ELBSubnets",
-        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: any[]) =>
-          pulumi.all(subnets.map((s: any) => s.id)).apply(ids => ids.join(","))
+        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: unknown[]) =>
+          pulumi.all(subnets.map((s: { id: pulumi.Output<string> }) => s.id)).apply(ids => ids.join(","))
         ),
       },
 
@@ -351,7 +351,7 @@ export function createBeanstalkApp(
       {
         namespace: "aws:elasticbeanstalk:application:environment",
         name: "AWS_REGION",
-        value: aws.config.region || "us-east-1",
+        value: aws.config.region || "us-west-2",
       },
 
       // JWT Secret

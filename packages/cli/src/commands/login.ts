@@ -135,7 +135,7 @@ async function loginWithToken(token: string, registryUrl: string): Promise<{ tok
     throw new Error('Invalid token');
   }
 
-  const user: any = await response.json();
+  const user = await response.json() as { id: string; username: string; email?: string };
   return { token, username: user.username };
 }
 

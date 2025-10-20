@@ -448,12 +448,12 @@ export function createCollectionsCommand(): Command {
     .option('--tag <tag>', 'Filter by tag')
     .option('--official', 'Show only official collections')
     .option('--limit <number>', 'Number of results to show', '50')
-    .action(async (query: string, options: any) => {
+    .action(async (query: string, options: { type?: string; limit?: string; category?: string; tag?: string; official?: boolean }) => {
       await handleCollectionsSearch(query, {
         category: options.category,
         tag: options.tag,
         official: options.official,
-        limit: parseInt(options.limit, 10),
+        limit: options.limit ? parseInt(options.limit, 10) : 50,
       });
     });
 

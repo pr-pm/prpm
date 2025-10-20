@@ -119,3 +119,43 @@ export async function getTopAuthors(limit: number = 50): Promise<TopAuthorsRespo
 export function getGitHubOAuthUrl(redirectUrl: string): string {
   return `${REGISTRY_URL}/api/v1/auth/github?redirect=${encodeURIComponent(redirectUrl)}`
 }
+
+/**
+ * Register with email and password
+ */
+export async function register(username: string, email: string, password: string) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, email, password }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Registration failed' }))
+    throw new Error(error.error || error.message || 'Registration failed')
+  }
+
+  return response.json()
+}
+
+/**
+ * Login with email and password
+ */
+export async function login(email: string, password: string) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Login failed' }))
+    throw new Error(error.error || error.message || 'Login failed')
+  }
+
+  return response.json()
+}

@@ -69,14 +69,17 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
           orderBy = 'updated_at DESC';
           break;
         case 'quality':
-          orderBy = 'quality_score DESC NULLS LAST';
+          orderBy = 'quality_score DESC NULLS LAST, total_downloads DESC';
           break;
         case 'rating':
-          orderBy = 'rating_average DESC NULLS LAST';
+          orderBy = 'rating_average DESC NULLS LAST, quality_score DESC NULLS LAST';
           break;
         case 'downloads':
+          orderBy = 'total_downloads DESC, quality_score DESC NULLS LAST';
+          break;
         default:
-          orderBy = 'rank DESC, total_downloads DESC';
+          // Default: prioritize quality, then downloads, then search relevance
+          orderBy = 'quality_score DESC NULLS LAST, rank DESC, total_downloads DESC';
           break;
       }
 

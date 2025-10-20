@@ -81,7 +81,7 @@ pulumi stack select prod
 
 ```bash
 # AWS region
-pulumi config set aws:region us-east-1
+pulumi config set aws:region us-west-2
 
 # Database credentials
 pulumi config set db:username prpm
@@ -117,7 +117,7 @@ pulumi stack output apiUrl
 cd ../registry
 
 # Deploy with EB CLI
-eb init --region us-east-1
+eb init --region us-west-2
 eb use $(pulumi stack output beanstalkEnvironmentName --cwd ../infra)
 eb deploy
 

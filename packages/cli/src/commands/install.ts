@@ -235,7 +235,7 @@ export function createInstallCommand(): Command {
     .option('--type <type>', 'Override package type (cursor, claude, continue)')
     .option('--as <format>', 'Download in specific format (cursor, claude, continue, windsurf)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string, options: any) => {
+    .action(async (packageSpec: string, options: { format?: string; save?: boolean; dev?: boolean; global?: boolean; type?: string; as?: string; frozenLockfile?: boolean }) => {
       if (options.type && !['cursor', 'claude', 'continue', 'windsurf', 'generic'].includes(options.type)) {
         console.error('❌ Type must be one of: cursor, claude, continue, windsurf, generic');
         process.exit(1);
@@ -246,7 +246,11 @@ export function createInstallCommand(): Command {
         process.exit(1);
       }
 
-      await handleInstall(packageSpec, options);
+      await handleInstall(packageSpec, {
+        type: options.type as PackageType | undefined,
+        as: options.as,
+        frozenLockfile: options.frozenLockfile
+      });
     });
 
   return command;

@@ -1,0 +1,33 @@
+{
+  "name": "@prpm-official/creating-cursor-rules",
+  "version": "1.0.0",
+  "description": "Meta-rule for creating effective Cursor IDE rules with proper structure, patterns, and examples",
+  "type": "cursor",
+  "author": "PRPM Team",
+  "license": "MIT",
+  "keywords": [
+    "meta",
+    "cursor",
+    "cursor-rules",
+    "best-practices",
+    "documentation",
+    "development"
+  ],
+  "category": "meta",
+  "tags": [
+    "meta",
+    "cursor",
+    "cursor-rules"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khaliqgant/prompt-package-manager"
+  },
+  "prpm": {
+    "format": "cursor",
+    "installPath": ".cursor/rules",
+    "files": [
+      ".cursor/rules/creating-cursor-rules.md"
+    ]
+  }
+}

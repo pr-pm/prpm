@@ -133,7 +133,7 @@ if [ "$CURRENT_STACK" != "none" ]; then
         echo -e "${YELLOW}⚠️  Missing required configuration${NC}"
         echo ""
         echo "Set missing values with:"
-        echo "  pulumi config set aws:region us-east-1"
+        echo "  pulumi config set aws:region us-west-2"
         echo "  pulumi config set --secret db:password <PASSWORD>"
         echo "  pulumi config set --secret github:clientId <CLIENT_ID>"
         echo "  pulumi config set --secret github:clientSecret <CLIENT_SECRET>"

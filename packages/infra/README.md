@@ -61,7 +61,7 @@ pulumi stack init prod
 pulumi stack select dev
 
 # Required configuration
-pulumi config set aws:region us-east-1
+pulumi config set aws:region us-west-2
 pulumi config set --secret db:password YOUR_SECURE_DB_PASSWORD
 pulumi config set --secret github:clientId YOUR_GITHUB_CLIENT_ID
 pulumi config set --secret github:clientSecret YOUR_GITHUB_CLIENT_SECRET
@@ -160,7 +160,7 @@ ECR_REPO=$(pulumi stack output ecrRepositoryUrl)
 
 # 3. Build and push Docker image
 cd ../registry
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REPO
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin $ECR_REPO
 docker build -t prpm-registry:latest .
 docker tag prpm-registry:latest $ECR_REPO:latest
 docker push $ECR_REPO:latest

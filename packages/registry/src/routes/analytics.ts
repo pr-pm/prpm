@@ -6,6 +6,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { createHash } from 'crypto';
 import { optionalAuth } from '../middleware/auth.js';
+import { AnalyticsQuery } from '../types/analytics.js';
 
 const TrackDownloadSchema = z.object({
   packageId: z.string(),
@@ -67,7 +68,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
 
       try {
         // Get client info for anonymous tracking
-        const clientId = (request.user as any)?.id || 
+        const clientId = request.user?.user_id ||
           request.headers['x-client-id'] as string ||
           'anonymous';
         
@@ -75,18 +76,30 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           createHash('sha256').update(request.ip).digest('hex').substring(0, 16) :
           null;
 
-        // Record download in package_stats table
+        // Record download event in enhanced analytics table
         await fastify.pg.query(
-          `INSERT INTO package_stats (
+          `INSERT INTO download_events (
             package_id,
-            download_count,
-            format,
+            version,
             client_type,
-            downloaded_by,
+            format,
+            user_id,
+            client_id,
             ip_hash,
-            created_at
-          ) VALUES ($1, 1, $2, $3, $4, $5, NOW())`,
-          [packageId, format || 'generic', client || 'api', clientId, ipHash]
+            user_agent,
+            referrer
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            packageId,
+            version || null,
+            client || 'api',
+            format || 'generic',
+            request.user?.user_id || null,
+            clientId !== 'anonymous' ? clientId : null,
+            ipHash,
+            request.headers['user-agent'] || null,
+            request.headers.referer || request.headers.referrer || null,
+          ]
         );
 
         // Update package download counts
@@ -161,15 +174,21 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
       const { packageId, referrer } = request.body;
 
       try {
-        // Record view (fire and forget, don't block response)
+        // Record view event (fire and forget, don't block response)
+        const userId = request.user?.user_id || null;
+        const ipHash = request.ip ?
+          createHash('sha256').update(request.ip).digest('hex').substring(0, 16) :
+          null;
+
         fastify.pg.query(
           `INSERT INTO package_views (
             package_id,
-            referrer,
+            user_id,
+            ip_hash,
             user_agent,
-            created_at
-          ) VALUES ($1, $2, $3, NOW())`,
-          [packageId, referrer, request.headers['user-agent']]
+            referrer
+          ) VALUES ($1, $2, $3, $4, $5)`,
+          [packageId, userId, ipHash, request.headers['user-agent'], referrer]
         ).catch(err => fastify.log.error({ err }, 'Failed to record view'));
 
         return reply.send({ success: true });
@@ -238,12 +257,12 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
 
         const pkg = pkgResult.rows[0];
 
-        // Get downloads by format
+        // Get downloads by format from download events
         const formatResult = await fastify.pg.query(
-          `SELECT 
+          `SELECT
             format,
             COUNT(*) as count
-          FROM package_stats
+          FROM download_events
           WHERE package_id = $1
           GROUP BY format`,
           [packageId]
@@ -254,12 +273,12 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           return acc;
         }, {} as Record<string, number>);
 
-        // Get downloads by client
+        // Get downloads by client from download events
         const clientResult = await fastify.pg.query(
-          `SELECT 
+          `SELECT
             client_type,
             COUNT(*) as count
-          FROM package_stats
+          FROM download_events
           WHERE package_id = $1
           GROUP BY client_type`,
           [packageId]
@@ -272,11 +291,11 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
 
         // Calculate trend (simple: compare this week vs last week)
         const trendResult = await fastify.pg.query(
-          `SELECT 
+          `SELECT
             SUM(CASE WHEN created_at >= NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) as this_week,
-            SUM(CASE WHEN created_at >= NOW() - INTERVAL '14 days' 
+            SUM(CASE WHEN created_at >= NOW() - INTERVAL '14 days'
                       AND created_at < NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) as last_week
-          FROM package_stats
+          FROM download_events
           WHERE package_id = $1`,
           [packageId]
         );
@@ -331,7 +350,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { limit = 10, timeframe = 'week' } = request.query as any;
+      const { limit = 10, timeframe = 'week' } = request.query as AnalyticsQuery;
 
       const intervalMap: Record<string, string> = {
         day: '1 day',
@@ -342,7 +361,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
 
       try {
         const result = await fastify.pg.query(
-          `SELECT 
+          `SELECT
             p.id,
             p.display_name,
             p.description,
@@ -350,11 +369,11 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
             p.category,
             p.total_downloads,
             p.weekly_downloads,
-            COUNT(ps.id) as recent_downloads,
-            COUNT(ps.id)::float / GREATEST(p.total_downloads, 1) as trending_score
+            COUNT(de.id) as recent_downloads,
+            COUNT(de.id)::float / GREATEST(p.total_downloads, 1) as trending_score
           FROM packages p
-          LEFT JOIN package_stats ps ON ps.package_id = p.id 
-            AND ps.created_at >= NOW() - INTERVAL '${interval}'
+          LEFT JOIN download_events de ON de.package_id = p.id
+            AND de.created_at >= NOW() - INTERVAL '${interval}'
           GROUP BY p.id
           ORDER BY trending_score DESC, recent_downloads DESC
           LIMIT $1`,
@@ -396,7 +415,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { limit = 10, type } = request.query as any;
+      const { limit = 10, type } = request.query as AnalyticsQuery;
 
       try {
         let query = `
@@ -415,7 +434,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           WHERE total_downloads > 0
         `;
 
-        const params: any[] = [];
+        const params: (string | number)[] = [];
 
         if (type) {
           query += ` AND type = $1`;

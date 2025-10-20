@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient } from '@prpm/registry-client';
+import { getRegistryClient, SearchResult } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
@@ -72,7 +72,7 @@ export async function handleSearch(
   const startTime = Date.now();
   let success = false;
   let error: string | undefined;
-  let result: any = null;
+  let result: SearchResult | null = null;
 
   try {
     // Allow empty query when filtering by type
@@ -93,7 +93,7 @@ export async function handleSearch(
     const client = getRegistryClient(config);
 
     // Map CLI type to registry schema
-    const searchOptions: any = {
+    const searchOptions: Record<string, unknown> = {
       limit: options.limit || 20,
     };
 
@@ -109,7 +109,7 @@ export async function handleSearch(
 
     result = await client.search(query || '', searchOptions);
 
-    if (result.packages.length === 0) {
+    if (!result || result.packages.length === 0) {
       console.log('\n❌ No packages found');
       console.log(`\nTry:`);
       console.log(`  - Broadening your search terms`);
@@ -121,7 +121,7 @@ export async function handleSearch(
     console.log(`\n✨ Found ${result.total} package(s):\n`);
 
     // Display results
-    result.packages.forEach((pkg: any) => {
+    result.packages.forEach((pkg) => {
       const badges: string[] = [];
       if (pkg.featured || pkg.official) badges.push('Official');
       if (pkg.verified && !pkg.featured && !pkg.official) badges.push('Verified');
@@ -177,9 +177,9 @@ export function createSearchCommand(): Command {
     .argument('[query]', 'Search query (optional when using --type)')
     .option('--type <type>', 'Filter by package type (skill, agent, rule, plugin, prompt, workflow, tool, template, mcp)')
     .option('--limit <number>', 'Number of results to show', '20')
-    .action(async (query: string | undefined, options: any) => {
+    .action(async (query: string | undefined, options: { type?: string; limit?: string; tags?: string }) => {
       const type = options.type as CLIPackageType | undefined;
-      const limit = parseInt(options.limit, 10);
+      const limit = options.limit ? parseInt(options.limit, 10) : 20;
 
       const validTypes: CLIPackageType[] = ['skill', 'agent', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
       if (options.type && !validTypes.includes(type!)) {

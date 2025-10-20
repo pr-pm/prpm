@@ -27,6 +27,7 @@
   "author": "khaliqgant",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.67.0",
     "@aws-sdk/client-s3": "^3.515.0",
     "@aws-sdk/s3-request-presigner": "^3.515.0",
     "@fastify/cors": "^9.0.1",

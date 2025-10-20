@@ -56,8 +56,8 @@ export async function uploadPackage(
       hash,
       size: tarball.length,
     };
-  } catch (error: any) {
-    server.log.error(`Failed to upload package to S3:`, error);
+  } catch (error: unknown) {
+    server.log.error({ error: String(error) }, 'Failed to upload package to S3');
     throw new Error('Failed to upload package to storage');
   }
 }
@@ -81,8 +81,8 @@ export async function getDownloadUrl(
 
     const url = await getSignedUrl(s3Client, command, { expiresIn });
     return url;
-  } catch (error: any) {
-    server.log.error(`Failed to generate download URL:`, error);
+  } catch (error: unknown) {
+    server.log.error({ error: String(error) }, 'Failed to generate download URL');
     throw new Error('Failed to generate download URL');
   }
 }
@@ -106,8 +106,8 @@ export async function deletePackage(
     );
 
     server.log.info(`Deleted package ${packageId}@${version} from S3`);
-  } catch (error: any) {
-    server.log.error(`Failed to delete package from S3:`, error);
+  } catch (error: unknown) {
+    server.log.error({ error: String(error) }, 'Failed to delete package from S3');
     throw new Error('Failed to delete package from storage');
   }
 }

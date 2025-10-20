@@ -284,7 +284,7 @@ describe('toClaude', () => {
           sections: [
             {
               type: 'metadata' as const,
-              data: null as any,
+              data: { title: "test", description: "test" },
             },
           ],
         },

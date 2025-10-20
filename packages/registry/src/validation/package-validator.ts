@@ -4,6 +4,7 @@
  */
 
 import { isValidCategory, suggestCategory } from '../constants/categories.js';
+import { toError } from '../types/errors.js';
 
 export interface ValidationResult {
   valid: boolean;
@@ -345,10 +346,11 @@ function validateJSON(content: string): ValidationResult {
 
   try {
     JSON.parse(content);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = toError(error);
     errors.push({
       field: 'content',
-      message: `Invalid JSON: ${error.message}`,
+      message: `Invalid JSON: ${err.message}`,
       code: 'INVALID_JSON',
     });
   }

@@ -109,7 +109,7 @@ function convertSection(section: Section, warnings: string[]): string {
       return '';
 
     default:
-      warnings.push(`Unknown section type: ${(section as any).type}`);
+      warnings.push(`Unknown section type: ${(section as { type: string }).type}`);
       return '';
   }
 }
@@ -117,7 +117,7 @@ function convertSection(section: Section, warnings: string[]): string {
 /**
  * Convert metadata to Cursor format
  */
-function convertMetadata(section: { type: 'metadata'; data: any }): string {
+function convertMetadata(section: { type: "metadata"; data: Record<string, unknown> }): string {
   const { title, description, icon } = section.data;
 
   const lines: string[] = [];
@@ -171,7 +171,7 @@ function convertInstructions(section: {
 function convertRules(section: {
   type: 'rules';
   title: string;
-  items: any[];
+  items: RuleItem[];
   ordered?: boolean;
 }): string {
   const lines: string[] = [];
@@ -181,7 +181,7 @@ function convertRules(section: {
   lines.push('');
 
   // Rules list
-  section.items.forEach((rule: any, index) => {
+  section.items.forEach((rule, index) => {
     const content = typeof rule === 'string' ? rule : rule.content;
     const prefix = section.ordered ? `${index + 1}.` : '-';
 
@@ -209,7 +209,7 @@ function convertRules(section: {
 function convertExamples(section: {
   type: 'examples';
   title: string;
-  examples: any[];
+  examples: ExampleItem[];
 }): string {
   const lines: string[] = [];
 
@@ -218,7 +218,7 @@ function convertExamples(section: {
   lines.push('');
 
   // Examples
-  section.examples.forEach((example: any) => {
+  section.examples.forEach((example) => {
     // Example description
     const prefix = example.good === false ? '❌ Bad' : '✅ Good';
     lines.push(`### ${prefix}: ${example.description}`);
@@ -240,7 +240,7 @@ function convertExamples(section: {
  */
 function convertPersona(section: {
   type: 'persona';
-  data: any;
+  data: Record<string, unknown>;
 }): string {
   const { name, role, icon, style, expertise } = section.data;
   const lines: string[] = [];

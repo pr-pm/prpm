@@ -257,16 +257,16 @@ export async function registerTelemetryPlugin(server: FastifyInstance) {
   // Track all requests
   server.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
     // Store start time
-    (request as any).startTime = Date.now();
+    request.startTime = Date.now();
   });
 
   server.addHook('onResponse', async (request: FastifyRequest, reply: FastifyReply) => {
     if (!telemetry.isEnabled()) return;
 
-    const duration = Date.now() - ((request as any).startTime || Date.now());
+    const duration = Date.now() - (request.startTime || Date.now());
 
     // Extract user ID from JWT if available
-    const userId = (request as any).user?.user_id;
+    const userId = request.user?.user_id;
 
     // Track the request
     await telemetry.trackAPIRequest({
@@ -288,7 +288,7 @@ export async function registerTelemetryPlugin(server: FastifyInstance) {
       error: error.message,
       stack: error.stack,
       endpoint: request.routerPath || request.url,
-      userId: (request as any).user?.user_id,
+      userId: request.user?.user_id,
       context: {
         method: request.method,
         query: request.query,

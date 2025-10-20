@@ -160,7 +160,7 @@ function convertSection(section: Section, warnings: string[]): string {
  */
 function convertPersona(section: {
   type: 'persona';
-  data: any;
+  data: Record<string, unknown>;
 }): string {
   const { name, role, style, expertise } = section.data;
   const lines: string[] = [];
@@ -221,7 +221,7 @@ function convertInstructions(section: {
 function convertRules(section: {
   type: 'rules';
   title: string;
-  items: any[];
+  items: RuleItem[];
   ordered?: boolean;
 }): string {
   const lines: string[] = [];
@@ -230,7 +230,7 @@ function convertRules(section: {
   lines.push('');
 
   // For Claude, phrase rules as instructions/guidelines
-  section.items.forEach((rule: any, index) => {
+  section.items.forEach((rule, index) => {
     const content = typeof rule === 'string' ? rule : rule.content;
     const prefix = section.ordered ? `${index + 1}.` : '-';
 
@@ -263,14 +263,14 @@ function convertRules(section: {
 function convertExamples(section: {
   type: 'examples';
   title: string;
-  examples: any[];
+  examples: ExampleItem[];
 }): string {
   const lines: string[] = [];
 
   lines.push(`## ${section.title}`);
   lines.push('');
 
-  section.examples.forEach((example: any) => {
+  section.examples.forEach((example) => {
     // Good/bad indicator
     if (example.good === false) {
       lines.push(`### ❌ Incorrect: ${example.description}`);

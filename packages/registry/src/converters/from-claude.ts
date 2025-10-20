@@ -239,7 +239,7 @@ function createSectionFromBlock(title: string, content: string): Section {
  */
 function parsePersona(text: string): PersonaSection {
   const lines = text.split('\n');
-  const data: any = {};
+  const data: Record<string, unknown> = {};
 
   // Extract name and role from "You are X, a Y" or "You are X" pattern
   const youAreMatch = text.match(/You are ([^,.\n]+)(?:,\s*(?:a\s+)?([^.]+))?/i);
@@ -286,7 +286,7 @@ function parsePersona(text: string): PersonaSection {
 
   return {
     type: 'persona',
-    data,
+    data: data as { name?: string; role: string; icon?: string; style?: string[]; expertise?: string[] },
   };
 }
 
@@ -295,8 +295,8 @@ function parsePersona(text: string): PersonaSection {
  */
 function parseRulesSection(title: string, content: string): RulesSection {
   const lines = content.split('\n');
-  const items: any[] = [];
-  let currentRule: any = null;
+  const items: Array<{ title?: string; content: string; examples?: string[] }> = [];
+  let currentRule: { title?: string; content: string; examples?: string[] } | null = null;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -369,8 +369,8 @@ function parseRulesSection(title: string, content: string): RulesSection {
 /**
  * Parse examples section
  */
-function parseExamplesSection(title: string, content: string): any {
-  const examples: any[] = [];
+function parseExamplesSection(title: string, content: string): { type: "examples"; title: string; examples: Array<{ title?: string; description?: string; code?: string; input?: string; output?: string }> } {
+  const examples: Array<{ title?: string; description?: string; code?: string; input?: string; output?: string }> = [];
   const sections = content.split(/###\s+/);
 
   for (const section of sections) {

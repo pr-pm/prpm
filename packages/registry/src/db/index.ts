@@ -5,6 +5,7 @@
 import { FastifyInstance } from 'fastify';
 import fastifyPostgres from '@fastify/postgres';
 import { config } from '../config.js';
+import { toError } from '../types/errors.js';
 
 export async function setupDatabase(server: FastifyInstance) {
   await server.register(fastifyPostgres, {
@@ -17,9 +18,10 @@ export async function setupDatabase(server: FastifyInstance) {
     await client.query('SELECT NOW()');
     client.release();
     server.log.info('✅ Database connected');
-  } catch (error: any) {
-    server.log.error('❌ Database connection failed:', error);
-    throw error;
+  } catch (error: unknown) {
+    const err = toError(error);
+    server.log.error({ error: err.message }, '❌ Database connection failed');
+    throw err;
   }
 }
 

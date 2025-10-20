@@ -124,7 +124,7 @@ function createOpenSearch(
   );
 
   return {
-    domain: pulumi.output(domain) as any,
+    domain: pulumi.output(domain),
     securityGroup,
     endpoint: pulumi.output(domain).apply(d => d.endpoint),
     kibanaEndpoint: pulumi.output(domain).apply(d => d.kibanaEndpoint),

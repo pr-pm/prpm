@@ -4,6 +4,12 @@
  */
 
 import { PackageType } from './types';
+import type {
+  DependencyTree,
+  SearchResponse,
+  PackageManifest,
+  PublishResponse
+} from './types/registry';
 
 export interface RegistryPackage {
   id: string;
@@ -15,6 +21,7 @@ export interface RegistryPackage {
   rating_average?: number;
   verified: boolean;
   official?: boolean;
+  featured?: boolean;
   latest_version?: {
     version: string;
     tarball_url: string;
@@ -145,13 +152,13 @@ export class RegistryClient {
    */
   async resolveDependencies(packageId: string, version?: string): Promise<{
     resolved: Record<string, string>;
-    tree: any;
+    tree: DependencyTree;
   }> {
     const params = new URLSearchParams();
     if (version) params.append('version', version);
 
     const response = await this.fetch(`/api/v1/packages/${packageId}/resolve?${params}`);
-    return response.json() as Promise<{ resolved: Record<string, string>; tree: any }>;
+    return response.json() as Promise<{ resolved: Record<string, string>; tree: DependencyTree }>;
   }
 
   /**
@@ -185,7 +192,7 @@ export class RegistryClient {
     if (type) params.append('type', type);
 
     const response = await this.fetch(`/api/v1/search/trending?${params}`);
-    const data: any = await response.json();
+    const data = await response.json() as SearchResponse;
     return data.packages;
   }
 
@@ -197,14 +204,14 @@ export class RegistryClient {
     if (type) params.append('type', type);
 
     const response = await this.fetch(`/api/v1/search/featured?${params}`);
-    const data: any = await response.json();
+    const data = await response.json() as SearchResponse;
     return data.packages;
   }
 
   /**
    * Publish a package (requires authentication)
    */
-  async publish(manifest: any, tarball: Buffer): Promise<any> {
+  async publish(manifest: PackageManifest, tarball: Buffer): Promise<PublishResponse> {
     if (!this.token) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
@@ -218,7 +225,7 @@ export class RegistryClient {
       body: formData,
     });
 
-    return response.json();
+    return response.json() as Promise<PublishResponse>;
   }
 
   /**
@@ -373,7 +380,12 @@ export class RegistryClient {
         }
 
         if (!response.ok) {
-          const error: any = await response.json().catch(() => ({ error: response.statusText }));
+          let error: { error?: string; message?: string };
+          try {
+            error = await response.json() as { error?: string; message?: string };
+          } catch {
+            error = { error: response.statusText };
+          }
           throw new Error(error.error || error.message || `HTTP ${response.status}: ${response.statusText}`);
         }
 

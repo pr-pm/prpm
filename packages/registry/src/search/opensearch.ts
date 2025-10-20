@@ -8,6 +8,7 @@ import { AwsSigv4Signer } from '@opensearch-project/opensearch/aws';
 import { SearchFilters, SearchResult, Package } from '../types.js';
 import { SearchProvider } from './index.js';
 import { query, queryOne } from '../db/index.js';
+import { toError, getStatusCode } from '../types/errors.js';
 
 let client: Client | null = null;
 
@@ -135,8 +136,9 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
           offset,
           limit,
         };
-      } catch (error: any) {
-        server.log.error('OpenSearch query failed:', error);
+      } catch (error: unknown) {
+        const err = toError(error);
+        server.log.error({ error: err.message }, 'OpenSearch query failed');
         throw new Error('Search failed');
       }
     },
@@ -164,9 +166,10 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
         });
 
         server.log.info(`Package ${packageId} indexed in OpenSearch`);
-      } catch (error: any) {
-        server.log.error(`Failed to index package ${packageId}:`, error);
-        throw error;
+      } catch (error: unknown) {
+        const err = toError(error);
+        server.log.error({ error: err.message, packageId }, 'Failed to index package');
+        throw err;
       }
     },
 
@@ -181,13 +184,14 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
         });
 
         server.log.info(`Package ${packageId} removed from OpenSearch`);
-      } catch (error: any) {
-        if ((error as any).meta?.statusCode === 404) {
+      } catch (error: unknown) {
+        if (getStatusCode(error) === 404) {
           // Package not in index, that's fine
           return;
         }
-        server.log.error(`Failed to delete package ${packageId}:`, error);
-        throw error;
+        const err = toError(error);
+        server.log.error({ error: err.message, packageId }, 'Failed to delete package from index');
+        throw err;
       }
     },
 
@@ -245,7 +249,7 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
 
       if (body.length > 0) {
         await client.bulk({
-          body: body as any,
+          body,
           refresh: true,
         });
       }

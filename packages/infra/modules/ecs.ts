@@ -426,10 +426,10 @@ function createFargateService(
 
   return {
     cluster,
-    service: pulumi.output(service) as any,
-    taskDefinition: pulumi.output(taskDefinition) as any,
+    service: pulumi.output(service),
+    taskDefinition: pulumi.output(taskDefinition),
     ecsSecurityGroup,
-    alb: pulumi.output(alb) as any,
+    alb: pulumi.output(alb),
     targetGroup,
     ecrRepo,
     taskRole,

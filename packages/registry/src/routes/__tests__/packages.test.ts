@@ -16,7 +16,7 @@ describe('Package Routes', () => {
     server.decorate('authenticate', async () => {});
 
     // Create mock query function
-    const mockQuery = async (sql: string, params?: any[]) => {
+    const mockQuery = async (sql: string, params?: unknown[]) => {
       // Mock package by ID query
       if (sql.includes('SELECT * FROM packages WHERE id = $1')) {
         if (params?.[0] === 'test-package') {
@@ -131,7 +131,7 @@ describe('Package Routes', () => {
         query: mockQuery,
         release: () => {}
       })
-    } as any);
+    } as unknown);
 
     await server.register(packageRoutes, { prefix: '/api/v1/packages' });
     await server.ready();

@@ -107,8 +107,8 @@ function createElastiCache(
   );
 
   return {
-    cluster: pulumi.output(cluster) as any,
-    subnetGroup: pulumi.output(subnetGroup) as any,
+    cluster: pulumi.output(cluster),
+    subnetGroup: pulumi.output(subnetGroup),
     securityGroup,
     endpoint: pulumi.output(cluster).apply(c => c.cacheNodes[0].address),
     port: pulumi.output(6379),

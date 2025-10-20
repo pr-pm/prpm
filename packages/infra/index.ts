@@ -114,7 +114,7 @@ const app = ecs.createFargateService(projectName, environment, {
 });
 
 // 7. Search (Optional - Phase 2)
-let opensearch: any = undefined;
+let opensearch: ReturnType<typeof createOpenSearch> | undefined = undefined;
 if (searchConfig.enabled) {
   opensearch = search.createOpenSearch(projectName, environment, {
     vpc,

@@ -15,6 +15,7 @@ export interface User {
   github_id?: string;
   github_username?: string;
   avatar_url?: string;
+  password_hash?: string;
   verified_author: boolean;
   is_admin: boolean;
   is_active: boolean;
@@ -261,5 +262,9 @@ export interface RegistryConfig {
   packages: {
     maxSize: number;
     allowedExtensions: string[];
+  };
+  ai: {
+    anthropicApiKey: string;
+    evaluationEnabled: boolean;
   };
 }

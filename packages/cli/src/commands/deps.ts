@@ -6,6 +6,7 @@ import { Command } from 'commander';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
+import type { DependencyTree } from '../types/registry.js';
 
 /**
  * Display dependency tree
@@ -75,7 +76,7 @@ export async function handleDeps(packageSpec: string): Promise<void> {
  * Print dependency tree recursively
  */
 function printTree(
-  tree: any,
+  tree: DependencyTree,
   packageId: string,
   prefix: string = '',
   isLast: boolean = true

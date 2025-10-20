@@ -154,12 +154,12 @@ function createAlarms(
   );
 
   return {
-    ecsHighCpuAlarm: pulumi.output(ecsHighCpuAlarm) as any,
-    ecsHighMemoryAlarm: pulumi.output(ecsHighMemoryAlarm) as any,
-    albTargetResponseTimeAlarm: pulumi.output(albTargetResponseTimeAlarm) as any,
-    albUnhealthyTargetAlarm: pulumi.output(albUnhealthyTargetAlarm) as any,
-    rdsHighCpuAlarm: pulumi.output(rdsHighCpuAlarm) as any,
-    rdsLowStorageAlarm: pulumi.output(rdsLowStorageAlarm) as any,
+    ecsHighCpuAlarm: pulumi.output(ecsHighCpuAlarm),
+    ecsHighMemoryAlarm: pulumi.output(ecsHighMemoryAlarm),
+    albTargetResponseTimeAlarm: pulumi.output(albTargetResponseTimeAlarm),
+    albUnhealthyTargetAlarm: pulumi.output(albUnhealthyTargetAlarm),
+    rdsHighCpuAlarm: pulumi.output(rdsHighCpuAlarm),
+    rdsLowStorageAlarm: pulumi.output(rdsLowStorageAlarm),
   };
 }
 

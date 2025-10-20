@@ -54,6 +54,11 @@ export function loadConfig(): RegistryConfig {
       maxSize: parseInt(process.env.MAX_PACKAGE_SIZE || '10485760', 10), // 10MB
       allowedExtensions: (process.env.ALLOWED_FILE_EXTENSIONS || '.md,.json,.yaml,.yml,.txt').split(','),
     },
+
+    ai: {
+      anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+      evaluationEnabled: process.env.AI_EVALUATION_ENABLED !== 'false',
+    },
   };
 }
 

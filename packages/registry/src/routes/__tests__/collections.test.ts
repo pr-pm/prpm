@@ -16,7 +16,7 @@ describe('Collection Routes', () => {
     server.decorate('authenticate', async () => {});
 
     // Create mock query function
-    const mockQuery = async (sql: string, params?: any[]) => {
+    const mockQuery = async (sql: string, params?: unknown[]) => {
       // Debug logging (uncomment if needed)
       // console.log('SQL:', sql.substring(0, 150));
       // console.log('Params:', params);
@@ -243,7 +243,7 @@ describe('Collection Routes', () => {
         query: mockQuery,
         release: () => {}
       })
-    } as any);
+    } as unknown);
 
     await server.register(collectionRoutes, { prefix: '/api/v1/collections' });
     await server.ready();
@@ -283,7 +283,7 @@ describe('Collection Routes', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.collections.every((c: any) => c.official === true));
+      expect(body.collections.every((c) => c.official === true));
     });
 
     it('should support pagination', async () => {
@@ -316,7 +316,7 @@ describe('Collection Routes', () => {
     });
 
     it('should return 404 for non-existent collection', async () => {
-      (server as any).pg = {
+      (server.pg) = {
         query: async () => ({
           rows: [],
           command: 'SELECT',

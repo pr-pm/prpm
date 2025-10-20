@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { query, queryOne } from '../db/index.js';
 import { cacheGet, cacheSet, cacheDelete, cacheDeletePattern } from '../cache/redis.js';
 import { Package, PackageVersion, PackageInfo } from '../types.js';
+import { toError } from '../types/errors.js';
 import type {
   ListPackagesQuery,
   PackageParams,
@@ -38,12 +39,20 @@ export async function packageRoutes(server: FastifyInstance) {
   }, async (request: FastifyRequest<{ Querystring: ListPackagesQuery }>, reply: FastifyReply) => {
     const { search, type, category, featured, verified, sort = 'downloads', limit = 20, offset = 0 } = request.query;
 
+    server.log.info({
+      action: 'list_packages',
+      filters: { search, type, category, featured, verified },
+      sort,
+      pagination: { limit, offset }
+    }, '📦 Listing packages');
+
     // Build cache key
     const cacheKey = `packages:list:${JSON.stringify(request.query)}`;
 
     // Check cache
     const cached = await cacheGet(server, cacheKey);
     if (cached) {
+      server.log.info({ cacheKey }, '⚡ Cache hit');
       return cached;
     }
 
@@ -245,7 +254,7 @@ export async function packageRoutes(server: FastifyInstance) {
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
-    const { manifest, tarball, readme } = request.body as { manifest: any; tarball: string; readme?: string };
+    const { manifest, tarball, readme } = request.body as { manifest: Record<string, unknown>; tarball: string; readme?: string };
 
     // TODO: Implement full package publishing logic
     // 1. Validate manifest
@@ -334,10 +343,9 @@ export async function packageRoutes(server: FastifyInstance) {
 
     const result = await query(
       server,
-      `SELECT date, SUM(downloads) as downloads
+      `SELECT date, total_downloads as downloads
        FROM package_stats
        WHERE package_id = $1 AND date >= CURRENT_DATE - INTERVAL '${days} days'
-       GROUP BY date
        ORDER BY date ASC`,
       [packageId]
     );
@@ -580,10 +588,11 @@ export async function packageRoutes(server: FastifyInstance) {
         resolved: resolved.resolved,
         tree: resolved.tree,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = toError(error);
       return reply.code(500).send({
         error: 'Failed to resolve dependencies',
-        message: error.message,
+        message: err.message,
       });
     }
   });

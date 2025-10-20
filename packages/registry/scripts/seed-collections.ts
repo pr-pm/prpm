@@ -23,6 +23,12 @@ const pool = new Pool({
   connectionString: DATABASE_URL,
 });
 
+interface CollectionPackageRef {
+  packageId: string;
+  required?: boolean;
+  order?: number;
+}
+
 interface Collection {
   scope: string;
   id: string;
@@ -35,7 +41,7 @@ interface Collection {
   category?: string;
   tags?: string[];
   framework?: string;
-  packages?: string[];
+  packages?: (string | CollectionPackageRef)[];
 }
 
 async function seedCollections() {
@@ -315,9 +321,9 @@ async function seedCollections() {
             for (let i = 0; i < collection.packages.length; i++) {
               const pkg = collection.packages[i];
               // Handle both string format and object format
-              const packageId = typeof pkg === 'string' ? pkg : (pkg as any).packageId;
-              const required = typeof pkg === 'string' ? true : (pkg as any).required !== false;
-              const order = typeof pkg === 'string' ? i + 1 : ((pkg as any).order || i + 1);
+              const packageId = typeof pkg === 'string' ? pkg : pkg.packageId;
+              const required = typeof pkg === 'string' ? true : (pkg.required !== false);
+              const order = typeof pkg === 'string' ? i + 1 : (pkg.order || i + 1);
 
               // Check if package exists
               const pkgExists = await pool.query(

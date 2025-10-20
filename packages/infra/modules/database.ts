@@ -134,8 +134,8 @@ function createRdsPostgres(
   );
 
   return {
-    instance: pulumi.output(instance) as any,
-    subnetGroup: pulumi.output(subnetGroup) as any,
+    instance: pulumi.output(instance),
+    subnetGroup: pulumi.output(subnetGroup),
     securityGroup,
     endpoint: pulumi.output(instance).apply(i =>
       pulumi.output(i.endpoint).apply(e => e.split(":")[0])
