@@ -69,16 +69,6 @@ function convertContent(
   const tools = pkg.content.sections.find(s => s.type === 'tools');
   const persona = pkg.content.sections.find(s => s.type === 'persona');
 
-  // Check if the raw content in metadata already has a YAML frontmatter header
-  // If it does, return it as-is (content is already in Claude format)
-  if (metadata?.type === 'metadata' && metadata.data.raw) {
-    const raw = metadata.data.raw;
-    if (raw.trim().startsWith('---\n') && raw.includes('\n---\n')) {
-      // Content already has frontmatter, return as-is
-      return raw;
-    }
-  }
-
   // Generate frontmatter
   lines.push('---');
   lines.push(`name: ${pkg.id}`);

@@ -29,6 +29,16 @@ import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
  */
 function getTypeIcon(type: string): string {
   const icons: Record<string, string> = {
+    'claude-skill': '🎓',
+    'claude-agent': '🤖',
+    'claude-slash-command': '⚡',
+    'claude': '🤖',
+    'cursor': '📋',
+    'windsurf': '🌊',
+    'continue': '➡️',
+    'mcp': '🔗',
+    'generic': '📦',
+    // Legacy mappings
     skill: '🎓',
     agent: '🤖',
     rule: '📋',
@@ -37,7 +47,6 @@ function getTypeIcon(type: string): string {
     workflow: '⚡',
     tool: '🔧',
     template: '📄',
-    mcp: '🔗',
   };
   return icons[type] || '📦';
 }
@@ -47,6 +56,16 @@ function getTypeIcon(type: string): string {
  */
 function getTypeLabel(type: string): string {
   const labels: Record<string, string> = {
+    'claude-skill': 'Claude Skill',
+    'claude-agent': 'Claude Agent',
+    'claude-slash-command': 'Claude Slash Command',
+    'claude': 'Claude Agent',
+    'cursor': 'Cursor Rule',
+    'windsurf': 'Windsurf Rule',
+    'continue': 'Continue Rule',
+    'mcp': 'MCP Server',
+    'generic': 'Package',
+    // Legacy mappings
     skill: 'Skill',
     agent: 'Agent',
     rule: 'Rule',
@@ -55,7 +74,6 @@ function getTypeLabel(type: string): string {
     workflow: 'Workflow',
     tool: 'Tool',
     template: 'Template',
-    mcp: 'MCP Server',
   };
   return labels[type] || type;
 }
@@ -69,8 +87,25 @@ export async function handleInstall(
   let error: string | undefined;
 
   try {
-    // Parse package spec (e.g., "react-rules" or "react-rules@1.2.0")
-    const [packageId, specVersion] = packageSpec.split('@');
+    // Parse package spec (e.g., "react-rules" or "react-rules@1.2.0" or "@prpm/pkg@1.0.0")
+    // For scoped packages (@scope/name), the first @ is part of the package name
+    let packageId: string;
+    let specVersion: string | undefined;
+
+    if (packageSpec.startsWith('@')) {
+      // Scoped package: @scope/name or @scope/name@version
+      const match = packageSpec.match(/^(@[^/]+\/[^@]+)(?:@(.+))?$/);
+      if (!match) {
+        throw new Error('Invalid package spec format. Use: @scope/package or @scope/package@version');
+      }
+      packageId = match[1];
+      specVersion = match[2];
+    } else {
+      // Unscoped package: name or name@version
+      const parts = packageSpec.split('@');
+      packageId = parts[0];
+      specVersion = parts[1];
+    }
 
     // Read existing lock file
     const lockfile = await readLockfile();
@@ -104,7 +139,7 @@ export async function handleInstall(
     const pkg = await client.getPackage(packageId);
     const typeIcon = getTypeIcon(pkg.type);
     const typeLabel = getTypeLabel(pkg.type);
-    console.log(`   ${pkg.id} ${pkg.official ? '🏅' : ''}`);
+    console.log(`   ${pkg.name} ${pkg.official ? '🏅' : ''}`);
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 

@@ -171,7 +171,7 @@ async function seedSkills() {
         `, [
           dbPackageId,
           '1.0.0',
-          `https://registry.prpm.dev/packages/${skill.id}/1.0.0.tar.gz`,
+          `https://registry.prpm.dev/packages/${dbPackageId}/1.0.0.tar.gz`, // UUID-based URL
           'placeholder-hash',
           content.length,
           'Initial version',

@@ -121,15 +121,17 @@ export async function collectionRoutes(server: FastifyInstance) {
           params.push(query.author);
         }
 
-        // Full-text search
+        // Full-text search with PostgreSQL tsvector and trigram similarity
         if (query.query) {
           sql += ` AND (
-            c.name ILIKE $${paramIndex} OR
-            c.description ILIKE $${paramIndex} OR
-            $${paramIndex + 1} = ANY(c.tags)
+            to_tsvector('english', coalesce(c.name, '') || ' ' || coalesce(c.description, '') || ' ' || coalesce(c.id, '')) @@ websearch_to_tsquery('english', $${paramIndex}) OR
+            c.name ILIKE $${paramIndex + 1} OR
+            c.description ILIKE $${paramIndex + 1} OR
+            c.id ILIKE $${paramIndex + 1} OR
+            $${paramIndex + 2} = ANY(c.tags)
           )`;
-          params.push(`%${query.query}%`, query.query);
-          paramIndex += 2;
+          params.push(query.query, `%${query.query}%`, query.query);
+          paramIndex += 3;
         }
 
         // Count total before pagination

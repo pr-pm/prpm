@@ -170,15 +170,15 @@ export class RegistryClient {
     tarballUrl: string,
     options: { format?: string } = {}
   ): Promise<Buffer> {
+    // Parse URL
+    const urlObj = new URL(tarballUrl);
+
     // If format is specified and tarballUrl is from registry, append format param
-    let url = tarballUrl;
     if (options.format && tarballUrl.includes(this.baseUrl)) {
-      const urlObj = new URL(tarballUrl);
       urlObj.searchParams.set('format', options.format);
-      url = urlObj.toString();
     }
 
-    const response = await fetch(url);
+    const response = await fetch(urlObj.toString());
     if (!response.ok) {
       throw new Error(`Failed to download package: ${response.statusText}`);
     }
@@ -255,6 +255,7 @@ export class RegistryClient {
    * Get collections
    */
   async getCollections(options?: {
+    query?: string;
     category?: string;
     tag?: string;
     official?: boolean;
@@ -263,6 +264,7 @@ export class RegistryClient {
     offset?: number;
   }): Promise<CollectionsResult> {
     const params = new URLSearchParams();
+    if (options?.query) params.append('query', options.query);
     if (options?.category) params.append('category', options.category);
     if (options?.tag) params.append('tag', options.tag);
     if (options?.official) params.append('official', 'true');

@@ -28,24 +28,16 @@ export async function handleCollectionsSearch(
 
     console.log(`🔍 Searching collections for "${query}"...\n`);
 
-    // Get all collections and filter by query
+    // Use server-side search with full-text index
     const result = await client.getCollections({
+      query,
       category: options.category,
       tag: options.tag,
       official: options.official,
       limit: options.limit || 50,
     });
 
-    // Filter collections by search query (name, description, tags)
-    const queryLower = query.toLowerCase();
-    const filtered = result.collections.filter(c =>
-      c.name.toLowerCase().includes(queryLower) ||
-      c.description.toLowerCase().includes(queryLower) ||
-      c.tags.some(tag => tag.toLowerCase().includes(queryLower)) ||
-      c.id.toLowerCase().includes(queryLower)
-    );
-
-    if (filtered.length === 0) {
+    if (result.collections.length === 0) {
       console.log('No collections found matching your search.');
       console.log('\n💡 Try:');
       console.log('  - Broadening your search terms');
@@ -54,11 +46,11 @@ export async function handleCollectionsSearch(
       return;
     }
 
-    console.log(`✨ Found ${filtered.length} collection(s):\n`);
+    console.log(`✨ Found ${result.collections.length} collection(s):\n`);
 
     // Group by official vs community
-    const official = filtered.filter(c => c.official);
-    const community = filtered.filter(c => !c.official);
+    const official = result.collections.filter(c => c.official);
+    const community = result.collections.filter(c => !c.official);
 
     if (official.length > 0) {
       console.log(`📦 Official Collections (${official.length}):\n`);
@@ -89,7 +81,7 @@ export async function handleCollectionsSearch(
     }
 
     // Show results count
-    console.log(`\n📊 Found: ${filtered.length} matching collection${filtered.length === 1 ? '' : 's'} (searched ${result.total} total)\n`);
+    console.log(`\n📊 Found: ${result.collections.length} matching collection${result.collections.length === 1 ? '' : 's'} (searched ${result.total} total)\n`);
     console.log(`💡 View details: prpm collection info <collection>`);
     console.log(`💡 Install: prpm install @collection/<name>`);
 
@@ -99,7 +91,7 @@ export async function handleCollectionsSearch(
       duration: Date.now() - startTime,
       data: {
         query: query.substring(0, 100),
-        count: filtered.length,
+        count: result.collections.length,
         total: result.total,
         filters: options,
       },

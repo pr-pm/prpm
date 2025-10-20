@@ -266,7 +266,7 @@ async function seedPackages() {
               [
                 dbPackageId,
                 '1.0.0',
-                `https://registry.prpm.dev/packages/${packageId}/1.0.0.tar.gz`, // placeholder
+                `https://registry.prpm.dev/packages/${dbPackageId}/1.0.0.tar.gz`, // UUID-based URL
                 'placeholder-hash',
                 (pkg.content?.length || 0),
                 'Initial version',

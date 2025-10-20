@@ -209,7 +209,50 @@ export async function packageRoutes(server: FastifyInstance) {
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { packageName, version } = request.params as { packageName: string; version: string };
+    const { packageName, version: versionParam } = request.params as { packageName: string; version: string };
+
+    // Check if this is a tarball download request (.tar.gz)
+    if (versionParam.endsWith('.tar.gz')) {
+      const version = versionParam.replace(/\.tar\.gz$/, '');
+
+      // Check if packageName is a UUID (for tarball downloads by ID)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(packageName);
+
+      // Get package version with content
+      const pkgVersion = await queryOne<PackageVersion>(
+        server,
+        isUUID
+          ? `SELECT pv.*, p.name as package_name FROM package_versions pv
+             JOIN packages p ON p.id = pv.package_id
+             WHERE p.id = $1 AND pv.version = $2 AND p.visibility = 'public'`
+          : `SELECT pv.*, p.name as package_name FROM package_versions pv
+             JOIN packages p ON p.id = pv.package_id
+             WHERE p.name = $1 AND pv.version = $2 AND p.visibility = 'public'`,
+        [packageName, version]
+      );
+
+      if (!pkgVersion) {
+        return reply.status(404).send({ error: 'Package version not found' });
+      }
+
+      // For seeded packages with content in metadata, serve as gzipped content
+      if (pkgVersion.metadata && typeof pkgVersion.metadata === 'object' && 'content' in pkgVersion.metadata) {
+        const content = (pkgVersion.metadata as { content: string }).content;
+        const zlib = await import('zlib');
+        const gzipped = zlib.gzipSync(Buffer.from(content, 'utf-8'));
+
+        const pkgName = (pkgVersion as any).package_name || packageName;
+        reply.header('Content-Type', 'application/gzip');
+        reply.header('Content-Disposition', `attachment; filename="${pkgName.replace(/[^a-z0-9-]/gi, '-')}-${version}.tar.gz"`);
+        return reply.send(gzipped);
+      }
+
+      // For published packages, would redirect to S3
+      return reply.status(404).send({ error: 'Package tarball not available' });
+    }
+
+    // Regular version info request
+    const version = versionParam;
 
     // Check cache
     const cacheKey = `package:${packageName}:${version}`;
