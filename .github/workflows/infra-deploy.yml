@@ -22,7 +22,7 @@ permissions:
 
 env:
   PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-  AWS_REGION: us-east-1
+  AWS_REGION: us-west-2
 
 jobs:
   deploy:
@@ -72,6 +72,8 @@ jobs:
       - name: Configure Stack
         working-directory: packages/infra
         run: |
+          set -e  # Exit on error
+
           STACK="${{ inputs.stack || 'prod' }}"
           pulumi stack select $STACK || pulumi stack init $STACK
 
@@ -79,12 +81,31 @@ jobs:
           pulumi config set aws:region ${{ env.AWS_REGION }}
 
           # Database credentials
+          echo "Setting database configuration..."
           pulumi config set db:username prpm
+
+          if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
+            echo "ERROR: DB_PASSWORD secret is not set"
+            exit 1
+          fi
           pulumi config set --secret db:password "${{ secrets.DB_PASSWORD }}"
+          echo "✓ Database password set"
 
           # GitHub OAuth
-          pulumi config set --secret github:clientId "${{ secrets.GITHUB_CLIENT_ID }}"
-          pulumi config set --secret github:clientSecret "${{ secrets.GITHUB_CLIENT_SECRET }}"
+          echo "Setting GitHub OAuth configuration..."
+          if [ -n "${{ secrets.GITHUB_CLIENT_ID }}" ]; then
+            pulumi config set --secret github:clientId "${{ secrets.GITHUB_CLIENT_ID }}"
+            echo "✓ GitHub client ID set"
+          else
+            echo "⚠️  GitHub client ID not set (optional)"
+          fi
+
+          if [ -n "${{ secrets.GITHUB_CLIENT_SECRET }}" ]; then
+            pulumi config set --secret github:clientSecret "${{ secrets.GITHUB_CLIENT_SECRET }}"
+            echo "✓ GitHub client secret set"
+          else
+            echo "⚠️  GitHub client secret not set (optional)"
+          fi
 
           # Beanstalk configuration
           pulumi config set app:instanceType t3.micro
@@ -95,6 +116,18 @@ jobs:
           if [ "$STACK" = "prod" ]; then
             pulumi config set app:domainName registry.prpm.dev
           fi
+
+          # Verify configuration
+          echo ""
+          echo "Configuration summary:"
+          pulumi config
+
+          # Verify required secrets are set
+          if ! pulumi config get db:password --show-secrets >/dev/null 2>&1; then
+            echo "ERROR: db:password not set after configuration"
+            exit 1
+          fi
+          echo "✓ All required configuration verified"
 
       - name: Pulumi Up
         working-directory: packages/infra

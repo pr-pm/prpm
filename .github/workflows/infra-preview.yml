@@ -15,7 +15,7 @@ permissions:
 
 env:
   PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-  AWS_REGION: us-east-1
+  AWS_REGION: us-west-2
 
 jobs:
   preview:

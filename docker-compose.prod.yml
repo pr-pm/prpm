@@ -52,12 +52,12 @@ services:
       timeout: 5s
       retries: 5
 
-  # Registry service (development mode - uses host node_modules)
+  # Registry service
   registry:
-    image: node:20-alpine
+    build:
+      context: ./packages/registry
+      dockerfile: Dockerfile
     container_name: prpm-registry
-    working_dir: /app
-    command: sh -c "export PATH=/app/node_modules/.bin:$PATH && npm run dev"
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,7 +66,7 @@ services:
       minio:
         condition: service_healthy
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3000
       DATABASE_URL: postgresql://prpm:prpm@postgres:5432/prpm
       REDIS_URL: redis://redis:6379
@@ -89,40 +89,34 @@ services:
       ENABLE_RATE_LIMITING: "false"
     ports:
       - "3000:3000"
-    volumes:
-      # Mount entire registry directory (including node_modules from host)
-      - ./packages/registry:/app
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 30s
 
-  # Webapp service (development mode - uses host node_modules)
+  # Webapp service
   webapp:
-    image: node:20-alpine
+    build:
+      context: ./packages/webapp
+      dockerfile: Dockerfile
     container_name: prpm-webapp
-    working_dir: /app
-    command: sh -c "export PATH=/app/node_modules/.bin:$PATH && npm run dev"
     depends_on:
       registry:
         condition: service_healthy
     environment:
-      NODE_ENV: development
-      NEXT_PUBLIC_REGISTRY_URL: http://localhost:3000
+      NODE_ENV: production
+      NEXT_PUBLIC_REGISTRY_URL: http://registry:3000
       NEXT_PUBLIC_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
     ports:
-      - "5173:5173"
-    volumes:
-      # Mount entire webapp directory (including node_modules from host)
-      - ./packages/webapp:/app
+      - "3001:3000"
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5173"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 30s
 
 volumes:
   postgres_data:
