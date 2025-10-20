@@ -9,7 +9,7 @@ import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
 
 // User-friendly CLI types
-type CLIPackageType = 'skill' | 'agent' | 'rule' | 'plugin' | 'prompt' | 'workflow' | 'tool' | 'template' | 'mcp';
+type CLIPackageType = 'skill' | 'agent' | 'command' | 'slash-command' | 'rule' | 'plugin' | 'prompt' | 'workflow' | 'tool' | 'template' | 'mcp';
 
 /**
  * Get icon for package type
@@ -18,6 +18,9 @@ function getTypeIcon(type: string): string {
   const icons: Record<string, string> = {
     skill: '🎓',
     agent: '🤖',
+    command: '⚡',
+    'slash-command': '⚡',
+    'claude-slash-command': '⚡',
     rule: '📋',
     plugin: '🔌',
     prompt: '💬',
@@ -36,6 +39,10 @@ function getTypeLabel(type: string): string {
   const labels: Record<string, string> = {
     skill: 'Skill',
     agent: 'Agent',
+    command: 'Slash Command',
+    'slash-command': 'Slash Command',
+    'claude-slash-command': 'Slash Command',
+    'claude-agent': 'Agent',
     rule: 'Rule',
     plugin: 'Plugin',
     prompt: 'Prompt',
@@ -55,8 +62,11 @@ function mapTypeToRegistry(cliType: CLIPackageType): { type?: PackageType; tags?
     rule: { type: 'cursor', tags: ['cursor-rule'] },
     // Skills are packages with type=claude-skill
     skill: { type: 'claude-skill' },
-    // Agents are packages with type=claude (not claude-skill)
-    agent: { type: 'claude' },
+    // Agents are packages with type=claude-agent or claude (not claude-skill)
+    agent: { type: 'claude-agent' },
+    // Slash commands are packages with type=claude-slash-command
+    command: { type: 'claude-slash-command' },
+    'slash-command': { type: 'claude-slash-command' },
     mcp: { type: 'mcp' },
     plugin: { type: 'generic', tags: ['plugin'] },
     prompt: { type: 'generic', tags: ['prompt'] },
@@ -185,7 +195,7 @@ export function createSearchCommand(): Command {
   command
     .description('Search for packages in the registry')
     .argument('[query]', 'Search query (optional when using --type or --author)')
-    .option('--type <type>', 'Filter by package type (skill, agent, rule, plugin, prompt, workflow, tool, template, mcp)')
+    .option('--type <type>', 'Filter by package type (skill, agent, command, slash-command, rule, plugin, prompt, workflow, tool, template, mcp)')
     .option('--author <username>', 'Filter by author username')
     .option('--limit <number>', 'Number of results to show', '20')
     .action(async (query: string | undefined, options: { type?: string; author?: string; limit?: string; tags?: string }) => {
@@ -193,13 +203,15 @@ export function createSearchCommand(): Command {
       const author = options.author;
       const limit = options.limit ? parseInt(options.limit, 10) : 20;
 
-      const validTypes: CLIPackageType[] = ['skill', 'agent', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
+      const validTypes: CLIPackageType[] = ['skill', 'agent', 'command', 'slash-command', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
       if (options.type && !validTypes.includes(type!)) {
         console.error(`❌ Type must be one of: ${validTypes.join(', ')}`);
         console.log(`\n💡 Examples:`);
         console.log(`   prpm search postgres --type skill`);
         console.log(`   prpm search debugging --type agent`);
+        console.log(`   prpm search refactor --type command`);
         console.log(`   prpm search react --type rule`);
+        console.log(`   prpm search --type command  # List all slash commands`);
         console.log(`   prpm search --type skill  # List all skills`);
         console.log(`   prpm search --author prpm  # List packages by @prpm`);
         process.exit(1);
