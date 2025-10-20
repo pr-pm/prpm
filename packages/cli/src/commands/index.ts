@@ -11,24 +11,47 @@ import { PackageType } from '../types';
 
 /**
  * Scan directory for files and return file information
+ * Recursively scans subdirectories for Claude skills/agents
  */
 async function scanDirectory(dirPath: string, type: PackageType): Promise<Array<{ filePath: string; filename: string; id: string }>> {
   try {
     const files = await fs.readdir(dirPath, { withFileTypes: true });
     const results: Array<{ filePath: string; filename: string; id: string }> = [];
-    
+
     for (const file of files) {
+      const fullPath = path.join(dirPath, file.name);
+
       if (file.isFile()) {
-        const filePath = path.join(dirPath, file.name);
+        // Direct file in the directory
         const id = generateId(file.name);
         results.push({
-          filePath,
+          filePath: fullPath,
           filename: file.name,
           id
         });
+      } else if (file.isDirectory()) {
+        // For Claude skills/agents, scan subdirectories for SKILL.md or AGENT.md
+        if (type === 'claude-skill' || type === 'claude') {
+          try {
+            const subFiles = await fs.readdir(fullPath, { withFileTypes: true });
+            for (const subFile of subFiles) {
+              if (subFile.isFile() && (subFile.name === 'SKILL.md' || subFile.name === 'AGENT.md')) {
+                const subFilePath = path.join(fullPath, subFile.name);
+                const id = file.name; // Use directory name as package ID
+                results.push({
+                  filePath: subFilePath,
+                  filename: `${file.name}/${subFile.name}`,
+                  id
+                });
+              }
+            }
+          } catch {
+            // Subdirectory can't be read, skip it
+          }
+        }
       }
     }
-    
+
     return results;
   } catch (error) {
     // Directory doesn't exist or can't be read
@@ -116,7 +139,7 @@ export function createIndexCommand(): Command {
   const command = new Command('index');
   
   command
-    .description('Scan existing .cursor/rules/ and .claude/agents/ directories and register unregistered files')
+    .description('Scan existing prompt directories (.cursor, .claude, .continue, .windsurf, .prompts, .mcp) and register unregistered files')
     .action(handleIndex);
   
   return command;

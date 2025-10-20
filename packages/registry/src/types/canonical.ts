@@ -18,6 +18,20 @@ export interface CanonicalPackage {
   // Content in canonical format
   content: CanonicalContent;
 
+  // Extracted metadata for easier access (mirrors MetadataSection.data)
+  metadata?: {
+    title?: string;
+    description?: string;
+    icon?: string;
+    version?: string;
+    author?: string;
+    globs?: string[];
+    alwaysApply?: boolean;
+    claudeAgent?: {
+      model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
+    };
+  };
+
   // Format compatibility scores
   formatScores?: {
     cursor?: number;
@@ -64,6 +78,9 @@ export interface MetadataSection {
     icon?: string;
     version?: string;
     author?: string;
+    claudeAgent?: {
+      model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
+    };
   };
 }
 

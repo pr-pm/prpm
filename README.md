@@ -31,7 +31,7 @@ prpm install @collection/react-fullstack
 # → Everything for React + Node + PostgreSQL (8 packages)
 ```
 
-**[Browse Collections →](docs/COLLECTIONS.md)** | **[Create Your Own →](docs/PUBLISHING.md)**
+**[Browse Collections →](docs/COLLECTIONS.md)** | **[View Examples →](docs/EXAMPLES.md)**
 
 ---
 
@@ -100,7 +100,7 @@ prpm collections info @collection/nextjs-pro
 
 **Smart filters:** Category, tags, editor type, trending vs popular, official vs community
 
-**[Full Discovery Guide →](docs/CLI.md#discovery--search)**
+**[Full CLI Reference →](docs/CLI.md)**
 
 ---
 
@@ -206,7 +206,7 @@ prpm install systematic-debugging
 - **🔌 MCP Server Configs (15+)** - Auto-configure MCP servers for Claude Code users (Cursor/Windsurf users: configs are ignored)
 - **📦 Collections (15+)** - Complete setups for Next.js, Python, Vue, Windsurf, and more
 
-**[Browse All 744+ Packages →](https://prpm.dev)** | **[Package Catalog →](docs/PACKAGES.md)**
+**[Package Catalog →](docs/PACKAGES.md)** | **[Browse at prpm.dev →](https://prpm.dev)**
 
 ---
 
@@ -278,7 +278,7 @@ prpm install karen-skill
                ├─> Fetches from registry
                ├─> Converts to Cursor format (server-side)
                ├─> Installs to .cursor/rules/
-               └─> Tracks in .promptpm.json
+               └─> Tracks in prpm.lock
 ```
 
 **Smart Features:**
@@ -330,30 +330,22 @@ Karen analyzes: Bullshit Factor, Actually Works, Code Quality, Completion Honest
 
 ## For Package Authors
 
-### Publish Once, Support All Editors
+### Share Your Packages
 
-```bash
-# Create package
-prpm create my-cursor-rule
+Package authors can publish to PRPM and reach users across all editors.
 
-# Publish to registry
-prpm publish
-
-# Users can install in ANY editor
-prpm install my-cursor-rule --as cursor
-prpm install my-cursor-rule --as claude
-prpm install my-cursor-rule --as continue
-prpm install my-cursor-rule --as windsurf
-```
+**How it works:**
+- Authors publish in canonical format
+- PRPM converts to all editor formats automatically
+- Users install in their preferred editor
 
 **Benefits:**
-- Reach 4x more developers (Cursor + Claude + Continue + Windsurf users)
-- Publish once, no manual conversion needed
-- Automatic updates for users
-- Version control and dependency management
+- 4x reach (Cursor + Claude + Continue + Windsurf users)
+- One package, works everywhere
+- Version control and updates
 - Download analytics
 
-**[Publishing Guide →](docs/PUBLISHING.md)**
+Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 
 ---
 
@@ -403,10 +395,10 @@ prpm install my-cursor-rule --as windsurf
 - 💻 [CLI Reference](docs/CLI.md)
 
 **Deep Dives:**
-- 🏗️ [Architecture](docs/ARCHITECTURE.md)
-- 🚀 [Publishing Packages](docs/PUBLISHING.md)
-- 🧪 [Testing](docs/TESTING.md)
-- 🎯 [Examples](docs/EXAMPLES.md)
+- 🏗️ [Architecture](docs/ARCHITECTURE.md) - System design and components
+- 🧪 [Testing](docs/TESTING.md) - Testing guide for developers
+- 🎯 [Examples](docs/EXAMPLES.md) - Real-world usage examples
+- 📦 [Package Catalog](docs/PACKAGES.md) - Browse 744+ packages
 
 **Karen:**
 - 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md)

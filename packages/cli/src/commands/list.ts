@@ -5,11 +5,79 @@
 import { Command } from 'commander';
 import { listPackages } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { PackageType } from '../types';
+
+/**
+ * Get destination directory based on package type
+ */
+function getDestinationDir(type: string): string {
+  switch (type) {
+    case 'cursor':
+      return '.cursor/rules';
+    case 'claude':
+      return '.claude/agents';
+    case 'claude-skill':
+      return '.claude/skills';
+    case 'continue':
+      return '.continue/rules';
+    case 'windsurf':
+      return '.windsurf/rules';
+    case 'generic':
+      return '.prompts';
+    case 'mcp':
+      return '.mcp';
+    default:
+      return '.prompts';
+  }
+}
+
+/**
+ * Find the actual file location for a package
+ */
+async function findPackageLocation(id: string, type?: string): Promise<string | null> {
+  if (!type) return null;
+
+  const baseDir = getDestinationDir(type);
+
+  // Try direct file: <dir>/<id>.md
+  const directPath = path.join(baseDir, `${id}.md`);
+  try {
+    await fs.access(directPath);
+    return directPath;
+  } catch {
+    // File doesn't exist, try subdirectory
+  }
+
+  // Try subdirectory: <dir>/<id>/SKILL.md or <dir>/<id>/AGENT.md
+  if (type === 'claude-skill') {
+    const skillPath = path.join(baseDir, id, 'SKILL.md');
+    try {
+      await fs.access(skillPath);
+      return skillPath;
+    } catch {
+      // Not found
+    }
+  }
+
+  if (type === 'claude') {
+    const agentPath = path.join(baseDir, id, 'AGENT.md');
+    try {
+      await fs.access(agentPath);
+      return agentPath;
+    } catch {
+      // Not found
+    }
+  }
+
+  return null;
+}
 
 /**
  * Display packages in a formatted table
  */
-function displayPackages(packages: Array<{id: string; version: string; resolved: string; type?: string; format?: string}>): void {
+async function displayPackages(packages: Array<{id: string; version: string; resolved: string; type?: string; format?: string}>): Promise<void> {
   if (packages.length === 0) {
     console.log('📦 No packages installed');
     return;
@@ -18,30 +86,38 @@ function displayPackages(packages: Array<{id: string; version: string; resolved:
   console.log('📦 Installed packages:');
   console.log('');
 
+  // Find file locations
+  const packagesWithLocations = await Promise.all(
+    packages.map(async pkg => ({
+      ...pkg,
+      location: await findPackageLocation(pkg.id, pkg.type)
+    }))
+  );
+
   // Calculate column widths
-  const idWidth = Math.max(8, ...packages.map(p => p.id.length));
-  const versionWidth = Math.max(7, ...packages.map(p => p.version.length));
-  const typeWidth = Math.max(6, ...packages.map(p => (p.type || '').length));
-  const formatWidth = Math.max(6, ...packages.map(p => (p.format || '').length));
+  const idWidth = Math.max(8, ...packagesWithLocations.map(p => p.id.length));
+  const versionWidth = Math.max(7, ...packagesWithLocations.map(p => p.version.length));
+  const typeWidth = Math.max(6, ...packagesWithLocations.map(p => (p.type || '').length));
+  const locationWidth = Math.max(8, ...packagesWithLocations.map(p => (p.location || 'N/A').length));
 
   // Header
   const header = [
     'ID'.padEnd(idWidth),
     'VERSION'.padEnd(versionWidth),
     'TYPE'.padEnd(typeWidth),
-    'FORMAT'.padEnd(formatWidth)
+    'LOCATION'.padEnd(locationWidth)
   ].join(' | ');
 
   console.log(header);
   console.log('-'.repeat(header.length));
 
   // Rows
-  packages.forEach(pkg => {
+  packagesWithLocations.forEach(pkg => {
     const row = [
       pkg.id.padEnd(idWidth),
       pkg.version.padEnd(versionWidth),
       (pkg.type || '').padEnd(typeWidth),
-      (pkg.format || '').padEnd(formatWidth)
+      (pkg.location || 'N/A').padEnd(locationWidth)
     ].join(' | ');
 
     console.log(row);
@@ -63,7 +139,7 @@ export async function handleList(): Promise<void> {
   try {
     const packages = await listPackages();
     packageCount = packages.length;
-    displayPackages(packages);
+    await displayPackages(packages);
     success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
