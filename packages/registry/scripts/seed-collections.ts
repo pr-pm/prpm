@@ -80,9 +80,8 @@ async function seedCollections() {
     const workingCollections = [
       {
         scope: 'collection',
-        id: 'react-best-practices',
+        name: 'react-best-practices',
         version: '1.0.0',
-        name: 'React Best Practices',
         description: 'Essential collection of React development best practices, patterns, and rules for building modern web applications',
         author: 'prpm',
         official: true,
@@ -93,9 +92,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'python-fullstack',
+        name: 'python-fullstack',
         version: '1.0.0',
-        name: 'Python Full Stack',
         description: 'Complete Python development collection covering backend, database, containerization, and best practices',
         author: 'prpm',
         official: true,
@@ -106,9 +104,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'claude-superpowers',
+        name: 'claude-superpowers',
         version: '1.0.0',
-        name: 'Claude Superpowers',
         description: 'Essential Claude skills for brainstorming, planning, and executing complex development tasks',
         author: 'obra',
         official: true,
@@ -125,9 +122,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'nextjs-fullstack',
+        name: 'nextjs-fullstack',
         version: '1.0.0',
-        name: 'Next.js Full Stack',
         description: 'Complete Next.js development stack with TypeScript, React, and modern tooling',
         author: 'prpm',
         official: true,
@@ -138,9 +134,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'vue-ecosystem',
+        name: 'vue-ecosystem',
         version: '1.0.0',
-        name: 'Vue.js Ecosystem',
         description: 'Complete Vue.js development collection with Nuxt, composition API, and modern patterns',
         author: 'prpm',
         official: true,
@@ -151,9 +146,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'angular-enterprise',
+        name: 'angular-enterprise',
         version: '1.0.0',
-        name: 'Angular Enterprise',
         description: 'Enterprise Angular development with best practices, patterns, and scalability',
         author: 'prpm',
         official: true,
@@ -164,9 +158,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'nodejs-backend',
+        name: 'nodejs-backend',
         version: '1.0.0',
-        name: 'Node.js Backend Development',
         description: 'Comprehensive Node.js backend stack with Express, NestJS, and microservices patterns',
         author: 'prpm',
         official: true,
@@ -177,9 +170,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'devops-kubernetes',
+        name: 'devops-kubernetes',
         version: '1.0.0',
-        name: 'DevOps & Kubernetes',
         description: 'Complete DevOps toolkit with Kubernetes, Docker, and CI/CD best practices',
         author: 'prpm',
         official: true,
@@ -190,9 +182,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'rust-systems',
+        name: 'rust-systems',
         version: '1.0.0',
-        name: 'Rust Systems Programming',
         description: 'Rust development collection for systems programming, performance, and safety',
         author: 'prpm',
         official: true,
@@ -203,9 +194,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'golang-microservices',
+        name: 'golang-microservices',
         version: '1.0.0',
-        name: 'Go Microservices',
         description: 'Go development for building scalable microservices and cloud-native applications',
         author: 'prpm',
         official: true,
@@ -216,9 +206,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'database-essentials',
+        name: 'database-essentials',
         version: '1.0.0',
-        name: 'Database Essentials',
         description: 'Essential database tools and practices for SQL, NoSQL, and ORMs',
         author: 'prpm',
         official: true,
@@ -229,9 +218,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'testing-toolkit',
+        name: 'testing-toolkit',
         version: '1.0.0',
-        name: 'Testing & QA Toolkit',
         description: 'Comprehensive testing collection with unit, integration, and e2e testing frameworks',
         author: 'prpm',
         official: true,
@@ -242,9 +230,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'aws-cloud',
+        name: 'aws-cloud',
         version: '1.0.0',
-        name: 'AWS Cloud Development',
         description: 'AWS cloud development with Lambda, DynamoDB, S3, and serverless patterns',
         author: 'prpm',
         official: true,
@@ -255,9 +242,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'graphql-stack',
+        name: 'graphql-stack',
         version: '1.0.0',
-        name: 'GraphQL Development Stack',
         description: 'Complete GraphQL development with Apollo, schema design, and best practices',
         author: 'prpm',
         official: true,
@@ -268,9 +254,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'mobile-development',
+        name: 'mobile-development',
         version: '1.0.0',
-        name: 'Mobile Development',
         description: 'Cross-platform mobile development with React Native and modern tooling',
         author: 'prpm',
         official: true,
@@ -281,9 +266,8 @@ async function seedCollections() {
       },
       {
         scope: 'collection',
-        id: 'web3-blockchain',
+        name: 'web3-blockchain',
         version: '1.0.0',
-        name: 'Web3 & Blockchain',
         description: 'Web3 development with Solidity, Ethereum, and decentralized applications',
         author: 'prpm',
         official: true,
@@ -304,21 +288,21 @@ async function seedCollections() {
         try {
           // Normalize scope: handle @collection/id format vs separate scope/id
           let scope = collection.scope || 'collection';
-          let collectionId = collection.id;
+          let nameSlug = collection.id; // The id field in JSON is actually the name slug
 
           // Handle @collection format in scope
           if (scope.startsWith('@')) {
             scope = scope.substring(1);
           }
 
-          // Check if collection already exists
+          // Check if collection already exists (using new schema: scope + name_slug + version)
           const existing = await pool.query(
-            'SELECT scope, id, version FROM collections WHERE scope = $1 AND id = $2 AND version = $3',
-            [scope, collectionId, collection.version]
+            'SELECT id FROM collections WHERE scope = $1 AND name_slug = $2 AND version = $3',
+            [scope, nameSlug, collection.version]
           );
 
           if (existing.rows.length > 0) {
-            console.log(`  ⏭️  Skipped: ${scope}/${collectionId}@${collection.version} (already exists)`);
+            console.log(`  ⏭️  Skipped: ${scope}/${nameSlug}@${collection.version} (already exists)`);
             totalSkipped++;
             continue;
           }
@@ -334,20 +318,22 @@ async function seedCollections() {
           );
           const authorUserId = userResult.rows[0].id;
 
-          // Insert collection
-          await pool.query(`
+          // Insert collection with new UUID-based schema
+          const collectionResult = await pool.query(`
             INSERT INTO collections (
-              scope, id, version, name, description, author_id,
+              scope, name_slug, old_id, version, name, description, author_id,
               official, verified, category, tags, framework,
               downloads, stars, created_at, updated_at
             ) VALUES (
-              $1, $2, $3, $4, $5, $6,
-              $7, $8, $9, $10, $11,
-              $12, $13, NOW(), NOW()
+              $1, $2, $3, $4, $5, $6, $7,
+              $8, $9, $10, $11, $12,
+              $13, $14, NOW(), NOW()
             )
+            RETURNING id
           `, [
             scope,
-            collectionId,
+            nameSlug,
+            nameSlug, // old_id matches name_slug for new collections
             collection.version,
             collection.name,
             collection.description,
@@ -361,6 +347,8 @@ async function seedCollections() {
             0, // stars
           ]);
 
+          const collectionUuid = collectionResult.rows[0].id;
+
           // Insert collection_packages relationships if packages are specified
           if (collection.packages && collection.packages.length > 0) {
             let linkedCount = 0;
@@ -371,12 +359,17 @@ async function seedCollections() {
               const required = typeof pkg === 'string' ? true : (pkg.required !== false);
               const order = typeof pkg === 'string' ? i + 1 : (pkg.order || i + 1);
 
-              // Resolve package UUID: try exact id, then name lookup
+              // Resolve package UUID: try as UUID first, then by name lookup
               let resolvedPackageId: string | null = null;
-              const byId = await pool.query('SELECT id FROM packages WHERE name = $1', [packageIdentifier]);
-              if (byId.rows.length > 0) {
-                resolvedPackageId = byId.rows[0].id;
+              // Check if it's a valid UUID
+              const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+              if (uuidRegex.test(packageIdentifier)) {
+                const byId = await pool.query('SELECT id FROM packages WHERE id = $1', [packageIdentifier]);
+                if (byId.rows.length > 0) {
+                  resolvedPackageId = byId.rows[0].id;
+                }
               } else {
+                // Look up by package name
                 const byName = await pool.query('SELECT id FROM packages WHERE name = $1', [packageIdentifier]);
                 if (byName.rows.length > 0) {
                   resolvedPackageId = byName.rows[0].id;
@@ -386,15 +379,12 @@ async function seedCollections() {
               if (resolvedPackageId) {
                 await pool.query(`
                   INSERT INTO collection_packages (
-                    collection_scope, collection_id, collection_version,
-                    package_id, package_version, required, install_order
+                    collection_id, package_id, package_version, required, install_order
                   ) VALUES (
-                    $1, $2, $3, $4, $5, $6, $7
-                  ) ON CONFLICT DO NOTHING
+                    $1, $2, $3, $4, $5
+                  ) ON CONFLICT (collection_id, package_id) DO NOTHING
                 `, [
-                  collection.scope,
-                  collection.id,
-                  collection.version,
+                  collectionUuid,
                   resolvedPackageId,
                   'latest', // Use latest version
                   required,
@@ -408,11 +398,11 @@ async function seedCollections() {
             }
           }
 
-          console.log(`  ✅ Imported: ${scope}/${collectionId}@${collection.version}`);
+          console.log(`  ✅ Imported: ${scope}/${nameSlug}@${collection.version}`);
           totalImported++;
 
         } catch (error) {
-          console.error(`  ❌ Error importing ${scope}/${collectionId}:`, error);
+          console.error(`  ❌ Error importing`, { error });
         }
       }
 

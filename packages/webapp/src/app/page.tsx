@@ -219,24 +219,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-
-          {/* CTA */}
-          <div className="text-center pb-20">
-            <div className="inline-flex flex-col items-center gap-4 px-8 py-6 bg-prpm-dark-card border border-prpm-border rounded-2xl">
-              <p className="text-gray-400">
-                Have an invite code?
-              </p>
-              <Link
-                href="/claim"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg transition-all font-semibold"
-              >
-                Claim Your Username
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
     </main>

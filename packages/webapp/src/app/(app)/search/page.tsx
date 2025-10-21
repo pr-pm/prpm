@@ -2,44 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { searchPackages, searchCollections, SearchPackagesParams, SearchCollectionsParams } from '@/lib/api'
+import {
+  searchPackages,
+  searchCollections,
+  SearchPackagesParams,
+  SearchCollectionsParams,
+  Package,
+  Collection,
+  PackageType,
+  SortType,
+} from '@/lib/api'
 
 type TabType = 'packages' | 'collections' | 'skills'
-type PackageType = 'cursor' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'generic' | 'mcp'
-type SortType = 'downloads' | 'created' | 'updated' | 'quality' | 'rating'
-
-interface Package {
-  id: string
-  name: string
-  description?: string
-  type: PackageType
-  author_id?: string
-  tags: string[]
-  category?: string
-  total_downloads: number
-  quality_score?: number
-  verified: boolean
-  featured: boolean
-  created_at: string
-}
-
-interface Collection {
-  scope: string
-  id: string
-  name_slug: string
-  name: string
-  description?: string
-  author: string
-  official: boolean
-  verified: boolean
-  category?: string
-  tags: string[]
-  framework?: string
-  downloads: number
-  stars: number
-  package_count: number
-  created_at: string
-}
 
 export default function SearchPage() {
   const [activeTab, setActiveTab] = useState<TabType>('packages')
@@ -142,6 +116,7 @@ export default function SearchPage() {
     } else if (activeTab === 'skills') {
       fetchSkills()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, query, selectedType, selectedCategory, selectedTags, sort, page])
 
   // Reset page when filters change

@@ -148,11 +148,12 @@ async function seedCollections() {
         tags.push('slash-commands');
       }
 
-      // Insert collection
+      // Insert collection with new UUID-based schema
       const collectionResult = await pool.query(
         `INSERT INTO collections (
           scope,
-          id,
+          name_slug,
+          old_id,
           name,
           version,
           description,
@@ -163,15 +164,16 @@ async function seedCollections() {
           verified,
           created_at,
           updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-        ON CONFLICT (scope, id, version) DO UPDATE SET
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+        ON CONFLICT (scope, name_slug, version) DO UPDATE SET
           description = EXCLUDED.description,
           tags = EXCLUDED.tags,
           updated_at = NOW()
-        RETURNING scope, id, version`,
+        RETURNING id`,
         [
           'collection', // Use 'collection' scope for official collections
-          pluginName,
+          pluginName, // name_slug
+          pluginName, // old_id (for compatibility)
           collectionName,
           '1.0.0',
           description,
@@ -183,9 +185,7 @@ async function seedCollections() {
         ]
       );
 
-      const collectionScope = collectionResult.rows[0].scope;
-      const collectionId = collectionResult.rows[0].id;
-      const collectionVersion = collectionResult.rows[0].version;
+      const collectionUuid = collectionResult.rows[0].id;
 
       // Add packages to collection
       const allPackages = [...group.agents, ...group.commands];
@@ -210,14 +210,12 @@ async function seedCollections() {
         // Add to collection
         await pool.query(
           `INSERT INTO collection_packages (
-            collection_scope,
             collection_id,
-            collection_version,
             package_id,
             install_order
-          ) VALUES ($1, $2, $3, $4, $5)
-          ON CONFLICT (collection_scope, collection_id, collection_version, package_id) DO NOTHING`,
-          [collectionScope, collectionId, collectionVersion, packageId, i]
+          ) VALUES ($1, $2, $3)
+          ON CONFLICT (collection_id, package_id) DO NOTHING`,
+          [collectionUuid, packageId, i]
         );
 
         packagesAdded++;
@@ -306,7 +304,7 @@ async function seedCollections() {
         COUNT(DISTINCT c.id) as count,
         COUNT(cp.package_id) as total_packages
       FROM collections c
-      LEFT JOIN collection_packages cp ON c.scope = cp.collection_scope AND c.id = cp.collection_id AND c.version = cp.collection_version
+      LEFT JOIN collection_packages cp ON c.id = cp.collection_id
       WHERE c.tags @> ARRAY['agent-collection']::TEXT[]
       GROUP BY c.category
       ORDER BY count DESC
@@ -322,7 +320,7 @@ async function seedCollections() {
         COUNT(DISTINCT c.id) as count,
         COUNT(cp.package_id) as total_packages
       FROM collections c
-      LEFT JOIN collection_packages cp ON c.scope = cp.collection_scope AND c.id = cp.collection_id AND c.version = cp.collection_version
+      LEFT JOIN collection_packages cp ON c.id = cp.collection_id
       WHERE c.tags @> ARRAY['agent-collection']::TEXT[]
     `);
     console.log(`\n📦 Total agent collections: ${total.rows[0].count} (${total.rows[0].total_packages} packages)`);
@@ -345,11 +343,12 @@ async function createFeaturedCollection(
   category: string,
   tags: string[]
 ) {
-  // Insert collection
+  // Insert collection with new UUID-based schema
   const collectionResult = await pool.query(
     `INSERT INTO collections (
       scope,
-      id,
+      name_slug,
+      old_id,
       name,
       version,
       description,
@@ -360,18 +359,16 @@ async function createFeaturedCollection(
       verified,
       created_at,
       updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-    ON CONFLICT (scope, id, version) DO UPDATE SET
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+    ON CONFLICT (scope, name_slug, version) DO UPDATE SET
       description = EXCLUDED.description,
       tags = EXCLUDED.tags,
       updated_at = NOW()
-    RETURNING scope, id, version`,
-    ['collection', slug, name, '1.0.0', description, curatorId, category, tags, true, true]
+    RETURNING id`,
+    ['collection', slug, slug, name, '1.0.0', description, curatorId, category, tags, true, true]
   );
 
-  const collectionScope = collectionResult.rows[0].scope;
-  const collectionId = collectionResult.rows[0].id;
-  const collectionVersion = collectionResult.rows[0].version;
+  const collectionUuid = collectionResult.rows[0].id;
 
   // Add packages to collection
   let packagesAdded = 0;
@@ -389,14 +386,12 @@ async function createFeaturedCollection(
 
     await pool.query(
       `INSERT INTO collection_packages (
-        collection_scope,
         collection_id,
-        collection_version,
         package_id,
         install_order
-      ) VALUES ($1, $2, $3, $4, $5)
-      ON CONFLICT (collection_scope, collection_id, collection_version, package_id) DO NOTHING`,
-      [collectionScope, collectionId, collectionVersion, packageId, i]
+      ) VALUES ($1, $2, $3)
+      ON CONFLICT (collection_id, package_id) DO NOTHING`,
+      [collectionUuid, packageId, i]
     );
 
     packagesAdded++;

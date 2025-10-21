@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "concurrently --kill-others --names \"BUILD,SERVER\" \"tsc --watch --preserveWatchOutput\" \"tsx watch --clear-screen=false src/index.ts\"",
+    "dev": "concurrently --kill-others --names \"BUILD,SERVER\" \"DOTENV_CONFIG_PATH=././../../.env tsc --watch --preserveWatchOutput\" \"DOTENV_CONFIG_PATH=././../../.env tsx watch -r dotenv/config src/index.ts\"",
     "dev:server": "tsx watch src/index.ts",
     "dev:no-build": "tsx watch src/index.ts",
     "build": "tsc",

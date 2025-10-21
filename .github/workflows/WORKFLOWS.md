@@ -294,3 +294,6 @@ aws elasticbeanstalk update-environment \
 - Staging: ~$32.50 (if used)
 - Prod: ~$40 (scaled to 2 instances)
 - **Total: ~$105/month (dev + prod)**
+
+### 2. `deploy-webapp.yml` - Deploy Webapp
+Pushes the webapp to s3 and invalidates the cloudfront cache.

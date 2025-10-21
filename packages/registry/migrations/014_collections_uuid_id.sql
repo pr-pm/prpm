@@ -9,9 +9,9 @@ ALTER TABLE collections ADD COLUMN name_slug VARCHAR(255);
 -- Copy current id to name_slug
 UPDATE collections SET name_slug = id;
 
--- Drop existing foreign key constraints
-ALTER TABLE collection_packages DROP CONSTRAINT collection_packages_collection_scope_collection_id_collection_fkey;
-ALTER TABLE collection_installs DROP CONSTRAINT collection_installs_collection_scope_collection_id_collec_fkey;
+-- Drop existing foreign key constraints (names are truncated by PostgreSQL to 63 chars)
+ALTER TABLE collection_packages DROP CONSTRAINT collection_packages_collection_scope_collection_id_collect_fkey;
+ALTER TABLE collection_installs DROP CONSTRAINT collection_installs_collection_scope_collection_id_collect_fkey;
 
 -- Add uuid_id to related tables
 ALTER TABLE collection_packages ADD COLUMN collection_uuid_id UUID;

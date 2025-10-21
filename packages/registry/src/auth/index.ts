@@ -24,7 +24,6 @@ export async function setupAuth(server: FastifyInstance) {
         },
         auth: fastifyOauth2.GITHUB_CONFIGURATION,
       },
-      startRedirectPath: '/api/v1/auth/github',
       callbackUri: config.github.callbackUrl,
       scope: ['user:email', 'read:user'],
     });
