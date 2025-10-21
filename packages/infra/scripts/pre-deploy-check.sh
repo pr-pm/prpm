@@ -67,27 +67,7 @@ check_pulumi_stack() {
     fi
 }
 
-# Function to check required config
-check_pulumi_config() {
-    echo "Checking required configuration..."
-
-    REQUIRED_CONFIGS=(
-        "db:password"
-        "github:clientId"
-        "github:clientSecret"
-        "aws:region"
-    )
-
-    for conf in "${REQUIRED_CONFIGS[@]}"; do
-        if pulumi config get $conf --show-secrets &> /dev/null; then
-            echo -e "${GREEN}✓${NC} $conf is set"
-        else
-            echo -e "${RED}✗${NC} $conf is not set"
-            echo "  Run: pulumi config set --secret $conf <value>"
-            ERRORS=$((ERRORS + 1))
-        fi
-    done
-}
+# Function to check required config (removed - now inline in main script)
 
 # Function to check AWS quotas/limits
 check_aws_quotas() {
@@ -121,33 +101,29 @@ estimate_costs() {
     echo "  ----------------------------------------"
 
     if [[ "$STACK" == "dev" ]]; then
+        echo "  Beanstalk (1x t3.micro): ~\$7.50"
         echo "  RDS (db.t4g.micro):      ~\$15"
-        echo "  ElastiCache (t4g.micro): ~\$12"
-        echo "  ECS Fargate (2 tasks):   ~\$25"
-        echo "  NAT Gateway:             ~\$32"
-        echo "  ALB:                     ~\$16"
+        echo "  Bastion (t3.micro):      ~\$7.50"
         echo "  S3 + CloudFront:         ~\$5"
+        echo "  Data transfer + logs:    ~\$2.50"
         echo "  ----------------------------------------"
-        echo "  Total:                   ~\$105/month"
+        echo "  Total:                   ~\$37.50/month"
     elif [[ "$STACK" == "staging" ]]; then
+        echo "  Beanstalk (2x t3.small): ~\$30"
         echo "  RDS (db.t4g.small):      ~\$30"
-        echo "  ElastiCache (t4g.small): ~\$24"
-        echo "  ECS Fargate (2 tasks):   ~\$50"
-        echo "  NAT Gateway:             ~\$32"
-        echo "  ALB:                     ~\$16"
+        echo "  Bastion (t3.micro):      ~\$7.50"
         echo "  S3 + CloudFront:         ~\$10"
+        echo "  Data transfer + logs:    ~\$5"
         echo "  ----------------------------------------"
-        echo "  Total:                   ~\$162/month"
+        echo "  Total:                   ~\$82.50/month"
     elif [[ "$STACK" == "prod" ]]; then
-        echo "  RDS (db.t4g.medium):     ~\$60"
-        echo "  ElastiCache (t4g.medium):~\$48"
-        echo "  ECS Fargate (3+ tasks):  ~\$100"
-        echo "  NAT Gateway:             ~\$32"
-        echo "  ALB:                     ~\$16"
-        echo "  S3 + CloudFront:         ~\$25"
-        echo "  CloudWatch + Logs:       ~\$10"
+        echo "  Beanstalk (2x t3.micro): ~\$15"
+        echo "  RDS (db.t4g.micro):      ~\$15"
+        echo "  Bastion (t3.micro):      ~\$7.50"
+        echo "  S3 + CloudFront:         ~\$10"
+        echo "  Data transfer + logs:    ~\$5"
         echo "  ----------------------------------------"
-        echo "  Total:                   ~\$291/month"
+        echo "  Total:                   ~\$52.50/month"
     fi
 
     echo ""
@@ -171,7 +147,33 @@ echo ""
 echo "3. Checking Pulumi Configuration"
 echo "--------------------------------"
 check_pulumi_stack
-check_pulumi_config
+
+# Check if config exists, but don't fail if missing (provision script will prompt)
+if pulumi config get aws:region &> /dev/null; then
+    echo "Checking configuration values..."
+    CONFIG_MISSING=0
+
+    REQUIRED_CONFIGS=(
+        "db:password"
+        "github:clientId"
+        "github:clientSecret"
+        "aws:region"
+    )
+
+    for conf in "${REQUIRED_CONFIGS[@]}"; do
+        if pulumi config get $conf --show-secrets &> /dev/null; then
+            echo -e "${GREEN}✓${NC} $conf is set"
+        else
+            echo -e "${YELLOW}⚠${NC}  $conf is not set (will be prompted during provisioning)"
+            CONFIG_MISSING=$((CONFIG_MISSING + 1))
+            WARNINGS=$((WARNINGS + 1))
+        fi
+    done
+else
+    echo -e "${YELLOW}⚠${NC}  Stack not yet configured (this is OK for first-time setup)"
+    echo "  Configuration will be set during provisioning"
+    WARNINGS=$((WARNINGS + 1))
+fi
 echo ""
 
 echo "4. Checking AWS Service Quotas"
@@ -187,18 +189,15 @@ echo "================================================"
 if [ $ERRORS -eq 0 ]; then
     echo -e "${GREEN}✓${NC} Pre-deployment checks passed!"
     if [ $WARNINGS -gt 0 ]; then
-        echo -e "${YELLOW}⚠${NC}  $WARNINGS warning(s) found. Review before deploying."
+        echo -e "${YELLOW}⚠${NC}  $WARNINGS warning(s) found (configuration will be prompted if needed)"
     fi
-    echo ""
-    echo "Next steps:"
-    echo "  1. Review changes: pulumi preview"
-    echo "  2. Deploy:         pulumi up"
-    echo "  3. Monitor:        watch -n 5 'pulumi stack output'"
     exit 0
 else
-    echo -e "${RED}✗${NC} $ERRORS error(s) found. Fix before deploying."
+    echo -e "${RED}✗${NC} $ERRORS critical error(s) found. Fix before deploying."
     if [ $WARNINGS -gt 0 ]; then
         echo -e "${YELLOW}⚠${NC}  $WARNINGS warning(s) also found."
     fi
+    echo ""
+    echo "Please fix the errors above before continuing."
     exit 1
 fi

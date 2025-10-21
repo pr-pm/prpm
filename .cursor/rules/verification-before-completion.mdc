@@ -1,7 +1,7 @@
 ---
 ruleType: always
 alwaysApply: true
-description: ---
+description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 source: claude-code-skill
 skill: verification-before-completion
 ---

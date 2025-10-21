@@ -1,7 +1,7 @@
 ---
 ruleType: contextual
 alwaysApply: false
-description: ---
+description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
 source: claude-code-skill
 skill: finishing-a-development-branch
 ---

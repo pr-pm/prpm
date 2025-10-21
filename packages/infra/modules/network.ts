@@ -8,12 +8,12 @@ import * as awsx from "@pulumi/awsx";
 
 export interface VpcResources {
   vpc: aws.ec2.Vpc;
-  publicSubnets: aws.ec2.Subnet[];
-  privateSubnets: aws.ec2.Subnet[];
+  publicSubnets: pulumi.Output<aws.ec2.Subnet[]>;
+  privateSubnets: pulumi.Output<aws.ec2.Subnet[]>;
   internetGateway: aws.ec2.InternetGateway;
-  natGateway: aws.ec2.NatGateway;
+  natGateway: pulumi.Output<aws.ec2.NatGateway>;
   publicRouteTable: aws.ec2.RouteTable;
-  privateRouteTable: aws.ec2.RouteTable;
+  privateRouteTable: pulumi.Output<aws.ec2.RouteTable>;
 }
 
 function createVpc(
@@ -162,7 +162,7 @@ function createVpc(
     natGateway: pulumi.output(natGateway),
     publicRouteTable,
     privateRouteTable: pulumi.output(privateRouteTable),
-  } 
+  };
 }
 
 export const network = {

@@ -1,7 +1,7 @@
 ---
 ruleType: contextual
 alwaysApply: false
-description: ---
+description: Use when errors occur deep in execution and you need to trace back to find the original trigger - systematically traces bugs backward through call stack, adding instrumentation when needed, to identify source of invalid data or incorrect behavior
 source: claude-code-skill
 skill: root-cause-tracing
 ---

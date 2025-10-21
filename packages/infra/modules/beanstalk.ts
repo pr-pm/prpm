@@ -15,9 +15,10 @@
 
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
+import { VpcResources } from "./network";
 
 interface BeanstalkConfig {
-  vpc: ReturnType<typeof createNetwork>;
+  vpc: VpcResources;
   dbEndpoint: pulumi.Output<string>;
   dbUsername: string;
   dbPassword: pulumi.Output<string>;
@@ -193,24 +194,60 @@ export function createBeanstalkApp(
     tags: config.tags,
   });
 
-  // 6. Create Application Version (will be updated via deployments)
-  const appVersion = new aws.elasticbeanstalk.ApplicationVersion(
-    `${name}-version`,
-    {
-      name: `${name}-initial`,
-      application: application.name,
-      description: "Initial application version",
-      bucket: config.s3BucketName,
-      key: "registry/application.zip", // Placeholder
-      tags: config.tags,
-    }
-  );
+  // 6. ACM Certificate (must be created before Beanstalk environment)
+  let certificate: aws.acm.Certificate | undefined;
+  let certValidationComplete: aws.acm.CertificateValidation | undefined;
+
+  if (config.domainName) {
+    // Extract base domain (e.g., "prpm.dev" from "registry.prpm.dev")
+    const domainParts = config.domainName.split(".");
+    const baseDomain =
+      domainParts.length >= 2
+        ? domainParts.slice(-2).join(".")
+        : config.domainName;
+
+    // Look up existing hosted zone
+    const hostedZone = aws.route53.getZoneOutput({
+      name: baseDomain,
+    });
+
+    // Create ACM certificate
+    certificate = new aws.acm.Certificate(`${name}-cert`, {
+      domainName: config.domainName,
+      validationMethod: "DNS",
+      tags: {
+        ...config.tags,
+        Name: `${config.domainName} SSL Certificate`,
+      },
+    });
+
+    // Create DNS validation record
+    const certValidation = new aws.route53.Record(
+      `${name}-cert-validation`,
+      {
+        name: certificate.domainValidationOptions[0].resourceRecordName,
+        type: certificate.domainValidationOptions[0].resourceRecordType,
+        zoneId: hostedZone.zoneId,
+        records: [certificate.domainValidationOptions[0].resourceRecordValue],
+        ttl: 60,
+      }
+    );
+
+    // Wait for certificate validation
+    certValidationComplete = new aws.acm.CertificateValidation(
+      `${name}-cert-validation-complete`,
+      {
+        certificateArn: certificate.arn,
+        validationRecordFqdns: [certValidation.fqdn],
+      }
+    );
+  }
 
   // 7. Create Beanstalk Environment
   const beanstalkEnv = new aws.elasticbeanstalk.Environment(`${name}-env`, {
     name: `${name}-env`,
     application: application.name,
-    solutionStackName: "64bit Amazon Linux 2023 v6.2.0 running Node.js 20",
+    solutionStackName: "64bit Amazon Linux 2023 v6.6.6 running Node.js 20",
     tier: "WebServer",
 
     // Environment variables
@@ -265,29 +302,22 @@ export function createBeanstalkApp(
       {
         namespace: "aws:ec2:vpc",
         name: "Subnets",
-        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: unknown[]) =>
-          pulumi.all(subnets.map((s: { id: pulumi.Output<string> }) => s.id)).apply(ids => ids.join(","))
+        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: aws.ec2.Subnet[]) =>
+          pulumi.all(subnets.map(s => s.id)).apply(ids => ids.join(","))
         ),
       },
       {
         namespace: "aws:ec2:vpc",
         name: "ELBSubnets",
-        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: unknown[]) =>
-          pulumi.all(subnets.map((s: { id: pulumi.Output<string> }) => s.id)).apply(ids => ids.join(","))
+        value: pulumi.output(config.vpc.publicSubnets).apply((subnets: aws.ec2.Subnet[]) =>
+          pulumi.all(subnets.map(s => s.id)).apply(ids => ids.join(","))
         ),
       },
 
-      // Node.js settings
-      {
-        namespace: "aws:elasticbeanstalk:container:nodejs",
-        name: "NodeCommand",
-        value: "npm start",
-      },
-      {
-        namespace: "aws:elasticbeanstalk:container:nodejs",
-        name: "NodeVersion",
-        value: "20.x",
-      },
+      // Note: Amazon Linux 2023 does NOT support aws:elasticbeanstalk:container:nodejs namespace
+      // NodeCommand and NodeVersion are not available
+      // The app starts automatically via package.json "start" script
+      // The Node.js version is specified in the solution stack name
 
       // Application environment variables
       {
@@ -404,6 +434,11 @@ export function createBeanstalkApp(
         name: "PreferredStartTime",
         value: "Sun:03:00",
       },
+      {
+        namespace: "aws:elasticbeanstalk:managedactions:platformupdate",
+        name: "UpdateLevel",
+        value: "minor",
+      },
 
       // Rolling updates
       {
@@ -421,17 +456,37 @@ export function createBeanstalkApp(
         name: "BatchSize",
         value: "50",
       },
+
+      // HTTPS/SSL Configuration (if certificate exists)
+      ...(certificate && certValidationComplete
+        ? [
+            {
+              namespace: "aws:elbv2:listener:443",
+              name: "Protocol",
+              value: "HTTPS",
+            },
+            {
+              namespace: "aws:elbv2:listener:443",
+              name: "SSLCertificateArns",
+              value: certValidationComplete.certificateArn,
+            },
+            {
+              namespace: "aws:elbv2:listener:443",
+              name: "SSLPolicy",
+              value: "ELBSecurityPolicy-TLS13-1-2-2021-06",
+            },
+          ]
+        : []),
     ],
 
     tags: config.tags,
   });
 
-  // 8. ACM Certificate and Route53 (if domain is provided)
-  let certificate: aws.acm.Certificate | undefined;
+  // 8. Route53 DNS record (if domain is provided)
   let dnsRecord: aws.route53.Record | undefined;
 
   if (config.domainName) {
-    // Extract base domain (e.g., "prpm.dev" from "registry.prpm.dev")
+    // Extract base domain
     const domainParts = config.domainName.split(".");
     const baseDomain =
       domainParts.length >= 2
@@ -443,45 +498,34 @@ export function createBeanstalkApp(
       name: baseDomain,
     });
 
-    // Create ACM certificate
-    certificate = new aws.acm.Certificate(`${name}-cert`, {
-      domainName: config.domainName,
-      validationMethod: "DNS",
-      tags: {
-        ...config.tags,
-        Name: `${config.domainName} SSL Certificate`,
-      },
-    });
+    // Check if this is an apex domain (e.g., prpm.dev vs registry.prpm.dev)
+    const isApexDomain = config.domainName === baseDomain;
 
-    // Create DNS validation record
-    const certValidation = new aws.route53.Record(
-      `${name}-cert-validation`,
-      {
-        name: certificate.domainValidationOptions[0].resourceRecordName,
-        type: certificate.domainValidationOptions[0].resourceRecordType,
+    if (isApexDomain) {
+      // For apex domains, use A record with alias pointing to Elastic Beanstalk environment
+      // Cannot use CNAME at apex - DNS spec limitation
+      dnsRecord = new aws.route53.Record(`${name}-dns`, {
+        name: config.domainName,
+        type: "A",
         zoneId: hostedZone.zoneId,
-        records: [certificate.domainValidationOptions[0].resourceRecordValue],
-        ttl: 60,
-      }
-    );
-
-    // Wait for certificate validation
-    const certValidationComplete = new aws.acm.CertificateValidation(
-      `${name}-cert-validation-complete`,
-      {
-        certificateArn: certificate.arn,
-        validationRecordFqdns: [certValidation.fqdn],
-      }
-    );
-
-    // Create Route53 A record pointing to Beanstalk environment
-    dnsRecord = new aws.route53.Record(`${name}-dns`, {
-      name: config.domainName,
-      type: "CNAME",
-      zoneId: hostedZone.zoneId,
-      records: [beanstalkEnv.cname],
-      ttl: 300,
-    });
+        aliases: [
+          {
+            name: beanstalkEnv.cname,
+            zoneId: "Z38NKT9BP95V3O", // Elastic Beanstalk zone ID for us-west-2
+            evaluateTargetHealth: true,
+          },
+        ],
+      });
+    } else {
+      // For subdomains, use CNAME record
+      dnsRecord = new aws.route53.Record(`${name}-dns`, {
+        name: config.domainName,
+        type: "CNAME",
+        zoneId: hostedZone.zoneId,
+        records: [beanstalkEnv.cname],
+        ttl: 300,
+      });
+    }
   }
 
   // Return outputs

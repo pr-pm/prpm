@@ -13,11 +13,12 @@ export interface DatabaseConfig {
   instanceClass: string;
   allocatedStorage: number;
   tags: Record<string, string>;
+  bastionSecurityGroupId?: pulumi.Output<string>;
 }
 
 export interface DatabaseResources {
-  instance: aws.rds.Instance;
-  subnetGroup: aws.rds.SubnetGroup;
+  instance: pulumi.Output<aws.rds.Instance>;
+  subnetGroup: pulumi.Output<aws.rds.SubnetGroup>;
   securityGroup: aws.ec2.SecurityGroup;
   endpoint: pulumi.Output<string>;
   port: pulumi.Output<number>;
@@ -69,9 +70,22 @@ function createRdsPostgres(
     },
   });
 
-  // Create parameter group for PostgreSQL 15
+  // Add ingress rule to allow bastion host access if provided
+  if (config.bastionSecurityGroupId) {
+    new aws.ec2.SecurityGroupRule(`${name}-rds-bastion-ingress`, {
+      type: "ingress",
+      securityGroupId: securityGroup.id,
+      sourceSecurityGroupId: config.bastionSecurityGroupId,
+      protocol: "tcp",
+      fromPort: 5432,
+      toPort: 5432,
+      description: "PostgreSQL from bastion host",
+    });
+  }
+
+  // Create parameter group for PostgreSQL 17
   const parameterGroup = new aws.rds.ParameterGroup(`${name}-db-params`, {
-    family: "postgres15",
+    family: "postgres17",
     parameters: [
       {
         name: "log_connections",
@@ -85,10 +99,8 @@ function createRdsPostgres(
         name: "log_duration",
         value: "1",
       },
-      {
-        name: "shared_preload_libraries",
-        value: "pg_stat_statements",
-      },
+      // Note: shared_preload_libraries is a static parameter that requires DB reboot
+      // Can be enabled later via AWS console if needed
     ],
     tags: {
       ...config.tags,
@@ -101,7 +113,7 @@ function createRdsPostgres(
     new aws.rds.Instance(`${name}-db`, {
       identifier: `${name}-db`,
       engine: "postgres",
-      engineVersion: "15.5",
+      engineVersion: "17.2",
       instanceClass: config.instanceClass,
       allocatedStorage: config.allocatedStorage,
       storageType: "gp3",
@@ -137,10 +149,8 @@ function createRdsPostgres(
     instance: pulumi.output(instance),
     subnetGroup: pulumi.output(subnetGroup),
     securityGroup,
-    endpoint: pulumi.output(instance).apply(i =>
-      pulumi.output(i.endpoint).apply(e => e.split(":")[0])
-    ),
-    port: pulumi.output(instance).apply(i => pulumi.output(i.port)),
+    endpoint: pulumi.output(instance).apply(i => i.endpoint.apply(e => e.split(":")[0])),
+    port: pulumi.output(instance).apply(i => i.port),
   };
 }
 

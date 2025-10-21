@@ -25,6 +25,7 @@ Evolving PRPM into the definitive package manager for AI coding prompts.
 - 🎨 **Collection templates** - Pre-built collection templates for common stacks
 - 📝 **Package claiming** - Allow original authors to claim and manage their packages
 - 🔐 **OAuth authentication** - GitHub OAuth for seamless login
+- 📁 **Nested Cursor rules** - Support directory-specific rules that correspond to project structure (see [Cursor nested rules docs](https://cursor.com/docs/context/rules#nested-rules))
 
 ## v2.0 (Q3 2025)
 

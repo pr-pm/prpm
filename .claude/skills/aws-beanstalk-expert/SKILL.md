@@ -83,7 +83,7 @@ const app = new aws.elasticbeanstalk.Application("app", {
 // Best Practice: Environment with all production settings
 const environment = new aws.elasticbeanstalk.Environment("app-env", {
   application: app.name,
-  solutionStackName: "64bit Amazon Linux 2023 v6.1.0 running Node.js 20",
+  solutionStackName: "64bit Amazon Linux 2023 v6.6.6 running Node.js 20", // Always use latest available
 
   settings: [
     // Instance configuration
@@ -580,3 +580,234 @@ flock -n /tmp/migrate.lock npm run migrate || {
 ```
 
 This skill provides battle-tested patterns for production Elastic Beanstalk deployments.
+
+## Critical Troubleshooting Scenarios (Updated Oct 2025)
+
+### Configuration Validation Errors
+
+**Error: "Invalid option specification - UpdateLevel required"**
+
+When enabling managed actions, you MUST also specify UpdateLevel:
+
+```typescript
+// Managed updates - BOTH required
+{
+  namespace: "aws:elasticbeanstalk:managedactions",
+  name: "ManagedActionsEnabled",
+  value: "true",
+},
+{
+  namespace: "aws:elasticbeanstalk:managedactions",
+  name: "PreferredStartTime",
+  value: "Sun:03:00",
+},
+{
+  namespace: "aws:elasticbeanstalk:managedactions:platformupdate",
+  name: "UpdateLevel",
+  value: "minor", // REQUIRED: "minor" or "patch"
+},
+```
+
+**Error: "No Solution Stack named 'X' found"**
+
+Solution stack names change frequently. Always verify the exact name:
+
+```bash
+# List available Node.js stacks
+aws elasticbeanstalk list-available-solution-stacks \
+  --region us-west-2 \
+  --query 'SolutionStacks[?contains(@, `Node.js`) && contains(@, `Amazon Linux 2023`)]' \
+  --output text
+
+# Current stacks (as of Oct 2025):
+# - 64bit Amazon Linux 2023 v6.6.6 running Node.js 20
+# - 64bit Amazon Linux 2023 v6.6.6 running Node.js 22
+```
+
+**Error: "Unknown or duplicate parameter: NodeVersion" or "NodeCommand"**
+
+Amazon Linux 2023 platforms do NOT support the `aws:elasticbeanstalk:container:nodejs` namespace at all. Neither NodeVersion nor NodeCommand work:
+
+```typescript
+// ❌ WRONG - aws:elasticbeanstalk:container:nodejs namespace not supported in AL2023
+{
+  namespace: "aws:elasticbeanstalk:container:nodejs",
+  name: "NodeVersion",
+  value: "20.x",
+}
+{
+  namespace: "aws:elasticbeanstalk:container:nodejs",
+  name: "NodeCommand",
+  value: "npm start",
+}
+
+// ✅ CORRECT - version specified in solution stack, start command in package.json
+solutionStackName: "64bit Amazon Linux 2023 v6.6.6 running Node.js 20"
+
+// In your package.json:
+{
+  "scripts": {
+    "start": "node server.js"
+  }
+}
+```
+
+**Why:** Amazon Linux 2023 uses a different platform architecture. The app starts automatically using the `start` script from `package.json`. You don't need to configure NodeCommand.
+
+### RDS Parameter Group Issues
+
+**Error: "cannot use immediate apply method for static parameter"**
+
+Static parameters like `shared_preload_libraries` cannot be modified after creation.
+
+**Solutions:**
+1. Remove static parameters from initial deployment
+2. Delete and recreate parameter group
+3. Apply static parameters manually after creation with DB reboot
+
+```typescript
+const parameterGroup = new aws.rds.ParameterGroup(`${name}-db-params`, {
+  family: "postgres17",
+  parameters: [
+    // Only dynamic parameters
+    { name: "log_connections", value: "1" },
+    { name: "log_disconnections", value: "1" },
+    { name: "log_duration", value: "1" },
+    // DON'T include: shared_preload_libraries (static, requires reboot)
+  ],
+});
+```
+
+**Error: "DBParameterGroupFamily mismatch"**
+
+PostgreSQL engine version MUST match parameter group family:
+
+- `postgres17` → engineVersion: `17.x`
+- `postgres16` → engineVersion: `16.x`
+- `postgres15` → engineVersion: `15.x`
+
+### Database Password Validation
+
+**Error: "MasterUserPassword is not a valid password"**
+
+RDS disallows these characters: `/`, `@`, `"`, space
+
+```bash
+# Generate valid password
+openssl rand -base64 32 | tr -d '/@ "' | cut -c1-32
+```
+
+### EC2 Key Pair Issues
+
+**Error: "The key pair 'X' does not exist"**
+
+Key pairs are region-specific:
+
+```bash
+# List keys
+aws ec2 describe-key-pairs --region us-west-2
+
+# Create new
+aws ec2 create-key-pair --key-name prpm-prod-bastion --region us-west-2 \
+  --query 'KeyMaterial' --output text > ~/.ssh/prpm-prod-bastion.pem
+chmod 400 ~/.ssh/prpm-prod-bastion.pem
+```
+
+### DNS Configuration Issues
+
+**Error: "CNAME is not permitted at apex in zone"**
+
+You cannot create CNAME records at the domain apex (root domain). Use A record with ALIAS instead:
+
+```typescript
+// Check if apex domain
+const domainParts = domainName.split(".");
+const baseDomain = domainParts.slice(-2).join(".");
+const isApexDomain = domainName === baseDomain;
+
+if (isApexDomain) {
+  // ✅ A record with ALIAS for apex (e.g., prpm.dev)
+  new aws.route53.Record(`dns`, {
+    name: domainName,
+    type: "A",
+    zoneId: hostedZone.zoneId,
+    aliases: [{
+      name: beanstalkEnv.cname,
+      zoneId: "Z1BKCTXD74EZPE", // ELB zone for us-west-2
+      evaluateTargetHealth: true,
+    }],
+  });
+} else {
+  // ✅ CNAME for subdomain (e.g., api.prpm.dev)
+  new aws.route53.Record(`dns`, {
+    name: domainName,
+    type: "CNAME",
+    zoneId: hostedZone.zoneId,
+    records: [beanstalkEnv.cname],
+    ttl: 300,
+  });
+}
+```
+
+**Elastic Beanstalk Hosted Zone IDs by Region:**
+- us-east-1: Z117KPS5GTRQ2G
+- us-west-1: Z1LQECGX5PH1X
+- us-west-2: Z38NKT9BP95V3O
+- eu-west-1: Z2NYPWQ7DFZAZH
+
+**Important:** Use Elastic Beanstalk zone IDs (not generic ELB zone IDs) when creating Route53 aliases to Beanstalk environments.
+
+[Full list](https://docs.aws.amazon.com/general/latest/gr/elasticbeanstalk.html)
+
+### HTTPS/SSL Configuration
+
+ACM certificate MUST be created and validated BEFORE Beanstalk environment:
+
+```typescript
+// 1. Create cert
+const cert = new aws.acm.Certificate(`cert`, {
+  domainName: "prpm.dev",
+  validationMethod: "DNS",
+});
+
+// 2. Validate via Route53 (automatic)
+const validation = new aws.route53.Record(`cert-validation`, {
+  name: cert.domainValidationOptions[0].resourceRecordName,
+  type: cert.domainValidationOptions[0].resourceRecordType,
+  zoneId: hostedZone.zoneId,
+  records: [cert.domainValidationOptions[0].resourceRecordValue],
+});
+
+// 3. Wait for validation
+const validated = new aws.acm.CertificateValidation(`cert-complete`, {
+  certificateArn: cert.arn,
+  validationRecordFqdns: [validation.fqdn],
+});
+
+// 4. Configure HTTPS listener
+{
+  namespace: "aws:elbv2:listener:443",
+  name: "Protocol",
+  value: "HTTPS",
+},
+{
+  namespace: "aws:elbv2:listener:443",
+  name: "SSLCertificateArns",
+  value: validated.certificateArn,
+},
+```
+
+## Common Pitfalls to Avoid
+
+1. **DON'T create ApplicationVersion before S3 file exists**
+2. **DON'T use static RDS parameters** in automated deployments
+3. **DON'T skip engineVersion** - must match parameter group family
+4. **DON'T forget UpdateLevel** when enabling managed actions
+5. **DON'T use `/`, `@`, `"`, or space** in database passwords
+6. **DON'T assume EC2 key pairs exist** across regions
+7. **DON'T hardcode solution stack versions** - they change
+8. **DON'T skip ACM validation** before creating environment
+9. **DON'T expose RDS to internet** - use bastion pattern
+10. **DON'T deploy without VPC** for production
+11. **DON'T use aws:elasticbeanstalk:container:nodejs namespace** in Amazon Linux 2023 (use package.json instead)
+12. **DON'T use CNAME records at domain apex** - use A record with ALIAS instead

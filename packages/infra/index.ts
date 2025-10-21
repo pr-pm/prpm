@@ -27,6 +27,7 @@ import * as beanstalk from "./modules/beanstalk";
 import { network } from "./modules/network";
 import { database } from "./modules/database";
 import { storage } from "./modules/storage";
+import { bastion } from "./modules/bastion";
 import {
   validateStackConfig,
   validateDatabaseConfig,
@@ -36,6 +37,11 @@ import {
 // Get configuration
 const config = new pulumi.Config();
 const awsConfig = new pulumi.Config("aws");
+const dbConfigNS = new pulumi.Config("db");
+const githubConfigNS = new pulumi.Config("github");
+const jwtConfigNS = new pulumi.Config("jwt");
+const appConfigNS = new pulumi.Config("app");
+
 const region = awsConfig.require("region");
 
 const projectName = "prpm";
@@ -65,27 +71,29 @@ const tags = {
 
 // Configuration values
 const dbConfig = {
-  username: config.get("db:username") || "prpm",
-  password: config.requireSecret("db:password"),
-  instanceClass: config.get("db:instanceClass") || "db.t4g.micro",
-  allocatedStorage: parseInt(config.get("db:allocatedStorage") || "20"),
+  username: dbConfigNS.get("username") || "prpm",
+  password: dbConfigNS.requireSecret("password"),
+  instanceClass: dbConfigNS.get("instanceClass") || "db.t4g.micro",
+  allocatedStorage: parseInt(dbConfigNS.get("allocatedStorage") || "20"),
 };
 
 const githubOAuth = {
-  clientId: config.requireSecret("github:clientId"),
-  clientSecret: config.requireSecret("github:clientSecret"),
+  clientId: githubConfigNS.requireSecret("clientId"),
+  clientSecret: githubConfigNS.requireSecret("clientSecret"),
 };
 
 const jwtConfig = {
-  secret: config.requireSecret("jwt:secret"),
+  secret: jwtConfigNS.requireSecret("secret"),
 };
 
 const appConfig = {
-  instanceType: config.get("app:instanceType") || "t3.micro",
-  minSize: parseInt(config.get("app:minSize") || "1"),
-  maxSize: parseInt(config.get("app:maxSize") || "2"),
-  domainName: config.get("app:domainName"), // e.g., registry.prpm.dev
+  instanceType: appConfigNS.get("instanceType") || "t3.micro",
+  minSize: parseInt(appConfigNS.get("minSize") || "1"),
+  maxSize: parseInt(appConfigNS.get("maxSize") || "2"),
+  domainName: appConfigNS.get("domainName"), // e.g., registry.prpm.dev
 };
+
+const ec2KeyName = config.get('ec2KeyName') || 'Khaliq Stable';
 
 // Run all configuration validations
 validateAll([
@@ -99,20 +107,28 @@ validateAll([
 // For Beanstalk, we can use simpler VPC without NAT Gateway
 const vpc = network.createVpc(projectName, environment, tags);
 
-// 2. Database Layer (RDS PostgreSQL)
+// 2. Bastion Host (for secure database access)
+const bastionHost = bastion.createBastionHost(projectName, environment, {
+  vpc,
+  keyName: ec2KeyName,
+  tags,
+});
+
+// 3. Database Layer (RDS PostgreSQL)
 const db = database.createRdsPostgres(projectName, environment, {
   vpc,
   username: dbConfig.username,
   password: dbConfig.password,
   instanceClass: dbConfig.instanceClass,
   allocatedStorage: dbConfig.allocatedStorage,
+  bastionSecurityGroupId: bastionHost.securityGroup.id,
   tags,
 });
 
-// 3. Storage Layer (S3 + CloudFront)
+// 4. Storage Layer (S3 + CloudFront)
 const s3 = storage.createPackageBucket(projectName, environment, tags);
 
-// 4. Elastic Beanstalk Application
+// 5. Elastic Beanstalk Application
 const app = beanstalk.createBeanstalkApp(projectName, environment, {
   vpc,
   dbEndpoint: db.endpoint,
@@ -132,12 +148,19 @@ const app = beanstalk.createBeanstalkApp(projectName, environment, {
 
 // Exports
 export const vpcId = vpc.vpc.id;
-export const publicSubnetIds = pulumi.all(vpc.publicSubnets.map(s => s.id));
-export const privateSubnetIds = pulumi.all(vpc.privateSubnets.map(s => s.id));
+export const publicSubnetIds = vpc.publicSubnets.apply(subnets =>
+  pulumi.all(subnets.map(s => s.id))
+);
+export const privateSubnetIds = vpc.privateSubnets.apply(subnets =>
+  pulumi.all(subnets.map(s => s.id))
+);
 
 export const dbEndpoint = db.endpoint;
 export const dbPort = db.port;
-export const dbName = db.instance.dbName;
+export const dbName = db.instance.apply(i => i.dbName);
+
+export const bastionPublicIp = bastionHost.publicIp;
+export const bastionInstanceId = bastionHost.instance.apply(i => i.id);
 
 export const s3BucketName = s3.bucket.bucket;
 export const s3BucketArn = s3.bucket.arn;

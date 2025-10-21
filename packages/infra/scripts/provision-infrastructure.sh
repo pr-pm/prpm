@@ -46,9 +46,6 @@ echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
-echo -e "${YELLOW}→${NC} Running pre-deployment checks..."
-./scripts/pre-deploy-check.sh
-
 echo ""
 echo -e "${BLUE}════════════════════════════════════════════════════════════${NC}"
 echo -e "${BLUE}  Step 1: Configure Pulumi Stack${NC}"
@@ -64,6 +61,11 @@ echo -e "${YELLOW}→${NC} Selecting stack: $STACK"
 pulumi stack select $STACK 2>/dev/null || pulumi stack init $STACK
 
 echo -e "${GREEN}✓${NC} Stack selected: $STACK"
+echo ""
+
+echo -e "${YELLOW}→${NC} Running pre-deployment checks..."
+./scripts/pre-deploy-check.sh
+
 echo ""
 
 # Check if stack is already configured

@@ -1,8 +1,10 @@
-# Creating Cursor Rules - Meta Rule
-
-**Tags:** meta
-
 ---
+title: Creating Cursor Rules
+description: Meta-rule for creating effective Cursor IDE rules with best practices, patterns, and examples
+tags: [meta, cursor, documentation, best-practices]
+---
+
+# Creating Cursor Rules - Meta Rule
 
 ## Overview
 
@@ -73,6 +75,53 @@ Prefer server components except for: forms, client-only APIs, animations.
 - Components in components/ (flat structure)
 - Types in types/ (shared), components/*/types.ts (local)
 ```
+
+## Required YAML Frontmatter
+
+**Every Cursor rule MUST include YAML frontmatter with these required fields:**
+
+```yaml
+---
+title: Rule Title
+description: Brief description of when and how to use this rule
+tags: [tag1, tag2, tag3]
+---
+```
+
+### Field Requirements
+
+**title:** (Required)
+- Clear, concise name for the rule
+- Use title case
+- Example: `Creating Cursor Rules`, `TypeScript Type Safety`
+
+**description:** (Required, MANDATORY)
+- Brief description of the rule's purpose and when to use it
+- Should start with context (e.g., "Use when...", "Meta-rule for...")
+- Keep under 200 characters if possible
+- Example: `Meta-rule for creating effective Cursor IDE rules with best practices, patterns, and examples`
+
+**tags:** (Required)
+- Array of relevant tags
+- Use lowercase, kebab-case
+- Include technology, domain, and category tags
+- Example: `[meta, cursor, documentation, best-practices]`
+
+### Optional Fields
+
+**ruleType:** (Optional)
+- Values: `always`, `conditional`, `contextual`
+- Indicates when the rule applies
+
+**alwaysApply:** (Optional)
+- Boolean indicating if rule should always be active
+- Use `true` for fundamental rules, `false` for contextual ones
+
+**source:** (Optional)
+- Where the rule originated from
+- Example: `claude-code-skill`, `custom`, `community`
+
+**IMPORTANT:** The `description` field is MANDATORY for all cursor rules. When converting skills to cursor rules or creating new rules, always include a valid description. Never use placeholders like `---` or empty strings.
 
 ## Required Sections
 
@@ -411,7 +460,7 @@ export function UserCard({ name, email, onEdit }: UserCardProps) {
 
 ## Best Practices
 
-### Keep It Scann able
+### Keep It Scannable
 
 - Use headers and sections
 - Bold important terms
@@ -444,6 +493,12 @@ See the PRPM registry `.cursor/rules` for a complete example:
 - API route patterns
 
 ## Checklist for New Cursor Rules
+
+**YAML Frontmatter:**
+- [ ] Title field present and descriptive
+- [ ] Description field present (MANDATORY - never empty or `---`)
+- [ ] Tags array includes relevant categories
+- [ ] Optional fields (ruleType, alwaysApply, source) added if applicable
 
 **Project Context:**
 - [ ] Tech stack clearly defined
