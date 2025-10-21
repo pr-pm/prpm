@@ -14,6 +14,19 @@ interface ClaimInviteBody {
   email?: string;
 }
 
+interface CreateInviteBody {
+  author_username: string;
+  package_count: number;
+  invite_message?: string;
+  expires_in_days?: number;
+}
+
+interface ListInvitesQuery {
+  status?: 'pending' | 'claimed' | 'expired' | 'revoked';
+  limit?: number;
+  offset?: number;
+}
+
 export async function inviteRoutes(server: FastifyInstance) {
   /**
    * GET /api/v1/invites/:token
@@ -422,6 +435,301 @@ export async function inviteRoutes(server: FastifyInstance) {
         return reply.status(500).send({
           error: 'Server error',
           message: 'Failed to retrieve invite statistics'
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/v1/invites
+   * Create a new author invite (admin only)
+   */
+  server.post<{ Body: CreateInviteBody }>(
+    '/',
+    {
+      schema: {
+        description: 'Create a new author invite',
+        tags: ['invites'],
+        body: {
+          type: 'object',
+          properties: {
+            author_username: { type: 'string', minLength: 1 },
+            package_count: { type: 'number', minimum: 1 },
+            invite_message: { type: 'string' },
+            expires_in_days: { type: 'number', minimum: 1, maximum: 365 }
+          },
+          required: ['author_username', 'package_count']
+        },
+        response: {
+          201: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              invite: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  token: { type: 'string' },
+                  author_username: { type: 'string' },
+                  package_count: { type: 'number' },
+                  invite_message: { type: 'string' },
+                  expires_at: { type: 'string' },
+                  invite_url: { type: 'string' }
+                }
+              }
+            }
+          }
+        }
+      },
+      preHandler: server.authenticate
+    },
+    async (request: FastifyRequest<{ Body: CreateInviteBody }>, reply: FastifyReply) => {
+      // TODO: Add admin check
+      // if (!request.user?.is_admin) {
+      //   return reply.status(403).send({ error: 'Forbidden' });
+      // }
+
+      const { author_username, package_count, invite_message, expires_in_days = 30 } = request.body;
+
+      try {
+        // Generate secure token (64 chars)
+        const crypto = await import('crypto');
+        const token = crypto.randomBytes(32).toString('hex');
+
+        // Calculate expiration date
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + expires_in_days);
+
+        // Create invite
+        const result = await server.pg.query(
+          `INSERT INTO author_invites (
+            token,
+            author_username,
+            package_count,
+            invite_message,
+            status,
+            expires_at,
+            created_by
+          ) VALUES ($1, $2, $3, $4, 'pending', $5, $6)
+          RETURNING id, token, author_username, package_count, invite_message, expires_at, created_at`,
+          [token, author_username, package_count, invite_message || null, expiresAt, request.user?.user_id]
+        );
+
+        const invite = result.rows[0];
+
+        // Generate invite URL
+        const baseUrl = process.env.WEBAPP_URL || 'https://prpm.dev';
+        const inviteUrl = `${baseUrl}/claim/${token}`;
+
+        server.log.info({
+          authorUsername: author_username,
+          packageCount: package_count,
+          expiresAt
+        }, 'Author invite created');
+
+        return reply.status(201).send({
+          success: true,
+          invite: {
+            id: invite.id,
+            token: invite.token,
+            author_username: invite.author_username,
+            package_count: invite.package_count,
+            invite_message: invite.invite_message,
+            expires_at: invite.expires_at,
+            invite_url: inviteUrl
+          }
+        });
+
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Server error',
+          message: 'Failed to create invite'
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/v1/invites
+   * List all invites (admin only)
+   */
+  server.get<{ Querystring: ListInvitesQuery }>(
+    '/',
+    {
+      schema: {
+        description: 'List all author invites',
+        tags: ['invites'],
+        querystring: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', enum: ['pending', 'claimed', 'expired', 'revoked'] },
+            limit: { type: 'number', minimum: 1, maximum: 100 },
+            offset: { type: 'number', minimum: 0 }
+          }
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              invites: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    author_username: { type: 'string' },
+                    package_count: { type: 'number' },
+                    status: { type: 'string' },
+                    expires_at: { type: 'string' },
+                    created_at: { type: 'string' },
+                    claimed_at: { type: 'string' },
+                    claimed_by: { type: 'string' }
+                  }
+                }
+              },
+              total: { type: 'number' },
+              limit: { type: 'number' },
+              offset: { type: 'number' }
+            }
+          }
+        }
+      },
+      preHandler: server.authenticate
+    },
+    async (request: FastifyRequest<{ Querystring: ListInvitesQuery }>, reply: FastifyReply) => {
+      // TODO: Add admin check
+      // if (!request.user?.is_admin) {
+      //   return reply.status(403).send({ error: 'Forbidden' });
+      // }
+
+      const { status, limit = 50, offset = 0 } = request.query;
+
+      try {
+        // Build query
+        let query = `
+          SELECT
+            id,
+            author_username,
+            package_count,
+            invite_message,
+            status,
+            expires_at,
+            created_at,
+            claimed_at,
+            claimed_by
+          FROM author_invites
+        `;
+
+        const params: any[] = [];
+        if (status) {
+          query += ` WHERE status = $1`;
+          params.push(status);
+        }
+
+        query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, offset);
+
+        const result = await server.pg.query(query, params);
+
+        // Get total count
+        let countQuery = 'SELECT COUNT(*) as total FROM author_invites';
+        const countParams: any[] = [];
+        if (status) {
+          countQuery += ' WHERE status = $1';
+          countParams.push(status);
+        }
+
+        const countResult = await server.pg.query(countQuery, countParams);
+        const total = parseInt(countResult.rows[0].total);
+
+        return reply.send({
+          invites: result.rows,
+          total,
+          limit,
+          offset
+        });
+
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Server error',
+          message: 'Failed to retrieve invites'
+        });
+      }
+    }
+  );
+
+  /**
+   * DELETE /api/v1/invites/:token
+   * Revoke an invite (admin only)
+   */
+  server.delete<{ Params: InviteParams }>(
+    '/:token',
+    {
+      schema: {
+        description: 'Revoke an author invite',
+        tags: ['invites'],
+        params: {
+          type: 'object',
+          properties: {
+            token: { type: 'string', minLength: 64, maxLength: 64 }
+          },
+          required: ['token']
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      },
+      preHandler: server.authenticate
+    },
+    async (request: FastifyRequest<{ Params: InviteParams }>, reply: FastifyReply) => {
+      // TODO: Add admin check
+      // if (!request.user?.is_admin) {
+      //   return reply.status(403).send({ error: 'Forbidden' });
+      // }
+
+      const { token } = request.params;
+
+      try {
+        const result = await server.pg.query(
+          `UPDATE author_invites
+          SET status = 'revoked', updated_at = NOW()
+          WHERE token = $1 AND status = 'pending'
+          RETURNING id, author_username`,
+          [token]
+        );
+
+        if (result.rows.length === 0) {
+          return reply.status(404).send({
+            error: 'Invite not found',
+            message: 'Invite not found or already claimed/revoked'
+          });
+        }
+
+        const invite = result.rows[0];
+
+        server.log.info({
+          inviteId: invite.id,
+          authorUsername: invite.author_username
+        }, 'Invite revoked');
+
+        return reply.send({
+          success: true,
+          message: `Invite for @${invite.author_username} has been revoked`
+        });
+
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Server error',
+          message: 'Failed to revoke invite'
         });
       }
     }
