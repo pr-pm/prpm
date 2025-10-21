@@ -129,19 +129,19 @@ export async function handleInstall(
     const config = await getConfig();
     const client = getRegistryClient(config);
 
-    // Determine format preference
-    const format = options.as || config.defaultFormat || detectProjectFormat() || 'cursor';
-    if (format !== 'canonical') {
-      console.log(`   🔄 Converting to ${format} format...`);
-    }
-
-    // Get package info
+    // Get package info first
     const pkg = await client.getPackage(packageId);
     const typeIcon = getTypeIcon(pkg.type);
     const typeLabel = getTypeLabel(pkg.type);
     console.log(`   ${pkg.name} ${pkg.official ? '🏅' : ''}`);
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
+
+    // Determine format preference - use package type if no explicit conversion requested
+    const format = options.as || pkg.type;
+    if (options.as && format !== 'canonical') {
+      console.log(`   🔄 Converting to ${format} format...`);
+    }
 
     // Determine version to install
     let tarballUrl: string;
