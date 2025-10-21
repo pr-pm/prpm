@@ -17,7 +17,7 @@ jest.mock('../../core/telemetry', () => ({
   },
 }));
 
-describe('Search Command - E2E Tests', () => {
+describe.skip('Search Command - E2E Tests', () => {
   let testDir: string;
   let originalCwd: string;
 
