@@ -48,7 +48,7 @@ async function seedCollections() {
     console.log('🌱 Starting Claude agent collections seeding...');
 
     // Load scraped data
-    const dataPath = join(__dirname, '../../../scraped-claude-agents.json');
+    const dataPath = join(__dirname, '../../../data/scraped/scraped-claude-agents.json');
     const packages: Package[] = JSON.parse(readFileSync(dataPath, 'utf-8'));
 
     console.log(`📦 Loaded ${packages.length} packages`);

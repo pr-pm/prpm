@@ -60,7 +60,9 @@ async function seedPackages() {
       '../../../data/scraped/scraped-cursor-directory.json',
       '../../../data/scraped/scraped-cursor-official-rules.json',
       '../../../data/scraped/prpm-beanstalk-packages.json', // PRPM team AWS Beanstalk packages
-      '../../../scraped-claude-agents.json', // Claude agents and slash commands
+      '../../../data/scraped/scraped-claude-agents.json', // Claude agents and slash commands
+      '../../../data/scraped/scraped-claude-slash-commands.json', // Claude slash commands only
+      '../../../data/scraped/scraped-claude-agents-only.json', // Claude agents only
     ];
 
     let totalPackages = 0;
