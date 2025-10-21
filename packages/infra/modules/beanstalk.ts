@@ -24,6 +24,7 @@ interface BeanstalkConfig {
   redisEndpoint?: pulumi.Output<string>;
   githubClientId: pulumi.Output<string>;
   githubClientSecret: pulumi.Output<string>;
+  jwtSecret: pulumi.Output<string>;
   s3BucketName: pulumi.Output<string>;
   instanceType?: string;
   minSize?: number;
@@ -358,7 +359,7 @@ export function createBeanstalkApp(
       {
         namespace: "aws:elasticbeanstalk:application:environment",
         name: "JWT_SECRET",
-        value: pulumi.output("change-this-in-production-via-eb-setenv"),
+        value: config.jwtSecret,
       },
 
       // Health check

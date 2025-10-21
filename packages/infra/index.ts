@@ -1,27 +1,37 @@
 /**
- * PRMP Registry Infrastructure
+ * PRPM Registry Infrastructure - Elastic Beanstalk (Cost-Optimized)
  *
- * This Pulumi program provisions the complete AWS infrastructure for the PRMP Registry:
- * - VPC with public/private subnets across 2 AZs
- * - RDS PostgreSQL database
- * - ElastiCache Redis cluster
- * - ECS Fargate cluster with Application Load Balancer
- * - S3 bucket for package storage with CloudFront CDN
- * - OpenSearch domain (optional, for Phase 2)
- * - Secrets Manager for sensitive configuration
- * - IAM roles and security groups
- * - CloudWatch log groups and alarms
+ * This is a cost-optimized alternative to the ECS Fargate setup.
+ *
+ * Cost comparison:
+ * - ECS Setup (index.ts): ~$126/month
+ * - Beanstalk Setup (this file): ~$32.50/month
+ * - Savings: $93.50/month (74%)
+ *
+ * Architecture:
+ * - Elastic Beanstalk (t3.micro) with Application Load Balancer
+ * - RDS PostgreSQL (db.t4g.micro)
+ * - S3 + CloudFront
+ * - No NAT Gateway needed (saves $32/month)
+ * - No ElastiCache (use in-memory caching, saves $12/month)
+ * - No separate ALB charge (included with Beanstalk)
+ *
+ * To use this instead of ECS:
+ * 1. Rename index.ts to index-ecs.ts
+ * 2. Rename this file to index.ts
+ * 3. Run: pulumi up
  */
 
 import * as pulumi from "@pulumi/pulumi";
+import * as beanstalk from "./modules/beanstalk";
 import { network } from "./modules/network";
 import { database } from "./modules/database";
-import { cache } from "./modules/cache";
 import { storage } from "./modules/storage";
-import { secrets } from "./modules/secrets";
-import { ecs } from "./modules/ecs";
-import { search } from "./modules/search";
-import { monitoring } from "./modules/monitoring";
+import {
+  validateStackConfig,
+  validateDatabaseConfig,
+  validateAll,
+} from "./validation";
 
 // Get configuration
 const config = new pulumi.Config();
@@ -31,11 +41,26 @@ const region = awsConfig.require("region");
 const projectName = "prpm";
 const environment = pulumi.getStack(); // dev, staging, prod
 
+// Validate stack configuration
+const stackValidation = validateStackConfig({
+  environment,
+  region,
+  projectName,
+});
+
+if (!stackValidation.valid) {
+  console.error("Stack configuration validation failed:");
+  stackValidation.errors.forEach(err => console.error(`  - ${err}`));
+  throw new Error("Invalid stack configuration");
+}
+
 // Tags to apply to all resources
 const tags = {
-  Project: "PRMP",
+  Project: "PRPM",
   Environment: environment,
   ManagedBy: "Pulumi",
+  CostOptimized: "true",
+  Architecture: "Beanstalk",
 };
 
 // Configuration values
@@ -51,24 +76,30 @@ const githubOAuth = {
   clientSecret: config.requireSecret("github:clientSecret"),
 };
 
+const jwtConfig = {
+  secret: config.requireSecret("jwt:secret"),
+};
+
 const appConfig = {
-  image: config.get("app:image") || "prpm-registry:latest",
-  cpu: parseInt(config.get("app:cpu") || "256"),
-  memory: parseInt(config.get("app:memory") || "512"),
-  desiredCount: parseInt(config.get("app:desiredCount") || "2"),
+  instanceType: config.get("app:instanceType") || "t3.micro",
+  minSize: parseInt(config.get("app:minSize") || "1"),
+  maxSize: parseInt(config.get("app:maxSize") || "2"),
   domainName: config.get("app:domainName"), // e.g., registry.prpm.dev
 };
 
-const searchConfig = {
-  enabled: config.getBoolean("search:enabled") || false,
-  instanceType: config.get("search:instanceType") || "t3.small.search",
-  volumeSize: parseInt(config.get("search:volumeSize") || "10"),
-};
+// Run all configuration validations
+validateAll([
+  {
+    category: "Database Configuration",
+    result: validateDatabaseConfig(dbConfig),
+  },
+]);
 
 // 1. Network Infrastructure
+// For Beanstalk, we can use simpler VPC without NAT Gateway
 const vpc = network.createVpc(projectName, environment, tags);
 
-// 2. Database Layer
+// 2. Database Layer (RDS PostgreSQL)
 const db = database.createRdsPostgres(projectName, environment, {
   vpc,
   username: dbConfig.username,
@@ -78,58 +109,24 @@ const db = database.createRdsPostgres(projectName, environment, {
   tags,
 });
 
-// 3. Cache Layer
-const redis = cache.createElastiCache(projectName, environment, {
-  vpc,
-  tags,
-});
-
-// 4. Storage Layer
+// 3. Storage Layer (S3 + CloudFront)
 const s3 = storage.createPackageBucket(projectName, environment, tags);
 
-// 5. Secrets Management
-const secretsData = secrets.createSecrets(projectName, environment, {
+// 4. Elastic Beanstalk Application
+const app = beanstalk.createBeanstalkApp(projectName, environment, {
+  vpc,
   dbEndpoint: db.endpoint,
   dbUsername: dbConfig.username,
   dbPassword: dbConfig.password,
-  redisEndpoint: redis.endpoint,
+  // No Redis - using in-memory caching to save $12/month
   githubClientId: githubOAuth.clientId,
   githubClientSecret: githubOAuth.clientSecret,
-  tags,
-});
-
-// 6. ECS Cluster & Application
-const app = ecs.createFargateService(projectName, environment, {
-  vpc,
-  image: appConfig.image,
-  cpu: appConfig.cpu,
-  memory: appConfig.memory,
-  desiredCount: appConfig.desiredCount,
-  domainName: appConfig.domainName,
-  dbSecurityGroupId: db.securityGroup.id,
-  redisSecurityGroupId: redis.securityGroup.id,
-  secretsArn: secretsData.secretsArn,
+  jwtSecret: jwtConfig.secret,
   s3BucketName: s3.bucket.bucket,
-  tags,
-});
-
-// 7. Search (Optional - Phase 2)
-let opensearch: ReturnType<typeof createOpenSearch> | undefined = undefined;
-if (searchConfig.enabled) {
-  opensearch = search.createOpenSearch(projectName, environment, {
-    vpc,
-    instanceType: searchConfig.instanceType,
-    volumeSize: searchConfig.volumeSize,
-    tags,
-  });
-}
-
-// 8. Monitoring & Alarms
-const monitors = monitoring.createAlarms(projectName, environment, {
-  ecsClusterName: app.cluster.name,
-  ecsServiceName: app.service.name,
-  albArn: app.alb.arn,
-  dbInstanceId: db.instance.id,
+  instanceType: appConfig.instanceType,
+  minSize: appConfig.minSize,
+  maxSize: appConfig.maxSize,
+  domainName: appConfig.domainName,
   tags,
 });
 
@@ -142,51 +139,94 @@ export const dbEndpoint = db.endpoint;
 export const dbPort = db.port;
 export const dbName = db.instance.dbName;
 
-export const redisEndpoint = redis.endpoint;
-export const redisPort = redis.port;
-
 export const s3BucketName = s3.bucket.bucket;
 export const s3BucketArn = s3.bucket.arn;
 export const cloudfrontDistributionUrl = s3.cloudfront.domainName;
 
-export const albDnsName = app.alb.dnsName;
-export const albZoneId = app.alb.zoneId;
+export const beanstalkApplicationName = app.application.name;
+export const beanstalkEnvironmentName = app.environment.name;
+export const beanstalkEndpoint = app.endpoint;
+export const beanstalkCname = app.cname;
+
 export const apiUrl = appConfig.domainName
   ? pulumi.interpolate`https://${appConfig.domainName}`
-  : pulumi.interpolate`http://${app.alb.dnsName}`;
+  : app.endpoint;
 
-export const ecsClusterName = app.cluster.name;
-export const ecsServiceName = app.service.name;
-export const ecrRepositoryUrl = app.ecrRepo.repositoryUrl;
+// Cost Summary
+export const costSummary = {
+  estimatedMonthlyCost: "$32.50-50",
+  breakdown: {
+    compute: "$7.50 (t3.micro)",
+    database: "$15 (db.t4g.micro)",
+    storage: "$5-10 (S3 + CloudFront)",
+    other: "$5 (data transfer, logs)",
+  },
+  savingsVsECS: "$93.50/month (74%)",
+};
 
-export const secretsManagerArn = secretsData.secretsArn;
-
-export const opensearchEndpoint = opensearch?.endpoint;
-export const opensearchDashboardUrl = opensearch?.kibanaEndpoint;
-
-// Output instructions for next steps
-export const nextSteps = pulumi.output({
-  "1_push_docker_image": pulumi.interpolate`
-    # Login to ECR
-    aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${app.ecrRepo.repositoryUrl}
-
-    # Build and push
+// Deployment Instructions
+export const deploymentInstructions = pulumi.output({
+  "1_build_application": `
+    # Build your application
     cd ../registry
-    docker build -t prpm-registry:latest .
-    docker tag prpm-registry:latest ${app.ecrRepo.repositoryUrl}:latest
-    docker push ${app.ecrRepo.repositoryUrl}:latest
+    npm run build
+    zip -r application.zip . -x "node_modules/*" ".git/*"
   `,
-  "2_run_migrations": pulumi.interpolate`
-    # Run migrations via ECS task
-    aws ecs run-task \\
-      --cluster ${app.cluster.name} \\
-      --task-definition ${app.taskDefinition.family} \\
-      --launch-type FARGATE \\
-      --network-configuration "awsvpcConfiguration={subnets=[${vpc.privateSubnets[0].id}],securityGroups=[${app.ecsSecurityGroup.id}],assignPublicIp=DISABLED}" \\
-      --overrides '{"containerOverrides":[{"name":"prpm-registry","command":["npm","run","migrate"]}]}'
+  "2_upload_to_s3": pulumi.interpolate`
+    # Upload to S3
+    aws s3 cp application.zip s3://${s3.bucket.bucket}/registry/application.zip
   `,
-  "3_access_api": apiUrl,
-  "4_view_logs": pulumi.interpolate`
-    aws logs tail /ecs/${projectName}-${environment} --follow
+  "3_create_app_version": pulumi.interpolate`
+    # Create new application version
+    aws elasticbeanstalk create-application-version \\
+      --application-name ${app.application.name} \\
+      --version-label v1.0.0 \\
+      --source-bundle S3Bucket="${s3.bucket.bucket}",S3Key="registry/application.zip"
+  `,
+  "4_deploy_version": pulumi.interpolate`
+    # Deploy to environment
+    aws elasticbeanstalk update-environment \\
+      --application-name ${app.application.name} \\
+      --environment-name ${app.environment.name} \\
+      --version-label v1.0.0
+  `,
+  "5_run_migrations": pulumi.interpolate`
+    # SSH into instance and run migrations
+    eb ssh ${app.environment.name}
+    cd /var/app/current
+    npm run migrate
+  `,
+  "6_access_api": app.endpoint,
+  "7_view_logs": pulumi.interpolate`
+    # View logs
+    eb logs ${app.environment.name} --tail
   `,
 });
+
+// Alternative: Simple EB CLI deployment
+export const ebCliDeployment = pulumi.interpolate`
+  # Easier deployment with EB CLI
+  cd ../registry
+  eb init ${app.application.name} --region ${region}
+  eb use ${app.environment.name}
+  eb deploy
+`;
+
+// Monitoring & Health
+export const monitoring = {
+  healthCheck: pulumi.interpolate`${app.endpoint}/health`,
+  cloudWatchLogs: pulumi.interpolate`/aws/elasticbeanstalk/${app.environment.name}`,
+  metrics: "Available in AWS Console → Elastic Beanstalk → Monitoring",
+};
+
+// Scaling Configuration
+export const scalingInfo = {
+  current: `${appConfig.minSize}-${appConfig.maxSize} instances`,
+  toScale: pulumi.interpolate`
+    # Update auto-scaling
+    eb setenv --environment ${app.environment.name} \\
+      MIN_SIZE=2 \\
+      MAX_SIZE=4
+  `,
+  triggerMetric: "CPU > 70% for 5 minutes",
+};

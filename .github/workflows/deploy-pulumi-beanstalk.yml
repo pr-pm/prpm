@@ -1,15 +1,19 @@
-name: Deploy Infrastructure (Pulumi + Beanstalk)
+name: Update Infrastructure (Pulumi)
+
+# This workflow is for UPDATING existing infrastructure only.
+# For INITIAL provisioning, run: packages/infra/scripts/provision-infrastructure.sh locally
+#
+# Use this workflow for:
+# - Updating environment variables
+# - Changing instance sizes
+# - Updating security settings
+# - Other infrastructure modifications
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'packages/infra/**'
   workflow_dispatch:
     inputs:
       stack:
-        description: 'Pulumi stack to deploy (dev, staging, prod)'
+        description: 'Pulumi stack to update (dev, staging, prod)'
         required: true
         default: 'dev'
         type: choice
@@ -25,7 +29,6 @@ on:
         options:
           - preview
           - up
-          - destroy
 
 env:
   PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
@@ -60,59 +63,31 @@ jobs:
           npm ci
           echo "✅ Dependencies installed successfully"
 
-      - name: Switch to Beanstalk configuration
-        working-directory: packages/infra
-        run: |
-          if [ ! -f index-beanstalk.ts ]; then
-            echo "Error: index-beanstalk.ts not found"
-            exit 1
-          fi
-          # Backup current index.ts if it's not already beanstalk
-          if ! grep -q "Elastic Beanstalk" index.ts 2>/dev/null; then
-            cp index.ts index-ecs-backup.ts
-            echo "ℹ️  Backed up ECS configuration to index-ecs-backup.ts"
-          fi
-          cp index-beanstalk.ts index.ts
-          echo "✅ Switched to Beanstalk configuration"
-
       - name: Select Pulumi Stack
         working-directory: packages/infra
         run: |
-          STACK="${{ github.event.inputs.stack || 'dev' }}"
+          STACK="${{ github.event.inputs.stack }}"
           pulumi login
-          pulumi stack select $STACK || pulumi stack init $STACK
-          echo "✅ Selected stack: $STACK"
 
-      - name: Configure Pulumi Stack (if new)
-        if: github.event.inputs.action == 'up' || github.event_name == 'push'
-        working-directory: packages/infra
-        run: |
-          STACK="${{ github.event.inputs.stack || 'dev' }}"
-
-          # Set AWS region
-          pulumi config set aws:region ${{ env.AWS_REGION }}
-
-          # Database credentials (from secrets)
-          pulumi config set db:username prpm
-          pulumi config set --secret db:password "${{ secrets.DB_PASSWORD }}"
-
-          # GitHub OAuth (from secrets)
-          pulumi config set --secret github:clientId "${{ secrets.GITHUB_CLIENT_ID }}"
-          pulumi config set --secret github:clientSecret "${{ secrets.GITHUB_CLIENT_SECRET }}"
-
-          # Beanstalk configuration
-          pulumi config set app:instanceType t3.micro
-          pulumi config set app:minSize 1
-          pulumi config set app:maxSize 2
-
-          # Domain configuration
-          if [ "$STACK" = "prod" ]; then
-            pulumi config set app:domainName registry.prpm.dev
-          elif [ "$STACK" = "staging" ]; then
-            pulumi config set app:domainName staging.prpm.dev
+          # Stack must already exist (created via local provisioning script)
+          if ! pulumi stack select $STACK 2>/dev/null; then
+            echo "❌ Stack '$STACK' does not exist!"
+            echo ""
+            echo "To create infrastructure, run locally:"
+            echo "  cd packages/infra"
+            echo "  ./scripts/provision-infrastructure.sh $STACK"
+            exit 1
           fi
 
-          echo "✅ Stack configured for $STACK"
+          echo "✅ Selected existing stack: $STACK"
+
+      - name: Verify Stack Configuration
+        working-directory: packages/infra
+        run: |
+          echo "Current stack configuration:"
+          pulumi config
+          echo ""
+          echo "✅ Stack is configured and ready for updates"
 
       - name: Pulumi Preview
         if: github.event.inputs.action == 'preview' || github.event_name == 'push'
@@ -128,16 +103,8 @@ jobs:
           pulumi up --yes --skip-preview
           echo "✅ Infrastructure deployed successfully"
 
-      - name: Pulumi Destroy
-        if: github.event.inputs.action == 'destroy'
-        working-directory: packages/infra
-        run: |
-          echo "⚠️  Destroying infrastructure for ${{ github.event.inputs.stack }}"
-          pulumi destroy --yes
-          echo "✅ Infrastructure destroyed"
-
       - name: Export Stack Outputs
-        if: github.event.inputs.action == 'up' || github.event_name == 'push'
+        if: github.event.inputs.action == 'up'
         id: pulumi_outputs
         working-directory: packages/infra
         run: |
