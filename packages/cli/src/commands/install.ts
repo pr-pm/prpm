@@ -171,31 +171,50 @@ export async function handleInstall(
                           (options.type || pkg.type);
     const destDir = getDestinationDir(effectiveType as PackageType);
 
-    // For MVP, assume single file in tarball
-    // TODO: Implement proper tar extraction
-    let mainFile = await extractMainFile(tarball, packageId);
+    // Extract all files from tarball
+    const extractedFiles = await extractTarball(tarball, packageId);
 
-    // Determine file extension based on format
-    const fileExtension = format === 'cursor' ? 'mdc' : 'md';
-    const destPath = `${destDir}/${packageId}.${fileExtension}`;
+    // Track where files were saved for user feedback
+    let destPath: string;
+    let fileCount = 0;
 
-    // Apply cursor config if downloading in cursor format
-    if (format === 'cursor' && hasMDCHeader(mainFile)) {
-      if (config.cursor) {
-        console.log(`   ⚙️  Applying cursor config...`);
-        mainFile = applyCursorConfig(mainFile, config.cursor);
+    // Check if this is a multi-file package
+    if (extractedFiles.length === 1) {
+      // Single file package
+      let mainFile = extractedFiles[0].content;
+      const fileExtension = format === 'cursor' ? 'mdc' : 'md';
+      destPath = `${destDir}/${packageId}.${fileExtension}`;
+
+      // Apply cursor config if downloading in cursor format
+      if (format === 'cursor' && hasMDCHeader(mainFile)) {
+        if (config.cursor) {
+          console.log(`   ⚙️  Applying cursor config...`);
+          mainFile = applyCursorConfig(mainFile, config.cursor);
+        }
+      }
+
+      // Apply Claude config if downloading in Claude format
+      if (format === 'claude' && hasClaudeHeader(mainFile)) {
+        if (config.claude) {
+          console.log(`   ⚙️  Applying Claude agent config...`);
+          mainFile = applyClaudeConfig(mainFile, config.claude);
+        }
+      }
+
+      await saveFile(destPath, mainFile);
+      fileCount = 1;
+    } else {
+      // Multi-file package - create directory for package
+      const packageDir = `${destDir}/${packageId}`;
+      destPath = packageDir;
+      console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
+
+      for (const file of extractedFiles) {
+        const filePath = `${packageDir}/${file.name}`;
+        await saveFile(filePath, file.content);
+        fileCount++;
       }
     }
-
-    // Apply Claude config if downloading in Claude format
-    if (format === 'claude' && hasClaudeHeader(mainFile)) {
-      if (config.claude) {
-        console.log(`   ⚙️  Applying Claude agent config...`);
-        mainFile = applyClaudeConfig(mainFile, config.claude);
-      }
-    }
-
-    await saveFile(destPath, mainFile);
 
     // Update or create lock file
     const updatedLockfile = lockfile || createLockfile();
@@ -247,19 +266,89 @@ export async function handleInstall(
  * Extract main file from tarball
  * TODO: Implement proper tar extraction with tar library
  */
-async function extractMainFile(tarball: Buffer, packageId: string): Promise<string> {
-  // Placeholder implementation
-  // In reality, we need to:
-  // 1. Extract tar.gz
-  // 2. Find main file (from manifest or naming convention)
-  // 3. Return file contents
+interface ExtractedFile {
+  name: string;
+  content: string;
+}
 
-  // For now, assume tarball is just gzipped content
+async function extractTarball(tarball: Buffer, packageId: string): Promise<ExtractedFile[]> {
+  const files: ExtractedFile[] = [];
   const zlib = await import('zlib');
+  const fs = await import('fs');
+  const os = await import('os');
+  const path = await import('path');
+
   return new Promise((resolve, reject) => {
-    zlib.gunzip(tarball, (err, result) => {
-      if (err) reject(err);
-      else resolve(result.toString('utf-8'));
+    // Decompress gzip first
+    zlib.gunzip(tarball, async (err, result) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      // Check if this is a tar archive by looking for tar header
+      const isTar = result.length > 257 && result.toString('utf-8', 257, 262) === 'ustar';
+
+      if (!isTar) {
+        // Not a tar archive, treat as single gzipped file
+        files.push({
+          name: `${packageId}.md`,
+          content: result.toString('utf-8')
+        });
+        resolve(files);
+        return;
+      }
+
+      // Create temp directory for extraction
+      const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'prpm-'));
+
+      try {
+        // Write tar data to temp file
+        const tarPath = path.join(tmpDir, 'package.tar');
+        await fs.promises.writeFile(tarPath, result);
+
+        // Extract using tar library
+        await tar.extract({
+          file: tarPath,
+          cwd: tmpDir,
+        });
+
+        // Read all extracted files
+        const extractedFiles = await fs.promises.readdir(tmpDir, { withFileTypes: true, recursive: true });
+
+        for (const entry of extractedFiles) {
+          if (entry.isFile() && entry.name !== 'package.tar') {
+            const filePath = path.join(entry.path || tmpDir, entry.name);
+            const content = await fs.promises.readFile(filePath, 'utf-8');
+            const relativePath = path.relative(tmpDir, filePath);
+            files.push({
+              name: relativePath,
+              content
+            });
+          }
+        }
+
+        if (files.length === 0) {
+          // No files found, fall back to single file
+          files.push({
+            name: `${packageId}.md`,
+            content: result.toString('utf-8')
+          });
+        }
+
+        // Cleanup
+        await fs.promises.rm(tmpDir, { recursive: true, force: true });
+        resolve(files);
+
+      } catch (tarErr) {
+        // Cleanup and fall back to single file
+        await fs.promises.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+        files.push({
+          name: `${packageId}.md`,
+          content: result.toString('utf-8')
+        });
+        resolve(files);
+      }
     });
   });
 }
