@@ -1,3 +1,8 @@
+---
+name: PRPM Documentation Standards
+description: Standards and guidelines for organizing, structuring, and maintaining documentation in the PRPM repository - ensures consistency across user docs, development docs, and internal references
+---
+
 # PRPM Documentation Standards
 
 ## Documentation Organization

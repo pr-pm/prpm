@@ -2,12 +2,12 @@
 
 Complete list of all GitHub Actions workflows in the PRPM repository and their functions.
 
-**Current Structure: 7 Workflows** (consolidated from 14)
+**Current Structure: 3 Workflows**
 
 ## Table of Contents
 - [CI/CD](#cicd)
 - [Publishing](#publishing)
-- [Infrastructure & Deployment](#infrastructure--deployment)
+- [Deployment](#deployment)
 
 ---
 
@@ -106,61 +106,9 @@ Complete list of all GitHub Actions workflows in the PRPM repository and their f
 
 ---
 
-## Infrastructure & Deployment
+## Deployment
 
-### 4. **infra-deploy.yml** - Infrastructure Deployment
-**Trigger:** Push to `main` (infra path changes), Manual workflow dispatch  
-**Purpose:** Deploy infrastructure with Pulumi to AWS
-
-**Environment:**
-- AWS Region: us-west-2
-- Stack: production
-- Requires: `PULUMI_ACCESS_TOKEN` secret
-
-**Paths Watched:**
-- `packages/infra/**`
-- `.github/workflows/infra-*.yml`
-
-**Jobs:**
-- `deploy` - Deploy infrastructure to production
-
-**Note:** Only runs when infrastructure files change
-
----
-
-### 5. **infra-preview.yml** - Infrastructure Preview
-**Trigger:** Pull requests affecting infrastructure  
-**Purpose:** Preview infrastructure changes before merging (read-only)
-
-**Jobs:**
-- `preview` - Run Pulumi preview for each stack
-
-**Features:**
-- Posts preview results as PR comment
-- Matrix strategy for multiple stacks
-- No actual deployment (preview only)
-- Helps catch infrastructure issues before merge
-
----
-
-### 6. **deploy-pulumi-beanstalk.yml** - AWS Beanstalk Deployment
-**Trigger:** Push to `main` (infra changes), Manual workflow dispatch  
-**Purpose:** Deploy to AWS Elastic Beanstalk with Pulumi
-
-**Inputs:**
-- `stack` - Environment: `dev`, `staging`, `prod`
-- `action` - Operation: `preview`, `up`, `destroy`
-
-**Environments:**
-- Development (dev)
-- Staging
-- Production (prod)
-
-**Warning:** `destroy` action will tear down infrastructure - use with caution
-
----
-
-### 7. **registry-deploy.yml** - Registry Service Deployment
+### 4. **registry-deploy.yml** - Registry Service Deployment
 **Trigger:** Push to `main` (registry path changes), Manual workflow dispatch  
 **Purpose:** Build and deploy registry Docker image
 
@@ -207,8 +155,7 @@ All workflows that build packages **must** follow this order:
 | `NPM_TOKEN` | publish.yml | Publish to npm registry |
 | `GITHUB_TOKEN` | Multiple | GitHub API access (auto-provided) |
 | `HOMEBREW_TAP_TOKEN` | homebrew-publish.yml | Update Homebrew formula |
-| `PULUMI_ACCESS_TOKEN` | infra-deploy, infra-preview, deploy-pulumi | Infrastructure management |
-| AWS credentials | infra-deploy, registry-deploy | AWS deployment access |
+| AWS credentials | registry-deploy | AWS deployment access |
 
 ---
 
@@ -219,9 +166,6 @@ All workflows that build packages **must** follow this order:
 | ci.yml | ✅ | ✅ | ✅ | - | - |
 | publish.yml | - | - | - | ✅ | - |
 | homebrew-publish.yml | - | - | - | ✅ | - |
-| infra-deploy.yml | ✅ | - | - | ✅ | packages/infra/** |
-| infra-preview.yml | - | - | ✅ | - | packages/infra/** |
-| deploy-pulumi-beanstalk.yml | ✅ | - | - | ✅ | packages/infra/** |
 | registry-deploy.yml | ✅ | - | - | ✅ | packages/registry/** |
 
 ---
@@ -296,12 +240,6 @@ strategy:
    - Tag: latest
 4. Review dry run output
 5. Run again with dry_run=false to publish
-
-### Deploying Infrastructure
-1. Go to **Actions** → **Infrastructure Deploy** or **Deploy Pulumi Beanstalk**
-2. Click **Run workflow**
-3. Select stack/environment
-4. Choose action (preview first, then up)
 
 ### Deploying Registry Service
 1. Go to **Actions** → **Registry Deploy**

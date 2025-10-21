@@ -224,9 +224,10 @@ async function seedPackages() {
                 visibility,
                 verified,
                 featured,
+                quality_score,
                 created_at,
                 updated_at
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
               ON CONFLICT (name) DO NOTHING
               RETURNING id`,
               [
@@ -240,6 +241,7 @@ async function seedPackages() {
                 'public',
                 isVerified,
                 isOfficial,  // Now maps to 'featured' column
+                pkg.quality_score || null,  // Import pre-computed quality score
               ]
             );
 

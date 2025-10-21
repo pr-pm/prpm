@@ -1,3 +1,8 @@
+---
+name: Pulumi Troubleshooting Expert
+description: Comprehensive guide to troubleshooting Pulumi TypeScript errors, infrastructure issues, and best practices - covers common errors, Outputs handling, AWS Beanstalk deployment, and cost optimization
+---
+
 # Pulumi Infrastructure Troubleshooting Skill
 
 ## Common Pulumi TypeScript Errors and Solutions

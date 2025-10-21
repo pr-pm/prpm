@@ -1,6 +1,0 @@
-name: prpm-infra
-runtime:
-  name: nodejs
-  options:
-    typescript: true
-description: PRPM Registry Infrastructure on AWS

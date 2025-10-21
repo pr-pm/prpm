@@ -1,3 +1,8 @@
+---
+name: PostgreSQL Migrations Expert
+description: Comprehensive guide to PostgreSQL migrations - common errors, generated columns, full-text search, indexes, idempotent migrations, and best practices for database schema changes
+---
+
 # PostgreSQL Migrations Skill
 
 ## Common PostgreSQL Migration Errors and Solutions

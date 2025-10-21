@@ -34,6 +34,7 @@ interface Package {
   official: boolean;
   verified: boolean;
   readme?: string;
+  quality_score?: number;
 }
 
 async function seedSkills() {
@@ -51,6 +52,7 @@ async function seedSkills() {
         description: 'Comprehensive guide to troubleshooting common Pulumi TypeScript errors, infrastructure issues, and best practices',
         tags: ['pulumi', 'infrastructure', 'troubleshooting', 'typescript', 'aws', 'devops', 'claude-skill'],
         category: 'devops',
+        quality_score: 4.70,
       },
       {
         path: path.join(rootDir, '.claude', 'skills', 'postgres-migrations', 'SKILL.md'),
@@ -59,6 +61,7 @@ async function seedSkills() {
         description: 'Complete guide to PostgreSQL migrations: common errors, generated columns, full-text search, indexes, and best practices',
         tags: ['postgresql', 'database', 'migrations', 'sql', 'devops', 'troubleshooting', 'claude-skill'],
         category: 'devops',
+        quality_score: 4.80,
       },
       {
         path: path.join(rootDir, 'packages', 'prpm-self-improve-cursor.md'),
@@ -67,6 +70,7 @@ async function seedSkills() {
         description: 'Teaches Cursor to automatically search and install PRPM packages to improve itself during tasks',
         tags: ['prpm', 'autonomous', 'self-improvement', 'discovery', 'cursor', 'meta'],
         category: 'meta',
+        quality_score: 3.50,
       },
       {
         path: path.join(rootDir, 'packages', 'prpm-self-improve-windsurf.md'),
@@ -75,6 +79,7 @@ async function seedSkills() {
         description: 'Teaches Windsurf to automatically search and install PRPM packages to improve itself during tasks',
         tags: ['prpm', 'autonomous', 'self-improvement', 'discovery', 'windsurf', 'meta'],
         category: 'meta',
+        quality_score: 3.50,
       },
       {
         path: path.join(rootDir, 'packages', 'prpm-self-improve-continue.md'),
@@ -83,6 +88,7 @@ async function seedSkills() {
         description: 'Teaches Continue to automatically search and install PRPM packages to improve itself during tasks',
         tags: ['prpm', 'autonomous', 'self-improvement', 'discovery', 'continue', 'meta'],
         category: 'meta',
+        quality_score: 3.50,
       },
       {
         path: path.join(rootDir, 'packages', 'prpm-self-improve-claude.md'),
@@ -91,6 +97,7 @@ async function seedSkills() {
         description: 'Teaches Claude Code to automatically search and install PRPM packages to improve itself during tasks',
         tags: ['prpm', 'autonomous', 'self-improvement', 'discovery', 'claude', 'meta', 'claude-skill'],
         category: 'meta',
+        quality_score: 3.50,
       },
       {
         path: path.join(rootDir, '.claude', 'skills', 'aws-beanstalk-expert', 'SKILL.md'),
@@ -99,6 +106,7 @@ async function seedSkills() {
         description: 'Expert knowledge for deploying, managing, and troubleshooting AWS Elastic Beanstalk applications with production best practices',
         tags: ['aws', 'elastic-beanstalk', 'deployment', 'infrastructure', 'devops', 'pulumi', 'ci-cd', 'troubleshooting', 'claude-skill'],
         category: 'devops',
+        quality_score: 5.00,
       },
       {
         path: path.join(rootDir, '.cursor', 'rules', 'creating-cursor-rules.mdc'),
@@ -107,6 +115,7 @@ async function seedSkills() {
         description: 'Meta-rule for creating effective Cursor IDE rules with best practices, patterns, and examples',
         tags: ['meta', 'cursor', 'documentation', 'best-practices', 'project-setup'],
         category: 'meta',
+        quality_score: 4.80,
       },
       {
         path: path.join(rootDir, '.claude', 'skills', 'creating-cursor-rules', 'SKILL.md'),
@@ -115,6 +124,7 @@ async function seedSkills() {
         description: 'Expert guidance for creating effective Cursor IDE rules with best practices, patterns, and examples',
         tags: ['meta', 'cursor', 'documentation', 'best-practices', 'project-setup', 'claude-skill'],
         category: 'meta',
+        quality_score: 4.80,
       },
       {
         path: path.join(rootDir, '.cursor', 'rules', 'creating-skills.mdc'),
@@ -123,6 +133,7 @@ async function seedSkills() {
         description: 'Meta-guide for creating effective Claude Code skills with proper structure, CSO optimization, and real examples',
         tags: ['meta', 'skill-creation', 'documentation', 'best-practices'],
         category: 'meta',
+        quality_score: 4.70,
       },
       {
         path: path.join(rootDir, '.claude', 'skills', 'creating-skills', 'SKILL.md'),
@@ -131,6 +142,7 @@ async function seedSkills() {
         description: 'Use when creating new Claude Code skills or improving existing ones - ensures skills are discoverable, scannable, and effective through proper structure, CSO optimization, and real examples',
         tags: ['meta', 'skill-creation', 'documentation', 'best-practices', 'claude-skill'],
         category: 'meta',
+        quality_score: 4.80,
       },
       {
         path: path.join(rootDir, '.cursor', 'rules', 'typescript-type-safety.mdc'),
@@ -139,6 +151,7 @@ async function seedSkills() {
         description: 'Use when encountering TypeScript any types, type errors, or lax type checking - eliminates type holes and enforces strict type safety through proper interfaces, type guards, and module augmentation',
         tags: ['typescript', 'type-safety', 'best-practices', 'code-quality'],
         category: 'development',
+        quality_score: 4.75,
       },
       {
         path: path.join(rootDir, '.claude', 'skills', 'typescript-type-safety', 'SKILL.md'),
@@ -147,6 +160,25 @@ async function seedSkills() {
         description: 'Use when encountering TypeScript any types, type errors, or lax type checking - eliminates type holes and enforces strict type safety through proper interfaces, type guards, and module augmentation',
         tags: ['typescript', 'type-safety', 'best-practices', 'code-quality', 'claude-skill'],
         category: 'development',
+        quality_score: 4.75,
+      },
+      {
+        path: path.join(rootDir, '.claude', 'skills', 'github-actions-testing', 'SKILL.md'),
+        id: '@prpm/github-actions-testing-skill',
+        type: 'claude-skill' as const,
+        description: 'Expert guidance for testing and validating GitHub Actions workflows before deployment - catches cache errors, path issues, monorepo dependencies, and service container problems that local testing misses',
+        tags: ['github-actions', 'ci-cd', 'testing', 'validation', 'devops', 'workflows', 'actionlint', 'act', 'claude-skill'],
+        category: 'devops',
+        quality_score: 4.70,
+      },
+      {
+        path: path.join(rootDir, 'packages', 'cursor-rules', 'github-actions-testing', 'rule.md'),
+        id: '@prpm/github-actions-testing',
+        type: 'cursor' as const,
+        description: 'Comprehensive testing and validation for GitHub Actions workflows - prevents cache errors, path issues, monorepo dependency problems, and service container misconfigurations',
+        tags: ['github-actions', 'ci-cd', 'testing', 'validation', 'devops', 'workflows', 'cursor'],
+        category: 'devops',
+        quality_score: 4.60,
       },
     ];
 
@@ -185,11 +217,11 @@ async function seedSkills() {
           INSERT INTO packages (
             name, type, description,
             author_id, tags, category, verified, featured,
-            visibility, created_at, updated_at
+            visibility, quality_score, created_at, updated_at
           ) VALUES (
             $1, $2, $3,
             $4, $5, $6, $7, $8,
-            $9, NOW(), NOW()
+            $9, $10, NOW(), NOW()
           )
           ON CONFLICT (name) DO NOTHING
           RETURNING id
@@ -203,6 +235,7 @@ async function seedSkills() {
           true, // verified
           true, // featured (official)
           'public', // visibility
+          skill.quality_score || null, // quality_score
         ]);
 
         // If package already exists, skip

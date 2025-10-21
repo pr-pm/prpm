@@ -4,12 +4,6 @@ This directory contains GitHub Actions workflows for PRPM deployment.
 
 ## 🏗️ Two-Step Deployment Model
 
-### Infrastructure Provisioning (One-time / Infrequent)
-**Run locally:** `packages/infra/scripts/provision-infrastructure.sh`
-- Creates VPC, RDS, S3, Beanstalk environment
-- Prompts for secrets interactively
-- Safer for one-time setup with human oversight
-
 ### Application Deployment (Frequent)
 **Automated:** GitHub Actions on push to main
 - Builds and deploys application code
@@ -20,39 +14,7 @@ This directory contains GitHub Actions workflows for PRPM deployment.
 
 ## Workflows
 
-### 1. `deploy-pulumi-beanstalk.yml` - Update Infrastructure
-
-**Purpose:** Update existing infrastructure (NOT for initial provisioning)
-
-**⚠️ Important:** For initial provisioning, use `packages/infra/scripts/provision-infrastructure.sh` locally
-
-**Triggers:**
-- Manual workflow dispatch only
-
-**What it does:**
-1. Selects existing Pulumi stack (must exist)
-2. Shows current configuration
-3. Previews or applies infrastructure changes
-4. Outputs updated infrastructure details
-
-**Use cases:**
-- Update environment variables
-- Change instance sizes
-- Modify security settings
-- Other infrastructure modifications
-
-**Required GitHub Secrets:**
-- `PULUMI_ACCESS_TOKEN` - Pulumi Cloud access token
-- `AWS_ACCESS_KEY_ID` - AWS credentials
-- `AWS_SECRET_ACCESS_KEY` - AWS credentials
-
-**Usage:**
-```bash
-# Via GitHub UI only:
-# Actions → Update Infrastructure (Pulumi) → Run workflow → Select environment and action
-```
-
-### 2. `deploy-registry.yml` - Deploy Application
+### 1. `deploy-registry.yml` - Deploy Application
 
 **Purpose:** Deploy the registry application to Elastic Beanstalk
 
@@ -204,10 +166,10 @@ All environment variables are configured via Pulumi infrastructure and stored in
 
 ⚠️ **IMPORTANT:** All deployments MUST go through GitHub Actions.
 
-Manual deployment scripts have been removed:
-- ❌ `packages/infra/scripts/deploy-beanstalk.sh` (removed from npm scripts)
-- ❌ Direct `eb deploy` commands
-- ❌ Direct AWS CLI deployment commands
+Manual deployment scripts have been moved to infrastructure repository:
+- ℹ️ `../prpm/infrastructure/scripts/deploy-beanstalk.sh` (moved to infrastructure repo)
+- ❌ Direct `eb deploy` commands (not recommended)
+- ❌ Direct AWS CLI deployment commands (not recommended)
 
 **Why GitHub Actions only?**
 1. ✅ **Consistent:** Same deployment process every time

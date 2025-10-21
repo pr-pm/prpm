@@ -24,7 +24,7 @@ describe('toClaude', () => {
       const result = toClaude(sampleCanonicalPackage);
 
       expect(result.content).toMatch(/^---\n/);
-      expect(result.content).toContain('name: test-package');
+      expect(result.content).toContain('name: Test Agent');
       expect(result.content).toContain('description: A test agent for conversion testing');
       expect(result.content).toContain('icon: 🧪');
       expect(result.content).toContain('tools: Read, Write, Bash, WebSearch');
@@ -40,7 +40,7 @@ describe('toClaude', () => {
       const result = toClaude(minimalCanonicalPackage);
 
       expect(result.content).toContain('---');
-      expect(result.content).toContain('name: minimal-package');
+      expect(result.content).toContain('name: Minimal Rule');
       expect(result.qualityScore).toBe(100);
     });
   });

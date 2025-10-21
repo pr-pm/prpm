@@ -386,22 +386,41 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 
 ---
 
-## Links
+## Documentation
+
+### 📚 User Documentation
 
 **Get Started:**
+- 📖 **[User Docs Index](docs/)** - Complete user documentation
 - 📦 [Installation Guide](docs/INSTALLATION.md)
-- ⚙️ [Configuration Guide](docs/CONFIGURATION.md) - **~/.prpmrc, prpm.lock, format customization**
-- 📚 [Collections](docs/COLLECTIONS.md)
-- 🔄 [Format Conversion](docs/FORMAT_CONVERSION.md)
-- 💻 [CLI Reference](docs/CLI.md)
+- ⚙️ [Configuration Guide](docs/CONFIGURATION.md) - ~/.prpmrc, prpm.lock, format customization
+- 💻 [CLI Reference](docs/CLI.md) - Complete command reference
 
-**Deep Dives:**
-- 🏗️ [Architecture](docs/ARCHITECTURE.md) - System design and components
-- 🧪 [Testing](docs/TESTING.md) - Testing guide for developers
-- 🎯 [Examples](docs/EXAMPLES.md) - Real-world usage examples
-- 📦 [Package Catalog](docs/PACKAGES.md) - Browse available packages
+**Core Concepts:**
+- 📚 [Collections](docs/COLLECTIONS.md) - Multi-package bundles
+- 🔄 [Format Conversion](docs/FORMAT_CONVERSION.md) - Universal packages explained
+- 📦 [Packages](docs/PACKAGES.md) - Package catalog
+- 🎯 [Examples](docs/EXAMPLES.md) - Real-world usage
 
-**Karen:**
+**Advanced:**
+- 🏗️ [Architecture](docs/ARCHITECTURE.md) - System design
+- 🔌 [MCP Servers](docs/MCP_SERVERS_IN_COLLECTIONS.md) - MCP configuration
+- 📝 [Publishing](docs/PUBLISHING.md) - Publish your packages
+
+### 🛠️ Developer Documentation
+
+**For Contributors:**
+- 🔧 **[Development Docs](development/docs/)** - Internal documentation index
+- 💻 [Development Setup](development/docs/DEVELOPMENT.md) - Local environment
+- 🐳 [Docker Services](development/docs/DOCKER.md) - PostgreSQL, Redis, MinIO
+
+**Deployment & Infrastructure:**
+- 🚀 [Deployment Summary](development/docs/DEPLOYMENT_SUMMARY.md) - Complete deployment guide
+- 📊 [Deployment Quickstart](development/docs/DEPLOYMENT_QUICKSTART.md) - TL;DR deployment
+- 🗄️ [Seeding Production](development/docs/SEEDING_PRODUCTION.md) - Database seeding
+- 🔄 [CI/CD Workflows](development/docs/GITHUB_WORKFLOWS.md) - GitHub Actions
+
+### 🔥 Karen Code Reviews
 - 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md)
 - 📖 [Karen GitHub Action](https://github.com/khaliqgant/karen-action)
 - 💡 [Karen Implementation](KAREN_IMPLEMENTATION.md)

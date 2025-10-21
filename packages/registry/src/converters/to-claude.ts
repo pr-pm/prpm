@@ -71,7 +71,12 @@ function convertContent(
 
   // Generate frontmatter
   lines.push('---');
-  lines.push(`name: ${pkg.id}`);
+
+  // Use human-readable title from metadata if available, otherwise use package ID
+  const skillName = metadata?.type === 'metadata' && metadata.data.title
+    ? metadata.data.title
+    : pkg.id;
+  lines.push(`name: ${skillName}`);
 
   if (metadata?.type === 'metadata') {
     lines.push(`description: ${metadata.data.description}`);
