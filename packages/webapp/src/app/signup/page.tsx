@@ -1,17 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { register, getGitHubOAuthUrl } from '@/lib/api'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { register, getGitHubOAuthUrl, validateInvite, type InviteDetails } from '@/lib/api'
 
 export default function SignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const inviteToken = searchParams.get('invite')
+
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [validatingInvite, setValidatingInvite] = useState(true)
+  const [invite, setInvite] = useState<InviteDetails | null>(null)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+
+  // Validate invite token on mount
+  useEffect(() => {
+    async function checkInvite() {
+      if (!inviteToken) {
+        setValidatingInvite(false)
+        return
+      }
+
+      try {
+        setValidatingInvite(true)
+        setInviteError(null)
+        const inviteData = await validateInvite(inviteToken)
+        setInvite(inviteData)
+        // Pre-fill username if invite has one
+        if (inviteData.author_username) {
+          setUsername(inviteData.author_username)
+        }
+      } catch (err) {
+        setInviteError(err instanceof Error ? err.message : 'Invalid invite token')
+        setInvite(null)
+      } finally {
+        setValidatingInvite(false)
+      }
+    }
+
+    checkInvite()
+  }, [inviteToken])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,6 +86,85 @@ export default function SignupPage() {
     window.location.href = getGitHubOAuthUrl(redirectUrl)
   }
 
+  // Show loading state while validating invite
+  if (validatingInvite) {
+    return (
+      <main className="min-h-screen bg-prpm-dark relative overflow-hidden flex items-center justify-center p-8">
+        <div className="absolute inset-0 bg-grid-pattern bg-[size:50px_50px] opacity-20"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-prpm-accent/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-prpm-purple/20 rounded-full blur-3xl"></div>
+
+        <div className="relative z-10 text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-prpm-accent mb-4"></div>
+          <p className="text-gray-400">Validating invite...</p>
+        </div>
+      </main>
+    )
+  }
+
+  // Show "Invite Only" message if no valid invite token
+  if (!invite) {
+    return (
+      <main className="min-h-screen bg-prpm-dark relative overflow-hidden flex items-center justify-center p-8">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-grid-pattern bg-[size:50px_50px] opacity-20"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-prpm-accent/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-prpm-purple/20 rounded-full blur-3xl"></div>
+
+        {/* Invite Only message */}
+        <div className="relative z-10 w-full max-w-md">
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-2xl p-8 text-center">
+            <div className="text-6xl mb-6">🔒</div>
+            <h1 className="text-3xl font-bold text-white mb-4">Invite Only</h1>
+            <p className="text-gray-400 mb-6">
+              PRPM is currently in private beta. You need a valid invite token to create an account.
+            </p>
+
+            {inviteError && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                {inviteError}
+              </div>
+            )}
+
+            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-6 mb-6">
+              <h3 className="text-sm font-semibold text-gray-300 mb-3">How to get an invite:</h3>
+              <ul className="text-sm text-gray-400 text-left space-y-2">
+                <li className="flex items-start">
+                  <span className="text-prpm-accent mr-2">•</span>
+                  <span>Contact us on GitHub or Discord</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-prpm-accent mr-2">•</span>
+                  <span>Request access through our community channels</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-prpm-accent mr-2">•</span>
+                  <span>Contribute to the PRPM project</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <Link
+                href="/"
+                className="block w-full px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold transition-all"
+              >
+                Back to Home
+              </Link>
+              <Link
+                href="/login"
+                className="block w-full px-6 py-3 bg-prpm-dark-card border border-prpm-border hover:border-prpm-accent text-white rounded-lg font-semibold transition-all"
+              >
+                Already have an account? Sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  // Show signup form if invite is valid
   return (
     <main className="min-h-screen bg-prpm-dark relative overflow-hidden flex items-center justify-center p-8">
       {/* Background effects */}
@@ -63,9 +176,24 @@ export default function SignupPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="bg-prpm-dark-card border border-prpm-border rounded-2xl p-8">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
             <p className="text-gray-400">Start publishing AI prompts to PRPM</p>
+          </div>
+
+          {/* Invite info banner */}
+          <div className="mb-6 p-4 bg-prpm-accent/10 border border-prpm-accent/30 rounded-lg">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🎉</span>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-white mb-1">
+                  Invited as @{invite.author_username}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {invite.package_count} package{invite.package_count !== 1 ? 's' : ''} • Expires {new Date(invite.expires_at).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Error message */}
