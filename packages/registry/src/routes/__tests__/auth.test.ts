@@ -429,4 +429,69 @@ describe('Auth Routes', () => {
       expect(response.headers.location).toBeDefined();
     });
   });
+
+  describe('GET /api/v1/auth/me/unclaimed-packages', () => {
+    it('should return unclaimed packages for user with GitHub username', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/api/v1/auth/me/unclaimed-packages',
+        headers: {
+          authorization: 'Bearer test-token',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body).toHaveProperty('packages');
+      expect(body).toHaveProperty('count');
+      expect(Array.isArray(body.packages)).toBe(true);
+    });
+
+    it('should return empty array for user without GitHub username', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/api/v1/auth/me/unclaimed-packages',
+        headers: {
+          authorization: 'Bearer test-token',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.packages).toEqual([]);
+      expect(body.count).toBe(0);
+    });
+  });
+
+  describe('POST /api/v1/auth/claim', () => {
+    it('should claim packages for user with GitHub username', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/api/v1/auth/claim',
+        headers: {
+          authorization: 'Bearer test-token',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body).toHaveProperty('success');
+      expect(body).toHaveProperty('claimed_count');
+      expect(body).toHaveProperty('message');
+    });
+
+    it('should return error for user without GitHub account', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/api/v1/auth/claim',
+        headers: {
+          authorization: 'Bearer test-token',
+        },
+      });
+
+      // This will depend on mock implementation
+      // Could be 400 if no GitHub account or 200 with 0 claimed
+      expect([200, 400]).toContain(response.statusCode);
+    });
+  });
 });

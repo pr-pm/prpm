@@ -557,6 +557,162 @@ export async function authRoutes(server: FastifyInstance) {
 
     return { success: true, message: 'Token revoked' };
   });
+
+  // Get unclaimed packages for authenticated user
+  server.get('/me/unclaimed-packages', {
+    onRequest: [server.authenticate],
+    schema: {
+      tags: ['auth'],
+      description: 'Get packages that match the authenticated user\'s GitHub username but are not yet claimed',
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            packages: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  total_downloads: { type: 'number' },
+                  created_at: { type: 'string' },
+                },
+              },
+            },
+            count: { type: 'number' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = request.user.user_id;
+
+    try {
+      // Get the user's GitHub username
+      const user = await queryOne<User>(
+        server,
+        'SELECT github_username FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (!user || !user.github_username) {
+        return {
+          packages: [],
+          count: 0,
+        };
+      }
+
+      // Find packages that match the GitHub username but aren't claimed by this user
+      // Packages can be namespaced like @username/package-name or just username/package-name
+      const packages = await query(
+        server,
+        `SELECT id, name, description, total_downloads, created_at
+         FROM packages
+         WHERE (
+           name LIKE $1 || '/%'
+           OR name LIKE '@' || $1 || '/%'
+         )
+         AND (author_id IS NULL OR author_id != $2)
+         ORDER BY total_downloads DESC, created_at DESC`,
+        [user.github_username, userId]
+      );
+
+      return {
+        packages: packages.rows,
+        count: packages.rows.length,
+      };
+    } catch (error: unknown) {
+      const err = toError(error);
+      server.log.error({ error: err.message }, 'Error fetching unclaimed packages');
+      return reply.status(500).send({
+        error: 'Failed to fetch unclaimed packages',
+        message: err.message,
+      });
+    }
+  });
+
+  // Claim packages for authenticated user
+  server.post('/claim', {
+    onRequest: [server.authenticate],
+    schema: {
+      tags: ['auth'],
+      description: 'Claim packages that match the authenticated user\'s GitHub username',
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            claimed_count: { type: 'number' },
+            message: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = request.user.user_id;
+
+    try {
+      // Get the user's GitHub username
+      const user = await queryOne<User>(
+        server,
+        'SELECT github_username FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (!user || !user.github_username) {
+        return reply.status(400).send({
+          error: 'No GitHub account linked',
+          message: 'You must have a GitHub account linked to claim packages',
+        });
+      }
+
+      // Claim packages by updating their author_id
+      const result = await query(
+        server,
+        `UPDATE packages
+         SET author_id = $1
+         WHERE (
+           name LIKE $2 || '/%'
+           OR name LIKE '@' || $2 || '/%'
+         )
+         AND (author_id IS NULL OR author_id != $1)`,
+        [userId, user.github_username]
+      );
+
+      const claimedCount = result.rowCount || 0;
+
+      if (claimedCount === 0) {
+        return {
+          success: true,
+          claimed_count: 0,
+          message: 'No packages to claim',
+        };
+      }
+
+      // Log the claim action
+      await query(
+        server,
+        `INSERT INTO audit_log (user_id, action, resource_type, metadata)
+         VALUES ($1, 'packages.claim', 'package', $2)`,
+        [userId, JSON.stringify({ claimed_count: claimedCount, github_username: user.github_username })]
+      );
+
+      return {
+        success: true,
+        claimed_count: claimedCount,
+        message: `Successfully claimed ${claimedCount} package${claimedCount !== 1 ? 's' : ''}`,
+      };
+    } catch (error: unknown) {
+      const err = toError(error);
+      server.log.error({ error: err.message }, 'Error claiming packages');
+      return reply.status(500).send({
+        error: 'Failed to claim packages',
+        message: err.message,
+      });
+    }
+  });
 }
 
 // Helper to parse expires_in strings like "30d", "7d", "1h"

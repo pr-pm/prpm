@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getUnclaimedPackages, claimPackages } from '@/lib/api'
 
 interface User {
   id: string
@@ -19,6 +20,9 @@ export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [unclaimedCount, setUnclaimedCount] = useState<number>(0)
+  const [claiming, setClaiming] = useState(false)
+  const [claimError, setClaimError] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is logged in
@@ -46,6 +50,17 @@ export default function DashboardPage() {
 
         const userData = await response.json()
         setUser(userData)
+
+        // Check for unclaimed packages
+        try {
+          const unclaimedData = await getUnclaimedPackages(token)
+          if (unclaimedData.packages && unclaimedData.packages.length > 0) {
+            setUnclaimedCount(unclaimedData.packages.length)
+          }
+        } catch (error) {
+          console.error('Error checking unclaimed packages:', error)
+          // Non-fatal error, continue
+        }
       } catch (error) {
         console.error('Error fetching user:', error)
         // Token might be invalid, redirect to login
@@ -64,6 +79,24 @@ export default function DashboardPage() {
     localStorage.removeItem('prpm_token')
     localStorage.removeItem('prpm_username')
     router.push('/')
+  }
+
+  const handleClaimPackages = async () => {
+    const token = localStorage.getItem('prpm_token')
+    if (!token) return
+
+    setClaiming(true)
+    setClaimError(null)
+
+    try {
+      await claimPackages(token)
+      // Refresh page to show updated package count
+      window.location.reload()
+    } catch (error) {
+      setClaimError(error instanceof Error ? error.message : 'Failed to claim packages')
+    } finally {
+      setClaiming(false)
+    }
   }
 
   if (loading) {
@@ -105,6 +138,36 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Unclaimed Packages Banner */}
+        {unclaimedCount > 0 && (
+          <div className="mb-8 bg-gradient-to-r from-prpm-accent/20 to-prpm-purple/20 border border-prpm-accent/30 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">🎉</div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-white mb-2">
+                  You have {unclaimedCount} unclaimed package{unclaimedCount !== 1 ? 's' : ''}!
+                </h3>
+                <p className="text-gray-300 mb-4">
+                  We found {unclaimedCount} package{unclaimedCount !== 1 ? 's' : ''} published under your GitHub username @{user.username}.
+                  Claim them now to link them to your account and get the verified author badge.
+                </p>
+                {claimError && (
+                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                    {claimError}
+                  </div>
+                )}
+                <button
+                  onClick={handleClaimPackages}
+                  disabled={claiming}
+                  className="px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {claiming ? 'Claiming...' : `Claim ${unclaimedCount} Package${unclaimedCount !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Welcome Section */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-white mb-2">

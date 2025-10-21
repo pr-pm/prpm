@@ -38,40 +38,37 @@ export type {
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3000'
 
 /**
- * Validate an invite token
+ * Check for unclaimed packages (requires authentication)
  */
-export async function validateInvite(token: string): Promise<InviteDetails> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/invites/${token}`)
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to validate invite' }))
-    throw new Error(error.error || error.message || 'Invalid invite token')
-  }
-
-  const data = await response.json()
-  return data.invite
-}
-
-/**
- * Claim an invite (requires authentication)
- */
-export async function claimInvite(
-  token: string,
-  jwtToken: string,
-  data: ClaimInviteRequest
-): Promise<ClaimInviteResponse> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/invites/${token}/claim`, {
-    method: 'POST',
+export async function getUnclaimedPackages(jwtToken: string) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/me/unclaimed-packages`, {
     headers: {
-      'Content-Type': 'application/json',
       'Authorization': `Bearer ${jwtToken}`,
     },
-    body: JSON.stringify(data),
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to claim invite' }))
-    throw new Error(error.error || error.message || 'Failed to claim invite')
+    const error = await response.json().catch(() => ({ error: 'Failed to check unclaimed packages' }))
+    throw new Error(error.error || error.message || 'Failed to check unclaimed packages')
+  }
+
+  return response.json()
+}
+
+/**
+ * Claim packages for authenticated user
+ */
+export async function claimPackages(jwtToken: string) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/claim`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to claim packages' }))
+    throw new Error(error.error || error.message || 'Failed to claim packages')
   }
 
   return response.json()
