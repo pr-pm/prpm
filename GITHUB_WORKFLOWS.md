@@ -2,384 +2,355 @@
 
 Complete list of all GitHub Actions workflows in the PRPM repository and their functions.
 
+**Current Structure: 7 Workflows** (consolidated from 14)
+
 ## Table of Contents
-- [CI/CD Workflows](#cicd-workflows)
-- [Publishing Workflows](#publishing-workflows)
-- [Quality & Testing Workflows](#quality--testing-workflows)
+- [CI/CD](#cicd)
+- [Publishing](#publishing)
 - [Infrastructure & Deployment](#infrastructure--deployment)
-- [Experimental Workflows](#experimental-workflows)
 
 ---
 
-## CI/CD Workflows
+## CI/CD
 
 ### 1. **ci.yml** - Main CI Pipeline
 **Trigger:** Push to `main`/`develop`, Pull requests  
-**Purpose:** Primary continuous integration pipeline that runs all tests
+**Purpose:** Comprehensive continuous integration pipeline
 
 **Jobs:**
 - `registry-tests` - Tests registry service with Postgres, Redis, MinIO
-- `cli-tests` - Tests CLI package
+- `cli-tests` - Tests CLI package  
 - `registry-client-tests` - Tests registry client library
-- `types-tests` - Tests @prpm/types package (builds and type-checks)
+- `types-tests` - Tests @prpm/types package
 - `security` - Runs npm audit on all packages
-- `all-checks` - Summary job that waits for all checks
+- `all-checks` - Summary job
 
 **Key Features:**
-- Builds @prpm/types first (dependency for all other packages)
-- Sets up full backend services (Postgres, Redis, MinIO)
-- Runs type checking and builds for all packages
-- Validates security with npm audit
-
----
-
-### 2. **package-tests.yml** - Isolated Package Tests
-**Trigger:** Push to `main`/`develop`, Pull requests  
-**Purpose:** Run tests for individual packages in isolation
-
-**Jobs:**
-- `cli-tests` - CLI package tests with coverage upload
-- `registry-client-tests` - Registry client tests with coverage
-- `integration-tests` - Full workspace test suite
-
-**Key Features:**
-- Uploads coverage to Codecov
-- Tests each package independently
-- Builds packages in correct dependency order (@prpm/types → registry-client → others)
-
----
-
-### 3. **e2e-tests.yml** - End-to-End Tests
-**Trigger:** Push to `main`/`develop`, Pull requests, Manual dispatch  
-**Purpose:** Full integration testing with running services
-
-**Jobs:**
-- `e2e-tests` - Complete end-to-end test suite
-
-**Tests:**
-- Health endpoint
-- API endpoints (packages, search, trending, collections)
-- Security headers
-- Rate limiting
-- Full E2E test scripts
+- ✅ Builds @prpm/types first (required dependency)
+- ✅ Full backend services (Postgres, Redis, MinIO)
+- ✅ Type checking and builds for all packages
+- ✅ Security validation with npm audit
+- Includes unit tests, integration tests, and E2E tests
+- Coverage reporting
+- Code quality metrics
 
 **Services:**
-- Postgres database
-- Redis cache
-- MinIO object storage
-- Registry server (running on port 4000)
+- PostgreSQL 15
+- Redis 7
+- MinIO (S3-compatible storage)
 
 ---
 
-### 4. **code-quality.yml** - Quality Metrics
-**Trigger:** Push to `main`/`develop`, Pull requests  
-**Purpose:** Track and enforce code quality standards
+## Publishing
 
-**Jobs:**
-- `typescript-check` - TypeScript error tracking
-  - Registry (production code only, excludes tests)
-  - CLI
-  - Registry Client
-  - Fails if errors > 0
-- `security-audit` - npm audit for vulnerabilities
-  - Registry
-  - Root workspace
-  - Fails on critical vulnerabilities
-- `code-metrics` - Lines of code tracking
-  - Generates summary reports
-
-**Outputs:**
-- TypeScript quality report table
-- Security audit summary
-- Code metrics dashboard
-
----
-
-### 5. **pr-checks.yml** - Pull Request Validation
-**Trigger:** Pull request events (opened, synchronize, reopened)  
-**Purpose:** Quick checks on pull requests
-
-**Jobs:**
-- `pr-info` - PR summary generation
-- `size-check` - Bundle size verification
-
----
-
-## Publishing Workflows
-
-### 6. **npm-publish.yml** - NPM Package Publishing
+### 2. **publish.yml** - Package Publishing
 **Trigger:** Manual workflow dispatch  
-**Purpose:** Publish packages to npm registry
+**Purpose:** Publish packages to npm registry with version management
 
 **Inputs:**
-- `version` - Bump type (patch/minor/major/pre-release)
+- `version` - Version bump type (patch/minor/major/prerelease)
 - `custom_version` - Override with specific version
-- `packages` - Which packages to publish (cli, registry-client, or all)
-- `dry_run` - Test without actually publishing
-- `tag` - NPM dist-tag (latest/next/beta/alpha)
+- `packages` - Which packages to publish: `types`, `registry-client`, `cli`, or `all`
+- `dry_run` - Test without actually publishing (default: false)
+- `tag` - NPM dist-tag: `latest`, `next`, `beta`, `alpha` (default: latest)
 
 **Jobs:**
-- `validate` - Run tests and determine packages
-- `publish` - Publish to npm (matrix job for each package)
-- `create-git-tag` - Create git tag and GitHub release
-- `summary` - Generate publish summary
+1. `validate` - Run tests and determine packages to publish
+2. `publish` - Publish to npm (matrix job per package)
+3. `create-git-tag` - Create git tag and GitHub release
+4. `summary` - Generate publish summary report
 
-**Publishing Order:**
-1. Builds @prpm/types first
-2. Builds @prpm/registry-client
-3. Publishes packages with proper versioning
-4. Creates git tags
-5. Creates GitHub releases
+**Publishing Order (Critical):**
+1. **@prpm/types** (no dependencies)
+2. **@prpm/registry-client** (depends on types)
+3. **prpm** (CLI - depends on types and registry-client)
 
 **Features:**
-- Dry run mode for testing
-- Matrix strategy for parallel publishing
-- Automatic version bumping
-- Git tag creation with release notes
+- ✅ Builds packages in dependency order
+- ✅ Dry run mode for testing
+- ✅ Matrix strategy for parallel publishing
+- ✅ Automatic version bumping
+- ✅ Git tag creation with release notes
+- ✅ Supports pre-release versions
+
+**Example Usage:**
+```bash
+# Publish all packages with patch bump
+# Go to Actions → Publish Packages → Run workflow
+# Select: version=patch, packages=all, dry_run=false, tag=latest
+
+# Dry run test
+# Select: dry_run=true to test without publishing
+
+# Publish only types package
+# Select: packages=types
+```
 
 ---
 
-### 7. **cli-publish.yml** - CLI Release Pipeline
-**Trigger:** Version tags (`v*.*.*`), Manual dispatch  
-**Purpose:** Full CLI release with binaries
+### 3. **homebrew-publish.yml** - Homebrew Formula Updates
+**Trigger:** Manual workflow dispatch, GitHub releases  
+**Purpose:** Update Homebrew tap with new CLI versions
 
-**Jobs:**
-- `test` - Run tests before publishing
-- `publish-npm` - Publish to npm
-- `build-binaries` - Build platform-specific binaries
-  - Linux x64
-  - macOS x64
-  - macOS ARM64
-- `create-release` - Create GitHub release with binaries
-- `update-homebrew` - Update Homebrew tap formula
-
-**Artifacts:**
-- npm package
-- Platform-specific binaries
-- Homebrew formula update
-
----
-
-### 8. **homebrew-publish.yml** - Homebrew Formula Updates
-**Trigger:** Manual dispatch, GitHub releases  
-**Purpose:** Update Homebrew tap with new versions
+**Inputs:**
+- `version` - Version to publish (e.g., 1.2.3)
+- `create_pr` - Create PR instead of direct push (default: false)
 
 **Features:**
-- Updates Formula/prpm.rb in homebrew-prpm repo
-- Calculates SHA256 for tarball
-- Creates PR or direct push option
+- Updates `Formula/prpm.rb` in homebrew-prpm repository
+- Calculates SHA256 for source tarball
 - Automated formula generation
+- Option to create PR for review
 
----
-
-### 9. **release.yml** - Cross-Platform Release
-**Trigger:** Version tags (`v*`)  
-**Purpose:** Build releases for multiple platforms
-
-**Matrix:**
-- macOS
-- Ubuntu (Linux)
-- Windows
-
-**Steps:**
-- Checkout code
-- Setup Node.js 18
-- Install dependencies
-- Build packages
+**Repository:** `khaliqgant/homebrew-prpm`
 
 ---
 
 ## Infrastructure & Deployment
 
-### 10. **infra-deploy.yml** - Infrastructure Deployment
-**Trigger:** Push to `main` (infra changes), Manual dispatch  
-**Purpose:** Deploy infrastructure with Pulumi
+### 4. **infra-deploy.yml** - Infrastructure Deployment
+**Trigger:** Push to `main` (infra path changes), Manual workflow dispatch  
+**Purpose:** Deploy infrastructure with Pulumi to AWS
 
 **Environment:**
 - AWS Region: us-west-2
-- Pulumi access token required
-
-**Jobs:**
-- `deploy` - Deploy infrastructure to production
+- Stack: production
+- Requires: `PULUMI_ACCESS_TOKEN` secret
 
 **Paths Watched:**
 - `packages/infra/**`
 - `.github/workflows/infra-*.yml`
 
+**Jobs:**
+- `deploy` - Deploy infrastructure to production
+
+**Note:** Only runs when infrastructure files change
+
 ---
 
-### 11. **infra-preview.yml** - Infrastructure Preview
+### 5. **infra-preview.yml** - Infrastructure Preview
 **Trigger:** Pull requests affecting infrastructure  
-**Purpose:** Preview infrastructure changes before merging
+**Purpose:** Preview infrastructure changes before merging (read-only)
 
 **Jobs:**
-- `preview` - Run Pulumi preview
+- `preview` - Run Pulumi preview for each stack
 
 **Features:**
-- Posts preview results to PR
+- Posts preview results as PR comment
 - Matrix strategy for multiple stacks
-- Read-only operation (no actual deployment)
+- No actual deployment (preview only)
+- Helps catch infrastructure issues before merge
 
 ---
 
-### 12. **deploy-pulumi-beanstalk.yml** - AWS Deployment
-**Trigger:** Push to `main` (infra changes), Manual dispatch  
+### 6. **deploy-pulumi-beanstalk.yml** - AWS Beanstalk Deployment
+**Trigger:** Push to `main` (infra changes), Manual workflow dispatch  
 **Purpose:** Deploy to AWS Elastic Beanstalk with Pulumi
 
 **Inputs:**
-- `stack` - Environment (dev/staging/prod)
-- `action` - Operation (preview/up/destroy)
+- `stack` - Environment: `dev`, `staging`, `prod`
+- `action` - Operation: `preview`, `up`, `destroy`
 
 **Environments:**
-- Development
+- Development (dev)
 - Staging
-- Production
+- Production (prod)
+
+**Warning:** `destroy` action will tear down infrastructure - use with caution
 
 ---
 
-### 13. **registry-deploy.yml** - Registry Service Deployment
-**Trigger:** Push to `main` (registry changes), Manual dispatch  
-**Purpose:** Deploy registry service
+### 7. **registry-deploy.yml** - Registry Service Deployment
+**Trigger:** Push to `main` (registry path changes), Manual workflow dispatch  
+**Purpose:** Build and deploy registry Docker image
 
 **Inputs:**
-- `environment` - Target (dev/staging/prod)
+- `environment` - Target environment: `dev`, `staging`, `prod`
 
 **Jobs:**
-- `build-and-push` - Build and push Docker image
+- `build-and-push` - Build Docker image and push to registry
 
 **Features:**
-- AWS integration
-- Docker image building
-- Environment-specific deployments
+- AWS ECR integration
+- Multi-environment support
+- Docker image building and tagging
+- Automated deployment to ECS/Beanstalk
 
----
-
-## Experimental Workflows
-
-### 14. **karen-test.yml** - AI Code Review Testing
-**Trigger:** Manual dispatch, Push to `v2`  
-**Purpose:** Test Karen AI code review action
-
-**Features:**
-- Uses khaliqgant/karen-action@v1.0.1
-- Anthropic API integration
-- Badge generation
-- No automatic commenting (test mode)
-
-**Configuration:**
-- `post_comment: false` - Don't comment on pushes
-- `generate_badge: true` - Create quality badges
-- `min_score: 0` - No failure threshold (testing)
+**Paths Watched:**
+- `packages/registry/**`
+- `.github/workflows/registry-*.yml`
 
 ---
 
 ## Workflow Dependencies & Build Order
 
 ### Critical Build Order
-All workflows that build packages must follow this order:
+All workflows that build packages **must** follow this order:
 
-1. **@prpm/types** - Build first (no dependencies)
-2. **@prpm/registry-client** - Depends on types
-3. **prpm (CLI)** - Depends on types and registry-client
-4. **@prpm/registry** - Depends on types
-5. **@prpm/webapp** - Depends on types
+1. **@prpm/types** (no dependencies) ← Build FIRST
+2. **@prpm/registry-client** (depends on types)
+3. **prpm** CLI (depends on types + registry-client)
+4. **@prpm/registry** (depends on types)
+5. **@prpm/webapp** (depends on types)
 
-### Workflows Updated for @prpm/types
-The following workflows have been updated to build `@prpm/types` first:
+### Workflows Updated for @prpm/types Dependency
 
-✅ `ci.yml` - All test jobs  
-✅ `code-quality.yml` - TypeScript checks  
-✅ `package-tests.yml` - Package tests  
-✅ `e2e-tests.yml` - E2E tests  
-✅ `npm-publish.yml` - Publishing workflow  
+✅ **ci.yml** - All test jobs build types first  
+✅ **publish.yml** - Builds types before publishing  
 
 ---
 
-## Secrets Required
-
-The workflows require the following GitHub secrets:
+## Required GitHub Secrets
 
 | Secret | Used By | Purpose |
 |--------|---------|---------|
-| `NPM_TOKEN` | npm-publish, cli-publish | Publish to npm registry |
+| `NPM_TOKEN` | publish.yml | Publish to npm registry |
 | `GITHUB_TOKEN` | Multiple | GitHub API access (auto-provided) |
-| `HOMEBREW_TAP_TOKEN` | homebrew-publish, cli-publish | Update homebrew formula |
-| `ANTHROPIC_API_KEY` | karen-test, e2e-tests | AI code review, optional tests |
-| `PULUMI_ACCESS_TOKEN` | infra-deploy, infra-preview, deploy-pulumi | Infrastructure deployment |
-| AWS credentials | infra-deploy, registry-deploy | AWS deployment |
+| `HOMEBREW_TAP_TOKEN` | homebrew-publish.yml | Update Homebrew formula |
+| `PULUMI_ACCESS_TOKEN` | infra-deploy, infra-preview, deploy-pulumi | Infrastructure management |
+| AWS credentials | infra-deploy, registry-deploy | AWS deployment access |
 
 ---
 
 ## Workflow Triggers Summary
 
-| Workflow | Push main | Push develop | Push v2 | PR | Tags | Manual |
-|----------|-----------|--------------|---------|----|----- |--------|
-| ci.yml | ✅ | ✅ | - | ✅ | - | - |
-| package-tests.yml | ✅ | ✅ | - | ✅ | - | - |
-| e2e-tests.yml | ✅ | ✅ | - | ✅ | - | ✅ |
-| code-quality.yml | ✅ | ✅ | - | ✅ | - | - |
-| pr-checks.yml | - | - | - | ✅ | - | - |
-| npm-publish.yml | - | - | - | - | - | ✅ |
-| cli-publish.yml | - | - | - | - | v*.*.* | ✅ |
-| homebrew-publish.yml | - | - | - | - | releases | ✅ |
-| release.yml | - | - | - | - | v* | - |
-| infra-deploy.yml | ✅* | - | - | - | - | ✅ |
-| infra-preview.yml | - | - | - | ✅* | - | - |
-| registry-deploy.yml | ✅* | - | - | - | - | ✅ |
-| deploy-pulumi.yml | ✅* | - | - | - | - | ✅ |
-| karen-test.yml | - | - | ✅ | - | - | ✅ |
-
-*Only when specific paths change
+| Workflow | Push main | Push develop | PR | Manual | Path Filter |
+|----------|-----------|--------------|----|----- |-------------|
+| ci.yml | ✅ | ✅ | ✅ | - | - |
+| publish.yml | - | - | - | ✅ | - |
+| homebrew-publish.yml | - | - | - | ✅ | - |
+| infra-deploy.yml | ✅ | - | - | ✅ | packages/infra/** |
+| infra-preview.yml | - | - | ✅ | - | packages/infra/** |
+| deploy-pulumi-beanstalk.yml | ✅ | - | - | ✅ | packages/infra/** |
+| registry-deploy.yml | ✅ | - | - | ✅ | packages/registry/** |
 
 ---
 
-## Monitoring & Notifications
+## Workflow Best Practices
 
-### GitHub Actions UI
-- All workflows appear in the Actions tab
-- Workflow runs show status badges
-- Step summaries show detailed reports
+### 1. Always Build Dependencies First
+```yaml
+- name: Build dependencies in order
+  run: |
+    npm run build --workspace=@prpm/types
+    npm run build --workspace=@prpm/registry-client
+    npm run build --workspace=prpm
+```
 
-### Workflow Status Badges
-Add to README.md:
+### 2. Use Workspace Targeting
+```yaml
+# Correct
+npm run build --workspace=@prpm/types
 
-```markdown
-![CI](https://github.com/khaliqgant/prompt-package-manager/workflows/CI/badge.svg)
-![Code Quality](https://github.com/khaliqgant/prompt-package-manager/workflows/Code%20Quality/badge.svg)
-![E2E Tests](https://github.com/khaliqgant/prompt-package-manager/workflows/E2E%20Tests/badge.svg)
+# Wrong - builds everything
+npm run build
+```
+
+### 3. Set Working Directory for Package-Specific Jobs
+```yaml
+defaults:
+  run:
+    working-directory: ./packages/cli
+```
+
+### 4. Use Matrix for Parallel Execution
+```yaml
+strategy:
+  matrix:
+    package: [types, registry-client, cli]
+```
+
+### 5. Cleanup Jobs Use if: always()
+```yaml
+- name: Cleanup
+  if: always()
+  run: kill $(cat /tmp/server.pid) || true
 ```
 
 ---
 
-## Best Practices
+## Monitoring & Status Badges
 
-1. **Always build @prpm/types first** in any workflow that builds packages
-2. **Use workspace dependencies** with `npm run build --workspace=@prpm/types`
-3. **Set working-directory** when targeting specific packages
-4. **Use matrix strategies** for parallel execution when possible
-5. **Add if: always()** to cleanup jobs
-6. **Use secrets** for sensitive values (never hardcode)
-7. **Test with dry-run** before actual publishing
-8. **Use GITHUB_STEP_SUMMARY** for human-readable reports
+### GitHub Actions UI
+- View all workflow runs in the **Actions** tab
+- Each workflow shows status, timing, and logs
+- Step summaries provide detailed reports
+
+### Add Status Badges to README
+```markdown
+![CI](https://github.com/khaliqgant/prompt-package-manager/workflows/CI/badge.svg)
+![Publish](https://github.com/khaliqgant/prompt-package-manager/workflows/Publish%20Packages/badge.svg)
+```
+
+---
+
+## Common Workflow Operations
+
+### Manual Publishing
+1. Go to **Actions** → **Publish Packages**
+2. Click **Run workflow**
+3. Select options:
+   - Version: patch/minor/major
+   - Packages: all/types/registry-client/cli
+   - Dry run: true (to test first)
+   - Tag: latest
+4. Review dry run output
+5. Run again with dry_run=false to publish
+
+### Deploying Infrastructure
+1. Go to **Actions** → **Infrastructure Deploy** or **Deploy Pulumi Beanstalk**
+2. Click **Run workflow**
+3. Select stack/environment
+4. Choose action (preview first, then up)
+
+### Deploying Registry Service
+1. Go to **Actions** → **Registry Deploy**
+2. Click **Run workflow**
+3. Select environment (dev/staging/prod)
 
 ---
 
 ## Maintenance
 
-### Adding New Workflows
-1. Create `.github/workflows/<name>.yml`
-2. Add to this documentation
-3. Test with manual dispatch if possible
-4. Add required secrets to repository settings
+### Adding New Packages
+When adding a new publishable package:
+1. Add to `publish.yml` packages list
+2. Update build order in `ci.yml`
+3. Add package.json with `publishConfig`
+4. Update `PUBLISHING.md` documentation
 
-### Modifying Existing Workflows
-1. Test changes on a branch first
-2. Use workflow_dispatch for manual testing
+### Modifying Workflows
+1. Test changes on a feature branch first
+2. Use `workflow_dispatch` trigger for manual testing
 3. Update this documentation
 4. Ensure @prpm/types build order is maintained
+5. Test dry-run before actual publishing
 
-### Deprecating Workflows
-1. Add deprecation notice to workflow file
-2. Set `if: false` to disable
-3. Update this documentation
-4. Remove after confirming no dependencies
+### Secrets Management
+- Store in GitHub repo Settings → Secrets and variables → Actions
+- Use environment-specific secrets for multi-env deployments
+- Rotate tokens periodically
+- Never commit secrets to code
+
+---
+
+## Removed Workflows (Consolidated)
+
+The following workflows were removed to eliminate redundancy:
+
+- ❌ `package-tests.yml` - Merged into ci.yml
+- ❌ `code-quality.yml` - Merged into ci.yml
+- ❌ `pr-checks.yml` - Merged into ci.yml
+- ❌ `e2e-tests.yml` - Merged into ci.yml
+- ❌ `release.yml` - Functionality merged into publish.yml
+- ❌ `cli-publish.yml` - Functionality merged into publish.yml
+- ❌ `karen-test.yml` - Experimental, removed
+
+**Result:** Consolidated from 14 → 7 workflows (50% reduction)
+
+**Benefits:**
+- Fewer concurrent runs (better performance)
+- Single source of truth for CI/CD
+- Easier maintenance
+- Better resource utilization
+- Clearer job dependencies

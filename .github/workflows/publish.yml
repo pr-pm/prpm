@@ -1,4 +1,4 @@
-name: NPM Publish
+name: Publish Packages
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       packages:
-        description: 'Packages to publish (comma-separated: cli,registry-client or "all")'
+        description: 'Packages to publish (comma-separated: types,registry-client,cli or "all")'
         required: true
         default: 'all'
         type: string
@@ -69,11 +69,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build registry-client
-        run: npm run build --workspace=@prpm/registry-client
-
-      - name: Build CLI
-        run: npm run build --workspace=prpm
+      - name: Build packages in dependency order
+        run: |
+          npm run build --workspace=@prpm/types
+          npm run build --workspace=@prpm/registry-client
+          npm run build --workspace=prpm
 
       - name: Run tests
         run: npm test --workspaces --if-present
@@ -84,7 +84,7 @@ jobs:
           PACKAGES="${{ github.event.inputs.packages }}"
 
           if [ "$PACKAGES" = "all" ]; then
-            PUBLISH_PACKAGES='["cli", "registry-client"]'
+            PUBLISH_PACKAGES='["types", "registry-client", "cli"]'
           else
             # Convert comma-separated to JSON array
             PUBLISH_PACKAGES=$(echo "$PACKAGES" | jq -R 'split(",") | map(select(length > 0))')
@@ -140,9 +140,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build dependencies
+      - name: Build dependencies in order
         run: |
-          # Build registry-client first (CLI depends on it)
+          # Build in dependency order: types → registry-client
+          npm run build --workspace=@prpm/types
           npm run build --workspace=@prpm/registry-client
 
       - name: Update version
@@ -151,7 +152,12 @@ jobs:
           npm version ${{ needs.validate.outputs.new_version }} --no-git-tag-version --allow-same-version
 
       - name: Build package
-        run: npm run build --workspace=@prpm/${{ matrix.package }}
+        run: |
+          if [ "${{ matrix.package }}" = "cli" ]; then
+            npm run build --workspace=prpm
+          else
+            npm run build --workspace=@prpm/${{ matrix.package }}
+          fi
 
       - name: Dry run check
         if: github.event.inputs.dry_run == 'true'
