@@ -2,45 +2,40 @@
  * API client for communicating with PRMP registry
  */
 
+import type {
+  InviteDetails,
+  ClaimInviteRequest,
+  ClaimInviteResponse,
+  Author,
+  TopAuthorsResponse,
+  PackageType,
+  SortType,
+  SearchPackagesParams,
+  Package,
+  SearchPackagesResponse,
+  SearchCollectionsParams,
+  Collection,
+  SearchCollectionsResponse
+} from '@prpm/types'
+
+// Re-export types for convenience
+export type {
+  InviteDetails,
+  ClaimInviteRequest,
+  ClaimInviteResponse,
+  Author,
+  TopAuthorsResponse,
+  PackageType,
+  SortType,
+  SearchPackagesParams,
+  Package,
+  SearchPackagesResponse,
+  SearchCollectionsParams,
+  Collection,
+  SearchCollectionsResponse
+}
+
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3000'
-
-export interface InviteDetails {
-  id: string
-  author_username: string
-  package_count: number
-  invite_message?: string
-  status: string
-  expires_at: string
-}
-
-export interface ClaimInviteRequest {
-  github_username?: string
-  email?: string
-}
-
-export interface ClaimInviteResponse {
-  success: boolean
-  message: string
-  user?: {
-    id: string
-    username: string
-    verified_author: boolean
-  }
-}
-
-export interface Author {
-  author: string
-  package_count: number
-  total_downloads: number
-  verified: boolean
-  latest_package?: string
-  created_at?: string
-}
-
-export interface TopAuthorsResponse {
-  authors: Author[]
-  total: number
-}
 
 /**
  * Validate an invite token
@@ -164,53 +159,6 @@ export async function login(email: string, password: string) {
 // SEARCH & DISCOVERY
 // ============================================
 
-export type PackageType = 'cursor' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'generic' | 'mcp'
-export type SortType = 'downloads' | 'created' | 'updated' | 'quality' | 'rating'
-
-export interface SearchPackagesParams {
-  q?: string
-  type?: PackageType
-  tags?: string[]
-  category?: string
-  author?: string
-  verified?: boolean
-  featured?: boolean
-  sort?: SortType
-  limit?: number
-  offset?: number
-}
-
-export interface Package {
-  id: string
-  name: string
-  description?: string
-  type: PackageType
-  author_id?: string
-  org_id?: string
-  tags: string[]
-  keywords: string[]
-  category?: string
-  visibility: string
-  deprecated: boolean
-  verified: boolean
-  featured: boolean
-  total_downloads: number
-  weekly_downloads: number
-  monthly_downloads: number
-  quality_score?: number
-  rating_average?: number
-  rating_count: number
-  created_at: string
-  updated_at: string
-}
-
-export interface SearchPackagesResponse {
-  packages: Package[]
-  total: number
-  offset: number
-  limit: number
-}
-
 /**
  * Search for packages
  */
@@ -236,50 +184,6 @@ export async function searchPackages(params: SearchPackagesParams): Promise<Sear
   }
 
   return response.json()
-}
-
-export interface SearchCollectionsParams {
-  query?: string
-  category?: string
-  tag?: string
-  framework?: string
-  official?: boolean
-  verified?: boolean
-  scope?: string
-  author?: string
-  limit?: number
-  offset?: number
-  sortBy?: 'downloads' | 'stars' | 'created' | 'updated' | 'name'
-  sortOrder?: 'asc' | 'desc'
-}
-
-export interface Collection {
-  scope: string
-  id: string
-  name_slug: string
-  version: string
-  name: string
-  description?: string
-  author: string
-  official: boolean
-  verified: boolean
-  category?: string
-  tags: string[]
-  framework?: string
-  downloads: number
-  stars: number
-  icon?: string
-  created_at: string
-  updated_at: string
-  package_count: number
-}
-
-export interface SearchCollectionsResponse {
-  collections: Collection[]
-  total: number
-  page: number
-  perPage: number
-  hasMore: boolean
 }
 
 /**

@@ -1,0 +1,29 @@
+{
+  "name": "@prpm/types",
+  "version": "0.1.0",
+  "description": "Shared TypeScript types for Prompt Package Manager",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "prpm",
+    "types",
+    "typescript"
+  ],
+  "author": "khaliqgant",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

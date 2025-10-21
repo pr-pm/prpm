@@ -40,6 +40,7 @@
   "author": "khaliqgant",
   "license": "MIT",
   "dependencies": {
+    "@prpm/types": "^0.1.0",
     "@prpm/registry-client": "^1.2.0",
     "@octokit/rest": "^22.0.0",
     "commander": "^11.1.0",
