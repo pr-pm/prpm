@@ -1,0 +1,10 @@
+{
+  "id": "Invalid_Collection_ID",
+  "name": "Collection with Invalid ID",
+  "description": "This collection has an invalid ID with uppercase and underscores",
+  "packages": [
+    {
+      "packageId": "test-package"
+    }
+  ]
+}

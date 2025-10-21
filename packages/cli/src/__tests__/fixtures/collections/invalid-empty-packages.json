@@ -1,0 +1,6 @@
+{
+  "id": "empty-packages",
+  "name": "Empty Packages Collection",
+  "description": "Collection with no packages in the array",
+  "packages": []
+}

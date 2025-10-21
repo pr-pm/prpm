@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { readFile, stat } from 'fs/promises';
+import { readFile, stat, mkdir, rm } from 'fs/promises';
 import { join, basename } from 'path';
 import { createReadStream } from 'fs';
 import * as tar from 'tar';
@@ -69,6 +69,9 @@ async function createTarball(manifest: PackageManifest): Promise<Buffer> {
   const tarballPath = join(tmpDir, 'package.tar.gz');
 
   try {
+    // Create temp directory
+    await mkdir(tmpDir, { recursive: true });
+
     // Get files to include (from manifest.files or default)
     const files = manifest.files || [
       'prpm.json',
@@ -117,6 +120,13 @@ async function createTarball(manifest: PackageManifest): Promise<Buffer> {
     return tarballBuffer;
   } catch (error) {
     throw error;
+  } finally {
+    // Clean up temp directory
+    try {
+      await rm(tmpDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup errors
+    }
   }
 }
 

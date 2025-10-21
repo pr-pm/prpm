@@ -2,9 +2,12 @@
  * Tests for collections command
  */
 
-import { handleCollectionsList, handleCollectionInfo } from '../commands/collections';
+import { handleCollectionsList, handleCollectionInfo, handleCollectionPublish } from '../commands/collections';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
+import { mkdir, writeFile, rm } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 // Mock dependencies
 jest.mock('@prpm/registry-client');
@@ -20,6 +23,7 @@ describe('collections command', () => {
   const mockClient = {
     getCollections: jest.fn(),
     getCollection: jest.fn(),
+    createCollection: jest.fn(),
   };
 
   const mockConfig = {
@@ -27,7 +31,19 @@ describe('collections command', () => {
     token: 'test-token',
   };
 
-  beforeEach(() => {
+  let testDir: string;
+  let originalCwd: string;
+
+  beforeAll(() => {
+    originalCwd = process.cwd();
+  });
+
+  beforeEach(async () => {
+    // Create temp directory for test files
+    testDir = join(tmpdir(), `prpm-test-${Date.now()}`);
+    await mkdir(testDir, { recursive: true });
+    process.chdir(testDir);
+
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
     (getConfig as jest.Mock).mockResolvedValue(mockConfig);
 
@@ -36,9 +52,25 @@ describe('collections command', () => {
     jest.spyOn(console, 'error').mockImplementation();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
+
+    // Clean up test directory
+    try {
+      await rm(testDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup errors
+    }
+  });
+
+  afterAll(() => {
+    // Restore original working directory
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      // Ignore errors
+    }
   });
 
   describe('handleCollectionsList', () => {
@@ -365,6 +397,357 @@ describe('collections command', () => {
       );
 
       mockExit.mockRestore();
+    });
+  });
+
+  describe('handleCollectionPublish', () => {
+    beforeEach(async () => {
+      // Create temp directory for test files
+      testDir = join(tmpdir(), `prpm-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+      process.chdir(testDir);
+    });
+
+    afterEach(async () => {
+      // Clean up test directory
+      try {
+        await rm(testDir, { recursive: true, force: true });
+      } catch {
+        // Ignore cleanup errors
+      }
+    });
+
+    it('should require authentication', async () => {
+      (getConfig as jest.Mock).mockResolvedValue({
+        registryUrl: 'https://test-registry.com',
+        token: undefined,
+      });
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Authentication required')
+      );
+
+      mockExit.mockRestore();
+    });
+
+    it('should validate collection.json exists', async () => {
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      mockExit.mockRestore();
+    });
+
+    it('should validate required fields', async () => {
+      await writeFile(
+        join(testDir, 'collection.json'),
+        JSON.stringify({
+          id: 'test-collection',
+          name: 'Test Collection',
+          // Missing description and packages
+        })
+      );
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Missing required fields')
+      );
+
+      mockExit.mockRestore();
+    });
+
+    it('should validate collection id format', async () => {
+      await writeFile(
+        join(testDir, 'collection.json'),
+        JSON.stringify({
+          id: 'Invalid_ID',
+          name: 'Test Collection',
+          description: 'A test collection',
+          packages: [{ packageId: 'test-pkg' }],
+        })
+      );
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Collection id must be lowercase alphanumeric')
+      );
+
+      mockExit.mockRestore();
+    });
+
+    it('should validate name length', async () => {
+      await writeFile(
+        join(testDir, 'collection.json'),
+        JSON.stringify({
+          id: 'test-collection',
+          name: 'AB',
+          description: 'A test collection',
+          packages: [{ packageId: 'test-pkg' }],
+        })
+      );
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Collection name must be at least 3 characters')
+      );
+
+      mockExit.mockRestore();
+    });
+
+    it('should validate description length', async () => {
+      await writeFile(
+        join(testDir, 'collection.json'),
+        JSON.stringify({
+          id: 'test-collection',
+          name: 'Test Collection',
+          description: 'Short',
+          packages: [{ packageId: 'test-pkg' }],
+        })
+      );
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Collection description must be at least 10 characters')
+      );
+
+      mockExit.mockRestore();
+    });
+
+    it('should validate packages array is not empty', async () => {
+      await writeFile(
+        join(testDir, 'collection.json'),
+        JSON.stringify({
+          id: 'test-collection',
+          name: 'Test Collection',
+          description: 'A test collection with no packages',
+          packages: [],
+        })
+      );
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Collection must include at least one package')
+      );
+
+      mockExit.mockRestore();
+    });
+
+    it('should validate each package has packageId', async () => {
+      await writeFile(
+        join(testDir, 'collection.json'),
+        JSON.stringify({
+          id: 'test-collection',
+          name: 'Test Collection',
+          description: 'A test collection',
+          packages: [{ version: '1.0.0' }],
+        })
+      );
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Package at index 0 is missing packageId')
+      );
+
+      mockExit.mockRestore();
+    });
+
+    it('should successfully publish valid collection', async () => {
+      await writeFile(
+        join(testDir, 'collection.json'),
+        JSON.stringify({
+          id: 'test-collection',
+          name: 'Test Collection',
+          description: 'A test collection for testing',
+          category: 'development',
+          tags: ['testing', 'automation'],
+          packages: [
+            {
+              packageId: 'test-package-1',
+              version: '1.0.0',
+              required: true,
+              reason: 'Core functionality',
+            },
+            {
+              packageId: 'test-package-2',
+              required: false,
+              reason: 'Optional enhancement',
+            },
+          ],
+          icon: '📦',
+        })
+      );
+
+      mockClient.createCollection.mockResolvedValue({
+        id: 'uuid-123',
+        scope: 'testuser',
+        name_slug: 'test-collection',
+        version: '1.0.0',
+        name: 'Test Collection',
+        description: 'A test collection for testing',
+        official: false,
+        verified: false,
+      });
+
+      await handleCollectionPublish('./collection.json');
+
+      expect(mockClient.createCollection).toHaveBeenCalledWith({
+        id: 'test-collection',
+        name: 'Test Collection',
+        description: 'A test collection for testing',
+        category: 'development',
+        tags: ['testing', 'automation'],
+        packages: [
+          {
+            packageId: 'test-package-1',
+            version: '1.0.0',
+            required: true,
+            reason: 'Core functionality',
+          },
+          {
+            packageId: 'test-package-2',
+            version: undefined,
+            required: false, // respects the false value from manifest
+            reason: 'Optional enhancement',
+          },
+        ],
+        icon: '📦',
+      });
+
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('✅ Collection published successfully!'));
+    });
+
+    it('should handle custom manifest path', async () => {
+      await writeFile(
+        join(testDir, 'custom.json'),
+        JSON.stringify({
+          id: 'custom-collection',
+          name: 'Custom Collection',
+          description: 'A custom collection',
+          packages: [{ packageId: 'pkg-1' }],
+        })
+      );
+
+      mockClient.createCollection.mockResolvedValue({
+        id: 'uuid-456',
+        scope: 'testuser',
+        name_slug: 'custom-collection',
+        version: '1.0.0',
+      });
+
+      await handleCollectionPublish('./custom.json');
+
+      expect(mockClient.createCollection).toHaveBeenCalled();
+    });
+
+    it('should handle invalid JSON', async () => {
+      await writeFile(join(testDir, 'collection.json'), 'invalid json {]');
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      mockExit.mockRestore();
+    });
+
+    it('should handle API errors', async () => {
+      await writeFile(
+        join(testDir, 'collection.json'),
+        JSON.stringify({
+          id: 'test-collection',
+          name: 'Test Collection',
+          description: 'A test collection',
+          packages: [{ packageId: 'test-pkg' }],
+        })
+      );
+
+      mockClient.createCollection.mockRejectedValue(
+        new Error('Collection already exists')
+      );
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Collection already exists')
+      );
+
+      mockExit.mockRestore();
+    });
+
+    it('should set required to true by default', async () => {
+      await writeFile(
+        join(testDir, 'collection.json'),
+        JSON.stringify({
+          id: 'test-collection',
+          name: 'Test Collection',
+          description: 'A test collection',
+          packages: [
+            { packageId: 'pkg-1', required: false },
+            { packageId: 'pkg-2' },
+          ],
+        })
+      );
+
+      mockClient.createCollection.mockResolvedValue({
+        id: 'uuid-789',
+        scope: 'testuser',
+        name_slug: 'test-collection',
+        version: '1.0.0',
+      });
+
+      await handleCollectionPublish('./collection.json');
+
+      expect(mockClient.createCollection).toHaveBeenCalledWith(
+        expect.objectContaining({
+          packages: [
+            expect.objectContaining({ packageId: 'pkg-1', required: false }),
+            expect.objectContaining({ packageId: 'pkg-2', required: true }),
+          ],
+        })
+      );
     });
   });
 });

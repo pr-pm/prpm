@@ -128,11 +128,11 @@ describe('RegistryClient', () => {
     });
 
     it('should handle search errors', async () => {
-      // Mock all 3 retries to return error
+      // Mock all 3 retries to return error (no retry needed as it's not 500/429)
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
+        status: 400,
+        statusText: 'Bad Request',
         json: async () => ({ error: 'Server error' }),
       });
 
@@ -390,6 +390,76 @@ describe('RegistryClient', () => {
         expect.anything()
       );
     });
+
+    it('should support limit parameter', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ packages: mockPackages }),
+      });
+
+      await client.getTrending(undefined, 50);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('limit=50'),
+        expect.anything()
+      );
+    });
+  });
+
+  describe('getFeatured', () => {
+    const mockPackages = [
+      {
+        id: 'featured-1',
+        type: 'cursor' as PackageType,
+        tags: [],
+        total_downloads: 5000,
+        verified: true,
+        featured: true,
+      },
+    ];
+
+    it('should fetch featured packages', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ packages: mockPackages }),
+      });
+
+      const result = await client.getFeatured();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/search/featured'),
+        expect.anything()
+      );
+      expect(result).toEqual(mockPackages);
+    });
+
+    it('should filter by type', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ packages: mockPackages }),
+      });
+
+      await client.getFeatured('claude', 15);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('type=claude'),
+        expect.anything()
+      );
+    });
+
+    it('should support limit parameter', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ packages: mockPackages }),
+      });
+
+      await client.getFeatured(undefined, 30);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('limit=30'),
+        expect.anything()
+      );
+    });
   });
 
   describe('getCollections', () => {
@@ -507,7 +577,301 @@ describe('RegistryClient', () => {
     });
   });
 
+  describe('installCollection', () => {
+    const mockInstallResult = {
+      collection: {
+        id: 'test-collection',
+        scope: 'official',
+        name: 'Test Collection',
+        description: 'A test collection',
+        version: '1.0.0',
+        author: 'test',
+        official: true,
+        verified: true,
+        tags: [],
+        packages: [],
+        downloads: 100,
+        stars: 50,
+        package_count: 2,
+      },
+      packagesToInstall: [
+        {
+          packageId: 'package-1',
+          version: '1.0.0',
+          format: 'cursor',
+          required: true,
+        },
+        {
+          packageId: 'package-2',
+          version: '1.1.0',
+          format: 'cursor',
+          required: false,
+        },
+      ],
+    };
+
+    it('should get collection installation plan', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockInstallResult,
+      });
+
+      const result = await client.installCollection({
+        scope: 'official',
+        id: 'test-collection',
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/collections/official/test-collection/install'),
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+      expect(result).toEqual(mockInstallResult);
+    });
+
+    it('should include version in install plan', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockInstallResult,
+      });
+
+      await client.installCollection({
+        scope: 'official',
+        id: 'test-collection',
+        version: '2.0.0',
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('@2.0.0/install'),
+        expect.anything()
+      );
+    });
+
+    it('should include format parameter', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockInstallResult,
+      });
+
+      await client.installCollection({
+        scope: 'official',
+        id: 'test-collection',
+        format: 'claude',
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('format=claude'),
+        expect.anything()
+      );
+    });
+
+    it('should include skipOptional parameter', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockInstallResult,
+      });
+
+      await client.installCollection({
+        scope: 'official',
+        id: 'test-collection',
+        skipOptional: true,
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('skipOptional=true'),
+        expect.anything()
+      );
+    });
+  });
+
+  describe('createCollection', () => {
+    const mockCreatedCollection = {
+      id: 'new-collection-uuid',
+      scope: 'testuser',
+      name_slug: 'new-collection',
+      name: 'New Collection',
+      description: 'A new collection',
+      version: '1.0.0',
+      author: 'testuser',
+      official: false,
+      verified: false,
+      tags: ['test'],
+      packages: [],
+      downloads: 0,
+      stars: 0,
+      package_count: 2,
+    };
+
+    it('should create a new collection', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockCreatedCollection,
+      });
+
+      const result = await client.createCollection({
+        id: 'new-collection',
+        name: 'New Collection',
+        description: 'A new collection',
+        packages: [
+          { packageId: 'package-1', version: '1.0.0', required: true },
+          { packageId: 'package-2', required: false },
+        ],
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${mockBaseUrl}/api/v1/collections`,
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${mockToken}`,
+          }),
+        })
+      );
+      expect(result).toEqual(mockCreatedCollection);
+    });
+
+    it('should include all optional fields', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockCreatedCollection,
+      });
+
+      await client.createCollection({
+        id: 'new-collection',
+        name: 'New Collection',
+        description: 'A new collection',
+        category: 'development',
+        tags: ['react', 'typescript'],
+        packages: [{ packageId: 'package-1' }],
+        icon: '🚀',
+      });
+
+      const callBody = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+      expect(callBody).toHaveProperty('category', 'development');
+      expect(callBody).toHaveProperty('tags');
+      expect(callBody.tags).toEqual(['react', 'typescript']);
+      expect(callBody).toHaveProperty('icon', '🚀');
+    });
+
+    it('should require authentication', async () => {
+      const clientWithoutToken = new RegistryClient({ url: mockBaseUrl });
+
+      await expect(
+        clientWithoutToken.createCollection({
+          id: 'test',
+          name: 'Test',
+          description: 'Test collection',
+          packages: [{ packageId: 'pkg-1' }],
+        })
+      ).rejects.toThrow('Authentication required');
+    });
+  });
+
+  describe('publish', () => {
+    const mockManifest = {
+      name: 'test-package',
+      version: '1.0.0',
+      description: 'A test package',
+      type: 'cursor',
+    };
+
+    const mockPublishResponse = {
+      package_id: 'test-package-uuid',
+      version: '1.0.0',
+      message: 'Package published successfully',
+    };
+
+    it('should publish a package', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockPublishResponse,
+      });
+
+      const tarball = Buffer.from('test-tarball-data');
+      const result = await client.publish(mockManifest as any, tarball);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${mockBaseUrl}/api/v1/packages`,
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Authorization': `Bearer ${mockToken}`,
+          }),
+        })
+      );
+      expect(result).toEqual(mockPublishResponse);
+    });
+
+    it('should send FormData with manifest and tarball', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockPublishResponse,
+      });
+
+      const tarball = Buffer.from('test-tarball-data');
+      await client.publish(mockManifest as any, tarball);
+
+      const callOptions = (global.fetch as jest.Mock).mock.calls[0][1];
+      expect(callOptions.body).toBeInstanceOf(FormData);
+    });
+
+    it('should require authentication', async () => {
+      const clientWithoutToken = new RegistryClient({ url: mockBaseUrl });
+      const tarball = Buffer.from('test-data');
+
+      await expect(
+        clientWithoutToken.publish(mockManifest as any, tarball)
+      ).rejects.toThrow('Authentication required');
+    });
+  });
+
+  describe('whoami', () => {
+    const mockUserInfo = {
+      id: 'user-123',
+      username: 'testuser',
+      email: 'test@example.com',
+      verified: true,
+    };
+
+    it('should fetch current user info', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockUserInfo,
+      });
+
+      const result = await client.whoami();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${mockBaseUrl}/api/v1/auth/me`,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Authorization': `Bearer ${mockToken}`,
+          }),
+        })
+      );
+      expect(result).toEqual(mockUserInfo);
+    });
+
+    it('should require authentication', async () => {
+      const clientWithoutToken = new RegistryClient({ url: mockBaseUrl });
+
+      await expect(clientWithoutToken.whoami()).rejects.toThrow('Not authenticated');
+    });
+  });
+
   describe('retry logic', () => {
+    beforeEach(() => {
+      // Use fake timers to speed up retry tests
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      // Restore real timers
+      jest.useRealTimers();
+    });
+
     it('should retry on 429 rate limit', async () => {
       (global.fetch as jest.Mock)
         .mockResolvedValueOnce({
@@ -521,7 +885,13 @@ describe('RegistryClient', () => {
           json: async () => ({ packages: [] }),
         });
 
-      const result = await client.search('test');
+      // Start the async search operation
+      const searchPromise = client.search('test');
+
+      // Fast-forward through the retry delay (1 second)
+      await jest.advanceTimersByTimeAsync(1000);
+
+      const result = await searchPromise;
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(result).toEqual({ packages: [] });
@@ -540,7 +910,13 @@ describe('RegistryClient', () => {
           json: async () => ({ packages: [] }),
         });
 
-      const result = await client.search('test');
+      // Start the async search operation
+      const searchPromise = client.search('test');
+
+      // Fast-forward through the retry delay (1 second = 2^0 * 1000)
+      await jest.advanceTimersByTimeAsync(1000);
+
+      const result = await searchPromise;
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
     });
@@ -553,8 +929,23 @@ describe('RegistryClient', () => {
         json: async () => ({ error: 'Server error' }),
       });
 
-      await expect(client.search('test')).rejects.toThrow();
-      expect(global.fetch).toHaveBeenCalledTimes(3); // Default 3 retries
+      // Start the async search operation
+      const searchPromise = client.search('test');
+
+      // Set up the expect first (before timers run)
+      const expectation = expect(searchPromise).rejects.toThrow();
+
+      // Now advance through retry delays
+      await jest.advanceTimersByTimeAsync(1000);
+      await jest.advanceTimersByTimeAsync(2000);
+
+      // Restore timers
+      jest.useRealTimers();
+
+      // Wait for the expectation to complete
+      await expectation;
+
+      expect(global.fetch).toHaveBeenCalledTimes(3); // Initial + 2 retries
     });
   });
 

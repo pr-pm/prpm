@@ -1,0 +1,54 @@
+{
+  "id": "full-stack-dev",
+  "name": "Full Stack Development Suite",
+  "description": "Complete collection of packages for full-stack JavaScript development including frontend, backend, testing, and DevOps tools",
+  "category": "development",
+  "tags": ["fullstack", "javascript", "typescript", "nodejs", "react"],
+  "packages": [
+    {
+      "packageId": "react-cursor-rules",
+      "version": "1.0.0",
+      "required": true,
+      "reason": "Frontend React development standards"
+    },
+    {
+      "packageId": "nodejs-best-practices",
+      "version": "2.0.0",
+      "required": true,
+      "reason": "Backend Node.js coding standards"
+    },
+    {
+      "packageId": "typescript-strict-config",
+      "version": "1.5.0",
+      "required": true,
+      "reason": "TypeScript strict mode configuration"
+    },
+    {
+      "packageId": "testing-library-rules",
+      "version": "1.2.0",
+      "required": true,
+      "reason": "Testing best practices with Testing Library"
+    },
+    {
+      "packageId": "eslint-prettier-config",
+      "required": false,
+      "reason": "Optional code formatting and linting configuration"
+    },
+    {
+      "packageId": "docker-compose-templates",
+      "required": false,
+      "reason": "Optional Docker development environment templates"
+    },
+    {
+      "packageId": "ci-cd-workflows",
+      "required": false,
+      "reason": "Optional GitHub Actions CI/CD workflow templates"
+    },
+    {
+      "packageId": "monitoring-setup",
+      "required": false,
+      "reason": "Optional application monitoring and logging setup"
+    }
+  ],
+  "icon": "🚀"
+}

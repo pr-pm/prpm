@@ -331,6 +331,122 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
 }
 
 /**
+ * Publish/create a collection
+ */
+export async function handleCollectionPublish(
+  manifestPath: string = './collection.json'
+): Promise<void> {
+  const startTime = Date.now();
+
+  try {
+    const config = await getConfig();
+    const client = getRegistryClient(config);
+
+    // Check authentication
+    if (!config.token) {
+      console.error('\n❌ Authentication required. Run `prpm login` first.\n');
+      process.exit(1);
+    }
+
+    console.log('📦 Publishing collection...\n');
+
+    // Read collection manifest
+    const fs = await import('fs/promises');
+    const manifestContent = await fs.readFile(manifestPath, 'utf-8');
+    const manifest = JSON.parse(manifestContent);
+
+    // Validate manifest
+    const required = ['id', 'name', 'description', 'packages'];
+    const missing = required.filter(field => !manifest[field]);
+    if (missing.length > 0) {
+      throw new Error(`Missing required fields: ${missing.join(', ')}`);
+    }
+
+    // Validate id format (must be lowercase alphanumeric with hyphens)
+    if (!/^[a-z0-9-]+$/.test(manifest.id)) {
+      throw new Error('Collection id must be lowercase alphanumeric with hyphens only');
+    }
+
+    // Validate name length
+    if (manifest.name.length < 3) {
+      throw new Error('Collection name must be at least 3 characters');
+    }
+
+    // Validate description length
+    if (manifest.description.length < 10) {
+      throw new Error('Collection description must be at least 10 characters');
+    }
+
+    // Validate packages array
+    if (!Array.isArray(manifest.packages) || manifest.packages.length === 0) {
+      throw new Error('Collection must include at least one package');
+    }
+
+    // Validate each package
+    manifest.packages.forEach((pkg: any, idx: number) => {
+      if (!pkg.packageId) {
+        throw new Error(`Package at index ${idx} is missing packageId`);
+      }
+    });
+
+    console.log(`🔍 Validating collection manifest...`);
+    console.log(`   Collection: ${manifest.name}`);
+    console.log(`   ID: ${manifest.id}`);
+    console.log(`   Packages: ${manifest.packages.length}`);
+    console.log('');
+
+    // Publish to registry
+    console.log('🚀 Publishing to registry...\n');
+
+    const result = await client.createCollection({
+      id: manifest.id,
+      name: manifest.name,
+      description: manifest.description,
+      category: manifest.category,
+      tags: manifest.tags,
+      packages: manifest.packages.map((pkg: any) => ({
+        packageId: pkg.packageId,
+        version: pkg.version,
+        required: pkg.required !== false,
+        reason: pkg.reason,
+      })),
+      icon: manifest.icon,
+    });
+
+    console.log(`✅ Collection published successfully!`);
+    console.log(`   Scope: ${result.scope}`);
+    console.log(`   Name: ${result.name_slug}`);
+    console.log(`   Version: ${result.version || '1.0.0'}`);
+    console.log('');
+    console.log(`💡 View: prpm collection info @${result.scope}/${result.name_slug}`);
+    console.log(`💡 Install: prpm install @${result.scope}/${result.name_slug}`);
+    console.log('');
+
+    await telemetry.track({
+      command: 'collections:publish',
+      success: true,
+      duration: Date.now() - startTime,
+      data: {
+        id: manifest.id,
+        packageCount: manifest.packages.length,
+      },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`\n❌ Failed to publish collection: ${errorMessage}\n`);
+    await telemetry.track({
+      command: 'collections:publish',
+      success: false,
+      error: errorMessage,
+      duration: Date.now() - startTime,
+    });
+    process.exit(1);
+  } finally {
+    await telemetry.shutdown();
+  }
+}
+
+/**
  * Install a collection
  */
 export async function handleCollectionInstall(
@@ -493,6 +609,14 @@ export function createCollectionsCommand(): Command {
     .command('info <collection>')
     .description('Show collection details')
     .action(handleCollectionInfo);
+
+  // Publish subcommand
+  command
+    .command('publish [manifest]')
+    .description('Publish a collection from collection.json')
+    .action(async (manifest?: string) => {
+      await handleCollectionPublish(manifest);
+    });
 
   // Install handled by main install command with @scope/id syntax
 

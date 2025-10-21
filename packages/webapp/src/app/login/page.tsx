@@ -24,10 +24,21 @@ export default function LoginPage() {
       localStorage.setItem('prpm_token', token)
       localStorage.setItem('prpm_username', user.username)
 
-      // Redirect to dashboard or intended destination
+      // Determine redirect URL based on environment
       const returnTo = localStorage.getItem('prpm_return_to') || '/dashboard'
       localStorage.removeItem('prpm_return_to')
-      router.push(returnTo)
+
+      // Get the current hostname
+      const hostname = window.location.hostname
+
+      // If in production and not already on app subdomain, redirect to app.prpm.dev
+      if (!hostname.includes('localhost') && !hostname.startsWith('app.')) {
+        const appHostname = hostname.replace(/^(www\.)?/, 'app.')
+        window.location.href = `${window.location.protocol}//${appHostname}${returnTo}`
+      } else {
+        // For localhost or already on app subdomain, just navigate
+        router.push(returnTo)
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {

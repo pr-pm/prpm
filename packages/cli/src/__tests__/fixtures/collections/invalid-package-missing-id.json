@@ -1,0 +1,12 @@
+{
+  "id": "missing-package-id",
+  "name": "Collection with Invalid Package",
+  "description": "Collection with a package missing packageId",
+  "packages": [
+    {
+      "version": "1.0.0",
+      "required": true,
+      "reason": "Package without an ID"
+    }
+  ]
+}
