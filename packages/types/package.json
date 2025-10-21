@@ -11,7 +11,8 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'No unit tests for types package - use npm run typecheck to validate'"
   },
   "keywords": [
     "prpm",
