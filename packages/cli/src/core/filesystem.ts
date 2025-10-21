@@ -15,8 +15,12 @@ export function getDestinationDir(type: PackageType): string {
       return '.cursor/rules';
     case 'claude':
       return '.claude/agents';
+    case 'claude-agent':
+      return '.claude/agents';
     case 'claude-skill':
       return '.claude/skills';
+    case 'claude-slash-command':
+      return '.claude/commands';
     case 'continue':
       return '.continue/rules';
     case 'windsurf':
