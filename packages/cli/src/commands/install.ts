@@ -164,7 +164,7 @@ export async function handleInstall(
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
     // Use format to determine directory, not package type
-    const effectiveType = format === 'claude' ? 'claude' :
+    const effectiveType = format === 'claude' ? 'claude-skill' :
                           format === 'cursor' ? 'cursor' :
                           format === 'continue' ? 'continue' :
                           format === 'windsurf' ? 'windsurf' :
