@@ -62,10 +62,10 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('react', {});
+      await handleSearch('react', { interactive: false });
 
       expect(mockClient.search).toHaveBeenCalledWith('react', expect.any(Object));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Found 1 package'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Results 1-1 of 1'));
     });
 
     it('should handle no results', async () => {
@@ -78,7 +78,7 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('nonexistent', {});
+      await handleSearch('nonexistent', { interactive: false });
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No packages found'));
     });
@@ -103,7 +103,7 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('test', {});
+      await handleSearch('test', { interactive: false });
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('test-package'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('A test package'));
@@ -121,7 +121,7 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('react', { type: 'rule' });
+      await handleSearch('react', { type: 'rule', interactive: false });
 
       expect(mockClient.search).toHaveBeenCalledWith(
         'react',
@@ -142,7 +142,7 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('react', { limit: 10 });
+      await handleSearch('react', { limit: 10, interactive: false });
 
       expect(mockClient.search).toHaveBeenCalledWith(
         'react',
@@ -170,7 +170,7 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('test', {});
+      await handleSearch('test', { interactive: false });
 
       // Check that verified badge is displayed
       const logCalls = (console.log as jest.Mock).mock.calls;
@@ -198,7 +198,7 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('test', {});
+      await handleSearch('test', { interactive: false });
 
       const logCalls = (console.log as jest.Mock).mock.calls;
       const hasFormattedDownloads = logCalls.some(call =>
@@ -226,7 +226,7 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('test', {});
+      await handleSearch('test', { interactive: false });
 
       const logCalls = (console.log as jest.Mock).mock.calls;
       const hasRating = logCalls.some(call =>
@@ -283,10 +283,10 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('test', {});
+      await handleSearch('test', { interactive: false });
 
       expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Showing 20 of 50 results')
+        expect.stringContaining('Page 1 of 3')
       );
     });
 
@@ -308,7 +308,7 @@ describe('search command', () => {
 
       mockClient.search.mockResolvedValue(mockResults);
 
-      await handleSearch('test', {});
+      await handleSearch('test', { interactive: false });
 
       const logCalls = (console.log as jest.Mock).mock.calls;
       const hasPagination = logCalls.some(call =>
