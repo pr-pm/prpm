@@ -31,10 +31,11 @@ export function loadConfig(): RegistryConfig {
       expiresIn: process.env.JWT_EXPIRES_IN || '7d',
     },
 
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID || '',
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
-      callbackUrl: process.env.GITHUB_CALLBACK_URL || 'http://localhost:3000/api/v1/auth/github/callback',
+
+    nango: {
+      apiKey: process.env.NANGO_API_KEY || '',
+      host: process.env.NANGO_HOST || 'https://api.nango.dev',
+      integrationId: process.env.NANGO_INTEGRATION_ID || 'github',
     },
 
     s3: {

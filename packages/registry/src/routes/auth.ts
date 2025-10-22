@@ -9,43 +9,21 @@ import { User, JWTPayload } from '../types.js';
 import { nanoid } from 'nanoid';
 import { hash, compare } from 'bcrypt';
 import { toError, getErrorMessage } from '../types/errors.js';
+import { nangoService } from '../services/nango.js';
 import '../types/jwt.js';
 
 const SALT_ROUNDS = 10;
 
 /**
- * Helper function to fetch user data from GitHub and create/update user
+ * Helper function to authenticate user with Nango connection
  */
-async function authenticateWithGitHub(server: FastifyInstance, accessToken: string): Promise<{ user: User; jwtToken: string }> {
-  // Fetch user data from GitHub
-  const userResponse = await fetch('https://api.github.com/user', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: 'application/vnd.github.v3+json',
-    },
-  });
+async function authenticateWithNango(server: FastifyInstance, connectionId: string): Promise<{ user: User; jwtToken: string }> {
+  // Get GitHub user data via Nango proxy
+  const githubUser = await nangoService.getGitHubUser(connectionId);
+  server.log.info({ login: githubUser.login, id: githubUser.id }, 'Fetched GitHub user data via Nango');
 
-  if (!userResponse.ok) {
-    throw new Error('Failed to fetch GitHub user data');
-  }
-
-  const githubUser = await userResponse.json();
-
-  // Fetch user email
-  const emailResponse = await fetch('https://api.github.com/user/emails', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: 'application/vnd.github.v3+json',
-    },
-  });
-
-  interface GitHubEmail {
-    email: string;
-    primary: boolean;
-    verified: boolean;
-  }
-  const emails = (await emailResponse.json()) as GitHubEmail[];
-  const primaryEmail = emails.find((e) => e.primary)?.email || emails[0]?.email;
+  // Get user emails via Nango proxy
+  const { email: primaryEmail } = await nangoService.getGitHubUser(connectionId);
 
   if (!primaryEmail) {
     throw new Error('No email found in GitHub account');
@@ -62,8 +40,8 @@ async function authenticateWithGitHub(server: FastifyInstance, accessToken: stri
     // Create new user
     user = await queryOne<User>(
       server,
-      `INSERT INTO users (username, email, github_id, github_username, avatar_url, last_login_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
+      `INSERT INTO users (username, email, github_id, github_username, avatar_url, nango_connection_id, last_login_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
        RETURNING *`,
       [
         githubUser.login,
@@ -71,14 +49,15 @@ async function authenticateWithGitHub(server: FastifyInstance, accessToken: stri
         String(githubUser.id),
         githubUser.login,
         githubUser.avatar_url,
+        connectionId,
       ]
     );
   } else {
-    // Update last login
+    // Update last login, GitHub username, and connection ID
     await query(
       server,
-      'UPDATE users SET last_login_at = NOW() WHERE id = $1',
-      [user.id]
+      'UPDATE users SET last_login_at = NOW(), github_username = $2, nango_connection_id = $3 WHERE id = $1',
+      [user.id, githubUser.login, connectionId]
     );
   }
 
@@ -101,6 +80,248 @@ async function authenticateWithGitHub(server: FastifyInstance, accessToken: stri
 export async function authRoutes(server: FastifyInstance) {
   // Store redirect URLs temporarily (keyed by state parameter)
   const pendingRedirects = new Map<string, string>();
+  
+  // Store CLI authentication sessions (userId -> connectionId)
+  const cliAuthSessions = new Map<string, string>();
+
+  // Create Nango connect session for webapp
+  server.post('/nango/connect-session', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['userId', 'email', 'displayName'],
+        properties: {
+          userId: { type: 'string' },
+          email: { type: 'string' },
+          displayName: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            connectSessionToken: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { userId, email, displayName } = request.body as {
+        userId: string;
+        email: string;
+        displayName: string;
+      };
+
+      const { token } = await nangoService.createConnectSession(
+        userId,
+        email,
+        displayName
+      );
+
+      return reply.send({ connectSessionToken: token });
+    } catch (error) {
+      server.log.error(error, 'Failed to create Nango connect session');
+      return reply.status(500).send({ error: 'Failed to create connect session' });
+    }
+  });
+
+  // Create Nango connect session for CLI (returns connect link)
+  server.post('/nango/cli/connect-session', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['userId', 'email', 'displayName'],
+        properties: {
+          userId: { type: 'string' },
+          email: { type: 'string' },
+          displayName: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            connectSessionToken: { type: 'string' },
+            connect_link: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { userId, email, displayName } = request.body as {
+        userId: string;
+        email: string;
+        displayName: string;
+      };
+
+      const result = await nangoService.createCLIConnectSession(
+        userId,
+        email,
+        displayName
+      );
+
+      return reply.send(result);
+    } catch (error) {
+      server.log.error(error, 'Failed to create Nango CLI connect session');
+      return reply.status(500).send({ error: 'Failed to create connect session' });
+    }
+  });
+
+  // Handle Nango webhook for connection events
+  server.post('/nango/webhook', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['type', 'operation', 'success'],
+        properties: {
+          type: { type: 'string' },
+          operation: { type: 'string' },
+          success: { type: 'boolean' },
+          connectionId: { type: 'string' },
+          endUser: {
+            type: 'object',
+            properties: {
+              endUserId: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { type, operation, success, connectionId, endUser } = request.body as {
+        type: string;
+        operation: string;
+        success: boolean;
+        connectionId?: string;
+        endUser?: { endUserId: string };
+      };
+
+      server.log.info({ type, operation, success, connectionId, endUser }, 'Nango webhook received');
+
+      if (type === 'auth' && operation === 'creation' && success && connectionId && endUser) {
+        // Store the connection ID for the user
+        // This will be used when the CLI polls for authentication completion
+        server.log.info({ connectionId, userId: endUser.endUserId }, 'New connection established');
+        
+        // Store the connection ID for CLI authentication sessions
+        cliAuthSessions.set(endUser.endUserId, connectionId);
+      }
+
+      return reply.send({ success: true });
+    } catch (error) {
+      server.log.error(error, 'Failed to handle Nango webhook');
+      return reply.status(500).send({ error: 'Webhook processing failed' });
+    }
+  });
+
+  // Poll for CLI authentication completion
+  server.get('/nango/cli/status/:userId', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['userId'],
+        properties: {
+          userId: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            authenticated: { type: 'boolean' },
+            connectionId: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { userId } = request.params as { userId: string };
+      
+      // Check if we have a connection ID for this user
+      const connectionId = cliAuthSessions.get(userId);
+      
+      if (connectionId) {
+        // Clean up the session after use
+        cliAuthSessions.delete(userId);
+        
+        return reply.send({
+          authenticated: true,
+          connectionId,
+        });
+      }
+      
+      return reply.send({
+        authenticated: false,
+        connectionId: null,
+      });
+    } catch (error) {
+      server.log.error(error, 'Failed to check CLI authentication status');
+      return reply.status(500).send({ error: 'Failed to check status' });
+    }
+  });
+
+  // Handle Nango authentication callback
+  server.post('/nango/callback', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['connectionId'],
+        properties: {
+          connectionId: { type: 'string' },
+          redirectUrl: { type: 'string' },
+          userId: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            token: { type: 'string' },
+            username: { type: 'string' },
+            redirectUrl: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { connectionId, redirectUrl, userId } = request.body as {
+        connectionId: string;
+        redirectUrl?: string;
+        userId?: string;
+      };
+
+      server.log.info({ connectionId, userId }, 'Nango authentication callback received');
+
+      // If userId is provided, this is a CLI authentication - store in sessions map
+      if (userId) {
+        server.log.info({ userId, connectionId }, 'Storing CLI auth session');
+        cliAuthSessions.set(userId, connectionId);
+      }
+
+      const { user, jwtToken } = await authenticateWithNango(server, connectionId);
+
+      server.log.info({ username: user.username }, 'User authenticated successfully via Nango');
+
+      return reply.send({
+        success: true,
+        token: jwtToken,
+        username: user.username,
+        redirectUrl: redirectUrl || '/dashboard',
+      });
+    } catch (error) {
+      server.log.error(error, 'Failed to authenticate with Nango');
+      return reply.status(500).send({
+        success: false,
+        error: 'Authentication failed'
+      });
+    }
+  });
 
   /**
    * Register with email/password
@@ -319,75 +540,6 @@ export async function authRoutes(server: FastifyInstance) {
     }
   });
 
-  // Override GitHub OAuth start to support custom redirect parameter
-  server.get('/github', async (request: FastifyRequest, reply: FastifyReply) => {
-    // Check if GitHub OAuth is configured
-    // @ts-ignore - fastify-oauth2 types
-    if (!server.githubOAuth2) {
-      return reply.status(503).send({
-        error: 'GitHub OAuth not configured',
-        message: 'GitHub authentication is not available. Please configure GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables.',
-      });
-    }
-
-    const { redirect } = request.query as { redirect?: string };
-
-    // Generate state parameter for security
-    const state = nanoid(32);
-
-    // Store redirect URL if provided
-    if (redirect) {
-      pendingRedirects.set(state, redirect);
-      // Clean up after 10 minutes
-      setTimeout(() => pendingRedirects.delete(state), 10 * 60 * 1000);
-    }
-
-    // Get the OAuth authorization URL
-    // @ts-ignore - fastify-oauth2 types
-    const authUrl = await server.githubOAuth2.generateAuthorizationUri(request, reply);
-
-    // Add state parameter
-    const urlWithState = new URL(authUrl);
-    urlWithState.searchParams.set('state', state);
-
-    return reply.redirect(urlWithState.toString());
-  });
-
-  // GitHub OAuth callback
-  server.get('/github/callback', async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const { state } = request.query as { state?: string };
-
-      // @ts-ignore - fastify-oauth2 types
-      const token = await server.githubOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
-
-      const { user, jwtToken } = await authenticateWithGitHub(server, token.access_token);
-
-      // Check if there's a pending redirect for this state
-      let redirectUrl = state ? pendingRedirects.get(state) : undefined;
-
-      // Clean up
-      if (state) {
-        pendingRedirects.delete(state);
-      }
-
-      if (redirectUrl) {
-        // CLI or custom redirect - include token and username
-        const url = new URL(redirectUrl);
-        url.searchParams.set('token', jwtToken);
-        url.searchParams.set('username', user.username);
-        return reply.redirect(url.toString());
-      }
-
-      // Default: redirect to frontend with token
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      return reply.redirect(`${frontendUrl}/auth/callback?token=${jwtToken}&username=${user.username}`);
-    } catch (error: unknown) {
-      const err = toError(error);
-      server.log.error({ error: err.message }, 'GitHub OAuth error');
-      return reply.status(500).send({ error: 'Authentication failed' });
-    }
-  });
 
   // Get current user
   server.get('/me', {

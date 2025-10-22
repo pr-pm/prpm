@@ -153,6 +153,8 @@ async function seedPackages() {
       '../../../data/scraped/scraped-claude-agents.json', // Claude agents and slash commands
       '../../../data/scraped/scraped-claude-slash-commands.json', // Claude slash commands only
       '../../../data/scraped/scraped-claude-agents-only.json', // Claude agents only
+      '../../../data/scraped/scraped-wshobson-agents.json', // Local wshobson agents
+      '../../../data/scraped/scraped-wshobson-commands.json', // Local wshobson commands
     ];
 
     let totalPackages = 0;

@@ -170,14 +170,6 @@ jobs:
             -x "node_modules/.cache/*" \
             -q
 
-          # Add seed data files from root
-          cd ../..
-          zip -ur packages/registry/${VERSION_LABEL}.zip \
-            data/scraped/ \
-            -x "*.git*" \
-            -q
-          cd packages/registry
-
           ls -lh ${VERSION_LABEL}.zip
           echo "✅ Deployment package created"
 

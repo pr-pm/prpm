@@ -16,6 +16,7 @@ export interface User {
   github_username?: string;
   avatar_url?: string;
   password_hash?: string;
+  nango_connection_id?: string;
   verified_author: boolean;
   is_admin: boolean;
   is_active: boolean;
@@ -243,10 +244,10 @@ export interface RegistryConfig {
     secret: string;
     expiresIn: string;
   };
-  github: {
-    clientId: string;
-    clientSecret: string;
-    callbackUrl: string;
+  nango: {
+    apiKey: string;
+    host: string;
+    integrationId: string;
   };
   s3: {
     endpoint: string;

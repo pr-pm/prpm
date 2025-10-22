@@ -81,43 +81,127 @@ function startCallbackServer(): Promise<{ token?: string; username?: string }> {
 }
 
 /**
- * Login with GitHub OAuth
+ * Login with GitHub OAuth via Nango connect link
  */
 async function loginWithOAuth(registryUrl: string): Promise<{ token: string; username: string }> {
   console.log('\n🔐 Opening browser for GitHub authentication...\n');
 
-  // Open browser to registry OAuth page with CLI redirect
-  const callbackUrl = 'http://localhost:8765/callback';
-  const authUrl = `${registryUrl}/api/v1/auth/github?redirect=${encodeURIComponent(callbackUrl)}`;
-  console.log(`   If browser doesn't open, visit: ${authUrl}\n`);
+  // Generate a unique user ID for this CLI session
+  const userId = `cli_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  // Try to open browser
-  const { exec } = await import('child_process');
-  const platform = process.platform;
-  const cmd = platform === 'darwin' ? 'open' : platform === 'win32' ? 'start' : 'xdg-open';
-  exec(`${cmd} "${authUrl}"`);
+  try {
+    // Get the Nango connect session from the registry
+    const response = await fetch(`${registryUrl}/api/v1/auth/nango/cli/connect-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        email: 'cli@example.com',
+        displayName: 'CLI User',
+      }),
+    });
 
-  // Start callback server and receive token directly
-  console.log('   Waiting for authentication...\n');
-  const result = await startCallbackServer();
-
-  if (!result.token) {
-    throw new Error('No token received from authentication');
-  }
-
-  // Extract username from token if not provided
-  let username = result.username || '';
-  if (!username) {
-    // Decode JWT to get username (basic JWT decode without verification)
-    try {
-      const payload = JSON.parse(Buffer.from(result.token.split('.')[1], 'base64').toString());
-      username = payload.username || 'unknown';
-    } catch (e) {
-      username = 'unknown';
+    if (!response.ok) {
+      throw new Error('Failed to get authentication session');
     }
+
+    const responseData = await response.json() as {
+      connectSessionToken: string;
+      connect_link?: string;
+    };
+    
+    const { connectSessionToken } = responseData;
+    
+    if (!connectSessionToken) {
+      console.error('❌ No session token received from server');
+      console.error('   Response data:', JSON.stringify(responseData, null, 2));
+      throw new Error('No session token received from server. Please check your Nango configuration.');
+    }
+    
+    // Create the CLI auth URL with session token, callback, and userId
+    const callbackUrl = 'http://localhost:8765/callback';
+    const webappUrl = registryUrl.replace('registry', 'webapp').replace(':3000', ':5173');
+    const authUrl = `${webappUrl}/cli-auth?sessionToken=${encodeURIComponent(connectSessionToken)}&cliCallback=${encodeURIComponent(callbackUrl)}&userId=${encodeURIComponent(userId)}`;
+    
+    console.log(`   Please open this link in your browser to authenticate:`);
+    console.log(`   ${authUrl}\n`);
+
+    // Try to open browser
+    const { exec } = await import('child_process');
+    const platform = process.platform;
+    const cmd = platform === 'darwin' ? 'open' : platform === 'win32' ? 'start' : 'xdg-open';
+    exec(`${cmd} "${authUrl}"`);
+
+    // Poll for authentication completion
+    console.log('   Waiting for authentication...\n');
+    const result = await pollForAuthentication(registryUrl, userId);
+
+    if (!result.token) {
+      throw new Error('No token received from authentication');
+    }
+
+    return { token: result.token, username: result.username || 'unknown' };
+  } catch (error) {
+    throw new Error(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Poll for authentication completion
+ */
+async function pollForAuthentication(registryUrl: string, userId: string): Promise<{ token?: string; username?: string }> {
+  const maxAttempts = 60; // 5 minutes with 5-second intervals
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    try {
+      const response = await fetch(`${registryUrl}/api/v1/auth/nango/cli/status/${userId}`);
+      
+      if (response.ok) {
+        const { authenticated, connectionId } = await response.json() as {
+          authenticated: boolean;
+          connectionId: string | null;
+        };
+        
+        if (authenticated && connectionId) {
+          // Authentication completed, get the JWT token
+          const callbackResponse = await fetch(`${registryUrl}/api/v1/auth/nango/callback`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              connectionId,
+              redirectUrl: '/cli-success',
+            }),
+          });
+
+          if (callbackResponse.ok) {
+            const result = await callbackResponse.json() as {
+              success: boolean;
+              token: string;
+              username: string;
+              redirectUrl: string;
+            };
+            return {
+              token: result.token,
+              username: result.username,
+            };
+          }
+        }
+      }
+    } catch (error) {
+      // Ignore polling errors and continue
+    }
+
+    // Wait 5 seconds before next attempt
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    attempts++;
   }
 
-  return { token: result.token, username: username || 'unknown' };
+  throw new Error('Authentication timeout - please try again');
 }
 
 /**

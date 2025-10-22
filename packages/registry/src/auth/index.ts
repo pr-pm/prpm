@@ -4,7 +4,6 @@
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fastifyJwt from '@fastify/jwt';
-import fastifyOauth2 from '@fastify/oauth2';
 import { config } from '../config.js';
 
 export async function setupAuth(server: FastifyInstance) {
@@ -13,24 +12,11 @@ export async function setupAuth(server: FastifyInstance) {
     secret: config.jwt.secret,
   });
 
-  // GitHub OAuth
-  if (config.github.clientId && config.github.clientSecret) {
-    await server.register(fastifyOauth2, {
-      name: 'githubOAuth2',
-      credentials: {
-        client: {
-          id: config.github.clientId,
-          secret: config.github.clientSecret,
-        },
-        auth: fastifyOauth2.GITHUB_CONFIGURATION,
-      },
-      callbackUri: config.github.callbackUrl,
-      scope: ['user:email', 'read:user'],
-    });
-
-    server.log.info('✅ GitHub OAuth configured');
+  // Nango configuration check
+  if (config.nango.apiKey && config.nango.host) {
+    server.log.info('✅ Nango configured for GitHub authentication');
   } else {
-    server.log.warn('⚠️  GitHub OAuth not configured (missing credentials)');
+    server.log.warn('⚠️  Nango not configured (missing API key or host)');
   }
 
   // JWT verification decorator

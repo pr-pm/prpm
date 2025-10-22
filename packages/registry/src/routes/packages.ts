@@ -326,17 +326,148 @@ export async function packageRoutes(server: FastifyInstance) {
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
-    const { manifest, tarball, readme } = request.body as { manifest: Record<string, unknown>; tarball: string; readme?: string };
+    const { manifest, tarball: tarballBase64, readme } = request.body as {
+      manifest: Record<string, unknown>;
+      tarball: string;
+      readme?: string
+    };
 
-    // TODO: Implement full package publishing logic
-    // 1. Validate manifest
-    // 2. Check permissions
-    // 3. Upload tarball to S3
-    // 4. Create/update package and version records
-    // 5. Invalidate caches
-    // 6. Index in search engine
+    try {
+      // 1. Validate manifest
+      const packageName = manifest.name as string;
+      const version = manifest.version as string;
+      const description = manifest.description as string;
+      const type = manifest.type as string;
 
-    return reply.status(501).send({ error: 'Publishing not yet implemented' });
+      if (!packageName || !version || !description || !type) {
+        return reply.status(400).send({
+          error: 'Invalid manifest',
+          message: 'Missing required fields: name, version, description, or type'
+        });
+      }
+
+      // Validate package name format
+      if (!/^(@[a-z0-9-]+\/)?[a-z0-9-]+$/.test(packageName)) {
+        return reply.status(400).send({
+          error: 'Invalid package name',
+          message: 'Package name must be lowercase alphanumeric with hyphens only'
+        });
+      }
+
+      // Validate semver version
+      if (!/^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/.test(version)) {
+        return reply.status(400).send({
+          error: 'Invalid version',
+          message: 'Version must be valid semver (e.g., 1.0.0)'
+        });
+      }
+
+      // 2. Check if package exists and user has permission
+      let pkg = await queryOne<Package>(
+        server,
+        'SELECT * FROM packages WHERE name = $1',
+        [packageName]
+      );
+
+      if (pkg) {
+        // Package exists - check ownership
+        if (pkg.author_id !== userId && !request.user.is_admin) {
+          return reply.status(403).send({
+            error: 'Forbidden',
+            message: 'You do not have permission to publish to this package'
+          });
+        }
+
+        // Check if version already exists
+        const existingVersion = await queryOne(
+          server,
+          'SELECT version FROM package_versions WHERE package_id = $1 AND version = $2',
+          [pkg.id, version]
+        );
+
+        if (existingVersion) {
+          return reply.status(409).send({
+            error: 'Version already exists',
+            message: `Version ${version} of ${packageName} already exists. Use a new version number.`
+          });
+        }
+      } else {
+        // New package - create it
+        pkg = await queryOne<Package>(
+          server,
+          `INSERT INTO packages (name, description, author_id, type, latest_version)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *`,
+          [packageName, description, userId, type, version]
+        );
+
+        if (!pkg) {
+          throw new Error('Failed to create package record');
+        }
+
+        server.log.info({ packageName, userId }, 'Created new package');
+      }
+
+      // 3. Decode tarball from base64 and upload to S3
+      const tarballBuffer = Buffer.from(tarballBase64, 'base64');
+
+      const { uploadPackage } = await import('../storage/s3.js');
+      const { url: tarballUrl, hash: tarballHash, size } = await uploadPackage(
+        server,
+        pkg.id,
+        version,
+        tarballBuffer
+      );
+
+      // 4. Create package version record
+      const packageVersion = await queryOne(
+        server,
+        `INSERT INTO package_versions (
+          package_id, version, tarball_url, tarball_hash, size,
+          published_at, manifest, readme
+        )
+        VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7)
+        RETURNING *`,
+        [
+          pkg.id,
+          version,
+          tarballUrl,
+          tarballHash,
+          size,
+          JSON.stringify(manifest),
+          readme || null
+        ]
+      );
+
+      // Update package latest_version and updated_at
+      await query(
+        server,
+        'UPDATE packages SET latest_version = $1, updated_at = NOW() WHERE id = $2',
+        [version, pkg.id]
+      );
+
+      // 5. Invalidate caches
+      await cacheDelete(server, `package:${packageName}`);
+      await cacheDelete(server, `package:${packageName}:${version}`);
+      await cacheDeletePattern(server, `packages:list:*`);
+
+      server.log.info({ packageName, version, userId }, 'Package published successfully');
+
+      return reply.send({
+        success: true,
+        package_id: pkg.id,
+        name: packageName,
+        version,
+        tarball_url: tarballUrl,
+        message: `Successfully published ${packageName}@${version}`
+      });
+    } catch (error: unknown) {
+      server.log.error({ error: String(error) }, 'Failed to publish package');
+      return reply.status(500).send({
+        error: 'Failed to publish package',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   });
 
   // Unpublish version (authenticated)

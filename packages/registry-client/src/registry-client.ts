@@ -251,13 +251,18 @@ export class RegistryClient {
         : [],
     };
 
-    const formData = new FormData();
-    formData.append('manifest', JSON.stringify(normalizedManifest));
-    formData.append('tarball', new Blob([tarball]), 'package.tar.gz');
+    // Convert tarball to base64 string for JSON transport
+    const tarballBase64 = tarball.toString('base64');
 
     const response = await this.fetch('/api/v1/packages', {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        manifest: normalizedManifest,
+        tarball: tarballBase64,
+      }),
     });
 
     return response.json() as Promise<PublishResponse>;

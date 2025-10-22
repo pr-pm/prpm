@@ -418,17 +418,6 @@ describe('Auth Routes', () => {
     });
   });
 
-  describe('GET /api/v1/auth/github', () => {
-    it('should redirect to GitHub OAuth', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/v1/auth/github',
-      });
-
-      expect([302, 307]).toContain(response.statusCode);
-      expect(response.headers.location).toBeDefined();
-    });
-  });
 
   describe('GET /api/v1/auth/me/unclaimed-packages', () => {
     it('should return unclaimed packages for user with GitHub username', async () => {

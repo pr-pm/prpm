@@ -106,10 +106,43 @@ export async function getTopAuthors(limit: number = 50): Promise<TopAuthorsRespo
 }
 
 /**
- * Get GitHub OAuth URL
+ * Create Nango connect session
  */
-export function getGitHubOAuthUrl(redirectUrl: string): string {
-  return `${REGISTRY_URL}/api/v1/auth/github?redirect=${encodeURIComponent(redirectUrl)}`
+export async function createNangoConnectSession(userId: string, email: string, displayName: string) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/nango/connect-session`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ userId, email, displayName }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to create connect session' }))
+    throw new Error(error.error || error.message || 'Failed to create connect session')
+  }
+
+  return response.json()
+}
+
+/**
+ * Handle Nango authentication callback
+ */
+export async function handleNangoCallback(connectionId: string, redirectUrl?: string, userId?: string | null) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/nango/callback`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ connectionId, redirectUrl, userId: userId || undefined }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Authentication failed' }))
+    throw new Error(error.error || error.message || 'Authentication failed')
+  }
+
+  return response.json()
 }
 
 /**

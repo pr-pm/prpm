@@ -56,6 +56,7 @@ async function seedCollections() {
       'seed/curated-collections.json',
       'seed/collections.json',
       'seed/pulumi-collection.json',
+      '../../../data/scraped/scraped-wshobson-collections.json',
     ];
 
     let allCollections: Collection[] = [];
