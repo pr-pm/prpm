@@ -214,10 +214,6 @@ jobs:
     name: Webapp Build & Type Check
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: ./packages/webapp
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -229,16 +225,23 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install webapp dependencies
+        working-directory: ./packages/webapp
         run: npm ci
 
       - name: Type check
+        working-directory: ./packages/webapp
         run: npx tsc --noEmit
 
       - name: Lint
+        working-directory: ./packages/webapp
         run: npm run lint
 
       - name: Build
+        working-directory: ./packages/webapp
         run: npm run build
 
   # All checks summary
