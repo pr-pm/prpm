@@ -17,6 +17,7 @@ const s3Client = new S3Client({
         secretAccessKey: config.s3.secretAccessKey,
       }
     : undefined,
+    forcePathStyle: config.s3.endpoint !== 'https://s3.amazonaws.com',
 });
 
 /**

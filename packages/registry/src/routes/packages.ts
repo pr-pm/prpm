@@ -395,10 +395,10 @@ export async function packageRoutes(server: FastifyInstance) {
         // New package - create it
         pkg = await queryOne<Package>(
           server,
-          `INSERT INTO packages (name, description, author_id, type, latest_version)
-           VALUES ($1, $2, $3, $4, $5)
+          `INSERT INTO packages (name, description, author_id, type)
+           VALUES ($1, $2, $3, $4)
            RETURNING *`,
-          [packageName, description, userId, type, version]
+          [packageName, description, userId, type]
         );
 
         if (!pkg) {
@@ -423,10 +423,10 @@ export async function packageRoutes(server: FastifyInstance) {
       const packageVersion = await queryOne(
         server,
         `INSERT INTO package_versions (
-          package_id, version, tarball_url, tarball_hash, size,
-          published_at, manifest, readme
+          package_id, version, tarball_url, content_hash, file_size,
+          published_at, metadata
         )
-        VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7)
+        VALUES ($1, $2, $3, $4, $5, NOW(), $6)
         RETURNING *`,
         [
           pkg.id,
@@ -434,16 +434,15 @@ export async function packageRoutes(server: FastifyInstance) {
           tarballUrl,
           tarballHash,
           size,
-          JSON.stringify(manifest),
-          readme || null
+          JSON.stringify({ manifest, readme })
         ]
       );
 
-      // Update package latest_version and updated_at
+      // Update package updated_at and last_published_at
       await query(
         server,
-        'UPDATE packages SET latest_version = $1, updated_at = NOW() WHERE id = $2',
-        [version, pkg.id]
+        'UPDATE packages SET last_published_at = NOW(), updated_at = NOW() WHERE id = $1',
+        [pkg.id]
       );
 
       // 5. Invalidate caches
