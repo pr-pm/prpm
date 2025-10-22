@@ -275,3 +275,71 @@ export async function getCategories() {
 
   return response.json()
 }
+
+// ============================================
+// AUTHOR PROFILES
+// ============================================
+
+/**
+ * Get public author profile with packages
+ */
+export async function getAuthorProfile(username: string, sort: 'downloads' | 'recent' | 'name' = 'downloads') {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/authors/${username}?sort=${sort}`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch author profile' }))
+    throw new Error(error.error || error.message || 'Failed to fetch author profile')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get unclaimed packages for an author
+ */
+export async function getAuthorUnclaimedPackages(username: string) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/authors/${username}/unclaimed`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch unclaimed packages' }))
+    throw new Error(error.error || error.message || 'Failed to fetch unclaimed packages')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get author dashboard (authenticated)
+ */
+export async function getAuthorDashboard(jwtToken: string) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/author/dashboard`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch dashboard' }))
+    throw new Error(error.error || error.message || 'Failed to fetch dashboard')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get author packages with analytics (authenticated)
+ */
+export async function getAuthorPackages(jwtToken: string, sort: 'downloads' | 'views' | 'rating' | 'created' | 'updated' = 'downloads') {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/author/packages?sort=${sort}`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch packages' }))
+    throw new Error(error.error || error.message || 'Failed to fetch packages')
+  }
+
+  return response.json()
+}
