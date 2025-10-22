@@ -118,13 +118,26 @@ jobs:
           echo "Installing root dependencies..."
           npm ci --quiet
 
-          echo "Installing registry dependencies..."
-          cd packages/registry
+          echo "Installing types dependencies..."
+          cd packages/types
           npm ci --quiet
 
-          echo "Installing types dependencies..."
-          cd ../types
+          echo "Installing registry dependencies..."
+          cd ../registry
           npm ci --quiet
+
+      - name: Build types package
+        working-directory: packages/types
+        run: |
+          echo "Building types package..."
+          npm run build
+
+          if [ ! -d "dist" ]; then
+            echo "❌ Types build failed - dist directory not found"
+            exit 1
+          fi
+
+          echo "✅ Types built successfully"
 
       - name: Build application
         working-directory: packages/registry
