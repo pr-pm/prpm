@@ -5,9 +5,13 @@
 
 import { config } from 'dotenv';
 import { Pool } from 'pg';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { createHash } from 'crypto';
+import tar from 'tar';
+import { tmpdir } from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -21,6 +25,18 @@ const pool = new Pool({
   connectionString: DATABASE_URL,
 });
 
+// Initialize S3 client
+const s3Client = new S3Client({
+  region: process.env.S3_REGION || 'us-east-1',
+  endpoint: process.env.S3_ENDPOINT !== 'https://s3.amazonaws.com' ? process.env.S3_ENDPOINT : undefined,
+  credentials: process.env.S3_ACCESS_KEY_ID
+    ? {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+      }
+    : undefined,
+});
+
 interface ScrapedPackage {
   id?: string;
   name: string;
@@ -31,6 +47,80 @@ interface ScrapedPackage {
   category?: string;
   type?: string;
   source_url?: string;
+}
+
+/**
+ * Create tarball from content and upload to S3
+ */
+async function uploadPackageToS3(
+  packageId: string,
+  version: string,
+  content: string,
+  type: string
+): Promise<{ url: string; hash: string; size: number }> {
+  const tempDir = join(tmpdir(), `prpm-seed-${Date.now()}-${Math.random().toString(36).substring(7)}`);
+
+  try {
+    // Create temp directory
+    mkdirSync(tempDir, { recursive: true });
+
+    // Determine file extension based on type
+    const ext = ['cursor', 'windsurf', 'continue'].includes(type) ? '.mdc' : '.md';
+    const filename = `content${ext}`;
+    const filePath = join(tempDir, filename);
+
+    // Write content to file
+    writeFileSync(filePath, content, 'utf-8');
+
+    // Create tarball
+    const tarballPath = join(tempDir, 'package.tar.gz');
+    await tar.create(
+      {
+        gzip: true,
+        file: tarballPath,
+        cwd: tempDir,
+      },
+      [filename]
+    );
+
+    // Read tarball
+    const tarballBuffer = readFileSync(tarballPath);
+    const hash = createHash('sha256').update(tarballBuffer).digest('hex');
+
+    // Upload to S3
+    const key = `packages/${packageId}/${version}/package.tar.gz`;
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET || 'prpm-packages',
+        Key: key,
+        Body: tarballBuffer,
+        ContentType: 'application/gzip',
+        Metadata: {
+          packageId,
+          version,
+          hash,
+        },
+      })
+    );
+
+    // Generate URL
+    const bucket = process.env.S3_BUCKET || 'prpm-packages';
+    const region = process.env.S3_REGION || 'us-east-1';
+    const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+
+    return {
+      url,
+      hash,
+      size: tarballBuffer.length,
+    };
+  } finally {
+    // Clean up temp directory
+    try {
+      rmSync(tempDir, { recursive: true, force: true });
+    } catch (err) {
+      console.warn(`  ⚠️  Failed to clean up temp directory: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 }
 
 async function seedPackages() {
@@ -254,7 +344,20 @@ async function seedPackages() {
             // Get the UUID package_id from the insert result
             const dbPackageId = pkgResult.rows[0].id;
 
-            // Insert initial version (using metadata to store content)
+            // Upload package content to S3
+            const content = pkg.content || pkg.description || `# ${pkg.name}\n\n${pkg.description || 'No description'}`;
+            let uploadResult;
+            try {
+              uploadResult = await uploadPackageToS3(packageId, '1.0.0', content, type);
+            } catch (err) {
+              console.error(`  ⚠️  Failed to upload to S3 for ${packageId}: ${err instanceof Error ? err.message : String(err)}`);
+              totalSkipped++;
+              // Delete the package we just inserted since upload failed
+              await pool.query('DELETE FROM packages WHERE id = $1', [dbPackageId]);
+              continue;
+            }
+
+            // Insert initial version with S3 URL
             await pool.query(
               `INSERT INTO package_versions (
                 package_id,
@@ -270,12 +373,11 @@ async function seedPackages() {
               [
                 dbPackageId,
                 '1.0.0',
-                `https://registry.prpm.dev/packages/${dbPackageId}/1.0.0.tar.gz`, // UUID-based URL
-                'placeholder-hash',
-                (pkg.content?.length || 0),
+                uploadResult.url,
+                uploadResult.hash,
+                uploadResult.size,
                 'Initial version',
                 JSON.stringify({
-                  content: pkg.content || pkg.description || '',
                   sourceUrl: pkg.sourceUrl || pkg.source_url || pkg.url || null,
                   originalType: pkg.type,
                 }),

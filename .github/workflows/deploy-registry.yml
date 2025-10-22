@@ -153,7 +153,7 @@ jobs:
 
           echo "Creating deployment package: ${VERSION_LABEL}.zip"
 
-          # Create zip with required files
+          # Create zip with required files (including seed scripts and data)
           zip -r ${VERSION_LABEL}.zip \
             dist/ \
             node_modules/ \
@@ -162,12 +162,21 @@ jobs:
             .ebextensions/ \
             .platform/ \
             migrations/ \
+            scripts/ \
             -x "*.git*" \
             -x "*.md" \
             -x "*.test.*" \
             -x "*.spec.*" \
             -x "node_modules/.cache/*" \
             -q
+
+          # Add seed data files from root
+          cd ../..
+          zip -ur packages/registry/${VERSION_LABEL}.zip \
+            data/scraped/ \
+            -x "*.git*" \
+            -q
+          cd packages/registry
 
           ls -lh ${VERSION_LABEL}.zip
           echo "✅ Deployment package created"
