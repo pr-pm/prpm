@@ -5,6 +5,18 @@ on:
     branches: [main]
     paths:
       - 'packages/webapp/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
 
 jobs:
   deploy:
