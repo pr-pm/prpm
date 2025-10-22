@@ -8,6 +8,7 @@ import { query, queryOne } from '../db/index.js';
 import { cacheGet, cacheSet, cacheDelete, cacheDeletePattern } from '../cache/redis.js';
 import { Package, PackageVersion, PackageInfo } from '../types.js';
 import { toError } from '../types/errors.js';
+import { config } from '../config.js';
 import type {
   ListPackagesQuery,
   PackageParams,
@@ -183,10 +184,26 @@ export async function packageRoutes(server: FastifyInstance) {
       [pkg.id]
     );
 
+    // Transform tarball URLs to registry download URLs
+    const protocol = request.protocol;
+    const host = request.headers.host || `localhost:${config.port}`;
+    const baseUrl = `${protocol}://${host}`;
+
+    const transformedVersions = versionsResult.rows.map(version => {
+      if (version.tarball_url) {
+        // Replace storage URL with registry download URL
+        return {
+          ...version,
+          tarball_url: `${baseUrl}/api/v1/packages/${packageName}/${version.version}.tar.gz`
+        };
+      }
+      return version;
+    });
+
     const packageInfo: PackageInfo = {
       ...pkg,
-      versions: versionsResult.rows,
-      latest_version: versionsResult.rows[0],
+      versions: transformedVersions,
+      latest_version: transformedVersions[0],
     };
 
     // Cache for 5 minutes
@@ -276,7 +293,21 @@ export async function packageRoutes(server: FastifyInstance) {
         return reply.send(gzipped);
       }
 
-      // For published packages, would redirect to S3
+      // For published packages with tarball_url, generate presigned download URL
+      if (pkgVersion.tarball_url) {
+        try {
+          // Extract package ID and version from tarball_url or use the actual values
+          const { getDownloadUrl } = await import('../storage/s3.js');
+          const downloadUrl = await getDownloadUrl(server, pkgVersion.package_id, version);
+
+          // Redirect to the presigned URL
+          return reply.redirect(302, downloadUrl);
+        } catch (error) {
+          server.log.error({ error, version: pkgVersion }, 'Failed to generate download URL');
+          return reply.status(500).send({ error: 'Failed to generate download URL' });
+        }
+      }
+
       return reply.status(404).send({ error: 'Package tarball not available' });
     }
 

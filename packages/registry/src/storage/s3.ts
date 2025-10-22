@@ -47,10 +47,17 @@ export async function uploadPackage(
       })
     );
 
-    // Generate public URL (CloudFront or S3)
-    const url = `https://${config.s3.bucket}.s3.${config.s3.region}.amazonaws.com/${key}`;
+    // Generate storage URL (use endpoint for MinIO, otherwise AWS S3)
+    let url: string;
+    if (config.s3.endpoint && config.s3.endpoint !== 'https://s3.amazonaws.com') {
+      // MinIO or custom S3-compatible endpoint - use path-style URL
+      url = `${config.s3.endpoint}/${config.s3.bucket}/${key}`;
+    } else {
+      // AWS S3 - use virtual-hosted-style URL
+      url = `https://${config.s3.bucket}.s3.${config.s3.region}.amazonaws.com/${key}`;
+    }
 
-    server.log.info(`Uploaded package ${packageId}@${version} to S3: ${url}`);
+    server.log.info(`Uploaded package ${packageId}@${version} to storage: ${url}`);
 
     return {
       url,
