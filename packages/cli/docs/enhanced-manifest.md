@@ -1,5 +1,7 @@
 # Enhanced PRPM Manifest Format
 
+> **Note**: If you're using Claude Code and already have a `.claude/marketplace.json` file, you can use that instead of creating a `prpm.json`. PRPM will automatically detect and convert it. See [marketplace.json documentation](./marketplace-json.md).
+
 ## Problem
 
 The current `prpm.json` format has a single `type` field, which means:

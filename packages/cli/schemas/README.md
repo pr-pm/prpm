@@ -8,6 +8,12 @@ This directory contains the JSON Schema for validating `prpm.json` manifest file
 
 **Schema URL**: `https://prpm.dev/schemas/manifest.json`
 
+## Alternative: marketplace.json
+
+PRPM also supports Claude's `marketplace.json` format as an alternative to `prpm.json`. If you have a `.claude/marketplace.json` file, PRPM will automatically detect and convert it when you run `prpm publish`.
+
+See [marketplace.json documentation](../docs/marketplace-json.md) for details.
+
 ## Using the Schema
 
 ### In Your Editor (VS Code, etc.)
