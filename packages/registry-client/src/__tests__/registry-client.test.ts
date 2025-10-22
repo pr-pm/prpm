@@ -643,8 +643,11 @@ describe('RegistryClient', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('@2.0.0/install'),
-        expect.anything()
+        expect.stringContaining('/install'),
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('"version":"2.0.0"'),
+        })
       );
     });
 
@@ -661,8 +664,11 @@ describe('RegistryClient', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('format=claude'),
-        expect.anything()
+        expect.stringContaining('/install'),
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('"format":"claude"'),
+        })
       );
     });
 
@@ -679,8 +685,11 @@ describe('RegistryClient', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('skipOptional=true'),
-        expect.anything()
+        expect.stringContaining('/install'),
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('"skipOptional":true'),
+        })
       );
     });
   });
