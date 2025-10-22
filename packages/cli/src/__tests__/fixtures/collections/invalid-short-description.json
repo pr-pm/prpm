@@ -1,0 +1,10 @@
+{
+  "id": "test",
+  "name": "Test Collection",
+  "description": "Short",
+  "packages": [
+    {
+      "packageId": "test-package"
+    }
+  ]
+}

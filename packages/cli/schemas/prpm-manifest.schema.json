@@ -1,0 +1,307 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/manifest.json",
+  "title": "PRPM Package Manifest",
+  "description": "Schema for PRPM package manifest (prpm.json)",
+  "type": "object",
+  "required": ["name", "version", "description", "type"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Package name in format: package-name or @scope/package-name",
+      "pattern": "^(@[a-z0-9-]+\\/)?[a-z0-9-]+$",
+      "minLength": 1,
+      "maxLength": 214,
+      "examples": [
+        "react-rules",
+        "@community/testing-skills",
+        "@company/cursor-rules"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (semver)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$",
+      "examples": ["1.0.0", "2.1.3", "1.0.0-beta.1"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Package description",
+      "minLength": 10,
+      "maxLength": 500
+    },
+    "type": {
+      "type": "string",
+      "description": "Package type. Use 'collection' only if files contain multiple distinct types.",
+      "enum": [
+        "cursor",
+        "claude",
+        "claude-skill",
+        "claude-agent",
+        "claude-slash-command",
+        "continue",
+        "windsurf",
+        "generic",
+        "collection"
+      ]
+    },
+    "author": {
+      "description": "Package author",
+      "oneOf": [
+        {
+          "type": "string",
+          "examples": ["John Doe", "Jane Smith"]
+        },
+        {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Author name"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "Author email"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "Author URL"
+            }
+          }
+        }
+      ]
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier",
+      "examples": ["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause"]
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "description": "Repository URL",
+      "examples": ["https://github.com/username/repo"]
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Package homepage URL"
+    },
+    "documentation": {
+      "type": "string",
+      "format": "uri",
+      "description": "Documentation URL"
+    },
+    "tags": {
+      "type": "array",
+      "description": "Package tags for categorization",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "uniqueItems": true,
+      "examples": [["productivity", "coding"], ["testing", "quality"]]
+    },
+    "keywords": {
+      "type": "array",
+      "description": "Search keywords",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 20,
+      "uniqueItems": true,
+      "examples": [["ai", "prompts", "development"]]
+    },
+    "category": {
+      "type": "string",
+      "description": "Package category",
+      "examples": ["development", "productivity", "testing"]
+    },
+    "files": {
+      "description": "Files to include in package. Can be simple paths or enhanced file objects with metadata.",
+      "oneOf": [
+        {
+          "type": "array",
+          "description": "Simple format: array of file paths",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "examples": [
+            ["skill.md", "README.md"],
+            [".cursor/rules/react.mdc", "LICENSE"]
+          ]
+        },
+        {
+          "type": "array",
+          "description": "Enhanced format: array of file objects with metadata",
+          "items": {
+            "type": "object",
+            "required": ["path", "type"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Relative path to file",
+                "examples": [
+                  ".claude/skills/tdd.md",
+                  ".cursor/rules/react.mdc",
+                  ".continue/rules/python.json"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "description": "File type (determines where it will be installed)",
+                "enum": [
+                  "cursor",
+                  "claude",
+                  "claude-skill",
+                  "claude-agent",
+                  "claude-slash-command",
+                  "continue",
+                  "windsurf",
+                  "generic"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name for this file",
+                "examples": ["React Rules", "Test-Driven Development"]
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of what this file does"
+              },
+              "tags": {
+                "type": "array",
+                "description": "File-specific tags",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true,
+                "examples": [["react", "typescript"], ["testing", "tdd"]]
+              }
+            },
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      ]
+    },
+    "main": {
+      "type": "string",
+      "description": "Main entry file (for single-file packages)",
+      "examples": ["index.md", "skill.md"]
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Package dependencies",
+      "patternProperties": {
+        "^(@[a-z0-9-]+\\/)?[a-z0-9-]+$": {
+          "type": "string",
+          "pattern": "^(\\^|~)?\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$"
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "@prpm/utils": "^1.0.0",
+          "common-rules": "~2.1.0"
+        }
+      ]
+    },
+    "peerDependencies": {
+      "type": "object",
+      "description": "Peer dependencies (packages that should be installed alongside)",
+      "patternProperties": {
+        "^(@[a-z0-9-]+\\/)?[a-z0-9-]+$": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "engines": {
+      "type": "object",
+      "description": "Required engine versions",
+      "properties": {
+        "prpm": {
+          "type": "string",
+          "description": "Required PRPM version"
+        },
+        "node": {
+          "type": "string",
+          "description": "Required Node.js version"
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "prpm": ">=1.0.0",
+          "node": ">=18.0.0"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "name": "@username/simple-package",
+      "version": "1.0.0",
+      "description": "A simple package with basic files",
+      "type": "claude-skill",
+      "author": "Your Name",
+      "license": "MIT",
+      "files": ["skill.md", "README.md"]
+    },
+    {
+      "name": "@username/cursor-rules",
+      "version": "1.0.0",
+      "description": "Multiple Cursor rules for different languages",
+      "type": "cursor",
+      "author": {
+        "name": "Your Name",
+        "email": "you@example.com"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/username/cursor-rules",
+      "tags": ["cursor", "rules", "multi-language"],
+      "files": [
+        {
+          "path": ".cursor/rules/typescript.mdc",
+          "type": "cursor",
+          "name": "TypeScript Rules",
+          "tags": ["typescript", "frontend"]
+        },
+        {
+          "path": ".cursor/rules/python.mdc",
+          "type": "cursor",
+          "name": "Python Rules",
+          "tags": ["python", "backend"]
+        }
+      ]
+    },
+    {
+      "name": "@community/testing-suite",
+      "version": "2.0.0",
+      "description": "Complete testing suite with skills and agents",
+      "type": "collection",
+      "author": "Community",
+      "license": "MIT",
+      "tags": ["testing", "quality"],
+      "files": [
+        {
+          "path": ".claude/skills/tdd.md",
+          "type": "claude-skill",
+          "name": "Test-Driven Development"
+        },
+        {
+          "path": ".claude/agents/test-generator.md",
+          "type": "claude-agent",
+          "name": "Test Generator"
+        }
+      ]
+    }
+  ]
+}

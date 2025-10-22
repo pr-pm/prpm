@@ -4,12 +4,10 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { 
-  readConfig, 
-  writeConfig, 
-  addPackage, 
-  removePackage 
-} from '../src/core/config';
+import {
+  addPackage,
+  removePackage
+} from '../src/core/lockfile';
 import { downloadFile, extractFilename } from '../src/core/downloader';
 import { 
   getDestinationDir, 
@@ -34,10 +32,10 @@ describe('Error Handling and Edge Cases', () => {
     await (global as any).testUtils.cleanupTempDir(tempDir);
   });
 
-  describe('Config Error Handling', () => {
-    it('should handle corrupted config file', async () => {
-      await fs.writeFile('.promptpm.json', '{ invalid json }');
-      
+  describe('Lockfile Error Handling', () => {
+    it('should handle corrupted lockfile', async () => {
+      await fs.writeFile('prpm.lock', '{ invalid json }');
+
       await expect(readConfig()).rejects.toThrow('Failed to read config');
     });
 

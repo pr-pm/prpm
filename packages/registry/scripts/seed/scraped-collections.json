@@ -1,0 +1,418 @@
+[
+  {
+    "scope": "collection",
+    "id": "cursor-nextjs-fullstack",
+    "version": "1.0.0",
+    "name": "Cursor Next.js Full-Stack",
+    "description": "Complete Next.js development setup for Cursor IDE with TypeScript, Tailwind, React, and testing best practices",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "development",
+    "tags": ["cursor", "nextjs", "typescript", "react", "fullstack"],
+    "packages": [
+      "cursorrules-nextjs-typescript",
+      "cursorrules-react-components",
+      "cursorrules-tailwind-nextjs",
+      "cursorrules-typescript-nextjs",
+      "cursorrules-cypress-e2e-testing"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-python-data-science",
+    "version": "1.0.0",
+    "name": "Cursor Python Data Science",
+    "description": "Complete Python data science and ML toolkit for Cursor with FastAPI, pandas, PyTorch, and testing workflows",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "data-science",
+    "tags": ["cursor", "python", "data-science", "ml", "fastapi"],
+    "packages": [
+      "cursorrules-python-fastapi",
+      "cursorrules-pandas-scikit-learn-guide",
+      "cursorrules-pytorch-scikit-learn",
+      "cursorrules-python-best-practices",
+      "cursorrules-python-llm-ml-workflow"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-mobile-development",
+    "version": "1.0.0",
+    "name": "Cursor Mobile Development",
+    "description": "Cross-platform mobile development with React Native, Flutter, and SwiftUI for Cursor IDE",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "mobile",
+    "tags": ["cursor", "mobile", "react-native", "flutter", "swiftui"],
+    "packages": [
+      "cursorrules-react-native-expo",
+      "cursorrules-flutter-app-expert",
+      "cursorrules-flutter-riverpod",
+      "cursorrules-swiftui",
+      "cursorrules-android-jetpack-compose"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-testing-comprehensive",
+    "version": "1.0.0",
+    "name": "Cursor Comprehensive Testing",
+    "description": "Complete testing toolkit for Cursor with Cypress, Playwright, Jest, and Vitest for unit, integration, and E2E testing",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "testing",
+    "tags": ["cursor", "testing", "cypress", "playwright", "jest"],
+    "packages": [
+      "cursorrules-cypress-e2e-testing",
+      "cursorrules-playwright-e2e-testing",
+      "cursorrules-jest-unit-testing",
+      "cursorrules-vitest-unit-testing",
+      "cursorrules-cypress-accessibility-testing"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-backend-api",
+    "version": "1.0.0",
+    "name": "Cursor Backend API Development",
+    "description": "Backend API development stack with Node.js, Python, and database integration for Cursor IDE",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "backend",
+    "tags": ["cursor", "backend", "api", "nodejs", "python"],
+    "packages": [
+      "cursorrules-nodejs-mongodb",
+      "cursorrules-python-fastapi",
+      "cursorrules-nestjs-typescript",
+      "cursorrules-laravel-php",
+      "cursorrules-graphql-architect-api-scaffolding-wshobson"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-web3-blockchain",
+    "version": "1.0.0",
+    "name": "Cursor Web3 & Blockchain",
+    "description": "Complete Web3 and blockchain development with Solidity, smart contracts, and React integration for Cursor",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "blockchain",
+    "tags": ["cursor", "web3", "blockchain", "solidity", "smart-contracts"],
+    "packages": [
+      "cursorrules-solidity-foundry",
+      "cursorrules-solidity-hardhat",
+      "cursorrules-blockchain-developer-blockchain-web3-wshobson",
+      "cursorrules-react-typescript-nextjs"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "claude-development-workflow",
+    "version": "1.0.0",
+    "name": "Claude Development Workflow Skills",
+    "description": "Essential Claude Code skills for professional development workflows including TDD, debugging, code review, and git practices",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "development",
+    "tags": ["claude", "skills", "workflow", "tdd", "debugging"],
+    "packages": [
+      "claude-skill-test-driven-development",
+      "claude-skill-systematic-debugging",
+      "claude-skill-requesting-code-review",
+      "claude-skill-receiving-code-review",
+      "claude-skill-using-git-worktrees",
+      "claude-skill-verification-before-completion"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-development-workflow",
+    "version": "1.0.0",
+    "name": "Cursor Development Workflow Rules",
+    "description": "Essential development workflow rules for Cursor IDE including TDD, debugging, code review, and git practices (converted from Claude Skills)",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "development",
+    "tags": ["cursor", "cursor-rules", "workflow", "tdd", "debugging"],
+    "installPath": ".cursor/rules/",
+    "packages": [
+      "cursor-rule-test-driven-development",
+      "cursor-rule-systematic-debugging",
+      "cursor-rule-requesting-code-review",
+      "cursor-rule-receiving-code-review",
+      "cursor-rule-using-git-worktrees",
+      "cursor-rule-verification-before-completion"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "claude-planning-execution",
+    "version": "1.0.0",
+    "name": "Claude Planning & Execution",
+    "description": "Claude Code skills for project planning, task execution, and subagent orchestration",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "productivity",
+    "tags": ["claude", "planning", "execution", "subagents", "orchestration"],
+    "packages": [
+      "claude-skill-writing-plans",
+      "claude-skill-executing-plans",
+      "claude-skill-dispatching-parallel-agents",
+      "claude-skill-subagent-driven-development",
+      "claude-skill-brainstorming"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-planning-execution",
+    "version": "1.0.0",
+    "name": "Cursor Planning & Execution Rules",
+    "description": "Cursor rules for project planning, task execution, and workflow orchestration (converted from Claude Skills)",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "productivity",
+    "tags": ["cursor", "cursor-rules", "planning", "execution", "workflow"],
+    "installPath": ".cursor/rules/",
+    "packages": [
+      "cursor-rule-writing-plans",
+      "cursor-rule-executing-plans",
+      "cursor-rule-dispatching-parallel-agents",
+      "cursor-rule-subagent-driven-development",
+      "cursor-rule-brainstorming"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "claude-team-roles",
+    "version": "1.0.0",
+    "name": "Claude Development Team Roles",
+    "description": "Complete development team with architect, developer, analyst, product manager, and QA roles for Claude",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "team",
+    "tags": ["claude", "team", "roles", "agile", "development"],
+    "packages": [
+      "architect-valllabh",
+      "developer-valllabh",
+      "analyst-valllabh",
+      "product-manager-valllabh",
+      "qa-engineer-valllabh",
+      "ux-expert-valllabh"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "claude-backend-specialists",
+    "version": "1.0.0",
+    "name": "Claude Backend Specialists",
+    "description": "Backend development specialists for Claude including API, database, security, and performance experts",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "backend",
+    "tags": ["claude", "backend", "api", "database", "security"],
+    "packages": [
+      "backend-architect-backend-development-wshobson",
+      "graphql-architect-api-scaffolding-wshobson",
+      "fastapi-pro-api-scaffolding-wshobson",
+      "backend-security-coder-backend-api-security-wshobson",
+      "observability-engineer-application-performance-wshobson"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "mcp-development-toolkit",
+    "version": "1.0.0",
+    "name": "MCP Development Toolkit",
+    "description": "Essential MCP servers for development across all IDEs: filesystem, git, database, and web tools",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "tools",
+    "tags": ["mcp", "universal", "tools", "filesystem", "git"],
+    "packages": [
+      "mcp-filesystem",
+      "mcp-git",
+      "mcp-github",
+      "mcp-postgres",
+      "mcp-fetch"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "mcp-cloud-infrastructure",
+    "version": "1.0.0",
+    "name": "MCP Cloud Infrastructure",
+    "description": "Cloud infrastructure MCP servers for AWS, Azure, and Cloudflare management across all IDEs",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "cloud",
+    "tags": ["mcp", "cloud", "aws", "azure", "infrastructure"],
+    "packages": [
+      "mcp-aws",
+      "mcp-azure",
+      "mcp-cloudflare",
+      "mcp-memory"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-frontend-frameworks",
+    "version": "1.0.0",
+    "name": "Cursor Frontend Frameworks",
+    "description": "Modern frontend framework collection for Cursor: React, Vue, Angular, and Svelte with TypeScript",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "frontend",
+    "tags": ["cursor", "frontend", "react", "vue", "angular"],
+    "packages": [
+      "cursorrules-react-typescript-nextjs",
+      "cursorrules-vue-3-nuxt-3-development",
+      "cursorrules-angular-typescript",
+      "cursorrules-sveltekit-typescript-guide",
+      "cursorrules-solidjs-typescript"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-code-quality",
+    "version": "1.0.0",
+    "name": "Cursor Code Quality & Best Practices",
+    "description": "Code quality, style guidelines, and best practices collection for Cursor IDE",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "quality",
+    "tags": ["cursor", "quality", "best-practices", "guidelines", "conventions"],
+    "packages": [
+      "cursorrules-code-guidelines",
+      "cursorrules-code-style-consistency",
+      "cursorrules-git-conventional-commit-messages",
+      "cursorrules-pr-template",
+      "cursorrules-typescript-code-convention"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-database-development",
+    "version": "1.0.0",
+    "name": "Cursor Database Development",
+    "description": "Database development and integration patterns for Cursor with MongoDB, PostgreSQL, and Redis",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "database",
+    "tags": ["cursor", "database", "mongodb", "postgresql", "sql"],
+    "packages": [
+      "cursorrules-nodejs-mongodb",
+      "cursorrules-nodejs-mongodb-tutorial",
+      "cursorrules-python-django-best-practices-cursorrules-prompt-fi",
+      "cursorrules-java-springboot-jpa"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "claude-research-documentation",
+    "version": "1.0.0",
+    "name": "Claude Research & Documentation",
+    "description": "Research, documentation, and writing specialists for Claude including citation management",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "documentation",
+    "tags": ["claude", "research", "documentation", "writing", "citations"],
+    "packages": [
+      "research-lead-anthropic",
+      "research-subagent-anthropic",
+      "citations-agent-anthropic",
+      "documentation-writer-kevinschawinski",
+      "analyst-valllabh"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-ai-ml-development",
+    "version": "1.0.0",
+    "name": "Cursor AI & ML Development",
+    "description": "AI and machine learning development with Python, LLMs, PyTorch, and scikit-learn for Cursor",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "ai-ml",
+    "tags": ["cursor", "ai", "ml", "llm", "python"],
+    "packages": [
+      "cursorrules-python-llm-ml-workflow",
+      "cursorrules-pytorch-scikit-learn",
+      "cursorrules-pandas-scikit-learn-guide",
+      "cursorrules-typescript-llm-tech-stack"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-devops-kubernetes",
+    "version": "1.0.0",
+    "name": "Cursor DevOps & Kubernetes",
+    "description": "DevOps and Kubernetes development for Cursor with cloud infrastructure and CI/CD patterns",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "devops",
+    "tags": ["cursor", "devops", "kubernetes", "docker", "cicd"],
+    "packages": [
+      "cursorrules-kubernetes-mkdocs-documentation-cursorrules-prompt",
+      "cloud-architect-cicd-automation-wshobson",
+      "kubernetes-architect-cicd-automation-wshobson",
+      "deployment-engineer-cicd-automation-wshobson"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "claude-quality-engineering",
+    "version": "1.0.0",
+    "name": "Claude Quality Engineering",
+    "description": "Quality assurance and engineering team for Claude with testing, validation, and observability specialists",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "quality",
+    "tags": ["claude", "quality", "testing", "qa", "observability"],
+    "packages": [
+      "qa-engineer-valllabh",
+      "quality-guard-kevinschawinski",
+      "tdd-orchestrator-backend-development-wshobson",
+      "ui-visual-validator-accessibility-compliance-wshobson",
+      "observability-engineer-application-performance-wshobson"
+    ]
+  },
+  {
+    "scope": "collection",
+    "id": "cursor-gaming-development",
+    "version": "1.0.0",
+    "name": "Cursor Game Development",
+    "description": "Game development collection for Cursor with Unity, DragonRuby, and simulation patterns",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "gaming",
+    "tags": ["cursor", "gaming", "unity", "game-dev", "simulation"],
+    "packages": [
+      "cursorrules-unity-cursor-ai-c",
+      "cursorrules-dragonruby-best-practices",
+      "cursorrules-ascii-simulation-game"
+    ]
+  }
+]

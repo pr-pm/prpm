@@ -1,0 +1,27 @@
+{
+  "id": "react-essentials",
+  "name": "React Essentials",
+  "description": "Essential React development packages for modern web applications",
+  "category": "development",
+  "tags": ["react", "javascript", "frontend"],
+  "packages": [
+    {
+      "packageId": "react-cursor-rules",
+      "version": "1.0.0",
+      "required": true,
+      "reason": "Core React coding standards and best practices"
+    },
+    {
+      "packageId": "typescript-rules",
+      "version": "2.1.0",
+      "required": true,
+      "reason": "TypeScript configuration for React projects"
+    },
+    {
+      "packageId": "react-testing-utils",
+      "required": false,
+      "reason": "Optional testing utilities for React components"
+    }
+  ],
+  "icon": "⚛️"
+}

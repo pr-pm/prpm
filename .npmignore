@@ -22,7 +22,7 @@ HOMEBREW_*.md
 ROADMAP.md
 
 # Build artifacts
-dist/prmp-*
+dist/prpm-*
 *.tsbuildinfo
 *.js.map
 *.d.ts.map

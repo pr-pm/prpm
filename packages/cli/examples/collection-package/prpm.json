@@ -1,0 +1,49 @@
+{
+  "name": "@username/my-collection",
+  "version": "1.0.0",
+  "description": "A collection of prompts for different IDEs and use cases",
+  "type": "collection",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": "https://github.com/username/my-collection",
+  "homepage": "https://example.com",
+  "keywords": ["prompts", "ai", "development"],
+  "tags": ["productivity", "coding"],
+  "files": [
+    {
+      "path": ".claude/skills/tdd.md",
+      "type": "claude-skill",
+      "name": "Test-Driven Development",
+      "description": "Guides you through TDD workflow",
+      "tags": ["testing", "tdd"]
+    },
+    {
+      "path": ".claude/agents/test-generator.md",
+      "type": "claude-agent",
+      "name": "Test Generator",
+      "description": "Generates comprehensive test suites",
+      "tags": ["testing", "automation"]
+    },
+    {
+      "path": ".claude/commands/review.md",
+      "type": "claude-slash-command",
+      "name": "Code Review",
+      "description": "Reviews code for best practices",
+      "tags": ["review", "quality"]
+    },
+    {
+      "path": ".cursor/rules/typescript.mdc",
+      "type": "cursor",
+      "name": "TypeScript Rules",
+      "description": "Best practices for TypeScript development",
+      "tags": ["typescript", "frontend"]
+    },
+    {
+      "path": ".cursor/rules/python.mdc",
+      "type": "cursor",
+      "name": "Python Rules",
+      "description": "Python development standards",
+      "tags": ["python", "backend"]
+    }
+  ]
+}

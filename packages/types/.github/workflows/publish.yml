@@ -1,0 +1,77 @@
+name: Publish Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        type: choice
+        options:
+          - '@prpm/types'
+          - '@prpm/registry-client'
+          - 'prpm'
+          - 'all'
+      version:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - 'patch'
+          - 'minor'
+          - 'major'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages in correct order
+        run: |
+          npm run build --workspace=@prpm/types
+          npm run build --workspace=@prpm/registry-client
+          npm run build --workspace=prpm
+
+      - name: Run tests
+        run: |
+          npm run test --workspace=prpm
+          npm run test --workspace=@prpm/registry-client
+
+      - name: Publish @prpm/types
+        if: inputs.package == '@prpm/types' || inputs.package == 'all'
+        working-directory: packages/types
+        run: |
+          npm version ${{ inputs.version }}
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @prpm/registry-client
+        if: inputs.package == '@prpm/registry-client' || inputs.package == 'all'
+        working-directory: packages/registry-client
+        run: |
+          npm version ${{ inputs.version }}
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish prpm CLI
+        if: inputs.package == 'prpm' || inputs.package == 'all'
+        working-directory: packages/cli
+        run: |
+          npm version ${{ inputs.version }}
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

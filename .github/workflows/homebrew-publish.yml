@@ -1,0 +1,214 @@
+name: Homebrew Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.2.3)'
+        required: true
+        type: string
+      create_pr:
+        description: 'Create PR instead of direct push'
+        required: false
+        type: boolean
+        default: false
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  update-formula:
+    name: Update Homebrew Formula
+    runs-on: macos-latest
+
+    steps:
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            # Extract version from release tag (remove 'v' prefix)
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            # Use manual input
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing Homebrew formula for version: $VERSION"
+
+      - name: Checkout homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: khaliqgant/homebrew-prpm
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-prpm
+
+      - name: Download and calculate SHA256
+        id: sha
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          URL="https://registry.npmjs.org/prpm/-/cli-${VERSION}.tgz"
+
+          echo "Downloading from: $URL"
+          curl -sL "$URL" -o /tmp/prpm.tgz
+
+          if [ ! -f /tmp/prpm.tgz ] || [ ! -s /tmp/prpm.tgz ]; then
+            echo "[ERROR] Failed to download package from NPM"
+            echo "Make sure prpm@${VERSION} is published to NPM first"
+            exit 1
+          fi
+
+          SHA256=$(shasum -a 256 /tmp/prpm.tgz | cut -d ' ' -f 1)
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          echo "SHA256: $SHA256"
+
+      - name: Update formula
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SHA256="${{ steps.sha.outputs.sha256 }}"
+
+          cd homebrew-prpm
+
+          # Create formula file
+          {
+            echo "class Prmp < Formula"
+            echo "  desc \"Prompt Package Manager - Manage AI prompt packages for Cursor, Claude, and more\""
+            echo "  homepage \"https://github.com/khaliqgant/prompt-package-manager\""
+            echo "  url \"https://registry.npmjs.org/prpm/-/cli-${VERSION}.tgz\""
+            echo "  sha256 \"${SHA256}\""
+            echo "  license \"MIT\""
+            echo "  version \"${VERSION}\""
+            echo ""
+            echo "  depends_on \"node@20\""
+            echo ""
+            echo "  def install"
+            echo "    system \"npm\", \"install\", *Language::Node.std_npm_install_args(libexec)"
+            echo "    bin.install_symlink Dir[\"\#{libexec}/bin/*\"]"
+            echo "  end"
+            echo ""
+            echo "  test do"
+            echo "    assert_match \"prpm version \#{version}\", shell_output(\"\#{bin}/prpm --version\")"
+            echo "  end"
+            echo "end"
+          } > Formula/prpm.rb
+
+          echo "Updated formula:"
+          cat Formula/prpm.rb
+
+      - name: Validate formula
+        run: |
+          cd homebrew-prpm
+          brew install --build-from-source Formula/prpm.rb
+          brew test prpm
+          brew uninstall prpm
+
+      - name: Create PR
+        if: github.event.inputs.create_pr == 'true'
+        run: |
+          cd homebrew-prpm
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          BRANCH="update-prpm-${{ steps.version.outputs.version }}"
+          git checkout -b "$BRANCH"
+          git add Formula/prpm.rb
+          git commit -m "prpm ${{ steps.version.outputs.version }}"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "prpm ${{ steps.version.outputs.version }}" \
+            --body "Update prpm formula to version ${{ steps.version.outputs.version }}" \
+            --base main
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Commit and push
+        if: github.event.inputs.create_pr != 'true'
+        run: |
+          cd homebrew-prpm
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          git add Formula/prpm.rb
+          git commit -m "prpm ${{ steps.version.outputs.version }}" \
+            -m "Update prpm formula to version ${{ steps.version.outputs.version }}" \
+            -m "" \
+            -m "Package URL: https://registry.npmjs.org/prpm/-/cli-${{ steps.version.outputs.version }}.tgz" \
+            -m "SHA256: ${{ steps.sha.outputs.sha256 }}" \
+            -m "" \
+            -m "Generated with Claude Code via Happy" \
+            -m "Co-Authored-By: Claude <noreply@anthropic.com>" \
+            -m "Co-Authored-By: Happy <yesreply@happy.engineering>"
+
+          git push origin main
+
+      - name: Summary
+        run: |
+          echo "## Beer: Homebrew Formula Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**SHA256**: \`${{ steps.sha.outputs.sha256 }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event.inputs.create_pr }}" = "true" ]; then
+            echo "[OK] **Pull request created**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "[OK] **Formula updated and pushed to main**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "brew install khaliqgant/prpm/prpm" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  test-installation:
+    name: Test Homebrew Installation
+    needs: update-formula
+    runs-on: macos-latest
+    if: github.event.inputs.create_pr != 'true'
+
+    steps:
+      - name: Wait for tap to update
+        run: sleep 30
+
+      - name: Install from tap
+        run: |
+          brew tap khaliqgant/prpm
+          brew install prpm
+
+      - name: Test installation
+        run: |
+          which prpm
+          prpm --version
+          prpm --help
+
+      - name: Verify version
+        run: |
+          INSTALLED_VERSION=$(prpm --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          EXPECTED_VERSION="${{ needs.update-formula.outputs.version || steps.version.outputs.version }}"
+
+          if [ "$INSTALLED_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "[ERROR] Version mismatch!"
+            echo "Expected: $EXPECTED_VERSION"
+            echo "Got: $INSTALLED_VERSION"
+            exit 1
+          fi
+
+          echo "[OK] Version verified: $INSTALLED_VERSION"
+
+      - name: Test basic commands
+        run: |
+          prpm search test || echo "Search command tested"
+          prpm --help
+
+      - name: Cleanup
+        if: always()
+        run: |
+          brew uninstall prpm || true
+          brew untap khaliqgant/prpm || true

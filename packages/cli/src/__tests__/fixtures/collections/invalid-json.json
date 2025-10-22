@@ -1,0 +1,5 @@
+{
+  "id": "invalid-json",
+  "name": "Invalid JSON",
+  "description": "This JSON is malformed"
+  "packages": [

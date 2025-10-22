@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main, v2]
+  pull_request:
+    branches: [main, v2]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: prpm
+          POSTGRES_PASSWORD: prpm_dev_password
+          POSTGRES_DB: prpm
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build types package first
+        run: npm run build --workspace=@prpm/types
+
+      - name: Build registry client
+        run: npm run build --workspace=@prpm/registry-client
+
+      - name: Build CLI
+        run: npm run build --workspace=prpm
+
+      - name: Build Registry
+        run: npm run build --workspace=@prpm/registry
+
+      - name: Build WebApp
+        run: npm run build --workspace=@prpm/webapp
+
+      - name: Run CLI tests
+        run: npm run test --workspace=prpm
+
+      - name: Run Registry Client tests
+        run: npm run test --workspace=@prpm/registry-client
+
+      - name: Type check all packages
+        run: npm run typecheck
+
+      - name: Run Registry tests
+        run: npm run test --workspace=@prpm/registry
+        env:
+          DATABASE_URL: postgresql://prpm:prpm_dev_password@localhost:5432/prpm
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret-for-ci

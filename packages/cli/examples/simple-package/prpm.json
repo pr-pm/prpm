@@ -1,0 +1,17 @@
+{
+  "$schema": "https://prpm.dev/schemas/manifest.json",
+  "name": "@username/simple-skill",
+  "version": "1.0.0",
+  "description": "A simple Claude skill for demonstration purposes",
+  "type": "claude-skill",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": "https://github.com/username/simple-skill",
+  "keywords": ["claude", "skill", "example"],
+  "tags": ["productivity"],
+  "files": [
+    "skill.md",
+    "README.md",
+    "LICENSE"
+  ]
+}

@@ -1,0 +1,106 @@
+---
+ruleType: conditional
+alwaysApply: true
+description: Automatically search and install PRPM packages when working on infrastructure, testing, deployment, or framework-specific tasks
+---
+
+# Self-Improving with PRPM
+
+## Purpose
+
+Automatically search and install PRPM packages to enhance Cursor's capabilities for specific tasks.
+
+## When to Apply
+
+**Automatically triggers when detecting:**
+- Infrastructure: aws, pulumi, terraform, kubernetes, docker
+- Testing: test, playwright, jest, cypress, vitest, e2e
+- Deployment: ci/cd, github-actions, gitlab-ci, deploy, workflow
+- Frameworks: react, vue, next.js, express, fastify, django
+
+## Workflow
+
+### 1. Task Analysis
+Analyze user request for keywords and extract relevant terms.
+
+### 2. Automatic Search
+```bash
+prpm search "<detected keywords>" --limit 5
+```
+
+### 3. Package Suggestion
+Present top 3 most relevant packages:
+```
+I found these PRPM packages that can help:
+1. @prpm/pulumi-infrastructure (Official, 5.2K downloads)
+   - Pulumi + AWS best practices
+2. @sanjeed5/github-actions (Community, 892 downloads)
+   - GitHub Actions patterns
+
+Should I install #1 to enhance my knowledge?
+```
+
+### 4. Installation (with approval)
+```bash
+prpm install <package-name> --as cursor
+```
+
+### 5. Application
+Load package knowledge and apply to current task.
+
+## Decision Rules
+
+### High Confidence (Auto-suggest)
+- ✅ Official packages (`@prpm/*`)
+- ✅ Featured packages
+- ✅ High downloads (>1,000)
+- ✅ Verified authors
+
+### Medium Confidence (Present options)
+- ⚠️ Community packages (<1,000 downloads)
+- ⚠️ Multiple similar packages
+
+### Low Confidence (Skip)
+- ❌ Unverified packages
+- ❌ Zero downloads
+
+## Search Triggers
+
+### Infrastructure
+**Keywords**: aws, gcp, kubernetes, docker, pulumi, terraform
+**Search**: `prpm search "infrastructure <cloud> <tool>"`
+
+### Testing
+**Keywords**: test, playwright, jest, cypress, vitest, e2e
+**Search**: `prpm search "testing <framework>"`
+
+### CI/CD
+**Keywords**: ci/cd, github-actions, gitlab-ci, deploy
+**Search**: `prpm search "deployment <platform>"`
+
+### Frameworks
+**Keywords**: react, vue, next.js, express, django
+**Search**: `prpm search "<framework> best-practices"`
+
+## Example
+
+```
+User: "Help me build Pulumi + Beanstalk infrastructure"
+
+Analysis: Keywords = Pulumi, Beanstalk, infrastructure
+Search: prpm search "pulumi beanstalk infrastructure"
+Found: @prpm/pulumi-infrastructure (Official, 3.2K downloads)
+Confidence: High → Auto-suggest
+
+Response:
+"I found: @prpm/pulumi-infrastructure (Official, 3.2K downloads)
+Pulumi + AWS best practices, resource patterns, cost optimization.
+Should I install this?"
+
+User: "Yes"
+
+Action: prpm install @prpm/pulumi-infrastructure --as cursor
+Result: Package loaded, applying Pulumi patterns to task
+```
+
+Remember: Self-improvement through package discovery makes Cursor more capable for each task domain.

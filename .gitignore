@@ -9,7 +9,7 @@ dist/
 *.tsbuildinfo
 
 # Exclude binaries from npm package
-dist/prmp-*
+dist/prpm-*
 
 # Binaries directory (for releases)
 binaries/
@@ -39,3 +39,6 @@ tests/temp/
 # Logs
 logs/
 *.log
+
+# Data files (scraped packages, checkpoints, etc.)
+data/

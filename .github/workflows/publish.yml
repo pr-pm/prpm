@@ -1,0 +1,296 @@
+name: Publish Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+      custom_version:
+        description: 'Custom version (optional, overrides version type)'
+        required: false
+        type: string
+      packages:
+        description: 'Packages to publish (comma-separated: types,registry-client,cli or "all")'
+        required: true
+        default: 'all'
+        type: string
+      dry_run:
+        description: 'Dry run (do not actually publish)'
+        required: false
+        type: boolean
+        default: false
+      tag:
+        description: 'NPM dist-tag (latest, next, beta, alpha)'
+        required: false
+        type: choice
+        options:
+          - latest
+          - next
+          - beta
+          - alpha
+        default: 'latest'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  validate:
+    name: Validate and Test
+    runs-on: ubuntu-latest
+    outputs:
+      packages_to_publish: ${{ steps.determine.outputs.packages }}
+      new_version: ${{ steps.version.outputs.new_version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages in dependency order
+        run: |
+          npm run build --workspace=@prpm/types
+          npm run build --workspace=@prpm/registry-client
+          npm run build --workspace=prpm
+
+      - name: Run tests
+        run: npm test --workspaces --if-present
+
+      - name: Determine packages to publish
+        id: determine
+        run: |
+          PACKAGES="${{ github.event.inputs.packages }}"
+
+          if [ "$PACKAGES" = "all" ]; then
+            PUBLISH_PACKAGES='["types", "registry-client", "cli"]'
+          else
+            # Convert comma-separated to JSON array
+            PUBLISH_PACKAGES=$(echo "$PACKAGES" | jq -R 'split(",") | map(select(length > 0))')
+          fi
+
+          echo "packages=$PUBLISH_PACKAGES" >> $GITHUB_OUTPUT
+          echo "Will publish: $PUBLISH_PACKAGES"
+
+      - name: Determine version
+        id: version
+        run: |
+          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
+          VERSION_TYPE="${{ github.event.inputs.version }}"
+
+          if [ -n "$CUSTOM_VERSION" ]; then
+            NEW_VERSION="$CUSTOM_VERSION"
+          else
+            # Get current version from CLI package (we'll use this as reference)
+            CURRENT_VERSION=$(node -p "require('./packages/cli/package.json').version")
+
+            # Calculate new version
+            NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version --preid=beta | tail -1 | sed 's/v//')
+
+            # Reset package.json (we'll update properly in publish job)
+            git checkout packages/cli/package.json
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version will be: $NEW_VERSION"
+
+  publish:
+    name: Publish ${{ matrix.package }}
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.validate.outputs.packages_to_publish) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build dependencies in order
+        run: |
+          # Build in dependency order: types → registry-client
+          npm run build --workspace=@prpm/types
+          npm run build --workspace=@prpm/registry-client
+
+      - name: Update version
+        run: |
+          cd packages/${{ matrix.package }}
+          npm version ${{ needs.validate.outputs.new_version }} --no-git-tag-version --allow-same-version
+
+      - name: Build package
+        run: |
+          if [ "${{ matrix.package }}" = "cli" ]; then
+            npm run build --workspace=prpm
+          else
+            npm run build --workspace=@prpm/${{ matrix.package }}
+          fi
+
+      - name: Dry run check
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          cd packages/${{ matrix.package }}
+          echo "Package: Dry run - would publish:"
+          npm pack --dry-run
+          npm publish --dry-run --access public --tag ${{ github.event.inputs.tag }}
+
+      - name: Publish to NPM
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          cd packages/${{ matrix.package }}
+          npm publish --access public --tag ${{ github.event.inputs.tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Report published
+        run: |
+          echo "[OK] Published @prpm/${{ matrix.package }}@${{ needs.validate.outputs.new_version }}"
+          echo "Tag: ${{ github.event.inputs.tag }}"
+
+  create-git-tag:
+    name: Create Git Tag and Release
+    needs: [validate, publish]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.dry_run != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Update package versions
+        run: |
+          PACKAGES='${{ needs.validate.outputs.packages_to_publish }}'
+          VERSION="${{ needs.validate.outputs.new_version }}"
+
+          echo "$PACKAGES" | jq -r '.[]' | while read package; do
+            cd "packages/$package"
+            npm version "$VERSION" --no-git-tag-version --allow-same-version
+            cd ../..
+          done
+
+      - name: Commit version bumps
+        run: |
+          git add packages/*/package.json
+          VERSION="${{ needs.validate.outputs.new_version }}"
+          PACKAGES="${{ needs.validate.outputs.packages_to_publish }}"
+          TAG="${{ github.event.inputs.tag }}"
+
+          git commit -m "chore(release): publish v${VERSION}" \
+            -m "Published packages: ${PACKAGES}" \
+            -m "Tag: ${TAG}" \
+            -m "" \
+            -m "Generated with Claude Code via Happy" \
+            -m "Co-Authored-By: Claude <noreply@anthropic.com>" \
+            -m "Co-Authored-By: Happy <yesreply@happy.engineering>" \
+            || echo "No changes to commit"
+
+      - name: Create and push tag
+        run: |
+          VERSION="v${{ needs.validate.outputs.new_version }}"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin main --follow-tags
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.validate.outputs.new_version }}
+          name: Release v${{ needs.validate.outputs.new_version }}
+          body: |
+            ## Published Packages
+
+            ${{ needs.validate.outputs.packages_to_publish }}
+
+            ### Version
+            `${{ needs.validate.outputs.new_version }}`
+
+            ### NPM Tag
+            `${{ github.event.inputs.tag }}`
+
+            ### Installation
+
+            ```bash
+            # CLI
+            npm install -g prpm@${{ needs.validate.outputs.new_version }}
+
+            # Registry Client (for developers)
+            npm install @prpm/registry-client@${{ needs.validate.outputs.new_version }}
+            ```
+
+            ---
+
+            Robot: Generated with [Claude Code](https://claude.com/claude-code) via [Happy](https://happy.engineering)
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  summary:
+    name: Publish Summary
+    needs: [validate, publish, create-git-tag]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Summary
+        run: |
+          echo "## Package: NPM Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: \`${{ needs.validate.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag**: \`${{ github.event.inputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Dry Run**: \`${{ github.event.inputs.dry_run }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Published Packages" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '${{ needs.validate.outputs.packages_to_publish }}' | jq -r '.[] | "- @prpm/" + .'  >> $GITHUB_STEP_SUMMARY || echo "- Error parsing packages"
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "[WARN] **This was a dry run - no packages were actually published**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "[OK] **Packages successfully published to NPM**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Install with:" >> $GITHUB_STEP_SUMMARY
+            echo '```bash' >> $GITHUB_STEP_SUMMARY
+            echo "npm install -g prpm@${{ needs.validate.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi

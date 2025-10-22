@@ -1,0 +1,443 @@
+[
+  {
+    "scope": "@collection",
+    "id": "mobile-dev-complete",
+    "version": "1.0.0",
+    "name": "Mobile Development Complete",
+    "description": "Everything needed for professional mobile development across React Native, Flutter, and iOS",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "mobile",
+    "tags": ["mobile", "react-native", "flutter", "ios", "cross-platform"],
+    "framework": "mobile",
+    "packages": [
+      {
+        "id": "react-native-expo",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "React Native Expo development with modern patterns"
+      },
+      {
+        "id": "flutter-clean-architecture",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Flutter development following clean architecture"
+      },
+      {
+        "id": "swiftui-guidelines",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "iOS development with SwiftUI best practices"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "backend-microservices",
+    "version": "1.0.0",
+    "name": "Backend Microservices Stack",
+    "description": "Complete backend microservices development with Python, Go, and Node.js",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "backend",
+    "tags": ["backend", "microservices", "api", "scalability", "distributed"],
+    "framework": "backend",
+    "packages": [
+      {
+        "id": "python-fastapi-best-practices",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "FastAPI microservices with Python best practices"
+      },
+      {
+        "id": "golang-microservices",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Scalable Go microservices architecture"
+      },
+      {
+        "id": "graphql-apollo-server",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "GraphQL API gateway with Apollo"
+      },
+      {
+        "id": "kubernetes-devops",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Container orchestration and deployment"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "testing-automation",
+    "version": "1.0.0",
+    "name": "Testing & Automation Suite",
+    "description": "Comprehensive testing toolkit with E2E, unit tests, and code quality automation",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "testing",
+    "tags": ["testing", "automation", "e2e", "unit-tests", "quality"],
+    "framework": "testing",
+    "packages": [
+      {
+        "id": "cypress-e2e-testing",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "End-to-end testing with Cypress"
+      },
+      {
+        "id": "continue-unit-tests",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Comprehensive unit test generation"
+      },
+      {
+        "id": "continue-jest-debugger",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Jest test debugging assistance"
+      },
+      {
+        "id": "continue-code-review",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Automated code review"
+      },
+      {
+        "id": "continue-code-smells",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Code quality issue detection"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "claude-code-workflows",
+    "version": "1.0.0",
+    "name": "Claude Code Professional Workflows",
+    "description": "Advanced Claude Code workflows for project management, automation, and team collaboration",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "workflow",
+    "tags": ["claude-code", "workflow", "automation", "project-management"],
+    "framework": "claude-code",
+    "packages": [
+      {
+        "id": "claude-code-riper-workflow",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Structured RIPER development methodology"
+      },
+      {
+        "id": "claude-code-ab-method",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Spec-driven development with sub-agents"
+      },
+      {
+        "id": "claude-code-project-manager",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Comprehensive project management"
+      },
+      {
+        "id": "claude-pr-submit",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Automated PR creation"
+      },
+      {
+        "id": "claude-create-issue",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "GitHub issue automation"
+      },
+      {
+        "id": "claude-accessibility-scan",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "WCAG accessibility validation"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "frontend-modern-stack",
+    "version": "1.0.0",
+    "name": "Modern Frontend Stack",
+    "description": "Complete modern frontend development with React, Next.js, Vue, and TypeScript",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "frontend",
+    "tags": ["frontend", "react", "nextjs", "vue", "typescript"],
+    "framework": "frontend",
+    "packages": [
+      {
+        "id": "nextjs-typescript-tailwind",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Next.js with TypeScript and Tailwind CSS"
+      },
+      {
+        "id": "react-redux-typescript",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Advanced React state management"
+      },
+      {
+        "id": "vue3-composition-api",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Modern Vue 3 development"
+      },
+      {
+        "id": "typescript-cloudflare-workers",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Serverless edge functions"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "systems-programming",
+    "version": "1.0.0",
+    "name": "Systems Programming Excellence",
+    "description": "Low-level systems programming with Rust and performance optimization",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "systems",
+    "tags": ["rust", "systems", "performance", "low-level"],
+    "framework": "systems",
+    "packages": [
+      {
+        "id": "rust-systems-programming",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Rust systems programming best practices"
+      },
+      {
+        "id": "golang-microservices",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "High-performance Go services"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "full-stack-python",
+    "version": "1.0.0",
+    "name": "Full-Stack Python Development",
+    "description": "Complete Python full-stack development with Django, FastAPI, and modern frontend",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "fullstack",
+    "tags": ["python", "django", "fastapi", "fullstack", "backend"],
+    "framework": "python",
+    "packages": [
+      {
+        "id": "python-fastapi-best-practices",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Modern Python API development"
+      },
+      {
+        "id": "django-rest-framework",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Professional Django REST APIs"
+      },
+      {
+        "id": "continue-unit-tests",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Python unit test generation"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "ruby-rails-mastery",
+    "version": "1.0.0",
+    "name": "Ruby on Rails Mastery",
+    "description": "Professional Ruby on Rails development with best practices and testing",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "backend",
+    "tags": ["ruby", "rails", "backend", "mvc", "web"],
+    "framework": "rails",
+    "packages": [
+      {
+        "id": "continue-ruby-rails",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Complete Rails development assistance"
+      },
+      {
+        "id": "continue-unit-tests",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "RSpec and unit test generation"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "windsurf-fullstack-pro",
+    "version": "1.0.0",
+    "name": "Windsurf Full-Stack Professional",
+    "description": "Complete Windsurf setup for professional full-stack development with React, TypeScript, and Python",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "fullstack",
+    "tags": ["windsurf", "fullstack", "react", "typescript", "python", "nextjs"],
+    "framework": "windsurf",
+    "packages": [
+      {
+        "id": "windsurf-cascade-core-principles",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Core Windsurf Cascade AI assistant operating principles"
+      },
+      {
+        "id": "windsurf-project-workflow-best-practices",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "General project workflow and development best practices"
+      },
+      {
+        "id": "windsurf-nextjs-typescript-fullstack",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Next.js 15 with App Router and TypeScript"
+      },
+      {
+        "id": "windsurf-react-best-practices",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "React development with hooks and modern patterns"
+      },
+      {
+        "id": "windsurf-typescript-strict",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Strict TypeScript configuration and type safety"
+      },
+      {
+        "id": "windsurf-fastapi-modern",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Python backend API development"
+      },
+      {
+        "id": "windsurf-github-collaboration-rules",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "GitHub PR and collaboration workflows"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "windsurf-backend-python",
+    "version": "1.0.0",
+    "name": "Windsurf Backend Python Stack",
+    "description": "Professional Python backend development with Django, FastAPI, and Flask for Windsurf",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "backend",
+    "tags": ["windsurf", "python", "backend", "django", "fastapi", "flask"],
+    "framework": "windsurf",
+    "packages": [
+      {
+        "id": "windsurf-cascade-core-principles",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Core Windsurf Cascade AI assistant principles"
+      },
+      {
+        "id": "windsurf-vibe-coding-global-rules",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Universal AI coding standards and security"
+      },
+      {
+        "id": "windsurf-fastapi-modern",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "FastAPI with async patterns and Pydantic V2"
+      },
+      {
+        "id": "windsurf-django-python",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Django development with async ORM and type hints"
+      },
+      {
+        "id": "windsurf-flask-microservices",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Flask microservices with blueprints"
+      }
+    ]
+  },
+  {
+    "scope": "@collection",
+    "id": "windsurf-frontend-frameworks",
+    "version": "1.0.0",
+    "name": "Windsurf Modern Frontend Frameworks",
+    "description": "Complete frontend development setup with React, Vue, and Angular for Windsurf",
+    "author": "prpm",
+    "official": true,
+    "verified": true,
+    "category": "frontend",
+    "tags": ["windsurf", "frontend", "react", "vue", "angular", "typescript"],
+    "framework": "windsurf",
+    "packages": [
+      {
+        "id": "windsurf-react-best-practices",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "React with TypeScript and hooks"
+      },
+      {
+        "id": "windsurf-vue-composition-api",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Vue 3 Composition API with Pinia"
+      },
+      {
+        "id": "windsurf-angular-enterprise",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Enterprise Angular with RxJS and signals"
+      },
+      {
+        "id": "windsurf-typescript-strict",
+        "version": "1.0.0",
+        "required": true,
+        "reason": "Strict TypeScript for all frameworks"
+      },
+      {
+        "id": "windsurf-vibe-coding-global-rules",
+        "version": "1.0.0",
+        "required": false,
+        "reason": "Universal coding standards"
+      }
+    ]
+  }
+]

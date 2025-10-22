@@ -1,0 +1,90 @@
+---
+ruleType: always
+alwaysApply: true
+description: Testing patterns and best practices for PRPM codebase with Vitest
+---
+
+# PRPM Testing Patterns
+
+Expert guidance for testing the Prompt Package Manager codebase.
+
+## Testing Philosophy
+
+### Test Pyramid
+- **70% Unit Tests**: Format converters, parsers, utilities
+- **20% Integration Tests**: API routes, database operations, CLI commands
+- **10% E2E Tests**: Full workflows (install, publish, search)
+
+### Coverage Goals
+- **Format Converters**: 100% coverage (critical path)
+- **CLI Commands**: 90% coverage
+- **API Routes**: 85% coverage
+- **Utilities**: 90% coverage
+
+## Key Testing Patterns
+
+### Format Converter Tests
+```typescript
+describe('toCursor', () => {
+  it('preserves all data in roundtrip', () => {
+    const result = toCursor(canonical);
+    const back = fromCursor(result.content);
+    expect(back).toEqual(canonical);
+  });
+  
+  it('flags lossy conversions', () => {
+    const result = toCursor(canonicalWithClaudeSpecific);
+    expect(result.lossyConversion).toBe(true);
+    expect(result.qualityScore).toBeLessThan(100);
+  });
+});
+```
+
+### CLI Command Tests
+```typescript
+describe('install command', () => {
+  it('downloads and installs package', async () => {
+    await handleInstall('test-package', { as: 'cursor' });
+    expect(fs.existsSync('.cursor/rules/test-package.md')).toBe(true);
+  });
+});
+```
+
+### Integration Tests
+```typescript
+describe('registry API', () => {
+  it('searches packages with filters', async () => {
+    const results = await searchPackages({ 
+      query: 'react', 
+      category: 'frontend' 
+    });
+    expect(results.length).toBeGreaterThan(0);
+  });
+});
+```
+
+## Best Practices
+
+1. **Test Isolation**: Each test should be independent
+2. **Clear Assertions**: Use descriptive expect messages
+3. **Mock External Services**: Don't hit real APIs in tests
+4. **Test Edge Cases**: Empty inputs, null values, large datasets
+5. **Performance**: Keep unit tests under 100ms each
+
+## Running Tests
+
+```bash
+# All tests
+npm run test
+
+# Watch mode
+npm run test:watch
+
+# Coverage
+npm run test:coverage
+
+# Specific file
+npm run test -- to-cursor.test.ts
+```
+
+Remember: High test coverage ensures PRPM stays reliable as critical infrastructure.

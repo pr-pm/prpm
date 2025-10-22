@@ -1,0 +1,10 @@
+{
+  "id": "minimal",
+  "name": "Minimal Collection",
+  "description": "A minimal valid collection with only required fields",
+  "packages": [
+    {
+      "packageId": "single-package"
+    }
+  ]
+}

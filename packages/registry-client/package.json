@@ -1,0 +1,57 @@
+{
+  "name": "@prpm/registry-client",
+  "version": "1.2.0",
+  "description": "Registry client library for PRPM",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch --preserveWatchOutput",
+    "dev": "tsc --watch --preserveWatchOutput",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "prpm",
+    "registry",
+    "client",
+    "prompts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khaliqgant/prompt-package-manager.git",
+    "directory": "packages/registry-client"
+  },
+  "bugs": {
+    "url": "https://github.com/khaliqgant/prompt-package-manager/issues"
+  },
+  "homepage": "https://github.com/khaliqgant/prompt-package-manager#readme",
+  "author": "khaliqgant",
+  "license": "MIT",
+  "dependencies": {
+    "@prpm/types": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.10.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

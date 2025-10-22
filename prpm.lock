@@ -1,0 +1,203 @@
+{
+  "version": "1.0.0",
+  "lockfileVersion": 1,
+  "packages": {
+    "brainstorming": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/brainstorming.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "condition-based-waiting": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/condition-based-waiting.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "core-principles": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.claude/agents/core-principles.md",
+      "integrity": "",
+      "type": "claude",
+      "format": "claude"
+    },
+    "defense-in-depth": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/defense-in-depth.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "dispatching-parallel-agents": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/dispatching-parallel-agents.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "executing-plans": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/executing-plans.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "finishing-a-development-branch": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/finishing-a-development-branch.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "format-conversion": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.claude/agents/format-conversion.md",
+      "integrity": "",
+      "type": "claude",
+      "format": "claude"
+    },
+    "karen-repo-reviewer": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/karen-repo-reviewer.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "receiving-code-review": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/receiving-code-review.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "requesting-code-review": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/requesting-code-review.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "root-cause-tracing": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/root-cause-tracing.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "self-improving": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.claude/skills/self-improving/SKILL.md",
+      "integrity": "",
+      "type": "claude-skill",
+      "format": "claude-skill"
+    },
+    "sharing-skills": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/sharing-skills.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "subagent-driven-development": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/subagent-driven-development.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "systematic-debugging": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/systematic-debugging.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "test-driven-development": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/test-driven-development.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "testing-anti-patterns": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/testing-anti-patterns.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "testing-patterns": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.claude/agents/testing-patterns.md",
+      "integrity": "",
+      "type": "claude",
+      "format": "claude"
+    },
+    "testing-skills-with-subagents": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/testing-skills-with-subagents.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "typescript-type-specialist": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/typescript-type-specialist.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "using-git-worktrees": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/using-git-worktrees.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "using-superpowers": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/using-superpowers.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "verification-before-completion": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/verification-before-completion.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "writing-plans": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/writing-plans.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "writing-skills": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.cursor/rules/writing-skills.mdc",
+      "integrity": "",
+      "type": "cursor",
+      "format": "cursor"
+    },
+    "prpm-development": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.claude/skills/prpm-development/SKILL.md",
+      "integrity": "",
+      "type": "claude-skill",
+      "format": "claude-skill"
+    },
+    "thoroughness": {
+      "version": "0.0.0",
+      "resolved": "file:///Users/khaliqgant/Projects/prompt-package-manager/.claude/skills/thoroughness/SKILL.md",
+      "integrity": "",
+      "type": "claude-skill",
+      "format": "claude-skill"
+    }
+  },
+  "generated": "2025-10-20T20:22:00.428Z"
+}

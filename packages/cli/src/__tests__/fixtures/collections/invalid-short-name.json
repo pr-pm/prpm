@@ -1,0 +1,10 @@
+{
+  "id": "short",
+  "name": "AB",
+  "description": "Collection with name that is too short",
+  "packages": [
+    {
+      "packageId": "test-package"
+    }
+  ]
+}

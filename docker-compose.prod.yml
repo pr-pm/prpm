@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  # Shared PostgreSQL database for all services
+  postgres:
+    image: postgres:15-alpine
+    container_name: prpm-postgres
+    environment:
+      POSTGRES_USER: prpm
+      POSTGRES_PASSWORD: prpm
+      POSTGRES_DB: prpm
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prpm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Shared Redis for all services
+  redis:
+    image: redis:7-alpine
+    container_name: prpm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Shared MinIO for all services
+  minio:
+    image: minio/minio:latest
+    container_name: prpm-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Registry service
+  registry:
+    build:
+      context: ./packages/registry
+      dockerfile: Dockerfile
+    container_name: prpm-registry
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://prpm:prpm@postgres:5432/prpm
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      # GitHub OAuth (optional)
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_CALLBACK_URL: http://localhost:3000/api/v1/auth/callback
+      # S3/MinIO
+      AWS_REGION: us-west-2
+      AWS_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      S3_BUCKET: prpm-packages
+      AWS_FORCE_PATH_STYLE: "true"
+      # Search
+      SEARCH_ENGINE: postgres
+      # Features
+      ENABLE_TELEMETRY: "false"
+      ENABLE_RATE_LIMITING: "false"
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Webapp service
+  webapp:
+    build:
+      context: ./packages/webapp
+      dockerfile: Dockerfile
+    container_name: prpm-webapp
+    depends_on:
+      registry:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_REGISTRY_URL: http://registry:3000
+      NEXT_PUBLIC_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+    ports:
+      - "3001:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
