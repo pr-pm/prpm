@@ -61,6 +61,7 @@ export async function handleCollectionsSearch(
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
+        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -75,6 +76,7 @@ export async function handleCollectionsSearch(
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
+        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -154,6 +156,7 @@ export async function handleCollectionsList(options: {
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
+        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -168,6 +171,7 @@ export async function handleCollectionsList(options: {
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
+        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
