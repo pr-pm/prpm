@@ -93,8 +93,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'Invalid_Package_Name',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
@@ -113,8 +114,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: 'invalid',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
@@ -133,8 +135,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'invalid-type',
+          files: ['.cursorrules'],
         })
       );
 
@@ -149,8 +152,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
@@ -193,8 +197,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
@@ -226,8 +231,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
@@ -257,7 +263,7 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
           files: ['prpm.json', 'custom-file.txt'],
         })
@@ -289,7 +295,7 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
           files: ['prpm.json', 'large-file.txt'],
         })
@@ -314,7 +320,7 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
           files: ['non-existent.txt'],
         })
@@ -333,8 +339,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
@@ -367,8 +374,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
           author: 'test-author',
           license: 'MIT',
         })
@@ -393,8 +401,9 @@ describe('Publish Command', () => {
         expect.objectContaining({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         }),
         expect.any(Buffer)
       );
@@ -421,8 +430,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
@@ -453,17 +463,7 @@ describe('Publish Command', () => {
 
     packageTypes.forEach((type) => {
       it(`should publish ${type} package`, async () => {
-        await writeFile(
-          join(testDir, 'prpm.json'),
-          JSON.stringify({
-            name: `test-${type}-package`,
-            version: '1.0.0',
-            description: `Test ${type} package`,
-            type,
-          })
-        );
-
-        // Create type-specific file
+        // Create type-specific file first
         const typeFiles: Record<string, string> = {
           cursor: '.cursorrules',
           claude: '.clinerules',
@@ -471,6 +471,17 @@ describe('Publish Command', () => {
           windsurf: '.windsurfrules',
           generic: 'README.md',
         };
+
+        await writeFile(
+          join(testDir, 'prpm.json'),
+          JSON.stringify({
+            name: `test-${type}-package`,
+            version: '1.0.0',
+            description: `Test ${type} package for testing purposes`,
+            type,
+            files: [typeFiles[type]],
+          })
+        );
 
         await writeFile(join(testDir, typeFiles[type]), `# Test ${type}`);
 
@@ -502,8 +513,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: '@myorg/test-package',
           version: '1.0.0',
-          description: 'Test scoped package',
+          description: 'Test scoped package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
@@ -536,8 +548,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
@@ -575,8 +588,9 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-package',
           version: '1.0.0',
-          description: 'Test package',
+          description: 'Test package for testing purposes',
           type: 'cursor',
+          files: ['.cursorrules'],
         })
       );
 
