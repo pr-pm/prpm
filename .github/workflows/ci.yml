@@ -228,6 +228,9 @@ jobs:
       - name: Install root dependencies
         run: npm ci
 
+      - name: Build types package (required dependency)
+        run: npm run build --workspace=@prpm/types
+
       - name: Install webapp dependencies
         working-directory: ./packages/webapp
         run: npm ci
