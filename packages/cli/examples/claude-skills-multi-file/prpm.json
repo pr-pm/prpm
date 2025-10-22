@@ -1,0 +1,33 @@
+{
+  "name": "@username/testing-skills",
+  "version": "1.0.0",
+  "description": "Multiple Claude skills focused on testing - all the same type",
+  "type": "claude-skill",
+  "author": "Your Name",
+  "license": "MIT",
+  "keywords": ["claude", "testing", "skills"],
+  "tags": ["testing", "quality"],
+  "files": [
+    {
+      "path": ".claude/skills/tdd.md",
+      "type": "claude-skill",
+      "name": "Test-Driven Development",
+      "description": "Red-Green-Refactor workflow",
+      "tags": ["tdd", "unit-testing"]
+    },
+    {
+      "path": ".claude/skills/integration-testing.md",
+      "type": "claude-skill",
+      "name": "Integration Testing",
+      "description": "End-to-end test patterns",
+      "tags": ["integration", "e2e"]
+    },
+    {
+      "path": ".claude/skills/test-coverage.md",
+      "type": "claude-skill",
+      "name": "Test Coverage Analysis",
+      "description": "Achieving meaningful coverage",
+      "tags": ["coverage", "quality"]
+    }
+  ]
+}

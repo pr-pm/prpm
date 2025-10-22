@@ -18,7 +18,6 @@ export async function handleInfo(packageName: string): Promise<void> {
     const config = await getConfig();
     const client = getRegistryClient(config);
     const pkg = await client.getPackage(packageName);
-    console.log(pkg)
 
     console.log('\n' + '='.repeat(60));
     console.log(`  ${pkg.name} ${pkg.verified ? '✓ Verified' : ''}`);

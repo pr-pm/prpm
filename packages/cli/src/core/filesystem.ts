@@ -98,3 +98,16 @@ export function generateId(filename: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
+
+/**
+ * Strip author namespace from package ID
+ * @example
+ * stripAuthorNamespace('@community/git-workflow-manager') // 'git-workflow-manager'
+ * stripAuthorNamespace('community/git-workflow-manager') // 'git-workflow-manager'
+ * stripAuthorNamespace('git-workflow-manager') // 'git-workflow-manager'
+ */
+export function stripAuthorNamespace(packageId: string): string {
+  // Handle @scope/package or scope/package format
+  const match = packageId.match(/^@?[^/]+\/(.+)$/);
+  return match ? match[1] : packageId;
+}

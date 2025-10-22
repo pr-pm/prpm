@@ -70,6 +70,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
         const packagesResult = await fastify.pg.query(
           `SELECT
              id,
+             name,
              description,
              type,
              total_downloads,
@@ -108,28 +109,13 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
           }
         );
 
-        // Check if this author has unclaimed packages (based on username)
-        const unclaimedResult = await fastify.pg.query(
-          `SELECT COUNT(*) as count
-           FROM packages
-           WHERE LOWER(author_name) = LOWER($1)
-             AND author_id IS NULL
-             AND visibility = 'public'`,
-          [username]
-        );
-
-        const hasUnclaimedPackages = parseInt(unclaimedResult.rows[0]?.count || '0', 10) > 0;
-
-        // Get unclaimed package count
-        const unclaimedCount = parseInt(unclaimedResult.rows[0]?.count || '0', 10);
-
         return reply.send({
           author: {
             username: user.username,
             verified: user.verified_author || false,
             github_username: user.github_username,
             joined: user.created_at,
-            has_claimed_account: true,
+            has_claimed_account: Boolean(user.github_username),
           },
           stats: {
             total_packages: stats.total_packages,
@@ -137,12 +123,9 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             average_rating: stats.avg_rating ? parseFloat(stats.avg_rating.toFixed(2)) : null,
             total_ratings: stats.total_ratings,
           },
-          unclaimed: {
-            has_unclaimed: hasUnclaimedPackages,
-            count: unclaimedCount,
-          },
           packages: packagesResult.rows.map(pkg => ({
             id: pkg.id,
+            name: pkg.name,
             description: pkg.description,
             type: pkg.type,
             total_downloads: pkg.total_downloads || 0,
@@ -195,13 +178,14 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
         const result = await fastify.pg.query(
           `SELECT
              id,
+             name,
              description,
              type,
              total_downloads,
              created_at,
              tags
            FROM packages
-           WHERE LOWER(author_name) = LOWER($1)
+           WHERE (name LIKE $1 || '/%' OR name LIKE '@' || $1 || '/%')
              AND author_id IS NULL
              AND visibility = 'public'
            ORDER BY total_downloads DESC`,
@@ -212,6 +196,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
           author_name: username,
           unclaimed_packages: result.rows.map(pkg => ({
             id: pkg.id,
+            name: pkg.name,
             description: pkg.description,
             type: pkg.type,
             total_downloads: pkg.total_downloads || 0,

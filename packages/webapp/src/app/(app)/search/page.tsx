@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
   searchPackages,
   searchCollections,
@@ -16,21 +17,58 @@ import {
 type TabType = 'packages' | 'collections' | 'skills'
 
 export default function SearchPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('packages')
-  const [query, setQuery] = useState('')
-  const [selectedType, setSelectedType] = useState<PackageType | ''>('')
-  const [selectedCategory, setSelectedCategory] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [sort, setSort] = useState<SortType>('downloads')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Track initial URL params to prevent reset on mount
+  const initialParams = useState(() => ({
+    tab: searchParams.get('tab') as TabType || 'packages',
+    query: searchParams.get('q') || '',
+    type: searchParams.get('type') as PackageType || '',
+    category: searchParams.get('category') || '',
+    tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
+    sort: searchParams.get('sort') as SortType || 'downloads',
+    page: Number(searchParams.get('page')) || 1,
+  }))[0]
+
+  // Initialize state from URL params
+  const [activeTab, setActiveTab] = useState<TabType>(initialParams.tab)
+  const [query, setQuery] = useState(initialParams.query)
+  const [selectedType, setSelectedType] = useState<PackageType | ''>(initialParams.type)
+  const [selectedCategory, setSelectedCategory] = useState(initialParams.category)
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialParams.tags)
+  const [sort, setSort] = useState<SortType>(initialParams.sort)
   const [packages, setPackages] = useState<Package[]>([])
   const [collections, setCollections] = useState<Collection[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(initialParams.page)
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [availableCategories, setAvailableCategories] = useState<string[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
 
   const limit = 20
+
+  // Update URL when state changes
+  useEffect(() => {
+    if (!isInitialized) {
+      setIsInitialized(true)
+      return
+    }
+
+    const params = new URLSearchParams()
+
+    if (query) params.set('q', query)
+    if (activeTab !== 'packages') params.set('tab', activeTab)
+    if (selectedType) params.set('type', selectedType)
+    if (selectedCategory) params.set('category', selectedCategory)
+    if (selectedTags.length > 0) params.set('tags', selectedTags.join(','))
+    if (sort !== 'downloads') params.set('sort', sort)
+    if (page !== 1) params.set('page', String(page))
+
+    const newUrl = params.toString() ? `/search?${params.toString()}` : '/search'
+    router.replace(newUrl, { scroll: false })
+  }, [activeTab, query, selectedType, selectedCategory, selectedTags, sort, page, router, isInitialized])
 
   // Fetch packages
   const fetchPackages = async () => {
@@ -119,10 +157,26 @@ export default function SearchPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, query, selectedType, selectedCategory, selectedTags, sort, page])
 
-  // Reset page when filters change
+  // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {
-    setPage(1)
-  }, [query, selectedType, selectedCategory, selectedTags, sort, activeTab])
+    // Don't reset on first render
+    if (!isInitialized) return
+
+    // Check if any filter actually changed from initial state
+    const filtersChanged =
+      query !== initialParams.query ||
+      selectedType !== initialParams.type ||
+      selectedCategory !== initialParams.category ||
+      JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
+      sort !== initialParams.sort ||
+      activeTab !== initialParams.tab
+
+    // Only reset page if filters changed AND we're not on the initial page
+    if (filtersChanged) {
+      setPage(1)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, selectedType, selectedCategory, selectedTags, sort, activeTab, isInitialized])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -275,7 +329,7 @@ export default function SearchPage() {
                   onChange={(e) => setSort(e.target.value as SortType)}
                   className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
                 >
-                  <option value="downloads">Most Downloads</option>
+                  <option value="downloads">Downloads</option>
                   <option value="quality">Quality Score</option>
                   <option value="rating">Highest Rated</option>
                   <option value="created">Recently Created</option>
@@ -382,7 +436,7 @@ export default function SearchPage() {
                                 )}
                                 <span>{pkg.total_downloads.toLocaleString()} downloads</span>
                                 {pkg.quality_score && (
-                                  <span>Quality: {pkg.quality_score.toFixed(1)}/5.0</span>
+                                  <span>Quality: {Number(pkg.quality_score).toFixed(1)}/5.0</span>
                                 )}
                               </div>
                               {pkg.tags.length > 0 && (

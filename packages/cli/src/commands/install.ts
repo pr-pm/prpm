@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile, getDestinationDir } from '../core/filesystem';
+import { saveFile, getDestinationDir, stripAuthorNamespace } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { Package, PackageType } from '../types';
@@ -216,7 +216,8 @@ export async function handleInstall(
       // Single file package
       let mainFile = extractedFiles[0].content;
       const fileExtension = format === 'cursor' ? 'mdc' : 'md';
-      destPath = `${destDir}/${packageId}.${fileExtension}`;
+      const packageName = stripAuthorNamespace(packageId);
+      destPath = `${destDir}/${packageName}.${fileExtension}`;
 
       // Apply cursor config if downloading in cursor format
       if (format === 'cursor' && hasMDCHeader(mainFile)) {
@@ -238,7 +239,8 @@ export async function handleInstall(
       fileCount = 1;
     } else {
       // Multi-file package - create directory for package
-      const packageDir = `${destDir}/${packageId}`;
+      const packageName = stripAuthorNamespace(packageId);
+      const packageDir = `${destDir}/${packageName}`;
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
 

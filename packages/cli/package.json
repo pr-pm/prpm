@@ -40,9 +40,11 @@
   "author": "khaliqgant",
   "license": "MIT",
   "dependencies": {
-    "@prpm/types": "^0.1.0",
-    "@prpm/registry-client": "^1.2.0",
     "@octokit/rest": "^22.0.0",
+    "@prpm/registry-client": "^1.2.0",
+    "@prpm/types": "^0.1.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "commander": "^11.1.0",
     "posthog-node": "^5.10.0",
     "tar": "^6.2.1"

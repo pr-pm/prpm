@@ -12,7 +12,13 @@ import { randomBytes } from 'crypto';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
-import type { PackageManifest } from '../types/registry.js';
+import type { PackageManifest, PackageFileMetadata } from '../types/registry.js';
+import {
+  marketplaceToManifest,
+  validateMarketplaceJson,
+  type MarketplaceJson,
+} from '../core/marketplace-converter.js';
+import { validateManifestSchema } from '../core/schema-validator.js';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -21,44 +27,97 @@ interface PublishOptions {
 }
 
 /**
+ * Try to find and load a manifest file
+ * Checks for:
+ * 1. prpm.json (native format)
+ * 2. .claude/marketplace.json (Claude format)
+ */
+async function findAndLoadManifest(): Promise<{ manifest: PackageManifest; source: string }> {
+  // Try prpm.json first (native format)
+  const prpmJsonPath = join(process.cwd(), 'prpm.json');
+  try {
+    const content = await readFile(prpmJsonPath, 'utf-8');
+    const manifest = JSON.parse(content);
+    const validated = validateManifest(manifest);
+    return { manifest: validated, source: 'prpm.json' };
+  } catch (error) {
+    // prpm.json not found or invalid, try marketplace.json
+  }
+
+  // Try .claude/marketplace.json (Claude format)
+  const marketplaceJsonPath = join(process.cwd(), '.claude', 'marketplace.json');
+  try {
+    const content = await readFile(marketplaceJsonPath, 'utf-8');
+    const marketplaceData = JSON.parse(content);
+
+    if (!validateMarketplaceJson(marketplaceData)) {
+      throw new Error('Invalid marketplace.json format');
+    }
+
+    // Convert marketplace.json to PRPM manifest
+    const manifest = marketplaceToManifest(marketplaceData as MarketplaceJson);
+
+    // Validate the converted manifest
+    const validated = validateManifest(manifest);
+
+    return { manifest: validated, source: '.claude/marketplace.json' };
+  } catch (error) {
+    // marketplace.json not found or invalid
+  }
+
+  // Neither file found
+  throw new Error(
+    'No manifest file found. Expected either:\n' +
+    '  - prpm.json in the current directory, or\n' +
+    '  - .claude/marketplace.json (Claude format)'
+  );
+}
+
+/**
  * Validate package manifest
  */
-async function validateManifest(manifestPath: string): Promise<PackageManifest> {
-  try {
-    const content = await readFile(manifestPath, 'utf-8');
-    const manifest = JSON.parse(content);
-
-    // Required fields
-    const required = ['name', 'version', 'description', 'type'];
-    const missing = required.filter(field => !manifest[field]);
-
-    if (missing.length > 0) {
-      throw new Error(`Missing required fields: ${missing.join(', ')}`);
-    }
-
-    // Validate name format
-    if (!/^(@[a-z0-9-]+\/)?[a-z0-9-]+$/.test(manifest.name)) {
-      throw new Error('Package name must be lowercase alphanumeric with hyphens only');
-    }
-
-    // Validate version format
-    if (!/^\d+\.\d+\.\d+/.test(manifest.version)) {
-      throw new Error('Version must be semver format (e.g., 1.0.0)');
-    }
-
-    // Validate type
-    const validTypes = ['cursor', 'claude', 'continue', 'windsurf', 'generic'];
-    if (!validTypes.includes(manifest.type)) {
-      throw new Error(`Type must be one of: ${validTypes.join(', ')}`);
-    }
-
-    return manifest;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('ENOENT')) {
-      throw new Error('prpm.json not found. Run this command in your package directory.');
-    }
-    throw error;
+function validateManifest(manifest: PackageManifest): PackageManifest {
+  // First, validate against JSON schema
+  const schemaValidation = validateManifestSchema(manifest);
+  if (!schemaValidation.valid) {
+    const errorMessages = schemaValidation.errors?.join('\n  - ') || 'Unknown validation error';
+    throw new Error(`Manifest validation failed:\n  - ${errorMessages}`);
   }
+
+  // Additional custom validations (beyond what JSON schema can express)
+
+  // Check if using enhanced format (file objects)
+  const hasEnhancedFormat = manifest.files.some(f => typeof f === 'object');
+
+  if (hasEnhancedFormat) {
+    // Check if files have multiple distinct types
+    const fileTypes = new Set(
+      (manifest.files as PackageFileMetadata[])
+        .filter(f => typeof f === 'object')
+        .map(f => f.type)
+    );
+
+    // Only suggest "collection" if there are multiple distinct types
+    if (fileTypes.size > 1 && manifest.type !== 'collection') {
+      console.warn('⚠️  Package contains multiple file types. Consider setting type to "collection" for clarity.');
+    }
+  }
+
+  return manifest;
+}
+
+/**
+ * Normalize files array to string paths
+ * Converts both simple and enhanced formats to string array
+ */
+function normalizeFilePaths(files: string[] | PackageFileMetadata[]): string[] {
+  return files.map(file => {
+    if (typeof file === 'string') {
+      return file;
+    } else {
+      return file.path;
+    }
+  });
 }
 
 /**
@@ -72,20 +131,20 @@ async function createTarball(manifest: PackageManifest): Promise<Buffer> {
     // Create temp directory
     await mkdir(tmpDir, { recursive: true });
 
-    // Get files to include (from manifest.files or default)
-    const files = manifest.files || [
-      'prpm.json',
-      '.cursorrules',
-      'README.md',
-      'LICENSE',
-      '.clinerules',
-      '.continuerc.json',
-      '.windsurfrules'
-    ];
+    // Get files to include - normalize to string paths
+    const filePaths = normalizeFilePaths(manifest.files);
+
+    // Add standard files if not already included
+    const standardFiles = ['prpm.json', 'README.md', 'LICENSE'];
+    for (const file of standardFiles) {
+      if (!filePaths.includes(file)) {
+        filePaths.push(file);
+      }
+    }
 
     // Check which files exist
     const existingFiles: string[] = [];
-    for (const file of files) {
+    for (const file of filePaths) {
       try {
         await stat(file);
         existingFiles.push(file);
@@ -153,11 +212,11 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     // Read and validate manifest
     console.log('🔍 Validating package manifest...');
-    const manifestPath = join(process.cwd(), 'prpm.json');
-    const manifest = await validateManifest(manifestPath);
+    const { manifest, source } = await findAndLoadManifest();
     packageName = manifest.name;
     version = manifest.version;
 
+    console.log(`   Source: ${source}`);
     console.log(`   Package: ${manifest.name}@${manifest.version}`);
     console.log(`   Type: ${manifest.type}`);
     console.log(`   Description: ${manifest.description}`);

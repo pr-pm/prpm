@@ -41,7 +41,7 @@ export interface Package {
   weekly_downloads: number;
   monthly_downloads: number;
   version_count: number;
-  quality_score?: number;
+  quality_score?: number | string;
   rating_average?: number;
   rating_count: number;
   created_at: Date | string;

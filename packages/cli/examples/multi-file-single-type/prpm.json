@@ -1,0 +1,33 @@
+{
+  "name": "@username/cursor-typescript-rules",
+  "version": "1.0.0",
+  "description": "Multiple Cursor rules for TypeScript projects - not a collection, just different rule files",
+  "type": "cursor",
+  "author": "Your Name",
+  "license": "MIT",
+  "keywords": ["cursor", "typescript", "rules"],
+  "tags": ["typescript", "development"],
+  "files": [
+    {
+      "path": ".cursor/rules/react-components.mdc",
+      "type": "cursor",
+      "name": "React Component Rules",
+      "description": "Best practices for React components",
+      "tags": ["react", "components"]
+    },
+    {
+      "path": ".cursor/rules/typescript-types.mdc",
+      "type": "cursor",
+      "name": "TypeScript Type Rules",
+      "description": "Type system best practices",
+      "tags": ["typescript", "types"]
+    },
+    {
+      "path": ".cursor/rules/testing.mdc",
+      "type": "cursor",
+      "name": "Testing Rules",
+      "description": "Testing patterns and practices",
+      "tags": ["testing", "jest"]
+    }
+  ]
+}

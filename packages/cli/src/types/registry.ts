@@ -4,6 +4,20 @@
 
 import { PackageType } from '../types';
 
+/**
+ * Enhanced file metadata for collection packages
+ */
+export interface PackageFileMetadata {
+  path: string;
+  type: PackageType;
+  name?: string;
+  description?: string;
+  tags?: string[];
+}
+
+/**
+ * Package manifest - supports both simple and enhanced file formats
+ */
 export interface PackageManifest {
   name: string;
   version: string;
@@ -19,7 +33,10 @@ export interface PackageManifest {
   dependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
   engines?: Record<string, string>;
-  files: string[];
+  // Files can be either:
+  // 1. Simple format: string[] (backward compatible)
+  // 2. Enhanced format: PackageFileMetadata[] (for collections)
+  files: string[] | PackageFileMetadata[];
   main?: string;
 }
 

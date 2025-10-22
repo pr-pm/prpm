@@ -21,6 +21,7 @@ import { createCollectionsCommand } from './commands/collections';
 import { createOutdatedCommand } from './commands/outdated';
 import { createUpdateCommand } from './commands/update';
 import { createUpgradeCommand } from './commands/upgrade';
+import { createSchemaCommand } from './commands/schema';
 import { telemetry } from './core/telemetry';
 
 const program = new Command();
@@ -48,6 +49,9 @@ program.addCommand(createListCommand());
 program.addCommand(createRemoveCommand());
 program.addCommand(createIndexCommand());
 program.addCommand(createTelemetryCommand());
+
+// Utility commands
+program.addCommand(createSchemaCommand());
 
 // Parse command line arguments
 program.parse();

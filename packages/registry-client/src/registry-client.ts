@@ -240,8 +240,17 @@ export class RegistryClient {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
 
+    // Normalize manifest for API - convert enhanced format to simple format for backend
+    // The backend currently only accepts string[] for files
+    const normalizedManifest = {
+      ...manifest,
+      files: manifest.files.map(file =>
+        typeof file === 'string' ? file : file.path
+      ),
+    };
+
     const formData = new FormData();
-    formData.append('manifest', JSON.stringify(manifest));
+    formData.append('manifest', JSON.stringify(normalizedManifest));
     formData.append('tarball', new Blob([tarball]), 'package.tar.gz');
 
     const response = await this.fetch('/api/v1/packages', {
