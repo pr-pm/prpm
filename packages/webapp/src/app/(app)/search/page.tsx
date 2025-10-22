@@ -441,7 +441,7 @@ export default function SearchPage() {
                               </div>
                               {pkg.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mt-3">
-                                  {pkg.tags.slice(0, 5).map(tag => (
+                                  {pkg.tags.slice(0, 5).map((tag: string) => (
                                     <span
                                       key={tag}
                                       className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-xs text-gray-400"
