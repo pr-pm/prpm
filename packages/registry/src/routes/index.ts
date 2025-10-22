@@ -11,6 +11,7 @@ import { collectionRoutes } from './collections.js';
 import { inviteRoutes } from './invites.js';
 import analyticsRoutes from './analytics.js';
 import authorAnalyticsRoutes from './author-analytics.js';
+import authorsRoutes from './authors.js';
 
 export async function registerRoutes(server: FastifyInstance) {
   // API v1 routes
@@ -24,6 +25,7 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(inviteRoutes, { prefix: '/invites' });
       await api.register(analyticsRoutes, { prefix: '/analytics' });
       await api.register(authorAnalyticsRoutes, { prefix: '/author' });
+      await api.register(authorsRoutes, { prefix: '/authors' });
     },
     { prefix: '/api/v1' }
   );

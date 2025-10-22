@@ -7,6 +7,7 @@ import { getRegistryClient, SearchResult, RegistryPackage } from '@prpm/registry
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
+import * as readline from 'readline';
 
 // User-friendly CLI types
 type CLIPackageType = 'skill' | 'agent' | 'command' | 'slash-command' | 'rule' | 'plugin' | 'prompt' | 'workflow' | 'tool' | 'template' | 'mcp';
@@ -77,9 +78,173 @@ function mapTypeToRegistry(cliType: CLIPackageType): { type?: PackageType; tags?
   return typeMap[cliType] || {};
 }
 
+/**
+ * Build webapp URL for search results
+ */
+function buildWebappUrl(query: string, options: { type?: CLIPackageType; author?: string }, page: number = 1): string {
+  const baseUrl = process.env.PRPM_WEBAPP_URL || 'https://app.prpm.dev';
+  const params = new URLSearchParams();
+
+  if (query) params.append('q', query);
+  if (options.type) params.append('type', options.type);
+  if (options.author) params.append('author', options.author);
+  if (page > 1) params.append('page', page.toString());
+
+  return `${baseUrl}/search?${params.toString()}`;
+}
+
+/**
+ * Display search results
+ */
+function displayResults(packages: RegistryPackage[], total: number, page: number, limit: number): void {
+  const startIdx = (page - 1) * limit + 1;
+  const endIdx = Math.min(page * limit, total);
+
+  console.log('\n' + '─'.repeat(80));
+  console.log(`📦 Results ${startIdx}-${endIdx} of ${total}`.padEnd(80));
+  console.log('─'.repeat(80) + '\n');
+
+  packages.forEach((pkg, idx) => {
+    const num = startIdx + idx;
+    const rating = pkg.rating_average ? `⭐ ${pkg.rating_average.toFixed(1)}` : '';
+    const downloads = pkg.total_downloads >= 1000
+      ? `${(pkg.total_downloads / 1000).toFixed(1)}k`
+      : pkg.total_downloads;
+    const typeIcon = getTypeIcon(pkg.type);
+    const typeLabel = getTypeLabel(pkg.type);
+
+    // Add verified badge
+    let verifiedBadge = '';
+    if (pkg.featured || pkg.official || pkg.verified) {
+      verifiedBadge = ' | ✅ Verified';
+    }
+
+    console.log(`\x1b[1m${num}. ${pkg.name}\x1b[0m ${rating}`);
+    console.log(`   ${pkg.description || 'No description'}`);
+    console.log(`   ${typeIcon} ${typeLabel} | 📥 ${downloads} downloads | 🏷️  ${pkg.tags.slice(0, 3).join(', ')}${verifiedBadge}`);
+    console.log();
+  });
+
+  console.log('─'.repeat(80));
+}
+
+/**
+ * Prompt user for pagination action
+ */
+function promptUser(): Promise<string> {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    rl.question('', (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase());
+    });
+  });
+}
+
+/**
+ * Interactive pagination handler
+ */
+async function handlePagination(
+  query: string,
+  options: { type?: CLIPackageType; author?: string; limit: number },
+  client: any,
+  searchOptions: Record<string, unknown>,
+  initialResult: SearchResult,
+  webappBaseUrl: string
+): Promise<void> {
+  let currentPage = 1;
+  let result = initialResult;
+  const totalPages = Math.ceil(result.total / options.limit);
+
+  while (true) {
+    // Display current page
+    displayResults(result.packages, result.total, currentPage, options.limit);
+
+    // Show navigation options
+    console.log('\n💡 \x1b[1mOptions:\x1b[0m');
+    if (currentPage < totalPages) {
+      console.log('   \x1b[36mn\x1b[0m - Next page');
+    }
+    if (currentPage > 1) {
+      console.log('   \x1b[36mp\x1b[0m - Previous page');
+    }
+    console.log('   \x1b[36m1-' + result.packages.length + '\x1b[0m - Install package by number');
+    console.log('   \x1b[36mw\x1b[0m - View in web browser');
+    console.log('   \x1b[36mq\x1b[0m - Quit');
+
+    // Show webapp link
+    const webappUrl = buildWebappUrl(query, options, currentPage);
+    console.log(`\n🌐 \x1b[2mView in browser: ${webappUrl}\x1b[0m`);
+
+    process.stdout.write('\n👉 ');
+    const input = await promptUser();
+
+    if (input === 'q' || input === 'quit' || input === 'exit') {
+      console.log('\n✨ Happy coding!\n');
+      break;
+    }
+
+    if (input === 'n' || input === 'next') {
+      if (currentPage < totalPages) {
+        currentPage++;
+        const offset = (currentPage - 1) * options.limit;
+        result = await client.search(query || '', { ...searchOptions, offset });
+        console.clear();
+      } else {
+        console.log('\n❌ Already on last page');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.clear();
+      }
+      continue;
+    }
+
+    if (input === 'p' || input === 'prev' || input === 'previous') {
+      if (currentPage > 1) {
+        currentPage--;
+        const offset = (currentPage - 1) * options.limit;
+        result = await client.search(query || '', { ...searchOptions, offset });
+        console.clear();
+      } else {
+        console.log('\n❌ Already on first page');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.clear();
+      }
+      continue;
+    }
+
+    if (input === 'w' || input === 'web' || input === 'browser') {
+      const url = buildWebappUrl(query, options, currentPage);
+      console.log(`\n🌐 Opening: ${url}`);
+      console.log('   (Copy and paste this URL into your browser)\n');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.clear();
+      continue;
+    }
+
+    // Check if input is a number for installation
+    const num = parseInt(input, 10);
+    if (!isNaN(num) && num >= 1 && num <= result.packages.length) {
+      const pkg = result.packages[num - 1];
+      console.log(`\n📦 To install: \x1b[36mprpm install ${pkg.name}\x1b[0m`);
+      console.log(`   More info: \x1b[36mprpm info ${pkg.name}\x1b[0m\n`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.clear();
+      continue;
+    }
+
+    console.log('\n❌ Invalid option. Try again.');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.clear();
+  }
+}
+
 export async function handleSearch(
   query: string,
-  options: { type?: CLIPackageType; author?: string; limit?: number }
+  options: { type?: CLIPackageType; author?: string; limit?: number; page?: number; interactive?: boolean }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -110,8 +275,13 @@ export async function handleSearch(
     const client = getRegistryClient(config);
 
     // Map CLI type to registry schema
+    const limit = options.limit || 20;
+    const page = options.page || 1;
+    const offset = (page - 1) * limit;
+
     const searchOptions: Record<string, unknown> = {
-      limit: options.limit || 20,
+      limit,
+      offset,
     };
 
     if (options.type) {
@@ -136,37 +306,45 @@ export async function handleSearch(
       console.log(`  - Broadening your search terms`);
       console.log(`  - Checking spelling`);
       console.log(`  - Browsing trending: prpm trending`);
+
+      // Suggest webapp even if no results
+      const webappUrl = buildWebappUrl(query, options);
+      console.log(`\n🌐 View in browser: ${webappUrl}`);
       return;
     }
 
-    console.log(`\n✨ Found ${result.total} package(s):\n`);
+    // If interactive mode is disabled or only one page, show simple results
+    const totalPages = Math.ceil(result.total / limit);
+    const shouldPaginate = options.interactive !== false && totalPages > 1;
 
-    // Display results
-    result.packages.forEach((pkg) => {
-      const rating = pkg.rating_average ? `⭐ ${pkg.rating_average.toFixed(1)}` : '';
-      const downloads = pkg.total_downloads >= 1000
-        ? `${(pkg.total_downloads / 1000).toFixed(1)}k`
-        : pkg.total_downloads;
-      const typeIcon = getTypeIcon(pkg.type);
-      const typeLabel = getTypeLabel(pkg.type);
+    if (!shouldPaginate) {
+      displayResults(result.packages, result.total, page, limit);
 
-      // Add verified badge to footer line
-      let verifiedBadge = '';
-      if (pkg.featured || pkg.official || pkg.verified) {
-        verifiedBadge = ' | ✅ Verified';
+      console.log('\n💡 \x1b[1mQuick Actions:\x1b[0m');
+      console.log('   Install: \x1b[36mprpm install <package-id>\x1b[0m');
+      console.log('   More info: \x1b[36mprpm info <package-id>\x1b[0m');
+
+      if (totalPages > 1) {
+        console.log(`\n📄 \x1b[1mMore Results:\x1b[0m`);
+        console.log(`   Page ${page} of ${totalPages}`);
+        if (page < totalPages) {
+          console.log(`   Next page: \x1b[36mprpm search "${query}" --page ${page + 1}\x1b[0m`);
+        }
+        console.log(`   Interactive mode: \x1b[36mprpm search "${query}" --interactive\x1b[0m`);
       }
 
-      console.log(`${pkg.name} ${rating}`);
-      console.log(`    ${pkg.description || 'No description'}`);
-      console.log(`    ${typeIcon} ${typeLabel} | 📥 ${downloads} | 🏷️  ${pkg.tags.slice(0, 3).join(', ')}${verifiedBadge}`);
+      // Always show webapp link
+      const webappUrl = buildWebappUrl(query, options, page);
+      console.log(`\n🌐 \x1b[1mView in Browser:\x1b[0m`);
+      console.log(`   ${webappUrl}`);
+      if (page < totalPages) {
+        const nextPageUrl = buildWebappUrl(query, options, page + 1);
+        console.log(`   Next page: ${nextPageUrl}`);
+      }
       console.log();
-    });
-
-    console.log(`\n💡 Install a package: prpm install <package-id>`);
-    console.log(`   Get more info: prpm info <package-id>`);
-
-    if (result.total > result.packages.length) {
-      console.log(`\n   Showing ${result.packages.length} of ${result.total} results`);
+    } else {
+      // Interactive pagination mode
+      await handlePagination(query, { ...options, limit }, client, searchOptions, result, registryUrl);
     }
 
     success = true;
@@ -192,6 +370,8 @@ export async function handleSearch(
         query: query.substring(0, 100),
         type: options.type,
         resultCount: success && result ? result.packages.length : 0,
+        page: options.page,
+        interactive: options.interactive,
       },
     });
 
@@ -208,11 +388,15 @@ export function createSearchCommand(): Command {
     .argument('[query]', 'Search query (optional when using --type or --author)')
     .option('--type <type>', 'Filter by package type (skill, agent, command, slash-command, rule, plugin, prompt, workflow, tool, template, mcp)')
     .option('--author <username>', 'Filter by author username')
-    .option('--limit <number>', 'Number of results to show', '20')
-    .action(async (query: string | undefined, options: { type?: string; author?: string; limit?: string; tags?: string }) => {
+    .option('--limit <number>', 'Number of results per page', '20')
+    .option('--page <number>', 'Page number (default: 1)', '1')
+    .option('--interactive', 'Enable interactive pagination (default: true for multiple pages)', true)
+    .option('--no-interactive', 'Disable interactive pagination')
+    .action(async (query: string | undefined, options: { type?: string; author?: string; limit?: string; page?: string; interactive?: boolean }) => {
       const type = options.type as CLIPackageType | undefined;
       const author = options.author;
       const limit = options.limit ? parseInt(options.limit, 10) : 20;
+      const page = options.page ? parseInt(options.page, 10) : 1;
 
       const validTypes: CLIPackageType[] = ['skill', 'agent', 'command', 'slash-command', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
       if (options.type && !validTypes.includes(type!)) {
@@ -228,7 +412,7 @@ export function createSearchCommand(): Command {
         process.exit(1);
       }
 
-      await handleSearch(query || '', { type, author, limit });
+      await handleSearch(query || '', { type, author, limit, page, interactive: options.interactive });
     });
 
   return command;
