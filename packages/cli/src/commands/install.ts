@@ -129,7 +129,40 @@ export async function handleInstall(
     const config = await getConfig();
     const client = getRegistryClient(config);
 
-    // Get package info first
+    // Check if this is a collection first (by trying to fetch it)
+    // Collections can be: name, scope/name, or @scope/name
+    let isCollection = false;
+    try {
+      // Try to parse as collection
+      let scope: string;
+      let name_slug: string;
+
+      const matchWithScope = packageId.match(/^@?([^/]+)\/([^/@]+)$/);
+      if (matchWithScope) {
+        [, scope, name_slug] = matchWithScope;
+      } else {
+        // No scope, assume 'collection' scope
+        scope = 'collection';
+        name_slug = packageId;
+      }
+
+      // Try to fetch as collection
+      await client.getCollection(scope, name_slug, version === 'latest' ? undefined : version);
+      isCollection = true;
+
+      // If successful, delegate to collection install handler
+      const { handleCollectionInstall } = await import('./collections.js');
+      return await handleCollectionInstall(packageId, {
+        format: options.as,
+        skipOptional: false,
+        dryRun: false,
+      });
+    } catch (err) {
+      // Not a collection, continue with package install
+      isCollection = false;
+    }
+
+    // Get package info
     const pkg = await client.getPackage(packageId);
     const typeIcon = getTypeIcon(pkg.type);
     const typeLabel = getTypeLabel(pkg.type);

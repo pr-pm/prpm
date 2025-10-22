@@ -66,9 +66,9 @@ async function seedStartupCollection() {
       ],
     };
 
-    // Check if collection already exists
+    // Check if collection already exists (using new schema: scope + name_slug + version)
     const existing = await pool.query(
-      'SELECT scope, id, version FROM collections WHERE scope = $1 AND id = $2 AND version = $3',
+      'SELECT id FROM collections WHERE scope = $1 AND name_slug = $2 AND version = $3',
       [collection.scope, collection.id, collection.version]
     );
 
@@ -77,24 +77,37 @@ async function seedStartupCollection() {
       return;
     }
 
-    // Insert collection
-    await pool.query(`
+    // Get or create user for author
+    const authorUsername = collection.author || 'prpm';
+    const userResult = await pool.query(
+      `INSERT INTO users (username, verified_author, created_at, updated_at)
+       VALUES ($1, $2, NOW(), NOW())
+       ON CONFLICT (username) DO UPDATE SET updated_at = NOW()
+       RETURNING id`,
+      [authorUsername, collection.verified || false]
+    );
+    const authorUserId = userResult.rows[0].id;
+
+    // Insert collection with new UUID-based schema
+    const collectionResult = await pool.query(`
       INSERT INTO collections (
-        scope, id, version, name, description, author,
+        scope, name_slug, old_id, version, name, description, author_id,
         official, verified, category, tags, icon,
         downloads, stars, created_at, updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6,
-        $7, $8, $9, $10, $11,
-        $12, $13, NOW(), NOW()
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11, $12,
+        $13, $14, NOW(), NOW()
       )
+      RETURNING id
     `, [
       collection.scope,
-      collection.id,
+      collection.id, // name_slug
+      collection.id, // old_id (for compatibility)
       collection.version,
       collection.name,
       collection.description,
-      collection.author,
+      authorUserId,
       collection.official,
       collection.verified,
       collection.category,
@@ -104,37 +117,37 @@ async function seedStartupCollection() {
       0, // stars
     ]);
 
+    const collectionUuid = collectionResult.rows[0].id;
+
     // Insert collection_packages relationships
     let linkedCount = 0;
     for (let i = 0; i < collection.packages.length; i++) {
-      const packageId = collection.packages[i];
+      const packageName = collection.packages[i];
 
-      // Check if package exists
+      // Check if package exists (lookup by name, not id)
       const pkgExists = await pool.query(
-        'SELECT id FROM packages WHERE id = $1',
-        [packageId]
+        'SELECT id FROM packages WHERE name = $1',
+        [packageName]
       );
 
       if (pkgExists.rows.length > 0) {
+        const packageUuid = pkgExists.rows[0].id;
         await pool.query(`
           INSERT INTO collection_packages (
-            collection_scope, collection_id, collection_version,
-            package_id, package_version, required, install_order
+            collection_id, package_id, package_version, required, install_order
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7
-          ) ON CONFLICT DO NOTHING
+            $1, $2, $3, $4, $5
+          ) ON CONFLICT (collection_id, package_id) DO NOTHING
         `, [
-          collection.scope,
-          collection.id,
-          collection.version,
-          packageId,
+          collectionUuid,
+          packageUuid,
           'latest',
           true, // All are required for MVP
           i + 1,
         ]);
         linkedCount++;
       } else {
-        console.log(`     ⚠️  Package not found: ${packageId}`);
+        console.log(`     ⚠️  Package not found: ${packageName}`);
       }
     }
 

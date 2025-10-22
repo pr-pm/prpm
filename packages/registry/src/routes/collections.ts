@@ -484,12 +484,14 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         const collection = collectionResult.rows[0];
 
-        // Get packages
+        // Get packages with their names
         const packagesResult = await server.pg.query(
           `
-          SELECT * FROM collection_packages
-          WHERE collection_id = $1
-          ORDER BY install_order ASC
+          SELECT cp.*, p.name as package_name
+          FROM collection_packages cp
+          JOIN packages p ON p.id = cp.package_id
+          WHERE cp.collection_id = $1
+          ORDER BY cp.install_order ASC
         `,
           [collection.id]
         );
@@ -515,7 +517,7 @@ export async function collectionRoutes(server: FastifyInstance) {
         const result: CollectionInstallResult = {
           collection,
           packagesToInstall: packages.map(pkg => ({
-            packageId: pkg.package_id,
+            packageId: pkg.package_name, // Use package name, not UUID
             version: pkg.package_version || 'latest',
             format: pkg.format_override || input.format || 'cursor',
             required: pkg.required,

@@ -91,7 +91,13 @@ async function seedSkills() {
         const author = packageId.split('/')[0].substring(1); // Remove @ and get scope
 
         // Map package type to valid database type
+        // Valid types: 'cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'
         let type = pkg.type || 'claude-skill';
+
+        // Map 'skill' to 'claude-skill' for backwards compatibility
+        if (type === 'skill') {
+          type = 'claude-skill';
+        }
 
         // Initialize tags array
         let tags = Array.isArray(pkg.tags) ? [...pkg.tags] : [];

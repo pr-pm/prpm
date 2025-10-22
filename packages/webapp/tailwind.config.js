@@ -8,10 +8,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'prpm-purple': '#8b5cf6',
-        'prpm-purple-dark': '#7c3aed',
-        'prpm-accent': '#6366f1',
-        'prpm-accent-light': '#818cf8',
+        'prpm-purple': '#10b981',
+        'prpm-purple-dark': '#059669',
+        'prpm-accent': '#34d399',
+        'prpm-accent-light': '#6ee7b7',
         'prpm-dark': '#0a0a0f',
         'prpm-dark-lighter': '#12121a',
         'prpm-dark-card': '#1a1a24',
@@ -29,8 +29,8 @@ module.exports = {
       },
       keyframes: {
         glow: {
-          '0%': { boxShadow: '0 0 20px rgba(99, 102, 241, 0.3)' },
-          '100%': { boxShadow: '0 0 30px rgba(99, 102, 241, 0.6)' },
+          '0%': { boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)' },
+          '100%': { boxShadow: '0 0 30px rgba(16, 185, 129, 0.6)' },
         },
       },
     },

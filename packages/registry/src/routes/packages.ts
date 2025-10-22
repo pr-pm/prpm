@@ -237,7 +237,36 @@ export async function packageRoutes(server: FastifyInstance) {
 
       // For seeded packages with content in metadata, serve as gzipped content
       if (pkgVersion.metadata && typeof pkgVersion.metadata === 'object' && 'content' in pkgVersion.metadata) {
-        const content = (pkgVersion.metadata as { content: string }).content;
+        let content = (pkgVersion.metadata as { content: string }).content;
+
+        // If content is empty or just "---", try to fetch from repository URL
+        if (!content || content.trim() === '' || content.trim() === '---') {
+          const metadata = pkgVersion.metadata as { sourceUrl?: string; content?: string };
+          if (metadata.sourceUrl) {
+            try {
+              // Convert GitHub blob URL to raw URL
+              let rawUrl = metadata.sourceUrl;
+              if (rawUrl.includes('github.com') && rawUrl.includes('/blob/')) {
+                rawUrl = rawUrl.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+              }
+
+              const response = await fetch(rawUrl);
+              if (response.ok) {
+                content = await response.text();
+              } else {
+                server.log.warn(`Failed to fetch content from ${rawUrl}: ${response.status}`);
+              }
+            } catch (error) {
+              server.log.error({ error, sourceUrl: metadata.sourceUrl }, 'Error fetching content from GitHub');
+            }
+          }
+        }
+
+        // If still no content, return 404
+        if (!content || content.trim() === '' || content.trim() === '---') {
+          return reply.status(404).send({ error: 'Package content not available' });
+        }
+
         const zlib = await import('zlib');
         const gzipped = zlib.gzipSync(Buffer.from(content, 'utf-8'));
 

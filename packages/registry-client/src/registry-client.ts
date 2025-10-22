@@ -171,11 +171,32 @@ export class RegistryClient {
     tarballUrl: string,
     options: { format?: string } = {}
   ): Promise<Buffer> {
-    // Parse URL
-    const urlObj = new URL(tarballUrl);
+    // Replace production registry URL with configured registry URL
+    // This allows local development to work correctly
+    let url = tarballUrl;
+    const productionUrls = [
+      'https://registry.prpm.dev',
+      'http://registry.prpm.dev',
+      'https://prpm.dev',
+      'http://prpm.dev',
+    ];
 
-    // If format is specified and tarballUrl is from registry, append format param
-    if (options.format && tarballUrl.includes(this.baseUrl)) {
+    for (const prodUrl of productionUrls) {
+      if (url.startsWith(prodUrl)) {
+        url = url.replace(prodUrl, this.baseUrl);
+        // Fix URLs that are missing /api/v1 prefix
+        // e.g., http://localhost:3000/packages/UUID/version.tar.gz
+        // should be http://localhost:3000/api/v1/packages/UUID/version.tar.gz
+        url = url.replace(/^(https?:\/\/[^/]+)\/packages\//, '$1/api/v1/packages/');
+        break;
+      }
+    }
+
+    // Parse URL
+    const urlObj = new URL(url);
+
+    // If format is specified, append format param
+    if (options.format) {
       urlObj.searchParams.set('format', options.format);
     }
 
@@ -296,14 +317,16 @@ export class RegistryClient {
     format?: string;
     skipOptional?: boolean;
   }): Promise<CollectionInstallResult> {
-    const params = new URLSearchParams();
-    if (options.format) params.append('format', options.format);
-    if (options.skipOptional) params.append('skipOptional', 'true');
-
-    const versionPath = options.version ? `@${options.version}` : '';
     const response = await this.fetch(
-      `/api/v1/collections/${options.scope}/${options.id}${versionPath}/install?${params}`,
-      { method: 'POST' }
+      `/api/v1/collections/${options.scope}/${options.id}/install`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          version: options.version,
+          format: options.format,
+          skipOptional: options.skipOptional,
+        }),
+      }
     );
     return response.json() as Promise<CollectionInstallResult>;
   }

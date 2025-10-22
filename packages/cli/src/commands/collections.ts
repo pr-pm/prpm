@@ -218,13 +218,24 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
   const startTime = Date.now();
 
   try {
-    // Parse collection spec: @scope/name_slug or scope/name_slug
-    const match = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
-    if (!match) {
-      throw new Error('Invalid collection format. Use: @scope/name or scope/name[@version]');
-    }
+    // Parse collection spec: @scope/name_slug, scope/name_slug, or just name_slug (defaults to 'collection' scope)
+    let scope: string;
+    let name_slug: string;
+    let version: string | undefined;
 
-    const [, scope, name_slug, version] = match;
+    const matchWithScope = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
+    if (matchWithScope) {
+      // Has explicit scope: @scope/name or scope/name
+      [, scope, name_slug, version] = matchWithScope;
+    } else {
+      // No scope, assume 'collection' scope: just name or name@version
+      const matchNoScope = collectionSpec.match(/^([^/@]+)(?:@(.+))?$/);
+      if (!matchNoScope) {
+        throw new Error('Invalid collection format. Use: name, @scope/name, or scope/name (optionally with @version)');
+      }
+      [, name_slug, version] = matchNoScope;
+      scope = 'collection'; // Default scope
+    }
 
     const config = await getConfig();
     const client = getRegistryClient(config);
@@ -462,13 +473,24 @@ export async function handleCollectionInstall(
   let packagesFailed = 0;
 
   try {
-    // Parse collection spec
-    const match = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
-    if (!match) {
-      throw new Error('Invalid collection format. Use: @scope/name or scope/name[@version]');
-    }
+    // Parse collection spec: @scope/name_slug, scope/name_slug, or just name_slug (defaults to 'collection' scope)
+    let scope: string;
+    let name_slug: string;
+    let version: string | undefined;
 
-    const [, scope, name_slug, version] = match;
+    const matchWithScope = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
+    if (matchWithScope) {
+      // Has explicit scope: @scope/name or scope/name
+      [, scope, name_slug, version] = matchWithScope;
+    } else {
+      // No scope, assume 'collection' scope: just name or name@version
+      const matchNoScope = collectionSpec.match(/^([^/@]+)(?:@(.+))?$/);
+      if (!matchNoScope) {
+        throw new Error('Invalid collection format. Use: name, @scope/name, or scope/name (optionally with @version)');
+      }
+      [, name_slug, version] = matchNoScope;
+      scope = 'collection'; // Default scope
+    }
 
     const config = await getConfig();
     const client = getRegistryClient(config);

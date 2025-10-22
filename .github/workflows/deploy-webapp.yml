@@ -21,7 +21,6 @@ jobs:
           cd packages/webapp
           npm ci
           npm run build
-          npm run export
 
       - name: Deploy to S3
         env:
