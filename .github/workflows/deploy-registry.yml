@@ -12,7 +12,7 @@ on:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'dev'
+        default: 'prod'
         type: choice
         options:
           - dev
@@ -30,7 +30,7 @@ jobs:
 
     # Prevent concurrent deployments to same environment
     concurrency:
-      group: deploy-${{ github.event.inputs.environment || 'dev' }}
+      group: deploy-${{ github.event.inputs.environment || 'prod' }}
       cancel-in-progress: false
 
     defaults:
@@ -57,7 +57,7 @@ jobs:
       - name: Set environment variables
         id: env
         run: |
-          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          ENVIRONMENT="${{ github.event.inputs.environment || 'prod' }}"
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_OUTPUT
 
           # Set Beanstalk app/env names based on Pulumi outputs
