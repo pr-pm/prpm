@@ -244,9 +244,11 @@ export class RegistryClient {
     // The backend currently only accepts string[] for files
     const normalizedManifest = {
       ...manifest,
-      files: manifest.files.map(file =>
-        typeof file === 'string' ? file : file.path
-      ),
+      files: manifest.files
+        ? manifest.files.map(file =>
+            typeof file === 'string' ? file : file.path
+          )
+        : [],
     };
 
     const formData = new FormData();

@@ -12,13 +12,13 @@ import { randomBytes } from 'crypto';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
-import type { PackageManifest, PackageFileMetadata } from '../types/registry.js';
+import type { PackageManifest, PackageFileMetadata } from '../types/registry';
 import {
   marketplaceToManifest,
   validateMarketplaceJson,
   type MarketplaceJson,
-} from '../core/marketplace-converter.js';
-import { validateManifestSchema } from '../core/schema-validator.js';
+} from '../core/marketplace-converter';
+import { validateManifestSchema } from '../core/schema-validator';
 
 interface PublishOptions {
   access?: 'public' | 'private';
