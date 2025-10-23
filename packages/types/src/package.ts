@@ -4,6 +4,8 @@
 
 export type PackageType =
   | 'cursor'
+  | 'cursor-agent'
+  | 'cursor-slash-command'
   | 'claude'
   | 'claude-skill'
   | 'claude-agent'

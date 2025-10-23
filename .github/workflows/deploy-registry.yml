@@ -63,7 +63,7 @@ jobs:
           # Set Beanstalk app/env names based on Pulumi outputs
           if [ "$ENVIRONMENT" = "prod" ]; then
             echo "EB_APP_NAME=prpm-prod" >> $GITHUB_OUTPUT
-            echo "EB_ENV_NAME=prpm-prpm-prod-env" >> $GITHUB_OUTPUT
+            echo "EB_ENV_NAME=prpm-prod-env" >> $GITHUB_OUTPUT
             echo "S3_BUCKET=prpm-prod-packages" >> $GITHUB_OUTPUT
           elif [ "$ENVIRONMENT" = "staging" ]; then
             echo "EB_APP_NAME=prpm-staging" >> $GITHUB_OUTPUT
