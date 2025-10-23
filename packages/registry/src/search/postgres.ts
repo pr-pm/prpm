@@ -34,8 +34,15 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       }
 
       if (type) {
-        conditions.push(`type = $${paramIndex++}`);
-        params.push(type);
+        if (Array.isArray(type)) {
+          // Handle array of types with IN clause
+          conditions.push(`type = ANY($${paramIndex++})`);
+          params.push(type);
+        } else {
+          // Handle single type
+          conditions.push(`type = $${paramIndex++}`);
+          params.push(type);
+        }
       }
 
       if (category) {

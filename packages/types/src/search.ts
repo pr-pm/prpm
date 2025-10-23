@@ -13,7 +13,7 @@ export type SortType = 'downloads' | 'created' | 'updated' | 'quality' | 'rating
  * Package search filters
  */
 export interface SearchFilters {
-  type?: PackageType;
+  type?: PackageType | PackageType[];
   tags?: string[];
   category?: string;
   author?: string; // Filter by author username
@@ -29,7 +29,7 @@ export interface SearchFilters {
  */
 export interface SearchPackagesParams {
   q?: string;
-  type?: PackageType;
+  type?: PackageType | PackageType[];
   tags?: string[];
   category?: string;
   author?: string;
