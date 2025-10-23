@@ -1,0 +1,22 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simplified version for favicon -->
+  <rect width="32" height="32" rx="6" fill="#1a1a2e"/>
+
+  <!-- Package box - simplified isometric -->
+  <g transform="translate(16, 10)">
+    <!-- Top face -->
+    <path d="M 0,-4 L 6,-1 L 0,2 L -6,-1 Z" fill="#9333ea"/>
+
+    <!-- Left face -->
+    <path d="M -6,-1 L -6,7 L 0,10 L 0,2 Z" fill="#6d28d9"/>
+
+    <!-- Right face -->
+    <path d="M 6,-1 L 6,7 L 0,10 L 0,2 Z" fill="#7c3aed"/>
+
+    <!-- Vertical line detail -->
+    <line x1="0" y1="-4" x2="0" y2="10" stroke="#c084fc" stroke-width="1.5"/>
+  </g>
+
+  <!-- Small accent dot -->
+  <circle cx="16" cy="26" r="1.5" fill="#9333ea"/>
+</svg>

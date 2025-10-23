@@ -6,7 +6,10 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'PRPM - Prompt Package Manager',
-  description: 'Manage and share AI coding prompts with the community',
+  description: 'The universal registry for AI coding prompts, agents, skills, and slash commands',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({

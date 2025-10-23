@@ -1,0 +1,56 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <circle cx="256" cy="256" r="256" fill="url(#bgGradient)"/>
+
+  <!-- Gradient definitions -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#0f0f1e"/>
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#9333ea"/>
+      <stop offset="50%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#6d28d9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Package box representation - 3D isometric style -->
+  <g transform="translate(256, 180)">
+    <!-- Top face -->
+    <path d="M 0,-60 L 80,-20 L 0,20 L -80,-20 Z" fill="url(#accentGradient)" opacity="0.9"/>
+
+    <!-- Left face -->
+    <path d="M -80,-20 L -80,80 L 0,120 L 0,20 Z" fill="#6d28d9" opacity="0.7"/>
+
+    <!-- Right face -->
+    <path d="M 80,-20 L 80,80 L 0,120 L 0,20 Z" fill="#7c3aed" opacity="0.8"/>
+
+    <!-- Ribbon/tape across the box -->
+    <rect x="-10" y="-40" width="20" height="160" fill="#a855f7" opacity="0.6"/>
+
+    <!-- Vertical line detail -->
+    <line x1="0" y1="-60" x2="0" y2="120" stroke="#c084fc" stroke-width="3" opacity="0.8"/>
+  </g>
+
+  <!-- PRPM text at bottom -->
+  <text x="256" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="700" fill="#ffffff" text-anchor="middle">
+    PRPM
+  </text>
+
+  <!-- Accent dots for decoration -->
+  <circle cx="140" cy="140" r="8" fill="#9333ea" opacity="0.3"/>
+  <circle cx="372" cy="140" r="8" fill="#9333ea" opacity="0.3"/>
+  <circle cx="140" cy="372" r="8" fill="#9333ea" opacity="0.3"/>
+  <circle cx="372" cy="372" r="8" fill="#9333ea" opacity="0.3"/>
+
+  <!-- Grid pattern overlay for tech feel -->
+  <g opacity="0.05">
+    <line x1="128" y1="0" x2="128" y2="512" stroke="#ffffff" stroke-width="1"/>
+    <line x1="256" y1="0" x2="256" y2="512" stroke="#ffffff" stroke-width="1"/>
+    <line x1="384" y1="0" x2="384" y2="512" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="128" x2="512" y2="128" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="256" x2="512" y2="256" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="384" x2="512" y2="384" stroke="#ffffff" stroke-width="1"/>
+  </g>
+</svg>
