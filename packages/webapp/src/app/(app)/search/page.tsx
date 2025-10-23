@@ -15,7 +15,7 @@ import {
 } from '@/lib/api'
 import PackageModal from '@/components/PackageModal'
 
-type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
+type TabType = 'all' | 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
 
 function SearchPageContent() {
   const router = useRouter()
@@ -23,7 +23,7 @@ function SearchPageContent() {
 
   // Track initial URL params to prevent reset on mount
   const initialParams = useState(() => ({
-    tab: searchParams.get('tab') as TabType || 'packages',
+    tab: searchParams.get('tab') as TabType || 'all',
     query: searchParams.get('q') || '',
     type: searchParams.get('type') as PackageType || '',
     category: searchParams.get('category') || '',
@@ -62,7 +62,7 @@ function SearchPageContent() {
     const params = new URLSearchParams()
 
     if (query) params.set('q', query)
-    if (activeTab !== 'packages') params.set('tab', activeTab)
+    if (activeTab !== 'all') params.set('tab', activeTab)
     if (selectedType) params.set('type', selectedType)
     if (selectedCategory) params.set('category', selectedCategory)
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','))
@@ -200,7 +200,7 @@ function SearchPageContent() {
 
   // Load data based on active tab
   useEffect(() => {
-    if (activeTab === 'packages') {
+    if (activeTab === 'all' || activeTab === 'packages') {
       fetchPackages()
     } else if (activeTab === 'collections') {
       fetchCollections()
@@ -295,6 +295,19 @@ function SearchPageContent() {
         {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-prpm-border overflow-x-auto">
           <button
+            onClick={() => setActiveTab('all')}
+            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
+              activeTab === 'all'
+                ? 'text-prpm-accent'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            All
+            {activeTab === 'all' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab('packages')}
             className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'packages'
@@ -377,8 +390,8 @@ function SearchPageContent() {
                 )}
               </div>
 
-              {/* Type Filter (packages only) */}
-              {activeTab === 'packages' && (
+              {/* Type Filter (packages and all tabs) */}
+              {(activeTab === 'packages' || activeTab === 'all') && (
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Type
@@ -480,7 +493,7 @@ function SearchPageContent() {
             ) : (
               <>
                 {/* Package Results */}
-                {(activeTab === 'packages' || activeTab === 'skills' || activeTab === 'slash-commands' || activeTab === 'agents') && (
+                {(activeTab === 'all' || activeTab === 'packages' || activeTab === 'skills' || activeTab === 'slash-commands' || activeTab === 'agents') && (
                   <div className="space-y-4">
                     {packages.length === 0 ? (
                       <div className="text-center py-20">
