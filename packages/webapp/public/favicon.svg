@@ -5,18 +5,18 @@
   <!-- Package box - simplified isometric -->
   <g transform="translate(16, 10)">
     <!-- Top face -->
-    <path d="M 0,-4 L 6,-1 L 0,2 L -6,-1 Z" fill="#9333ea"/>
+    <path d="M 0,-4 L 6,-1 L 0,2 L -6,-1 Z" fill="#10b981"/>
 
     <!-- Left face -->
-    <path d="M -6,-1 L -6,7 L 0,10 L 0,2 Z" fill="#6d28d9"/>
+    <path d="M -6,-1 L -6,7 L 0,10 L 0,2 Z" fill="#047857"/>
 
     <!-- Right face -->
-    <path d="M 6,-1 L 6,7 L 0,10 L 0,2 Z" fill="#7c3aed"/>
+    <path d="M 6,-1 L 6,7 L 0,10 L 0,2 Z" fill="#059669"/>
 
     <!-- Vertical line detail -->
-    <line x1="0" y1="-4" x2="0" y2="10" stroke="#c084fc" stroke-width="1.5"/>
+    <line x1="0" y1="-4" x2="0" y2="10" stroke="#6ee7b7" stroke-width="1.5"/>
   </g>
 
   <!-- Small accent dot -->
-  <circle cx="16" cy="26" r="1.5" fill="#9333ea"/>
+  <circle cx="16" cy="26" r="1.5" fill="#10b981"/>
 </svg>
