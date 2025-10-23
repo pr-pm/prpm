@@ -83,8 +83,11 @@ export async function handleIndex(): Promise<void> {
     // Define directories to scan with their types
     const dirsToScan: Array<{ path: string; type: PackageType; label: string }> = [
       { path: '.cursor/rules', type: 'cursor', label: 'Cursor Rules' },
+      { path: '.cursor/agents', type: 'cursor-agent', label: 'Cursor Agents' },
+      { path: '.cursor/commands', type: 'cursor-slash-command', label: 'Cursor Slash Commands' },
       { path: '.claude/agents', type: 'claude', label: 'Claude Agents' },
       { path: '.claude/skills', type: 'claude-skill', label: 'Claude Skills' },
+      { path: '.claude/commands', type: 'claude-slash-command', label: 'Claude Slash Commands' },
       { path: '.continue/rules', type: 'continue', label: 'Continue Rules' },
       { path: '.windsurf/rules', type: 'windsurf', label: 'Windsurf Rules' },
       { path: '.prompts', type: 'generic', label: 'Generic Prompts' },
