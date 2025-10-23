@@ -10,7 +10,6 @@
     "dev:no-build": "tsx watch src/index.ts",
     "build": "tsc",
     "build:watch": "tsc --watch --preserveWatchOutput",
-    "postinstall": "npm run build",
     "start": "node dist/index.js",
     "migrate": "node --import tsx migrations/run.ts",
     "migrate:create": "node --import tsx migrations/create.ts",
