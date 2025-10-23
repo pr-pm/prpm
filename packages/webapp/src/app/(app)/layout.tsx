@@ -1,5 +1,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: {
+    default: 'Browse Packages',
+    template: '%s | PRPM'
+  },
+}
 
 export default function AppLayout({
   children,
@@ -31,6 +39,12 @@ export default function AppLayout({
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Authors
+                </Link>
+                <Link
+                  href="/blog"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  Blog
                 </Link>
                 <Link
                   href="/dashboard"

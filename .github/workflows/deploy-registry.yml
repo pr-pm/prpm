@@ -387,15 +387,17 @@ jobs:
               exit 1
             fi
 
-            # Only fail on Red health if it persists for multiple checks
-            if [ "$HEALTH" = "Red" ]; then
+            # Track Red/Degraded health but be lenient during rolling deployments
+            if [ "$HEALTH" = "Red" ] || [ "$HEALTH" = "Degraded" ]; then
               RED_COUNT=$((RED_COUNT + 1))
-              echo "⚠️  Health is Red (consecutive: $RED_COUNT)"
+              echo "⚠️  Health is $HEALTH (consecutive: $RED_COUNT)"
 
-              # Only fail if Red for 6+ consecutive checks (60+ seconds) AND we're past initial deployment phase
-              # This accounts for rolling deployments where multiple instances cycle through
-              if [ $RED_COUNT -ge 6 ] && [ $i -gt 12 ]; then
-                echo "❌ Environment health has been Red for $RED_COUNT consecutive checks (60+ seconds)"
+              # Only fail if Red for extended period (10+ checks = 100+ seconds) AND we're well past deployment start
+              # AND the deployment has actually completed (Status = Ready)
+              # This is lenient because rolling deployments cycle instances and health fluctuates
+              if [ $RED_COUNT -ge 10 ] && [ $i -gt 30 ] && [ "$STATUS" = "Ready" ] && [ "$VERSION" = "$VERSION_LABEL" ]; then
+                echo "❌ Environment health has been $HEALTH for $RED_COUNT consecutive checks (100+ seconds) after deployment completion"
+                echo "This may indicate a problem with the deployed application."
 
                 # Get recent events
                 echo "Recent events:"
@@ -408,14 +410,13 @@ jobs:
                 exit 1
               fi
             else
-              # Reset counter if health improves
-              RED_COUNT=0
-              if [ $RED_COUNT_PREV -gt 0 ]; then
-                echo "✅ Health recovered from Red after $RED_COUNT_PREV checks"
-                RED_COUNT_PREV=0
+              # Reset counter if health improves (Green or Yellow)
+              if [ $RED_COUNT -gt 0 ]; then
+                echo "✅ Health recovered to $HEALTH after $RED_COUNT checks"
               fi
+              RED_COUNT=0
+              RED_COUNT_PREV=0
             fi
-            RED_COUNT_PREV=$RED_COUNT
 
             sleep 10
           done

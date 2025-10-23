@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const [unclaimedCount, setUnclaimedCount] = useState<number>(0)
   const [claiming, setClaiming] = useState(false)
   const [claimError, setClaimError] = useState<string | null>(null)
+  const [showTweetModal, setShowTweetModal] = useState(false)
 
   useEffect(() => {
     // Check if user is logged in
@@ -50,6 +51,13 @@ export default function DashboardPage() {
 
         const userData = await response.json()
         setUser(userData)
+
+        // Check if this is first login (show tweet modal)
+        const hasSeenTweetPrompt = localStorage.getItem('prpm_seen_tweet_prompt')
+        if (!hasSeenTweetPrompt) {
+          setShowTweetModal(true)
+          localStorage.setItem('prpm_seen_tweet_prompt', 'true')
+        }
 
         // Check for unclaimed packages
         try {
@@ -288,6 +296,64 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Tweet Encouragement Modal */}
+      {showTweetModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-2xl p-8 max-w-lg w-full relative">
+            <button
+              onClick={() => setShowTweetModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">🎉</div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Welcome to PRPM!
+              </h2>
+              <p className="text-gray-400">
+                You've successfully connected your GitHub account. Share your journey with the community!
+              </p>
+            </div>
+
+            <div className="bg-prpm-dark border border-prpm-border rounded-xl p-4 mb-6">
+              <p className="text-gray-300 text-sm mb-3">Ready-to-share tweet:</p>
+              <p className="text-white leading-relaxed">
+                Just connected my GitHub to @prpm_ai 🚀
+                <br /><br />
+                Check out my AI prompts, agents, and coding tools at prpm.ai/@{user?.username}
+                <br /><br />
+                #AI #DevTools #Prompts
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just connected my GitHub to @prpm_ai 🚀\n\nCheck out my AI prompts, agents, and coding tools at prpm.ai/@${user?.username}\n\n#AI #DevTools #Prompts`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 px-6 py-3 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+                onClick={() => setShowTweetModal(false)}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                </svg>
+                Tweet Now
+              </a>
+              <button
+                onClick={() => setShowTweetModal(false)}
+                className="px-6 py-3 bg-prpm-dark border border-prpm-border hover:border-prpm-accent text-gray-300 rounded-lg font-semibold transition-all"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
