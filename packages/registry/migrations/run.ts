@@ -35,7 +35,9 @@ async function runMigrations() {
     `);
 
     // Get list of migration files
-    const migrationsDir = __dirname;
+    // When built, this file is at dist/migrations/run.js
+    // SQL files are at migrations/*.sql (one level up from dist)
+    const migrationsDir = join(__dirname, '..', '..', 'migrations');
     const files = await readdir(migrationsDir);
     const sqlFiles = files
       .filter(f => f.endsWith('.sql'))
