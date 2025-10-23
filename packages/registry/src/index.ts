@@ -137,25 +137,45 @@ async function buildServer() {
     },
   });
 
-  // Database connection
+  // Database connection with retry logic
   server.log.info('🔌 Connecting to database...');
-  await setupDatabase(server);
-  server.log.info('✅ Database connected');
+  try {
+    await setupDatabase(server);
+    server.log.info('✅ Database connected');
+  } catch (error) {
+    server.log.error({ error }, '❌ Database connection failed');
+    throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 
-  // Redis cache
+  // Redis cache with retry logic
   server.log.info('🔌 Connecting to Redis...');
-  await setupRedis(server);
-  server.log.info('✅ Redis connected');
+  try {
+    await setupRedis(server);
+    server.log.info('✅ Redis connected');
+  } catch (error) {
+    server.log.error({ error }, '❌ Redis connection failed');
+    throw new Error(`Redis connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 
   // Authentication
   server.log.info('🔐 Setting up authentication...');
-  await setupAuth(server);
-  server.log.info('✅ Authentication configured');
+  try {
+    await setupAuth(server);
+    server.log.info('✅ Authentication configured');
+  } catch (error) {
+    server.log.error({ error }, '❌ Authentication setup failed');
+    throw new Error(`Authentication setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 
   // Telemetry & Analytics
   server.log.info('📊 Initializing telemetry...');
-  await registerTelemetryPlugin(server);
-  server.log.info('✅ Telemetry initialized');
+  try {
+    await registerTelemetryPlugin(server);
+    server.log.info('✅ Telemetry initialized');
+  } catch (error) {
+    server.log.error({ error }, '❌ Telemetry initialization failed');
+    throw new Error(`Telemetry initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 
   // API routes
   server.log.info('🛣️  Registering API routes...');
@@ -262,10 +282,8 @@ async function buildServer() {
   return server;
 }
 
-async function start() {
+async function start(server: Awaited<ReturnType<typeof buildServer>>) {
   try {
-    const server = await buildServer();
-
     await server.listen({
       port: config.port,
       host: config.host,
@@ -285,8 +303,8 @@ async function start() {
       '🚀 PRMP Registry Server started'
     );
   } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
+    server.log.error({ error }, 'Failed to start server');
+    throw error;
   }
 }
 
@@ -315,10 +333,12 @@ process.on('SIGTERM', async () => {
 // Start server
 (async () => {
   try {
+    console.log('🚀 Initializing PRMP Registry Server...');
     serverInstance = await buildServer();
-    await start();
+    await start(serverInstance);
   } catch (error) {
-    console.error('Failed to initialize server:', error);
+    console.error('❌ Failed to initialize server:', error);
+    console.error('Stack:', error instanceof Error ? error.stack : 'No stack trace');
     process.exit(1);
   }
 })();
