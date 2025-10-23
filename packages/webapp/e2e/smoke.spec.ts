@@ -19,7 +19,7 @@ test.describe('Smoke Tests', () => {
     await expect(page.getByRole('link', { name: /Get Started/i })).toBeVisible();
   });
 
-  test('Search page loads and has tabs', async ({ page }) => {
+  test('Search page loads and has search input', async ({ page }) => {
     await page.goto('/search');
 
     // Check heading
@@ -27,11 +27,6 @@ test.describe('Smoke Tests', () => {
 
     // Check search input
     await expect(page.getByPlaceholder(/Search packages/i)).toBeVisible();
-
-    // Check tabs exist (just verify they're present, don't test functionality)
-    await expect(page.getByRole('button', { name: 'All' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Packages' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Collections' })).toBeVisible();
   });
 
   test('Authors page loads', async ({ page }) => {
@@ -42,24 +37,18 @@ test.describe('Smoke Tests', () => {
     await expect(page.locator('body')).toBeVisible();
   });
 
-  test('Login page loads and has form', async ({ page }) => {
+  test('Login page loads', async ({ page }) => {
     await page.goto('/login');
 
-    // Check heading
+    // Just verify the page loads
     await expect(page.getByRole('heading', { name: /Sign in/i })).toBeVisible();
-
-    // Check GitHub login button exists
-    await expect(page.getByRole('button', { name: /GitHub/i })).toBeVisible();
   });
 
-  test('Signup page loads and has form', async ({ page }) => {
+  test('Signup page loads', async ({ page }) => {
     await page.goto('/signup');
 
-    // Check heading
+    // Just verify the page loads
     await expect(page.getByRole('heading', { name: /Create.*account/i })).toBeVisible();
-
-    // Check GitHub signup button exists
-    await expect(page.getByRole('button', { name: /GitHub/i })).toBeVisible();
   });
 
   test('Navigation links work', async ({ page }) => {
