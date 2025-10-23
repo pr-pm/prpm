@@ -13,8 +13,9 @@ import {
   PackageType,
   SortType,
 } from '@/lib/api'
+import PackageModal from '@/components/PackageModal'
 
-type TabType = 'packages' | 'collections' | 'skills'
+type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
 
 function SearchPageContent() {
   const router = useRouter()
@@ -46,6 +47,8 @@ function SearchPageContent() {
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [availableCategories, setAvailableCategories] = useState<string[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
+  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
+  const [showPackageModal, setShowPackageModal] = useState(false)
 
   const limit = 20
 
@@ -145,6 +148,56 @@ function SearchPageContent() {
     }
   }
 
+  // Fetch slash commands (claude-slash-command type packages)
+  const fetchSlashCommands = async () => {
+    setLoading(true)
+    try {
+      const params: SearchPackagesParams = {
+        type: 'claude-slash-command',
+        limit,
+        offset: (page - 1) * limit,
+        sort,
+      }
+
+      if (query.trim()) params.q = query
+      if (selectedCategory) params.category = selectedCategory
+      if (selectedTags.length > 0) params.tags = selectedTags
+
+      const result = await searchPackages(params)
+      setPackages(result.packages)
+      setTotal(result.total)
+    } catch (error) {
+      console.error('Failed to fetch slash commands:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch agents (claude-agent type packages)
+  const fetchAgents = async () => {
+    setLoading(true)
+    try {
+      const params: SearchPackagesParams = {
+        type: 'claude-agent',
+        limit,
+        offset: (page - 1) * limit,
+        sort,
+      }
+
+      if (query.trim()) params.q = query
+      if (selectedCategory) params.category = selectedCategory
+      if (selectedTags.length > 0) params.tags = selectedTags
+
+      const result = await searchPackages(params)
+      setPackages(result.packages)
+      setTotal(result.total)
+    } catch (error) {
+      console.error('Failed to fetch agents:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Load data based on active tab
   useEffect(() => {
     if (activeTab === 'packages') {
@@ -153,6 +206,10 @@ function SearchPageContent() {
       fetchCollections()
     } else if (activeTab === 'skills') {
       fetchSkills()
+    } else if (activeTab === 'slash-commands') {
+      fetchSlashCommands()
+    } else if (activeTab === 'agents') {
+      fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, query, selectedType, selectedCategory, selectedTags, sort, page])
@@ -273,6 +330,32 @@ function SearchPageContent() {
           >
             Skills
             {activeTab === 'skills' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('slash-commands')}
+            className={`px-6 py-3 font-medium transition-colors relative ${
+              activeTab === 'slash-commands'
+                ? 'text-prpm-accent'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Slash Commands
+            {activeTab === 'slash-commands' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('agents')}
+            className={`px-6 py-3 font-medium transition-colors relative ${
+              activeTab === 'agents'
+                ? 'text-prpm-accent'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Agents
+            {activeTab === 'agents' && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
             )}
           </button>
@@ -397,7 +480,7 @@ function SearchPageContent() {
             ) : (
               <>
                 {/* Package Results */}
-                {(activeTab === 'packages' || activeTab === 'skills') && (
+                {(activeTab === 'packages' || activeTab === 'skills' || activeTab === 'slash-commands' || activeTab === 'agents') && (
                   <div className="space-y-4">
                     {packages.length === 0 ? (
                       <div className="text-center py-20">
@@ -407,7 +490,11 @@ function SearchPageContent() {
                       packages.map((pkg) => (
                         <div
                           key={pkg.id}
-                          className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors"
+                          className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
+                          onClick={() => {
+                            setSelectedPackage(pkg)
+                            setShowPackageModal(true)
+                          }}
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -558,6 +645,15 @@ function SearchPageContent() {
             )}
           </div>
         </div>
+
+        {/* Package Modal */}
+        {selectedPackage && (
+          <PackageModal
+            package={selectedPackage}
+            isOpen={showPackageModal}
+            onClose={() => setShowPackageModal(false)}
+          />
+        )}
       </div>
     </main>
   )

@@ -12,6 +12,7 @@ import {
   getCurrentUser,
   type Author,
 } from '@/lib/api'
+import PackageModal from '@/components/PackageModal'
 
 interface AuthorStats {
   total_packages: number
@@ -61,7 +62,6 @@ function AuthorsPageContent() {
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [showPackageModal, setShowPackageModal] = useState(false)
-  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (username) {
@@ -124,12 +124,6 @@ function AuthorsPageContent() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleCopyInstall = (packageName: string) => {
-    navigator.clipboard.writeText(`prpm install ${packageName}`)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
   }
 
   if (loading) {
@@ -318,79 +312,12 @@ function AuthorsPageContent() {
           </div>
 
           {/* Package Modal */}
-          {showPackageModal && selectedPackage && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-              onClick={() => setShowPackageModal(false)}
-            >
-              <div
-                className="bg-prpm-dark-card border border-prpm-border rounded-xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-2">{selectedPackage.name}</h2>
-                    <span className="px-3 py-1 bg-prpm-dark rounded text-sm text-prpm-accent">
-                      {selectedPackage.type}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setShowPackageModal(false)}
-                    className="text-gray-400 hover:text-white text-2xl"
-                  >
-                    ×
-                  </button>
-                </div>
-
-                <p className="text-gray-300 mb-6">{selectedPackage.description}</p>
-
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-prpm-dark p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-prpm-accent">
-                      {selectedPackage.total_downloads.toLocaleString()}
-                    </div>
-                    <div className="text-gray-400 text-sm">Total Downloads</div>
-                  </div>
-                  <div className="bg-prpm-dark p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-prpm-accent">
-                      {selectedPackage.weekly_downloads.toLocaleString()}
-                    </div>
-                    <div className="text-gray-400 text-sm">Weekly Downloads</div>
-                  </div>
-                </div>
-
-                {selectedPackage.tags.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-sm font-semibold text-gray-400 mb-2">Tags</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedPackage.tags.map((tag: string) => (
-                        <span
-                          key={tag}
-                          className="px-3 py-1 bg-prpm-dark border border-prpm-border rounded text-sm text-gray-300"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleCopyInstall(selectedPackage.name)}
-                    className="flex-1 px-4 py-2 bg-prpm-accent hover:bg-prpm-accent-dark rounded-lg font-medium"
-                  >
-                    {copied ? '✓ Copied!' : 'Copy Install Command'}
-                  </button>
-                  <Link
-                    href={`/search?q=${selectedPackage.name}`}
-                    className="px-4 py-2 border border-prpm-border hover:border-prpm-accent rounded-lg font-medium text-center"
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            </div>
+          {selectedPackage && (
+            <PackageModal
+              package={selectedPackage}
+              isOpen={showPackageModal}
+              onClose={() => setShowPackageModal(false)}
+            />
           )}
         </div>
       </div>
