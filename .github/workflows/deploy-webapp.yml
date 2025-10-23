@@ -37,6 +37,8 @@ jobs:
         run: npm run build --workspace=@prpm/types
 
       - name: Build webapp
+        env:
+          REGISTRY_URL: https://registry.prpm.dev
         run: |
           cd packages/webapp
           npm ci
