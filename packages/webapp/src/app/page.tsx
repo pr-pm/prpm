@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Home() {
   return (
@@ -20,6 +21,10 @@ export default function Home() {
               Alpha · 1,042+ packages · 16 collections
             </div>
 
+            <div className="flex justify-center mb-8">
+              <Image src="/logo.svg" alt="PRPM Logo" width={120} height={120} className="w-24 h-24 lg:w-32 lg:h-32" />
+            </div>
+
             <h1 className="text-7xl lg:text-8xl font-extrabold mb-6 tracking-tight">
               <span className="bg-gradient-to-r from-white via-gray-100 to-gray-400 bg-clip-text text-transparent">
                 PRPM
@@ -31,7 +36,7 @@ export default function Home() {
             </p>
 
             <p className="text-lg lg:text-xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              The universal registry for AI coding prompts. Install packages individually or use
+              The universal registry for AI coding prompts, agents, skills, and slash commands. Install packages individually or use
               <span className="text-prpm-accent font-semibold"> collections</span> to get complete workflow setups in one command.
               Works with Cursor, Claude, Continue, Windsurf, and more.
             </p>
@@ -103,7 +108,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2 text-white">1,042+ Packages</h3>
               <p className="text-gray-400 leading-relaxed">
-                Curated collection of production-ready AI prompts from verified contributors
+                Production-ready prompts, agents, skills, and slash commands from verified contributors
               </p>
             </div>
 
