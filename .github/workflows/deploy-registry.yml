@@ -160,18 +160,28 @@ jobs:
 
           echo "Creating deployment package: ${VERSION_LABEL}.zip"
 
-          # Include @prpm/types as a local dependency since it's a workspace package
-          echo "Copying @prpm/types to node_modules..."
-          mkdir -p node_modules/@prpm
-          cp -r ../types node_modules/@prpm/types
+          # Include @prpm/types as a local file dependency since it's a workspace package
+          echo "Copying @prpm/types to .types directory..."
+          mkdir -p .types
+          cp -r ../types/* .types/
 
           # Verify types package was copied
-          if [ ! -d "node_modules/@prpm/types/dist" ]; then
+          if [ ! -d ".types/dist" ]; then
             echo "❌ Failed to copy types package"
             exit 1
           fi
 
           echo "✅ Types package copied successfully"
+
+          # Modify package.json to use file: dependency for @prpm/types
+          echo "Updating package.json to use local types..."
+          cp package.json package.json.bak
+          cat package.json | jq '.dependencies["@prpm/types"] = "file:.types"' > package.json.tmp
+          mv package.json.tmp package.json
+
+          # Show the change
+          echo "Modified dependency:"
+          jq '.dependencies["@prpm/types"]' package.json
 
           zip -r ${VERSION_LABEL}.zip \
             dist/ \
@@ -181,15 +191,19 @@ jobs:
             .platform/ \
             migrations/ \
             scripts/ \
-            node_modules/@prpm/types/ \
+            .types/ \
             -x "*.git*" \
             -x "*.md" \
             -x "*.test.*" \
             -x "*.spec.*" \
+            -x "*node_modules*" \
             -q
 
+          # Restore original package.json
+          mv package.json.bak package.json
+
           ls -lh ${VERSION_LABEL}.zip
-          echo "✅ Deployment package created with @prpm/types included"
+          echo "✅ Deployment package created with @prpm/types as file dependency"
 
       - name: Upload to S3
         working-directory: packages/registry
