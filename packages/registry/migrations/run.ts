@@ -3,7 +3,6 @@
  * Database migration runner
  */
 
-import { config } from 'dotenv';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { Client } from 'pg';
@@ -13,8 +12,14 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env file from registry root
-config({ path: join(__dirname, '..', '.env') });
+// Load .env file from registry root (only in development)
+// In production, environment variables are set by the platform
+try {
+  const { config } = await import('dotenv');
+  config({ path: join(__dirname, '..', '.env') });
+} catch {
+  // dotenv not available or not needed (production environment)
+}
 
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://prpm:prpm@localhost:5434/prpm';
 
