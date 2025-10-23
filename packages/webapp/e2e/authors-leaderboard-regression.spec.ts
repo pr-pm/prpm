@@ -116,8 +116,8 @@ test.describe('Authors Page - Leaderboard Design Regression', () => {
       await expect(githubButton.locator('svg')).toBeVisible();
 
       // Check gradient styling
-      const banner = page.locator('div').filter({ hasText: 'Want to Join the Leaderboard?' }).first();
-      await expect(banner).toHaveClass(/bg-gradient-to-r/);
+      const banner = page.locator('div.bg-gradient-to-r').filter({ hasText: 'Want to Join the Leaderboard?' });
+      await expect(banner).toBeVisible();
       await expect(banner).toHaveClass(/from-prpm-purple/);
     });
   });
@@ -125,9 +125,8 @@ test.describe('Authors Page - Leaderboard Design Regression', () => {
   test.describe('Leaderboard Table Structure', () => {
     test('should have correct table structure and styling', async ({ page }) => {
       // Check header row with gradient background
-      const headerRow = page.locator('div').filter({ hasText: /^#.*Author.*Packages.*Downloads.*Status$/ }).first();
+      const headerRow = page.locator('div.bg-gradient-to-r').filter({ hasText: 'Author' }).filter({ hasText: 'Packages' }).first();
       await expect(headerRow).toBeVisible();
-      await expect(headerRow).toHaveClass(/bg-gradient-to-r/);
 
       // Check all 5 column headers in correct order
       const headers = page.locator('.grid.grid-cols-12 > div');
@@ -278,8 +277,8 @@ test.describe('Authors Page - Leaderboard Design Regression', () => {
     test('should display centered bottom CTA', async ({ page }) => {
       await expect(page.getByText('Missing from the list? Contribute your packages today!')).toBeVisible();
 
-      const bottomCTA = page.locator('div').filter({ hasText: 'Missing from the list?' }).first();
-      await expect(bottomCTA).toHaveClass(/text-center/);
+      const bottomCTA = page.locator('div.text-center').filter({ hasText: 'Missing from the list?' });
+      await expect(bottomCTA).toBeVisible();
     });
   });
 

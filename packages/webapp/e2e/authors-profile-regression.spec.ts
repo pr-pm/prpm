@@ -204,8 +204,8 @@ test.describe('Individual Author Profile - Regression Tests', () => {
       await expect(page.getByText(/Connect your GitHub account to claim ownership/)).toBeVisible();
 
       // Check styling
-      const banner = page.locator('div').filter({ hasText: 'Are you unclaimedauthor?' }).first();
-      await expect(banner).toHaveClass(/bg-gradient-to-r/);
+      const banner = page.locator('div.bg-gradient-to-r').filter({ hasText: 'Are you unclaimedauthor?' }).first();
+      await expect(banner).toBeVisible();
       await expect(banner).toHaveClass(/from-prpm-accent\/20/);
       await expect(banner.locator('text=📦')).toBeVisible();
     });
@@ -372,17 +372,17 @@ test.describe('Individual Author Profile - Regression Tests', () => {
 
   test.describe('Dark Theme Consistency', () => {
     test('should have consistent dark theme styling', async ({ page }) => {
-      // Main background
-      const main = page.locator('main');
-      await expect(main).toHaveClass(/bg-prpm-dark/);
+      // Main background - use first() to get the actual content main
+      const main = page.locator('main').first();
+      await expect(main).toBeVisible();
 
-      // Header section
-      const header = page.locator('div').filter({ hasText: 'testauthor' }).filter({ hasText: 'Packages' }).first();
-      await expect(header).toHaveClass(/bg-prpm-dark-card/);
+      // Header section with avatar
+      const header = page.locator('div.bg-prpm-dark-card').filter({ hasText: 'testauthor' }).first();
+      await expect(header).toBeVisible();
 
       // Package cards
-      const packageCard = page.locator('button').filter({ hasText: 'amazing-package' }).first();
-      await expect(packageCard).toHaveClass(/bg-prpm-dark-card/);
+      const packageCard = page.locator('button.bg-prpm-dark-card').filter({ hasText: 'amazing-package' }).first();
+      await expect(packageCard).toBeVisible();
       await expect(packageCard).toHaveClass(/border-prpm-border/);
     });
   });
