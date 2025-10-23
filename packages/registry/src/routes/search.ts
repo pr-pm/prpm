@@ -18,7 +18,7 @@ export async function searchRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           q: { type: 'string' },
-          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'cursor-agent', 'cursor-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
           tags: { type: 'array', items: { type: 'string' } },
           category: { type: 'string' },
           author: { type: 'string' },
@@ -89,7 +89,7 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'cursor-agent', 'cursor-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },
@@ -141,7 +141,7 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
+          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'cursor-agent', 'cursor-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },

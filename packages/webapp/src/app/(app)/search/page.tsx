@@ -148,24 +148,67 @@ function SearchPageContent() {
     }
   }
 
-  // Fetch slash commands (claude-slash-command type packages)
+  // Fetch slash commands (claude-slash-command and cursor-slash-command type packages)
   const fetchSlashCommands = async () => {
     setLoading(true)
     try {
-      const params: SearchPackagesParams = {
-        type: 'claude-slash-command',
-        limit,
+      // Fetch both Claude and Cursor slash commands
+      const baseParams = {
+        limit: limit * 2, // Get more to account for both types
         offset: (page - 1) * limit,
         sort,
       }
 
-      if (query.trim()) params.q = query
-      if (selectedCategory) params.category = selectedCategory
-      if (selectedTags.length > 0) params.tags = selectedTags
+      const claudeParams: SearchPackagesParams = {
+        ...baseParams,
+        type: 'claude-slash-command',
+      }
 
-      const result = await searchPackages(params)
-      setPackages(result.packages)
-      setTotal(result.total)
+      const cursorParams: SearchPackagesParams = {
+        ...baseParams,
+        type: 'cursor-slash-command',
+      }
+
+      if (query.trim()) {
+        claudeParams.q = query
+        cursorParams.q = query
+      }
+      if (selectedCategory) {
+        claudeParams.category = selectedCategory
+        cursorParams.category = selectedCategory
+      }
+      if (selectedTags.length > 0) {
+        claudeParams.tags = selectedTags
+        cursorParams.tags = selectedTags
+      }
+
+      // Fetch both types in parallel
+      const [claudeResult, cursorResult] = await Promise.all([
+        searchPackages(claudeParams),
+        searchPackages(cursorParams),
+      ])
+
+      // Combine and deduplicate results
+      const combinedPackages = [...claudeResult.packages, ...cursorResult.packages]
+      const uniquePackages = Array.from(
+        new Map(combinedPackages.map(pkg => [pkg.id, pkg])).values()
+      )
+
+      // Sort combined results
+      const sortedPackages = uniquePackages.sort((a, b) => {
+        if (sort === 'downloads') return (b.total_downloads || 0) - (a.total_downloads || 0)
+        if (sort === 'recent') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        if (sort === 'updated') return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        if (sort === 'name') return a.name.localeCompare(b.name)
+        return 0
+      })
+
+      // Paginate the combined results
+      const startIdx = (page - 1) * limit
+      const paginatedPackages = sortedPackages.slice(startIdx, startIdx + limit)
+
+      setPackages(paginatedPackages)
+      setTotal(claudeResult.total + cursorResult.total)
     } catch (error) {
       console.error('Failed to fetch slash commands:', error)
     } finally {
@@ -173,24 +216,67 @@ function SearchPageContent() {
     }
   }
 
-  // Fetch agents (claude-agent type packages)
+  // Fetch agents (claude-agent and cursor-agent type packages)
   const fetchAgents = async () => {
     setLoading(true)
     try {
-      const params: SearchPackagesParams = {
-        type: 'claude-agent',
-        limit,
+      // Fetch both Claude and Cursor agents
+      const baseParams = {
+        limit: limit * 2, // Get more to account for both types
         offset: (page - 1) * limit,
         sort,
       }
 
-      if (query.trim()) params.q = query
-      if (selectedCategory) params.category = selectedCategory
-      if (selectedTags.length > 0) params.tags = selectedTags
+      const claudeParams: SearchPackagesParams = {
+        ...baseParams,
+        type: 'claude-agent',
+      }
 
-      const result = await searchPackages(params)
-      setPackages(result.packages)
-      setTotal(result.total)
+      const cursorParams: SearchPackagesParams = {
+        ...baseParams,
+        type: 'cursor-agent',
+      }
+
+      if (query.trim()) {
+        claudeParams.q = query
+        cursorParams.q = query
+      }
+      if (selectedCategory) {
+        claudeParams.category = selectedCategory
+        cursorParams.category = selectedCategory
+      }
+      if (selectedTags.length > 0) {
+        claudeParams.tags = selectedTags
+        cursorParams.tags = selectedTags
+      }
+
+      // Fetch both types in parallel
+      const [claudeResult, cursorResult] = await Promise.all([
+        searchPackages(claudeParams),
+        searchPackages(cursorParams),
+      ])
+
+      // Combine and deduplicate results
+      const combinedPackages = [...claudeResult.packages, ...cursorResult.packages]
+      const uniquePackages = Array.from(
+        new Map(combinedPackages.map(pkg => [pkg.id, pkg])).values()
+      )
+
+      // Sort combined results
+      const sortedPackages = uniquePackages.sort((a, b) => {
+        if (sort === 'downloads') return (b.total_downloads || 0) - (a.total_downloads || 0)
+        if (sort === 'recent') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        if (sort === 'updated') return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        if (sort === 'name') return a.name.localeCompare(b.name)
+        return 0
+      })
+
+      // Paginate the combined results
+      const startIdx = (page - 1) * limit
+      const paginatedPackages = sortedPackages.slice(startIdx, startIdx + limit)
+
+      setPackages(paginatedPackages)
+      setTotal(claudeResult.total + cursorResult.total)
     } catch (error) {
       console.error('Failed to fetch agents:', error)
     } finally {
@@ -200,6 +286,10 @@ function SearchPageContent() {
 
   // Load data based on active tab
   useEffect(() => {
+    // Clear previous results when switching tabs to ensure fresh data loads
+    setPackages([])
+    setCollections([])
+
     if (activeTab === 'packages') {
       fetchPackages()
     } else if (activeTab === 'collections') {
