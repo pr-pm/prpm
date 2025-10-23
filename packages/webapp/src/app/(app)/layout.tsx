@@ -14,7 +14,7 @@ export default function AppLayout({
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-8">
               <Link href="/" className="flex items-center gap-3">
-                <Image src="/logo.svg" alt="PRPM Logo" width={40} height={40} className="w-10 h-10" />
+                <Image src="/logo-icon.svg" alt="PRPM Logo" width={40} height={40} className="w-10 h-10" />
                 <span className="text-2xl font-bold bg-gradient-to-r from-prpm-accent to-prpm-purple bg-clip-text text-transparent">
                   PRPM
                 </span>

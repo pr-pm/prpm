@@ -22,7 +22,7 @@ export default function Home() {
             </div>
 
             <div className="flex justify-center mb-8">
-              <Image src="/logo.svg" alt="PRPM Logo" width={120} height={120} className="w-24 h-24 lg:w-32 lg:h-32" />
+              <Image src="/logo-icon.svg" alt="PRPM Logo" width={120} height={120} className="w-24 h-24 lg:w-32 lg:h-32" />
             </div>
 
             <h1 className="text-7xl lg:text-8xl font-extrabold mb-6 tracking-tight">
