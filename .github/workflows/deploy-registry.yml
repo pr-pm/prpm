@@ -152,6 +152,37 @@ jobs:
 
           echo "✅ Build completed successfully"
 
+      - name: Install production dependencies
+        working-directory: packages/registry
+        run: |
+          echo "📦 Installing production dependencies..."
+          npm ci --production --quiet
+
+          echo "✅ Production dependencies installed"
+          echo "📁 node_modules size:"
+          du -sh node_modules
+
+      - name: Prepare deployment package
+        working-directory: packages/registry
+        run: |
+          echo "📦 Preparing workspace package for deployment..."
+
+          # Copy built types package into node_modules to replace workspace link
+          # This ensures @prpm/types is available during deployment
+          rm -rf node_modules/@prpm/types
+          mkdir -p node_modules/@prpm
+          cp -r ../types node_modules/@prpm/types
+
+          # Verify types package has dist directory
+          if [ ! -d "node_modules/@prpm/types/dist" ]; then
+            echo "❌ Types package missing dist directory"
+            exit 1
+          fi
+
+          echo "✅ Workspace package prepared"
+          echo "📁 @prpm/types contents:"
+          ls -la node_modules/@prpm/types/
+
       - name: Create deployment package
         working-directory: packages/registry
         run: |
@@ -160,23 +191,8 @@ jobs:
 
           echo "Creating deployment package: ${VERSION_LABEL}.zip"
 
-          # Copy built types package into dist/node_modules for deployment
-          # This mimics how the working deploy script handles internal packages
-          echo "📦 Copying @prpm/types to dist/node_modules..."
-          mkdir -p dist/node_modules/@prpm/types
-          cp -r ../types/dist/* dist/node_modules/@prpm/types/
-          cp ../types/package.json dist/node_modules/@prpm/types/
-
-          # Verify types package was copied
-          if [ ! -d "dist/node_modules/@prpm/types" ]; then
-            echo "❌ Failed to copy types package"
-            exit 1
-          fi
-
-          echo "✅ Types package copied to dist/node_modules/@prpm/types"
-          echo "📁 Types package contents:"
-          ls -la dist/node_modules/@prpm/types/
-
+          # Include everything: dist, migrations, node_modules (with all deps)
+          # EB will see node_modules exists and skip npm install
           zip -r ${VERSION_LABEL}.zip \
             dist/ \
             package.json \
@@ -185,19 +201,21 @@ jobs:
             .platform/ \
             migrations/ \
             scripts/ \
+            node_modules/ \
             -x "*.git*" \
             -x "*.md" \
             -x "*.test.*" \
             -x "*.spec.*" \
             -x "*.ts" \
+            -x "node_modules/.cache/*" \
             -q
 
           # Verify package contents
-          echo "📁 Verifying @prpm/types is in deployment package:"
-          unzip -l ${VERSION_LABEL}.zip | grep -i "@prpm/types" | head -10 || echo "⚠️  No @prpm/types files found"
+          echo "📁 Verifying deployment package contents:"
+          unzip -l ${VERSION_LABEL}.zip | grep -E "(node_modules/@prpm/types|package.json|dist/)" | head -15
 
           ls -lh ${VERSION_LABEL}.zip
-          echo "✅ Deployment package created with @prpm/types in dist/node_modules"
+          echo "✅ Deployment package created with complete node_modules"
 
       - name: Upload to S3
         working-directory: packages/registry
