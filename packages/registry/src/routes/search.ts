@@ -19,7 +19,7 @@ export async function searchRoutes(server: FastifyInstance) {
         properties: {
           q: { type: 'string' },
           type: {
-            oneOf: [
+            anyOf: [
               { type: 'string', enum: ['cursor', 'cursor-agent', 'cursor-slash-command', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
               { type: 'array', items: { type: 'string', enum: ['cursor', 'cursor-agent', 'cursor-slash-command', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] } }
             ]
