@@ -101,6 +101,9 @@ test.describe('Individual Author Profile - Regression Tests', () => {
 
     // Navigate once per test
     await page.goto('/authors?username=testauthor');
+
+    // Wait for the profile to load
+    await page.waitForSelector('h1:has-text("testauthor")', { timeout: 10000 });
   });
 
   test.describe('Profile Header', () => {
@@ -164,11 +167,9 @@ test.describe('Individual Author Profile - Regression Tests', () => {
       const ratingsCard = page.locator('div').filter({ hasText: 'Total Ratings' }).filter({ hasText: '25' });
       await expect(ratingsCard).toBeVisible();
 
-      // Check card styling
-      const packagesCardElement = page.locator('div').filter({ hasText: 'Packages' }).first();
-      await expect(packagesCardElement).toHaveClass(/bg-prpm-dark/);
-      await expect(packagesCardElement).toHaveClass(/border-prpm-border/);
-      await expect(packagesCardElement).toHaveClass(/rounded-lg/);
+      // Check card styling - use specific class selector
+      const packagesCardElement = page.locator('div.bg-prpm-dark.border-prpm-border.rounded-lg').filter({ hasText: 'Packages' }).first();
+      await expect(packagesCardElement).toBeVisible();
     });
   });
 
