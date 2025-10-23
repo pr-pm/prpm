@@ -293,10 +293,10 @@ function SearchPageContent() {
         </form>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-prpm-border">
+        <div className="flex gap-2 mb-6 border-b border-prpm-border overflow-x-auto">
           <button
             onClick={() => setActiveTab('packages')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
+            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'packages'
                 ? 'text-prpm-accent'
                 : 'text-gray-400 hover:text-gray-300'
@@ -309,7 +309,7 @@ function SearchPageContent() {
           </button>
           <button
             onClick={() => setActiveTab('collections')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
+            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'collections'
                 ? 'text-prpm-accent'
                 : 'text-gray-400 hover:text-gray-300'
@@ -322,7 +322,7 @@ function SearchPageContent() {
           </button>
           <button
             onClick={() => setActiveTab('skills')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
+            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'skills'
                 ? 'text-prpm-accent'
                 : 'text-gray-400 hover:text-gray-300'
@@ -335,7 +335,7 @@ function SearchPageContent() {
           </button>
           <button
             onClick={() => setActiveTab('slash-commands')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
+            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'slash-commands'
                 ? 'text-prpm-accent'
                 : 'text-gray-400 hover:text-gray-300'
@@ -348,7 +348,7 @@ function SearchPageContent() {
           </button>
           <button
             onClick={() => setActiveTab('agents')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
+            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
               activeTab === 'agents'
                 ? 'text-prpm-accent'
                 : 'text-gray-400 hover:text-gray-300'
