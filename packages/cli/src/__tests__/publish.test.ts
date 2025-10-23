@@ -26,13 +26,16 @@ const mockGetRegistryClient = getRegistryClient as jest.MockedFunction<typeof ge
 describe('Publish Command', () => {
   let testDir: string;
   let originalCwd: string;
+  let exitMock: jest.SpyInstance;
+  let consoleMock: jest.SpyInstance;
+  let consoleErrorMock: jest.SpyInstance;
 
   beforeAll(() => {
-    // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    // Mock console methods (persist across tests)
+    consoleMock = jest.spyOn(console, 'log').mockImplementation();
+    consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
     // Mock process.exit to prevent tests from actually exiting
-    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+    exitMock = jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
       throw new Error(`Process exited with code ${code}`);
     }) as any);
   });
@@ -50,8 +53,9 @@ describe('Publish Command', () => {
       registryUrl: 'http://localhost:3000',
     });
 
-    // Clear mocks
-    jest.clearAllMocks();
+    // Clear registry client mock only, not the global mocks
+    mockGetRegistryClient.mockClear();
+    mockGetConfig.mockClear();
   });
 
   afterEach(async () => {
