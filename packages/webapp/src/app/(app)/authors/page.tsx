@@ -257,32 +257,32 @@ function AuthorsPageContent() {
             </div>
 
             {/* Analytics Dashboard for Own Profile */}
-            {isOwnProfile && showAnalytics && dashboardData && (
+            {isOwnProfile && showAnalytics && dashboardData && dashboardData.summary && (
               <div className="mt-8 p-6 bg-prpm-dark border border-prpm-border rounded-lg">
                 <h3 className="text-xl font-bold text-white mb-4">📊 Your Analytics</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <div className="text-gray-400 text-sm">Downloads Today</div>
-                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.downloads_today}</div>
+                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.downloads_today || 0}</div>
                   </div>
                   <div>
                     <div className="text-gray-400 text-sm">Downloads This Week</div>
-                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.downloads_week}</div>
+                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.downloads_week || 0}</div>
                   </div>
                   <div>
                     <div className="text-gray-400 text-sm">Downloads This Month</div>
-                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.downloads_month}</div>
+                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.downloads_month || 0}</div>
                   </div>
                   <div>
                     <div className="text-gray-400 text-sm">Total Views</div>
-                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.total_views}</div>
+                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.total_views || 0}</div>
                   </div>
                 </div>
-                {dashboardData.most_popular && (
+                {dashboardData.most_popular && dashboardData.most_popular.downloads !== undefined && (
                   <div className="mt-4 p-4 bg-prpm-dark-card border border-prpm-border rounded-lg">
                     <div className="text-sm text-gray-400 mb-1">Most Popular Package</div>
                     <div className="text-lg font-semibold text-white">{dashboardData.most_popular.package_name}</div>
-                    <div className="text-sm text-gray-400">{dashboardData.most_popular.downloads.toLocaleString()} downloads</div>
+                    <div className="text-sm text-gray-400">{(dashboardData.most_popular.downloads || 0).toLocaleString()} downloads</div>
                   </div>
                 )}
               </div>
