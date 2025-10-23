@@ -13,6 +13,10 @@ export function getDestinationDir(type: PackageType): string {
   switch (type) {
     case 'cursor':
       return '.cursor/rules';
+    case 'cursor-agent':
+      return '.cursor/agents';
+    case 'cursor-slash-command':
+      return '.cursor/commands';
     case 'claude':
       return '.claude/agents';
     case 'claude-agent':
