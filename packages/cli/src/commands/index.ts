@@ -30,12 +30,22 @@ async function scanDirectory(dirPath: string, type: PackageType): Promise<Array<
           id
         });
       } else if (file.isDirectory()) {
-        // For Claude skills/agents, scan subdirectories for SKILL.md or AGENT.md
-        if (type === 'claude-skill' || type === 'claude') {
+        // For Claude/Cursor skills/agents, scan subdirectories for structured packages
+        const isClaudeType = type === 'claude-skill' || type === 'claude-agent' || type === 'claude';
+        const isCursorAgent = type === 'cursor-agent';
+
+        if (isClaudeType || isCursorAgent) {
           try {
             const subFiles = await fs.readdir(fullPath, { withFileTypes: true });
             for (const subFile of subFiles) {
-              if (subFile.isFile() && (subFile.name === 'SKILL.md' || subFile.name === 'AGENT.md')) {
+              const isValidFile = subFile.isFile() && (
+                subFile.name === 'SKILL.md' ||
+                subFile.name === 'AGENT.md' ||
+                subFile.name === 'skill.md' ||
+                subFile.name === 'agent.md'
+              );
+
+              if (isValidFile) {
                 const subFilePath = path.join(fullPath, subFile.name);
                 const id = file.name; // Use directory name as package ID
                 results.push({
@@ -69,23 +79,26 @@ function isPackageRegistered(packages: Array<{id: string}>, id: string): boolean
 /**
  * Handle the index command
  */
-export async function handleIndex(): Promise<void> {
+export async function handleIndex(options: { verbose?: boolean } = {}): Promise<void> {
   try {
-    console.log('🔍 Scanning for existing prompt files...');
-    
+    console.log('🔍 Scanning AI editor directories for prompt files...\n');
+
     // Get currently registered packages
     const existingPackages = await listPackages();
-    console.log(`📋 Found ${existingPackages.length} already registered packages`);
-    
+    if (options.verbose) {
+      console.log(`📋 Currently registered: ${existingPackages.length} packages\n`);
+    }
+
     let totalFound = 0;
     let totalAdded = 0;
+    const summary: Array<{ dir: string; found: number; added: number }> = [];
 
     // Define directories to scan with their types
     const dirsToScan: Array<{ path: string; type: PackageType; label: string }> = [
       { path: '.cursor/rules', type: 'cursor', label: 'Cursor Rules' },
       { path: '.cursor/agents', type: 'cursor-agent', label: 'Cursor Agents' },
       { path: '.cursor/commands', type: 'cursor-slash-command', label: 'Cursor Slash Commands' },
-      { path: '.claude/agents', type: 'claude', label: 'Claude Agents' },
+      { path: '.claude/agents', type: 'claude-agent', label: 'Claude Agents' },
       { path: '.claude/skills', type: 'claude-skill', label: 'Claude Skills' },
       { path: '.claude/commands', type: 'claude-slash-command', label: 'Claude Slash Commands' },
       { path: '.continue/rules', type: 'continue', label: 'Continue Rules' },
@@ -96,8 +109,18 @@ export async function handleIndex(): Promise<void> {
 
     // Scan each directory
     for (const dir of dirsToScan) {
-      console.log(`\n📁 Scanning ${dir.path}/ (${dir.label})...`);
       const files = await scanDirectory(dir.path, dir.type);
+
+      if (files.length === 0) {
+        if (options.verbose) {
+          console.log(`📁 ${dir.path}/ - No files found`);
+        }
+        continue;
+      }
+
+      console.log(`📁 ${dir.path}/ (${dir.label}) - Found ${files.length} file(s)`);
+
+      let dirAdded = 0;
       totalFound += files.length;
 
       for (const file of files) {
@@ -109,24 +132,49 @@ export async function handleIndex(): Promise<void> {
             type: dir.type,
             format: dir.type,
           });
-          console.log(`  ✅ Added: ${file.filename} (${file.id})`);
+          if (options.verbose) {
+            console.log(`  ✅ Added: ${file.filename} (${file.id})`);
+          }
           totalAdded++;
-        } else {
+          dirAdded++;
+        } else if (options.verbose) {
           console.log(`  ⏭️  Skipped: ${file.filename} (already registered)`);
         }
       }
+
+      if (dirAdded > 0) {
+        console.log(`  ➕ Added ${dirAdded} new package(s)\n`);
+      } else if (!options.verbose) {
+        console.log(`  ✓ All files already registered\n`);
+      }
+
+      summary.push({ dir: dir.path, found: files.length, added: dirAdded });
     }
     
     // Summary
-    console.log('\n📊 Index Summary:');
-    console.log(`   📁 Total files found: ${totalFound}`);
-    console.log(`   ➕ New packages added: ${totalAdded}`);
-    console.log(`   ⏭️  Already registered: ${totalFound - totalAdded}`);
-    
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📊 Index Summary\n');
+    console.log(`   📁 Total files found:      ${totalFound}`);
+    console.log(`   ➕ New packages added:     ${totalAdded}`);
+    console.log(`   ⏭️  Already registered:    ${totalFound - totalAdded}`);
+
+    if (options.verbose && summary.length > 0) {
+      console.log('\n   Breakdown by directory:');
+      summary.filter(s => s.found > 0).forEach(s => {
+        console.log(`     ${s.dir}: ${s.found} found, ${s.added} added`);
+      });
+    }
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     if (totalAdded > 0) {
-      console.log(`\n✅ Successfully indexed ${totalAdded} new packages!`);
+      console.log(`\n✅ Successfully indexed ${totalAdded} new package(s)`);
+      console.log('   Run `prpm list` to see all registered packages');
+    } else if (totalFound > 0) {
+      console.log('\n✨ All existing files are already registered');
     } else {
-      console.log('\n✨ All existing files are already registered.');
+      console.log('\n💡 No prompt files found in standard directories');
+      console.log('   Install packages with: prpm install <package-name>');
     }
     
   } catch (error) {
@@ -142,7 +190,8 @@ export function createIndexCommand(): Command {
   const command = new Command('index');
   
   command
-    .description('Scan existing prompt directories (.cursor, .claude, .continue, .windsurf, .prompts, .mcp) and register unregistered files')
+    .description('Scan AI editor directories and register untracked prompt files in prpm-lock.json')
+    .option('-v, --verbose', 'Show detailed output for each file scanned')
     .action(handleIndex);
   
   return command;
