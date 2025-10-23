@@ -160,8 +160,19 @@ jobs:
 
           echo "Creating deployment package: ${VERSION_LABEL}.zip"
 
-          # Create zip WITHOUT node_modules - let Beanstalk install fresh
-          # This avoids issues with npm prune in monorepo workspaces
+          # Include @prpm/types as a local dependency since it's a workspace package
+          echo "Copying @prpm/types to node_modules..."
+          mkdir -p node_modules/@prpm
+          cp -r ../types node_modules/@prpm/types
+
+          # Verify types package was copied
+          if [ ! -d "node_modules/@prpm/types/dist" ]; then
+            echo "❌ Failed to copy types package"
+            exit 1
+          fi
+
+          echo "✅ Types package copied successfully"
+
           zip -r ${VERSION_LABEL}.zip \
             dist/ \
             package.json \
@@ -170,6 +181,7 @@ jobs:
             .platform/ \
             migrations/ \
             scripts/ \
+            node_modules/@prpm/types/ \
             -x "*.git*" \
             -x "*.md" \
             -x "*.test.*" \
@@ -177,7 +189,7 @@ jobs:
             -q
 
           ls -lh ${VERSION_LABEL}.zip
-          echo "✅ Deployment package created (without node_modules - will be installed on server)"
+          echo "✅ Deployment package created with @prpm/types included"
 
       - name: Upload to S3
         working-directory: packages/registry
