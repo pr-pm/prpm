@@ -31,8 +31,9 @@ export default function Home() {
             </p>
 
             <p className="text-lg lg:text-xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              The universal registry for AI coding prompts. Install, share, and discover
-              production-ready prompts for Cursor, Claude, Continue, Windsurf, and more.
+              The universal registry for AI coding prompts. Install packages individually or use
+              <span className="text-prpm-accent font-semibold"> collections</span> to get complete workflow setups in one command.
+              Works with Cursor, Claude, Continue, Windsurf, and more.
             </p>
 
             <div className="flex gap-4 justify-center flex-wrap mb-12">
@@ -67,15 +68,26 @@ export default function Home() {
               </a>
             </div>
 
-            {/* Quick install command */}
-            <div className="max-w-2xl mx-auto">
+            {/* Quick install commands */}
+            <div className="max-w-3xl mx-auto space-y-4">
               <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Quick Start</span>
+                  <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Install CLI</span>
                   <button className="text-xs text-gray-500 hover:text-prpm-accent transition-colors">Copy</button>
                 </div>
                 <code className="block font-mono text-prpm-accent-light text-left">
                   <span className="text-gray-600">$</span> npm install -g prpm
+                </code>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-accent/30 rounded-xl p-6 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Try Collections</span>
+                  <button className="text-xs text-gray-500 hover:text-prpm-accent transition-colors">Copy</button>
+                </div>
+                <code className="block font-mono text-prpm-accent-light text-left space-y-1">
+                  <div><span className="text-gray-600">$</span> prpm install collection/nextjs-pro</div>
+                  <div className="text-xs text-gray-500 mt-2"># Installs 5+ packages: react-best-practices, typescript-strict, tailwind-helper, and more</div>
                 </code>
               </div>
             </div>
