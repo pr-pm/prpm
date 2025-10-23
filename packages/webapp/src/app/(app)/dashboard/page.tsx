@@ -183,6 +183,7 @@ export default function DashboardPage() {
           <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
             <div className="flex items-center gap-4 mb-4">
               {user.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={user.avatar_url}
                   alt={user.username}

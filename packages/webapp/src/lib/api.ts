@@ -197,7 +197,7 @@ export async function searchPackages(params: SearchPackagesParams): Promise<Sear
 
   if (params.q) queryParams.append('q', params.q)
   if (params.type) queryParams.append('type', params.type)
-  if (params.tags) params.tags.forEach(tag => queryParams.append('tags', tag))
+  if (params.tags) params.tags.forEach((tag: string) => queryParams.append('tags', tag))
   if (params.category) queryParams.append('category', params.category)
   if (params.author) queryParams.append('author', params.author)
   if (params.verified !== undefined) queryParams.append('verified', String(params.verified))

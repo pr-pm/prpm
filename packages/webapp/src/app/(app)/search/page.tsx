@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import {
@@ -16,7 +16,7 @@ import {
 
 type TabType = 'packages' | 'collections' | 'skills'
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -441,7 +441,7 @@ export default function SearchPage() {
                               </div>
                               {pkg.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mt-3">
-                                  {pkg.tags.slice(0, 5).map(tag => (
+                                  {pkg.tags.slice(0, 5).map((tag: string) => (
                                     <span
                                       key={tag}
                                       className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-xs text-gray-400"
@@ -509,7 +509,7 @@ export default function SearchPage() {
                               </div>
                               {collection.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mt-3">
-                                  {collection.tags.slice(0, 5).map(tag => (
+                                  {collection.tags.slice(0, 5).map((tag: string) => (
                                     <span
                                       key={tag}
                                       className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-xs text-gray-400"
@@ -560,5 +560,21 @@ export default function SearchPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-prpm-dark text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-prpm-accent mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading search...</p>
+        </div>
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   )
 }
