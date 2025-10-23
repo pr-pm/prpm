@@ -255,8 +255,26 @@ jobs:
           echo "📁 Verifying deployment package contents:"
           unzip -l ${VERSION_LABEL}.zip | grep -E "(node_modules/@prpm/types|package.json|dist/)" | head -15
 
+          echo ""
+          echo "📁 Checking for critical dist files:"
+          if unzip -l ${VERSION_LABEL}.zip | grep -q "dist/index.js"; then
+            echo "✅ dist/index.js found in package"
+          else
+            echo "❌ dist/index.js NOT FOUND in package!"
+            echo "Package contents:"
+            unzip -l ${VERSION_LABEL}.zip | head -30
+            exit 1
+          fi
+
+          if unzip -l ${VERSION_LABEL}.zip | grep -q "dist/migrations/run.js"; then
+            echo "✅ dist/migrations/run.js found in package"
+          else
+            echo "❌ dist/migrations/run.js NOT FOUND in package!"
+            exit 1
+          fi
+
           ls -lh ${VERSION_LABEL}.zip
-          echo "✅ Deployment package created with complete node_modules"
+          echo "✅ Deployment package created with complete node_modules and dist/"
 
       - name: Upload to S3
         working-directory: packages/registry
