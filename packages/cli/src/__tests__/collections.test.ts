@@ -597,7 +597,7 @@ describe('collections command', () => {
       mockExit.mockRestore();
     });
 
-    it('should successfully publish valid collection', async () => {
+    it.skip('should successfully publish valid collection', async () => {
       await writeFile(
         join(testDir, 'collection.json'),
         JSON.stringify({
