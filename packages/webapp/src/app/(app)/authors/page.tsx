@@ -41,6 +41,7 @@ interface AuthorData {
     username: string
     verified: boolean
     github_username: string | null
+    avatar_url?: string | null
     joined: string
     has_claimed_account: boolean
   }
@@ -174,10 +175,18 @@ function AuthorsPageContent() {
             </Link>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-6">
-                <div className="w-24 h-24 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center">
-                  <span className="text-4xl font-bold text-white">
-                    {author.username.charAt(0).toUpperCase()}
-                  </span>
+                <div className="w-24 h-24 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
+                  {author.avatar_url ? (
+                    <img
+                      src={author.avatar_url}
+                      alt={`${author.username}'s avatar`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-4xl font-bold text-white">
+                      {author.username.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
 
                 <div>
