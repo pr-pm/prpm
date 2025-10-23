@@ -454,8 +454,8 @@ function AuthorsPageContent() {
 
         {/* Leaderboard */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-          {/* Table Header */}
-          <div className="bg-gradient-to-r from-prpm-purple to-prpm-purple-dark text-white px-6 py-4">
+          {/* Table Header - Hidden on mobile */}
+          <div className="hidden md:block bg-gradient-to-r from-prpm-purple to-prpm-purple-dark text-white px-6 py-4">
             <div className="grid grid-cols-12 gap-4 font-semibold">
               <div className="col-span-1 text-center">#</div>
               <div className="col-span-4">Author</div>
@@ -471,11 +471,12 @@ function AuthorsPageContent() {
               <Link
                 key={author.author}
                 href={`/authors?username=${author.author}`}
-                className={`px-6 py-4 hover:bg-prpm-purple/5 dark:hover:bg-prpm-purple/10 transition-colors block ${
+                className={`px-4 md:px-6 py-4 hover:bg-prpm-purple/5 dark:hover:bg-prpm-purple/10 transition-colors block ${
                   index < 3 ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''
                 }`}
               >
-                <div className="grid grid-cols-12 gap-4 items-center">
+                {/* Desktop Table Layout */}
+                <div className="hidden md:grid grid-cols-12 gap-4 items-center">
                   {/* Rank */}
                   <div className="col-span-1 text-center">
                     {index === 0 && <span className="text-3xl">🥇</span>}
@@ -531,6 +532,48 @@ function AuthorsPageContent() {
                         <span>Unclaimed</span>
                       </span>
                     )}
+                  </div>
+                </div>
+
+                {/* Mobile Card Layout */}
+                <div className="md:hidden">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="text-3xl">
+                      {index === 0 && '🥇'}
+                      {index === 1 && '🥈'}
+                      {index === 2 && '🥉'}
+                      {index > 2 && <span className="text-xl font-semibold text-gray-600 dark:text-gray-400">#{index + 1}</span>}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">👤</span>
+                        <div className="font-semibold text-lg">@{author.author}</div>
+                        {author.verified ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-medium">
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-xs">
+                            Unclaimed
+                          </span>
+                        )}
+                      </div>
+                      {author.latest_package && (
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                          Latest: {author.latest_package}
+                        </div>
+                      )}
+                      <div className="flex gap-4 text-sm">
+                        <div>
+                          <span className="font-bold text-prpm-purple">{author.package_count}</span>
+                          <span className="text-gray-500 dark:text-gray-400"> packages</span>
+                        </div>
+                        <div>
+                          <span className="font-semibold">{(author.total_downloads || 0).toLocaleString()}</span>
+                          <span className="text-gray-500 dark:text-gray-400"> downloads</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Link>
