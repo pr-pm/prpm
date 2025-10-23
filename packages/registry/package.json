@@ -8,7 +8,7 @@
     "dev": "concurrently --kill-others --names \"BUILD,SERVER\" \"DOTENV_CONFIG_PATH=././../../.env tsc --watch --preserveWatchOutput\" \"DOTENV_CONFIG_PATH=././../../.env tsx watch -r dotenv/config src/index.ts\"",
     "dev:server": "tsx watch src/index.ts",
     "dev:no-build": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.migrations.json",
     "build:watch": "tsc --watch --preserveWatchOutput",
     "start": "node dist/index.js",
     "migrate": "node dist/migrations/run.js",
