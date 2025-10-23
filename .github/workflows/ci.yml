@@ -288,7 +288,7 @@ jobs:
 
       - name: Run Playwright tests
         working-directory: ./packages/webapp
-        run: npx playwright test authors-leaderboard-regression.spec.ts authors-profile-regression.spec.ts --project=chromium
+        run: npx playwright test smoke.spec.ts --project=chromium
         env:
           CI: true
 
