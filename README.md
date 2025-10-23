@@ -6,7 +6,7 @@
 
 ```bash
 npm install -g prpm
-prpm install @collection/nextjs-pro  # Entire Next.js setup in one command
+prpm install collection/nextjs-pro  # Entire Next.js setup in one command
 ```
 
 **1,300+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf) | **One command to install**
@@ -19,16 +19,21 @@ Skip installing packages one-by-one. Get curated bundles for your entire workflo
 
 ```bash
 # Install 5+ packages at once
-prpm install @collection/nextjs-pro
-# → react-best-practices, typescript-strict, tailwind-helper, nextjs-patterns, component-architect
+prpm install collection/nextjs-pro
+# → Installs react-best-practices, typescript-strict, tailwind-helper,
+#    nextjs-patterns, component-architect
 
 # Python data science stack
-prpm install @collection/python-data
-# → pandas-helper, numpy-patterns, matplotlib-guide, jupyter-best-practices, ml-workflow
+prpm install collection/python-data
+# → Installs pandas-helper, numpy-patterns, matplotlib-guide,
+#    jupyter-best-practices, ml-workflow
 
 # Full-stack React
-prpm install @collection/react-fullstack
+prpm install collection/react-fullstack
 # → Everything for React + Node + PostgreSQL (8 packages)
+
+# Collections are just packages grouped together - each package is installed
+# individually but with a single command. Perfect for onboarding or project setup!
 ```
 
 **[Browse Collections →](docs/COLLECTIONS.md)** | **[View Examples →](docs/EXAMPLES.md)**
@@ -58,12 +63,12 @@ prpm install react-best-practices  # Installs in the right place automatically
 
 ```bash
 # Install collection with MCP server configs (Claude Code only)
-prpm install @collection/pulumi-infrastructure --as claude
+prpm install collection/pulumi-infrastructure --as claude
 # → Writes MCP server config to .claude/mcp_servers.json
 # → Claude Code then runs: npx @modelcontextprotocol/server-pulumi
 
 # Same collection for Cursor (MCP configs ignored)
-prpm install @collection/pulumi-infrastructure --as cursor
+prpm install collection/pulumi-infrastructure --as cursor
 # → Only installs Cursor rules, no MCP configuration
 ```
 
@@ -95,7 +100,7 @@ prpm info react-best-practices
 # Browse collections
 prpm collections
 prpm collections --category frontend
-prpm collections info @collection/nextjs-pro
+prpm collections info collection/nextjs-pro
 ```
 
 **Smart filters:** Category, tags, editor type, trending vs popular, official vs community
@@ -121,7 +126,7 @@ prpm collections info @collection/nextjs-pro
 ### The Solution
 ```bash
 # PRPM workflow (simple)
-prpm install @collection/nextjs-pro  # Entire setup
+prpm install collection/nextjs-pro  # Entire setup (multiple packages)
 # OR
 prpm install test-driven-development  # Single package
 prpm install systematic-debugging
@@ -152,8 +157,8 @@ prpm config set defaultFormat cursor
 
 ### Install Your First Collection
 ```bash
-# Get a complete setup
-prpm install @collection/nextjs-pro
+# Get a complete setup (installs multiple packages at once)
+prpm install collection/nextjs-pro
 
 # Or browse available collections
 prpm collections
@@ -216,8 +221,8 @@ prpm install systematic-debugging
 
 ```bash
 # Collections
-prpm collections                     # Browse available collections
-prpm install @collection/nextjs-pro  # Install a collection
+prpm collections                    # Browse available collections
+prpm install collection/nextjs-pro  # Install a collection
 
 # Packages
 prpm search react                    # Search packages
@@ -244,9 +249,9 @@ prpm info <package-name>             # Package details
 
 ### Complete Next.js Setup
 ```bash
-prpm install @collection/nextjs-pro
-# Instant setup: React best practices, TypeScript config, Tailwind helpers,
-# Next.js patterns, component architecture
+prpm install collection/nextjs-pro
+# Installs 5+ packages in one command: React best practices, TypeScript config,
+# Tailwind helpers, Next.js patterns, component architecture
 ```
 
 ### Switch Between Editors
@@ -442,7 +447,7 @@ brew install khaliqgant/homebrew-prpm/prpm
 
 Then:
 ```bash
-prpm install @collection/nextjs-pro  # Get started with a complete setup
+prpm install collection/nextjs-pro  # Get started with a complete setup
 ```
 
 ---
@@ -472,6 +477,8 @@ MIT License - See [LICENSE](LICENSE)
 **Stop copy-pasting. Start installing.**
 
 **[Install PRPM](#installation)** | **[Browse Collections](docs/COLLECTIONS.md)** | **[Get Karen Score](GET_KAREN_SCORE.md)**
+
+_Collections install multiple curated packages with one command • Packages work in all editors • No manual copying needed_
 
 Made with 🔥 by [@khaliqgant](https://github.com/khaliqgant)
 

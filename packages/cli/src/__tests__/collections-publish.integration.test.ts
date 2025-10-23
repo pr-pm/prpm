@@ -45,14 +45,16 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
     await mkdir(testDir, { recursive: true });
     process.chdir(testDir);
 
+    // Clear mocks first
+    jest.clearAllMocks();
+
+    // Then set up mocks (after clearing)
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
     (getConfig as jest.Mock).mockResolvedValue(mockConfig);
 
     // Re-spy on console methods for each test
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
-
-    jest.clearAllMocks();
   });
 
   afterEach(async () => {
