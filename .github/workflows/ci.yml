@@ -277,15 +277,29 @@ jobs:
         working-directory: ./packages/webapp
         run: npx playwright install --with-deps chromium
 
-      - name: Build webapp
+      - name: Start dev server in background
         working-directory: ./packages/webapp
-        run: npm run build
+        run: |
+          npm run dev &
+          echo $! > .dev-server.pid
+          # Wait for dev server to be ready
+          timeout 60 bash -c 'until curl -s http://localhost:5173 > /dev/null; do echo "Waiting for dev server..."; sleep 2; done'
+          echo "✅ Dev server is ready"
 
       - name: Run Playwright tests
         working-directory: ./packages/webapp
         run: npx playwright test authors-leaderboard-regression.spec.ts authors-profile-regression.spec.ts --project=chromium
         env:
           CI: true
+
+      - name: Stop dev server
+        if: always()
+        working-directory: ./packages/webapp
+        run: |
+          if [ -f .dev-server.pid ]; then
+            kill $(cat .dev-server.pid) || true
+            rm .dev-server.pid
+          fi
 
       - name: Upload Playwright report on failure
         if: failure()
