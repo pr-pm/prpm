@@ -99,6 +99,8 @@ export interface Author {
   package_count: number;
   total_downloads: number;
   verified: boolean;
+  avatar_url?: string;
+  github_username?: string;
   latest_package?: string;
   created_at?: string;
 }

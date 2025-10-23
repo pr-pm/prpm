@@ -247,11 +247,81 @@ jobs:
         working-directory: ./packages/webapp
         run: npm run build
 
+  # Webapp E2E Tests with Playwright
+  webapp-e2e-tests:
+    name: Webapp E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build types package (required dependency)
+        run: npm run build --workspace=@prpm/types
+
+      - name: Install webapp dependencies
+        working-directory: ./packages/webapp
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: ./packages/webapp
+        run: npx playwright install --with-deps chromium
+
+      - name: Start dev server in background
+        working-directory: ./packages/webapp
+        run: |
+          npm run dev &
+          echo $! > .dev-server.pid
+          # Wait for dev server to be ready
+          timeout 60 bash -c 'until curl -s http://localhost:5173 > /dev/null; do echo "Waiting for dev server..."; sleep 2; done'
+          echo "✅ Dev server is ready"
+
+      - name: Run Playwright tests
+        working-directory: ./packages/webapp
+        run: npx playwright test authors-leaderboard-regression.spec.ts authors-profile-regression.spec.ts --project=chromium
+        env:
+          CI: true
+
+      - name: Stop dev server
+        if: always()
+        working-directory: ./packages/webapp
+        run: |
+          if [ -f .dev-server.pid ]; then
+            kill $(cat .dev-server.pid) || true
+            rm .dev-server.pid
+          fi
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: packages/webapp/playwright-report/
+          retention-days: 7
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: packages/webapp/test-results/
+          retention-days: 7
+
   # All checks summary
   all-checks:
     name: All Checks
     runs-on: ubuntu-latest
-    needs: [registry-tests, cli-tests, registry-client-tests, types-tests, webapp-tests, security]
+    needs: [registry-tests, cli-tests, registry-client-tests, types-tests, webapp-tests, webapp-e2e-tests, security]
     if: always()
 
     steps:

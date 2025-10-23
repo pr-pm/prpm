@@ -364,7 +364,7 @@ export async function searchRoutes(server: FastifyInstance) {
         COUNT(p.id)::text as package_count,
         COALESCE(SUM(p.total_downloads), 0)::text as total_downloads,
         u.verified_author as verified,
-        (SELECT p2.id FROM packages p2
+        (SELECT p2.name FROM packages p2
          WHERE p2.author_id = u.id
          ORDER BY p2.created_at DESC
          LIMIT 1) as latest_package
