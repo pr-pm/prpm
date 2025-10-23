@@ -152,12 +152,6 @@ jobs:
 
           echo "✅ Build completed successfully"
 
-      - name: Prune dev dependencies
-        working-directory: packages/registry
-        run: |
-          npm prune --production --quiet
-          echo "✅ Removed dev dependencies"
-
       - name: Create deployment package
         working-directory: packages/registry
         run: |
@@ -166,10 +160,10 @@ jobs:
 
           echo "Creating deployment package: ${VERSION_LABEL}.zip"
 
-          # Create zip with required files (including seed scripts and data)
+          # Create zip WITHOUT node_modules - let Beanstalk install fresh
+          # This avoids issues with npm prune in monorepo workspaces
           zip -r ${VERSION_LABEL}.zip \
             dist/ \
-            node_modules/ \
             package.json \
             package-lock.json \
             .ebextensions/ \
@@ -180,11 +174,10 @@ jobs:
             -x "*.md" \
             -x "*.test.*" \
             -x "*.spec.*" \
-            -x "node_modules/.cache/*" \
             -q
 
           ls -lh ${VERSION_LABEL}.zip
-          echo "✅ Deployment package created"
+          echo "✅ Deployment package created (without node_modules - will be installed on server)"
 
       - name: Upload to S3
         working-directory: packages/registry
