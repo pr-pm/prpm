@@ -152,36 +152,77 @@ jobs:
 
           echo "✅ Build completed successfully"
 
-      - name: Install production dependencies
+      - name: Prepare standalone package for deployment
         working-directory: packages/registry
         run: |
-          echo "📦 Installing production dependencies..."
-          npm ci --production --quiet
+          echo "📦 Creating standalone package.json (removing workspace dependency)..."
+
+          # Create temp directory for clean install
+          mkdir -p /tmp/registry-deploy
+          cd /tmp/registry-deploy
+
+          # Copy original package.json
+          cp $GITHUB_WORKSPACE/packages/registry/package.json .
+
+          # Replace workspace dependency with local file path
+          # This allows npm to install it as a regular package
+          jq --arg workspace "$GITHUB_WORKSPACE" '.dependencies["@prpm/types"] = "file:\($workspace)/packages/types"' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          echo "📄 Modified package.json dependencies:"
+          jq '.dependencies | with_entries(select(.key | contains("prpm")))' package.json
+
+          echo "✅ Standalone package.json created"
+
+      - name: Install production dependencies (clean context)
+        run: |
+          echo "📦 Installing ALL production dependencies in clean context..."
+          cd /tmp/registry-deploy
+
+          # Install without workspace resolution - treats @prpm/types as file dependency
+          npm install --omit=dev --legacy-peer-deps
 
           echo "✅ Production dependencies installed"
           echo "📁 node_modules size:"
           du -sh node_modules
 
-      - name: Prepare deployment package
-        working-directory: packages/registry
-        run: |
-          echo "📦 Preparing workspace package for deployment..."
+          # Verify critical packages
+          echo "🔍 Checking for required packages..."
+          for pkg in pg fastify @prpm/types; do
+            if [ -d "node_modules/$pkg" ]; then
+              echo "  ✅ $pkg"
+            else
+              echo "  ❌ $pkg MISSING!"
+              exit 1
+            fi
+          done
 
-          # Copy built types package into node_modules to replace workspace link
-          # This ensures @prpm/types is available during deployment
-          rm -rf node_modules/@prpm/types
-          mkdir -p node_modules/@prpm
-          cp -r ../types node_modules/@prpm/types
-
-          # Verify types package has dist directory
-          if [ ! -d "node_modules/@prpm/types/dist" ]; then
-            echo "❌ Types package missing dist directory"
+          # Verify @prpm/types has its dist
+          if [ -d "node_modules/@prpm/types/dist" ]; then
+            echo "✅ @prpm/types properly installed with dist/"
+          else
+            echo "❌ @prpm/types incomplete"
             exit 1
           fi
 
-          echo "✅ Workspace package prepared"
-          echo "📁 @prpm/types contents:"
-          ls -la node_modules/@prpm/types/
+      - name: Copy clean dependencies to registry
+        working-directory: packages/registry
+        run: |
+          echo "📦 Copying clean node_modules to registry package..."
+
+          # Remove workspace-linked node_modules
+          rm -rf node_modules
+
+          # Copy clean install from temp directory
+          cp -r /tmp/registry-deploy/node_modules .
+
+          echo "✅ Dependencies copied"
+          echo "📁 Final node_modules size:"
+          du -sh node_modules
+
+          # Final verification
+          echo "🔍 Final package check:"
+          ls -la node_modules/@prpm/types/ | head -10
 
       - name: Create deployment package
         working-directory: packages/registry
