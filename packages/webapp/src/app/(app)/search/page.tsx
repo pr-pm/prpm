@@ -286,6 +286,10 @@ function SearchPageContent() {
 
   // Load data based on active tab
   useEffect(() => {
+    // Clear previous results when switching tabs to ensure fresh data loads
+    setPackages([])
+    setCollections([])
+
     if (activeTab === 'packages') {
       fetchPackages()
     } else if (activeTab === 'collections') {
