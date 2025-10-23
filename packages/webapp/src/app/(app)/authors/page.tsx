@@ -96,7 +96,7 @@ function AuthorsPageContent() {
 
       if (token) {
         try {
-          const currentUser = await getCurrentUser()
+          const currentUser = await getCurrentUser(token)
           currentUsername = currentUser.username
         } catch (err) {
           console.error('Failed to get current user:', err)
@@ -113,7 +113,7 @@ function AuthorsPageContent() {
       // If viewing own profile, load dashboard data
       if (isOwn && token) {
         try {
-          const dashboard = await getAuthorDashboard()
+          const dashboard = await getAuthorDashboard(token)
           setDashboardData(dashboard)
         } catch (err) {
           console.error('Failed to load dashboard:', err)
@@ -411,12 +411,12 @@ function AuthorsPageContent() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {authors.map((author) => (
             <Link
-              key={author.username}
-              href={`/authors?username=${author.username}`}
+              key={author.author}
+              href={`/authors?username=${author.author}`}
               className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 hover:border-prpm-accent transition-colors"
             >
               <div className="flex items-center gap-3 mb-4">
-                <h2 className="text-xl font-semibold">{author.username}</h2>
+                <h2 className="text-xl font-semibold">{author.author}</h2>
                 {author.verified && (
                   <span className="text-prpm-accent" title="Verified Author">
                     ✓
@@ -427,7 +427,7 @@ function AuthorsPageContent() {
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <div className="text-2xl font-bold text-prpm-accent">
-                    {author.total_packages}
+                    {author.package_count}
                   </div>
                   <div className="text-gray-400">Packages</div>
                 </div>
@@ -439,7 +439,7 @@ function AuthorsPageContent() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-prpm-accent">
-                    {author.average_rating?.toFixed(1) || 'N/A'}
+                    N/A
                   </div>
                   <div className="text-gray-400">Rating</div>
                 </div>

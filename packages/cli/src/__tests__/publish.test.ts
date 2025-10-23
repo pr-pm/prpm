@@ -32,9 +32,9 @@ describe('Publish Command', () => {
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
     // Mock process.exit to prevent tests from actually exiting
-    jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
       throw new Error(`Process exited with code ${code}`);
-    } as any);
+    }) as any);
   });
 
   beforeEach(async () => {
