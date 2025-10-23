@@ -46,7 +46,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
       try {
         // Get user info
         const userResult = await fastify.pg.query(
-          `SELECT id, username, verified_author, created_at, github_username
+          `SELECT id, username, verified_author, created_at, github_username, avatar_url
            FROM users
            WHERE LOWER(username) = LOWER($1)`,
           [username]
@@ -116,6 +116,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             github_username: user.github_username,
             joined: user.created_at,
             has_claimed_account: Boolean(user.github_username),
+            avatar_url: user.avatar_url
           },
           stats: {
             total_packages: stats.total_packages,
