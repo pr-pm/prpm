@@ -25,17 +25,17 @@ export default function Home() {
               <Image src="/logo-icon.svg" alt="PRPM Logo" width={120} height={120} className="w-24 h-24 lg:w-32 lg:h-32" />
             </div>
 
-            <h1 className="text-7xl lg:text-8xl font-extrabold mb-6 tracking-tight">
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold mb-6 tracking-tight">
               <span className="bg-gradient-to-r from-white via-gray-100 to-gray-400 bg-clip-text text-transparent">
                 PRPM
               </span>
             </h1>
 
-            <p className="text-2xl lg:text-3xl mb-6 text-gray-300 font-semibold tracking-tight">
+            <p className="text-xl sm:text-2xl lg:text-3xl mb-6 text-gray-300 font-semibold tracking-tight">
               Prompt Package Manager
             </p>
 
-            <p className="text-lg lg:text-xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg lg:text-xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed px-4">
               The universal registry for AI coding prompts, agents, skills, and slash commands. Install packages individually or use
               <span className="text-prpm-accent font-semibold"> collections</span> to get complete workflow setups in one command.
               Works with Cursor, Claude, Continue, Windsurf, and more.

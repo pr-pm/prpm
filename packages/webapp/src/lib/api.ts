@@ -196,7 +196,13 @@ export async function searchPackages(params: SearchPackagesParams): Promise<Sear
   const queryParams = new URLSearchParams()
 
   if (params.q) queryParams.append('q', params.q)
-  if (params.type) queryParams.append('type', params.type)
+  if (params.type) {
+    if (Array.isArray(params.type)) {
+      params.type.forEach((t: string) => queryParams.append('type', t))
+    } else {
+      queryParams.append('type', params.type)
+    }
+  }
   if (params.tags) params.tags.forEach((tag: string) => queryParams.append('tags', tag))
   if (params.category) queryParams.append('category', params.category)
   if (params.author) queryParams.append('author', params.author)
