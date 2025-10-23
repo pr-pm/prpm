@@ -10,6 +10,9 @@ import { toError } from '../types/errors.js';
 export async function setupDatabase(server: FastifyInstance) {
   await server.register(fastifyPostgres, {
     connectionString: config.database.url,
+    ssl: process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false } // AWS RDS requires SSL in production
+      : undefined,
   });
 
   // Test connection

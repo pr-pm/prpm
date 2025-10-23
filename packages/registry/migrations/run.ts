@@ -24,7 +24,12 @@ try {
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://prpm:prpm@localhost:5434/prpm';
 
 async function runMigrations() {
-  const client = new Client({ connectionString: DATABASE_URL });
+  const client = new Client({
+    connectionString: DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false } // AWS RDS requires SSL in production
+      : undefined,
+  });
 
   try {
     await client.connect();
