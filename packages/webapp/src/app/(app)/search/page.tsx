@@ -148,12 +148,12 @@ function SearchPageContent() {
     }
   }
 
-  // Fetch slash commands (claude-slash-command type packages)
+  // Fetch slash commands (both Claude and Cursor slash commands)
   const fetchSlashCommands = async () => {
     setLoading(true)
     try {
       const params: SearchPackagesParams = {
-        type: 'claude-slash-command',
+        type: ['claude-slash-command', 'cursor-slash-command'],
         limit,
         offset: (page - 1) * limit,
         sort,
@@ -173,12 +173,12 @@ function SearchPageContent() {
     }
   }
 
-  // Fetch agents (claude-agent type packages)
+  // Fetch agents (both Claude and Cursor agents)
   const fetchAgents = async () => {
     setLoading(true)
     try {
       const params: SearchPackagesParams = {
-        type: 'claude-agent',
+        type: ['claude-agent', 'cursor-agent'],
         limit,
         offset: (page - 1) * limit,
         sort,

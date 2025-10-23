@@ -18,7 +18,12 @@ export async function searchRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           q: { type: 'string' },
-          type: { type: 'string', enum: ['cursor', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
+          type: {
+            oneOf: [
+              { type: 'string', enum: ['cursor', 'cursor-agent', 'cursor-slash-command', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] },
+              { type: 'array', items: { type: 'string', enum: ['cursor', 'cursor-agent', 'cursor-slash-command', 'claude', 'claude-skill', 'claude-agent', 'claude-slash-command', 'continue', 'windsurf', 'generic', 'mcp'] } }
+            ]
+          },
           tags: { type: 'array', items: { type: 'string' } },
           category: { type: 'string' },
           author: { type: 'string' },
@@ -34,7 +39,7 @@ export async function searchRoutes(server: FastifyInstance) {
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { q, type, tags, category, author, verified, featured, hasSlashCommands, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
       q?: string;
-      type?: PackageType;
+      type?: PackageType | PackageType[];
       tags?: string[];
       category?: string;
       author?: string;
