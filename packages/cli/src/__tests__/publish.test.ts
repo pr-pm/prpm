@@ -31,6 +31,10 @@ describe('Publish Command', () => {
     // Mock console methods
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
+    // Mock process.exit to prevent tests from actually exiting
+    jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+      throw new Error(`Process exited with code ${code}`);
+    } as any);
   });
 
   beforeEach(async () => {
@@ -56,19 +60,12 @@ describe('Publish Command', () => {
 
   describe('Manifest Validation', () => {
     it('should require prpm.json to exist', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       await expect(handlePublish({})).rejects.toThrow('Process exited');
 
-      mockExit.mockRestore();
     });
 
     it('should validate required fields', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       await writeFile(
         join(testDir, 'prpm.json'),
@@ -80,13 +77,9 @@ describe('Publish Command', () => {
 
       await expect(handlePublish({})).rejects.toThrow('Process exited');
 
-      mockExit.mockRestore();
     });
 
     it('should validate package name format', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       await writeFile(
         join(testDir, 'prpm.json'),
@@ -101,13 +94,9 @@ describe('Publish Command', () => {
 
       await expect(handlePublish({})).rejects.toThrow('Process exited');
 
-      mockExit.mockRestore();
     });
 
     it('should validate version format', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       await writeFile(
         join(testDir, 'prpm.json'),
@@ -122,13 +111,9 @@ describe('Publish Command', () => {
 
       await expect(handlePublish({})).rejects.toThrow('Process exited');
 
-      mockExit.mockRestore();
     });
 
     it('should validate package type', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       await writeFile(
         join(testDir, 'prpm.json'),
@@ -143,7 +128,6 @@ describe('Publish Command', () => {
 
       await expect(handlePublish({})).rejects.toThrow('Process exited');
 
-      mockExit.mockRestore();
     });
 
     it('should accept valid manifest', async () => {
@@ -177,9 +161,6 @@ describe('Publish Command', () => {
 
   describe('Authentication', () => {
     it('should require authentication token', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       mockGetConfig.mockResolvedValue({
         token: undefined,
@@ -188,7 +169,6 @@ describe('Publish Command', () => {
 
       await expect(handlePublish({})).rejects.toThrow('Process exited');
 
-      mockExit.mockRestore();
     });
 
     it('should pass token to registry client', async () => {
@@ -286,9 +266,6 @@ describe('Publish Command', () => {
     });
 
     it('should reject packages over 10MB', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       await writeFile(
         join(testDir, 'prpm.json'),
@@ -307,13 +284,9 @@ describe('Publish Command', () => {
 
       await expect(handlePublish({})).rejects.toThrow('Process exited');
 
-      mockExit.mockRestore();
     });
 
     it('should fail if no files to include', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       await writeFile(
         join(testDir, 'prpm.json'),
@@ -328,7 +301,6 @@ describe('Publish Command', () => {
 
       await expect(handlePublish({})).rejects.toThrow('Process exited');
 
-      mockExit.mockRestore();
     });
   });
 
@@ -421,9 +393,6 @@ describe('Publish Command', () => {
     });
 
     it('should handle publish errors', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       await writeFile(
         join(testDir, 'prpm.json'),
@@ -454,7 +423,6 @@ describe('Publish Command', () => {
         })
       );
 
-      mockExit.mockRestore();
     });
   });
 
@@ -579,9 +547,6 @@ describe('Publish Command', () => {
     });
 
     it('should track failed publish', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
 
       await writeFile(
         join(testDir, 'prpm.json'),
@@ -612,7 +577,6 @@ describe('Publish Command', () => {
         })
       );
 
-      mockExit.mockRestore();
     });
   });
 });
