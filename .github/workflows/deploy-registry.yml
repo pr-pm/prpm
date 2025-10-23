@@ -232,6 +232,24 @@ jobs:
 
           echo "Creating deployment package: ${VERSION_LABEL}.zip"
 
+          # Verify dist exists before packaging
+          echo "📁 Checking dist directory before packaging:"
+          if [ ! -d "dist" ]; then
+            echo "❌ dist/ directory not found in $(pwd)"
+            ls -la
+            exit 1
+          fi
+
+          if [ ! -f "dist/index.js" ]; then
+            echo "❌ dist/index.js not found"
+            ls -la dist/
+            exit 1
+          fi
+
+          echo "✅ dist/ directory exists with index.js"
+          echo "dist/ contents:"
+          ls -lh dist/ | head -10
+
           # Include everything: dist, migrations, node_modules (with all deps)
           # EB will see node_modules exists and skip npm install
           zip -r ${VERSION_LABEL}.zip \
@@ -243,13 +261,13 @@ jobs:
             migrations/ \
             scripts/ \
             node_modules/ \
+            Procfile \
             -x "*.git*" \
             -x "*.md" \
             -x "*.test.*" \
             -x "*.spec.*" \
             -x "*.ts" \
-            -x "node_modules/.cache/*" \
-            -q
+            -x "node_modules/.cache/*"
 
           # Verify package contents
           echo "📁 Verifying deployment package contents:"
