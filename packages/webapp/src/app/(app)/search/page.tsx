@@ -14,6 +14,8 @@ import {
   SortType,
 } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 type TabType = 'packages' | 'collections' | 'skills'
 
 export default function SearchPage() {

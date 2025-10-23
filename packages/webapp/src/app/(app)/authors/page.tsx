@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -12,6 +12,8 @@ import {
   getCurrentUser,
   type Author,
 } from '@/lib/api'
+
+export const dynamic = 'force-dynamic'
 
 interface AuthorStats {
   total_packages: number
@@ -69,6 +71,7 @@ export default function AuthorsPage() {
     } else {
       loadAuthors()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username])
 
   async function loadAuthors() {
