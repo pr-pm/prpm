@@ -159,7 +159,7 @@ export interface AccessToken {
 
 // API Request/Response types
 export interface SearchFilters {
-  type?: PackageType;
+  type?: PackageType | PackageType[];
   tags?: string[];
   category?: string;
   author?: string;  // Filter by author username
