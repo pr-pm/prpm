@@ -1,12 +1,12 @@
 {
-  "total": 61,
+  "total": 42,
   "breakdown": {
-    "bullshitFactor": 14,
-    "actuallyWorks": 13,
+    "bullshitFactor": 8,
+    "actuallyWorks": 10,
     "codeQualityReality": 12,
-    "completionHonesty": 6,
-    "practicalValue": 16
+    "completionHonesty": 4,
+    "practicalValue": 8
   },
-  "grade": "Meh, it works I guess",
-  "timestamp": "2025-10-24T20:07:16.269Z"
+  "grade": "Needs intervention",
+  "timestamp": "2025-10-24T20:19:38.490Z"
 }
