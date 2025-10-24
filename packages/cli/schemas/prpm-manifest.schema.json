@@ -4,7 +4,17 @@
   "title": "PRPM Package Manifest",
   "description": "Schema for PRPM package manifest (prpm.json)",
   "type": "object",
-  "required": ["name", "version", "description", "type"],
+  "required": ["name", "version", "description"],
+  "oneOf": [
+    {
+      "required": ["type"],
+      "description": "Legacy format using type field"
+    },
+    {
+      "required": ["format"],
+      "description": "New format using format and optional subtype"
+    }
+  ],
   "properties": {
     "name": {
       "type": "string",
@@ -32,7 +42,7 @@
     },
     "type": {
       "type": "string",
-      "description": "Package type. Use 'collection' only if files contain multiple distinct types.",
+      "description": "Package type (DEPRECATED - use format and subtype instead). Use 'collection' only if files contain multiple distinct types.",
       "enum": [
         "cursor",
         "cursor-agent",
@@ -47,6 +57,35 @@
         "kiro",
         "mcp",
         "generic",
+        "collection"
+      ]
+    },
+    "format": {
+      "type": "string",
+      "description": "Package format - the AI tool/platform this package is for",
+      "enum": [
+        "cursor",
+        "claude",
+        "continue",
+        "windsurf",
+        "copilot",
+        "kiro",
+        "generic",
+        "mcp"
+      ]
+    },
+    "subtype": {
+      "type": "string",
+      "description": "Package subtype - the functional category (optional, defaults to 'rule')",
+      "enum": [
+        "rule",
+        "agent",
+        "skill",
+        "slash-command",
+        "prompt",
+        "workflow",
+        "tool",
+        "template",
         "collection"
       ]
     },
