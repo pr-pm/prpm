@@ -234,6 +234,31 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* Footer */}
+          <footer className="border-t border-prpm-border/50 pt-8 mt-20">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
+              <div>
+                © 2025 PRPM. Open source under MIT License.
+              </div>
+              <div className="flex gap-6">
+                <Link href="/legal/terms" className="hover:text-white transition-colors">
+                  Terms
+                </Link>
+                <Link href="/legal/privacy" className="hover:text-white transition-colors">
+                  Privacy
+                </Link>
+                <a
+                  href="https://github.com/khaliqgant/prompt-package-manager"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
+                  GitHub
+                </a>
+              </div>
+            </div>
+          </footer>
         </div>
       </div>
     </main>
