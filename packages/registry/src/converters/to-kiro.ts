@@ -125,7 +125,7 @@ function convertContent(
 
   // Add description if available
   if (pkg.description || pkg.metadata?.description) {
-    lines.push(pkg.description || pkg.metadata!.description);
+    lines.push(pkg.description || pkg.metadata?.description || '');
     lines.push('');
   }
 
