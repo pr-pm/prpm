@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     title: 'PRPM - The Universal Registry for AI Coding Tools',
     description: 'Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, and more.',
     images: ['/og-image.png'],
-    creator: '@pr-pmdev',
+    creator: '@prpmdev',
   },
   robots: {
     index: true,

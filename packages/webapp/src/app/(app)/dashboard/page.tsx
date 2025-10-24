@@ -437,7 +437,7 @@ export default function DashboardPage() {
             <div className="bg-prpm-dark border border-prpm-border rounded-xl p-4 mb-6">
               <p className="text-gray-300 text-sm mb-3">Ready-to-share tweet:</p>
               <p className="text-white leading-relaxed">
-                Just connected my GitHub to @pr-pmdev 🚀
+                Just connected my GitHub to @prpmdev 🚀
                 <br /><br />
                 Check out my AI prompts, agents, and coding tools at prpm.dev/@{user?.username}
                 <br /><br />
@@ -447,7 +447,7 @@ export default function DashboardPage() {
 
             <div className="flex gap-3">
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just connected my GitHub to @pr-pmdev 🚀\n\nCheck out my AI prompts, agents, and coding tools at prpm.dev/@${user?.username}\n\n#AI #DevTools #Prompts`)}`}
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just connected my GitHub to @prpmdev 🚀\n\nCheck out my AI prompts, agents, and coding tools at prpm.dev/@${user?.username}\n\n#AI #DevTools #Prompts`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 px-6 py-3 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
