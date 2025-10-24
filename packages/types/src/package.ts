@@ -12,6 +12,8 @@ export type PackageType =
   | 'claude-slash-command'
   | 'continue'
   | 'windsurf'
+  | 'copilot'
+  | 'kiro'
   | 'generic'
   | 'mcp';
 

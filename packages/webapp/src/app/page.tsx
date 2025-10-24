@@ -36,7 +36,7 @@ export default function Home() {
             </p>
 
             <p className="text-base sm:text-lg lg:text-xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed px-4">
-              Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, and more — all from one file.
+              Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro, and more — all from one file.
             </p>
 
             <div className="flex gap-4 justify-center flex-wrap mb-12">
@@ -228,6 +228,12 @@ export default function Home() {
               </div>
               <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
                 <span className="text-gray-300 font-medium">Windsurf</span>
+              </div>
+              <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <span className="text-gray-300 font-medium">GitHub Copilot</span>
+              </div>
+              <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <span className="text-gray-300 font-medium">Kiro</span>
               </div>
               <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
                 <span className="text-gray-300 font-medium">Generic Prompts</span>
