@@ -14,6 +14,7 @@ import {
   SortType,
 } from '@/lib/api'
 import PackageModal from '@/components/PackageModal'
+import CollectionModal from '@/components/CollectionModal'
 
 type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
 
@@ -49,6 +50,8 @@ function SearchPageContent() {
   const [isInitialized, setIsInitialized] = useState(false)
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [showPackageModal, setShowPackageModal] = useState(false)
+  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
+  const [showCollectionModal, setShowCollectionModal] = useState(false)
 
   const limit = 20
 
@@ -566,7 +569,11 @@ function SearchPageContent() {
                       collections.map((collection) => (
                         <div
                           key={collection.id}
-                          className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors"
+                          onClick={() => {
+                            setSelectedCollection(collection)
+                            setShowCollectionModal(true)
+                          }}
+                          className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -656,6 +663,15 @@ function SearchPageContent() {
             package={selectedPackage}
             isOpen={showPackageModal}
             onClose={() => setShowPackageModal(false)}
+          />
+        )}
+
+        {/* Collection Modal */}
+        {selectedCollection && (
+          <CollectionModal
+            collection={selectedCollection}
+            isOpen={showCollectionModal}
+            onClose={() => setShowCollectionModal(false)}
           />
         )}
       </div>
