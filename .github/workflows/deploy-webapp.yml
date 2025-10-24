@@ -34,7 +34,7 @@ jobs:
         run: npm ci
 
       - name: Build types package
-        run: npm run build --workspace=@prpm/types
+        run: npm run build --workspace=@pr-pm/types
 
       - name: Build webapp
         env:

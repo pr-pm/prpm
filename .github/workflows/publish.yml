@@ -71,8 +71,8 @@ jobs:
 
       - name: Build packages in dependency order
         run: |
-          npm run build --workspace=@prpm/types
-          npm run build --workspace=@prpm/registry-client
+          npm run build --workspace=@pr-pm/types
+          npm run build --workspace=@pr-pm/registry-client
           npm run build --workspace=prpm
 
       - name: Run tests
@@ -143,8 +143,8 @@ jobs:
       - name: Build dependencies in order
         run: |
           # Build in dependency order: types → registry-client
-          npm run build --workspace=@prpm/types
-          npm run build --workspace=@prpm/registry-client
+          npm run build --workspace=@pr-pm/types
+          npm run build --workspace=@pr-pm/registry-client
 
       - name: Update version
         run: |
@@ -156,7 +156,7 @@ jobs:
           if [ "${{ matrix.package }}" = "cli" ]; then
             npm run build --workspace=prpm
           else
-            npm run build --workspace=@prpm/${{ matrix.package }}
+            npm run build --workspace=@pr-pm/${{ matrix.package }}
           fi
 
       - name: Dry run check
@@ -177,7 +177,7 @@ jobs:
 
       - name: Report published
         run: |
-          echo "[OK] Published @prpm/${{ matrix.package }}@${{ needs.validate.outputs.new_version }}"
+          echo "[OK] Published @pr-pm/${{ matrix.package }}@${{ needs.validate.outputs.new_version }}"
           echo "Tag: ${{ github.event.inputs.tag }}"
 
   create-git-tag:
@@ -254,7 +254,7 @@ jobs:
             npm install -g prpm@${{ needs.validate.outputs.new_version }}
 
             # Registry Client (for developers)
-            npm install @prpm/registry-client@${{ needs.validate.outputs.new_version }}
+            npm install @pr-pm/registry-client@${{ needs.validate.outputs.new_version }}
             ```
 
             ---
@@ -281,7 +281,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Published Packages" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo '${{ needs.validate.outputs.packages_to_publish }}' | jq -r '.[] | "- @prpm/" + .'  >> $GITHUB_STEP_SUMMARY || echo "- Error parsing packages"
+          echo '${{ needs.validate.outputs.packages_to_publish }}' | jq -r '.[] | "- @pr-pm/" + .'  >> $GITHUB_STEP_SUMMARY || echo "- Error parsing packages"
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then

@@ -55,7 +55,7 @@ jobs:
 
       - name: Build types package (required dependency)
         working-directory: ./
-        run: npm run build --workspace=@prpm/types
+        run: npm run build --workspace=@pr-pm/types
 
       - name: Start MinIO
         run: |
@@ -114,11 +114,11 @@ jobs:
 
       - name: Build types package (required dependency)
         working-directory: ./
-        run: npm run build --workspace=@prpm/types
+        run: npm run build --workspace=@pr-pm/types
 
       - name: Build registry-client
         working-directory: ./
-        run: npm run build --workspace=@prpm/registry-client
+        run: npm run build --workspace=@pr-pm/registry-client
 
       - name: Type check
         run: npx tsc --noEmit
@@ -154,7 +154,7 @@ jobs:
 
       - name: Build types package (required dependency)
         working-directory: ./
-        run: npm run build --workspace=@prpm/types
+        run: npm run build --workspace=@pr-pm/types
 
       - name: Run tests
         run: npm test
@@ -229,7 +229,7 @@ jobs:
         run: npm ci
 
       - name: Build types package (required dependency)
-        run: npm run build --workspace=@prpm/types
+        run: npm run build --workspace=@pr-pm/types
 
       - name: Install webapp dependencies
         working-directory: ./packages/webapp
@@ -267,7 +267,7 @@ jobs:
         run: npm ci
 
       - name: Build types package (required dependency)
-        run: npm run build --workspace=@prpm/types
+        run: npm run build --workspace=@pr-pm/types
 
       - name: Install webapp dependencies
         working-directory: ./packages/webapp
