@@ -13,7 +13,13 @@ export interface CanonicalPackage {
   description: string;
   author: string;
   tags: string[];
-  type: 'rule' | 'agent' | 'skill' | 'prompt';
+
+  // New taxonomy: format + subtype
+  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp';
+  subtype?: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection';
+
+  /** @deprecated Use format and subtype instead */
+  type: 'cursor' | 'cursor-agent' | 'cursor-slash-command' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp' | 'collection';
 
   // Content in canonical format
   content: CanonicalContent;
