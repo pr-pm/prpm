@@ -8,7 +8,7 @@ import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir, stripAuthorNamespace } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
-import { Package, PackageType } from '../types';
+import { Package, Format, Subtype } from '../types';
 import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { createGunzip } from 'zlib';
@@ -25,70 +25,77 @@ import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-co
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
 
 /**
- * Get icon for package type
+ * Get icon for package format and subtype
  */
-function getTypeIcon(type: string): string {
-  const icons: Record<string, string> = {
-    'claude-skill': '🎓',
-    'claude-agent': '🤖',
-    'claude-slash-command': '⚡',
+function getPackageIcon(format: Format, subtype: Subtype): string {
+  // Subtype icons take precedence
+  const subtypeIcons: Record<Subtype, string> = {
+    'skill': '🎓',
+    'agent': '🤖',
+    'slash-command': '⚡',
+    'rule': '📋',
+    'prompt': '💬',
+    'workflow': '⚡',
+    'tool': '🔧',
+    'template': '📄',
+    'collection': '📦',
+  };
+
+  // Format-specific icons for rules/defaults
+  const formatIcons: Record<Format, string> = {
     'claude': '🤖',
     'cursor': '📋',
-    'cursor-agent': '🤖',
-    'cursor-slash-command': '⚡',
     'windsurf': '🌊',
     'continue': '➡️',
     'copilot': '✈️',
     'kiro': '🎯',
     'mcp': '🔗',
     'generic': '📦',
-    // Legacy mappings
-    skill: '🎓',
-    agent: '🤖',
-    rule: '📋',
-    plugin: '🔌',
-    prompt: '💬',
-    workflow: '⚡',
-    tool: '🔧',
-    template: '📄',
   };
-  return icons[type] || '📦';
+
+  return subtypeIcons[subtype] || formatIcons[format] || '📦';
 }
 
 /**
- * Get human-readable label for package type
+ * Get human-readable label for package format and subtype
  */
-function getTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    'claude-skill': 'Claude Skill',
-    'claude-agent': 'Claude Agent',
-    'claude-slash-command': 'Claude Slash Command',
-    'claude': 'Claude Agent',
-    'cursor': 'Cursor Rule',
-    'cursor-agent': 'Cursor Agent',
-    'cursor-slash-command': 'Cursor Slash Command',
-    'windsurf': 'Windsurf Rule',
-    'continue': 'Continue Rule',
-    'copilot': 'GitHub Copilot Instruction',
-    'kiro': 'Kiro Steering File',
-    'mcp': 'MCP Server',
-    'generic': 'Package',
-    // Legacy mappings
-    skill: 'Skill',
-    agent: 'Agent',
-    rule: 'Rule',
-    plugin: 'Plugin',
-    prompt: 'Prompt',
-    workflow: 'Workflow',
-    tool: 'Tool',
-    template: 'Template',
+function getPackageLabel(format: Format, subtype: Subtype): string {
+  const formatLabels: Record<Format, string> = {
+    'claude': 'Claude',
+    'cursor': 'Cursor',
+    'windsurf': 'Windsurf',
+    'continue': 'Continue',
+    'copilot': 'GitHub Copilot',
+    'kiro': 'Kiro',
+    'mcp': 'MCP',
+    'generic': '',
   };
-  return labels[type] || type;
+
+  const subtypeLabels: Record<Subtype, string> = {
+    'skill': 'Skill',
+    'agent': 'Agent',
+    'slash-command': 'Slash Command',
+    'rule': 'Rule',
+    'prompt': 'Prompt',
+    'workflow': 'Workflow',
+    'tool': 'Tool',
+    'template': 'Template',
+    'collection': 'Collection',
+  };
+
+  const formatLabel = formatLabels[format];
+  const subtypeLabel = subtypeLabels[subtype];
+
+  if (format === 'generic') {
+    return subtypeLabel;
+  }
+
+  return `${formatLabel} ${subtypeLabel}`;
 }
 
 export async function handleInstall(
   packageSpec: string,
-  options: { version?: string; type?: PackageType; as?: string; frozenLockfile?: boolean }
+  options: { version?: string; format?: Format; subtype?: Subtype; as?: string; frozenLockfile?: boolean }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -141,7 +148,7 @@ export async function handleInstall(
       if (!requestedVersion || requestedVersion === 'latest' || requestedVersion === installedPkg.version) {
         console.log(`\n✨ Package already installed!`);
         console.log(`   📦 ${packageId}@${installedPkg.version}`);
-        console.log(`   🔄 Format: ${installedPkg.format || installedPkg.type || 'unknown'}`);
+        console.log(`   🔄 Format: ${installedPkg.format || 'unknown'} | Subtype: ${installedPkg.subtype || 'unknown'}`);
         console.log(`\n💡 To reinstall or upgrade:`);
         console.log(`   prpm upgrade ${packageId}     # Upgrade to latest version`);
         console.log(`   prpm uninstall ${packageId}   # Uninstall first, then install`);
@@ -193,14 +200,14 @@ export async function handleInstall(
 
     // Get package info
     const pkg = await client.getPackage(packageId);
-    const typeIcon = getTypeIcon(pkg.type);
-    const typeLabel = getTypeLabel(pkg.type);
+    const typeIcon = getPackageIcon(pkg.format, pkg.subtype);
+    const typeLabel = getPackageLabel(pkg.format, pkg.subtype);
     console.log(`   ${pkg.name} ${pkg.official ? '🏅' : ''}`);
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 
     // Determine format preference - use package type if no explicit conversion requested
-    const format = options.as || pkg.type;
+    const format = options.as || pkg.format;
     if (options.as && format !== 'canonical') {
       console.log(`   🔄 Converting to ${format} format...`);
     }
@@ -225,36 +232,12 @@ export async function handleInstall(
 
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
-    // Determine effective type based on format and original package type
-    let effectiveType: PackageType;
 
-    if (format === 'cursor') {
-      // Map package types to cursor equivalents
-      if (pkg.type === 'claude-slash-command' || pkg.type === 'cursor-slash-command') {
-        effectiveType = 'cursor-slash-command';
-      } else if (pkg.type === 'claude-agent' || pkg.type === 'cursor-agent') {
-        effectiveType = 'cursor-agent';
-      } else {
-        effectiveType = 'cursor';
-      }
-    } else if (format === 'claude') {
-      // Map package types to claude equivalents
-      if (pkg.type === 'cursor-slash-command' || pkg.type === 'claude-slash-command') {
-        effectiveType = 'claude-slash-command';
-      } else if (pkg.type === 'cursor-agent' || pkg.type === 'claude-agent') {
-        effectiveType = 'claude-agent';
-      } else if (pkg.type === 'claude-skill') {
-        effectiveType = 'claude-skill';
-      } else {
-        effectiveType = 'claude-agent';
-      }
-    } else if (format === 'continue' || format === 'windsurf' || format === 'copilot' || format === 'kiro') {
-      effectiveType = format as PackageType;
-    } else {
-      effectiveType = (options.type || pkg.type) as PackageType;
-    }
+    // Determine effective format and subtype
+    const effectiveFormat = (format as Format) || pkg.format;
+    const effectiveSubtype = options.subtype || pkg.subtype;
 
-    const destDir = getDestinationDir(effectiveType);
+    const destDir = getDestinationDir(effectiveFormat, effectiveSubtype);
 
     // Extract all files from tarball
     const extractedFiles = await extractTarball(tarball, packageId);
@@ -267,14 +250,14 @@ export async function handleInstall(
     if (extractedFiles.length === 1) {
       // Single file package
       let mainFile = extractedFiles[0].content;
-      // Determine file extension based on effective type
+      // Determine file extension based on effective format
       // Cursor rules use .mdc, but slash commands and other files use .md
-      const fileExtension = (effectiveType === 'cursor' && format === 'cursor') ? 'mdc' : 'md';
+      const fileExtension = (effectiveFormat === 'cursor' && format === 'cursor') ? 'mdc' : 'md';
       const packageName = stripAuthorNamespace(packageId);
       destPath = `${destDir}/${packageName}.${fileExtension}`;
 
       // Handle cursor format - add header if missing for .mdc files
-      if (format === 'cursor' && effectiveType === 'cursor') {
+      if (format === 'cursor' && effectiveFormat === 'cursor') {
         if (!hasMDCHeader(mainFile)) {
           console.log(`   ⚠️  Adding missing MDC header...`);
           mainFile = addMDCHeader(mainFile, pkg.description);
@@ -317,8 +300,8 @@ export async function handleInstall(
     addToLockfile(updatedLockfile, packageId, {
       version: actualVersion || version,
       tarballUrl,
-      type: pkg.type,
-      format,
+      format: effectiveFormat,
+      subtype: effectiveSubtype,
       installedPath: destPath,
     });
 
@@ -360,7 +343,7 @@ export async function handleInstall(
       data: {
         packageId: packageSpec.split('@')[0],
         version: options.version || 'latest',
-        type: options.type,
+        format: options.format, subtype: options.subtype,
       },
     });
     await telemetry.shutdown();
@@ -479,12 +462,18 @@ export function createInstallCommand(): Command {
     .description('Install a package from the registry')
     .argument('<package>', 'Package to install (e.g., react-rules or react-rules@1.2.0)')
     .option('--version <version>', 'Specific version to install')
-    .option('--type <type>', 'Override package type (cursor, claude, continue)')
+    .option('--format <format>', 'Override package format (cursor, claude, continue, windsurf, copilot, kiro)')
+    .option('--subtype <subtype>', 'Override package subtype (rule, agent, skill, slash-command)')
     .option('--as <format>', 'Download in specific format (cursor, claude, continue, windsurf)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string, options: { format?: string; save?: boolean; dev?: boolean; global?: boolean; type?: string; as?: string; frozenLockfile?: boolean }) => {
-      if (options.type && !['cursor', 'claude', 'continue', 'windsurf', 'generic'].includes(options.type)) {
-        console.error('❌ Type must be one of: cursor, claude, continue, windsurf, generic');
+    .action(async (packageSpec: string, options: { format?: string; subtype?: string; save?: boolean; dev?: boolean; global?: boolean; as?: string; frozenLockfile?: boolean }) => {
+      if (options.format && !['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'].includes(options.format)) {
+        console.error('❌ Format must be one of: cursor, claude, continue, windsurf, copilot, kiro, generic, mcp');
+        process.exit(1);
+      }
+
+      if (options.subtype && !['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'].includes(options.subtype)) {
+        console.error('❌ Subtype must be one of: rule, agent, skill, slash-command, prompt, workflow, tool, template, collection');
         process.exit(1);
       }
 
@@ -494,7 +483,9 @@ export function createInstallCommand(): Command {
       }
 
       await handleInstall(packageSpec, {
-        type: options.type as PackageType | undefined,
+        version: options.version,
+        format: options.format as Format | undefined,
+        subtype: options.subtype as Subtype | undefined,
         as: options.as,
         frozenLockfile: options.frozenLockfile
       });
