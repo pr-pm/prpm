@@ -3,7 +3,12 @@
  */
 
 // Package types
-export type PackageType = 'cursor' | 'cursor-agent' | 'cursor-slash-command' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'generic' | 'mcp';
+export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp';
+export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection';
+
+/** @deprecated Use Format and Subtype instead */
+export type PackageType = 'cursor' | 'cursor-agent' | 'cursor-slash-command' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp' | 'collection';
+
 export type PackageVisibility = 'public' | 'private' | 'unlisted';
 export type OrgRole = 'owner' | 'admin' | 'maintainer' | 'member';
 
@@ -51,7 +56,10 @@ export interface Package {
   description?: string;
   author_id?: string;
   org_id?: string;
+  /** @deprecated Use format and subtype instead */
   type: PackageType;
+  format: Format;
+  subtype?: Subtype;
   license?: string;
   repository_url?: string;
   homepage_url?: string;
@@ -106,7 +114,10 @@ export interface PackageManifest {
   repository?: string;
   homepage?: string;
   documentation?: string;
-  type: PackageType;
+  /** @deprecated Use format and subtype instead */
+  type?: PackageType;
+  format?: Format;
+  subtype?: Subtype;
   tags?: string[];
   keywords?: string[];
   category?: string;
@@ -160,7 +171,10 @@ export interface AccessToken {
 
 // API Request/Response types
 export interface SearchFilters {
+  /** @deprecated Use format and subtype instead */
   type?: PackageType | PackageType[];
+  format?: Format | Format[];
+  subtype?: Subtype | Subtype[];
   tags?: string[];
   category?: string;
   author?: string;  // Filter by author username

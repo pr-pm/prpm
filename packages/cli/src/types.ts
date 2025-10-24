@@ -2,11 +2,18 @@
  * Core types for the Prompt Package Manager
  */
 
-export type PackageType = 'cursor' | 'cursor-agent' | 'cursor-slash-command' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp';
+export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp';
+export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection';
+
+/** @deprecated Use Format and Subtype instead */
+export type PackageType = 'cursor' | 'cursor-agent' | 'cursor-slash-command' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp' | 'collection';
 
 export interface Package {
   id: string;
+  /** @deprecated Use format and subtype instead */
   type: PackageType;
+  format: Format;
+  subtype?: Subtype;
   url: string;
   dest: string;
   // Future expansion fields (not used in MVP)
