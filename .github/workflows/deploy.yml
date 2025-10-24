@@ -175,6 +175,8 @@ jobs:
 
           MAX_ATTEMPTS=40  # 40 attempts × 30 seconds = 20 minutes max
           ATTEMPT=0
+          RED_COUNT=0
+          MAX_CONSECUTIVE_RED=30  # Allow up to 30 consecutive red checks (~15 minutes)
 
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             ATTEMPT=$((ATTEMPT + 1))
@@ -200,12 +202,33 @@ jobs:
                 break
               elif [ "$HEALTH" = "Yellow" ]; then
                 echo "⚠️  Environment is Ready but has warnings (Yellow health)"
-                echo "   Checking if this is acceptable..."
+                RED_COUNT=0  # Reset red counter
 
                 # Give it a few more checks to potentially turn Green
                 if [ $ATTEMPT -gt 10 ]; then
                   echo "⚠️  Proceeding with Yellow health status"
                   break
+                fi
+              elif [ "$HEALTH" = "Red" ]; then
+                RED_COUNT=$((RED_COUNT + 1))
+                echo "🔴 Environment is Red (consecutive: $RED_COUNT/$MAX_CONSECUTIVE_RED)"
+
+                if [ $RED_COUNT -ge $MAX_CONSECUTIVE_RED ]; then
+                  echo "❌ Environment has been Red for too long ($RED_COUNT checks = ~$(($RED_COUNT / 2)) minutes)"
+
+                  # Get recent events for debugging
+                  echo ""
+                  echo "Recent events:"
+                  aws elasticbeanstalk describe-events \
+                    --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+                    --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+                    --max-records 10 \
+                    --query 'Events[].[EventDate,Severity,Message]' \
+                    --output text | head -30
+
+                  exit 1
+                else
+                  echo "   Waiting for application to start up... (will fail after $MAX_CONSECUTIVE_RED consecutive reds)"
                 fi
               else
                 echo "❌ Environment is Ready but health is: $HEALTH"
@@ -223,6 +246,7 @@ jobs:
               fi
             elif [ "$STATUS" = "Updating" ]; then
               echo "   Still updating, waiting 30 seconds..."
+              RED_COUNT=0  # Reset red counter during updates
             else
               echo "❌ Unexpected status: $STATUS"
 
@@ -260,18 +284,33 @@ jobs:
 
       - name: Health check
         run: |
-          echo "Waiting 30 seconds for environment to stabilize..."
-          sleep 30
+          echo "Running health checks with retries..."
 
-          echo "Running health checks..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://registry.prpm.dev/health)
+          MAX_RETRIES=10
+          RETRY=0
 
-          if [ "$STATUS" -ne 200 ]; then
-            echo "Error: Health check returned status $STATUS"
-            exit 1
-          fi
+          while [ $RETRY -lt $MAX_RETRIES ]; do
+            RETRY=$((RETRY + 1))
+            echo "🔍 Health check attempt $RETRY/$MAX_RETRIES..."
 
-          echo "✓ Registry is healthy (HTTP $STATUS)"
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://registry.prpm.dev/health)
+
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ Registry is healthy (HTTP $STATUS)"
+              exit 0
+            else
+              echo "⚠️  Health check returned status $STATUS"
+
+              if [ $RETRY -lt $MAX_RETRIES ]; then
+                echo "   Waiting 30 seconds before retry..."
+                sleep 30
+              fi
+            fi
+          done
+
+          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          echo "Last status code: $STATUS"
+          exit 1
 
   # Deploy webapp second (if changed or manually requested), only after registry succeeds or is skipped
   # This job depends on deploy-registry but will run even if that job is skipped

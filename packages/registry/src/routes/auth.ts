@@ -82,31 +82,45 @@ async function authenticateWithNango(server: FastifyInstance, connectionId: stri
       user.nango_connection_id = connectionId;
     } else if (user.nango_connection_id !== connectionId) {
       // User already has a connection, and this is a different one
-      // The webhook should have already deleted this duplicate connection
+      // The webhook should have already updated to the new connection and deleted the old one
       server.log.warn({
         userId: user.id,
         storedConnectionId: user.nango_connection_id,
         providedConnectionId: connectionId
-      }, 'Callback received duplicate connection that should have been deleted by webhook');
+      }, 'Callback received different connection than stored - webhook should have updated this');
 
-      // This shouldn't happen if webhook worked correctly, but handle it gracefully
-      // Use the stored connection for authentication
-      await query(
+      // The webhook should have already updated the database with the new connectionId
+      // This is a race condition where the callback ran before the webhook completed
+      // Refresh the user data to get the latest connectionId
+      const refreshedUser = await queryOne<User>(
         server,
-        'UPDATE users SET last_login_at = NOW(), github_username = $2 WHERE id = $1',
-        [user.id, githubUser.login]
+        'SELECT * FROM users WHERE github_id = $1',
+        [String(githubUser.id)]
       );
 
-      // Validate the STORED connection is still valid
-      try {
-        const storedGithubUser = await nangoService.getGitHubUser(user.nango_connection_id);
+      if (refreshedUser && refreshedUser.nango_connection_id === connectionId) {
+        // Webhook already updated the connection - use the refreshed user
         server.log.info({
+          userId: refreshedUser.id,
+          connectionId
+        }, 'Webhook already updated connection, using refreshed user data');
+        user = refreshedUser;
+      } else {
+        // Webhook hasn't updated yet - this shouldn't normally happen
+        // Update the user to use the new connection
+        server.log.warn({
           userId: user.id,
-          storedConnectionId: user.nango_connection_id
-        }, 'Using stored connection for authentication');
-      } catch (error) {
-        server.log.error({ error, userId: user.id, storedConnectionId: user.nango_connection_id }, 'Stored connection is invalid');
-        throw new Error('Your stored authentication has expired. Please contact support.');
+          oldConnectionId: user.nango_connection_id,
+          newConnectionId: connectionId
+        }, 'Webhook has not updated connection yet, updating now');
+
+        await query(
+          server,
+          'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+          [connectionId, githubUser.login, user.id]
+        );
+
+        user.nango_connection_id = connectionId;
       }
     } else {
       // Same connection, just update last login
@@ -278,16 +292,63 @@ export async function authRoutes(server: FastifyInstance) {
           );
 
           if (existingUser && existingUser.nango_connection_id && existingUser.nango_connection_id !== connectionId) {
-            // User already has a DIFFERENT connection - delete this new one
+            // User already has a DIFFERENT connection - keep the NEW one and delete the OLD one
             server.log.info({
               userId: existingUser.id,
-              existingConnectionId: existingUser.nango_connection_id,
+              oldConnectionId: existingUser.nango_connection_id,
               newConnectionId: connectionId
-            }, 'User already has a different connection, deleting new connection');
+            }, 'User has a different connection, updating to use new connection and deleting old one');
 
-            await nangoService.deleteConnection(connectionId);
+            // Delete the old connection from Nango
+            try {
+              await nangoService.deleteConnection(existingUser.nango_connection_id);
+              server.log.info({
+                connectionId: existingUser.nango_connection_id
+              }, 'Deleted old connection from Nango');
+            } catch (error) {
+              server.log.error({
+                error,
+                connectionId: existingUser.nango_connection_id
+              }, 'Failed to delete old connection from Nango');
+            }
 
-            server.log.info({ connectionId }, 'Deleted duplicate connection');
+            // Update user to use the new connection
+            await query(
+              server,
+              'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+              [connectionId, githubUser.login, existingUser.id]
+            );
+
+            server.log.info({
+              userId: existingUser.id,
+              newConnectionId: connectionId
+            }, 'Updated user to use new connection');
+
+            // Patch the new connection with user metadata
+            try {
+              const tags: Record<string, string> = {};
+              if (existingUser.verified_author) {
+                tags.verified_author = 'true';
+              }
+
+              await nangoService.patchConnection(connectionId, {
+                id: existingUser.id,
+                email: existingUser.email,
+                display_name: existingUser.username,
+                tags: Object.keys(tags).length > 0 ? tags : undefined,
+              });
+
+              server.log.info({
+                userId: existingUser.id,
+                connectionId,
+                tags
+              }, 'Patched new connection with user metadata');
+            } catch (error) {
+              server.log.error({ error, userId: existingUser.id, connectionId }, 'Failed to patch new connection');
+            }
+
+            // Store the connection ID for CLI authentication sessions
+            cliAuthSessions.set(endUser.endUserId, connectionId);
           } else if (!existingUser) {
             // New user - create them in the database
             const primaryEmail = githubUser.email || `${githubUser.login}@github.user`;
