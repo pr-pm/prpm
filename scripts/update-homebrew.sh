@@ -64,15 +64,15 @@ fi
 cat > "$FORMULA_FILE" << EOF
 class Prmp < Formula
   desc "Prompt Package Manager - Install and manage prompt-based files like Cursor rules and Claude sub-agents"
-  homepage "https://github.com/khaliqgant/prompt-package-manager"
-  url "https://github.com/khaliqgant/prompt-package-manager/releases/download/v${VERSION}/prpm-macos-x64"
+  homepage "https://github.com/pr-pm/prpm"
+  url "https://github.com/pr-pm/prpm/releases/download/v${VERSION}/prpm-macos-x64"
   sha256 "${MACOS_X64_HASH}"
   version "${VERSION}"
   license "MIT"
   
   # Support both Intel and Apple Silicon Macs
   if Hardware::CPU.arm?
-    url "https://github.com/khaliqgant/prompt-package-manager/releases/download/v${VERSION}/prpm-macos-arm64"
+    url "https://github.com/pr-pm/prpm/releases/download/v${VERSION}/prpm-macos-arm64"
     sha256 "${MACOS_ARM64_HASH}"
   end
   

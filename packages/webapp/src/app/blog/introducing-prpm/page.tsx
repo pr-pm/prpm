@@ -39,7 +39,7 @@ export default function IntroducingPRPMPost() {
             </div>
             <div className="flex items-center gap-4">
               <a
-                href="https://github.com/khaliqgant/prompt-package-manager"
+                href="https://github.com/pr-pm/prpm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors"
@@ -195,7 +195,7 @@ export default function IntroducingPRPMPost() {
 
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
             <a
-              href="https://github.com/khaliqgant/prompt-package-manager"
+              href="https://github.com/pr-pm/prpm"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold transition-all"

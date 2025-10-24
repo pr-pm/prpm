@@ -58,7 +58,7 @@ The registry launches next week with 100+ cursor rules and Claude skills. I'd be
 
 ## Links
 
-- **GitHub**: https://github.com/khaliqgant/prompt-package-manager
+- **GitHub**: https://github.com/pr-pm/prpm
 - **Demo**: [video or screenshots]
 - **Docs**: [link to docs]
 
@@ -115,7 +115,7 @@ Like npm but for Claude skills, cursor rules, and prompts. Simon's article on Cl
 
 100+ packages available, growing daily.
 
-Would love HN's feedback: github.com/khaliqgant/prompt-package-manager
+Would love HN's feedback: github.com/pr-pm/prpm
 ```
 
 ---

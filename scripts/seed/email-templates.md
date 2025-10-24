@@ -10,7 +10,7 @@ Templates for reaching out to original package authors to claim ownership.
 ```markdown
 Hi @{username}! 👋
 
-We're building [PRMP (Prompt Package Manager)](https://github.com/khaliqgant/prompt-package-manager) - a CLI tool for managing AI prompts, similar to npm but for cursor rules, Claude agents, and other AI prompt files.
+We're building [PRMP (Prompt Package Manager)](https://github.com/pr-pm/prpm) - a CLI tool for managing AI prompts, similar to npm but for cursor rules, Claude agents, and other AI prompt files.
 
 **Your cursor rules are now available on our registry!** 🎉
 
@@ -47,7 +47,7 @@ No problem! Just let us know and we'll remove it immediately. We respect your wi
 
 ### Learn more
 
-- [Project Repo](https://github.com/khaliqgant/prompt-package-manager)
+- [Project Repo](https://github.com/pr-pm/prpm)
 - [Documentation](https://docs.prpm.dev)
 - [How it Works](https://docs.prpm.dev/how-it-works)
 
@@ -104,7 +104,7 @@ Thanks for making great cursor rules!
 
 Khaliq
 Founder, PRMP
-https://github.com/khaliqgant/prompt-package-manager
+https://github.com/pr-pm/prpm
 ```
 
 ## Template 4: Reddit/Forum Post
@@ -134,7 +134,7 @@ Full list of published packages: https://registry.prpm.dev/explore
 All packages include original author attribution, repo links, and star counts.
 If you want your package removed, just let me know.
 
-Project repo: https://github.com/khaliqgant/prompt-package-manager
+Project repo: https://github.com/pr-pm/prpm
 
 Feedback welcome!
 ```
@@ -172,7 +172,7 @@ registry.prpm.dev/claim</a></p>
 Claude agents, Continue configs, etc. It provides a unified CLI for discovering,
 installing, and managing AI prompt files.</p>
 
-<a href="https://github.com/khaliqgant/prompt-package-manager">Learn More →</a>
+<a href="https://github.com/pr-pm/prpm">Learn More →</a>
 
 <p><small>Don't want your package published? Reply to opt-out.</small></p>
 ```
@@ -244,7 +244,7 @@ prpm install react-expert-skill
 
 Like npm, but for Claude skills and prompts. Launching next week with 100+ packages.
 
-Would love your feedback: github.com/khaliqgant/prompt-package-manager
+Would love your feedback: github.com/pr-pm/prpm
 
 Best,
 Khaliq

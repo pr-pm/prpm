@@ -9,7 +9,7 @@ Karen just reviewed my project and gave it a 78/100 ✅
 
 First-mover advantage in a real market gap, but you're racing against discovery - someone will fork this if you don't move fast enough.
 
-Full hot take: https://github.com/khaliqgant/prompt-package-manager/blob/v2/.karen/review.md
+Full hot take: https://github.com/pr-pm/prpm/blob/v2/.karen/review.md
 
 #KarenScore #PRPM #CLI
 ```
@@ -21,7 +21,7 @@ Full hot take: https://github.com/khaliqgant/prompt-package-manager/blob/v2/.kar
 Add this to your README.md:
 
 ```markdown
-[![Karen Score](https://raw.githubusercontent.com/khaliqgant/prompt-package-manager/v2/.karen/badges/score-badge.svg)](https://github.com/khaliqgant/prompt-package-manager/blob/v2/.karen/review.md)
+[![Karen Score](https://raw.githubusercontent.com/pr-pm/prpm/v2/.karen/badges/score-badge.svg)](https://github.com/pr-pm/prpm/blob/v2/.karen/review.md)
 ```
 
 Or use this markdown badge:
@@ -58,7 +58,7 @@ Interesting insights:
 - 253 packages scraped (Claude + Cursor rules)
 - Karen uses WebSearch to research competitors before scoring
 
-Full hot take: https://github.com/khaliqgant/prompt-package-manager/blob/v2/.karen/review.md
+Full hot take: https://github.com/pr-pm/prpm/blob/v2/.karen/review.md
 ```
 
 ## Discord/Slack
@@ -78,7 +78,7 @@ But also:
 - Registry infrastructure not deployed yet
 - Need 10x more packages
 
-Full review: https://github.com/khaliqgant/prompt-package-manager/blob/v2/.karen/review.md
+Full review: https://github.com/pr-pm/prpm/blob/v2/.karen/review.md
 ```
 
 ---

@@ -51,12 +51,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/khaliqgant/prompt-package-manager.git"
+    "url": "git+https://github.com/pr-pm/prpm.git"
   },
   "bugs": {
-    "url": "https://github.com/khaliqgant/prompt-package-manager/issues"
+    "url": "https://github.com/pr-pm/prpm/issues"
   },
-  "homepage": "https://github.com/khaliqgant/prompt-package-manager#readme",
+  "homepage": "https://github.com/pr-pm/prpm#readme",
   "author": "khaliqgant",
   "license": "MIT",
   "devDependencies": {
@@ -76,5 +76,8 @@
   "overrides": {
     "@fastify/multipart": "^7.7.3",
     "@fastify/jwt": "^7.2.4"
+  },
+  "dependencies": {
+    "prpm": "^0.0.4"
   }
 }

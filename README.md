@@ -1,6 +1,6 @@
 # PRPM - The Package Manager for AI Prompts
 
-[![Karen Score](https://raw.githubusercontent.com/khaliqgant/prompt-package-manager/v2/.karen/badges/score-badge.svg)](https://github.com/khaliqgant/prompt-package-manager/blob/v2/.karen/review.md)
+[![Karen Score](https://raw.githubusercontent.com/pr-pm/prpm/v2/.karen/badges/score-badge.svg)](https://github.com/pr-pm/prpm/blob/v2/.karen/review.md)
 
 **Stop copy-pasting prompts from GitHub.** Install Cursor rules, Claude skills, and AI agents like npm packages.
 
@@ -442,7 +442,7 @@ npm install -g prpm
 brew install khaliqgant/homebrew-prpm/prpm
 
 # Direct download
-# See releases: github.com/khaliqgant/prompt-package-manager/releases
+# See releases: github.com/pr-pm/prpm/releases
 ```
 
 Then:

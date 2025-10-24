@@ -56,7 +56,7 @@ export default function AppLayout({
             </div>
             <div className="flex items-center gap-4">
               <a
-                href="https://github.com/khaliqgant/prompt-package-manager"
+                href="https://github.com/pr-pm/prpm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors"

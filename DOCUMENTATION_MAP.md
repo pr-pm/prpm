@@ -149,8 +149,8 @@ prpm/
    ```
 
 3. **Ask for help:**
-   - [GitHub Discussions](https://github.com/khaliqgant/prompt-package-manager/discussions)
-   - [GitHub Issues](https://github.com/khaliqgant/prompt-package-manager/issues)
+   - [GitHub Discussions](https://github.com/pr-pm/prpm/discussions)
+   - [GitHub Issues](https://github.com/pr-pm/prpm/issues)
    - Email: team@prpm.dev
 
 ---

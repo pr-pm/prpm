@@ -105,8 +105,8 @@ Analytics: ClickHouse
 We welcome community contributions:
 
 - 📦 **Submit packages** - [Publishing guide](docs/PUBLISHING.md)
-- 🐛 **Report bugs** - [GitHub Issues](https://github.com/khaliqgant/prompt-package-manager/issues)
-- 💡 **Request features** - [Discussions](https://github.com/khaliqgant/prompt-package-manager/discussions)
+- 🐛 **Report bugs** - [GitHub Issues](https://github.com/pr-pm/prpm/issues)
+- 💡 **Request features** - [Discussions](https://github.com/pr-pm/prpm/discussions)
 - 🧪 **Write tests** - Improve test coverage
 - 📖 **Improve docs** - Help make PRPM easier to use
 

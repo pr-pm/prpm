@@ -259,4 +259,4 @@ prpm install --help
 
 ## Issues & Feedback
 
-Report issues at: https://github.com/khaliqgant/prompt-package-manager/issues
+Report issues at: https://github.com/pr-pm/prpm/issues

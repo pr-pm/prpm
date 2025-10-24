@@ -176,10 +176,12 @@ export async function handleIndex(options: { verbose?: boolean } = {}): Promise<
       console.log('\n💡 No prompt files found in standard directories');
       console.log('   Install packages with: prpm install <package-name>');
     }
-    
+
   } catch (error) {
     console.error(`❌ Failed to index packages: ${error}`);
     process.exit(1);
+  } finally {
+    process.exit(0);
   }
 }
 

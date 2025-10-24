@@ -20,7 +20,7 @@ brew install prpm
 ```
 
 ### Direct Download
-Download the latest binary from [GitHub Releases](https://github.com/khaliqgant/prompt-package-manager/releases).
+Download the latest binary from [GitHub Releases](https://github.com/pr-pm/prpm/releases).
 
 ## Quick Start
 
@@ -908,10 +908,10 @@ export PRPM_REGISTRY_URL=https://custom-registry.com
 
 ## Support & Resources
 
-- **GitHub**: https://github.com/khaliqgant/prompt-package-manager
-- **Issues**: https://github.com/khaliqgant/prompt-package-manager/issues
+- **GitHub**: https://github.com/pr-pm/prpm
+- **Issues**: https://github.com/pr-pm/prpm/issues
 - **Registry**: https://registry.prpm.dev
-- **Documentation**: https://github.com/khaliqgant/prompt-package-manager#readme
+- **Documentation**: https://github.com/pr-pm/prpm#readme
 
 ## Contributing
 
