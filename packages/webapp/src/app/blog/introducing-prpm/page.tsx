@@ -3,11 +3,11 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Introducing PRPM: The Universal Registry for AI Coding Tools',
-  description: 'Today, we're excited to launch PRPM - a universal package manager for AI prompts, agents, skills, and slash commands.',
+  title: "Introducing PRPM: The Universal Registry for AI Coding Tools",
+  description: "Today, we're excited to launch PRPM - a universal package manager for AI prompts, agents, skills, and slash commands.",
   openGraph: {
-    title: 'Introducing PRPM: The Universal Registry for AI Coding Tools',
-    description: 'Learn about our vision for making AI coding tools accessible and shareable.',
+    title: "Introducing PRPM: The Universal Registry for AI Coding Tools",
+    description: "Learn about our vision for making AI coding tools accessible and shareable.",
   },
 }
 
@@ -86,8 +86,6 @@ export default function IntroducingPRPMPost() {
 
           <div className="flex items-center gap-4 text-gray-400 text-sm">
             <span>By PRPM Team</span>
-            <span>•</span>
-            <time dateTime="2025-10-23">October 23, 2025</time>
             <span>•</span>
             <span>5 min read</span>
           </div>
@@ -177,7 +175,7 @@ export default function IntroducingPRPMPost() {
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-prpm-purple mt-1">→</span>
-                <span><strong className="text-white">IDE Extensions:</strong> Native integrations for popular editors</span>
+                <span><strong className="text-white">prpm+:</strong> Advanced tooling for both using and writing prompts</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-prpm-purple mt-1">→</span>
@@ -241,7 +239,7 @@ export default function IntroducingPRPMPost() {
             <div className="flex items-center gap-4">
               <span className="text-gray-400 text-sm">Share this post:</span>
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Introducing PRPM: The Universal Registry for AI Coding Tools')}&url=${encodeURIComponent('https://prpm.ai/blog/introducing-prpm')}&via=prpm_ai`}
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Introducing PRPM: The Universal Registry for AI Coding Tools')}&url=${encodeURIComponent('https://prpm.dev/blog/introducing-prpm')}&via=prpmdev`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-[#1DA1F2] transition-colors"

@@ -242,6 +242,9 @@ export default function Home() {
                 © 2025 PRPM. Open source under MIT License.
               </div>
               <div className="flex gap-6">
+                <Link href="/blog" className="hover:text-white transition-colors">
+                  Blog
+                </Link>
                 <Link href="/legal/terms" className="hover:text-white transition-colors">
                   Terms
                 </Link>

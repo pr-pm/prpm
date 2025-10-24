@@ -10,6 +10,7 @@ interface User {
   username: string
   email: string
   avatar_url?: string
+  website?: string
   verified_author: boolean
   is_admin: boolean
   package_count?: number
@@ -24,6 +25,10 @@ export default function DashboardPage() {
   const [claiming, setClaiming] = useState(false)
   const [claimError, setClaimError] = useState<string | null>(null)
   const [showTweetModal, setShowTweetModal] = useState(false)
+  const [isEditingWebsite, setIsEditingWebsite] = useState(false)
+  const [websiteInput, setWebsiteInput] = useState('')
+  const [websiteError, setWebsiteError] = useState<string | null>(null)
+  const [websiteSaving, setWebsiteSaving] = useState(false)
 
   useEffect(() => {
     // Check if user is logged in
@@ -104,6 +109,50 @@ export default function DashboardPage() {
       setClaimError(error instanceof Error ? error.message : 'Failed to claim packages')
     } finally {
       setClaiming(false)
+    }
+  }
+
+  const handleEditWebsite = () => {
+    setWebsiteInput(user?.website || '')
+    setIsEditingWebsite(true)
+    setWebsiteError(null)
+  }
+
+  const handleCancelWebsiteEdit = () => {
+    setIsEditingWebsite(false)
+    setWebsiteInput('')
+    setWebsiteError(null)
+  }
+
+  const handleSaveWebsite = async () => {
+    const token = localStorage.getItem('prpm_token')
+    if (!token) return
+
+    setWebsiteSaving(true)
+    setWebsiteError(null)
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/auth/me`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ website: websiteInput.trim() || null }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to update website')
+      }
+
+      const data = await response.json()
+      setUser(prev => prev ? { ...prev, website: data.user.website } : null)
+      setIsEditingWebsite(false)
+    } catch (error) {
+      setWebsiteError(error instanceof Error ? error.message : 'Failed to update website')
+    } finally {
+      setWebsiteSaving(false)
     }
   }
 
@@ -202,11 +251,76 @@ export default function DashboardPage() {
                   {user.username[0].toUpperCase()}
                 </div>
               )}
-              <div>
+              <div className="flex-1">
                 <h3 className="text-xl font-semibold text-white">{user.username}</h3>
                 <p className="text-gray-400 text-sm">{user.email}</p>
               </div>
             </div>
+
+            {/* Website Section */}
+            <div className="mb-4 border-t border-prpm-border pt-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-gray-300">Website</label>
+                {!isEditingWebsite && (
+                  <button
+                    onClick={handleEditWebsite}
+                    className="text-xs text-prpm-accent hover:text-prpm-accent-light transition-colors"
+                  >
+                    {user.website ? 'Edit' : 'Add'}
+                  </button>
+                )}
+              </div>
+
+              {isEditingWebsite ? (
+                <div className="space-y-2">
+                  <input
+                    type="url"
+                    value={websiteInput}
+                    onChange={(e) => setWebsiteInput(e.target.value)}
+                    placeholder="https://example.com"
+                    className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-prpm-accent transition-colors"
+                  />
+                  {websiteError && (
+                    <p className="text-xs text-red-400">{websiteError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveWebsite}
+                      disabled={websiteSaving}
+                      className="flex-1 px-3 py-2 bg-prpm-accent hover:bg-prpm-accent-light text-white text-sm rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {websiteSaving ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={handleCancelWebsiteEdit}
+                      disabled={websiteSaving}
+                      className="px-3 py-2 bg-prpm-dark border border-prpm-border hover:border-prpm-accent text-gray-300 text-sm rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {user.website ? (
+                    <a
+                      href={user.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-prpm-accent hover:text-prpm-accent-light transition-colors flex items-center gap-1 break-all"
+                    >
+                      {user.website}
+                      <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No website set</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-2 flex-wrap">
               {user.verified_author && (
                 <span className="px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-full text-green-400 text-xs font-medium">
@@ -323,17 +437,17 @@ export default function DashboardPage() {
             <div className="bg-prpm-dark border border-prpm-border rounded-xl p-4 mb-6">
               <p className="text-gray-300 text-sm mb-3">Ready-to-share tweet:</p>
               <p className="text-white leading-relaxed">
-                Just connected my GitHub to @prpm_ai 🚀
+                Just connected my GitHub to @prpmdev 🚀
                 <br /><br />
-                Check out my AI prompts, agents, and coding tools at prpm.ai/@{user?.username}
+                Check out my AI prompts, agents, and coding tools at prpm.dev/@{user?.username}
                 <br /><br />
-                #AI #DevTools #Prompts
+                #AI #DevTools #Prompts #prpm
               </p>
             </div>
 
             <div className="flex gap-3">
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just connected my GitHub to @prpm_ai 🚀\n\nCheck out my AI prompts, agents, and coding tools at prpm.ai/@${user?.username}\n\n#AI #DevTools #Prompts`)}`}
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just connected my GitHub to @prpmdev 🚀\n\nCheck out my AI prompts, agents, and coding tools at prpm.dev/@${user?.username}\n\n#AI #DevTools #Prompts`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 px-6 py-3 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"

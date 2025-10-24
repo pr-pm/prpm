@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://prpm.ai'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://prpm.dev'),
   title: {
     default: 'PRPM - The Universal Registry for AI Coding Tools',
     template: '%s | PRPM'
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     'AI coding assistant',
     'developer tools'
   ],
-  authors: [{ name: 'PRPM', url: 'https://prpm.ai' }],
+  authors: [{ name: 'PRPM', url: 'https://prpm.dev' }],
   creator: 'PRPM',
   publisher: 'PRPM',
   formatDetection: {
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://prpm.ai',
+    url: 'https://prpm.dev',
     title: 'PRPM - The Universal Registry for AI Coding Tools',
     description: 'Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, and more — all from one file.',
     siteName: 'PRPM',
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     title: 'PRPM - The Universal Registry for AI Coding Tools',
     description: 'Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, and more.',
     images: ['/og-image.png'],
-    creator: '@prpm_ai',
+    creator: '@prpmdev',
   },
   robots: {
     index: true,

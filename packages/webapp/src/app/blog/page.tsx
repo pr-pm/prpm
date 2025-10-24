@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import NewsletterSubscribe from '@/components/NewsletterSubscribe'
 
 export const metadata: Metadata = {
-  title: 'Blog',
-  description: 'Latest updates, insights, and tutorials from the PRPM team about AI coding tools, prompts, and workflow automation.',
+  title: "Blog",
+  description: "Latest updates, insights, and tutorials from the PRPM team about AI coding tools, prompts, and workflow automation.",
   openGraph: {
-    title: 'PRPM Blog - AI Coding Tools & Insights',
-    description: 'Latest updates and insights about AI prompts, agents, and developer tools.',
+    title: "PRPM Blog - AI Coding Tools & Insights",
+    description: "Latest updates and insights about AI prompts, agents, and developer tools.",
   },
 }
 
@@ -23,13 +24,13 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
-    slug: 'introducing-prpm',
-    title: 'Introducing PRPM: The Universal Registry for AI Coding Tools',
-    excerpt: 'Today, we're excited to launch PRPM - a universal package manager for AI prompts, agents, skills, and slash commands. Learn about our vision and what's coming next.',
-    date: '2025-10-23',
-    author: 'PRPM Team',
-    readTime: '5 min read',
-    tags: ['Launch', 'Announcement', 'Vision'],
+    slug: "introducing-prpm",
+    title: "Introducing PRPM: The Universal Registry for AI Coding Tools",
+    excerpt: "Today, we're excited to launch PRPM - a universal package manager for AI prompts, agents, skills, and slash commands. Learn about our vision and what's coming next.",
+    date: "2025-10-23",
+    author: "PRPM Team",
+    readTime: "5 min read",
+    tags: ["Launch", "Announcement", "Vision"],
   },
 ]
 
@@ -106,14 +107,6 @@ export default function BlogPage() {
             >
               <div className="mb-4">
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                  <time dateTime={post.date}>
-                    {new Date(post.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </time>
-                  <span>•</span>
                   <span>{post.readTime}</span>
                 </div>
 
@@ -163,23 +156,7 @@ export default function BlogPage() {
 
       {/* Newsletter CTA */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-purple/20 border border-prpm-accent/30 rounded-2xl p-8 md:p-12 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Stay Updated</h2>
-          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-            Get notified about new features, blog posts, and updates from the PRPM team
-          </p>
-          <div className="flex gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-3 bg-prpm-dark border border-prpm-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-prpm-accent transition-colors"
-            />
-            <button className="px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold transition-all">
-              Subscribe
-            </button>
-          </div>
-          <p className="text-gray-500 text-sm mt-4">Coming soon - join our GitHub for now!</p>
-        </div>
+        <NewsletterSubscribe />
       </div>
     </main>
   )
