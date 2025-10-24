@@ -8,6 +8,7 @@ import { toCursor } from '../converters/to-cursor.js';
 import { toClaude } from '../converters/to-claude.js';
 import { toCopilot } from '../converters/to-copilot.js';
 import { toKiro } from '../converters/to-kiro.js';
+import { toWindsurf } from '../converters/to-windsurf.js';
 import type { CanonicalPackage } from '../types/canonical.js';
 
 export async function convertRoutes(server: FastifyInstance) {
@@ -325,9 +326,7 @@ async function convertPackage(
       };
 
     case 'windsurf':
-      // TODO: Implement Windsurf converter
-      // For now, use Cursor format (similar)
-      return toCursor(pkg);
+      return toWindsurf(pkg);
 
     case 'copilot': {
       // GitHub Copilot format
