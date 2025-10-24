@@ -34,7 +34,7 @@ function CLIAuthContent() {
       console.error('Failed to handle connection:', err)
       setError('Authentication flow error')
     }
-  }, [userId])
+  }, [])
 
   const openModal = useCallback(() => {
     if (nango && sessionToken) {
@@ -192,8 +192,12 @@ function CLIAuthContent() {
       }
     }
 
-    initializeAuth()
-  }, [sessionToken, cliCallback, connectionStatus, handleConnectionSuccess])
+    // Only initialize once when component mounts
+    if (!authSucceededRef.current) {
+      initializeAuth()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionToken, cliCallback])
 
   if (isLoading) {
     return (

@@ -225,13 +225,11 @@ jobs:
 
           echo "✓ Dependency updates complete"
 
-      - name: Update package-lock.json
+      - name: Update root package-lock.json
         run: |
-          cd packages/${{ matrix.package }}
+          echo "Updating root package-lock.json..."
 
-          echo "Updating package-lock.json..."
-
-          # Run npm install to update lockfile
+          # Update root lockfile after dependency changes
           npm install --package-lock-only
 
           echo "✓ package-lock.json updated"
@@ -274,9 +272,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: version-${{ matrix.package }}
-          path: |
-            packages/${{ matrix.package }}/package.json
-            packages/${{ matrix.package }}/package-lock.json
+          path: packages/${{ matrix.package }}/package.json
           retention-days: 1
 
       - name: Upload updated index.ts (CLI only)
@@ -285,6 +281,14 @@ jobs:
         with:
           name: cli-index-ts
           path: packages/cli/src/index.ts
+          retention-days: 1
+
+      - name: Upload root package-lock.json (once)
+        if: matrix.package == 'cli'
+        uses: actions/upload-artifact@v4
+        with:
+          name: root-package-lock
+          path: package-lock.json
           retention-days: 1
 
   create-git-tag:
@@ -319,21 +323,15 @@ jobs:
         run: |
           echo "Restoring updated files from publish job..."
 
+          # Restore package.json files
           for artifact_dir in /tmp/artifacts/version-*; do
             if [ -d "$artifact_dir" ]; then
               PACKAGE_NAME=$(basename "$artifact_dir" | sed 's/version-//')
-              echo "Restoring $PACKAGE_NAME files..."
+              echo "Restoring $PACKAGE_NAME package.json..."
 
-              # Restore package.json
-              if [ -f "$artifact_dir/packages/$PACKAGE_NAME/package.json" ]; then
-                cp "$artifact_dir/packages/$PACKAGE_NAME/package.json" "packages/$PACKAGE_NAME/package.json"
+              if [ -f "$artifact_dir/package.json" ]; then
+                cp "$artifact_dir/package.json" "packages/$PACKAGE_NAME/package.json"
                 echo "  ✓ package.json"
-              fi
-
-              # Restore package-lock.json
-              if [ -f "$artifact_dir/packages/$PACKAGE_NAME/package-lock.json" ]; then
-                cp "$artifact_dir/packages/$PACKAGE_NAME/package-lock.json" "packages/$PACKAGE_NAME/package-lock.json"
-                echo "  ✓ package-lock.json"
               fi
             fi
           done
@@ -342,6 +340,14 @@ jobs:
           if [ -d "/tmp/artifacts/cli-index-ts" ]; then
             echo "Restoring CLI index.ts..."
             cp "/tmp/artifacts/cli-index-ts/index.ts" "packages/cli/src/index.ts"
+            echo "  ✓ index.ts"
+          fi
+
+          # Restore root package-lock.json
+          if [ -f "/tmp/artifacts/root-package-lock/package-lock.json" ]; then
+            echo "Restoring root package-lock.json..."
+            cp "/tmp/artifacts/root-package-lock/package-lock.json" "package-lock.json"
+            echo "  ✓ package-lock.json"
           fi
 
           echo "✓ All files restored"
@@ -378,9 +384,11 @@ jobs:
 
       - name: Commit version bumps
         run: |
-          # Add all package.json and package-lock.json files
+          # Add all package.json files
           git add packages/*/package.json
-          git add packages/*/package-lock.json
+
+          # Add root package-lock.json
+          git add package-lock.json
 
           # Add CLI index.ts if it was updated
           if [ -f "packages/cli/src/index.ts" ]; then
