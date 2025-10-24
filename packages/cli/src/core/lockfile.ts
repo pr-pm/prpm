@@ -14,6 +14,7 @@ export interface LockfilePackage {
   dependencies?: Record<string, string>;
   type?: string;
   format?: string;
+  installedPath?: string; // Path where the package was installed
 }
 
 export interface Lockfile {
@@ -82,6 +83,7 @@ export function addToLockfile(
     dependencies?: Record<string, string>;
     type?: string;
     format?: string;
+    installedPath?: string;
   }
 ): void {
   lockfile.packages[packageId] = {
@@ -91,6 +93,7 @@ export function addToLockfile(
     dependencies: packageInfo.dependencies,
     type: packageInfo.type,
     format: packageInfo.format,
+    installedPath: packageInfo.installedPath,
   };
   lockfile.generated = new Date().toISOString();
 }
@@ -250,6 +253,7 @@ export async function addPackage(packageInfo: {
   dependencies?: Record<string, string>;
   type?: string;
   format?: string;
+  installedPath?: string;
 }): Promise<void> {
   const lockfile = (await readLockfile()) || createLockfile();
   addToLockfile(lockfile, packageInfo.id, {
@@ -258,6 +262,7 @@ export async function addPackage(packageInfo: {
     dependencies: packageInfo.dependencies,
     type: packageInfo.type,
     format: packageInfo.format,
+    installedPath: packageInfo.installedPath,
   });
   await writeLockfile(lockfile);
 }

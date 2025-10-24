@@ -1,5 +1,5 @@
 /**
- * Remove command implementation
+ * Uninstall command implementation
  */
 
 import { Command } from 'commander';
@@ -9,11 +9,11 @@ import { promises as fs } from 'fs';
 import { PackageType } from '../types';
 
 /**
- * Handle the remove command
+ * Handle the uninstall command
  */
-export async function handleRemove(name: string): Promise<void> {
+export async function handleUninstall(name: string): Promise<void> {
   try {
-    console.log(`🗑️  Removing package: ${name}`);
+    console.log(`🗑️  Uninstalling package: ${name}`);
 
     // Remove from lockfile and get package info
     const pkg = await removePackage(name);
@@ -61,25 +61,26 @@ export async function handleRemove(name: string): Promise<void> {
       }
     }
 
-    console.log(`✅ Successfully removed ${name}`);
+    console.log(`✅ Successfully uninstalled ${name}`);
 
     process.exit(0);
   } catch (error) {
-    console.error(`❌ Failed to remove package: ${error}`);
+    console.error(`❌ Failed to uninstall package: ${error}`);
     process.exit(1);
   }
 }
 
 /**
- * Create the remove command
+ * Create the uninstall command
  */
-export function createRemoveCommand(): Command {
-  const command = new Command('remove');
-  
+export function createUninstallCommand(): Command {
+  const command = new Command('uninstall');
+
   command
-    .description('Remove a prompt package')
-    .argument('<id>', 'Package ID to remove')
-    .action(handleRemove);
-  
+    .description('Uninstall a prompt package')
+    .argument('<id>', 'Package ID to uninstall')
+    .alias('remove')  // Keep 'remove' as an alias for backwards compatibility
+    .action(handleUninstall);
+
   return command;
 }

@@ -229,7 +229,7 @@ prpm search react                    # Search packages
 prpm install <package-name>          # Install package
 prpm install <package> --as cursor   # Install for specific editor
 prpm list                            # List installed
-prpm remove <package-name>           # Remove package
+prpm uninstall <package-name>           # Remove package
 
 # Updates
 prpm outdated                        # Check for updates

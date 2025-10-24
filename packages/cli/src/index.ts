@@ -6,7 +6,7 @@
 
 import { Command } from 'commander';
 import { createListCommand } from './commands/list';
-import { createRemoveCommand } from './commands/remove';
+import { createUninstallCommand } from './commands/uninstall';
 import { createIndexCommand } from './commands/index';
 import { createTelemetryCommand } from './commands/telemetry';
 import { createPopularCommand } from './commands/popular';
@@ -46,7 +46,7 @@ program.addCommand(createUpgradeCommand());
 
 // Local file commands (existing)
 program.addCommand(createListCommand());
-program.addCommand(createRemoveCommand());
+program.addCommand(createUninstallCommand());
 program.addCommand(createIndexCommand());
 program.addCommand(createTelemetryCommand());
 

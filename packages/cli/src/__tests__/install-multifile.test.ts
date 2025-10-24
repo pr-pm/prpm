@@ -85,6 +85,7 @@ describe('install command - multi-file packages', () => {
     getPackage: jest.fn(),
     getPackageVersion: jest.fn(),
     downloadPackage: jest.fn(),
+    trackDownload: jest.fn(),
   };
 
   const mockConfig = {
@@ -101,6 +102,7 @@ describe('install command - multi-file packages', () => {
     (createLockfile as jest.Mock).mockReturnValue({ packages: {} });
     (setPackageIntegrity as jest.Mock).mockImplementation(() => {});
     (saveFile as jest.Mock).mockResolvedValue(undefined);
+    mockClient.trackDownload.mockResolvedValue(undefined);
 
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();

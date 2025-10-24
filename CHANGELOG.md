@@ -98,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Initial release** - CLI for managing prompt files
   - `prpm add <url>` - Add prompts from URL
   - `prpm list` - List installed prompts
-  - `prpm remove <id>` - Remove prompts
+  - `prpm uninstall <id>` - Remove prompts
   - `prpm index` - Generate index of prompts
 
 - **Package types supported:**

@@ -175,7 +175,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
       const { username } = request.params;
 
       try {
-        // Get unclaimed packages by author name
+        // Get unclaimed packages by author name (case-insensitive)
         const result = await fastify.pg.query(
           `SELECT
              id,
@@ -186,7 +186,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
              created_at,
              tags
            FROM packages
-           WHERE (name LIKE $1 || '/%' OR name LIKE '@' || $1 || '/%')
+           WHERE (LOWER(name) LIKE LOWER($1) || '/%' OR LOWER(name) LIKE '@' || LOWER($1) || '/%')
              AND author_id IS NULL
              AND visibility = 'public'
            ORDER BY total_downloads DESC`,
