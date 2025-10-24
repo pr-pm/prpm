@@ -95,7 +95,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
 
 export async function handleInstall(
   packageSpec: string,
-  options: { version?: string; format?: Format; subtype?: Subtype; as?: string; frozenLockfile?: boolean }
+  options: { version?: string; as?: string; frozenLockfile?: boolean }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -233,9 +233,9 @@ export async function handleInstall(
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
 
-    // Determine effective format and subtype
+    // Determine effective format and subtype (from conversion or package native format)
     const effectiveFormat = (format as Format) || pkg.format;
-    const effectiveSubtype = options.subtype || pkg.subtype;
+    const effectiveSubtype = pkg.subtype;
 
     const destDir = getDestinationDir(effectiveFormat, effectiveSubtype);
 
@@ -343,7 +343,7 @@ export async function handleInstall(
       data: {
         packageId: packageSpec.split('@')[0],
         version: options.version || 'latest',
-        format: options.format, subtype: options.subtype,
+        convertTo: options.as,
       },
     });
     await telemetry.shutdown();
@@ -462,30 +462,20 @@ export function createInstallCommand(): Command {
     .description('Install a package from the registry')
     .argument('<package>', 'Package to install (e.g., react-rules or react-rules@1.2.0)')
     .option('--version <version>', 'Specific version to install')
-    .option('--format <format>', 'Override package format (cursor, claude, continue, windsurf, copilot, kiro)')
-    .option('--subtype <subtype>', 'Override package subtype (rule, agent, skill, slash-command)')
-    .option('--as <format>', 'Download in specific format (cursor, claude, continue, windsurf)')
+    .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, canonical)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string, options: { format?: string; subtype?: string; save?: boolean; dev?: boolean; global?: boolean; as?: string; frozenLockfile?: boolean }) => {
-      if (options.format && !['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'].includes(options.format)) {
-        console.error('❌ Format must be one of: cursor, claude, continue, windsurf, copilot, kiro, generic, mcp');
-        process.exit(1);
-      }
-
-      if (options.subtype && !['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'].includes(options.subtype)) {
-        console.error('❌ Subtype must be one of: rule, agent, skill, slash-command, prompt, workflow, tool, template, collection');
-        process.exit(1);
-      }
-
+    .action(async (packageSpec: string, options: { version?: string; as?: string; frozenLockfile?: boolean }) => {
       if (options.as && !['cursor', 'claude', 'continue', 'windsurf', 'canonical'].includes(options.as)) {
-        console.error('❌ Format must be one of: cursor, claude, continue, windsurf, canonical');
+        console.error('❌ --as must be one of: cursor, claude, continue, windsurf, canonical');
+        console.log('\n💡 Examples:');
+        console.log('   prpm install my-package --as cursor     # Convert to Cursor format');
+        console.log('   prpm install my-package --as claude     # Convert to Claude format');
+        console.log('   prpm install my-package                 # Install in native format');
         process.exit(1);
       }
 
       await handleInstall(packageSpec, {
         version: options.version,
-        format: options.format as Format | undefined,
-        subtype: options.subtype as Subtype | undefined,
         as: options.as,
         frozenLockfile: options.frozenLockfile
       });
