@@ -82,7 +82,7 @@ function mapTypeToRegistry(cliType: CLIPackageType): { type?: PackageType; tags?
  * Build webapp URL for search results
  */
 function buildWebappUrl(query: string, options: { type?: CLIPackageType; author?: string }, page: number = 1): string {
-  const baseUrl = process.env.PRPM_WEBAPP_URL || 'https://app.prpm.dev';
+  const baseUrl = process.env.PRPM_WEBAPP_URL || 'https://prpm.dev';
   const params = new URLSearchParams();
 
   if (query) params.append('q', query);
