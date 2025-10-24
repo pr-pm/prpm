@@ -98,8 +98,8 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     );
 
     // Only suggest "collection" if there are multiple distinct types
-    if (fileTypes.size > 1 && manifest.type !== 'collection') {
-      console.warn('⚠️  Package contains multiple file types. Consider setting type to "collection" for clarity.');
+    if (fileTypes.size > 1 && manifest.subtype !== 'collection') {
+      console.warn('⚠️  Package contains multiple file types. Consider setting subtype to "collection" for clarity.');
     }
   }
 
@@ -218,7 +218,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     console.log(`   Source: ${source}`);
     console.log(`   Package: ${manifest.name}@${manifest.version}`);
-    console.log(`   Type: ${manifest.type}`);
+    console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype || 'rule'}`);
     console.log(`   Description: ${manifest.description}`);
     console.log('');
 

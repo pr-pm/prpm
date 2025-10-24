@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
-import { PackageType } from '../types';
+import { Format, Subtype } } from '../types';
 
 export async function handleTrending(options: { type?: PackageType; limit?: number }): Promise<void> {
   const startTime = Date.now();

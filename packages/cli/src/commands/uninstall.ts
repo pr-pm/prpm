@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import { removePackage } from '../core/lockfile';
 import { getDestinationDir, deleteFile, fileExists, stripAuthorNamespace } from '../core/filesystem';
 import { promises as fs } from 'fs';
-import { PackageType } from '../types';
+import { Format, Subtype } } from '../types';
 
 /**
  * Handle the uninstall command
@@ -28,7 +28,7 @@ export async function handleUninstall(name: string): Promise<void> {
                           pkg.format === 'cursor' ? 'cursor' :
                           pkg.format === 'continue' ? 'continue' :
                           pkg.format === 'windsurf' ? 'windsurf' :
-                          pkg.type) as PackageType;
+                          `${pkg.format || 'unknown'}-${pkg.subtype || 'unknown'}`) as PackageType;
 
     const destDir = getDestinationDir(effectiveType);
     const fileExtension = pkg.format === 'cursor' ? 'mdc' : 'md';

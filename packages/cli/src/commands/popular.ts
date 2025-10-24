@@ -5,7 +5,7 @@
 
 import { Command } from 'commander';
 import { handleTrending } from './trending';
-import { PackageType } from '../types';
+import { Format, Subtype } } from '../types';
 
 /**
  * Show popular packages (wrapper around trending)
