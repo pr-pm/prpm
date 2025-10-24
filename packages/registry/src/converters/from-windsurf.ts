@@ -10,6 +10,7 @@ import type {
   PackageMetadata,
   ContentSection,
 } from '../types/canonical.js';
+import { setTaxonomy } from './taxonomy-utils.js';
 
 /**
  * Parse Windsurf rules file to canonical format
@@ -194,7 +195,7 @@ export function fromWindsurf(
   flushSection();
 
   // Build canonical package
-  const pkg: CanonicalPackage = {
+  const pkg: Partial<CanonicalPackage> = {
     id: metadata.id,
     name: metadata.name,
     version: metadata.version,
@@ -210,7 +211,11 @@ export function fromWindsurf(
     },
   };
 
-  return pkg;
+  // Set taxonomy (format + subtype + legacy type)
+  // Windsurf rules are rules by default
+  setTaxonomy(pkg, 'windsurf', 'rule');
+
+  return pkg as CanonicalPackage;
 }
 
 /**

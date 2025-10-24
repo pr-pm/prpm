@@ -13,6 +13,7 @@ import type {
   ContextSection,
   MetadataSection,
 } from '../types/canonical.js';
+import { setTaxonomy } from './taxonomy-utils.js';
 
 export interface PackageMetadata {
   id: string;
@@ -65,14 +66,13 @@ export function fromKiro(
   const domain = metadata.name.replace(/-/g, ' ').replace(/\.md$/, '');
 
   // Build canonical package
-  const pkg: CanonicalPackage = {
+  const pkg: Partial<CanonicalPackage> = {
     id: metadata.id,
     version: metadata.version || '1.0.0',
     name: metadata.name,
     description: metadata.description || '',
     author: metadata.author || '',
     tags: metadata.tags || ['kiro', ...inferTags(frontmatter)],
-    type: 'rule', // Default type for Kiro steering files
     content: canonicalContent,
     sourceFormat: 'kiro',
     metadata: {
@@ -87,7 +87,11 @@ export function fromKiro(
     },
   };
 
-  return pkg;
+  // Set taxonomy (format + subtype + legacy type)
+  // Kiro steering files are rules by default
+  setTaxonomy(pkg, 'kiro', 'rule');
+
+  return pkg as CanonicalPackage;
 }
 
 /**
