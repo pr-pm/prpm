@@ -1,6 +1,6 @@
 # PRPM - The Package Manager for AI Prompts
 
-[![Karen Score](https://raw.githubusercontent.com/pr-pm/prpm/v2/.karen/badges/score-badge.svg)](https://github.com/pr-pm/prpm/blob/v2/.karen/review.md)
+[![Karen Score](.karen/badges/score-badge.svg)](.karen/review.md)
 
 **Stop copy-pasting prompts from GitHub.** Install Cursor rules, Claude skills, and AI agents like npm packages.
 
@@ -57,26 +57,6 @@ prpm install react-best-practices  # Installs in the right place automatically
 
 **Format conversion happens server-side.** Authors publish once, users install everywhere.
 
-### What About MCP Servers?
-
-**PRPM doesn't install MCP servers** - it configures them for Claude Code users:
-
-```bash
-# Install collection with MCP server configs (Claude Code only)
-prpm install collection/pulumi-infrastructure --as claude
-# → Writes MCP server config to .claude/mcp_servers.json
-# → Claude Code then runs: npx @modelcontextprotocol/server-pulumi
-
-# Same collection for Cursor (MCP configs ignored)
-prpm install collection/pulumi-infrastructure --as cursor
-# → Only installs Cursor rules, no MCP configuration
-```
-
-**MCP servers are external tools** that Claude Code runs separately. PRPM just writes the config file.
-
-**[How It Works →](docs/FORMAT_CONVERSION.md)** | **[MCP Server Details →](docs/MCP_SERVERS_IN_COLLECTIONS.md)**
-
----
 
 ## 🔍 Discovery - Find What You Need
 

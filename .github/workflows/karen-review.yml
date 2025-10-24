@@ -16,7 +16,7 @@ jobs:
       - name: Karen Review
         uses: khaliqgant/karen-action@v1
         with:
-          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           auto_update_readme: true  # Automatically update badge in README
           generate_badge: true
           post_comment: true
