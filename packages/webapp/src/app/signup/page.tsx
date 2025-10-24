@@ -88,87 +88,97 @@ export default function SignupPage() {
 
   const handleAuthSuccess = async (connectionId: string) => {
     try {
-      console.log('[AUTH] Authentication successful, handling callback...')
-      const redirectUrl = '/dashboard'
+      console.log('[AUTH] GitHub authentication successful!')
+      console.log('[AUTH] Connection ID:', connectionId)
+      console.log('[AUTH] Waiting for webhook to process authentication...')
 
       // Show optimistic success state immediately
       setError(null)
 
-      console.log('[AUTH] Calling Nango callback with connectionId:', connectionId)
+      // Store the connection ID for polling
+      const pollStartTime = Date.now()
+      const maxPollTime = 30000 // 30 seconds max
+      const pollInterval = 1000 // Check every 1 second
 
-      // Race the API call against a timeout to provide faster feedback
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout - slow network')), 15000)
-      )
+      // Poll for authentication completion
+      const pollForAuth = async (): Promise<any> => {
+        const elapsed = Date.now() - pollStartTime
 
-      const result = await Promise.race([
-        handleNangoCallback(connectionId, redirectUrl),
-        timeoutPromise
-      ]).catch(err => {
-        if (err.message.includes('timeout')) {
-          console.warn('[AUTH] API call is slow, continuing anyway...')
-          // Don't fail completely on slow network, let it complete in background
-          handleNangoCallback(connectionId, redirectUrl).then(r => {
-            console.log('[AUTH] Slow callback completed:', r)
-          })
-          return null
+        if (elapsed > maxPollTime) {
+          throw new Error('Authentication timed out. The server may be processing your request. Please try refreshing in a moment.')
         }
-        throw err
+
+        console.log(`[AUTH] Polling attempt ${Math.floor(elapsed / 1000)}s...`)
+
+        try {
+          // Check if webhook has processed the auth by calling the callback endpoint
+          const result = await handleNangoCallback(connectionId, '/dashboard')
+
+          if (result && result.success && result.token && result.username) {
+            console.log('[AUTH] Webhook processed! Got credentials')
+            return result
+          }
+
+          // If we got a response but it's not ready yet, keep polling
+          if (result && result.error && result.error.includes('not found')) {
+            console.log('[AUTH] Webhook not processed yet, continuing to poll...')
+            await new Promise(resolve => setTimeout(resolve, pollInterval))
+            return pollForAuth()
+          }
+
+          // Unknown response, keep polling
+          console.log('[AUTH] Unexpected response, retrying...', result)
+          await new Promise(resolve => setTimeout(resolve, pollInterval))
+          return pollForAuth()
+
+        } catch (err: any) {
+          // If it's a network error or the connection isn't ready, keep polling
+          if (err.message?.includes('not found') || err.message?.includes('Connection') || err.message?.includes('fetch')) {
+            console.log('[AUTH] Connection not ready yet, waiting for webhook...', err.message)
+            await new Promise(resolve => setTimeout(resolve, pollInterval))
+            return pollForAuth()
+          }
+
+          // Other errors should be thrown
+          throw err
+        }
+      }
+
+      // Start polling
+      const result = await pollForAuth()
+
+      console.log('[AUTH] Authentication complete!', {
+        hasToken: !!result.token,
+        username: result.username
       })
 
-      console.log('[AUTH] Callback result:', JSON.stringify(result, null, 2))
+      // Store the JWT token (use prpm_ prefix to match dashboard expectations)
+      localStorage.setItem('prpm_token', result.token)
+      localStorage.setItem('prpm_username', result.username)
+      // Also store with jwt_ prefix for backwards compatibility
+      localStorage.setItem('jwt_token', result.token)
+      localStorage.setItem('username', result.username)
 
-      // Check if we got a token back
-      if (!result || !result.token || !result.username) {
-        // If no result yet (slow network), try to proceed with optimistic data
-        console.warn('[AUTH] No immediate result, checking for cached auth data...')
+      // Verify storage
+      const storedToken = localStorage.getItem('prpm_token')
+      const storedUsername = localStorage.getItem('prpm_username')
+      console.log('[AUTH] Credentials stored:', {
+        tokenStored: !!storedToken,
+        username: storedUsername
+      })
 
-        // Check if we already have credentials from a previous attempt
-        const existingToken = localStorage.getItem('prpm_token')
-        const existingUsername = localStorage.getItem('prpm_username')
+      // Web authentication - redirect to dashboard
+      const targetUrl = result.redirectUrl || '/dashboard'
+      console.log('[AUTH] Redirecting to:', targetUrl)
 
-        if (existingToken && existingUsername) {
-          console.log('[AUTH] Found existing credentials, proceeding to dashboard')
-          window.location.href = '/dashboard'
-          return
-        }
+      // Add a small delay to ensure localStorage writes complete
+      await new Promise(resolve => setTimeout(resolve, 100))
 
-        console.error('[AUTH] Invalid callback result - missing token or username:', result)
-        setError(`Authentication incomplete. Please try refreshing the page.`)
-        setIsLoading(false)
-        return
-      }
+      // Force a hard redirect to ensure localStorage is persisted
+      window.location.href = targetUrl
 
-      if (result.success) {
-        console.log('[AUTH] Success! Storing credentials...')
-        // Store the JWT token (use prpm_ prefix to match dashboard expectations)
-        localStorage.setItem('prpm_token', result.token)
-        localStorage.setItem('prpm_username', result.username)
-        // Also store with jwt_ prefix for backwards compatibility
-        localStorage.setItem('jwt_token', result.token)
-        localStorage.setItem('username', result.username)
-
-        // Verify storage
-        const storedToken = localStorage.getItem('prpm_token')
-        const storedUsername = localStorage.getItem('prpm_username')
-        console.log('[AUTH] Verification - Token stored:', !!storedToken, 'Username stored:', storedUsername)
-
-        // Web authentication - redirect to dashboard
-        const targetUrl = result.redirectUrl || '/dashboard'
-        console.log('[AUTH] Redirecting to:', targetUrl)
-
-        // Add a small delay to ensure localStorage writes complete
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        // Force a hard redirect to ensure localStorage is persisted
-        window.location.href = targetUrl
-      } else {
-        console.error('[AUTH] Authentication failed - success = false:', result)
-        setError(`Authentication failed: ${result.error || 'Unknown error'}`)
-        setIsLoading(false)
-      }
     } catch (err) {
-      console.error('[AUTH] Callback error:', err)
+      console.error('[AUTH] Authentication error:', err)
       setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.')
       setIsLoading(false)
     }
