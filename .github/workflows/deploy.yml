@@ -1,0 +1,467 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/registry/**'
+      - 'packages/types/**'
+      - 'packages/webapp/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      deploy_target:
+        description: 'What to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - registry-only
+          - webapp-only
+
+env:
+  AWS_REGION: us-west-2
+  NODE_VERSION: '20'
+
+jobs:
+  # Check what changed (or use manual deploy_target selection)
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      registry: ${{ steps.set-outputs.outputs.registry }}
+      webapp: ${{ steps.set-outputs.outputs.webapp }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'push'
+        with:
+          filters: |
+            registry:
+              - 'packages/registry/**'
+              - 'packages/types/**'
+            webapp:
+              - 'packages/webapp/**'
+
+      - name: Set outputs based on trigger
+        id: set-outputs
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual deployment - use deploy_target input
+            if [ "${{ github.event.inputs.deploy_target }}" = "all" ]; then
+              echo "registry=true" >> $GITHUB_OUTPUT
+              echo "webapp=true" >> $GITHUB_OUTPUT
+            elif [ "${{ github.event.inputs.deploy_target }}" = "registry-only" ]; then
+              echo "registry=true" >> $GITHUB_OUTPUT
+              echo "webapp=false" >> $GITHUB_OUTPUT
+            elif [ "${{ github.event.inputs.deploy_target }}" = "webapp-only" ]; then
+              echo "registry=false" >> $GITHUB_OUTPUT
+              echo "webapp=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Automatic deployment - use path filter results
+            echo "registry=${{ steps.filter.outputs.registry }}" >> $GITHUB_OUTPUT
+            echo "webapp=${{ steps.filter.outputs.webapp }}" >> $GITHUB_OUTPUT
+          fi
+
+  # Deploy registry first (if changed or manually requested)
+  deploy-registry:
+    name: Deploy Registry
+    needs: changes
+    if: needs.changes.outputs.registry == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build types
+        run: npm run build --workspace=@pr-pm/types
+
+      - name: Build registry
+        run: npm run build --workspace=@pr-pm/registry
+
+      - name: Set environment variables
+        id: env
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'prod' }}"
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_OUTPUT
+
+          # Set Beanstalk app/env names and S3 bucket based on environment
+          if [ "$ENVIRONMENT" = "prod" ]; then
+            echo "EB_APP_NAME=prpm-prod" >> $GITHUB_OUTPUT
+            echo "EB_ENV_NAME=prpm-prod-env" >> $GITHUB_OUTPUT
+            echo "S3_BUCKET=prpm-prod-packages" >> $GITHUB_OUTPUT
+          elif [ "$ENVIRONMENT" = "staging" ]; then
+            echo "EB_APP_NAME=prpm-staging" >> $GITHUB_OUTPUT
+            echo "EB_ENV_NAME=prpm-staging-env" >> $GITHUB_OUTPUT
+            echo "S3_BUCKET=prpm-deployments-staging" >> $GITHUB_OUTPUT
+          else
+            echo "EB_APP_NAME=prpm-dev" >> $GITHUB_OUTPUT
+            echo "EB_ENV_NAME=prpm-dev-env" >> $GITHUB_OUTPUT
+            echo "S3_BUCKET=prpm-deployments-dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create deployment package
+        run: |
+          cd packages/registry
+          VERSION_LABEL="v-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:7}"
+          echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
+          zip -r ${VERSION_LABEL}.zip . -x "*.git*" "node_modules/*" "src/*" "*.test.ts" "*.spec.ts"
+          echo "✅ Created deployment package: ${VERSION_LABEL}.zip"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload to S3
+        working-directory: packages/registry
+        run: |
+          S3_KEY="deployments/${VERSION_LABEL}.zip"
+          echo "Uploading to s3://${{ steps.env.outputs.S3_BUCKET }}/${S3_KEY}"
+
+          aws s3 cp ${VERSION_LABEL}.zip s3://${{ steps.env.outputs.S3_BUCKET }}/${S3_KEY} \
+            --metadata "git-sha=${{ github.sha }},run-number=${{ github.run_number }},environment=${{ steps.env.outputs.ENVIRONMENT }}"
+
+          echo "✅ Uploaded to S3"
+
+      - name: Create Beanstalk application version
+        run: |
+          echo "Creating application version: $VERSION_LABEL"
+
+          aws elasticbeanstalk create-application-version \
+            --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+            --version-label $VERSION_LABEL \
+            --source-bundle S3Bucket="${{ steps.env.outputs.S3_BUCKET }}",S3Key="deployments/${VERSION_LABEL}.zip" \
+            --description "Deployed from GitHub Actions run ${{ github.run_number }} (SHA: ${{ github.sha }})" \
+            --process
+
+          echo "✅ Application version created"
+
+      - name: Deploy to Beanstalk environment
+        run: |
+          echo "Deploying to environment: ${{ steps.env.outputs.EB_ENV_NAME }}"
+
+          aws elasticbeanstalk update-environment \
+            --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+            --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+            --version-label $VERSION_LABEL
+
+          echo "✅ Deployment initiated"
+
+      - name: Wait for deployment
+        run: |
+          echo "Waiting for environment to update..."
+
+          MAX_ATTEMPTS=40  # 40 attempts × 30 seconds = 20 minutes max
+          ATTEMPT=0
+          RED_COUNT=0
+          MAX_CONSECUTIVE_RED=30  # Allow up to 30 consecutive red checks (~15 minutes)
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "⏳ Check $ATTEMPT/$MAX_ATTEMPTS..."
+
+            # Get environment status and health
+            ENV_INFO=$(aws elasticbeanstalk describe-environments \
+              --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+              --environment-names ${{ steps.env.outputs.EB_ENV_NAME }} \
+              --query 'Environments[0].[Status,Health,HealthStatus]' \
+              --output text)
+
+            STATUS=$(echo "$ENV_INFO" | awk '{print $1}')
+            HEALTH=$(echo "$ENV_INFO" | awk '{print $2}')
+            HEALTH_STATUS=$(echo "$ENV_INFO" | awk '{print $3}')
+
+            echo "   Status: $STATUS | Health: $HEALTH | HealthStatus: $HEALTH_STATUS"
+
+            # Check if deployment is complete
+            if [ "$STATUS" = "Ready" ]; then
+              if [ "$HEALTH" = "Green" ]; then
+                echo "✅ Environment is Ready and Healthy"
+                break
+              elif [ "$HEALTH" = "Yellow" ]; then
+                echo "⚠️  Environment is Ready but has warnings (Yellow health)"
+                RED_COUNT=0  # Reset red counter
+
+                # Give it a few more checks to potentially turn Green
+                if [ $ATTEMPT -gt 10 ]; then
+                  echo "⚠️  Proceeding with Yellow health status"
+                  break
+                fi
+              elif [ "$HEALTH" = "Red" ]; then
+                RED_COUNT=$((RED_COUNT + 1))
+                echo "🔴 Environment is Red (consecutive: $RED_COUNT/$MAX_CONSECUTIVE_RED)"
+
+                if [ $RED_COUNT -ge $MAX_CONSECUTIVE_RED ]; then
+                  echo "❌ Environment has been Red for too long ($RED_COUNT checks = ~$(($RED_COUNT / 2)) minutes)"
+
+                  # Get recent events for debugging
+                  echo ""
+                  echo "Recent events:"
+                  aws elasticbeanstalk describe-events \
+                    --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+                    --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+                    --max-records 10 \
+                    --query 'Events[].[EventDate,Severity,Message]' \
+                    --output text | head -30
+
+                  exit 1
+                else
+                  echo "   Waiting for application to start up... (will fail after $MAX_CONSECUTIVE_RED consecutive reds)"
+                fi
+              else
+                echo "❌ Environment is Ready but health is: $HEALTH"
+
+                # Get recent events for debugging
+                echo "Recent events:"
+                aws elasticbeanstalk describe-events \
+                  --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+                  --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+                  --max-records 5 \
+                  --query 'Events[].[EventDate,Severity,Message]' \
+                  --output text | head -20
+
+                exit 1
+              fi
+            elif [ "$STATUS" = "Updating" ]; then
+              echo "   Still updating, waiting 30 seconds..."
+              RED_COUNT=0  # Reset red counter during updates
+            else
+              echo "❌ Unexpected status: $STATUS"
+
+              # Get recent events for debugging
+              echo "Recent events:"
+              aws elasticbeanstalk describe-events \
+                --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+                --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+                --max-records 10 \
+                --query 'Events[].[EventDate,Severity,Message]' \
+                --output text | head -30
+
+              exit 1
+            fi
+
+            sleep 30
+          done
+
+          if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
+            echo "❌ Deployment timed out after $MAX_ATTEMPTS attempts ($(($MAX_ATTEMPTS * 30 / 60)) minutes)"
+
+            # Get recent events for debugging
+            echo "Recent events:"
+            aws elasticbeanstalk describe-events \
+              --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+              --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+              --max-records 20 \
+              --query 'Events[].[EventDate,Severity,Message]' \
+              --output text
+
+            exit 1
+          fi
+
+          echo "✓ Registry deployment completed"
+
+      - name: Health check
+        run: |
+          echo "Running health checks with retries..."
+
+          MAX_RETRIES=10
+          RETRY=0
+
+          while [ $RETRY -lt $MAX_RETRIES ]; do
+            RETRY=$((RETRY + 1))
+            echo "🔍 Health check attempt $RETRY/$MAX_RETRIES..."
+
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://registry.prpm.dev/health)
+
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ Registry is healthy (HTTP $STATUS)"
+              exit 0
+            else
+              echo "⚠️  Health check returned status $STATUS"
+
+              if [ $RETRY -lt $MAX_RETRIES ]; then
+                echo "   Waiting 30 seconds before retry..."
+                sleep 30
+              fi
+            fi
+          done
+
+          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          echo "Last status code: $STATUS"
+          exit 1
+
+  # Deploy webapp second (if changed or manually requested), only after registry succeeds or is skipped
+  # This job depends on deploy-registry but will run even if that job is skipped
+  deploy-webapp:
+    name: Deploy WebApp
+    needs: [changes, deploy-registry]
+    # Run if webapp is selected AND registry either succeeded or was skipped
+    if: |
+      always() &&
+      needs.changes.outputs.webapp == 'true' &&
+      (needs.deploy-registry.result == 'success' || needs.deploy-registry.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build types package
+        run: npm run build --workspace=@pr-pm/types
+
+      - name: Build webapp
+        env:
+          REGISTRY_URL: https://registry.prpm.dev
+        run: |
+          cd packages/webapp
+          npm ci
+          npm run build
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "packages/webapp/out" ]; then
+            echo "Error: Build output directory does not exist"
+            exit 1
+          fi
+
+          if [ ! -f "packages/webapp/out/index.html" ]; then
+            echo "Error: index.html not found in build output"
+            exit 1
+          fi
+
+          echo "✓ Build output verified"
+          find packages/webapp/out -type f | head -20
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to S3
+        run: |
+          # Sync new files (without delete) to ensure all chunks are uploaded
+          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "*.html" \
+            --exclude "_next/data/*"
+
+          # Sync HTML files with NO CACHE
+          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --exclude "*" \
+            --include "*.html" \
+            --include "_next/data/*"
+
+          # Delete old files after everything is uploaded
+          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --delete
+
+          echo "✓ WebApp deployed to S3"
+
+      - name: Invalidate CloudFront
+        run: |
+          DIST_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items[?contains(@, 'prpm.dev')]].Id" \
+            --output text)
+
+          echo "Creating CloudFront invalidation for distribution: $DIST_ID"
+
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id $DIST_ID \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+
+          echo "Invalidation created: $INVALIDATION_ID"
+          echo "Waiting for invalidation to complete..."
+
+          aws cloudfront wait invalidation-completed \
+            --distribution-id $DIST_ID \
+            --id $INVALIDATION_ID
+
+          echo "✓ CloudFront invalidation completed"
+
+      - name: Health check
+        run: |
+          echo "Running health checks..."
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://prpm.dev)
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Error: Homepage returned status $STATUS"
+            exit 1
+          fi
+          echo "✓ Homepage is accessible (HTTP $STATUS)"
+
+          for page in "/search" "/authors" "/blog"; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://prpm.dev$page")
+            if [ "$STATUS" -ne 200 ]; then
+              echo "Warning: $page returned status $STATUS"
+            else
+              echo "✓ $page is accessible (HTTP $STATUS)"
+            fi
+          done
+
+  # Summary of what was deployed
+  summary:
+    name: Deployment Summary
+    needs: [changes, deploy-registry, deploy-webapp]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.changes.outputs.registry }}" == "true" ]; then
+            if [ "${{ needs.deploy-registry.result }}" == "success" ]; then
+              echo "✅ **Registry**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Registry**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏭️ **Registry**: No changes, skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.changes.outputs.webapp }}" == "true" ]; then
+            if [ "${{ needs.deploy-webapp.result }}" == "success" ]; then
+              echo "✅ **WebApp**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **WebApp**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏭️ **WebApp**: No changes, skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: \`${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY

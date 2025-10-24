@@ -195,7 +195,7 @@ The workflow generates:
 ```ruby
 class Prmp < Formula
   desc "Prompt Package Manager - Manage AI prompt packages"
-  homepage "https://github.com/khaliqgant/prompt-package-manager"
+  homepage "https://github.com/pr-pm/prpm"
   url "https://registry.npmjs.org/prpm/-/cli-1.2.3.tgz"
   sha256 "abc123..."
   license "MIT"
@@ -249,7 +249,7 @@ npm run build --workspaces
 
 ### 3. Verify GitHub Release
 
-1. Check Releases page: https://github.com/khaliqgant/prompt-package-manager/releases
+1. Check Releases page: https://github.com/pr-pm/prpm/releases
 2. Verify release notes generated
 3. Verify git tag created
 

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Nango from '@nangohq/frontend'
-import { createNangoConnectSession, handleNangoCallback } from '@/lib/api'
+import { createNangoConnectSession, checkAuthStatus } from '@/lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -97,56 +97,106 @@ export default function LoginPage() {
 
   const handleAuthSuccess = async (connectionId: string) => {
     try {
-      console.log('Authentication successful, handling callback...')
+      console.log('[AUTH] GitHub authentication successful!')
+      console.log('[AUTH] Connection ID:', connectionId)
+      console.log('[AUTH] Waiting for webhook to process authentication...')
+
       const cliCallbackUrl = getCliCallbackUrl()
       const redirectUrl = cliCallbackUrl ? cliCallbackUrl : '/dashboard'
 
-      console.log('Calling Nango callback with connectionId:', connectionId)
-      const result = await handleNangoCallback(connectionId, redirectUrl)
-      console.log('Callback result:', result)
+      // Show optimistic success state immediately
+      setError(null)
 
-      if (result.success) {
-        // Store the JWT token (use prpm_ prefix to match dashboard expectations)
-        localStorage.setItem('prpm_token', result.token)
-        localStorage.setItem('prpm_username', result.username)
-        // Also store with jwt_ prefix for backwards compatibility
-        localStorage.setItem('jwt_token', result.token)
-        localStorage.setItem('username', result.username)
-        console.log('Token stored in localStorage:', {
-          prpm_token: result.token.substring(0, 20) + '...',
-          prpm_username: result.username
-        })
+      // Store the connection ID for polling
+      const pollStartTime = Date.now()
+      const maxPollTime = 30000 // 30 seconds max
+      const pollInterval = 1000 // Check every 1 second
 
-        if (cliCallbackUrl) {
-          // CLI authentication - redirect to CLI callback with token (external)
-          const callbackUrl = new URL(cliCallbackUrl)
-          callbackUrl.searchParams.set('token', result.token)
-          callbackUrl.searchParams.set('username', result.username)
-          console.log('Redirecting to CLI callback:', callbackUrl.toString())
-          window.location.href = callbackUrl.toString()
-        } else {
-          // Web authentication - redirect to dashboard (internal)
-          const targetUrl = result.redirectUrl || '/dashboard'
-          console.log('Redirecting to dashboard:', targetUrl)
+      // Poll for authentication completion
+      const pollForAuth = async (): Promise<any> => {
+        const elapsed = Date.now() - pollStartTime
 
-          // Use Next.js router for better handling
-          router.push(targetUrl)
-
-          // Fallback to window.location if router doesn't work
-          setTimeout(() => {
-            if (window.location.pathname === '/login') {
-              console.log('Router push may have failed, using window.location')
-              window.location.href = targetUrl
-            }
-          }, 1000)
+        if (elapsed > maxPollTime) {
+          throw new Error('Authentication timed out. The server may be processing your request. Please try refreshing in a moment.')
         }
-      } else {
-        console.error('Authentication failed:', result)
-        setError('Authentication failed. Please try again.')
-        setIsLoading(false)
+
+        console.log(`[AUTH] Polling attempt ${Math.floor(elapsed / 1000)}s...`)
+
+        try {
+          // Check if webhook has processed the auth by polling the status endpoint
+          const result = await checkAuthStatus(connectionId)
+
+          if (result && result.ready && result.token && result.username) {
+            console.log('[AUTH] Webhook processed! Got credentials')
+            return result
+          }
+
+          // If we got a response but it's not ready yet, keep polling
+          if (result && !result.ready) {
+            console.log('[AUTH] Webhook not processed yet, continuing to poll...')
+            await new Promise(resolve => setTimeout(resolve, pollInterval))
+            return pollForAuth()
+          }
+
+          // Unknown response, keep polling
+          console.log('[AUTH] Unexpected response, retrying...', result)
+          await new Promise(resolve => setTimeout(resolve, pollInterval))
+          return pollForAuth()
+
+        } catch (err: any) {
+          // If it's a network error or the connection isn't ready, keep polling
+          if (err.message?.includes('not ready') || err.message?.includes('not found') || err.message?.includes('Connection') || err.message?.includes('fetch')) {
+            console.log('[AUTH] Connection not ready yet, waiting for webhook...', err.message)
+            await new Promise(resolve => setTimeout(resolve, pollInterval))
+            return pollForAuth()
+          }
+
+          // Other errors should be thrown
+          throw err
+        }
       }
+
+      // Start polling
+      const result = await pollForAuth()
+
+      console.log('[AUTH] Authentication complete!', {
+        hasToken: !!result.token,
+        username: result.username
+      })
+
+      // Store the JWT token with prpm_ prefix
+      localStorage.setItem('prpm_token', result.token)
+      localStorage.setItem('prpm_username', result.username)
+
+      // Verify storage
+      const storedToken = localStorage.getItem('prpm_token')
+      const storedUsername = localStorage.getItem('prpm_username')
+      console.log('[AUTH] Credentials stored:', {
+        tokenStored: !!storedToken,
+        username: storedUsername
+      })
+
+      if (cliCallbackUrl) {
+        // CLI authentication - redirect to CLI callback with token (external)
+        const callbackUrl = new URL(cliCallbackUrl)
+        callbackUrl.searchParams.set('token', result.token)
+        callbackUrl.searchParams.set('username', result.username)
+        console.log('[AUTH] Redirecting to CLI callback:', callbackUrl.toString())
+        window.location.href = callbackUrl.toString()
+      } else {
+        // Web authentication - redirect to dashboard
+        const targetUrl = result.redirectUrl || '/dashboard'
+        console.log('[AUTH] Redirecting to:', targetUrl)
+
+        // Add a small delay to ensure localStorage writes complete
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        // Force a hard redirect to ensure localStorage is persisted
+        window.location.href = targetUrl
+      }
+
     } catch (err) {
-      console.error('Callback error:', err)
+      console.error('[AUTH] Authentication error:', err)
       setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.')
       setIsLoading(false)
     }

@@ -44,7 +44,7 @@ export default function DashboardPage() {
     // Fetch user info
     const fetchUserInfo = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/auth/me`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3000'}/api/v1/auth/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -132,7 +132,7 @@ export default function DashboardPage() {
     setWebsiteError(null)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/auth/me`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3000'}/api/v1/auth/me`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -404,7 +404,7 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">3. Install a package</h3>
               <code className="block bg-prpm-dark border border-prpm-border rounded-lg p-4 text-prpm-accent-light font-mono text-sm">
-                prpm install @prpm/pulumi-troubleshooting-skill
+                prpm install @pr-pm/pulumi-troubleshooting-skill
               </code>
             </div>
           </div>

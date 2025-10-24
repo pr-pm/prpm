@@ -6,7 +6,7 @@ INSERT INTO authors (username, github_id, email, verified, created_at, updated_a
 VALUES (
   'test-author',
   12345678,
-  'test@prpm.dev',
+  'test@pr-pm.dev',
   true,
   NOW(),
   NOW()

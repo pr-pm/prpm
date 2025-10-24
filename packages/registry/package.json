@@ -1,5 +1,5 @@
 {
-  "name": "@prpm/registry",
+  "name": "@pr-pm/registry",
   "version": "0.1.0",
   "description": "PRPM Registry Backend - Central package registry for prompts, agents, and cursor rules",
   "main": "dist/index.js",
@@ -50,7 +50,7 @@
     "@fastify/swagger-ui": "^3.1.0",
     "@nangohq/node": "^0.69.5",
     "@opensearch-project/opensearch": "^2.5.0",
-    "@prpm/types": "^0.1.0",
+    "@pr-pm/types": "^0.1.0",
     "bcrypt": "^5.1.1",
     "dotenv": "^17.2.3",
     "fastify": "^4.26.2",

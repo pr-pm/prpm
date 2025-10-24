@@ -1,6 +1,6 @@
 {
-  "name": "@prpm/registry-client",
-  "version": "1.2.0",
+  "name": "@pr-pm/registry-client",
+  "version": "1.2.2",
   "description": "Registry client library for PRPM",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,17 +23,17 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/khaliqgant/prompt-package-manager.git",
+    "url": "git+https://github.com/pr-pm/prpm.git",
     "directory": "packages/registry-client"
   },
   "bugs": {
-    "url": "https://github.com/khaliqgant/prompt-package-manager/issues"
+    "url": "https://github.com/pr-pm/prpm/issues"
   },
-  "homepage": "https://github.com/khaliqgant/prompt-package-manager#readme",
+  "homepage": "https://github.com/pr-pm/prpm#readme",
   "author": "khaliqgant",
   "license": "MIT",
   "dependencies": {
-    "@prpm/types": "^0.1.0"
+    "@pr-pm/types": "^0.1.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",

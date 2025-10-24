@@ -402,7 +402,7 @@ CREATE TRIGGER package_rating_updated
 
 -- Create prpm team user (for development and official packages)
 INSERT INTO users (username, email, is_admin, verified_author)
-VALUES ('prpm', 'team@prpm.dev', TRUE, TRUE)
+VALUES ('prpm', 'team@pr-pm.dev', TRUE, TRUE)
 ON CONFLICT DO NOTHING;
 
 -- Create test organization

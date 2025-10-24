@@ -105,7 +105,7 @@ brew upgrade prpm
 
 ### Direct Download
 
-Download pre-built binaries from [GitHub Releases](https://github.com/khaliqgant/prompt-package-manager/releases):
+Download pre-built binaries from [GitHub Releases](https://github.com/pr-pm/prpm/releases):
 
 1. Download for your platform (macOS, Linux, Windows)
 2. Extract archive

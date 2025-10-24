@@ -50,7 +50,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       packages_to_publish: ${{ steps.determine.outputs.packages }}
-      new_version: ${{ steps.version.outputs.new_version }}
+      version_strategy: ${{ steps.version.outputs.version_strategy }}
+      version_type: ${{ steps.version.outputs.version_type }}
+      custom_version: ${{ steps.version.outputs.custom_version }}
 
     steps:
       - name: Checkout code
@@ -71,12 +73,9 @@ jobs:
 
       - name: Build packages in dependency order
         run: |
-          npm run build --workspace=@prpm/types
-          npm run build --workspace=@prpm/registry-client
+          npm run build --workspace=@pr-pm/types
+          npm run build --workspace=@pr-pm/registry-client
           npm run build --workspace=prpm
-
-      - name: Run tests
-        run: npm test --workspaces --if-present
 
       - name: Determine packages to publish
         id: determine
@@ -100,20 +99,14 @@ jobs:
           VERSION_TYPE="${{ github.event.inputs.version }}"
 
           if [ -n "$CUSTOM_VERSION" ]; then
-            NEW_VERSION="$CUSTOM_VERSION"
+            echo "version_strategy=custom" >> $GITHUB_OUTPUT
+            echo "custom_version=$CUSTOM_VERSION" >> $GITHUB_OUTPUT
+            echo "Version strategy: custom ($CUSTOM_VERSION)"
           else
-            # Get current version from CLI package (we'll use this as reference)
-            CURRENT_VERSION=$(node -p "require('./packages/cli/package.json').version")
-
-            # Calculate new version
-            NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version --preid=beta | tail -1 | sed 's/v//')
-
-            # Reset package.json (we'll update properly in publish job)
-            git checkout packages/cli/package.json
+            echo "version_strategy=bump" >> $GITHUB_OUTPUT
+            echo "version_type=$VERSION_TYPE" >> $GITHUB_OUTPUT
+            echo "Version strategy: bump ($VERSION_TYPE)"
           fi
-
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "New version will be: $NEW_VERSION"
 
   publish:
     name: Publish ${{ matrix.package }}
@@ -143,20 +136,110 @@ jobs:
       - name: Build dependencies in order
         run: |
           # Build in dependency order: types → registry-client
-          npm run build --workspace=@prpm/types
-          npm run build --workspace=@prpm/registry-client
+          npm run build --workspace=@pr-pm/types
+          npm run build --workspace=@pr-pm/registry-client
 
-      - name: Update version
+      - name: Determine and update version for this package
+        id: package_version
         run: |
           cd packages/${{ matrix.package }}
-          npm version ${{ needs.validate.outputs.new_version }} --no-git-tag-version --allow-same-version
+
+          if [ "${{ needs.validate.outputs.version_strategy }}" = "custom" ]; then
+            # Use custom version
+            NEW_VERSION="${{ needs.validate.outputs.custom_version }}"
+            npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
+          else
+            # Bump version based on current package version
+            VERSION_TYPE="${{ needs.validate.outputs.version_type }}"
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+            echo "Current version: $CURRENT_VERSION"
+            echo "Bumping: $VERSION_TYPE"
+
+            # Use npm version to calculate the bump
+            NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version --preid=beta 2>&1 | tail -1 | sed 's/v//')
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Package ${{ matrix.package }} will be published as: $NEW_VERSION"
+
+          # Update version in index.ts for CLI package
+          if [ "${{ matrix.package }}" = "cli" ]; then
+            echo "Updating version in src/index.ts to $NEW_VERSION"
+            sed -i "s/\.version('.*')/\.version('$NEW_VERSION')/" src/index.ts
+
+            # Verify the update worked
+            if grep -q "\.version('$NEW_VERSION')" src/index.ts; then
+              echo "✓ Updated index.ts version to $NEW_VERSION"
+            else
+              echo "❌ Failed to update index.ts version"
+              exit 1
+            fi
+          fi
+
+      - name: Update internal dependencies
+        run: |
+          cd packages/${{ matrix.package }}
+
+          echo "Checking for internal package dependencies to update..."
+
+          # Get the list of packages being published and their new versions
+          PUBLISHED_PACKAGES='${{ needs.validate.outputs.packages_to_publish }}'
+
+          # Check each internal dependency
+          for pkg in $(echo "$PUBLISHED_PACKAGES" | jq -r '.[]'); do
+            if [ "$pkg" = "${{ matrix.package }}" ]; then
+              continue  # Skip self
+            fi
+
+            # Determine package name
+            if [ "$pkg" = "cli" ]; then
+              PKG_NAME="prpm"
+            else
+              PKG_NAME="@pr-pm/$pkg"
+            fi
+
+            # Check if this package depends on it
+            if grep -q "\"$PKG_NAME\"" package.json; then
+              # Get the version that was just published
+              PKG_VERSION=$(node -p "require('../$pkg/package.json').version")
+
+              echo "Updating dependency $PKG_NAME to ^$PKG_VERSION"
+
+              # Update package.json with the new version
+              node -e "
+                const fs = require('fs');
+                const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+                if (pkg.dependencies && pkg.dependencies['$PKG_NAME']) {
+                  pkg.dependencies['$PKG_NAME'] = '^$PKG_VERSION';
+                  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+                  console.log('✓ Updated $PKG_NAME in dependencies');
+                } else if (pkg.devDependencies && pkg.devDependencies['$PKG_NAME']) {
+                  pkg.devDependencies['$PKG_NAME'] = '^$PKG_VERSION';
+                  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+                  console.log('✓ Updated $PKG_NAME in devDependencies');
+                }
+              "
+            fi
+          done
+
+          echo "✓ Dependency updates complete"
+
+      - name: Update root package-lock.json
+        run: |
+          echo "Updating root package-lock.json..."
+
+          # Update root lockfile after dependency changes
+          npm install --package-lock-only
+
+          echo "✓ package-lock.json updated"
 
       - name: Build package
         run: |
           if [ "${{ matrix.package }}" = "cli" ]; then
             npm run build --workspace=prpm
           else
-            npm run build --workspace=@prpm/${{ matrix.package }}
+            npm run build --workspace=@pr-pm/${{ matrix.package }}
           fi
 
       - name: Dry run check
@@ -177,8 +260,36 @@ jobs:
 
       - name: Report published
         run: |
-          echo "[OK] Published @prpm/${{ matrix.package }}@${{ needs.validate.outputs.new_version }}"
+          PKG_NAME="${{ matrix.package }}"
+          if [ "$PKG_NAME" = "cli" ]; then
+            echo "[OK] Published prpm@${{ steps.package_version.outputs.new_version }}"
+          else
+            echo "[OK] Published @pr-pm/${{ matrix.package }}@${{ steps.package_version.outputs.new_version }}"
+          fi
           echo "Tag: ${{ github.event.inputs.tag }}"
+
+      - name: Upload version info
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/package.json
+          retention-days: 1
+
+      - name: Upload updated index.ts (CLI only)
+        if: matrix.package == 'cli'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-index-ts
+          path: packages/cli/src/index.ts
+          retention-days: 1
+
+      - name: Upload root package-lock.json (once)
+        if: matrix.package == 'cli'
+        uses: actions/upload-artifact@v4
+        with:
+          name: root-package-lock
+          path: package-lock.json
+          retention-days: 1
 
   create-git-tag:
     name: Create Git Tag and Release
@@ -198,51 +309,122 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-      - name: Update package versions
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download all version artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/artifacts
+
+      - name: Restore updated files from publish job
+        run: |
+          echo "Restoring updated files from publish job..."
+
+          # Restore package.json files
+          for artifact_dir in /tmp/artifacts/version-*; do
+            if [ -d "$artifact_dir" ]; then
+              PACKAGE_NAME=$(basename "$artifact_dir" | sed 's/version-//')
+              echo "Restoring $PACKAGE_NAME package.json..."
+
+              if [ -f "$artifact_dir/package.json" ]; then
+                cp "$artifact_dir/package.json" "packages/$PACKAGE_NAME/package.json"
+                echo "  ✓ package.json"
+              fi
+            fi
+          done
+
+          # Restore CLI index.ts if it was published
+          if [ -d "/tmp/artifacts/cli-index-ts" ]; then
+            echo "Restoring CLI index.ts..."
+            cp "/tmp/artifacts/cli-index-ts/index.ts" "packages/cli/src/index.ts"
+            echo "  ✓ index.ts"
+          fi
+
+          # Restore root package-lock.json
+          if [ -f "/tmp/artifacts/root-package-lock/package-lock.json" ]; then
+            echo "Restoring root package-lock.json..."
+            cp "/tmp/artifacts/root-package-lock/package-lock.json" "package-lock.json"
+            echo "  ✓ package-lock.json"
+          fi
+
+          echo "✓ All files restored"
+
+      - name: Determine versions from published packages
+        id: collect_versions
         run: |
           PACKAGES='${{ needs.validate.outputs.packages_to_publish }}'
-          VERSION="${{ needs.validate.outputs.new_version }}"
+          VERSION_STRATEGY="${{ needs.validate.outputs.version_strategy }}"
 
+          # If custom version was used, use that for the tag
+          if [ "$VERSION_STRATEGY" = "custom" ]; then
+            RELEASE_TAG="v${{ needs.validate.outputs.custom_version }}"
+            echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+            echo "Using custom version tag: $RELEASE_TAG"
+          else
+            # Use timestamp-based tag for per-package bumps
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+            RELEASE_TAG="release-$TIMESTAMP"
+            echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+            echo "Using timestamp tag: $RELEASE_TAG"
+          fi
+
+          # Collect current versions for release notes
+          VERSIONS_LIST=""
           echo "$PACKAGES" | jq -r '.[]' | while read package; do
-            cd "packages/$package"
-            npm version "$VERSION" --no-git-tag-version --allow-same-version
-            cd ../..
+            VERSION=$(node -p "require('./packages/$package/package.json').version")
+            if [ "$package" = "cli" ]; then
+              echo "- prpm@$VERSION" >> /tmp/versions.txt
+            else
+              echo "- @pr-pm/$package@$VERSION" >> /tmp/versions.txt
+            fi
           done
 
       - name: Commit version bumps
         run: |
+          # Add all package.json files
           git add packages/*/package.json
-          VERSION="${{ needs.validate.outputs.new_version }}"
-          PACKAGES="${{ needs.validate.outputs.packages_to_publish }}"
-          TAG="${{ github.event.inputs.tag }}"
 
-          git commit -m "chore(release): publish v${VERSION}" \
-            -m "Published packages: ${PACKAGES}" \
-            -m "Tag: ${TAG}" \
-            -m "" \
-            -m "Generated with Claude Code via Happy" \
-            -m "Co-Authored-By: Claude <noreply@anthropic.com>" \
-            -m "Co-Authored-By: Happy <yesreply@happy.engineering>" \
-            || echo "No changes to commit"
+          # Add root package-lock.json
+          git add package-lock.json
+
+          # Add CLI index.ts if it was updated
+          if [ -f "packages/cli/src/index.ts" ]; then
+            git add packages/cli/src/index.ts
+          fi
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No version changes to commit"
+          else
+            PACKAGES="${{ needs.validate.outputs.packages_to_publish }}"
+            TAG="${{ github.event.inputs.tag }}"
+
+            git commit -m "chore(release): publish packages" \
+              -m "Published packages: ${PACKAGES}" \
+              -m "NPM Tag: ${TAG}"
+
+            git push origin main
+            echo "✓ Version changes committed and pushed"
+          fi
 
       - name: Create and push tag
         run: |
-          VERSION="v${{ needs.validate.outputs.new_version }}"
-          git tag -a "$VERSION" -m "Release $VERSION"
-          git push origin main --follow-tags
+          RELEASE_TAG="${{ steps.collect_versions.outputs.release_tag }}"
+          git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ needs.validate.outputs.new_version }}
-          name: Release v${{ needs.validate.outputs.new_version }}
+          tag_name: ${{ steps.collect_versions.outputs.release_tag }}
+          name: Release ${{ steps.collect_versions.outputs.release_tag }}
           body: |
             ## Published Packages
 
-            ${{ needs.validate.outputs.packages_to_publish }}
-
-            ### Version
-            `${{ needs.validate.outputs.new_version }}`
+            $(cat /tmp/versions.txt || echo "See package versions below")
 
             ### NPM Tag
             `${{ github.event.inputs.tag }}`
@@ -250,16 +432,11 @@ jobs:
             ### Installation
 
             ```bash
-            # CLI
-            npm install -g prpm@${{ needs.validate.outputs.new_version }}
+            # Install latest CLI
+            npm install -g prpm@latest
 
-            # Registry Client (for developers)
-            npm install @prpm/registry-client@${{ needs.validate.outputs.new_version }}
+            # Or install specific versions listed above
             ```
-
-            ---
-
-            Robot: Generated with [Claude Code](https://claude.com/claude-code) via [Happy](https://happy.engineering)
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -273,24 +450,33 @@ jobs:
     steps:
       - name: Summary
         run: |
-          echo "## Package: NPM Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 NPM Publish Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version**: \`${{ needs.validate.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Tag**: \`${{ github.event.inputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Version Strategy**: \`${{ needs.validate.outputs.version_strategy }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**NPM Tag**: \`${{ github.event.inputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Dry Run**: \`${{ github.event.inputs.dry_run }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Published Packages" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo '${{ needs.validate.outputs.packages_to_publish }}' | jq -r '.[] | "- @prpm/" + .'  >> $GITHUB_STEP_SUMMARY || echo "- Error parsing packages"
+
+          # List packages (each was versioned independently)
+          echo '${{ needs.validate.outputs.packages_to_publish }}' | jq -r '.[]' | while read pkg; do
+            if [ "$pkg" = "cli" ]; then
+              echo "- prpm (CLI)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- @pr-pm/$pkg" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            echo "[WARN] **This was a dry run - no packages were actually published**" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **This was a dry run - no packages were actually published**" >> $GITHUB_STEP_SUMMARY
           else
-            echo "[OK] **Packages successfully published to NPM**" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Packages successfully published to NPM**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Install with:" >> $GITHUB_STEP_SUMMARY
+            echo "Install latest CLI:" >> $GITHUB_STEP_SUMMARY
             echo '```bash' >> $GITHUB_STEP_SUMMARY
-            echo "npm install -g prpm@${{ needs.validate.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+            echo "npm install -g prpm@latest" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           fi

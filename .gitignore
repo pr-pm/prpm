@@ -35,6 +35,8 @@ Thumbs.db
 coverage/
 .nyc_output/
 tests/temp/
+playwright-report/
+test-results/
 
 # Logs
 logs/

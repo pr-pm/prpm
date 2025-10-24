@@ -31,7 +31,7 @@ async function setAdminPassword() {
     const password = process.argv[2] || 'admin123';
 
     console.log('🔐 Setting prpm user password...\n');
-    console.log(`Email: team@prpm.dev`);
+    console.log(`Email: team@pr-pm.dev`);
     console.log(`Password: ${password}`);
     console.log();
 
@@ -41,9 +41,9 @@ async function setAdminPassword() {
     // Update existing prpm user or create if doesn't exist
     const result = await pool.query(
       `INSERT INTO users (username, email, password_hash, is_admin, verified_author, created_at, updated_at)
-       VALUES ('prpm', 'team@prpm.dev', $1, TRUE, TRUE, NOW(), NOW())
+       VALUES ('prpm', 'team@pr-pm.dev', $1, TRUE, TRUE, NOW(), NOW())
        ON CONFLICT (username)
-       DO UPDATE SET password_hash = $1, email = 'team@prpm.dev', updated_at = NOW()
+       DO UPDATE SET password_hash = $1, email = 'team@pr-pm.dev', updated_at = NOW()
        RETURNING id, username, email, is_admin`,
       [passwordHash]
     );
@@ -62,7 +62,7 @@ async function setAdminPassword() {
     console.log(`  Is Admin: ${user.is_admin}`);
     console.log();
     console.log('💡 You can now login with:');
-    console.log(`   Email: team@prpm.dev`);
+    console.log(`   Email: team@pr-pm.dev`);
     console.log(`   Password: ${password}`);
     console.log();
     console.log('🔑 To login via CLI:');

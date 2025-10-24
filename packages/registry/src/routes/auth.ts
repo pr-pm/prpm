@@ -82,31 +82,45 @@ async function authenticateWithNango(server: FastifyInstance, connectionId: stri
       user.nango_connection_id = connectionId;
     } else if (user.nango_connection_id !== connectionId) {
       // User already has a connection, and this is a different one
-      // The webhook should have already deleted this duplicate connection
+      // The webhook should have already updated to the new connection and deleted the old one
       server.log.warn({
         userId: user.id,
         storedConnectionId: user.nango_connection_id,
         providedConnectionId: connectionId
-      }, 'Callback received duplicate connection that should have been deleted by webhook');
+      }, 'Callback received different connection than stored - webhook should have updated this');
 
-      // This shouldn't happen if webhook worked correctly, but handle it gracefully
-      // Use the stored connection for authentication
-      await query(
+      // The webhook should have already updated the database with the new connectionId
+      // This is a race condition where the callback ran before the webhook completed
+      // Refresh the user data to get the latest connectionId
+      const refreshedUser = await queryOne<User>(
         server,
-        'UPDATE users SET last_login_at = NOW(), github_username = $2 WHERE id = $1',
-        [user.id, githubUser.login]
+        'SELECT * FROM users WHERE github_id = $1',
+        [String(githubUser.id)]
       );
 
-      // Validate the STORED connection is still valid
-      try {
-        const storedGithubUser = await nangoService.getGitHubUser(user.nango_connection_id);
+      if (refreshedUser && refreshedUser.nango_connection_id === connectionId) {
+        // Webhook already updated the connection - use the refreshed user
         server.log.info({
+          userId: refreshedUser.id,
+          connectionId
+        }, 'Webhook already updated connection, using refreshed user data');
+        user = refreshedUser;
+      } else {
+        // Webhook hasn't updated yet - this shouldn't normally happen
+        // Update the user to use the new connection
+        server.log.warn({
           userId: user.id,
-          storedConnectionId: user.nango_connection_id
-        }, 'Using stored connection for authentication');
-      } catch (error) {
-        server.log.error({ error, userId: user.id, storedConnectionId: user.nango_connection_id }, 'Stored connection is invalid');
-        throw new Error('Your stored authentication has expired. Please contact support.');
+          oldConnectionId: user.nango_connection_id,
+          newConnectionId: connectionId
+        }, 'Webhook has not updated connection yet, updating now');
+
+        await query(
+          server,
+          'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+          [connectionId, githubUser.login, user.id]
+        );
+
+        user.nango_connection_id = connectionId;
       }
     } else {
       // Same connection, just update last login
@@ -278,27 +292,124 @@ export async function authRoutes(server: FastifyInstance) {
           );
 
           if (existingUser && existingUser.nango_connection_id && existingUser.nango_connection_id !== connectionId) {
-            // User already has a DIFFERENT connection - delete this new one
+            // User already has a DIFFERENT connection - keep the NEW one and delete the OLD one
             server.log.info({
               userId: existingUser.id,
-              existingConnectionId: existingUser.nango_connection_id,
+              oldConnectionId: existingUser.nango_connection_id,
               newConnectionId: connectionId
-            }, 'User already has a different connection, deleting new connection');
+            }, 'User has a different connection, updating to use new connection and deleting old one');
 
-            await nangoService.deleteConnection(connectionId);
+            // Delete the old connection from Nango
+            try {
+              await nangoService.deleteConnection(existingUser.nango_connection_id);
+              server.log.info({
+                connectionId: existingUser.nango_connection_id
+              }, 'Deleted old connection from Nango');
+            } catch (error) {
+              server.log.error({
+                error,
+                connectionId: existingUser.nango_connection_id
+              }, 'Failed to delete old connection from Nango');
+            }
 
-            server.log.info({ connectionId }, 'Deleted duplicate connection');
-          } else {
-            // Either:
-            // 1. New user (existingUser is null) - callback will handle creation, webhook will patch
-            // 2. Existing user without connection - callback will handle updating, webhook will patch
-            // 3. Existing user with this same connection - this is the first login
+            // Update user to use the new connection
+            await query(
+              server,
+              'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+              [connectionId, githubUser.login, existingUser.id]
+            );
 
-            // Store the connection ID for CLI authentication sessions ONLY if it's valid
+            server.log.info({
+              userId: existingUser.id,
+              newConnectionId: connectionId
+            }, 'Updated user to use new connection');
+
+            // Patch the new connection with user metadata
+            try {
+              const tags: Record<string, string> = {};
+              if (existingUser.verified_author) {
+                tags.verified_author = 'true';
+              }
+
+              await nangoService.patchConnection(connectionId, {
+                id: existingUser.id,
+                email: existingUser.email,
+                display_name: existingUser.username,
+                tags: Object.keys(tags).length > 0 ? tags : undefined,
+              });
+
+              server.log.info({
+                userId: existingUser.id,
+                connectionId,
+                tags
+              }, 'Patched new connection with user metadata');
+            } catch (error) {
+              server.log.error({ error, userId: existingUser.id, connectionId }, 'Failed to patch new connection');
+            }
+
+            // Store the connection ID for CLI authentication sessions
             cliAuthSessions.set(endUser.endUserId, connectionId);
+          } else if (!existingUser) {
+            // New user - create them in the database
+            const primaryEmail = githubUser.email || `${githubUser.login}@github.user`;
 
-            // Patch the connection with user metadata if we have an existing user
-            if (existingUser) {
+            const newUser = await queryOne<User>(
+              server,
+              `INSERT INTO users (username, email, github_id, github_username, avatar_url, nango_connection_id, last_login_at)
+               VALUES ($1, $2, $3, $4, $5, $6, NOW())
+               RETURNING *`,
+              [
+                githubUser.login,
+                primaryEmail,
+                String(githubUser.id),
+                githubUser.login,
+                githubUser.avatar_url,
+                connectionId,
+              ]
+            );
+
+            server.log.info({
+              userId: newUser?.id,
+              username: newUser?.username,
+              githubId: githubUser.id,
+              connectionId
+            }, 'Created new user in webhook');
+
+            // Patch the connection with new user metadata
+            if (newUser) {
+              try {
+                await nangoService.patchConnection(connectionId, {
+                  id: newUser.id,
+                  email: newUser.email,
+                  display_name: newUser.username,
+                });
+
+                server.log.info({
+                  userId: newUser.id,
+                  connectionId
+                }, 'Patched connection with new user metadata');
+              } catch (error) {
+                server.log.error({ error, userId: newUser.id, connectionId }, 'Failed to patch connection for new user');
+              }
+            }
+
+            // Store the connection ID for CLI authentication sessions
+            cliAuthSessions.set(endUser.endUserId, connectionId);
+          } else {
+            // Existing user without connection or same connection - update them
+            if (!existingUser.nango_connection_id || existingUser.nango_connection_id === connectionId) {
+              await query(
+                server,
+                'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+                [connectionId, githubUser.login, existingUser.id]
+              );
+
+              server.log.info({
+                userId: existingUser.id,
+                connectionId
+              }, 'Updated existing user with connection in webhook');
+
+              // Patch the connection with user metadata
               try {
                 const tags: Record<string, string> = {};
                 if (existingUser.verified_author) {
@@ -319,17 +430,11 @@ export async function authRoutes(server: FastifyInstance) {
                 }, 'Patched connection with existing user metadata in webhook');
               } catch (error) {
                 server.log.error({ error, userId: existingUser.id, connectionId }, 'Failed to patch connection in webhook');
-                // Don't throw - connection is still valid
               }
-            }
 
-            server.log.info({
-              hasExistingUser: !!existingUser,
-              existingUserId: existingUser?.id,
-              githubId: githubUser.id,
-              githubLogin: githubUser.login,
-              connectionId
-            }, 'Connection valid, stored for CLI auth');
+              // Store the connection ID for CLI authentication sessions
+              cliAuthSessions.set(endUser.endUserId, connectionId);
+            }
           }
         } catch (error) {
           server.log.error({ error, connectionId }, 'Error processing webhook GitHub user check');
@@ -341,6 +446,77 @@ export async function authRoutes(server: FastifyInstance) {
     } catch (error) {
       server.log.error(error, 'Failed to handle Nango webhook');
       return reply.status(500).send({ error: 'Webhook processing failed' });
+    }
+  });
+
+  // Poll for authentication completion by connection ID
+  server.get('/nango/status/:connectionId', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['connectionId'],
+        properties: {
+          connectionId: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            ready: { type: 'boolean' },
+            token: { type: 'string' },
+            username: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { connectionId } = request.params as { connectionId: string };
+
+      server.log.info({ connectionId }, 'Checking auth status for connection');
+
+      // Check if webhook has created a user for this connection
+      const user = await queryOne<User>(
+        server,
+        'SELECT * FROM users WHERE nango_connection_id = $1',
+        [connectionId]
+      );
+
+      if (!user) {
+        // Webhook hasn't processed yet
+        server.log.info({ connectionId }, 'User not ready yet - webhook still processing');
+        return reply.status(404).send({
+          ready: false,
+          error: 'User not ready - webhook still processing',
+        });
+      }
+
+      // User is ready - update last login and return JWT
+      await query(
+        server,
+        'UPDATE users SET last_login_at = NOW() WHERE id = $1',
+        [user.id]
+      );
+
+      const jwtToken = server.jwt.sign({
+        user_id: user.id,
+        username: user.username,
+        email: user.email,
+        is_admin: user.is_admin,
+        scopes: ['read:packages', 'write:packages'],
+      } as JWTPayload);
+
+      server.log.info({ username: user.username, userId: user.id }, 'User ready - returning JWT');
+
+      return reply.send({
+        ready: true,
+        token: jwtToken,
+        username: user.username,
+      });
+    } catch (error) {
+      server.log.error(error, 'Failed to check auth status');
+      return reply.status(500).send({ error: 'Failed to check status' });
     }
   });
 
@@ -391,91 +567,6 @@ export async function authRoutes(server: FastifyInstance) {
     }
   });
 
-  // Handle Nango authentication callback
-  server.post('/nango/callback', {
-    schema: {
-      body: {
-        type: 'object',
-        required: ['connectionId'],
-        properties: {
-          connectionId: { type: 'string' },
-          redirectUrl: { type: 'string' },
-          userId: { type: 'string' },
-        },
-      },
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            success: { type: 'boolean' },
-            token: { type: 'string' },
-            username: { type: 'string' },
-            redirectUrl: { type: 'string' },
-          },
-        },
-      },
-    },
-  }, async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const { connectionId, redirectUrl, userId } = request.body as {
-        connectionId: string;
-        redirectUrl?: string;
-        userId?: string;
-      };
-
-      server.log.info({ connectionId, userId }, 'Nango authentication callback received');
-
-      // If userId is provided, this is a CLI authentication - store in sessions map
-      if (userId) {
-        server.log.info({ userId, connectionId }, 'Storing CLI auth session');
-        cliAuthSessions.set(userId, connectionId);
-      }
-
-      const { user, jwtToken, isNewUser } = await authenticateWithNango(server, connectionId);
-
-      server.log.info({ username: user.username, isNewUser }, 'User authenticated successfully via Nango');
-
-      // Patch the connection with user metadata if this is a new user
-      // (webhook couldn't patch because user didn't exist yet)
-      if (isNewUser) {
-        try {
-          const tags: Record<string, string> = {};
-          if (user.verified_author) {
-            tags.verified_author = 'true';
-          }
-
-          await nangoService.patchConnection(connectionId, {
-            id: user.id,
-            email: user.email,
-            display_name: user.username,
-            tags: Object.keys(tags).length > 0 ? tags : undefined,
-          });
-
-          server.log.info({
-            userId: user.id,
-            connectionId,
-            tags
-          }, 'Patched connection with newly created user metadata');
-        } catch (error) {
-          server.log.error({ error, userId: user.id, connectionId }, 'Failed to patch connection for new user');
-          // Don't throw - authentication succeeded, patching is optional metadata
-        }
-      }
-
-      return reply.send({
-        success: true,
-        token: jwtToken,
-        username: user.username,
-        redirectUrl: redirectUrl || '/dashboard',
-      });
-    } catch (error) {
-      server.log.error(error, 'Failed to authenticate with Nango');
-      return reply.status(500).send({
-        success: false,
-        error: 'Authentication failed'
-      });
-    }
-  });
 
   /**
    * Register with email/password

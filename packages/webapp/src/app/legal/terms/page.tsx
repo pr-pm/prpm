@@ -33,7 +33,7 @@ export default async function TermsPage() {
                 Privacy Policy
               </Link>
               <a
-                href="https://github.com/khaliqgant/prompt-package-manager"
+                href="https://github.com/pr-pm/prpm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors"

@@ -12,7 +12,7 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   moduleNameMapper: {
-    '^@prpm/registry-client$': '<rootDir>/../registry-client/src',
+    '^@pr-pm/registry-client$': '<rootDir>/../registry-client/src',
   },
   transform: {
     '^.+\\.ts$': ['ts-jest', {

@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient, SearchResult, RegistryPackage } from '@prpm/registry-client';
+import { getRegistryClient, SearchResult, RegistryPackage } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { Format, Subtype } from '../types';

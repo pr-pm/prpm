@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient } from '@prpm/registry-client';
+import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir, stripAuthorNamespace } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
@@ -102,7 +102,7 @@ export async function handleInstall(
   let error: string | undefined;
 
   try {
-    // Parse package spec (e.g., "react-rules" or "react-rules@1.2.0" or "@prpm/pkg@1.0.0")
+    // Parse package spec (e.g., "react-rules" or "react-rules@1.2.0" or "@pr-pm/pkg@1.0.0")
     // For scoped packages (@scope/name), the first @ is part of the package name
     let packageId: string;
     let specVersion: string | undefined;

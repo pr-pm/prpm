@@ -102,7 +102,7 @@ describe('schema-validator', () => {
         files: ['skill.md'],
         main: 'skill.md',
         dependencies: {
-          '@prpm/utils': '^1.0.0',
+          '@pr-pm/utils': '^1.0.0',
         },
         peerDependencies: {
           'common-rules': '~2.0.0',

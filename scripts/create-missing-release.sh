@@ -46,7 +46,7 @@ echo -e "   macOS x64: ${MACOS_X64_HASH}"
 echo -e "   macOS ARM64: ${MACOS_ARM64_HASH}"
 
 echo -e "${YELLOW}📋 Manual steps to create GitHub release:${NC}"
-echo -e "1. Go to: ${BLUE}https://github.com/khaliqgant/prompt-package-manager/releases/new${NC}"
+echo -e "1. Go to: ${BLUE}https://github.com/pr-pm/prpm/releases/new${NC}"
 echo -e "2. Set tag version to: ${BLUE}v${VERSION}${NC}"
 echo -e "3. Set release title to: ${BLUE}v${VERSION}${NC}"
 echo -e "4. Upload these files:"

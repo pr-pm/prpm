@@ -1,23 +1,12 @@
 {
-  "total": 78,
-  "grade": "Actually decent",
-  "emoji": "✅",
+  "total": 38,
   "breakdown": {
-    "bullshitFactor": 17,
-    "actuallyWorks": 16,
-    "codeQualityReality": 15,
-    "completionHonesty": 14,
-    "practicalValue": 16
+    "bullshitFactor": 5,
+    "actuallyWorks": 9,
+    "codeQualityReality": 12,
+    "completionHonesty": 2,
+    "practicalValue": 10
   },
-  "timestamp": "2025-10-18T20:15:00Z",
-  "marketResearch": {
-    "competitors": [
-      "PatrickJS/awesome-cursorrules (manual copying, no package manager)",
-      "sanjeed5/awesome-cursor-rules-mdc (879 rules, manual download)",
-      "obra/superpowers (Claude skills, manual management)"
-    ],
-    "marketGap": "Yes - No dedicated CLI package manager for Cursor/Claude prompts with versioning and distribution",
-    "recommendation": "First-mover advantage in prompt package management. Focus on registry ecosystem and viral Karen integration to drive adoption."
-  },
-  "hotTakeUrl": ".karen/review.md"
+  "grade": "Needs intervention",
+  "timestamp": "2025-10-24T20:37:59.446Z"
 }

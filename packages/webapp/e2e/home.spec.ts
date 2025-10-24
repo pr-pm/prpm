@@ -18,7 +18,7 @@ test.describe('Home Page', () => {
     // Check GitHub link
     const githubLink = page.getByRole('link', { name: 'View on GitHub' });
     await expect(githubLink).toBeVisible();
-    await expect(githubLink).toHaveAttribute('href', 'https://github.com/khaliqgant/prompt-package-manager');
+    await expect(githubLink).toHaveAttribute('href', 'https://github.com/pr-pm/prpm');
     await expect(githubLink).toHaveAttribute('target', '_blank');
 
     // Check Claim Invite link

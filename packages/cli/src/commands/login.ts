@@ -91,6 +91,8 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
 
   try {
     // Get the Nango connect session from the registry
+    console.log(`   Connecting to: ${registryUrl}`);
+
     const response = await fetch(`${registryUrl}/api/v1/auth/nango/cli/connect-session`, {
       method: 'POST',
       headers: {
@@ -104,7 +106,8 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
     });
 
     if (!response.ok) {
-      throw new Error('Failed to get authentication session');
+      const errorText = await response.text().catch(() => 'Unable to read error response');
+      throw new Error(`Failed to get authentication session (${response.status}): ${errorText}`);
     }
 
     const responseData = await response.json() as {
@@ -122,7 +125,12 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
     
     // Create the CLI auth URL with session token, callback, and userId
     const callbackUrl = 'http://localhost:8765/callback';
-    const webappUrl = registryUrl.replace('registry', 'webapp').replace(':3000', ':5173');
+
+    // Determine webapp URL - default to production
+    const webappUrl = registryUrl.includes('localhost')
+      ? registryUrl.replace(':3000', ':5173')  // Local: localhost:3000 → localhost:5173
+      : 'https://prpm.dev';                     // Production: always use prpm.dev
+
     const authUrl = `${webappUrl}/cli-auth?sessionToken=${encodeURIComponent(connectSessionToken)}&cliCallback=${encodeURIComponent(callbackUrl)}&userId=${encodeURIComponent(userId)}`;
     
     console.log(`   Please open this link in your browser to authenticate:`);
@@ -144,6 +152,14 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
 
     return { token: result.token, username: result.username || 'unknown' };
   } catch (error) {
+    if (error instanceof Error) {
+      // Check for common network errors
+      if (error.message.includes('ECONNREFUSED')) {
+        throw new Error(`Cannot connect to registry at ${registryUrl}. Is the registry running?`);
+      } else if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
+        throw new Error(`Cannot resolve registry hostname: ${registryUrl}. Check your internet connection.`);
+      }
+    }
     throw new Error(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -167,28 +183,21 @@ async function pollForAuthentication(registryUrl: string, userId: string): Promi
         
         if (authenticated && connectionId) {
           // Authentication completed, get the JWT token
-          const callbackResponse = await fetch(`${registryUrl}/api/v1/auth/nango/callback`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              connectionId,
-              redirectUrl: '/cli-success',
-            }),
-          });
+          const statusResponse = await fetch(`${registryUrl}/api/v1/auth/nango/status/${connectionId}`);
 
-          if (callbackResponse.ok) {
-            const result = await callbackResponse.json() as {
-              success: boolean;
+          if (statusResponse.ok) {
+            const result = await statusResponse.json() as {
+              ready: boolean;
               token: string;
               username: string;
-              redirectUrl: string;
             };
-            return {
-              token: result.token,
-              username: result.username,
-            };
+
+            if (result.ready && result.token) {
+              return {
+                token: result.token,
+                username: result.username,
+              };
+            }
           }
         }
       }
