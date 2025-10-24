@@ -4,40 +4,79 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { PackageType } from '../types';
+import { PackageType, Format, Subtype } from '../types';
 
 /**
- * Get the destination directory for a package type
+ * Get the destination directory for a package based on format and subtype
  */
-export function getDestinationDir(type: PackageType): string {
-  switch (type) {
+export function getDestinationDir(
+  formatOrType: Format | PackageType,
+  subtype?: Subtype
+): string {
+  // Handle legacy PackageType format (backward compatibility)
+  if (formatOrType.includes('-')) {
+    // This is a compound type like 'cursor-agent', 'claude-skill'
+    const type = formatOrType as PackageType;
+    switch (type) {
+      case 'cursor-agent':
+        return '.cursor/agents';
+      case 'cursor-slash-command':
+        return '.cursor/commands';
+      case 'claude-agent':
+        return '.claude/agents';
+      case 'claude-skill':
+        return '.claude/skills';
+      case 'claude-slash-command':
+        return '.claude/commands';
+      default:
+        throw new Error(`Unknown package type: ${type}`);
+    }
+  }
+
+  // New format + subtype approach
+  const format = formatOrType as Format;
+
+  switch (format) {
     case 'cursor':
+      if (subtype === 'agent') return '.cursor/agents';
+      if (subtype === 'slash-command') return '.cursor/commands';
       return '.cursor/rules';
-    case 'cursor-agent':
-      return '.cursor/agents';
-    case 'cursor-slash-command':
-      return '.cursor/commands';
+
     case 'claude':
-      return '.claude/agents';
-    case 'claude-agent':
-      return '.claude/agents';
-    case 'claude-skill':
-      return '.claude/skills';
-    case 'claude-slash-command':
-      return '.claude/commands';
+      if (subtype === 'skill') return '.claude/skills';
+      if (subtype === 'slash-command') return '.claude/commands';
+      if (subtype === 'agent') return '.claude/agents';
+      return '.claude/agents'; // Default for claude
+
     case 'continue':
       return '.continue/rules';
+
     case 'windsurf':
       return '.windsurf/rules';
+
     case 'copilot':
       return '.github/instructions';
+
     case 'kiro':
       return '.kiro/steering';
+
     case 'generic':
       return '.prompts';
+
+    case 'mcp':
+      return '.mcp/tools';
+
     default:
-      throw new Error(`Unknown package type: ${type}`);
+      throw new Error(`Unknown format: ${format}`);
   }
+}
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use getDestinationDir with format and subtype instead
+ */
+export function getDestinationDirLegacy(type: PackageType): string {
+  return getDestinationDir(type);
 }
 
 /**
