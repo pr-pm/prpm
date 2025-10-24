@@ -70,15 +70,34 @@ jobs:
       - name: Run tests
         run: npm test --workspace=@pr-pm/registry
 
+      - name: Set environment variables
+        id: env
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'prod' }}"
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_OUTPUT
+
+          # Set Beanstalk app/env names and S3 bucket based on environment
+          if [ "$ENVIRONMENT" = "prod" ]; then
+            echo "EB_APP_NAME=prpm-prod" >> $GITHUB_OUTPUT
+            echo "EB_ENV_NAME=prpm-prod-env" >> $GITHUB_OUTPUT
+            echo "S3_BUCKET=prpm-prod-packages" >> $GITHUB_OUTPUT
+          elif [ "$ENVIRONMENT" = "staging" ]; then
+            echo "EB_APP_NAME=prpm-staging" >> $GITHUB_OUTPUT
+            echo "EB_ENV_NAME=prpm-staging-env" >> $GITHUB_OUTPUT
+            echo "S3_BUCKET=prpm-deployments-staging" >> $GITHUB_OUTPUT
+          else
+            echo "EB_APP_NAME=prpm-dev" >> $GITHUB_OUTPUT
+            echo "EB_ENV_NAME=prpm-dev-env" >> $GITHUB_OUTPUT
+            echo "S3_BUCKET=prpm-deployments-dev" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create deployment package
         run: |
           cd packages/registry
-          zip -r ../../deploy.zip . -x "*.git*" "node_modules/*" "src/*" "*.test.ts" "*.spec.ts"
-          cd ../..
-          zip -ur deploy.zip package.json package-lock.json
-          mkdir -p .ebextensions
-          # Add any .ebextensions configuration here if needed
-          zip -ur deploy.zip .ebextensions
+          VERSION_LABEL="v-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:7}"
+          echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
+          zip -r ${VERSION_LABEL}.zip . -x "*.git*" "node_modules/*" "src/*" "*.test.ts" "*.spec.ts"
+          echo "✅ Created deployment package: ${VERSION_LABEL}.zip"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -87,33 +106,47 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy to Elastic Beanstalk
+      - name: Upload to S3
+        working-directory: packages/registry
         run: |
-          ENV_NAME="prpm-registry-${{ github.event.inputs.environment || 'prod' }}"
-          APP_NAME="prpm-registry"
+          S3_KEY="deployments/${VERSION_LABEL}.zip"
+          echo "Uploading to s3://${{ steps.env.outputs.S3_BUCKET }}/${S3_KEY}"
 
-          VERSION_LABEL="v-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:7}"
+          aws s3 cp ${VERSION_LABEL}.zip s3://${{ steps.env.outputs.S3_BUCKET }}/${S3_KEY} \
+            --metadata "git-sha=${{ github.sha }},run-number=${{ github.run_number }},environment=${{ steps.env.outputs.ENVIRONMENT }}"
 
-          echo "Uploading application version $VERSION_LABEL..."
-          aws s3 cp deploy.zip "s3://elasticbeanstalk-$AWS_REGION-${{ secrets.AWS_ACCOUNT_ID }}/$APP_NAME/$VERSION_LABEL.zip"
+          echo "✅ Uploaded to S3"
 
-          echo "Creating application version..."
+      - name: Create Beanstalk application version
+        run: |
+          echo "Creating application version: $VERSION_LABEL"
+
           aws elasticbeanstalk create-application-version \
-            --application-name "$APP_NAME" \
-            --version-label "$VERSION_LABEL" \
-            --source-bundle S3Bucket="elasticbeanstalk-$AWS_REGION-${{ secrets.AWS_ACCOUNT_ID }}",S3Key="$APP_NAME/$VERSION_LABEL.zip" \
-            --description "Deploy from GitHub Actions - $GITHUB_SHA"
+            --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+            --version-label $VERSION_LABEL \
+            --source-bundle S3Bucket="${{ steps.env.outputs.S3_BUCKET }}",S3Key="deployments/${VERSION_LABEL}.zip" \
+            --description "Deployed from GitHub Actions run ${{ github.run_number }} (SHA: ${{ github.sha }})" \
+            --process
 
-          echo "Deploying to environment $ENV_NAME..."
+          echo "✅ Application version created"
+
+      - name: Deploy to Beanstalk environment
+        run: |
+          echo "Deploying to environment: ${{ steps.env.outputs.EB_ENV_NAME }}"
+
           aws elasticbeanstalk update-environment \
-            --application-name "$APP_NAME" \
-            --environment-name "$ENV_NAME" \
-            --version-label "$VERSION_LABEL"
+            --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+            --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+            --version-label $VERSION_LABEL
 
+          echo "✅ Deployment initiated"
+
+      - name: Wait for deployment
+        run: |
           echo "Waiting for environment to update..."
           aws elasticbeanstalk wait environment-updated \
-            --application-name "$APP_NAME" \
-            --environment-names "$ENV_NAME"
+            --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+            --environment-names ${{ steps.env.outputs.EB_ENV_NAME }}
 
           echo "✓ Registry deployment completed"
 
