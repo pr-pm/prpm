@@ -417,6 +417,7 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 **Format-Specific Guides:**
 - ✈️ [GitHub Copilot](docs/GITHUB_COPILOT.md) - Instructions for GitHub Copilot
 - 🎯 [Kiro](docs/KIRO.md) - Steering files for Kiro AI
+- 🌊 [Windsurf](docs/WINDSURF.md) - Rules for Windsurf editor
 
 ### 🛠️ Developer Documentation
 
