@@ -163,6 +163,13 @@ jobs:
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "Package ${{ matrix.package }} will be published as: $NEW_VERSION"
 
+          # Update version in index.ts for CLI package
+          if [ "${{ matrix.package }}" = "cli" ]; then
+            echo "Updating version in src/index.ts to $NEW_VERSION"
+            sed -i "s/.version('.*')/.version('$NEW_VERSION')/" src/index.ts
+            echo "✓ Updated index.ts version"
+          fi
+
       - name: Build package
         run: |
           if [ "${{ matrix.package }}" = "cli" ]; then
