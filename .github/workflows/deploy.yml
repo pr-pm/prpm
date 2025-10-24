@@ -33,17 +33,18 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # Check what changed
+  # Check what changed (or use manual deploy_target selection)
   changes:
     runs-on: ubuntu-latest
     outputs:
-      registry: ${{ steps.filter.outputs.registry }}
-      webapp: ${{ steps.filter.outputs.webapp }}
+      registry: ${{ steps.set-outputs.outputs.registry }}
+      webapp: ${{ steps.set-outputs.outputs.webapp }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: dorny/paths-filter@v3
         id: filter
+        if: github.event_name == 'push'
         with:
           filters: |
             registry:
@@ -52,14 +53,32 @@ jobs:
             webapp:
               - 'packages/webapp/**'
 
+      - name: Set outputs based on trigger
+        id: set-outputs
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual deployment - use deploy_target input
+            if [ "${{ github.event.inputs.deploy_target }}" = "all" ]; then
+              echo "registry=true" >> $GITHUB_OUTPUT
+              echo "webapp=true" >> $GITHUB_OUTPUT
+            elif [ "${{ github.event.inputs.deploy_target }}" = "registry-only" ]; then
+              echo "registry=true" >> $GITHUB_OUTPUT
+              echo "webapp=false" >> $GITHUB_OUTPUT
+            elif [ "${{ github.event.inputs.deploy_target }}" = "webapp-only" ]; then
+              echo "registry=false" >> $GITHUB_OUTPUT
+              echo "webapp=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Automatic deployment - use path filter results
+            echo "registry=${{ steps.filter.outputs.registry }}" >> $GITHUB_OUTPUT
+            echo "webapp=${{ steps.filter.outputs.webapp }}" >> $GITHUB_OUTPUT
+          fi
+
   # Deploy registry first (if changed or manually requested)
   deploy-registry:
     name: Deploy Registry
     needs: changes
-    if: |
-      needs.changes.outputs.registry == 'true' ||
-      (github.event_name == 'workflow_dispatch' &&
-       (github.event.inputs.deploy_target == 'all' || github.event.inputs.deploy_target == 'registry-only'))
+    if: needs.changes.outputs.registry == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -259,14 +278,10 @@ jobs:
   deploy-webapp:
     name: Deploy WebApp
     needs: [changes, deploy-registry]
-    # Run if:
-    # 1. Webapp changed OR manually deploying webapp
-    # 2. AND registry either succeeded or was skipped (not run or not failed)
+    # Run if webapp is selected AND registry either succeeded or was skipped
     if: |
       always() &&
-      (needs.changes.outputs.webapp == 'true' ||
-       (github.event_name == 'workflow_dispatch' &&
-        (github.event.inputs.deploy_target == 'all' || github.event.inputs.deploy_target == 'webapp-only'))) &&
+      needs.changes.outputs.webapp == 'true' &&
       (needs.deploy-registry.result == 'success' || needs.deploy-registry.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
