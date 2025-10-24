@@ -172,7 +172,7 @@ None. This release is fully backward compatible with 1.1.0.
 
 ## Links
 
-- [GitHub Repository](https://github.com/khaliqgant/prompt-package-manager)
+- [GitHub Repository](https://github.com/pr-pm/prpm)
 - [Registry](https://registry.prpm.dev)
 - [Documentation](https://docs.prpm.dev)
-- [Report Issues](https://github.com/khaliqgant/prompt-package-manager/issues)
+- [Report Issues](https://github.com/pr-pm/prpm/issues)

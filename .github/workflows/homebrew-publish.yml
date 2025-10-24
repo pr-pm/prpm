@@ -76,7 +76,7 @@ jobs:
           {
             echo "class Prmp < Formula"
             echo "  desc \"Prompt Package Manager - Manage AI prompt packages for Cursor, Claude, and more\""
-            echo "  homepage \"https://github.com/khaliqgant/prompt-package-manager\""
+            echo "  homepage \"https://github.com/pr-pm/prpm\""
             echo "  url \"https://registry.npmjs.org/prpm/-/cli-${VERSION}.tgz\""
             echo "  sha256 \"${SHA256}\""
             echo "  license \"MIT\""

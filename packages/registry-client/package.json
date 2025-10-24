@@ -23,13 +23,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/khaliqgant/prompt-package-manager.git",
+    "url": "git+https://github.com/pr-pm/prpm.git",
     "directory": "packages/registry-client"
   },
   "bugs": {
-    "url": "https://github.com/khaliqgant/prompt-package-manager/issues"
+    "url": "https://github.com/pr-pm/prpm/issues"
   },
-  "homepage": "https://github.com/khaliqgant/prompt-package-manager#readme",
+  "homepage": "https://github.com/pr-pm/prpm#readme",
   "author": "khaliqgant",
   "license": "MIT",
   "dependencies": {

@@ -100,7 +100,7 @@ Contribute to the PRPM CLI, registry, or format converters.
 
 ```bash
 # Clone the repository
-git clone https://github.com/khaliqgant/prompt-package-manager.git
+git clone https://github.com/pr-pm/prpm.git
 cd prompt-package-manager
 
 # Install dependencies

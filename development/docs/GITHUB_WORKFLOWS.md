@@ -222,8 +222,8 @@ strategy:
 
 ### Add Status Badges to README
 ```markdown
-![CI](https://github.com/khaliqgant/prompt-package-manager/workflows/CI/badge.svg)
-![Publish](https://github.com/khaliqgant/prompt-package-manager/workflows/Publish%20Packages/badge.svg)
+![CI](https://github.com/pr-pm/prpm/workflows/CI/badge.svg)
+![Publish](https://github.com/pr-pm/prpm/workflows/Publish%20Packages/badge.svg)
 ```
 
 ---

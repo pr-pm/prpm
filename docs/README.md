@@ -118,8 +118,8 @@ For PRPM contributors and maintainers, see **[development/docs/](../development/
 
 ## Getting Help
 
-- 💬 **[GitHub Discussions](https://github.com/khaliqgant/prompt-package-manager/discussions)** - Ask questions
-- 🐛 **[GitHub Issues](https://github.com/khaliqgant/prompt-package-manager/issues)** - Report bugs
+- 💬 **[GitHub Discussions](https://github.com/pr-pm/prpm/discussions)** - Ask questions
+- 🐛 **[GitHub Issues](https://github.com/pr-pm/prpm/issues)** - Report bugs
 - 📧 **Email**: team@prpm.dev
 
 ---

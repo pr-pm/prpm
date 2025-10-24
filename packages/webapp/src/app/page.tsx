@@ -59,7 +59,7 @@ export default function Home() {
                 Sign In
               </Link>
               <a
-                href="https://github.com/khaliqgant/prompt-package-manager"
+                href="https://github.com/pr-pm/prpm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group px-8 py-4 bg-prpm-dark-card border border-prpm-border text-gray-300 rounded-lg hover:border-prpm-accent hover:text-white transition-all font-semibold text-lg hover-lift flex items-center gap-2"
@@ -252,7 +252,7 @@ export default function Home() {
                   Privacy
                 </Link>
                 <a
-                  href="https://github.com/khaliqgant/prompt-package-manager"
+                  href="https://github.com/pr-pm/prpm"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors"
