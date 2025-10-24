@@ -1,7 +1,6 @@
 name: Karen Code Review
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:  # Manual trigger via Actions tab
 
 jobs:
   karen-review:
