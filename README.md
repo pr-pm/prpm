@@ -136,6 +136,10 @@ prpm install systematic-debugging
 
 **It's npm for AI prompts. But it works everywhere.**
 
+### Team Consistency
+
+If you're working on a big project and some coworkers use Copilot, others use Claude, and sometimes it's Cursor, the only way to unify rules so it's consistent across the codebase is to use PRPM. It's an easy way to make sure everyone has the same rules across the team.
+
 ---
 
 ## Quick Start
