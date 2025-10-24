@@ -35,12 +35,17 @@
       "description": "Package type. Use 'collection' only if files contain multiple distinct types.",
       "enum": [
         "cursor",
+        "cursor-agent",
+        "cursor-slash-command",
         "claude",
         "claude-skill",
         "claude-agent",
         "claude-slash-command",
         "continue",
         "windsurf",
+        "copilot",
+        "kiro",
+        "mcp",
         "generic",
         "collection"
       ]
@@ -156,12 +161,17 @@
                 "description": "File type (determines where it will be installed)",
                 "enum": [
                   "cursor",
+                  "cursor-agent",
+                  "cursor-slash-command",
                   "claude",
                   "claude-skill",
                   "claude-agent",
                   "claude-slash-command",
                   "continue",
                   "windsurf",
+                  "copilot",
+                  "kiro",
+                  "mcp",
                   "generic"
                 ]
               },
@@ -302,6 +312,36 @@
           "name": "Test Generator"
         }
       ]
+    },
+    {
+      "name": "@username/copilot-instructions",
+      "version": "1.0.0",
+      "description": "GitHub Copilot instructions for API development",
+      "type": "copilot",
+      "author": "Your Name",
+      "license": "MIT",
+      "tags": ["copilot", "api", "backend"],
+      "files": ["api-guidelines.md"]
+    },
+    {
+      "name": "@username/kiro-steering",
+      "version": "1.0.0",
+      "description": "Kiro steering file for testing standards",
+      "type": "kiro",
+      "author": "Your Name",
+      "license": "MIT",
+      "tags": ["kiro", "testing", "quality"],
+      "files": ["testing.md"]
+    },
+    {
+      "name": "@username/windsurf-rules",
+      "version": "1.0.0",
+      "description": "Windsurf coding rules for React projects",
+      "type": "windsurf",
+      "author": "Your Name",
+      "license": "MIT",
+      "tags": ["windsurf", "react", "frontend"],
+      "files": [".windsurfrules"]
     }
   ]
 }
