@@ -990,15 +990,15 @@ export async function authRoutes(server: FastifyInstance) {
         };
       }
 
-      // Find packages that match the GitHub username but aren't claimed by this user
+      // Find packages that match the GitHub username but aren't claimed by this user (case-insensitive)
       // Packages can be namespaced like @username/package-name or just username/package-name
       const packages = await query(
         server,
         `SELECT id, name, description, total_downloads, created_at
          FROM packages
          WHERE (
-           name LIKE $1 || '/%'
-           OR name LIKE '@' || $1 || '/%'
+           LOWER(name) LIKE LOWER($1) || '/%'
+           OR LOWER(name) LIKE '@' || LOWER($1) || '/%'
          )
          AND (author_id IS NULL OR author_id != $2)
          ORDER BY total_downloads DESC, created_at DESC`,
@@ -1054,14 +1054,14 @@ export async function authRoutes(server: FastifyInstance) {
         });
       }
 
-      // Claim packages by updating their author_id
+      // Claim packages by updating their author_id (case-insensitive username match)
       const result = await query(
         server,
         `UPDATE packages
          SET author_id = $1
          WHERE (
-           name LIKE $2 || '/%'
-           OR name LIKE '@' || $2 || '/%'
+           LOWER(name) LIKE LOWER($2) || '/%'
+           OR LOWER(name) LIKE '@' || LOWER($2) || '/%'
          )
          AND (author_id IS NULL OR author_id != $1)`,
         [userId, user.github_username]
