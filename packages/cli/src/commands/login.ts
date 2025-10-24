@@ -167,28 +167,21 @@ async function pollForAuthentication(registryUrl: string, userId: string): Promi
         
         if (authenticated && connectionId) {
           // Authentication completed, get the JWT token
-          const callbackResponse = await fetch(`${registryUrl}/api/v1/auth/nango/callback`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              connectionId,
-              redirectUrl: '/cli-success',
-            }),
-          });
+          const statusResponse = await fetch(`${registryUrl}/api/v1/auth/nango/status/${connectionId}`);
 
-          if (callbackResponse.ok) {
-            const result = await callbackResponse.json() as {
-              success: boolean;
+          if (statusResponse.ok) {
+            const result = await statusResponse.json() as {
+              ready: boolean;
               token: string;
               username: string;
-              redirectUrl: string;
             };
-            return {
-              token: result.token,
-              username: result.username,
-            };
+
+            if (result.ready && result.token) {
+              return {
+                token: result.token,
+                username: result.username,
+              };
+            }
           }
         }
       }
