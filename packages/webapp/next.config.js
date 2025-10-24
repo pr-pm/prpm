@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'export',
+  trailingSlash: true, // Required for S3 static hosting
   env: {
     NEXT_PUBLIC_REGISTRY_URL: process.env.REGISTRY_URL || 'http://localhost:3000',
   },
