@@ -38,6 +38,8 @@ function getTypeIcon(type: string): string {
     'cursor-slash-command': '⚡',
     'windsurf': '🌊',
     'continue': '➡️',
+    'copilot': '✈️',
+    'kiro': '🎯',
     'mcp': '🔗',
     'generic': '📦',
     // Legacy mappings
@@ -67,6 +69,8 @@ function getTypeLabel(type: string): string {
     'cursor-slash-command': 'Cursor Slash Command',
     'windsurf': 'Windsurf Rule',
     'continue': 'Continue Rule',
+    'copilot': 'GitHub Copilot Instruction',
+    'kiro': 'Kiro Steering File',
     'mcp': 'MCP Server',
     'generic': 'Package',
     // Legacy mappings
@@ -244,7 +248,7 @@ export async function handleInstall(
       } else {
         effectiveType = 'claude-agent';
       }
-    } else if (format === 'continue' || format === 'windsurf') {
+    } else if (format === 'continue' || format === 'windsurf' || format === 'copilot' || format === 'kiro') {
       effectiveType = format as PackageType;
     } else {
       effectiveType = (options.type || pkg.type) as PackageType;

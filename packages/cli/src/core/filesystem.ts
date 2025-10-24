@@ -29,6 +29,10 @@ export function getDestinationDir(type: PackageType): string {
       return '.continue/rules';
     case 'windsurf':
       return '.windsurf/rules';
+    case 'copilot':
+      return '.github/instructions';
+    case 'kiro':
+      return '.kiro/steering';
     case 'generic':
       return '.prompts';
     default:
