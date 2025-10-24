@@ -529,9 +529,6 @@ function SearchPageContent() {
                                   <span>{pkg.category}</span>
                                 )}
                                 <span>{pkg.total_downloads.toLocaleString()} downloads</span>
-                                {pkg.quality_score && (
-                                  <span>Quality: {Number(pkg.quality_score).toFixed(1)}/5.0</span>
-                                )}
                               </div>
                               {pkg.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mt-3">
