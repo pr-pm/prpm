@@ -16,7 +16,7 @@ const __dirname = dirname(__filename);
 // In production, environment variables are set by the platform
 try {
   const { config } = await import('dotenv');
-  config({ path: join(__dirname, '..', '.env') });
+  config({ path: join(__dirname, '../..', '.env') });
 } catch {
   // dotenv not available or not needed (production environment)
 }
