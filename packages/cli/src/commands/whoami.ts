@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { getConfig } from '../core/user-config';
+import { getRegistryClient } from '@prpm/registry-client';
 import { telemetry } from '../core/telemetry';
 
 /**
@@ -24,7 +25,33 @@ export async function handleWhoami(): Promise<void> {
       return;
     }
 
-    console.log(`${config.username}`);
+    // Fetch user profile from registry
+    try {
+      const client = getRegistryClient(config);
+      const userProfile = await client.getUserProfile(config.username);
+
+      console.log(`\n👤 ${userProfile.username}${userProfile.verified_author ? ' ✓' : ''}`);
+
+      if (userProfile.stats) {
+        console.log(`\n📊 Stats:`);
+        console.log(`   📦 Packages: ${userProfile.stats.total_packages}`);
+        console.log(`   ⬇️  Downloads: ${userProfile.stats.total_downloads.toLocaleString()}`);
+      }
+
+      // TODO: Add organizations when implemented in the database
+      if (userProfile.organizations && userProfile.organizations.length > 0) {
+        console.log(`\n🏢 Organizations:`);
+        userProfile.organizations.forEach((org: { id: string; name: string; role: string }) => {
+          console.log(`   • ${org.name} (${org.role})`);
+        });
+      }
+
+      console.log('');
+    } catch (apiError) {
+      // Fallback to simple username display if API call fails
+      console.log(`${config.username}`);
+    }
+
     success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);

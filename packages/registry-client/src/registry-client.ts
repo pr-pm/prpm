@@ -397,6 +397,44 @@ export class RegistryClient {
   }
 
   /**
+   * Get user profile
+   */
+  async getUserProfile(username: string): Promise<{
+    id: string;
+    username: string;
+    avatar_url?: string;
+    verified_author: boolean;
+    created_at: string;
+    stats: {
+      total_packages: number;
+      total_downloads: number;
+    };
+    organizations?: Array<{
+      id: string;
+      name: string;
+      role: string;
+    }>;
+  }> {
+    const response = await this.fetch(`/api/v1/users/${username}`);
+    return response.json() as Promise<{
+      id: string;
+      username: string;
+      avatar_url?: string;
+      verified_author: boolean;
+      created_at: string;
+      stats: {
+        total_packages: number;
+        total_downloads: number;
+      };
+      organizations?: Array<{
+        id: string;
+        name: string;
+        role: string;
+      }>;
+    }>;
+  }
+
+  /**
    * Create a collection (requires authentication)
    */
   async createCollection(data: {
