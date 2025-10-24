@@ -18,7 +18,7 @@ export default function Home() {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-prpm-dark-card border border-prpm-border rounded-full text-sm text-gray-400">
               <span className="w-2 h-2 bg-prpm-accent rounded-full animate-pulse"></span>
-              Alpha · 1,042+ packages · 16 collections
+              Alpha · 1,500+ packages · 16 collections
             </div>
 
             <div className="flex justify-center mb-8">
@@ -104,7 +104,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">1,042+ Packages</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">1,500+ Packages</h3>
               <p className="text-gray-400 leading-relaxed">
                 Production-ready prompts, agents, skills, and slash commands from verified contributors
               </p>
