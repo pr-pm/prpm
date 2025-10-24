@@ -207,7 +207,7 @@
       "additionalProperties": false,
       "examples": [
         {
-          "@prpm/utils": "^1.0.0",
+          "@pr-pm/utils": "^1.0.0",
           "common-rules": "~2.1.0"
         }
       ]

@@ -6,7 +6,7 @@
  */
 
 import { handlePublish } from '../commands/publish';
-import { getRegistryClient } from '@prpm/registry-client';
+import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { readFile, writeFile, mkdir } from 'fs/promises';
@@ -14,7 +14,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 
 // Mock dependencies
-jest.mock('@prpm/registry-client');
+jest.mock('@pr-pm/registry-client');
 jest.mock('../core/user-config');
 jest.mock('../core/telemetry', () => ({
   telemetry: {

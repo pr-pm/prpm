@@ -16,7 +16,7 @@ import type {
   SearchCollectionsParams,
   Collection,
   SearchCollectionsResponse
-} from '@prpm/types'
+} from '@pr-pm/types'
 
 // Re-export types for convenience
 export type {

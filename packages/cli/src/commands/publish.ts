@@ -9,7 +9,7 @@ import { createReadStream } from 'fs';
 import * as tar from 'tar';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
-import { getRegistryClient } from '@prpm/registry-client';
+import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import type { PackageManifest, PackageFileMetadata } from '../types/registry';

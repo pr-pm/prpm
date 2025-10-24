@@ -201,7 +201,7 @@ This is a test skill for conversion testing.
     it('should upload converted package to registry', async () => {
       // Create package tarball
       const packageJson = {
-        name: '@prpm/cursor-rule-test-skill',
+        name: '@pr-pm/cursor-rule-test-skill',
         version: '1.0.0',
         type: 'cursor',
         format: 'cursor-mdc',

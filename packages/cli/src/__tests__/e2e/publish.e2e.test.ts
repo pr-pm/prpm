@@ -3,14 +3,14 @@
  */
 
 import { handlePublish } from '../../commands/publish';
-import { getRegistryClient } from '@prpm/registry-client';
+import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../../core/user-config';
 import { createTestDir, cleanupTestDir, createMockPackage } from './test-helpers';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
 // Mock dependencies
-jest.mock('@prpm/registry-client');
+jest.mock('@pr-pm/registry-client');
 jest.mock('../../core/user-config');
 jest.mock('../../core/telemetry', () => ({
   telemetry: {

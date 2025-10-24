@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { getRegistryClient, SearchResult, RegistryPackage } from '@prpm/registry-client';
+import { getRegistryClient, SearchResult, RegistryPackage } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { PackageType } from '../types';
@@ -408,7 +408,7 @@ export function createSearchCommand(): Command {
         console.log(`   prpm search react --type rule`);
         console.log(`   prpm search --type command  # List all slash commands`);
         console.log(`   prpm search --type skill  # List all skills`);
-        console.log(`   prpm search --author prpm  # List packages by @prpm`);
+        console.log(`   prpm search --author prpm  # List packages by @pr-pm`);
         process.exit(1);
       }
 

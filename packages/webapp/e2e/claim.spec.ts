@@ -60,7 +60,7 @@ test.describe('Claim Invite Flow', () => {
 
       const inviteLink = page.getByRole('link', { name: 'Request an invite' });
       await expect(inviteLink).toBeVisible();
-      await expect(inviteLink).toHaveAttribute('href', 'mailto:invite@prpm.dev');
+      await expect(inviteLink).toHaveAttribute('href', 'mailto:invite@pr-pm.dev');
     });
 
     test('should pre-fill token from query parameter', async ({ page }) => {

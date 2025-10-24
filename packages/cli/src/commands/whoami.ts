@@ -4,7 +4,7 @@
 
 import { Command } from 'commander';
 import { getConfig } from '../core/user-config';
-import { getRegistryClient } from '@prpm/registry-client';
+import { getRegistryClient } from '@pr-pm/registry-client';
 import { telemetry } from '../core/telemetry';
 
 /**

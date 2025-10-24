@@ -1,6 +1,6 @@
 [
   {
-    "id": "@prpm/pulumi-troubleshooting",
+    "id": "@pr-pm/pulumi-troubleshooting",
     "display_name": "Pulumi Infrastructure Troubleshooting",
     "description": "Comprehensive guide to solving common Pulumi TypeScript errors, Output handling, and AWS infrastructure deployment issues. Covers 10+ common errors with solutions.",
     "version": "1.0.0",
@@ -8,7 +8,7 @@
     "category": "infrastructure",
     "tags": ["pulumi", "infrastructure", "typescript", "aws", "iac", "devops", "troubleshooting", "debugging"],
     "keywords": ["pulumi", "infrastructure-as-code", "typescript", "aws", "outputs", "beanstalk", "github-actions"],
-    "author_id": "@prpm",
+    "author_id": "@pr-pm",
     "author_name": "PRPM Team",
     "license": "MIT",
     "visibility": "public",
@@ -43,7 +43,7 @@
     }
   },
   {
-    "id": "@prpm/postgres-migrations",
+    "id": "@pr-pm/postgres-migrations",
     "display_name": "PostgreSQL Migrations Skill",
     "description": "Master PostgreSQL migrations with patterns for full-text search, IMMUTABLE functions, generated columns, and idempotent migrations. Includes 10 common errors and solutions.",
     "version": "1.0.0",
@@ -51,7 +51,7 @@
     "category": "database",
     "tags": ["postgresql", "database", "migrations", "sql", "full-text-search", "performance", "indexing"],
     "keywords": ["postgres", "postgresql", "migrations", "sql", "fts", "gin-index", "generated-columns", "immutable-functions"],
-    "author_id": "@prpm",
+    "author_id": "@pr-pm",
     "author_name": "PRPM Team",
     "license": "MIT",
     "visibility": "public",
