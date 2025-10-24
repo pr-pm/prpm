@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Nango from '@nangohq/frontend'
-import { createNangoConnectSession, handleNangoCallback } from '@/lib/api'
+import { createNangoConnectSession, checkAuthStatus } from '@/lib/api'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -111,16 +111,16 @@ export default function SignupPage() {
         console.log(`[AUTH] Polling attempt ${Math.floor(elapsed / 1000)}s...`)
 
         try {
-          // Check if webhook has processed the auth by calling the callback endpoint
-          const result = await handleNangoCallback(connectionId, '/dashboard')
+          // Check if webhook has processed the auth by polling the status endpoint
+          const result = await checkAuthStatus(connectionId)
 
-          if (result && result.success && result.token && result.username) {
+          if (result && result.ready && result.token && result.username) {
             console.log('[AUTH] Webhook processed! Got credentials')
             return result
           }
 
           // If we got a response but it's not ready yet, keep polling
-          if (result && result.error && result.error.includes('not found')) {
+          if (result && !result.ready) {
             console.log('[AUTH] Webhook not processed yet, continuing to poll...')
             await new Promise(resolve => setTimeout(resolve, pollInterval))
             return pollForAuth()
@@ -133,7 +133,7 @@ export default function SignupPage() {
 
         } catch (err: any) {
           // If it's a network error or the connection isn't ready, keep polling
-          if (err.message?.includes('not found') || err.message?.includes('Connection') || err.message?.includes('fetch')) {
+          if (err.message?.includes('not ready') || err.message?.includes('not found') || err.message?.includes('Connection') || err.message?.includes('fetch')) {
             console.log('[AUTH] Connection not ready yet, waiting for webhook...', err.message)
             await new Promise(resolve => setTimeout(resolve, pollInterval))
             return pollForAuth()

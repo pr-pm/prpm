@@ -388,6 +388,77 @@ export async function authRoutes(server: FastifyInstance) {
     }
   });
 
+  // Poll for authentication completion by connection ID
+  server.get('/nango/auth/status/:connectionId', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['connectionId'],
+        properties: {
+          connectionId: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            ready: { type: 'boolean' },
+            token: { type: 'string' },
+            username: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { connectionId } = request.params as { connectionId: string };
+
+      server.log.info({ connectionId }, 'Checking auth status for connection');
+
+      // Check if webhook has created a user for this connection
+      const user = await queryOne<User>(
+        server,
+        'SELECT * FROM users WHERE nango_connection_id = $1',
+        [connectionId]
+      );
+
+      if (!user) {
+        // Webhook hasn't processed yet
+        server.log.info({ connectionId }, 'User not ready yet - webhook still processing');
+        return reply.status(404).send({
+          ready: false,
+          error: 'User not ready - webhook still processing',
+        });
+      }
+
+      // User is ready - update last login and return JWT
+      await query(
+        server,
+        'UPDATE users SET last_login_at = NOW() WHERE id = $1',
+        [user.id]
+      );
+
+      const jwtToken = server.jwt.sign({
+        user_id: user.id,
+        username: user.username,
+        email: user.email,
+        is_admin: user.is_admin,
+        scopes: ['read:packages', 'write:packages'],
+      } as JWTPayload);
+
+      server.log.info({ username: user.username, userId: user.id }, 'User ready - returning JWT');
+
+      return reply.send({
+        ready: true,
+        token: jwtToken,
+        username: user.username,
+      });
+    } catch (error) {
+      server.log.error(error, 'Failed to check auth status');
+      return reply.status(500).send({ error: 'Failed to check status' });
+    }
+  });
+
   // Poll for CLI authentication completion
   server.get('/nango/cli/status/:userId', {
     schema: {
@@ -435,98 +506,6 @@ export async function authRoutes(server: FastifyInstance) {
     }
   });
 
-  // Handle Nango authentication callback
-  server.post('/nango/callback', {
-    schema: {
-      body: {
-        type: 'object',
-        required: ['connectionId'],
-        properties: {
-          connectionId: { type: 'string' },
-          redirectUrl: { type: 'string' },
-          userId: { type: 'string' },
-        },
-      },
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            success: { type: 'boolean' },
-            token: { type: 'string' },
-            username: { type: 'string' },
-            redirectUrl: { type: 'string' },
-          },
-        },
-      },
-    },
-  }, async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const { connectionId, redirectUrl, userId } = request.body as {
-        connectionId: string;
-        redirectUrl?: string;
-        userId?: string;
-      };
-
-      server.log.info({ connectionId, userId }, 'Nango authentication callback received');
-
-      // If userId is provided, this is a CLI authentication - store in sessions map
-      if (userId) {
-        server.log.info({ userId, connectionId }, 'Storing CLI auth session');
-        cliAuthSessions.set(userId, connectionId);
-      }
-
-      // The webhook should have already created/updated the user
-      // Just retrieve the user from the database by connection ID
-      const user = await queryOne<User>(
-        server,
-        'SELECT * FROM users WHERE nango_connection_id = $1',
-        [connectionId]
-      );
-
-      if (!user) {
-        // User not found - webhook hasn't processed yet or connection doesn't exist
-        server.log.info({ connectionId }, 'User not found for connection - webhook may still be processing');
-        return reply.status(404).send({
-          success: false,
-          error: 'User not found - webhook may still be processing. Please try again.',
-          code: 'CONNECTION_NOT_READY'
-        });
-      }
-
-      server.log.info({ username: user.username, userId: user.id }, 'User found for connection');
-
-      // Update last login
-      await query(
-        server,
-        'UPDATE users SET last_login_at = NOW() WHERE id = $1',
-        [user.id]
-      );
-
-      // Generate JWT
-      const jwtToken = server.jwt.sign({
-        user_id: user.id,
-        username: user.username,
-        email: user.email,
-        is_admin: user.is_admin,
-        scopes: ['read:packages', 'write:packages'],
-      } as JWTPayload);
-
-      return reply.send({
-        success: true,
-        token: jwtToken,
-        username: user.username,
-        redirectUrl: redirectUrl || '/dashboard',
-      });
-    } catch (error: any) {
-      server.log.error({ error, connectionId: (request.body as any)?.connectionId }, 'Failed to authenticate with Nango');
-
-      return reply.status(500).send({
-        success: false,
-        error: 'Authentication failed',
-        message: error?.message || String(error)
-      });
-    }
-  });
 
   /**
    * Register with email/password

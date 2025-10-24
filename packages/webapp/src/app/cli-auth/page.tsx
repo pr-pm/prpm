@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Nango from '@nangohq/frontend'
-import { handleNangoCallback } from '@/lib/api'
+// No API imports needed - CLI polls the backend directly
 
 // Disable static generation for this page since it uses search params
 export const dynamic = 'force-dynamic'
@@ -24,23 +24,15 @@ function CLIAuthContent() {
 
   const handleConnectionSuccess = useCallback(async (connectionId: string) => {
     try {
-      // Call our backend to authenticate the user
-      console.log('CLI auth successful, registering with backend...')
-      const result = await handleNangoCallback(connectionId, '/cli-success', userId)
-      console.log('Backend registration complete:', result)
-
-      if (result.success) {
-        // Don't redirect to CLI callback - the CLI is polling and will pick up the auth status
-        // Just show success message
-        console.log('Authentication successful! CLI will detect this via polling.')
-        setConnectionStatus('connected')
-        // The CLI is polling /api/v1/auth/nango/cli/status and will get the token
-      } else {
-        setError('Authentication failed')
-      }
+      // Webhook will process the authentication and create/update the user
+      // CLI is polling /api/v1/auth/nango/cli/status/:userId and will get the token
+      // We just need to show success message
+      console.log('CLI auth successful! Connection ID:', connectionId)
+      console.log('Webhook is processing authentication. CLI will detect this via polling.')
+      setConnectionStatus('connected')
     } catch (err) {
-      console.error('Failed to authenticate:', err)
-      setError('Authentication failed')
+      console.error('Failed to handle connection:', err)
+      setError('Authentication flow error')
     }
   }, [userId])
 

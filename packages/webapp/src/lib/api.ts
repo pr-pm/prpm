@@ -128,18 +128,14 @@ export async function createNangoConnectSession(userId: string, email: string, d
 /**
  * Handle Nango authentication callback
  */
-export async function handleNangoCallback(connectionId: string, redirectUrl?: string, userId?: string | null) {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/nango/callback`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ connectionId, redirectUrl, userId: userId || undefined }),
+export async function checkAuthStatus(connectionId: string) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/nango/auth/status/${connectionId}`, {
+    method: 'GET',
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Authentication failed' }))
-    throw new Error(error.error || error.message || 'Authentication failed')
+    const error = await response.json().catch(() => ({ error: 'Authentication not ready' }))
+    throw new Error(error.error || error.message || 'Authentication not ready')
   }
 
   return response.json()
