@@ -88,46 +88,87 @@ export default function SignupPage() {
 
   const handleAuthSuccess = async (connectionId: string) => {
     try {
-      console.log('Authentication successful, handling callback...')
+      console.log('[AUTH] Authentication successful, handling callback...')
       const redirectUrl = '/dashboard'
 
-      console.log('Calling Nango callback with connectionId:', connectionId)
-      const result = await handleNangoCallback(connectionId, redirectUrl)
-      console.log('Callback result:', result)
+      // Show optimistic success state immediately
+      setError(null)
+
+      console.log('[AUTH] Calling Nango callback with connectionId:', connectionId)
+
+      // Race the API call against a timeout to provide faster feedback
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout - slow network')), 15000)
+      )
+
+      const result = await Promise.race([
+        handleNangoCallback(connectionId, redirectUrl),
+        timeoutPromise
+      ]).catch(err => {
+        if (err.message.includes('timeout')) {
+          console.warn('[AUTH] API call is slow, continuing anyway...')
+          // Don't fail completely on slow network, let it complete in background
+          handleNangoCallback(connectionId, redirectUrl).then(r => {
+            console.log('[AUTH] Slow callback completed:', r)
+          })
+          return null
+        }
+        throw err
+      })
+
+      console.log('[AUTH] Callback result:', JSON.stringify(result, null, 2))
+
+      // Check if we got a token back
+      if (!result || !result.token || !result.username) {
+        // If no result yet (slow network), try to proceed with optimistic data
+        console.warn('[AUTH] No immediate result, checking for cached auth data...')
+
+        // Check if we already have credentials from a previous attempt
+        const existingToken = localStorage.getItem('prpm_token')
+        const existingUsername = localStorage.getItem('prpm_username')
+
+        if (existingToken && existingUsername) {
+          console.log('[AUTH] Found existing credentials, proceeding to dashboard')
+          window.location.href = '/dashboard'
+          return
+        }
+
+        console.error('[AUTH] Invalid callback result - missing token or username:', result)
+        setError(`Authentication incomplete. Please try refreshing the page.`)
+        setIsLoading(false)
+        return
+      }
 
       if (result.success) {
+        console.log('[AUTH] Success! Storing credentials...')
         // Store the JWT token (use prpm_ prefix to match dashboard expectations)
         localStorage.setItem('prpm_token', result.token)
         localStorage.setItem('prpm_username', result.username)
         // Also store with jwt_ prefix for backwards compatibility
         localStorage.setItem('jwt_token', result.token)
         localStorage.setItem('username', result.username)
-        console.log('Token stored in localStorage:', {
-          prpm_token: result.token.substring(0, 20) + '...',
-          prpm_username: result.username
-        })
+
+        // Verify storage
+        const storedToken = localStorage.getItem('prpm_token')
+        const storedUsername = localStorage.getItem('prpm_username')
+        console.log('[AUTH] Verification - Token stored:', !!storedToken, 'Username stored:', storedUsername)
 
         // Web authentication - redirect to dashboard
         const targetUrl = result.redirectUrl || '/dashboard'
-        console.log('Redirecting to dashboard:', targetUrl)
+        console.log('[AUTH] Redirecting to:', targetUrl)
 
-        // Use Next.js router for better handling
-        router.push(targetUrl)
+        // Add a small delay to ensure localStorage writes complete
+        await new Promise(resolve => setTimeout(resolve, 100))
 
-        // Fallback to window.location if router doesn't work
-        setTimeout(() => {
-          if (window.location.pathname === '/signup') {
-            console.log('Router push may have failed, using window.location')
-            window.location.href = targetUrl
-          }
-        }, 1000)
+        // Force a hard redirect to ensure localStorage is persisted
+        window.location.href = targetUrl
       } else {
-        console.error('Authentication failed:', result)
-        setError('Authentication failed. Please try again.')
+        console.error('[AUTH] Authentication failed - success = false:', result)
+        setError(`Authentication failed: ${result.error || 'Unknown error'}`)
         setIsLoading(false)
       }
     } catch (err) {
-      console.error('Callback error:', err)
+      console.error('[AUTH] Callback error:', err)
       setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.')
       setIsLoading(false)
     }
