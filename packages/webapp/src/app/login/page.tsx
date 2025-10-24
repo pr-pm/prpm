@@ -164,12 +164,9 @@ export default function LoginPage() {
         username: result.username
       })
 
-      // Store the JWT token (use prpm_ prefix to match dashboard expectations)
+      // Store the JWT token with prpm_ prefix
       localStorage.setItem('prpm_token', result.token)
       localStorage.setItem('prpm_username', result.username)
-      // Also store with jwt_ prefix for backwards compatibility
-      localStorage.setItem('jwt_token', result.token)
-      localStorage.setItem('username', result.username)
 
       // Verify storage
       const storedToken = localStorage.getItem('prpm_token')
