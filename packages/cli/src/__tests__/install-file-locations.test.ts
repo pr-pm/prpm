@@ -39,6 +39,7 @@ describe('install command - file locations', () => {
     getPackage: jest.fn(),
     getPackageVersion: jest.fn(),
     downloadPackage: jest.fn(),
+    trackDownload: jest.fn(),
   };
 
   const mockConfig = {
@@ -73,10 +74,16 @@ describe('install command - file locations', () => {
     (addToLockfile as jest.Mock).mockImplementation(() => {});
     (createLockfile as jest.Mock).mockReturnValue({ packages: {} });
     (setPackageIntegrity as jest.Mock).mockImplementation(() => {});
+    mockClient.trackDownload.mockResolvedValue(undefined);
 
     // Mock console methods
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
+
+    // Mock process.exit to prevent test from exiting
+    jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+      throw new Error(`process.exit called with ${code}`);
+    });
   });
 
   afterEach(() => {
@@ -167,7 +174,7 @@ describe('install command - file locations', () => {
   });
 
   describe('Format conversions with --as', () => {
-    it('should install any package with --as claude to .claude/skills', async () => {
+    it('should install cursor package with --as claude to .claude/agents', async () => {
       const mockPackage = {
         id: 'test-cursor-rule',
         name: 'test-cursor-rule',
@@ -186,8 +193,8 @@ describe('install command - file locations', () => {
 
       await handleInstall('test-cursor-rule', { as: 'claude' });
 
-      // Should go to .claude/skills when using --as claude
-      const expectedPath = '.claude/skills/test-cursor-rule.md';
+      // Generic cursor type maps to claude-agent when using --as claude
+      const expectedPath = '.claude/agents/test-cursor-rule.md';
       expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
     });
 

@@ -93,8 +93,49 @@ export function applyCursorConfig(content: string, config: CursorMDCConfig): str
 }
 
 /**
- * Check if content has MDC header
+ * Check if content has valid MDC header (YAML frontmatter)
+ * A valid MDC header must:
+ * 1. Start with ---
+ * 2. Have a closing --- on its own line
+ * 3. Have at least a description field
  */
 export function hasMDCHeader(content: string): boolean {
-  return content.startsWith('---\n');
+  if (!content.startsWith('---\n')) {
+    return false;
+  }
+
+  const lines = content.split('\n');
+  const headerEndIndex = lines.findIndex((line, index) => index > 0 && line === '---');
+
+  // Must have closing ---
+  if (headerEndIndex === -1) {
+    return false;
+  }
+
+  // Extract header lines (excluding the --- markers)
+  const headerLines = lines.slice(1, headerEndIndex);
+
+  // Must have at least one valid YAML field (typically description)
+  const hasValidField = headerLines.some(line => {
+    const trimmed = line.trim();
+    return trimmed.length > 0 && trimmed.includes(':') && !trimmed.startsWith('#');
+  });
+
+  return hasValidField;
+}
+
+/**
+ * Add MDC header to content if missing
+ * Creates a basic YAML frontmatter with description
+ */
+export function addMDCHeader(content: string, packageDescription?: string): string {
+  const description = packageDescription || 'Cursor rule for coding standards and best practices';
+  const header = [
+    '---',
+    `description: "${description}"`,
+    '---',
+    '',
+  ].join('\n');
+
+  return header + content;
 }

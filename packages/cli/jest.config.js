@@ -16,16 +16,12 @@ module.exports = {
   },
   transform: {
     '^.+\\.ts$': ['ts-jest', {
+      isolatedModules: true,
       tsconfig: {
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
       }
     }],
-  },
-  globals: {
-    'ts-jest': {
-      isolatedModules: true,
-    },
   },
   clearMocks: true,
   resetMocks: true,

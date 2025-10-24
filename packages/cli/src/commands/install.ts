@@ -21,7 +21,7 @@ import {
   setPackageIntegrity,
   getLockedVersion,
 } from '../core/lockfile';
-import { applyCursorConfig, hasMDCHeader } from '../core/cursor-config';
+import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-config';
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
 
 /**
@@ -269,8 +269,13 @@ export async function handleInstall(
       const packageName = stripAuthorNamespace(packageId);
       destPath = `${destDir}/${packageName}.${fileExtension}`;
 
-      // Apply cursor config if downloading in cursor format
-      if (format === 'cursor' && hasMDCHeader(mainFile)) {
+      // Handle cursor format - add header if missing for .mdc files
+      if (format === 'cursor' && effectiveType === 'cursor') {
+        if (!hasMDCHeader(mainFile)) {
+          console.log(`   ⚠️  Adding missing MDC header...`);
+          mainFile = addMDCHeader(mainFile, pkg.description);
+        }
+        // Apply cursor config if available
         if (config.cursor) {
           console.log(`   ⚙️  Applying cursor config...`);
           mainFile = applyCursorConfig(mainFile, config.cursor);
@@ -326,10 +331,13 @@ export async function handleInstall(
       format,
     });
 
+    // Display the incremented download count
+    const newDownloadCount = pkg.total_downloads + 1;
+
     console.log(`\n✅ Successfully installed ${packageId}`);
     console.log(`   📁 Saved to: ${destPath}`);
     console.log(`   🔒 Lock file updated`);
-    console.log(`\n💡 This package has been downloaded ${pkg.total_downloads.toLocaleString()} times`);
+    console.log(`\n💡 This package has been downloaded ${newDownloadCount.toLocaleString()} times`);
 
     success = true;
   } catch (err) {
