@@ -1,0 +1,285 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/registry/**'
+      - 'packages/types/**'
+      - 'packages/webapp/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  AWS_REGION: us-west-2
+  NODE_VERSION: '20'
+
+jobs:
+  # Check what changed
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      registry: ${{ steps.filter.outputs.registry }}
+      webapp: ${{ steps.filter.outputs.webapp }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            registry:
+              - 'packages/registry/**'
+              - 'packages/types/**'
+            webapp:
+              - 'packages/webapp/**'
+
+  # Deploy registry first (if changed)
+  deploy-registry:
+    name: Deploy Registry
+    needs: changes
+    if: needs.changes.outputs.registry == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build types
+        run: npm run build --workspace=@pr-pm/types
+
+      - name: Build registry
+        run: npm run build --workspace=@pr-pm/registry
+
+      - name: Run tests
+        run: npm test --workspace=@pr-pm/registry
+
+      - name: Create deployment package
+        run: |
+          cd packages/registry
+          zip -r ../../deploy.zip . -x "*.git*" "node_modules/*" "src/*" "*.test.ts" "*.spec.ts"
+          cd ../..
+          zip -ur deploy.zip package.json package-lock.json
+          mkdir -p .ebextensions
+          # Add any .ebextensions configuration here if needed
+          zip -ur deploy.zip .ebextensions
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          ENV_NAME="prpm-registry-${{ github.event.inputs.environment || 'prod' }}"
+          APP_NAME="prpm-registry"
+
+          VERSION_LABEL="v-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:7}"
+
+          echo "Uploading application version $VERSION_LABEL..."
+          aws s3 cp deploy.zip "s3://elasticbeanstalk-$AWS_REGION-${{ secrets.AWS_ACCOUNT_ID }}/$APP_NAME/$VERSION_LABEL.zip"
+
+          echo "Creating application version..."
+          aws elasticbeanstalk create-application-version \
+            --application-name "$APP_NAME" \
+            --version-label "$VERSION_LABEL" \
+            --source-bundle S3Bucket="elasticbeanstalk-$AWS_REGION-${{ secrets.AWS_ACCOUNT_ID }}",S3Key="$APP_NAME/$VERSION_LABEL.zip" \
+            --description "Deploy from GitHub Actions - $GITHUB_SHA"
+
+          echo "Deploying to environment $ENV_NAME..."
+          aws elasticbeanstalk update-environment \
+            --application-name "$APP_NAME" \
+            --environment-name "$ENV_NAME" \
+            --version-label "$VERSION_LABEL"
+
+          echo "Waiting for environment to update..."
+          aws elasticbeanstalk wait environment-updated \
+            --application-name "$APP_NAME" \
+            --environment-names "$ENV_NAME"
+
+          echo "✓ Registry deployment completed"
+
+      - name: Health check
+        run: |
+          echo "Waiting 30 seconds for environment to stabilize..."
+          sleep 30
+
+          echo "Running health checks..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://registry.prpm.dev/health)
+
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Error: Health check returned status $STATUS"
+            exit 1
+          fi
+
+          echo "✓ Registry is healthy (HTTP $STATUS)"
+
+  # Deploy webapp second (if changed), only after registry succeeds
+  deploy-webapp:
+    name: Deploy WebApp
+    needs: [changes, deploy-registry]
+    if: |
+      always() &&
+      needs.changes.outputs.webapp == 'true' &&
+      (needs.deploy-registry.result == 'success' || needs.deploy-registry.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build types package
+        run: npm run build --workspace=@pr-pm/types
+
+      - name: Build webapp
+        env:
+          REGISTRY_URL: https://registry.prpm.dev
+        run: |
+          cd packages/webapp
+          npm ci
+          npm run build
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "packages/webapp/out" ]; then
+            echo "Error: Build output directory does not exist"
+            exit 1
+          fi
+
+          if [ ! -f "packages/webapp/out/index.html" ]; then
+            echo "Error: index.html not found in build output"
+            exit 1
+          fi
+
+          echo "✓ Build output verified"
+          find packages/webapp/out -type f | head -20
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to S3
+        run: |
+          # Sync new files (without delete) to ensure all chunks are uploaded
+          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "*.html" \
+            --exclude "_next/data/*"
+
+          # Sync HTML files with NO CACHE
+          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --exclude "*" \
+            --include "*.html" \
+            --include "_next/data/*"
+
+          # Delete old files after everything is uploaded
+          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --delete
+
+          echo "✓ WebApp deployed to S3"
+
+      - name: Invalidate CloudFront
+        run: |
+          DIST_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items[?contains(@, 'prpm.dev')]].Id" \
+            --output text)
+
+          echo "Creating CloudFront invalidation for distribution: $DIST_ID"
+
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id $DIST_ID \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+
+          echo "Invalidation created: $INVALIDATION_ID"
+          echo "Waiting for invalidation to complete..."
+
+          aws cloudfront wait invalidation-completed \
+            --distribution-id $DIST_ID \
+            --id $INVALIDATION_ID
+
+          echo "✓ CloudFront invalidation completed"
+
+      - name: Health check
+        run: |
+          echo "Running health checks..."
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://prpm.dev)
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Error: Homepage returned status $STATUS"
+            exit 1
+          fi
+          echo "✓ Homepage is accessible (HTTP $STATUS)"
+
+          for page in "/search" "/authors" "/blog"; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://prpm.dev$page")
+            if [ "$STATUS" -ne 200 ]; then
+              echo "Warning: $page returned status $STATUS"
+            else
+              echo "✓ $page is accessible (HTTP $STATUS)"
+            fi
+          done
+
+  # Summary of what was deployed
+  summary:
+    name: Deployment Summary
+    needs: [changes, deploy-registry, deploy-webapp]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.changes.outputs.registry }}" == "true" ]; then
+            if [ "${{ needs.deploy-registry.result }}" == "success" ]; then
+              echo "✅ **Registry**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Registry**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏭️ **Registry**: No changes, skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.changes.outputs.webapp }}" == "true" ]; then
+            if [ "${{ needs.deploy-webapp.result }}" == "success" ]; then
+              echo "✅ **WebApp**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **WebApp**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏭️ **WebApp**: No changes, skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: \`${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY

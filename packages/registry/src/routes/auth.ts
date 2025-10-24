@@ -389,7 +389,7 @@ export async function authRoutes(server: FastifyInstance) {
   });
 
   // Poll for authentication completion by connection ID
-  server.get('/nango/auth/status/:connectionId', {
+  server.get('/nango/status/:connectionId', {
     schema: {
       params: {
         type: 'object',

@@ -129,7 +129,7 @@ export async function createNangoConnectSession(userId: string, email: string, d
  * Handle Nango authentication callback
  */
 export async function checkAuthStatus(connectionId: string) {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/nango/auth/status/${connectionId}`, {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/nango/status/${connectionId}`, {
     method: 'GET',
   })
 
