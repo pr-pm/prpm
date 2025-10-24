@@ -463,20 +463,24 @@ export function createInstallCommand(): Command {
     .argument('<package>', 'Package to install (e.g., react-rules or react-rules@1.2.0)')
     .option('--version <version>', 'Specific version to install')
     .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, canonical)')
+    .option('--format <format>', 'Alias for --as')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string, options: { version?: string; as?: string; frozenLockfile?: boolean }) => {
-      if (options.as && !['cursor', 'claude', 'continue', 'windsurf', 'canonical'].includes(options.as)) {
-        console.error('❌ --as must be one of: cursor, claude, continue, windsurf, canonical');
+    .action(async (packageSpec: string, options: { version?: string; as?: string; format?: string; frozenLockfile?: boolean }) => {
+      // Support both --as and --format (format is alias for as)
+      const convertTo = options.format || options.as;
+
+      if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'canonical'].includes(convertTo)) {
+        console.error('❌ Format must be one of: cursor, claude, continue, windsurf, canonical');
         console.log('\n💡 Examples:');
-        console.log('   prpm install my-package --as cursor     # Convert to Cursor format');
-        console.log('   prpm install my-package --as claude     # Convert to Claude format');
-        console.log('   prpm install my-package                 # Install in native format');
+        console.log('   prpm install my-package --as cursor       # Convert to Cursor format');
+        console.log('   prpm install my-package --format claude   # Convert to Claude format');
+        console.log('   prpm install my-package                   # Install in native format');
         process.exit(1);
       }
 
       await handleInstall(packageSpec, {
         version: options.version,
-        as: options.as,
+        as: convertTo,
         frozenLockfile: options.frozenLockfile
       });
     });
