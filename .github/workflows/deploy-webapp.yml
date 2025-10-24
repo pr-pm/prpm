@@ -44,11 +44,35 @@ jobs:
           npm ci
           npm run build
 
+      - name: Verify build output
+        run: |
+          if [ ! -d "packages/webapp/out" ]; then
+            echo "Error: Build output directory does not exist"
+            exit 1
+          fi
+
+          # Check that critical files exist
+          if [ ! -f "packages/webapp/out/index.html" ]; then
+            echo "Error: index.html not found in build output"
+            exit 1
+          fi
+
+          # List the build output for debugging
+          echo "Build output contains:"
+          find packages/webapp/out -type f | head -20
+
       - name: Deploy to S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
+          # First sync new files (without delete) to ensure all chunks are uploaded
+          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --cache-control "public, max-age=31536000, immutable" --exclude "*.html" --exclude "_next/data/*"
+
+          # Then sync HTML files with shorter cache
+          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --cache-control "public, max-age=0, must-revalidate" --exclude "*" --include "*.html" --include "_next/data/*"
+
+          # Finally, delete old files after everything is uploaded
           aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --delete
 
       - name: Invalidate CloudFront
@@ -58,3 +82,27 @@ jobs:
         run: |
           DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, 'prpm.dev')]].Id" --output text)
           aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"
+
+      - name: Health check
+        run: |
+          echo "Waiting for CloudFront invalidation to propagate..."
+          sleep 30
+
+          # Check homepage
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://prpm.dev)
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Error: Homepage returned status $STATUS"
+            exit 1
+          fi
+
+          echo "✓ Homepage is accessible (HTTP $STATUS)"
+
+          # Check critical pages
+          for page in "/search" "/authors" "/blog"; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://prpm.dev$page")
+            if [ "$STATUS" -ne 200 ]; then
+              echo "Warning: $page returned status $STATUS"
+            else
+              echo "✓ $page is accessible (HTTP $STATUS)"
+            fi
+          done
