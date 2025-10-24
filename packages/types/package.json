@@ -1,5 +1,5 @@
 {
-  "name": "@prpm/types",
+  "name": "@pr-pm/types",
   "version": "0.1.0",
   "description": "Shared TypeScript types for Prompt Package Manager",
   "main": "dist/index.js",

@@ -41,8 +41,8 @@
   "license": "MIT",
   "dependencies": {
     "@octokit/rest": "^22.0.0",
-    "@prpm/registry-client": "^1.2.0",
-    "@prpm/types": "^0.1.0",
+    "@pr-pm/registry-client": "^1.2.0",
+    "@pr-pm/types": "^0.1.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "commander": "^11.1.0",
