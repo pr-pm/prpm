@@ -4,7 +4,7 @@ const nextConfig = {
   output: 'export',
   trailingSlash: true, // Required for S3 static hosting
   env: {
-    NEXT_PUBLIC_REGISTRY_URL: process.env.REGISTRY_URL || 'http://localhost:3000',
+    NEXT_PUBLIC_REGISTRY_URL: process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'http://localhost:3000',
   },
   images: {
     unoptimized: true, // Required for static export

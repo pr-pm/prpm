@@ -5,7 +5,7 @@
 import { handleCollectionsList, handleCollectionInfo, handleCollectionPublish } from '../commands/collections';
 import { getRegistryClient } from '@prpm/registry-client';
 import { getConfig } from '../core/user-config';
-import { mkdir, writeFile, rm } from 'fs/promises';
+import { mkdtemp, writeFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
@@ -40,8 +40,7 @@ describe('collections command', () => {
 
   beforeEach(async () => {
     // Create temp directory for test files
-    testDir = join(tmpdir(), `prpm-test-${Date.now()}`);
-    await mkdir(testDir, { recursive: true });
+    testDir = await mkdtemp(join(tmpdir(), 'prpm-test-'));
     process.chdir(testDir);
 
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
@@ -407,8 +406,7 @@ describe('collections command', () => {
   describe('handleCollectionPublish', () => {
     beforeEach(async () => {
       // Create temp directory for test files
-      testDir = join(tmpdir(), `prpm-test-${Date.now()}`);
-      await mkdir(testDir, { recursive: true });
+      testDir = await mkdtemp(join(tmpdir(), 'prpm-test-'));
       process.chdir(testDir);
     });
 
