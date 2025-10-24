@@ -5,8 +5,6 @@
 <!-- karen-badge-end -->
 
 
-[![Karen Score](.karen/badges/score-badge.svg)](.karen/review.md)
-
 **Stop copy-pasting prompts from GitHub.** Install Cursor rules, Claude skills, and AI agents like npm packages.
 
 ```bash
