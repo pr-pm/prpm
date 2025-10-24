@@ -1,5 +1,10 @@
 # PRPM - The Package Manager for AI Prompts
 
+<!-- karen-badge-start -->
+[![Karen Score](.karen/badges/score-badge.svg)](.karen/review.md)
+<!-- karen-badge-end -->
+
+
 [![Karen Score](.karen/badges/score-badge.svg)](.karen/review.md)
 
 **Stop copy-pasting prompts from GitHub.** Install Cursor rules, Claude skills, and AI agents like npm packages.
