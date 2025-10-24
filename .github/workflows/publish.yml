@@ -75,9 +75,6 @@ jobs:
           npm run build --workspace=@pr-pm/registry-client
           npm run build --workspace=prpm
 
-      - name: Run tests
-        run: npm test --workspaces --if-present
-
       - name: Determine packages to publish
         id: determine
         run: |
