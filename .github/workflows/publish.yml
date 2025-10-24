@@ -166,9 +166,75 @@ jobs:
           # Update version in index.ts for CLI package
           if [ "${{ matrix.package }}" = "cli" ]; then
             echo "Updating version in src/index.ts to $NEW_VERSION"
-            sed -i "s/.version('.*')/.version('$NEW_VERSION')/" src/index.ts
-            echo "✓ Updated index.ts version"
+            sed -i "s/\.version('.*')/\.version('$NEW_VERSION')/" src/index.ts
+
+            # Verify the update worked
+            if grep -q "\.version('$NEW_VERSION')" src/index.ts; then
+              echo "✓ Updated index.ts version to $NEW_VERSION"
+            else
+              echo "❌ Failed to update index.ts version"
+              exit 1
+            fi
           fi
+
+      - name: Update internal dependencies
+        run: |
+          cd packages/${{ matrix.package }}
+
+          echo "Checking for internal package dependencies to update..."
+
+          # Get the list of packages being published and their new versions
+          PUBLISHED_PACKAGES='${{ needs.validate.outputs.packages_to_publish }}'
+
+          # Check each internal dependency
+          for pkg in $(echo "$PUBLISHED_PACKAGES" | jq -r '.[]'); do
+            if [ "$pkg" = "${{ matrix.package }}" ]; then
+              continue  # Skip self
+            fi
+
+            # Determine package name
+            if [ "$pkg" = "cli" ]; then
+              PKG_NAME="prpm"
+            else
+              PKG_NAME="@pr-pm/$pkg"
+            fi
+
+            # Check if this package depends on it
+            if grep -q "\"$PKG_NAME\"" package.json; then
+              # Get the version that was just published
+              PKG_VERSION=$(node -p "require('../$pkg/package.json').version")
+
+              echo "Updating dependency $PKG_NAME to ^$PKG_VERSION"
+
+              # Update package.json with the new version
+              node -e "
+                const fs = require('fs');
+                const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+                if (pkg.dependencies && pkg.dependencies['$PKG_NAME']) {
+                  pkg.dependencies['$PKG_NAME'] = '^$PKG_VERSION';
+                  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+                  console.log('✓ Updated $PKG_NAME in dependencies');
+                } else if (pkg.devDependencies && pkg.devDependencies['$PKG_NAME']) {
+                  pkg.devDependencies['$PKG_NAME'] = '^$PKG_VERSION';
+                  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+                  console.log('✓ Updated $PKG_NAME in devDependencies');
+                }
+              "
+            fi
+          done
+
+          echo "✓ Dependency updates complete"
+
+      - name: Update package-lock.json
+        run: |
+          cd packages/${{ matrix.package }}
+
+          echo "Updating package-lock.json..."
+
+          # Run npm install to update lockfile
+          npm install --package-lock-only
+
+          echo "✓ package-lock.json updated"
 
       - name: Build package
         run: |
@@ -208,7 +274,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: version-${{ matrix.package }}
-          path: packages/${{ matrix.package }}/package.json
+          path: |
+            packages/${{ matrix.package }}/package.json
+            packages/${{ matrix.package }}/package-lock.json
           retention-days: 1
 
       - name: Upload updated index.ts (CLI only)
@@ -247,15 +315,26 @@ jobs:
         with:
           path: /tmp/artifacts
 
-      - name: Restore updated package.json files
+      - name: Restore updated files from publish job
         run: |
-          echo "Restoring updated package.json files from publish job..."
+          echo "Restoring updated files from publish job..."
 
           for artifact_dir in /tmp/artifacts/version-*; do
             if [ -d "$artifact_dir" ]; then
               PACKAGE_NAME=$(basename "$artifact_dir" | sed 's/version-//')
-              echo "Restoring $PACKAGE_NAME package.json..."
-              cp "$artifact_dir/package.json" "packages/$PACKAGE_NAME/package.json"
+              echo "Restoring $PACKAGE_NAME files..."
+
+              # Restore package.json
+              if [ -f "$artifact_dir/packages/$PACKAGE_NAME/package.json" ]; then
+                cp "$artifact_dir/packages/$PACKAGE_NAME/package.json" "packages/$PACKAGE_NAME/package.json"
+                echo "  ✓ package.json"
+              fi
+
+              # Restore package-lock.json
+              if [ -f "$artifact_dir/packages/$PACKAGE_NAME/package-lock.json" ]; then
+                cp "$artifact_dir/packages/$PACKAGE_NAME/package-lock.json" "packages/$PACKAGE_NAME/package-lock.json"
+                echo "  ✓ package-lock.json"
+              fi
             fi
           done
 
@@ -265,7 +344,7 @@ jobs:
             cp "/tmp/artifacts/cli-index-ts/index.ts" "packages/cli/src/index.ts"
           fi
 
-          echo "✓ All version files restored"
+          echo "✓ All files restored"
 
       - name: Determine versions from published packages
         id: collect_versions
@@ -299,8 +378,9 @@ jobs:
 
       - name: Commit version bumps
         run: |
-          # Add all package.json files
+          # Add all package.json and package-lock.json files
           git add packages/*/package.json
+          git add packages/*/package-lock.json
 
           # Add CLI index.ts if it was updated
           if [ -f "packages/cli/src/index.ts" ]; then
@@ -316,7 +396,7 @@ jobs:
 
             git commit -m "chore(release): publish packages" \
               -m "Published packages: ${PACKAGES}" \
-              -m "NPM Tag: ${TAG}" 
+              -m "NPM Tag: ${TAG}"
 
             git push origin main
             echo "✓ Version changes committed and pushed"

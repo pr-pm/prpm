@@ -125,7 +125,12 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
     
     // Create the CLI auth URL with session token, callback, and userId
     const callbackUrl = 'http://localhost:8765/callback';
-    const webappUrl = registryUrl.replace('registry', 'webapp').replace(':3000', ':5173');
+
+    // Determine webapp URL - default to production
+    const webappUrl = registryUrl.includes('localhost')
+      ? registryUrl.replace(':3000', ':5173')  // Local: localhost:3000 → localhost:5173
+      : 'https://prpm.dev';                     // Production: always use prpm.dev
+
     const authUrl = `${webappUrl}/cli-auth?sessionToken=${encodeURIComponent(connectSessionToken)}&cliCallback=${encodeURIComponent(callbackUrl)}&userId=${encodeURIComponent(userId)}`;
     
     console.log(`   Please open this link in your browser to authenticate:`);
