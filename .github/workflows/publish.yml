@@ -204,6 +204,21 @@ jobs:
           fi
           echo "Tag: ${{ github.event.inputs.tag }}"
 
+      - name: Upload version info
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/package.json
+          retention-days: 1
+
+      - name: Upload updated index.ts (CLI only)
+        if: matrix.package == 'cli'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-index-ts
+          path: packages/cli/src/index.ts
+          retention-days: 1
+
   create-git-tag:
     name: Create Git Tag and Release
     needs: [validate, publish]
@@ -226,6 +241,31 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Download all version artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/artifacts
+
+      - name: Restore updated package.json files
+        run: |
+          echo "Restoring updated package.json files from publish job..."
+
+          for artifact_dir in /tmp/artifacts/version-*; do
+            if [ -d "$artifact_dir" ]; then
+              PACKAGE_NAME=$(basename "$artifact_dir" | sed 's/version-//')
+              echo "Restoring $PACKAGE_NAME package.json..."
+              cp "$artifact_dir/package.json" "packages/$PACKAGE_NAME/package.json"
+            fi
+          done
+
+          # Restore CLI index.ts if it was published
+          if [ -d "/tmp/artifacts/cli-index-ts" ]; then
+            echo "Restoring CLI index.ts..."
+            cp "/tmp/artifacts/cli-index-ts/index.ts" "packages/cli/src/index.ts"
+          fi
+
+          echo "✓ All version files restored"
 
       - name: Determine versions from published packages
         id: collect_versions
@@ -257,26 +297,29 @@ jobs:
             fi
           done
 
-      - name: Commit version bumps (packages were already bumped during publish)
+      - name: Commit version bumps
         run: |
-          # Check if there are any changes (there shouldn't be since publish job already bumped)
-          if git diff --quiet packages/*/package.json; then
-            echo "No version changes to commit (already published)"
+          # Add all package.json files
+          git add packages/*/package.json
+
+          # Add CLI index.ts if it was updated
+          if [ -f "packages/cli/src/index.ts" ]; then
+            git add packages/cli/src/index.ts
+          fi
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No version changes to commit"
           else
-            git add packages/*/package.json
             PACKAGES="${{ needs.validate.outputs.packages_to_publish }}"
             TAG="${{ github.event.inputs.tag }}"
 
             git commit -m "chore(release): publish packages" \
               -m "Published packages: ${PACKAGES}" \
-              -m "NPM Tag: ${TAG}" \
-              -m "" \
-              -m "Generated with Claude Code via Happy" \
-              -m "Co-Authored-By: Claude <noreply@anthropic.com>" \
-              -m "Co-Authored-By: Happy <yesreply@happy.engineering>" \
-              || echo "No changes to commit"
+              -m "NPM Tag: ${TAG}" 
 
             git push origin main
+            echo "✓ Version changes committed and pushed"
           fi
 
       - name: Create and push tag
@@ -306,10 +349,6 @@ jobs:
 
             # Or install specific versions listed above
             ```
-
-            ---
-
-            🤖 Generated with [Claude Code](https://claude.com/claude-code) via [Happy](https://happy.engineering)
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

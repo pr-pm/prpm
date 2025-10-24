@@ -91,6 +91,8 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
 
   try {
     // Get the Nango connect session from the registry
+    console.log(`   Connecting to: ${registryUrl}`);
+
     const response = await fetch(`${registryUrl}/api/v1/auth/nango/cli/connect-session`, {
       method: 'POST',
       headers: {
@@ -104,7 +106,8 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
     });
 
     if (!response.ok) {
-      throw new Error('Failed to get authentication session');
+      const errorText = await response.text().catch(() => 'Unable to read error response');
+      throw new Error(`Failed to get authentication session (${response.status}): ${errorText}`);
     }
 
     const responseData = await response.json() as {
@@ -144,6 +147,14 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
 
     return { token: result.token, username: result.username || 'unknown' };
   } catch (error) {
+    if (error instanceof Error) {
+      // Check for common network errors
+      if (error.message.includes('ECONNREFUSED')) {
+        throw new Error(`Cannot connect to registry at ${registryUrl}. Is the registry running?`);
+      } else if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
+        throw new Error(`Cannot resolve registry hostname: ${registryUrl}. Check your internet connection.`);
+      }
+    }
     throw new Error(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
