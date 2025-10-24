@@ -18,6 +18,15 @@ on:
           - dev
           - staging
           - prod
+      deploy_target:
+        description: 'What to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - registry-only
+          - webapp-only
 
 env:
   AWS_REGION: us-west-2
@@ -43,11 +52,14 @@ jobs:
             webapp:
               - 'packages/webapp/**'
 
-  # Deploy registry first (if changed)
+  # Deploy registry first (if changed or manually requested)
   deploy-registry:
     name: Deploy Registry
     needs: changes
-    if: needs.changes.outputs.registry == 'true'
+    if: |
+      needs.changes.outputs.registry == 'true' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.deploy_target == 'all' || github.event.inputs.deploy_target == 'registry-only'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -141,9 +153,89 @@ jobs:
       - name: Wait for deployment
         run: |
           echo "Waiting for environment to update..."
-          aws elasticbeanstalk wait environment-updated \
-            --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
-            --environment-names ${{ steps.env.outputs.EB_ENV_NAME }}
+
+          MAX_ATTEMPTS=40  # 40 attempts × 30 seconds = 20 minutes max
+          ATTEMPT=0
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "⏳ Check $ATTEMPT/$MAX_ATTEMPTS..."
+
+            # Get environment status and health
+            ENV_INFO=$(aws elasticbeanstalk describe-environments \
+              --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+              --environment-names ${{ steps.env.outputs.EB_ENV_NAME }} \
+              --query 'Environments[0].[Status,Health,HealthStatus]' \
+              --output text)
+
+            STATUS=$(echo "$ENV_INFO" | awk '{print $1}')
+            HEALTH=$(echo "$ENV_INFO" | awk '{print $2}')
+            HEALTH_STATUS=$(echo "$ENV_INFO" | awk '{print $3}')
+
+            echo "   Status: $STATUS | Health: $HEALTH | HealthStatus: $HEALTH_STATUS"
+
+            # Check if deployment is complete
+            if [ "$STATUS" = "Ready" ]; then
+              if [ "$HEALTH" = "Green" ]; then
+                echo "✅ Environment is Ready and Healthy"
+                break
+              elif [ "$HEALTH" = "Yellow" ]; then
+                echo "⚠️  Environment is Ready but has warnings (Yellow health)"
+                echo "   Checking if this is acceptable..."
+
+                # Give it a few more checks to potentially turn Green
+                if [ $ATTEMPT -gt 10 ]; then
+                  echo "⚠️  Proceeding with Yellow health status"
+                  break
+                fi
+              else
+                echo "❌ Environment is Ready but health is: $HEALTH"
+
+                # Get recent events for debugging
+                echo "Recent events:"
+                aws elasticbeanstalk describe-events \
+                  --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+                  --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+                  --max-records 5 \
+                  --query 'Events[].[EventDate,Severity,Message]' \
+                  --output text | head -20
+
+                exit 1
+              fi
+            elif [ "$STATUS" = "Updating" ]; then
+              echo "   Still updating, waiting 30 seconds..."
+            else
+              echo "❌ Unexpected status: $STATUS"
+
+              # Get recent events for debugging
+              echo "Recent events:"
+              aws elasticbeanstalk describe-events \
+                --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+                --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+                --max-records 10 \
+                --query 'Events[].[EventDate,Severity,Message]' \
+                --output text | head -30
+
+              exit 1
+            fi
+
+            sleep 30
+          done
+
+          if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
+            echo "❌ Deployment timed out after $MAX_ATTEMPTS attempts ($(($MAX_ATTEMPTS * 30 / 60)) minutes)"
+
+            # Get recent events for debugging
+            echo "Recent events:"
+            aws elasticbeanstalk describe-events \
+              --application-name ${{ steps.env.outputs.EB_APP_NAME }} \
+              --environment-name ${{ steps.env.outputs.EB_ENV_NAME }} \
+              --max-records 20 \
+              --query 'Events[].[EventDate,Severity,Message]' \
+              --output text
+
+            exit 1
+          fi
 
           echo "✓ Registry deployment completed"
 
@@ -162,13 +254,19 @@ jobs:
 
           echo "✓ Registry is healthy (HTTP $STATUS)"
 
-  # Deploy webapp second (if changed), only after registry succeeds
+  # Deploy webapp second (if changed or manually requested), only after registry succeeds or is skipped
+  # This job depends on deploy-registry but will run even if that job is skipped
   deploy-webapp:
     name: Deploy WebApp
     needs: [changes, deploy-registry]
+    # Run if:
+    # 1. Webapp changed OR manually deploying webapp
+    # 2. AND registry either succeeded or was skipped (not run or not failed)
     if: |
       always() &&
-      needs.changes.outputs.webapp == 'true' &&
+      (needs.changes.outputs.webapp == 'true' ||
+       (github.event_name == 'workflow_dispatch' &&
+        (github.event.inputs.deploy_target == 'all' || github.event.inputs.deploy_target == 'webapp-only'))) &&
       (needs.deploy-registry.result == 'success' || needs.deploy-registry.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
