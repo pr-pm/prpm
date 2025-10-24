@@ -29,86 +29,6 @@ export type Subtype =
   | 'template'
   | 'collection';
 
-/**
- * Legacy PackageType for backward compatibility
- * @deprecated Use Format and Subtype instead
- */
-export type PackageType =
-  | 'cursor'
-  | 'cursor-agent'
-  | 'cursor-slash-command'
-  | 'claude'
-  | 'claude-skill'
-  | 'claude-agent'
-  | 'claude-slash-command'
-  | 'continue'
-  | 'windsurf'
-  | 'copilot'
-  | 'kiro'
-  | 'generic'
-  | 'mcp'
-  | 'collection';
-
-/**
- * Convert legacy PackageType to Format and Subtype
- */
-export function parsePackageType(type: PackageType): { format: Format; subtype?: Subtype } {
-  // Handle collection separately
-  if (type === 'collection') {
-    return { format: 'generic', subtype: 'collection' };
-  }
-
-  // Handle MCP
-  if (type === 'mcp') {
-    return { format: 'mcp', subtype: 'tool' };
-  }
-
-  // Split compound types
-  if (type.includes('-')) {
-    const parts = type.split('-');
-    const format = parts[0] as Format;
-    const subtypeStr = parts.slice(1).join('-');
-
-    // Map to proper subtype
-    const subtypeMap: Record<string, Subtype> = {
-      'agent': 'agent',
-      'skill': 'skill',
-      'slash-command': 'slash-command',
-    };
-
-    return { format, subtype: subtypeMap[subtypeStr] || 'rule' };
-  }
-
-  // Simple format types default to rule
-  return { format: type as Format, subtype: 'rule' };
-}
-
-/**
- * Convert Format and Subtype to legacy PackageType
- */
-export function toPackageType(format: Format, subtype?: Subtype): PackageType {
-  if (subtype === 'collection') {
-    return 'collection';
-  }
-
-  if (!subtype || subtype === 'rule' || subtype === 'prompt') {
-    return format as PackageType;
-  }
-
-  // Construct compound type for non-rule subtypes
-  if (subtype === 'agent') {
-    return `${format}-agent` as PackageType;
-  }
-  if (subtype === 'skill') {
-    return `${format}-skill` as PackageType;
-  }
-  if (subtype === 'slash-command') {
-    return `${format}-slash-command` as PackageType;
-  }
-
-  // Default to base format
-  return format as PackageType;
-}
 
 export type PackageVisibility = 'public' | 'private' | 'unlisted';
 
@@ -121,10 +41,8 @@ export interface Package {
   description?: string;
   author_id?: string;
   org_id?: string;
-  /** @deprecated Use format and subtype instead */
-  type: PackageType;
   format: Format;
-  subtype?: Subtype;
+  subtype: Subtype; // Required, defaults to 'rule'
   license?: string;
   repository_url?: string;
   homepage_url?: string;
@@ -185,10 +103,8 @@ export interface PackageManifest {
   repository?: string;
   homepage?: string;
   documentation?: string;
-  /** @deprecated Use format and subtype instead */
-  type?: PackageType;
-  format?: Format;
-  subtype?: Subtype;
+  format: Format;
+  subtype?: Subtype; // Optional, defaults to 'rule'
   tags?: string[];
   keywords?: string[];
   category?: string;

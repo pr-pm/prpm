@@ -5,15 +5,10 @@
 export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp';
 export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection';
 
-/** @deprecated Use Format and Subtype instead */
-export type PackageType = 'cursor' | 'cursor-agent' | 'cursor-slash-command' | 'claude' | 'claude-skill' | 'claude-agent' | 'claude-slash-command' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp' | 'collection';
-
 export interface Package {
   id: string;
-  /** @deprecated Use format and subtype instead */
-  type: PackageType;
   format: Format;
-  subtype?: Subtype;
+  subtype: Subtype;
   url: string;
   dest: string;
   // Future expansion fields (not used in MVP)
@@ -28,7 +23,8 @@ export interface Package {
 
 export interface AddOptions {
   url: string;
-  type: PackageType;
+  format: Format;
+  subtype?: Subtype;
 }
 
 export interface RemoveOptions {
@@ -37,7 +33,8 @@ export interface RemoveOptions {
 
 export interface ListOptions {
   // Future expansion: filtering, sorting
-  type?: PackageType;
+  format?: Format;
+  subtype?: Subtype;
 }
 
 export interface IndexOptions {

@@ -4,38 +4,12 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { PackageType, Format, Subtype } from '../types';
+import { Format, Subtype } from '../types';
 
 /**
  * Get the destination directory for a package based on format and subtype
  */
-export function getDestinationDir(
-  formatOrType: Format | PackageType,
-  subtype?: Subtype
-): string {
-  // Handle legacy PackageType format (backward compatibility)
-  if (formatOrType.includes('-')) {
-    // This is a compound type like 'cursor-agent', 'claude-skill'
-    const type = formatOrType as PackageType;
-    switch (type) {
-      case 'cursor-agent':
-        return '.cursor/agents';
-      case 'cursor-slash-command':
-        return '.cursor/commands';
-      case 'claude-agent':
-        return '.claude/agents';
-      case 'claude-skill':
-        return '.claude/skills';
-      case 'claude-slash-command':
-        return '.claude/commands';
-      default:
-        throw new Error(`Unknown package type: ${type}`);
-    }
-  }
-
-  // New format + subtype approach
-  const format = formatOrType as Format;
-
+export function getDestinationDir(format: Format, subtype: Subtype): string {
   switch (format) {
     case 'cursor':
       if (subtype === 'agent') return '.cursor/agents';
@@ -72,14 +46,6 @@ export function getDestinationDir(
 }
 
 /**
- * Legacy function for backward compatibility
- * @deprecated Use getDestinationDir with format and subtype instead
- */
-export function getDestinationDirLegacy(type: PackageType): string {
-  return getDestinationDir(type);
-}
-
-/**
  * Ensure directory exists, creating it if necessary
  */
 export async function ensureDirectoryExists(dirPath: string): Promise<void> {
@@ -98,7 +64,7 @@ export async function saveFile(filePath: string, content: string): Promise<void>
     // Ensure parent directory exists
     const dir = path.dirname(filePath);
     await ensureDirectoryExists(dir);
-    
+
     // Write file
     await fs.writeFile(filePath, content, 'utf-8');
   } catch (error) {
