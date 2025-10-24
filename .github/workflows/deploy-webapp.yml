@@ -69,8 +69,8 @@ jobs:
           # First sync new files (without delete) to ensure all chunks are uploaded
           aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --cache-control "public, max-age=31536000, immutable" --exclude "*.html" --exclude "_next/data/*"
 
-          # Then sync HTML files with shorter cache
-          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --cache-control "public, max-age=0, must-revalidate" --exclude "*" --include "*.html" --include "_next/data/*"
+          # Then sync HTML files with NO CACHE to prevent CloudFront caching issues
+          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --cache-control "no-cache, no-store, must-revalidate" --exclude "*" --include "*.html" --include "_next/data/*"
 
           # Finally, delete old files after everything is uploaded
           aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --delete
@@ -81,12 +81,28 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, 'prpm.dev')]].Id" --output text)
-          aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"
+          echo "Creating CloudFront invalidation for distribution: $DIST_ID"
+
+          # Create invalidation and capture the ID
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id $DIST_ID \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+
+          echo "Invalidation created: $INVALIDATION_ID"
+          echo "Waiting for invalidation to complete (this may take 2-5 minutes)..."
+
+          # Wait for invalidation to complete
+          aws cloudfront wait invalidation-completed \
+            --distribution-id $DIST_ID \
+            --id $INVALIDATION_ID
+
+          echo "✓ CloudFront invalidation completed successfully"
 
       - name: Health check
         run: |
-          echo "Waiting for CloudFront invalidation to propagate..."
-          sleep 30
+          echo "Running health checks..."
 
           # Check homepage
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://prpm.dev)
