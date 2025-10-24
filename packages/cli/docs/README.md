@@ -233,7 +233,7 @@ prpm whoami
 prpm list
 
 # Remove a package
-prpm remove @username/package
+prpm uninstall @username/package
 
 # Get JSON schema
 prpm schema

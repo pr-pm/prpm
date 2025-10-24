@@ -53,7 +53,7 @@ prpm install react-best-practices --as cursor
 prpm install @collection/nextjs-pro
 ```
 
-### `prpm remove`
+### `prpm uninstall`
 
 Remove installed packages.
 
@@ -62,7 +62,7 @@ Remove installed packages.
 prpm install test-driven-development <package-name>
 
 # Remove multiple packages
-prpm remove pkg1 pkg2 pkg3
+prpm uninstall pkg1 pkg2 pkg3
 ```
 
 **Note**: Removes from `prpm.lock` and notifies about manual file deletion.

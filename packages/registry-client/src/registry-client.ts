@@ -209,6 +209,55 @@ export class RegistryClient {
   }
 
   /**
+   * Track package download
+   */
+  async trackDownload(
+    packageId: string,
+    options?: {
+      version?: string;
+      client?: string;
+      format?: string;
+      clientId?: string;
+    }
+  ): Promise<void> {
+    try {
+      // Map package type to analytics format
+      const formatMap: Record<string, string> = {
+        'cursor': 'cursor',
+        'cursor-agent': 'cursor',
+        'cursor-slash-command': 'cursor',
+        'claude': 'claude',
+        'claude-skill': 'claude',
+        'claude-agent': 'claude',
+        'claude-slash-command': 'claude',
+        'continue': 'continue',
+        'windsurf': 'windsurf',
+        'generic': 'generic',
+        'mcp': 'generic',
+      };
+
+      const analyticsFormat = options?.format ? formatMap[options.format] || 'generic' : 'generic';
+
+      await this.fetch('/api/v1/analytics/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          packageId,
+          version: options?.version,
+          client: options?.client || 'cli',
+          format: analyticsFormat,
+          clientId: options?.clientId,
+        }),
+      });
+    } catch (error) {
+      // Don't fail install if analytics tracking fails
+      // Just log silently
+    }
+  }
+
+  /**
    * Get trending packages
    */
   async getTrending(type?: PackageType, limit: number = 20): Promise<RegistryPackage[]> {

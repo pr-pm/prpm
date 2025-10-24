@@ -155,7 +155,10 @@ export async function packageRoutes(server: FastifyInstance) {
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { packageName } = request.params as { packageName: string };
+    const { packageName: rawPackageName } = request.params as { packageName: string };
+
+    // Decode URL-encoded package name (handles slashes in scoped packages)
+    const packageName = decodeURIComponent(rawPackageName);
 
     // Check cache
     const cacheKey = `package:${packageName}`;
@@ -192,9 +195,11 @@ export async function packageRoutes(server: FastifyInstance) {
     const transformedVersions = versionsResult.rows.map(version => {
       if (version.tarball_url) {
         // Replace storage URL with registry download URL
+        // URL-encode package name to handle slashes in scoped packages
+        const encodedPackageName = encodeURIComponent(packageName);
         return {
           ...version,
-          tarball_url: `${baseUrl}/api/v1/packages/${packageName}/${version.version}.tar.gz`
+          tarball_url: `${baseUrl}/api/v1/packages/${encodedPackageName}/${version.version}.tar.gz`
         };
       }
       return version;
@@ -226,7 +231,10 @@ export async function packageRoutes(server: FastifyInstance) {
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { packageName, version: versionParam } = request.params as { packageName: string; version: string };
+    const { packageName: rawPackageName, version: versionParam } = request.params as { packageName: string; version: string };
+
+    // Decode URL-encoded package name (handles slashes in scoped packages)
+    const packageName = decodeURIComponent(rawPackageName);
 
     // Check if this is a tarball download request (.tar.gz)
     if (versionParam.endsWith('.tar.gz')) {
@@ -298,7 +306,9 @@ export async function packageRoutes(server: FastifyInstance) {
         try {
           // Extract package ID and version from tarball_url or use the actual values
           const { getDownloadUrl } = await import('../storage/s3.js');
-          const downloadUrl = await getDownloadUrl(server, pkgVersion.package_id, version);
+          // Use package name for S3 key (some packages were seeded with name-based paths)
+          const pkgName = (pkgVersion as any).package_name || packageName;
+          const downloadUrl = await getDownloadUrl(server, pkgName, version);
 
           // Redirect to the presigned URL
           return reply.redirect(302, downloadUrl);

@@ -104,14 +104,15 @@ export function generateId(filename: string): string {
 }
 
 /**
- * Strip author namespace from package ID
+ * Strip author namespace from package ID and return just the package name
  * @example
  * stripAuthorNamespace('@community/git-workflow-manager') // 'git-workflow-manager'
  * stripAuthorNamespace('community/git-workflow-manager') // 'git-workflow-manager'
+ * stripAuthorNamespace('@wshobson/commands/agent-orchestration/improve-agent') // 'improve-agent'
  * stripAuthorNamespace('git-workflow-manager') // 'git-workflow-manager'
  */
 export function stripAuthorNamespace(packageId: string): string {
-  // Handle @scope/package or scope/package format
-  const match = packageId.match(/^@?[^/]+\/(.+)$/);
-  return match ? match[1] : packageId;
+  // Split by '/' and get the last segment (the actual package name)
+  const parts = packageId.split('/');
+  return parts[parts.length - 1];
 }

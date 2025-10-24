@@ -109,21 +109,21 @@ prpm add https://example.com/my-rules.md --as claude
 
 ---
 
-#### `prpm remove <id>`
+#### `prpm uninstall <id>`
 
 Remove an installed package.
 
 ```bash
-prpm remove react-rules
+prpm uninstall react-rules
 ```
 
 **Examples:**
 ```bash
 # Remove by package ID
-prpm remove typescript-rules
+prpm uninstall typescript-rules
 
 # Remove cursor rules
-prpm remove cursor-rules
+prpm uninstall cursor-rules
 ```
 
 ---

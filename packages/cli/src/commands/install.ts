@@ -128,6 +128,27 @@ export async function handleInstall(
       version = options.version || specVersion || lockedVersion || 'latest';
     }
 
+    // Check if package is already installed
+    if (lockfile && lockfile.packages[packageId]) {
+      const installedPkg = lockfile.packages[packageId];
+      const requestedVersion = options.version || specVersion;
+
+      // If no specific version requested, or same version requested
+      if (!requestedVersion || requestedVersion === 'latest' || requestedVersion === installedPkg.version) {
+        console.log(`\n✨ Package already installed!`);
+        console.log(`   📦 ${packageId}@${installedPkg.version}`);
+        console.log(`   🔄 Format: ${installedPkg.format || installedPkg.type || 'unknown'}`);
+        console.log(`\n💡 To reinstall or upgrade:`);
+        console.log(`   prpm upgrade ${packageId}     # Upgrade to latest version`);
+        console.log(`   prpm uninstall ${packageId}   # Uninstall first, then install`);
+        success = true;
+        return;
+      } else if (requestedVersion !== installedPkg.version) {
+        // Different version requested - allow upgrade/downgrade
+        console.log(`📦 Upgrading ${packageId}: ${installedPkg.version} → ${requestedVersion}`);
+      }
+    }
+
     console.log(`📥 Installing ${packageId}@${version}...`);
 
     const config = await getConfig();
@@ -200,13 +221,36 @@ export async function handleInstall(
 
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
-    // Use format to determine directory, not package type
-    const effectiveType = format === 'claude' ? 'claude-skill' :
-                          format === 'cursor' ? 'cursor' :
-                          format === 'continue' ? 'continue' :
-                          format === 'windsurf' ? 'windsurf' :
-                          (options.type || pkg.type);
-    const destDir = getDestinationDir(effectiveType as PackageType);
+    // Determine effective type based on format and original package type
+    let effectiveType: PackageType;
+
+    if (format === 'cursor') {
+      // Map package types to cursor equivalents
+      if (pkg.type === 'claude-slash-command' || pkg.type === 'cursor-slash-command') {
+        effectiveType = 'cursor-slash-command';
+      } else if (pkg.type === 'claude-agent' || pkg.type === 'cursor-agent') {
+        effectiveType = 'cursor-agent';
+      } else {
+        effectiveType = 'cursor';
+      }
+    } else if (format === 'claude') {
+      // Map package types to claude equivalents
+      if (pkg.type === 'cursor-slash-command' || pkg.type === 'claude-slash-command') {
+        effectiveType = 'claude-slash-command';
+      } else if (pkg.type === 'cursor-agent' || pkg.type === 'claude-agent') {
+        effectiveType = 'claude-agent';
+      } else if (pkg.type === 'claude-skill') {
+        effectiveType = 'claude-skill';
+      } else {
+        effectiveType = 'claude-agent';
+      }
+    } else if (format === 'continue' || format === 'windsurf') {
+      effectiveType = format as PackageType;
+    } else {
+      effectiveType = (options.type || pkg.type) as PackageType;
+    }
+
+    const destDir = getDestinationDir(effectiveType);
 
     // Extract all files from tarball
     const extractedFiles = await extractTarball(tarball, packageId);
@@ -219,7 +263,9 @@ export async function handleInstall(
     if (extractedFiles.length === 1) {
       // Single file package
       let mainFile = extractedFiles[0].content;
-      const fileExtension = format === 'cursor' ? 'mdc' : 'md';
+      // Determine file extension based on effective type
+      // Cursor rules use .mdc, but slash commands and other files use .md
+      const fileExtension = (effectiveType === 'cursor' && format === 'cursor') ? 'mdc' : 'md';
       const packageName = stripAuthorNamespace(packageId);
       destPath = `${destDir}/${packageName}.${fileExtension}`;
 
@@ -264,6 +310,7 @@ export async function handleInstall(
       tarballUrl,
       type: pkg.type,
       format,
+      installedPath: destPath,
     });
 
     setPackageIntegrity(updatedLockfile, packageId, tarball);
@@ -271,6 +318,13 @@ export async function handleInstall(
 
     // Update lockfile (already done above via addToLockfile + writeLockfile)
     // No need to call addPackage again as it would be redundant
+
+    // Track download analytics
+    await client.trackDownload(packageId, {
+      version: actualVersion || version,
+      client: 'cli',
+      format,
+    });
 
     console.log(`\n✅ Successfully installed ${packageId}`);
     console.log(`   📁 Saved to: ${destPath}`);
