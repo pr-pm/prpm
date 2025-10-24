@@ -403,6 +403,8 @@ function SearchPageContent() {
                     <option value="claude-slash-command">Claude Slash Command</option>
                     <option value="continue">Continue</option>
                     <option value="windsurf">Windsurf</option>
+                    <option value="copilot">GitHub Copilot</option>
+                    <option value="kiro">Kiro</option>
                     <option value="mcp">MCP</option>
                     <option value="generic">Generic</option>
                   </select>

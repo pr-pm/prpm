@@ -10,7 +10,7 @@ import { PackageType } from '../types';
 import * as readline from 'readline';
 
 // User-friendly CLI types
-type CLIPackageType = 'skill' | 'agent' | 'command' | 'slash-command' | 'rule' | 'plugin' | 'prompt' | 'workflow' | 'tool' | 'template' | 'mcp';
+type CLIPackageType = 'skill' | 'agent' | 'command' | 'slash-command' | 'rule' | 'plugin' | 'prompt' | 'workflow' | 'tool' | 'template' | 'mcp' | 'copilot' | 'kiro' | 'windsurf';
 
 /**
  * Get icon for package type
@@ -29,6 +29,9 @@ function getTypeIcon(type: string): string {
     tool: '🔧',
     template: '📄',
     mcp: '🔗',
+    copilot: '✈️',
+    kiro: '🎯',
+    windsurf: '🌊',
   };
   return icons[type] || '📦';
 }
@@ -51,6 +54,9 @@ function getTypeLabel(type: string): string {
     tool: 'Tool',
     template: 'Template',
     mcp: 'MCP Server',
+    copilot: 'GitHub Copilot',
+    kiro: 'Kiro',
+    windsurf: 'Windsurf',
   };
   return labels[type] || type;
 }
@@ -69,6 +75,9 @@ function mapTypeToRegistry(cliType: CLIPackageType): { type?: PackageType; tags?
     command: { type: 'claude-slash-command' },
     'slash-command': { type: 'claude-slash-command' },
     mcp: { type: 'mcp' },
+    copilot: { type: 'copilot' },
+    kiro: { type: 'kiro' },
+    windsurf: { type: 'windsurf' },
     plugin: { type: 'generic', tags: ['plugin'] },
     prompt: { type: 'generic', tags: ['prompt'] },
     workflow: { type: 'generic', tags: ['workflow'] },
