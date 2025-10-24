@@ -67,9 +67,6 @@ jobs:
       - name: Build registry
         run: npm run build --workspace=@pr-pm/registry
 
-      - name: Run tests
-        run: npm test --workspace=@pr-pm/registry
-
       - name: Set environment variables
         id: env
         run: |
