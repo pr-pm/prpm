@@ -37,6 +37,10 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
     originalCwd = process.cwd();
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
+    // Mock process.exit to prevent it from terminating the test process
+    jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined): never => {
+      throw new Error(`process.exit called with code ${code}`);
+    });
   });
 
   beforeEach(async () => {
@@ -58,6 +62,13 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
   });
 
   afterEach(async () => {
+    // Restore working directory before cleanup
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      // Ignore errors
+    }
+
     // Clean up test directory
     try {
       await rm(testDir, { recursive: true, force: true });

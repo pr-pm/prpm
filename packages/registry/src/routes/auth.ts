@@ -16,8 +16,9 @@ const SALT_ROUNDS = 10;
 
 /**
  * Helper function to authenticate user with Nango connection
+ * Returns user, jwtToken, and whether this was a new user creation
  */
-async function authenticateWithNango(server: FastifyInstance, connectionId: string): Promise<{ user: User; jwtToken: string }> {
+async function authenticateWithNango(server: FastifyInstance, connectionId: string): Promise<{ user: User; jwtToken: string; isNewUser: boolean }> {
   // Get GitHub user data via Nango proxy
   const githubUser = await nangoService.getGitHubUser(connectionId);
   server.log.info({ login: githubUser.login, id: githubUser.id }, 'Fetched GitHub user data via Nango');
@@ -36,7 +37,10 @@ async function authenticateWithNango(server: FastifyInstance, connectionId: stri
     [String(githubUser.id)]
   );
 
+  let isNewUser = false;
+
   if (!user) {
+    isNewUser = true;
     // Create new user
     user = await queryOne<User>(
       server,
@@ -52,13 +56,66 @@ async function authenticateWithNango(server: FastifyInstance, connectionId: stri
         connectionId,
       ]
     );
+
+    if (user) {
+      server.log.info({
+        userId: user.id,
+        connectionId
+      }, 'Created new user with connection');
+    }
   } else {
-    // Update last login, GitHub username, and connection ID
-    await query(
-      server,
-      'UPDATE users SET last_login_at = NOW(), github_username = $2, nango_connection_id = $3 WHERE id = $1',
-      [user.id, githubUser.login, connectionId]
-    );
+    // Existing user
+    if (!user.nango_connection_id) {
+      // User doesn't have a connection yet - set this as their first connection
+      server.log.info({
+        userId: user.id,
+        connectionId
+      }, 'Setting first connection for existing user');
+
+      await query(
+        server,
+        'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+        [connectionId, githubUser.login, user.id]
+      );
+
+      // Update user object with connection
+      user.nango_connection_id = connectionId;
+    } else if (user.nango_connection_id !== connectionId) {
+      // User already has a connection, and this is a different one
+      // The webhook should have already deleted this duplicate connection
+      server.log.warn({
+        userId: user.id,
+        storedConnectionId: user.nango_connection_id,
+        providedConnectionId: connectionId
+      }, 'Callback received duplicate connection that should have been deleted by webhook');
+
+      // This shouldn't happen if webhook worked correctly, but handle it gracefully
+      // Use the stored connection for authentication
+      await query(
+        server,
+        'UPDATE users SET last_login_at = NOW(), github_username = $2 WHERE id = $1',
+        [user.id, githubUser.login]
+      );
+
+      // Validate the STORED connection is still valid
+      try {
+        const storedGithubUser = await nangoService.getGitHubUser(user.nango_connection_id);
+        server.log.info({
+          userId: user.id,
+          storedConnectionId: user.nango_connection_id
+        }, 'Using stored connection for authentication');
+      } catch (error) {
+        server.log.error({ error, userId: user.id, storedConnectionId: user.nango_connection_id }, 'Stored connection is invalid');
+        throw new Error('Your stored authentication has expired. Please contact support.');
+      }
+    } else {
+      // Same connection, just update last login
+      await query(
+        server,
+        'UPDATE users SET last_login_at = NOW(), github_username = $2 WHERE id = $1',
+        [user.id, githubUser.login]
+      );
+    }
   }
 
   if (!user) {
@@ -74,7 +131,7 @@ async function authenticateWithNango(server: FastifyInstance, connectionId: stri
     scopes: ['read:packages', 'write:packages'],
   } as JWTPayload);
 
-  return { user, jwtToken };
+  return { user, jwtToken, isNewUser };
 }
 
 export async function authRoutes(server: FastifyInstance) {
@@ -202,12 +259,82 @@ export async function authRoutes(server: FastifyInstance) {
       server.log.info({ type, operation, success, connectionId, endUser }, 'Nango webhook received');
 
       if (type === 'auth' && operation === 'creation' && success && connectionId && endUser) {
-        // Store the connection ID for the user
-        // This will be used when the CLI polls for authentication completion
-        server.log.info({ connectionId, userId: endUser.endUserId }, 'New connection established');
-        
-        // Store the connection ID for CLI authentication sessions
-        cliAuthSessions.set(endUser.endUserId, connectionId);
+        server.log.info({ connectionId, userId: endUser.endUserId }, 'New connection established, checking for existing user');
+
+        try {
+          // Get GitHub user info using the new connection
+          const githubUser = await nangoService.getGitHubUser(connectionId);
+          server.log.info({
+            githubId: githubUser.id,
+            githubLogin: githubUser.login,
+            connectionId
+          }, 'Fetched GitHub user from new connection');
+
+          // Check if user already exists by GitHub ID
+          const existingUser = await queryOne<User>(
+            server,
+            'SELECT id, username, email, verified_author, nango_connection_id FROM users WHERE github_id = $1',
+            [String(githubUser.id)]
+          );
+
+          if (existingUser && existingUser.nango_connection_id && existingUser.nango_connection_id !== connectionId) {
+            // User already has a DIFFERENT connection - delete this new one
+            server.log.info({
+              userId: existingUser.id,
+              existingConnectionId: existingUser.nango_connection_id,
+              newConnectionId: connectionId
+            }, 'User already has a different connection, deleting new connection');
+
+            await nangoService.deleteConnection(connectionId);
+
+            server.log.info({ connectionId }, 'Deleted duplicate connection');
+          } else {
+            // Either:
+            // 1. New user (existingUser is null) - callback will handle creation, webhook will patch
+            // 2. Existing user without connection - callback will handle updating, webhook will patch
+            // 3. Existing user with this same connection - this is the first login
+
+            // Store the connection ID for CLI authentication sessions ONLY if it's valid
+            cliAuthSessions.set(endUser.endUserId, connectionId);
+
+            // Patch the connection with user metadata if we have an existing user
+            if (existingUser) {
+              try {
+                const tags: Record<string, string> = {};
+                if (existingUser.verified_author) {
+                  tags.verified_author = 'true';
+                }
+
+                await nangoService.patchConnection(connectionId, {
+                  id: existingUser.id,
+                  email: existingUser.email,
+                  display_name: existingUser.username,
+                  tags: Object.keys(tags).length > 0 ? tags : undefined,
+                });
+
+                server.log.info({
+                  userId: existingUser.id,
+                  connectionId,
+                  tags
+                }, 'Patched connection with existing user metadata in webhook');
+              } catch (error) {
+                server.log.error({ error, userId: existingUser.id, connectionId }, 'Failed to patch connection in webhook');
+                // Don't throw - connection is still valid
+              }
+            }
+
+            server.log.info({
+              hasExistingUser: !!existingUser,
+              existingUserId: existingUser?.id,
+              githubId: githubUser.id,
+              githubLogin: githubUser.login,
+              connectionId
+            }, 'Connection valid, stored for CLI auth');
+          }
+        } catch (error) {
+          server.log.error({ error, connectionId }, 'Error processing webhook GitHub user check');
+          // Don't throw - allow webhook to succeed even if our processing fails
+        }
       }
 
       return reply.send({ success: true });
@@ -304,9 +431,36 @@ export async function authRoutes(server: FastifyInstance) {
         cliAuthSessions.set(userId, connectionId);
       }
 
-      const { user, jwtToken } = await authenticateWithNango(server, connectionId);
+      const { user, jwtToken, isNewUser } = await authenticateWithNango(server, connectionId);
 
-      server.log.info({ username: user.username }, 'User authenticated successfully via Nango');
+      server.log.info({ username: user.username, isNewUser }, 'User authenticated successfully via Nango');
+
+      // Patch the connection with user metadata if this is a new user
+      // (webhook couldn't patch because user didn't exist yet)
+      if (isNewUser) {
+        try {
+          const tags: Record<string, string> = {};
+          if (user.verified_author) {
+            tags.verified_author = 'true';
+          }
+
+          await nangoService.patchConnection(connectionId, {
+            id: user.id,
+            email: user.email,
+            display_name: user.username,
+            tags: Object.keys(tags).length > 0 ? tags : undefined,
+          });
+
+          server.log.info({
+            userId: user.id,
+            connectionId,
+            tags
+          }, 'Patched connection with newly created user metadata');
+        } catch (error) {
+          server.log.error({ error, userId: user.id, connectionId }, 'Failed to patch connection for new user');
+          // Don't throw - authentication succeeded, patching is optional metadata
+        }
+      }
 
       return reply.send({
         success: true,
@@ -555,6 +709,7 @@ export async function authRoutes(server: FastifyInstance) {
             username: { type: 'string' },
             email: { type: 'string' },
             avatar_url: { type: 'string' },
+            website: { type: 'string' },
             verified_author: { type: 'boolean' },
             is_admin: { type: 'boolean' },
             package_count: { type: 'number' },
@@ -568,7 +723,7 @@ export async function authRoutes(server: FastifyInstance) {
 
     const user = await queryOne<User>(
       server,
-      'SELECT id, username, email, avatar_url, verified_author, is_admin FROM users WHERE id = $1',
+      'SELECT id, username, email, avatar_url, website, verified_author, is_admin FROM users WHERE id = $1',
       [userId]
     );
 
@@ -592,6 +747,85 @@ export async function authRoutes(server: FastifyInstance) {
       package_count: parseInt(stats?.package_count || '0', 10),
       total_downloads: parseInt(stats?.total_downloads || '0', 10),
     };
+  });
+
+  // Update user profile
+  server.patch('/me', {
+    onRequest: [server.authenticate],
+    schema: {
+      tags: ['auth'],
+      description: 'Update current user profile',
+      body: {
+        type: 'object',
+        properties: {
+          website: { type: 'string', format: 'uri', maxLength: 500 },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                username: { type: 'string' },
+                email: { type: 'string' },
+                avatar_url: { type: 'string' },
+                website: { type: 'string' },
+                verified_author: { type: 'boolean' },
+              },
+            },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = request.user.user_id;
+    const { website } = request.body as { website?: string };
+
+    try {
+      // Validate website URL if provided
+      if (website && website.trim()) {
+        const trimmedWebsite = website.trim();
+        // Basic URL validation
+        try {
+          new URL(trimmedWebsite);
+        } catch (e) {
+          return reply.status(400).send({
+            error: 'Invalid website URL',
+            message: 'Please provide a valid URL (e.g., https://example.com)',
+          });
+        }
+      }
+
+      // Update user
+      const user = await queryOne<User>(
+        server,
+        `UPDATE users
+         SET website = $2, updated_at = NOW()
+         WHERE id = $1
+         RETURNING id, username, email, avatar_url, website, verified_author`,
+        [userId, website && website.trim() ? website.trim() : null]
+      );
+
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+
+      return {
+        success: true,
+        user,
+      };
+    } catch (error: unknown) {
+      const err = toError(error);
+      server.log.error({ error: err.message }, 'Update profile error');
+      return reply.status(500).send({
+        error: 'Failed to update profile',
+        message: err.message,
+      });
+    }
   });
 
   // Generate API token

@@ -1,0 +1,13 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow admin/auth pages from indexing
+Disallow: /login
+Disallow: /signup
+Disallow: /dashboard
+Disallow: /cli-auth
+Disallow: /auth/
+
+# Sitemap
+Sitemap: https://prpm.ai/sitemap.xml

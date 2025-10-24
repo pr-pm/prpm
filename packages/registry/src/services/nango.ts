@@ -123,6 +123,31 @@ export class NangoService {
   }
 
   /**
+   * Delete a connection
+   */
+  async deleteConnection(connectionId: string) {
+    return await this.nango.deleteConnection(config.nango.integrationId, connectionId);
+  }
+
+  /**
+   * Patch a connection to update end_user metadata
+   */
+  async patchConnection(connectionId: string, endUser: {
+    id: string;
+    email?: string;
+    display_name?: string;
+    organization_id?: string;
+    tags?: Record<string, string>;
+  }) {
+    return await this.nango.patchConnection({
+      connectionId: connectionId,
+      provider_config_key: config.nango.integrationId,
+    }, {
+      end_user: endUser,
+    });
+  }
+
+  /**
    * Get GitHub user data for a user by their user ID (requires connection ID in database)
    */
   async getGitHubUserByUserId(userId: string, connectionId: string): Promise<{
@@ -162,23 +187,37 @@ export const nangoService = {
   async createConnectSession(userId: string, email: string, displayName: string) {
     return getNangoService().createConnectSession(userId, email, displayName);
   },
-  
+
   async createCLIConnectSession(userId: string, email: string, displayName: string) {
     return getNangoService().createCLIConnectSession(userId, email, displayName);
   },
-  
+
   async getGitHubUser(connectionId: string) {
     return getNangoService().getGitHubUser(connectionId);
   },
-  
+
   async getConnection(connectionId: string) {
     return getNangoService().getConnection(connectionId);
   },
-  
+
+  async deleteConnection(connectionId: string) {
+    return getNangoService().deleteConnection(connectionId);
+  },
+
+  async patchConnection(connectionId: string, endUser: {
+    id: string;
+    email?: string;
+    display_name?: string;
+    organization_id?: string;
+    tags?: Record<string, string>;
+  }) {
+    return getNangoService().patchConnection(connectionId, endUser);
+  },
+
   async getGitHubUserByUserId(userId: string, connectionId: string) {
     return getNangoService().getGitHubUserByUserId(userId, connectionId);
   },
-  
+
   async getGitHubUserEmailByUserId(userId: string, connectionId: string) {
     return getNangoService().getGitHubUserEmailByUserId(userId, connectionId);
   }

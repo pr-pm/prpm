@@ -32,13 +32,11 @@ export default function Home() {
             </h1>
 
             <p className="text-xl sm:text-2xl lg:text-3xl mb-6 text-gray-300 font-semibold tracking-tight">
-              Prompt Package Manager
+              The universal registry for AI coding tools.
             </p>
 
             <p className="text-base sm:text-lg lg:text-xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed px-4">
-              The universal registry for AI coding prompts, agents, skills, and slash commands. Install packages individually or use
-              <span className="text-prpm-accent font-semibold"> collections</span> to get complete workflow setups in one command.
-              Works with Cursor, Claude, Continue, Windsurf, and more.
+              Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, and more — all from one file.
             </p>
 
             <div className="flex gap-4 justify-center flex-wrap mb-12">
@@ -236,6 +234,34 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* Footer */}
+          <footer className="border-t border-prpm-border/50 pt-8 mt-20">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
+              <div>
+                © 2025 PRPM. Open source under MIT License.
+              </div>
+              <div className="flex gap-6">
+                <Link href="/blog" className="hover:text-white transition-colors">
+                  Blog
+                </Link>
+                <Link href="/legal/terms" className="hover:text-white transition-colors">
+                  Terms
+                </Link>
+                <Link href="/legal/privacy" className="hover:text-white transition-colors">
+                  Privacy
+                </Link>
+                <a
+                  href="https://github.com/khaliqgant/prompt-package-manager"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
+                  GitHub
+                </a>
+              </div>
+            </div>
+          </footer>
         </div>
       </div>
     </main>

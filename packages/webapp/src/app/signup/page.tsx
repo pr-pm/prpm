@@ -2,32 +2,133 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createNangoConnectSession } from '@/lib/api'
+import { useRouter } from 'next/navigation'
+import Nango from '@nangohq/frontend'
+import { createNangoConnectSession, handleNangoCallback } from '@/lib/api'
 
 export default function SignupPage() {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [nango, setNango] = useState<any>(null)
+  const [sessionToken, setSessionToken] = useState<string | null>(null)
+  const [authSucceeded, setAuthSucceeded] = useState(false)
+
+  const openConnectModal = (nangoInstance: any, token: string) => {
+    try {
+      console.log('Opening Nango Connect UI for signup...')
+      nangoInstance.openConnectUI({
+        detectClosedAuthWindow: true,
+        onEvent: (event: any) => {
+          console.log('Nango event:', event)
+
+          if (event.type === 'connect') {
+            // Handle successful authentication
+            const connectionId = event.payload?.connectionId
+            if (connectionId) {
+              setAuthSucceeded(true)
+              // Don't await here - let it run asynchronously and redirect
+              handleAuthSuccess(connectionId).catch(err => {
+                console.error('Error in handleAuthSuccess:', err)
+                setError(err instanceof Error ? err.message : 'Authentication failed')
+                setIsLoading(false)
+              })
+            }
+          } else if (event.type === 'close') {
+            console.log('Modal closed by user')
+            // Only show error if authentication didn't succeed
+            if (!authSucceeded) {
+              setError('Authentication cancelled')
+              setIsLoading(false)
+            }
+          }
+        },
+      })
+    } catch (err) {
+      console.error('Failed to open modal:', err)
+      setError(`Failed to open authentication modal: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setIsLoading(false)
+    }
+  }
 
   const handleGitHubSignup = async () => {
     setIsLoading(true)
     setError(null)
+    setAuthSucceeded(false)
 
     try {
       // Generate a temporary user ID for signup
-      const userId = `signup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      
+      const tempUserId = `signup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+      console.log('Creating Nango connect session for signup...')
+
       // Create Nango connect session
       const { connectSessionToken } = await createNangoConnectSession(
-        userId,
+        tempUserId,
         'signup@example.com',
         'New User'
       )
 
-      // Redirect to login page with session token
-      window.location.href = `/login?sessionToken=${encodeURIComponent(connectSessionToken)}`
+      console.log('Connect session created, initializing Nango...')
+
+      // Initialize Nango
+      const nangoInstance = new Nango({ connectSessionToken })
+      setNango(nangoInstance)
+      setSessionToken(connectSessionToken)
+
+      // Open modal immediately
+      openConnectModal(nangoInstance, connectSessionToken)
+
     } catch (err) {
       console.error('Signup error:', err)
       setError(err instanceof Error ? err.message : 'Signup failed. Please try again.')
+      setIsLoading(false)
+    }
+  }
+
+  const handleAuthSuccess = async (connectionId: string) => {
+    try {
+      console.log('Authentication successful, handling callback...')
+      const redirectUrl = '/dashboard'
+
+      console.log('Calling Nango callback with connectionId:', connectionId)
+      const result = await handleNangoCallback(connectionId, redirectUrl)
+      console.log('Callback result:', result)
+
+      if (result.success) {
+        // Store the JWT token (use prpm_ prefix to match dashboard expectations)
+        localStorage.setItem('prpm_token', result.token)
+        localStorage.setItem('prpm_username', result.username)
+        // Also store with jwt_ prefix for backwards compatibility
+        localStorage.setItem('jwt_token', result.token)
+        localStorage.setItem('username', result.username)
+        console.log('Token stored in localStorage:', {
+          prpm_token: result.token.substring(0, 20) + '...',
+          prpm_username: result.username
+        })
+
+        // Web authentication - redirect to dashboard
+        const targetUrl = result.redirectUrl || '/dashboard'
+        console.log('Redirecting to dashboard:', targetUrl)
+
+        // Use Next.js router for better handling
+        router.push(targetUrl)
+
+        // Fallback to window.location if router doesn't work
+        setTimeout(() => {
+          if (window.location.pathname === '/signup') {
+            console.log('Router push may have failed, using window.location')
+            window.location.href = targetUrl
+          }
+        }, 1000)
+      } else {
+        console.error('Authentication failed:', result)
+        setError('Authentication failed. Please try again.')
+        setIsLoading(false)
+      }
+    } catch (err) {
+      console.error('Callback error:', err)
+      setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.')
       setIsLoading(false)
     }
   }
@@ -79,7 +180,7 @@ export default function SignupPage() {
             {isLoading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Setting up authentication...
+                Connecting...
               </>
             ) : (
               <>
@@ -90,6 +191,16 @@ export default function SignupPage() {
               </>
             )}
           </button>
+
+          {/* Retry button if modal doesn't open */}
+          {isLoading && nango && sessionToken && (
+            <button
+              onClick={() => openConnectModal(nango, sessionToken)}
+              className="w-full mt-3 px-4 py-2 bg-prpm-dark-card border border-prpm-border hover:border-prpm-accent text-gray-300 rounded-lg text-sm transition-all"
+            >
+              Modal didn't open? Click here to retry
+            </button>
+          )}
 
           {/* Benefits list */}
           <div className="mt-8 pt-6 border-t border-prpm-border">
