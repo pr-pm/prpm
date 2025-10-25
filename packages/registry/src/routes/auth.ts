@@ -81,58 +81,20 @@ async function authenticateWithNango(server: FastifyInstance, connectionId: stri
       // Update user object with connection
       user.nango_connection_id = connectionId;
     } else if (user.nango_connection_id !== connectionId) {
-      // User already has a connection, and this is a different one
-      // Check if this matches the incoming_connection_id
-      const refreshedUser = await queryOne<User>(
+      // User already has a permanent connection
+      // The connectionId here is the incoming one (for polling), not for API calls
+      server.log.info({
+        userId: user.id,
+        permanentConnectionId: user.nango_connection_id,
+        incomingConnectionId: connectionId
+      }, 'Callback with incoming connection (already handled by webhook)');
+
+      // Just update last login - webhook already handled incoming_connection_id
+      await query(
         server,
-        'SELECT * FROM users WHERE github_id = $1',
-        [String(githubUser.id)]
+        'UPDATE users SET last_login_at = NOW() WHERE id = $1',
+        [user.id]
       );
-
-      if (refreshedUser && refreshedUser.incoming_connection_id === connectionId) {
-        // This is the incoming connection - we should switch to it now
-        server.log.info({
-          userId: refreshedUser.id,
-          oldConnectionId: refreshedUser.nango_connection_id,
-          newConnectionId: connectionId
-        }, 'Callback using incoming connection, switching to it and deleting old one');
-
-        // Delete the old connection from Nango
-        if (refreshedUser.nango_connection_id) {
-          try {
-            await nangoService.deleteConnection(refreshedUser.nango_connection_id);
-            server.log.info({
-              deletedConnectionId: refreshedUser.nango_connection_id
-            }, 'Deleted old connection from Nango during callback');
-          } catch (error) {
-            server.log.error({
-              error,
-              connectionId: refreshedUser.nango_connection_id
-            }, 'Failed to delete old connection during callback');
-          }
-        }
-
-        // Switch to the incoming connection
-        await query(
-          server,
-          'UPDATE users SET nango_connection_id = $1, incoming_connection_id = NULL, last_login_at = NOW(), github_username = $2 WHERE id = $3',
-          [connectionId, githubUser.login, refreshedUser.id]
-        );
-
-        refreshedUser.nango_connection_id = connectionId;
-        refreshedUser.incoming_connection_id = null;
-        user = refreshedUser;
-      } else {
-        // Neither stored nor incoming matches - shouldn't happen
-        server.log.warn({
-          userId: user.id,
-          storedConnectionId: user.nango_connection_id,
-          providedConnectionId: connectionId
-        }, 'Callback received unexpected connection ID');
-
-        // Refresh user to be safe
-        user = refreshedUser || user;
-      }
     } else {
       // Same connection, just update last login
       await query(
@@ -303,24 +265,38 @@ export async function authRoutes(server: FastifyInstance) {
           );
 
           if (existingUser && existingUser.nango_connection_id && existingUser.nango_connection_id !== connectionId) {
-            // User already has a DIFFERENT connection - store the new one as incoming, don't switch yet
+            // User already has a permanent connection - store new one as incoming for this login session
             server.log.info({
               userId: existingUser.id,
-              storedConnectionId: existingUser.nango_connection_id,
+              permanentConnectionId: existingUser.nango_connection_id,
               incomingConnectionId: connectionId
-            }, 'User has a different connection, storing new one as incoming_connection_id');
+            }, 'Existing user logging in, storing session connection as incoming_connection_id');
 
-            // Store the incoming connection ID without changing the active one
+            // Store the incoming connection ID for this login session
             await query(
               server,
               'UPDATE users SET incoming_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
               [connectionId, githubUser.login, existingUser.id]
             );
 
+            // Delete this connection from Nango immediately since we only need it for polling
+            // The permanent nango_connection_id will be used for API calls
+            try {
+              await nangoService.deleteConnection(connectionId);
+              server.log.info({
+                connectionId
+              }, 'Deleted temporary login connection from Nango, user will poll against incoming_connection_id');
+            } catch (error) {
+              server.log.error({
+                error,
+                connectionId
+              }, 'Failed to delete temporary connection from Nango');
+            }
+
             server.log.info({
               userId: existingUser.id,
               incomingConnectionId: connectionId
-            }, 'Stored incoming connection ID, keeping stored connection unchanged');
+            }, 'Stored incoming connection ID for polling, permanent connection unchanged');
 
             // Patch the new connection with user metadata
             try {
@@ -353,8 +329,8 @@ export async function authRoutes(server: FastifyInstance) {
 
             const newUser = await queryOne<User>(
               server,
-              `INSERT INTO users (username, email, github_id, github_username, avatar_url, nango_connection_id, last_login_at)
-               VALUES ($1, $2, $3, $4, $5, $6, NOW())
+              `INSERT INTO users (username, email, github_id, github_username, avatar_url, nango_connection_id, incoming_connection_id, last_login_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $6, NOW())
                RETURNING *`,
               [
                 githubUser.login,
@@ -395,17 +371,30 @@ export async function authRoutes(server: FastifyInstance) {
             cliAuthSessions.set(endUser.endUserId, connectionId);
           } else {
             // Existing user without connection or same connection - update them
-            if (!existingUser.nango_connection_id || existingUser.nango_connection_id === connectionId) {
+            if (!existingUser.nango_connection_id) {
+              // First time connecting - set both nango_connection_id and incoming_connection_id
               await query(
                 server,
-                'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+                'UPDATE users SET nango_connection_id = $1, incoming_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
                 [connectionId, githubUser.login, existingUser.id]
               );
 
               server.log.info({
                 userId: existingUser.id,
                 connectionId
-              }, 'Updated existing user with connection in webhook');
+              }, 'Set permanent and incoming connection for existing user (first time)');
+            } else if (existingUser.nango_connection_id === connectionId) {
+              // Same connection - just update incoming and last login
+              await query(
+                server,
+                'UPDATE users SET incoming_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+                [connectionId, githubUser.login, existingUser.id]
+              );
+
+              server.log.info({
+                userId: existingUser.id,
+                connectionId
+              }, 'Updated incoming connection for same permanent connection');
 
               // Patch the connection with user metadata
               try {
@@ -474,10 +463,10 @@ export async function authRoutes(server: FastifyInstance) {
 
       server.log.info({ connectionId }, 'Checking auth status for connection');
 
-      // Check if webhook has created a user for this connection
+      // Check if webhook has created a user for this connection (check incoming_connection_id)
       const user = await queryOne<User>(
         server,
-        'SELECT * FROM users WHERE nango_connection_id = $1',
+        'SELECT * FROM users WHERE incoming_connection_id = $1',
         [connectionId]
       );
 
