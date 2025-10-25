@@ -25,7 +25,8 @@ interface Package {
   id: string
   name: string
   description: string
-  type: string
+  format: string
+  subtype: string
   total_downloads: number
   weekly_downloads: number
   monthly_downloads: number
