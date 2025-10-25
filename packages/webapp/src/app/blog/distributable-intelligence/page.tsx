@@ -124,11 +124,13 @@ export default function DistributableIntelligencePost() {
             </p>
           </div>
 
-          <h2>In Two Minutes</h2>
+          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+            <h2 className="text-3xl font-bold text-white mb-6">In Two Minutes</h2>
 
-          <p>
-            Codemods automate the first 60–80% of migrations. Docs explain the rest. Developers still wrestle with edge cases, conventions, and tests. <strong>PRPM closes the gap</strong> by letting maintainers publish executable knowledge:
-          </p>
+            <p className="text-gray-300 leading-relaxed text-lg mb-0">
+              Codemods automate the first 60–80% of migrations. Docs explain the rest. Developers still wrestle with edge cases, conventions, and tests. <strong className="text-white">PRPM closes the gap</strong> by letting maintainers publish executable knowledge:
+            </p>
+          </div>
 
           <ul>
             <li><strong>Rules</strong> - Declarative constraints AI enforces during code generation</li>
@@ -137,7 +139,7 @@ export default function DistributableIntelligencePost() {
           </ul>
 
           <p>
-            Developers <code>prpm install @vendor/migration-package</code>, their AI assistant loads it from <code>.ai/</code>, and performs context-aware changes across the repo, flags true edge cases, and generates tests that match your conventions.
+            Developers <code>prpm install @vendor/migration-package</code>, their AI assistant loads it from <code>.claude/</code> or <code>.cursor/</code>, and performs context-aware changes across the repo, flags true edge cases, and generates tests that match your conventions.
           </p>
 
           <div className="not-prose bg-prpm-accent/10 border border-prpm-accent/30 rounded-xl p-6 my-8 shadow-sm">
@@ -154,10 +156,12 @@ export default function DistributableIntelligencePost() {
             <li><strong>Framework authors</strong> - Smoother breaking changes, faster adoption</li>
             <li><strong>SaaS vendors</strong> - Deprecate old APIs sooner, fewer tickets</li>
             <li><strong>Enterprises</strong> - Codify standards once; every team's AI follows them</li>
-            <li><strong>OSS maintainers</strong> - Contributors generate PRs in your house style</li>
+            <li><strong>OSS maintainers</strong> - Contributors generate PRs in your <strong>house style</strong></li>
           </ul>
 
-          <h2>How It Works in 60 Seconds</h2>
+          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+            <h2 className="text-3xl font-bold text-white mb-0">How It Works in 60 Seconds</h2>
+          </div>
 
           <div className="not-prose mb-10">
             <h3 className="text-2xl font-bold text-white mb-4">1. Author</h3>
@@ -265,37 +269,75 @@ subtype: rule
 
           <p>Nango ships <strong>the complete suite:</strong></p>
 
-          <table>
-            <thead>
-              <tr>
-                <th>Component</th>
-                <th>Purpose</th>
-                <th>Coverage</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Migration Script</strong></td>
-                <td>Syntax-level transforms</td>
-                <td>70%</td>
-              </tr>
-              <tr>
-                <td><strong>Documentation</strong></td>
-                <td>Human learning</td>
-                <td>Reference</td>
-              </tr>
-              <tr>
-                <td><strong>PRPM Packages</strong></td>
-                <td>AI-executable knowledge</td>
-                <td>+25%</td>
-              </tr>
-              <tr>
-                <td><strong>Developer Review</strong></td>
-                <td>True edge cases</td>
-                <td>5%</td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Purpose</th>
+                  <th>Coverage</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Migration Script</strong></td>
+                  <td>Syntax-level transforms</td>
+                  <td>70%</td>
+                </tr>
+                <tr>
+                  <td><strong>Documentation</strong></td>
+                  <td>Human learning</td>
+                  <td>Reference</td>
+                </tr>
+                <tr>
+                  <td><strong>PRPM Packages</strong></td>
+                  <td>AI-executable knowledge</td>
+                  <td>+25%</td>
+                </tr>
+                <tr>
+                  <td><strong>Developer Review</strong></td>
+                  <td>True edge cases</td>
+                  <td>5%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-4 not-prose">
+            <div className="bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-white text-base">Migration Script</h4>
+                <span className="text-prpm-accent font-semibold text-sm">70%</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-0">Syntax-level transforms</p>
+            </div>
+
+            <div className="bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-white text-base">Documentation</h4>
+                <span className="text-gray-400 font-semibold text-sm">Reference</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-0">Human learning</p>
+            </div>
+
+            <div className="bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-white text-base">PRPM Packages</h4>
+                <span className="text-prpm-accent font-semibold text-sm">+25%</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-0">AI-executable knowledge</p>
+            </div>
+
+            <div className="bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-white text-base">Developer Review</h4>
+                <span className="text-prpm-accent font-semibold text-sm">5%</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-0">True edge cases</p>
+            </div>
+          </div>
 
           <div className="not-prose bg-prpm-accent/5 border-l-4 border-prpm-accent rounded-r-xl p-6 my-8">
             <p className="text-xl font-semibold text-prpm-accent mb-0">Total: 95% automated vs 70% with scripts alone</p>
@@ -438,7 +480,9 @@ subtype: rule
 
           <p className="text-xl font-semibold text-white">We're building the missing piece.</p>
 
-          <h2>Get Started</h2>
+          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+            <h2 className="text-3xl font-bold text-white mb-0">Get Started</h2>
+          </div>
 
           <div className="not-prose space-y-8">
             <div>
