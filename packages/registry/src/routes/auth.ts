@@ -298,44 +298,14 @@ export async function authRoutes(server: FastifyInstance) {
                 userId: existingUser.id,
                 connectionId
               }, 'Set permanent and incoming connection for existing user (first time)');
-            } else if (existingUser.nango_connection_id === connectionId) {
-              // Same connection - just update incoming and last login
-              await query(
-                server,
-                'UPDATE users SET incoming_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
-                [connectionId, githubUser.login, existingUser.id]
-              );
-
-              server.log.info({
+            } else {
+              // This shouldn't happen - Nango creates a new connection ID each time
+              // If it does, log a warning
+              server.log.warn({
                 userId: existingUser.id,
-                connectionId
-              }, 'Updated incoming connection for same permanent connection');
-
-              // Patch the connection with user metadata
-              try {
-                const tags: Record<string, string> = {};
-                if (existingUser.verified_author) {
-                  tags.verified_author = 'true';
-                }
-
-                await nangoService.patchConnection(connectionId, {
-                  id: existingUser.id,
-                  email: existingUser.email,
-                  display_name: existingUser.username,
-                  tags: Object.keys(tags).length > 0 ? tags : undefined,
-                });
-
-                server.log.info({
-                  userId: existingUser.id,
-                  connectionId,
-                  tags
-                }, 'Patched connection with existing user metadata in webhook');
-              } catch (error) {
-                server.log.error({ error, userId: existingUser.id, connectionId }, 'Failed to patch connection in webhook');
-              }
-
-              // Store the connection ID for CLI authentication sessions
-              cliAuthSessions.set(endUser.endUserId, connectionId);
+                storedConnectionId: existingUser.nango_connection_id,
+                newConnectionId: connectionId
+              }, 'Unexpected: received same connection ID as stored permanent connection');
             }
           }
         } catch (error) {
