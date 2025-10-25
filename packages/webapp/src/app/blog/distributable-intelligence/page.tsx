@@ -159,32 +159,52 @@ export default function DistributableIntelligencePost() {
 
           <h2>How It Works in 60 Seconds</h2>
 
-          <h3>1. Author</h3>
-          <p>Create rules, skills, and agents as Markdown files with YAML frontmatter:</p>
+          <div className="not-prose mb-10">
+            <h3 className="text-2xl font-bold text-white mb-4">1. Author</h3>
+            <p className="text-gray-300 leading-relaxed mb-6">Create rules, skills, and agents as Markdown files with YAML frontmatter:</p>
 
-          <pre className="language-bash"><code>{`$ prpm init
+            <pre className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 overflow-x-auto mb-6"><code className="text-sm text-gray-300 font-mono">{`$ prpm init
 # Creates prpm.json + example files`}</code></pre>
 
-          <pre className="language-markdown"><code>{`---
+            <div className="bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-6">
+              <pre className="text-sm text-gray-400 mb-4"><code>{`---
 format: cursor
 subtype: rule
----
+---`}</code></pre>
 
-# Nango TypeScript Patterns
+              <h4 className="text-lg font-bold text-white mb-3">Nango TypeScript Patterns</h4>
 
-Learn more at [Nango.dev](https://nango.dev)
+              <p className="text-sm text-gray-400 mb-4">
+                Learn more at <a href="https://nango.dev" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline font-medium">Nango.dev</a>
+              </p>
 
-When converting YAML integrations:
-- YAML \`sync\` → TypeScript class extending \`NangoSync\`
-- \`models\` array → generic type \`NangoSync<Model>\`
-- \`frequency\` → \`@Frequency\` decorator`}</code></pre>
+              <p className="text-sm text-gray-300 mb-2">When converting YAML integrations:</p>
+              <ul className="text-sm text-gray-300 space-y-2">
+                <li className="flex items-start">
+                  <span className="text-prpm-accent mr-2">•</span>
+                  <span>YAML <code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">sync</code> → TypeScript class extending <code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">NangoSync</code></span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-prpm-accent mr-2">•</span>
+                  <span><code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">models</code> array → generic type <code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">NangoSync&lt;Model&gt;</code></span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-prpm-accent mr-2">•</span>
+                  <span><code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">frequency</code> → <code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">@Frequency</code> decorator</span>
+                </li>
+              </ul>
+            </div>
+          </div>
 
-          <h3>2. Publish</h3>
-          <pre className="language-bash"><code>{`$ prpm publish
+          <div className="not-prose mb-10">
+            <h3 className="text-2xl font-bold text-white mb-4">2. Publish</h3>
+            <pre className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 overflow-x-auto"><code className="text-sm text-gray-300 font-mono">{`$ prpm publish
 ✓ Published @nango/yaml-to-ts-migration@1.0.0`}</code></pre>
+          </div>
 
-          <h3>3. Install & Apply</h3>
-          <pre className="language-bash"><code>{`$ prpm install @nango/yaml-to-ts-migration-agent
+          <div className="not-prose mb-10">
+            <h3 className="text-2xl font-bold text-white mb-4">3. Install & Apply</h3>
+            <pre className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 overflow-x-auto"><code className="text-sm text-gray-300 font-mono">{`$ prpm install @nango/yaml-to-ts-migration-agent
 ✓ Installed to .cursor/rules/nango/yaml-to-ts-migration-agent
 
 # In your AI assistant (Cursor/Claude/etc):
@@ -195,6 +215,7 @@ When converting YAML integrations:
 ✓ Generated tests
 ✓ Updated imports
 ⚠ 2 files require manual review (flagged)`}</code></pre>
+          </div>
 
           <div className="not-prose bg-prpm-accent/5 border-l-4 border-prpm-accent rounded-r-xl p-6 my-8">
             <p className="text-xl font-semibold text-prpm-accent mb-0">Total time: 30 minutes vs 2-4 hours</p>
@@ -419,22 +440,30 @@ When converting YAML integrations:
 
           <h2>Get Started</h2>
 
-          <h3>For Framework/Library Authors</h3>
-          <pre><code className="language-bash">{`$ prpm init
+          <div className="not-prose space-y-8">
+            <div>
+              <h3 className="text-2xl font-bold text-white mb-4">For Framework/Library Authors</h3>
+              <pre className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 overflow-x-auto"><code className="text-sm text-gray-300 font-mono">{`$ prpm init
 # Create migration rules, skills, and agents
 $ prpm publish @yourframework/v2-migration`}</code></pre>
+            </div>
 
-          <h3>For Enterprises</h3>
-          <pre><code className="language-bash">{`$ prpm init --private
+            <div>
+              <h3 className="text-2xl font-bold text-white mb-4">For Enterprises</h3>
+              <pre className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 overflow-x-auto"><code className="text-sm text-gray-300 font-mono">{`$ prpm init --private
 # Create internal rules and skills
 $ prpm publish @company/coding-standards --registry=company.prpm.dev`}</code></pre>
+            </div>
 
-          <h3>For Developers</h3>
-          <pre><code className="language-bash">{`$ prpm install @react/hooks-migration
+            <div>
+              <h3 className="text-2xl font-bold text-white mb-4">For Developers</h3>
+              <pre className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 overflow-x-auto"><code className="text-sm text-gray-300 font-mono">{`$ prpm install @react/hooks-migration
 $ prpm install @stripe/api-v4-migration
 # Let AI use these packages to write better code`}</code></pre>
+            </div>
+          </div>
 
-          <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-purple/20 border border-prpm-accent/30 rounded-2xl p-8 my-12 text-center">
+          <div className="not-prose bg-gradient-to-r from-prpm-accent/20 to-prpm-purple/20 border border-prpm-accent/30 rounded-2xl p-8 my-12 text-center">
             <p className="text-2xl font-bold text-white mb-4">Ready to build the future?</p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
