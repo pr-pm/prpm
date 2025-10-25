@@ -279,7 +279,7 @@ describe('Cross-format conversions', () => {
     it('should parse Cursor format', () => {
       canonical = fromCursor(sampleCursorFile, metadata);
       expect(canonical).toBeDefined();
-      expect(canonical.type).toBe('cursor');
+      expect(canonical.format).toBe('cursor');
     });
 
     it('should convert Cursor to Claude agent', () => {
@@ -339,7 +339,8 @@ describe('Cross-format conversions', () => {
     it('should parse Claude format', () => {
       canonical = fromClaude(sampleClaudeAgent, metadata);
       expect(canonical).toBeDefined();
-      expect(canonical.type).toBe('claude-agent');
+      expect(canonical.format).toBe('claude');
+      expect(canonical.subtype).toBe('agent');
     });
 
     it('should convert Claude to Cursor', () => {
@@ -394,7 +395,8 @@ describe('Cross-format conversions', () => {
     it('should parse Continue format', () => {
       canonical = fromContinue(sampleContinueFile, metadata);
       expect(canonical).toBeDefined();
-      expect(canonical.type).toBe('continue');
+      expect(canonical.format).toBe('continue');
+      expect(canonical.subtype).toBe('rule');
     });
 
     it('should convert Continue to Cursor', () => {
@@ -440,7 +442,7 @@ describe('Cross-format conversions', () => {
       it('should parse Copilot repo-wide format', () => {
         canonical = fromCopilot(sampleCopilotRepoWide, metadata);
         expect(canonical).toBeDefined();
-        expect(canonical.type).toBe('copilot');
+        expect(canonical.format).toBe('copilot');
       });
 
       it('should convert Copilot to Cursor', () => {
@@ -576,7 +578,7 @@ describe('Cross-format conversions', () => {
     it('should parse Windsurf format', () => {
       canonical = fromWindsurf(sampleWindsurfFile, metadata);
       expect(canonical).toBeDefined();
-      expect(canonical.type).toBe('windsurf');
+      expect(canonical.format).toBe('windsurf');
     });
 
     it('should convert Windsurf to Cursor', () => {
@@ -734,7 +736,8 @@ describe('Cross-format conversions', () => {
     it('should parse Cursor agent format', () => {
       canonical = fromCursor(sampleCursorAgent, metadata);
       expect(canonical).toBeDefined();
-      expect(canonical.type).toBe('cursor-agent');
+      expect(canonical.format).toBe('cursor');
+      expect(canonical.subtype).toBe('agent');
     });
 
     it('should convert Cursor agent to Claude agent', () => {
@@ -785,7 +788,8 @@ describe('Cross-format conversions', () => {
     it('should parse Cursor slash command format', () => {
       canonical = fromCursor(sampleCursorCommand, metadata);
       expect(canonical).toBeDefined();
-      expect(canonical.type).toBe('cursor-slash-command');
+      expect(canonical.format).toBe('cursor');
+      expect(canonical.subtype).toBe('slash-command');
     });
 
     it('should convert Cursor command to Claude slash command', () => {
@@ -836,7 +840,8 @@ describe('Cross-format conversions', () => {
     it('should parse Claude skill format', () => {
       canonical = fromClaude(sampleClaudeSkill, metadata);
       expect(canonical).toBeDefined();
-      expect(canonical.type).toBe('claude-skill');
+      expect(canonical.format).toBe('claude');
+      expect(canonical.subtype).toBe('skill');
     });
 
     it('should convert Claude skill to Cursor agent', () => {
@@ -886,7 +891,8 @@ describe('Cross-format conversions', () => {
     it('should parse Claude slash command format', () => {
       canonical = fromClaude(sampleClaudeSlashCommand, metadata);
       expect(canonical).toBeDefined();
-      expect(canonical.type).toBe('claude-slash-command');
+      expect(canonical.format).toBe('claude');
+      expect(canonical.subtype).toBe('slash-command');
     });
 
     it('should convert Claude command to Cursor slash command', () => {
