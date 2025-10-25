@@ -19,7 +19,8 @@ export interface ListPackagesQuery {
 
 export interface SearchQuery {
   q?: string;
-  type?: PackageType;
+  format?: Format;
+  subtype?: Subtype;
   category?: string;
   tags?: string | string[];
   verified?: boolean;
@@ -30,7 +31,8 @@ export interface SearchQuery {
 }
 
 export interface TrendingQuery {
-  type?: PackageType;
+  format?: Format;
+  subtype?: Subtype;
   limit?: number;
   offset?: number;
 }

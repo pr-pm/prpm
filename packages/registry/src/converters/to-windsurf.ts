@@ -47,28 +47,26 @@ export function toWindsurf(pkg: CanonicalPackage): ConversionResult {
     switch (section.type) {
       case 'persona': {
         // Convert persona to Role section
-        if (section.content.name) {
-          const emoji = section.content.emoji || '🤖';
-          const role = section.content.role || 'Assistant';
-          lines.push(`${emoji} **${section.content.name}** - ${role}`);
+        if (section.data.name) {
+          const icon = section.data.icon || '🤖';
+          const role = section.data.role || 'Assistant';
+          lines.push(`${icon} **${section.data.name}** - ${role}`);
+          lines.push('');
+        } else if (section.data.role) {
+          lines.push(`**Role:** ${section.data.role}`);
           lines.push('');
         }
 
-        if (section.content.tone) {
-          lines.push(`**Style:** ${section.content.tone}`);
+        if (section.data.style && section.data.style.length > 0) {
+          lines.push(`**Style:** ${section.data.style.join(', ')}`);
           lines.push('');
         }
 
-        if (section.content.expertise && section.content.expertise.length > 0) {
+        if (section.data.expertise && section.data.expertise.length > 0) {
           lines.push('**Expertise:**');
-          for (const exp of section.content.expertise) {
+          for (const exp of section.data.expertise) {
             lines.push(`- ${exp}`);
           }
-          lines.push('');
-        }
-
-        if (section.content.background) {
-          lines.push(section.content.background);
           lines.push('');
         }
         break;
@@ -76,21 +74,17 @@ export function toWindsurf(pkg: CanonicalPackage): ConversionResult {
 
       case 'instructions': {
         // Convert instructions
-        if (section.content.text) {
-          lines.push(section.content.text);
+        if (section.content) {
+          lines.push(section.content);
           lines.push('');
         }
+        break;
+      }
 
-        if (section.content.items && section.content.items.length > 0) {
-          for (const item of section.content.items) {
-            if (item.emphasis === 'strong') {
-              lines.push(`**${item.title || 'Important'}:** ${item.text}`);
-            } else if (item.emphasis === 'warning') {
-              lines.push(`⚠️ **Warning:** ${item.text}`);
-            } else {
-              lines.push(`- ${item.text}`);
-            }
-          }
+      case 'context': {
+        // Convert context section
+        if (section.content) {
+          lines.push(section.content);
           lines.push('');
         }
         break;
@@ -98,21 +92,23 @@ export function toWindsurf(pkg: CanonicalPackage): ConversionResult {
 
       case 'rules': {
         // Convert rules to numbered or bulleted list
-        if (section.content.items && section.content.items.length > 0) {
-          for (let i = 0; i < section.content.items.length; i++) {
-            const rule = section.content.items[i];
-            const prefix = section.content.ordered ? `${i + 1}.` : '-';
+        if (section.items && section.items.length > 0) {
+          for (let i = 0; i < section.items.length; i++) {
+            const rule = section.items[i];
+            const prefix = section.ordered ? `${i + 1}.` : '-';
 
-            lines.push(`${prefix} ${rule.text}`);
+            lines.push(`${prefix} ${rule.content}`);
 
             // Add rationale if present
             if (rule.rationale) {
               lines.push(`   - *Rationale: ${rule.rationale}*`);
             }
 
-            // Add example if present
-            if (rule.example) {
-              lines.push(`   - Example: ${rule.example}`);
+            // Add examples if present
+            if (rule.examples && rule.examples.length > 0) {
+              for (const example of rule.examples) {
+                lines.push(`   - Example: ${example}`);
+              }
             }
           }
           lines.push('');
@@ -122,13 +118,8 @@ export function toWindsurf(pkg: CanonicalPackage): ConversionResult {
 
       case 'examples': {
         // Convert examples
-        if (section.content.items && section.content.items.length > 0) {
-          for (const example of section.content.items) {
-            if (example.title) {
-              lines.push(`### ${example.title}`);
-              lines.push('');
-            }
-
+        if (section.examples && section.examples.length > 0) {
+          for (const example of section.examples) {
             if (example.description) {
               lines.push(example.description);
               lines.push('');
@@ -150,43 +141,34 @@ export function toWindsurf(pkg: CanonicalPackage): ConversionResult {
         // Convert tools configuration
         warnings.push('Tools configuration may not be supported by Windsurf');
 
-        if (section.content.items && section.content.items.length > 0) {
+        if (section.tools && section.tools.length > 0) {
           lines.push('**Available Tools:**');
           lines.push('');
-          for (const tool of section.content.items) {
-            lines.push(`- **${tool.name}**`);
-            if (tool.description) {
-              lines.push(`  ${tool.description}`);
-            }
+          for (const tool of section.tools) {
+            lines.push(`- ${tool}`);
+          }
+          if (section.description) {
+            lines.push('');
+            lines.push(section.description);
           }
           lines.push('');
         }
         break;
       }
 
-      case 'reference': {
-        // Convert reference section
-        if (section.content.text) {
-          lines.push(section.content.text);
-          lines.push('');
-        }
-
-        if (section.content.links && section.content.links.length > 0) {
-          lines.push('**References:**');
-          for (const link of section.content.links) {
-            lines.push(`- [${link.title}](${link.url})`);
-          }
+      case 'custom': {
+        // Custom section - just add content
+        if (section.content) {
+          lines.push(section.content);
           lines.push('');
         }
         break;
       }
 
       default: {
-        // Generic section - just add content
-        if (section.content.text) {
-          lines.push(section.content.text);
-          lines.push('');
-        }
+        // Unknown section type - skip
+        warnings.push(`Unknown section type: ${(section as any).type}`);
+        break;
       }
     }
   }
