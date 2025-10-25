@@ -21,6 +21,7 @@ import type { CanonicalPackage } from '../../types/canonical.js';
 
 const metadata = {
   id: 'test-package',
+  name: 'Test Package',
   version: '1.0.0',
   author: 'test-author',
   tags: ['test'],
