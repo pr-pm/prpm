@@ -3,6 +3,7 @@
  * Converts GitHub Copilot instructions to canonical format
  */
 
+import yaml from 'js-yaml';
 import type {
   CanonicalPackage,
   CanonicalContent,
@@ -94,17 +95,22 @@ function parseFrontmatter(content: string): {
 
   const [, frontmatterText, body] = match;
 
-  // Parse applyTo field
-  const frontmatter: { applyTo?: string } = {};
+  try {
+    // Parse YAML frontmatter
+    const parsed = yaml.load(frontmatterText) as Record<string, unknown>;
 
-  frontmatterText.split('\n').forEach(line => {
-    const applyToMatch = line.match(/^\s*applyTo:\s*"([^"]+)"\s*$/);
-    if (applyToMatch) {
-      frontmatter.applyTo = applyToMatch[1];
+    const frontmatter: { applyTo?: string } = {};
+
+    if (parsed && typeof parsed === 'object' && 'applyTo' in parsed && typeof parsed.applyTo === 'string') {
+      frontmatter.applyTo = parsed.applyTo;
     }
-  });
 
-  return { frontmatter, body };
+    return { frontmatter, body };
+  } catch (error) {
+    // If YAML parsing fails, return empty frontmatter
+    console.warn('Failed to parse YAML frontmatter:', error);
+    return { frontmatter: {}, body };
+  }
 }
 
 /**

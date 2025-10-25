@@ -3,6 +3,7 @@
  * Converts Kiro steering files to canonical format
  */
 
+import yaml from 'js-yaml';
 import type {
   CanonicalPackage,
   CanonicalContent,
@@ -113,25 +114,34 @@ function parseFrontmatter(content: string): {
 
   const [, frontmatterText, body] = match;
 
-  // Parse frontmatter fields
-  const frontmatter: {
-    inclusion?: 'always' | 'fileMatch' | 'manual';
-    fileMatchPattern?: string;
-  } = {};
+  try {
+    // Parse YAML frontmatter
+    const parsed = yaml.load(frontmatterText) as Record<string, unknown>;
 
-  frontmatterText.split('\n').forEach(line => {
-    const inclusionMatch = line.match(/^\s*inclusion:\s*(always|fileMatch|manual)\s*$/);
-    if (inclusionMatch) {
-      frontmatter.inclusion = inclusionMatch[1] as 'always' | 'fileMatch' | 'manual';
+    const frontmatter: {
+      inclusion?: 'always' | 'fileMatch' | 'manual';
+      fileMatchPattern?: string;
+    } = {};
+
+    if (parsed && typeof parsed === 'object') {
+      // Parse inclusion field
+      if ('inclusion' in parsed) {
+        const inclusion = parsed.inclusion;
+        if (inclusion === 'always' || inclusion === 'fileMatch' || inclusion === 'manual') {
+          frontmatter.inclusion = inclusion;
+        }
+      }
+
+      // Parse fileMatchPattern field
+      if ('fileMatchPattern' in parsed && typeof parsed.fileMatchPattern === 'string') {
+        frontmatter.fileMatchPattern = parsed.fileMatchPattern;
+      }
     }
 
-    const patternMatch = line.match(/^\s*fileMatchPattern:\s*"([^"]+)"\s*$/);
-    if (patternMatch) {
-      frontmatter.fileMatchPattern = patternMatch[1];
-    }
-  });
-
-  return { frontmatter, body };
+    return { frontmatter, body };
+  } catch (error) {
+    throw new Error(`Failed to parse YAML frontmatter: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 /**
