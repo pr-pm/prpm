@@ -27,7 +27,8 @@ export interface PackageManifest {
   license?: string;
   repository?: string;
   homepage?: string;
-  type: string;
+  format: Format;
+  subtype?: Subtype;
   tags?: string[];
   keywords?: string[];
   category?: string;
@@ -65,7 +66,8 @@ export interface SearchPackage {
   id: string;
   name: string;
   description?: string;
-  type: PackageType;
+  format: Format;
+  subtype: Subtype;
   tags: string[];
   category?: string;
   total_downloads: number;

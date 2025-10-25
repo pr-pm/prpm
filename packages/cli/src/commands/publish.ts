@@ -90,16 +90,16 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
   const hasEnhancedFormat = manifest.files.some(f => typeof f === 'object');
 
   if (hasEnhancedFormat) {
-    // Check if files have multiple distinct types
-    const fileTypes = new Set(
+    // Check if files have multiple distinct formats
+    const fileFormats = new Set(
       (manifest.files as PackageFileMetadata[])
         .filter(f => typeof f === 'object')
-        .map(f => f.type)
+        .map(f => f.format)
     );
 
-    // Only suggest "collection" if there are multiple distinct types
-    if (fileTypes.size > 1 && manifest.subtype !== 'collection') {
-      console.warn('⚠️  Package contains multiple file types. Consider setting subtype to "collection" for clarity.');
+    // Only suggest "collection" if there are multiple distinct formats
+    if (fileFormats.size > 1 && manifest.subtype !== 'collection') {
+      console.warn('⚠️  Package contains multiple file formats. Consider setting subtype to "collection" for clarity.');
     }
   }
 
