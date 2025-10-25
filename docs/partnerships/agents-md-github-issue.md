@@ -19,8 +19,8 @@ We've built [PRPM (Prompt Package Manager)](https://prpm.dev) - an early-stage p
 ### What PRPM Offers the agents.md Ecosystem
 
 1. **Immediate content library**: 1,500+ existing AI configurations that can convert to agents.md
-2. **Migration path**: Convert tool-specific formats (`.cursorrules`, `.github/copilot-instructions.md`, etc.) to agents.md
-3. **Easy installation**: `prpm install nango/typescript-patterns --format agents.md`
+2. **Migration path**: Convert tool-specific formats (`.cursor/rules`, `.github/copilot-instructions.md`, etc.) to agents.md
+3. **Easy installation**: `prpm install typescript-best-practices --format agents.md`
 4. **Quality validation**: Conversion scoring ensures agents.md files work well with Codex and other tools
 
 ### Example Usage
@@ -33,7 +33,7 @@ npm install -g @pr-pm/cli
 prpm search typescript
 
 # Install as agents.md format
-prpm install nango/typescript-patterns --format agents.md
+prpm install typescript-best-practices --format agents.md
 ```
 
 Result: An `agents.md` file is created in your project root with proven TypeScript patterns, ready to guide coding agents.
@@ -58,11 +58,11 @@ This could appear in the README, website, or a dedicated "Ecosystem" page.
 
 ### Why This Matters
 
-Converting formats is only valuable if the source content is good. Real companies have shared proven patterns:
+Converting formats is only valuable if the source content is good. Communities have shared proven patterns:
 
-- **Nango**: Used distributable TypeScript patterns to migrate 47 repos in 3 days
-- **cursor.directory**: Community has created 1,000+ proven coding rules
+- **cursor.directory**: Community has created 1,000+ proven coding rules in `.cursor/rules` format
 - **Claude/Continue users**: Hundreds of tested skills and agents
+- **GitHub Copilot users**: Path-specific instructions in `.github/copilot-instructions.md`
 
 All of this can become agents.md content, making it easier for new teams to adopt the standard instead of starting from scratch.
 

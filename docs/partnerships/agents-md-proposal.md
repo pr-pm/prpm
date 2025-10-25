@@ -24,7 +24,7 @@ PRPM is a package manager (like npm, but for AI tool configurations) that:
 
 1. **Provides a searchable registry** of 1,500+ AI coding configurations
 2. **Converts between formats** - including to/from agents.md
-3. **Makes installation simple**: `prpm install nango/typescript-patterns --format agents.md`
+3. **Makes installation simple**: `prpm install typescript-best-practices --format agents.md`
 4. **Enables sharing** of proven patterns across teams and projects
 
 ## How This Benefits agents.md
@@ -33,12 +33,12 @@ We believe PRPM could help drive agents.md adoption in several ways:
 
 ### 1. Immediate Content Library
 - 1,500+ existing packages can be converted to agents.md format
-- Companies like Nango, cursor.directory contributors, and others have shared proven patterns
+- Communities like cursor.directory contributors have shared proven patterns
 - New agents.md users get working examples instantly instead of starting from blank files
 
 ### 2. Migration Path from Tool-Specific Formats
 Many teams already use:
-- `.cursorrules` (Cursor)
+- `.cursor/rules` (Cursor)
 - `.github/copilot-instructions.md` (GitHub Copilot)
 - `.claude/` files (Claude)
 - `.kiro/steering/` (Kiro)
@@ -56,7 +56,7 @@ We'd be honored if agents.md documentation could include a brief mention like:
 >
 > - **[PRPM](https://prpm.dev)** - A package manager for AI coding configurations with native agents.md support. Install pre-written agents.md files from a registry of 1,500+ configurations, or convert existing tool-specific formats to agents.md.
 >   ```bash
->   prpm install nango/typescript-patterns --format agents.md
+>   prpm install typescript-best-practices --format agents.md
 >   ```
 
 This could appear in:
@@ -94,7 +94,7 @@ npm install -g @pr-pm/cli
 prpm search typescript
 
 # Install as agents.md format
-prpm install nango/typescript-patterns --format agents.md
+prpm install typescript-best-practices --format agents.md
 
 # Result: agents.md file created in project root with proven TypeScript patterns
 ```
@@ -106,7 +106,7 @@ The converted agents.md file maintains quality because:
 
 ## Why We Built This
 
-We saw developers constantly re-writing the same .cursorrules, .github/copilot-instructions.md, and other files across projects. Meanwhile, companies like Nango were sharing incredible patterns (they migrated 47 repos in 3 days using distributable knowledge), but there was no standard way to package and share this work.
+We saw developers constantly re-writing the same `.cursor/rules`, `.github/copilot-instructions.md`, and other files across projects. Communities were sharing incredible patterns, but there was no standard way to package and distribute this work across different AI coding tools.
 
 The agents.md format is the perfect standard to rally around - simple, open, and backed by major players. We want to help it succeed.
 
