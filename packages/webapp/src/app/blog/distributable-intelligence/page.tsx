@@ -269,37 +269,75 @@ subtype: rule
 
           <p>Nango ships <strong>the complete suite:</strong></p>
 
-          <table>
-            <thead>
-              <tr>
-                <th>Component</th>
-                <th>Purpose</th>
-                <th>Coverage</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Migration Script</strong></td>
-                <td>Syntax-level transforms</td>
-                <td>70%</td>
-              </tr>
-              <tr>
-                <td><strong>Documentation</strong></td>
-                <td>Human learning</td>
-                <td>Reference</td>
-              </tr>
-              <tr>
-                <td><strong>PRPM Packages</strong></td>
-                <td>AI-executable knowledge</td>
-                <td>+25%</td>
-              </tr>
-              <tr>
-                <td><strong>Developer Review</strong></td>
-                <td>True edge cases</td>
-                <td>5%</td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Purpose</th>
+                  <th>Coverage</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Migration Script</strong></td>
+                  <td>Syntax-level transforms</td>
+                  <td>70%</td>
+                </tr>
+                <tr>
+                  <td><strong>Documentation</strong></td>
+                  <td>Human learning</td>
+                  <td>Reference</td>
+                </tr>
+                <tr>
+                  <td><strong>PRPM Packages</strong></td>
+                  <td>AI-executable knowledge</td>
+                  <td>+25%</td>
+                </tr>
+                <tr>
+                  <td><strong>Developer Review</strong></td>
+                  <td>True edge cases</td>
+                  <td>5%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-4 not-prose">
+            <div className="bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-white text-base">Migration Script</h4>
+                <span className="text-prpm-accent font-semibold text-sm">70%</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-0">Syntax-level transforms</p>
+            </div>
+
+            <div className="bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-white text-base">Documentation</h4>
+                <span className="text-gray-400 font-semibold text-sm">Reference</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-0">Human learning</p>
+            </div>
+
+            <div className="bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-white text-base">PRPM Packages</h4>
+                <span className="text-prpm-accent font-semibold text-sm">+25%</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-0">AI-executable knowledge</p>
+            </div>
+
+            <div className="bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-white text-base">Developer Review</h4>
+                <span className="text-prpm-accent font-semibold text-sm">5%</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-0">True edge cases</p>
+            </div>
+          </div>
 
           <div className="not-prose bg-prpm-accent/5 border-l-4 border-prpm-accent rounded-r-xl p-6 my-8">
             <p className="text-xl font-semibold text-prpm-accent mb-0">Total: 95% automated vs 70% with scripts alone</p>
