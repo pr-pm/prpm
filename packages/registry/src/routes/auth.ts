@@ -19,95 +19,30 @@ const SALT_ROUNDS = 10;
  * Returns user, jwtToken, and whether this was a new user creation
  */
 async function authenticateWithNango(server: FastifyInstance, connectionId: string): Promise<{ user: User; jwtToken: string; isNewUser: boolean }> {
-  // Get GitHub user data via Nango proxy
-  const githubUser = await nangoService.getGitHubUser(connectionId);
-  server.log.info({ login: githubUser.login, id: githubUser.id }, 'Fetched GitHub user data via Nango');
+  // The webhook has already handled creating/updating the user
+  // We just need to look up the user by incoming_connection_id and return JWT
 
-  // Get user emails via Nango proxy
-  const { email: primaryEmail } = await nangoService.getGitHubUser(connectionId);
+  server.log.info({ connectionId }, 'Callback authenticating user with incoming connection');
 
-  if (!primaryEmail) {
-    throw new Error('No email found in GitHub account');
-  }
-
-  // Find or create user
-  let user = await queryOne<User>(
+  // Find user by incoming_connection_id (webhook already set this)
+  const user = await queryOne<User>(
     server,
-    'SELECT * FROM users WHERE github_id = $1',
-    [String(githubUser.id)]
+    'SELECT * FROM users WHERE incoming_connection_id = $1',
+    [connectionId]
   );
 
-  let isNewUser = false;
-
   if (!user) {
-    isNewUser = true;
-    // Create new user
-    user = await queryOne<User>(
-      server,
-      `INSERT INTO users (username, email, github_id, github_username, avatar_url, nango_connection_id, last_login_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW())
-       RETURNING *`,
-      [
-        githubUser.login,
-        primaryEmail,
-        String(githubUser.id),
-        githubUser.login,
-        githubUser.avatar_url,
-        connectionId,
-      ]
-    );
-
-    if (user) {
-      server.log.info({
-        userId: user.id,
-        connectionId
-      }, 'Created new user with connection');
-    }
-  } else {
-    // Existing user
-    if (!user.nango_connection_id) {
-      // User doesn't have a connection yet - set this as their first connection
-      server.log.info({
-        userId: user.id,
-        connectionId
-      }, 'Setting first connection for existing user');
-
-      await query(
-        server,
-        'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
-        [connectionId, githubUser.login, user.id]
-      );
-
-      // Update user object with connection
-      user.nango_connection_id = connectionId;
-    } else if (user.nango_connection_id !== connectionId) {
-      // User already has a permanent connection
-      // The connectionId here is the incoming one (for polling), not for API calls
-      server.log.info({
-        userId: user.id,
-        permanentConnectionId: user.nango_connection_id,
-        incomingConnectionId: connectionId
-      }, 'Callback with incoming connection (already handled by webhook)');
-
-      // Just update last login - webhook already handled incoming_connection_id
-      await query(
-        server,
-        'UPDATE users SET last_login_at = NOW() WHERE id = $1',
-        [user.id]
-      );
-    } else {
-      // Same connection, just update last login
-      await query(
-        server,
-        'UPDATE users SET last_login_at = NOW(), github_username = $2 WHERE id = $1',
-        [user.id, githubUser.login]
-      );
-    }
+    throw new Error('User not found - webhook may not have processed yet');
   }
 
-  if (!user) {
-    throw new Error('Failed to create or fetch user');
-  }
+  server.log.info({
+    userId: user.id,
+    username: user.username,
+    connectionId
+  }, 'Found user by incoming connection, generating JWT');
+
+  // Determine if this is a new user (both connections are the same = first time)
+  const isNewUser = user.nango_connection_id === user.incoming_connection_id;
 
   // Generate JWT
   const jwtToken = server.jwt.sign({
