@@ -1,0 +1,12 @@
+Codemods automate 70% of migrations. Docs explain the rest. Developers still spend hours wrestling with edge cases, conventions, and tests.
+
+We've all been there: following a 12,000-word migration guide, copy-pasting patterns, missing edge cases, and spending 2 hours debugging why tests fail. The gap between automated scripts and comprehensive docs is where most migration time gets lost.
+
+That's why we built PRPM (Prompt Package Manager). Instead of choosing between codemods (fast but incomplete) and docs (complete but manual), you can now ship executable knowledge that AI assistants apply consistently across your entire codebase.
+
+Real example: Nango used PRPM packages to migrate 47 repositories in 3 days with zero regressions. What used to take weeks of careful manual work—reading docs, applying patterns, fixing edge cases—now takes hours.
+
+Read the full vision for distributable intelligence:
+https://prpm.dev/blog/distributable-intelligence
+
+#AI #DeveloperTools #Migration #SoftwareEngineering #DevEx

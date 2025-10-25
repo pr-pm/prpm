@@ -1,0 +1,18 @@
+Package managers fundamentally changed how we ship code. npm, pip, cargo—they made it trivial to install and share libraries across projects.
+
+But there's been no equivalent for AI instructions. Every team writes their own Cursor rules, Claude skills, and Copilot instructions from scratch. Copy-paste between projects. Reinvent patterns that dozens of other teams have already solved.
+
+Today, we're launching PRPM (Prompt Package Manager)—a universal registry for AI prompts, agents, skills, and rules that work across Cursor, Claude, Continue, Windsurf, and any future AI editor.
+
+Instead of copy-pasting .cursorrules files between projects, you can:
+• Install curated packages: prpm install @nextjs/app-router
+• Publish your own patterns for others to use
+• Get automatic format conversion for your specific AI editor
+• Browse 1,500+ packages from the community
+
+We built the infrastructure we wanted to exist: format-agnostic, privacy-first, and as reliable as npm.
+
+Learn more and install your first package:
+https://prpm.dev/blog/introducing-prpm
+
+#AI #OpenSource #DeveloperTools #Productivity #SoftwareEngineering

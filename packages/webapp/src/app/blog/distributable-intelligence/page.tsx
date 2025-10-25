@@ -1,0 +1,438 @@
+import Link from 'next/link'
+import Image from 'next/image'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: "PRPM: Distributable Intelligence for AI-Assisted Development",
+  description: "Ship rules, skills, and agents that make breaking changes painless. PRPM is the package manager for AI coding assistants—making migrations and refactors correct by default.",
+  openGraph: {
+    title: "PRPM: Distributable Intelligence for AI-Assisted Development",
+    description: "The missing piece between docs and codemods. Ship executable knowledge that AI can apply across entire codebases.",
+  },
+}
+
+export default function DistributableIntelligencePost() {
+  return (
+    <main className="min-h-screen bg-prpm-dark">
+      {/* Navigation */}
+      <nav className="border-b border-prpm-border bg-prpm-dark-card backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16 items-center">
+            <div className="flex items-center gap-8">
+              <Link href="/" className="flex items-center gap-3">
+                <Image src="/logo-icon.svg" alt="PRPM Logo" width={40} height={40} className="w-10 h-10" />
+                <span className="text-2xl font-bold bg-gradient-to-r from-prpm-accent to-prpm-purple bg-clip-text text-transparent">
+                  PRPM
+                </span>
+              </Link>
+              <div className="hidden md:flex items-center gap-6">
+                <Link href="/search" className="text-gray-400 hover:text-white transition-colors">
+                  Search
+                </Link>
+                <Link href="/authors" className="text-gray-400 hover:text-white transition-colors">
+                  Authors
+                </Link>
+                <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">
+                  Blog
+                </Link>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://github.com/pr-pm/prpm"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Article */}
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Back button */}
+        <Link
+          href="/blog"
+          className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Blog
+        </Link>
+
+        {/* Header */}
+        <header className="mb-12">
+          <div className="flex flex-wrap gap-2 mb-4">
+            <span className="px-3 py-1 bg-prpm-accent/10 border border-prpm-accent/30 rounded-full text-prpm-accent text-sm font-medium">
+              Vision
+            </span>
+            <span className="px-3 py-1 bg-prpm-accent/10 border border-prpm-accent/30 rounded-full text-prpm-accent text-sm font-medium">
+              Technical
+            </span>
+            <span className="px-3 py-1 bg-prpm-accent/10 border border-prpm-accent/30 rounded-full text-prpm-accent text-sm font-medium">
+              AI Development
+            </span>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 text-white leading-tight">
+            PRPM: Distributable Intelligence for AI-Assisted Development
+          </h1>
+
+          <p className="text-2xl text-gray-400 mb-6">
+            Ship rules, skills, and agents that make breaking changes painless—install once, every AI assistant understands your patterns.
+          </p>
+
+          <div className="flex items-center gap-4 text-gray-400 text-sm">
+            <span>By PRPM Team</span>
+            <span>•</span>
+            <span>October 25, 2025</span>
+            <span>•</span>
+            <span>15 min read</span>
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="prose prose-invert prose-lg max-w-none
+          prose-headings:text-white prose-headings:font-bold
+          prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6
+          prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
+          prose-p:text-gray-300 prose-p:leading-relaxed
+          prose-a:text-prpm-accent prose-a:no-underline hover:prose-a:underline
+          prose-code:text-prpm-accent prose-code:bg-prpm-dark-card prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+          prose-pre:bg-prpm-dark-card prose-pre:border prose-pre:border-prpm-border
+          prose-strong:text-white prose-strong:font-semibold
+          prose-ul:text-gray-300 prose-ol:text-gray-300
+          prose-li:text-gray-300
+          prose-blockquote:border-l-prpm-accent prose-blockquote:text-gray-400
+          prose-table:text-gray-300
+          prose-th:text-white prose-th:bg-prpm-dark-card
+          prose-td:border-prpm-border
+        ">
+          {/* Intro */}
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-2xl p-8 mb-8">
+            <p className="text-xl text-gray-300 leading-relaxed mb-4">
+              <strong className="text-white">In one line:</strong> PRPM is a package manager for AI coding assistants—ship rules, skills, and agents that make migrations and refactors correct by default.
+            </p>
+          </div>
+
+          <h2>In Two Minutes</h2>
+
+          <p>
+            Codemods automate the first 60–80% of migrations. Docs explain the rest. Developers still wrestle with edge cases, conventions, and tests. <strong>PRPM closes the gap</strong> by letting maintainers publish executable knowledge:
+          </p>
+
+          <ul>
+            <li><strong>Rules</strong> - Declarative constraints AI enforces during code generation</li>
+            <li><strong>Skills</strong> - Step-by-step procedures for specific tasks</li>
+            <li><strong>Agents</strong> - Multi-file orchestration with edge case detection</li>
+          </ul>
+
+          <p>
+            Developers <code>prpm install @vendor/migration-package</code>, their AI assistant loads it from <code>.ai/</code>, and performs context-aware changes across the repo, flags true edge cases, and generates tests that match your conventions.
+          </p>
+
+          <div className="bg-prpm-accent/10 border border-prpm-accent/30 rounded-xl p-6 my-8">
+            <p className="font-semibold text-white mb-2">Outcome:</p>
+            <p className="mb-0">95% of migration work handled automatically vs 70% with scripts alone. Faster upgrades, consistent code, materially fewer support tickets.</p>
+          </div>
+
+          <p>
+            <strong>Why now:</strong> AI can refactor entire codebases, but it lacks framework- and company-specific patterns. PRPM provides a universal format with converters for Cursor/Windsurf/Claude/Copilot, versioned distribution, and a registry for discovery and updates.
+          </p>
+
+          <p><strong>Who benefits:</strong></p>
+          <ul>
+            <li><strong>Framework authors</strong> - Smoother breaking changes, faster adoption</li>
+            <li><strong>SaaS vendors</strong> - Deprecate old APIs sooner, fewer tickets</li>
+            <li><strong>Enterprises</strong> - Codify standards once; every team's AI follows them</li>
+            <li><strong>OSS maintainers</strong> - Contributors generate PRs in your house style</li>
+          </ul>
+
+          <h2>How It Works in 60 Seconds</h2>
+
+          <h3>1. Author</h3>
+          <p>Create rules, skills, and agents as Markdown files with YAML frontmatter:</p>
+
+          <pre><code className="language-bash">{`$ prpm init
+# Creates prpm.json + example files`}</code></pre>
+
+          <pre><code className="language-markdown">{`---
+format: cursor
+subtype: rule
+---
+
+# Nango TypeScript Patterns
+
+When converting YAML integrations:
+- YAML \`sync\` → TypeScript class extending \`NangoSync\`
+- \`models\` array → generic type \`NangoSync<Model>\`
+- \`frequency\` → \`@Frequency\` decorator`}</code></pre>
+
+          <h3>2. Publish</h3>
+          <pre><code className="language-bash">{`$ prpm publish
+✓ Published @nango/yaml-to-ts-migration@1.0.0`}</code></pre>
+
+          <h3>3. Install & Apply</h3>
+          <pre><code className="language-bash">{`$ prpm install @nango/yaml-to-ts-migration-agent
+✓ Installed to .ai/nango/yaml-to-ts-migration-agent
+
+# In your AI assistant (Cursor/Claude/etc):
+"Migrate all YAML integrations to TypeScript"
+
+# AI (with package loaded):
+✓ Migrated 12 integrations
+✓ Generated tests
+✓ Updated imports
+⚠ 2 files require manual review (flagged)`}</code></pre>
+
+          <p className="text-xl font-semibold text-prpm-accent">Total time: 30 minutes vs 2-4 hours</p>
+
+          <h2>The Problem: Edge Cases Stall Migrations</h2>
+
+          <h3>Traditional Approach</h3>
+          <p>When frameworks ship breaking changes:</p>
+          <ol>
+            <li><strong>Migration script</strong> - Handles 60-80% (syntax-level transforms)</li>
+            <li><strong>Documentation</strong> - Explains patterns and edge cases</li>
+            <li><strong>Support channels</strong> - Field hundreds of questions</li>
+            <li><strong>Months of lag</strong> - Adoption delayed by migration pain</li>
+          </ol>
+
+          <p><strong>Result:</strong> Slow adoption, fragmented ecosystem, support burden</p>
+
+          <h3>Real Example: Nango's YAML → TypeScript Migration</h3>
+
+          <p>When Nango migrated from YAML-based integrations to TypeScript, they provided:</p>
+
+          <p>✅ <strong>Migration script:</strong> <code>nango migrate yaml-to-ts</code></p>
+          <ul>
+            <li>Converts basic YAML structure</li>
+            <li>Handles ~70% of common cases</li>
+          </ul>
+
+          <p>✅ <strong>Documentation:</strong> Migration guide with examples</p>
+          <ul>
+            <li>API reference for new TypeScript classes</li>
+            <li>Pattern explanations</li>
+          </ul>
+
+          <p>❌ <strong>Missing:</strong> Deep knowledge for AI to complete migration</p>
+          <ul>
+            <li>Which TypeScript patterns for each YAML feature</li>
+            <li>How to handle pagination logic correctly</li>
+            <li>Webhook migration with proper typing</li>
+            <li>Test generation matching Nango conventions</li>
+            <li>Edge case detection and reporting</li>
+          </ul>
+
+          <p><strong>Gap:</strong> Developers manually convert 30% of cases by reading docs, trial-and-error on type errors, hoping they match Nango's patterns.</p>
+
+          <h3>The PRPM Solution</h3>
+
+          <p>Nango ships <strong>the complete suite:</strong></p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Purpose</th>
+                <th>Coverage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Migration Script</strong></td>
+                <td>Syntax-level transforms</td>
+                <td>70%</td>
+              </tr>
+              <tr>
+                <td><strong>Documentation</strong></td>
+                <td>Human learning</td>
+                <td>Reference</td>
+              </tr>
+              <tr>
+                <td><strong>PRPM Packages</strong></td>
+                <td>AI-executable knowledge</td>
+                <td>+25%</td>
+              </tr>
+              <tr>
+                <td><strong>Developer Review</strong></td>
+                <td>True edge cases</td>
+                <td>5%</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p className="text-xl font-semibold text-prpm-accent">Total: 95% automated vs 70% with scripts alone</p>
+
+          <h2>Package Types: Rules, Skills, Agents</h2>
+
+          <h3>Rules</h3>
+          <p><strong>Declarative constraints enforced during code generation</strong></p>
+
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 my-6">
+            <p className="text-sm text-gray-400 mb-2">Example: Nango TypeScript Integration Rules</p>
+            <ul className="text-sm">
+              <li>Sync configs extend <code>NangoSync&lt;ModelType&gt;</code></li>
+              <li>Action configs extend <code>NangoAction&lt;InputType, OutputType&gt;</code></li>
+              <li>Use <code>@Frequency</code> decorator for sync schedules</li>
+              <li>Class names: PascalCase (e.g., SalesforceContacts)</li>
+              <li>File names: kebab-case (e.g., salesforce-contacts.integration.ts)</li>
+            </ul>
+          </div>
+
+          <p>When AI generates code, it automatically applies these patterns.</p>
+
+          <h3>Skills</h3>
+          <p><strong>Step-by-step procedures for specific tasks</strong></p>
+
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 my-6">
+            <p className="text-sm text-gray-400 mb-2">Example: Migrate YAML Sync Configuration</p>
+            <ol className="text-sm">
+              <li>Read the YAML sync configuration</li>
+              <li>Extract: name, frequency, models, endpoints</li>
+              <li>Create TypeScript class extending <code>NangoSync&lt;ModelType&gt;</code></li>
+              <li>Add <code>@Frequency</code> decorator</li>
+              <li>Preserve pagination logic</li>
+              <li>Add error handling</li>
+              <li>Generate tests</li>
+            </ol>
+          </div>
+
+          <p>AI invokes skills for specific migration tasks.</p>
+
+          <h3>Agents</h3>
+          <p><strong>Multi-step orchestration with reporting</strong></p>
+
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 my-6">
+            <p className="text-sm text-gray-400 mb-2">Example: Nango YAML to TypeScript Migration Agent</p>
+            <p className="text-sm mb-2">I am a specialized agent for migrating Nango YAML integrations to TypeScript.</p>
+            <p className="text-sm font-semibold mb-1">My Process:</p>
+            <ol className="text-sm">
+              <li><strong>Discovery</strong> - Scan codebase for YAML integration files</li>
+              <li><strong>Analysis</strong> - Parse each YAML, identify patterns and complexity</li>
+              <li><strong>Generation</strong> - Create TypeScript equivalents using rules and skills</li>
+              <li><strong>Integration</strong> - Update imports, dependencies, references</li>
+              <li><strong>Testing</strong> - Generate test files based on YAML patterns</li>
+              <li><strong>Reporting</strong> - Summary with edge cases flagged for review</li>
+            </ol>
+          </div>
+
+          <p>AI runs agents for end-to-end migrations.</p>
+
+          <h2>The Complete Stack</h2>
+
+          <p><strong>Every technical company should ship:</strong></p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Format</th>
+                <th>For</th>
+                <th>Coverage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Documentation</strong></td>
+                <td>Website, markdown</td>
+                <td>Humans</td>
+                <td>Concept learning</td>
+              </tr>
+              <tr>
+                <td><strong>Migration Scripts</strong></td>
+                <td>CLI, codemods</td>
+                <td>Automation</td>
+                <td>60-80% mechanical</td>
+              </tr>
+              <tr>
+                <td><strong>PRPM Packages</strong></td>
+                <td>Rules, skills, agents</td>
+                <td>AI</td>
+                <td>+20-40% contextual</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p className="text-xl font-semibold text-white mt-6">This is the new standard.</p>
+          <p>Documentation teaches, scripts automate, PRPM packages guide AI to handle nuanced work.</p>
+
+          <h2>Why Now</h2>
+
+          <p className="text-xl font-semibold text-white">The AI coding assistant is the new compiler.</p>
+
+          <p>Just like every language needed:</p>
+          <ul>
+            <li>Documentation (how to write code)</li>
+            <li>Compiler/interpreter (how to run code)</li>
+            <li>Package manager (how to share code)</li>
+          </ul>
+
+          <p>Every AI coding platform needs:</p>
+          <ul>
+            <li>Documentation (what to build)</li>
+            <li>Migration scripts (basic automation)</li>
+            <li><strong>PRPM packages</strong> (how to build it correctly)</li>
+          </ul>
+
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 my-8">
+            <pre className="text-sm text-gray-300 mb-0"><code>{`2020: "AI will help with autocomplete"
+2023: "AI can write full functions"
+2024: "AI can refactor entire codebases"
+2025: "AI needs distributed knowledge to do it RIGHT"
+      ↑
+    PRPM fills this gap`}</code></pre>
+          </div>
+
+          <p className="text-xl font-semibold text-white">We're building the missing piece.</p>
+
+          <h2>Get Started</h2>
+
+          <h3>For Framework/Library Authors</h3>
+          <pre><code className="language-bash">{`$ prpm init
+# Create migration rules, skills, and agents
+$ prpm publish @yourframework/v2-migration`}</code></pre>
+
+          <h3>For Enterprises</h3>
+          <pre><code className="language-bash">{`$ prpm init --private
+# Create internal rules and skills
+$ prpm publish @company/coding-standards --registry=company.prpm.dev`}</code></pre>
+
+          <h3>For Developers</h3>
+          <pre><code className="language-bash">{`$ prpm install @react/hooks-migration
+$ prpm install @stripe/api-v4-migration
+# Let AI use these packages to write better code`}</code></pre>
+
+          <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-purple/20 border border-prpm-accent/30 rounded-2xl p-8 my-12 text-center">
+            <p className="text-2xl font-bold text-white mb-4">Ready to build the future?</p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link
+                href="https://prpm.dev"
+                className="px-6 py-3 bg-prpm-accent text-white font-semibold rounded-lg hover:bg-prpm-accent/80 transition-colors"
+              >
+                Get Started
+              </Link>
+              <Link
+                href="https://github.com/pr-pm/prpm"
+                className="px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors"
+              >
+                View on GitHub
+              </Link>
+            </div>
+          </div>
+
+          <p className="text-center text-xl text-gray-400 italic">
+            <strong className="text-white">This is the future of software development:</strong> Intelligence as code, distributed through packages, applied by AI.
+          </p>
+        </div>
+      </article>
+    </main>
+  )
+}

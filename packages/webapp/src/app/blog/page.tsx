@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "distributable-intelligence",
+    title: "PRPM: Distributable Intelligence for AI-Assisted Development",
+    excerpt: "Ship rules, skills, and agents that make breaking changes painless. Learn how PRPM closes the gap between migration scripts and docs, enabling 95% automated migrations vs 70% with scripts alone.",
+    date: "2025-10-25",
+    author: "PRPM Team",
+    readTime: "15 min read",
+    tags: ["Vision", "Technical", "AI Development"],
+  },
+  {
     slug: "introducing-prpm",
     title: "Introducing PRPM: The Universal Registry for AI Coding Tools",
     excerpt: "Today, we're excited to launch PRPM - a universal package manager for AI prompts, agents, skills, and slash commands. Learn about our vision and what's coming next.",
