@@ -2,14 +2,15 @@
  * Registry API types for CLI
  */
 
-import { PackageType } from '../types';
+import { Format, Subtype } from '../types';
 
 /**
  * Enhanced file metadata for collection packages
  */
 export interface PackageFileMetadata {
   path: string;
-  type: PackageType;
+  format: Format;
+  subtype: Subtype;
   name?: string;
   description?: string;
   tags?: string[];
@@ -64,7 +65,8 @@ export interface SearchPackage {
   id: string;
   name: string;
   description?: string;
-  type: PackageType;
+  format: Format;
+  subtype: Subtype;
   tags: string[];
   category?: string;
   total_downloads: number;
