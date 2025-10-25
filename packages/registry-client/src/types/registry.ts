@@ -27,7 +27,8 @@ export interface PackageManifest {
   license?: string;
   repository?: string;
   homepage?: string;
-  type: string;
+  format: Format;
+  subtype?: Subtype;
   tags?: string[];
   keywords?: string[];
   category?: string;
