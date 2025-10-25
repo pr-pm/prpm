@@ -109,9 +109,11 @@ According to the [official Cursor documentation](https://cursor.com/docs/context
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `description` | string | - | Optional description of the rule's purpose |
+| `description` | string | - | **Should always be provided** - Description of the rule's purpose |
 | `globs` | string[] | - | File path patterns to match (e.g., `["**/*.ts"]`) |
 | `alwaysApply` | boolean | `false` | If `true`, rule is always included in context |
+
+**Best Practice**: While `description` is technically optional, **always provide it**. A clear description helps both users and AI understand when and why to apply the rule. Rules without descriptions are difficult to maintain and organize.
 
 **Rule Types** (determined by frontmatter):
 - **Always**: `alwaysApply: true` - Always included in model context
