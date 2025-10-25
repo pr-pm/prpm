@@ -1,0 +1,5 @@
+Codemods get you 70% through migrations. Docs explain the rest. You still spend hours on edge cases.
+
+PRPM packages close that gap—ship executable knowledge that AI applies consistently. 95% automated vs 70%.
+
+https://prpm.dev/blog/distributable-intelligence

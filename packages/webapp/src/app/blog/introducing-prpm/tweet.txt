@@ -1,0 +1,5 @@
+Package managers changed how we ship code. Now there's one for AI instructions.
+
+Install rules, skills, and agents that work across Cursor, Claude, Continue, Windsurf—any AI editor.
+
+https://prpm.dev/blog/introducing-prpm
