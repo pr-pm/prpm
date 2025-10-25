@@ -300,8 +300,8 @@ export async function handleInstall(
     addToLockfile(updatedLockfile, packageId, {
       version: actualVersion || version,
       tarballUrl,
-      format: effectiveFormat,
-      subtype: effectiveSubtype,
+      format: pkg.format, // Preserve original package format
+      subtype: pkg.subtype, // Preserve original package subtype
       installedPath: destPath,
     });
 
