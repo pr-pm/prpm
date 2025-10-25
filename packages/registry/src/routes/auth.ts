@@ -82,45 +82,56 @@ async function authenticateWithNango(server: FastifyInstance, connectionId: stri
       user.nango_connection_id = connectionId;
     } else if (user.nango_connection_id !== connectionId) {
       // User already has a connection, and this is a different one
-      // The webhook should have already updated to the new connection and deleted the old one
-      server.log.warn({
-        userId: user.id,
-        storedConnectionId: user.nango_connection_id,
-        providedConnectionId: connectionId
-      }, 'Callback received different connection than stored - webhook should have updated this');
-
-      // The webhook should have already updated the database with the new connectionId
-      // This is a race condition where the callback ran before the webhook completed
-      // Refresh the user data to get the latest connectionId
+      // Check if this matches the incoming_connection_id
       const refreshedUser = await queryOne<User>(
         server,
         'SELECT * FROM users WHERE github_id = $1',
         [String(githubUser.id)]
       );
 
-      if (refreshedUser && refreshedUser.nango_connection_id === connectionId) {
-        // Webhook already updated the connection - use the refreshed user
+      if (refreshedUser && refreshedUser.incoming_connection_id === connectionId) {
+        // This is the incoming connection - we should switch to it now
         server.log.info({
           userId: refreshedUser.id,
-          connectionId
-        }, 'Webhook already updated connection, using refreshed user data');
-        user = refreshedUser;
-      } else {
-        // Webhook hasn't updated yet - this shouldn't normally happen
-        // Update the user to use the new connection
-        server.log.warn({
-          userId: user.id,
-          oldConnectionId: user.nango_connection_id,
+          oldConnectionId: refreshedUser.nango_connection_id,
           newConnectionId: connectionId
-        }, 'Webhook has not updated connection yet, updating now');
+        }, 'Callback using incoming connection, switching to it and deleting old one');
 
+        // Delete the old connection from Nango
+        if (refreshedUser.nango_connection_id) {
+          try {
+            await nangoService.deleteConnection(refreshedUser.nango_connection_id);
+            server.log.info({
+              deletedConnectionId: refreshedUser.nango_connection_id
+            }, 'Deleted old connection from Nango during callback');
+          } catch (error) {
+            server.log.error({
+              error,
+              connectionId: refreshedUser.nango_connection_id
+            }, 'Failed to delete old connection during callback');
+          }
+        }
+
+        // Switch to the incoming connection
         await query(
           server,
-          'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
-          [connectionId, githubUser.login, user.id]
+          'UPDATE users SET nango_connection_id = $1, incoming_connection_id = NULL, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+          [connectionId, githubUser.login, refreshedUser.id]
         );
 
-        user.nango_connection_id = connectionId;
+        refreshedUser.nango_connection_id = connectionId;
+        refreshedUser.incoming_connection_id = null;
+        user = refreshedUser;
+      } else {
+        // Neither stored nor incoming matches - shouldn't happen
+        server.log.warn({
+          userId: user.id,
+          storedConnectionId: user.nango_connection_id,
+          providedConnectionId: connectionId
+        }, 'Callback received unexpected connection ID');
+
+        // Refresh user to be safe
+        user = refreshedUser || user;
       }
     } else {
       // Same connection, just update last login
@@ -292,37 +303,24 @@ export async function authRoutes(server: FastifyInstance) {
           );
 
           if (existingUser && existingUser.nango_connection_id && existingUser.nango_connection_id !== connectionId) {
-            // User already has a DIFFERENT connection - keep the NEW one and delete the OLD one
+            // User already has a DIFFERENT connection - store the new one as incoming, don't switch yet
             server.log.info({
               userId: existingUser.id,
-              oldConnectionId: existingUser.nango_connection_id,
-              newConnectionId: connectionId
-            }, 'User has a different connection, updating to use new connection and deleting old one');
+              storedConnectionId: existingUser.nango_connection_id,
+              incomingConnectionId: connectionId
+            }, 'User has a different connection, storing new one as incoming_connection_id');
 
-            // Delete the old connection from Nango
-            try {
-              await nangoService.deleteConnection(existingUser.nango_connection_id);
-              server.log.info({
-                connectionId: existingUser.nango_connection_id
-              }, 'Deleted old connection from Nango');
-            } catch (error) {
-              server.log.error({
-                error,
-                connectionId: existingUser.nango_connection_id
-              }, 'Failed to delete old connection from Nango');
-            }
-
-            // Update user to use the new connection
+            // Store the incoming connection ID without changing the active one
             await query(
               server,
-              'UPDATE users SET nango_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
+              'UPDATE users SET incoming_connection_id = $1, last_login_at = NOW(), github_username = $2 WHERE id = $3',
               [connectionId, githubUser.login, existingUser.id]
             );
 
             server.log.info({
               userId: existingUser.id,
-              newConnectionId: connectionId
-            }, 'Updated user to use new connection');
+              incomingConnectionId: connectionId
+            }, 'Stored incoming connection ID, keeping stored connection unchanged');
 
             // Patch the new connection with user metadata
             try {

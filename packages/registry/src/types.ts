@@ -17,6 +17,7 @@ export interface User {
   avatar_url?: string;
   password_hash?: string;
   nango_connection_id?: string;
+  incoming_connection_id?: string | null;
   website?: string;
   verified_author: boolean;
   is_admin: boolean;
