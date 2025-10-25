@@ -298,6 +298,32 @@ export async function authRoutes(server: FastifyInstance) {
                 userId: existingUser.id,
                 connectionId
               }, 'Set permanent and incoming connection for existing user (first time)');
+
+              // Patch the connection with user metadata since we're keeping it
+              try {
+                const tags: Record<string, string> = {};
+                if (existingUser.verified_author) {
+                  tags.verified_author = 'true';
+                }
+
+                await nangoService.patchConnection(connectionId, {
+                  id: existingUser.id,
+                  email: existingUser.email,
+                  display_name: existingUser.username,
+                  tags: Object.keys(tags).length > 0 ? tags : undefined,
+                });
+
+                server.log.info({
+                  userId: existingUser.id,
+                  connectionId,
+                  tags
+                }, 'Patched permanent connection with user metadata');
+              } catch (error) {
+                server.log.error({ error, userId: existingUser.id, connectionId }, 'Failed to patch permanent connection');
+              }
+
+              // Store the connection ID for CLI authentication sessions
+              cliAuthSessions.set(endUser.endUserId, connectionId);
             } else {
               // This shouldn't happen - Nango creates a new connection ID each time
               // If it does, log a warning
