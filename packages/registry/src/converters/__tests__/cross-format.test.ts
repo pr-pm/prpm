@@ -939,56 +939,65 @@ describe('Cross-format conversions', () => {
   });
 
   describe('Subtype preservation', () => {
-    it('should preserve agent type through conversions', () => {
+    it('should preserve agent subtype through conversions', () => {
       const cursorAgent = fromCursor(sampleCursorAgent, metadata);
-      expect(cursorAgent.type).toBe('cursor-agent');
+      expect(cursorAgent.format).toBe('cursor');
+      expect(cursorAgent.subtype).toBe('agent');
 
       // Convert to Claude and back
       const claudeResult = toClaude(cursorAgent);
       const backToCanonical = fromClaude(claudeResult.content, metadata);
-      expect(backToCanonical.type).toBe('claude-agent');
+      expect(backToCanonical.format).toBe('claude');
+      expect(backToCanonical.subtype).toBe('agent');
     });
 
-    it('should preserve slash command type through conversions', () => {
+    it('should preserve slash command subtype through conversions', () => {
       const cursorCommand = fromCursor(sampleCursorCommand, metadata);
-      expect(cursorCommand.type).toBe('cursor-slash-command');
+      expect(cursorCommand.format).toBe('cursor');
+      expect(cursorCommand.subtype).toBe('slash-command');
 
       // Convert to Claude and back
       const claudeResult = toClaude(cursorCommand);
       const backToCanonical = fromClaude(claudeResult.content, metadata);
-      expect(backToCanonical.type).toBe('claude-slash-command');
+      expect(backToCanonical.format).toBe('claude');
+      expect(backToCanonical.subtype).toBe('slash-command');
     });
 
-    it('should preserve skill type through conversions', () => {
+    it('should preserve skill subtype through conversions', () => {
       const claudeSkill = fromClaude(sampleClaudeSkill, metadata);
-      expect(claudeSkill.type).toBe('claude-skill');
+      expect(claudeSkill.format).toBe('claude');
+      expect(claudeSkill.subtype).toBe('skill');
 
       // Convert to Cursor and back
       const cursorResult = toCursor(claudeSkill);
       const backToCanonical = fromCursor(cursorResult.content, metadata);
-      // Cursor doesn't have skills, so it becomes an agent
-      expect(['cursor', 'cursor-agent']).toContain(backToCanonical.type);
+      expect(backToCanonical.format).toBe('cursor');
+      // Cursor should preserve the skill subtype
+      expect(backToCanonical.subtype).toBe('skill');
     });
 
     it('should detect agentType in frontmatter', () => {
       const cursorAgent = fromCursor(sampleCursorAgent, metadata);
 
       // Should be parsed as agent based on agentType field
-      expect(cursorAgent.type).toBe('cursor-agent');
+      expect(cursorAgent.format).toBe('cursor');
+      expect(cursorAgent.subtype).toBe('agent');
     });
 
     it('should detect commandType in frontmatter', () => {
       const cursorCommand = fromCursor(sampleCursorCommand, metadata);
 
       // Should be parsed as slash-command based on commandType field
-      expect(cursorCommand.type).toBe('cursor-slash-command');
+      expect(cursorCommand.format).toBe('cursor');
+      expect(cursorCommand.subtype).toBe('slash-command');
     });
 
     it('should detect skillType in Claude frontmatter', () => {
       const claudeSkill = fromClaude(sampleClaudeSkill, metadata);
 
       // Should be parsed as skill based on skillType field
-      expect(claudeSkill.type).toBe('claude-skill');
+      expect(claudeSkill.format).toBe('claude');
+      expect(claudeSkill.subtype).toBe('skill');
     });
   });
 });

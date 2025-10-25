@@ -108,7 +108,7 @@ describe('toWindsurf', () => {
         ...sampleCanonicalPackage,
         content: {
           format: 'canonical' as const,
-          version: '1.0',
+          version: '1.0' as const,
           sections: sampleCanonicalPackage.content.sections.filter(
             s => s.type !== 'instructions'
           ),

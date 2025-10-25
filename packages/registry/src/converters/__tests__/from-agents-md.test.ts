@@ -191,8 +191,8 @@ Write tests for all code.
       const result = fromAgentsMd(content, basicMetadata);
 
       const sections = result.content.sections;
-      expect(sections.some(s => s.title === 'Coding Standards')).toBe(true);
-      expect(sections.some(s => s.title === 'Testing Guidelines')).toBe(true);
+      expect(sections.some(s => 'title' in s && s.title === 'Coding Standards')).toBe(true);
+      expect(sections.some(s => 'title' in s && s.title === 'Testing Guidelines')).toBe(true);
     });
 
     it('should parse lists as rules', () => {
@@ -403,8 +403,8 @@ Content here.
 
       const result = fromAgentsMd(content, metadata);
 
-      expect(result.metadata?.author).toBe('test-author');
-      expect(result.metadata?.tags).toContain('testing');
+      expect(result.author).toBe('test-author');
+      expect(result.tags).toContain('testing');
     });
 
     it('should include agents.md tag by default', () => {

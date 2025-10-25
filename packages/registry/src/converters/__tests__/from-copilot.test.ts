@@ -201,8 +201,8 @@ Here are some examples.
       const result = fromCopilot(content, basicMetadata);
 
       const sections = result.content.sections;
-      expect(sections.some(s => s.title === 'Instructions')).toBe(true);
-      expect(sections.some(s => s.title === 'Examples')).toBe(true);
+      expect(sections.some(s => 'title' in s && s.title === 'Instructions')).toBe(true);
+      expect(sections.some(s => 'title' in s && s.title === 'Examples')).toBe(true);
     });
 
     it('should parse lists as rules', () => {
@@ -260,8 +260,8 @@ Content here.
 
       const result = fromCopilot(content, metadata);
 
-      expect(result.metadata?.author).toBe('test-author');
-      expect(result.metadata?.tags).toContain('testing');
+      expect(result.author).toBe('test-author');
+      expect(result.tags).toContain('testing');
     });
   });
 
@@ -279,7 +279,7 @@ Guidelines for testing TypeScript applications.
 
       const result = fromCopilot(content, basicMetadata);
 
-      expect(result.metadata?.tags).toBeDefined();
+      expect(result.tags).toBeDefined();
     });
   });
 });

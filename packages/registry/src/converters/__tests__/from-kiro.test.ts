@@ -302,8 +302,8 @@ Here are examples.
       const result = fromKiro(content, basicMetadata);
 
       const sections = result.content.sections;
-      expect(sections.some(s => s.title === 'Guidelines')).toBe(true);
-      expect(sections.some(s => s.title === 'Examples')).toBe(true);
+      expect(sections.some(s => 'title' in s && s.title === 'Guidelines')).toBe(true);
+      expect(sections.some(s => 'title' in s && s.title === 'Examples')).toBe(true);
     });
 
     it('should parse lists as rules', () => {
@@ -377,8 +377,8 @@ Content here.
 
       const result = fromKiro(content, metadata);
 
-      expect(result.metadata?.author).toBe('test-author');
-      expect(result.metadata?.tags).toContain('testing');
+      expect(result.author).toBe('test-author');
+      expect(result.tags).toContain('testing');
     });
 
     it('should infer tags from inclusion mode', () => {
@@ -393,7 +393,7 @@ Always active rules.
 
       const result = fromKiro(alwaysContent, basicMetadata);
 
-      expect(result.metadata?.tags).toContain('always-active');
+      expect(result.tags).toContain('always-active');
     });
   });
 
@@ -416,8 +416,8 @@ Guidelines for testing TypeScript applications.
 
       const result = fromKiro(content, basicMetadata);
 
-      expect(result.metadata?.tags).toBeDefined();
-      expect(result.metadata?.tags?.length).toBeGreaterThan(0);
+      expect(result.tags).toBeDefined();
+      expect(result.tags?.length).toBeGreaterThan(0);
     });
   });
 });

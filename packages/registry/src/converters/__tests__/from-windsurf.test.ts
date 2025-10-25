@@ -28,10 +28,19 @@ Write comprehensive tests for all code.
 
       expect(result.id).toBe('test-windsurf');
       expect(result.sourceFormat).toBe('windsurf');
-      expect(result.content.sections.length).toBeGreaterThan(0);
+      expect(result.format).toBe('windsurf');
+      expect(result.subtype).toBe('rule');
+      expect(result.content.sections.length).toBe(1);
+
+      const section = result.content.sections[0];
+      expect(section.type).toBe('instructions');
+      if (section.type === 'instructions') {
+        expect(section.title).toBe('Windsurf Rules');
+        expect(section.content).toBe(content.trim());
+      }
     });
 
-    it('should extract title from H1', () => {
+    it('should preserve content as-is', () => {
       const content = `# Best Practices
 
 Follow these guidelines.
@@ -39,10 +48,14 @@ Follow these guidelines.
 
       const result = fromWindsurf(content, basicMetadata);
 
-      expect(result.metadata?.title).toBe('Best Practices');
+      const section = result.content.sections[0];
+      expect(section.type).toBe('instructions');
+      if (section.type === 'instructions') {
+        expect(section.content).toBe(content.trim());
+      }
     });
 
-    it('should extract description from first paragraph', () => {
+    it('should set basic description', () => {
       const content = `# Testing Guide
 
 This is a comprehensive guide for testing.
@@ -54,12 +67,12 @@ This is a comprehensive guide for testing.
 
       const result = fromWindsurf(content, basicMetadata);
 
-      expect(result.description).toBe('This is a comprehensive guide for testing.');
+      expect(result.description).toBe('Windsurf rules');
     });
   });
 
-  describe('section parsing', () => {
-    it('should parse H2 headers as section titles', () => {
+  describe('content preservation', () => {
+    it('should preserve full markdown content', () => {
       const content = `# Main Title
 
 ## Instructions
@@ -73,12 +86,16 @@ Here are some examples.
 
       const result = fromWindsurf(content, basicMetadata);
 
-      const sections = result.content.sections;
-      expect(sections.some(s => s.title === 'Instructions')).toBe(true);
-      expect(sections.some(s => s.title === 'Examples')).toBe(true);
+      expect(result.content.sections.length).toBe(1);
+      const section = result.content.sections[0];
+      if (section.type === 'instructions') {
+        expect(section.content).toContain('# Main Title');
+        expect(section.content).toContain('## Instructions');
+        expect(section.content).toContain('## Examples');
+      }
     });
 
-    it('should parse bullet lists', () => {
+    it('should preserve bullet lists', () => {
       const content = `# Rules
 
 ## Guidelines
@@ -90,13 +107,15 @@ Here are some examples.
 
       const result = fromWindsurf(content, basicMetadata);
 
-      const guidelineSection = result.content.sections.find(s => s.title === 'Guidelines');
-      expect(guidelineSection).toBeDefined();
-      expect(guidelineSection?.content.items).toBeDefined();
-      expect(guidelineSection?.content.items?.length).toBeGreaterThan(0);
+      const section = result.content.sections[0];
+      if (section.type === 'instructions') {
+        expect(section.content).toContain('- Always write tests');
+        expect(section.content).toContain('- Use TypeScript');
+        expect(section.content).toContain('- Follow conventions');
+      }
     });
 
-    it('should parse code blocks', () => {
+    it('should preserve code blocks', () => {
       const content = `# Example
 
 ## Usage
@@ -110,10 +129,15 @@ function test() {
 
       const result = fromWindsurf(content, basicMetadata);
 
-      expect(result.content.sections.length).toBeGreaterThan(0);
+      expect(result.content.sections.length).toBe(1);
+      const section = result.content.sections[0];
+      if (section.type === 'instructions') {
+        expect(section.content).toContain('```typescript');
+        expect(section.content).toContain('function test()');
+      }
     });
 
-    it('should infer section types from titles', () => {
+    it('should create single instructions section', () => {
       const content = `# Guide
 
 ## Instructions
@@ -131,74 +155,11 @@ Here are some.
 
       const result = fromWindsurf(content, basicMetadata);
 
-      const instructionsSection = result.content.sections.find(s => s.title === 'Instructions');
-      expect(instructionsSection?.type).toBe('instructions');
-
-      const rulesSection = result.content.sections.find(s => s.title === 'Rules');
-      expect(rulesSection?.type).toBe('rules');
-
-      const examplesSection = result.content.sections.find(s => s.title === 'Examples');
-      expect(examplesSection?.type).toBe('examples');
+      expect(result.content.sections.length).toBe(1);
+      expect(result.content.sections[0].type).toBe('instructions');
     });
   });
 
-  describe('rule parsing', () => {
-    it('should parse rules with rationale', () => {
-      const content = `# Rules
-
-## Testing Guidelines
-
-- Write tests before code (TDD)
-   - *Rationale: Ensures better design and prevents bugs*
-- Test edge cases thoroughly
-`;
-
-      const result = fromWindsurf(content, basicMetadata);
-
-      const rulesSection = result.content.sections.find(s => s.title === 'Testing Guidelines');
-      expect(rulesSection).toBeDefined();
-      expect(rulesSection?.content.items).toBeDefined();
-
-      const firstRule = rulesSection?.content.items?.[0];
-      expect(firstRule?.text).toContain('Write tests before code');
-      expect(firstRule?.rationale).toBe('Ensures better design and prevents bugs');
-    });
-
-    it('should parse rules with examples', () => {
-      const content = `# Rules
-
-## Best Practices
-
-- Use descriptive names
-   - Example: getUserById() not get()
-`;
-
-      const result = fromWindsurf(content, basicMetadata);
-
-      const section = result.content.sections.find(s => s.title === 'Best Practices');
-      const firstRule = section?.content.items?.[0];
-      expect(firstRule?.text).toContain('Use descriptive names');
-      expect(firstRule?.example).toBe('getUserById() not get()');
-    });
-  });
-
-  describe('persona parsing', () => {
-    it('should parse persona section', () => {
-      const content = `# Assistant
-
-## Role
-
-🤖 **CodeBot** - Programming Assistant
-
-**Style:** precise, helpful
-`;
-
-      const result = fromWindsurf(content, basicMetadata);
-
-      const roleSection = result.content.sections.find(s => s.title === 'Role');
-      expect(roleSection?.type).toBe('persona');
-    });
-  });
 
   describe('metadata extraction', () => {
     it('should set sourceFormat to windsurf', () => {
