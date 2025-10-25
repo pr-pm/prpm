@@ -4,6 +4,7 @@
 **Author**: PRPM Team
 **Format**: Cursor (`.cursor/rules/*.mdc`)
 **Status**: Production
+**Official Docs**: [cursor.com/docs/context/rules](https://cursor.com/docs/context/rules)
 
 ---
 
@@ -23,13 +24,15 @@
 
 ## Introduction
 
-Cursor is one of the most popular AI-first code editors, and its `.cursor/rules/` system allows developers to customize AI behavior with project-specific guidelines. Unlike other formats that use plain markdown or JSON, Cursor uses **MDC (Model Context)** files - markdown with rich YAML frontmatter.
+Cursor is one of the most popular AI-first code editors, and its `.cursor/rules/` system allows developers to customize AI behavior with project-specific guidelines. Unlike other formats that use plain markdown or JSON, Cursor uses **MDC (Model Context)** files - markdown with optional YAML frontmatter.
 
 This architectural choice makes Cursor rules:
-- **Structured**: YAML frontmatter provides machine-readable metadata
+- **Contextual**: Rules can reference other files using `@filename` syntax
 - **Flexible**: Markdown body supports rich formatting
-- **Discoverable**: Tags and descriptions enable cataloging
 - **Conditional**: Glob patterns control when rules apply
+- **Persistent**: Provide reusable context at the prompt level
+
+For complete documentation, see the [official Cursor rules documentation](https://cursor.com/docs/context/rules).
 
 ---
 
@@ -50,19 +53,15 @@ Cursor rules live in `.cursor/rules/`:
 
 ### File Structure
 
-Cursor rules use the **MDC format** - Markdown with YAML frontmatter:
+Cursor rules use the **MDC format** - Markdown with optional YAML frontmatter:
 
 ```markdown
 ---
-title: TypeScript Type Safety
 description: Enforce strict TypeScript patterns and prevent common type errors
-tags: [typescript, type-safety, best-practices]
-version: "1.0.0"
 globs:
   - "**/*.ts"
   - "**/*.tsx"
-ruleType: always
-alwaysApply: true
+alwaysApply: false
 ---
 
 # TypeScript Type Safety
@@ -98,30 +97,38 @@ function processData(data: any) {
 \`\`\`
 ```
 
+**Note**: While PRPM and other tools may add additional metadata fields (like `title`, `tags`, `version`) for cataloging purposes, Cursor officially only uses `description`, `globs`, and `alwaysApply` from the frontmatter.
+
 ---
 
 ## MDC Frontmatter
 
-### Required Fields
+### Officially Supported Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `title` | string | Clear, concise rule name (title case) |
-| `description` | string | **MANDATORY** - Brief description of purpose |
-| `tags` | string[] | Relevant tags (lowercase, kebab-case) |
-
-**Critical**: The `description` field is **mandatory** for all Cursor rules. Never use placeholders like `---` or empty strings.
-
-### Optional Fields
+According to the [official Cursor documentation](https://cursor.com/docs/context/rules), the following frontmatter fields are supported:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `version` | string | `"1.0.0"` | Semantic version |
-| `globs` | string[] | `["**/*"]` | File patterns where rule applies |
-| `ruleType` | string | `"on-demand"` | When rule applies (`always`, `conditional`, `contextual`) |
-| `alwaysApply` | boolean | `false` | Whether rule is always active |
-| `author` | string | - | Rule author |
-| `source` | string | - | Origin (`claude-code-skill`, `custom`, `community`) |
+| `description` | string | - | Optional description of the rule's purpose |
+| `globs` | string[] | - | File path patterns to match (e.g., `["**/*.ts"]`) |
+| `alwaysApply` | boolean | `false` | If `true`, rule is always included in context |
+
+**Rule Types** (determined by frontmatter):
+- **Always**: `alwaysApply: true` - Always included in model context
+- **Auto Attached**: Has `globs` field - Included when matching files are referenced
+- **Manual**: No frontmatter or empty frontmatter - Only included when explicitly mentioned using `@ruleName`
+
+### PRPM Extension Fields
+
+PRPM adds additional metadata fields for cataloging and package management purposes. These fields are **not used by Cursor** but help with discoverability in the registry:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Rule name for search/display |
+| `tags` | string[] | Technology tags for filtering |
+| `version` | string | Semantic version for package versioning |
+
+When PRPM converts packages to Cursor format, these extension fields are included in the frontmatter for round-trip conversion support, but Cursor ignores them.
 
 ### Glob Patterns
 
@@ -140,6 +147,36 @@ globs:
 - `dir/**/*` - All files in directory and subdirectories
 - `dir/*.ext` - Direct children only
 - `!pattern` - Negation (exclude)
+
+### File References with @filename
+
+**Important feature**: Cursor rules can reference other files using `@filename` syntax to include them in the rule's context.
+
+**Example**:
+
+```markdown
+---
+description: API design guidelines that reference our schema definitions
+globs:
+  - "src/api/**/*.ts"
+---
+
+# API Design Guidelines
+
+Follow the patterns defined in @src/lib/api-schema.ts for all API route validation.
+
+Use the error handling utilities from @src/lib/errors.ts for consistent error responses.
+```
+
+When this rule is active, Cursor will automatically include the referenced files (`api-schema.ts` and `errors.ts`) in the context, allowing the AI to see the actual implementation patterns being referenced.
+
+**Use cases**:
+- Reference type definitions or interfaces
+- Include example implementations
+- Point to configuration files
+- Reference related rules or documentation
+
+This feature makes Cursor rules **composable** - rules can build on existing code and other rules rather than duplicating information.
 
 ---
 
