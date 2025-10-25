@@ -8,7 +8,7 @@
 
 ### Summary
 
-We've built [PRPM (Prompt Package Manager)](https://prpm.dev) with native agents.md support and believe it could help accelerate adoption of this excellent open standard. This is a humble proposal to explore a brief documentation mention.
+We've built [PRPM (Prompt Package Manager)](https://prpm.dev) - an early-stage package manager for AI coding configurations - with native agents.md support. We believe PRPM could help accelerate adoption of the excellent agents.md standard. This is a humble proposal to explore a brief documentation mention as the ecosystem grows.
 
 ### The Opportunity
 
@@ -54,6 +54,7 @@ This could appear in the README, website, or a dedicated "Ecosystem" page.
 - ❌ Changes to the agents.md spec
 - ❌ Exclusive positioning
 - ❌ Resource commitments
+- ❌ To imply PRPM is production-ready (we're early stage too!)
 
 ### Why This Matters
 
@@ -67,11 +68,12 @@ All of this can become agents.md content, making it easier for new teams to adop
 
 ### Our Commitment
 
-Regardless of this proposal's outcome:
+As an early-stage project ourselves, we understand the importance of community trust. Regardless of this proposal's outcome:
 - ✅ We'll maintain high-quality agents.md conversion
 - ✅ We'll follow the spec exactly
 - ✅ We're open source (MIT licensed)
 - ✅ We'll promote agents.md as the open standard
+- ✅ We'll be transparent about our early-stage status
 
 ### Benefits to agents.md Adoption
 
@@ -96,7 +98,7 @@ Regardless of this proposal's outcome:
 
 ---
 
-Thank you for creating agents.md - it's exactly the kind of open standard the AI coding ecosystem needs. We built PRPM to help distribute this kind of knowledge, and we'd be honored to help drive agents.md adoption.
+Thank you for creating agents.md - it's exactly the kind of open standard the AI coding ecosystem needs. Both agents.md and PRPM are early-stage projects trying to solve real problems in this rapidly evolving space. We built PRPM to help distribute knowledge, and we'd be honored to support agents.md adoption however we can.
 
 **PRPM Team**
-MIT Licensed • Open Source • Community-Driven
+Early Stage • MIT Licensed • Open Source • Community-Driven

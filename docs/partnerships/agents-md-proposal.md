@@ -10,7 +10,7 @@
 
 ## Summary
 
-We're building [PRPM (Prompt Package Manager)](https://prpm.dev) - a universal registry for AI coding tool configurations - and have added native support for the agents.md format. We believe PRPM could help accelerate agents.md adoption by providing immediate access to hundreds of pre-written, conversion-ready configurations. This is a humble proposal to explore potential collaboration.
+We're building [PRPM (Prompt Package Manager)](https://prpm.dev) - an early-stage universal registry for AI coding tool configurations - and have added native support for the agents.md format. As fellow early-stage projects in this rapidly evolving space, we believe PRPM could help accelerate agents.md adoption by providing immediate access to hundreds of pre-written, conversion-ready configurations. This is a humble proposal to explore potential collaboration.
 
 ## Background
 
@@ -71,14 +71,16 @@ To be clear, we're **not** asking for:
 - Changes to the agents.md specification
 - Exclusive positioning or special treatment
 - Any commitment of resources or support
+- To imply PRPM is production-ready (we're early stage and transparent about it)
 
 ## Our Commitment
 
-Regardless of whether this proposal is accepted, we're committed to:
+As an early-stage project ourselves, we understand the importance of community trust and transparency. Regardless of whether this proposal is accepted, we're committed to:
 - Maintaining high-quality agents.md conversion
 - Following the agents.md specification exactly
 - Contributing back to the ecosystem (we're open source: MIT licensed)
 - Driving awareness of agents.md as an open standard
+- Being transparent about our early-stage status and limitations
 
 ## Example: How It Works Today
 
@@ -124,7 +126,7 @@ The agents.md format is the perfect standard to rally around - simple, open, and
 
 ## Conclusion
 
-We deeply respect the work that's gone into creating agents.md as an open standard. This proposal is offered in the spirit of collaboration - if there's a way PRPM can help drive adoption of agents.md, we'd be honored to contribute. If not, we'll continue supporting the format anyway because we believe in open standards.
+We deeply respect the work that's gone into creating agents.md as an open standard. Both agents.md and PRPM are early-stage projects trying to solve real problems in this rapidly evolving AI coding ecosystem. This proposal is offered in the spirit of collaboration - if there's a way PRPM can help drive adoption of agents.md, we'd be honored to contribute. If not, we'll continue supporting the format anyway because we believe in open standards.
 
 Thank you for considering this proposal, and thank you for creating agents.md.
 
@@ -133,3 +135,4 @@ Thank you for considering this proposal, and thank you for creating agents.md.
 **Submitted by:** PRPM Team
 **Contact:** https://github.com/pr-pm/prpm
 **License:** MIT (same as agents.md)
+**Stage:** Early stage, actively developing
