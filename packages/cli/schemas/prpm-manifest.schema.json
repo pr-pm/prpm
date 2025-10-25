@@ -203,7 +203,7 @@
             "type": "object",
             "required": [
               "path",
-              "type"
+              "format"
             ],
             "properties": {
               "path": {
@@ -215,24 +215,34 @@
                   ".continue/rules/python.json"
                 ]
               },
-              "type": {
+              "format": {
                 "type": "string",
-                "description": "File type (determines where it will be installed)",
+                "description": "File format - the AI tool/platform this file is for",
                 "enum": [
                   "cursor",
-                  "cursor-agent",
-                  "cursor-slash-command",
                   "claude",
-                  "claude-skill",
-                  "claude-agent",
-                  "claude-slash-command",
                   "continue",
                   "windsurf",
                   "copilot",
                   "kiro",
                   "agents.md",
-                  "mcp",
-                  "generic"
+                  "generic",
+                  "mcp"
+                ]
+              },
+              "subtype": {
+                "type": "string",
+                "description": "File subtype - the functional category",
+                "enum": [
+                  "rule",
+                  "agent",
+                  "skill",
+                  "slash-command",
+                  "prompt",
+                  "workflow",
+                  "tool",
+                  "template",
+                  "collection"
                 ]
               },
               "name": {
@@ -335,7 +345,7 @@
       "name": "@username/simple-package",
       "version": "1.0.0",
       "description": "A simple package with basic files",
-      "type": "claude-skill",
+      "format": "claude", "subtype": "skill",
       "author": "Your Name",
       "license": "MIT",
       "files": [
@@ -347,7 +357,7 @@
       "name": "@username/cursor-rules",
       "version": "1.0.0",
       "description": "Multiple Cursor rules for different languages",
-      "type": "cursor",
+      "format": "cursor",
       "author": {
         "name": "Your Name",
         "email": "you@example.com"
@@ -362,7 +372,7 @@
       "files": [
         {
           "path": ".cursor/rules/typescript.mdc",
-          "type": "cursor",
+          "format": "cursor",
           "name": "TypeScript Rules",
           "tags": [
             "typescript",
@@ -371,7 +381,7 @@
         },
         {
           "path": ".cursor/rules/python.mdc",
-          "type": "cursor",
+          "format": "cursor",
           "name": "Python Rules",
           "tags": [
             "python",
@@ -384,7 +394,7 @@
       "name": "@community/testing-suite",
       "version": "2.0.0",
       "description": "Complete testing suite with skills and agents",
-      "type": "collection",
+      "format": "generic", "subtype": "collection",
       "author": "Community",
       "license": "MIT",
       "tags": [
@@ -394,12 +404,12 @@
       "files": [
         {
           "path": ".claude/skills/tdd.md",
-          "type": "claude-skill",
+          "format": "claude", "subtype": "skill",
           "name": "Test-Driven Development"
         },
         {
           "path": ".claude/agents/test-generator.md",
-          "type": "claude-agent",
+          "format": "claude", "subtype": "agent",
           "name": "Test Generator"
         }
       ]
@@ -408,7 +418,7 @@
       "name": "@username/copilot-instructions",
       "version": "1.0.0",
       "description": "GitHub Copilot instructions for API development",
-      "type": "copilot",
+      "format": "copilot",
       "author": "Your Name",
       "license": "MIT",
       "tags": [
@@ -424,7 +434,7 @@
       "name": "@username/kiro-steering",
       "version": "1.0.0",
       "description": "Kiro steering file for testing standards",
-      "type": "kiro",
+      "format": "kiro",
       "author": "Your Name",
       "license": "MIT",
       "tags": [
@@ -440,7 +450,7 @@
       "name": "@username/windsurf-rules",
       "version": "1.0.0",
       "description": "Windsurf coding rules for React projects",
-      "type": "windsurf",
+      "format": "windsurf",
       "author": "Your Name",
       "license": "MIT",
       "tags": [

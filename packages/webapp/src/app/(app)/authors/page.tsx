@@ -363,7 +363,7 @@ function AuthorsPageContent() {
                       {pkg.name}
                     </h3>
                     <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-gray-400 text-xs">
-                      {pkg.type}
+                      {pkg.format}
                     </span>
                   </div>
 
