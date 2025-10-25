@@ -124,11 +124,13 @@ export default function DistributableIntelligencePost() {
             </p>
           </div>
 
-          <h2>In Two Minutes</h2>
+          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+            <h2 className="text-3xl font-bold text-white mb-6">In Two Minutes</h2>
 
-          <p>
-            Codemods automate the first 60–80% of migrations. Docs explain the rest. Developers still wrestle with edge cases, conventions, and tests. <strong>PRPM closes the gap</strong> by letting maintainers publish executable knowledge:
-          </p>
+            <p className="text-gray-300 leading-relaxed text-lg mb-0">
+              Codemods automate the first 60–80% of migrations. Docs explain the rest. Developers still wrestle with edge cases, conventions, and tests. <strong className="text-white">PRPM closes the gap</strong> by letting maintainers publish executable knowledge:
+            </p>
+          </div>
 
           <ul>
             <li><strong>Rules</strong> - Declarative constraints AI enforces during code generation</li>
@@ -137,7 +139,7 @@ export default function DistributableIntelligencePost() {
           </ul>
 
           <p>
-            Developers <code>prpm install @vendor/migration-package</code>, their AI assistant loads it from <code>.ai/</code>, and performs context-aware changes across the repo, flags true edge cases, and generates tests that match your conventions.
+            Developers <code>prpm install @vendor/migration-package</code>, their AI assistant loads it from <code>.claude/</code> or <code>.cursor/</code>, and performs context-aware changes across the repo, flags true edge cases, and generates tests that match your conventions.
           </p>
 
           <div className="not-prose bg-prpm-accent/10 border border-prpm-accent/30 rounded-xl p-6 my-8 shadow-sm">
@@ -154,10 +156,12 @@ export default function DistributableIntelligencePost() {
             <li><strong>Framework authors</strong> - Smoother breaking changes, faster adoption</li>
             <li><strong>SaaS vendors</strong> - Deprecate old APIs sooner, fewer tickets</li>
             <li><strong>Enterprises</strong> - Codify standards once; every team's AI follows them</li>
-            <li><strong>OSS maintainers</strong> - Contributors generate PRs in your house style</li>
+            <li><strong>OSS maintainers</strong> - Contributors generate PRs in your <strong>house style</strong></li>
           </ul>
 
-          <h2>How It Works in 60 Seconds</h2>
+          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+            <h2 className="text-3xl font-bold text-white mb-0">How It Works in 60 Seconds</h2>
+          </div>
 
           <div className="not-prose mb-10">
             <h3 className="text-2xl font-bold text-white mb-4">1. Author</h3>
