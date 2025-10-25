@@ -12,6 +12,7 @@ export type Format =
   | 'windsurf'
   | 'copilot'
   | 'kiro'
+  | 'agents.md'
   | 'generic'
   | 'mcp';
 

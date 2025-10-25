@@ -49,6 +49,7 @@
         "windsurf",
         "copilot",
         "kiro",
+        "agents.md",
         "generic",
         "mcp"
       ]
@@ -229,6 +230,7 @@
                   "windsurf",
                   "copilot",
                   "kiro",
+                  "agents.md",
                   "mcp",
                   "generic"
                 ]

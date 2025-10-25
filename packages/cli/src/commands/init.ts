@@ -36,6 +36,7 @@ const FORMATS = [
   'windsurf',
   'copilot',
   'kiro',
+  'agents.md',
   'generic',
   'mcp',
 ] as const;
@@ -76,6 +77,10 @@ const FORMAT_EXAMPLES: Record<string, { files: string[]; description: string }> 
   kiro: {
     description: 'Kiro steering files',
     files: ['.kiro/steering/example.md', 'README.md'],
+  },
+  'agents.md': {
+    description: 'OpenAI agents.md project instructions',
+    files: ['agents.md', 'README.md'],
   },
   generic: {
     description: 'Generic AI prompts',
@@ -192,6 +197,45 @@ Describe the context where this steering file applies.
 ## Examples
 
 Provide examples of correct patterns.
+`,
+  },
+  'agents.md': {
+    'agents.md': `# Project Coding Guidelines
+
+Project-specific instructions for AI coding agents (OpenAI Codex, etc.).
+
+## TypeScript Conventions
+
+- Use strict mode for type safety
+- Prefer interfaces over types for object shapes
+- Use const assertions where appropriate
+
+## Testing Requirements
+
+- Write tests for all public APIs
+- Maintain >80% code coverage
+- Use descriptive test names
+
+## Code Examples
+
+### Preferred: Async/Await
+
+\`\`\`typescript
+async function fetchData() {
+  const response = await fetch('/api/data');
+  return response.json();
+}
+\`\`\`
+
+### Avoid: Callback Hell
+
+\`\`\`typescript
+getData(function(data) {
+  processData(data, function(result) {
+    // Deeply nested callbacks
+  });
+});
+\`\`\`
 `,
   },
   generic: {

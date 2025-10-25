@@ -15,7 +15,7 @@ export interface CanonicalPackage {
   tags: string[];
 
   // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic' | 'mcp';
+  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
   subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection';
 
 
@@ -44,6 +44,10 @@ export interface CanonicalPackage {
       fileMatchPattern?: string; // Required if inclusion is 'fileMatch'
       domain?: string; // Domain/topic for organization
     };
+    agentsMdConfig?: {
+      project?: string; // Project name
+      scope?: string; // Scope of the instructions (e.g., "testing", "api")
+    };
   };
 
   // Format compatibility scores
@@ -54,10 +58,11 @@ export interface CanonicalPackage {
     windsurf?: number;
     copilot?: number;
     kiro?: number;
+    'agents.md'?: number;
   };
 
   // Source information
-  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'generic';
+  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic';
   sourceUrl?: string;
 
   // Quality & verification flags
