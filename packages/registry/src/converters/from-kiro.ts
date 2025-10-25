@@ -66,6 +66,10 @@ export function fromKiro(
   // Infer domain from filename if not provided
   const domain = metadata.name.replace(/-/g, ' ').replace(/\.md$/, '');
 
+  // Detect foundational Kiro files
+  const foundationalType = detectFoundationalType(metadata.name);
+  const additionalTags = inferTags(frontmatter, foundationalType);
+
   // Build canonical package
   const pkg: Partial<CanonicalPackage> = {
     id: metadata.id,
@@ -73,7 +77,7 @@ export function fromKiro(
     name: metadata.name,
     description: metadata.description || '',
     author: metadata.author || '',
-    tags: metadata.tags || ['kiro', ...inferTags(frontmatter)],
+    tags: metadata.tags || ['kiro', ...additionalTags],
     content: canonicalContent,
     sourceFormat: 'kiro',
     metadata: {
@@ -84,6 +88,7 @@ export function fromKiro(
         inclusion: frontmatter.inclusion,
         fileMatchPattern: frontmatter.fileMatchPattern,
         domain,
+        foundationalType,
       },
     },
   };
@@ -376,13 +381,41 @@ function inferSectionType(
 }
 
 /**
- * Infer tags from frontmatter
+ * Detect if this is a foundational Kiro file
+ * Returns: 'product' | 'tech' | 'structure' | undefined
  */
-function inferTags(frontmatter: {
-  inclusion?: 'always' | 'fileMatch' | 'manual';
-  fileMatchPattern?: string;
-}): string[] {
+function detectFoundationalType(filename: string): 'product' | 'tech' | 'structure' | undefined {
+  const normalizedName = filename.toLowerCase().replace(/\.md$/, '');
+
+  if (normalizedName === 'product') {
+    return 'product';
+  }
+  if (normalizedName === 'tech') {
+    return 'tech';
+  }
+  if (normalizedName === 'structure') {
+    return 'structure';
+  }
+
+  return undefined;
+}
+
+/**
+ * Infer tags from frontmatter and foundational type
+ */
+function inferTags(
+  frontmatter: {
+    inclusion?: 'always' | 'fileMatch' | 'manual';
+    fileMatchPattern?: string;
+  },
+  foundationalType?: 'product' | 'tech' | 'structure'
+): string[] {
   const tags: string[] = [];
+
+  // Add foundational type tag
+  if (foundationalType) {
+    tags.push(`kiro-${foundationalType}`);
+  }
 
   if (frontmatter.inclusion) {
     tags.push(`kiro-${frontmatter.inclusion}`);

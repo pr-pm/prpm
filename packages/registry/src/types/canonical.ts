@@ -43,6 +43,7 @@ export interface CanonicalPackage {
       inclusion?: 'always' | 'fileMatch' | 'manual'; // REQUIRED - no default
       fileMatchPattern?: string; // Required if inclusion is 'fileMatch'
       domain?: string; // Domain/topic for organization
+      foundationalType?: 'product' | 'tech' | 'structure'; // Foundational file type (product.md, tech.md, structure.md)
     };
     agentsMdConfig?: {
       project?: string; // Project name
@@ -218,6 +219,7 @@ export interface ConversionOptions {
     inclusion?: 'always' | 'fileMatch' | 'manual'; // REQUIRED
     fileMatchPattern?: string; // Required if inclusion === 'fileMatch'
     domain?: string;
+    foundationalType?: 'product' | 'tech' | 'structure'; // Foundational file type (product.md, tech.md, structure.md)
   };
 }
 
