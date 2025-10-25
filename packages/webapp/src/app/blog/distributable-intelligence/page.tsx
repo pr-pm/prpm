@@ -99,25 +99,28 @@ export default function DistributableIntelligencePost() {
 
         {/* Content */}
         <div className="prose prose-invert prose-lg max-w-none
-          prose-headings:text-white prose-headings:font-bold
-          prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6
-          prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
-          prose-p:text-gray-300 prose-p:leading-relaxed
-          prose-a:text-prpm-accent prose-a:no-underline hover:prose-a:underline
-          prose-code:text-prpm-accent prose-code:bg-prpm-dark-card prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-          prose-pre:bg-prpm-dark-card prose-pre:border prose-pre:border-prpm-border
+          prose-headings:text-white prose-headings:font-bold prose-headings:tracking-tight
+          prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-6 prose-h2:scroll-mt-20
+          prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:scroll-mt-20
+          prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-6
+          prose-a:text-prpm-accent prose-a:no-underline prose-a:font-medium hover:prose-a:underline
+          prose-code:text-prpm-accent prose-code:bg-prpm-dark-card/50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[0.9em] prose-code:font-mono prose-code:border prose-code:border-prpm-border/30
+          prose-pre:bg-prpm-dark-card prose-pre:border prose-pre:border-prpm-border prose-pre:rounded-xl prose-pre:p-6 prose-pre:my-8 prose-pre:overflow-x-auto
           prose-strong:text-white prose-strong:font-semibold
-          prose-ul:text-gray-300 prose-ol:text-gray-300
-          prose-li:text-gray-300
-          prose-blockquote:border-l-prpm-accent prose-blockquote:text-gray-400
-          prose-table:text-gray-300
-          prose-th:text-white prose-th:bg-prpm-dark-card
-          prose-td:border-prpm-border
+          prose-ul:my-6 prose-ul:space-y-2 prose-ul:text-gray-300
+          prose-ol:my-6 prose-ol:space-y-2 prose-ol:text-gray-300
+          prose-li:text-gray-300 prose-li:leading-relaxed
+          prose-blockquote:border-l-4 prose-blockquote:border-prpm-accent prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-gray-400 prose-blockquote:my-8
+          prose-table:border-collapse prose-table:w-full prose-table:my-8 prose-table:text-gray-300
+          prose-thead:border-b-2 prose-thead:border-prpm-border
+          prose-th:text-left prose-th:text-white prose-th:bg-prpm-dark-card prose-th:px-4 prose-th:py-3 prose-th:font-semibold prose-th:border prose-th:border-prpm-border
+          prose-td:px-4 prose-td:py-3 prose-td:border prose-td:border-prpm-border
+          prose-hr:border-prpm-border prose-hr:my-12
         ">
           {/* Intro */}
-          <div className="bg-prpm-dark-card border border-prpm-border rounded-2xl p-8 mb-8">
-            <p className="text-xl text-gray-300 leading-relaxed mb-4">
-              <strong className="text-white">In one line:</strong> PRPM is a package manager for AI coding assistants—ship rules, skills, and agents that make migrations and refactors correct by default.
+          <div className="not-prose bg-gradient-to-br from-prpm-dark-card to-prpm-dark-card/50 border border-prpm-border/50 rounded-2xl p-8 mb-12 shadow-lg">
+            <p className="text-xl text-gray-300 leading-relaxed mb-0">
+              <strong className="text-white font-semibold">In one line:</strong> PRPM is a package manager for AI coding assistants—ship rules, skills, and agents that make migrations and refactors correct by default.
             </p>
           </div>
 
@@ -137,9 +140,9 @@ export default function DistributableIntelligencePost() {
             Developers <code>prpm install @vendor/migration-package</code>, their AI assistant loads it from <code>.ai/</code>, and performs context-aware changes across the repo, flags true edge cases, and generates tests that match your conventions.
           </p>
 
-          <div className="bg-prpm-accent/10 border border-prpm-accent/30 rounded-xl p-6 my-8">
-            <p className="font-semibold text-white mb-2">Outcome:</p>
-            <p className="mb-0">95% of migration work handled automatically vs 70% with scripts alone. Faster upgrades, consistent code, materially fewer support tickets.</p>
+          <div className="not-prose bg-prpm-accent/10 border border-prpm-accent/30 rounded-xl p-6 my-8 shadow-sm">
+            <p className="font-semibold text-white mb-3 text-lg">Outcome:</p>
+            <p className="mb-0 text-gray-300 leading-relaxed">95% of migration work handled automatically vs 70% with scripts alone. Faster upgrades, consistent code, materially fewer support tickets.</p>
           </div>
 
           <p>
@@ -159,10 +162,10 @@ export default function DistributableIntelligencePost() {
           <h3>1. Author</h3>
           <p>Create rules, skills, and agents as Markdown files with YAML frontmatter:</p>
 
-          <pre><code className="language-bash">{`$ prpm init
+          <pre className="language-bash"><code>{`$ prpm init
 # Creates prpm.json + example files`}</code></pre>
 
-          <pre><code className="language-markdown">{`---
+          <pre className="language-markdown"><code>{`---
 format: cursor
 subtype: rule
 ---
@@ -175,11 +178,11 @@ When converting YAML integrations:
 - \`frequency\` → \`@Frequency\` decorator`}</code></pre>
 
           <h3>2. Publish</h3>
-          <pre><code className="language-bash">{`$ prpm publish
+          <pre className="language-bash"><code>{`$ prpm publish
 ✓ Published @nango/yaml-to-ts-migration@1.0.0`}</code></pre>
 
           <h3>3. Install & Apply</h3>
-          <pre><code className="language-bash">{`$ prpm install @nango/yaml-to-ts-migration-agent
+          <pre className="language-bash"><code>{`$ prpm install @nango/yaml-to-ts-migration-agent
 ✓ Installed to .ai/nango/yaml-to-ts-migration-agent
 
 # In your AI assistant (Cursor/Claude/etc):
@@ -191,7 +194,9 @@ When converting YAML integrations:
 ✓ Updated imports
 ⚠ 2 files require manual review (flagged)`}</code></pre>
 
-          <p className="text-xl font-semibold text-prpm-accent">Total time: 30 minutes vs 2-4 hours</p>
+          <div className="not-prose bg-prpm-accent/5 border-l-4 border-prpm-accent rounded-r-xl p-6 my-8">
+            <p className="text-xl font-semibold text-prpm-accent mb-0">Total time: 30 minutes vs 2-4 hours</p>
+          </div>
 
           <h2>The Problem: Edge Cases Stall Migrations</h2>
 
@@ -269,21 +274,38 @@ When converting YAML integrations:
             </tbody>
           </table>
 
-          <p className="text-xl font-semibold text-prpm-accent">Total: 95% automated vs 70% with scripts alone</p>
+          <div className="not-prose bg-prpm-accent/5 border-l-4 border-prpm-accent rounded-r-xl p-6 my-8">
+            <p className="text-xl font-semibold text-prpm-accent mb-0">Total: 95% automated vs 70% with scripts alone</p>
+          </div>
 
           <h2>Package Types: Rules, Skills, Agents</h2>
 
           <h3>Rules</h3>
           <p><strong>Declarative constraints enforced during code generation</strong></p>
 
-          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 my-6">
-            <p className="text-sm text-gray-400 mb-2">Example: Nango TypeScript Integration Rules</p>
-            <ul className="text-sm">
-              <li>Sync configs extend <code>NangoSync&lt;ModelType&gt;</code></li>
-              <li>Action configs extend <code>NangoAction&lt;InputType, OutputType&gt;</code></li>
-              <li>Use <code>@Frequency</code> decorator for sync schedules</li>
-              <li>Class names: PascalCase (e.g., SalesforceContacts)</li>
-              <li>File names: kebab-case (e.g., salesforce-contacts.integration.ts)</li>
+          <div className="not-prose bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-6 my-6 shadow-sm">
+            <p className="text-sm text-gray-400 mb-4 font-medium">Example: Nango TypeScript Integration Rules</p>
+            <ul className="text-sm text-gray-300 space-y-2.5">
+              <li className="flex items-start">
+                <span className="text-prpm-accent mr-2 mt-0.5">→</span>
+                <span>Sync configs extend <code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">NangoSync&lt;ModelType&gt;</code></span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-prpm-accent mr-2 mt-0.5">→</span>
+                <span>Action configs extend <code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">NangoAction&lt;InputType, OutputType&gt;</code></span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-prpm-accent mr-2 mt-0.5">→</span>
+                <span>Use <code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">@Frequency</code> decorator for sync schedules</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-prpm-accent mr-2 mt-0.5">→</span>
+                <span>Class names: PascalCase (e.g., SalesforceContacts)</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-prpm-accent mr-2 mt-0.5">→</span>
+                <span>File names: kebab-case (e.g., salesforce-contacts.integration.ts)</span>
+              </li>
             </ul>
           </div>
 
@@ -292,13 +314,13 @@ When converting YAML integrations:
           <h3>Skills</h3>
           <p><strong>Step-by-step procedures for specific tasks</strong></p>
 
-          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 my-6">
-            <p className="text-sm text-gray-400 mb-2">Example: Migrate YAML Sync Configuration</p>
-            <ol className="text-sm">
+          <div className="not-prose bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-6 my-6 shadow-sm">
+            <p className="text-sm text-gray-400 mb-4 font-medium">Example: Migrate YAML Sync Configuration</p>
+            <ol className="text-sm text-gray-300 space-y-2 list-decimal list-inside">
               <li>Read the YAML sync configuration</li>
               <li>Extract: name, frequency, models, endpoints</li>
-              <li>Create TypeScript class extending <code>NangoSync&lt;ModelType&gt;</code></li>
-              <li>Add <code>@Frequency</code> decorator</li>
+              <li>Create TypeScript class extending <code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">NangoSync&lt;ModelType&gt;</code></li>
+              <li>Add <code className="text-prpm-accent bg-prpm-dark-card px-1.5 py-0.5 rounded text-xs">@Frequency</code> decorator</li>
               <li>Preserve pagination logic</li>
               <li>Add error handling</li>
               <li>Generate tests</li>
@@ -310,17 +332,17 @@ When converting YAML integrations:
           <h3>Agents</h3>
           <p><strong>Multi-step orchestration with reporting</strong></p>
 
-          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 my-6">
-            <p className="text-sm text-gray-400 mb-2">Example: Nango YAML to TypeScript Migration Agent</p>
-            <p className="text-sm mb-2">I am a specialized agent for migrating Nango YAML integrations to TypeScript.</p>
-            <p className="text-sm font-semibold mb-1">My Process:</p>
-            <ol className="text-sm">
-              <li><strong>Discovery</strong> - Scan codebase for YAML integration files</li>
-              <li><strong>Analysis</strong> - Parse each YAML, identify patterns and complexity</li>
-              <li><strong>Generation</strong> - Create TypeScript equivalents using rules and skills</li>
-              <li><strong>Integration</strong> - Update imports, dependencies, references</li>
-              <li><strong>Testing</strong> - Generate test files based on YAML patterns</li>
-              <li><strong>Reporting</strong> - Summary with edge cases flagged for review</li>
+          <div className="not-prose bg-prpm-dark-card/50 border border-prpm-border/50 rounded-xl p-6 my-6 shadow-sm">
+            <p className="text-sm text-gray-400 mb-3 font-medium">Example: Nango YAML to TypeScript Migration Agent</p>
+            <p className="text-sm text-gray-300 mb-4 italic">I am a specialized agent for migrating Nango YAML integrations to TypeScript.</p>
+            <p className="text-sm font-semibold text-white mb-3">My Process:</p>
+            <ol className="text-sm text-gray-300 space-y-2 list-decimal list-inside">
+              <li><strong className="text-white">Discovery</strong> - Scan codebase for YAML integration files</li>
+              <li><strong className="text-white">Analysis</strong> - Parse each YAML, identify patterns and complexity</li>
+              <li><strong className="text-white">Generation</strong> - Create TypeScript equivalents using rules and skills</li>
+              <li><strong className="text-white">Integration</strong> - Update imports, dependencies, references</li>
+              <li><strong className="text-white">Testing</strong> - Generate test files based on YAML patterns</li>
+              <li><strong className="text-white">Reporting</strong> - Summary with edge cases flagged for review</li>
             </ol>
           </div>
 

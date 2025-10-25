@@ -87,6 +87,8 @@ export default function IntroducingPRPMPost() {
           <div className="flex items-center gap-4 text-gray-400 text-sm">
             <span>By PRPM Team</span>
             <span>•</span>
+            <span>October 23, 2025</span>
+            <span>•</span>
             <span>5 min read</span>
           </div>
         </header>
