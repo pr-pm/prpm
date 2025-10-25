@@ -480,7 +480,9 @@ subtype: rule
 
           <p className="text-xl font-semibold text-white">We're building the missing piece.</p>
 
-          <h2>Get Started</h2>
+          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+            <h2 className="text-3xl font-bold text-white mb-0">Get Started</h2>
+          </div>
 
           <div className="not-prose space-y-8">
             <div>
