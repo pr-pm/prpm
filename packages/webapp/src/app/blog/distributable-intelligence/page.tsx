@@ -91,7 +91,7 @@ export default function DistributableIntelligencePost() {
           <div className="flex items-center gap-4 text-gray-400 text-sm">
             <span>By PRPM Team</span>
             <span>•</span>
-            <span>October 25, 2024</span>
+            <span>October 25, 2025</span>
             <span>•</span>
             <span>15 min read</span>
           </div>
