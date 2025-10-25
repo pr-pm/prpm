@@ -105,51 +105,51 @@ Add to your `prpm.json`:
   "name": "@your-org/kiro-testing-standards",
   "version": "1.0.0",
   "description": "Testing standards for Kiro",
-  "type": "kiro",
+  "format": "kiro",
+  "subtype": "rule",
   "tags": ["kiro", "testing", "standards"],
-  "kiroConfig": {
-    "filename": "testing",
-    "inclusion": "fileMatch",
-    "fileMatchPattern": "**/*.test.ts",
-    "domain": "testing"
-  }
+  "files": [".kiro/steering/testing.md"]
 }
 ```
 
-### 2. Configuration Options
+> **Note**: Configuration like `inclusion`, `fileMatchPattern`, and `domain` should be defined **in the file's frontmatter**, not in `prpm.json`. PRPM automatically extracts this configuration when parsing the file.
+
+### 2. File Structure
+
+All configuration goes in the file's YAML frontmatter:
 
 **Manual activation**:
-```json
-{
-  "kiroConfig": {
-    "filename": "security-audit",
-    "inclusion": "manual",
-    "domain": "security"
-  }
-}
+```markdown
+---
+inclusion: manual
+domain: security
+---
+
+# Security Audit Checklist
+...
 ```
 
 **Always active**:
-```json
-{
-  "kiroConfig": {
-    "filename": "code-style",
-    "inclusion": "always",
-    "domain": "coding-standards"
-  }
-}
+```markdown
+---
+inclusion: always
+domain: coding-standards
+---
+
+# Code Style Guide
+...
 ```
 
 **File pattern matching**:
-```json
-{
-  "kiroConfig": {
-    "filename": "api-routes",
-    "inclusion": "fileMatch",
-    "fileMatchPattern": "src/api/**/*.ts",
-    "domain": "backend"
-  }
-}
+```markdown
+---
+inclusion: fileMatch
+fileMatchPattern: "src/api/**/*.ts"
+domain: backend
+---
+
+# API Design Principles
+...
 ```
 
 ### 3. Publish
@@ -172,14 +172,21 @@ prpm install claude-skill --as kiro
 
 ## Configuration Reference
 
-### kiroConfig Options
+### Frontmatter Options (in `.md` file)
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `filename` | string | No | Name for the steering file (default: package name) |
 | `inclusion` | string | **Yes** | Inclusion mode: `always`, `fileMatch`, or `manual` |
 | `fileMatchPattern` | string | Conditional* | Glob pattern (*required if inclusion is `fileMatch`) |
-| `domain` | string | No | Domain/topic for organization |
+| `domain` | string | No | Domain/topic for organization (inferred from filename if not provided) |
+
+### Manifest Options (in `prpm.json`)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `format` | string | Yes | Must be `"kiro"` |
+| `subtype` | string | No | Package subtype (default: `"rule"`) |
+| `files` | array | Yes | List of steering files to include |
 
 ### Supported Sections
 
@@ -351,60 +358,84 @@ domain: testing
 
 ### Always-Active Code Style
 
+**prpm.json:**
 ```json
 {
   "name": "@company/code-style",
-  "type": "kiro",
-  "kiroConfig": {
-    "filename": "code-style",
-    "inclusion": "always",
-    "domain": "coding-standards"
-  }
+  "format": "kiro",
+  "subtype": "rule",
+  "files": [".kiro/steering/code-style.md"]
 }
+```
+
+**File frontmatter:**
+```yaml
+---
+inclusion: always
+domain: coding-standards
+---
 ```
 
 ### Test File Guidelines
 
+**prpm.json:**
 ```json
 {
   "name": "@company/testing-standards",
-  "type": "kiro",
-  "kiroConfig": {
-    "filename": "testing",
-    "inclusion": "fileMatch",
-    "fileMatchPattern": "**/*.test.ts",
-    "domain": "testing"
-  }
+  "format": "kiro",
+  "subtype": "rule",
+  "files": [".kiro/steering/testing.md"]
 }
+```
+
+**File frontmatter:**
+```yaml
+---
+inclusion: fileMatch
+fileMatchPattern: "**/*.test.ts"
+domain: testing
+---
 ```
 
 ### Security Audit Checklist
 
+**prpm.json:**
 ```json
 {
   "name": "@company/security-checklist",
-  "type": "kiro",
-  "kiroConfig": {
-    "filename": "security-audit",
-    "inclusion": "manual",
-    "domain": "security"
-  }
+  "format": "kiro",
+  "subtype": "rule",
+  "files": [".kiro/steering/security-audit.md"]
 }
+```
+
+**File frontmatter:**
+```yaml
+---
+inclusion: manual
+domain: security
+---
 ```
 
 ### React Component Standards
 
+**prpm.json:**
 ```json
 {
   "name": "@company/react-standards",
-  "type": "kiro",
-  "kiroConfig": {
-    "filename": "react-components",
-    "inclusion": "fileMatch",
-    "fileMatchPattern": "src/components/**/*.tsx",
-    "domain": "frontend"
-  }
+  "format": "kiro",
+  "subtype": "rule",
+  "files": [".kiro/steering/react-components.md"]
 }
+```
+
+**File frontmatter:**
+```yaml
+---
+inclusion: fileMatch
+fileMatchPattern: "src/components/**/*.tsx"
+domain: frontend
+---
 ```
 
 ## Migration Guide

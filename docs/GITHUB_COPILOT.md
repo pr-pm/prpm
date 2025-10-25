@@ -96,34 +96,34 @@ Add to your `prpm.json`:
   "name": "@your-org/copilot-instructions",
   "version": "1.0.0",
   "description": "Custom Copilot instructions for our project",
-  "type": "copilot",
+  "format": "copilot",
+  "subtype": "tool",
   "tags": ["copilot", "instructions", "coding-standards"],
-  "copilotConfig": {
-    "instructionName": "testing",
-    "applyTo": "**/*.test.ts"
-  }
+  "files": [".github/copilot-instructions.md"]
 }
 ```
 
-### 2. Configuration Options
+> **Note**: Configuration like `applyTo` patterns should be defined **in the file's frontmatter**, not in `prpm.json`. PRPM automatically extracts this configuration when parsing the file.
 
-**Repository-wide** (no `applyTo`):
-```json
-{
-  "copilotConfig": {
-    "instructionName": "coding-standards"
-  }
-}
+### 2. File Structure
+
+**Repository-wide** (no frontmatter needed):
+```markdown
+# Coding Standards
+
+Follow these standards across the entire repository.
 ```
 
-**Path-specific** (with `applyTo`):
-```json
-{
-  "copilotConfig": {
-    "instructionName": "api-routes",
-    "applyTo": "src/pages/api/**/*.ts"
-  }
-}
+**Path-specific** (use frontmatter):
+```markdown
+---
+applyTo:
+  - src/pages/api/**/*.ts
+---
+
+# API Routes Standards
+
+Apply these rules when working with API routes.
 ```
 
 ### 3. Publish
@@ -146,12 +146,19 @@ prpm install claude-skill --as copilot
 
 ## Configuration Reference
 
-### copilotConfig Options
+### Frontmatter Options (in `.md` file)
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `instructionName` | string | No | Name for the instruction file (default: package name) |
-| `applyTo` | string | No* | Glob pattern for files to apply to (*required for path-specific) |
+| `applyTo` | string or array | No* | Glob pattern(s) for files to apply to (*required for path-specific instructions) |
+
+### Manifest Options (in `prpm.json`)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `format` | string | Yes | Must be `"copilot"` |
+| `subtype` | string | No | Package subtype (default: `"tool"`) |
+| `files` | array | Yes | List of instruction files to include |
 
 ### Supported Sections
 
@@ -167,13 +174,16 @@ Copilot instructions support:
 
 ### 1. Use Path-Specific Instructions for Focused Rules
 
-```json
-{
-  "copilotConfig": {
-    "instructionName": "api-security",
-    "applyTo": "src/api/**/*.ts"
-  }
-}
+Define `applyTo` patterns in the file's frontmatter:
+
+```markdown
+---
+applyTo: src/api/**/*.ts
+---
+
+# API Security Rules
+
+...
 ```
 
 ### 2. Keep Instructions Clear and Concise
@@ -238,40 +248,54 @@ Use `.gitignore`-style glob patterns:
 
 ### Repository-Wide TypeScript Standards
 
+**prpm.json:**
 ```json
 {
   "name": "@company/typescript-standards",
-  "type": "copilot",
-  "copilotConfig": {
-    "instructionName": "typescript-standards"
-  }
+  "format": "copilot",
+  "subtype": "tool",
+  "files": [".github/copilot-instructions.md"]
 }
 ```
 
+**No frontmatter needed** - applies to entire repository.
+
 ### Test File Guidelines
 
+**prpm.json:**
 ```json
 {
   "name": "@company/test-guidelines",
-  "type": "copilot",
-  "copilotConfig": {
-    "instructionName": "testing",
-    "applyTo": "**/*.test.ts"
-  }
+  "format": "copilot",
+  "subtype": "tool",
+  "files": [".github/instructions/testing.instructions.md"]
 }
+```
+
+**File frontmatter:**
+```yaml
+---
+applyTo: "**/*.test.ts"
+---
 ```
 
 ### API Route Security
 
+**prpm.json:**
 ```json
 {
   "name": "@company/api-security",
-  "type": "copilot",
-  "copilotConfig": {
-    "instructionName": "api-security",
-    "applyTo": "src/pages/api/**/*.ts"
-  }
+  "format": "copilot",
+  "subtype": "tool",
+  "files": [".github/instructions/api-security.instructions.md"]
 }
+```
+
+**File frontmatter:**
+```yaml
+---
+applyTo: "src/pages/api/**/*.ts"
+---
 ```
 
 ## Resources
