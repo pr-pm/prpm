@@ -226,8 +226,8 @@ Content here.
 
       const result = fromWindsurf(content, metadata);
 
-      expect(result.metadata?.author).toBe('test-author');
-      expect(result.metadata?.tags).toContain('testing');
+      expect(result.author).toBe('test-author');
+      expect(result.tags).toContain('testing');
     });
   });
 });

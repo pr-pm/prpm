@@ -163,10 +163,11 @@ function convertSection(section: Section, warnings: string[]): string {
       return convertContext(section);
 
     case 'custom':
-      // Only include if it's agents.md-specific or generic
-      if (!section.editorType || section.editorType === 'agents.md' || section.editorType === 'generic') {
+      // Include if no specific editor type (generic custom section)
+      if (!section.editorType) {
         return section.content;
       }
+      // Skip editor-specific custom sections as they likely won't work in agents.md
       warnings.push(`Custom ${section.editorType} section skipped`);
       return '';
 

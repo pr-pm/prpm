@@ -37,8 +37,8 @@ export function toWindsurf(pkg: CanonicalPackage): ConversionResult {
       continue;
     }
 
-    // Add section title
-    if (section.title) {
+    // Add section title (if section type supports it)
+    if ('title' in section && section.title) {
       lines.push(`## ${section.title}`);
       lines.push('');
     }

@@ -7,8 +7,7 @@
 
 import type {
   CanonicalPackage,
-  PackageMetadata,
-  ContentSection,
+  Section,
 } from '../types/canonical.js';
 import { setTaxonomy } from './taxonomy-utils.js';
 
@@ -17,12 +16,17 @@ import { setTaxonomy } from './taxonomy-utils.js';
  */
 export function fromWindsurf(
   content: string,
-  metadata: PackageMetadata
+  metadata: {
+    id: string;
+    version?: string;
+    author?: string;
+    tags?: string[];
+  }
 ): CanonicalPackage {
-  const sections: ContentSection[] = [];
+  const sections: Section[] = [];
   const lines = content.split('\n');
 
-  let currentSection: ContentSection | null = null;
+  let currentSection: Section | null = null;
   let currentText: string[] = [];
   let inCodeBlock = false;
   let codeBlockLanguage = '';
@@ -197,17 +201,16 @@ export function fromWindsurf(
   // Build canonical package
   const pkg: Partial<CanonicalPackage> = {
     id: metadata.id,
-    name: metadata.name,
-    version: metadata.version,
-    description: description || metadata.description,
+    name: metadata.id,
+    version: metadata.version || '1.0.0',
+    description: description || 'Windsurf rules',
+    author: metadata.author || 'unknown',
+    tags: metadata.tags || [],
     sourceFormat: 'windsurf',
     content: {
+      format: 'canonical',
+      version: '1.0',
       sections,
-    },
-    metadata: {
-      ...metadata,
-      title: title || metadata.name,
-      description: description || metadata.description,
     },
   };
 
@@ -221,7 +224,7 @@ export function fromWindsurf(
 /**
  * Infer section type from title
  */
-function inferSectionType(title: string): ContentSection['type'] {
+function inferSectionType(title: string): Section['type'] {
   const lowerTitle = title.toLowerCase();
 
   if (

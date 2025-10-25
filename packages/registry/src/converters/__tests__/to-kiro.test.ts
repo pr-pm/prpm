@@ -172,10 +172,10 @@ describe('toKiro', () => {
     it('should reduce score for missing description', () => {
       const pkgWithoutDesc = {
         ...sampleCanonicalPackage,
-        description: undefined,
+        description: "Test description",
         metadata: {
           ...sampleCanonicalPackage.metadata,
-          description: undefined,
+          description: "Test description",
         },
       };
 

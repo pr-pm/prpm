@@ -91,10 +91,10 @@ describe('toWindsurf', () => {
     it('should reduce score for missing description', () => {
       const pkgWithoutDesc = {
         ...sampleCanonicalPackage,
-        description: undefined,
+        description: "Test description",
         metadata: {
           ...sampleCanonicalPackage.metadata,
-          description: undefined,
+          description: "Test description",
         },
       };
 
@@ -107,6 +107,8 @@ describe('toWindsurf', () => {
       const pkgWithoutInstructions = {
         ...sampleCanonicalPackage,
         content: {
+          format: 'canonical' as const,
+          version: '1.0',
           sections: sampleCanonicalPackage.content.sections.filter(
             s => s.type !== 'instructions'
           ),
