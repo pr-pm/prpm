@@ -233,28 +233,8 @@ export async function authRoutes(server: FastifyInstance) {
               incomingConnectionId: connectionId
             }, 'Stored incoming connection ID for polling, permanent connection unchanged');
 
-            // Patch the new connection with user metadata
-            try {
-              const tags: Record<string, string> = {};
-              if (existingUser.verified_author) {
-                tags.verified_author = 'true';
-              }
-
-              await nangoService.patchConnection(connectionId, {
-                id: existingUser.id,
-                email: existingUser.email,
-                display_name: existingUser.username,
-                tags: Object.keys(tags).length > 0 ? tags : undefined,
-              });
-
-              server.log.info({
-                userId: existingUser.id,
-                connectionId,
-                tags
-              }, 'Patched new connection with user metadata');
-            } catch (error) {
-              server.log.error({ error, userId: existingUser.id, connectionId }, 'Failed to patch new connection');
-            }
+            // Note: We don't patch this connection since it's been deleted from Nango
+            // We only use it for frontend polling via incoming_connection_id
 
             // Store the connection ID for CLI authentication sessions
             cliAuthSessions.set(endUser.endUserId, connectionId);
