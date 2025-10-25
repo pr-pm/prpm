@@ -172,6 +172,8 @@ subtype: rule
 
 # Nango TypeScript Patterns
 
+Learn more at [Nango.dev](https://nango.dev)
+
 When converting YAML integrations:
 - YAML \`sync\` → TypeScript class extending \`NangoSync\`
 - \`models\` array → generic type \`NangoSync<Model>\`
@@ -183,7 +185,7 @@ When converting YAML integrations:
 
           <h3>3. Install & Apply</h3>
           <pre className="language-bash"><code>{`$ prpm install @nango/yaml-to-ts-migration-agent
-✓ Installed to .ai/nango/yaml-to-ts-migration-agent
+✓ Installed to .cursor/rules/nango/yaml-to-ts-migration-agent
 
 # In your AI assistant (Cursor/Claude/etc):
 "Migrate all YAML integrations to TypeScript"
