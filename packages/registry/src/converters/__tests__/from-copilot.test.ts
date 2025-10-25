@@ -81,6 +81,108 @@ Rules for TypeScript.
 
       expect(result.metadata?.copilotConfig?.applyTo).toContain('src/**/*.ts');
     });
+
+    it('should parse applyTo with complex glob patterns', () => {
+      const content = `---
+applyTo:
+  - "**/*.{ts,tsx,js,jsx}"
+  - "src/**/[A-Z]*.ts"
+  - "!**/*.test.ts"
+---
+
+# Complex Patterns
+
+Rules with complex glob patterns.
+`;
+
+      const result = fromCopilot(content, basicMetadata);
+
+      expect(result.metadata?.copilotConfig?.applyTo).toContain('**/*.{ts,tsx,js,jsx}');
+      expect(result.metadata?.copilotConfig?.applyTo).toContain('src/**/[A-Z]*.ts');
+      expect(result.metadata?.copilotConfig?.applyTo).toContain('!**/*.test.ts');
+    });
+
+    it('should parse single string applyTo pattern', () => {
+      const content = `---
+applyTo: "src/**/*.ts"
+---
+
+# Single Pattern
+
+Rules for a single pattern.
+`;
+
+      const result = fromCopilot(content, basicMetadata);
+
+      expect(result.metadata?.copilotConfig?.applyTo).toBe('src/**/*.ts');
+    });
+
+    it('should handle empty frontmatter', () => {
+      const content = `---
+---
+
+# No Config
+
+Rules without config.
+`;
+
+      const result = fromCopilot(content, basicMetadata);
+
+      expect(result.metadata?.copilotConfig?.applyTo).toBeUndefined();
+    });
+
+    it('should handle frontmatter with comments', () => {
+      const content = `---
+# This is a comment
+applyTo:
+  - src/**/*.ts
+  # Another comment
+  - test/**/*.ts
+---
+
+# With Comments
+
+Rules with YAML comments.
+`;
+
+      const result = fromCopilot(content, basicMetadata);
+
+      expect(result.metadata?.copilotConfig?.applyTo).toContain('src/**/*.ts');
+      expect(result.metadata?.copilotConfig?.applyTo).toContain('test/**/*.ts');
+    });
+
+    it('should handle Unicode characters in patterns', () => {
+      const content = `---
+applyTo:
+  - "docs/日本語/**/*.md"
+  - "tests/tëst/**/*.js"
+---
+
+# Unicode Patterns
+
+Rules with Unicode paths.
+`;
+
+      const result = fromCopilot(content, basicMetadata);
+
+      expect(result.metadata?.copilotConfig?.applyTo).toContain('docs/日本語/**/*.md');
+      expect(result.metadata?.copilotConfig?.applyTo).toContain('tests/tëst/**/*.js');
+    });
+
+    it('should ignore invalid applyTo types', () => {
+      const content = `---
+applyTo: 123
+---
+
+# Invalid Type
+
+Rules with invalid applyTo.
+`;
+
+      const result = fromCopilot(content, basicMetadata);
+
+      expect(result.metadata?.copilotConfig?.applyTo).toBeUndefined();
+    });
   });
 
   describe('section parsing', () => {
