@@ -164,7 +164,7 @@ function convertSection(section: Section, warnings: string[]): string {
 
     case 'custom':
       // Only include if it's agents.md-specific or generic
-      if (!section.editorType || section.editorType === 'agents.md') {
+      if (!section.editorType || section.editorType === 'agents.md' || section.editorType === 'generic') {
         return section.content;
       }
       warnings.push(`Custom ${section.editorType} section skipped`);
