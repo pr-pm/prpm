@@ -125,10 +125,17 @@ export async function packageRoutes(server: FastifyInstance) {
     );
     const total = parseInt(countResult?.count || '0', 10);
 
-    // Get packages
+    // Get packages (select only needed columns for list view)
     const result = await query<Package>(
       server,
-      `SELECT * FROM packages
+      `SELECT
+         id, name, description, author_id, format, subtype,
+         category, tags, keywords, version_count,
+         total_downloads, weekly_downloads, monthly_downloads,
+         rating_average, rating_count, quality_score,
+         verified, featured, official, created_at, updated_at,
+         last_published_at, install_count, view_count
+       FROM packages
        ${whereClause}
        ORDER BY ${orderBy}
        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
