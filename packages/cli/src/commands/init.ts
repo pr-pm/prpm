@@ -4,7 +4,7 @@
  */
 
 import { Command } from 'commander';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import * as readline from 'readline/promises';
@@ -338,6 +338,77 @@ async function select(
 }
 
 /**
+ * Extract metadata from file content (YAML frontmatter or comments)
+ */
+async function extractMetadataFromFile(filePath: string): Promise<{
+  description?: string;
+  tags?: string[];
+  name?: string;
+}> {
+  try {
+    const content = await readFile(filePath, 'utf-8');
+    const metadata: { description?: string; tags?: string[]; name?: string } = {};
+
+    // Try to extract YAML frontmatter (---\nkey: value\n---)
+    const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+    if (frontmatterMatch) {
+      const frontmatter = frontmatterMatch[1];
+
+      // Extract description
+      const descMatch = frontmatter.match(/description:\s*(.+)/i);
+      if (descMatch) {
+        metadata.description = descMatch[1].trim().replace(/^["']|["']$/g, '');
+      }
+
+      // Extract name
+      const nameMatch = frontmatter.match(/name:\s*(.+)/i);
+      if (nameMatch) {
+        metadata.name = nameMatch[1].trim().replace(/^["']|["']$/g, '');
+      }
+
+      // Extract tags
+      const tagsMatch = frontmatter.match(/tags:\s*(.+)/i);
+      if (tagsMatch) {
+        const tagsStr = tagsMatch[1].trim();
+        // Handle both array format [tag1, tag2] and comma-separated
+        if (tagsStr.startsWith('[')) {
+          metadata.tags = tagsStr
+            .replace(/[\[\]]/g, '')
+            .split(',')
+            .map(t => t.trim().replace(/^["']|["']$/g, ''))
+            .filter(Boolean);
+        } else {
+          metadata.tags = tagsStr
+            .split(',')
+            .map(t => t.trim().replace(/^["']|["']$/g, ''))
+            .filter(Boolean);
+        }
+      }
+    }
+
+    // If no frontmatter, try to extract from first heading or comments
+    if (!metadata.description) {
+      // Try markdown heading
+      const headingMatch = content.match(/^#\s+(.+)/m);
+      if (headingMatch) {
+        metadata.description = headingMatch[1].trim();
+      } else {
+        // Try HTML/JSDoc style comment
+        const commentMatch = content.match(/\/\*\*\s*\n\s*\*\s*(.+)/);
+        if (commentMatch) {
+          metadata.description = commentMatch[1].trim();
+        }
+      }
+    }
+
+    return metadata;
+  } catch (error) {
+    // File might not exist yet, that's okay
+    return {};
+  }
+}
+
+/**
  * Get package name from current directory or git config
  */
 function getDefaultPackageName(): string {
@@ -542,6 +613,49 @@ async function initPackage(options: InitOptions): Promise<void> {
           .split(',')
           .map(f => f.trim())
           .filter(Boolean);
+      }
+
+      // Try to extract metadata from the first file if it exists
+      if (config.files.length > 0) {
+        const firstFile = config.files[0];
+        console.log(`\n🔍 Checking ${firstFile} for metadata...`);
+        const extractedMetadata = await extractMetadataFromFile(firstFile);
+
+        if (extractedMetadata.description) {
+          console.log(`   Found description: "${extractedMetadata.description}"`);
+          const useExtracted = await prompt(
+            rl,
+            '   Use this description? (Y/n)',
+            'y'
+          );
+          if (useExtracted.toLowerCase() !== 'n') {
+            config.description = extractedMetadata.description;
+          }
+        }
+
+        if (extractedMetadata.tags && extractedMetadata.tags.length > 0) {
+          console.log(`   Found tags: ${extractedMetadata.tags.join(', ')}`);
+          const useExtractedTags = await prompt(
+            rl,
+            '   Use these tags? (Y/n)',
+            'y'
+          );
+          if (useExtractedTags.toLowerCase() !== 'n') {
+            config.tags = extractedMetadata.tags;
+          }
+        }
+
+        if (extractedMetadata.name && !config.name.includes(extractedMetadata.name)) {
+          console.log(`   Found name: "${extractedMetadata.name}"`);
+          const useExtractedName = await prompt(
+            rl,
+            '   Include in package name? (y/N)',
+            'n'
+          );
+          if (useExtractedName.toLowerCase() === 'y') {
+            config.name = `${config.name}-${extractedMetadata.name.toLowerCase().replace(/\s+/g, '-')}`;
+          }
+        }
       }
 
       // Ask if user wants to add more files
