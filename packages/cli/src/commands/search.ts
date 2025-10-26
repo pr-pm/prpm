@@ -36,6 +36,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'copilot': '✈️',
     'kiro': '🎯',
     'mcp': '🔗',
+    'agents.md': '📝',
     'generic': '📦',
   };
 
@@ -54,6 +55,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'copilot': 'GitHub Copilot',
     'kiro': 'Kiro',
     'mcp': 'MCP',
+    'agents.md': 'Agents.md',
     'generic': '',
   };
 
