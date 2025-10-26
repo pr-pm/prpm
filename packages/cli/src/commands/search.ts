@@ -449,6 +449,7 @@ export function createSearchCommand(): Command {
       }
 
       await handleSearch(query || '', { format, subtype, author, limit, page, interactive: options.interactive });
+      process.exit(0);
     });
 
   return command;

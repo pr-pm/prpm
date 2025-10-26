@@ -27,5 +27,8 @@ export function createPopularCommand(): Command {
     .description('Show popular packages (all time)')
     .option('--format <format>', 'Filter by format (cursor, claude, continue, windsurf, copilot, kiro, generic)')
     .option('--subtype <subtype>', 'Filter by subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection)')
-    .action(handlePopular);
+    .action(async (options: { format?: string; subtype?: string }) => {
+      await handlePopular(options);
+      process.exit(0);
+    });
 }

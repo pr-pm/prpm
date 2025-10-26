@@ -91,6 +91,7 @@ export function createTrendingCommand(): Command {
       }
 
       await handleTrending({ format, subtype, limit });
+      process.exit(0);
     });
 
   return command;

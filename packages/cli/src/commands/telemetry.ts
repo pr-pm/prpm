@@ -17,7 +17,7 @@ function createStatusCommand() {
     .action(async () => {
       const enabled = telemetry.isEnabled();
       const stats = await telemetry.getStats();
-      
+
       console.log('📊 Telemetry Status:');
       console.log(`   Status: ${enabled ? '✅ Enabled' : '❌ Disabled'}`);
       console.log(`   Analytics: 📈 PostHog`);
@@ -25,7 +25,7 @@ function createStatusCommand() {
       if (stats.lastEvent) {
         console.log(`   Last event: ${stats.lastEvent}`);
       }
-      
+
       if (enabled) {
         console.log('\n💡 Telemetry helps us improve the tool by collecting anonymous usage data.');
         console.log('   Data is sent to PostHog for analysis.');
@@ -33,6 +33,7 @@ function createStatusCommand() {
       } else {
         console.log('\n💡 Telemetry is disabled. Run "prpm telemetry enable" to help improve the tool.');
       }
+      process.exit(0);
     });
 }
 
@@ -43,6 +44,7 @@ function createEnableCommand() {
       await telemetry.enable();
       console.log('✅ Telemetry enabled');
       console.log('📊 Anonymous usage data will be collected to help improve the tool.');
+      process.exit(0);
     });
 }
 
@@ -53,6 +55,7 @@ function createDisableCommand() {
       await telemetry.disable();
       console.log('❌ Telemetry disabled');
       console.log('📊 No usage data will be collected.');
+      process.exit(0);
     });
 }
 
@@ -66,6 +69,7 @@ function createStatsCommand() {
       if (stats.lastEvent) {
         console.log(`   Last event: ${stats.lastEvent}`);
       }
+      process.exit(0);
     });
 }
 
@@ -107,6 +111,8 @@ function createTestCommand() {
         
       } catch (error) {
         console.error('❌ Failed to send test event:', error);
+        process.exit(1);
       }
+      process.exit(0);
     });
 }

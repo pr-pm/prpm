@@ -756,7 +756,7 @@ export function createInitCommand(): Command {
     .action(async (options: InitOptions) => {
       try {
         await initPackage(options);
-        return;
+        process.exit(0);
       } catch (error) {
         console.error('\n❌ Error:', error instanceof Error ? error.message : error);
         process.exit(1);

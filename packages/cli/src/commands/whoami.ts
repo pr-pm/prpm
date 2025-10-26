@@ -75,5 +75,8 @@ export async function handleWhoami(): Promise<void> {
 export function createWhoamiCommand(): Command {
   return new Command('whoami')
     .description('Show current logged-in user')
-    .action(handleWhoami);
+    .action(async () => {
+      await handleWhoami();
+      process.exit(0);
+    });
 }

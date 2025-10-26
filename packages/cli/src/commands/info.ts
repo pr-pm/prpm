@@ -86,6 +86,7 @@ export function createInfoCommand(): Command {
     .argument('<package>', 'Package ID to get information about')
     .action(async (packageId: string) => {
       await handleInfo(packageId);
+      process.exit(0);
     });
 
   return command;

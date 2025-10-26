@@ -546,6 +546,7 @@ export function createInstallCommand(): Command {
         as: convertTo,
         frozenLockfile: options.frozenLockfile
       });
+      process.exit(0);
     });
 
   return command;

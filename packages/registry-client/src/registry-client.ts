@@ -305,18 +305,24 @@ export class RegistryClient {
         : [],
     };
 
-    // Convert tarball to base64 string for JSON transport
-    const tarballBase64 = tarball.toString('base64');
+    // Create FormData for multipart upload
+    // In Node 18+, FormData and Blob are available globally
+    const FormDataClass = typeof FormData !== 'undefined' ? FormData : (globalThis as any).FormData;
+    const BlobClass = typeof Blob !== 'undefined' ? Blob : (globalThis as any).Blob;
+
+    const formData = new FormDataClass();
+
+    // Add manifest as JSON string
+    formData.append('manifest', JSON.stringify(normalizedManifest));
+
+    // Add tarball as blob
+    const tarballBlob = new BlobClass([tarball], { type: 'application/gzip' });
+    formData.append('tarball', tarballBlob, 'package.tar.gz');
 
     const response = await this.fetch('/api/v1/packages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        manifest: normalizedManifest,
-        tarball: tarballBase64,
-      }),
+      body: formData as any,
+      // Don't set Content-Type header - let fetch set it with boundary
     });
 
     return response.json() as Promise<PublishResponse>;
@@ -473,18 +479,31 @@ export class RegistryClient {
    */
   private async fetch(path: string, options: RequestInit = {}, retries: number = 3): Promise<Response> {
     const url = `${this.baseUrl}${path}`;
-    const headers: Record<string, string> = {
-      ...options.headers as Record<string, string>,
-    };
 
-    // Only set Content-Type if not already set and body is not FormData
-    if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
-      headers['Content-Type'] = 'application/json';
-    }
+    // When body is FormData, we need to let fetch set Content-Type with boundary
+    // but we still need to add Authorization header
+    const isFormData = options.body instanceof FormData ||
+                       (typeof options.body === 'object' && options.body !== null &&
+                        typeof (options.body as any).append === 'function');
 
-    // Always add Authorization if we have a token
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    let headers: Record<string, string> | Headers;
+
+    if (isFormData) {
+      // For FormData, create new Headers instance and don't set Content-Type
+      const headersObj = new Headers(options.headers as Record<string, string>);
+      if (this.token) {
+        headersObj.set('Authorization', `Bearer ${this.token}`);
+      }
+      headers = headersObj;
+    } else {
+      // For regular requests, use plain object
+      headers = {
+        ...options.headers as Record<string, string>,
+        'Content-Type': 'application/json',
+      };
+      if (this.token) {
+        headers['Authorization'] = `Bearer ${this.token}`;
+      }
     }
 
     let lastError: Error | null = null;
@@ -516,13 +535,22 @@ export class RegistryClient {
         }
 
         if (!response.ok) {
-          let error: { error?: string; message?: string };
+          let error: { error?: string; message?: string; details?: string[] };
           try {
-            error = await response.json() as { error?: string; message?: string };
+            error = await response.json() as { error?: string; message?: string; details?: string[] };
+            // Debug logging
+            console.error('Registry error response:', JSON.stringify(error, null, 2));
           } catch {
             error = { error: response.statusText };
           }
-          throw new Error(error.error || error.message || `HTTP ${response.status}: ${response.statusText}`);
+
+          // Build error message with details if available
+          let errorMessage = error.error || error.message || `HTTP ${response.status}: ${response.statusText}`;
+          if (error.details && error.details.length > 0) {
+            errorMessage += '\n  - ' + error.details.join('\n  - ');
+          }
+
+          throw new Error(errorMessage);
         }
 
         return response;

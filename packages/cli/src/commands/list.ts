@@ -169,10 +169,13 @@ export async function handleList(): Promise<void> {
  */
 export function createListCommand(): Command {
   const command = new Command('list');
-  
+
   command
     .description('List all installed prompt packages')
-    .action(handleList);
-  
+    .action(async () => {
+      await handleList();
+      process.exit(0);
+    });
+
   return command;
 }

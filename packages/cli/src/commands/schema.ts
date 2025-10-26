@@ -33,7 +33,10 @@ export function createSchemaCommand(): Command {
 
   command
     .description('Display the PRPM manifest JSON schema')
-    .action(handleSchema);
+    .action(async () => {
+      await handleSchema();
+      process.exit(0);
+    });
 
   return command;
 }

@@ -23,7 +23,7 @@ export const packageManifestSchema = z.object({
       email: z.string().email().optional(),
       url: z.string().url().optional(),
     }),
-  ]),
+  ]).optional(),
   license: z.string().optional(),
   repository: z.string().url().optional(),
   homepage: z.string().url().optional(),

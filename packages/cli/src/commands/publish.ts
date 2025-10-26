@@ -41,7 +41,15 @@ async function findAndLoadManifest(): Promise<{ manifest: PackageManifest; sourc
     const validated = validateManifest(manifest);
     return { manifest: validated, source: 'prpm.json' };
   } catch (error) {
-    // prpm.json not found or invalid, try marketplace.json
+    // If it's a validation error, throw it immediately (don't try marketplace.json)
+    if (error instanceof Error && (
+      error.message.includes('Manifest validation failed') ||
+      error.message.includes('Claude skill') ||
+      error.message.includes('SKILL.md')
+    )) {
+      throw error;
+    }
+    // Otherwise, prpm.json not found or invalid JSON, try marketplace.json
   }
 
   // Try .claude/marketplace.json (Claude format)
@@ -279,15 +287,27 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     console.log(`   Source: ${source}`);
     console.log(`   Package: ${manifest.name}@${manifest.version}`);
-    console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype || 'rule'}`);
+    console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype || 'rule (default)'}`);
     console.log(`   Description: ${manifest.description}`);
     console.log('');
 
     // Create tarball
     console.log('📦 Creating package tarball...');
     const tarball = await createTarball(manifest);
-    const sizeMB = (tarball.length / (1024 * 1024)).toFixed(2);
-    console.log(`   Size: ${sizeMB}MB`);
+
+    // Display size in KB or MB depending on size
+    const sizeInBytes = tarball.length;
+    const sizeInKB = sizeInBytes / 1024;
+    const sizeInMB = sizeInBytes / (1024 * 1024);
+
+    let sizeDisplay: string;
+    if (sizeInMB >= 1) {
+      sizeDisplay = `${sizeInMB.toFixed(2)}MB`;
+    } else {
+      sizeDisplay = `${sizeInKB.toFixed(2)}KB`;
+    }
+
+    console.log(`   Size: ${sizeDisplay}`);
     console.log('');
 
     if (options.dryRun) {
@@ -314,6 +334,34 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Failed to publish package: ${error}\n`);
+
+    // Provide helpful hints based on error type
+    if (error.includes('Manifest validation failed')) {
+      console.log('💡 Common validation issues:');
+      console.log('   - Missing required fields (name, version, description, format)');
+      console.log('   - Invalid format or subtype values');
+      console.log('   - Description too short (min 10 chars) or too long (max 500 chars)');
+      console.log('   - Package name must be lowercase with hyphens only');
+      console.log('');
+      console.log('💡 For Claude skills specifically:');
+      console.log('   - Add "subtype": "skill" to your prpm.json');
+      console.log('   - Ensure files include a SKILL.md file');
+      console.log('   - Package name must be max 64 characters');
+      console.log('');
+      console.log('💡 View the schema: prpm schema');
+      console.log('');
+    } else if (error.includes('SKILL.md')) {
+      console.log('💡 Claude skills require:');
+      console.log('   - A file named SKILL.md (all caps) in your package');
+      console.log('   - "format": "claude" and "subtype": "skill" in prpm.json');
+      console.log('');
+    } else if (error.includes('No manifest file found')) {
+      console.log('💡 Create a manifest file:');
+      console.log('   - Run: prpm init');
+      console.log('   - Or create prpm.json manually');
+      console.log('');
+    }
+
     process.exit(1);
   } finally {
     // Track telemetry
@@ -341,5 +389,8 @@ export function createPublishCommand(): Command {
     .option('--access <type>', 'Package access (public or private)', 'public')
     .option('--tag <tag>', 'NPM-style tag (e.g., latest, beta)', 'latest')
     .option('--dry-run', 'Validate package without publishing')
-    .action(handlePublish);
+    .action(async (options: PublishOptions) => {
+      await handlePublish(options);
+      process.exit(0);
+    });
 }

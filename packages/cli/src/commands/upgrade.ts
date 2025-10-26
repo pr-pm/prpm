@@ -130,5 +130,8 @@ export function createUpgradeCommand(): Command {
     .argument('[package]', 'Specific package to upgrade (optional)')
     .option('--all', 'Upgrade all packages')
     .option('--force', 'Skip warning for major version upgrades')
-    .action(handleUpgrade);
+    .action(async (packageName?: string, options?: { all?: boolean; force?: boolean }) => {
+      await handleUpgrade(packageName, options);
+      process.exit(0);
+    });
 }

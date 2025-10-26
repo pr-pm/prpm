@@ -27,6 +27,7 @@ export async function publishRoutes(server: FastifyInstance) {
       tags: ['packages'],
       description: 'Publish a new package or version',
       consumes: ['multipart/form-data'],
+      // Skip body validation for multipart - will be parsed manually
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
@@ -38,18 +39,25 @@ export async function publishRoutes(server: FastifyInstance) {
 
       // Parse form fields
       const fields: Record<string, any> = {};
-      for await (const part of request.parts()) {
-        if (part.type === 'field') {
-          fields[part.fieldname] = part.value;
-        } else if (part.type === 'file') {
-          if (part.fieldname === 'tarball') {
-            const chunks: Buffer[] = [];
-            for await (const chunk of part.file) {
-              chunks.push(chunk);
+      try {
+        for await (const part of request.parts()) {
+          console.log('Received part:', part.type, part.fieldname);
+          if (part.type === 'field') {
+            fields[part.fieldname] = part.value;
+          } else if (part.type === 'file') {
+            if (part.fieldname === 'tarball') {
+              const chunks: Buffer[] = [];
+              for await (const chunk of part.file) {
+                chunks.push(chunk);
+              }
+              tarball = Buffer.concat(chunks);
+              console.log('Tarball size:', tarball.length);
             }
-            tarball = Buffer.concat(chunks);
           }
         }
+      } catch (parseError) {
+        console.error('Error parsing multipart data:', parseError);
+        throw parseError;
       }
 
       // Validate manifest field
@@ -70,6 +78,8 @@ export async function publishRoutes(server: FastifyInstance) {
       // Validate manifest
       const manifestValidation = validateManifest(manifest);
       if (!manifestValidation.valid) {
+        // Log validation errors for debugging
+        console.log('Manifest validation failed:', manifestValidation.errors);
         return reply.status(400).send({
           error: 'Invalid manifest',
           details: manifestValidation.errors,
@@ -142,7 +152,19 @@ export async function publishRoutes(server: FastifyInstance) {
 
       // Create package if it doesn't exist
       if (!existingPackage) {
-        const authorName = typeof manifest.author === 'string' ? manifest.author : manifest.author.name;
+        // Get username from user if author not provided
+        let authorName: string;
+        if (manifest.author) {
+          authorName = typeof manifest.author === 'string' ? manifest.author : manifest.author.name;
+        } else {
+          // Fetch username from database
+          const userRecord = await queryOne<{ username: string }>(
+            server,
+            'SELECT username FROM users WHERE id = $1',
+            [userId]
+          );
+          authorName = userRecord?.username || 'Unknown';
+        }
 
         await query(
           server,
@@ -236,10 +258,13 @@ export async function publishRoutes(server: FastifyInstance) {
       });
     } catch (error: unknown) {
       const err = toError(error);
-      server.log.error({ error: err.message }, 'Publish error');
+      server.log.error({ error: err.message, stack: err.stack }, 'Publish error');
+      console.error('Publish error:', err);
+      console.error('Error stack:', err.stack);
       return reply.status(500).send({
         error: 'Failed to publish package',
         message: err.message,
+        ...(process.env.NODE_ENV === 'development' ? { stack: err.stack } : {})
       });
     }
   });

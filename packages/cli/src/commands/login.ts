@@ -297,5 +297,8 @@ export function createLoginCommand(): Command {
   return new Command('login')
     .description('Login to the PRMP registry')
     .option('--token <token>', 'Login with a personal access token')
-    .action(handleLogin);
+    .action(async (options: LoginOptions) => {
+      await handleLogin(options);
+      process.exit(0);
+    });
 }
