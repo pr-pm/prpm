@@ -400,6 +400,48 @@ function SearchPageContent() {
                       <option value="agents.md">Agents.md</option>
                       <option value="generic">Generic</option>
                     </select>
+
+                    {/* Format compatibility info */}
+                    {selectedFormat === 'agents.md' && (
+                      <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <p className="text-xs text-gray-300 mb-2">
+                          <strong className="text-blue-400">Compatible with:</strong>
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          OpenAI Codex • GitHub Copilot • Google Gemini • Any tool supporting the open standard
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedFormat === 'copilot' && (
+                      <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                        <p className="text-xs text-gray-300 mb-2">
+                          <strong className="text-purple-400">Compatible with:</strong>
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          GitHub Copilot • OpenAI Codex
+                        </p>
+                      </div>
+                    )}
+
+                    {(selectedFormat === 'cursor' || selectedFormat === 'claude' || selectedFormat === 'continue' || selectedFormat === 'windsurf' || selectedFormat === 'kiro') && (
+                      <div className="mt-3 p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400">
+                          Tool-specific format for <strong>{selectedFormat === 'cursor' ? 'Cursor IDE' : selectedFormat === 'claude' ? 'Claude Desktop/Code' : selectedFormat === 'continue' ? 'Continue (VS Code/JetBrains)' : selectedFormat === 'windsurf' ? 'Windsurf IDE' : 'Kiro AI'}</strong>
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedFormat === 'mcp' && (
+                      <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <p className="text-xs text-gray-300 mb-2">
+                          <strong className="text-green-400">Protocol-based:</strong>
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Any tool implementing Model Context Protocol
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
