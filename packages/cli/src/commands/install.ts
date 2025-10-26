@@ -210,7 +210,8 @@ export async function handleInstall(
     let format = options.as || pkg.format;
 
     // Special handling for Claude packages: default to CLAUDE.md if it doesn't exist
-    if (!options.as && pkg.format === 'claude') {
+    // BUT only for packages that are generic rules (not skills, agents, or commands)
+    if (!options.as && pkg.format === 'claude' && pkg.subtype === 'rule') {
       const { fileExists } = await import('../core/filesystem.js');
       const claudeMdExists = await fileExists('CLAUDE.md');
 
