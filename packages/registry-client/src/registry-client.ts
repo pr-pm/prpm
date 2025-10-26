@@ -289,7 +289,7 @@ export class RegistryClient {
   /**
    * Publish a package (requires authentication)
    */
-  async publish(manifest: PackageManifest, tarball: Buffer): Promise<PublishResponse> {
+  async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string }): Promise<PublishResponse> {
     if (!this.token) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
@@ -314,6 +314,11 @@ export class RegistryClient {
 
     // Add manifest as JSON string
     formData.append('manifest', JSON.stringify(normalizedManifest));
+
+    // Add organization ID if specified
+    if (options?.orgId) {
+      formData.append('org_id', options.orgId);
+    }
 
     // Add tarball as blob
     const tarballBlob = new BlobClass([tarball], { type: 'application/gzip' });

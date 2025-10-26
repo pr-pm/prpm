@@ -279,6 +279,46 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     console.log('📦 Publishing package...\n');
 
+    // Get user info to check for organizations
+    console.log('🔍 Checking authentication...');
+    const client = getRegistryClient(config);
+    let userInfo: any;
+    let selectedOrgId: string | undefined;
+
+    try {
+      userInfo = await client.whoami();
+
+      // If user has organizations, prompt for selection
+      if (userInfo.organizations && userInfo.organizations.length > 0) {
+        const { default: inquirer } = await import('inquirer');
+
+        const publishOptions = [
+          { name: `Personal (${userInfo.username})`, value: null },
+          ...userInfo.organizations
+            .filter((org: any) => ['owner', 'admin', 'maintainer'].includes(org.role))
+            .map((org: any) => ({
+              name: `${org.name} (${org.role})`,
+              value: org.id,
+            })),
+        ];
+
+        if (publishOptions.length > 1) {
+          const answer = await inquirer.prompt([
+            {
+              type: 'list',
+              name: 'publisher',
+              message: 'Publish this package as:',
+              choices: publishOptions,
+            },
+          ]);
+          selectedOrgId = answer.publisher;
+        }
+      }
+    } catch (err) {
+      console.log('   Could not fetch user organizations, publishing as personal package');
+    }
+    console.log('');
+
     // Read and validate manifest
     console.log('🔍 Validating package manifest...');
     const { manifest, source } = await findAndLoadManifest();
@@ -289,6 +329,10 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     console.log(`   Package: ${manifest.name}@${manifest.version}`);
     console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype || 'rule (default)'}`);
     console.log(`   Description: ${manifest.description}`);
+    if (selectedOrgId) {
+      const selectedOrg = userInfo.organizations.find((org: any) => org.id === selectedOrgId);
+      console.log(`   Publishing to: ${selectedOrg?.name || 'organization'}`);
+    }
     console.log('');
 
     // Create tarball
@@ -319,8 +363,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     // Publish to registry
     console.log('🚀 Publishing to registry...');
-    const client = getRegistryClient(config);
-    const result = await client.publish(manifest, tarball);
+    const result = await client.publish(manifest, tarball, selectedOrgId ? { orgId: selectedOrgId } : undefined);
 
     console.log('');
     console.log('✅ Package published successfully!');
