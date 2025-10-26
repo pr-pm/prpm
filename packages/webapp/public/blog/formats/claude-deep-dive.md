@@ -27,10 +27,14 @@
 
 ## Introduction
 
-Claude has two complementary systems for providing context:
+Claude has **four** complementary systems for providing context:
 
-1. **CLAUDE.md**: A project-specific context file that Claude Code automatically loads at the start of every conversation
-2. **Skills** (`.claude/skills/*/SKILL.md`): Reusable reference documentation that Claude Desktop consults when relevant
+1. **CLAUDE.md**: Project-specific context file (always loaded in Claude Code)
+2. **Skills** (`.claude/skills/*/SKILL.md`): Reusable reference documentation (discoverable)
+3. **Agents** (`.claude/agents/*/AGENT.md`): Persona-based configurations with tool access (explicitly invoked)
+4. **Rules** (`.claude/rules/*.md`): Always-active conventions (legacy, superseded by CLAUDE.md)
+
+This post focuses primarily on **CLAUDE.md** and **Skills**, as they represent the modern recommended approach for Claude context management.
 
 ### CLAUDE.md: Always-On Project Context
 
