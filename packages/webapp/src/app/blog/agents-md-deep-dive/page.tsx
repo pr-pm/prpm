@@ -47,6 +47,42 @@ export default function AgentsMdDeepDivePost() {
             The AI coding tool landscape is fragmented with Cursor using <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">.cursor/rules/</code>, GitHub Copilot using <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">.github/copilot-instructions.md</code>, Claude using <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">.claude/skills/</code>, and more. agents.md provides a neutral, open standard that all these tools can support.
           </p>
 
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 mb-6">
+            <h4 className="text-lg font-bold text-blue-400 mb-3">🤖 Compatible Tools</h4>
+            <p className="text-gray-300 mb-4">
+              The agents.md format is supported by multiple AI coding tools:
+            </p>
+            <ul className="space-y-2 text-gray-300">
+              <li className="flex items-start gap-3">
+                <span className="text-blue-400">✓</span>
+                <div>
+                  <strong className="text-white">OpenAI Codex</strong> - The foundational model that powers many AI coding tools
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-400">✓</span>
+                <div>
+                  <strong className="text-white">GitHub Copilot</strong> - Reads agents.md in addition to .github/copilot-instructions.md
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-400">✓</span>
+                <div>
+                  <strong className="text-white">Google Gemini Code Assist</strong> - Committed to supporting the open standard
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-400">✓</span>
+                <div>
+                  <strong className="text-white">Any future tool</strong> - That adopts the open standard
+                </div>
+              </li>
+            </ul>
+            <p className="text-sm text-gray-400 mt-4 italic">
+              This is why agents.md is the recommended format for teams using multiple AI tools or wanting to avoid vendor lock-in.
+            </p>
+          </div>
+
           <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-6">
             <p className="text-gray-300 mb-4"><strong>Key insight:</strong> The format's power is in what it doesn't require:</p>
             <ul className="space-y-2 text-gray-300">
