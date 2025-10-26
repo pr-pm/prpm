@@ -20,8 +20,8 @@ export async function searchRoutes(server: FastifyInstance) {
           q: { type: 'string' },
           format: {
             anyOf: [
-              { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'] },
-              { type: 'array', items: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'] } }
+              { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
+              { type: 'array', items: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] } }
             ]
           },
           subtype: {
@@ -94,7 +94,7 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'] },
+          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
           subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
@@ -154,7 +154,7 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'] },
+          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
           subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },

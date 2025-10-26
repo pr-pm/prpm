@@ -9,6 +9,7 @@ import { toClaude, toClaudeMd } from '../converters/to-claude.js';
 import { toCopilot } from '../converters/to-copilot.js';
 import { toKiro } from '../converters/to-kiro.js';
 import { toWindsurf } from '../converters/to-windsurf.js';
+import { toAgentsMd } from '../converters/to-agents-md.js';
 import type { CanonicalPackage } from '../types/canonical.js';
 
 export async function convertRoutes(server: FastifyInstance) {
@@ -32,7 +33,7 @@ export async function convertRoutes(server: FastifyInstance) {
           properties: {
             format: {
               type: 'string',
-              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'canonical'],
+              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical'],
               default: 'canonical',
             },
             version: { type: 'string' },
@@ -143,7 +144,7 @@ export async function convertRoutes(server: FastifyInstance) {
           properties: {
             format: {
               type: 'string',
-              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'canonical'],
+              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical'],
               default: 'canonical',
             },
             version: { type: 'string' },
@@ -259,11 +260,11 @@ export async function convertRoutes(server: FastifyInstance) {
             content: { type: 'string' },
             from: {
               type: 'string',
-              enum: ['cursor', 'claude', 'continue', 'windsurf', 'auto'],
+              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'auto'],
             },
             to: {
               type: 'string',
-              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'canonical'],
+              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical'],
             },
             metadata: {
               type: 'object',
@@ -350,6 +351,9 @@ async function convertPackage(
       return toKiro(pkg, { kiroConfig: kiroConfig as { filename?: string; inclusion: 'always' | 'fileMatch' | 'manual'; fileMatchPattern?: string; domain?: string } });
     }
 
+    case 'agents.md':
+      return toAgentsMd(pkg);
+
     case 'canonical':
     default:
       return {
@@ -385,6 +389,8 @@ function getFilenameForFormat(format: string, packageId: string, pkg?: Canonical
       const filename = pkg?.metadata?.kiroConfig?.filename || packageId;
       return `${filename}.md`;
     }
+    case 'agents.md':
+      return 'AGENTS.md';
     default:
       return `${packageId}.json`;
   }
