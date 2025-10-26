@@ -166,7 +166,7 @@ export default function CursorDeepDivePost() {
           </p>
 
           <div className="bg-prpm-dark border border-prpm-border rounded-xl p-6 mb-6 font-mono text-sm">
-            <div className="text-gray-500 mb-2">// from-cursor.ts</div>
+            <div className="text-gray-500 mb-2">{'//'} from-cursor.ts</div>
             <div className="text-prpm-accent-light">export &#123; fromClaude as fromCursor &#125; from './from-claude.js';</div>
           </div>
 

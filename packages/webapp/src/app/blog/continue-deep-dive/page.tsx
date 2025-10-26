@@ -111,9 +111,9 @@ export default function ContinueDeepDivePost() {
           </p>
 
           <div className="bg-prpm-dark border border-prpm-border rounded-xl p-6 mb-6 font-mono text-sm">
-            <div className="text-gray-500 mb-2">// from-continue.ts</div>
+            <div className="text-gray-500 mb-2">{'//'} from-continue.ts</div>
             <div className="text-prpm-accent-light">export &#123; fromClaude as fromContinue &#125; from './from-claude.js';</div>
-            <div className="text-gray-500 mt-4 mb-2">// to-continue.ts</div>
+            <div className="text-gray-500 mt-4 mb-2">{'//'} to-continue.ts</div>
             <div className="text-prpm-accent-light">export &#123; toClaude as toContinue &#125; from './to-claude.js';</div>
           </div>
 
