@@ -140,17 +140,30 @@ export default function ClaudeDeepDivePost() {
           </p>
 
           <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-6">
-            <h3 className="text-xl font-bold text-white mb-4">📁 Required File Structure</h3>
+            <h3 className="text-xl font-bold text-white mb-4">📁 Required File Structure & Naming</h3>
             <p className="text-gray-300 mb-3">
-              According to <a href="https://docs.claude.com/en/docs/claude-code/skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude's official documentation</a>, skills <strong>must</strong> be named <code className="bg-prpm-dark px-2 py-1 rounded">SKILL.md</code> (all caps):
+              According to <a href="https://docs.claude.com/en/docs/claude-code/skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude's official documentation</a>, skills have strict requirements:
             </p>
-            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 font-mono text-sm text-gray-400 mb-3">
+            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 font-mono text-sm text-gray-400 mb-4">
               .claude/skills/<br/>
               └── my-skill/<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;└── SKILL.md  ← Must be named SKILL.md
+              &nbsp;&nbsp;&nbsp;&nbsp;└── SKILL.md  ← Must be named SKILL.md (all caps)
+            </div>
+            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 mb-3">
+              <p className="text-white font-semibold mb-2">Character Limits:</p>
+              <ul className="space-y-2 text-gray-300 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-prpm-accent">•</span>
+                  <span><strong>Skill name:</strong> Max 64 characters, lowercase letters, numbers, and hyphens only</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-prpm-accent">•</span>
+                  <span><strong>Description:</strong> Max 1024 characters (aim for 100-800 for optimal discoverability)</span>
+                </li>
+              </ul>
             </div>
             <p className="text-gray-300 text-sm">
-              PRPM enforces this requirement during package installation and publishing to ensure compatibility with Claude Desktop and Claude Code.
+              PRPM enforces these requirements during package installation and publishing to ensure compatibility with Claude Desktop and Claude Code.
             </p>
           </div>
 

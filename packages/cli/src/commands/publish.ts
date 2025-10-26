@@ -116,6 +116,52 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
         'Please rename your skill file to SKILL.md (all caps) and update your prpm.json files array.'
       );
     }
+
+    // Validate skill name length (max 64 characters)
+    if (manifest.name.length > 64) {
+      throw new Error(
+        `Claude skill name "${manifest.name}" exceeds 64 character limit (${manifest.name.length} characters).\n` +
+        'According to Claude documentation, skill names must be max 64 characters.\n' +
+        'Please shorten your package name.'
+      );
+    }
+
+    // Validate skill name format (lowercase, numbers, hyphens only)
+    if (!/^[a-z0-9-]+$/.test(manifest.name)) {
+      throw new Error(
+        `Claude skill name "${manifest.name}" contains invalid characters.\n` +
+        'According to Claude documentation, skill names must use lowercase letters, numbers, and hyphens only.\n' +
+        'Please update your package name.'
+      );
+    }
+
+    // Validate description length (max 1024 characters)
+    if (manifest.description.length > 1024) {
+      throw new Error(
+        `Claude skill description exceeds 1024 character limit (${manifest.description.length} characters).\n` +
+        'According to Claude documentation, skill descriptions must be max 1024 characters.\n' +
+        'Please shorten your description.'
+      );
+    }
+
+    // Warn if description is approaching the limit (80% = 819 chars)
+    if (manifest.description.length > 819) {
+      console.warn(
+        `⚠️  Warning: Skill description is ${manifest.description.length}/1024 characters (${Math.round(manifest.description.length / 1024 * 100)}% of limit).\n` +
+        '   Consider keeping it concise for better discoverability.'
+      );
+    }
+
+    // Warn if description is too short (less than 100 chars)
+    if (manifest.description.length < 100) {
+      console.warn(
+        `⚠️  Warning: Skill description is only ${manifest.description.length} characters.\n` +
+        '   Claude uses descriptions for skill discovery - consider adding more detail about:\n' +
+        '   - What the skill does\n' +
+        '   - When Claude should use it\n' +
+        '   - What problems it solves'
+      );
+    }
   }
 
   return manifest;
