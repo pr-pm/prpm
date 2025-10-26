@@ -73,9 +73,15 @@ export function fromCopilot(
     },
   };
 
-  // Set taxonomy (format + subtype + legacy type)
-  // Copilot instructions are rules by default
-  setTaxonomy(pkg, 'copilot', 'rule');
+  // Set taxonomy (format + subtype)
+  // Detect subtype from frontmatter or default to rule
+  let subtype: 'rule' | 'tool' | 'chatmode' = 'rule';
+  if (frontmatter.subtype === 'chatmode' || frontmatter.type === 'chatmode') {
+    subtype = 'chatmode';
+  } else if (frontmatter.subtype === 'tool' || frontmatter.type === 'tool') {
+    subtype = 'tool';
+  }
+  setTaxonomy(pkg, 'copilot', subtype);
 
   return pkg as CanonicalPackage;
 }
@@ -84,7 +90,7 @@ export function fromCopilot(
  * Parse YAML frontmatter from Copilot instruction
  */
 function parseFrontmatter(content: string): {
-  frontmatter: { applyTo?: string };
+  frontmatter: { applyTo?: string; subtype?: string; type?: string };
   body: string;
 } {
   const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -99,10 +105,18 @@ function parseFrontmatter(content: string): {
     // Parse YAML frontmatter
     const parsed = yaml.load(frontmatterText) as Record<string, unknown>;
 
-    const frontmatter: { applyTo?: string } = {};
+    const frontmatter: { applyTo?: string; subtype?: string; type?: string } = {};
 
-    if (parsed && typeof parsed === 'object' && 'applyTo' in parsed && typeof parsed.applyTo === 'string') {
-      frontmatter.applyTo = parsed.applyTo;
+    if (parsed && typeof parsed === 'object') {
+      if ('applyTo' in parsed && typeof parsed.applyTo === 'string') {
+        frontmatter.applyTo = parsed.applyTo;
+      }
+      if ('subtype' in parsed && typeof parsed.subtype === 'string') {
+        frontmatter.subtype = parsed.subtype;
+      }
+      if ('type' in parsed && typeof parsed.type === 'string') {
+        frontmatter.type = parsed.type;
+      }
     }
 
     return { frontmatter, body };

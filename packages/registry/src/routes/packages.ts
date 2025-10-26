@@ -28,7 +28,7 @@ export async function packageRoutes(server: FastifyInstance) {
         properties: {
           search: { type: 'string' },
           format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'] },
+          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
           category: { type: 'string' },
           featured: { type: 'boolean' },
           verified: { type: 'boolean' },
@@ -673,7 +673,7 @@ export async function packageRoutes(server: FastifyInstance) {
         properties: {
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
           format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'] },
+          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
         },
       },
     },
