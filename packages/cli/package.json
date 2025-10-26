@@ -50,7 +50,6 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "commander": "^11.1.0",
-    "inquirer": "^9.2.12",
     "posthog-node": "^5.10.0",
     "tar": "^6.2.1"
   },

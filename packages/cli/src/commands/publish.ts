@@ -325,33 +325,14 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         selectedOrgId = orgFromManifest.id;
         console.log(`   Organization from manifest: ${orgFromManifest.name} (${orgFromManifest.role})`);
       }
-      // Only prompt if no org specified in manifest and user has orgs
-      else if (userInfo.organizations && userInfo.organizations.length > 0) {
-        const { default: inquirer } = await import('inquirer');
-
-        const publishOptions = [
-          { name: `Personal (${userInfo.username})`, value: null },
-          ...userInfo.organizations
-            .filter((org: any) => ['owner', 'admin', 'maintainer'].includes(org.role))
-            .map((org: any) => ({
-              name: `${org.name} (${org.role})`,
-              value: org.id,
-            })),
-        ];
-
-        if (publishOptions.length > 1) {
-          const answer = await inquirer.prompt([
-            {
-              type: 'list',
-              name: 'publisher',
-              message: 'Publish this package as:',
-              choices: publishOptions,
-            },
-          ]);
-          selectedOrgId = answer.publisher;
-        }
-      }
+      // If no org specified in manifest, publish to personal account (no prompt)
     } catch (err) {
+      // If we can't fetch user info and org is specified in manifest, error out
+      if (manifest.organization) {
+        console.error(`❌ Could not verify organization "${manifest.organization}". Please check your connection.`);
+        process.exit(1);
+      }
+      // Otherwise fallback to personal publishing
       console.log('   Could not fetch user organizations, publishing as personal package');
     }
     console.log('');
