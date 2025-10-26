@@ -164,6 +164,55 @@ describe.skip('Publish Command', () => {
 
       expect(mockPublish).toHaveBeenCalled();
     });
+
+    it('should reject Claude skills without SKILL.md file', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-skill',
+          version: '1.0.0',
+          description: 'Test Claude skill',
+          format: 'claude',
+          subtype: 'skill',
+          files: ['.claude/skills/test-skill/skill.md'], // Wrong filename (should be SKILL.md)
+        })
+      );
+
+      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test-skill/skill.md'), '# Test skill');
+
+      await expect(handlePublish({})).rejects.toThrow(/SKILL\.md/);
+    });
+
+    it('should accept Claude skills with SKILL.md file', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-skill',
+          version: '1.0.0',
+          description: 'Test Claude skill',
+          format: 'claude',
+          subtype: 'skill',
+          files: ['.claude/skills/test-skill/SKILL.md'], // Correct filename
+        })
+      );
+
+      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '# Test skill');
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-skill',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+    });
   });
 
   describe('Authentication', () => {
