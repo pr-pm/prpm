@@ -51,6 +51,7 @@ const SUBTYPES = [
   'tool',
   'template',
   'collection',
+  'chatmode',
 ] as const;
 
 const FORMAT_EXAMPLES: Record<string, { files: string[]; description: string }> = {
@@ -68,7 +69,7 @@ const FORMAT_EXAMPLES: Record<string, { files: string[]; description: string }> 
   },
   windsurf: {
     description: 'Windsurf AI coding rules',
-    files: ['.windsurfrules', 'README.md'],
+    files: ['.windsurf/rules', 'README.md'],
   },
   copilot: {
     description: 'GitHub Copilot instructions',
@@ -136,7 +137,7 @@ Provide detailed instructions for the AI to follow when using this skill.
 `,
   },
   windsurf: {
-    '.windsurfrules': `# Windsurf Rules
+    '.windsurf/rules': `# Windsurf Rules
 
 Add your Windsurf AI coding rules here.
 
@@ -175,6 +176,36 @@ Add your GitHub Copilot instructions here.
 - Use async/await for asynchronous operations
 - Implement error handling with try/catch
 - Export named functions instead of default exports
+`,
+    '.github/chatmodes/example.chatmode.md': `---
+name: Example Chat Mode
+description: Example custom chat mode for GitHub Copilot
+---
+
+# Example Chat Mode
+
+This is an example chat mode. Replace with your actual chat mode persona and instructions.
+
+## Role
+
+You are a [describe the role/persona].
+
+## Capabilities
+
+- Capability 1
+- Capability 2
+- Capability 3
+
+## Guidelines
+
+When responding:
+1. Guideline 1
+2. Guideline 2
+3. Guideline 3
+
+## Example Interactions
+
+Provide examples of how this chat mode should respond.
 `,
   },
   kiro: {
