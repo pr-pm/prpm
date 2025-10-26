@@ -146,6 +146,56 @@ export default function KiroDeepDivePost() {
             Kiro's steering file approach represents a paradigm shift in prompt engineering with modular concerns, context-aware rules, scalable organization, and maintainable structure. PRPM fully supports Kiro's unique features including frontmatter parsing, foundational file detection, cross-format conversion, and quality scoring.
           </p>
 
+          <h2 className="text-3xl font-bold text-white mt-12 mb-4">Resources</h2>
+
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-6">
+            <h3 className="text-xl font-bold text-white mb-4">Official Kiro Documentation</h3>
+            <ul className="space-y-2 text-gray-300">
+              <li>
+                <a href="https://kiro.dev/docs/steering/" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                  Kiro Steering Documentation
+                </a>
+              </li>
+              <li>
+                <a href="https://kiro.dev" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                  Kiro Official Website
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-6">
+            <h3 className="text-xl font-bold text-white mb-4">PRPM Documentation</h3>
+            <ul className="space-y-2 text-gray-300">
+              <li>
+                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/KIRO.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                  PRPM Kiro Guide
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/IMPORT_FORMAT_SPECS.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                  PRPM Import Format Specifications
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-8">
+            <h3 className="text-xl font-bold text-white mb-4">Source Code</h3>
+            <ul className="space-y-2 text-gray-300">
+              <li>
+                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/packages/registry/src/converters/from-kiro.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                  from-kiro.ts Converter
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/packages/registry/src/converters/to-kiro.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                  to-kiro.ts Converter
+                </a>
+              </li>
+            </ul>
+          </div>
+
           <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-purple/20 border border-prpm-accent/30 rounded-2xl p-8 text-center">
             <h3 className="text-2xl font-bold text-white mb-4">Explore All Format Deep Dives</h3>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

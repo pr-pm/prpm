@@ -1,8 +1,10 @@
 /**
  * Windsurf Rules Parser
- * Converts Windsurf .windsurfrules format to canonical package format
+ * Converts Windsurf .windsurf/rules format to canonical package format
  *
  * Windsurf uses a simple markdown format without special frontmatter.
+ * File location: .windsurf/rules
+ * Character limit: 12,000 characters per file
  */
 
 import type {
@@ -11,6 +13,8 @@ import type {
   InstructionsSection,
 } from '../types/canonical.js';
 import { setTaxonomy } from './taxonomy-utils.js';
+
+const MAX_WINDSURF_CHARS = 12000;
 
 /**
  * Parse Windsurf rules file to canonical format
@@ -25,12 +29,20 @@ export function fromWindsurf(
   }
 ): CanonicalPackage {
   const sections: Section[] = [];
+  const trimmedContent = content.trim();
+
+  // Validate character limit (Windsurf has a 12,000 character limit)
+  if (trimmedContent.length > MAX_WINDSURF_CHARS) {
+    console.warn(
+      `Warning: Windsurf rules file exceeds ${MAX_WINDSURF_CHARS} character limit (${trimmedContent.length} characters). Content may be truncated by Windsurf.`
+    );
+  }
 
   // Windsurf format is simple markdown - just treat the whole content as instructions
   const instructionsSection: InstructionsSection = {
     type: 'instructions',
     title: 'Windsurf Rules',
-    content: content.trim(),
+    content: trimmedContent,
   };
 
   sections.push(instructionsSection);

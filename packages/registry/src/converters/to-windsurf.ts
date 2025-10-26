@@ -1,12 +1,15 @@
 /**
  * Windsurf Rules Converter
- * Converts canonical package format to Windsurf .windsurfrules format
+ * Converts canonical package format to Windsurf .windsurf/rules format
  *
  * Windsurf uses a simple markdown format similar to Cursor but without MDC headers.
- * File location: .windsurfrules (root of project)
+ * File location: .windsurf/rules
+ * Character limit: 12,000 characters per file
  */
 
 import type { CanonicalPackage, ConversionResult } from '../types/canonical.js';
+
+const MAX_WINDSURF_CHARS = 12000;
 
 /**
  * Convert canonical package to Windsurf format
@@ -193,11 +196,20 @@ export function toWindsurf(pkg: CanonicalPackage): ConversionResult {
 
   const content = lines.join('\n').trim() + '\n';
 
+  // Validate character limit (Windsurf has a 12,000 character limit)
+  if (content.length > MAX_WINDSURF_CHARS) {
+    warnings.push(
+      `Content exceeds Windsurf's ${MAX_WINDSURF_CHARS} character limit (${content.length} characters). Content may be truncated by Windsurf.`
+    );
+    qualityScore -= 20;
+  }
+
   return {
     format: 'windsurf',
     content,
     qualityScore: Math.max(0, qualityScore),
     warnings: warnings.length > 0 ? warnings : undefined,
+    lossyConversion: content.length > MAX_WINDSURF_CHARS,
   };
 }
 

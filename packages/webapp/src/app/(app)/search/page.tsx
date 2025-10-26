@@ -19,6 +19,18 @@ import CollectionModal from '@/components/CollectionModal'
 
 type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
 
+// Define which subtypes are available for each format
+const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
+  'cursor': ['rule', 'agent', 'slash-command', 'prompt', 'workflow', 'tool', 'template'],
+  'claude': ['skill', 'agent', 'slash-command', 'prompt', 'workflow', 'tool', 'template'],
+  'continue': ['rule', 'agent', 'slash-command', 'prompt', 'workflow', 'tool', 'template'],
+  'windsurf': ['rule', 'agent', 'slash-command', 'prompt', 'workflow', 'tool', 'template'],
+  'copilot': ['tool', 'prompt', 'template'],
+  'kiro': ['rule', 'agent', 'prompt', 'workflow', 'tool', 'template'],
+  'mcp': ['tool', 'template'],
+  'generic': ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'],
+}
+
 function SearchPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -57,6 +69,18 @@ function SearchPageContent() {
   const [showCollectionModal, setShowCollectionModal] = useState(false)
 
   const limit = 20
+
+  // Get available subtypes for the selected format
+  const availableSubtypes = selectedFormat
+    ? FORMAT_SUBTYPES[selectedFormat] || []
+    : ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection']
+
+  // Reset subtype when format changes and current subtype is not available
+  useEffect(() => {
+    if (selectedFormat && selectedSubtype && !availableSubtypes.includes(selectedSubtype)) {
+      setSelectedSubtype('')
+    }
+  }, [selectedFormat, selectedSubtype, availableSubtypes])
 
   // Update URL when state changes
   useEffect(() => {
@@ -225,7 +249,7 @@ function SearchPageContent() {
       fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, query, selectedFormat, selectedCategory, selectedTags, sort, page])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, page])
 
   // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {
@@ -236,6 +260,7 @@ function SearchPageContent() {
     const filtersChanged =
       query !== initialParams.query ||
       selectedFormat !== initialParams.format ||
+      selectedSubtype !== initialParams.subtype ||
       selectedCategory !== initialParams.category ||
       JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
       sort !== initialParams.sort ||
@@ -246,7 +271,7 @@ function SearchPageContent() {
       setPage(1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, selectedFormat, selectedCategory, selectedTags, sort, activeTab, isInitialized])
+  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, activeTab, isInitialized])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -333,45 +358,6 @@ function SearchPageContent() {
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
             )}
           </button>
-          <button
-            onClick={() => setActiveTab('skills')}
-            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
-              activeTab === 'skills'
-                ? 'text-prpm-accent'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-          >
-            Skills
-            {activeTab === 'skills' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('slash-commands')}
-            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
-              activeTab === 'slash-commands'
-                ? 'text-prpm-accent'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-          >
-            Slash Commands
-            {activeTab === 'slash-commands' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('agents')}
-            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
-              activeTab === 'agents'
-                ? 'text-prpm-accent'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-          >
-            Agents
-            {activeTab === 'agents' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
-            )}
-          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -423,15 +409,15 @@ function SearchPageContent() {
                       className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
                     >
                       <option value="">All Subtypes</option>
-                      <option value="rule">Rule</option>
-                      <option value="agent">Agent</option>
-                      <option value="skill">Skill</option>
-                      <option value="slash-command">Slash Command</option>
-                      <option value="prompt">Prompt</option>
-                      <option value="workflow">Workflow</option>
-                      <option value="tool">Tool</option>
-                      <option value="template">Template</option>
-                      <option value="collection">Collection</option>
+                      {availableSubtypes.includes('rule') && <option value="rule">Rule</option>}
+                      {availableSubtypes.includes('agent') && <option value="agent">Agent</option>}
+                      {availableSubtypes.includes('skill') && <option value="skill">Skill</option>}
+                      {availableSubtypes.includes('slash-command') && <option value="slash-command">Slash Command</option>}
+                      {availableSubtypes.includes('prompt') && <option value="prompt">Prompt</option>}
+                      {availableSubtypes.includes('workflow') && <option value="workflow">Workflow</option>}
+                      {availableSubtypes.includes('tool') && <option value="tool">Tool</option>}
+                      {availableSubtypes.includes('template') && <option value="template">Template</option>}
+                      {availableSubtypes.includes('collection') && <option value="collection">Collection</option>}
                     </select>
                   </div>
                 </>
@@ -521,10 +507,39 @@ function SearchPageContent() {
                   <div className="space-y-4">
                     {packages.length === 0 ? (
                       <div className="text-center py-20">
-                        <p className="text-gray-400">No packages found</p>
+                        <p className="text-gray-400 mb-4">No packages found</p>
+                        {selectedFormat && (
+                          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 max-w-2xl mx-auto text-left">
+                            <h4 className="text-lg font-bold text-blue-400 mb-3">💡 Cross-Platform Tip</h4>
+                            <p className="text-gray-300 mb-3">
+                              PRPM is cross-platform! Even if there are no native <strong>{selectedFormat}</strong> packages, you can install packages from other formats using the <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-sm">--as</code> flag.
+                            </p>
+                            <p className="text-gray-300 mb-3">
+                              For example, install any Cursor rule as {selectedFormat}:
+                            </p>
+                            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 font-mono text-sm text-gray-300">
+                              prpm install @org/cursor-rules --as {selectedFormat}
+                            </div>
+                            <p className="text-gray-400 text-sm mt-3">
+                              This means you have access to <strong>thousands of packages</strong> across all formats, not just {selectedFormat}-specific ones!
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      packages.map((pkg) => (
+                      <>
+                        {selectedFormat && total < 50 && (
+                          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
+                            <h4 className="text-sm font-bold text-blue-400 mb-2">💡 Cross-Platform Tip</h4>
+                            <p className="text-gray-300 text-sm mb-2">
+                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>thousands more</strong> by installing packages from other formats:
+                            </p>
+                            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 font-mono text-xs text-gray-300">
+                              prpm install @org/any-package --as {selectedFormat}
+                            </div>
+                          </div>
+                        )}
+                        {packages.map((pkg) => (
                         <div
                           key={pkg.id}
                           className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
@@ -580,7 +595,8 @@ function SearchPageContent() {
                             </code>
                           </div>
                         </div>
-                      ))
+                      ))}
+                      </>
                     )}
                   </div>
                 )}
