@@ -397,6 +397,7 @@ function SearchPageContent() {
                       <option value="copilot">GitHub Copilot</option>
                       <option value="kiro">Kiro</option>
                       <option value="mcp">MCP</option>
+                      <option value="agents.md">Agents.md</option>
                       <option value="generic">Generic</option>
                     </select>
                   </div>

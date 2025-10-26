@@ -71,11 +71,19 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
       const filter: unknown[] = [{ term: { visibility: 'public' } }];
 
       if (format) {
-        filter.push({ term: { format } });
+        if (Array.isArray(format)) {
+          filter.push({ terms: { format } });
+        } else {
+          filter.push({ term: { format } });
+        }
       }
 
       if (subtype) {
-        filter.push({ term: { subtype } });
+        if (Array.isArray(subtype)) {
+          filter.push({ terms: { subtype } });
+        } else {
+          filter.push({ term: { subtype } });
+        }
       }
 
       if (category) {
