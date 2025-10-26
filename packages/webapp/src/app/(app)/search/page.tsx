@@ -21,14 +21,14 @@ type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agent
 
 // Define which subtypes are available for each format
 const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
-  'cursor': ['rule', 'agent', 'slash-command', 'prompt', 'workflow', 'tool', 'template'],
-  'claude': ['skill', 'agent', 'slash-command', 'prompt', 'workflow', 'tool', 'template'],
-  'continue': ['rule', 'agent', 'slash-command', 'prompt', 'workflow', 'tool', 'template'],
-  'windsurf': ['rule', 'agent', 'slash-command', 'prompt', 'workflow', 'tool', 'template'],
-  'copilot': ['tool', 'prompt', 'template'],
-  'kiro': ['rule', 'agent', 'prompt', 'workflow', 'tool', 'template'],
-  'mcp': ['tool', 'template'],
-  'generic': ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'],
+  'cursor': ['rule', 'agent', 'slash-command', 'tool'],
+  'claude': ['skill', 'agent', 'slash-command', 'tool'],
+  'continue': ['rule', 'agent', 'slash-command', 'tool'],
+  'windsurf': ['rule', 'agent', 'slash-command', 'tool'],
+  'copilot': ['tool', 'chatmode'],
+  'kiro': ['rule', 'agent', 'tool'],
+  'mcp': ['tool'],
+  'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode'],
 }
 
 function SearchPageContent() {
@@ -73,7 +73,7 @@ function SearchPageContent() {
   // Get available subtypes for the selected format
   const availableSubtypes = selectedFormat
     ? FORMAT_SUBTYPES[selectedFormat] || []
-    : ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection']
+    : ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode']
 
   // Reset subtype when format changes and current subtype is not available
   useEffect(() => {
@@ -413,11 +413,8 @@ function SearchPageContent() {
                       {availableSubtypes.includes('agent') && <option value="agent">Agent</option>}
                       {availableSubtypes.includes('skill') && <option value="skill">Skill</option>}
                       {availableSubtypes.includes('slash-command') && <option value="slash-command">Slash Command</option>}
-                      {availableSubtypes.includes('prompt') && <option value="prompt">Prompt</option>}
-                      {availableSubtypes.includes('workflow') && <option value="workflow">Workflow</option>}
                       {availableSubtypes.includes('tool') && <option value="tool">Tool</option>}
-                      {availableSubtypes.includes('template') && <option value="template">Template</option>}
-                      {availableSubtypes.includes('collection') && <option value="collection">Collection</option>}
+                      {availableSubtypes.includes('chatmode') && <option value="chatmode">Chat Mode</option>}
                     </select>
                   </div>
                 </>
@@ -521,7 +518,7 @@ function SearchPageContent() {
                               prpm install @org/cursor-rules --as {selectedFormat}
                             </div>
                             <p className="text-gray-400 text-sm mt-3">
-                              This means you have access to <strong>thousands of packages</strong> across all formats, not just {selectedFormat}-specific ones!
+                              This means you have access to <strong>1,700+ packages</strong> across all formats, not just {selectedFormat}-specific ones!
                             </p>
                           </div>
                         )}
@@ -532,7 +529,7 @@ function SearchPageContent() {
                           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
                             <h4 className="text-sm font-bold text-blue-400 mb-2">💡 Cross-Platform Tip</h4>
                             <p className="text-gray-300 text-sm mb-2">
-                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>thousands more</strong> by installing packages from other formats:
+                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>1,700+ packages</strong> by installing packages from other formats:
                             </p>
                             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 font-mono text-xs text-gray-300">
                               prpm install @org/any-package --as {selectedFormat}

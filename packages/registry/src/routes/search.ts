@@ -26,8 +26,8 @@ export async function searchRoutes(server: FastifyInstance) {
           },
           subtype: {
             anyOf: [
-              { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'] },
-              { type: 'array', items: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'] } }
+              { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+              { type: 'array', items: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] } }
             ]
           },
           tags: { type: 'array', items: { type: 'string' } },
@@ -95,7 +95,7 @@ export async function searchRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'] },
+          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },
@@ -155,7 +155,7 @@ export async function searchRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'] },
+          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },

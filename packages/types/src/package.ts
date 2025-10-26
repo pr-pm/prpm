@@ -28,7 +28,8 @@ export type Subtype =
   | 'workflow'
   | 'tool'
   | 'template'
-  | 'collection';
+  | 'collection'
+  | 'chatmode';
 
 
 export type PackageVisibility = 'public' | 'private' | 'unlisted';

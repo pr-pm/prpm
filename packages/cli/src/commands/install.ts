@@ -39,6 +39,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'tool': '🔧',
     'template': '📄',
     'collection': '📦',
+    'chatmode': '💬',
   };
 
   // Format-specific icons for rules/defaults
@@ -81,6 +82,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'tool': 'Tool',
     'template': 'Template',
     'collection': 'Collection',
+    'chatmode': 'Chat Mode',
   };
 
   const formatLabel = formatLabels[format];

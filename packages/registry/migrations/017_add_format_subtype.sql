@@ -54,7 +54,7 @@ ALTER TABLE packages ADD CONSTRAINT packages_format_check
   CHECK (format IN ('cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'));
 
 ALTER TABLE packages ADD CONSTRAINT packages_subtype_check
-  CHECK (subtype IN ('rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'));
+  CHECK (subtype IN ('rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'));
 
 -- Make format and subtype NOT NULL
 ALTER TABLE packages ALTER COLUMN format SET NOT NULL;
