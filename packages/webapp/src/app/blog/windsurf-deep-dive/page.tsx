@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import type { Metadata } from 'next'
+import BlogHeader from '@/components/BlogHeader'
 
 export const metadata: Metadata = {
   title: "Windsurf Rules: A Technical Deep Dive",
@@ -14,21 +14,7 @@ export const metadata: Metadata = {
 export default function WindsurfDeepDivePost() {
   return (
     <main className="min-h-screen bg-prpm-dark">
-      <nav className="border-b border-prpm-border bg-prpm-dark-card backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <Link href="/" className="flex items-center gap-3">
-              <Image src="/logo-icon.svg" alt="PRPM Logo" width={40} height={40} className="w-10 h-10" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-prpm-accent to-prpm-purple bg-clip-text text-transparent">PRPM</span>
-            </Link>
-            <div className="hidden md:flex items-center gap-6">
-              <Link href="/search" className="text-gray-400 hover:text-white transition-colors">Search</Link>
-              <Link href="/authors" className="text-gray-400 hover:text-white transition-colors">Authors</Link>
-              <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <BlogHeader />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Link href="/blog" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
