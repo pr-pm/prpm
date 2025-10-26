@@ -167,6 +167,36 @@ export default function ClaudeDeepDivePost() {
             </p>
           </div>
 
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">Supported Frontmatter Fields</h3>
+          <div className="bg-prpm-dark border border-prpm-border rounded-xl p-6 mb-6">
+            <table className="w-full text-gray-300 text-sm">
+              <thead>
+                <tr className="border-b border-prpm-border">
+                  <th className="text-left py-2 pr-4">Field</th>
+                  <th className="text-left py-2 pr-4">Required</th>
+                  <th className="text-left py-2">Description</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-prpm-border/50">
+                <tr>
+                  <td className="py-2 pr-4 font-mono text-prpm-accent">name</td>
+                  <td className="py-2 pr-4">✅ Yes</td>
+                  <td className="py-2">Unique identifier (lowercase, numbers, hyphens, max 64 chars)</td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-4 font-mono text-prpm-accent">description</td>
+                  <td className="py-2 pr-4">✅ Yes</td>
+                  <td className="py-2">What the skill does and when to use it (max 1024 chars)</td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-4 font-mono text-prpm-accent">allowed-tools</td>
+                  <td className="py-2 pr-4">⬜ Optional</td>
+                  <td className="py-2">Restricts which tools Claude can use with this skill</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           <h3 className="text-2xl font-bold text-white mt-8 mb-4">Claude Search Optimization (CSO)</h3>
           <p className="text-gray-300 leading-relaxed mb-6">
             Future Claude instances read the <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">description</code> field to decide if a skill is relevant. Bad descriptions mean skills won't be found.
