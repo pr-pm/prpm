@@ -187,6 +187,52 @@ describe('install command - multi-file packages', () => {
       );
     });
 
+    it('should auto-fix skill.md to SKILL.md for Claude skills', async () => {
+      const mockPackage = {
+        id: 'legacy-skill',
+        name: 'legacy-skill',
+        format: 'claude', subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      // Package has lowercase skill.md instead of SKILL.md
+      const tarGz = await createTarGz({
+        'skill.md': '# Main Skill File',
+        'helpers/utils.md': '# Utility Functions',
+      });
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(tarGz);
+
+      // Mock console.log to capture the warning
+      const consoleLogSpy = jest.spyOn(console, 'log');
+
+      await handleInstall('legacy-skill', {});
+
+      // Should auto-rename skill.md to SKILL.md
+      expect(saveFile).toHaveBeenCalledWith(
+        '.claude/skills/legacy-skill/SKILL.md',
+        '# Main Skill File'
+      );
+      expect(saveFile).toHaveBeenCalledWith(
+        '.claude/skills/legacy-skill/helpers/utils.md',
+        '# Utility Functions'
+      );
+
+      // Should log a warning about the auto-fix
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Auto-fixing skill filename: skill.md → SKILL.md')
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+
     it('should extract multi-file agent to .claude/agents directory', async () => {
       const mockPackage = {
         id: 'complex-agent',

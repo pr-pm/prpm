@@ -318,15 +318,30 @@ export async function handleInstall(
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
 
-      // For Claude skills, enforce SKILL.md filename requirement
+      // For Claude skills, auto-fix filename to SKILL.md if needed
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
-        const hasSkillMd = extractedFiles.some(f => f.name === 'SKILL.md');
-        if (!hasSkillMd) {
-          throw new Error(
-            'Claude skills must contain a SKILL.md file. ' +
-            'According to Claude documentation, skills must have a file named SKILL.md in their directory. ' +
-            'Please update the package to follow this requirement.'
+        const skillMdIndex = extractedFiles.findIndex(f => f.name === 'SKILL.md');
+
+        if (skillMdIndex === -1) {
+          // SKILL.md not found, look for common variations and auto-rename
+          const skillFileIndex = extractedFiles.findIndex(f =>
+            f.name.toLowerCase() === 'skill.md' ||
+            f.name === 'skill.md' ||
+            f.name.endsWith('.md') && extractedFiles.length === 1 // Single .md file
           );
+
+          if (skillFileIndex !== -1) {
+            const oldName = extractedFiles[skillFileIndex].name;
+            console.log(`   ⚠️  Auto-fixing skill filename: ${oldName} → SKILL.md`);
+            console.log(`      (Claude skills must be named SKILL.md per official documentation)`);
+            extractedFiles[skillFileIndex].name = 'SKILL.md';
+          } else {
+            throw new Error(
+              'Claude skills must contain a SKILL.md file. ' +
+              'According to Claude documentation, skills must have a file named SKILL.md in their directory. ' +
+              'No suitable file found to rename. Please update the package to follow this requirement.'
+            );
+          }
         }
       }
 
