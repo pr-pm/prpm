@@ -29,11 +29,24 @@ An open standard created through collaboration between OpenAI, Google, and other
 - ✅ **Google Gemini Code Assist** - Committed to supporting the standard
 - ✅ **Any future tool** that adopts the open standard
 
-**File Location:**
+**File Locations:**
 ```
+# Standard agents.md (per specification)
 project-root/
-└── agents.md
+└── AGENTS.md                    # Project-specific guidance
+
+# Codex also supports:
+~/.codex/AGENTS.md              # Global/personal guidance
+project-root/AGENTS.override.md # Override parent instructions (Codex-specific)
 ```
+
+**Hierarchy (OpenAI Codex):**
+1. Searches from current directory up to repository root
+2. Uses `AGENTS.override.md` if present (replaces inherited instructions)
+3. Falls back to `AGENTS.md` if no override exists
+4. Merges with `~/.codex/AGENTS.md` for global guidance
+
+**Note:** The `.override.md` variant is a Codex-specific extension, not part of the base agents.md specification.
 
 **Why Choose This:**
 - ✅ Works with multiple tools (no vendor lock-in)
@@ -283,6 +296,49 @@ Are you using multiple AI tools?
         ├─ Kiro → `kiro`
         └─ Other → `generic`
 ```
+
+---
+
+## Tool-Specific Details
+
+### OpenAI Codex File Hierarchy
+
+OpenAI Codex uses a hierarchical system for AGENTS.md files:
+
+**Search Order:**
+1. **Global**: `~/.codex/AGENTS.md` (always loaded for personal preferences)
+2. **Directory hierarchy**: Searches from current working directory up to repository root
+3. **Override behavior**: If `AGENTS.override.md` exists, it replaces (not merges) inherited AGENTS.md files
+4. **Standard behavior**: If only `AGENTS.md` exists, it merges with parent directories
+
+**Example Hierarchy:**
+```
+~/.codex/
+└── AGENTS.md                     # Always loaded (global)
+
+my-project/                       # Repository root
+├── AGENTS.md                     # Base project guidance
+└── packages/
+    ├── frontend/
+    │   └── AGENTS.override.md   # Replaces parent AGENTS.md
+    └── backend/
+        └── AGENTS.md            # Merges with parent AGENTS.md
+```
+
+**Use Cases:**
+- **AGENTS.md**: Add/merge instructions with parent directories
+- **AGENTS.override.md**: Completely replace parent instructions (useful for subprojects with different conventions)
+- **~/.codex/AGENTS.md**: Personal preferences applied globally across all projects
+
+**PRPM Support:**
+- PRPM creates standard `AGENTS.md` files per the specification
+- Users can manually create `.override.md` variants for Codex-specific workflows
+- Future: PRPM could add `--override` flag: `prpm install pkg --format agents.md --override`
+
+**References:**
+- [Codex Documentation](https://github.com/openai/codex)
+- [Getting Started with AGENTS.md](https://github.com/openai/codex/blob/main/docs/getting-started.md#memory-with-agentsmd)
+- [agents.md Official Spec](https://agents.md/)
 
 ---
 

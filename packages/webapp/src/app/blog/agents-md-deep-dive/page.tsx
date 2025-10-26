@@ -83,6 +83,36 @@ export default function AgentsMdDeepDivePost() {
             </p>
           </div>
 
+          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 mb-6">
+            <h4 className="text-lg font-bold text-green-400 mb-3">📁 OpenAI Codex: Hierarchical AGENTS.md</h4>
+            <p className="text-gray-300 mb-4">
+              OpenAI Codex extends the standard with a hierarchical file system:
+            </p>
+            <ul className="space-y-2 text-gray-300 mb-4">
+              <li className="flex items-start gap-3">
+                <span className="text-green-400">1.</span>
+                <div>
+                  <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">~/.codex/AGENTS.md</code> - Global guidance (loaded for all projects)
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-green-400">2.</span>
+                <div>
+                  <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">AGENTS.md</code> - Standard behavior (merges with parent directories)
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-green-400">3.</span>
+                <div>
+                  <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">AGENTS.override.md</code> - Codex extension (replaces parent instructions)
+                </div>
+              </li>
+            </ul>
+            <p className="text-sm text-gray-400 italic">
+              The override variant is useful for monorepos where subdirectories need completely different conventions. This is a Codex-specific extension, not part of the base agents.md specification.
+            </p>
+          </div>
+
           <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-6">
             <p className="text-gray-300 mb-4"><strong>Key insight:</strong> The format's power is in what it doesn't require:</p>
             <ul className="space-y-2 text-gray-300">
