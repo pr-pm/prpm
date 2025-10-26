@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import type { Metadata } from 'next'
 import { promises as fs } from 'fs'
 import path from 'path'
@@ -26,23 +27,7 @@ export default async function PrivacyPage() {
           </div>
         </div>
 
-        {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-prpm-border">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to Home
-            </Link>
-            <Link href="/legal/terms" className="text-gray-400 hover:text-white transition-colors text-sm">
-              Terms of Service →
-            </Link>
-          </div>
-        </footer>
+        <Footer />
       </article>
     </main>
   )

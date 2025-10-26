@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import Header from '@/components/Header'
+import BlogFooter from '@/components/BlogFooter'
 
 export const metadata: Metadata = {
   title: "Kiro Steering Files: A Technical Deep Dive",
@@ -173,14 +174,7 @@ export default function KiroDeepDivePost() {
           </div>
         </div>
 
-        <footer className="mt-12 pt-8 border-t border-prpm-border">
-          <Link href="/blog" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Blog
-          </Link>
-        </footer>
+        <BlogFooter postTitle="Kiro Steering Files: A Technical Deep Dive" postUrl="/blog/kiro-deep-dive" />
       </article>
     </main>
   )

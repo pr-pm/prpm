@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import Header from '@/components/Header'
+import BlogFooter from '@/components/BlogFooter'
 
 export const metadata: Metadata = {
   title: "PRPM: Distributable Intelligence for AI-Assisted Development",
@@ -492,6 +493,8 @@ $ prpm install @stripe/api-v4-migration
             <strong className="text-white">This is the future of software development:</strong> Intelligence as code, distributed through packages, applied by AI.
           </p>
         </div>
+
+        <BlogFooter postTitle="PRPM: Distributable Intelligence for AI-Assisted Development" postUrl="/blog/distributable-intelligence" />
       </article>
     </main>
   )
