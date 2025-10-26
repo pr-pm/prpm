@@ -73,9 +73,7 @@ export async function handleUpdate(
         console.log(`\n📦 Updating ${pkg.id}: ${currentVersion} → ${latestVersion}`);
 
         // Install new version
-        await handleInstall(`${pkg.id}@${latestVersion}`, {
-          type: pkg.type as 'cursor' | 'claude' | 'continue' | 'windsurf' | 'generic' | undefined,
-        });
+        await handleInstall(`${pkg.id}@${latestVersion}`, {});
 
         updatedCount++;
       } catch (err) {
@@ -132,5 +130,8 @@ export function createUpdateCommand(): Command {
     .description('Update packages to latest compatible versions (minor/patch only)')
     .argument('[package]', 'Specific package to update (optional)')
     .option('--all', 'Update all packages')
-    .action(handleUpdate);
+    .action(async (packageName?: string, options?: { all?: boolean }) => {
+      await handleUpdate(packageName, options);
+      process.exit(0);
+    });
 }

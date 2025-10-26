@@ -121,7 +121,7 @@ describe('install command - multi-file packages', () => {
       const mockPackage = {
         id: 'test-skill',
         name: 'test-skill',
-        type: 'claude-skill',
+        format: 'claude', subtype: 'skill',
         tags: [],
         total_downloads: 100,
         verified: true,
@@ -150,7 +150,7 @@ describe('install command - multi-file packages', () => {
       const mockPackage = {
         id: 'complex-skill',
         name: 'complex-skill',
-        type: 'claude-skill',
+        format: 'claude', subtype: 'skill',
         tags: [],
         total_downloads: 100,
         verified: true,
@@ -161,7 +161,7 @@ describe('install command - multi-file packages', () => {
       };
 
       const tarGz = await createTarGz({
-        'skill.md': '# Main Skill File',
+        'SKILL.md': '# Main Skill File',
         'helpers/utils.md': '# Utility Functions',
         'examples/demo.md': '# Demo Examples',
       });
@@ -174,7 +174,7 @@ describe('install command - multi-file packages', () => {
       // Should save to directory with multiple files
       expect(saveFile).toHaveBeenCalledTimes(3);
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/complex-skill/skill.md',
+        '.claude/skills/complex-skill/SKILL.md',
         '# Main Skill File'
       );
       expect(saveFile).toHaveBeenCalledWith(
@@ -187,11 +187,57 @@ describe('install command - multi-file packages', () => {
       );
     });
 
+    it('should auto-fix skill.md to SKILL.md for Claude skills', async () => {
+      const mockPackage = {
+        id: 'legacy-skill',
+        name: 'legacy-skill',
+        format: 'claude', subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      // Package has lowercase skill.md instead of SKILL.md
+      const tarGz = await createTarGz({
+        'skill.md': '# Main Skill File',
+        'helpers/utils.md': '# Utility Functions',
+      });
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(tarGz);
+
+      // Mock console.log to capture the warning
+      const consoleLogSpy = jest.spyOn(console, 'log');
+
+      await handleInstall('legacy-skill', {});
+
+      // Should auto-rename skill.md to SKILL.md
+      expect(saveFile).toHaveBeenCalledWith(
+        '.claude/skills/legacy-skill/SKILL.md',
+        '# Main Skill File'
+      );
+      expect(saveFile).toHaveBeenCalledWith(
+        '.claude/skills/legacy-skill/helpers/utils.md',
+        '# Utility Functions'
+      );
+
+      // Should log a warning about the auto-fix
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Auto-fixing skill filename: skill.md → SKILL.md')
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+
     it('should extract multi-file agent to .claude/agents directory', async () => {
       const mockPackage = {
         id: 'complex-agent',
         name: 'complex-agent',
-        type: 'claude-agent',
+        format: 'claude', subtype: 'agent',
         tags: [],
         total_downloads: 50,
         verified: true,
@@ -231,7 +277,7 @@ describe('install command - multi-file packages', () => {
       const mockPackage = {
         id: 'complex-command',
         name: 'complex-command',
-        type: 'claude-slash-command',
+        format: 'claude', subtype: 'slash-command',
         tags: [],
         total_downloads: 75,
         verified: true,
@@ -266,7 +312,7 @@ describe('install command - multi-file packages', () => {
       const mockPackage = {
         id: 'complex-skill',
         name: 'complex-skill',
-        type: 'claude-skill',
+        format: 'claude', subtype: 'skill',
         tags: [],
         total_downloads: 100,
         verified: true,
@@ -304,7 +350,7 @@ describe('install command - multi-file packages', () => {
       const mockPackage = {
         id: 'legacy-skill',
         name: 'legacy-skill',
-        type: 'claude-skill',
+        format: 'claude', subtype: 'skill',
         tags: [],
         total_downloads: 100,
         verified: true,

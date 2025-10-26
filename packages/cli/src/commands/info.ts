@@ -46,7 +46,7 @@ export async function handleInfo(packageName: string): Promise<void> {
     }
 
     // Type
-    console.log(`\n📂 Type: ${pkg.type}`);
+    console.log(`\n📂 Type: ${`${pkg.format || 'unknown'} ${pkg.subtype || 'unknown'}`}`);
 
     // Installation
     console.log('\n💻 Installation:');
@@ -86,6 +86,7 @@ export function createInfoCommand(): Command {
     .argument('<package>', 'Package ID to get information about')
     .action(async (packageId: string) => {
       await handleInfo(packageId);
+      process.exit(0);
     });
 
   return command;

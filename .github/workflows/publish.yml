@@ -163,18 +163,10 @@ jobs:
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "Package ${{ matrix.package }} will be published as: $NEW_VERSION"
 
-          # Update version in index.ts for CLI package
+          # For CLI, version is now dynamically read from package.json at runtime
+          # No need to update index.ts manually - it reads from package.json
           if [ "${{ matrix.package }}" = "cli" ]; then
-            echo "Updating version in src/index.ts to $NEW_VERSION"
-            sed -i "s/\.version('.*')/\.version('$NEW_VERSION')/" src/index.ts
-
-            # Verify the update worked
-            if grep -q "\.version('$NEW_VERSION')" src/index.ts; then
-              echo "✓ Updated index.ts version to $NEW_VERSION"
-            else
-              echo "❌ Failed to update index.ts version"
-              exit 1
-            fi
+            echo "✓ CLI version will be $NEW_VERSION (read dynamically from package.json)"
           fi
 
       - name: Update internal dependencies
@@ -275,14 +267,6 @@ jobs:
           path: packages/${{ matrix.package }}/package.json
           retention-days: 1
 
-      - name: Upload updated index.ts (CLI only)
-        if: matrix.package == 'cli'
-        uses: actions/upload-artifact@v4
-        with:
-          name: cli-index-ts
-          path: packages/cli/src/index.ts
-          retention-days: 1
-
       - name: Upload root package-lock.json (once)
         if: matrix.package == 'cli'
         uses: actions/upload-artifact@v4
@@ -336,13 +320,6 @@ jobs:
             fi
           done
 
-          # Restore CLI index.ts if it was published
-          if [ -d "/tmp/artifacts/cli-index-ts" ]; then
-            echo "Restoring CLI index.ts..."
-            cp "/tmp/artifacts/cli-index-ts/index.ts" "packages/cli/src/index.ts"
-            echo "  ✓ index.ts"
-          fi
-
           # Restore root package-lock.json
           if [ -f "/tmp/artifacts/root-package-lock/package-lock.json" ]; then
             echo "Restoring root package-lock.json..."
@@ -389,11 +366,6 @@ jobs:
 
           # Add root package-lock.json
           git add package-lock.json
-
-          # Add CLI index.ts if it was updated
-          if [ -f "packages/cli/src/index.ts" ]; then
-            git add packages/cli/src/index.ts
-          fi
 
           # Check if there are changes to commit
           if git diff --staged --quiet; then

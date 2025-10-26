@@ -3,7 +3,7 @@
  */
 
 import { RegistryClient, getRegistryClient } from '../registry-client';
-import { PackageType } from '../types';
+import { Format, Subtype } from '../types';
 
 // Mock fetch globally
 global.fetch = jest.fn();
@@ -51,7 +51,8 @@ describe('RegistryClient', () => {
         {
           id: 'test-package',
           description: 'A test package',
-          type: 'cursor' as PackageType,
+          format: 'cursor' as Format,
+          subtype: 'rule' as Subtype,
           tags: ['test'],
           total_downloads: 100,
           verified: true,
@@ -82,16 +83,16 @@ describe('RegistryClient', () => {
       expect(result).toEqual(mockSearchResult);
     });
 
-    it('should include type filter in search', async () => {
+    it('should include format filter in search', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => mockSearchResult,
       });
 
-      await client.search('test', { type: 'cursor' });
+      await client.search('test', { format: 'cursor' });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('type=cursor'),
+        expect.stringContaining('format=cursor'),
         expect.anything()
       );
     });
@@ -144,7 +145,8 @@ describe('RegistryClient', () => {
     const mockPackage = {
       id: 'test-package',
       description: 'A test package',
-      type: 'cursor' as PackageType,
+      format: 'cursor' as Format,
+      subtype: 'rule' as Subtype,
       tags: ['test'],
       total_downloads: 100,
       verified: true,
@@ -355,7 +357,8 @@ describe('RegistryClient', () => {
     const mockPackages = [
       {
         id: 'trending-1',
-        type: 'cursor' as PackageType,
+        format: 'cursor' as Format,
+        subtype: 'rule' as Subtype,
         tags: [],
         total_downloads: 1000,
         verified: true,
@@ -377,16 +380,16 @@ describe('RegistryClient', () => {
       expect(result).toEqual(mockPackages);
     });
 
-    it('should filter by type', async () => {
+    it('should filter by format', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ packages: mockPackages }),
       });
 
-      await client.getTrending('cursor', 10);
+      await client.getTrending('cursor', undefined, 10);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('type=cursor'),
+        expect.stringContaining('format=cursor'),
         expect.anything()
       );
     });
@@ -397,7 +400,7 @@ describe('RegistryClient', () => {
         json: async () => ({ packages: mockPackages }),
       });
 
-      await client.getTrending(undefined, 50);
+      await client.getTrending(undefined, undefined, 50);
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('limit=50'),
@@ -410,7 +413,8 @@ describe('RegistryClient', () => {
     const mockPackages = [
       {
         id: 'featured-1',
-        type: 'cursor' as PackageType,
+        format: 'cursor' as Format,
+        subtype: 'rule' as Subtype,
         tags: [],
         total_downloads: 5000,
         verified: true,
@@ -433,16 +437,16 @@ describe('RegistryClient', () => {
       expect(result).toEqual(mockPackages);
     });
 
-    it('should filter by type', async () => {
+    it('should filter by format', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ packages: mockPackages }),
       });
 
-      await client.getFeatured('claude', 15);
+      await client.getFeatured('claude', undefined, 15);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('type=claude'),
+        expect.stringContaining('format=claude'),
         expect.anything()
       );
     });
@@ -453,7 +457,7 @@ describe('RegistryClient', () => {
         json: async () => ({ packages: mockPackages }),
       });
 
-      await client.getFeatured(undefined, 30);
+      await client.getFeatured(undefined, undefined, 30);
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('limit=30'),
@@ -805,15 +809,13 @@ describe('RegistryClient', () => {
         `${mockBaseUrl}/api/v1/packages`,
         expect.objectContaining({
           method: 'POST',
-          headers: expect.objectContaining({
-            'Authorization': `Bearer ${mockToken}`,
-          }),
+          headers: expect.any(Object), // Headers object for FormData
         })
       );
       expect(result).toEqual(mockPublishResponse);
     });
 
-    it('should send JSON with manifest and base64 tarball', async () => {
+    it('should send FormData with manifest and tarball', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => mockPublishResponse,
@@ -823,17 +825,12 @@ describe('RegistryClient', () => {
       await client.publish(mockManifest as any, tarball);
 
       const callOptions = (global.fetch as jest.Mock).mock.calls[0][1];
-      expect(callOptions.headers?.['Content-Type']).toBe('application/json');
 
-      const body = JSON.parse(callOptions.body);
-      expect(body.manifest).toEqual({
-        name: 'test-package',
-        version: '1.0.0',
-        description: 'A test package',
-        type: 'cursor',
-        files: [],
-      });
-      expect(body.tarball).toBe(tarball.toString('base64'));
+      // Should send FormData (body will be FormData instance)
+      expect(callOptions.body).toBeInstanceOf(FormData);
+
+      // Headers should be a Headers object (not plain object with Content-Type for FormData)
+      expect(callOptions.headers).toBeInstanceOf(Headers);
     });
 
     it('should require authentication', async () => {

@@ -164,6 +164,149 @@ describe.skip('Publish Command', () => {
 
       expect(mockPublish).toHaveBeenCalled();
     });
+
+    it('should reject Claude skills without SKILL.md file', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-skill',
+          version: '1.0.0',
+          description: 'Test Claude skill',
+          format: 'claude',
+          subtype: 'skill',
+          files: ['.claude/skills/test-skill/skill.md'], // Wrong filename (should be SKILL.md)
+        })
+      );
+
+      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test-skill/skill.md'), '# Test skill');
+
+      await expect(handlePublish({})).rejects.toThrow(/SKILL\.md/);
+    });
+
+    it('should accept Claude skills with SKILL.md file', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-skill',
+          version: '1.0.0',
+          description: 'Test Claude skill',
+          format: 'claude',
+          subtype: 'skill',
+          files: ['.claude/skills/test-skill/SKILL.md'], // Correct filename
+        })
+      );
+
+      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '# Test skill');
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-skill',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+    });
+
+    it('should reject Claude skills with name longer than 64 characters', async () => {
+      const longName = 'a'.repeat(65); // 65 characters
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: longName,
+          version: '1.0.0',
+          description: 'Test Claude skill with name that exceeds the 64 character limit',
+          format: 'claude',
+          subtype: 'skill',
+          files: ['.claude/skills/test/SKILL.md'],
+        })
+      );
+
+      await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '# Test skill');
+
+      await expect(handlePublish({})).rejects.toThrow(/64 character limit/);
+    });
+
+    it('should reject Claude skills with invalid name characters', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'Test_Skill_Invalid', // Uppercase and underscores not allowed
+          version: '1.0.0',
+          description: 'Test Claude skill with invalid name format',
+          format: 'claude',
+          subtype: 'skill',
+          files: ['.claude/skills/test/SKILL.md'],
+        })
+      );
+
+      await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '# Test skill');
+
+      await expect(handlePublish({})).rejects.toThrow(/invalid characters/);
+    });
+
+    it('should reject Claude skills with description longer than 1024 characters', async () => {
+      const longDescription = 'a'.repeat(1025); // 1025 characters
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-skill',
+          version: '1.0.0',
+          description: longDescription,
+          format: 'claude',
+          subtype: 'skill',
+          files: ['.claude/skills/test-skill/SKILL.md'],
+        })
+      );
+
+      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '# Test skill');
+
+      await expect(handlePublish({})).rejects.toThrow(/1024 character limit/);
+    });
+
+    it('should warn about short descriptions for Claude skills', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-skill',
+          version: '1.0.0',
+          description: 'Too short', // Only 9 characters
+          format: 'claude',
+          subtype: 'skill',
+          files: ['.claude/skills/test-skill/SKILL.md'],
+        })
+      );
+
+      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '# Test skill');
+
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-skill',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('only 9 characters')
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
   });
 
   describe('Authentication', () => {

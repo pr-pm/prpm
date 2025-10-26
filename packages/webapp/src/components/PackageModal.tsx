@@ -7,7 +7,8 @@ interface ModalPackage {
   id: string
   name: string
   description?: string
-  type: string
+  format: string
+  subtype: string
   total_downloads: number
   weekly_downloads: number
   tags: string[]
@@ -30,6 +31,22 @@ export default function PackageModal({ package: pkg, isOpen, onClose }: PackageM
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const formatSubtype = (subtype: string) => {
+    const labels: Record<string, string> = {
+      'skill': 'Skill',
+      'agent': 'Agent',
+      'slash-command': 'Slash Command',
+      'rule': 'Rule',
+      'prompt': 'Prompt',
+      'workflow': 'Workflow',
+      'tool': 'Tool',
+      'template': 'Template',
+      'collection': 'Collection',
+      'chatmode': 'Chat Mode',
+    }
+    return labels[subtype] || subtype
+  }
+
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
@@ -42,9 +59,14 @@ export default function PackageModal({ package: pkg, isOpen, onClose }: PackageM
         <div className="flex items-start justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold mb-2">{pkg.name}</h2>
-            <span className="px-3 py-1 bg-prpm-dark rounded text-sm text-prpm-accent">
-              {pkg.type}
-            </span>
+            <div className="flex gap-2">
+              <span className="px-3 py-1 bg-prpm-dark rounded text-sm text-prpm-accent">
+                {pkg.format}
+              </span>
+              <span className="px-3 py-1 bg-prpm-dark rounded text-sm text-gray-400">
+                {formatSubtype(pkg.subtype)}
+              </span>
+            </div>
           </div>
           <button
             onClick={onClose}

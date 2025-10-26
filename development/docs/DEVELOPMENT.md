@@ -80,7 +80,7 @@ npm run dev:client
 
 **Note**: The CLI dev mode runs the CLI directly from source and restarts it on file changes. To test with arguments:
 ```bash
-npm run dev:cli -- install @prpm/some-package
+npm run dev:cli -- install @pr-pm/some-package
 ```
 
 ## Build Watch Modes
@@ -92,8 +92,8 @@ npm run build:watch:all
 
 # Watch individual packages
 npm run build:watch --workspace=prpm                    # CLI
-npm run build:watch --workspace=@prpm/registry-client   # Client library
-npm run build:watch --workspace=@prpm/registry          # Registry API
+npm run build:watch --workspace=@pr-pm/registry-client   # Client library
+npm run build:watch --workspace=@pr-pm/registry          # Registry API
 ```
 
 ### Development with Client Library Changes
@@ -121,8 +121,8 @@ npm run typecheck
 
 # Check specific packages
 npm run typecheck --workspace=prpm
-npm run typecheck --workspace=@prpm/registry-client
-npm run typecheck --workspace=@prpm/registry
+npm run typecheck --workspace=@pr-pm/registry-client
+npm run typecheck --workspace=@pr-pm/registry
 ```
 
 ### Continuous Type Checking
@@ -150,12 +150,12 @@ npm run test:registry
 npm run test:watch
 
 # Specific package in watch mode
-npm run test:watch --workspace=@prpm/registry
+npm run test:watch --workspace=@pr-pm/registry
 ```
 
 ## Package-Specific Commands
 
-### Registry (@prpm/registry)
+### Registry (@pr-pm/registry)
 - `npm run dev` - **Watch mode by default**: Runs both TypeScript compilation and hot reload server
 - `npm run dev:server` - Server hot reload only (no build watch)
 - `npm run dev:no-build` - Server hot reload only (alias)
@@ -174,7 +174,7 @@ npm run test:watch --workspace=@prpm/registry
 
 **Note**: `npm run dev` runs the CLI from source files and restarts it when you save changes. This is useful for development/testing. For testing the actual built output, use `npm run dev:with-build`.
 
-### Registry Client (@prpm/registry-client)
+### Registry Client (@pr-pm/registry-client)
 - `npm run dev` - **Watch mode by default**: TypeScript compilation with auto-rebuild
 - `npm run build` - Production build
 - `npm run build:watch` - TypeScript compilation in watch mode (same as dev)

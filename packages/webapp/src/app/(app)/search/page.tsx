@@ -10,13 +10,27 @@ import {
   SearchCollectionsParams,
   Package,
   Collection,
-  PackageType,
+  Format,
+  Subtype,
   SortType,
 } from '@/lib/api'
 import PackageModal from '@/components/PackageModal'
 import CollectionModal from '@/components/CollectionModal'
 
 type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
+
+// Define which subtypes are available for each format
+const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
+  'cursor': ['rule', 'agent', 'slash-command', 'tool'],
+  'claude': ['skill', 'agent', 'slash-command', 'tool'],
+  'continue': ['rule', 'agent', 'slash-command', 'tool'],
+  'windsurf': ['rule', 'agent', 'slash-command', 'tool'],
+  'copilot': ['tool', 'chatmode'],
+  'kiro': ['rule', 'agent', 'tool'],
+  'mcp': ['tool'],
+  'agents.md': ['agent', 'tool'],
+  'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode'],
+}
 
 function SearchPageContent() {
   const router = useRouter()
@@ -26,7 +40,8 @@ function SearchPageContent() {
   const initialParams = useState(() => ({
     tab: searchParams.get('tab') as TabType || 'packages',
     query: searchParams.get('q') || '',
-    type: searchParams.get('type') as PackageType || '',
+    format: searchParams.get('format') as Format || '',
+    subtype: searchParams.get('subtype') as Subtype || '',
     category: searchParams.get('category') || '',
     tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
     sort: searchParams.get('sort') as SortType || 'downloads',
@@ -36,7 +51,8 @@ function SearchPageContent() {
   // Initialize state from URL params
   const [activeTab, setActiveTab] = useState<TabType>(initialParams.tab)
   const [query, setQuery] = useState(initialParams.query)
-  const [selectedType, setSelectedType] = useState<PackageType | ''>(initialParams.type)
+  const [selectedFormat, setSelectedFormat] = useState<Format | ''>(initialParams.format)
+  const [selectedSubtype, setSelectedSubtype] = useState<Subtype | ''>(initialParams.subtype)
   const [selectedCategory, setSelectedCategory] = useState(initialParams.category)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialParams.tags)
   const [sort, setSort] = useState<SortType>(initialParams.sort)
@@ -55,6 +71,18 @@ function SearchPageContent() {
 
   const limit = 20
 
+  // Get available subtypes for the selected format
+  const availableSubtypes = selectedFormat
+    ? FORMAT_SUBTYPES[selectedFormat] || []
+    : ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode']
+
+  // Reset subtype when format changes and current subtype is not available
+  useEffect(() => {
+    if (selectedFormat && selectedSubtype && !availableSubtypes.includes(selectedSubtype)) {
+      setSelectedSubtype('')
+    }
+  }, [selectedFormat, selectedSubtype, availableSubtypes])
+
   // Update URL when state changes
   useEffect(() => {
     if (!isInitialized) {
@@ -66,7 +94,8 @@ function SearchPageContent() {
 
     if (query) params.set('q', query)
     if (activeTab !== 'packages') params.set('tab', activeTab)
-    if (selectedType) params.set('type', selectedType)
+    if (selectedFormat) params.set('format', selectedFormat)
+    if (selectedSubtype) params.set('subtype', selectedSubtype)
     if (selectedCategory) params.set('category', selectedCategory)
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','))
     if (sort !== 'downloads') params.set('sort', sort)
@@ -74,7 +103,7 @@ function SearchPageContent() {
 
     const newUrl = params.toString() ? `/search?${params.toString()}` : '/search'
     router.replace(newUrl, { scroll: false })
-  }, [activeTab, query, selectedType, selectedCategory, selectedTags, sort, page, router, isInitialized])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, page, router, isInitialized])
 
   // Fetch packages
   const fetchPackages = async () => {
@@ -87,7 +116,8 @@ function SearchPageContent() {
       }
 
       if (query.trim()) params.q = query
-      if (selectedType) params.type = selectedType
+      if (selectedFormat) params.format = selectedFormat
+      if (selectedSubtype) params.subtype = selectedSubtype
       if (selectedCategory) params.category = selectedCategory
       if (selectedTags.length > 0) params.tags = selectedTags
 
@@ -131,7 +161,8 @@ function SearchPageContent() {
     setLoading(true)
     try {
       const params: SearchPackagesParams = {
-        type: 'claude-skill',
+        format: 'claude',
+        subtype: 'skill',
         limit,
         offset: (page - 1) * limit,
         sort,
@@ -151,12 +182,12 @@ function SearchPageContent() {
     }
   }
 
-  // Fetch slash commands (both Claude and Cursor slash commands)
+  // Fetch slash commands (all formats)
   const fetchSlashCommands = async () => {
     setLoading(true)
     try {
       const params: SearchPackagesParams = {
-        type: ['claude-slash-command', 'cursor-slash-command'],
+        subtype: 'slash-command',
         limit,
         offset: (page - 1) * limit,
         sort,
@@ -176,12 +207,12 @@ function SearchPageContent() {
     }
   }
 
-  // Fetch agents (both Claude and Cursor agents)
+  // Fetch agents (all formats)
   const fetchAgents = async () => {
     setLoading(true)
     try {
       const params: SearchPackagesParams = {
-        type: ['claude-agent', 'cursor-agent'],
+        subtype: 'agent',
         limit,
         offset: (page - 1) * limit,
         sort,
@@ -219,7 +250,7 @@ function SearchPageContent() {
       fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, query, selectedType, selectedCategory, selectedTags, sort, page])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, page])
 
   // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {
@@ -229,7 +260,8 @@ function SearchPageContent() {
     // Check if any filter actually changed from initial state
     const filtersChanged =
       query !== initialParams.query ||
-      selectedType !== initialParams.type ||
+      selectedFormat !== initialParams.format ||
+      selectedSubtype !== initialParams.subtype ||
       selectedCategory !== initialParams.category ||
       JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
       sort !== initialParams.sort ||
@@ -240,7 +272,7 @@ function SearchPageContent() {
       setPage(1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, selectedType, selectedCategory, selectedTags, sort, activeTab, isInitialized])
+  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, activeTab, isInitialized])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -256,13 +288,13 @@ function SearchPageContent() {
   }
 
   const clearFilters = () => {
-    setSelectedType('')
+    setSelectedFormat('')
     setSelectedCategory('')
     setSelectedTags([])
     setQuery('')
   }
 
-  const hasFilters = selectedType || selectedCategory || selectedTags.length > 0 || query
+  const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || query
 
   return (
     <main className="min-h-screen bg-prpm-dark">
@@ -327,45 +359,6 @@ function SearchPageContent() {
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
             )}
           </button>
-          <button
-            onClick={() => setActiveTab('skills')}
-            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
-              activeTab === 'skills'
-                ? 'text-prpm-accent'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-          >
-            Skills
-            {activeTab === 'skills' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('slash-commands')}
-            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
-              activeTab === 'slash-commands'
-                ? 'text-prpm-accent'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-          >
-            Slash Commands
-            {activeTab === 'slash-commands' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('agents')}
-            className={`px-4 sm:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
-              activeTab === 'agents'
-                ? 'text-prpm-accent'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-          >
-            Agents
-            {activeTab === 'agents' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-prpm-accent"></div>
-            )}
-          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -384,29 +377,91 @@ function SearchPageContent() {
                 )}
               </div>
 
-              {/* Type Filter (packages only) */}
+              {/* Format and Subtype Filters (packages only) */}
               {activeTab === 'packages' && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Type
-                  </label>
-                  <select
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value as PackageType | '')}
-                    className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
-                  >
-                    <option value="">All Types</option>
-                    <option value="cursor">Cursor</option>
-                    <option value="claude">Claude</option>
-                    <option value="claude-skill">Claude Skill</option>
-                    <option value="claude-agent">Claude Agent</option>
-                    <option value="claude-slash-command">Claude Slash Command</option>
-                    <option value="continue">Continue</option>
-                    <option value="windsurf">Windsurf</option>
-                    <option value="mcp">MCP</option>
-                    <option value="generic">Generic</option>
-                  </select>
-                </div>
+                <>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Format
+                    </label>
+                    <select
+                      value={selectedFormat}
+                      onChange={(e) => setSelectedFormat(e.target.value as Format | '')}
+                      className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
+                    >
+                      <option value="">All Formats</option>
+                      <option value="cursor">Cursor</option>
+                      <option value="claude">Claude</option>
+                      <option value="continue">Continue</option>
+                      <option value="windsurf">Windsurf</option>
+                      <option value="copilot">GitHub Copilot</option>
+                      <option value="kiro">Kiro</option>
+                      <option value="mcp">MCP</option>
+                      <option value="agents.md">Agents.md</option>
+                      <option value="generic">Generic</option>
+                    </select>
+
+                    {/* Format compatibility info */}
+                    {selectedFormat === 'agents.md' && (
+                      <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <p className="text-xs text-gray-300 mb-2">
+                          <strong className="text-blue-400">Compatible with:</strong>
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          OpenAI Codex • GitHub Copilot • Google Gemini • Any tool supporting the open standard
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedFormat === 'copilot' && (
+                      <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                        <p className="text-xs text-gray-300 mb-2">
+                          <strong className="text-purple-400">Compatible with:</strong>
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          GitHub Copilot • OpenAI Codex
+                        </p>
+                      </div>
+                    )}
+
+                    {(selectedFormat === 'cursor' || selectedFormat === 'claude' || selectedFormat === 'continue' || selectedFormat === 'windsurf' || selectedFormat === 'kiro') && (
+                      <div className="mt-3 p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400">
+                          Tool-specific format for <strong>{selectedFormat === 'cursor' ? 'Cursor IDE' : selectedFormat === 'claude' ? 'Claude Desktop/Code' : selectedFormat === 'continue' ? 'Continue (VS Code/JetBrains)' : selectedFormat === 'windsurf' ? 'Windsurf IDE' : 'Kiro AI'}</strong>
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedFormat === 'mcp' && (
+                      <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <p className="text-xs text-gray-300 mb-2">
+                          <strong className="text-green-400">Protocol-based:</strong>
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Any tool implementing Model Context Protocol
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Subtype
+                    </label>
+                    <select
+                      value={selectedSubtype}
+                      onChange={(e) => setSelectedSubtype(e.target.value as Subtype | '')}
+                      className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
+                    >
+                      <option value="">All Subtypes</option>
+                      {availableSubtypes.includes('rule') && <option value="rule">Rule</option>}
+                      {availableSubtypes.includes('agent') && <option value="agent">Agent</option>}
+                      {availableSubtypes.includes('skill') && <option value="skill">Skill</option>}
+                      {availableSubtypes.includes('slash-command') && <option value="slash-command">Slash Command</option>}
+                      {availableSubtypes.includes('tool') && <option value="tool">Tool</option>}
+                      {availableSubtypes.includes('chatmode') && <option value="chatmode">Chat Mode</option>}
+                    </select>
+                  </div>
+                </>
               )}
 
               {/* Sort */}
@@ -474,11 +529,13 @@ function SearchPageContent() {
 
           {/* Results */}
           <div className="lg:col-span-3">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-gray-400">
-                {loading ? 'Searching...' : `${total} results`}
-              </p>
-            </div>
+            {!loading && (packages.length > 0 || collections.length > 0) && (
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-gray-400">
+                  {total} results
+                </p>
+              </div>
+            )}
 
             {loading ? (
               <div className="flex items-center justify-center py-20">
@@ -491,10 +548,39 @@ function SearchPageContent() {
                   <div className="space-y-4">
                     {packages.length === 0 ? (
                       <div className="text-center py-20">
-                        <p className="text-gray-400">No packages found</p>
+                        <p className="text-gray-400 mb-4">No packages found</p>
+                        {selectedFormat && (
+                          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 max-w-2xl mx-auto text-left">
+                            <h4 className="text-lg font-bold text-blue-400 mb-3">💡 Cross-Platform Tip</h4>
+                            <p className="text-gray-300 mb-3">
+                              PRPM is cross-platform! Even if there are no native <strong>{selectedFormat}</strong> packages, you can install packages from other formats using the <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-sm">--as</code> flag.
+                            </p>
+                            <p className="text-gray-300 mb-3">
+                              For example, install any Cursor rule as {selectedFormat}:
+                            </p>
+                            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 font-mono text-sm text-gray-300">
+                              prpm install @org/cursor-rules --as {selectedFormat}
+                            </div>
+                            <p className="text-gray-400 text-sm mt-3">
+                              This means you have access to <strong>1,700+ packages</strong> across all formats, not just {selectedFormat}-specific ones!
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      packages.map((pkg) => (
+                      <>
+                        {selectedFormat && total < 50 && (
+                          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
+                            <h4 className="text-sm font-bold text-blue-400 mb-2">💡 Cross-Platform Tip</h4>
+                            <p className="text-gray-300 text-sm mb-2">
+                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>1,700+ packages</strong> by installing packages from other formats:
+                            </p>
+                            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 font-mono text-xs text-gray-300">
+                              prpm install @org/any-package --as {selectedFormat}
+                            </div>
+                          </div>
+                        )}
+                        {packages.map((pkg) => (
                         <div
                           key={pkg.id}
                           className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
@@ -523,7 +609,7 @@ function SearchPageContent() {
                               <p className="text-gray-400 mb-3">{pkg.description || 'No description'}</p>
                               <div className="flex items-center gap-4 text-sm text-gray-500">
                                 <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-gray-400">
-                                  {pkg.type}
+                                  {`${pkg.format}-${pkg.subtype}`}
                                 </span>
                                 {pkg.category && (
                                   <span>{pkg.category}</span>
@@ -550,7 +636,8 @@ function SearchPageContent() {
                             </code>
                           </div>
                         </div>
-                      ))
+                      ))}
+                      </>
                     )}
                   </div>
                 )}
@@ -628,7 +715,7 @@ function SearchPageContent() {
                 )}
 
                 {/* Pagination */}
-                {total > limit && (
+                {total > limit && (packages.length > 0 || collections.length > 0) && (
                   <div className="flex justify-center gap-2 mt-8">
                     <button
                       onClick={() => setPage(p => Math.max(1, p - 1))}

@@ -2,22 +2,22 @@ version: '3.8'
 
 services:
   # Shared PostgreSQL database for all services
-  postgres:
-    image: postgres:15-alpine
-    container_name: prpm-postgres
-    environment:
-      POSTGRES_USER: prpm
-      POSTGRES_PASSWORD: prpm
-      POSTGRES_DB: prpm
-    ports:
-      - "5434:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U prpm"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  #postgres:
+    #image: postgres:15-alpine
+    #container_name: prpm-postgres
+    #environment:
+      #POSTGRES_USER: prpm
+      #POSTGRES_PASSWORD: prpm
+      #POSTGRES_DB: prpm
+    #ports:
+      #- "5434:5432"
+    #volumes:
+      #- postgres_data:/var/lib/postgresql/data
+    #healthcheck:
+      #test: ["CMD-SHELL", "pg_isready -U prpm"]
+      #interval: 10s
+      #timeout: 5s
+      #retries: 5
 
   # Shared Redis for all services
   redis:

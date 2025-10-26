@@ -1,6 +1,6 @@
 {
   "name": "prpm",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Prompt Package Manager CLI - Install and manage prompt-based files",
   "main": "dist/index.js",
   "bin": {
@@ -19,6 +19,10 @@
     "test:ci": "jest --ci --coverage --watchAll=false",
     "build:binary": "echo 'Binary builds deprecated - use npm install -g prpm or Homebrew instead'",
     "typecheck": "tsc --noEmit",
+    "version:bump": "node scripts/bump-version.js",
+    "version:major": "node scripts/bump-version.js major",
+    "version:minor": "node scripts/bump-version.js minor",
+    "version:patch": "node scripts/bump-version.js patch",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

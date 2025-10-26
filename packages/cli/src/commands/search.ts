@@ -6,87 +6,113 @@ import { Command } from 'commander';
 import { getRegistryClient, SearchResult, RegistryPackage } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
-import { PackageType } from '../types';
+import { Format, Subtype } from '../types';
 import * as readline from 'readline';
 
-// User-friendly CLI types
-type CLIPackageType = 'skill' | 'agent' | 'command' | 'slash-command' | 'rule' | 'plugin' | 'prompt' | 'workflow' | 'tool' | 'template' | 'mcp';
-
 /**
- * Get icon for package type
+ * Get icon for package format and subtype
  */
-function getTypeIcon(type: string): string {
-  const icons: Record<string, string> = {
-    skill: '🎓',
-    agent: '🤖',
-    command: '⚡',
+function getPackageIcon(format: Format, subtype: Subtype): string {
+  // Subtype icons take precedence
+  const subtypeIcons: Record<Subtype, string> = {
+    'skill': '🎓',
+    'agent': '🤖',
     'slash-command': '⚡',
-    'claude-slash-command': '⚡',
-    rule: '📋',
-    plugin: '🔌',
-    prompt: '💬',
-    workflow: '⚡',
-    tool: '🔧',
-    template: '📄',
-    mcp: '🔗',
+    'rule': '📋',
+    'prompt': '💬',
+    'workflow': '⚡',
+    'tool': '🔧',
+    'template': '📄',
+    'collection': '📦',
+    'chatmode': '💬',
   };
-  return icons[type] || '📦';
+
+  // Format-specific icons for rules/defaults
+  const formatIcons: Record<Format, string> = {
+    'claude': '🤖',
+    'cursor': '📋',
+    'windsurf': '🌊',
+    'continue': '➡️',
+    'copilot': '✈️',
+    'kiro': '🎯',
+    'mcp': '🔗',
+    'agents.md': '📝',
+    'generic': '📦',
+  };
+
+  return subtypeIcons[subtype] || formatIcons[format] || '📦';
 }
 
 /**
- * Get human-readable label for package type
+ * Get human-readable label for package format and subtype
  */
-function getTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    skill: 'Skill',
-    agent: 'Agent',
-    command: 'Slash Command',
+function getPackageLabel(format: Format, subtype: Subtype): string {
+  const formatLabels: Record<Format, string> = {
+    'claude': 'Claude',
+    'cursor': 'Cursor',
+    'windsurf': 'Windsurf',
+    'continue': 'Continue',
+    'copilot': 'GitHub Copilot',
+    'kiro': 'Kiro',
+    'mcp': 'MCP',
+    'agents.md': 'Agents.md',
+    'generic': '',
+  };
+
+  const subtypeLabels: Record<Subtype, string> = {
+    'skill': 'Skill',
+    'agent': 'Agent',
     'slash-command': 'Slash Command',
-    'claude-slash-command': 'Slash Command',
-    'claude-agent': 'Agent',
-    rule: 'Rule',
-    plugin: 'Plugin',
-    prompt: 'Prompt',
-    workflow: 'Workflow',
-    tool: 'Tool',
-    template: 'Template',
-    mcp: 'MCP Server',
+    'rule': 'Rule',
+    'prompt': 'Prompt',
+    'workflow': 'Workflow',
+    'tool': 'Tool',
+    'template': 'Template',
+    'collection': 'Collection',
+    'chatmode': 'Chat Mode',
   };
-  return labels[type] || type;
+
+  const formatLabel = formatLabels[format];
+  const subtypeLabel = subtypeLabels[subtype];
+
+  if (format === 'generic') {
+    return subtypeLabel;
+  }
+
+  return `${formatLabel} ${subtypeLabel}`;
 }
 
 /**
- * Map user-friendly CLI types to registry schema
+ * Map subtype filters for search
  */
-function mapTypeToRegistry(cliType: CLIPackageType): { type?: PackageType; tags?: string[] } {
-  const typeMap: Record<CLIPackageType, { type?: PackageType; tags?: string[] }> = {
-    rule: { type: 'cursor', tags: ['cursor-rule'] },
-    // Skills are packages with type=claude-skill
-    skill: { type: 'claude-skill' },
-    // Agents are packages with type=claude-agent or claude (not claude-skill)
-    agent: { type: 'claude-agent' },
-    // Slash commands are packages with type=claude-slash-command
-    command: { type: 'claude-slash-command' },
-    'slash-command': { type: 'claude-slash-command' },
-    mcp: { type: 'mcp' },
-    plugin: { type: 'generic', tags: ['plugin'] },
-    prompt: { type: 'generic', tags: ['prompt'] },
-    workflow: { type: 'generic', tags: ['workflow'] },
-    tool: { type: 'generic', tags: ['tool'] },
-    template: { type: 'generic', tags: ['template'] },
-  };
-  return typeMap[cliType] || {};
+function buildSearchFilters(options: { format?: Format; subtype?: Subtype; author?: string }) {
+  const searchOptions: Record<string, unknown> = {};
+
+  if (options.format) {
+    searchOptions.format = options.format;
+  }
+
+  if (options.subtype) {
+    searchOptions.subtype = options.subtype;
+  }
+
+  if (options.author) {
+    searchOptions.author = options.author;
+  }
+
+  return searchOptions;
 }
 
 /**
  * Build webapp URL for search results
  */
-function buildWebappUrl(query: string, options: { type?: CLIPackageType; author?: string }, page: number = 1): string {
+function buildWebappUrl(query: string, options: { format?: Format; subtype?: Subtype; author?: string }, page: number = 1): string {
   const baseUrl = process.env.PRPM_WEBAPP_URL || 'https://prpm.dev';
   const params = new URLSearchParams();
 
   if (query) params.append('q', query);
-  if (options.type) params.append('type', options.type);
+  if (options.format) params.append('format', options.format);
+  if (options.subtype) params.append('subtype', options.subtype);
   if (options.author) params.append('author', options.author);
   if (page > 1) params.append('page', page.toString());
 
@@ -110,8 +136,8 @@ function displayResults(packages: RegistryPackage[], total: number, page: number
     const downloads = pkg.total_downloads >= 1000
       ? `${(pkg.total_downloads / 1000).toFixed(1)}k`
       : pkg.total_downloads;
-    const typeIcon = getTypeIcon(pkg.type);
-    const typeLabel = getTypeLabel(pkg.type);
+    const typeIcon = getPackageIcon(pkg.format, pkg.subtype);
+    const typeLabel = getPackageLabel(pkg.format, pkg.subtype);
 
     // Add verified badge
     let verifiedBadge = '';
@@ -150,7 +176,7 @@ function promptUser(): Promise<string> {
  */
 async function handlePagination(
   query: string,
-  options: { type?: CLIPackageType; author?: string; limit: number },
+  options: { format?: Format; subtype?: Subtype; author?: string; limit: number },
   client: any,
   searchOptions: Record<string, unknown>,
   initialResult: SearchResult,
@@ -244,7 +270,7 @@ async function handlePagination(
 
 export async function handleSearch(
   query: string,
-  options: { type?: CLIPackageType; author?: string; limit?: number; page?: number; interactive?: boolean }
+  options: { format?: Format; subtype?: Subtype; author?: string; limit?: number; page?: number; interactive?: boolean }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -253,20 +279,22 @@ export async function handleSearch(
   let registryUrl = '';
 
   try {
-    // Allow empty query when filtering by type or author
+    // Allow empty query when filtering by format/subtype or author
     if (query) {
       console.log(`🔍 Searching for "${query}"...`);
-    } else if (options.type) {
-      console.log(`🔍 Listing ${options.type} packages...`);
+    } else if (options.format || options.subtype) {
+      const filterType = options.subtype || options.format;
+      console.log(`🔍 Listing ${filterType} packages...`);
     } else if (options.author) {
       console.log(`🔍 Listing packages by @${options.author}...`);
     } else {
-      console.log('❌ Please provide a search query or use --type/--author to filter');
+      console.log('❌ Please provide a search query or use --format/--subtype/--author to filter');
       console.log('\n💡 Examples:');
       console.log('   prpm search react');
-      console.log('   prpm search --type skill');
+      console.log('   prpm search --subtype skill');
+      console.log('   prpm search --format claude');
       console.log('   prpm search --author prpm');
-      console.log('   prpm search react --type rule');
+      console.log('   prpm search react --subtype rule');
       return;
     }
 
@@ -274,7 +302,7 @@ export async function handleSearch(
     registryUrl = config.registryUrl || 'https://registry.prpm.dev';
     const client = getRegistryClient(config);
 
-    // Map CLI type to registry schema
+    // Build search options
     const limit = options.limit || 20;
     const page = options.page || 1;
     const offset = (page - 1) * limit;
@@ -284,16 +312,13 @@ export async function handleSearch(
       offset,
     };
 
-    if (options.type) {
-      const mapped = mapTypeToRegistry(options.type);
-      if (mapped.type) {
-        searchOptions.type = mapped.type;
-      }
-      if (mapped.tags) {
-        searchOptions.tags = mapped.tags;
-      }
+    // Add format/subtype filters
+    if (options.format) {
+      searchOptions.format = options.format;
     }
-
+    if (options.subtype) {
+      searchOptions.subtype = options.subtype;
+    }
     if (options.author) {
       searchOptions.author = options.author;
     }
@@ -368,7 +393,8 @@ export async function handleSearch(
       duration: Date.now() - startTime,
       data: {
         query: query.substring(0, 100),
-        type: options.type,
+        format: options.format,
+        subtype: options.subtype,
         resultCount: success && result ? result.packages.length : 0,
         page: options.page,
         interactive: options.interactive,
@@ -385,34 +411,45 @@ export function createSearchCommand(): Command {
 
   command
     .description('Search for packages in the registry')
-    .argument('[query]', 'Search query (optional when using --type or --author)')
-    .option('--type <type>', 'Filter by package type (skill, agent, command, slash-command, rule, plugin, prompt, workflow, tool, template, mcp)')
+    .argument('[query]', 'Search query (optional when using --format/--subtype or --author)')
+    .option('--format <format>', 'Filter by package format (cursor, claude, continue, windsurf, copilot, kiro, generic, mcp)')
+    .option('--subtype <subtype>', 'Filter by package subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection)')
     .option('--author <username>', 'Filter by author username')
     .option('--limit <number>', 'Number of results per page', '20')
     .option('--page <number>', 'Page number (default: 1)', '1')
     .option('--interactive', 'Enable interactive pagination (default: true for multiple pages)', true)
     .option('--no-interactive', 'Disable interactive pagination')
-    .action(async (query: string | undefined, options: { type?: string; author?: string; limit?: string; page?: string; interactive?: boolean }) => {
-      const type = options.type as CLIPackageType | undefined;
+    .action(async (query: string | undefined, options: { format?: string; subtype?: string; author?: string; limit?: string; page?: string; interactive?: boolean }) => {
+      const format = options.format as Format | undefined;
+      const subtype = options.subtype as Subtype | undefined;
       const author = options.author;
       const limit = options.limit ? parseInt(options.limit, 10) : 20;
       const page = options.page ? parseInt(options.page, 10) : 1;
 
-      const validTypes: CLIPackageType[] = ['skill', 'agent', 'command', 'slash-command', 'rule', 'plugin', 'prompt', 'workflow', 'tool', 'template', 'mcp'];
-      if (options.type && !validTypes.includes(type!)) {
-        console.error(`❌ Type must be one of: ${validTypes.join(', ')}`);
-        console.log(`\n💡 Examples:`);
-        console.log(`   prpm search postgres --type skill`);
-        console.log(`   prpm search debugging --type agent`);
-        console.log(`   prpm search refactor --type command`);
-        console.log(`   prpm search react --type rule`);
-        console.log(`   prpm search --type command  # List all slash commands`);
-        console.log(`   prpm search --type skill  # List all skills`);
-        console.log(`   prpm search --author prpm  # List packages by @pr-pm`);
+      const validFormats: Format[] = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'];
+      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'];
+
+      if (options.format && !validFormats.includes(format!)) {
+        console.error(`❌ Format must be one of: ${validFormats.join(', ')}`);
         process.exit(1);
       }
 
-      await handleSearch(query || '', { type, author, limit, page, interactive: options.interactive });
+      if (options.subtype && !validSubtypes.includes(subtype!)) {
+        console.error(`❌ Subtype must be one of: ${validSubtypes.join(', ')}`);
+        console.log(`\n💡 Examples:`);
+        console.log(`   prpm search postgres --subtype skill`);
+        console.log(`   prpm search debugging --subtype agent`);
+        console.log(`   prpm search refactor --subtype slash-command`);
+        console.log(`   prpm search react --subtype rule`);
+        console.log(`   prpm search --subtype slash-command  # List all slash commands`);
+        console.log(`   prpm search --subtype skill  # List all skills`);
+        console.log(`   prpm search --format claude  # List all Claude packages`);
+        console.log(`   prpm search --author prpm  # List packages by @prpm`);
+        process.exit(1);
+      }
+
+      await handleSearch(query || '', { format, subtype, author, limit, page, interactive: options.interactive });
+      process.exit(0);
     });
 
   return command;

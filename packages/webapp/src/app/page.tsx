@@ -18,7 +18,7 @@ export default function Home() {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-prpm-dark-card border border-prpm-border rounded-full text-sm text-gray-400">
               <span className="w-2 h-2 bg-prpm-accent rounded-full animate-pulse"></span>
-              Alpha · 1,042+ packages · 16 collections
+              Alpha · 1,500+ packages · 100+ collections
             </div>
 
             <div className="flex justify-center mb-8">
@@ -36,39 +36,38 @@ export default function Home() {
             </p>
 
             <p className="text-base sm:text-lg lg:text-xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed px-4">
-              Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, and more — all from one file.
+              Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, GitHub Copilot, OpenAI Codex, Google Gemini, Kiro, and more — all from one file.
             </p>
 
-            <div className="flex gap-4 justify-center flex-wrap mb-12">
+            <div className="flex flex-col gap-4 items-center mb-12">
               <Link
                 href="/search"
-                className="px-8 py-4 bg-prpm-accent text-white rounded-lg hover:bg-prpm-accent-light transition-all font-semibold text-lg hover-lift"
+                className="px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift flex items-center gap-2"
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
                 Browse Packages
               </Link>
-              <Link
-                href="/signup"
-                className="px-8 py-4 bg-prpm-dark-card border-2 border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift"
-              >
-                Get Started
-              </Link>
-              <Link
-                href="/login"
-                className="px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift"
-              >
-                Sign In
-              </Link>
-              <a
-                href="https://github.com/pr-pm/prpm"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group px-8 py-4 bg-prpm-dark-card border border-prpm-border text-gray-300 rounded-lg hover:border-prpm-accent hover:text-white transition-all font-semibold text-lg hover-lift flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                </svg>
-                GitHub
-              </a>
+              <div className="flex gap-4 justify-center flex-wrap">
+                <Link
+                  href="/signup"
+                  className="px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift"
+                >
+                  Get Started
+                </Link>
+                <a
+                  href="https://github.com/pr-pm/prpm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                  </svg>
+                  GitHub
+                </a>
+              </div>
             </div>
 
             {/* Quick install commands */}
@@ -104,7 +103,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">1,042+ Packages</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">1,500+ Packages</h3>
               <p className="text-gray-400 leading-relaxed">
                 Production-ready prompts, agents, skills, and slash commands from verified contributors
               </p>
@@ -140,7 +139,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">16 Collections</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">100+ Collections</h3>
               <p className="text-gray-400 leading-relaxed">
                 Curated package bundles for specific workflows and use cases
               </p>
@@ -216,7 +215,10 @@ export default function Home() {
           {/* Supported Platforms */}
           <div className="text-center mb-20">
             <h2 className="text-2xl font-semibold mb-8 text-white">Universal Format Support</h2>
-            <div className="flex flex-wrap justify-center gap-4">
+            <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
+              PRPM packages work with all major AI coding tools — from vendor-specific formats to the open agents.md standard.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 mb-6">
               <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
                 <span className="text-gray-300 font-medium">Cursor</span>
               </div>
@@ -230,9 +232,24 @@ export default function Home() {
                 <span className="text-gray-300 font-medium">Windsurf</span>
               </div>
               <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
-                <span className="text-gray-300 font-medium">Generic Prompts</span>
+                <span className="text-gray-300 font-medium">GitHub Copilot</span>
+              </div>
+              <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <span className="text-gray-300 font-medium">OpenAI Codex</span>
+              </div>
+              <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <span className="text-gray-300 font-medium">Google Gemini</span>
+              </div>
+              <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <span className="text-gray-300 font-medium">Kiro</span>
+              </div>
+              <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-accent/50 rounded-lg">
+                <span className="text-prpm-accent font-medium">agents.md (Open Standard)</span>
               </div>
             </div>
+            <p className="text-sm text-gray-500">
+              Plus any tool supporting Model Context Protocol (MCP) or the agents.md open standard
+            </p>
           </div>
 
           {/* Footer */}

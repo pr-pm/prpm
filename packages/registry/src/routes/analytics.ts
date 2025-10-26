@@ -11,7 +11,7 @@ import { AnalyticsQuery } from '../types/analytics.js';
 const TrackDownloadSchema = z.object({
   packageId: z.string(),
   version: z.string().optional(),
-  format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'generic']).optional(),
+  format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp']).optional(),
   client: z.enum(['cli', 'web', 'api']).optional(),
 });
 
@@ -39,9 +39,9 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           properties: {
             packageId: { type: 'string', description: 'Package ID' },
             version: { type: 'string', description: 'Package version' },
-            format: { 
-              type: 'string', 
-              enum: ['cursor', 'claude', 'continue', 'windsurf', 'generic'],
+            format: {
+              type: 'string',
+              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'],
               description: 'Download format'
             },
             client: { 
@@ -441,7 +441,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           type: 'object',
           properties: {
             limit: { type: 'number', default: 10 },
-            type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf'] },
+            type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
           },
         },
       },

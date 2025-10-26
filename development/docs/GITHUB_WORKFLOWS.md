@@ -21,12 +21,12 @@ Complete list of all GitHub Actions workflows in the PRPM repository and their f
 - `registry-tests` - Tests registry service with Postgres, Redis, MinIO
 - `cli-tests` - Tests CLI package  
 - `registry-client-tests` - Tests registry client library
-- `types-tests` - Tests @prpm/types package
+- `types-tests` - Tests @pr-pm/types package
 - `security` - Runs npm audit on all packages
 - `all-checks` - Summary job
 
 **Key Features:**
-- ✅ Builds @prpm/types first (required dependency)
+- ✅ Builds @pr-pm/types first (required dependency)
 - ✅ Full backend services (Postgres, Redis, MinIO)
 - ✅ Type checking and builds for all packages
 - ✅ Security validation with npm audit
@@ -61,8 +61,8 @@ Complete list of all GitHub Actions workflows in the PRPM repository and their f
 4. `summary` - Generate publish summary report
 
 **Publishing Order (Critical):**
-1. **@prpm/types** (no dependencies)
-2. **@prpm/registry-client** (depends on types)
+1. **@pr-pm/types** (no dependencies)
+2. **@pr-pm/registry-client** (depends on types)
 3. **prpm** (CLI - depends on types and registry-client)
 
 **Features:**
@@ -135,13 +135,13 @@ Complete list of all GitHub Actions workflows in the PRPM repository and their f
 ### Critical Build Order
 All workflows that build packages **must** follow this order:
 
-1. **@prpm/types** (no dependencies) ← Build FIRST
-2. **@prpm/registry-client** (depends on types)
+1. **@pr-pm/types** (no dependencies) ← Build FIRST
+2. **@pr-pm/registry-client** (depends on types)
 3. **prpm** CLI (depends on types + registry-client)
-4. **@prpm/registry** (depends on types)
-5. **@prpm/webapp** (depends on types)
+4. **@pr-pm/registry** (depends on types)
+5. **@pr-pm/webapp** (depends on types)
 
-### Workflows Updated for @prpm/types Dependency
+### Workflows Updated for @pr-pm/types Dependency
 
 ✅ **ci.yml** - All test jobs build types first  
 ✅ **publish.yml** - Builds types before publishing  
@@ -176,15 +176,15 @@ All workflows that build packages **must** follow this order:
 ```yaml
 - name: Build dependencies in order
   run: |
-    npm run build --workspace=@prpm/types
-    npm run build --workspace=@prpm/registry-client
+    npm run build --workspace=@pr-pm/types
+    npm run build --workspace=@pr-pm/registry-client
     npm run build --workspace=prpm
 ```
 
 ### 2. Use Workspace Targeting
 ```yaml
 # Correct
-npm run build --workspace=@prpm/types
+npm run build --workspace=@pr-pm/types
 
 # Wrong - builds everything
 npm run build
@@ -261,7 +261,7 @@ When adding a new publishable package:
 1. Test changes on a feature branch first
 2. Use `workflow_dispatch` trigger for manual testing
 3. Update this documentation
-4. Ensure @prpm/types build order is maintained
+4. Ensure @pr-pm/types build order is maintained
 5. Test dry-run before actual publishing
 
 ### Secrets Management

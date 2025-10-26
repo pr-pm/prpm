@@ -142,5 +142,8 @@ function getUpdateType(current: string, latest: string): 'major' | 'minor' | 'pa
 export function createOutdatedCommand(): Command {
   return new Command('outdated')
     .description('Check for package updates')
-    .action(handleOutdated);
+    .action(async () => {
+      await handleOutdated();
+      process.exit(0);
+    });
 }

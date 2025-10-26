@@ -8,7 +8,7 @@ import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir, stripAuthorNamespace } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
-import { Package, PackageType } from '../types';
+import { Package, Format, Subtype } from '../types';
 import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { createGunzip } from 'zlib';
@@ -25,66 +25,81 @@ import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-co
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
 
 /**
- * Get icon for package type
+ * Get icon for package format and subtype
  */
-function getTypeIcon(type: string): string {
-  const icons: Record<string, string> = {
-    'claude-skill': '🎓',
-    'claude-agent': '🤖',
-    'claude-slash-command': '⚡',
+function getPackageIcon(format: Format, subtype: Subtype): string {
+  // Subtype icons take precedence
+  const subtypeIcons: Record<Subtype, string> = {
+    'skill': '🎓',
+    'agent': '🤖',
+    'slash-command': '⚡',
+    'rule': '📋',
+    'prompt': '💬',
+    'workflow': '⚡',
+    'tool': '🔧',
+    'template': '📄',
+    'collection': '📦',
+    'chatmode': '💬',
+  };
+
+  // Format-specific icons for rules/defaults
+  const formatIcons: Record<Format, string> = {
     'claude': '🤖',
     'cursor': '📋',
-    'cursor-agent': '🤖',
-    'cursor-slash-command': '⚡',
     'windsurf': '🌊',
     'continue': '➡️',
+    'copilot': '✈️',
+    'kiro': '🎯',
     'mcp': '🔗',
+    'agents.md': '📝',
     'generic': '📦',
-    // Legacy mappings
-    skill: '🎓',
-    agent: '🤖',
-    rule: '📋',
-    plugin: '🔌',
-    prompt: '💬',
-    workflow: '⚡',
-    tool: '🔧',
-    template: '📄',
   };
-  return icons[type] || '📦';
+
+  return subtypeIcons[subtype] || formatIcons[format] || '📦';
 }
 
 /**
- * Get human-readable label for package type
+ * Get human-readable label for package format and subtype
  */
-function getTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    'claude-skill': 'Claude Skill',
-    'claude-agent': 'Claude Agent',
-    'claude-slash-command': 'Claude Slash Command',
-    'claude': 'Claude Agent',
-    'cursor': 'Cursor Rule',
-    'cursor-agent': 'Cursor Agent',
-    'cursor-slash-command': 'Cursor Slash Command',
-    'windsurf': 'Windsurf Rule',
-    'continue': 'Continue Rule',
-    'mcp': 'MCP Server',
-    'generic': 'Package',
-    // Legacy mappings
-    skill: 'Skill',
-    agent: 'Agent',
-    rule: 'Rule',
-    plugin: 'Plugin',
-    prompt: 'Prompt',
-    workflow: 'Workflow',
-    tool: 'Tool',
-    template: 'Template',
+function getPackageLabel(format: Format, subtype: Subtype): string {
+  const formatLabels: Record<Format, string> = {
+    'claude': 'Claude',
+    'cursor': 'Cursor',
+    'windsurf': 'Windsurf',
+    'continue': 'Continue',
+    'copilot': 'GitHub Copilot',
+    'kiro': 'Kiro',
+    'mcp': 'MCP',
+    'agents.md': 'Agents.md',
+    'generic': '',
   };
-  return labels[type] || type;
+
+  const subtypeLabels: Record<Subtype, string> = {
+    'skill': 'Skill',
+    'agent': 'Agent',
+    'slash-command': 'Slash Command',
+    'rule': 'Rule',
+    'prompt': 'Prompt',
+    'workflow': 'Workflow',
+    'tool': 'Tool',
+    'template': 'Template',
+    'collection': 'Collection',
+    'chatmode': 'Chat Mode',
+  };
+
+  const formatLabel = formatLabels[format];
+  const subtypeLabel = subtypeLabels[subtype];
+
+  if (format === 'generic') {
+    return subtypeLabel;
+  }
+
+  return `${formatLabel} ${subtypeLabel}`;
 }
 
 export async function handleInstall(
   packageSpec: string,
-  options: { version?: string; type?: PackageType; as?: string; frozenLockfile?: boolean }
+  options: { version?: string; as?: string; frozenLockfile?: boolean }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -137,7 +152,7 @@ export async function handleInstall(
       if (!requestedVersion || requestedVersion === 'latest' || requestedVersion === installedPkg.version) {
         console.log(`\n✨ Package already installed!`);
         console.log(`   📦 ${packageId}@${installedPkg.version}`);
-        console.log(`   🔄 Format: ${installedPkg.format || installedPkg.type || 'unknown'}`);
+        console.log(`   🔄 Format: ${installedPkg.format || 'unknown'} | Subtype: ${installedPkg.subtype || 'unknown'}`);
         console.log(`\n💡 To reinstall or upgrade:`);
         console.log(`   prpm upgrade ${packageId}     # Upgrade to latest version`);
         console.log(`   prpm uninstall ${packageId}   # Uninstall first, then install`);
@@ -189,14 +204,32 @@ export async function handleInstall(
 
     // Get package info
     const pkg = await client.getPackage(packageId);
-    const typeIcon = getTypeIcon(pkg.type);
-    const typeLabel = getTypeLabel(pkg.type);
+    const typeIcon = getPackageIcon(pkg.format, pkg.subtype);
+    const typeLabel = getPackageLabel(pkg.format, pkg.subtype);
     console.log(`   ${pkg.name} ${pkg.official ? '🏅' : ''}`);
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 
-    // Determine format preference - use package type if no explicit conversion requested
-    const format = options.as || pkg.type;
+    // Determine format preference
+    let format = options.as || pkg.format;
+
+    // Special handling for Claude packages: default to CLAUDE.md if it doesn't exist
+    // BUT only for packages that are generic rules (not skills, agents, or commands)
+    if (!options.as && pkg.format === 'claude' && pkg.subtype === 'rule') {
+      const { fileExists } = await import('../core/filesystem.js');
+      const claudeMdExists = await fileExists('CLAUDE.md');
+
+      if (!claudeMdExists) {
+        // CLAUDE.md doesn't exist, install as CLAUDE.md (recommended format for Claude Code)
+        format = 'claude-md';
+        console.log(`   💡 Installing as CLAUDE.md (recommended for Claude Code)`);
+        console.log(`      To install as skill instead, use: prpm install ${packageId} --as claude`);
+      } else {
+        // CLAUDE.md already exists, install as skill to avoid overwriting
+        console.log(`   ℹ️  CLAUDE.md already exists, installing as skill in .claude/skills/`);
+      }
+    }
+
     if (options.as && format !== 'canonical') {
       console.log(`   🔄 Converting to ${format} format...`);
     }
@@ -221,36 +254,10 @@ export async function handleInstall(
 
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
-    // Determine effective type based on format and original package type
-    let effectiveType: PackageType;
 
-    if (format === 'cursor') {
-      // Map package types to cursor equivalents
-      if (pkg.type === 'claude-slash-command' || pkg.type === 'cursor-slash-command') {
-        effectiveType = 'cursor-slash-command';
-      } else if (pkg.type === 'claude-agent' || pkg.type === 'cursor-agent') {
-        effectiveType = 'cursor-agent';
-      } else {
-        effectiveType = 'cursor';
-      }
-    } else if (format === 'claude') {
-      // Map package types to claude equivalents
-      if (pkg.type === 'cursor-slash-command' || pkg.type === 'claude-slash-command') {
-        effectiveType = 'claude-slash-command';
-      } else if (pkg.type === 'cursor-agent' || pkg.type === 'claude-agent') {
-        effectiveType = 'claude-agent';
-      } else if (pkg.type === 'claude-skill') {
-        effectiveType = 'claude-skill';
-      } else {
-        effectiveType = 'claude-agent';
-      }
-    } else if (format === 'continue' || format === 'windsurf') {
-      effectiveType = format as PackageType;
-    } else {
-      effectiveType = (options.type || pkg.type) as PackageType;
-    }
-
-    const destDir = getDestinationDir(effectiveType);
+    // Determine effective format and subtype (from conversion or package native format)
+    const effectiveFormat = (format as Format) || pkg.format;
+    const effectiveSubtype = pkg.subtype;
 
     // Extract all files from tarball
     const extractedFiles = await extractTarball(tarball, packageId);
@@ -259,18 +266,32 @@ export async function handleInstall(
     let destPath: string;
     let fileCount = 0;
 
+    // Special handling for CLAUDE.md format (goes in project root)
+    if (format === 'claude-md') {
+      if (extractedFiles.length !== 1) {
+        throw new Error('CLAUDE.md format only supports single-file packages');
+      }
+
+      let mainFile = extractedFiles[0].content;
+      destPath = 'CLAUDE.md';
+
+      await saveFile(destPath, mainFile);
+      fileCount = 1;
+    }
     // Check if this is a multi-file package
-    if (extractedFiles.length === 1) {
+    else if (extractedFiles.length === 1) {
+      const destDir = getDestinationDir(effectiveFormat, effectiveSubtype);
+
       // Single file package
       let mainFile = extractedFiles[0].content;
-      // Determine file extension based on effective type
+      // Determine file extension based on effective format
       // Cursor rules use .mdc, but slash commands and other files use .md
-      const fileExtension = (effectiveType === 'cursor' && format === 'cursor') ? 'mdc' : 'md';
+      const fileExtension = (effectiveFormat === 'cursor' && format === 'cursor') ? 'mdc' : 'md';
       const packageName = stripAuthorNamespace(packageId);
       destPath = `${destDir}/${packageName}.${fileExtension}`;
 
       // Handle cursor format - add header if missing for .mdc files
-      if (format === 'cursor' && effectiveType === 'cursor') {
+      if (format === 'cursor' && effectiveFormat === 'cursor') {
         if (!hasMDCHeader(mainFile)) {
           console.log(`   ⚠️  Adding missing MDC header...`);
           mainFile = addMDCHeader(mainFile, pkg.description);
@@ -293,11 +314,40 @@ export async function handleInstall(
       await saveFile(destPath, mainFile);
       fileCount = 1;
     } else {
+      const destDir = getDestinationDir(effectiveFormat, effectiveSubtype);
+
       // Multi-file package - create directory for package
       const packageName = stripAuthorNamespace(packageId);
       const packageDir = `${destDir}/${packageName}`;
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
+
+      // For Claude skills, auto-fix filename to SKILL.md if needed
+      if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
+        const skillMdIndex = extractedFiles.findIndex(f => f.name === 'SKILL.md');
+
+        if (skillMdIndex === -1) {
+          // SKILL.md not found, look for common variations and auto-rename
+          const skillFileIndex = extractedFiles.findIndex(f =>
+            f.name.toLowerCase() === 'skill.md' ||
+            f.name === 'skill.md' ||
+            f.name.endsWith('.md') && extractedFiles.length === 1 // Single .md file
+          );
+
+          if (skillFileIndex !== -1) {
+            const oldName = extractedFiles[skillFileIndex].name;
+            console.log(`   ⚠️  Auto-fixing skill filename: ${oldName} → SKILL.md`);
+            console.log(`      (Claude skills must be named SKILL.md per official documentation)`);
+            extractedFiles[skillFileIndex].name = 'SKILL.md';
+          } else {
+            throw new Error(
+              'Claude skills must contain a SKILL.md file. ' +
+              'According to Claude documentation, skills must have a file named SKILL.md in their directory. ' +
+              'No suitable file found to rename. Please update the package to follow this requirement.'
+            );
+          }
+        }
+      }
 
       for (const file of extractedFiles) {
         const filePath = `${packageDir}/${file.name}`;
@@ -313,8 +363,8 @@ export async function handleInstall(
     addToLockfile(updatedLockfile, packageId, {
       version: actualVersion || version,
       tarballUrl,
-      type: pkg.type,
-      format,
+      format: pkg.format, // Preserve original package format
+      subtype: pkg.subtype, // Preserve original package subtype
       installedPath: destPath,
     });
 
@@ -356,7 +406,7 @@ export async function handleInstall(
       data: {
         packageId: packageSpec.split('@')[0],
         version: options.version || 'latest',
-        type: options.type,
+        convertTo: options.as,
       },
     });
     await telemetry.shutdown();
@@ -475,25 +525,28 @@ export function createInstallCommand(): Command {
     .description('Install a package from the registry')
     .argument('<package>', 'Package to install (e.g., react-rules or react-rules@1.2.0)')
     .option('--version <version>', 'Specific version to install')
-    .option('--type <type>', 'Override package type (cursor, claude, continue)')
-    .option('--as <format>', 'Download in specific format (cursor, claude, continue, windsurf)')
+    .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, canonical)')
+    .option('--format <format>', 'Alias for --as')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string, options: { format?: string; save?: boolean; dev?: boolean; global?: boolean; type?: string; as?: string; frozenLockfile?: boolean }) => {
-      if (options.type && !['cursor', 'claude', 'continue', 'windsurf', 'generic'].includes(options.type)) {
-        console.error('❌ Type must be one of: cursor, claude, continue, windsurf, generic');
-        process.exit(1);
-      }
+    .action(async (packageSpec: string, options: { version?: string; as?: string; format?: string; frozenLockfile?: boolean }) => {
+      // Support both --as and --format (format is alias for as)
+      const convertTo = options.format || options.as;
 
-      if (options.as && !['cursor', 'claude', 'continue', 'windsurf', 'canonical'].includes(options.as)) {
+      if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'canonical'].includes(convertTo)) {
         console.error('❌ Format must be one of: cursor, claude, continue, windsurf, canonical');
+        console.log('\n💡 Examples:');
+        console.log('   prpm install my-package --as cursor       # Convert to Cursor format');
+        console.log('   prpm install my-package --format claude   # Convert to Claude format');
+        console.log('   prpm install my-package                   # Install in native format');
         process.exit(1);
       }
 
       await handleInstall(packageSpec, {
-        type: options.type as PackageType | undefined,
-        as: options.as,
+        version: options.version,
+        as: convertTo,
         frozenLockfile: options.frozenLockfile
       });
+      process.exit(0);
     });
 
   return command;

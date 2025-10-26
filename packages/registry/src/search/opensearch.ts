@@ -43,7 +43,8 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
   return {
     async search(searchQuery: string, filters: SearchFilters): Promise<SearchResult> {
       const {
-        type,
+        format,
+        subtype,
         tags,
         category,
         verified,
@@ -69,8 +70,20 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
 
       const filter: unknown[] = [{ term: { visibility: 'public' } }];
 
-      if (type) {
-        filter.push({ term: { type } });
+      if (format) {
+        if (Array.isArray(format)) {
+          filter.push({ terms: { format } });
+        } else {
+          filter.push({ term: { format } });
+        }
+      }
+
+      if (subtype) {
+        if (Array.isArray(subtype)) {
+          filter.push({ terms: { subtype } });
+        } else {
+          filter.push({ term: { subtype } });
+        }
       }
 
       if (category) {
@@ -213,7 +226,8 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
             properties: {
               id: { type: 'keyword' },
               description: { type: 'text', analyzer: 'english' },
-              type: { type: 'keyword' },
+              format: { type: 'keyword' },
+              subtype: { type: 'keyword' },
               category: { type: 'keyword' },
               tags: { type: 'keyword' },
               keywords: { type: 'text' },
