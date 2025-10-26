@@ -10,4 +10,4 @@ Disallow: /cli-auth
 Disallow: /auth/
 
 # Sitemap
-Sitemap: https://prpm.ai/sitemap.xml
+Sitemap: https://prpm.dev/sitemap.xml

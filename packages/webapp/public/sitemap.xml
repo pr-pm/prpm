@@ -6,34 +6,113 @@
 
   <!-- Homepage -->
   <url>
-    <loc>https://prpm.ai/</loc>
-    <lastmod>2025-10-23</lastmod>
+    <loc>https://prpm.dev/</loc>
+    <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Search/Browse -->
   <url>
-    <loc>https://prpm.ai/search</loc>
-    <lastmod>2025-10-23</lastmod>
+    <loc>https://prpm.dev/search</loc>
+    <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- Authors -->
   <url>
-    <loc>https://prpm.ai/authors</loc>
-    <lastmod>2025-10-23</lastmod>
+    <loc>https://prpm.dev/authors</loc>
+    <lastmod>2025-10-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- Claim packages -->
+  <!-- Blog -->
   <url>
-    <loc>https://prpm.ai/claim</loc>
-    <lastmod>2025-10-23</lastmod>
+    <loc>https://prpm.dev/blog</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Blog Posts -->
+  <url>
+    <loc>https://prpm.dev/blog/introducing-prpm</loc>
+    <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/distributable-intelligence</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/cursor-deep-dive</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/claude-deep-dive</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/continue-deep-dive</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/windsurf-deep-dive</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/copilot-deep-dive</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/kiro-deep-dive</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/agents-md-deep-dive</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Auth -->
+  <url>
+    <loc>https://prpm.dev/login</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/signup</loc>
+    <lastmod>2025-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 
   <!--
