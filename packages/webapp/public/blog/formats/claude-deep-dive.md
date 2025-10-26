@@ -14,7 +14,7 @@
 2. [Format Specification](#format-specification)
    - [CLAUDE.md: Project Context File](#claudemd-project-context-file)
    - [Skills: Reusable Reference Documentation](#skills-reusable-reference-documentation)
-3. [Skills vs Agents vs Rules vs CLAUDE.md](#skills-vs-agents-vs-rules-vs-claudemd)
+3. [Skills vs Agents vs Commands vs Rules vs CLAUDE.md](#skills-vs-agents-vs-commands-vs-rules-vs-claudemd)
 4. [Frontmatter Requirements](#frontmatter-requirements)
 5. [Claude Search Optimization (CSO)](#claude-search-optimization-cso)
 6. [PRPM's Implementation](#prpms-implementation)
@@ -27,14 +27,15 @@
 
 ## Introduction
 
-Claude has **four** complementary systems for providing context:
+Claude has **five** complementary systems for providing context:
 
 1. **CLAUDE.md**: Project-specific context file (always loaded in Claude Code)
 2. **Skills** (`.claude/skills/*/SKILL.md`): Reusable reference documentation (discoverable)
 3. **Agents** (`.claude/agents/*/AGENT.md`): Persona-based configurations with tool access (explicitly invoked)
-4. **Rules** (`.claude/rules/*.md`): Always-active conventions (legacy, superseded by CLAUDE.md)
+4. **Commands** (`.claude/commands/*.md`): Slash commands for quick actions (user-invoked)
+5. **Rules** (`.claude/rules/*.md`): Always-active conventions (legacy, superseded by CLAUDE.md)
 
-This post focuses primarily on **CLAUDE.md** and **Skills**, as they represent the modern recommended approach for Claude context management.
+This post focuses primarily on **CLAUDE.md** and **Skills**, as they represent the modern recommended approach for Claude context management. Commands, Agents, and Rules are also supported but serve more specialized use cases.
 
 ### CLAUDE.md: Always-On Project Context
 
@@ -329,9 +330,9 @@ Teams using strict TypeScript typing report:
 
 ---
 
-## Skills vs Agents vs Rules vs CLAUDE.md
+## Skills vs Agents vs Commands vs Rules vs CLAUDE.md
 
-Claude has **four** types of custom content, each serving a different purpose:
+Claude has **five** types of custom content, each serving a different purpose:
 
 ### CLAUDE.md (Root of Project)
 
@@ -380,6 +381,21 @@ Claude has **four** types of custom content, each serving a different purpose:
 - Multi-turn interactions with consistent persona
 - Tool-using agents that need specific capabilities
 
+### Commands (.claude/commands/)
+
+**Purpose**: Slash commands for quick, repeatable actions
+**When active**: User explicitly invokes with `/command-name`
+**Content type**: Prompt templates, quick instructions, shortcuts
+**Format**: Markdown with optional YAML frontmatter
+**Optimization**: Clear, concise prompts
+
+**Example**: "/review-code", "/write-tests", "/explain-error"
+
+**Best for**:
+- Quick, repeatable tasks (format code, write docs, explain concepts)
+- Prompt templates with variable substitution
+- Shortcuts for common requests
+
 ### Rules (.claude/rules/)
 
 **Purpose**: Always-active project conventions (legacy/alternative to CLAUDE.md)
@@ -398,7 +414,8 @@ Claude has **four** types of custom content, each serving a different purpose:
 |------|------------|-------|--------|----------|
 | **CLAUDE.md** | Always (auto-loaded) | Entire project | Plain markdown | "Run pnpm install", "Use App Router" |
 | **Skills** | On-demand (search) | Specific technique | Markdown + frontmatter | "How to implement rate limiting" |
-| **Agents** | Explicit invoke | Full interaction | Markdown + frontmatter | "Act as code reviewer" |
+| **Agents** | Explicit invoke | Full interaction | Markdown + frontmatter + tools | "Act as code reviewer" |
+| **Commands** | Slash command (`/cmd`) | Single action | Markdown (optional frontmatter) | "/review-code", "/write-tests" |
 | **Rules** | Always active | All code in project | Markdown (optional frontmatter) | (Legacy - use CLAUDE.md instead) |
 
 ### Decision Tree: Which Format to Use?
@@ -411,10 +428,16 @@ Is it project-specific?
 │       ├─ Yes → Use Skills
 │       └─ No → Use CLAUDE.md (with conditional sections)
 └─ No → Is it reusable across projects?
-    ├─ Yes → Use Skills
+    ├─ Yes → Is it a quick, single action?
+    │   ├─ Yes → Use Commands (slash commands)
+    │   └─ No → Use Skills (reference documentation)
     └─ No → Does it require a specific persona?
-        ├─ Yes → Use Agents
-        └─ No → Use Skills
+        ├─ Yes → Does it need tools/APIs?
+        │   ├─ Yes → Use Agents
+        │   └─ No → Use Skills
+        └─ No → Is it a quick action?
+            ├─ Yes → Use Commands
+            └─ No → Use Skills
 ```
 
 ---
