@@ -489,6 +489,7 @@ async function initPackage(options: InitOptions): Promise<void> {
       config.format = await select(rl, 'Select package format:', FORMATS, 'cursor');
 
       // Subtype
+      console.log('\nAvailable subtypes: rule, agent, skill, slash-command, prompt, workflow, tool, template, collection, chatmode');
       const includeSubtype = await prompt(rl, 'Specify subtype? (y/N)', 'n');
       if (includeSubtype.toLowerCase() === 'y') {
         config.subtype = await select(rl, 'Select package subtype:', SUBTYPES, 'rule');
