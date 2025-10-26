@@ -5,7 +5,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { toCursor } from '../converters/to-cursor.js';
-import { toClaude } from '../converters/to-claude.js';
+import { toClaude, toClaudeMd } from '../converters/to-claude.js';
 import { toCopilot } from '../converters/to-copilot.js';
 import { toKiro } from '../converters/to-kiro.js';
 import { toWindsurf } from '../converters/to-windsurf.js';
@@ -318,6 +318,9 @@ async function convertPackage(
     case 'claude':
       return toClaude(pkg);
 
+    case 'claude-md':
+      return toClaudeMd(pkg);
+
     case 'continue':
       // TODO: Implement Continue converter
       return {
@@ -364,6 +367,8 @@ function getFilenameForFormat(format: string, packageId: string, pkg?: Canonical
       return `.cursorrules`;
     case 'claude':
       return `${packageId}.md`;
+    case 'claude-md':
+      return 'CLAUDE.md';
     case 'continue':
       return `.continuerc.json`;
     case 'windsurf':

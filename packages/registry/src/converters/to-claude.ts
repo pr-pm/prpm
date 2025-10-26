@@ -326,6 +326,110 @@ function convertContext(section: {
 }
 
 /**
+ * Convert canonical package to CLAUDE.md format (plain markdown, no frontmatter)
+ * This is the recommended format for project-specific context in Claude Code
+ */
+export function toClaudeMd(
+  pkg: CanonicalPackage,
+  options: Partial<ConversionOptions> = {}
+): ConversionResult {
+  const warnings: string[] = [];
+  let qualityScore = 100;
+
+  try {
+    const lines: string[] = [];
+
+    // Extract metadata
+    const metadata = pkg.content.sections.find(s => s.type === 'metadata');
+
+    // Main title (no frontmatter for CLAUDE.md)
+    if (metadata?.type === 'metadata') {
+      const { title } = metadata.data;
+      lines.push(`# ${title}`);
+      lines.push('');
+    }
+
+    // Convert all sections to plain markdown (no frontmatter)
+    for (const section of pkg.content.sections) {
+      // Skip metadata (already handled as title)
+      if (section.type === 'metadata') {
+        continue;
+      }
+
+      // Skip tools and persona (not appropriate for CLAUDE.md)
+      if (section.type === 'tools' || section.type === 'persona') {
+        warnings.push(`${section.type} section skipped (not appropriate for CLAUDE.md)`);
+        continue;
+      }
+
+      const sectionContent = convertSectionToPlainMarkdown(section, warnings);
+      if (sectionContent) {
+        lines.push(sectionContent);
+        lines.push('');
+      }
+    }
+
+    const content = lines.join('\n').trim();
+
+    // Check for lossy conversion
+    const lossyConversion = warnings.some(w =>
+      w.includes('not supported') || w.includes('skipped')
+    );
+
+    if (lossyConversion) {
+      qualityScore -= 10;
+    }
+
+    return {
+      content,
+      format: 'claude',
+      warnings: warnings.length > 0 ? warnings : undefined,
+      lossyConversion,
+      qualityScore,
+    };
+  } catch (error) {
+    warnings.push(`Conversion error: ${error instanceof Error ? error.message : String(error)}`);
+    return {
+      content: '',
+      format: 'claude',
+      warnings,
+      lossyConversion: true,
+      qualityScore: 0,
+    };
+  }
+}
+
+/**
+ * Convert section to plain markdown (for CLAUDE.md format)
+ */
+function convertSectionToPlainMarkdown(section: Section, warnings: string[]): string {
+  switch (section.type) {
+    case 'instructions':
+      return convertInstructions(section);
+
+    case 'rules':
+      return convertRules(section);
+
+    case 'examples':
+      return convertExamples(section);
+
+    case 'context':
+      return convertContext(section);
+
+    case 'custom':
+      // Only include if it's claude-specific or generic
+      if (!section.editorType || section.editorType === 'claude') {
+        return section.content;
+      }
+      warnings.push(`Custom ${section.editorType} section skipped`);
+      return '';
+
+    default:
+      return '';
+  }
+}
+
+/**
  * Detect if content is already in Claude agent format
  */
 export function isClaudeFormat(content: string): boolean {

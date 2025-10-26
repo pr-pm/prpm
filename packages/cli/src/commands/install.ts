@@ -206,8 +206,25 @@ export async function handleInstall(
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 
-    // Determine format preference - use package type if no explicit conversion requested
-    const format = options.as || pkg.format;
+    // Determine format preference
+    let format = options.as || pkg.format;
+
+    // Special handling for Claude packages: default to CLAUDE.md if it doesn't exist
+    if (!options.as && pkg.format === 'claude') {
+      const { fileExists } = await import('../core/filesystem.js');
+      const claudeMdExists = await fileExists('CLAUDE.md');
+
+      if (!claudeMdExists) {
+        // CLAUDE.md doesn't exist, install as CLAUDE.md (recommended format for Claude Code)
+        format = 'claude-md';
+        console.log(`   💡 Installing as CLAUDE.md (recommended for Claude Code)`);
+        console.log(`      To install as skill instead, use: prpm install ${packageId} --as claude`);
+      } else {
+        // CLAUDE.md already exists, install as skill to avoid overwriting
+        console.log(`   ℹ️  CLAUDE.md already exists, installing as skill in .claude/skills/`);
+      }
+    }
+
     if (options.as && format !== 'canonical') {
       console.log(`   🔄 Converting to ${format} format...`);
     }
@@ -237,8 +254,6 @@ export async function handleInstall(
     const effectiveFormat = (format as Format) || pkg.format;
     const effectiveSubtype = pkg.subtype;
 
-    const destDir = getDestinationDir(effectiveFormat, effectiveSubtype);
-
     // Extract all files from tarball
     const extractedFiles = await extractTarball(tarball, packageId);
 
@@ -246,8 +261,22 @@ export async function handleInstall(
     let destPath: string;
     let fileCount = 0;
 
+    // Special handling for CLAUDE.md format (goes in project root)
+    if (format === 'claude-md') {
+      if (extractedFiles.length !== 1) {
+        throw new Error('CLAUDE.md format only supports single-file packages');
+      }
+
+      let mainFile = extractedFiles[0].content;
+      destPath = 'CLAUDE.md';
+
+      await saveFile(destPath, mainFile);
+      fileCount = 1;
+    }
     // Check if this is a multi-file package
-    if (extractedFiles.length === 1) {
+    else if (extractedFiles.length === 1) {
+      const destDir = getDestinationDir(effectiveFormat, effectiveSubtype);
+
       // Single file package
       let mainFile = extractedFiles[0].content;
       // Determine file extension based on effective format
@@ -280,6 +309,8 @@ export async function handleInstall(
       await saveFile(destPath, mainFile);
       fileCount = 1;
     } else {
+      const destDir = getDestinationDir(effectiveFormat, effectiveSubtype);
+
       // Multi-file package - create directory for package
       const packageName = stripAuthorNamespace(packageId);
       const packageDir = `${destDir}/${packageName}`;
