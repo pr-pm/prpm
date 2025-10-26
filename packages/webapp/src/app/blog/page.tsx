@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import NewsletterSubscribe from '@/components/NewsletterSubscribe'
-import BlogHeader from '@/components/BlogHeader'
+import Header from '@/components/Header'
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -109,7 +109,7 @@ const blogPosts: BlogPost[] = [
 export default function BlogPage() {
   return (
     <main className="min-h-screen bg-prpm-dark">
-      <BlogHeader />
+      <Header />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden">

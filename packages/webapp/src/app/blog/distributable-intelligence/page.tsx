@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import BlogHeader from '@/components/BlogHeader'
+import Header from '@/components/Header'
 
 export const metadata: Metadata = {
   title: "PRPM: Distributable Intelligence for AI-Assisted Development",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function DistributableIntelligencePost() {
   return (
     <main className="min-h-screen bg-prpm-dark">
-      <BlogHeader />
+      <Header />
 
       {/* Article */}
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

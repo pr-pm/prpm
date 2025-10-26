@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import BlogHeader from '@/components/BlogHeader'
+import Header from '@/components/Header'
 
 export const metadata: Metadata = {
   title: "agents.md: A Deep Dive into OpenAI's Open Standard for AI Coding Agents",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function AgentsMdDeepDivePost() {
   return (
     <main className="min-h-screen bg-prpm-dark">
-      <BlogHeader />
+      <Header />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Link href="/blog" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8">
