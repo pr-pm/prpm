@@ -28,6 +28,7 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'copilot': ['tool', 'chatmode'],
   'kiro': ['rule', 'agent', 'tool'],
   'mcp': ['tool'],
+  'agents.md': ['agent', 'tool'],
   'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode'],
 }
 
