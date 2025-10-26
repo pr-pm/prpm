@@ -36,7 +36,7 @@ export default function Home() {
             </p>
 
             <p className="text-base sm:text-lg lg:text-xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed px-4">
-              Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro, and more — all from one file.
+              Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, GitHub Copilot, OpenAI Codex, Google Gemini, Kiro, and more — all from one file.
             </p>
 
             <div className="flex gap-4 justify-center flex-wrap mb-12">
@@ -216,7 +216,10 @@ export default function Home() {
           {/* Supported Platforms */}
           <div className="text-center mb-20">
             <h2 className="text-2xl font-semibold mb-8 text-white">Universal Format Support</h2>
-            <div className="flex flex-wrap justify-center gap-4">
+            <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
+              PRPM packages work with all major AI coding tools — from vendor-specific formats to the open agents.md standard.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 mb-6">
               <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
                 <span className="text-gray-300 font-medium">Cursor</span>
               </div>
@@ -233,12 +236,21 @@ export default function Home() {
                 <span className="text-gray-300 font-medium">GitHub Copilot</span>
               </div>
               <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
-                <span className="text-gray-300 font-medium">Kiro</span>
+                <span className="text-gray-300 font-medium">OpenAI Codex</span>
               </div>
               <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
-                <span className="text-gray-300 font-medium">Generic Prompts</span>
+                <span className="text-gray-300 font-medium">Google Gemini</span>
+              </div>
+              <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <span className="text-gray-300 font-medium">Kiro</span>
+              </div>
+              <div className="px-6 py-3 bg-prpm-dark-card border border-prpm-accent/50 rounded-lg">
+                <span className="text-prpm-accent font-medium">agents.md (Open Standard)</span>
               </div>
             </div>
+            <p className="text-sm text-gray-500">
+              Plus any tool supporting Model Context Protocol (MCP) or the agents.md open standard
+            </p>
           </div>
 
           {/* Footer */}
