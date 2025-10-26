@@ -29,6 +29,21 @@ interface PackageConfig {
   files: string[];
 }
 
+interface ManifestConfig {
+  packages?: PackageConfig[];
+  // Single package fields (for backward compatibility)
+  name?: string;
+  version?: string;
+  description?: string;
+  format?: string;
+  subtype?: string;
+  author?: string;
+  license?: string;
+  repository?: string;
+  tags?: string[];
+  files?: string[];
+}
+
 const FORMATS = [
   'cursor',
   'claude',
@@ -57,7 +72,7 @@ const SUBTYPES = [
 const FORMAT_EXAMPLES: Record<string, { files: string[]; description: string }> = {
   cursor: {
     description: 'Cursor AI coding rules',
-    files: ['.cursorrules', 'README.md'],
+    files: ['.cursor/rules', 'README.md'],
   },
   claude: {
     description: 'Claude AI skills and agents',
@@ -95,7 +110,7 @@ const FORMAT_EXAMPLES: Record<string, { files: string[]; description: string }> 
 
 const EXAMPLE_TEMPLATES: Record<string, Record<string, string>> = {
   cursor: {
-    '.cursorrules': `# Cursor Rules
+    '.cursor/rules': `# Cursor Rules
 
 Add your Cursor AI coding rules here.
 
@@ -509,6 +524,164 @@ ${config.license}
 }
 
 /**
+ * Collect package configuration interactively
+ */
+async function collectPackageConfig(
+  rl: readline.Interface,
+  isFirstPackage: boolean,
+  defaultAuthor?: string
+): Promise<PackageConfig> {
+  const config: Partial<PackageConfig> = {};
+
+  // Package name
+  const defaultName = getDefaultPackageName();
+  config.name = await prompt(rl, 'Package name', isFirstPackage ? defaultName : '');
+
+  // Version
+  config.version = await prompt(rl, 'Version', '1.0.0');
+
+  // Description
+  config.description = await prompt(
+    rl,
+    'Description',
+    'A PRPM package for AI coding assistants'
+  );
+
+  // Format
+  config.format = await select(rl, 'Select package format:', FORMATS, 'cursor');
+
+  // Subtype
+  console.log('\nAvailable subtypes: rule, agent, skill, slash-command, prompt, workflow, tool, template, collection, chatmode');
+  const includeSubtype = await prompt(rl, 'Specify subtype? (y/N)', 'n');
+  if (includeSubtype.toLowerCase() === 'y') {
+    config.subtype = await select(rl, 'Select package subtype:', SUBTYPES, 'rule');
+  }
+
+  // Author
+  config.author = await prompt(rl, 'Author', defaultAuthor || 'Your Name');
+
+  // License
+  config.license = await prompt(rl, 'License', 'MIT');
+
+  // Repository
+  const includeRepo = await prompt(rl, 'Add repository URL? (y/N)', 'n');
+  if (includeRepo.toLowerCase() === 'y') {
+    config.repository = await prompt(rl, 'Repository URL', '');
+  }
+
+  // Tags
+  const tagsInput = await prompt(
+    rl,
+    'Tags (comma-separated)',
+    config.format
+  );
+  config.tags = tagsInput
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  // Files - use examples based on format
+  const formatExamples = FORMAT_EXAMPLES[config.format];
+  console.log(`\nExample files for ${config.format}:`);
+  formatExamples.files.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
+
+  const useExamples = await prompt(
+    rl,
+    '\nUse example file structure? (Y/n)',
+    'y'
+  );
+
+  if (useExamples.toLowerCase() !== 'n') {
+    config.files = formatExamples.files;
+  } else {
+    const filesInput = await prompt(
+      rl,
+      'Files (comma-separated)',
+      formatExamples.files.join(', ')
+    );
+    config.files = filesInput
+      .split(',')
+      .map(f => f.trim())
+      .filter(Boolean);
+  }
+
+  // Try to extract metadata from the first file if it exists
+  if (config.files.length > 0) {
+    const firstFile = config.files[0];
+    console.log(`\n🔍 Checking ${firstFile} for metadata...`);
+    const extractedMetadata = await extractMetadataFromFile(firstFile);
+
+    if (extractedMetadata.description) {
+      console.log(`   Found description: "${extractedMetadata.description}"`);
+      const useExtracted = await prompt(
+        rl,
+        '   Use this description? (Y/n)',
+        'y'
+      );
+      if (useExtracted.toLowerCase() !== 'n') {
+        config.description = extractedMetadata.description;
+      }
+    }
+
+    if (extractedMetadata.tags && extractedMetadata.tags.length > 0) {
+      console.log(`   Found tags: ${extractedMetadata.tags.join(', ')}`);
+      const useExtractedTags = await prompt(
+        rl,
+        '   Use these tags? (Y/n)',
+        'y'
+      );
+      if (useExtractedTags.toLowerCase() !== 'n') {
+        config.tags = extractedMetadata.tags;
+      }
+    }
+
+    if (extractedMetadata.name && !config.name.includes(extractedMetadata.name)) {
+      console.log(`   Found name: "${extractedMetadata.name}"`);
+      const useExtractedName = await prompt(
+        rl,
+        '   Include in package name? (y/N)',
+        'n'
+      );
+      if (useExtractedName.toLowerCase() === 'y') {
+        config.name = `${config.name}-${extractedMetadata.name.toLowerCase().replace(/\s+/g, '-')}`;
+      }
+    }
+  }
+
+  // Ask if user wants to add more files to this package
+  let addingMoreFiles = true;
+  while (addingMoreFiles) {
+    const addMore = await prompt(
+      rl,
+      '\nAdd more files to this package? (y/N)',
+      'n'
+    );
+
+    if (addMore.toLowerCase() === 'y') {
+      const additionalFiles = await prompt(
+        rl,
+        'Additional files (comma-separated)',
+        ''
+      );
+      const newFiles = additionalFiles
+        .split(',')
+        .map(f => f.trim())
+        .filter(Boolean);
+
+      if (newFiles.length > 0) {
+        config.files = [...config.files, ...newFiles];
+        console.log(`\nCurrent files (${config.files.length}):`);
+        config.files.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
+      }
+    } else {
+      addingMoreFiles = false;
+    }
+  }
+
+  return config as PackageConfig;
+}
+
+/**
  * Initialize a new PRPM package
  */
 async function initPackage(options: InitOptions): Promise<void> {
@@ -521,19 +694,23 @@ async function initPackage(options: InitOptions): Promise<void> {
     );
   }
 
-  const config: Partial<PackageConfig> = {};
+  const packages: PackageConfig[] = [];
+  const defaultAuthor = getDefaultAuthor();
 
   // Use defaults if --yes flag
   if (options.yes) {
-    config.name = getDefaultPackageName();
-    config.version = '1.0.0';
-    config.description = 'A PRPM package';
-    config.format = 'cursor';
-    config.subtype = 'rule';
-    config.author = getDefaultAuthor() || 'Your Name';
-    config.license = 'MIT';
-    config.tags = [];
-    config.files = FORMAT_EXAMPLES.cursor.files;
+    const config: PackageConfig = {
+      name: getDefaultPackageName(),
+      version: '1.0.0',
+      description: 'A PRPM package',
+      format: 'cursor',
+      subtype: 'rule',
+      author: defaultAuthor || 'Your Name',
+      license: 'MIT',
+      tags: [],
+      files: FORMAT_EXAMPLES.cursor.files,
+    };
+    packages.push(config);
   } else {
     // Interactive prompts
     const rl = readline.createInterface({ input, output });
@@ -542,149 +719,28 @@ async function initPackage(options: InitOptions): Promise<void> {
       console.log('\n🚀 Welcome to PRPM package initialization!\n');
       console.log('This utility will walk you through creating a prpm.json file.\n');
 
-      // Package name
-      const defaultName = getDefaultPackageName();
-      config.name = await prompt(rl, 'Package name', defaultName);
+      // Collect first package
+      const firstPackage = await collectPackageConfig(rl, true, defaultAuthor);
+      packages.push(firstPackage);
 
-      // Version
-      config.version = await prompt(rl, 'Version', '1.0.0');
-
-      // Description
-      config.description = await prompt(
-        rl,
-        'Description',
-        'A PRPM package for AI coding assistants'
-      );
-
-      // Format
-      config.format = await select(rl, 'Select package format:', FORMATS, 'cursor');
-
-      // Subtype
-      console.log('\nAvailable subtypes: rule, agent, skill, slash-command, prompt, workflow, tool, template, collection, chatmode');
-      const includeSubtype = await prompt(rl, 'Specify subtype? (y/N)', 'n');
-      if (includeSubtype.toLowerCase() === 'y') {
-        config.subtype = await select(rl, 'Select package subtype:', SUBTYPES, 'rule');
-      }
-
-      // Author
-      const defaultAuthor = getDefaultAuthor();
-      config.author = await prompt(rl, 'Author', defaultAuthor || 'Your Name');
-
-      // License
-      config.license = await prompt(rl, 'License', 'MIT');
-
-      // Repository
-      const includeRepo = await prompt(rl, 'Add repository URL? (y/N)', 'n');
-      if (includeRepo.toLowerCase() === 'y') {
-        config.repository = await prompt(rl, 'Repository URL', '');
-      }
-
-      // Tags
-      const tagsInput = await prompt(
-        rl,
-        'Tags (comma-separated)',
-        config.format
-      );
-      config.tags = tagsInput
-        .split(',')
-        .map(t => t.trim())
-        .filter(Boolean);
-
-      // Files - use examples based on format
-      const formatExamples = FORMAT_EXAMPLES[config.format];
-      console.log(`\nExample files for ${config.format}:`);
-      formatExamples.files.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
-
-      const useExamples = await prompt(
-        rl,
-        '\nUse example file structure? (Y/n)',
-        'y'
-      );
-
-      if (useExamples.toLowerCase() !== 'n') {
-        config.files = formatExamples.files;
-      } else {
-        const filesInput = await prompt(
-          rl,
-          'Files (comma-separated)',
-          formatExamples.files.join(', ')
-        );
-        config.files = filesInput
-          .split(',')
-          .map(f => f.trim())
-          .filter(Boolean);
-      }
-
-      // Try to extract metadata from the first file if it exists
-      if (config.files.length > 0) {
-        const firstFile = config.files[0];
-        console.log(`\n🔍 Checking ${firstFile} for metadata...`);
-        const extractedMetadata = await extractMetadataFromFile(firstFile);
-
-        if (extractedMetadata.description) {
-          console.log(`   Found description: "${extractedMetadata.description}"`);
-          const useExtracted = await prompt(
-            rl,
-            '   Use this description? (Y/n)',
-            'y'
-          );
-          if (useExtracted.toLowerCase() !== 'n') {
-            config.description = extractedMetadata.description;
-          }
-        }
-
-        if (extractedMetadata.tags && extractedMetadata.tags.length > 0) {
-          console.log(`   Found tags: ${extractedMetadata.tags.join(', ')}`);
-          const useExtractedTags = await prompt(
-            rl,
-            '   Use these tags? (Y/n)',
-            'y'
-          );
-          if (useExtractedTags.toLowerCase() !== 'n') {
-            config.tags = extractedMetadata.tags;
-          }
-        }
-
-        if (extractedMetadata.name && !config.name.includes(extractedMetadata.name)) {
-          console.log(`   Found name: "${extractedMetadata.name}"`);
-          const useExtractedName = await prompt(
-            rl,
-            '   Include in package name? (y/N)',
-            'n'
-          );
-          if (useExtractedName.toLowerCase() === 'y') {
-            config.name = `${config.name}-${extractedMetadata.name.toLowerCase().replace(/\s+/g, '-')}`;
-          }
-        }
-      }
-
-      // Ask if user wants to add more files
-      let addingMoreFiles = true;
-      while (addingMoreFiles) {
+      // Ask if user wants to add more packages
+      let addingMorePackages = true;
+      while (addingMorePackages) {
         const addMore = await prompt(
           rl,
-          '\nAdd more files to the package? (y/N)',
+          '\nAdd another package to prpm.json? (y/N)',
           'n'
         );
 
         if (addMore.toLowerCase() === 'y') {
-          const additionalFiles = await prompt(
-            rl,
-            'Additional files (comma-separated)',
-            ''
-          );
-          const newFiles = additionalFiles
-            .split(',')
-            .map(f => f.trim())
-            .filter(Boolean);
+          const nextPackage = await collectPackageConfig(rl, false, defaultAuthor);
+          packages.push(nextPackage);
 
-          if (newFiles.length > 0) {
-            config.files = [...config.files, ...newFiles];
-            console.log(`\nCurrent files (${config.files.length}):`);
-            config.files.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
-          }
+          console.log(`\n✅ Added package: ${nextPackage.name}`);
+          console.log(`\nTotal packages: ${packages.length}`);
+          packages.forEach((pkg, idx) => console.log(`  ${idx + 1}. ${pkg.name} (${pkg.format})`));
         } else {
-          addingMoreFiles = false;
+          addingMorePackages = false;
         }
       }
     } finally {
@@ -693,29 +749,29 @@ async function initPackage(options: InitOptions): Promise<void> {
   }
 
   // Create manifest
-  const manifest: Record<string, any> = {
-    name: config.name,
-    version: config.version,
-    description: config.description,
-    format: config.format,
-  };
+  let manifest: ManifestConfig;
 
-  if (config.subtype) {
-    manifest.subtype = config.subtype;
+  if (packages.length === 1) {
+    // Single package - use flat structure for backward compatibility
+    const config = packages[0];
+    manifest = {
+      name: config.name,
+      version: config.version,
+      description: config.description,
+      format: config.format,
+      ...(config.subtype ? { subtype: config.subtype } : {}),
+      author: config.author,
+      license: config.license,
+      ...(config.repository ? { repository: config.repository } : {}),
+      ...(config.tags && config.tags.length > 0 ? { tags: config.tags } : {}),
+      files: config.files,
+    };
+  } else {
+    // Multiple packages - use packages array
+    manifest = {
+      packages: packages,
+    };
   }
-
-  manifest.author = config.author;
-  manifest.license = config.license;
-
-  if (config.repository) {
-    manifest.repository = config.repository;
-  }
-
-  if (config.tags && config.tags.length > 0) {
-    manifest.tags = config.tags;
-  }
-
-  manifest.files = config.files;
 
   // Write prpm.json
   await writeFile(
@@ -726,20 +782,27 @@ async function initPackage(options: InitOptions): Promise<void> {
 
   console.log('\n✅ Created prpm.json\n');
 
-  // Create example files
-  if (config.files && config.format) {
-    console.log('Creating example files...\n');
-    await createExampleFiles(config.format, config.files);
+  // Create example files for all packages
+  console.log('Creating example files...\n');
+  for (const pkg of packages) {
+    console.log(`\n📦 ${pkg.name}:`);
+    await createExampleFiles(pkg.format, pkg.files);
 
-    // Create README
-    await createReadme(config as PackageConfig);
+    // Create README for first package only
+    if (pkg === packages[0]) {
+      await createReadme(pkg);
+    }
   }
 
-  console.log('\n✨ Package initialized successfully!\n');
-  console.log('Next steps:');
+  console.log('\n✨ Package(s) initialized successfully!\n');
+  console.log(`Created ${packages.length} package${packages.length > 1 ? 's' : ''}:\n`);
+  packages.forEach((pkg, idx) => {
+    console.log(`  ${idx + 1}. ${pkg.name} (${pkg.format}${pkg.subtype ? `/${pkg.subtype}` : ''})`);
+  });
+  console.log('\nNext steps:');
   console.log('  1. Edit the generated files with your content');
   console.log('  2. Review and update prpm.json as needed');
-  console.log('  3. Run `prpm publish` to publish your package\n');
+  console.log('  3. Run `prpm publish` to publish your package(s)\n');
 }
 
 /**
