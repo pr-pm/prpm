@@ -94,13 +94,13 @@ export default function ClaudeDeepDivePost() {
         <div className="prose prose-invert prose-lg max-w-none">
           <div className="bg-prpm-dark-card border border-prpm-border rounded-2xl p-8 mb-8">
             <p className="text-xl text-gray-300 leading-relaxed italic mb-0">
-              Claude has four officially supported systems for providing context: CLAUDE.md for project-specific context, Skills for reusable reference documentation, Agents for project-specific tasks, and Commands for quick actions. This deep dive explores Claude's unique approach to context management and optimization.
+              Claude has four officially supported systems for providing context: CLAUDE.md for project-specific context, <a href="https://docs.claude.com/en/docs/claude-code/skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Skills</a> for reusable reference documentation, <a href="https://docs.claude.com/en/docs/claude-code/sub-agents" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Agents</a> for project-specific tasks, and <a href="https://docs.claude.com/en/docs/claude-code/slash-commands" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Commands</a> for quick actions. This deep dive explores Claude's unique approach to context management and optimization.
             </p>
           </div>
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">Introduction</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
-            Claude Desktop's skills system represents a reference-based approach to AI customization. Unlike other formats that emphasize always-on rules, Claude uses a discoverable skills-based system where each skill is optimized for Claude's search system.
+            Claude's <a href="https://docs.claude.com/en/docs/claude-code/skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">skills system</a> represents a reference-based approach to AI customization. Unlike other formats that emphasize always-on rules, Claude uses a discoverable skills-based system where each skill is optimized for Claude's search system. Read more about <a href="https://support.claude.com/en/articles/12512176-what-are-skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">what skills are</a> and Anthropic's vision for <a href="https://www.anthropic.com/news/skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">agent skills</a>.
           </p>
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">CLAUDE.md: Always-On Project Context</h2>
@@ -230,6 +230,59 @@ export default function ClaudeDeepDivePost() {
           <p className="text-gray-300 leading-relaxed mb-6">
             For creative tasks with high degrees of freedom, provide broad guidance. For critical operations with low degrees of freedom, provide explicit step-by-step instructions.
           </p>
+
+          <h2 className="text-3xl font-bold text-white mt-12 mb-4">Official Resources</h2>
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-8">
+            <h3 className="text-xl font-bold text-white mb-4">📚 Claude Documentation</h3>
+            <ul className="space-y-3 text-gray-300">
+              <li className="flex items-start gap-3">
+                <span className="text-prpm-accent mt-1">→</span>
+                <span>
+                  <a href="https://docs.claude.com/en/docs/claude-code/skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline font-semibold">Skills Documentation</a>
+                  {' '}- Official technical documentation for Claude Code skills
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-prpm-accent mt-1">→</span>
+                <span>
+                  <a href="https://docs.claude.com/en/docs/claude-code/sub-agents" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline font-semibold">Sub-Agents Documentation</a>
+                  {' '}- How to create and use Claude sub-agents
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-prpm-accent mt-1">→</span>
+                <span>
+                  <a href="https://docs.claude.com/en/docs/claude-code/slash-commands" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline font-semibold">Slash Commands Documentation</a>
+                  {' '}- Creating custom slash commands
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-prpm-accent mt-1">→</span>
+                <span>
+                  <a href="https://support.claude.com/en/articles/12512176-what-are-skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline font-semibold">What are Skills?</a>
+                  {' '}- Claude support article explaining skills concept
+                </span>
+              </li>
+            </ul>
+
+            <h3 className="text-xl font-bold text-white mb-4 mt-6">🔬 Anthropic Blog Posts</h3>
+            <ul className="space-y-3 text-gray-300">
+              <li className="flex items-start gap-3">
+                <span className="text-prpm-purple mt-1">→</span>
+                <span>
+                  <a href="https://www.anthropic.com/news/skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline font-semibold">Skills Announcement</a>
+                  {' '}- Anthropic's vision for agent skills
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-prpm-purple mt-1">→</span>
+                <span>
+                  <a href="https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline font-semibold">Equipping Agents for the Real World</a>
+                  {' '}- Deep technical dive into agent skills architecture
+                </span>
+              </li>
+            </ul>
+          </div>
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">Conclusion</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
