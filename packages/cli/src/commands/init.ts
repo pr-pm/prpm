@@ -543,6 +543,36 @@ async function initPackage(options: InitOptions): Promise<void> {
           .map(f => f.trim())
           .filter(Boolean);
       }
+
+      // Ask if user wants to add more files
+      let addingMoreFiles = true;
+      while (addingMoreFiles) {
+        const addMore = await prompt(
+          rl,
+          '\nAdd more files to the package? (y/N)',
+          'n'
+        );
+
+        if (addMore.toLowerCase() === 'y') {
+          const additionalFiles = await prompt(
+            rl,
+            'Additional files (comma-separated)',
+            ''
+          );
+          const newFiles = additionalFiles
+            .split(',')
+            .map(f => f.trim())
+            .filter(Boolean);
+
+          if (newFiles.length > 0) {
+            config.files = [...config.files, ...newFiles];
+            console.log(`\nCurrent files (${config.files.length}):`);
+            config.files.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
+          }
+        } else {
+          addingMoreFiles = false;
+        }
+      }
     } finally {
       rl.close();
     }
@@ -612,6 +642,7 @@ export function createInitCommand(): Command {
     .action(async (options: InitOptions) => {
       try {
         await initPackage(options);
+        return;
       } catch (error) {
         console.error('\n❌ Error:', error instanceof Error ? error.message : error);
         process.exit(1);
