@@ -226,7 +226,8 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
             properties: {
               id: { type: 'keyword' },
               description: { type: 'text', analyzer: 'english' },
-              type: { type: 'keyword' },
+              format: { type: 'keyword' },
+              subtype: { type: 'keyword' },
               category: { type: 'keyword' },
               tags: { type: 'keyword' },
               keywords: { type: 'text' },

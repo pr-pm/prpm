@@ -4,9 +4,9 @@
 -- Drop the existing subtype constraint
 ALTER TABLE packages DROP CONSTRAINT IF EXISTS packages_subtype_check;
 
--- Recreate with chatmode included
+-- Recreate with chatmode included (maintain consistent order with migration 017)
 ALTER TABLE packages ADD CONSTRAINT packages_subtype_check
-  CHECK (subtype IN ('rule', 'agent', 'skill', 'slash-command', 'prompt', 'chatmode', 'workflow', 'tool', 'template', 'collection'));
+  CHECK (subtype IN ('rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'));
 
 -- Update existing copilot-chatmode packages to use chatmode subtype
 -- These were imported with subtype='prompt' before chatmode was available
