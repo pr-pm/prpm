@@ -538,8 +538,6 @@ export class RegistryClient {
           let error: { error?: string; message?: string; details?: string[] };
           try {
             error = await response.json() as { error?: string; message?: string; details?: string[] };
-            // Debug logging
-            console.error('Registry error response:', JSON.stringify(error, null, 2));
           } catch {
             error = { error: response.statusText };
           }

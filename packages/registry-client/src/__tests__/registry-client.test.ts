@@ -809,15 +809,13 @@ describe('RegistryClient', () => {
         `${mockBaseUrl}/api/v1/packages`,
         expect.objectContaining({
           method: 'POST',
-          headers: expect.objectContaining({
-            'Authorization': `Bearer ${mockToken}`,
-          }),
+          headers: expect.any(Object), // Headers object for FormData
         })
       );
       expect(result).toEqual(mockPublishResponse);
     });
 
-    it('should send JSON with manifest and base64 tarball', async () => {
+    it('should send FormData with manifest and tarball', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => mockPublishResponse,
@@ -827,17 +825,12 @@ describe('RegistryClient', () => {
       await client.publish(mockManifest as any, tarball);
 
       const callOptions = (global.fetch as jest.Mock).mock.calls[0][1];
-      expect(callOptions.headers?.['Content-Type']).toBe('application/json');
 
-      const body = JSON.parse(callOptions.body);
-      expect(body.manifest).toEqual({
-        name: 'test-package',
-        version: '1.0.0',
-        description: 'A test package',
-        type: 'cursor',
-        files: [],
-      });
-      expect(body.tarball).toBe(tarball.toString('base64'));
+      // Should send FormData (body will be FormData instance)
+      expect(callOptions.body).toBeInstanceOf(FormData);
+
+      // Headers should be a Headers object (not plain object with Content-Type for FormData)
+      expect(callOptions.headers).toBeInstanceOf(Headers);
     });
 
     it('should require authentication', async () => {

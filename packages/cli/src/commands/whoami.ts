@@ -49,7 +49,14 @@ export async function handleWhoami(): Promise<void> {
       console.log('');
     } catch (apiError) {
       // Fallback to simple username display if API call fails
+      // This can happen if the user's token is stale or the registry is unavailable
       console.log(`${config.username}`);
+
+      // Show hint if it looks like an auth issue
+      const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
+      if (errorMessage.includes('User not found') || errorMessage.includes('Unauthorized')) {
+        console.log('💡 Tip: Your token may be outdated. Run "prpm login" to refresh.\n');
+      }
     }
 
     success = true;
