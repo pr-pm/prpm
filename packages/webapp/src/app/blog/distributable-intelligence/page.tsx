@@ -2,6 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import Header from '@/components/Header'
 import BlogFooter from '@/components/BlogFooter'
+import BackLink from '@/components/BackLink'
+import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
   title: "PRPM: Distributable Intelligence for AI-Assisted Development",
@@ -19,47 +21,16 @@ export default function DistributableIntelligencePost() {
 
       {/* Article */}
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Back button */}
-        <Link
-          href="/blog"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Blog
-        </Link>
+        <BackLink href="/blog">Back to Blog</BackLink>
 
-        {/* Header */}
-        <header className="mb-12">
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span className="px-3 py-1 bg-prpm-accent/10 border border-prpm-accent/30 rounded-full text-prpm-accent text-sm font-medium">
-              Vision
-            </span>
-            <span className="px-3 py-1 bg-prpm-accent/10 border border-prpm-accent/30 rounded-full text-prpm-accent text-sm font-medium">
-              Technical
-            </span>
-            <span className="px-3 py-1 bg-prpm-accent/10 border border-prpm-accent/30 rounded-full text-prpm-accent text-sm font-medium">
-              AI Development
-            </span>
-          </div>
-
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 text-white leading-tight">
-            PRPM: Distributable Intelligence for AI-Assisted Development
-          </h1>
-
-          <p className="text-2xl text-gray-400 mb-6">
-            Ship rules, skills, and agents that make breaking changes painless—install once, every AI assistant understands your patterns.
-          </p>
-
-          <div className="flex items-center gap-4 text-gray-400 text-sm">
-            <span>By PRPM Team</span>
-            <span>•</span>
-            <span>October 25, 2025</span>
-            <span>•</span>
-            <span>15 min read</span>
-          </div>
-        </header>
+        <BlogPostHeader
+          tags={['Vision', 'Technical', 'AI Development']}
+          title="PRPM: Distributable Intelligence for AI-Assisted Development"
+          subtitle="Ship rules, skills, and agents that make breaking changes painless—install once, every AI assistant understands your patterns."
+          author="PRPM Team"
+          date="October 25, 2025"
+          readTime="15 min read"
+        />
 
         {/* Content */}
         <div className="prose prose-invert prose-lg max-w-none

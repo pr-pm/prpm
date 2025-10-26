@@ -2,6 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import Header from '@/components/Header'
 import BlogFooter from '@/components/BlogFooter'
+import BackLink from '@/components/BackLink'
+import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
   title: "Cursor Rules: A Technical Deep Dive",
@@ -19,43 +21,15 @@ export default function CursorDeepDivePost() {
 
       {/* Article */}
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Back button */}
-        <Link
-          href="/blog"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Blog
-        </Link>
+        <BackLink href="/blog">Back to Blog</BackLink>
 
-        {/* Header */}
-        <header className="mb-12">
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span className="px-3 py-1 bg-prpm-accent/10 border border-prpm-accent/30 rounded-full text-prpm-accent text-sm font-medium">
-              Cursor
-            </span>
-            <span className="px-3 py-1 bg-prpm-accent/10 border border-prpm-accent/30 rounded-full text-prpm-accent text-sm font-medium">
-              Format
-            </span>
-            <span className="px-3 py-1 bg-prpm-accent/10 border border-prpm-accent/30 rounded-full text-prpm-accent text-sm font-medium">
-              Deep Dive
-            </span>
-          </div>
-
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 text-white leading-tight">
-            Cursor Rules: A Technical Deep Dive
-          </h1>
-
-          <div className="flex items-center gap-4 text-gray-400 text-sm">
-            <span>By PRPM Team</span>
-            <span>•</span>
-            <span>October 26, 2025</span>
-            <span>•</span>
-            <span>12 min read</span>
-          </div>
-        </header>
+        <BlogPostHeader
+          tags={['Cursor', 'Format', 'Deep Dive']}
+          title="Cursor Rules: A Technical Deep Dive"
+          author="PRPM Team"
+          date="October 26, 2025"
+          readTime="12 min read"
+        />
 
         {/* Content */}
         <div className="prose prose-invert prose-lg max-w-none">
