@@ -14,7 +14,7 @@
 2. [Format Specification](#format-specification)
    - [CLAUDE.md: Project Context File](#claudemd-project-context-file)
    - [Skills: Reusable Reference Documentation](#skills-reusable-reference-documentation)
-3. [Skills vs Agents vs Commands vs Rules vs CLAUDE.md](#skills-vs-agents-vs-commands-vs-rules-vs-claudemd)
+3. [Skills vs Agents vs Commands vs CLAUDE.md](#skills-vs-agents-vs-commands-vs-claudemd)
 4. [Frontmatter Requirements](#frontmatter-requirements)
 5. [Claude Search Optimization (CSO)](#claude-search-optimization-cso)
 6. [PRPM's Implementation](#prpms-implementation)
@@ -27,15 +27,14 @@
 
 ## Introduction
 
-Claude has **five** complementary systems for providing context:
+Claude has **four** officially supported systems for providing context:
 
 1. **CLAUDE.md**: Project-specific context file (always loaded in Claude Code)
-2. **Skills** (`.claude/skills/*/SKILL.md`): Reusable reference documentation (discoverable)
-3. **Agents** (`.claude/agents/*/AGENT.md`): Persona-based configurations with tool access (explicitly invoked)
+2. **Skills** (`.claude/skills/*/SKILL.md`): Reusable reference documentation (Claude Desktop only, discoverable)
+3. **Agents** (`.claude/agents/*.md`): Subagents for project-specific tasks (explicitly invoked)
 4. **Commands** (`.claude/commands/*.md`): Slash commands for quick actions (user-invoked)
-5. **Rules** (`.claude/rules/*.md`): Always-active conventions (legacy, superseded by CLAUDE.md)
 
-This post focuses primarily on **CLAUDE.md** and **Skills**, as they represent the modern recommended approach for Claude context management. Commands, Agents, and Rules are also supported but serve more specialized use cases.
+This post focuses primarily on **CLAUDE.md** and **Skills**, as they represent the primary context management systems. Commands and Agents serve more specialized use cases.
 
 ### CLAUDE.md: Always-On Project Context
 
@@ -330,9 +329,9 @@ Teams using strict TypeScript typing report:
 
 ---
 
-## Skills vs Agents vs Commands vs Rules vs CLAUDE.md
+## Skills vs Agents vs Commands vs CLAUDE.md
 
-Claude has **five** types of custom content, each serving a different purpose:
+Claude has **four** officially supported types of custom content, each serving a different purpose:
 
 ### CLAUDE.md (Root of Project)
 
@@ -396,27 +395,14 @@ Claude has **five** types of custom content, each serving a different purpose:
 - Prompt templates with variable substitution
 - Shortcuts for common requests
 
-### Rules (.claude/rules/)
-
-**Purpose**: Always-active project conventions (legacy/alternative to CLAUDE.md)
-**When active**: All interactions in project
-**Content type**: Code style, tech stack, project structure
-**Format**: Markdown (frontmatter optional)
-**Optimization**: Concise, scannable
-
-**Example**: "tech-stack.md", "code-conventions.md", "architecture.md"
-
-**Note**: With Claude Code's CLAUDE.md support, **rules are largely superseded by CLAUDE.md**. Use CLAUDE.md for new projects.
-
 **Key differences**:
 
 | Type | Activation | Scope | Format | Use Case |
 |------|------------|-------|--------|----------|
 | **CLAUDE.md** | Always (auto-loaded) | Entire project | Plain markdown | "Run pnpm install", "Use App Router" |
 | **Skills** | On-demand (search) | Specific technique | Markdown + frontmatter | "How to implement rate limiting" |
-| **Agents** | Explicit invoke | Full interaction | Markdown + frontmatter + tools | "Act as code reviewer" |
-| **Commands** | Slash command (`/cmd`) | Single action | Markdown (optional frontmatter) | "/review-code", "/write-tests" |
-| **Rules** | Always active | All code in project | Markdown (optional frontmatter) | (Legacy - use CLAUDE.md instead) |
+| **Agents** | Explicit invoke | Project subagents | Markdown + frontmatter | "@agent-name" invocation |
+| **Commands** | Slash command | Single action | Markdown (optional frontmatter) | "/review-code", "/write-tests" |
 
 ### Decision Tree: Which Format to Use?
 
