@@ -11,7 +11,7 @@ import { AnalyticsQuery } from '../types/analytics.js';
 const TrackDownloadSchema = z.object({
   packageId: z.string(),
   version: z.string().optional(),
-  format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'generic']).optional(),
+  format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp']).optional(),
   client: z.enum(['cli', 'web', 'api']).optional(),
 });
 
