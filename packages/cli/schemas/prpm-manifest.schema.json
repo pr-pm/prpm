@@ -131,6 +131,14 @@
       "format": "uri",
       "description": "Documentation URL"
     },
+    "organization": {
+      "type": "string",
+      "description": "Organization name or ID to publish this package under. If not specified, publishes to personal account.",
+      "examples": [
+        "my-team",
+        "my-company"
+      ]
+    },
     "tags": {
       "type": "array",
       "description": "Package tags for categorization",
@@ -350,6 +358,19 @@
       "license": "MIT",
       "files": [
         "skill.md",
+        "README.md"
+      ]
+    },
+    {
+      "name": "@company/team-package",
+      "version": "1.0.0",
+      "description": "A package published under organization account",
+      "format": "cursor",
+      "author": "Team Name",
+      "organization": "my-company",
+      "license": "MIT",
+      "files": [
+        ".cursor/rules/guidelines.mdc",
         "README.md"
       ]
     },

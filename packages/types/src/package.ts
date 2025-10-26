@@ -107,6 +107,7 @@ export interface PackageManifest {
   documentation?: string;
   format: Format;
   subtype?: Subtype; // Optional, defaults to 'rule'
+  organization?: string; // Organization name or ID to publish under
   tags?: string[];
   keywords?: string[];
   category?: string;

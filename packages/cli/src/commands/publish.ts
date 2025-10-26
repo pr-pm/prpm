@@ -279,6 +279,12 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     console.log('📦 Publishing package...\n');
 
+    // Read and validate manifest first to check if org is specified
+    console.log('🔍 Validating package manifest...');
+    const { manifest, source } = await findAndLoadManifest();
+    packageName = manifest.name;
+    version = manifest.version;
+
     // Get user info to check for organizations
     console.log('🔍 Checking authentication...');
     const client = getRegistryClient(config);
@@ -288,8 +294,39 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     try {
       userInfo = await client.whoami();
 
-      // If user has organizations, prompt for selection
-      if (userInfo.organizations && userInfo.organizations.length > 0) {
+      // Check if organization is specified in manifest
+      if (manifest.organization) {
+        // Find org by name or ID
+        const orgFromManifest = userInfo.organizations?.find(
+          (org: any) => org.name === manifest.organization || org.id === manifest.organization
+        );
+
+        if (!orgFromManifest) {
+          console.error(`❌ Organization "${manifest.organization}" not found or you are not a member.`);
+          console.error('   Available organizations:');
+          if (userInfo.organizations && userInfo.organizations.length > 0) {
+            userInfo.organizations.forEach((org: any) => {
+              console.error(`   - ${org.name} (${org.role})`);
+            });
+          } else {
+            console.error('   (none)');
+          }
+          process.exit(1);
+        }
+
+        // Check if user has publishing rights
+        if (!['owner', 'admin', 'maintainer'].includes(orgFromManifest.role)) {
+          console.error(`❌ You do not have permission to publish to organization "${orgFromManifest.name}".`);
+          console.error(`   Your role: ${orgFromManifest.role}`);
+          console.error(`   Required: owner, admin, or maintainer`);
+          process.exit(1);
+        }
+
+        selectedOrgId = orgFromManifest.id;
+        console.log(`   Organization from manifest: ${orgFromManifest.name} (${orgFromManifest.role})`);
+      }
+      // Only prompt if no org specified in manifest and user has orgs
+      else if (userInfo.organizations && userInfo.organizations.length > 0) {
         const { default: inquirer } = await import('inquirer');
 
         const publishOptions = [
@@ -319,17 +356,11 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     }
     console.log('');
 
-    // Read and validate manifest
-    console.log('🔍 Validating package manifest...');
-    const { manifest, source } = await findAndLoadManifest();
-    packageName = manifest.name;
-    version = manifest.version;
-
     console.log(`   Source: ${source}`);
     console.log(`   Package: ${manifest.name}@${manifest.version}`);
     console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype || 'rule (default)'}`);
     console.log(`   Description: ${manifest.description}`);
-    if (selectedOrgId) {
+    if (selectedOrgId && userInfo) {
       const selectedOrg = userInfo.organizations.find((org: any) => org.id === selectedOrgId);
       console.log(`   Publishing to: ${selectedOrg?.name || 'organization'}`);
     }
