@@ -502,11 +502,13 @@ function SearchPageContent() {
 
           {/* Results */}
           <div className="lg:col-span-3">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-gray-400">
-                {loading ? 'Searching...' : `${total} results`}
-              </p>
-            </div>
+            {!loading && (packages.length > 0 || collections.length > 0) && (
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-gray-400">
+                  {total} results
+                </p>
+              </div>
+            )}
 
             {loading ? (
               <div className="flex items-center justify-center py-20">
@@ -656,7 +658,7 @@ function SearchPageContent() {
                 )}
 
                 {/* Pagination */}
-                {total > limit && (
+                {total > limit && (packages.length > 0 || collections.length > 0) && (
                   <div className="flex justify-center gap-2 mt-8">
                     <button
                       onClick={() => setPage(p => Math.max(1, p - 1))}

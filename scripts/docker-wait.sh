@@ -12,7 +12,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 COMPOSE_FILE="docker-compose.services.yml"
-SERVICES=("postgres" "redis" "minio")
+SERVICES=("redis" "minio")
 MAX_WAIT=60  # Maximum seconds to wait for services
 WAIT_INTERVAL=2  # Seconds between health checks
 
