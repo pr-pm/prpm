@@ -99,7 +99,7 @@ Each editor has a converter module:
 ```typescript
 // registry/src/converters/cursor.ts
 export function toCursor(canonical: CanonicalPackage): string {
-  // Convert to Cursor .cursorrules format
+  // Convert to Cursor .cursor/rules/ format
   return `# ${canonical.content.metadata.title}\n\n${sections...}`;
 }
 
@@ -173,7 +173,7 @@ Same as above but returns tarball with package.json + converted content
 
 ## Format Specifications
 
-### Cursor Format (.cursorrules)
+### Cursor Format (.cursor/rules/)
 
 ```markdown
 # React Best Practices

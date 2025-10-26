@@ -433,7 +433,7 @@ prpm publish
                 </tr>
                 <tr className="border-b border-prpm-border">
                   <td className="px-4 py-3 font-semibold">Cursor</td>
-                  <td className="px-4 py-3"><code className="text-xs">.cursorrules</code></td>
+                  <td className="px-4 py-3"><code className="text-xs">.cursor/rules/</code></td>
                   <td className="px-4 py-3">Plain text rules</td>
                   <td className="px-4 py-3 text-red-400">❌ Cursor only</td>
                 </tr>
@@ -495,13 +495,13 @@ prpm publish
             Already using another format? Here's how to migrate to agents.md:
           </p>
 
-          <h3 className="text-2xl font-bold text-white mt-8 mb-4">From Cursor (.cursorrules)</h3>
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">From Cursor (.cursor/rules/)</h3>
           <div className="bg-prpm-dark border border-prpm-border rounded-xl p-6 mb-6">
             <p className="text-gray-300 mb-4">Cursor rules are already plain text instructions, making migration straightforward:</p>
             <ol className="space-y-3 text-gray-300">
               <li className="flex items-start gap-3">
                 <span className="text-prpm-accent">1.</span>
-                <span>Copy <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">.cursorrules</code> content</span>
+                <span>Copy content from <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">.cursor/rules/</code> files</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-prpm-accent">2.</span>
@@ -517,7 +517,7 @@ prpm publish
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-prpm-accent">5.</span>
-                <span>Keep <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">.cursorrules</code> if still using Cursor (both can coexist)</span>
+                <span>Keep <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">.cursor/rules/</code> if still using Cursor (both can coexist)</span>
               </li>
             </ol>
           </div>

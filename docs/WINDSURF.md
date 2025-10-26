@@ -402,11 +402,11 @@ export function UserProfile({ userId, onUpdate }: Props) {
 
 ## Migration from Other Formats
 
-### From Cursor (.cursorrules)
+### From Cursor (.cursor/rules/)
 
 Cursor files may have MDC headers - these will be removed when converting to Windsurf:
 
-**Before** (.cursorrules):
+**Before** (.cursor/rules/):
 ```markdown
 ---
 name: React Rules

@@ -48,7 +48,7 @@ PRPM supports multiple package types to help you organize and discover the right
 
 **When to use**: When you want to enforce specific patterns or conventions in your project.
 
-**Typical install location**: `.cursor/rules/`, `.cursorrules`
+**Typical install location**: `.cursor/rules/`
 
 ---
 

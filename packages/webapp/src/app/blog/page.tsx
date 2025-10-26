@@ -35,7 +35,7 @@ const blogPosts: BlogPost[] = [
   {
     slug: "cursor-deep-dive",
     title: "Cursor Rules: A Technical Deep Dive",
-    excerpt: "Explore Cursor's MDC format for .cursorrules - from official frontmatter fields to @filename references. Learn PRPM's implementation approach and best practices for creating effective rules.",
+    excerpt: "Explore Cursor's MDC format for .cursor/rules/ - from official frontmatter fields to @filename references. Learn PRPM's implementation approach and best practices for creating effective rules.",
     date: "2025-10-26",
     author: "PRPM Team",
     readTime: "12 min read",
@@ -134,7 +134,9 @@ export default function BlogPage() {
       {/* Blog Posts Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post) => (
+          {blogPosts
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}

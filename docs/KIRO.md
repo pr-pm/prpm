@@ -444,7 +444,7 @@ domain: frontend
 
 Kiro steering files work best when organized by domain:
 
-**Before** (single .cursorrules file):
+**Before** (single .cursor/rules/ file):
 ```markdown
 # All rules in one file
 
