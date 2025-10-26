@@ -161,7 +161,7 @@ describe('install command - multi-file packages', () => {
       };
 
       const tarGz = await createTarGz({
-        'skill.md': '# Main Skill File',
+        'SKILL.md': '# Main Skill File',
         'helpers/utils.md': '# Utility Functions',
         'examples/demo.md': '# Demo Examples',
       });
@@ -174,7 +174,7 @@ describe('install command - multi-file packages', () => {
       // Should save to directory with multiple files
       expect(saveFile).toHaveBeenCalledTimes(3);
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/complex-skill/skill.md',
+        '.claude/skills/complex-skill/SKILL.md',
         '# Main Skill File'
       );
       expect(saveFile).toHaveBeenCalledWith(

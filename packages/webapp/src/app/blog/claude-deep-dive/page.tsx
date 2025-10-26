@@ -139,6 +139,21 @@ export default function ClaudeDeepDivePost() {
             Skills are self-contained reference guides for proven techniques, patterns, or tools. Unlike CLAUDE.md (which is always loaded), skills are discoverable - Claude consults them only when relevant.
           </p>
 
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-6">
+            <h3 className="text-xl font-bold text-white mb-4">📁 Required File Structure</h3>
+            <p className="text-gray-300 mb-3">
+              According to <a href="https://docs.claude.com/en/docs/claude-code/skills" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude's official documentation</a>, skills <strong>must</strong> be named <code className="bg-prpm-dark px-2 py-1 rounded">SKILL.md</code> (all caps):
+            </p>
+            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 font-mono text-sm text-gray-400 mb-3">
+              .claude/skills/<br/>
+              └── my-skill/<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;└── SKILL.md  ← Must be named SKILL.md
+            </div>
+            <p className="text-gray-300 text-sm">
+              PRPM enforces this requirement during package installation and publishing to ensure compatibility with Claude Desktop and Claude Code.
+            </p>
+          </div>
+
           <h3 className="text-2xl font-bold text-white mt-8 mb-4">Claude Search Optimization (CSO)</h3>
           <p className="text-gray-300 leading-relaxed mb-6">
             Future Claude instances read the <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">description</code> field to decide if a skill is relevant. Bad descriptions mean skills won't be found.

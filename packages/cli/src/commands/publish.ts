@@ -103,6 +103,21 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     }
   }
 
+  // Enforce SKILL.md filename for Claude skills
+  if (manifest.format === 'claude' && manifest.subtype === 'skill') {
+    const filePaths = normalizeFilePaths(manifest.files);
+    const hasSkillMd = filePaths.some(path => path.endsWith('/SKILL.md') || path === 'SKILL.md');
+
+    if (!hasSkillMd) {
+      throw new Error(
+        'Claude skills must contain a SKILL.md file.\n' +
+        'According to Claude documentation at https://docs.claude.com/en/docs/claude-code/skills,\n' +
+        'skills must have a file named SKILL.md in their directory.\n' +
+        'Please rename your skill file to SKILL.md (all caps) and update your prpm.json files array.'
+      );
+    }
+  }
+
   return manifest;
 }
 

@@ -60,7 +60,7 @@ const FORMAT_EXAMPLES: Record<string, { files: string[]; description: string }> 
   },
   claude: {
     description: 'Claude AI skills and agents',
-    files: ['.claude/skills/example-skill.md', 'README.md'],
+    files: ['.claude/skills/example-skill/SKILL.md', 'README.md'],
   },
   continue: {
     description: 'Continue AI coding rules',
@@ -112,8 +112,10 @@ Add your Cursor AI coding rules here.
 `,
   },
   claude: {
-    '.claude/skills/example-skill.md': `---
-description: Example Claude skill
+    '.claude/skills/example-skill/SKILL.md': `---
+name: example-skill
+description: Example Claude skill - replace with your actual skill
+tags: example, template
 ---
 
 # Example Skill

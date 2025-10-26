@@ -318,6 +318,18 @@ export async function handleInstall(
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
 
+      // For Claude skills, enforce SKILL.md filename requirement
+      if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
+        const hasSkillMd = extractedFiles.some(f => f.name === 'SKILL.md');
+        if (!hasSkillMd) {
+          throw new Error(
+            'Claude skills must contain a SKILL.md file. ' +
+            'According to Claude documentation, skills must have a file named SKILL.md in their directory. ' +
+            'Please update the package to follow this requirement.'
+          );
+        }
+      }
+
       for (const file of extractedFiles) {
         const filePath = `${packageDir}/${file.name}`;
         await saveFile(filePath, file.content);
