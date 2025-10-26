@@ -1,9 +1,10 @@
-# Claude Desktop Skills: A Technical Deep Dive
+# Claude Desktop & Claude Code: A Technical Deep Dive
 
 **Published**: 2025-01-XX
 **Author**: PRPM Team
-**Format**: Claude Desktop (`.claude/skills/*/SKILL.md`)
+**Formats**: Claude Desktop Skills (`.claude/skills/*/SKILL.md`) & Claude Code Project Context (`CLAUDE.md`)
 **Status**: Production
+**Official Docs**: [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices)
 
 ---
 
@@ -11,7 +12,9 @@
 
 1. [Introduction](#introduction)
 2. [Format Specification](#format-specification)
-3. [Skills vs Agents vs Rules](#skills-vs-agents-vs-rules)
+   - [CLAUDE.md: Project Context File](#claudemd-project-context-file)
+   - [Skills: Reusable Reference Documentation](#skills-reusable-reference-documentation)
+3. [Skills vs Agents vs Rules vs CLAUDE.md](#skills-vs-agents-vs-rules-vs-claudemd)
 4. [Frontmatter Requirements](#frontmatter-requirements)
 5. [Claude Search Optimization (CSO)](#claude-search-optimization-cso)
 6. [PRPM's Implementation](#prpms-implementation)
@@ -24,21 +27,144 @@
 
 ## Introduction
 
-Claude Desktop uses a unique **skills-based system** where each skill is a self-contained reference guide for proven techniques, patterns, or tools. Unlike traditional prompts that tell the AI what to do, skills are **reference documentation** that Claude consults when relevant.
+Claude has two complementary systems for providing context:
 
-This philosophical difference makes Claude skills:
+1. **CLAUDE.md**: A project-specific context file that Claude Code automatically loads at the start of every conversation
+2. **Skills** (`.claude/skills/*/SKILL.md`): Reusable reference documentation that Claude Desktop consults when relevant
+
+### CLAUDE.md: Always-On Project Context
+
+According to [Anthropic's official best practices](https://www.anthropic.com/engineering/claude-code-best-practices), CLAUDE.md is a special configuration file that Claude Code automatically pulls into context when starting a conversation. It serves as your project's persistent memory.
+
+**Key characteristics**:
+- **Always loaded**: Automatically included in every Claude Code conversation
+- **Project-specific**: Lives in project root (or parent/child directories, or `~/.claude/CLAUDE.md`)
+- **Human-readable**: Plain markdown, concise and scannable
+- **Dynamic**: Update with `#` key during coding sessions
+
+**What to include in CLAUDE.md**:
+- Common bash commands (`npm run build`, `npm test`)
+- Core files and utility functions
+- Code style guidelines (ES modules vs CommonJS, naming conventions)
+- Testing instructions (how to run tests, coverage requirements)
+- Repository etiquette (branch naming, commit conventions)
+- Developer environment setup
+- Unexpected project behaviors or gotchas
+- Project-specific context Claude doesn't already know
+
+### Skills: Reusable Reference Documentation
+
+Skills are a unique **skills-based system** where each skill is a self-contained reference guide for proven techniques, patterns, or tools. Unlike CLAUDE.md (which is always loaded), skills are **discoverable** - Claude consults them only when relevant.
+
+**Key characteristics**:
 - **Discoverable**: Optimized for Claude's search system
 - **Scannable**: Quick to evaluate relevance
 - **Actionable**: Clear examples and patterns
 - **Context-aware**: Applied only when needed
+- **Reusable**: Can be shared across projects
 
 The core principle: **Default assumption is Claude is already very smart. Only add context Claude doesn't already have.**
+
+### When to Use Each
+
+| Use Case | Format | Example |
+|----------|--------|---------|
+| Project-specific commands | CLAUDE.md | `npm run build:prod`, `docker-compose up` |
+| Project-specific conventions | CLAUDE.md | "Use snake_case for DB columns", "API routes go in src/api/" |
+| Reusable patterns | Skills | TypeScript type guards, React hooks patterns |
+| Tool-specific expertise | Skills | Prisma query optimization, Zod schema design |
+| Project gotchas | CLAUDE.md | "Tests require .env.test file", "Don't use npm, use pnpm" |
+| Tech stack overview | CLAUDE.md | "Next.js 14 App Router, PostgreSQL, Tailwind CSS" |
 
 ---
 
 ## Format Specification
 
-### Directory Structure
+### CLAUDE.md: Project Context File
+
+**Location**: `CLAUDE.md` in project root (or parent/child directories, or `~/.claude/CLAUDE.md` for global config)
+
+**Format**: Plain markdown (no frontmatter required)
+
+**Purpose**: Automatically loaded context for every Claude Code conversation
+
+**Example CLAUDE.md**:
+
+```markdown
+# Bash Commands
+
+- `npm run build` - Build the project for production
+- `npm run dev` - Start development server on port 3000
+- `npm run typecheck` - Run TypeScript type checking
+- `npm test` - Run full test suite (slow, prefer single tests)
+- `npm run test:watch` - Run tests in watch mode
+- `pnpm install` - Install dependencies (we use pnpm, NOT npm)
+
+# Tech Stack
+
+- **Framework**: Next.js 14 (App Router, NOT Pages Router)
+- **Language**: TypeScript 5.x with strict mode
+- **Styling**: Tailwind CSS 3.x
+- **State**: Zustand for global state, React Context for component trees
+- **Database**: PostgreSQL 15 with Prisma ORM
+- **Testing**: Vitest + Playwright
+
+# Code Style
+
+- Use ES modules (`import`/`export`) syntax, NOT CommonJS (`require`)
+- Destructure imports when possible: `import { foo } from 'bar'`
+- Named exports only (no default exports)
+- File naming: kebab-case.tsx for components, camelCase.ts for utilities
+- Functional components with TypeScript interfaces for props
+
+# Workflow
+
+- **Always typecheck after code changes** (CI will fail without this)
+- Prefer running single tests over full suite for performance
+- Use `git rebase` for feature branches, NOT merge commits
+- Branch naming: `feature/description`, `fix/description`, `chore/description`
+
+# Project Structure
+
+```
+src/
+├── app/          # Next.js App Router pages
+├── components/   # React components
+├── lib/          # Utility functions and business logic
+├── db/           # Database schema and migrations
+└── tests/        # Test files co-located with source
+```
+
+# Important Notes
+
+- Tests require `.env.test` file (copy from `.env.example`)
+- Database migrations must be reviewed by @dbadmin before merging
+- Don't commit `.env` file (use `.env.example` as template)
+- API routes are rate-limited to 100 req/min in production
+```
+
+**Key Principles for CLAUDE.md**:
+
+1. **Keep it concise**: Claude loads this into every conversation, so be selective
+2. **Human-readable**: Write for developers first, AI second
+3. **Project-specific only**: Don't document things Claude already knows (React basics, TypeScript syntax)
+4. **Update frequently**: Use `#` key to quickly add new context during coding
+5. **Iterate**: Refine based on Claude's performance
+
+**What NOT to include**:
+
+- Generic programming advice (Claude already knows this)
+- Third-party library documentation (Claude has access to docs)
+- Obvious patterns (how to write a for loop)
+- Tool-specific expertise (that belongs in skills)
+
+### Skills: Reusable Reference Documentation
+
+**Location**: `.claude/skills/*/SKILL.md`
+
+**Format**: Markdown with YAML frontmatter (required)
+
+**Purpose**: Discoverable reference documentation consulted when relevant
 
 Claude skills use a **directory-per-skill** structure:
 
@@ -199,44 +325,93 @@ Teams using strict TypeScript typing report:
 
 ---
 
-## Skills vs Agents vs Rules
+## Skills vs Agents vs Rules vs CLAUDE.md
 
-Claude Desktop has **three** types of custom content:
+Claude has **four** types of custom content, each serving a different purpose:
+
+### CLAUDE.md (Root of Project)
+
+**Purpose**: Project-specific context automatically loaded in every Claude Code conversation
+**When active**: **Always active** - Loaded at start of every Claude Code session
+**Content type**: Project commands, tech stack, workflows, gotchas, project structure
+**Format**: Plain markdown (no frontmatter)
+**Location**: `CLAUDE.md` in project root (or parent/child dirs, or `~/.claude/CLAUDE.md`)
+
+**Example content**: "Run `pnpm install` (NOT npm)", "Tests require .env.test", "Use App Router NOT Pages Router"
+
+**Best for**:
+- Project-specific bash commands
+- Tech stack declarations
+- Code style conventions unique to this project
+- Workflow instructions (testing, deployment)
+- Project gotchas and unexpected behaviors
 
 ### Skills (.claude/skills/)
 
-**Purpose**: Reference guides for techniques and patterns
-**When active**: Claude searches and applies when relevant
-**Content type**: Examples, patterns, quick reference
+**Purpose**: Reference guides for reusable techniques and patterns
+**When active**: On-demand (Claude searches and applies when relevant)
+**Content type**: Examples, patterns, quick reference, tool expertise
+**Format**: Markdown with YAML frontmatter (required)
 **Optimization**: CSO (Claude Search Optimization)
 
-**Example**: "typescript-type-safety", "api-design-patterns", "testing-strategies"
+**Example**: "typescript-type-safety", "prisma-query-optimization", "react-hooks-patterns"
+
+**Best for**:
+- Reusable technical patterns (can be shared across projects)
+- Tool-specific expertise (Prisma, Zod, React)
+- Proven techniques with examples
 
 ### Agents (.claude/agents/)
 
-**Purpose**: Persona-based AI configurations
+**Purpose**: Persona-based AI configurations for specific roles
 **When active**: User explicitly invokes agent
 **Content type**: Role definition, tools, communication style
-**Optimization**: Clear role description
+**Format**: Markdown with YAML frontmatter (required)
+**Optimization**: Clear role description with tools field
 
 **Example**: "code-reviewer", "api-designer", "test-writer"
 
+**Best for**:
+- Specialized roles requiring specific context
+- Multi-turn interactions with consistent persona
+- Tool-using agents that need specific capabilities
+
 ### Rules (.claude/rules/)
 
-**Purpose**: Always-active project conventions
+**Purpose**: Always-active project conventions (legacy/alternative to CLAUDE.md)
 **When active**: All interactions in project
 **Content type**: Code style, tech stack, project structure
+**Format**: Markdown (frontmatter optional)
 **Optimization**: Concise, scannable
 
 **Example**: "tech-stack.md", "code-conventions.md", "architecture.md"
 
+**Note**: With Claude Code's CLAUDE.md support, **rules are largely superseded by CLAUDE.md**. Use CLAUDE.md for new projects.
+
 **Key differences**:
 
-| Type | Activation | Scope | Use Case |
-|------|------------|-------|----------|
-| **Skills** | On-demand (search) | Specific technique | "How to implement rate limiting" |
-| **Agents** | Explicit invoke | Full interaction | "Act as code reviewer" |
-| **Rules** | Always active | All code in project | "Use Next.js 14 App Router" |
+| Type | Activation | Scope | Format | Use Case |
+|------|------------|-------|--------|----------|
+| **CLAUDE.md** | Always (auto-loaded) | Entire project | Plain markdown | "Run pnpm install", "Use App Router" |
+| **Skills** | On-demand (search) | Specific technique | Markdown + frontmatter | "How to implement rate limiting" |
+| **Agents** | Explicit invoke | Full interaction | Markdown + frontmatter | "Act as code reviewer" |
+| **Rules** | Always active | All code in project | Markdown (optional frontmatter) | (Legacy - use CLAUDE.md instead) |
+
+### Decision Tree: Which Format to Use?
+
+```
+Is it project-specific?
+├─ Yes → Is it always needed?
+│   ├─ Yes → Use CLAUDE.md
+│   └─ No → Is it a reusable pattern?
+│       ├─ Yes → Use Skills
+│       └─ No → Use CLAUDE.md (with conditional sections)
+└─ No → Is it reusable across projects?
+    ├─ Yes → Use Skills
+    └─ No → Does it require a specific persona?
+        ├─ Yes → Use Agents
+        └─ No → Use Skills
+```
 
 ---
 
