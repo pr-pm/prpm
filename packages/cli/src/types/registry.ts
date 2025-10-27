@@ -32,6 +32,7 @@ export interface PackageManifest {
   tags?: string[];
   keywords?: string[];
   category?: string;
+  organization?: string; // Organization name or ID for team publishing
   dependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
   engines?: Record<string, string>;
