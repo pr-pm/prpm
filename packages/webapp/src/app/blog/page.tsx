@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "prpm-vs-plugins",
+    title: "PRPM vs Plugins Marketplace: What's the Difference?",
+    excerpt: "Understanding how PRPM differs from traditional plugin marketplaces. Learn why PRPM manages AI instructions while plugins manage executable code, and why both can coexist in your workflow.",
+    date: "2025-10-27",
+    author: "PRPM Team",
+    readTime: "5 min read",
+    tags: ["PRPM", "Explainer", "Architecture"],
+  },
+  {
     slug: "distributable-intelligence",
     title: "PRPM: Distributable Intelligence for AI-Assisted Development",
     excerpt: "Ship rules, skills, and agents that make breaking changes painless. Learn how PRPM closes the gap between migration scripts and docs, enabling 95% automated migrations vs 70% with scripts alone.",
