@@ -170,44 +170,19 @@ export default function Home() {
             </div>
           </div>
 
-          {/* CLI Examples */}
+          {/* Demo */}
           <div className="mb-20">
-            <div className="max-w-3xl mx-auto">
-              <div className="bg-prpm-dark-card/50 border border-prpm-border rounded-2xl p-8 backdrop-blur-sm">
-                <div className="space-y-4">
-                  <div className="bg-black/40 rounded-lg p-4 font-mono text-sm border border-prpm-border/30">
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-600 select-none">$</span>
-                      <div className="flex-1">
-                        <span className="text-prpm-accent-light">prpm</span>
-                        <span className="text-gray-400"> search</span>
-                        <span className="text-white"> react</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-black/40 rounded-lg p-4 font-mono text-sm border border-prpm-border/30">
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-600 select-none">$</span>
-                      <div className="flex-1">
-                        <span className="text-prpm-accent-light">prpm</span>
-                        <span className="text-gray-400"> install</span>
-                        <span className="text-white"> @sanjeed5/react-best-practices</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-black/40 rounded-lg p-4 font-mono text-sm border border-prpm-border/30">
-                    <div className="flex items-start gap-3">
-                      <span className="text-gray-600 select-none">$</span>
-                      <div className="flex-1">
-                        <span className="text-prpm-accent-light">prpm</span>
-                        <span className="text-gray-400"> publish</span>
-                        <span className="text-white"> --format cursor</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-2xl font-semibold mb-6 text-white text-center">See it in action</h2>
+              <div className="bg-prpm-dark-card/50 border border-prpm-border rounded-2xl p-4 backdrop-blur-sm">
+                <Image
+                  src="/demo.gif"
+                  alt="PRPM Install Demo"
+                  width={1200}
+                  height={600}
+                  className="w-full rounded-lg"
+                  unoptimized
+                />
               </div>
             </div>
           </div>

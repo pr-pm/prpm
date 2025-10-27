@@ -12,7 +12,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
    */
   fastify.get<{
     Params: { username: string };
-    Querystring: { sort?: string; limit?: number };
+    Querystring: { sort?: string; limit?: number; offset?: number };
   }>(
     '/:username',
     {
@@ -35,13 +35,14 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
               default: 'downloads',
             },
             limit: { type: 'number', default: 100, minimum: 1, maximum: 500 },
+            offset: { type: 'number', default: 0, minimum: 0 },
           },
         },
       },
     },
     async (request, reply) => {
       const { username } = request.params;
-      const { sort = 'downloads', limit = 100 } = request.query;
+      const { sort = 'downloads', limit = 100, offset = 0 } = request.query;
 
       try {
         // Get user info
@@ -66,13 +67,36 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
         };
         const orderBy = sortMap[sort] || sortMap.downloads;
 
-        // Get author's public packages with stats
+        // Get total stats for ALL packages (not limited)
+        const statsResult = await fastify.pg.query(
+          `SELECT
+             COUNT(*) as total_packages,
+             SUM(total_downloads) as total_downloads,
+             SUM(rating_count) as total_ratings,
+             SUM(rating_average * rating_count) as weighted_rating_sum
+           FROM packages
+           WHERE author_id = $1 AND visibility = 'public'`,
+          [user.id]
+        );
+
+        const statsRow = statsResult.rows[0];
+        const stats = {
+          total_packages: parseInt(statsRow.total_packages) || 0,
+          total_downloads: parseInt(statsRow.total_downloads) || 0,
+          total_ratings: parseInt(statsRow.total_ratings) || 0,
+          avg_rating: statsRow.total_ratings > 0
+            ? parseFloat(statsRow.weighted_rating_sum) / parseFloat(statsRow.total_ratings)
+            : 0,
+        };
+
+        // Get author's public packages (limited for display)
         const packagesResult = await fastify.pg.query(
           `SELECT
              id,
              name,
              description,
-             type,
+             format,
+             subtype,
              total_downloads,
              weekly_downloads,
              monthly_downloads,
@@ -84,29 +108,8 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
            FROM packages
            WHERE author_id = $1 AND visibility = 'public'
            ORDER BY ${orderBy}
-           LIMIT $2`,
-          [user.id, limit]
-        );
-
-        // Calculate stats
-        const stats = packagesResult.rows.reduce(
-          (acc, pkg) => ({
-            total_packages: acc.total_packages + 1,
-            total_downloads: acc.total_downloads + (pkg.total_downloads || 0),
-            total_ratings: acc.total_ratings + (pkg.rating_count || 0),
-            avg_rating:
-              acc.total_ratings + (pkg.rating_count || 0) > 0
-                ? (acc.avg_rating * acc.total_ratings +
-                    (pkg.rating_average || 0) * (pkg.rating_count || 0)) /
-                  (acc.total_ratings + (pkg.rating_count || 0))
-                : 0,
-          }),
-          {
-            total_packages: 0,
-            total_downloads: 0,
-            total_ratings: 0,
-            avg_rating: 0,
-          }
+           LIMIT $2 OFFSET $3`,
+          [user.id, limit, offset]
         );
 
         return reply.send({
@@ -128,7 +131,8 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             id: pkg.id,
             name: pkg.name,
             description: pkg.description,
-            type: pkg.type,
+            format: pkg.format,
+            subtype: pkg.subtype,
             total_downloads: pkg.total_downloads || 0,
             weekly_downloads: pkg.weekly_downloads || 0,
             monthly_downloads: pkg.monthly_downloads || 0,
@@ -138,7 +142,13 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             updated_at: pkg.updated_at,
             tags: pkg.tags || [],
           })),
-          total: packagesResult.rows.length,
+          pagination: {
+            showing: packagesResult.rows.length,
+            total: stats.total_packages,
+            limit: limit,
+            offset: offset,
+            hasMore: offset + limit < stats.total_packages,
+          },
         });
       } catch (error) {
         fastify.log.error(error);
@@ -181,7 +191,8 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
              id,
              name,
              description,
-             type,
+             format,
+             subtype,
              total_downloads,
              created_at,
              tags
@@ -199,7 +210,8 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             id: pkg.id,
             name: pkg.name,
             description: pkg.description,
-            type: pkg.type,
+            format: pkg.format,
+            subtype: pkg.subtype,
             total_downloads: pkg.total_downloads || 0,
             created_at: pkg.created_at,
             tags: pkg.tags || [],

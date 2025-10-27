@@ -224,16 +224,17 @@ export async function publishRoutes(server: FastifyInstance) {
         await query(
           server,
           `INSERT INTO packages (
-            id, description, author_id, org_id, type, license,
+            id, description, author_id, org_id, format, subtype, license,
             repository_url, homepage_url, documentation_url,
             tags, keywords, category, last_published_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())`,
           [
             manifest.name,
             manifest.description,
             orgId ? null : userId,  // If publishing to org, don't set author_id
             orgId || null,          // Set org_id if publishing to org
-            manifest.type,
+            manifest.format,
+            manifest.subtype || 'rule',
             manifest.license || null,
             manifest.repository || null,
             manifest.homepage || null,
