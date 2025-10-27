@@ -329,8 +329,18 @@ export async function getCategories() {
 /**
  * Get public author profile with packages
  */
-export async function getAuthorProfile(username: string, sort: 'downloads' | 'recent' | 'name' = 'downloads') {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/authors/${username}?sort=${sort}`)
+export async function getAuthorProfile(
+  username: string,
+  sort: 'downloads' | 'recent' | 'name' = 'downloads',
+  limit: number = 100,
+  offset: number = 0
+) {
+  const params = new URLSearchParams({
+    sort,
+    limit: limit.toString(),
+    offset: offset.toString()
+  })
+  const response = await fetch(`${REGISTRY_URL}/api/v1/authors/${username}?${params}`)
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Failed to fetch author profile' }))
