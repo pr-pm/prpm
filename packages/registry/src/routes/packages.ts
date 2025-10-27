@@ -134,7 +134,7 @@ export async function packageRoutes(server: FastifyInstance) {
          total_downloads, weekly_downloads, monthly_downloads,
          rating_average, rating_count, quality_score,
          verified, featured, official, created_at, updated_at,
-         last_published_at, install_count, view_count, license
+         last_published_at, install_count, view_count, license, license_url
        FROM packages
        ${whereClause}
        ORDER BY ${orderBy}

@@ -15,6 +15,7 @@ interface ModalPackage {
   tags: string[]
   license?: string
   license_url?: string
+  license_text?: string
   repository_url?: string
 }
 
@@ -116,7 +117,7 @@ export default function PackageModal({ package: pkg, isOpen, onClose }: PackageM
         {pkg.license && (
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-400 mb-2">License</h3>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-3">
               <span className="px-3 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-sm">
                 {pkg.license}
               </span>
@@ -135,15 +136,37 @@ export default function PackageModal({ package: pkg, isOpen, onClose }: PackageM
                 ) : null
               })()}
             </div>
+            {pkg.license_text && (
+              <details className="group">
+                <summary className="cursor-pointer text-gray-400 hover:text-white text-sm list-none flex items-center gap-2">
+                  <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                  View Full License Text
+                </summary>
+                <pre className="bg-prpm-dark border border-prpm-border rounded p-3 text-xs text-gray-300 overflow-x-auto mt-2 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                  {pkg.license_text}
+                </pre>
+              </details>
+            )}
           </div>
         )}
 
-        <button
-          onClick={handleCopyInstall}
-          className="w-full px-4 py-2 bg-prpm-accent hover:bg-prpm-accent-dark rounded-lg font-medium"
-        >
-          {copied ? '✓ Copied!' : 'Copy Install Command'}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleCopyInstall}
+            className="flex-1 px-4 py-2 bg-prpm-accent hover:bg-prpm-accent-dark rounded-lg font-medium"
+          >
+            {copied ? '✓ Copied!' : 'Copy Install Command'}
+          </button>
+          <a
+            href={`/packages/${pkg.id}`}
+            className="px-4 py-2 bg-prpm-dark-card border border-prpm-border hover:border-prpm-accent rounded-lg font-medium text-center transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            View Details
+          </a>
+        </div>
       </div>
     </div>
   )
