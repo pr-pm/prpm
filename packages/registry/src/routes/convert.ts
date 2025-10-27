@@ -202,8 +202,9 @@ export async function convertRoutes(server: FastifyInstance) {
           name: pkg.id,
           version: pkg.version,
           description: pkg.description,
-          type: pkg.type,
-          format,
+          format: pkg.format,
+          subtype: pkg.subtype,
+          targetFormat: format,
           author: pkg.author,
           license: pkg.license || 'MIT',
         };
