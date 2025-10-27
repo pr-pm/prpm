@@ -254,7 +254,8 @@ export async function collectionRoutes(server: FastifyInstance) {
             cp.format_override,
             p.id as package_id_full,
             p.description as package_description,
-            p.type as package_type,
+            p.format as package_format,
+            p.subtype as package_subtype,
             pv.version as latest_version
           FROM collection_packages cp
           JOIN packages p ON cp.package_id = p.id
@@ -732,7 +733,8 @@ export async function collectionRoutes(server: FastifyInstance) {
           cp.install_order,
           p.name as package_name,
           p.description,
-          p.type,
+          p.format,
+          p.subtype,
           p.tags
         FROM collection_packages cp
         LEFT JOIN packages p ON cp.package_id = p.id
