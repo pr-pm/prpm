@@ -9,9 +9,13 @@ import type { PackageManifest } from '../types/registry.js';
  */
 export interface MarketplaceJson {
   name: string;
-  owner: string;
-  description: string;
-  version: string;
+  owner: string | { name: string; email?: string; url?: string };
+  description?: string;
+  metadata?: {
+    description?: string;
+    version?: string;
+  };
+  version?: string;
   githubUrl?: string;
   websiteUrl?: string;
   keywords?: string[];
@@ -92,7 +96,8 @@ export function marketplaceToManifest(
 
   // Generate package name from plugin name
   // Format: @owner/plugin-name
-  const packageName = generatePackageName(marketplace.owner, plugin.name);
+  const ownerName = typeof marketplace.owner === 'string' ? marketplace.owner : marketplace.owner.name;
+  const packageName = generatePackageName(ownerName, plugin.name);
 
   // Collect all files that should be included
   const files = collectFiles(plugin);
@@ -109,13 +114,28 @@ export function marketplaceToManifest(
   // Extract tags from keywords (first 10)
   const tags = keywords.slice(0, 10);
 
+  // Get description from plugin, metadata, or root
+  const description = plugin.description ||
+                      marketplace.metadata?.description ||
+                      marketplace.description ||
+                      '';
+
+  // Get version from plugin, metadata, or root
+  const version = plugin.version ||
+                  marketplace.metadata?.version ||
+                  marketplace.version ||
+                  '1.0.0';
+
+  // Get author - prefer plugin.author, fallback to owner name
+  const author = plugin.author || ownerName;
+
   const manifest: PackageManifest = {
     name: packageName,
-    version: plugin.version || marketplace.version || '1.0.0',
-    description: plugin.description || marketplace.description,
+    version,
+    description,
     format,
     subtype,
-    author: plugin.author || marketplace.owner,
+    author,
     files,
     tags,
     keywords,
@@ -267,11 +287,21 @@ export function validateMarketplaceJson(data: unknown): data is MarketplaceJson 
     return false;
   }
 
-  if (!marketplace.owner || typeof marketplace.owner !== 'string') {
+  // owner can be either string or object with name property
+  if (!marketplace.owner) {
+    return false;
+  }
+  if (typeof marketplace.owner !== 'string' &&
+      (typeof marketplace.owner !== 'object' || !marketplace.owner.name)) {
     return false;
   }
 
-  if (!marketplace.description || typeof marketplace.description !== 'string') {
+  // description can be at root or in metadata
+  const hasDescription =
+    (marketplace.description && typeof marketplace.description === 'string') ||
+    (marketplace.metadata?.description && typeof marketplace.metadata.description === 'string');
+
+  if (!hasDescription) {
     return false;
   }
 
