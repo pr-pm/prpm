@@ -3,7 +3,7 @@
  * Extracts preview content from package files for display in modals
  */
 
-import { readFile } from 'fs/promises';
+import { readFile, stat } from 'fs/promises';
 import { join } from 'path';
 import type { PackageManifest, PackageFileMetadata } from '../types/registry';
 
@@ -31,6 +31,13 @@ export async function extractSnippet(manifest: PackageManifest): Promise<string 
     // If there's a main file specified, prefer that
     const targetFile = manifest.main || filePath;
     const fullPath = join(cwd, targetFile);
+
+    // Check if path is a directory
+    const stats = await stat(fullPath);
+    if (stats.isDirectory()) {
+      console.warn(`⚠️  Skipping snippet extraction: "${targetFile}" is a directory`);
+      return null;
+    }
 
     // Read the file content
     const content = await readFile(fullPath, 'utf-8');

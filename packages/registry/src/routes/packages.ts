@@ -374,26 +374,62 @@ export async function packageRoutes(server: FastifyInstance) {
   // Publish package (authenticated)
   server.post('/', {
     onRequest: [server.authenticate],
-    schema: {
-      tags: ['packages'],
-      description: 'Publish a new package or version',
-      body: {
-        type: 'object',
-        required: ['manifest', 'tarball'],
-        properties: {
-          manifest: { type: 'object' },
-          tarball: { type: 'string' },
-          readme: { type: 'string' },
-        },
-      },
-    },
+    // No schema - multipart doesn't set request.body for validation
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
-    const { manifest, tarball: tarballBase64, readme } = request.body as {
-      manifest: Record<string, unknown>;
-      tarball: string;
-      readme?: string
-    };
+
+    // Check if this is multipart or JSON
+    const isMultipart = request.headers['content-type']?.includes('multipart/form-data');
+
+    let manifest: Record<string, unknown>;
+    let tarballBuffer: Buffer;
+
+    if (isMultipart) {
+      // Handle multipart upload (from CLI)
+      let manifestStr: string | undefined;
+      const parts = request.parts();
+      for await (const part of parts) {
+        if (part.type === 'field' && part.fieldname === 'manifest') {
+          manifestStr = part.value as string;
+        } else if (part.type === 'file' && part.fieldname === 'tarball') {
+          const chunks: Buffer[] = [];
+          for await (const chunk of part.file) {
+            chunks.push(chunk);
+          }
+          tarballBuffer = Buffer.concat(chunks);
+        }
+      }
+
+      if (!manifestStr) {
+        return reply.status(400).send({ error: 'Missing manifest field' });
+      }
+
+      try {
+        manifest = JSON.parse(manifestStr);
+      } catch {
+        return reply.status(400).send({ error: 'Invalid manifest JSON' });
+      }
+
+      if (!tarballBuffer!) {
+        return reply.status(400).send({ error: 'Missing tarball file' });
+      }
+    } else {
+      // Handle JSON upload (legacy)
+      const body = request.body as {
+        manifest: Record<string, unknown>;
+        tarball: string;
+        readme?: string;
+      };
+
+      manifest = body.manifest;
+      const tarballBase64 = body.tarball;
+
+      if (!manifest || !tarballBase64) {
+        return reply.status(400).send({ error: 'Missing manifest or tarball' });
+      }
+
+      tarballBuffer = Buffer.from(tarballBase64, 'base64');
+    }
 
     try {
       // 1. Validate manifest
@@ -472,9 +508,7 @@ export async function packageRoutes(server: FastifyInstance) {
         server.log.info({ packageName, userId }, 'Created new package');
       }
 
-      // 3. Decode tarball from base64 and upload to S3
-      const tarballBuffer = Buffer.from(tarballBase64, 'base64');
-
+      // 3. Upload tarball to S3
       const { uploadPackage } = await import('../storage/s3.js');
       const { url: tarballUrl, hash: tarballHash, size } = await uploadPackage(
         server,
@@ -498,7 +532,7 @@ export async function packageRoutes(server: FastifyInstance) {
           tarballUrl,
           tarballHash,
           size,
-          JSON.stringify({ manifest, readme })
+          JSON.stringify({ manifest, readme: undefined })
         ]
       );
 

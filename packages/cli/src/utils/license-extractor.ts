@@ -125,20 +125,14 @@ export async function extractLicenseInfo(repositoryUrl?: string): Promise<Licens
 }
 
 /**
- * Validate license information and warn if missing
+ * Display license information if found
  */
 export function validateLicenseInfo(licenseInfo: LicenseInfo, packageName: string): void {
-  if (!licenseInfo.text) {
-    console.warn(`⚠️  Warning: No LICENSE file found for package "${packageName}"`);
-    console.warn('   Open-source licenses require including license text with your software.');
-    console.warn('   Consider adding a LICENSE file to your package.');
-    console.warn('');
-  } else if (!licenseInfo.type) {
-    console.warn(`⚠️  Warning: Could not detect license type from LICENSE file`);
-    console.warn('   License will be published with text but without type classification.');
-    console.warn('   Consider using a standard license format (MIT, Apache-2.0, etc.)');
-    console.warn('');
-  } else {
+  if (licenseInfo.text && licenseInfo.type) {
     console.log(`   License: ${licenseInfo.type} (${licenseInfo.fileName})`);
+  } else if (licenseInfo.text && !licenseInfo.type) {
+    console.log(`   License: Found (${licenseInfo.fileName})`);
+  } else {
+    console.log(`   License: Not found (package will be published without license)`);
   }
 }
