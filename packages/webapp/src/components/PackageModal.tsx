@@ -16,6 +16,7 @@ interface ModalPackage {
   license?: string
   license_url?: string
   license_text?: string
+  snippet?: string
   repository_url?: string
 }
 
@@ -111,6 +112,22 @@ export default function PackageModal({ package: pkg, isOpen, onClose }: PackageM
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {pkg.snippet && (
+          <div className="mb-6">
+            <details className="group">
+              <summary className="cursor-pointer text-gray-400 hover:text-white text-sm list-none flex items-center gap-2 mb-2">
+                <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="font-semibold">Preview Content</span>
+              </summary>
+              <pre className="bg-prpm-dark border border-prpm-border rounded p-3 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap max-h-80 overflow-y-auto">
+                {pkg.snippet}
+              </pre>
+            </details>
           </div>
         )}
 
