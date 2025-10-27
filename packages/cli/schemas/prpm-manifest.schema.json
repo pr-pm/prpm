@@ -113,6 +113,15 @@
         "BSD-3-Clause"
       ]
     },
+    "license_text": {
+      "type": "string",
+      "description": "Full text of the license file for proper attribution"
+    },
+    "license_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the license file in the repository"
+    },
     "repository": {
       "type": "string",
       "format": "uri",

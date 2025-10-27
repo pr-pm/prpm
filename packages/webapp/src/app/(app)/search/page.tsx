@@ -617,6 +617,11 @@ function SearchPageContent() {
                                 {pkg.category && (
                                   <span>{pkg.category}</span>
                                 )}
+                                {pkg.license && (
+                                  <span className="px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-xs">
+                                    {pkg.license}
+                                  </span>
+                                )}
                                 <span>{pkg.total_downloads.toLocaleString()} downloads</span>
                               </div>
                               {pkg.tags.length > 0 && (

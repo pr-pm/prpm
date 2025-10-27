@@ -53,10 +53,14 @@ export interface Package {
   name: string;
   description?: string;
   author_id?: string;
+  author_username?: string;
   org_id?: string;
   format: Format;
   subtype: Subtype;
   license?: string;
+  license_text?: string;
+  license_url?: string;
+  snippet?: string;
   repository_url?: string;
   homepage_url?: string;
   documentation_url?: string;
@@ -68,6 +72,7 @@ export interface Package {
   deprecated_reason?: string;
   verified: boolean;
   featured: boolean;
+  official?: boolean;
   total_downloads: number;
   weekly_downloads: number;
   monthly_downloads: number;
@@ -75,6 +80,8 @@ export interface Package {
   quality_score?: number;
   rating_average?: number;
   rating_count: number;
+  install_count?: number;
+  view_count?: number;
   created_at: Date;
   updated_at: Date;
   last_published_at?: Date;

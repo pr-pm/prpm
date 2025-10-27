@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { listPackages } from '../core/lockfile';
+import type { LockfilePackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -40,22 +41,27 @@ function getDestinationDir(type: string): string {
 /**
  * Find the actual file location for a package
  */
-async function findPackageLocation(id: string, type?: string): Promise<string | null> {
-  if (!type) return null;
+async function findPackageLocation(id: string, format?: string, subtype?: string): Promise<string | null> {
+  if (!format) return null;
 
-  const baseDir = getDestinationDir(type);
+  const baseDir = getDestinationDir(format);
 
-  // Try direct file: <dir>/<id>.md
-  const directPath = path.join(baseDir, `${id}.md`);
-  try {
-    await fs.access(directPath);
-    return directPath;
-  } catch {
-    // File doesn't exist, try subdirectory
+  // Try different file extensions based on format
+  const extensions = format === 'cursor' ? ['.mdc', '.md'] : ['.md'];
+
+  // Try direct file: <dir>/<id>.ext
+  for (const ext of extensions) {
+    const directPath = path.join(baseDir, `${id}${ext}`);
+    try {
+      await fs.access(directPath);
+      return directPath;
+    } catch {
+      // File doesn't exist, continue
+    }
   }
 
   // Try subdirectory: <dir>/<id>/SKILL.md or <dir>/<id>/AGENT.md
-  if (type === 'claude-skill') {
+  if (subtype === 'skill') {
     const skillPath = path.join(baseDir, id, 'SKILL.md');
     try {
       await fs.access(skillPath);
@@ -65,7 +71,7 @@ async function findPackageLocation(id: string, type?: string): Promise<string | 
     }
   }
 
-  if (type === 'claude') {
+  if (subtype === 'agent' || format === 'claude') {
     const agentPath = path.join(baseDir, id, 'AGENT.md');
     try {
       await fs.access(agentPath);
@@ -81,7 +87,7 @@ async function findPackageLocation(id: string, type?: string): Promise<string | 
 /**
  * Display packages in a formatted table
  */
-async function displayPackages(packages: Array<{id: string; version: string; resolved: string; format?: string; subtype?: string}>): Promise<void> {
+async function displayPackages(packages: Array<LockfilePackage & { id: string }>): Promise<void> {
   if (packages.length === 0) {
     console.log('📦 No packages installed');
     return;
@@ -94,15 +100,21 @@ async function displayPackages(packages: Array<{id: string; version: string; res
   const packagesWithLocations = await Promise.all(
     packages.map(async pkg => ({
       ...pkg,
-      location: await findPackageLocation(pkg.id, `${pkg.format}-${pkg.subtype}`)
+      location: await findPackageLocation(pkg.id, pkg.format, pkg.subtype)
     }))
   );
+
+  // Helper to format type display
+  const formatType = (format?: string, subtype?: string) => {
+    if (!format) return '';
+    return subtype ? `${format}/${subtype}` : format;
+  };
 
   // Calculate column widths
   const idWidth = Math.max(8, ...packagesWithLocations.map(p => p.id.length));
   const versionWidth = Math.max(7, ...packagesWithLocations.map(p => p.version.length));
-  const typeWidth = Math.max(6, ...packagesWithLocations.map(p => (`${p.format || ''}-${p.subtype || ''}`).length));
-  const locationWidth = Math.max(8, ...packagesWithLocations.map(p => (p.location || 'N/A').length));
+  const typeWidth = Math.max(6, ...packagesWithLocations.map(p => formatType(p.format, p.subtype).length));
+  const locationWidth = Math.max(8, ...packagesWithLocations.map(p => (p.installedPath || 'N/A').length));
 
   // Header
   const header = [
@@ -120,8 +132,8 @@ async function displayPackages(packages: Array<{id: string; version: string; res
     const row = [
       pkg.id.padEnd(idWidth),
       pkg.version.padEnd(versionWidth),
-      (`${pkg.format}-${pkg.subtype}` || '').padEnd(typeWidth),
-      (pkg.location || 'N/A').padEnd(locationWidth)
+      formatType(pkg.format, pkg.subtype).padEnd(typeWidth),
+      (pkg.installedPath || 'N/A').padEnd(locationWidth)
     ].join(' | ');
 
     console.log(row);

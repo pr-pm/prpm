@@ -24,24 +24,24 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       } = filters;
 
       // Build WHERE clause
-      const conditions: string[] = ["visibility = 'public'"];
+      const conditions: string[] = ["p.visibility = 'public'"];
       const params: unknown[] = [];
       let paramIndex = 1;
 
       // Only add text search if query is provided
       if (searchQuery && searchQuery.trim()) {
-        conditions.push(`to_tsvector('english', name || ' ' || COALESCE(description, '')) @@ plainto_tsquery('english', $${paramIndex++})`);
+        conditions.push(`to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')) @@ plainto_tsquery('english', $${paramIndex++})`);
         params.push(searchQuery);
       }
 
       if (format) {
         if (Array.isArray(format)) {
           // Handle array of formats with IN clause
-          conditions.push(`format = ANY($${paramIndex++})`);
+          conditions.push(`p.format = ANY($${paramIndex++})`);
           params.push(format);
         } else {
           // Handle single format
-          conditions.push(`format = $${paramIndex++}`);
+          conditions.push(`p.format = $${paramIndex++}`);
           params.push(format);
         }
       }
@@ -49,37 +49,37 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       if (subtype) {
         if (Array.isArray(subtype)) {
           // Handle array of subtypes with IN clause
-          conditions.push(`subtype = ANY($${paramIndex++})`);
+          conditions.push(`p.subtype = ANY($${paramIndex++})`);
           params.push(subtype);
         } else {
           // Handle single subtype
-          conditions.push(`subtype = $${paramIndex++}`);
+          conditions.push(`p.subtype = $${paramIndex++}`);
           params.push(subtype);
         }
       }
 
       if (category) {
-        conditions.push(`category = $${paramIndex++}`);
+        conditions.push(`p.category = $${paramIndex++}`);
         params.push(category);
       }
 
       if (author) {
-        conditions.push(`author_id = (SELECT id FROM users WHERE username = $${paramIndex++})`);
+        conditions.push(`p.author_id = (SELECT id FROM users WHERE username = $${paramIndex++})`);
         params.push(author);
       }
 
       if (tags && tags.length > 0) {
-        conditions.push(`tags && $${paramIndex++}`);
+        conditions.push(`p.tags && $${paramIndex++}`);
         params.push(tags);
       }
 
       if (verified !== undefined) {
-        conditions.push(`verified = $${paramIndex++}`);
+        conditions.push(`p.verified = $${paramIndex++}`);
         params.push(verified);
       }
 
       if (featured !== undefined) {
-        conditions.push(`featured = $${paramIndex++}`);
+        conditions.push(`p.featured = $${paramIndex++}`);
         params.push(featured);
       }
 
@@ -89,35 +89,36 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       let orderBy: string;
       switch (sort) {
         case 'created':
-          orderBy = 'created_at DESC';
+          orderBy = 'p.created_at DESC';
           break;
         case 'updated':
-          orderBy = 'updated_at DESC';
+          orderBy = 'p.updated_at DESC';
           break;
         case 'quality':
-          orderBy = 'quality_score DESC NULLS LAST, total_downloads DESC';
+          orderBy = 'p.quality_score DESC NULLS LAST, p.total_downloads DESC';
           break;
         case 'rating':
-          orderBy = 'rating_average DESC NULLS LAST, quality_score DESC NULLS LAST';
+          orderBy = 'p.rating_average DESC NULLS LAST, p.quality_score DESC NULLS LAST';
           break;
         case 'downloads':
-          orderBy = 'total_downloads DESC, quality_score DESC NULLS LAST';
+          orderBy = 'p.total_downloads DESC, p.quality_score DESC NULLS LAST';
           break;
         default:
           // Default: prioritize quality, then downloads, then search relevance
-          orderBy = 'quality_score DESC NULLS LAST, rank DESC, total_downloads DESC';
+          orderBy = 'p.quality_score DESC NULLS LAST, rank DESC, p.total_downloads DESC';
           break;
       }
 
       // Search with ranking (only calculate rank if there's a search query)
       const rankColumn = (searchQuery && searchQuery.trim())
-        ? `ts_rank(to_tsvector('english', name || ' ' || COALESCE(description, '')), plainto_tsquery('english', $1)) as rank`
+        ? `ts_rank(to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')), plainto_tsquery('english', $1)) as rank`
         : '0 as rank';
 
       const result = await query<Package & { rank: number }>(
         server,
-        `SELECT *, ${rankColumn}
-         FROM packages
+        `SELECT p.*, u.username as author_username, ${rankColumn}
+         FROM packages p
+         LEFT JOIN users u ON p.author_id = u.id
          WHERE ${whereClause}
          ORDER BY ${orderBy}
          LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
@@ -127,7 +128,7 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       // Get total count
       const countResult = await queryOne<{ count: string }>(
         server,
-        `SELECT COUNT(*) as count FROM packages WHERE ${whereClause}`,
+        `SELECT COUNT(*) as count FROM packages p WHERE ${whereClause}`,
         params
       );
       const total = parseInt(countResult?.count || '0', 10);

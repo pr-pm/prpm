@@ -126,18 +126,27 @@ export async function packageRoutes(server: FastifyInstance) {
     const total = parseInt(countResult?.count || '0', 10);
 
     // Get packages (select only needed columns for list view)
+    // Prefix table name for WHERE clause
+    const whereClauseWithPrefix = whereClause.replace(/(\w+)\s*=/g, 'p.$1 =').replace(/(\w+)\s+ILIKE/g, 'p.$1 ILIKE');
+    const orderByWithPrefix = orderBy.split(',').map(o => {
+      const [col, dir] = o.trim().split(/\s+/);
+      return `p.${col} ${dir || ''}`.trim();
+    }).join(', ');
+
     const result = await query<Package>(
       server,
       `SELECT
-         id, name, description, author_id, format, subtype,
-         category, tags, keywords, version_count,
-         total_downloads, weekly_downloads, monthly_downloads,
-         rating_average, rating_count, quality_score,
-         verified, featured, official, created_at, updated_at,
-         last_published_at, install_count, view_count
-       FROM packages
-       ${whereClause}
-       ORDER BY ${orderBy}
+         p.id, p.name, p.description, p.author_id, p.format, p.subtype,
+         p.category, p.tags, p.keywords, p.version_count,
+         p.total_downloads, p.weekly_downloads, p.monthly_downloads,
+         p.rating_average, p.rating_count, p.snippet, p.quality_score,
+         p.verified, p.featured, p.official, p.created_at, p.updated_at,
+         p.last_published_at, p.install_count, p.view_count, p.license, p.license_url,
+         u.username as author_username
+       FROM packages p
+       LEFT JOIN users u ON p.author_id = u.id
+       ${whereClauseWithPrefix}
+       ORDER BY ${orderByWithPrefix}
        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
       [...params, limit, offset]
     );

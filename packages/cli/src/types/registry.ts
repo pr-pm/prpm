@@ -25,6 +25,9 @@ export interface PackageManifest {
   description: string;
   author: string | { name: string; email?: string };
   license?: string;
+  license_text?: string;
+  license_url?: string;
+  snippet?: string;
   repository?: string;
   homepage?: string;
   format: Format;

@@ -19,6 +19,8 @@ import {
   type MarketplaceJson,
 } from '../core/marketplace-converter';
 import { validateManifestSchema } from '../core/schema-validator';
+import { extractLicenseInfo, validateLicenseInfo } from '../utils/license-extractor';
+import { extractSnippet, validateSnippet } from '../utils/snippet-extractor';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -368,6 +370,32 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       const selectedOrg = userInfo.organizations.find((org: any) => org.id === selectedOrgId);
       console.log(`   Publishing to: ${selectedOrg?.name || 'organization'}`);
     }
+    console.log('');
+
+    // Extract license information
+    console.log('📄 Extracting license information...');
+    const licenseInfo = await extractLicenseInfo(manifest.repository);
+
+    // Update manifest with license information if found
+    if (licenseInfo.text) {
+      if (licenseInfo.type && !manifest.license) {
+        manifest.license = licenseInfo.type;
+      }
+      manifest.license_text = licenseInfo.text;
+      manifest.license_url = licenseInfo.url || undefined;
+    }
+
+    // Validate and warn about license (optional - will extract if present)
+    validateLicenseInfo(licenseInfo, manifest.name);
+    console.log('');
+
+    // Extract content snippet
+    console.log('📝 Extracting content snippet...');
+    const snippet = await extractSnippet(manifest);
+    if (snippet) {
+      manifest.snippet = snippet;
+    }
+    validateSnippet(snippet, manifest.name);
     console.log('');
 
     // Create tarball

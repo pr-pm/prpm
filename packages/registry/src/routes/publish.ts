@@ -224,10 +224,10 @@ export async function publishRoutes(server: FastifyInstance) {
         await query(
           server,
           `INSERT INTO packages (
-            id, description, author_id, org_id, format, subtype, license,
+            id, description, author_id, org_id, format, subtype, license, license_text, license_url, snippet,
             repository_url, homepage_url, documentation_url,
             tags, keywords, category, last_published_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())`,
           [
             manifest.name,
             manifest.description,
@@ -236,6 +236,9 @@ export async function publishRoutes(server: FastifyInstance) {
             manifest.format,
             manifest.subtype || 'rule',
             manifest.license || null,
+            manifest.license_text || null,
+            manifest.license_url || null,
+            manifest.snippet || null,
             manifest.repository || null,
             manifest.homepage || null,
             manifest.documentation || null,
@@ -247,11 +250,24 @@ export async function publishRoutes(server: FastifyInstance) {
 
         server.log.info(`Created new package: ${manifest.name}${orgId ? ` for organization ${orgId}` : ''}`);
       } else {
-        // Update package last_published_at
+        // Update package last_published_at, license, and snippet information
         await query(
           server,
-          'UPDATE packages SET last_published_at = NOW(), updated_at = NOW() WHERE id = $1',
-          [manifest.name]
+          `UPDATE packages SET
+            last_published_at = NOW(),
+            updated_at = NOW(),
+            license = COALESCE($2, license),
+            license_text = COALESCE($3, license_text),
+            license_url = COALESCE($4, license_url),
+            snippet = COALESCE($5, snippet)
+          WHERE id = $1`,
+          [
+            manifest.name,
+            manifest.license || null,
+            manifest.license_text || null,
+            manifest.license_url || null,
+            manifest.snippet || null,
+          ]
         );
       }
 
