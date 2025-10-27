@@ -35,6 +35,8 @@ interface Package {
   created_at: string
   updated_at: string
   tags: string[]
+  license?: string
+  license_url?: string
 }
 
 interface AuthorData {
@@ -378,6 +380,14 @@ function AuthorsPageContent() {
                   <p className="text-gray-400 text-sm mb-4 line-clamp-2">
                     {pkg.description || 'No description'}
                   </p>
+
+                  {pkg.license && (
+                    <div className="mb-3">
+                      <span className="px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-xs">
+                        {pkg.license}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">

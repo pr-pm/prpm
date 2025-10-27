@@ -36,6 +36,7 @@ export async function publishRoutes(server: FastifyInstance) {
       // Get manifest and tarball
       let manifest: PackageManifest;
       let tarball: Buffer | undefined;
+      let orgId: string | undefined;
 
       // Parse form fields
       const fields: Record<string, any> = {};
@@ -58,6 +59,11 @@ export async function publishRoutes(server: FastifyInstance) {
       } catch (parseError) {
         console.error('Error parsing multipart data:', parseError);
         throw parseError;
+      }
+
+      // Extract org_id if provided
+      if (fields.org_id) {
+        orgId = fields.org_id;
       }
 
       // Validate manifest field
@@ -104,6 +110,29 @@ export async function publishRoutes(server: FastifyInstance) {
         return reply.status(400).send({ error: extValidation.error });
       }
 
+      // If org_id is specified, verify user has permission to publish to that org
+      if (orgId) {
+        const orgMembership = await queryOne<{ role: string }>(
+          server,
+          `SELECT role FROM organization_members
+           WHERE org_id = $1 AND user_id = $2`,
+          [orgId, userId]
+        );
+
+        if (!orgMembership) {
+          return reply.status(403).send({
+            error: 'You are not a member of this organization',
+          });
+        }
+
+        // Check if user has publishing rights (owner, admin, or maintainer can publish)
+        if (!['owner', 'admin', 'maintainer'].includes(orgMembership.role)) {
+          return reply.status(403).send({
+            error: `You do not have permission to publish packages for this organization. Required role: owner, admin, or maintainer. Your role: ${orgMembership.role}`,
+          });
+        }
+      }
+
       // Check if package exists
       const existingPackage = await queryOne<Package>(
         server,
@@ -113,10 +142,36 @@ export async function publishRoutes(server: FastifyInstance) {
 
       // If package exists, check ownership
       if (existingPackage) {
-        if (existingPackage.author_id !== userId && !request.user.is_admin) {
-          return reply.status(403).send({
-            error: 'You do not have permission to publish to this package',
-          });
+        // Package owned by user
+        if (existingPackage.author_id && !existingPackage.org_id) {
+          if (existingPackage.author_id !== userId && !request.user.is_admin) {
+            return reply.status(403).send({
+              error: 'You do not have permission to publish to this package',
+            });
+          }
+        }
+        // Package owned by org
+        else if (existingPackage.org_id) {
+          const orgMembership = await queryOne<{ role: string }>(
+            server,
+            `SELECT role FROM organization_members
+             WHERE org_id = $1 AND user_id = $2`,
+            [existingPackage.org_id, userId]
+          );
+
+          if (!orgMembership || !['owner', 'admin', 'maintainer'].includes(orgMembership.role)) {
+            return reply.status(403).send({
+              error: 'You do not have permission to publish to this organization package',
+            });
+          }
+        }
+        // Package not owned - shouldn't happen but check anyway
+        else {
+          if (!request.user.is_admin) {
+            return reply.status(403).send({
+              error: 'You do not have permission to publish to this package',
+            });
+          }
         }
 
         // Check if version already exists
@@ -169,14 +224,15 @@ export async function publishRoutes(server: FastifyInstance) {
         await query(
           server,
           `INSERT INTO packages (
-            id, description, author_id, format, subtype, license,
+            id, description, author_id, org_id, format, subtype, license,
             repository_url, homepage_url, documentation_url,
             tags, keywords, category, last_published_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())`,
           [
             manifest.name,
             manifest.description,
-            userId,
+            orgId ? null : userId,  // If publishing to org, don't set author_id
+            orgId || null,          // Set org_id if publishing to org
             manifest.format,
             manifest.subtype || 'rule',
             manifest.license || null,
@@ -189,7 +245,7 @@ export async function publishRoutes(server: FastifyInstance) {
           ]
         );
 
-        server.log.info(`Created new package: ${manifest.name}`);
+        server.log.info(`Created new package: ${manifest.name}${orgId ? ` for organization ${orgId}` : ''}`);
       } else {
         // Update package last_published_at
         await query(
