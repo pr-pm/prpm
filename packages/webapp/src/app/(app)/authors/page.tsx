@@ -49,12 +49,20 @@ interface AuthorData {
   }
   stats: AuthorStats
   packages: Package[]
-  total: number
+  pagination: {
+    showing: number
+    total: number
+    limit: number
+    offset: number
+    hasMore: boolean
+  }
 }
 
 function AuthorsPageContent() {
   const searchParams = useSearchParams()
   const username = searchParams.get('username')
+  const offset = parseInt(searchParams.get('offset') || '0')
+  const limit = parseInt(searchParams.get('limit') || '100')
 
   const [authors, setAuthors] = useState<Author[]>([])
   const [authorData, setAuthorData] = useState<AuthorData | null>(null)
@@ -69,12 +77,12 @@ function AuthorsPageContent() {
 
   useEffect(() => {
     if (username) {
-      loadAuthorProfile(username)
+      loadAuthorProfile(username, offset, limit)
     } else {
       loadAuthors()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username])
+  }, [username, offset, limit])
 
   async function loadAuthors() {
     try {
@@ -89,7 +97,7 @@ function AuthorsPageContent() {
     }
   }
 
-  async function loadAuthorProfile(username: string) {
+  async function loadAuthorProfile(username: string, offset: number = 0, limit: number = 100) {
     try {
       setLoading(true)
       setError(null)
@@ -107,7 +115,7 @@ function AuthorsPageContent() {
           if (user.username.toLowerCase() === username.toLowerCase()) {
             setIsOwnProfile(true)
             const [profile, dashboard, packages] = await Promise.all([
-              getAuthorProfile(username),
+              getAuthorProfile(username, 'downloads', limit, offset),
               getAuthorDashboard(token),
               getAuthorPackages(token, 'downloads'),
             ])
@@ -122,7 +130,7 @@ function AuthorsPageContent() {
 
       if (!isOwnProfile) {
         // Load public profile
-        const profile = await getAuthorProfile(username)
+        const profile = await getAuthorProfile(username, 'downloads', limit, offset)
         setAuthorData(profile)
       }
     } catch (err) {
@@ -319,7 +327,7 @@ function AuthorsPageContent() {
                     Are you {author.username}?
                   </h2>
                   <p className="text-gray-300 mb-4">
-                    We found {packages.length} package{packages.length !== 1 ? 's' : ''} under your name.
+                    We found {authorData.pagination.total} package{authorData.pagination.total !== 1 ? 's' : ''} under your name.
                     Connect your GitHub account to claim ownership and unlock analytics!
                   </p>
                   <Link
@@ -338,7 +346,7 @@ function AuthorsPageContent() {
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">
-              Packages ({packages.length})
+              Packages ({authorData.pagination.showing} of {authorData.pagination.total})
             </h2>
           </div>
 
@@ -399,6 +407,86 @@ function AuthorsPageContent() {
                   )}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {authorData.pagination.total > authorData.pagination.limit && (
+            <div className="mt-8 space-y-4">
+              {/* Main Navigation */}
+              <div className="flex items-center justify-center gap-4">
+                {/* Previous Button */}
+                <button
+                  onClick={() => {
+                    const newOffset = Math.max(0, authorData.pagination.offset - authorData.pagination.limit)
+                    window.location.href = `?username=${username}&offset=${newOffset}`
+                  }}
+                  disabled={authorData.pagination.offset === 0}
+                  className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                    authorData.pagination.offset === 0
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      : 'bg-prpm-accent text-white hover:bg-prpm-accent/90'
+                  }`}
+                >
+                  ← Previous
+                </button>
+
+                {/* Page Info */}
+                <div className="text-gray-400 text-center">
+                  <div className="text-sm">
+                    Page <span className="font-semibold text-white">{Math.floor(authorData.pagination.offset / authorData.pagination.limit) + 1}</span> of{' '}
+                    <span className="font-semibold text-white">{Math.ceil(authorData.pagination.total / authorData.pagination.limit)}</span>
+                  </div>
+                  <div className="text-xs mt-1">
+                    Showing <span className="font-semibold text-white">{authorData.pagination.offset + 1}-{authorData.pagination.offset + authorData.pagination.showing}</span> of{' '}
+                    <span className="font-semibold text-white">{authorData.pagination.total}</span> packages
+                  </div>
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() => {
+                    const newOffset = authorData.pagination.offset + authorData.pagination.limit
+                    window.location.href = `?username=${username}&offset=${newOffset}`
+                  }}
+                  disabled={!authorData.pagination.hasMore}
+                  className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                    !authorData.pagination.hasMore
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      : 'bg-prpm-accent text-white hover:bg-prpm-accent/90'
+                  }`}
+                >
+                  Next →
+                </button>
+              </div>
+
+              {/* Quick Jump to First/Last */}
+              <div className="flex items-center justify-center gap-2 text-sm">
+                {authorData.pagination.offset > 0 && (
+                  <button
+                    onClick={() => {
+                      window.location.href = `?username=${username}&offset=0`
+                    }}
+                    className="text-prpm-accent hover:text-prpm-accent-light transition-colors"
+                  >
+                    « First Page
+                  </button>
+                )}
+                {authorData.pagination.offset > 0 && authorData.pagination.hasMore && (
+                  <span className="text-gray-600">|</span>
+                )}
+                {authorData.pagination.hasMore && (
+                  <button
+                    onClick={() => {
+                      const lastPageOffset = Math.floor((authorData.pagination.total - 1) / authorData.pagination.limit) * authorData.pagination.limit
+                      window.location.href = `?username=${username}&offset=${lastPageOffset}`
+                    }}
+                    className="text-prpm-accent hover:text-prpm-accent-light transition-colors"
+                  >
+                    Last Page »
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
