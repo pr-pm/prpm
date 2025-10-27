@@ -20,6 +20,7 @@ import {
 } from '../core/marketplace-converter';
 import { validateManifestSchema } from '../core/schema-validator';
 import { extractLicenseInfo, validateLicenseInfo } from '../utils/license-extractor';
+import { extractSnippet, validateSnippet } from '../utils/snippet-extractor';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -327,6 +328,15 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       process.exit(1);
     }
 
+    console.log('');
+
+    // Extract content snippet
+    console.log('📝 Extracting content snippet...');
+    const snippet = await extractSnippet(manifest);
+    if (snippet) {
+      manifest.snippet = snippet;
+    }
+    validateSnippet(snippet, manifest.name);
     console.log('');
 
     // Create tarball

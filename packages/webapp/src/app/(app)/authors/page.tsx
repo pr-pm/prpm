@@ -37,6 +37,9 @@ interface Package {
   tags: string[]
   license?: string
   license_url?: string
+  license_text?: string
+  snippet?: string
+  repository_url?: string
 }
 
 interface AuthorData {
