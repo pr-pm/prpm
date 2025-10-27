@@ -397,7 +397,8 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           `SELECT
             p.id,
             p.description,
-            p.type,
+            p.format,
+            p.subtype,
             p.category,
             p.total_downloads,
             p.weekly_downloads,

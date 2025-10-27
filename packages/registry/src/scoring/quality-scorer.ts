@@ -488,7 +488,7 @@ export async function updateAllQualityScores(
 
   // Get all package IDs
   const query_text = type
-    ? 'SELECT id FROM packages WHERE type = $1 ORDER BY created_at DESC'
+    ? 'SELECT id FROM packages WHERE format = $1 ORDER BY created_at DESC'
     : 'SELECT id FROM packages ORDER BY created_at DESC';
 
   const params = type ? [type] : [];
