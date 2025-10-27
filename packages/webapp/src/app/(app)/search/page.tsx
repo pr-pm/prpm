@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import {
@@ -72,9 +72,12 @@ function SearchPageContent() {
   const limit = 20
 
   // Get available subtypes for the selected format
-  const availableSubtypes = selectedFormat
-    ? FORMAT_SUBTYPES[selectedFormat] || []
-    : ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode']
+  const availableSubtypes = useMemo(() =>
+    selectedFormat
+      ? FORMAT_SUBTYPES[selectedFormat] || []
+      : ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode'],
+    [selectedFormat]
+  )
 
   // Reset subtype when format changes and current subtype is not available
   useEffect(() => {
