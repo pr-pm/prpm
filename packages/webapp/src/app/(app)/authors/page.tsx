@@ -134,18 +134,18 @@ function AuthorsPageContent() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-prpm-dark flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-prpm-accent mb-4"></div>
           <p className="text-gray-400">{username ? 'Loading profile...' : 'Loading top authors...'}</p>
         </div>
-      </main>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <main className="min-h-screen bg-prpm-dark flex items-center justify-center p-8">
+      <div className="flex items-center justify-center min-h-[60vh] p-8">
         <div className="max-w-md w-full bg-prpm-dark-card border border-prpm-border rounded-2xl p-8 text-center">
           <div className="text-6xl mb-6">❌</div>
           <h1 className="text-3xl font-bold text-white mb-4">{username ? 'Author Not Found' : 'Error'}</h1>
@@ -159,7 +159,7 @@ function AuthorsPageContent() {
             Browse Authors
           </Link>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -168,7 +168,7 @@ function AuthorsPageContent() {
     const { author, stats, packages } = authorData
 
     return (
-      <main className="min-h-screen bg-prpm-dark">
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8 -my-8">
         {/* Header */}
         <div className="bg-prpm-dark-card border-b border-prpm-border">
           <div className="max-w-7xl mx-auto px-6 py-12">
@@ -411,13 +411,13 @@ function AuthorsPageContent() {
             onClose={() => setShowPackageModal(false)}
           />
         )}
-      </main>
+      </div>
     )
   }
 
   // Show authors list view
   return (
-    <main className="min-h-screen p-8">
+    <div className="-mx-4 sm:-mx-6 lg:-mx-8 -my-8 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-12">
@@ -606,7 +606,7 @@ function AuthorsPageContent() {
           </p>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
 
