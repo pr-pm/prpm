@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { listPackages } from '../core/lockfile';
+import type { LockfilePackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -86,7 +87,7 @@ async function findPackageLocation(id: string, format?: string, subtype?: string
 /**
  * Display packages in a formatted table
  */
-async function displayPackages(packages: Array<{id: string; version: string; resolved: string; format?: string; subtype?: string}>): Promise<void> {
+async function displayPackages(packages: Array<LockfilePackage & { id: string }>): Promise<void> {
   if (packages.length === 0) {
     console.log('📦 No packages installed');
     return;
@@ -113,7 +114,7 @@ async function displayPackages(packages: Array<{id: string; version: string; res
   const idWidth = Math.max(8, ...packagesWithLocations.map(p => p.id.length));
   const versionWidth = Math.max(7, ...packagesWithLocations.map(p => p.version.length));
   const typeWidth = Math.max(6, ...packagesWithLocations.map(p => formatType(p.format, p.subtype).length));
-  const locationWidth = Math.max(8, ...packagesWithLocations.map(p => (p.location || 'N/A').length));
+  const locationWidth = Math.max(8, ...packagesWithLocations.map(p => (p.installedPath || 'N/A').length));
 
   // Header
   const header = [
@@ -132,7 +133,7 @@ async function displayPackages(packages: Array<{id: string; version: string; res
       pkg.id.padEnd(idWidth),
       pkg.version.padEnd(versionWidth),
       formatType(pkg.format, pkg.subtype).padEnd(typeWidth),
-      (pkg.location || 'N/A').padEnd(locationWidth)
+      (pkg.installedPath || 'N/A').padEnd(locationWidth)
     ].join(' | ');
 
     console.log(row);
