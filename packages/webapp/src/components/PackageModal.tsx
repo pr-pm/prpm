@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { getLicenseUrl } from '@/lib/license-utils'
 
 // Minimal package interface for modal display
 interface ModalPackage {
@@ -12,6 +13,9 @@ interface ModalPackage {
   total_downloads: number
   weekly_downloads: number
   tags: string[]
+  license?: string
+  license_url?: string
+  repository_url?: string
 }
 
 interface PackageModalProps {
@@ -105,6 +109,31 @@ export default function PackageModal({ package: pkg, isOpen, onClose }: PackageM
                   {tag}
                 </span>
               ))}
+            </div>
+          </div>
+        )}
+
+        {pkg.license && (
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-400 mb-2">License</h3>
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-sm">
+                {pkg.license}
+              </span>
+              {(() => {
+                const licenseUrl = getLicenseUrl(pkg.license_url, pkg.repository_url)
+                return licenseUrl ? (
+                  <a
+                    href={licenseUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-prpm-accent hover:underline text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View License →
+                  </a>
+                ) : null
+              })()}
             </div>
           </div>
         )}

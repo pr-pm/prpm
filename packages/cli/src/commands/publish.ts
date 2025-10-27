@@ -19,6 +19,7 @@ import {
   type MarketplaceJson,
 } from '../core/marketplace-converter';
 import { validateManifestSchema } from '../core/schema-validator';
+import { extractLicenseInfo, validateLicenseInfo } from '../utils/license-extractor';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -289,6 +290,43 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     console.log(`   Package: ${manifest.name}@${manifest.version}`);
     console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype || 'rule (default)'}`);
     console.log(`   Description: ${manifest.description}`);
+    console.log('');
+
+    // Extract license information
+    console.log('📄 Extracting license information...');
+    const licenseInfo = await extractLicenseInfo(manifest.repository);
+
+    // Update manifest with license information if found
+    if (licenseInfo.text) {
+      if (licenseInfo.type && !manifest.license) {
+        manifest.license = licenseInfo.type;
+      }
+      manifest.license_text = licenseInfo.text;
+      manifest.license_url = licenseInfo.url || undefined;
+    }
+
+    // Validate and warn about license
+    validateLicenseInfo(licenseInfo, manifest.name);
+
+    // For production publishing (not dry-run), require license information
+    if (!options.dryRun && !licenseInfo.text) {
+      console.error('');
+      console.error('❌ License validation failed:');
+      console.error('   No LICENSE file found in your package directory.');
+      console.error('');
+      console.error('   Open-source licenses (MIT, Apache-2.0, etc.) require including');
+      console.error('   license text with your software for proper attribution.');
+      console.error('');
+      console.error('💡 To fix this:');
+      console.error('   1. Add a LICENSE file to your package directory');
+      console.error('   2. Copy the full license text (e.g., from https://opensource.org/licenses/MIT)');
+      console.error('   3. Run `prpm publish` again');
+      console.error('');
+      console.error('💡 Or use --dry-run to test packaging without license validation');
+      console.error('');
+      process.exit(1);
+    }
+
     console.log('');
 
     // Create tarball
