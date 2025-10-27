@@ -753,7 +753,8 @@ export async function collectionRoutes(server: FastifyInstance) {
         package: row.package_name ? {
           name: row.package_name,
           description: row.description,
-          type: row.type,
+          format: row.format,
+          subtype: row.subtype,
           tags: row.tags,
         } : null,
       }));
