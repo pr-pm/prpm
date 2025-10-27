@@ -215,7 +215,7 @@ function collectFiles(plugin: MarketplacePlugin): string[] {
   }
 
   // Add standard files if they're not already included
-  const standardFiles = ['README.md', 'LICENSE', '.claude/marketplace.json'];
+  const standardFiles = ['README.md', 'LICENSE', '.claude/marketplace.json', '.claude-plugin/marketplace.json'];
   for (const file of standardFiles) {
     files.add(file);
   }

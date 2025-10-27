@@ -31,6 +31,7 @@ interface PublishOptions {
  * Checks for:
  * 1. prpm.json (native format)
  * 2. .claude/marketplace.json (Claude format)
+ * 3. .claude-plugin/marketplace.json (Claude format - alternative location)
  */
 async function findAndLoadManifest(): Promise<{ manifest: PackageManifest; source: string }> {
   // Try prpm.json first (native format)
@@ -70,14 +71,36 @@ async function findAndLoadManifest(): Promise<{ manifest: PackageManifest; sourc
 
     return { manifest: validated, source: '.claude/marketplace.json' };
   } catch (error) {
+    // marketplace.json not found or invalid at .claude path, try .claude-plugin
+  }
+
+  // Try .claude-plugin/marketplace.json (alternative Claude format)
+  const marketplaceJsonPluginPath = join(process.cwd(), '.claude-plugin', 'marketplace.json');
+  try {
+    const content = await readFile(marketplaceJsonPluginPath, 'utf-8');
+    const marketplaceData = JSON.parse(content);
+
+    if (!validateMarketplaceJson(marketplaceData)) {
+      throw new Error('Invalid marketplace.json format');
+    }
+
+    // Convert marketplace.json to PRPM manifest
+    const manifest = marketplaceToManifest(marketplaceData as MarketplaceJson);
+
+    // Validate the converted manifest
+    const validated = validateManifest(manifest);
+
+    return { manifest: validated, source: '.claude-plugin/marketplace.json' };
+  } catch (error) {
     // marketplace.json not found or invalid
   }
 
-  // Neither file found
+  // No manifest file found
   throw new Error(
     'No manifest file found. Expected either:\n' +
     '  - prpm.json in the current directory, or\n' +
-    '  - .claude/marketplace.json (Claude format)'
+    '  - .claude/marketplace.json (Claude format), or\n' +
+    '  - .claude-plugin/marketplace.json (Claude format)'
   );
 }
 

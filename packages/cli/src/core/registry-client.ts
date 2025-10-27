@@ -215,7 +215,7 @@ export class RegistryClient {
   /**
    * Publish a package (requires authentication)
    */
-  async publish(manifest: PackageManifest, tarball: Buffer): Promise<PublishResponse> {
+  async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string }): Promise<PublishResponse> {
     if (!this.token) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
@@ -223,6 +223,11 @@ export class RegistryClient {
     const formData = new FormData();
     formData.append('manifest', JSON.stringify(manifest));
     formData.append('tarball', new Blob([tarball]), 'package.tar.gz');
+
+    // Add org_id if provided
+    if (options?.orgId) {
+      formData.append('org_id', options.orgId);
+    }
 
     const response = await this.fetch('/api/v1/packages', {
       method: 'POST',
@@ -341,6 +346,14 @@ export class RegistryClient {
    */
   private async fetch(path: string, options: RequestInit = {}, retries: number = 3): Promise<Response> {
     const url = `${this.baseUrl}${path}`;
+
+    // Debug logging
+    if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+      console.error(`[DEBUG] Fetching: ${url}`);
+      console.error(`[DEBUG] Method: ${options.method || 'GET'}`);
+      console.error(`[DEBUG] Has token: ${!!this.token}`);
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...options.headers as Record<string, string>,
@@ -354,6 +367,10 @@ export class RegistryClient {
 
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
+        if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+          console.error(`[DEBUG] Attempt ${attempt + 1}/${retries}`);
+        }
+
         const response = await fetch(url, {
           ...options,
           headers,
@@ -386,6 +403,12 @@ export class RegistryClient {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
+        if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+          console.error(`[DEBUG] Error on attempt ${attempt + 1}:`, lastError.message);
+          console.error(`[DEBUG] Error type:`, lastError.constructor.name);
+          console.error(`[DEBUG] Full error:`, lastError);
+        }
+
         // Network errors - retry with exponential backoff
         if (attempt < retries - 1 && (
           lastError.message.includes('fetch failed') ||
@@ -393,18 +416,29 @@ export class RegistryClient {
           lastError.message.includes('ETIMEDOUT')
         )) {
           const waitTime = Math.pow(2, attempt) * 1000;
+          if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+            console.error(`[DEBUG] Retrying after ${waitTime}ms...`);
+          }
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }
 
-        // If it's not a retryable error or we're out of retries, throw
+        // If it's not a retryable error or we're out of retries, throw with more context
         if (attempt === retries - 1) {
-          throw lastError;
+          const enhancedError = new Error(
+            `Failed to connect to registry at ${url}\n` +
+            `Original error: ${lastError.message}\n\n` +
+            `💡 Possible causes:\n` +
+            `   - Registry server is not running\n` +
+            `   - Network connection issue\n` +
+            `   - Incorrect PRPM_REGISTRY_URL (currently: ${this.baseUrl})`
+          );
+          throw enhancedError;
         }
       }
     }
 
-    throw lastError || new Error('Request failed after retries');
+    throw lastError || new Error(`Request failed after ${retries} retries to ${url}`);
   }
 }
 
