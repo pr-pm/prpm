@@ -104,6 +104,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
              monthly_downloads,
              rating_average,
              rating_count,
+             snippet,
              created_at,
              updated_at,
              tags
@@ -137,6 +138,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             license: pkg.license,
             license_url: pkg.license_url,
             subtype: pkg.subtype,
+            snippet: pkg.snippet,
             total_downloads: pkg.total_downloads || 0,
             weekly_downloads: pkg.weekly_downloads || 0,
             monthly_downloads: pkg.monthly_downloads || 0,
