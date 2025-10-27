@@ -18,6 +18,7 @@ interface ModalPackage {
   license_text?: string
   snippet?: string
   repository_url?: string
+  author_username?: string
 }
 
 interface PackageModalProps {
@@ -64,7 +65,19 @@ export default function PackageModal({ package: pkg, isOpen, onClose }: PackageM
       >
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold mb-2">{pkg.name}</h2>
+            <h2 className="text-2xl font-bold mb-3">{pkg.name}</h2>
+            {pkg.author_username && (
+              <a
+                href={`/authors?username=${pkg.author_username}`}
+                className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-prpm-accent transition-colors mb-3"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+                @{pkg.author_username}
+              </a>
+            )}
             <div className="flex gap-2">
               <span className="px-3 py-1 bg-prpm-dark rounded text-sm text-prpm-accent">
                 {pkg.format}

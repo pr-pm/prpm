@@ -113,17 +113,17 @@ export async function searchRoutes(server: FastifyInstance) {
       return cached;
     }
 
-    const conditions: string[] = ["visibility = 'public'"];
+    const conditions: string[] = ["p.visibility = 'public'"];
     const params: unknown[] = [];
     let paramIndex = 1;
 
     if (format) {
-      conditions.push(`format = $${paramIndex++}`);
+      conditions.push(`p.format = $${paramIndex++}`);
       params.push(format);
     }
 
     if (subtype) {
-      conditions.push(`subtype = $${paramIndex++}`);
+      conditions.push(`p.subtype = $${paramIndex++}`);
       params.push(subtype);
     }
 
@@ -131,9 +131,11 @@ export async function searchRoutes(server: FastifyInstance) {
 
     const result = await query<Package>(
       server,
-      `SELECT * FROM packages
+      `SELECT p.*, u.username as author_username
+       FROM packages p
+       LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
-       ORDER BY weekly_downloads DESC, total_downloads DESC
+       ORDER BY p.weekly_downloads DESC, p.total_downloads DESC
        LIMIT $${params.length + 1}`,
       [...params, limit]
     );
@@ -173,17 +175,17 @@ export async function searchRoutes(server: FastifyInstance) {
       return cached;
     }
 
-    const conditions: string[] = ["visibility = 'public'", 'featured = TRUE'];
+    const conditions: string[] = ["p.visibility = 'public'", 'p.featured = TRUE'];
     const params: unknown[] = [];
     let paramIndex = 1;
 
     if (format) {
-      conditions.push(`format = $${paramIndex++}`);
+      conditions.push(`p.format = $${paramIndex++}`);
       params.push(format);
     }
 
     if (subtype) {
-      conditions.push(`subtype = $${paramIndex++}`);
+      conditions.push(`p.subtype = $${paramIndex++}`);
       params.push(subtype);
     }
 
@@ -191,9 +193,11 @@ export async function searchRoutes(server: FastifyInstance) {
 
     const result = await query<Package>(
       server,
-      `SELECT * FROM packages
+      `SELECT p.*, u.username as author_username
+       FROM packages p
+       LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
-       ORDER BY quality_score DESC NULLS LAST, total_downloads DESC
+       ORDER BY p.quality_score DESC NULLS LAST, p.total_downloads DESC
        LIMIT $${params.length + 1}`,
       [...params, limit]
     );
@@ -303,15 +307,15 @@ export async function searchRoutes(server: FastifyInstance) {
       return cached;
     }
 
-    const conditions: string[] = ["visibility = 'public'", "type = 'claude-slash-command'"];
+    const conditions: string[] = ["p.visibility = 'public'", "p.type = 'claude-slash-command'"];
     const params: unknown[] = [];
     let paramIndex = 1;
 
     if (q) {
       conditions.push(`(
-        to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '')) @@ websearch_to_tsquery('english', $${paramIndex}) OR
-        name ILIKE $${paramIndex + 1} OR
-        $${paramIndex + 2} = ANY(tags)
+        to_tsvector('english', coalesce(p.name, '') || ' ' || coalesce(p.description, '')) @@ websearch_to_tsquery('english', $${paramIndex}) OR
+        p.name ILIKE $${paramIndex + 1} OR
+        $${paramIndex + 2} = ANY(p.tags)
       )`);
       params.push(q, `%${q}%`, q.toLowerCase());
       paramIndex += 3;
@@ -322,7 +326,7 @@ export async function searchRoutes(server: FastifyInstance) {
     // Get total count
     const countResult = await query<{ count: string }>(
       server,
-      `SELECT COUNT(*) as count FROM packages WHERE ${whereClause}`,
+      `SELECT COUNT(*) as count FROM packages p WHERE ${whereClause}`,
       params
     );
     const total = parseInt(countResult.rows[0]?.count || '0', 10);
@@ -330,9 +334,11 @@ export async function searchRoutes(server: FastifyInstance) {
     // Get slash commands
     const result = await query<Package>(
       server,
-      `SELECT * FROM packages
+      `SELECT p.*, u.username as author_username
+       FROM packages p
+       LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
-       ORDER BY quality_score DESC NULLS LAST, total_downloads DESC
+       ORDER BY p.quality_score DESC NULLS LAST, p.total_downloads DESC
        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
       [...params, limit, offset]
     );
