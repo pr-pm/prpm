@@ -40,6 +40,7 @@ interface Package {
   license_text?: string
   snippet?: string
   repository_url?: string
+  author_username?: string
 }
 
 interface AuthorData {
