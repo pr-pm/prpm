@@ -25,11 +25,11 @@ interface BlogPost {
 const blogPosts: BlogPost[] = [
   {
     slug: "prpm-vs-plugins",
-    title: "PRPM vs Claude Plugins Marketplace: What's the Difference?",
-    excerpt: "Understanding how PRPM differs from the Claude plugin marketplaces. Learn why PRPM manages AI instructions while plugins manage executable code, and why both can coexist in your workflow.",
+    title: "PRPM and Claude Plugins: Working Together",
+    excerpt: "How PRPM complements Anthropic's Claude Code plugin system. Learn why cross-platform and platform-specific solutions strengthen the AI coding ecosystem.",
     date: "2025-10-27",
     author: "PRPM Team",
-    readTime: "5 min read",
+    readTime: "6 min read",
     tags: ["PRPM", "Explainer", "Vision"],
   },
   {
