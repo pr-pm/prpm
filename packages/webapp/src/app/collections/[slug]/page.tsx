@@ -5,6 +5,9 @@ import type { Collection } from '@pr-pm/types'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 
+// Allow dynamic rendering for params not in generateStaticParams
+export const dynamicParams = true
+
 // Generate static params for all collections
 export async function generateStaticParams() {
   // During CI or when SEO endpoints don't exist yet, return empty array

@@ -6,6 +6,9 @@ import CopyInstallCommand from '@/components/CopyInstallCommand'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 
+// Allow dynamic rendering for params not in generateStaticParams
+export const dynamicParams = true
+
 // Helper to get package content/snippet
 function getPackageContent(pkg: any): string | null {
   // Use snippet field from the package if available
@@ -83,18 +86,18 @@ export async function generateStaticParams() {
     // unscoped-package -> prpm/unscoped-package (default author)
     const params = allPackages.map((name) => {
       if (name.startsWith('@')) {
-        // Scoped package: @author/package -> author/package
+        // Scoped package: @author/package/sub/path -> author + [package, sub, path]
         const withoutAt = name.substring(1) // Remove @
         const [author, ...packageParts] = withoutAt.split('/')
         return {
           author,
-          package: packageParts.join('/'),
+          package: packageParts, // Array for catch-all route
         }
       } else {
         // Unscoped package: assume prpm as default author
         return {
           author: 'prpm',
-          package: name,
+          package: [name], // Array for catch-all route
         }
       }
     })
@@ -114,9 +117,10 @@ export async function generateStaticParams() {
 }
 
 // Generate metadata for SEO
-export async function generateMetadata({ params }: { params: { author: string; package: string } }): Promise<Metadata> {
-  // Reconstruct full package name: author/package -> @author/package
-  const fullName = `@${params.author}/${params.package}`
+export async function generateMetadata({ params }: { params: { author: string; package: string[] } }): Promise<Metadata> {
+  // Reconstruct full package name: author/[package, parts] -> @author/package/parts
+  const packagePath = Array.isArray(params.package) ? params.package.join('/') : params.package
+  const fullName = `@${params.author}/${packagePath}`
 
   try {
     // URL-encode the package name to handle @ and / characters
@@ -176,9 +180,10 @@ async function getPackage(name: string): Promise<PackageInfo | null> {
   }
 }
 
-export default async function PackagePage({ params }: { params: { author: string; package: string } }) {
-  // Reconstruct full package name: author/package -> @author/package
-  const fullName = `@${params.author}/${params.package}`
+export default async function PackagePage({ params }: { params: { author: string; package: string[] } }) {
+  // Reconstruct full package name: author/[package, parts] -> @author/package/parts
+  const packagePath = Array.isArray(params.package) ? params.package.join('/') : params.package
+  const fullName = `@${params.author}/${packagePath}`
   const pkg = await getPackage(fullName)
 
   if (!pkg) {
