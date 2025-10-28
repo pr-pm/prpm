@@ -15,46 +15,80 @@ function getPackageContent(pkg: PackageInfo): string | null {
 
 // Generate static params for all packages
 export async function generateStaticParams() {
-  const allPackages: string[] = []
-  let offset = 0
-  const limit = 100
-  let hasMore = true
+  try {
+    const allPackages: string[] = []
+    let offset = 0
+    const limit = 100
+    let hasMore = true
 
-  console.log(`[SSG] Fetching packages from: ${REGISTRY_URL}`)
+    console.log(`[SSG Packages] Starting - REGISTRY_URL: ${REGISTRY_URL}`)
+    console.log(`[SSG Packages] Environment check:`, {
+      NEXT_PUBLIC_REGISTRY_URL: process.env.NEXT_PUBLIC_REGISTRY_URL,
+      REGISTRY_URL: process.env.REGISTRY_URL,
+      NODE_ENV: process.env.NODE_ENV
+    })
 
-  // Paginate through all packages
-  while (hasMore) {
-    try {
+    // Paginate through all packages
+    while (hasMore) {
       const url = `${REGISTRY_URL}/api/v1/search/seo/packages?limit=${limit}&offset=${offset}`
-      console.log(`[SSG] Fetching: ${url}`)
+      console.log(`[SSG Packages] Attempting fetch: ${url}`)
 
-      const res = await fetch(url, {
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
+      try {
+        const res = await fetch(url, {
+          next: { revalidate: 3600 }, // Revalidate every hour
+          cache: 'no-store' // Disable caching during build
+        })
 
-      if (!res.ok) {
-        console.error(`[SSG] Failed to fetch packages: ${res.status}`)
+        console.log(`[SSG Packages] Response status: ${res.status} ${res.statusText}`)
+
+        if (!res.ok) {
+          console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages`)
+          console.error(`[SSG Packages] Response headers:`, Object.fromEntries(res.headers.entries()))
+          break
+        }
+
+        const data = await res.json()
+        console.log(`[SSG Packages] Received data with ${data.packages?.length || 0} packages`)
+
+        if (!data.packages || !Array.isArray(data.packages)) {
+          console.error('[SSG Packages] Invalid response format:', data)
+          break
+        }
+
+        allPackages.push(...data.packages)
+        hasMore = data.hasMore
+        offset += limit
+
+        console.log(`[SSG Packages] Progress: ${allPackages.length} packages fetched`)
+      } catch (fetchError) {
+        console.error('[SSG Packages] Fetch error:', fetchError)
+        console.error('[SSG Packages] Error details:', {
+          message: fetchError instanceof Error ? fetchError.message : String(fetchError),
+          stack: fetchError instanceof Error ? fetchError.stack : undefined
+        })
         break
       }
-
-      const data = await res.json()
-      allPackages.push(...data.packages)
-      hasMore = data.hasMore
-      offset += limit
-
-      console.log(`[SSG] Fetched ${allPackages.length} packages so far...`)
-    } catch (error) {
-      console.error('[SSG] Error fetching packages for SSG:', error)
-      break
     }
+
+    console.log(`[SSG Packages] ✅ Complete: ${allPackages.length} packages for static generation`)
+
+    // ALWAYS return an array, even if empty
+    const params = allPackages.map((name) => ({
+      name: encodeURIComponent(name),
+    }))
+
+    console.log(`[SSG Packages] Returning ${params.length} params`)
+    return params
+
+  } catch (outerError) {
+    // Catch any unexpected errors and log them
+    console.error('[SSG Packages] CRITICAL ERROR in generateStaticParams:', outerError)
+    console.error('[SSG Packages] Error stack:', outerError instanceof Error ? outerError.stack : undefined)
+
+    // Return empty array to prevent build failure
+    console.log('[SSG Packages] Returning empty array due to error')
+    return []
   }
-
-  console.log(`[SSG] Total packages for static generation: ${allPackages.length}`)
-
-  // Return at least an empty array to satisfy Next.js
-  return allPackages.map((name) => ({
-    name: encodeURIComponent(name),
-  }))
 }
 
 // Generate metadata for SEO

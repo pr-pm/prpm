@@ -7,46 +7,80 @@ const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTR
 
 // Generate static params for all collections
 export async function generateStaticParams() {
-  const allCollections: string[] = []
-  let offset = 0
-  const limit = 100
-  let hasMore = true
+  try {
+    const allCollections: string[] = []
+    let offset = 0
+    const limit = 100
+    let hasMore = true
 
-  console.log(`[SSG] Fetching collections from: ${REGISTRY_URL}`)
+    console.log(`[SSG Collections] Starting - REGISTRY_URL: ${REGISTRY_URL}`)
+    console.log(`[SSG Collections] Environment check:`, {
+      NEXT_PUBLIC_REGISTRY_URL: process.env.NEXT_PUBLIC_REGISTRY_URL,
+      REGISTRY_URL: process.env.REGISTRY_URL,
+      NODE_ENV: process.env.NODE_ENV
+    })
 
-  // Paginate through all collections
-  while (hasMore) {
-    try {
+    // Paginate through all collections
+    while (hasMore) {
       const url = `${REGISTRY_URL}/api/v1/search/seo/collections?limit=${limit}&offset=${offset}`
-      console.log(`[SSG] Fetching: ${url}`)
+      console.log(`[SSG Collections] Attempting fetch: ${url}`)
 
-      const res = await fetch(url, {
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
+      try {
+        const res = await fetch(url, {
+          next: { revalidate: 3600 }, // Revalidate every hour
+          cache: 'no-store' // Disable caching during build
+        })
 
-      if (!res.ok) {
-        console.error(`[SSG] Failed to fetch collections: ${res.status}`)
+        console.log(`[SSG Collections] Response status: ${res.status} ${res.statusText}`)
+
+        if (!res.ok) {
+          console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections`)
+          console.error(`[SSG Collections] Response headers:`, Object.fromEntries(res.headers.entries()))
+          break
+        }
+
+        const data = await res.json()
+        console.log(`[SSG Collections] Received data with ${data.collections?.length || 0} collections`)
+
+        if (!data.collections || !Array.isArray(data.collections)) {
+          console.error('[SSG Collections] Invalid response format:', data)
+          break
+        }
+
+        allCollections.push(...data.collections)
+        hasMore = data.hasMore
+        offset += limit
+
+        console.log(`[SSG Collections] Progress: ${allCollections.length} collections fetched`)
+      } catch (fetchError) {
+        console.error('[SSG Collections] Fetch error:', fetchError)
+        console.error('[SSG Collections] Error details:', {
+          message: fetchError instanceof Error ? fetchError.message : String(fetchError),
+          stack: fetchError instanceof Error ? fetchError.stack : undefined
+        })
         break
       }
-
-      const data = await res.json()
-      allCollections.push(...data.collections)
-      hasMore = data.hasMore
-      offset += limit
-
-      console.log(`[SSG] Fetched ${allCollections.length} collections so far...`)
-    } catch (error) {
-      console.error('[SSG] Error fetching collections for SSG:', error)
-      break
     }
+
+    console.log(`[SSG Collections] ✅ Complete: ${allCollections.length} collections for static generation`)
+
+    // ALWAYS return an array, even if empty
+    const params = allCollections.map((slug) => ({
+      slug: encodeURIComponent(slug),
+    }))
+
+    console.log(`[SSG Collections] Returning ${params.length} params`)
+    return params
+
+  } catch (outerError) {
+    // Catch any unexpected errors and log them
+    console.error('[SSG Collections] CRITICAL ERROR in generateStaticParams:', outerError)
+    console.error('[SSG Collections] Error stack:', outerError instanceof Error ? outerError.stack : undefined)
+
+    // Return empty array to prevent build failure
+    console.log('[SSG Collections] Returning empty array due to error')
+    return []
   }
-
-  console.log(`[SSG] Total collections for static generation: ${allCollections.length}`)
-
-  // Return at least an empty array to satisfy Next.js
-  return allCollections.map((slug) => ({
-    slug: encodeURIComponent(slug),
-  }))
 }
 
 // Generate metadata for SEO
