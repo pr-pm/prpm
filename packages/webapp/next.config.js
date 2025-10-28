@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // TODO: Re-enable after deploying registry SEO endpoints to production
-  // output: 'export',
+  output: 'export',
   trailingSlash: false, // Changed to false for CloudFront compatibility
   env: {
     NEXT_PUBLIC_REGISTRY_URL: process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'http://localhost:3000',
