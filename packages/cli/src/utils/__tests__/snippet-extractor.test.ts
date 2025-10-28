@@ -63,7 +63,7 @@ describe('snippet-extractor', () => {
     });
 
     it('should break at newline when possible', async () => {
-      const content = 'Line 1\n'.repeat(100) + 'A'.repeat(1000) + '\nFinal line';
+      const content = 'Line 1\n'.repeat(300) + 'A'.repeat(1000) + '\nFinal line';
       await writeFile(join(testDir, 'prompt.md'), content);
 
       const manifest: PackageManifest = {
