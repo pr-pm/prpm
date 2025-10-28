@@ -3,7 +3,7 @@
  * Handles merging root-level fields with package-level fields
  */
 
-import type { MultiPackageManifest, PackageManifest } from '@pr-pm/types';
+import type { MultiPackageManifest, PackageManifest } from '../types/registry';
 
 /**
  * Fields that can be inherited from root to packages

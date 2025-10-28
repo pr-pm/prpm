@@ -141,6 +141,8 @@ export interface MultiPackageManifest {
   homepage?: string;
   documentation?: string;
   organization?: string;
+  tags?: string[];
+  keywords?: string[];
   packages: PackageManifest[];
 }
 

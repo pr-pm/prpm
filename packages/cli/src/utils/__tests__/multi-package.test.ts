@@ -8,7 +8,7 @@ import {
   validateMultiPackageManifest,
   filterPackages,
 } from '../multi-package';
-import type { MultiPackageManifest, PackageManifest } from '@pr-pm/types';
+import type { MultiPackageManifest, PackageManifest } from '../../types/registry';
 
 describe('multi-package utilities', () => {
   describe('mergePackageFields', () => {
