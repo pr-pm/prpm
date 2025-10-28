@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 
 interface CollectionPackage {
   packageId: string
@@ -220,13 +219,6 @@ export default function CollectionModal({ collection: initialCollection, isOpen,
           </code>
         </div>
 
-        {/* View Details Button */}
-        <Link
-          href={`/collections/${collection.name_slug}`}
-          className="block w-full text-center px-4 py-3 bg-prpm-accent hover:bg-prpm-accent-dark text-white rounded-lg font-medium transition-colors"
-        >
-          View Full Details
-        </Link>
       </div>
     </div>
   )
