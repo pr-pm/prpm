@@ -5,6 +5,9 @@ import type { PackageInfo } from '@pr-pm/types'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 
+// Only generate paths returned by generateStaticParams
+export const dynamicParams = false
+
 // Helper to extract content from package version metadata
 function getPackageContent(pkg: PackageInfo): string | null {
   if (!pkg.latest_version?.metadata) return null
@@ -15,6 +18,13 @@ function getPackageContent(pkg: PackageInfo): string | null {
 
 // Generate static params for all packages
 export async function generateStaticParams() {
+  // During CI or when SEO endpoints don't exist yet, return empty array
+  // to allow build to succeed. The full static generation happens in deployment.
+  if (process.env.CI === 'true' || process.env.SKIP_SSG === 'true') {
+    console.log('[SSG Packages] Skipping static generation (CI or SKIP_SSG enabled)')
+    return []
+  }
+
   try {
     const allPackages: string[] = []
     let offset = 0
@@ -35,8 +45,7 @@ export async function generateStaticParams() {
 
       try {
         const res = await fetch(url, {
-          next: { revalidate: 3600 }, // Revalidate every hour
-          cache: 'no-store' // Disable caching during build
+          next: { revalidate: 3600 } // Revalidate every hour
         })
 
         console.log(`[SSG Packages] Response status: ${res.status} ${res.statusText}`)

@@ -5,8 +5,18 @@ import type { Collection } from '@pr-pm/types'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 
+// Only generate paths returned by generateStaticParams
+export const dynamicParams = false
+
 // Generate static params for all collections
 export async function generateStaticParams() {
+  // During CI or when SEO endpoints don't exist yet, return empty array
+  // to allow build to succeed. The full static generation happens in deployment.
+  if (process.env.CI === 'true' || process.env.SKIP_SSG === 'true') {
+    console.log('[SSG Collections] Skipping static generation (CI or SKIP_SSG enabled)')
+    return []
+  }
+
   try {
     const allCollections: string[] = []
     let offset = 0
@@ -27,8 +37,7 @@ export async function generateStaticParams() {
 
       try {
         const res = await fetch(url, {
-          next: { revalidate: 3600 }, // Revalidate every hour
-          cache: 'no-store' // Disable caching during build
+          next: { revalidate: 3600 } // Revalidate every hour
         })
 
         console.log(`[SSG Collections] Response status: ${res.status} ${res.statusText}`)
