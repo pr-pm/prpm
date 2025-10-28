@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
   getOrganization,
+  getCurrentUser,
   OrganizationDetails,
   OrganizationPackage,
   OrganizationMember,
 } from '@/lib/api'
 import PackageModal from '@/components/PackageModal'
+import EditOrganizationModal from '@/components/EditOrganizationModal'
 
 function OrganizationPageContent() {
   const searchParams = useSearchParams()
@@ -19,6 +21,9 @@ function OrganizationPageContent() {
   const [error, setError] = useState<string | null>(null)
   const [selectedPackage, setSelectedPackage] = useState<OrganizationPackage | null>(null)
   const [showPackageModal, setShowPackageModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [jwtToken, setJwtToken] = useState<string | undefined>(undefined)
+  const [canEdit, setCanEdit] = useState(false)
 
   useEffect(() => {
     const fetchOrganization = async () => {
@@ -33,6 +38,25 @@ function OrganizationPageContent() {
         setError(null)
         const data = await getOrganization(orgName)
         setOrgData(data)
+
+        // Check if user is logged in and has permission to edit
+        const token = localStorage.getItem('prpm_token')
+        if (token) {
+          setJwtToken(token)
+          try {
+            const currentUser = await getCurrentUser(token)
+            // Check if user is owner or admin of the organization
+            const userMembership = data.members.find(
+              (m) => m.user_id === currentUser.id
+            )
+            if (userMembership && (userMembership.role === 'owner' || userMembership.role === 'admin')) {
+              setCanEdit(true)
+            }
+          } catch (err) {
+            // User not authenticated or token invalid
+            console.error('Failed to check user permissions:', err)
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load organization')
       } finally {
@@ -42,6 +66,17 @@ function OrganizationPageContent() {
 
     fetchOrganization()
   }, [orgName])
+
+  async function handleEditSuccess() {
+    // Reload organization data after successful edit
+    if (!orgName) return
+    try {
+      const data = await getOrganization(orgName)
+      setOrgData(data)
+    } catch (err) {
+      console.error('Failed to reload organization:', err)
+    }
+  }
 
   if (loading) {
     return (
@@ -79,9 +114,22 @@ function OrganizationPageContent() {
       {/* Header */}
       <div className="bg-prpm-dark-card border-b border-prpm-border">
         <div className="max-w-7xl mx-auto px-6 py-12">
-          <Link href="/search" className="text-prpm-accent hover:text-prpm-accent-light mb-4 inline-block">
-            ← Back to Search
-          </Link>
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/search" className="text-prpm-accent hover:text-prpm-accent-light inline-block">
+              ← Back to Search
+            </Link>
+            {canEdit && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-prpm-dark border border-prpm-border text-gray-400 hover:text-white hover:border-prpm-accent rounded-lg transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Organization
+              </button>
+            )}
+          </div>
           <div className="flex items-start gap-6">
             {/* Avatar */}
             <div className="w-24 h-24 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
@@ -144,7 +192,7 @@ function OrganizationPageContent() {
             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4">
               <div className="text-gray-400 text-sm mb-1">Total Downloads</div>
               <div className="text-2xl font-bold text-white">
-                {packages.reduce((sum, pkg) => sum + pkg.downloads, 0).toLocaleString()}
+                {packages.reduce((sum, pkg) => sum + pkg.total_downloads, 0).toLocaleString()}
               </div>
             </div>
           </div>
@@ -202,7 +250,7 @@ function OrganizationPageContent() {
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <span>⬇️</span>
-                        <span>{pkg.downloads.toLocaleString()}</span>
+                        <span>{pkg.total_downloads.toLocaleString()}</span>
                       </div>
                       <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-xs text-gray-400">
                         {pkg.subtype}
@@ -293,6 +341,15 @@ function OrganizationPageContent() {
           onClose={() => setShowPackageModal(false)}
         />
       )}
+
+      {/* Edit Organization Modal */}
+      <EditOrganizationModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={handleEditSuccess}
+        organization={organization}
+        jwtToken={jwtToken}
+      />
     </main>
   )
 }
