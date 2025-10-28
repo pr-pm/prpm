@@ -365,7 +365,7 @@ export default function DashboardPage() {
             <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 opacity-50 cursor-not-allowed">
               <div className="text-4xl mb-3">📦</div>
               <h3 className="text-lg font-semibold text-white mb-2">Publish Package</h3>
-              <p className="text-gray-400 text-sm">Coming soon</p>
+              <p className="text-gray-400 text-sm">Use the prpm cli</p>
             </div>
 
             <Link

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { getLicenseUrl } from '@/lib/license-utils'
+import { getPackageUrl } from '@/lib/package-url'
 
 // Minimal package interface for modal display
 interface ModalPackage {
@@ -185,10 +187,16 @@ export default function PackageModal({ package: pkg, isOpen, onClose }: PackageM
         <div className="flex gap-3">
           <button
             onClick={handleCopyInstall}
-            className="w-full px-4 py-2 bg-prpm-accent hover:bg-prpm-accent-dark rounded-lg font-medium"
+            className="flex-1 px-4 py-2 bg-prpm-accent hover:bg-prpm-accent-dark rounded-lg font-medium"
           >
             {copied ? '✓ Copied!' : 'Copy Install Command'}
           </button>
+          <Link
+            href={getPackageUrl(pkg.name)}
+            className="flex-1 px-4 py-2 bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg font-medium text-center transition-colors"
+          >
+            View Details
+          </Link>
         </div>
       </div>
     </div>

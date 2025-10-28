@@ -591,13 +591,13 @@ function SearchPageContent() {
                           </div>
                         )}
                         {packages.map((pkg) => (
-                        <div
+                        <button
                           key={pkg.id}
-                          className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
                           onClick={() => {
                             setSelectedPackage(pkg)
                             setShowPackageModal(true)
                           }}
+                          className="block w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -668,7 +668,7 @@ function SearchPageContent() {
                               )}
                             </button>
                           </div>
-                        </div>
+                        </button>
                       ))}
                       </>
                     )}
@@ -684,13 +684,13 @@ function SearchPageContent() {
                       </div>
                     ) : (
                       collections.map((collection) => (
-                        <div
+                        <button
                           key={collection.id}
                           onClick={() => {
                             setSelectedCollection(collection)
                             setShowCollectionModal(true)
                           }}
-                          className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
+                          className="w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -759,7 +759,7 @@ function SearchPageContent() {
                               )}
                             </button>
                           </div>
-                        </div>
+                        </button>
                       ))
                     )}
                   </div>

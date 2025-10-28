@@ -5,9 +5,15 @@
 /**
  * Generate the URL for a package page
  * Handles both scoped packages (@org/name) and regular packages (name)
+ * Route structure: /packages/[author]/[package]
  */
 export function getPackageUrl(packageName: string): string {
-  // Encode the package name for URL safety
-  const encodedName = encodeURIComponent(packageName)
-  return `/packages/${encodedName}`
+  if (packageName.startsWith('@')) {
+    // Scoped package: @author/package -> /packages/author/package
+    const withoutAt = packageName.substring(1) // Remove @
+    return `/packages/${withoutAt}`
+  } else {
+    // Unscoped package: assume prpm as default author
+    return `/packages/prpm/${packageName}`
+  }
 }
