@@ -18,7 +18,7 @@ export default function Home() {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-prpm-dark-card border border-prpm-border rounded-full text-sm text-gray-400">
               <span className="w-2 h-2 bg-prpm-accent rounded-full animate-pulse"></span>
-              Alpha · 1,500+ packages · 100+ collections
+              Alpha · 1,800+ packages · 100+ collections
             </div>
 
             <div className="flex justify-center mb-8">

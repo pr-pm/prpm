@@ -2,15 +2,14 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { PackageInfo } from '@pr-pm/types'
+import CopyInstallCommand from '@/components/CopyInstallCommand'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 
-// Helper to extract content from package version metadata
-function getPackageContent(pkg: PackageInfo): string | null {
-  if (!pkg.latest_version?.metadata) return null
-
-  const metadata = pkg.latest_version.metadata as any
-  return metadata.content || null
+// Helper to get package content/snippet
+function getPackageContent(pkg: any): string | null {
+  // Use snippet field from the package if available
+  return pkg.snippet || null
 }
 
 // Generate static params for all packages
@@ -79,10 +78,26 @@ export async function generateStaticParams() {
 
     console.log(`[SSG Packages] ✅ Complete: ${allPackages.length} packages for static generation`)
 
-    // ALWAYS return an array, even if empty
-    const params = allPackages.map((name) => ({
-      name: encodeURIComponent(name),
-    }))
+    // Transform package names to author/package format
+    // @scope/package -> scope/package
+    // unscoped-package -> prpm/unscoped-package (default author)
+    const params = allPackages.map((name) => {
+      if (name.startsWith('@')) {
+        // Scoped package: @author/package -> author/package
+        const withoutAt = name.substring(1) // Remove @
+        const [author, ...packageParts] = withoutAt.split('/')
+        return {
+          author,
+          package: packageParts.join('/'),
+        }
+      } else {
+        // Unscoped package: assume prpm as default author
+        return {
+          author: 'prpm',
+          package: name,
+        }
+      }
+    })
 
     console.log(`[SSG Packages] Returning ${params.length} params`)
     return params
@@ -99,11 +114,14 @@ export async function generateStaticParams() {
 }
 
 // Generate metadata for SEO
-export async function generateMetadata({ params }: { params: { name: string } }): Promise<Metadata> {
-  const decodedName = decodeURIComponent(params.name)
+export async function generateMetadata({ params }: { params: { author: string; package: string } }): Promise<Metadata> {
+  // Reconstruct full package name: author/package -> @author/package
+  const fullName = `@${params.author}/${params.package}`
 
   try {
-    const res = await fetch(`${REGISTRY_URL}/api/v1/packages/${decodedName}`, {
+    // URL-encode the package name to handle @ and / characters
+    const encodedName = encodeURIComponent(fullName)
+    const res = await fetch(`${REGISTRY_URL}/api/v1/packages/${encodedName}`, {
       next: { revalidate: 3600 }
     })
 
@@ -141,7 +159,11 @@ export async function generateMetadata({ params }: { params: { name: string } })
 
 async function getPackage(name: string): Promise<PackageInfo | null> {
   try {
-    const res = await fetch(`${REGISTRY_URL}/api/v1/packages/${name}`, {
+    // URL-encode the package name to handle @ and / characters
+    const encodedName = encodeURIComponent(name)
+    const url = `${REGISTRY_URL}/api/v1/packages/${encodedName}`
+
+    const res = await fetch(url, {
       next: { revalidate: 3600 } // Revalidate every hour
     })
 
@@ -154,9 +176,10 @@ async function getPackage(name: string): Promise<PackageInfo | null> {
   }
 }
 
-export default async function PackagePage({ params }: { params: { name: string } }) {
-  const decodedName = decodeURIComponent(params.name)
-  const pkg = await getPackage(decodedName)
+export default async function PackagePage({ params }: { params: { author: string; package: string } }) {
+  // Reconstruct full package name: author/package -> @author/package
+  const fullName = `@${params.author}/${params.package}`
+  const pkg = await getPackage(fullName)
 
   if (!pkg) {
     notFound()
@@ -208,12 +231,10 @@ export default async function PackagePage({ params }: { params: { name: string }
           )}
 
           {/* Install Command */}
-          <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-4 mb-6">
-            <code className="text-prpm-accent-light text-lg">prpm install {pkg.name}</code>
-          </div>
+          <CopyInstallCommand packageName={pkg.name} />
 
           {/* Stats */}
-          <div className="flex flex-wrap gap-6 text-gray-400">
+          <div className="flex flex-wrap gap-6 text-gray-400 mb-8">
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -241,12 +262,12 @@ export default async function PackagePage({ params }: { params: { name: string }
           </div>
         </div>
 
-        {/* Full Package Content */}
+        {/* Full Package Content - Prominently displayed at the top */}
         {content && (
           <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4">📄 Package Content</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">📄 Prompt Content Snippet</h2>
             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 overflow-x-auto">
-              <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words">
+              <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
                 <code>{content}</code>
               </pre>
             </div>
@@ -398,22 +419,6 @@ export default async function PackagePage({ params }: { params: { name: string }
                 <dt className="text-sm text-gray-400 mb-2">Changelog</dt>
                 <dd className="text-white whitespace-pre-wrap text-sm">{pkg.latest_version.changelog}</dd>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Quality Score */}
-        {pkg.quality_score !== undefined && pkg.quality_score !== null && (
-          <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4">⭐ Quality Score</h2>
-            <div className="flex items-center gap-4 mb-3">
-              <span className="text-3xl font-bold text-prpm-accent">
-                {typeof pkg.quality_score === 'number' ? pkg.quality_score.toFixed(1) : pkg.quality_score}
-              </span>
-              <span className="text-gray-400">/ 100</span>
-            </div>
-            {pkg.quality_explanation && (
-              <p className="text-gray-300 text-sm">{pkg.quality_explanation}</p>
             )}
           </div>
         )}

@@ -95,10 +95,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const decodedSlug = decodeURIComponent(params.slug)
 
   try {
-    // Collections use scope/name_slug format, we need to split it
-    const parts = decodedSlug.split('/')
-    const scope = parts[0] || '@prpm'
-    const name = parts.slice(1).join('/') || decodedSlug
+    // Collections typically use 'collection' as the default scope
+    const scope = 'collection'
+    const name = decodedSlug
 
     const res = await fetch(`${REGISTRY_URL}/api/v1/collections/${scope}/${name}`, {
       next: { revalidate: 3600 }
@@ -138,10 +137,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 async function getCollection(slug: string): Promise<Collection | null> {
   try {
-    // Collections use scope/name_slug format
-    const parts = slug.split('/')
-    const scope = parts[0] || '@prpm'
-    const name = parts.slice(1).join('/') || slug
+    // Collections typically use 'collection' as the default scope
+    // URL format: /collections/name-slug -> API: /api/v1/collections/collection/name-slug
+    const scope = 'collection'
+    const name = slug
 
     const res = await fetch(`${REGISTRY_URL}/api/v1/collections/${scope}/${name}`, {
       next: { revalidate: 3600 } // Revalidate every hour
@@ -233,6 +232,60 @@ export default async function CollectionPage({ params }: { params: { slug: strin
             )}
           </div>
         </div>
+
+        {/* Packages in Collection */}
+        {collection.packages && collection.packages.length > 0 && (
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
+            <h2 className="text-2xl font-semibold text-white mb-4">📦 Packages ({collection.packages.length})</h2>
+            <div className="space-y-3">
+              {collection.packages
+                .sort((a, b) => (a.installOrder || 999) - (b.installOrder || 999))
+                .map((pkg, index) => (
+                <div
+                  key={pkg.packageId}
+                  className="bg-prpm-dark border border-prpm-border rounded-lg p-4 hover:border-prpm-accent transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-gray-500 text-sm font-mono">#{index + 1}</span>
+                        <h3 className="text-lg font-semibold text-white">
+                          {(pkg as any).package?.name || pkg.packageId}
+                        </h3>
+                        {pkg.required && (
+                          <span className="px-2 py-0.5 bg-prpm-accent/20 text-prpm-accent text-xs rounded-full">
+                            Required
+                          </span>
+                        )}
+                        {!pkg.required && (
+                          <span className="px-2 py-0.5 bg-gray-500/20 text-gray-400 text-xs rounded-full">
+                            Optional
+                          </span>
+                        )}
+                      </div>
+                      {(pkg as any).package?.description && (
+                        <p className="text-gray-400 text-sm mb-2">{(pkg as any).package.description}</p>
+                      )}
+                      {pkg.reason && (
+                        <p className="text-gray-500 text-sm italic">
+                          <span className="font-semibold">Why included:</span> {pkg.reason}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                        <span>Version: {pkg.version || 'latest'}</span>
+                        {pkg.formatOverride && (
+                          <span className="px-2 py-0.5 bg-prpm-dark border border-prpm-border rounded">
+                            Format: {pkg.formatOverride}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Metadata */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
