@@ -350,6 +350,10 @@ jobs:
           cd packages/webapp
           npm ci
           npm run build:static
+        env:
+          CI: false
+          NEXT_PUBLIC_REGISTRY_URL: https://registry.prpm.dev
+          REGISTRY_URL: https://registry.prpm.dev
 
       - name: Verify build output
         run: |
