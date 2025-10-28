@@ -42,7 +42,8 @@ export type Subtype =
   | 'slash-command'
   | 'prompt'
   | 'collection'
-  | 'chatmode';
+  | 'chatmode'
+  | 'tool';
 
 /**
  * Available subtypes as a constant array
@@ -56,6 +57,7 @@ export const SUBTYPES: readonly Subtype[] = [
   'prompt',
   'collection',
   'chatmode',
+  'tool',
 ] as const;
 
 

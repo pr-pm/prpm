@@ -9,7 +9,7 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
-import { FORMATS, SUBTYPES } from '../types.js';
+import { FORMATS, SUBTYPES } from '../types';
 
 interface InitOptions {
   yes?: boolean; // Skip prompts and use defaults

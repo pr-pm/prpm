@@ -136,10 +136,10 @@ describe('install command - multi-file packages', () => {
 
       await handleInstall('test-skill', {});
 
-      // Should save as single file
+      // Should save as SKILL.md in package directory
       expect(saveFile).toHaveBeenCalledTimes(1);
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/test-skill.md',
+        '.claude/skills/test-skill/SKILL.md',
         expect.stringContaining('Single file content')
       );
     });
@@ -368,10 +368,10 @@ describe('install command - multi-file packages', () => {
 
       await handleInstall('legacy-skill', {});
 
-      // Should work as single file
+      // Should work as single file, now in directory with SKILL.md
       expect(saveFile).toHaveBeenCalledTimes(1);
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/legacy-skill.md',
+        '.claude/skills/legacy-skill/SKILL.md',
         expect.stringContaining('Legacy Skill')
       );
     });

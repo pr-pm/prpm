@@ -113,12 +113,12 @@ describe('install command - file locations', () => {
       await handleInstall('test-skill', {});
 
       // Verify file was saved to correct location (relative path)
-      const expectedPath = '.claude/skills/test-skill.md';
+      const expectedPath = '.claude/skills/test-skill/SKILL.md';
       expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
 
       // Verify directory exists
-      const destDir = getDestinationDir('claude', 'skill');
-      expect(destDir).toBe('.claude/skills');
+      const destDir = getDestinationDir('claude', 'skill', 'test-skill');
+      expect(destDir).toBe('.claude/skills/test-skill');
     });
 
     it('should install claude-agent to .claude/agents', async () => {
