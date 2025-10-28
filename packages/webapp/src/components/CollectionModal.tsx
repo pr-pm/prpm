@@ -73,7 +73,7 @@ export default function CollectionModal({ collection: initialCollection, isOpen,
   if (!isOpen) return null
 
   const handleCopyInstall = () => {
-    navigator.clipboard.writeText(`prpm install ${collection.name_slug}`)
+    navigator.clipboard.writeText(`prpm install collections/${collection.name_slug}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -215,7 +215,7 @@ export default function CollectionModal({ collection: initialCollection, isOpen,
             </button>
           </div>
           <code className="text-prpm-accent-light">
-            prpm install {collection.name_slug}
+            prpm install collections/{collection.name_slug}
           </code>
         </div>
       </div>

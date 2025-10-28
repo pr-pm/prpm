@@ -95,13 +95,25 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
 
 export async function handleInstall(
   packageSpec: string,
-  options: { version?: string; as?: string; frozenLockfile?: boolean }
+  options: { version?: string; as?: string; subtype?: Subtype; frozenLockfile?: boolean }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
   let error: string | undefined;
 
   try {
+    // Check if this is explicitly a collection install (collections/name)
+    if (packageSpec.startsWith('collections/')) {
+      const collectionId = packageSpec.replace('collections/', '');
+      console.log(`📥 Installing ${collectionId}@latest...`);
+      const { handleCollectionInstall } = await import('./collections.js');
+      return await handleCollectionInstall(collectionId, {
+        format: options.as,
+        skipOptional: false,
+        dryRun: false,
+      });
+    }
+
     // Parse package spec (e.g., "react-rules" or "react-rules@1.2.0" or "@pr-pm/pkg@1.0.0")
     // For scoped packages (@scope/name), the first @ is part of the package name
     let packageId: string;
@@ -253,7 +265,7 @@ export async function handleInstall(
 
     // Determine effective format and subtype (from conversion or package native format)
     const effectiveFormat = (format as Format) || pkg.format;
-    const effectiveSubtype = pkg.subtype;
+    const effectiveSubtype = options.subtype || pkg.subtype;
 
     // Extract all files from tarball
     const extractedFiles = await extractTarball(tarball, packageId);
@@ -533,8 +545,9 @@ export function createInstallCommand(): Command {
     .option('--version <version>', 'Specific version to install')
     .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, canonical)')
     .option('--format <format>', 'Alias for --as')
+    .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string, options: { version?: string; as?: string; format?: string; frozenLockfile?: boolean }) => {
+    .action(async (packageSpec: string, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = options.format || options.as;
 
@@ -550,6 +563,7 @@ export function createInstallCommand(): Command {
       await handleInstall(packageSpec, {
         version: options.version,
         as: convertTo,
+        subtype: options.subtype as Subtype | undefined,
         frozenLockfile: options.frozenLockfile
       });
       process.exit(0);
