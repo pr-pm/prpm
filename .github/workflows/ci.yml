@@ -237,6 +237,10 @@ jobs:
       - name: Build
         working-directory: ./packages/webapp
         run: npm run build
+        env:
+          SKIP_SSG: false
+          NEXT_PUBLIC_REGISTRY_URL: https://registry.prpm.dev
+          REGISTRY_URL: https://registry.prpm.dev
 
   # Webapp E2E Tests with Playwright
   webapp-e2e-tests:
