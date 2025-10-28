@@ -17,11 +17,13 @@ function getPackageContent(pkg: any): string | null {
 
 // Generate static params for all packages
 export async function generateStaticParams() {
-  // During CI or when SEO endpoints don't exist yet, return empty array
-  // to allow build to succeed. The full static generation happens in deployment.
+  // During CI, return mock data to test static generation without hitting API
   if (process.env.CI === 'true' || process.env.SKIP_SSG === 'true') {
-    console.log('[SSG Packages] Skipping static generation (CI or SKIP_SSG enabled)')
-    return []
+    console.log('[SSG Packages] Using mock data for CI build')
+    return [
+      { author: 'prpm', package: ['test-package'] },
+      { author: 'test', package: ['multi', 'segment', 'package'] },
+    ]
   }
 
   try {
