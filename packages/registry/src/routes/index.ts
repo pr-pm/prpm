@@ -13,6 +13,7 @@ import analyticsRoutes from './analytics.js';
 import authorAnalyticsRoutes from './author-analytics.js';
 import authorsRoutes from './authors.js';
 import { newsletterRoutes } from './newsletter.js';
+import { organizationRoutes } from './organizations.js';
 
 export async function registerRoutes(server: FastifyInstance) {
   // API v1 routes
@@ -28,6 +29,7 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(authorAnalyticsRoutes, { prefix: '/author' });
       await api.register(authorsRoutes, { prefix: '/authors' });
       await api.register(newsletterRoutes, { prefix: '/newsletter' });
+      await api.register(organizationRoutes, { prefix: '/organizations' });
     },
     { prefix: '/api/v1' }
   );

@@ -19,6 +19,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
   const navigationLinks = [
     { href: '/search', label: 'Search' },
     { href: '/authors', label: 'Authors' },
+    { href: '/organizations', label: 'Organizations' },
     { href: '/blog', label: 'Blog' },
     ...(showDashboard ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
   ]

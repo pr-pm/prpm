@@ -114,6 +114,11 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
  * Validate package manifest
  */
 function validateManifest(manifest: PackageManifest): PackageManifest {
+  // Set default subtype to 'rule' if not provided
+  if (!manifest.subtype) {
+    manifest.subtype = 'rule';
+  }
+
   // First, validate against JSON schema
   const schemaValidation = validateManifestSchema(manifest);
   if (!schemaValidation.valid) {
@@ -371,7 +376,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
         console.log(`   Source: ${source}`);
         console.log(`   Package: ${manifest.name}@${manifest.version}`);
-        console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype || 'rule (default)'}`);
+        console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype}`);
         console.log(`   Description: ${manifest.description}`);
         if (selectedOrgId && userInfo) {
           const selectedOrg = userInfo.organizations.find((org: any) => org.id === selectedOrgId);
@@ -383,12 +388,15 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log('📄 Extracting license information...');
         const licenseInfo = await extractLicenseInfo(manifest.repository);
 
-        // Update manifest with license information if found
-        if (licenseInfo.text) {
-          if (licenseInfo.type && !manifest.license) {
-            manifest.license = licenseInfo.type;
-          }
+        // Update manifest with license information from LICENSE file if found
+        // Only set fields that aren't already manually specified in prpm.json
+        if (licenseInfo.type && !manifest.license) {
+          manifest.license = licenseInfo.type;
+        }
+        if (licenseInfo.text && !manifest.license_text) {
           manifest.license_text = licenseInfo.text;
+        }
+        if (licenseInfo.url && !manifest.license_url) {
           manifest.license_url = licenseInfo.url || undefined;
         }
 
@@ -459,7 +467,6 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log('');
         console.log(`   Package: ${manifest.name}@${result.version}`);
         console.log(`   Install: prpm install ${manifest.name}`);
-        console.log(`   View: ${packageUrl}`);
         console.log('');
 
         publishedPackages.push({

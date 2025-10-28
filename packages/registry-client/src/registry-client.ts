@@ -566,12 +566,15 @@ export class RegistryClient {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
-        console.error(`[RegistryClient] Fetch error on attempt ${attempt + 1}/${retries}:`, {
-          url,
-          method: options.method || 'GET',
-          error: lastError.message,
-          stack: lastError.stack,
-        });
+        // Only log retry errors if DEBUG environment variable is set
+        if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+          console.error(`[RegistryClient] Fetch error on attempt ${attempt + 1}/${retries}:`, {
+            url,
+            method: options.method || 'GET',
+            error: lastError.message,
+            stack: lastError.stack,
+          });
+        }
 
         // Network errors - retry with exponential backoff
         if (attempt < retries - 1 && (
@@ -580,7 +583,9 @@ export class RegistryClient {
           lastError.message.includes('ETIMEDOUT')
         )) {
           const waitTime = Math.pow(2, attempt) * 1000;
-          console.log(`[RegistryClient] Retrying in ${waitTime}ms...`);
+          if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+            console.log(`[RegistryClient] Retrying in ${waitTime}ms...`);
+          }
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }

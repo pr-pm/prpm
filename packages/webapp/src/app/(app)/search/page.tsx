@@ -67,6 +67,7 @@ function SearchPageContent() {
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [showPackageModal, setShowPackageModal] = useState(false)
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
   const [showCollectionModal, setShowCollectionModal] = useState(false)
 
   const limit = 20
@@ -295,6 +296,12 @@ function SearchPageContent() {
     setSelectedCategory('')
     setSelectedTags([])
     setQuery('')
+  }
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
   }
 
   const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || query
@@ -638,10 +645,28 @@ function SearchPageContent() {
                               )}
                             </div>
                           </div>
-                          <div className="mt-4 pt-4 border-t border-prpm-border">
+                          <div className="mt-4 pt-4 border-t border-prpm-border flex items-center justify-between gap-2">
                             <code className="text-sm text-prpm-accent-light">
                               prpm install {pkg.name}
                             </code>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                copyToClipboard(`prpm install ${pkg.name}`, pkg.id)
+                              }}
+                              className="p-2 hover:bg-prpm-dark rounded transition-colors flex-shrink-0"
+                              title="Copy install command"
+                            >
+                              {copiedId === pkg.id ? (
+                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4 text-gray-400 hover:text-prpm-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              )}
+                            </button>
                           </div>
                         </button>
                       ))}
@@ -711,10 +736,28 @@ function SearchPageContent() {
                               )}
                             </div>
                           </div>
-                          <div className="mt-4 pt-4 border-t border-prpm-border">
+                          <div className="mt-4 pt-4 border-t border-prpm-border flex items-center justify-between gap-2">
                             <code className="text-sm text-prpm-accent-light">
-                              prpm install {collection.name_slug}
+                              prpm install collections/{collection.name_slug}
                             </code>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                copyToClipboard(`prpm install collections/${collection.name_slug}`, collection.id)
+                              }}
+                              className="p-2 hover:bg-prpm-dark rounded transition-colors flex-shrink-0"
+                              title="Copy install command"
+                            >
+                              {copiedId === collection.id ? (
+                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4 text-gray-400 hover:text-prpm-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              )}
+                            </button>
                           </div>
                         </button>
                       ))

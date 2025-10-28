@@ -219,7 +219,7 @@ describe('Install command - format conversion', () => {
 
       // Should save to claude directory with skill subtype
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/claude-skill.md',
+        '.claude/skills/claude-skill/SKILL.md',
         expect.any(String)
       );
     });

@@ -433,17 +433,31 @@ export async function packageRoutes(server: FastifyInstance) {
 
     try {
       // 1. Validate manifest
-      const packageName = manifest.name as string;
+      let packageName = manifest.name as string;
       const version = manifest.version as string;
       const description = manifest.description as string;
       const format = manifest.format as string;
-      const subtype = manifest.subtype as string;
+      const subtype = (manifest.subtype as string) || 'rule';
+      const organization = manifest.organization as string | undefined;
+      const license = manifest.license as string | undefined;
+      const tags = (manifest.tags as string[]) || [];
+      const keywords = (manifest.keywords as string[]) || [];
 
       if (!packageName || !version || !description || !format) {
         return reply.status(400).send({
           error: 'Invalid manifest',
           message: 'Missing required fields: name, version, description, or format'
         });
+      }
+
+      // If organization is specified, ensure package name is prefixed with @org-name/
+      if (organization) {
+        const expectedPrefix = `@${organization}/`;
+        if (!packageName.startsWith(expectedPrefix)) {
+          // Auto-prefix the package name
+          packageName = `${expectedPrefix}${packageName}`;
+          server.log.info({ originalName: manifest.name, newName: packageName }, 'Auto-prefixed package name with organization');
+        }
       }
 
       // Validate package name format
@@ -460,6 +474,47 @@ export async function packageRoutes(server: FastifyInstance) {
           error: 'Invalid version',
           message: 'Version must be valid semver (e.g., 1.0.0)'
         });
+      }
+
+      // Lookup organization if specified
+      let orgId: string | undefined;
+      if (organization) {
+        const org = await queryOne<{ id: string }>(
+          server,
+          'SELECT id FROM organizations WHERE name = $1',
+          [organization]
+        );
+
+        if (!org) {
+          return reply.status(404).send({
+            error: 'Organization not found',
+            message: `Organization '${organization}' does not exist`
+          });
+        }
+
+        orgId = org.id;
+
+        // Verify user has permission to publish to this org
+        const orgMembership = await queryOne<{ role: string }>(
+          server,
+          `SELECT role FROM organization_members
+           WHERE org_id = $1 AND user_id = $2`,
+          [orgId, userId]
+        );
+
+        if (!orgMembership) {
+          return reply.status(403).send({
+            error: 'Forbidden',
+            message: `You are not a member of the '${organization}' organization`,
+          });
+        }
+
+        if (!['owner', 'admin', 'maintainer'].includes(orgMembership.role)) {
+          return reply.status(403).send({
+            error: 'Forbidden',
+            message: `You do not have permission to publish packages for the '${organization}' organization. Required role: owner, admin, or maintainer. Your role: ${orgMembership.role}`,
+          });
+        }
       }
 
       // 2. Check if package exists and user has permission
@@ -495,10 +550,23 @@ export async function packageRoutes(server: FastifyInstance) {
         // New package - create it
         pkg = await queryOne<Package>(
           server,
-          `INSERT INTO packages (name, description, author_id, format, subtype)
-           VALUES ($1, $2, $3, $4, $5)
+          `INSERT INTO packages (
+            name, description, author_id, org_id, format, subtype,
+            license, tags, keywords, last_published_at
+          )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
            RETURNING *`,
-          [packageName, description, userId, format, subtype]
+          [
+            packageName,
+            description,
+            orgId ? null : userId,  // If publishing to org, don't set author_id
+            orgId || null,          // Set org_id if publishing to org
+            format,
+            subtype,
+            license || null,
+            tags,
+            keywords
+          ]
         );
 
         if (!pkg) {

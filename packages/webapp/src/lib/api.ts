@@ -399,3 +399,154 @@ export async function getAuthorPackages(jwtToken: string, sort: 'downloads' | 'v
 
   return response.json()
 }
+
+/**
+ * Organization types
+ */
+export interface Organization {
+  id: string
+  name: string
+  description: string | null
+  avatar_url: string | null
+  website_url: string | null
+  is_verified: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface OrganizationMember {
+  user_id: string | null
+  username: string
+  email: string
+  avatar_url: string | null
+  role: string
+  joined_at: string
+  is_public?: boolean
+}
+
+export interface OrganizationPackage {
+  id: string
+  name: string
+  description: string
+  format: string
+  subtype: string
+  total_downloads: number
+  weekly_downloads: number
+  is_featured: boolean
+  is_verified: boolean
+  last_published_at: string
+  created_at: string
+  tags: string[]
+  license?: string
+  repository_url?: string
+  author_username?: string
+}
+
+export interface OrganizationDetails {
+  organization: Organization
+  packages: OrganizationPackage[]
+  members: OrganizationMember[]
+  package_count: number
+  member_count: number
+}
+
+/**
+ * Get organization details
+ */
+export async function getOrganization(orgName: string): Promise<OrganizationDetails> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations/${encodeURIComponent(orgName)}`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch organization' }))
+    throw new Error(error.error || error.message || 'Failed to fetch organization')
+  }
+
+  return response.json()
+}
+
+export interface OrganizationListItem {
+  id: string
+  name: string
+  description: string | null
+  avatar_url: string | null
+  website_url: string | null
+  is_verified: boolean
+  created_at: string
+  package_count: number
+  member_count: number
+  total_downloads: number
+}
+
+export interface ListOrganizationsResponse {
+  organizations: OrganizationListItem[]
+  limit: number
+  offset: number
+}
+
+/**
+ * List all organizations
+ */
+export async function listOrganizations(options?: { verified?: boolean; limit?: number; offset?: number }): Promise<ListOrganizationsResponse> {
+  const queryParams = new URLSearchParams()
+  if (options?.verified !== undefined) queryParams.append('verified', String(options.verified))
+  if (options?.limit) queryParams.append('limit', String(options.limit))
+  if (options?.offset) queryParams.append('offset', String(options.offset))
+
+  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations?${queryParams.toString()}`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to list organizations' }))
+    throw new Error(error.error || error.message || 'Failed to list organizations')
+  }
+
+  return response.json()
+}
+
+/**
+ * Create a new organization
+ */
+export async function createOrganization(
+  jwtToken: string,
+  data: { name: string; description?: string; website_url?: string }
+): Promise<{ organization: Organization; message: string }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to create organization' }))
+    throw new Error(error.error || error.message || 'Failed to create organization')
+  }
+
+  return response.json()
+}
+
+/**
+ * Update an organization
+ */
+export async function updateOrganization(
+  jwtToken: string,
+  orgName: string,
+  data: { description?: string; website_url?: string; avatar_url?: string }
+): Promise<{ organization: Organization; message: string }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations/${encodeURIComponent(orgName)}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to update organization' }))
+    throw new Error(error.error || error.message || 'Failed to update organization')
+  }
+
+  return response.json()
+}
