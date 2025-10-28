@@ -30,6 +30,7 @@ export interface PackageManifest {
   snippet?: string;
   repository?: string;
   homepage?: string;
+  documentation?: string;
   format: Format;
   subtype?: Subtype;
   tags?: string[];
