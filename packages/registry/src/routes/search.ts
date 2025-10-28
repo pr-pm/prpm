@@ -421,4 +421,117 @@ export async function searchRoutes(server: FastifyInstance) {
 
     return response;
   });
+
+  // Lightweight SEO endpoint - package names only (for SSG)
+  server.get('/seo/packages', {
+    schema: {
+      tags: ['search', 'seo'],
+      description: 'Get package names for static site generation (lightweight, paginated)',
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', default: 100, minimum: 1, maximum: 1000 },
+          offset: { type: 'number', default: 0, minimum: 0 },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { limit = 100, offset = 0 } = request.query as {
+      limit?: number;
+      offset?: number;
+    };
+
+    const cacheKey = `search:seo:packages:${limit}:${offset}`;
+    const cached = await cacheGet<any>(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get total count
+    const countResult = await query<{ count: string }>(
+      server,
+      `SELECT COUNT(*) as count FROM packages WHERE visibility = 'public'`
+    );
+    const total = parseInt(countResult.rows[0]?.count || '0', 10);
+
+    // Get package names only
+    const result = await query<{ name: string; updated_at: string }>(
+      server,
+      `SELECT name, updated_at
+       FROM packages
+       WHERE visibility = 'public'
+       ORDER BY total_downloads DESC, name ASC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+
+    const response = {
+      packages: result.rows.map(r => r.name),
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    };
+
+    // Cache for 1 hour (packages don't change frequently)
+    await cacheSet(server, cacheKey, response, 3600);
+
+    return response;
+  });
+
+  // Lightweight SEO endpoint - collection slugs only (for SSG)
+  server.get('/seo/collections', {
+    schema: {
+      tags: ['search', 'seo'],
+      description: 'Get collection slugs for static site generation (lightweight, paginated)',
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', default: 100, minimum: 1, maximum: 1000 },
+          offset: { type: 'number', default: 0, minimum: 0 },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { limit = 100, offset = 0 } = request.query as {
+      limit?: number;
+      offset?: number;
+    };
+
+    const cacheKey = `search:seo:collections:${limit}:${offset}`;
+    const cached = await cacheGet<any>(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Get total count (collections don't have visibility - all are public)
+    const countResult = await query<{ count: string }>(
+      server,
+      `SELECT COUNT(*) as count FROM collections`
+    );
+    const total = parseInt(countResult.rows[0]?.count || '0', 10);
+
+    // Get collection slugs only
+    const result = await query<{ name_slug: string; updated_at: string }>(
+      server,
+      `SELECT name_slug, updated_at
+       FROM collections
+       ORDER BY downloads DESC, name_slug ASC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+
+    const response = {
+      collections: result.rows.map(r => r.name_slug),
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    };
+
+    // Cache for 1 hour (collections don't change frequently)
+    await cacheSet(server, cacheKey, response, 3600);
+
+    return response;
+  });
 }
