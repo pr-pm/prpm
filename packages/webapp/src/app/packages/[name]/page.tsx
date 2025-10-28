@@ -43,8 +43,7 @@ export async function generateStaticParams() {
 
       try {
         const res = await fetch(url, {
-          next: { revalidate: 3600 }, // Revalidate every hour
-          cache: 'no-store' // Disable caching during build
+          next: { revalidate: 3600 } // Revalidate every hour
         })
 
         console.log(`[SSG Packages] Response status: ${res.status} ${res.statusText}`)
