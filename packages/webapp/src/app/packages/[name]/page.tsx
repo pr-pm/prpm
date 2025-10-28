@@ -20,25 +20,38 @@ export async function generateStaticParams() {
   const limit = 100
   let hasMore = true
 
+  console.log(`[SSG] Fetching packages from: ${REGISTRY_URL}`)
+
   // Paginate through all packages
   while (hasMore) {
     try {
-      const res = await fetch(`${REGISTRY_URL}/api/v1/search/seo/packages?limit=${limit}&offset=${offset}`, {
+      const url = `${REGISTRY_URL}/api/v1/search/seo/packages?limit=${limit}&offset=${offset}`
+      console.log(`[SSG] Fetching: ${url}`)
+
+      const res = await fetch(url, {
         next: { revalidate: 3600 } // Revalidate every hour
       })
 
-      if (!res.ok) break
+      if (!res.ok) {
+        console.error(`[SSG] Failed to fetch packages: ${res.status}`)
+        break
+      }
 
       const data = await res.json()
       allPackages.push(...data.packages)
       hasMore = data.hasMore
       offset += limit
+
+      console.log(`[SSG] Fetched ${allPackages.length} packages so far...`)
     } catch (error) {
-      console.error('Error fetching packages for SSG:', error)
+      console.error('[SSG] Error fetching packages for SSG:', error)
       break
     }
   }
 
+  console.log(`[SSG] Total packages for static generation: ${allPackages.length}`)
+
+  // Return at least an empty array to satisfy Next.js
   return allPackages.map((name) => ({
     name: encodeURIComponent(name),
   }))

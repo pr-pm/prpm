@@ -12,25 +12,38 @@ export async function generateStaticParams() {
   const limit = 100
   let hasMore = true
 
+  console.log(`[SSG] Fetching collections from: ${REGISTRY_URL}`)
+
   // Paginate through all collections
   while (hasMore) {
     try {
-      const res = await fetch(`${REGISTRY_URL}/api/v1/search/seo/collections?limit=${limit}&offset=${offset}`, {
+      const url = `${REGISTRY_URL}/api/v1/search/seo/collections?limit=${limit}&offset=${offset}`
+      console.log(`[SSG] Fetching: ${url}`)
+
+      const res = await fetch(url, {
         next: { revalidate: 3600 } // Revalidate every hour
       })
 
-      if (!res.ok) break
+      if (!res.ok) {
+        console.error(`[SSG] Failed to fetch collections: ${res.status}`)
+        break
+      }
 
       const data = await res.json()
       allCollections.push(...data.collections)
       hasMore = data.hasMore
       offset += limit
+
+      console.log(`[SSG] Fetched ${allCollections.length} collections so far...`)
     } catch (error) {
-      console.error('Error fetching collections for SSG:', error)
+      console.error('[SSG] Error fetching collections for SSG:', error)
       break
     }
   }
 
+  console.log(`[SSG] Total collections for static generation: ${allCollections.length}`)
+
+  // Return at least an empty array to satisfy Next.js
   return allCollections.map((slug) => ({
     slug: encodeURIComponent(slug),
   }))
