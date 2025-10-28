@@ -184,20 +184,12 @@ export default function PackageModal({ package: pkg, isOpen, onClose }: PackageM
           </div>
         )}
 
-        <div className="flex gap-3">
-          <button
-            onClick={handleCopyInstall}
-            className="flex-1 px-4 py-2 bg-prpm-accent hover:bg-prpm-accent-dark rounded-lg font-medium"
-          >
-            {copied ? '✓ Copied!' : 'Copy Install Command'}
-          </button>
-          <Link
-            href={getPackageUrl(pkg.name)}
-            className="flex-1 px-4 py-2 bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg font-medium text-center transition-colors"
-          >
-            View Details
-          </Link>
-        </div>
+        <button
+          onClick={handleCopyInstall}
+          className="w-full px-4 py-2 bg-prpm-accent hover:bg-prpm-accent-dark rounded-lg font-medium"
+        >
+          {copied ? '✓ Copied!' : 'Copy Install Command'}
+        </button>
       </div>
     </div>
   )
