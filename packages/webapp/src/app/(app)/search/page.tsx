@@ -584,13 +584,10 @@ function SearchPageContent() {
                           </div>
                         )}
                         {packages.map((pkg) => (
-                        <div
+                        <Link
                           key={pkg.id}
-                          className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
-                          onClick={() => {
-                            setSelectedPackage(pkg)
-                            setShowPackageModal(true)
-                          }}
+                          href={`/packages/${encodeURIComponent(pkg.name)}`}
+                          className="block bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -643,7 +640,7 @@ function SearchPageContent() {
                               prpm install {pkg.name}
                             </code>
                           </div>
-                        </div>
+                        </Link>
                       ))}
                       </>
                     )}
@@ -659,13 +656,10 @@ function SearchPageContent() {
                       </div>
                     ) : (
                       collections.map((collection) => (
-                        <div
+                        <Link
                           key={collection.id}
-                          onClick={() => {
-                            setSelectedCollection(collection)
-                            setShowCollectionModal(true)
-                          }}
-                          className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
+                          href={`/collections/${encodeURIComponent(collection.name_slug)}`}
+                          className="block bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -716,7 +710,7 @@ function SearchPageContent() {
                               prpm install {collection.name_slug}
                             </code>
                           </div>
-                        </div>
+                        </Link>
                       ))
                     )}
                   </div>

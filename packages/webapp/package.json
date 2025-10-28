@@ -6,6 +6,12 @@
   "scripts": {
     "dev": "next dev -p 5173",
     "build": "next build",
+    "build:static": "tsx scripts/build-static.ts --env=production",
+    "build:static:local": "tsx scripts/build-static.ts --env=local",
+    "build:static:staging": "tsx scripts/build-static.ts --env=staging",
+    "generate-sitemap": "tsx scripts/generate-sitemap.ts --env=production",
+    "generate-sitemap:local": "tsx scripts/generate-sitemap.ts --env=local",
+    "generate-sitemap:staging": "tsx scripts/generate-sitemap.ts --env=staging",
     "start": "next start -p 5173",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
