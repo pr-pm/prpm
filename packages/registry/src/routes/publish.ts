@@ -214,7 +214,7 @@ export async function publishRoutes(server: FastifyInstance) {
         await query(
           server,
           `INSERT INTO packages (
-            id, description, author_id, org_id, format, subtype, license, license_text, license_url, snippet,
+            name, description, author_id, org_id, format, subtype, license, license_text, license_url, snippet,
             repository_url, homepage_url, documentation_url,
             tags, keywords, category, last_published_at
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())`,

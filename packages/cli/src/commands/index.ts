@@ -104,7 +104,7 @@ export async function handleIndex(options: { verbose?: boolean } = {}): Promise<
       { path: '.continue/rules', format: 'continue', subtype: 'rule', label: 'Continue Rules' },
       { path: '.windsurf/rules', format: 'windsurf', subtype: 'rule', label: 'Windsurf Rules' },
       { path: '.prompts', format: 'generic', subtype: 'prompt', label: 'Generic Prompts' },
-      { path: '.mcp', format: 'mcp', subtype: 'tool', label: 'MCP Servers' },
+      { path: '.mcp', format: 'mcp', subtype: 'rule', label: 'MCP Servers' },
     ];
 
     // Scan each directory

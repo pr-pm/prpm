@@ -399,3 +399,62 @@ export async function getAuthorPackages(jwtToken: string, sort: 'downloads' | 'v
 
   return response.json()
 }
+
+/**
+ * Organization types
+ */
+export interface Organization {
+  id: string
+  name: string
+  description: string | null
+  avatar_url: string | null
+  website_url: string | null
+  is_verified: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface OrganizationMember {
+  user_id: string | null
+  username: string
+  email: string
+  avatar_url: string | null
+  role: string
+  joined_at: string
+  is_public?: boolean
+}
+
+export interface OrganizationPackage {
+  id: string
+  name: string
+  description: string
+  format: string
+  subtype: string
+  downloads: number
+  is_featured: boolean
+  is_verified: boolean
+  last_published_at: string
+  created_at: string
+}
+
+export interface OrganizationDetails {
+  organization: Organization
+  packages: OrganizationPackage[]
+  members: OrganizationMember[]
+  package_count: number
+  member_count: number
+}
+
+/**
+ * Get organization details
+ */
+export async function getOrganization(orgName: string): Promise<OrganizationDetails> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations/${encodeURIComponent(orgName)}`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch organization' }))
+    throw new Error(error.error || error.message || 'Failed to fetch organization')
+  }
+
+  return response.json()
+}

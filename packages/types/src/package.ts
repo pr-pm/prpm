@@ -17,6 +17,22 @@ export type Format =
   | 'mcp';
 
 /**
+ * Available formats as a constant array
+ * Useful for CLI prompts, validation, etc.
+ */
+export const FORMATS: readonly Format[] = [
+  'cursor',
+  'claude',
+  'continue',
+  'windsurf',
+  'copilot',
+  'kiro',
+  'agents.md',
+  'generic',
+  'mcp',
+] as const;
+
+/**
  * Package subtype - the functional category of the package
  */
 export type Subtype =
@@ -25,11 +41,22 @@ export type Subtype =
   | 'skill'
   | 'slash-command'
   | 'prompt'
-  | 'workflow'
-  | 'tool'
-  | 'template'
   | 'collection'
   | 'chatmode';
+
+/**
+ * Available subtypes as a constant array
+ * Useful for CLI prompts, validation, etc.
+ */
+export const SUBTYPES: readonly Subtype[] = [
+  'rule',
+  'agent',
+  'skill',
+  'slash-command',
+  'prompt',
+  'collection',
+  'chatmode',
+] as const;
 
 
 export type PackageVisibility = 'public' | 'private' | 'unlisted';

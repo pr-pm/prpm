@@ -9,6 +9,7 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
+import { FORMATS, SUBTYPES } from '../types.js';
 
 interface InitOptions {
   yes?: boolean; // Skip prompts and use defaults
@@ -28,31 +29,6 @@ interface PackageConfig {
   tags: string[];
   files: string[];
 }
-
-const FORMATS = [
-  'cursor',
-  'claude',
-  'continue',
-  'windsurf',
-  'copilot',
-  'kiro',
-  'agents.md',
-  'generic',
-  'mcp',
-] as const;
-
-const SUBTYPES = [
-  'rule',
-  'agent',
-  'skill',
-  'slash-command',
-  'prompt',
-  'workflow',
-  'tool',
-  'template',
-  'collection',
-  'chatmode',
-] as const;
 
 const FORMAT_EXAMPLES: Record<string, { files: string[]; description: string }> = {
   cursor: {
@@ -441,7 +417,7 @@ function getDefaultAuthor(): string {
 /**
  * Create example files based on format
  */
-async function createExampleFiles(format: string, files: string[]): Promise<void> {
+async function createExampleFiles(format: string, files: string[], packageName: string): Promise<void> {
   const templates = EXAMPLE_TEMPLATES[format] || {};
 
   for (const file of files) {
@@ -460,7 +436,11 @@ async function createExampleFiles(format: string, files: string[]): Promise<void
     }
 
     // Use template or create empty file
-    const content = templates[file] || `# ${file}\n\nAdd your content here.\n`;
+    let content = templates[file] || `# ${file}\n\nAdd your content here.\n`;
+
+    // Replace 'example-skill' placeholder with actual package name in template content
+    content = content.replace(/example-skill/g, packageName);
+
     await writeFile(filePath, content, 'utf-8');
     console.log(`  Created ${file}`);
   }
@@ -533,7 +513,10 @@ async function initPackage(options: InitOptions): Promise<void> {
     config.author = getDefaultAuthor() || 'Your Name';
     config.license = 'MIT';
     config.tags = [];
-    config.files = FORMAT_EXAMPLES.cursor.files;
+    // Replace 'example-skill' with actual package name in file paths
+    config.files = FORMAT_EXAMPLES.cursor.files.map(f =>
+      f.replace(/example-skill/g, config.name || 'example-skill')
+    );
   } else {
     // Interactive prompts
     const rl = readline.createInterface({ input, output });
@@ -560,11 +543,7 @@ async function initPackage(options: InitOptions): Promise<void> {
       config.format = await select(rl, 'Select package format:', FORMATS, 'cursor');
 
       // Subtype
-      console.log('\nAvailable subtypes: rule, agent, skill, slash-command, prompt, workflow, tool, template, collection, chatmode');
-      const includeSubtype = await prompt(rl, 'Specify subtype? (y/N)', 'n');
-      if (includeSubtype.toLowerCase() === 'y') {
-        config.subtype = await select(rl, 'Select package subtype:', SUBTYPES, 'rule');
-      }
+      config.subtype = await select(rl, 'Select package subtype:', SUBTYPES, 'rule');
 
       // Author
       const defaultAuthor = getDefaultAuthor();
@@ -592,8 +571,14 @@ async function initPackage(options: InitOptions): Promise<void> {
 
       // Files - use examples based on format
       const formatExamples = FORMAT_EXAMPLES[config.format];
+
+      // Replace 'example-skill' with actual package name in file paths
+      const exampleFiles = formatExamples.files.map(f =>
+        f.replace(/example-skill/g, config.name || 'example-skill')
+      );
+
       console.log(`\nExample files for ${config.format}:`);
-      formatExamples.files.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
+      exampleFiles.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
 
       const useExamples = await prompt(
         rl,
@@ -602,12 +587,12 @@ async function initPackage(options: InitOptions): Promise<void> {
       );
 
       if (useExamples.toLowerCase() !== 'n') {
-        config.files = formatExamples.files;
+        config.files = exampleFiles;
       } else {
         const filesInput = await prompt(
           rl,
           'Files (comma-separated)',
-          formatExamples.files.join(', ')
+          exampleFiles.join(', ')
         );
         config.files = filesInput
           .split(',')
@@ -698,11 +683,8 @@ async function initPackage(options: InitOptions): Promise<void> {
     version: config.version,
     description: config.description,
     format: config.format,
+    subtype: config.subtype || 'rule',  // Default to 'rule' if not specified
   };
-
-  if (config.subtype) {
-    manifest.subtype = config.subtype;
-  }
 
   manifest.author = config.author;
   manifest.license = config.license;
@@ -727,9 +709,9 @@ async function initPackage(options: InitOptions): Promise<void> {
   console.log('\n✅ Created prpm.json\n');
 
   // Create example files
-  if (config.files && config.format) {
+  if (config.files && config.format && config.name) {
     console.log('Creating example files...\n');
-    await createExampleFiles(config.format, config.files);
+    await createExampleFiles(config.format, config.files, config.name);
 
     // Create README
     await createReadme(config as PackageConfig);

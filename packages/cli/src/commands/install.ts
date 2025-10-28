@@ -35,9 +35,6 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'slash-command': '⚡',
     'rule': '📋',
     'prompt': '💬',
-    'workflow': '⚡',
-    'tool': '🔧',
-    'template': '📄',
     'collection': '📦',
     'chatmode': '💬',
   };
@@ -80,9 +77,6 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'slash-command': 'Slash Command',
     'rule': 'Rule',
     'prompt': 'Prompt',
-    'workflow': 'Workflow',
-    'tool': 'Tool',
-    'template': 'Template',
     'collection': 'Collection',
     'chatmode': 'Chat Mode',
   };

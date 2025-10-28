@@ -3,7 +3,37 @@
  */
 
 export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
-export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode';
+export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'collection' | 'chatmode';
+
+/**
+ * Available formats as a constant array
+ * Useful for CLI prompts, validation, etc.
+ */
+export const FORMATS: readonly Format[] = [
+  'cursor',
+  'claude',
+  'continue',
+  'windsurf',
+  'copilot',
+  'kiro',
+  'agents.md',
+  'generic',
+  'mcp',
+] as const;
+
+/**
+ * Available subtypes as a constant array
+ * Useful for CLI prompts, validation, etc.
+ */
+export const SUBTYPES: readonly Subtype[] = [
+  'rule',
+  'agent',
+  'skill',
+  'slash-command',
+  'prompt',
+  'collection',
+  'chatmode',
+] as const;
 
 export interface Package {
   id: string;
