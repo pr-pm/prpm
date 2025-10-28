@@ -1,0 +1,21 @@
+{
+  "name": "self-improving",
+  "version": "1.0.0",
+  "description": "Use when starting infrastructure, testing, deployment, or framework-specific tasks - automatically searches PRPM registry for relevant expertise packages and suggests installation to enhance capabilities for the current task",
+  "format": "claude",
+  "subtype": "skill",
+  "author": "Khaliq <khaliqgant@gmail.com>",
+  "organization": "prpm",
+  "license": "MIT",
+  "repository": "https://github.com/pr-pm/prpm",
+  "tags": [
+    "claude",
+    "skill",
+    "self-improvement",
+    "meta",
+    "prpm"
+  ],
+  "files": [
+    ".claude/skills/self-improving/SKILL.md"
+  ]
+}

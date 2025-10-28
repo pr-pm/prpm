@@ -27,84 +27,41 @@ export async function generateStaticParams() {
   }
 
   try {
-    const allPackages: string[] = []
+    console.log(`[SSG Packages] Starting - REGISTRY_URL: ${REGISTRY_URL}`)
+
+    // Fetch package names using SEO endpoint (lightweight)
+    const allPackageNames: string[] = []
     let offset = 0
     const limit = 100
     let hasMore = true
 
-    console.log(`[SSG Packages] Starting - REGISTRY_URL: ${REGISTRY_URL}`)
-    console.log(`[SSG Packages] Environment check:`, {
-      NEXT_PUBLIC_REGISTRY_URL: process.env.NEXT_PUBLIC_REGISTRY_URL,
-      REGISTRY_URL: process.env.REGISTRY_URL,
-      NODE_ENV: process.env.NODE_ENV,
-      CI: process.env.CI
-    })
-
-    // Paginate through all packages
     while (hasMore) {
       const url = `${REGISTRY_URL}/api/v1/search/seo/packages?limit=${limit}&offset=${offset}`
-      console.log(`[SSG Packages] Attempting fetch: ${url}`)
+      const res = await fetch(url, { next: { revalidate: 3600 } })
 
-      try {
-        const res = await fetch(url, {
-          next: { revalidate: 3600 } // Revalidate every hour
-        })
+      if (!res.ok) break
 
-        console.log(`[SSG Packages] Response status: ${res.status} ${res.statusText}`)
+      const data = await res.json()
+      if (!data.packages) break
 
-        if (!res.ok) {
-          console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages`)
-          console.error(`[SSG Packages] Response headers:`, Object.fromEntries(res.headers.entries()))
-          break
-        }
-
-        const data = await res.json()
-        console.log(`[SSG Packages] Received data with ${data.packages?.length || 0} packages`)
-
-        if (!data.packages || !Array.isArray(data.packages)) {
-          console.error('[SSG Packages] Invalid response format:', data)
-          break
-        }
-
-        allPackages.push(...data.packages)
-        hasMore = data.hasMore
-        offset += limit
-
-        console.log(`[SSG Packages] Progress: ${allPackages.length} packages fetched`)
-      } catch (fetchError) {
-        console.error('[SSG Packages] Fetch error:', fetchError)
-        console.error('[SSG Packages] Error details:', {
-          message: fetchError instanceof Error ? fetchError.message : String(fetchError),
-          stack: fetchError instanceof Error ? fetchError.stack : undefined
-        })
-        break
-      }
+      allPackageNames.push(...data.packages)
+      hasMore = data.hasMore
+      offset += limit
     }
 
-    console.log(`[SSG Packages] ✅ Complete: ${allPackages.length} packages for static generation`)
+    console.log(`[SSG Packages] ✅ Found ${allPackageNames.length} packages`)
 
-    // Transform package names to author/package format
-    // @scope/package -> scope/package
-    // unscoped-package -> prpm/unscoped-package (default author)
-    const params = allPackages.map((name) => {
+    // Transform package names to params
+    const params = allPackageNames.map((name) => {
       if (name.startsWith('@')) {
-        // Scoped package: @author/package/sub/path -> author + [package, sub, path]
-        const withoutAt = name.substring(1) // Remove @
+        const withoutAt = name.substring(1)
         const [author, ...packageParts] = withoutAt.split('/')
-        return {
-          author,
-          package: packageParts, // Array for catch-all route
-        }
+        return { author, package: packageParts }
       } else {
-        // Unscoped package: assume prpm as default author
-        return {
-          author: 'prpm',
-          package: [name], // Array for catch-all route
-        }
+        return { author: 'prpm', package: [name] }
       }
     })
 
-    console.log(`[SSG Packages] Returning ${params.length} params`)
     return params
 
   } catch (outerError) {
@@ -211,19 +168,32 @@ export async function generateMetadata({ params }: { params: { author: string; p
 
 async function getPackage(name: string): Promise<PackageInfo | null> {
   try {
-    // URL-encode the package name to handle @ and / characters
+    // Use the search endpoint which returns full package data
+    // This avoids rate limiting since we batch requests
     const encodedName = encodeURIComponent(name)
-    const url = `${REGISTRY_URL}/api/v1/packages/${encodedName}`
+    const url = `${REGISTRY_URL}/api/v1/search?q=${encodedName}&limit=1`
 
     const res = await fetch(url, {
-      next: { revalidate: 3600 } // Revalidate every hour
+      next: { revalidate: 3600 },
+      cache: 'force-cache' // Aggressively cache during build
     })
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      console.error(`[Package Fetch] Failed for ${name}: ${res.status}`)
+      return null
+    }
 
-    return res.json()
+    const data = await res.json()
+    if (!data.packages || data.packages.length === 0) {
+      console.error(`[Package Fetch] No results for ${name}`)
+      return null
+    }
+
+    // Return the first (exact) match
+    const exactMatch = data.packages.find((p: PackageInfo) => p.name === name)
+    return exactMatch || data.packages[0]
   } catch (error) {
-    console.error('Error fetching package:', error)
+    console.error(`[Package Fetch] Error fetching ${name}:`, error)
     return null
   }
 }

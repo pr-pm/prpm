@@ -79,9 +79,13 @@ async function buildServer() {
   });
 
   // Rate limiting
+  // Higher limits for production to support static site generation
+  const rateLimitMax = parseInt(process.env.RATE_LIMIT_MAX || '500', 10);
+  const rateLimitWindow = process.env.RATE_LIMIT_WINDOW || '1 minute';
+
   await server.register(rateLimit, {
-    max: 100, // 100 requests
-    timeWindow: '1 minute',
+    max: rateLimitMax,
+    timeWindow: rateLimitWindow,
     errorResponseBuilder: () => ({
       error: 'Too Many Requests',
       message: 'Rate limit exceeded. Please try again later.',

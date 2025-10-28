@@ -24,7 +24,7 @@ Analyze user request for keywords and extract relevant terms.
 
 ### 2. Automatic Search
 ```bash
-prpm search "<detected keywords>" --limit 5
+prpm search "<detected keywords>" --limit 5 --no-interactive
 ```
 
 ### 3. Package Suggestion
@@ -113,11 +113,14 @@ Action:
 # Basic search
 prpm search "keyword1 keyword2"
 
-# Category filter
-prpm search --category devops "pulumi"
+# author filter
+prpm search --author "prpm"
 
 # Type filter
-prpm search --type claude "infrastructure"
+prpm search --format claude "infrastructure"
+
+# Sub Type filter
+prpm search --format claude --subtype skill "infrastructure"
 
 # Limit results
 prpm search "github actions" --limit 5
