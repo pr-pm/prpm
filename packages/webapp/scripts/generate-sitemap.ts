@@ -176,7 +176,7 @@ async function main() {
     entries.push({
       url: `${envConfig.SITE_URL}${page.url}`,
       lastmod: new Date().toISOString().split('T')[0],
-      changefreq: page.changefreq,
+      changefreq: page.changefreq as SitemapEntry['changefreq'],
       priority: page.priority,
     })
   }

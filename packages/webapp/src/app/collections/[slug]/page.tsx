@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     return {
       title: `${collection.name_slug} - PRPM Collection`,
       description: collection.description || `Install ${collection.name_slug} collection with PRPM - curated package collection`,
-      keywords: [...(collection.tags || []), collection.category, collection.framework, 'prpm', 'collection', 'ai', 'coding'].filter(Boolean),
+      keywords: [...(collection.tags || []), collection.category, collection.framework, 'prpm', 'collection', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
       openGraph: {
         title: collection.name_slug,
         description: collection.description || 'Curated package collection',
@@ -215,32 +215,32 @@ export default async function CollectionPage({ params }: { params: { slug: strin
           <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6">
             <h2 className="text-xl font-semibold text-white mb-4">Links</h2>
             <dl className="space-y-3">
-              {collection.repository_url && (
+              {(collection as any).repository_url && (
                 <div>
                   <dt className="text-sm text-gray-400">Repository</dt>
                   <dd>
                     <a
-                      href={collection.repository_url}
+                      href={(collection as any).repository_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-prpm-accent hover:text-prpm-accent-light break-all"
                     >
-                      {collection.repository_url}
+                      {(collection as any).repository_url}
                     </a>
                   </dd>
                 </div>
               )}
-              {collection.homepage_url && (
+              {(collection as any).homepage_url && (
                 <div>
                   <dt className="text-sm text-gray-400">Homepage</dt>
                   <dd>
                     <a
-                      href={collection.homepage_url}
+                      href={(collection as any).homepage_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-prpm-accent hover:text-prpm-accent-light break-all"
                     >
-                      {collection.homepage_url}
+                      {(collection as any).homepage_url}
                     </a>
                   </dd>
                 </div>

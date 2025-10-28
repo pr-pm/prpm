@@ -103,10 +103,10 @@ async function main() {
   })
 
   // Step 2: Prepare environment variables
-  const env = {
+  const env: NodeJS.ProcessEnv = {
     ...process.env,
     ...envConfig,
-    NODE_ENV: 'production',
+    NODE_ENV: 'production' as const,
   }
 
   // Step 3: Run Next.js build
@@ -119,7 +119,7 @@ async function main() {
     shell: true,
   })
 
-  buildProcess.on('close', (code) => {
+  buildProcess.on('close', (code: number | null) => {
     if (code === 0) {
       console.log('\n✅ Build completed successfully!')
       console.log(`\n📊 Build stats:`)
@@ -139,7 +139,7 @@ async function main() {
     }
   })
 
-  buildProcess.on('error', (error) => {
+  buildProcess.on('error', (error: Error) => {
     console.error(`\n❌ Build error: ${error.message}\n`)
     process.exit(1)
   })
