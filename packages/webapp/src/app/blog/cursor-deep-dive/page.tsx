@@ -6,11 +6,34 @@ import BackLink from '@/components/BackLink'
 import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
-  title: "Cursor Rules: A Technical Deep Dive",
-  description: "Explore Cursor's MDC format specification, PRPM's implementation, and best practices for creating effective Cursor rules.",
+  title: "Cursor Rules: Complete Guide to MDC Format & Best Practices | PRPM",
+  description: "Master Cursor rules with this comprehensive guide to MDC format, .cursor/rules/ system, YAML frontmatter, and best practices. Learn how to create effective Cursor IDE rules for AI-first code editing.",
+  keywords: [
+    'cursor rules',
+    'cursor IDE',
+    '.cursor/rules',
+    'MDC format',
+    'cursor configuration',
+    'AI code editor',
+    'cursor best practices',
+    'YAML frontmatter',
+    'cursor tutorial',
+    'AI coding tools'
+  ],
+  alternates: {
+    canonical: 'https://prpm.dev/blog/cursor-deep-dive',
+  },
   openGraph: {
-    title: "Cursor Rules: A Technical Deep Dive",
-    description: "Deep dive into Cursor's MDC format and rule system for AI-first code editing.",
+    title: "Cursor Rules: Complete Guide to MDC Format & Best Practices",
+    description: "Master Cursor rules with this comprehensive guide to MDC format, .cursor/rules/ system, and best practices for AI-first code editing.",
+    type: 'article',
+    url: 'https://prpm.dev/blog/cursor-deep-dive',
+    publishedTime: '2025-10-26T00:00:00Z',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Cursor Rules: Complete Guide to MDC Format & Best Practices",
+    description: "Master Cursor rules with this comprehensive guide to MDC format and best practices.",
   },
 }
 

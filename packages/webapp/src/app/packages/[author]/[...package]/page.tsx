@@ -140,19 +140,65 @@ export async function generateMetadata({ params }: { params: { author: string; p
 
     const pkg: PackageInfo = await res.json()
 
+    // Create SEO-friendly title that highlights the package purpose
+    const displayName = pkg.name.replace(/^@[^/]+\//, '') // Remove @author/ prefix
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+
+    // Build title based on format/subtype for better SEO
+    let seoTitle = displayName
+    if (pkg.subtype === 'rule' && pkg.format === 'cursor') {
+      seoTitle = `${displayName} - Cursor Rules | PRPM`
+    } else if (pkg.subtype === 'skill') {
+      seoTitle = `${displayName} - ${pkg.format === 'claude' ? 'Claude Code' : pkg.format.charAt(0).toUpperCase() + pkg.format.slice(1)} Skill | PRPM`
+    } else if (pkg.subtype === 'prompt') {
+      seoTitle = `${displayName} - AI Prompt | PRPM`
+    } else {
+      seoTitle = `${displayName} - ${pkg.format} ${pkg.subtype} | PRPM`
+    }
+
+    // Enhanced description with more context
+    const seoDescription = pkg.description ||
+      `${displayName}: ${pkg.format} ${pkg.subtype} for ${pkg.format === 'cursor' ? 'Cursor IDE' : pkg.format === 'claude' ? 'Claude Code' : 'AI coding tools'}. ${pkg.category ? `Category: ${pkg.category}.` : ''} Install with PRPM.`
+
+    // Enhanced keywords with format-specific terms
+    const formatKeywords = pkg.format === 'cursor' ? ['cursor', 'cursor rules', 'cursor IDE', '.cursor/rules'] :
+      pkg.format === 'claude' ? ['claude', 'claude code', 'claude skills'] :
+      pkg.format === 'windsurf' ? ['windsurf', 'windsurf rules'] :
+      [pkg.format]
+
+    const subtypeKeywords = pkg.subtype === 'rule' ? ['rules', 'coding rules', 'AI rules'] :
+      pkg.subtype === 'skill' ? ['skills', 'coding skills', 'AI skills'] :
+      pkg.subtype === 'prompt' ? ['prompts', 'AI prompts'] :
+      [pkg.subtype]
+
     return {
-      title: `${pkg.name} - PRPM Package`,
-      description: pkg.description || `Install ${pkg.name} with PRPM - ${pkg.format} ${pkg.subtype} for your AI coding workflow`,
-      keywords: [...(pkg.tags || []), pkg.format, pkg.subtype, pkg.category, 'prpm', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
+      title: seoTitle,
+      description: seoDescription,
+      keywords: [
+        ...formatKeywords,
+        ...subtypeKeywords,
+        ...(pkg.tags || []),
+        pkg.category,
+        'prpm',
+        'AI coding',
+        'developer tools',
+        'package manager'
+      ].filter((k): k is string => Boolean(k)),
+      alternates: {
+        canonical: `https://prpm.dev/packages/${params.author}/${packagePath}`,
+      },
       openGraph: {
-        title: pkg.name,
-        description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
+        title: seoTitle,
+        description: seoDescription,
         type: 'website',
+        url: `https://prpm.dev/packages/${params.author}/${packagePath}`,
       },
       twitter: {
         card: 'summary',
-        title: pkg.name,
-        description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
+        title: seoTitle,
+        description: seoDescription,
       },
     }
   } catch (error) {
@@ -194,8 +240,66 @@ export default async function PackagePage({ params }: { params: { author: string
 
   const content = getPackageContent(pkg)
 
+  // Generate structured data (JSON-LD) for SEO
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    name: pkg.name,
+    description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
+    programmingLanguage: pkg.format,
+    codeRepository: pkg.repository_url,
+    license: pkg.license,
+    version: pkg.versions?.[0]?.version,
+    keywords: pkg.tags?.join(', '),
+    author: {
+      '@type': 'Organization',
+      name: params.author,
+    },
+    downloadUrl: `https://prpm.dev/packages/${params.author}/${packagePath}`,
+    aggregateRating: pkg.rating_count && pkg.rating_average ? {
+      '@type': 'AggregateRating',
+      ratingValue: pkg.rating_average,
+      ratingCount: pkg.rating_count,
+    } : undefined,
+  }
+
+  const breadcrumbStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://prpm.dev',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Packages',
+        item: 'https://prpm.dev/search',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: pkg.name,
+        item: `https://prpm.dev/packages/${params.author}/${packagePath}`,
+      },
+    ],
+  }
+
   return (
     <main className="min-h-screen bg-prpm-dark">
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbStructuredData) }}
+      />
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="mb-6 text-sm text-gray-400">
