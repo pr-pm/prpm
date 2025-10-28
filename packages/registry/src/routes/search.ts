@@ -504,10 +504,10 @@ export async function searchRoutes(server: FastifyInstance) {
       return cached;
     }
 
-    // Get total count
+    // Get total count (collections don't have visibility - all are public)
     const countResult = await query<{ count: string }>(
       server,
-      `SELECT COUNT(*) as count FROM collections WHERE visibility = 'public'`
+      `SELECT COUNT(*) as count FROM collections`
     );
     const total = parseInt(countResult.rows[0]?.count || '0', 10);
 
@@ -516,7 +516,6 @@ export async function searchRoutes(server: FastifyInstance) {
       server,
       `SELECT name_slug, updated_at
        FROM collections
-       WHERE visibility = 'public'
        ORDER BY downloads DESC, name_slug ASC
        LIMIT $1 OFFSET $2`,
       [limit, offset]
