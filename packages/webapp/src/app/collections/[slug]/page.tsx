@@ -7,6 +7,13 @@ const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTR
 
 // Generate static params for all collections
 export async function generateStaticParams() {
+  // During CI or when SEO endpoints don't exist yet, return empty array
+  // to allow build to succeed. The full static generation happens in deployment.
+  if (process.env.CI === 'true' || process.env.SKIP_SSG === 'true') {
+    console.log('[SSG Collections] Skipping static generation (CI or SKIP_SSG enabled)')
+    return []
+  }
+
   try {
     const allCollections: string[] = []
     let offset = 0
@@ -17,7 +24,8 @@ export async function generateStaticParams() {
     console.log(`[SSG Collections] Environment check:`, {
       NEXT_PUBLIC_REGISTRY_URL: process.env.NEXT_PUBLIC_REGISTRY_URL,
       REGISTRY_URL: process.env.REGISTRY_URL,
-      NODE_ENV: process.env.NODE_ENV
+      NODE_ENV: process.env.NODE_ENV,
+      CI: process.env.CI
     })
 
     // Paginate through all collections
