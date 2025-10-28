@@ -88,7 +88,7 @@ export default function Home() {
                   <button className="text-xs text-gray-500 hover:text-prpm-accent transition-colors">Copy</button>
                 </div>
                 <code className="block font-mono text-prpm-accent-light text-left space-y-1">
-                  <div><span className="text-gray-600">$</span> prpm install collection/nextjs-pro</div>
+                  <div><span className="text-gray-600">$</span> prpm install collections/nextjs-pro</div>
                   <div className="text-xs text-gray-500 mt-2"># Installs 5+ packages: react-best-practices, typescript-strict, tailwind-helper, and more</div>
                 </code>
               </div>
@@ -172,15 +172,16 @@ export default function Home() {
 
           {/* Demo */}
           <div className="mb-20">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto px-4 sm:px-0">
               <h2 className="text-2xl font-semibold mb-6 text-white text-center">See it in action</h2>
-              <div className="bg-prpm-dark-card/50 border border-prpm-border rounded-2xl p-4 backdrop-blur-sm">
+              <div className="bg-prpm-dark-card/50 border border-prpm-border rounded-lg sm:rounded-2xl p-0 sm:p-4 backdrop-blur-sm overflow-hidden">
                 <Image
                   src="/demo.gif"
                   alt="PRPM Install Demo"
                   width={1200}
                   height={600}
                   className="w-full rounded-lg"
+                  style={{ height: 'auto' }}
                   unoptimized
                 />
               </div>

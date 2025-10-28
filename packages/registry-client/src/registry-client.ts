@@ -289,7 +289,7 @@ export class RegistryClient {
   /**
    * Publish a package (requires authentication)
    */
-  async publish(manifest: PackageManifest, tarball: Buffer): Promise<PublishResponse> {
+  async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string }): Promise<PublishResponse> {
     if (!this.token) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
@@ -315,17 +315,28 @@ export class RegistryClient {
     // Add manifest as JSON string
     formData.append('manifest', JSON.stringify(normalizedManifest));
 
+    // Add organization ID if specified
+    if (options?.orgId) {
+      formData.append('org_id', options.orgId);
+    }
+
     // Add tarball as blob
     const tarballBlob = new BlobClass([tarball], { type: 'application/gzip' });
     formData.append('tarball', tarballBlob, 'package.tar.gz');
 
-    const response = await this.fetch('/api/v1/packages', {
-      method: 'POST',
-      body: formData as any,
-      // Don't set Content-Type header - let fetch set it with boundary
-    });
+    console.log('📡 Publishing to:', `${this.baseUrl}/api/v1/packages`);
+    try {
+      const response = await this.fetch('/api/v1/packages', {
+        method: 'POST',
+        body: formData as any,
+        // Don't set Content-Type header - let fetch set it with boundary
+      });
 
-    return response.json() as Promise<PublishResponse>;
+      return response.json() as Promise<PublishResponse>;
+    } catch (error) {
+      console.error('❌ Publish request failed:', error instanceof Error ? error.message : String(error));
+      throw error;
+    }
   }
 
   /**
@@ -555,6 +566,16 @@ export class RegistryClient {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
+        // Only log retry errors if DEBUG environment variable is set
+        if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+          console.error(`[RegistryClient] Fetch error on attempt ${attempt + 1}/${retries}:`, {
+            url,
+            method: options.method || 'GET',
+            error: lastError.message,
+            stack: lastError.stack,
+          });
+        }
+
         // Network errors - retry with exponential backoff
         if (attempt < retries - 1 && (
           lastError.message.includes('fetch failed') ||
@@ -562,6 +583,9 @@ export class RegistryClient {
           lastError.message.includes('ETIMEDOUT')
         )) {
           const waitTime = Math.pow(2, attempt) * 1000;
+          if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+            console.log(`[RegistryClient] Retrying in ${waitTime}ms...`);
+          }
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }

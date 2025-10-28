@@ -406,5 +406,266 @@ describe('marketplace-converter', () => {
       expect(manifest.files).not.toContain('https://example.com/plugin.md');
       expect(manifest.files).not.toContain('https://example.com/agent.md');
     });
+
+    it('should handle owner as object with name field', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: {
+          name: 'testowner',
+          email: 'test@example.com',
+          url: 'https://example.com',
+        },
+        description: 'Test description',
+        version: '1.0.0',
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Test plugin description',
+            version: '1.0.0',
+          },
+        ],
+      };
+
+      const manifest = marketplaceToManifest(marketplace);
+
+      expect(manifest.name).toBe('@testowner/test-plugin');
+      expect(manifest.author).toBe('testowner');
+    });
+
+    it('should handle metadata.description fallback', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: 'testowner',
+        metadata: {
+          description: 'Metadata description',
+        },
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            version: '1.0.0',
+          },
+        ],
+      };
+
+      const manifest = marketplaceToManifest(marketplace);
+
+      expect(manifest.description).toBe('Metadata description');
+    });
+
+    it('should handle metadata.version fallback', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: 'testowner',
+        description: 'Test description',
+        metadata: {
+          version: '2.0.0',
+        },
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Test plugin',
+          },
+        ],
+      };
+
+      const manifest = marketplaceToManifest(marketplace);
+
+      expect(manifest.version).toBe('2.0.0');
+    });
+
+    it('should prioritize plugin description over metadata description', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: 'testowner',
+        description: 'Root description',
+        metadata: {
+          description: 'Metadata description',
+        },
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Plugin description',
+            version: '1.0.0',
+          },
+        ],
+      };
+
+      const manifest = marketplaceToManifest(marketplace);
+
+      expect(manifest.description).toBe('Plugin description');
+    });
+
+    it('should prioritize plugin version over metadata version', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: 'testowner',
+        description: 'Test description',
+        version: '1.0.0',
+        metadata: {
+          version: '2.0.0',
+        },
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Test plugin',
+            version: '3.0.0',
+          },
+        ],
+      };
+
+      const manifest = marketplaceToManifest(marketplace);
+
+      expect(manifest.version).toBe('3.0.0');
+    });
+
+    it('should use author fallback from owner when plugin.author missing', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: 'testowner',
+        description: 'Test description',
+        version: '1.0.0',
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Test plugin',
+            version: '1.0.0',
+            // No author field
+          },
+        ],
+      };
+
+      const manifest = marketplaceToManifest(marketplace);
+
+      expect(manifest.author).toBe('testowner');
+    });
+
+    it('should include .claude-plugin/marketplace.json in files', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: 'testowner',
+        description: 'Test description',
+        version: '1.0.0',
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Test plugin',
+            version: '1.0.0',
+          },
+        ],
+      };
+
+      const manifest = marketplaceToManifest(marketplace);
+
+      expect(manifest.files).toContain('.claude-plugin/marketplace.json');
+      expect(manifest.files).toContain('.claude/marketplace.json');
+    });
+  });
+
+  describe('validateMarketplaceJson - New Features', () => {
+    it('should validate marketplace.json with owner object', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: {
+          name: 'testowner',
+          email: 'test@example.com',
+        },
+        description: 'Test description',
+        version: '1.0.0',
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Test plugin',
+            version: '1.0.0',
+          },
+        ],
+      };
+
+      expect(validateMarketplaceJson(marketplace)).toBe(true);
+    });
+
+    it('should reject marketplace.json with owner object missing name', () => {
+      const marketplace = {
+        name: 'Test Marketplace',
+        owner: {
+          email: 'test@example.com',
+        },
+        description: 'Test description',
+        version: '1.0.0',
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Test plugin',
+            version: '1.0.0',
+          },
+        ],
+      };
+
+      expect(validateMarketplaceJson(marketplace)).toBe(false);
+    });
+
+    it('should validate marketplace.json with description in metadata', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: 'testowner',
+        metadata: {
+          description: 'Metadata description',
+        },
+        version: '1.0.0',
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Plugin description',
+            version: '1.0.0',
+          },
+        ],
+      };
+
+      expect(validateMarketplaceJson(marketplace)).toBe(true);
+    });
+
+    it('should reject marketplace.json without description anywhere', () => {
+      const marketplace = {
+        name: 'Test Marketplace',
+        owner: 'testowner',
+        version: '1.0.0',
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            version: '1.0.0',
+          },
+        ],
+      };
+
+      expect(validateMarketplaceJson(marketplace)).toBe(false);
+    });
+
+    it('should validate marketplace.json with optional version', () => {
+      const marketplace: MarketplaceJson = {
+        name: 'Test Marketplace',
+        owner: 'testowner',
+        description: 'Test description',
+        plugins: [
+          {
+            name: 'Test Plugin',
+            source: 'plugin.md',
+            description: 'Plugin description',
+            version: '1.0.0',
+          },
+        ],
+      };
+
+      expect(validateMarketplaceJson(marketplace)).toBe(true);
+    });
   });
 });

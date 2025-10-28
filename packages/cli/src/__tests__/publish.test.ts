@@ -659,6 +659,366 @@ describe.skip('Publish Command', () => {
     });
   });
 
+  describe('Organization Publishing', () => {
+    it('should publish to organization when specified in manifest', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: '@company/team-package',
+          version: '1.0.0',
+          description: 'Test organization package',
+          type: 'cursor',
+          files: ['.cursorrules'],
+          organization: 'my-company',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'owner' },
+          { id: 'org-456', name: 'other-org', role: 'maintainer' },
+        ],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: '@company/team-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockWhoami).toHaveBeenCalled();
+      expect(mockPublish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: '@company/team-package',
+          organization: 'my-company',
+        }),
+        expect.any(Buffer),
+        { orgId: 'org-123' }
+      );
+    });
+
+    it('should publish to organization by ID', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'org-package',
+          version: '1.0.0',
+          description: 'Test org package by ID',
+          type: 'cursor',
+          files: ['.cursorrules'],
+          organization: 'org-123',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'admin' },
+        ],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'org-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Buffer),
+        { orgId: 'org-123' }
+      );
+    });
+
+    it('should fail when organization not found', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package',
+          type: 'cursor',
+          files: ['.cursorrules'],
+          organization: 'nonexistent-org',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'owner' },
+        ],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: jest.fn(),
+      } as any);
+
+      await expect(handlePublish({})).rejects.toThrow('Process exited');
+    });
+
+    it('should fail when user has insufficient permissions', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package',
+          type: 'cursor',
+          files: ['.cursorrules'],
+          organization: 'my-company',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'member' }, // Not owner/admin/maintainer
+        ],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: jest.fn(),
+      } as any);
+
+      await expect(handlePublish({})).rejects.toThrow('Process exited');
+    });
+
+    it('should accept owner role for publishing', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'owner-package',
+          version: '1.0.0',
+          description: 'Package published by owner',
+          type: 'cursor',
+          files: ['.cursorrules'],
+          organization: 'my-company',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'owner' },
+        ],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'owner-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+    });
+
+    it('should accept admin role for publishing', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'admin-package',
+          version: '1.0.0',
+          description: 'Package published by admin',
+          type: 'cursor',
+          files: ['.cursorrules'],
+          organization: 'my-company',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'admin' },
+        ],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'admin-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+    });
+
+    it('should accept maintainer role for publishing', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'maintainer-package',
+          version: '1.0.0',
+          description: 'Package published by maintainer',
+          type: 'cursor',
+          files: ['.cursorrules'],
+          organization: 'my-company',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'maintainer' },
+        ],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'maintainer-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+    });
+
+    it('should publish to personal account when no organization specified', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'personal-package',
+          version: '1.0.0',
+          description: 'Personal package',
+          type: 'cursor',
+          files: ['.cursorrules'],
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'owner' },
+        ],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'personal-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      // Should be called without orgId parameter
+      expect(mockPublish).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Buffer),
+        undefined
+      );
+    });
+
+    it('should handle network errors when fetching organizations', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package',
+          type: 'cursor',
+          files: ['.cursorrules'],
+          organization: 'my-company',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockRejectedValue(new Error('Network error'));
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: jest.fn(),
+      } as any);
+
+      await expect(handlePublish({})).rejects.toThrow('Process exited');
+    });
+
+    it('should fallback to personal publishing on network error when no org specified', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package',
+          type: 'cursor',
+          files: ['.cursorrules'],
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '# Test');
+
+      const mockWhoami = jest.fn().mockRejectedValue(new Error('Network error'));
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Buffer),
+        undefined
+      );
+    });
+  });
+
   describe('Telemetry', () => {
     it('should track successful publish', async () => {
       await writeFile(

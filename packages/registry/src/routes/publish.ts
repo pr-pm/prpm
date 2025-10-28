@@ -24,57 +24,47 @@ export async function publishRoutes(server: FastifyInstance) {
   server.post('/', {
     onRequest: [server.authenticate],
     schema: {
-      tags: ['packages'],
-      description: 'Publish a new package or version',
-      consumes: ['multipart/form-data'],
-      // Skip body validation for multipart - will be parsed manually
+      body: {
+        type: 'object',
+        additionalProperties: true,
+      },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
 
     try {
-      // Get manifest and tarball
+      // Parse multipart data manually using request.parts()
       let manifest: PackageManifest;
       let tarball: Buffer | undefined;
       let orgId: string | undefined;
+      let changelog: string | undefined;
 
-      // Parse form fields
-      const fields: Record<string, any> = {};
-      try {
-        for await (const part of request.parts()) {
-          console.log('Received part:', part.type, part.fieldname);
-          if (part.type === 'field') {
-            fields[part.fieldname] = part.value;
-          } else if (part.type === 'file') {
-            if (part.fieldname === 'tarball') {
-              const chunks: Buffer[] = [];
-              for await (const chunk of part.file) {
-                chunks.push(chunk);
-              }
-              tarball = Buffer.concat(chunks);
-              console.log('Tarball size:', tarball.length);
+      const parts = request.parts();
+      for await (const part of parts) {
+        if (part.type === 'field') {
+          if (part.fieldname === 'manifest') {
+            try {
+              manifest = JSON.parse(part.value as string);
+            } catch {
+              return reply.status(400).send({ error: 'Invalid manifest JSON' });
             }
+          } else if (part.fieldname === 'org_id') {
+            orgId = part.value as string;
+          } else if (part.fieldname === 'changelog') {
+            changelog = part.value as string;
           }
+        } else if (part.type === 'file' && part.fieldname === 'tarball') {
+          const chunks: Buffer[] = [];
+          for await (const chunk of part.file) {
+            chunks.push(chunk);
+          }
+          tarball = Buffer.concat(chunks);
         }
-      } catch (parseError) {
-        console.error('Error parsing multipart data:', parseError);
-        throw parseError;
       }
 
-      // Extract org_id if provided
-      if (fields.org_id) {
-        orgId = fields.org_id;
-      }
-
-      // Validate manifest field
-      if (!fields.manifest) {
+      // Validate required fields
+      if (!manifest!) {
         return reply.status(400).send({ error: 'Missing manifest field' });
-      }
-
-      try {
-        manifest = JSON.parse(fields.manifest);
-      } catch {
-        return reply.status(400).send({ error: 'Invalid manifest JSON' });
       }
 
       if (!tarball) {
@@ -224,7 +214,7 @@ export async function publishRoutes(server: FastifyInstance) {
         await query(
           server,
           `INSERT INTO packages (
-            id, description, author_id, org_id, format, subtype, license, license_text, license_url, snippet,
+            name, description, author_id, org_id, format, subtype, license, license_text, license_url, snippet,
             repository_url, homepage_url, documentation_url,
             tags, keywords, category, last_published_at
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())`,
@@ -283,7 +273,7 @@ export async function publishRoutes(server: FastifyInstance) {
           manifest.name,
           manifest.version,
           manifest.description,
-          fields.changelog || null,
+          changelog || null,
           upload.url,
           upload.hash,
           upload.size,

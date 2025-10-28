@@ -32,7 +32,8 @@ export const packageManifestSchema = z.object({
   homepage: z.string().url().optional(),
   documentation: z.string().url().optional(),
   format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp']),
-  subtype: z.enum(['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode']).optional(),
+  subtype: z.enum(['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode']).optional(),
+  organization: z.string().optional(), // Organization name to publish under
   // Legacy field support for backwards compatibility
   type: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'generic']).optional(),
   tags: z.array(z.string()).max(10).optional(),

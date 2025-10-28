@@ -29,17 +29,17 @@ const LICENSE_FILE_PATTERNS = [
  */
 const LICENSE_PATTERNS = [
   { pattern: /MIT License/i, type: 'MIT' },
-  { pattern: /Apache License.*Version 2\.0/i, type: 'Apache-2.0' },
-  { pattern: /GNU GENERAL PUBLIC LICENSE.*Version 3/i, type: 'GPL-3.0' },
-  { pattern: /GNU GENERAL PUBLIC LICENSE.*Version 2/i, type: 'GPL-2.0' },
-  { pattern: /GNU LESSER GENERAL PUBLIC LICENSE.*Version 3/i, type: 'LGPL-3.0' },
-  { pattern: /GNU LESSER GENERAL PUBLIC LICENSE.*Version 2/i, type: 'LGPL-2.1' },
+  { pattern: /Apache License[\s\S]*Version 2\.0/i, type: 'Apache-2.0' },
+  { pattern: /GNU GENERAL PUBLIC LICENSE[\s\S]*Version 3/i, type: 'GPL-3.0' },
+  { pattern: /GNU GENERAL PUBLIC LICENSE[\s\S]*Version 2/i, type: 'GPL-2.0' },
+  { pattern: /GNU LESSER GENERAL PUBLIC LICENSE[\s\S]*Version 3/i, type: 'LGPL-3.0' },
+  { pattern: /GNU LESSER GENERAL PUBLIC LICENSE[\s\S]*Version 2/i, type: 'LGPL-2.1' },
   { pattern: /BSD 3-Clause License/i, type: 'BSD-3-Clause' },
   { pattern: /BSD 2-Clause License/i, type: 'BSD-2-Clause' },
-  { pattern: /Mozilla Public License.*Version 2\.0/i, type: 'MPL-2.0' },
+  { pattern: /Mozilla Public License[\s\S]*Version 2\.0/i, type: 'MPL-2.0' },
   { pattern: /ISC License/i, type: 'ISC' },
   { pattern: /The Unlicense/i, type: 'Unlicense' },
-  { pattern: /Creative Commons Zero.*1\.0/i, type: 'CC0-1.0' },
+  { pattern: /Creative Commons Zero[\s\S]*1\.0/i, type: 'CC0-1.0' },
 ];
 
 export interface LicenseInfo {
@@ -125,20 +125,14 @@ export async function extractLicenseInfo(repositoryUrl?: string): Promise<Licens
 }
 
 /**
- * Validate license information and warn if missing
+ * Display license information if found
  */
 export function validateLicenseInfo(licenseInfo: LicenseInfo, packageName: string): void {
-  if (!licenseInfo.text) {
-    console.warn(`⚠️  Warning: No LICENSE file found for package "${packageName}"`);
-    console.warn('   Open-source licenses require including license text with your software.');
-    console.warn('   Consider adding a LICENSE file to your package.');
-    console.warn('');
-  } else if (!licenseInfo.type) {
-    console.warn(`⚠️  Warning: Could not detect license type from LICENSE file`);
-    console.warn('   License will be published with text but without type classification.');
-    console.warn('   Consider using a standard license format (MIT, Apache-2.0, etc.)');
-    console.warn('');
-  } else {
+  if (licenseInfo.text && licenseInfo.type) {
     console.log(`   License: ${licenseInfo.type} (${licenseInfo.fileName})`);
+  } else if (licenseInfo.text && !licenseInfo.type) {
+    console.log(`   License: Found (${licenseInfo.fileName})`);
+  } else {
+    console.log(`   License: Not found (package will be published without license)`);
   }
 }

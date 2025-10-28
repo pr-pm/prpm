@@ -19,6 +19,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
   const navigationLinks = [
     { href: '/search', label: 'Search' },
     { href: '/authors', label: 'Authors' },
+    { href: '/organizations', label: 'Organizations' },
     { href: '/blog', label: 'Blog' },
     ...(showDashboard ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
   ]
@@ -62,12 +63,12 @@ export default function Header({ showDashboard = false, showAccount = false }: H
               </svg>
             </a>
             {showAccount && (
-              <button className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white border border-prpm-border rounded-lg hover:border-prpm-accent transition-all">
+              <Link href="/dashboard" className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white border border-prpm-border rounded-lg hover:border-prpm-accent transition-all">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 Account
-              </button>
+              </Link>
             )}
             {/* Mobile menu button */}
             <button
@@ -116,12 +117,16 @@ export default function Header({ showDashboard = false, showAccount = false }: H
                 GitHub
               </a>
               {showAccount && (
-                <button className="text-gray-400 hover:text-white transition-colors py-2 flex items-center gap-2">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-gray-400 hover:text-white transition-colors py-2 flex items-center gap-2"
+                >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   Account
-                </button>
+                </Link>
               )}
             </div>
           </div>

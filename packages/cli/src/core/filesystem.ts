@@ -9,7 +9,7 @@ import { Format, Subtype } from '../types';
 /**
  * Get the destination directory for a package based on format and subtype
  */
-export function getDestinationDir(format: Format, subtype: Subtype): string {
+export function getDestinationDir(format: Format, subtype: Subtype, name: string): string {
   switch (format) {
     case 'cursor':
       if (subtype === 'agent') return '.cursor/agents';
@@ -17,7 +17,7 @@ export function getDestinationDir(format: Format, subtype: Subtype): string {
       return '.cursor/rules';
 
     case 'claude':
-      if (subtype === 'skill') return '.claude/skills';
+      if (subtype === 'skill') return `.claude/skills/${name}`;
       if (subtype === 'slash-command') return '.claude/commands';
       if (subtype === 'agent') return '.claude/agents';
       return '.claude/agents'; // Default for claude

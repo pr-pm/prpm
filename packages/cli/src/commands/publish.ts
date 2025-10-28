@@ -29,19 +29,20 @@ interface PublishOptions {
 }
 
 /**
- * Try to find and load a manifest file
+ * Try to find and load manifest files
  * Checks for:
- * 1. prpm.json (native format)
- * 2. .claude/marketplace.json (Claude format)
+ * 1. prpm.json (native format) - returns single manifest
+ * 2. .claude/marketplace.json (Claude format) - returns all plugins as separate manifests
+ * 3. .claude-plugin/marketplace.json (Claude format - alternative location) - returns all plugins
  */
-async function findAndLoadManifest(): Promise<{ manifest: PackageManifest; source: string }> {
+async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; source: string }> {
   // Try prpm.json first (native format)
   const prpmJsonPath = join(process.cwd(), 'prpm.json');
   try {
     const content = await readFile(prpmJsonPath, 'utf-8');
     const manifest = JSON.parse(content);
     const validated = validateManifest(manifest);
-    return { manifest: validated, source: 'prpm.json' };
+    return { manifests: [validated], source: 'prpm.json' };
   } catch (error) {
     // If it's a validation error, throw it immediately (don't try marketplace.json)
     if (error instanceof Error && (
@@ -58,28 +59,54 @@ async function findAndLoadManifest(): Promise<{ manifest: PackageManifest; sourc
   const marketplaceJsonPath = join(process.cwd(), '.claude', 'marketplace.json');
   try {
     const content = await readFile(marketplaceJsonPath, 'utf-8');
-    const marketplaceData = JSON.parse(content);
+    const marketplaceData = JSON.parse(content) as MarketplaceJson;
 
     if (!validateMarketplaceJson(marketplaceData)) {
       throw new Error('Invalid marketplace.json format');
     }
 
-    // Convert marketplace.json to PRPM manifest
-    const manifest = marketplaceToManifest(marketplaceData as MarketplaceJson);
+    // Convert each plugin in marketplace.json to a separate PRPM manifest
+    const manifests: PackageManifest[] = [];
+    for (let i = 0; i < marketplaceData.plugins.length; i++) {
+      const manifest = marketplaceToManifest(marketplaceData, i);
+      const validated = validateManifest(manifest);
+      manifests.push(validated);
+    }
 
-    // Validate the converted manifest
-    const validated = validateManifest(manifest);
+    return { manifests, source: '.claude/marketplace.json' };
+  } catch (error) {
+    // marketplace.json not found or invalid at .claude path, try .claude-plugin
+  }
 
-    return { manifest: validated, source: '.claude/marketplace.json' };
+  // Try .claude-plugin/marketplace.json (alternative Claude format)
+  const marketplaceJsonPluginPath = join(process.cwd(), '.claude-plugin', 'marketplace.json');
+  try {
+    const content = await readFile(marketplaceJsonPluginPath, 'utf-8');
+    const marketplaceData = JSON.parse(content) as MarketplaceJson;
+
+    if (!validateMarketplaceJson(marketplaceData)) {
+      throw new Error('Invalid marketplace.json format');
+    }
+
+    // Convert each plugin in marketplace.json to a separate PRPM manifest
+    const manifests: PackageManifest[] = [];
+    for (let i = 0; i < marketplaceData.plugins.length; i++) {
+      const manifest = marketplaceToManifest(marketplaceData, i);
+      const validated = validateManifest(manifest);
+      manifests.push(validated);
+    }
+
+    return { manifests, source: '.claude-plugin/marketplace.json' };
   } catch (error) {
     // marketplace.json not found or invalid
   }
 
-  // Neither file found
+  // No manifest file found
   throw new Error(
     'No manifest file found. Expected either:\n' +
     '  - prpm.json in the current directory, or\n' +
-    '  - .claude/marketplace.json (Claude format)'
+    '  - .claude/marketplace.json (Claude format), or\n' +
+    '  - .claude-plugin/marketplace.json (Claude format)'
   );
 }
 
@@ -87,6 +114,11 @@ async function findAndLoadManifest(): Promise<{ manifest: PackageManifest; sourc
  * Validate package manifest
  */
 function validateManifest(manifest: PackageManifest): PackageManifest {
+  // Set default subtype to 'rule' if not provided
+  if (!manifest.subtype) {
+    manifest.subtype = 'rule';
+  }
+
   // First, validate against JSON schema
   const schemaValidation = validateManifestSchema(manifest);
   if (!schemaValidation.valid) {
@@ -281,104 +313,208 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     console.log('📦 Publishing package...\n');
 
-    // Read and validate manifest
-    console.log('🔍 Validating package manifest...');
-    const { manifest, source } = await findAndLoadManifest();
-    packageName = manifest.name;
-    version = manifest.version;
+    // Read and validate manifests
+    console.log('🔍 Validating package manifest(s)...');
+    const { manifests, source } = await findAndLoadManifests();
 
-    console.log(`   Source: ${source}`);
-    console.log(`   Package: ${manifest.name}@${manifest.version}`);
-    console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype || 'rule (default)'}`);
-    console.log(`   Description: ${manifest.description}`);
-    console.log('');
-
-    // Extract license information
-    console.log('📄 Extracting license information...');
-    const licenseInfo = await extractLicenseInfo(manifest.repository);
-
-    // Update manifest with license information if found
-    if (licenseInfo.text) {
-      if (licenseInfo.type && !manifest.license) {
-        manifest.license = licenseInfo.type;
-      }
-      manifest.license_text = licenseInfo.text;
-      manifest.license_url = licenseInfo.url || undefined;
+    if (manifests.length > 1) {
+      console.log(`   Found ${manifests.length} plugins in ${source}`);
+      console.log('   Will publish each plugin separately\n');
     }
 
-    // Validate and warn about license
-    validateLicenseInfo(licenseInfo, manifest.name);
+    // Get user info to check for organizations (once for all packages)
+    console.log('🔍 Checking authentication...');
+    const client = getRegistryClient(config);
+    let userInfo: any;
 
-    // For production publishing (not dry-run), require license information
-    if (!options.dryRun && !licenseInfo.text) {
-      console.error('');
-      console.error('❌ License validation failed:');
-      console.error('   No LICENSE file found in your package directory.');
-      console.error('');
-      console.error('   Open-source licenses (MIT, Apache-2.0, etc.) require including');
-      console.error('   license text with your software for proper attribution.');
-      console.error('');
-      console.error('💡 To fix this:');
-      console.error('   1. Add a LICENSE file to your package directory');
-      console.error('   2. Copy the full license text (e.g., from https://opensource.org/licenses/MIT)');
-      console.error('   3. Run `prpm publish` again');
-      console.error('');
-      console.error('💡 Or use --dry-run to test packaging without license validation');
-      console.error('');
+    try {
+      userInfo = await client.whoami();
+    } catch (err) {
+      console.log('   Could not fetch user organizations, publishing as personal packages');
+    }
+    console.log('');
+
+    // Track published packages
+    const publishedPackages: Array<{ name: string; version: string; url: string }> = [];
+    const failedPackages: Array<{ name: string; error: string }> = [];
+
+    // Publish each manifest
+    for (let i = 0; i < manifests.length; i++) {
+      const manifest = manifests[i];
+      packageName = manifest.name;
+      version = manifest.version;
+
+      if (manifests.length > 1) {
+        console.log(`\n${'='.repeat(60)}`);
+        console.log(`📦 Publishing plugin ${i + 1} of ${manifests.length}`);
+        console.log(`${'='.repeat(60)}\n`);
+      }
+
+      try {
+        let selectedOrgId: string | undefined;
+
+        // Check if organization is specified in manifest
+        if (manifest.organization && userInfo) {
+          const orgFromManifest = userInfo.organizations?.find(
+            (org: any) => org.name === manifest.organization || org.id === manifest.organization
+          );
+
+          if (!orgFromManifest) {
+            throw new Error(`Organization "${manifest.organization}" not found or you are not a member`);
+          }
+
+          // Check if user has publishing rights
+          if (!['owner', 'admin', 'maintainer'].includes(orgFromManifest.role)) {
+            throw new Error(
+              `You do not have permission to publish to organization "${orgFromManifest.name}". ` +
+              `Your role: ${orgFromManifest.role}. Required: owner, admin, or maintainer`
+            );
+          }
+
+          selectedOrgId = orgFromManifest.id;
+        }
+
+        console.log(`   Source: ${source}`);
+        console.log(`   Package: ${manifest.name}@${manifest.version}`);
+        console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype}`);
+        console.log(`   Description: ${manifest.description}`);
+        if (selectedOrgId && userInfo) {
+          const selectedOrg = userInfo.organizations.find((org: any) => org.id === selectedOrgId);
+          console.log(`   Publishing to: ${selectedOrg?.name || 'organization'}`);
+        }
+        console.log('');
+
+        // Extract license information
+        console.log('📄 Extracting license information...');
+        const licenseInfo = await extractLicenseInfo(manifest.repository);
+
+        // Update manifest with license information from LICENSE file if found
+        // Only set fields that aren't already manually specified in prpm.json
+        if (licenseInfo.type && !manifest.license) {
+          manifest.license = licenseInfo.type;
+        }
+        if (licenseInfo.text && !manifest.license_text) {
+          manifest.license_text = licenseInfo.text;
+        }
+        if (licenseInfo.url && !manifest.license_url) {
+          manifest.license_url = licenseInfo.url || undefined;
+        }
+
+        // Validate and warn about license (optional - will extract if present)
+        validateLicenseInfo(licenseInfo, manifest.name);
+        console.log('');
+
+        // Extract content snippet
+        console.log('📝 Extracting content snippet...');
+        const snippet = await extractSnippet(manifest);
+        if (snippet) {
+          manifest.snippet = snippet;
+        }
+        validateSnippet(snippet, manifest.name);
+        console.log('');
+
+        // Create tarball
+        console.log('📦 Creating package tarball...');
+        const tarball = await createTarball(manifest);
+
+        // Display size in KB or MB depending on size
+        const sizeInBytes = tarball.length;
+        const sizeInKB = sizeInBytes / 1024;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+
+        let sizeDisplay: string;
+        if (sizeInMB >= 1) {
+          sizeDisplay = `${sizeInMB.toFixed(2)}MB`;
+        } else {
+          sizeDisplay = `${sizeInKB.toFixed(2)}KB`;
+        }
+
+        console.log(`   Size: ${sizeDisplay}`);
+        console.log('');
+
+        if (options.dryRun) {
+          console.log('✅ Dry run successful! Package is ready to publish.');
+          publishedPackages.push({
+            name: manifest.name,
+            version: manifest.version,
+            url: ''
+          });
+          continue;
+        }
+
+        // Publish to registry
+        console.log('🚀 Publishing to registry...');
+        const result = await client.publish(manifest, tarball, selectedOrgId ? { orgId: selectedOrgId } : undefined);
+
+        // Determine the webapp URL based on registry URL
+        let webappUrl: string;
+        const registryUrl = config.registryUrl || 'https://registry.prpm.dev';
+        if (registryUrl.includes('localhost') || registryUrl.includes('127.0.0.1')) {
+          // Local development - webapp is on port 5173
+          webappUrl = 'http://localhost:5173';
+        } else if (registryUrl.includes('registry.prpm.dev')) {
+          // Production - webapp is on prpm.dev
+          webappUrl = 'https://prpm.dev';
+        } else {
+          // Default to registry URL for unknown environments
+          webappUrl = registryUrl;
+        }
+
+        const packageUrl = `${webappUrl}/packages/${encodeURIComponent(manifest.name)}`;
+
+        console.log('');
+        console.log('✅ Package published successfully!');
+        console.log('');
+        console.log(`   Package: ${manifest.name}@${result.version}`);
+        console.log(`   Install: prpm install ${manifest.name}`);
+        console.log('');
+
+        publishedPackages.push({
+          name: manifest.name,
+          version: result.version,
+          url: packageUrl
+        });
+      } catch (err) {
+        const pkgError = err instanceof Error ? err.message : String(err);
+        console.error(`\n❌ Failed to publish ${manifest.name}: ${pkgError}\n`);
+        failedPackages.push({
+          name: manifest.name,
+          error: pkgError
+        });
+      }
+    }
+
+    // Print summary if multiple packages
+    if (manifests.length > 1) {
+      console.log(`\n${'='.repeat(60)}`);
+      console.log(`📊 Publishing Summary`);
+      console.log(`${'='.repeat(60)}\n`);
+
+      if (publishedPackages.length > 0) {
+        console.log(`✅ Successfully published ${publishedPackages.length} package(s):`);
+        publishedPackages.forEach(pkg => {
+          console.log(`   - ${pkg.name}@${pkg.version}`);
+          if (pkg.url) {
+            console.log(`     ${pkg.url}`);
+          }
+        });
+        console.log('');
+      }
+
+      if (failedPackages.length > 0) {
+        console.log(`❌ Failed to publish ${failedPackages.length} package(s):`);
+        failedPackages.forEach(pkg => {
+          console.log(`   - ${pkg.name}: ${pkg.error}`);
+        });
+        console.log('');
+      }
+    }
+
+    success = publishedPackages.length > 0;
+
+    if (failedPackages.length > 0 && publishedPackages.length === 0) {
       process.exit(1);
     }
-
-    console.log('');
-
-    // Extract content snippet
-    console.log('📝 Extracting content snippet...');
-    const snippet = await extractSnippet(manifest);
-    if (snippet) {
-      manifest.snippet = snippet;
-    }
-    validateSnippet(snippet, manifest.name);
-    console.log('');
-
-    // Create tarball
-    console.log('📦 Creating package tarball...');
-    const tarball = await createTarball(manifest);
-
-    // Display size in KB or MB depending on size
-    const sizeInBytes = tarball.length;
-    const sizeInKB = sizeInBytes / 1024;
-    const sizeInMB = sizeInBytes / (1024 * 1024);
-
-    let sizeDisplay: string;
-    if (sizeInMB >= 1) {
-      sizeDisplay = `${sizeInMB.toFixed(2)}MB`;
-    } else {
-      sizeDisplay = `${sizeInKB.toFixed(2)}KB`;
-    }
-
-    console.log(`   Size: ${sizeDisplay}`);
-    console.log('');
-
-    if (options.dryRun) {
-      console.log('✅ Dry run successful! Package is ready to publish.');
-      console.log('   Run without --dry-run to publish.');
-      success = true;
-      return;
-    }
-
-    // Publish to registry
-    console.log('🚀 Publishing to registry...');
-    const client = getRegistryClient(config);
-    const result = await client.publish(manifest, tarball);
-
-    console.log('');
-    console.log('✅ Package published successfully!');
-    console.log('');
-    console.log(`   Package: ${manifest.name}@${result.version}`);
-    console.log(`   Install: prpm install ${manifest.name}`);
-    console.log(`   View: ${config.registryUrl}/packages/${result.package_id}`);
-    console.log('');
-
-    success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Failed to publish package: ${error}\n`);

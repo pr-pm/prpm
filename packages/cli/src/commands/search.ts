@@ -20,11 +20,9 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'slash-command': '⚡',
     'rule': '📋',
     'prompt': '💬',
-    'workflow': '⚡',
-    'tool': '🔧',
-    'template': '📄',
     'collection': '📦',
     'chatmode': '💬',
+    'tool': '🔧',
   };
 
   // Format-specific icons for rules/defaults
@@ -65,11 +63,9 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'slash-command': 'Slash Command',
     'rule': 'Rule',
     'prompt': 'Prompt',
-    'workflow': 'Workflow',
-    'tool': 'Tool',
-    'template': 'Template',
     'collection': 'Collection',
     'chatmode': 'Chat Mode',
+    'tool': 'Tool',
   };
 
   const formatLabel = formatLabels[format];
@@ -427,7 +423,7 @@ export function createSearchCommand(): Command {
       const page = options.page ? parseInt(options.page, 10) : 1;
 
       const validFormats: Format[] = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'];
-      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'];
+      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode'];
 
       if (options.format && !validFormats.includes(format!)) {
         console.error(`❌ Format must be one of: ${validFormats.join(', ')}`);

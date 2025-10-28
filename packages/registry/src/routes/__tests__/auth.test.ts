@@ -348,6 +348,21 @@ describe('Auth Routes', () => {
       expect(body).toHaveProperty('username', 'testuser');
       expect(body).toHaveProperty('email', 'test@example.com');
     });
+
+    it('should return user organizations', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/api/v1/auth/me',
+        headers: {
+          authorization: 'Bearer test-token',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body).toHaveProperty('organizations');
+      expect(Array.isArray(body.organizations)).toBe(true);
+    });
   });
 
   describe('POST /api/v1/auth/token', () => {

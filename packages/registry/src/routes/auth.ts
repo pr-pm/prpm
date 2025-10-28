@@ -703,6 +703,18 @@ export async function authRoutes(server: FastifyInstance) {
             is_admin: { type: 'boolean' },
             package_count: { type: 'number' },
             total_downloads: { type: 'number' },
+            organizations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  name: { type: 'string' },
+                  role: { type: 'string' },
+                  avatar_url: { type: 'string' },
+                },
+              },
+            },
           },
         },
       },
@@ -731,10 +743,22 @@ export async function authRoutes(server: FastifyInstance) {
       [userId]
     );
 
+    // Get user's organizations
+    const organizations = await query<{ id: string; name: string; role: string; avatar_url: string | null }>(
+      server,
+      `SELECT o.id, o.name, om.role, o.avatar_url
+       FROM organizations o
+       INNER JOIN organization_members om ON o.id = om.org_id
+       WHERE om.user_id = $1
+       ORDER BY o.name ASC`,
+      [userId]
+    );
+
     return {
       ...user,
       package_count: parseInt(stats?.package_count || '0', 10),
       total_downloads: parseInt(stats?.total_downloads || '0', 10),
+      organizations: organizations.rows,
     };
   });
 

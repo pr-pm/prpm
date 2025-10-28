@@ -238,6 +238,7 @@ export interface JWTPayload {
 
 // Configuration
 export interface RegistryConfig {
+  env?: string;
   port: number;
   host: string;
   logLevel: string;

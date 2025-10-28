@@ -8,10 +8,16 @@ PRPM supports publishing packages using Claude's `marketplace.json` format, allo
 
 ## Location
 
-PRPM looks for marketplace.json at:
+PRPM looks for marketplace.json at either:
 ```
 .claude/marketplace.json
 ```
+or
+```
+.claude-plugin/marketplace.json
+```
+
+Both locations are supported to accommodate different Claude marketplace formats.
 
 ## Publishing with marketplace.json
 
@@ -19,8 +25,9 @@ When you run `prpm publish`, PRPM automatically checks for manifest files in thi
 
 1. **`prpm.json`** (PRPM's native format)
 2. **`.claude/marketplace.json`** (Claude's format - auto-converted)
+3. **`.claude-plugin/marketplace.json`** (Claude's format - alternative location, auto-converted)
 
-If neither file exists, publishing will fail.
+If none of these files exist, publishing will fail.
 
 ```bash
 # If you have .claude/marketplace.json, just run:
