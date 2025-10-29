@@ -6,36 +6,65 @@
 import { readFile, stat } from 'fs/promises';
 import { join } from 'path';
 import type { PackageManifest, PackageFileMetadata } from '../types/registry';
+import { getInstalledFilePath } from '../core/filesystem';
 
 const MAX_SNIPPET_LENGTH = 2000;
 
 /**
  * Extract a preview snippet from package files
- * Takes the first file in the package and extracts ~2000 characters
+ * Uses the same path logic as the install command to determine where files will be placed
  */
 export async function extractSnippet(manifest: PackageManifest): Promise<string | null> {
   const cwd = process.cwd();
 
   try {
-    // Get the first file from the manifest
-    const firstFile = manifest.files[0];
-    if (!firstFile) {
+    // Validate manifest has required fields
+    if (!manifest.format || !manifest.name || !manifest.subtype) {
+      console.warn('⚠️  Cannot extract snippet: manifest missing format, name, or subtype');
       return null;
     }
 
-    // Get file path (handle both string and object formats)
-    const filePath = typeof firstFile === 'string'
-      ? firstFile
-      : (firstFile as PackageFileMetadata).path;
+    // Determine which file to extract snippet from
+    let targetFilePath: string;
 
-    // If there's a main file specified, prefer that
-    const targetFile = manifest.main || filePath;
-    const fullPath = join(cwd, targetFile);
+    if (manifest.main) {
+      // If main file is specified, use it directly (for multi-file packages)
+      targetFilePath = getInstalledFilePath(
+        manifest.name,
+        manifest.format,
+        manifest.subtype,
+        manifest.main
+      );
+    } else if (manifest.files && manifest.files.length > 0) {
+      // Get the first file from the manifest
+      const firstFile = manifest.files[0];
+      const fileName = typeof firstFile === 'string'
+        ? firstFile
+        : (firstFile as PackageFileMetadata).path;
+
+      // For single-file packages or when no main is specified,
+      // use the format-aware path construction
+      targetFilePath = getInstalledFilePath(
+        manifest.name,
+        manifest.format,
+        manifest.subtype,
+        fileName
+      );
+    } else {
+      // No files specified, try to construct the default path
+      targetFilePath = getInstalledFilePath(
+        manifest.name,
+        manifest.format,
+        manifest.subtype
+      );
+    }
+
+    const fullPath = join(cwd, targetFilePath);
 
     // Check if path is a directory
     const stats = await stat(fullPath);
     if (stats.isDirectory()) {
-      console.warn(`⚠️  Skipping snippet extraction: "${targetFile}" is a directory`);
+      console.warn(`⚠️  Skipping snippet extraction: "${targetFilePath}" is a directory`);
       return null;
     }
 

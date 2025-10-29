@@ -73,7 +73,16 @@ export function fromClaude(
   }
 
   // Parse body content
-  const bodySections = parseMarkdownBody(body);
+  const { sections: bodySections, h1Title, h1Icon } = parseMarkdownBody(body);
+
+  // Update metadata title from H1 if present (overrides frontmatter name)
+  if (h1Title) {
+    metadataSection.data.title = h1Title;
+    if (h1Icon) {
+      metadataSection.data.icon = h1Icon;
+    }
+  }
+
   sections.push(...bodySections);
 
   // Detect subtype from frontmatter
@@ -133,20 +142,37 @@ function parseFrontmatter(content: string): {
 /**
  * Parse markdown body into sections
  */
-function parseMarkdownBody(body: string): Section[] {
+function parseMarkdownBody(body: string): {
+  sections: Section[];
+  h1Title?: string;
+  h1Icon?: string;
+} {
   const sections: Section[] = [];
   const lines = body.split('\n');
 
   let currentSection: { type: string; title: string; lines: string[] } | null =
     null;
   let preamble: string[] = [];
+  let h1Title: string | undefined;
+  let h1Icon: string | undefined;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Check for h1 (main title - usually just informational)
+    // Check for h1 (main title) - extract it for metadata
     if (line.startsWith('# ')) {
-      continue; // Skip main title, already in metadata
+      const titleText = line.substring(2).trim();
+
+      // Check if title has an icon (emoji at start)
+      const iconMatch = titleText.match(/^(\p{Emoji})\s+(.+)$/u);
+      if (iconMatch) {
+        h1Icon = iconMatch[1];
+        h1Title = iconMatch[2];
+      } else {
+        h1Title = titleText;
+      }
+
+      continue; // Skip main title in body sections
     }
 
     // Check for h2 (section header)
@@ -205,7 +231,7 @@ function parseMarkdownBody(body: string): Section[] {
     );
   }
 
-  return sections;
+  return { sections, h1Title, h1Icon };
 }
 
 /**

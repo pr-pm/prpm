@@ -405,6 +405,31 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     }
     console.log('');
 
+    // Check for duplicate package names
+    if (manifests.length > 1) {
+      const nameMap = new Map<string, number>();
+      const duplicates: string[] = [];
+
+      manifests.forEach((manifest, index) => {
+        const existingIndex = nameMap.get(manifest.name);
+        if (existingIndex !== undefined) {
+          duplicates.push(`  - "${manifest.name}" appears in positions ${existingIndex + 1} and ${index + 1}`);
+        } else {
+          nameMap.set(manifest.name, index);
+        }
+      });
+
+      if (duplicates.length > 0) {
+        console.error('❌ Duplicate package names detected:\n');
+        duplicates.forEach(dup => console.error(dup));
+        console.error('\n⚠️  Each package must have a unique name.');
+        console.error('   Package names are globally unique per author/organization.');
+        console.error('   If you want to publish the same package for different formats,');
+        console.error('   use different names (e.g., "react-rules-cursor" vs "react-rules-claude").\n');
+        throw new Error('Cannot publish packages with duplicate names');
+      }
+    }
+
     // Track published packages
     const publishedPackages: Array<{ name: string; version: string; url: string }> = [];
     const failedPackages: Array<{ name: string; error: string }> = [];

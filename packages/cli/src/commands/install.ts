@@ -95,7 +95,17 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
 
 export async function handleInstall(
   packageSpec: string,
-  options: { version?: string; as?: string; subtype?: Subtype; frozenLockfile?: boolean }
+  options: {
+    version?: string;
+    as?: string;
+    subtype?: Subtype;
+    frozenLockfile?: boolean;
+    fromCollection?: {
+      scope: string;
+      name_slug: string;
+      version?: string;
+    };
+  }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -384,6 +394,7 @@ export async function handleInstall(
       format: pkg.format, // Preserve original package format
       subtype: pkg.subtype, // Preserve original package subtype
       installedPath: destPath,
+      fromCollection: options.fromCollection,
     });
 
     setPackageIntegrity(updatedLockfile, packageId, tarball);

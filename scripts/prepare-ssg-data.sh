@@ -13,8 +13,19 @@ S3_BUCKET="s3://prpm-prod-packages/seo-data"
 DEBUG=${DEBUG:-false}
 
 # Fallback data (can be overridden by environment variables)
-FALLBACK_PACKAGES=${FALLBACK_PACKAGES:-'[{"name":"@prpm/example","description":"Example package","format":"cursor","subtype":"rules","total_downloads":0,"weekly_downloads":0}]'}
-FALLBACK_COLLECTIONS=${FALLBACK_COLLECTIONS:-'[{"name_slug":"example-collection","description":"Example collection","package_count":0,"downloads":0,"stars":0}]'}
+# Realistic mock data for local development
+FALLBACK_PACKAGES=${FALLBACK_PACKAGES:-'[
+  {"name":"@prpm/pulumi-troubleshooting-skill","description":"Comprehensive guide to troubleshooting Pulumi TypeScript errors","format":"claude","subtype":"skill","total_downloads":150,"weekly_downloads":25},
+  {"name":"@prpm/creating-skills-skill","description":"Expert guidance for creating effective Claude Code skills","format":"claude","subtype":"skill","total_downloads":120,"weekly_downloads":20},
+  {"name":"@prpm/typescript-type-safety","description":"Eliminate TypeScript any types and enforce strict type safety","format":"cursor","subtype":"rule","total_downloads":100,"weekly_downloads":15},
+  {"name":"@prpm/postgres-migrations","description":"PostgreSQL migrations best practices and common errors","format":"cursor","subtype":"rule","total_downloads":85,"weekly_downloads":12},
+  {"name":"@prpm/test-driven-development","description":"Write tests first to ensure they verify behavior","format":"claude","subtype":"skill","total_downloads":200,"weekly_downloads":30}
+]'}
+FALLBACK_COLLECTIONS=${FALLBACK_COLLECTIONS:-'[
+  {"name_slug":"claude-plugins-builder","description":"Tools and skills for building Claude Code plugins","package_count":8,"downloads":450,"stars":12},
+  {"name_slug":"accessibility-compliance","description":"WCAG compliance and accessibility testing","package_count":5,"downloads":280,"stars":8},
+  {"name_slug":"api-testing-observability","description":"API testing and observability patterns","package_count":6,"downloads":320,"stars":10}
+]'}
 
 # Colors for output
 GREEN='\033[0;32m'

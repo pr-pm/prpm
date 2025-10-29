@@ -138,3 +138,59 @@ export function stripAuthorNamespace(packageId: string | undefined): string {
   const parts = packageId.split('/');
   return parts[parts.length - 1];
 }
+
+/**
+ * Get the expected installed file path for a package
+ * This matches the logic used by the install command to determine where files are placed
+ *
+ * @param packageName - Full package name (e.g., '@prpm/typescript-rules')
+ * @param format - Package format
+ * @param subtype - Package subtype
+ * @param fileName - Optional specific file name (defaults to main file)
+ * @returns Path where the file will be installed relative to working directory
+ */
+export function getInstalledFilePath(
+  packageName: string,
+  format: Format,
+  subtype: Subtype,
+  fileName?: string
+): string {
+  const destDir = getDestinationDir(format, subtype, packageName);
+  const packageBaseName = stripAuthorNamespace(packageName);
+
+  // If a specific file name is provided, use it
+  if (fileName) {
+    return path.join(destDir, fileName);
+  }
+
+  // Claude skills always use SKILL.md
+  if (format === 'claude' && subtype === 'skill') {
+    return path.join(destDir, 'SKILL.md');
+  }
+
+  // Determine file extension
+  const fileExtension = format === 'cursor' ? 'mdc' : 'md';
+
+  // For other formats, use package name as filename
+  return path.join(destDir, `${packageBaseName}.${fileExtension}`);
+}
+
+/**
+ * Get all expected installed file paths for a multi-file package
+ *
+ * @param packageName - Full package name
+ * @param format - Package format
+ * @param subtype - Package subtype
+ * @param fileNames - Array of file names in the package
+ * @returns Array of paths where files will be installed
+ */
+export function getInstalledFilePaths(
+  packageName: string,
+  format: Format,
+  subtype: Subtype,
+  fileNames: string[]
+): string[] {
+  const destDir = getDestinationDir(format, subtype, packageName);
+
+  return fileNames.map(fileName => path.join(destDir, fileName));
+}

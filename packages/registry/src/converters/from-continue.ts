@@ -1,6 +1,25 @@
 /**
  * Continue Format Parser
- * Continue uses the same markdown format as Claude, so we alias to fromClaude
+ * Continue uses plain markdown without frontmatter
  */
 
-export { fromClaude as fromContinue } from './from-claude.js';
+import { fromClaude } from './from-claude.js';
+import type { CanonicalPackage } from '../types/canonical.js';
+
+/**
+ * Parse Continue format
+ * Continue uses plain markdown without frontmatter (unlike Claude which has YAML frontmatter)
+ */
+export function fromContinue(
+  content: string,
+  metadata: { id: string; name?: string; version?: string; author?: string; tags?: string[] }
+): CanonicalPackage {
+  // Use Claude parser but override the format
+  const pkg = fromClaude(content, metadata);
+
+  // Override format to 'continue' (fromClaude returns 'claude')
+  pkg.format = 'continue';
+  pkg.sourceFormat = 'continue';
+
+  return pkg;
+}

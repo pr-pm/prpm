@@ -7,6 +7,13 @@ import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { handleInstall } from './install';
 import { telemetry } from '../core/telemetry';
+import {
+  readLockfile,
+  writeLockfile,
+  createLockfile,
+  addCollectionToLockfile,
+  getCollectionFromLockfile,
+} from '../core/lockfile';
 
 /**
  * Search collections by query
@@ -527,6 +534,7 @@ export async function handleCollectionInstall(
     }
 
     // Install packages sequentially
+    const installedPackageIds: string[] = [];
     for (let i = 0; i < packages.length; i++) {
       const pkg = packages[i];
       const progress = `${i + 1}/${packages.length}`;
@@ -536,9 +544,15 @@ export async function handleCollectionInstall(
 
         await handleInstall(`${pkg.packageId}@${pkg.version}`, {
           as: pkg.format,
+          fromCollection: {
+            scope,
+            name_slug,
+            version: collection.version || version || '1.0.0',
+          },
         });
 
         console.log(`  ${progress} ✓ ${pkg.packageId}`);
+        installedPackageIds.push(pkg.packageId);
         packagesInstalled++;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -551,11 +565,23 @@ export async function handleCollectionInstall(
       }
     }
 
+    // Update lockfile with collection info
+    const lockfile = (await readLockfile()) || createLockfile();
+    const collectionKey = `@${scope}/${name_slug}`;
+    addCollectionToLockfile(lockfile, collectionKey, {
+      scope,
+      name_slug,
+      version: collection.version || version || '1.0.0',
+      packages: installedPackageIds,
+    });
+    await writeLockfile(lockfile);
+
     console.log(`\n✅ Collection installed successfully!`);
     console.log(`   ${packagesInstalled}/${packages.length} packages installed`);
     if (packagesFailed > 0) {
       console.log(`   ${packagesFailed} optional packages failed`);
     }
+    console.log(`   🔒 Collection tracked in lock file`);
     console.log('');
 
     await telemetry.track({
