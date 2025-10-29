@@ -352,61 +352,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Download S3 data for static build
+      - name: Prepare SSG data
         run: |
-          echo "Downloading SEO data from S3..."
-          mkdir -p packages/webapp/public/seo-data
-          aws s3 sync s3://prpm-prod-packages/seo-data/ packages/webapp/public/seo-data/ \
-            --exclude "*" \
-            --include "packages.json" \
-            --include "collections.json"
-          echo "✓ S3 data downloaded"
-          ls -lh packages/webapp/public/seo-data/
-
-      - name: Validate and prepare SSG data
-        run: |
-          # Ensure directory exists
-          mkdir -p packages/webapp/public/seo-data
-
-          # Validate packages.json
-          if [ -f packages/webapp/public/seo-data/packages.json ]; then
-            # Check if file is valid JSON and not empty array
-            if jq -e '. | length > 0' packages/webapp/public/seo-data/packages.json > /dev/null 2>&1; then
-              PKG_COUNT=$(jq '. | length' packages/webapp/public/seo-data/packages.json)
-              echo "✓ packages.json is valid with $PKG_COUNT packages"
-            else
-              echo "⚠️  packages.json is empty or invalid, creating fallback"
-              echo '[{"name":"@prpm/example","description":"Example package","format":"cursor","subtype":"rules","total_downloads":0,"weekly_downloads":0}]' > packages/webapp/public/seo-data/packages.json
-            fi
-          else
-            echo "⚠️  packages.json missing, creating fallback"
-            echo '[{"name":"@prpm/example","description":"Example package","format":"cursor","subtype":"rules","total_downloads":0,"weekly_downloads":0}]' > packages/webapp/public/seo-data/packages.json
-          fi
-
-          # Validate collections.json
-          if [ -f packages/webapp/public/seo-data/collections.json ]; then
-            # Check if file is valid JSON and not empty array
-            if jq -e '. | length > 0' packages/webapp/public/seo-data/collections.json > /dev/null 2>&1; then
-              COLL_COUNT=$(jq '. | length' packages/webapp/public/seo-data/collections.json)
-              echo "✓ collections.json is valid with $COLL_COUNT collections"
-            else
-              echo "⚠️  collections.json is empty or invalid, creating fallback"
-              echo '[{"name_slug":"example-collection","description":"Example collection","package_count":0,"downloads":0,"stars":0}]' > packages/webapp/public/seo-data/collections.json
-            fi
-          else
-            echo "⚠️  collections.json missing, creating fallback"
-            echo '[{"name_slug":"example-collection","description":"Example collection","package_count":0,"downloads":0,"stars":0}]' > packages/webapp/public/seo-data/collections.json
-          fi
-
-          echo ""
-          echo "✓ SSG data files ready:"
-          ls -lh packages/webapp/public/seo-data/
-          echo ""
-          echo "Sample from packages.json:"
-          jq '.[0] | {name, format, subtype}' packages/webapp/public/seo-data/packages.json || echo "Unable to parse"
-          echo ""
-          echo "Sample from collections.json:"
-          jq '.[0] | {name_slug, package_count}' packages/webapp/public/seo-data/collections.json || echo "Unable to parse"
+          # Use centralized script for SSG data preparation
+          chmod +x scripts/prepare-ssg-data.sh
+          DEBUG=true ./scripts/prepare-ssg-data.sh
 
       - name: Build webapp with SSG
         run: |
@@ -417,7 +367,7 @@ jobs:
           CI: false
           NEXT_PUBLIC_REGISTRY_URL: "https://registry.prpm.dev"
           REGISTRY_URL: "https://registry.prpm.dev"
-          NEXT_PUBLIC_S3_SEO_DATA_URL: "https://prpm-prod-packages.s3.amazonaws.com/seo-data"
+          # Don't set NEXT_PUBLIC_S3_SEO_DATA_URL - we want to use local files only during build
 
       - name: Verify build output
         run: |
