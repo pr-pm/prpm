@@ -53,7 +53,7 @@ describe.skip('Publish Command', () => {
     // Mock config
     mockGetConfig.mockResolvedValue({
       token: 'test-token',
-      registryUrl: 'http://localhost:3000',
+      registryUrl: 'http://localhost:3111',
     });
 
     // Clear registry client mock only, not the global mocks
@@ -314,7 +314,7 @@ describe.skip('Publish Command', () => {
 
       mockGetConfig.mockResolvedValue({
         token: undefined,
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
       });
 
       await expect(handlePublish({})).rejects.toThrow('Process exited');

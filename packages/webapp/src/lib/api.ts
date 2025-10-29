@@ -37,7 +37,7 @@ export type {
   SearchCollectionsResponse
 }
 
-const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3000'
+const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'
 
 /**
  * Check for unclaimed packages (requires authentication)

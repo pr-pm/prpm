@@ -46,7 +46,7 @@ describe.skip('Install Command - E2E Tests', () => {
 
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
     (getConfig as jest.Mock).mockResolvedValue({
-      registryUrl: 'http://localhost:3000',
+      registryUrl: 'http://localhost:3111',
       token: 'test-token',
     });
 
@@ -71,7 +71,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'cursor',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/packages/test-cursor-pkg/1.0.0/download',
+          tarball_url: 'http://localhost:3111/packages/test-cursor-pkg/1.0.0/download',
         },
       };
 
@@ -91,14 +91,14 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'cursor',
         latest_version: {
           version: '2.0.0',
-          tarball_url: 'http://localhost:3000/packages/test-pkg/2.0.0/download',
+          tarball_url: 'http://localhost:3111/packages/test-pkg/2.0.0/download',
         },
       };
 
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.getPackageVersion.mockResolvedValue({
         version: '1.5.0',
-        tarball_url: 'http://localhost:3000/packages/test-pkg/1.5.0/download',
+        tarball_url: 'http://localhost:3111/packages/test-pkg/1.5.0/download',
       });
       mockClient.downloadPackage.mockResolvedValue(Buffer.from('test-data'));
 
@@ -114,7 +114,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'cursor',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/packages/cursor-pkg/1.0.0/download',
+          tarball_url: 'http://localhost:3111/packages/cursor-pkg/1.0.0/download',
         },
       };
 
@@ -153,7 +153,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'cursor',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/packages/test-pkg/1.0.0/download',
+          tarball_url: 'http://localhost:3111/packages/test-pkg/1.0.0/download',
         },
       };
 
@@ -196,7 +196,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'cursor',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/packages/pkg-1/1.0.0/download',
+          tarball_url: 'http://localhost:3111/packages/pkg-1/1.0.0/download',
         },
       });
       mockClient.downloadPackage.mockResolvedValue(Buffer.from('test-data'));
@@ -231,7 +231,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'cursor',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/packages/required-pkg/1.0.0/download',
+          tarball_url: 'http://localhost:3111/packages/required-pkg/1.0.0/download',
         },
       });
       mockClient.downloadPackage.mockResolvedValue(Buffer.from('test-data'));
@@ -254,7 +254,7 @@ describe.skip('Install Command - E2E Tests', () => {
           type: 'cursor',
           latest_version: {
             version: '1.0.0',
-            tarball_url: 'http://localhost:3000/test',
+            tarball_url: 'http://localhost:3111/test',
           },
         });
 
@@ -275,7 +275,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'cursor',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/test',
+          tarball_url: 'http://localhost:3111/test',
         },
       });
 
@@ -295,7 +295,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'cursor',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/test',
+          tarball_url: 'http://localhost:3111/test',
         },
       });
 
@@ -318,7 +318,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'cursor',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/test',
+          tarball_url: 'http://localhost:3111/test',
         },
       });
 
@@ -338,7 +338,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'claude',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/test',
+          tarball_url: 'http://localhost:3111/test',
         },
       });
       mockClient.downloadPackage.mockResolvedValue(Buffer.from('test-data'));
@@ -355,7 +355,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'continue',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/test',
+          tarball_url: 'http://localhost:3111/test',
         },
       });
       mockClient.downloadPackage.mockResolvedValue(Buffer.from('test-data'));
@@ -372,7 +372,7 @@ describe.skip('Install Command - E2E Tests', () => {
         type: 'windsurf',
         latest_version: {
           version: '1.0.0',
-          tarball_url: 'http://localhost:3000/test',
+          tarball_url: 'http://localhost:3111/test',
         },
       });
       mockClient.downloadPackage.mockResolvedValue(Buffer.from('test-data'));

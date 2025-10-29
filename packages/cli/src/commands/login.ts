@@ -130,8 +130,8 @@ async function loginWithOAuth(registryUrl: string): Promise<{ token: string; use
     let webappUrl: string;
 
     if (registryUrl.includes('localhost') || registryUrl.includes('127.0.0.1')) {
-      // Local development: registry on port 3000, webapp on port 5173
-      webappUrl = registryUrl.replace(':3000', ':5173');
+      // Local development: registry on port 3111, webapp on port 5173
+      webappUrl = registryUrl.replace(':3111', ':5173');
     } else if (registryUrl.includes('registry.prpm.dev')) {
       // Production: always use prpm.dev webapp
       webappUrl = 'https://prpm.dev';

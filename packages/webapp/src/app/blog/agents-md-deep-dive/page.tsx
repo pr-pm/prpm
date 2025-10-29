@@ -267,7 +267,7 @@ npm run dev
 - Implement rate limiting on public API endpoints
 
 ## Build Commands
-- **Development**: \`npm run dev\` (port 3000)
+- **Development**: \`npm run dev\` (port 3111)
 - **Production Build**: \`npm run build\`
 - **Type Check**: \`npm run type-check\`
 - **Lint**: \`npm run lint\`

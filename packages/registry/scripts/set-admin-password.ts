@@ -67,7 +67,7 @@ async function setAdminPassword() {
     console.log();
     console.log('🔑 To login via CLI:');
     console.log('   1. Start the registry: npm run dev (in packages/registry)');
-    console.log('   2. Login: PRPM_REGISTRY_URL=http://localhost:3000 prpm login');
+    console.log('   2. Login: PRPM_REGISTRY_URL=http://localhost:3111 prpm login');
     console.log();
 
   } catch (error) {

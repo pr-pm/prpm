@@ -92,6 +92,15 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
           main: pkg.main,
         };
 
+        // Debug: Log inheritance only if DEBUG env var is set
+        if (process.env.DEBUG) {
+          console.log(`\n🔍 Package ${pkg.name} inheritance:`);
+          console.log(`   - Package-level private: ${pkg.private}`);
+          console.log(`   - Top-level private: ${multiManifest.private}`);
+          console.log(`   - Inherited private: ${packageWithDefaults.private}`);
+          console.log('');
+        }
+
         return validateManifest(packageWithDefaults);
       });
 
@@ -413,13 +422,41 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       }
 
       try {
-        // Determine access level: CLI option overrides manifest setting
-        // If --access flag is explicitly provided, use it; otherwise use manifest setting
-        const isPrivate = options.access === 'private' || (options.access === 'public' ? false : manifest.private || false);
+        // Debug: Log access override logic only if DEBUG env var is set
+        if (process.env.DEBUG) {
+          console.log(`\n🔍 Before access override:`);
+          console.log(`   - manifest.private: ${manifest.private}`);
+          console.log(`   - options.access: ${options.access}`);
+        }
+
+        // Determine access level:
+        // 1. If --access flag is provided, it overrides manifest setting
+        // 2. Otherwise, use manifest setting (defaults to false/public if not specified)
+        let isPrivate: boolean;
+        if (options.access !== undefined) {
+          // CLI flag explicitly provided - use it
+          isPrivate = options.access === 'private';
+          if (process.env.DEBUG) {
+            console.log(`   - Using CLI flag override: ${options.access}`);
+          }
+        } else {
+          // No CLI flag - use manifest setting
+          isPrivate = manifest.private || false;
+          if (process.env.DEBUG) {
+            console.log(`   - Using manifest setting: ${isPrivate}`);
+          }
+        }
+
+        if (process.env.DEBUG) {
+          console.log(`   - calculated isPrivate: ${isPrivate}`);
+        }
 
         // Update manifest with final private setting
-        if (isPrivate !== manifest.private) {
-          manifest.private = isPrivate;
+        manifest.private = isPrivate;
+
+        if (process.env.DEBUG) {
+          console.log(`   - final manifest.private: ${manifest.private}`);
+          console.log('');
         }
 
         let selectedOrgId: string | undefined;
@@ -642,7 +679,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 export function createPublishCommand(): Command {
   return new Command('publish')
     .description('Publish a package to the registry')
-    .option('--access <type>', 'Package access (public or private)', 'public')
+    .option('--access <type>', 'Package access (public or private) - overrides manifest setting')
     .option('--tag <tag>', 'NPM-style tag (e.g., latest, beta)', 'latest')
     .option('--dry-run', 'Validate package without publishing')
     .action(async (options: PublishOptions) => {
