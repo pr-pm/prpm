@@ -69,7 +69,7 @@ export async function generateStaticParams() {
 
     // Map to slug params
     const params = collections.map((collection: any) => ({
-      slug: encodeURIComponent(collection.name_slug),
+      slug: collection.name_slug,
     }))
 
     console.log(`[SSG Collections] ✅ Complete: ${params.length} collections for static generation`)
@@ -88,8 +88,7 @@ export async function generateStaticParams() {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const decodedSlug = decodeURIComponent(params.slug)
-  const collection = await getCollection(decodedSlug)
+  const collection = await getCollection(params.slug)
 
   if (!collection) {
     return {
@@ -163,8 +162,7 @@ async function getCollection(slug: string): Promise<Collection | null> {
 }
 
 export default async function CollectionPage({ params }: { params: { slug: string } }) {
-  const decodedSlug = decodeURIComponent(params.slug)
-  const collection = await getCollection(decodedSlug)
+  const collection = await getCollection(params.slug)
 
   if (!collection) {
     notFound()

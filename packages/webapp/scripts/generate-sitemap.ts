@@ -186,8 +186,14 @@ async function main() {
   const packages = await fetchAllPackages()
   console.log(`\n📦 Adding ${packages.length} package pages...`)
   for (const packageName of packages) {
+    // Transform @author/package/sub/path -> author/package/sub/path
+    let packageUrl = packageName
+    if (packageName.startsWith('@')) {
+      packageUrl = packageName.substring(1) // Remove @ prefix
+    }
+
     entries.push({
-      url: `${envConfig.SITE_URL}/packages/${packageName}`,
+      url: `${envConfig.SITE_URL}/packages/${packageUrl}`,
       lastmod: new Date().toISOString().split('T')[0],
       changefreq: 'weekly',
       priority: 0.8,
