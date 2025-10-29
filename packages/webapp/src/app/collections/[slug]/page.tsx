@@ -4,7 +4,9 @@ import Link from 'next/link'
 import type { Collection } from '@pr-pm/types'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
-const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || 'https://prpm-prod-packages.s3.amazonaws.com/seo-data'
+// During build, don't set a default S3 URL - we want to use local files only
+// Only use S3 as fallback in runtime (client-side) if explicitly configured
+const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || (typeof window !== 'undefined' ? 'https://prpm-prod-packages.s3.amazonaws.com/seo-data' : '')
 
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
@@ -34,7 +36,13 @@ export async function generateStaticParams() {
       collections = JSON.parse(fileContent)
       console.log(`[SSG Collections] ✅ Loaded ${collections.length} collections from local file`)
     } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3
+      // Local file doesn't exist, try fetching from S3 if URL is configured
+      if (!S3_SEO_DATA_URL) {
+        console.error(`[SSG Collections] Local file not found and S3_SEO_DATA_URL not configured`)
+        console.error(`[SSG Collections] Make sure to run prepare-ssg-data.sh before building`)
+        return []
+      }
+
       console.log(`[SSG Collections] Local file not found, fetching from S3`)
 
       const url = `${S3_SEO_DATA_URL}/collections.json`
@@ -109,18 +117,36 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 async function getCollection(slug: string): Promise<Collection | null> {
   try {
-    // Fetch collections data from S3
-    const url = `${S3_SEO_DATA_URL}/collections.json`
-    const res = await fetch(url, {
-      next: { revalidate: 3600 } // Revalidate every hour
-    })
+    let collections
 
-    if (!res.ok) {
-      console.error(`Error fetching collections from S3: ${res.status}`)
-      return null
+    // Try to read from local filesystem first (for static builds)
+    try {
+      const fs = await import('fs/promises')
+      const path = await import('path')
+      const localPath = path.join(process.cwd(), 'public', 'seo-data', 'collections.json')
+      const fileContent = await fs.readFile(localPath, 'utf-8')
+      collections = JSON.parse(fileContent)
+      console.log(`[getCollection] Loaded from local file`)
+    } catch (fsError) {
+      // Local file doesn't exist, try fetching from S3 if URL is configured
+      if (!S3_SEO_DATA_URL) {
+        console.error(`[getCollection] Local file not found and S3_SEO_DATA_URL not configured`)
+        return null
+      }
+
+      console.log(`[getCollection] Local file not found, fetching from S3`)
+      const url = `${S3_SEO_DATA_URL}/collections.json`
+      const res = await fetch(url, {
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (!res.ok) {
+        console.error(`Error fetching collections from S3: ${res.status}`)
+        return null
+      }
+
+      collections = await res.json()
     }
-
-    const collections = await res.json()
 
     if (!Array.isArray(collections)) {
       console.error('Invalid collections data format from S3')
