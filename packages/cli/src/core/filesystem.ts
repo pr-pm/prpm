@@ -8,8 +8,11 @@ import { Format, Subtype } from '../types';
 
 /**
  * Get the destination directory for a package based on format and subtype
+ * @param format - Package format (cursor, claude, etc.)
+ * @param subtype - Package subtype (skill, agent, rule, etc.)
+ * @param name - Package name (optional, only needed for Claude skills which create subdirectories)
  */
-export function getDestinationDir(format: Format, subtype: Subtype, name: string): string {
+export function getDestinationDir(format: Format, subtype: Subtype, name?: string): string {
   // Strip author namespace from package name to avoid nested directories
   const packageName = stripAuthorNamespace(name);
 
@@ -20,7 +23,9 @@ export function getDestinationDir(format: Format, subtype: Subtype, name: string
       return '.cursor/rules';
 
     case 'claude':
-      if (subtype === 'skill') return `.claude/skills/${packageName}`;
+      // Only create subdirectory for skills if name is provided
+      if (subtype === 'skill' && packageName) return `.claude/skills/${packageName}`;
+      if (subtype === 'skill') return '.claude/skills';
       if (subtype === 'slash-command') return '.claude/commands';
       if (subtype === 'agent') return '.claude/agents';
       return '.claude/agents'; // Default for claude
@@ -123,7 +128,12 @@ export function generateId(filename: string): string {
  * stripAuthorNamespace('@wshobson/commands/agent-orchestration/improve-agent') // 'improve-agent'
  * stripAuthorNamespace('git-workflow-manager') // 'git-workflow-manager'
  */
-export function stripAuthorNamespace(packageId: string): string {
+export function stripAuthorNamespace(packageId: string | undefined): string {
+  // Handle undefined or empty string
+  if (!packageId) {
+    return '';
+  }
+
   // Split by '/' and get the last segment (the actual package name)
   const parts = packageId.split('/');
   return parts[parts.length - 1];

@@ -211,13 +211,16 @@ export async function publishRoutes(server: FastifyInstance) {
           authorName = userRecord?.username || 'Unknown';
         }
 
+        // Determine visibility: private field in manifest maps to visibility in database
+        const visibility = manifest.private ? 'private' : 'public';
+
         await query(
           server,
           `INSERT INTO packages (
             name, description, author_id, org_id, format, subtype, license, license_text, license_url, snippet,
             repository_url, homepage_url, documentation_url,
-            tags, keywords, category, last_published_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())`,
+            tags, keywords, category, visibility, last_published_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW())`,
           [
             manifest.name,
             manifest.description,
@@ -235,12 +238,16 @@ export async function publishRoutes(server: FastifyInstance) {
             manifest.tags || [],
             manifest.keywords || [],
             manifest.category || null,
+            visibility,
           ]
         );
 
         server.log.info(`Created new package: ${manifest.name}${orgId ? ` for organization ${orgId}` : ''}`);
       } else {
-        // Update package last_published_at, license, and snippet information
+        // Determine visibility: private field in manifest maps to visibility in database
+        const visibility = manifest.private ? 'private' : 'public';
+
+        // Update package last_published_at, license, snippet, and visibility information
         await query(
           server,
           `UPDATE packages SET
@@ -249,7 +256,8 @@ export async function publishRoutes(server: FastifyInstance) {
             license = COALESCE($2, license),
             license_text = COALESCE($3, license_text),
             license_url = COALESCE($4, license_url),
-            snippet = COALESCE($5, snippet)
+            snippet = COALESCE($5, snippet),
+            visibility = $6
           WHERE id = $1`,
           [
             manifest.name,
@@ -257,6 +265,7 @@ export async function publishRoutes(server: FastifyInstance) {
             manifest.license_text || null,
             manifest.license_url || null,
             manifest.snippet || null,
+            visibility,
           ]
         );
       }

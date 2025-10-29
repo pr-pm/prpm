@@ -333,14 +333,24 @@ export async function getAuthorProfile(
   username: string,
   sort: 'downloads' | 'recent' | 'name' = 'downloads',
   limit: number = 100,
-  offset: number = 0
+  offset: number = 0,
+  jwtToken?: string
 ) {
   const params = new URLSearchParams({
     sort,
     limit: limit.toString(),
     offset: offset.toString()
   })
-  const response = await fetch(`${REGISTRY_URL}/api/v1/authors/${username}?${params}`)
+
+  const headers: Record<string, string> = {}
+
+  if (jwtToken) {
+    headers['Authorization'] = `Bearer ${jwtToken}`
+  }
+
+  const response = await fetch(`${REGISTRY_URL}/api/v1/authors/${username}?${params}`, {
+    headers,
+  })
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Failed to fetch author profile' }))
@@ -430,6 +440,7 @@ export interface OrganizationPackage {
   description: string
   format: string
   subtype: string
+  visibility: string
   total_downloads: number
   weekly_downloads: number
   is_featured: boolean
@@ -453,8 +464,16 @@ export interface OrganizationDetails {
 /**
  * Get organization details
  */
-export async function getOrganization(orgName: string): Promise<OrganizationDetails> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations/${encodeURIComponent(orgName)}`)
+export async function getOrganization(orgName: string, jwtToken?: string): Promise<OrganizationDetails> {
+  const headers: Record<string, string> = {}
+
+  if (jwtToken) {
+    headers['Authorization'] = `Bearer ${jwtToken}`
+  }
+
+  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations/${encodeURIComponent(orgName)}`, {
+    headers,
+  })
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Failed to fetch organization' }))

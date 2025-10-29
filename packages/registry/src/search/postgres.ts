@@ -64,8 +64,13 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       }
 
       if (author) {
-        conditions.push(`p.author_id = (SELECT id FROM users WHERE username = $${paramIndex++})`);
+        // Search by both author username and organization name
+        conditions.push(`(
+          p.author_id = (SELECT id FROM users WHERE username = $${paramIndex}) OR
+          p.org_id = (SELECT id FROM organizations WHERE name = $${paramIndex})
+        )`);
         params.push(author);
+        paramIndex++;
       }
 
       if (tags && tags.length > 0) {

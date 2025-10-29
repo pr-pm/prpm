@@ -38,9 +38,30 @@ interface PublishOptions {
 async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; source: string }> {
   // Try prpm.json first (native format)
   const prpmJsonPath = join(process.cwd(), 'prpm.json');
+  let prpmJsonExists = false;
+  let prpmJsonError: Error | null = null;
+
   try {
     const content = await readFile(prpmJsonPath, 'utf-8');
-    const manifest = JSON.parse(content) as Manifest;
+    prpmJsonExists = true;
+
+    // Try to parse JSON
+    let manifest: Manifest;
+    try {
+      manifest = JSON.parse(content) as Manifest;
+    } catch (parseError) {
+      // JSON parse error - provide specific error message
+      const error = parseError as Error;
+      throw new Error(
+        `Invalid JSON in prpm.json:\n\n` +
+        `${error.message}\n\n` +
+        `Please check your prpm.json file for syntax errors:\n` +
+        `  - Missing or extra commas\n` +
+        `  - Unclosed quotes or brackets\n` +
+        `  - Invalid JSON syntax\n\n` +
+        `You can validate your JSON at https://jsonlint.com/`
+      );
+    }
 
     // Check if this is a multi-package manifest
     if ('packages' in manifest && Array.isArray(manifest.packages)) {
@@ -81,15 +102,19 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
     const validated = validateManifest(manifest as PackageManifest);
     return { manifests: [validated], source: 'prpm.json' };
   } catch (error) {
-    // If it's a validation error, throw it immediately (don't try marketplace.json)
-    if (error instanceof Error && (
+    // Store error for later
+    prpmJsonError = error as Error;
+
+    // If it's a validation or parsing error, throw it immediately (don't try marketplace.json)
+    if (prpmJsonExists && error instanceof Error && (
+      error.message.includes('Invalid JSON') ||
       error.message.includes('Manifest validation failed') ||
       error.message.includes('Claude skill') ||
       error.message.includes('SKILL.md')
     )) {
       throw error;
     }
-    // Otherwise, prpm.json not found or invalid JSON, try marketplace.json
+    // Otherwise, prpm.json not found or other error, try marketplace.json
   }
 
   // Try .claude/marketplace.json (Claude format)
