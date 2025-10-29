@@ -55,7 +55,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
           description: pkg.description,
           format: pkg.format,
           files: pkg.files,
-          author: pkg.author !== undefined ? pkg.author : (multiManifest.author ?? undefined),
+          author: pkg.author !== undefined ? pkg.author : (multiManifest.author || ''),
           license: pkg.license !== undefined ? pkg.license : (multiManifest.license ?? undefined),
           repository: pkg.repository !== undefined ? pkg.repository : (multiManifest.repository ?? undefined),
           homepage: pkg.homepage !== undefined ? pkg.homepage : (multiManifest.homepage ?? undefined),
