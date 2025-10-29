@@ -363,19 +363,37 @@ jobs:
           echo "✓ S3 data downloaded"
           ls -lh packages/webapp/public/seo-data/
 
-      - name: Create test data for SSG (if S3 data is missing)
+      - name: Create fallback data for SSG (if S3 data is missing)
         run: |
           # Ensure directory exists
           mkdir -p packages/webapp/public/seo-data
 
-          # If S3 download failed or files are empty, create minimal test data
+          # If S3 download failed or files are empty, create fallback data with at least one entry
+          # (Next.js requires generateStaticParams to return non-empty array with output: export)
           if [ ! -s packages/webapp/public/seo-data/packages.json ]; then
-            echo "Creating minimal test data for packages.json"
-            echo '[]' > packages/webapp/public/seo-data/packages.json
+            echo "Creating fallback data for packages.json"
+            cat > packages/webapp/public/seo-data/packages.json << 'EOF'
+[{
+  "name": "@prpm/example",
+  "description": "Example package",
+  "format": "cursor",
+  "subtype": "rules",
+  "total_downloads": 0,
+  "weekly_downloads": 0
+}]
+EOF
           fi
           if [ ! -s packages/webapp/public/seo-data/collections.json ]; then
-            echo "Creating minimal test data for collections.json"
-            echo '[]' > packages/webapp/public/seo-data/collections.json
+            echo "Creating fallback data for collections.json"
+            cat > packages/webapp/public/seo-data/collections.json << 'EOF'
+[{
+  "name_slug": "example-collection",
+  "description": "Example collection",
+  "package_count": 0,
+  "downloads": 0,
+  "stars": 0
+}]
+EOF
           fi
 
           echo "✓ SSG data files ready:"
