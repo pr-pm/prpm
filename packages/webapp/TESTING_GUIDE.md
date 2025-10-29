@@ -94,7 +94,7 @@ cd packages/registry
 docker-compose up -d
 
 # Verify registry is healthy
-curl http://localhost:3000/health
+curl http://localhost:3111/health
 ```
 
 **Run tests:**
@@ -374,7 +374,7 @@ npm run dev
 **Solution:**
 ```bash
 # Check registry health
-curl http://localhost:3000/health
+curl http://localhost:3111/health
 
 # Restart registry
 cd packages/registry

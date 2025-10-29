@@ -44,7 +44,7 @@ cd packages/registry
 npm run migrate
 ```
 
-The registry will be available at http://localhost:3000
+The registry will be available at http://localhost:3111
 
 ### Manual Setup (without Docker)
 
@@ -101,9 +101,9 @@ npm run dev
 ```
 
 The server will be available at:
-- API: http://localhost:3000
-- Swagger Docs: http://localhost:3000/docs
-- Health Check: http://localhost:3000/health
+- API: http://localhost:3111
+- Swagger Docs: http://localhost:3111/docs
+- Health Check: http://localhost:3111/health
 
 ### Production Build
 

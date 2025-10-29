@@ -36,13 +36,19 @@ function OrganizationPageContent() {
       try {
         setLoading(true)
         setError(null)
-        const data = await getOrganization(orgName)
-        setOrgData(data)
 
-        // Check if user is logged in and has permission to edit
+        // Get JWT token first
         const token = localStorage.getItem('prpm_token')
         if (token) {
           setJwtToken(token)
+        }
+
+        // Fetch organization data with authentication if available
+        const data = await getOrganization(orgName, token || undefined)
+        setOrgData(data)
+
+        // Check if user has permission to edit
+        if (token) {
           try {
             const currentUser = await getCurrentUser(token)
             // Check if user is owner or admin of the organization
@@ -71,7 +77,8 @@ function OrganizationPageContent() {
     // Reload organization data after successful edit
     if (!orgName) return
     try {
-      const data = await getOrganization(orgName)
+      const token = localStorage.getItem('prpm_token')
+      const data = await getOrganization(orgName, token || undefined)
       setOrgData(data)
     } catch (err) {
       console.error('Failed to reload organization:', err)
@@ -230,6 +237,11 @@ function OrganizationPageContent() {
                         <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-gray-400 text-xs">
                           {pkg.format}
                         </span>
+                        {pkg.visibility === 'private' && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 border border-gray-500/30 text-gray-400">
+                            🔒 Private
+                          </span>
+                        )}
                         {pkg.is_verified && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-prpm-accent/20 border border-prpm-accent/30 text-prpm-accent">
                             ✓

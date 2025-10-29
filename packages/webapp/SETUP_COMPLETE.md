@@ -64,7 +64,7 @@ packages/webapp/
 
 ## API Integration
 
-Connects to registry at `http://localhost:3000` (configurable via `NEXT_PUBLIC_REGISTRY_URL`):
+Connects to registry at `http://localhost:3111` (configurable via `NEXT_PUBLIC_REGISTRY_URL`):
 
 - `GET /api/v1/invites/:token` - Validate invite
 - `POST /api/v1/invites/:token/claim` - Claim invite (authenticated)
@@ -107,7 +107,7 @@ Route (app)                              Size     First Load JS
 Create `.env.local`:
 
 ```env
-NEXT_PUBLIC_REGISTRY_URL=http://localhost:3000
+NEXT_PUBLIC_REGISTRY_URL=http://localhost:3111
 ```
 
 For production:
@@ -198,7 +198,7 @@ NEXT_PUBLIC_SITE_URL=https://prpm.dev
 
 ### Prerequisites
 
-1. Registry running at `http://localhost:3000`
+1. Registry running at `http://localhost:3111`
 2. Database with author invites created
 3. GitHub OAuth configured in registry
 

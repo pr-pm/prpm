@@ -39,7 +39,7 @@ describe.skip('Publish Command - E2E Tests', () => {
 
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
     (getConfig as jest.Mock).mockResolvedValue({
-      registryUrl: 'http://localhost:3000',
+      registryUrl: 'http://localhost:3111',
       token: 'test-token-123',
     });
 
@@ -260,7 +260,7 @@ describe.skip('Publish Command - E2E Tests', () => {
   describe('Authentication', () => {
     it('should require authentication token', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
         token: undefined,
       });
 

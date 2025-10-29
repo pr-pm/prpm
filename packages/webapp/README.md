@@ -21,7 +21,7 @@ npm install
 Create a `.env.local` file:
 
 ```bash
-NEXT_PUBLIC_REGISTRY_URL=http://localhost:3000
+NEXT_PUBLIC_REGISTRY_URL=http://localhost:3111
 ```
 
 ### Run Development Server

@@ -58,7 +58,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
       const open = require('open');
 
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
       });
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -101,7 +101,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
     it('should handle manual token input', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
       });
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -135,7 +135,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
     it('should handle login timeout', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
       });
 
       (global.fetch as jest.Mock).mockResolvedValue({
@@ -159,7 +159,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
     it('should handle network errors during login', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
       });
 
       (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
@@ -175,7 +175,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
     it('should handle invalid token error', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
       });
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -197,7 +197,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
   describe('Whoami Command', () => {
     it('should display current user info', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
         token: 'valid-token',
       });
 
@@ -220,7 +220,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
     it('should require authentication', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
         token: undefined,
       });
 
@@ -239,7 +239,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
     it('should handle invalid/expired token', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
         token: 'expired-token',
       });
 
@@ -264,7 +264,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
     it('should display user stats', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
         token: 'valid-token',
       });
 
@@ -288,7 +288,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
     it('should show verified badge', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
         token: 'valid-token',
       });
 
@@ -309,7 +309,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
     it('should handle network errors', async () => {
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
         token: 'valid-token',
       });
 
@@ -329,7 +329,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
     it('should complete full login and whoami flow', async () => {
       // Step 1: Login
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
       });
 
       (global.fetch as jest.Mock)
@@ -357,7 +357,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
       // Step 2: Verify with whoami
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
         token: 'new-access-token',
       });
 
@@ -380,7 +380,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
       const testToken = 'persistent-token-123';
 
       (getConfig as jest.Mock).mockResolvedValue({
-        registryUrl: 'http://localhost:3000',
+        registryUrl: 'http://localhost:3111',
         token: testToken,
       });
 

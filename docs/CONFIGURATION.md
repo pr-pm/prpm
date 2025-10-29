@@ -4,10 +4,21 @@ Complete guide to configuring PRPM (Prompt Package Manager) for your development
 
 ## Overview
 
-PRPM uses two main configuration files:
+PRPM uses configuration files at multiple levels:
 
 1. **`~/.prpmrc`** - Global user configuration (auth, preferences)
-2. **`prpm.lock`** - Project lockfile (installed packages)
+2. **`.prpmrc`** - Repository-level configuration (project-specific settings)
+3. **`prpm.lock`** - Project lockfile (installed packages)
+
+### Configuration Priority
+
+PRPM loads configuration in this order (later overrides earlier):
+
+1. **Default values** - Built-in defaults
+2. **User config** (`~/.prpmrc`) - Global user preferences
+3. **Repository config** (`.prpmrc`) - Project-specific settings
+4. **Environment variables** (`PRPM_REGISTRY_URL`, etc.)
+5. **Command-line flags** - Explicit flags override everything
 
 ## Global Configuration (`~/.prpmrc`)
 
@@ -131,6 +142,233 @@ export PRPM_REGISTRY_URL=https://custom-registry.com
 # Disable telemetry
 export PRPM_TELEMETRY_ENABLED=false
 ```
+
+---
+
+## Repository Configuration (`.prpmrc`)
+
+Repository-level configuration allows you to define project-specific settings in your repository root. This is useful for:
+
+- **Team collaboration** - Share consistent format and collection preferences
+- **Project defaults** - Override global settings per-project
+- **Collection tracking** - Track installed collections in version control
+- **Format preferences** - Specify preferred AI tool formats for the project
+
+### Location
+
+The repository config file should be placed at the root of your repository:
+
+```
+your-project/
+├── .prpmrc          ← Repository config
+├── .cursor/
+├── .claude/
+├── package.json
+└── README.md
+```
+
+### Structure
+
+Repository configuration supports all the same fields as user configuration, except authentication:
+
+```json
+{
+  "defaultFormat": "cursor",
+  "collections": {
+    "installed": [
+      "@collection/frontend-react-ecosystem@1.2.0",
+      "@collection/testing-complete@2.0.0"
+    ],
+    "preferredFormats": ["cursor", "claude"],
+    "autoInstall": false,
+    "includeTags": ["react", "typescript"],
+    "excludeTags": ["experimental"]
+  },
+  "cursor": {
+    "version": "0.1.0",
+    "globs": ["src/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
+    "alwaysApply": true,
+    "author": "Frontend Team",
+    "tags": ["react", "typescript"]
+  },
+  "claude": {
+    "model": "sonnet",
+    "tools": "Read,Write,Edit,Bash,Grep"
+  }
+}
+```
+
+### Collections Configuration
+
+The `collections` field tracks and configures collection behavior:
+
+```json
+{
+  "collections": {
+    "installed": [
+      "@collection/frontend-react-ecosystem@1.2.0",
+      "@collection/testing-complete@2.0.0"
+    ],
+    "preferredFormats": ["cursor", "claude"],
+    "defaultCategory": "frontend",
+    "preferOfficial": true,
+    "autoUpdate": false,
+    "includeTags": ["react", "typescript", "testing"],
+    "excludeTags": ["experimental", "beta"],
+    "autoInstall": false
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `installed` | string[] | List of installed collections with versions |
+| `preferredFormats` | string[] | Preferred formats for collection installation |
+| `defaultCategory` | string | Default category when browsing collections |
+| `preferOfficial` | boolean | Prefer official collections in search results |
+| `autoUpdate` | boolean | Automatically update collections |
+| `includeTags` | string[] | Tags to include when searching |
+| `excludeTags` | string[] | Tags to exclude when searching |
+| `autoInstall` | boolean | Auto-install collections from config |
+
+### Example Repository Configs
+
+**Frontend React Project:**
+```json
+{
+  "defaultFormat": "cursor",
+  "collections": {
+    "installed": [
+      "@collection/frontend-react-ecosystem@1.2.0"
+    ],
+    "preferredFormats": ["cursor"],
+    "includeTags": ["react", "typescript", "nextjs"]
+  },
+  "cursor": {
+    "version": "0.1.0",
+    "globs": ["src/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
+    "alwaysApply": true,
+    "author": "Frontend Team",
+    "tags": ["react", "typescript"]
+  }
+}
+```
+
+**Python Backend Project:**
+```json
+{
+  "defaultFormat": "claude",
+  "collections": {
+    "installed": [
+      "@collection/python-backend-complete@2.0.0",
+      "@collection/testing-complete@1.5.0"
+    ],
+    "preferredFormats": ["claude", "generic"]
+  },
+  "claude": {
+    "model": "sonnet",
+    "tools": "Read,Write,Edit,Bash,Grep"
+  }
+}
+```
+
+**Full-Stack TypeScript Project:**
+```json
+{
+  "defaultFormat": "cursor",
+  "collections": {
+    "installed": [
+      "@collection/backend-node-typescript@1.0.0",
+      "@collection/frontend-react-ecosystem@1.2.0",
+      "@collection/database-fullstack@2.1.0",
+      "@collection/devops-infrastructure@1.5.0"
+    ],
+    "preferredFormats": ["cursor", "claude"],
+    "autoUpdate": true
+  },
+  "cursor": {
+    "version": "0.1.0",
+    "alwaysApply": true
+  }
+}
+```
+
+### Managing Repository Config
+
+```bash
+# Initialize repository config
+prpm init
+
+# Install and save to config
+prpm install @collection/frontend-react-ecosystem --save
+
+# View current repository config
+cat .prpmrc
+
+# Check which config is being used
+prpm config list
+```
+
+### Version Control
+
+**Should you commit `.prpmrc`?**
+
+✅ **Yes** - Commit repository config to share with your team:
+- Consistent format preferences
+- Shared collection installations
+- Team-wide configuration
+
+```gitignore
+# Don't ignore .prpmrc
+```
+
+❌ **Don't commit** sensitive information:
+- Authentication tokens (only in `~/.prpmrc`)
+- Personal preferences that vary by developer
+
+### Config Merging Example
+
+Given:
+
+**User config (`~/.prpmrc`):**
+```json
+{
+  "registryUrl": "https://registry.prpm.dev",
+  "token": "user-token",
+  "username": "john",
+  "defaultFormat": "claude",
+  "cursor": {
+    "author": "John Doe"
+  }
+}
+```
+
+**Repository config (`.prpmrc`):**
+```json
+{
+  "defaultFormat": "cursor",
+  "cursor": {
+    "author": "Team Name",
+    "globs": ["src/**/*.ts"]
+  }
+}
+```
+
+**Merged result:**
+```json
+{
+  "registryUrl": "https://registry.prpm.dev",
+  "token": "user-token",
+  "username": "john",
+  "defaultFormat": "cursor",        // Overridden by repo config
+  "cursor": {
+    "author": "Team Name",           // Overridden by repo config
+    "globs": ["src/**/*.ts"]         // Added from repo config
+  }
+}
+```
+
+---
 
 ## Project Lockfile (`prpm.lock`)
 
