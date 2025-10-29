@@ -242,7 +242,6 @@ jobs:
   webapp-e2e-tests:
     name: Webapp E2E Tests (Playwright)
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
