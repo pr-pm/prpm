@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Collection } from '@pr-pm/types'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
+const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || 'https://prpm-prod-packages.s3.amazonaws.com/seo-data'
 
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
@@ -20,68 +21,36 @@ export async function generateStaticParams() {
   }
 
   try {
-    const allCollections: string[] = []
-    let offset = 0
-    const limit = 100
-    let hasMore = true
+    console.log(`[SSG Collections] Starting - S3_SEO_DATA_URL: ${S3_SEO_DATA_URL}`)
 
-    console.log(`[SSG Collections] Starting - REGISTRY_URL: ${REGISTRY_URL}`)
-    console.log(`[SSG Collections] Environment check:`, {
-      NEXT_PUBLIC_REGISTRY_URL: process.env.NEXT_PUBLIC_REGISTRY_URL,
-      REGISTRY_URL: process.env.REGISTRY_URL,
-      NODE_ENV: process.env.NODE_ENV,
-      CI: process.env.CI
+    // Fetch collection data from S3 (uploaded by Lambda)
+    const url = `${S3_SEO_DATA_URL}/collections.json`
+    console.log(`[SSG Collections] Fetching from S3: ${url}`)
+
+    const res = await fetch(url, {
+      next: { revalidate: 3600 } // Revalidate every hour
     })
 
-    // Paginate through all collections
-    while (hasMore) {
-      const url = `${REGISTRY_URL}/api/v1/search/seo/collections?limit=${limit}&offset=${offset}`
-      console.log(`[SSG Collections] Attempting fetch: ${url}`)
-
-      try {
-        const res = await fetch(url, {
-          next: { revalidate: 3600 } // Revalidate every hour
-        })
-
-        console.log(`[SSG Collections] Response status: ${res.status} ${res.statusText}`)
-
-        if (!res.ok) {
-          console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections`)
-          console.error(`[SSG Collections] Response headers:`, Object.fromEntries(res.headers.entries()))
-          break
-        }
-
-        const data = await res.json()
-        console.log(`[SSG Collections] Received data with ${data.collections?.length || 0} collections`)
-
-        if (!data.collections || !Array.isArray(data.collections)) {
-          console.error('[SSG Collections] Invalid response format:', data)
-          break
-        }
-
-        allCollections.push(...data.collections)
-        hasMore = data.hasMore
-        offset += limit
-
-        console.log(`[SSG Collections] Progress: ${allCollections.length} collections fetched`)
-      } catch (fetchError) {
-        console.error('[SSG Collections] Fetch error:', fetchError)
-        console.error('[SSG Collections] Error details:', {
-          message: fetchError instanceof Error ? fetchError.message : String(fetchError),
-          stack: fetchError instanceof Error ? fetchError.stack : undefined
-        })
-        break
-      }
+    if (!res.ok) {
+      console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections from S3`)
+      console.error(`[SSG Collections] Response headers:`, Object.fromEntries(res.headers.entries()))
+      return []
     }
 
-    console.log(`[SSG Collections] ✅ Complete: ${allCollections.length} collections for static generation`)
+    const collections = await res.json()
+    console.log(`[SSG Collections] Received ${collections.length} collections from S3`)
 
-    // ALWAYS return an array, even if empty
-    const params = allCollections.map((slug) => ({
-      slug: encodeURIComponent(slug),
+    if (!Array.isArray(collections)) {
+      console.error('[SSG Collections] Invalid response format - expected array')
+      return []
+    }
+
+    // Map to slug params
+    const params = collections.map((collection: any) => ({
+      slug: encodeURIComponent(collection.name_slug),
     }))
 
-    console.log(`[SSG Collections] Returning ${params.length} params`)
+    console.log(`[SSG Collections] ✅ Complete: ${params.length} collections for static generation`)
     return params
 
   } catch (outerError) {
@@ -98,62 +67,55 @@ export async function generateStaticParams() {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const decodedSlug = decodeURIComponent(params.slug)
+  const collection = await getCollection(decodedSlug)
 
-  try {
-    // Collections typically use 'collection' as the default scope
-    const scope = 'collection'
-    const name = decodedSlug
-
-    const res = await fetch(`${REGISTRY_URL}/api/v1/collections/${scope}/${name}`, {
-      next: { revalidate: 3600 }
-    })
-
-    if (!res.ok) {
-      return {
-        title: 'Collection Not Found',
-        description: 'The requested collection could not be found.',
-      }
-    }
-
-    const collection: Collection = await res.json()
-
+  if (!collection) {
     return {
-      title: `${collection.name_slug} - PRPM Collection`,
-      description: collection.description || `Install ${collection.name_slug} collection with PRPM - curated package collection`,
-      keywords: [...(collection.tags || []), collection.category, collection.framework, 'prpm', 'collection', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
-      openGraph: {
-        title: collection.name_slug,
-        description: collection.description || 'Curated package collection',
-        type: 'website',
-      },
-      twitter: {
-        card: 'summary',
-        title: collection.name_slug,
-        description: collection.description || 'Curated package collection',
-      },
+      title: 'Collection Not Found',
+      description: 'The requested collection could not be found.',
     }
-  } catch (error) {
-    return {
-      title: 'Collection Error',
-      description: 'Error loading collection details.',
-    }
+  }
+
+  return {
+    title: `${collection.name_slug} - PRPM Collection`,
+    description: collection.description || `Install ${collection.name_slug} collection with PRPM - curated package collection`,
+    keywords: [...(collection.tags || []), collection.category, collection.framework, 'prpm', 'collection', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
+    openGraph: {
+      title: collection.name_slug,
+      description: collection.description || 'Curated package collection',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: collection.name_slug,
+      description: collection.description || 'Curated package collection',
+    },
   }
 }
 
 async function getCollection(slug: string): Promise<Collection | null> {
   try {
-    // Collections typically use 'collection' as the default scope
-    // URL format: /collections/name-slug -> API: /api/v1/collections/collection/name-slug
-    const scope = 'collection'
-    const name = slug
-
-    const res = await fetch(`${REGISTRY_URL}/api/v1/collections/${scope}/${name}`, {
+    // Fetch collections data from S3
+    const url = `${S3_SEO_DATA_URL}/collections.json`
+    const res = await fetch(url, {
       next: { revalidate: 3600 } // Revalidate every hour
     })
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      console.error(`Error fetching collections from S3: ${res.status}`)
+      return null
+    }
 
-    return res.json()
+    const collections = await res.json()
+
+    if (!Array.isArray(collections)) {
+      console.error('Invalid collections data format from S3')
+      return null
+    }
+
+    // Find the collection by slug
+    const collection = collections.find((c: any) => c.name_slug === slug)
+    return collection || null
   } catch (error) {
     console.error('Error fetching collection:', error)
     return null
@@ -242,20 +204,20 @@ export default async function CollectionPage({ params }: { params: { slug: strin
         {collection.packages && collection.packages.length > 0 && (
           <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
             <h2 className="text-2xl font-semibold text-white mb-4">📦 Packages ({collection.packages.length})</h2>
-            <div className="space-y-3">
+            <div className="space-y-6">
               {collection.packages
                 .sort((a, b) => (a.installOrder || 999) - (b.installOrder || 999))
                 .map((pkg, index) => (
                 <div
                   key={pkg.packageId}
-                  className="bg-prpm-dark border border-prpm-border rounded-lg p-4 hover:border-prpm-accent transition-colors"
+                  className="bg-prpm-dark border border-prpm-border rounded-lg p-4"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-4 mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-gray-500 text-sm font-mono">#{index + 1}</span>
                         <h3 className="text-lg font-semibold text-white">
-                          {(pkg as any).package?.name || pkg.packageId}
+                          {(pkg as any).packageName || pkg.packageId}
                         </h3>
                         {pkg.required && (
                           <span className="px-2 py-0.5 bg-prpm-accent/20 text-prpm-accent text-xs rounded-full">
@@ -272,11 +234,11 @@ export default async function CollectionPage({ params }: { params: { slug: strin
                         <p className="text-gray-400 text-sm mb-2">{(pkg as any).package.description}</p>
                       )}
                       {pkg.reason && (
-                        <p className="text-gray-500 text-sm italic">
+                        <p className="text-gray-500 text-sm italic mb-2">
                           <span className="font-semibold">Why included:</span> {pkg.reason}
                         </p>
                       )}
-                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span>Version: {pkg.version || 'latest'}</span>
                         {pkg.formatOverride && (
                           <span className="px-2 py-0.5 bg-prpm-dark border border-prpm-border rounded">
@@ -285,7 +247,29 @@ export default async function CollectionPage({ params }: { params: { slug: strin
                         )}
                       </div>
                     </div>
+                    <div>
+                      {(pkg as any).packageName && (
+                        <Link
+                          href={`/packages/${(pkg as any).packageName.replace('@', '').replace('/', '/')}`}
+                          className="px-3 py-1.5 bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded text-sm transition-colors whitespace-nowrap"
+                        >
+                          View Details →
+                        </Link>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Full prompt content */}
+                  {(pkg as any).fullContent && (
+                    <div className="mt-4 border-t border-prpm-border pt-4">
+                      <h4 className="text-sm font-semibold text-gray-400 mb-2">📄 Prompt Content</h4>
+                      <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 overflow-x-auto">
+                        <pre className="text-xs text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
+                          <code>{(pkg as any).fullContent}</code>
+                        </pre>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -345,6 +345,24 @@ jobs:
       - name: Build types package
         run: npm run build --workspace=@pr-pm/types
 
+      - name: Configure AWS credentials for S3 data
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download S3 data for static build
+        run: |
+          echo "Downloading SEO data from S3..."
+          mkdir -p packages/webapp/public/seo-data
+          aws s3 sync s3://prpm-prod-packages/seo-data/ packages/webapp/public/seo-data/ \
+            --exclude "*" \
+            --include "packages.json" \
+            --include "collections.json"
+          echo "✓ S3 data downloaded"
+          ls -lh packages/webapp/public/seo-data/
+
       - name: Build webapp with SSG
         run: |
           cd packages/webapp
@@ -354,6 +372,7 @@ jobs:
           CI: false
           NEXT_PUBLIC_REGISTRY_URL: https://registry.prpm.dev
           REGISTRY_URL: https://registry.prpm.dev
+          NEXT_PUBLIC_S3_SEO_DATA_URL: https://prpm-prod-packages.s3.amazonaws.com/seo-data
 
       - name: Verify build output
         run: |

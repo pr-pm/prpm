@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 interface CollectionPackage {
   packageId: string
@@ -218,6 +219,15 @@ export default function CollectionModal({ collection: initialCollection, isOpen,
             prpm install collections/{collection.name_slug}
           </code>
         </div>
+
+        {/* View Details Link */}
+        <Link
+          href={`/collections/${collection.name_slug}`}
+          className="block w-full px-4 py-2 bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg font-medium text-center transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          View Full Details →
+        </Link>
 
       </div>
     </div>
