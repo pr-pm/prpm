@@ -376,29 +376,11 @@ jobs:
               echo "✓ packages.json is valid with $PKG_COUNT packages"
             else
               echo "⚠️  packages.json is empty or invalid, creating fallback"
-              cat > packages/webapp/public/seo-data/packages.json << 'EOF'
-[{
-  "name": "@prpm/example",
-  "description": "Example package",
-  "format": "cursor",
-  "subtype": "rules",
-  "total_downloads": 0,
-  "weekly_downloads": 0
-}]
-EOF
+              echo '[{"name":"@prpm/example","description":"Example package","format":"cursor","subtype":"rules","total_downloads":0,"weekly_downloads":0}]' > packages/webapp/public/seo-data/packages.json
             fi
           else
             echo "⚠️  packages.json missing, creating fallback"
-            cat > packages/webapp/public/seo-data/packages.json << 'EOF'
-[{
-  "name": "@prpm/example",
-  "description": "Example package",
-  "format": "cursor",
-  "subtype": "rules",
-  "total_downloads": 0,
-  "weekly_downloads": 0
-}]
-EOF
+            echo '[{"name":"@prpm/example","description":"Example package","format":"cursor","subtype":"rules","total_downloads":0,"weekly_downloads":0}]' > packages/webapp/public/seo-data/packages.json
           fi
 
           # Validate collections.json
@@ -409,27 +391,11 @@ EOF
               echo "✓ collections.json is valid with $COLL_COUNT collections"
             else
               echo "⚠️  collections.json is empty or invalid, creating fallback"
-              cat > packages/webapp/public/seo-data/collections.json << 'EOF'
-[{
-  "name_slug": "example-collection",
-  "description": "Example collection",
-  "package_count": 0,
-  "downloads": 0,
-  "stars": 0
-}]
-EOF
+              echo '[{"name_slug":"example-collection","description":"Example collection","package_count":0,"downloads":0,"stars":0}]' > packages/webapp/public/seo-data/collections.json
             fi
           else
             echo "⚠️  collections.json missing, creating fallback"
-            cat > packages/webapp/public/seo-data/collections.json << 'EOF'
-[{
-  "name_slug": "example-collection",
-  "description": "Example collection",
-  "package_count": 0,
-  "downloads": 0,
-  "stars": 0
-}]
-EOF
+            echo '[{"name_slug":"example-collection","description":"Example collection","package_count":0,"downloads":0,"stars":0}]' > packages/webapp/public/seo-data/collections.json
           fi
 
           echo ""
