@@ -5,7 +5,9 @@ import type { PackageInfo } from '@pr-pm/types'
 import CopyInstallCommand from '@/components/CopyInstallCommand'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
-const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || 'https://prpm-prod-packages.s3.amazonaws.com/seo-data'
+// During build, don't set a default S3 URL - we want to use local files only
+// Only use S3 as fallback in runtime (client-side) if explicitly configured
+const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || (typeof window !== 'undefined' ? 'https://prpm-prod-packages.s3.amazonaws.com/seo-data' : '')
 
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
@@ -41,7 +43,13 @@ export async function generateStaticParams() {
       packages = JSON.parse(fileContent)
       console.log(`[SSG Packages] ✅ Loaded ${packages.length} packages from local file`)
     } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3
+      // Local file doesn't exist, try fetching from S3 if URL is configured
+      if (!S3_SEO_DATA_URL) {
+        console.error(`[SSG Packages] Local file not found and S3_SEO_DATA_URL not configured`)
+        console.error(`[SSG Packages] Make sure to run prepare-ssg-data.sh before building`)
+        return []
+      }
+
       console.log(`[SSG Packages] Local file not found, fetching from S3`)
 
       const url = `${S3_SEO_DATA_URL}/packages.json`
@@ -116,7 +124,7 @@ export async function generateMetadata({ params }: { params: { author: string; p
   }
 
   return {
-    title: `${pkg.name} - PRPM Package`,
+    title: `${pkg.name} ${pkg.format} ${pkg.subtype} - PRPM Package`,
     description: pkg.description || `Install ${pkg.name} with PRPM - ${pkg.format} ${pkg.subtype} for your AI coding workflow`,
     keywords: [...(pkg.tags || []), pkg.format, pkg.subtype, pkg.category, 'prpm', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
     openGraph: {
@@ -134,18 +142,36 @@ export async function generateMetadata({ params }: { params: { author: string; p
 
 async function getPackage(name: string): Promise<PackageInfo | null> {
   try {
-    // Fetch packages data from S3
-    const url = `${S3_SEO_DATA_URL}/packages.json`
-    const res = await fetch(url, {
-      next: { revalidate: 3600 } // Revalidate every hour
-    })
+    let packages
 
-    if (!res.ok) {
-      console.error(`Error fetching packages from S3: ${res.status}`)
-      return null
+    // Try to read from local filesystem first (for static builds)
+    try {
+      const fs = await import('fs/promises')
+      const path = await import('path')
+      const localPath = path.join(process.cwd(), 'public', 'seo-data', 'packages.json')
+      const fileContent = await fs.readFile(localPath, 'utf-8')
+      packages = JSON.parse(fileContent)
+      console.log(`[getPackage] Loaded from local file`)
+    } catch (fsError) {
+      // Local file doesn't exist, try fetching from S3 if URL is configured
+      if (!S3_SEO_DATA_URL) {
+        console.error(`[getPackage] Local file not found and S3_SEO_DATA_URL not configured`)
+        return null
+      }
+
+      console.log(`[getPackage] Local file not found, fetching from S3`)
+      const url = `${S3_SEO_DATA_URL}/packages.json`
+      const res = await fetch(url, {
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (!res.ok) {
+        console.error(`Error fetching packages from S3: ${res.status}`)
+        return null
+      }
+
+      packages = await res.json()
     }
-
-    const packages = await res.json()
 
     if (!Array.isArray(packages)) {
       console.error('Invalid packages data format from S3')

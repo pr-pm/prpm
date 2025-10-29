@@ -67,12 +67,12 @@ export default function OrganizationsPage() {
     <main className="min-h-screen bg-prpm-dark">
       {/* Header */}
       <div className="bg-prpm-dark-card border-b border-prpm-border">
-        <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           <Link href="/search" className="text-prpm-accent hover:text-prpm-accent-light mb-4 inline-block">
             ← Back to Search
           </Link>
-          <h1 className="text-4xl font-bold text-white mb-4">Organizations Leaderboard</h1>
-          <p className="text-gray-400 text-lg">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">Organizations Leaderboard</h1>
+          <p className="text-gray-400 text-base sm:text-lg">
             Top organizations by packages and downloads
           </p>
         </div>
@@ -80,17 +80,17 @@ export default function OrganizationsPage() {
 
       {/* CTA Banner */}
       <div className="bg-gradient-to-r from-prpm-accent/10 to-purple-500/10 border-b border-prpm-border">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Create Your Organization</h2>
-              <p className="text-gray-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Create Your Organization</h2>
+              <p className="text-gray-400 text-sm sm:text-base">
                 Start publishing packages under your organization and collaborate with your team
               </p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold whitespace-nowrap transition-all"
+              className="w-full md:w-auto px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold whitespace-nowrap transition-all"
             >
               Create Organization
             </button>
@@ -99,14 +99,14 @@ export default function OrganizationsPage() {
       </div>
 
       {/* Leaderboard */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {organizations.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🏢</div>
             <p className="text-gray-400">No organizations found</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {organizations.map((org, index) => {
               const rank = index + 1
               const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null
@@ -115,20 +115,94 @@ export default function OrganizationsPage() {
                 <Link
                   key={org.id}
                   href={`/orgs?name=${encodeURIComponent(org.name)}`}
-                  className="block bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-all group"
+                  className="block bg-prpm-dark-card border border-prpm-border rounded-lg p-4 sm:p-6 hover:border-prpm-accent transition-all group"
                 >
-                  <div className="flex items-center gap-6">
+                  {/* Mobile Layout (< 640px) */}
+                  <div className="sm:hidden space-y-4">
+                    {/* Top Row: Rank + Avatar + Name */}
+                    <div className="flex items-center gap-3">
+                      {/* Rank */}
+                      <div className="flex-shrink-0 w-10 text-center">
+                        {medal ? (
+                          <span className="text-2xl">{medal}</span>
+                        ) : (
+                          <span className="text-lg font-bold text-gray-500">#{rank}</span>
+                        )}
+                      </div>
+
+                      {/* Avatar */}
+                      <div className="flex-shrink-0 w-12 h-12 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
+                        {org.avatar_url ? (
+                          <img
+                            src={org.avatar_url}
+                            alt={`${org.name}'s avatar`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-lg font-bold text-white">
+                            {org.name.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Organization Name */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-lg font-bold text-white group-hover:text-prpm-accent transition-colors truncate">
+                            {org.name}
+                          </h2>
+                          {org.is_verified && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-prpm-accent/20 border border-prpm-accent/30 rounded-full text-prpm-accent text-xs font-semibold flex-shrink-0">
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    {org.description && (
+                      <p className="text-gray-400 text-sm line-clamp-2 pl-13">
+                        {org.description}
+                      </p>
+                    )}
+
+                    {/* Stats Row */}
+                    <div className="grid grid-cols-3 gap-2 pt-3 border-t border-prpm-border">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-white">
+                          {org.package_count}
+                        </div>
+                        <div className="text-gray-400 text-xs">Packages</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-white">
+                          {org.member_count}
+                        </div>
+                        <div className="text-gray-400 text-xs">Members</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-prpm-accent">
+                          {org.total_downloads.toLocaleString()}
+                        </div>
+                        <div className="text-gray-400 text-xs">Downloads</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop Layout (>= 640px) */}
+                  <div className="hidden sm:flex items-center gap-4 md:gap-6">
                     {/* Rank */}
-                    <div className="flex-shrink-0 w-16 text-center">
+                    <div className="flex-shrink-0 w-12 md:w-16 text-center">
                       {medal ? (
-                        <span className="text-4xl">{medal}</span>
+                        <span className="text-3xl md:text-4xl">{medal}</span>
                       ) : (
-                        <span className="text-2xl font-bold text-gray-500">#{rank}</span>
+                        <span className="text-xl md:text-2xl font-bold text-gray-500">#{rank}</span>
                       )}
                     </div>
 
                     {/* Avatar */}
-                    <div className="flex-shrink-0 w-16 h-16 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
+                    <div className="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
                       {org.avatar_url ? (
                         <img
                           src={org.avatar_url}
@@ -136,7 +210,7 @@ export default function OrganizationsPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-2xl font-bold text-white">
+                        <span className="text-xl md:text-2xl font-bold text-white">
                           {org.name.charAt(0).toUpperCase()}
                         </span>
                       )}
@@ -144,8 +218,8 @@ export default function OrganizationsPage() {
 
                     {/* Organization Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h2 className="text-xl font-bold text-white group-hover:text-prpm-accent transition-colors truncate">
+                      <div className="flex items-center gap-2 md:gap-3 mb-2 flex-wrap">
+                        <h2 className="text-lg md:text-xl font-bold text-white group-hover:text-prpm-accent transition-colors truncate">
                           {org.name}
                         </h2>
                         {org.is_verified && (
@@ -162,21 +236,21 @@ export default function OrganizationsPage() {
                     </div>
 
                     {/* Stats */}
-                    <div className="flex gap-8 flex-shrink-0">
+                    <div className="flex gap-4 md:gap-8 flex-shrink-0">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-white">
+                        <div className="text-xl md:text-2xl font-bold text-white">
                           {org.package_count}
                         </div>
                         <div className="text-gray-400 text-xs">Packages</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-white">
+                        <div className="text-xl md:text-2xl font-bold text-white">
                           {org.member_count}
                         </div>
                         <div className="text-gray-400 text-xs">Members</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-prpm-accent">
+                        <div className="text-xl md:text-2xl font-bold text-prpm-accent">
                           {org.total_downloads.toLocaleString()}
                         </div>
                         <div className="text-gray-400 text-xs">Downloads</div>
