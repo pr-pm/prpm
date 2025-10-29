@@ -124,7 +124,7 @@ export async function generateMetadata({ params }: { params: { author: string; p
   }
 
   return {
-    title: `${pkg.name} - PRPM Package`,
+    title: `${pkg.name} ${pkg.format} ${pkg.subtype} - PRPM Package`,
     description: pkg.description || `Install ${pkg.name} with PRPM - ${pkg.format} ${pkg.subtype} for your AI coding workflow`,
     keywords: [...(pkg.tags || []), pkg.format, pkg.subtype, pkg.category, 'prpm', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
     openGraph: {

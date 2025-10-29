@@ -98,7 +98,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 
   return {
-    title: `${collection.name_slug} - PRPM Collection`,
+    title: `${collection.name} - PRPM Collection`,
     description: collection.description || `Install ${collection.name_slug} collection with PRPM - curated package collection`,
     keywords: [...(collection.tags || []), collection.category, collection.framework, 'prpm', 'collection', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
     openGraph: {
