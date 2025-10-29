@@ -61,6 +61,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
           homepage: pkg.homepage !== undefined ? pkg.homepage : multiManifest.homepage,
           documentation: pkg.documentation !== undefined ? pkg.documentation : multiManifest.documentation,
           organization: pkg.organization !== undefined ? pkg.organization : multiManifest.organization,
+          private: pkg.private !== undefined ? pkg.private : multiManifest.private,
           tags: pkg.tags !== undefined ? pkg.tags : multiManifest.tags,
           keywords: pkg.keywords !== undefined ? pkg.keywords : multiManifest.keywords,
           subtype: pkg.subtype,
@@ -387,6 +388,15 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       }
 
       try {
+        // Determine access level: CLI option overrides manifest setting
+        // If --access flag is explicitly provided, use it; otherwise use manifest setting
+        const isPrivate = options.access === 'private' || (options.access === 'public' ? false : manifest.private || false);
+
+        // Update manifest with final private setting
+        if (isPrivate !== manifest.private) {
+          manifest.private = isPrivate;
+        }
+
         let selectedOrgId: string | undefined;
 
         // Check if organization is specified in manifest
@@ -414,6 +424,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log(`   Package: ${manifest.name}@${manifest.version}`);
         console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype}`);
         console.log(`   Description: ${manifest.description}`);
+        console.log(`   Access: ${manifest.private ? 'private' : 'public'}`);
         if (selectedOrgId && userInfo) {
           const selectedOrg = userInfo.organizations.find((org: any) => org.id === selectedOrgId);
           console.log(`   Publishing to: ${selectedOrg?.name || 'organization'}`);

@@ -10,6 +10,9 @@ import { Format, Subtype } from '../types';
  * Get the destination directory for a package based on format and subtype
  */
 export function getDestinationDir(format: Format, subtype: Subtype, name: string): string {
+  // Strip author namespace from package name to avoid nested directories
+  const packageName = stripAuthorNamespace(name);
+
   switch (format) {
     case 'cursor':
       if (subtype === 'agent') return '.cursor/agents';
@@ -17,7 +20,7 @@ export function getDestinationDir(format: Format, subtype: Subtype, name: string
       return '.cursor/rules';
 
     case 'claude':
-      if (subtype === 'skill') return `.claude/skills/${name}`;
+      if (subtype === 'skill') return `.claude/skills/${packageName}`;
       if (subtype === 'slash-command') return '.claude/commands';
       if (subtype === 'agent') return '.claude/agents';
       return '.claude/agents'; // Default for claude

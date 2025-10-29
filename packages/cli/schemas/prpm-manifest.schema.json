@@ -148,6 +148,11 @@
         "my-company"
       ]
     },
+    "private": {
+      "type": "boolean",
+      "description": "Whether the package is private. Private packages are only accessible to the owner/organization members. Defaults to false (public).",
+      "default": false
+    },
     "tags": {
       "type": "array",
       "description": "Package tags for categorization",
@@ -354,6 +359,14 @@
           "node": ">=18.0.0"
         }
       ]
+    },
+    "packages": {
+      "type": "array",
+      "description": "Array of packages to publish from a single manifest (multi-package publishing). Packages inherit top-level fields unless overridden.",
+      "items": {
+        "$ref": "#"
+      },
+      "minItems": 1
     }
   },
   "additionalProperties": false,
@@ -490,6 +503,51 @@
       ],
       "files": [
         ".windsurfrules"
+      ]
+    },
+    {
+      "name": "@company/private-package",
+      "version": "1.0.0",
+      "description": "A private package only accessible to organization members",
+      "format": "claude",
+      "subtype": "skill",
+      "author": "Company Team",
+      "organization": "my-company",
+      "private": true,
+      "license": "Proprietary",
+      "files": [
+        "internal-skill.md",
+        "README.md"
+      ]
+    },
+    {
+      "name": "@username/multi-package-example",
+      "version": "1.0.0",
+      "description": "Multi-package manifest example",
+      "author": "Your Name",
+      "license": "MIT",
+      "repository": "https://github.com/username/multi-package",
+      "packages": [
+        {
+          "name": "@username/package-one",
+          "version": "1.0.0",
+          "description": "First package in the multi-package manifest",
+          "format": "claude",
+          "subtype": "skill",
+          "files": [
+            "package-one/SKILL.md"
+          ]
+        },
+        {
+          "name": "@username/package-two",
+          "version": "1.0.0",
+          "description": "Second package with different settings",
+          "format": "cursor",
+          "private": true,
+          "files": [
+            "package-two/.cursor/rules/main.mdc"
+          ]
+        }
       ]
     }
   ]

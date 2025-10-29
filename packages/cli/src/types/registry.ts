@@ -37,6 +37,7 @@ export interface PackageManifest {
   keywords?: string[];
   category?: string;
   organization?: string; // Organization name or ID for team publishing
+  private?: boolean; // Whether the package is private (defaults to false/public)
   dependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
   engines?: Record<string, string>;
@@ -110,6 +111,7 @@ export interface MultiPackageManifest {
   homepage?: string;
   documentation?: string;
   organization?: string;
+  private?: boolean; // Default private setting for all packages (can be overridden per package)
   tags?: string[];
   keywords?: string[];
   packages: PackageManifest[];
