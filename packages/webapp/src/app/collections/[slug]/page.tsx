@@ -4,7 +4,9 @@ import Link from 'next/link'
 import type { Collection } from '@pr-pm/types'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
-const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || 'https://prpm-prod-packages.s3.amazonaws.com/seo-data'
+// During build, don't set a default S3 URL - we want to use local files only
+// Only use S3 as fallback in runtime (client-side) if explicitly configured
+const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || (typeof window !== 'undefined' ? 'https://prpm-prod-packages.s3.amazonaws.com/seo-data' : '')
 
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
@@ -34,7 +36,13 @@ export async function generateStaticParams() {
       collections = JSON.parse(fileContent)
       console.log(`[SSG Collections] ✅ Loaded ${collections.length} collections from local file`)
     } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3
+      // Local file doesn't exist, try fetching from S3 if URL is configured
+      if (!S3_SEO_DATA_URL) {
+        console.error(`[SSG Collections] Local file not found and S3_SEO_DATA_URL not configured`)
+        console.error(`[SSG Collections] Make sure to run prepare-ssg-data.sh before building`)
+        return []
+      }
+
       console.log(`[SSG Collections] Local file not found, fetching from S3`)
 
       const url = `${S3_SEO_DATA_URL}/collections.json`
@@ -61,7 +69,7 @@ export async function generateStaticParams() {
 
     // Map to slug params
     const params = collections.map((collection: any) => ({
-      slug: encodeURIComponent(collection.name_slug),
+      slug: collection.name_slug,
     }))
 
     console.log(`[SSG Collections] ✅ Complete: ${params.length} collections for static generation`)
@@ -80,8 +88,7 @@ export async function generateStaticParams() {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const decodedSlug = decodeURIComponent(params.slug)
-  const collection = await getCollection(decodedSlug)
+  const collection = await getCollection(params.slug)
 
   if (!collection) {
     return {
@@ -109,18 +116,36 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 async function getCollection(slug: string): Promise<Collection | null> {
   try {
-    // Fetch collections data from S3
-    const url = `${S3_SEO_DATA_URL}/collections.json`
-    const res = await fetch(url, {
-      next: { revalidate: 3600 } // Revalidate every hour
-    })
+    let collections
 
-    if (!res.ok) {
-      console.error(`Error fetching collections from S3: ${res.status}`)
-      return null
+    // Try to read from local filesystem first (for static builds)
+    try {
+      const fs = await import('fs/promises')
+      const path = await import('path')
+      const localPath = path.join(process.cwd(), 'public', 'seo-data', 'collections.json')
+      const fileContent = await fs.readFile(localPath, 'utf-8')
+      collections = JSON.parse(fileContent)
+      console.log(`[getCollection] Loaded from local file`)
+    } catch (fsError) {
+      // Local file doesn't exist, try fetching from S3 if URL is configured
+      if (!S3_SEO_DATA_URL) {
+        console.error(`[getCollection] Local file not found and S3_SEO_DATA_URL not configured`)
+        return null
+      }
+
+      console.log(`[getCollection] Local file not found, fetching from S3`)
+      const url = `${S3_SEO_DATA_URL}/collections.json`
+      const res = await fetch(url, {
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (!res.ok) {
+        console.error(`Error fetching collections from S3: ${res.status}`)
+        return null
+      }
+
+      collections = await res.json()
     }
-
-    const collections = await res.json()
 
     if (!Array.isArray(collections)) {
       console.error('Invalid collections data format from S3')
@@ -137,8 +162,7 @@ async function getCollection(slug: string): Promise<Collection | null> {
 }
 
 export default async function CollectionPage({ params }: { params: { slug: string } }) {
-  const decodedSlug = decodeURIComponent(params.slug)
-  const collection = await getCollection(decodedSlug)
+  const collection = await getCollection(params.slug)
 
   if (!collection) {
     notFound()
@@ -189,18 +213,22 @@ export default async function CollectionPage({ params }: { params: { slug: strin
               </svg>
               <span>{collection.package_count} packages</span>
             </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-              </svg>
-              <span>{collection.downloads.toLocaleString()} installs</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-              <span>{collection.stars} stars</span>
-            </div>
+            {collection.downloads != null && (
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                <span>{collection.downloads.toLocaleString()} installs</span>
+              </div>
+            )}
+            {collection.stars != null && (
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+                <span>{collection.stars} stars</span>
+              </div>
+            )}
             {collection.author && (
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
