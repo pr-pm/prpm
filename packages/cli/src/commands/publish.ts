@@ -12,7 +12,7 @@ import { randomBytes } from 'crypto';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
-import type { PackageManifest, PackageFileMetadata } from '../types/registry';
+import type { PackageManifest, PackageFileMetadata, MultiPackageManifest, Manifest } from '../types/registry';
 import {
   marketplaceToManifest,
   validateMarketplaceJson,
@@ -31,7 +31,7 @@ interface PublishOptions {
 /**
  * Try to find and load manifest files
  * Checks for:
- * 1. prpm.json (native format) - returns single manifest
+ * 1. prpm.json (native format) - returns single manifest or array of packages
  * 2. .claude/marketplace.json (Claude format) - returns all plugins as separate manifests
  * 3. .claude-plugin/marketplace.json (Claude format - alternative location) - returns all plugins
  */
@@ -40,8 +40,44 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
   const prpmJsonPath = join(process.cwd(), 'prpm.json');
   try {
     const content = await readFile(prpmJsonPath, 'utf-8');
-    const manifest = JSON.parse(content);
-    const validated = validateManifest(manifest);
+    const manifest = JSON.parse(content) as Manifest;
+
+    // Check if this is a multi-package manifest
+    if ('packages' in manifest && Array.isArray(manifest.packages)) {
+      const multiManifest = manifest as MultiPackageManifest;
+
+      // Validate each package in the array
+      const validatedManifests = multiManifest.packages.map((pkg, idx) => {
+        // Inherit top-level fields if not specified in package - using explicit undefined checks
+        const packageWithDefaults: PackageManifest = {
+          name: pkg.name,
+          version: pkg.version,
+          description: pkg.description,
+          format: pkg.format,
+          files: pkg.files,
+          author: pkg.author !== undefined ? pkg.author : (multiManifest.author ?? undefined),
+          license: pkg.license !== undefined ? pkg.license : (multiManifest.license ?? undefined),
+          repository: pkg.repository !== undefined ? pkg.repository : (multiManifest.repository ?? undefined),
+          homepage: pkg.homepage !== undefined ? pkg.homepage : (multiManifest.homepage ?? undefined),
+          documentation: pkg.documentation !== undefined ? pkg.documentation : (multiManifest.documentation ?? undefined),
+          organization: pkg.organization !== undefined ? pkg.organization : (multiManifest.organization ?? undefined),
+          tags: pkg.tags !== undefined ? pkg.tags : (multiManifest.tags ?? undefined),
+          keywords: pkg.keywords !== undefined ? pkg.keywords : (multiManifest.keywords ?? undefined),
+          subtype: pkg.subtype,
+          dependencies: pkg.dependencies,
+          peerDependencies: pkg.peerDependencies,
+          engines: pkg.engines,
+          main: pkg.main,
+        };
+
+        return validateManifest(packageWithDefaults);
+      });
+
+      return { manifests: validatedManifests, source: 'prpm.json (multi-package)' };
+    }
+
+    // Single package manifest
+    const validated = validateManifest(manifest as PackageManifest);
     return { manifests: [validated], source: 'prpm.json' };
   } catch (error) {
     // If it's a validation error, throw it immediately (don't try marketplace.json)

@@ -1088,5 +1088,140 @@ describe.skip('Publish Command', () => {
       );
 
     });
+
+    it('should handle multi-package manifest from prpm.json', async () => {
+      // Create multi-package manifest
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'multi-package-example',
+          version: '1.0.0',
+          description: 'Example multi-package manifest',
+          author: 'Test Author',
+          license: 'MIT',
+          repository: 'https://github.com/test/repo',
+          tags: ['test', 'multi'],
+          packages: [
+            {
+              name: 'package-one',
+              version: '1.0.0',
+              description: 'First package',
+              format: 'cursor',
+              subtype: 'rule',
+              files: ['package-one.cursorrules'],
+            },
+            {
+              name: 'package-two',
+              version: '1.0.0',
+              description: 'Second package',
+              format: 'claude',
+              subtype: 'skill',
+              files: ['SKILL.md'],
+            },
+          ],
+        })
+      );
+
+      // Create files for both packages
+      await writeFile(join(testDir, 'package-one.cursorrules'), '# Package one rules');
+      await writeFile(join(testDir, 'SKILL.md'), '# Package two skill');
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test',
+        version: '1.0.0',
+      });
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({});
+
+      // Should publish both packages
+      expect(mockPublish).toHaveBeenCalledTimes(2);
+
+      // Verify first package call
+      const firstCall = mockPublish.mock.calls[0];
+      expect(firstCall[0]).toMatchObject({
+        name: 'package-one',
+        version: '1.0.0',
+        description: 'First package',
+        format: 'cursor',
+        subtype: 'rule',
+        author: 'Test Author', // Inherited from top-level
+        license: 'MIT', // Inherited from top-level
+        repository: 'https://github.com/test/repo', // Inherited from top-level
+        tags: ['test', 'multi'], // Inherited from top-level
+      });
+
+      // Verify second package call
+      const secondCall = mockPublish.mock.calls[1];
+      expect(secondCall[0]).toMatchObject({
+        name: 'package-two',
+        version: '1.0.0',
+        description: 'Second package',
+        format: 'claude',
+        subtype: 'skill',
+        author: 'Test Author', // Inherited from top-level
+        license: 'MIT', // Inherited from top-level
+      });
+    });
+
+    it('should allow packages to override top-level fields in multi-package manifest', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'multi-package-override',
+          version: '1.0.0',
+          author: 'Default Author',
+          license: 'MIT',
+          packages: [
+            {
+              name: 'package-override',
+              version: '2.0.0',
+              description: 'Package with overrides',
+              format: 'cursor',
+              subtype: 'rule',
+              author: 'Custom Author', // Override
+              license: 'Apache-2.0', // Override
+              files: ['test.cursorrules'],
+            },
+          ],
+        })
+      );
+
+      await writeFile(join(testDir, 'test.cursorrules'), '# Test');
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test',
+        version: '2.0.0',
+      });
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalledTimes(1);
+
+      const call = mockPublish.mock.calls[0];
+      expect(call[0]).toMatchObject({
+        name: 'package-override',
+        version: '2.0.0',
+        author: 'Custom Author', // Should use package-level override
+        license: 'Apache-2.0', // Should use package-level override
+      });
+    });
   });
 });
