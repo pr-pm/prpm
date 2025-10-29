@@ -187,7 +187,7 @@ async function main() {
   console.log(`\n📦 Adding ${packages.length} package pages...`)
   for (const packageName of packages) {
     entries.push({
-      url: `${envConfig.SITE_URL}/packages/${encodeURIComponent(packageName)}`,
+      url: `${envConfig.SITE_URL}/packages/${packageName}`,
       lastmod: new Date().toISOString().split('T')[0],
       changefreq: 'weekly',
       priority: 0.8,
@@ -199,7 +199,7 @@ async function main() {
   console.log(`\n📚 Adding ${collections.length} collection pages...`)
   for (const collectionSlug of collections) {
     entries.push({
-      url: `${envConfig.SITE_URL}/collections/${encodeURIComponent(collectionSlug)}`,
+      url: `${envConfig.SITE_URL}/collections/${collectionSlug}`,
       lastmod: new Date().toISOString().split('T')[0],
       changefreq: 'weekly',
       priority: 0.8,
