@@ -11,34 +11,48 @@ export const dynamicParams = true
 
 // Generate static params for all collections
 export async function generateStaticParams() {
-  // During CI, return mock data to test static generation without hitting API
-  if (process.env.CI === 'true' || process.env.SKIP_SSG === 'true') {
-    console.log('[SSG Collections] Using mock data for CI build')
-    return [
-      { slug: 'test-collection' },
-      { slug: 'another-collection' },
-    ]
+  // Skip SSG entirely when explicitly disabled (for testing builds without S3 data)
+  if (process.env.SKIP_SSG === 'true') {
+    console.log('[SSG Collections] SSG disabled via SKIP_SSG=true')
+    return []
   }
 
   try {
     console.log(`[SSG Collections] Starting - S3_SEO_DATA_URL: ${S3_SEO_DATA_URL}`)
 
-    // Fetch collection data from S3 (uploaded by Lambda)
-    const url = `${S3_SEO_DATA_URL}/collections.json`
-    console.log(`[SSG Collections] Fetching from S3: ${url}`)
+    // Try to read from local filesystem first (for static builds with pre-downloaded data)
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    const res = await fetch(url, {
-      next: { revalidate: 3600 } // Revalidate every hour
-    })
+    // Check if local SEO data exists (downloaded during CI build)
+    const localPath = path.join(process.cwd(), 'public', 'seo-data', 'collections.json')
+    console.log(`[SSG Collections] Checking for local file: ${localPath}`)
 
-    if (!res.ok) {
-      console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections from S3`)
-      console.error(`[SSG Collections] Response headers:`, Object.fromEntries(res.headers.entries()))
-      return []
+    let collections
+    try {
+      const fileContent = await fs.readFile(localPath, 'utf-8')
+      collections = JSON.parse(fileContent)
+      console.log(`[SSG Collections] ✅ Loaded ${collections.length} collections from local file`)
+    } catch (fsError) {
+      // Local file doesn't exist, try fetching from S3
+      console.log(`[SSG Collections] Local file not found, fetching from S3`)
+
+      const url = `${S3_SEO_DATA_URL}/collections.json`
+      console.log(`[SSG Collections] Fetching from: ${url}`)
+
+      const res = await fetch(url, {
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (!res.ok) {
+        console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections from S3`)
+        console.error(`[SSG Collections] Response headers:`, Object.fromEntries(res.headers.entries()))
+        return []
+      }
+
+      collections = await res.json()
+      console.log(`[SSG Collections] Received ${collections.length} collections from S3`)
     }
-
-    const collections = await res.json()
-    console.log(`[SSG Collections] Received ${collections.length} collections from S3`)
 
     if (!Array.isArray(collections)) {
       console.error('[SSG Collections] Invalid response format - expected array')
