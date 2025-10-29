@@ -18,34 +18,48 @@ function getPackageContent(pkg: any): string | null {
 
 // Generate static params for all packages
 export async function generateStaticParams() {
-  // During CI, return mock data to test static generation without hitting API
-  if (process.env.CI === 'true' || process.env.SKIP_SSG === 'true') {
-    console.log('[SSG Packages] Using mock data for CI build')
-    return [
-      { author: 'prpm', package: ['test-package'] },
-      { author: 'test', package: ['multi', 'segment', 'package'] },
-    ]
+  // Skip SSG entirely when explicitly disabled (for testing builds without S3 data)
+  if (process.env.SKIP_SSG === 'true') {
+    console.log('[SSG Packages] SSG disabled via SKIP_SSG=true')
+    return []
   }
 
   try {
     console.log(`[SSG Packages] Starting - S3_SEO_DATA_URL: ${S3_SEO_DATA_URL}`)
 
-    // Fetch package data from S3 (uploaded by Lambda)
-    const url = `${S3_SEO_DATA_URL}/packages.json`
-    console.log(`[SSG Packages] Fetching from S3: ${url}`)
+    // Try to read from local filesystem first (for static builds with pre-downloaded data)
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    const res = await fetch(url, {
-      next: { revalidate: 3600 } // Revalidate every hour
-    })
+    // Check if local SEO data exists (downloaded during CI build)
+    const localPath = path.join(process.cwd(), 'public', 'seo-data', 'packages.json')
+    console.log(`[SSG Packages] Checking for local file: ${localPath}`)
 
-    if (!res.ok) {
-      console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages from S3`)
-      console.error(`[SSG Packages] Response headers:`, Object.fromEntries(res.headers.entries()))
-      return []
+    let packages
+    try {
+      const fileContent = await fs.readFile(localPath, 'utf-8')
+      packages = JSON.parse(fileContent)
+      console.log(`[SSG Packages] ✅ Loaded ${packages.length} packages from local file`)
+    } catch (fsError) {
+      // Local file doesn't exist, try fetching from S3
+      console.log(`[SSG Packages] Local file not found, fetching from S3`)
+
+      const url = `${S3_SEO_DATA_URL}/packages.json`
+      console.log(`[SSG Packages] Fetching from: ${url}`)
+
+      const res = await fetch(url, {
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (!res.ok) {
+        console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages from S3`)
+        console.error(`[SSG Packages] Response headers:`, Object.fromEntries(res.headers.entries()))
+        return []
+      }
+
+      packages = await res.json()
+      console.log(`[SSG Packages] Received ${packages.length} packages from S3`)
     }
-
-    const packages = await res.json()
-    console.log(`[SSG Packages] Received ${packages.length} packages from S3`)
 
     if (!Array.isArray(packages)) {
       console.error('[SSG Packages] Invalid response format - expected array')

@@ -234,6 +234,37 @@ jobs:
         working-directory: ./packages/webapp
         run: npm run lint
 
+      - name: Create mock SSG data files
+        run: |
+          # Create directory and mock data with at least one entry
+          # (Next.js requires generateStaticParams to return non-empty array with output: export)
+          mkdir -p packages/webapp/public/seo-data
+
+          # Mock package data
+          cat > packages/webapp/public/seo-data/packages.json << 'EOF'
+[{
+  "name": "@prpm/test-package",
+  "description": "Test package for CI builds",
+  "format": "cursor",
+  "subtype": "rules",
+  "total_downloads": 0,
+  "weekly_downloads": 0
+}]
+EOF
+
+          # Mock collection data
+          cat > packages/webapp/public/seo-data/collections.json << 'EOF'
+[{
+  "name_slug": "test-collection",
+  "description": "Test collection for CI builds",
+  "package_count": 0,
+  "downloads": 0,
+  "stars": 0
+}]
+EOF
+
+          echo "✓ Mock SSG data files created with test entries"
+
       - name: Build
         working-directory: ./packages/webapp
         run: npm run build
