@@ -1,0 +1,10 @@
+[
+  {
+    "name": "@prpm/pulumi-troubleshooting-skill",
+    "description": "Comprehensive guide to troubleshooting Pulumi TypeScript errors",
+    "format": "claude",
+    "subtype": "skill",
+    "total_downloads": 150,
+    "weekly_downloads": 25
+  }
+]

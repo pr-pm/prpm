@@ -33,3 +33,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# SSG data (generated locally or downloaded from S3)
+/public/seo-data/packages.json
+/public/seo-data/collections.json

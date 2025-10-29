@@ -15,6 +15,7 @@ interface DiscoveredPackage {
   subtype: Subtype;
   name: string;
   files: string[];
+  scanDir: string; // The directory that was scanned (e.g., '.claude')
 }
 
 /**
@@ -92,6 +93,7 @@ function detectPackageInfo(filePath: string, content: string): {
 async function scanDirectory(
   dirPath: string,
   baseDir: string,
+  scanDir: string,
   maxDepth: number = 5,
   currentDepth: number = 0
 ): Promise<DiscoveredPackage[]> {
@@ -115,7 +117,7 @@ async function scanDirectory(
 
       if (entry.isDirectory()) {
         // Recursively scan subdirectories
-        const subDirPackages = await scanDirectory(fullPath, baseDir, maxDepth, currentDepth + 1);
+        const subDirPackages = await scanDirectory(fullPath, baseDir, scanDir, maxDepth, currentDepth + 1);
         discovered.push(...subDirPackages);
       } else if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.mdc') || entry.name.endsWith('.txt'))) {
         // Check if this is a package file
@@ -130,6 +132,7 @@ async function scanDirectory(
               subtype: packageInfo.subtype,
               name: packageInfo.name,
               files: [relativePath],
+              scanDir,
             });
           }
         } catch (err) {
@@ -142,6 +145,80 @@ async function scanDirectory(
   }
 
   return discovered;
+}
+
+/**
+ * Extract description from file content
+ * Tries multiple strategies:
+ * 1. YAML frontmatter (---\ndescription: ...\n---)
+ * 2. Markdown description field (description: ...)
+ * 3. First substantial paragraph after title
+ */
+function extractDescription(content: string): string | null {
+  const lines = content.split('\n');
+
+  // Strategy 1: YAML frontmatter
+  if (lines[0]?.trim() === '---') {
+    let foundClosing = false;
+    let frontmatterLines: string[] = [];
+
+    for (let i = 1; i < lines.length && i < 50; i++) {
+      const line = lines[i];
+      if (line.trim() === '---') {
+        foundClosing = true;
+        break;
+      }
+      frontmatterLines.push(line);
+    }
+
+    if (foundClosing && frontmatterLines.length > 0) {
+      // Parse YAML-like frontmatter
+      for (const line of frontmatterLines) {
+        const match = line.match(/^description:\s*(.+)$/i);
+        if (match) {
+          return match[1].trim().replace(/^["']|["']$/g, '').substring(0, 200);
+        }
+      }
+    }
+  }
+
+  // Strategy 2: Look for "description:" field anywhere in first 20 lines
+  for (let i = 0; i < Math.min(lines.length, 20); i++) {
+    const line = lines[i];
+    const match = line.match(/^description:\s*(.+)$/i);
+    if (match) {
+      return match[1].trim().replace(/^["']|["']$/g, '').substring(0, 200);
+    }
+  }
+
+  // Strategy 3: First substantial non-header paragraph
+  let foundTitle = false;
+  for (let i = 0; i < Math.min(lines.length, 30); i++) {
+    const line = lines[i].trim();
+
+    // Skip empty lines and YAML frontmatter
+    if (line === '' || line === '---') {
+      continue;
+    }
+
+    // Skip markdown headers
+    if (line.startsWith('#')) {
+      foundTitle = true;
+      continue;
+    }
+
+    // Found a substantial line after the title
+    if (foundTitle && line.length >= 20 && !line.startsWith('```')) {
+      return line.substring(0, 200);
+    }
+
+    // If no title found yet but line is substantial, use it
+    if (!foundTitle && line.length >= 30) {
+      return line.substring(0, 200);
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -174,7 +251,7 @@ export async function handleCatalog(
           continue;
         }
 
-        const discovered = await scanDirectory(dir, dir);
+        const discovered = await scanDirectory(dir, dir, dir);
         allDiscovered.push(...discovered);
         console.log(`   Found ${discovered.length} package(s) in ${dir}`);
       } catch (err) {
@@ -263,12 +340,11 @@ export async function handleCatalog(
       // Extract description from first file
       let description = `${discovered.format} ${discovered.subtype}`;
       try {
-        const firstFilePath = join(process.cwd(), discovered.files[0]);
+        const firstFilePath = join(process.cwd(), discovered.scanDir, discovered.files[0]);
         const content = await readFile(firstFilePath, 'utf-8');
-        const lines = content.split('\n').slice(0, 10);
-        const descLine = lines.find(line => line.trim().length > 20 && !line.startsWith('#'));
-        if (descLine) {
-          description = descLine.trim().substring(0, 200);
+        const extractedDesc = extractDescription(content);
+        if (extractedDesc) {
+          description = extractedDesc;
         }
       } catch (err) {
         // Use default description
