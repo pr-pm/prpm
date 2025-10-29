@@ -241,27 +241,10 @@ jobs:
           mkdir -p packages/webapp/public/seo-data
 
           # Mock package data
-          cat > packages/webapp/public/seo-data/packages.json << 'EOF'
-[{
-  "name": "@prpm/test-package",
-  "description": "Test package for CI builds",
-  "format": "cursor",
-  "subtype": "rules",
-  "total_downloads": 0,
-  "weekly_downloads": 0
-}]
-EOF
+          echo '[{"name":"@prpm/test-package","description":"Test package for CI builds","format":"cursor","subtype":"rules","total_downloads":0,"weekly_downloads":0}]' > packages/webapp/public/seo-data/packages.json
 
           # Mock collection data
-          cat > packages/webapp/public/seo-data/collections.json << 'EOF'
-[{
-  "name_slug": "test-collection",
-  "description": "Test collection for CI builds",
-  "package_count": 0,
-  "downloads": 0,
-  "stars": 0
-}]
-EOF
+          echo '[{"name_slug":"test-collection","description":"Test collection for CI builds","package_count":0,"downloads":0,"stars":0}]' > packages/webapp/public/seo-data/collections.json
 
           echo "✓ Mock SSG data files created with test entries"
 
