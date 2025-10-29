@@ -26,6 +26,7 @@ import { createUpgradeCommand } from './commands/upgrade';
 import { createSchemaCommand } from './commands/schema';
 import { createInitCommand } from './commands/init';
 import { createConfigCommand } from './commands/config';
+import { createHooksCommand } from './commands/hooks';
 import { telemetry } from './core/telemetry';
 
 // Read version from package.json
@@ -71,6 +72,7 @@ program.addCommand(createTelemetryCommand());
 // Utility commands
 program.addCommand(createSchemaCommand());
 program.addCommand(createConfigCommand());
+program.addCommand(createHooksCommand());
 
 // Parse command line arguments
 program.parse();

@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PRPM Hooks Configuration",
+  "description": "Configuration for PRPM git hooks that run agents on code changes",
+  "type": "object",
+  "properties": {
+    "hooks": {
+      "type": "object",
+      "properties": {
+        "pre-commit": {
+          "$ref": "#/definitions/hookConfig"
+        },
+        "pre-push": {
+          "$ref": "#/definitions/hookConfig"
+        },
+        "commit-msg": {
+          "$ref": "#/definitions/hookConfig"
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "anthropicApiKey": {
+          "type": "string",
+          "description": "Anthropic API key for agent execution (can also use ANTHROPIC_API_KEY env var)"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Global toggle to enable/disable all hooks"
+        },
+        "timeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Timeout in milliseconds for agent execution"
+        },
+        "cache": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable caching of agent responses"
+            },
+            "ttl": {
+              "type": "number",
+              "default": 3600,
+              "description": "Cache time-to-live in seconds"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "hookConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable this specific hook"
+        },
+        "agents": {
+          "type": "array",
+          "description": "List of agents to run for this hook",
+          "items": {
+            "$ref": "#/definitions/agentConfig"
+          }
+        }
+      }
+    },
+    "agentConfig": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Package name of the agent (e.g., @pre-commit/security-scanner)",
+          "pattern": "^(@[a-z0-9-]+/)?[a-z0-9-]+$"
+        },
+        "files": {
+          "type": "string",
+          "description": "Glob pattern to match files (e.g., **/*.ts, **/*.{js,ts})",
+          "default": "**/*"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warning", "info"],
+          "default": "warning",
+          "description": "Severity level - 'error' blocks commit, 'warning' shows but allows commit"
+        },
+        "autoFix": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically apply fixes suggested by the agent"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable this specific agent"
+        }
+      }
+    }
+  }
+}
