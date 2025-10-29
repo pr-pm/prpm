@@ -10,10 +10,10 @@ const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || 'https://prpm
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
 
-// Helper to get package content/snippet
+// Helper to get package content - prefer full content, fall back to snippet
 function getPackageContent(pkg: any): string | null {
-  // Use snippet field from the package if available
-  return pkg.snippet || null
+  // Use fullContent if available (from S3), otherwise fall back to snippet
+  return pkg.fullContent || pkg.snippet || null
 }
 
 // Generate static params for all packages
@@ -237,7 +237,7 @@ export default async function PackagePage({ params }: { params: { author: string
         {/* Full Package Content - Prominently displayed at the top */}
         {content && (
           <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">📄 Prompt Content Snippet</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">📄 Full Prompt Content</h2>
             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 overflow-x-auto">
               <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
                 <code>{content}</code>

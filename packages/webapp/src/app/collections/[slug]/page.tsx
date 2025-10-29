@@ -204,20 +204,20 @@ export default async function CollectionPage({ params }: { params: { slug: strin
         {collection.packages && collection.packages.length > 0 && (
           <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
             <h2 className="text-2xl font-semibold text-white mb-4">📦 Packages ({collection.packages.length})</h2>
-            <div className="space-y-3">
+            <div className="space-y-6">
               {collection.packages
                 .sort((a, b) => (a.installOrder || 999) - (b.installOrder || 999))
                 .map((pkg, index) => (
                 <div
                   key={pkg.packageId}
-                  className="bg-prpm-dark border border-prpm-border rounded-lg p-4 hover:border-prpm-accent transition-colors"
+                  className="bg-prpm-dark border border-prpm-border rounded-lg p-4"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-4 mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-gray-500 text-sm font-mono">#{index + 1}</span>
                         <h3 className="text-lg font-semibold text-white">
-                          {(pkg as any).package?.name || pkg.packageId}
+                          {(pkg as any).packageName || pkg.packageId}
                         </h3>
                         {pkg.required && (
                           <span className="px-2 py-0.5 bg-prpm-accent/20 text-prpm-accent text-xs rounded-full">
@@ -234,11 +234,11 @@ export default async function CollectionPage({ params }: { params: { slug: strin
                         <p className="text-gray-400 text-sm mb-2">{(pkg as any).package.description}</p>
                       )}
                       {pkg.reason && (
-                        <p className="text-gray-500 text-sm italic">
+                        <p className="text-gray-500 text-sm italic mb-2">
                           <span className="font-semibold">Why included:</span> {pkg.reason}
                         </p>
                       )}
-                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span>Version: {pkg.version || 'latest'}</span>
                         {pkg.formatOverride && (
                           <span className="px-2 py-0.5 bg-prpm-dark border border-prpm-border rounded">
@@ -247,7 +247,29 @@ export default async function CollectionPage({ params }: { params: { slug: strin
                         )}
                       </div>
                     </div>
+                    <div>
+                      {(pkg as any).packageName && (
+                        <Link
+                          href={`/packages/${(pkg as any).packageName.replace('@', '').replace('/', '/')}`}
+                          className="px-3 py-1.5 bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded text-sm transition-colors whitespace-nowrap"
+                        >
+                          View Details →
+                        </Link>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Full prompt content */}
+                  {(pkg as any).fullContent && (
+                    <div className="mt-4 border-t border-prpm-border pt-4">
+                      <h4 className="text-sm font-semibold text-gray-400 mb-2">📄 Prompt Content</h4>
+                      <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 overflow-x-auto">
+                        <pre className="text-xs text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
+                          <code>{(pkg as any).fullContent}</code>
+                        </pre>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
