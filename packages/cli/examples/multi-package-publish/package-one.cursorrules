@@ -1,0 +1,9 @@
+# Example Package One
+
+This is a simple Cursor rules file for testing multi-package publishing.
+
+## Rules
+
+- Always write clean, maintainable code
+- Follow project conventions
+- Write tests for new features

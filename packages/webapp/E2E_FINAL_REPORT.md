@@ -407,9 +407,9 @@ npm run dev
 ### Access Points
 
 - **Webapp:** http://localhost:5173
-- **Registry API:** http://localhost:3000
-- **Swagger Docs:** http://localhost:3000/docs
-- **Health Check:** http://localhost:3000/health
+- **Registry API:** http://localhost:3111
+- **Swagger Docs:** http://localhost:3111/docs
+- **Health Check:** http://localhost:3111/health
 
 ### Manual Test Flow
 

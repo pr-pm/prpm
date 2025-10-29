@@ -1,0 +1,28 @@
+{
+  "$schema": "https://prpm.dev/schemas/manifest.json",
+  "name": "multi-package-example",
+  "version": "1.0.0",
+  "description": "Example of publishing multiple packages from a single prpm.json",
+  "author": "PRPM Team",
+  "license": "MIT",
+  "repository": "https://github.com/pr-pm/prpm",
+  "tags": ["example", "multi-package"],
+  "packages": [
+    {
+      "name": "@prpm-examples/package-one",
+      "version": "1.0.0",
+      "description": "First package in the multi-package example",
+      "format": "cursor",
+      "subtype": "rule",
+      "files": ["package-one.cursorrules"]
+    },
+    {
+      "name": "@prpm-examples/package-two",
+      "version": "1.0.0",
+      "description": "Second package in the multi-package example",
+      "format": "claude",
+      "subtype": "skill",
+      "files": ["SKILL.md"]
+    }
+  ]
+}

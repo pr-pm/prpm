@@ -4,6 +4,7 @@
  */
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { optionalAuth } from '../middleware/auth.js';
 
 export default async function authorsRoutes(fastify: FastifyInstance) {
   /**
@@ -16,6 +17,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
   }>(
     '/:username',
     {
+      preHandler: [optionalAuth], // Allow both authenticated and unauthenticated requests
       schema: {
         tags: ['Authors'],
         description: 'Get public author profile',
@@ -59,6 +61,10 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
 
         const user = userResult.rows[0];
 
+        // Check if logged-in user is viewing their own profile
+        const loggedInUserId = request.user?.user_id;
+        const isOwnProfile = loggedInUserId === user.id;
+
         // Determine sort order
         const sortMap: Record<string, string> = {
           downloads: 'total_downloads DESC',
@@ -66,6 +72,11 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
           name: 'id ASC',
         };
         const orderBy = sortMap[sort] || sortMap.downloads;
+
+        // Build visibility filter based on whether user is viewing their own profile
+        const visibilityFilter = isOwnProfile
+          ? `visibility IN ('public', 'private')`  // Show all packages if viewing own profile
+          : `visibility = 'public'`;                // Show only public packages otherwise
 
         // Get total stats for ALL packages (not limited)
         const statsResult = await fastify.pg.query(
@@ -75,7 +86,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
              SUM(rating_count) as total_ratings,
              SUM(rating_average * rating_count) as weighted_rating_sum
            FROM packages
-           WHERE author_id = $1 AND visibility = 'public'`,
+           WHERE author_id = $1 AND ${visibilityFilter}`,
           [user.id]
         );
 
@@ -89,7 +100,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             : 0,
         };
 
-        // Get author's public packages (limited for display)
+        // Get author's packages (limited for display) - include visibility
         const packagesResult = await fastify.pg.query(
           `SELECT
              id,
@@ -99,6 +110,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
              license,
              license_url,
              subtype,
+             visibility,
              total_downloads,
              weekly_downloads,
              monthly_downloads,
@@ -109,7 +121,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
              updated_at,
              tags
            FROM packages
-           WHERE author_id = $1 AND visibility = 'public'
+           WHERE author_id = $1 AND ${visibilityFilter}
            ORDER BY ${orderBy}
            LIMIT $2 OFFSET $3`,
           [user.id, limit, offset]
@@ -138,6 +150,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             license: pkg.license,
             license_url: pkg.license_url,
             subtype: pkg.subtype,
+            visibility: pkg.visibility,
             snippet: pkg.snippet,
             total_downloads: pkg.total_downloads || 0,
             weekly_downloads: pkg.weekly_downloads || 0,

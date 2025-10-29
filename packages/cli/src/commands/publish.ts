@@ -12,7 +12,7 @@ import { randomBytes } from 'crypto';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
-import type { PackageManifest, PackageFileMetadata } from '../types/registry';
+import type { PackageManifest, PackageFileMetadata, MultiPackageManifest, Manifest } from '../types/registry';
 import {
   marketplaceToManifest,
   validateMarketplaceJson,
@@ -31,28 +31,99 @@ interface PublishOptions {
 /**
  * Try to find and load manifest files
  * Checks for:
- * 1. prpm.json (native format) - returns single manifest
+ * 1. prpm.json (native format) - returns single manifest or array of packages
  * 2. .claude/marketplace.json (Claude format) - returns all plugins as separate manifests
  * 3. .claude-plugin/marketplace.json (Claude format - alternative location) - returns all plugins
  */
 async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; source: string }> {
   // Try prpm.json first (native format)
   const prpmJsonPath = join(process.cwd(), 'prpm.json');
+  let prpmJsonExists = false;
+  let prpmJsonError: Error | null = null;
+
   try {
     const content = await readFile(prpmJsonPath, 'utf-8');
-    const manifest = JSON.parse(content);
-    const validated = validateManifest(manifest);
+    prpmJsonExists = true;
+
+    // Try to parse JSON
+    let manifest: Manifest;
+    try {
+      manifest = JSON.parse(content) as Manifest;
+    } catch (parseError) {
+      // JSON parse error - provide specific error message
+      const error = parseError as Error;
+      throw new Error(
+        `Invalid JSON in prpm.json:\n\n` +
+        `${error.message}\n\n` +
+        `Please check your prpm.json file for syntax errors:\n` +
+        `  - Missing or extra commas\n` +
+        `  - Unclosed quotes or brackets\n` +
+        `  - Invalid JSON syntax\n\n` +
+        `You can validate your JSON at https://jsonlint.com/`
+      );
+    }
+
+    // Check if this is a multi-package manifest
+    if ('packages' in manifest && Array.isArray(manifest.packages)) {
+      const multiManifest = manifest as MultiPackageManifest;
+
+      // Validate each package in the array
+      const validatedManifests = multiManifest.packages.map((pkg, idx) => {
+        // Inherit top-level fields if not specified in package - using explicit undefined checks
+        const packageWithDefaults: PackageManifest = {
+          name: pkg.name,
+          version: pkg.version,
+          description: pkg.description,
+          format: pkg.format,
+          files: pkg.files,
+          author: pkg.author !== undefined ? pkg.author : multiManifest.author!,
+          license: pkg.license !== undefined ? pkg.license : multiManifest.license,
+          repository: pkg.repository !== undefined ? pkg.repository : multiManifest.repository,
+          homepage: pkg.homepage !== undefined ? pkg.homepage : multiManifest.homepage,
+          documentation: pkg.documentation !== undefined ? pkg.documentation : multiManifest.documentation,
+          organization: pkg.organization !== undefined ? pkg.organization : multiManifest.organization,
+          private: pkg.private !== undefined ? pkg.private : multiManifest.private,
+          tags: pkg.tags !== undefined ? pkg.tags : multiManifest.tags,
+          keywords: pkg.keywords !== undefined ? pkg.keywords : multiManifest.keywords,
+          subtype: pkg.subtype,
+          dependencies: pkg.dependencies,
+          peerDependencies: pkg.peerDependencies,
+          engines: pkg.engines,
+          main: pkg.main,
+        };
+
+        // Debug: Log inheritance only if DEBUG env var is set
+        if (process.env.DEBUG) {
+          console.log(`\n🔍 Package ${pkg.name} inheritance:`);
+          console.log(`   - Package-level private: ${pkg.private}`);
+          console.log(`   - Top-level private: ${multiManifest.private}`);
+          console.log(`   - Inherited private: ${packageWithDefaults.private}`);
+          console.log('');
+        }
+
+        return validateManifest(packageWithDefaults);
+      });
+
+      return { manifests: validatedManifests, source: 'prpm.json (multi-package)' };
+    }
+
+    // Single package manifest
+    const validated = validateManifest(manifest as PackageManifest);
     return { manifests: [validated], source: 'prpm.json' };
   } catch (error) {
-    // If it's a validation error, throw it immediately (don't try marketplace.json)
-    if (error instanceof Error && (
+    // Store error for later
+    prpmJsonError = error as Error;
+
+    // If it's a validation or parsing error, throw it immediately (don't try marketplace.json)
+    if (prpmJsonExists && error instanceof Error && (
+      error.message.includes('Invalid JSON') ||
       error.message.includes('Manifest validation failed') ||
       error.message.includes('Claude skill') ||
       error.message.includes('SKILL.md')
     )) {
       throw error;
     }
-    // Otherwise, prpm.json not found or invalid JSON, try marketplace.json
+    // Otherwise, prpm.json not found or other error, try marketplace.json
   }
 
   // Try .claude/marketplace.json (Claude format)
@@ -351,6 +422,43 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       }
 
       try {
+        // Debug: Log access override logic only if DEBUG env var is set
+        if (process.env.DEBUG) {
+          console.log(`\n🔍 Before access override:`);
+          console.log(`   - manifest.private: ${manifest.private}`);
+          console.log(`   - options.access: ${options.access}`);
+        }
+
+        // Determine access level:
+        // 1. If --access flag is provided, it overrides manifest setting
+        // 2. Otherwise, use manifest setting (defaults to false/public if not specified)
+        let isPrivate: boolean;
+        if (options.access !== undefined) {
+          // CLI flag explicitly provided - use it
+          isPrivate = options.access === 'private';
+          if (process.env.DEBUG) {
+            console.log(`   - Using CLI flag override: ${options.access}`);
+          }
+        } else {
+          // No CLI flag - use manifest setting
+          isPrivate = manifest.private || false;
+          if (process.env.DEBUG) {
+            console.log(`   - Using manifest setting: ${isPrivate}`);
+          }
+        }
+
+        if (process.env.DEBUG) {
+          console.log(`   - calculated isPrivate: ${isPrivate}`);
+        }
+
+        // Update manifest with final private setting
+        manifest.private = isPrivate;
+
+        if (process.env.DEBUG) {
+          console.log(`   - final manifest.private: ${manifest.private}`);
+          console.log('');
+        }
+
         let selectedOrgId: string | undefined;
 
         // Check if organization is specified in manifest
@@ -378,6 +486,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log(`   Package: ${manifest.name}@${manifest.version}`);
         console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype}`);
         console.log(`   Description: ${manifest.description}`);
+        console.log(`   Access: ${manifest.private ? 'private' : 'public'}`);
         if (selectedOrgId && userInfo) {
           const selectedOrg = userInfo.organizations.find((org: any) => org.id === selectedOrgId);
           console.log(`   Publishing to: ${selectedOrg?.name || 'organization'}`);
@@ -570,7 +679,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 export function createPublishCommand(): Command {
   return new Command('publish')
     .description('Publish a package to the registry')
-    .option('--access <type>', 'Package access (public or private)', 'public')
+    .option('--access <type>', 'Package access (public or private) - overrides manifest setting')
     .option('--tag <tag>', 'NPM-style tag (e.g., latest, beta)', 'latest')
     .option('--dry-run', 'Validate package without publishing')
     .action(async (options: PublishOptions) => {

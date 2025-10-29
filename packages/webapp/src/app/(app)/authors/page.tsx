@@ -27,6 +27,7 @@ interface Package {
   description: string
   format: string
   subtype: string
+  visibility: string
   total_downloads: number
   weekly_downloads: number
   monthly_downloads: number
@@ -121,7 +122,7 @@ function AuthorsPageContent() {
           if (user.username.toLowerCase() === username.toLowerCase()) {
             setIsOwnProfile(true)
             const [profile, dashboard, packages] = await Promise.all([
-              getAuthorProfile(username, 'downloads', limit, offset),
+              getAuthorProfile(username, 'downloads', limit, offset, token),
               getAuthorDashboard(token),
               getAuthorPackages(token, 'downloads'),
             ])
@@ -135,8 +136,8 @@ function AuthorsPageContent() {
       }
 
       if (!isOwnProfile) {
-        // Load public profile
-        const profile = await getAuthorProfile(username, 'downloads', limit, offset)
+        // Load public profile (with token if available to show private packages)
+        const profile = await getAuthorProfile(username, 'downloads', limit, offset, token || undefined)
         setAuthorData(profile)
       }
     } catch (err) {
@@ -376,9 +377,16 @@ function AuthorsPageContent() {
                     <h3 className="text-lg font-semibold text-white group-hover:text-prpm-accent transition-colors">
                       {pkg.name}
                     </h3>
-                    <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-gray-400 text-xs">
-                      {pkg.format}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-gray-400 text-xs">
+                        {pkg.format}
+                      </span>
+                      {pkg.visibility === 'private' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 border border-gray-500/30 text-gray-400">
+                          🔒
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <p className="text-gray-400 text-sm mb-4 line-clamp-2">

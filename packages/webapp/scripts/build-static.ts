@@ -18,8 +18,8 @@ import * as path from 'path'
 // Environment configurations
 const ENVIRONMENTS = {
   local: {
-    REGISTRY_URL: 'http://localhost:3000',
-    NEXT_PUBLIC_REGISTRY_URL: 'http://localhost:3000',
+    REGISTRY_URL: 'http://localhost:3111',
+    NEXT_PUBLIC_REGISTRY_URL: 'http://localhost:3111',
   },
   staging: {
     REGISTRY_URL: 'https://staging-registry.prpm.dev',
@@ -131,7 +131,7 @@ async function main() {
       if (environment === 'local') {
         console.log('💡 To test locally:')
         console.log('   npx serve out')
-        console.log('   Sitemap: http://localhost:3000/sitemap.xml\n')
+        console.log('   Sitemap: http://localhost:3111/sitemap.xml\n')
       }
     } else {
       console.error(`\n❌ Build failed with code ${code}\n`)
