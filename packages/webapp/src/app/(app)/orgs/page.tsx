@@ -12,6 +12,8 @@ import {
 } from '@/lib/api'
 import PackageModal from '@/components/PackageModal'
 import EditOrganizationModal from '@/components/EditOrganizationModal'
+import UpgradePrompt from '@/components/UpgradePrompt'
+import UpgradeModal from '@/components/UpgradeModal'
 
 function OrganizationPageContent() {
   const searchParams = useSearchParams()
@@ -22,6 +24,7 @@ function OrganizationPageContent() {
   const [selectedPackage, setSelectedPackage] = useState<OrganizationPackage | null>(null)
   const [showPackageModal, setShowPackageModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [jwtToken, setJwtToken] = useState<string | undefined>(undefined)
   const [canEdit, setCanEdit] = useState(false)
 
@@ -199,6 +202,19 @@ function OrganizationPageContent() {
         </div>
       </div>
 
+      {/* Upgrade Banner for Non-Verified Organizations */}
+      {!organization.is_verified && canEdit && (
+        <div className="bg-prpm-dark border-b border-prpm-border">
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <UpgradePrompt
+              organizationName={organization.name}
+              jwtToken={jwtToken}
+              variant="banner"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Packages and Members */}
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -348,6 +364,14 @@ function OrganizationPageContent() {
         onClose={() => setShowEditModal(false)}
         onSuccess={handleEditSuccess}
         organization={organization}
+        jwtToken={jwtToken}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        organizationName={organization.name}
         jwtToken={jwtToken}
       />
     </main>

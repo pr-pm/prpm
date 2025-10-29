@@ -173,7 +173,7 @@ export default function EditOrganizationModal({
 
             <div>
               <label htmlFor="org-avatar-edit" className="block text-sm font-semibold text-white mb-2">
-                Avatar URL
+                Avatar URL {!organization.is_verified && <span className="text-prpm-accent">✨ Verified only</span>}
               </label>
               <input
                 type="url"
@@ -181,12 +181,18 @@ export default function EditOrganizationModal({
                 value={avatarUrl}
                 onChange={(e) => setAvatarUrl(e.target.value)}
                 placeholder="https://example.com/avatar.png"
-                disabled={loading}
+                disabled={loading || !organization.is_verified}
                 className="w-full px-4 py-3 bg-prpm-dark border border-prpm-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-prpm-accent transition-colors disabled:opacity-50"
               />
-              <p className="text-gray-400 text-xs mt-2">
-                URL to an image for your organization's avatar
-              </p>
+              {organization.is_verified ? (
+                <p className="text-gray-400 text-xs mt-2">
+                  URL to an image for your organization's avatar
+                </p>
+              ) : (
+                <p className="text-yellow-500 text-xs mt-2">
+                  ⚠️ Custom avatar URLs are only available for verified organizations. Upgrade to unlock this feature.
+                </p>
+              )}
             </div>
 
             <div className="flex gap-4 pt-4">
