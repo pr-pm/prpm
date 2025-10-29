@@ -234,6 +234,14 @@ jobs:
         working-directory: ./packages/webapp
         run: npm run lint
 
+      - name: Create mock SSG data files
+        run: |
+          # Create directory and empty JSON arrays for SSG
+          mkdir -p packages/webapp/public/seo-data
+          echo '[]' > packages/webapp/public/seo-data/packages.json
+          echo '[]' > packages/webapp/public/seo-data/collections.json
+          echo "✓ Mock SSG data files created"
+
       - name: Build
         working-directory: ./packages/webapp
         run: npm run build
