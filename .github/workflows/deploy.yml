@@ -370,9 +370,9 @@ jobs:
           npm run build:static
         env:
           CI: false
-          NEXT_PUBLIC_REGISTRY_URL: https://registry.prpm.dev
-          REGISTRY_URL: https://registry.prpm.dev
-          NEXT_PUBLIC_S3_SEO_DATA_URL: https://prpm-prod-packages.s3.amazonaws.com/seo-data
+          NEXT_PUBLIC_REGISTRY_URL: "https://registry.prpm.dev"
+          REGISTRY_URL: "https://registry.prpm.dev"
+          NEXT_PUBLIC_S3_SEO_DATA_URL: "https://prpm-prod-packages.s3.amazonaws.com/seo-data"
 
       - name: Verify build output
         run: |
