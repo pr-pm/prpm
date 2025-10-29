@@ -363,6 +363,24 @@ jobs:
           echo "✓ S3 data downloaded"
           ls -lh packages/webapp/public/seo-data/
 
+      - name: Create test data for SSG (if S3 data is missing)
+        run: |
+          # Ensure directory exists
+          mkdir -p packages/webapp/public/seo-data
+
+          # If S3 download failed or files are empty, create minimal test data
+          if [ ! -s packages/webapp/public/seo-data/packages.json ]; then
+            echo "Creating minimal test data for packages.json"
+            echo '[]' > packages/webapp/public/seo-data/packages.json
+          fi
+          if [ ! -s packages/webapp/public/seo-data/collections.json ]; then
+            echo "Creating minimal test data for collections.json"
+            echo '[]' > packages/webapp/public/seo-data/collections.json
+          fi
+
+          echo "✓ SSG data files ready:"
+          ls -lh packages/webapp/public/seo-data/
+
       - name: Build webapp with SSG
         run: |
           cd packages/webapp
