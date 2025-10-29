@@ -5,6 +5,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { query, queryOne } from '../db/index.js';
 import { cacheGet, cacheSet } from '../cache/redis.js';
+import { optionalAuth } from '../middleware/auth.js';
 
 interface Organization {
   id: string;
@@ -32,6 +33,7 @@ interface OrganizationPackage {
   description: string;
   format: string;
   subtype: string;
+  visibility: string;
   total_downloads: number;
   weekly_downloads: number;
   is_featured: boolean;
@@ -55,6 +57,7 @@ interface OrganizationDetails {
 export async function organizationRoutes(server: FastifyInstance) {
   // Get organization details with packages and members
   server.get('/:orgName', {
+    preHandler: [optionalAuth], // Allow both authenticated and unauthenticated requests
     schema: {
       tags: ['organizations'],
       description: 'Get organization details including packages and members',
@@ -66,21 +69,17 @@ export async function organizationRoutes(server: FastifyInstance) {
         required: ['orgName'],
       },
     },
-  }, async (request: FastifyRequest<{ Params: { orgName: string } }>, reply: FastifyReply) => {
-    const { orgName } = request.params;
+  }, async (request, reply) => {
+    const { orgName } = request.params as { orgName: string };
 
     server.log.info({
       action: 'get_organization',
       orgName,
+      userId: request.user?.user_id,
     }, '🏢 Fetching organization details');
 
-    // Check cache first
-    const cacheKey = `org:${orgName}`;
-    const cached = await cacheGet<OrganizationDetails>(server, cacheKey);
-    if (cached) {
-      server.log.info({ orgName }, '💾 Returning cached organization data');
-      return reply.send(cached);
-    }
+    // Note: We can't cache this response because it varies based on user authentication
+    // Each user (member vs non-member) will see different packages
 
     try {
       // Get organization info
@@ -99,6 +98,40 @@ export async function organizationRoutes(server: FastifyInstance) {
         });
       }
 
+      // Check if logged-in user is a member of this organization
+      const loggedInUserId = request.user?.user_id;
+      let isMember = false;
+
+      server.log.info({
+        hasUser: !!request.user,
+        userId: loggedInUserId,
+        orgId: org.id,
+        orgName: org.name,
+      }, '🔐 Checking organization membership');
+
+      if (loggedInUserId) {
+        const memberCheck = await queryOne<{ role: string }>(
+          server,
+          `SELECT role FROM organization_members WHERE org_id = $1 AND user_id = $2`,
+          [org.id, loggedInUserId]
+        );
+        isMember = !!memberCheck;
+
+        server.log.info({
+          userId: loggedInUserId,
+          orgId: org.id,
+          isMember,
+          role: memberCheck?.role,
+        }, '👤 Membership check result');
+      } else {
+        server.log.info('❌ No authenticated user - showing public packages only');
+      }
+
+      // Build visibility filter based on whether user is a member
+      const visibilityFilter = isMember
+        ? `p.visibility IN ('public', 'private')`  // Show all packages if member
+        : `p.visibility = 'public'`;                // Show only public packages otherwise
+
       // Get organization packages
       const packagesResult = await query<OrganizationPackage>(
         server,
@@ -108,6 +141,7 @@ export async function organizationRoutes(server: FastifyInstance) {
            p.description,
            p.format,
            p.subtype,
+           p.visibility,
            p.total_downloads,
            p.weekly_downloads,
            p.featured as is_featured,
@@ -120,7 +154,7 @@ export async function organizationRoutes(server: FastifyInstance) {
            u.username as author_username
          FROM packages p
          LEFT JOIN users u ON p.author_id = u.id
-         WHERE p.org_id = $1
+         WHERE p.org_id = $1 AND ${visibilityFilter}
          ORDER BY p.total_downloads DESC`,
         [org.id]
       );
@@ -158,13 +192,15 @@ export async function organizationRoutes(server: FastifyInstance) {
         member_count: membersResult.rows.length,
       };
 
-      // Cache for 5 minutes
-      await cacheSet(server, cacheKey, result, 300);
+      // Don't cache because response varies by user authentication
+      // Members see private packages, non-members don't
 
       server.log.info({
         orgName,
         packageCount: packagesResult.rows.length,
         memberCount: membersResult.rows.length,
+        isMember,
+        userId: loggedInUserId,
       }, '✅ Organization details fetched');
 
       return reply.send(result);

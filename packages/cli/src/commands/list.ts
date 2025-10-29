@@ -39,6 +39,14 @@ function getDestinationDir(type: string): string {
 }
 
 /**
+ * Strip author namespace from package ID
+ */
+function stripAuthorNamespace(packageId: string): string {
+  const parts = packageId.split('/');
+  return parts[parts.length - 1];
+}
+
+/**
  * Find the actual file location for a package
  */
 async function findPackageLocation(id: string, format?: string, subtype?: string): Promise<string | null> {
@@ -46,12 +54,15 @@ async function findPackageLocation(id: string, format?: string, subtype?: string
 
   const baseDir = getDestinationDir(format);
 
+  // Strip author namespace to get actual package name used in file system
+  const packageName = stripAuthorNamespace(id);
+
   // Try different file extensions based on format
   const extensions = format === 'cursor' ? ['.mdc', '.md'] : ['.md'];
 
-  // Try direct file: <dir>/<id>.ext
+  // Try direct file: <dir>/<packageName>.ext
   for (const ext of extensions) {
-    const directPath = path.join(baseDir, `${id}${ext}`);
+    const directPath = path.join(baseDir, `${packageName}${ext}`);
     try {
       await fs.access(directPath);
       return directPath;
@@ -60,9 +71,9 @@ async function findPackageLocation(id: string, format?: string, subtype?: string
     }
   }
 
-  // Try subdirectory: <dir>/<id>/SKILL.md or <dir>/<id>/AGENT.md
+  // Try subdirectory: <dir>/<packageName>/SKILL.md or <dir>/<packageName>/AGENT.md
   if (subtype === 'skill') {
-    const skillPath = path.join(baseDir, id, 'SKILL.md');
+    const skillPath = path.join(baseDir, packageName, 'SKILL.md');
     try {
       await fs.access(skillPath);
       return skillPath;
@@ -72,7 +83,7 @@ async function findPackageLocation(id: string, format?: string, subtype?: string
   }
 
   if (subtype === 'agent' || format === 'claude') {
-    const agentPath = path.join(baseDir, id, 'AGENT.md');
+    const agentPath = path.join(baseDir, packageName, 'AGENT.md');
     try {
       await fs.access(agentPath);
       return agentPath;

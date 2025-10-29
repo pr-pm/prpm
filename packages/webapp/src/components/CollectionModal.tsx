@@ -39,7 +39,7 @@ interface CollectionModalProps {
   onClose: () => void
 }
 
-const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3000'
+const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'
 
 export default function CollectionModal({ collection: initialCollection, isOpen, onClose }: CollectionModalProps) {
   const [copied, setCopied] = useState(false)

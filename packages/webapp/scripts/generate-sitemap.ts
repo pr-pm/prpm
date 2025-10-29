@@ -19,7 +19,7 @@ import * as path from 'path'
 // Environment configurations
 const ENVIRONMENTS = {
   local: {
-    REGISTRY_URL: 'http://localhost:3000',
+    REGISTRY_URL: 'http://localhost:3111',
     SITE_URL: 'http://localhost:5173',
   },
   staging: {

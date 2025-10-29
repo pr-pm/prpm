@@ -91,7 +91,7 @@ export async function createMockConfig(
 ): Promise<void> {
   const config = {
     token: options.token || 'test-token-123',
-    registryUrl: options.registryUrl || 'http://localhost:3000',
+    registryUrl: options.registryUrl || 'http://localhost:3111',
   };
 
   await mkdir(join(configPath, '..'), { recursive: true });

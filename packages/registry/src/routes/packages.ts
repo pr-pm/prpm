@@ -548,24 +548,34 @@ export async function packageRoutes(server: FastifyInstance) {
         }
       } else {
         // New package - create it
+        // Determine visibility: private field in manifest maps to visibility in database
+        const visibility = manifest.private ? 'private' : 'public';
+
+        server.log.debug({
+          packageName,
+          manifestPrivate: manifest.private,
+          calculatedVisibility: visibility,
+        }, '📝 Creating new package with visibility');
+
         pkg = await queryOne<Package>(
           server,
           `INSERT INTO packages (
             name, description, author_id, org_id, format, subtype,
-            license, tags, keywords, last_published_at
+            license, tags, keywords, visibility, last_published_at
           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
            RETURNING *`,
           [
             packageName,
             description,
-            orgId ? null : userId,  // If publishing to org, don't set author_id
-            orgId || null,          // Set org_id if publishing to org
+            userId,                 // Always record the author (person who published)
+            orgId || null,          // Set org_id if publishing to org (org takes precedence for ownership)
             format,
             subtype,
             license || null,
             tags,
-            keywords
+            keywords,
+            visibility,
           ]
         );
 

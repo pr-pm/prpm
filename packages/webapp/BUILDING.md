@@ -15,7 +15,7 @@ npm run build:static
 ```
 
 ### Local Build
-Builds using your local registry (`http://localhost:3000`):
+Builds using your local registry (`http://localhost:3111`):
 ```bash
 npm run build:static:local
 ```
@@ -38,7 +38,7 @@ From the repository root:
 npm run dev:registry
 ```
 
-The registry will be available at `http://localhost:3000`
+The registry will be available at `http://localhost:3111`
 
 ### 2. Seed Test Data (Optional)
 If your local database is empty, seed some test data:
@@ -74,7 +74,7 @@ python -m http.server 3000 -d out
 npx http-server out -p 3000
 ```
 
-Then open http://localhost:3000 and test:
+Then open http://localhost:3111 and test:
 - Individual package pages: `/packages/[package-name]`
 - Individual collection pages: `/collections/[collection-slug]`
 - Search page: `/search`
@@ -144,7 +144,7 @@ npm run generate-sitemap          # For production
 
 **Solution:**
 - Make sure registry is running: `npm run dev:registry`
-- Check registry is accessible: `curl http://localhost:3000/health`
+- Check registry is accessible: `curl http://localhost:3111/health`
 - Verify correct environment: `--env=local` for local registry
 
 ### "No packages found"
@@ -152,7 +152,7 @@ npm run generate-sitemap          # For production
 
 **Solution:**
 - Seed test data: `npm run seed:all` (from root)
-- Verify packages exist: `curl http://localhost:3000/api/v1/search/seo/packages`
+- Verify packages exist: `curl http://localhost:3111/api/v1/search/seo/packages`
 
 ### Build is slow
 **Expected:** Building 1800+ pages takes 5-15 minutes
@@ -181,13 +181,13 @@ The build script uses these environment variables:
 
 | Variable | Local | Staging | Production |
 |----------|-------|---------|------------|
-| `REGISTRY_URL` | `http://localhost:3000` | `https://staging-registry.prpm.dev` | `https://registry.prpm.dev` |
-| `NEXT_PUBLIC_REGISTRY_URL` | `http://localhost:3000` | `https://staging-registry.prpm.dev` | `https://registry.prpm.dev` |
+| `REGISTRY_URL` | `http://localhost:3111` | `https://staging-registry.prpm.dev` | `https://registry.prpm.dev` |
+| `NEXT_PUBLIC_REGISTRY_URL` | `http://localhost:3111` | `https://staging-registry.prpm.dev` | `https://registry.prpm.dev` |
 | `NODE_ENV` | `production` | `production` | `production` |
 
 You can also override manually:
 ```bash
-REGISTRY_URL=http://localhost:3000 npm run build
+REGISTRY_URL=http://localhost:3111 npm run build
 ```
 
 ## Testing Checklist

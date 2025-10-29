@@ -3,7 +3,7 @@
  */
 
 describe('Registry API Endpoints', () => {
-  const REGISTRY_URL = 'http://localhost:3000';
+  const REGISTRY_URL = 'http://localhost:3111';
   const TEST_PACKAGE = 'analyst-valllabh';
 
   test('trending endpoint returns 200', async () => {

@@ -44,7 +44,7 @@ export default function DashboardPage() {
     // Fetch user info
     const fetchUserInfo = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3000'}/api/v1/auth/me`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'}/api/v1/auth/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -132,7 +132,7 @@ export default function DashboardPage() {
     setWebsiteError(null)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3000'}/api/v1/auth/me`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'}/api/v1/auth/me`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
