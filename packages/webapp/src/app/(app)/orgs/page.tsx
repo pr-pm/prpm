@@ -117,7 +117,7 @@ function OrganizationPageContent() {
         const data = await getOrganization(orgName, jwtToken)
 
         // Check if organization is now verified
-        if (data.is_verified) {
+        if (data.organization.is_verified) {
           setPollingSubscription(false)
           setOrgData(data)
           setShowVerifiedSuccess(true)
