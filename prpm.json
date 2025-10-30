@@ -90,7 +90,7 @@
     },
     {
       "name": "prpm-json-best-practices-skill",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
       "format": "claude",
       "subtype": "skill",
@@ -125,7 +125,7 @@
     },
     {
       "name": "prpm-json-best-practices",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
       "format": "cursor",
       "subtype": "rule",

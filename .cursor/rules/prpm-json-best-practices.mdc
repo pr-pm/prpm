@@ -350,6 +350,102 @@ Before publishing:
 }
 ```
 
+## Lockfile Management
+
+### Understanding prpm.lock
+
+The `prpm.lock` file is **auto-generated** and tracks installed packages. It's the source of truth for what's installed.
+
+**CRITICAL:** Do NOT add packages to `prpm.json` if they exist in `prpm.lock`:
+
+- `prpm.lock` tracks **installed dependencies** (packages you use)
+- `prpm.json` defines **published packages** (packages you create)
+
+### When to Use Each File
+
+**Use `prpm.json` when:**
+- Creating a package to publish to the registry
+- Defining metadata for YOUR packages
+- Setting up a multi-package repository
+
+**Use `prpm.lock` (auto-generated) when:**
+- Installing packages with `prpm install`
+- Tracking which packages are installed
+- Ensuring reproducible installations
+
+### Common Mistake: Duplicating Dependencies
+
+❌ **WRONG - Don't add installed packages to prpm.json:**
+
+```json
+// prpm.json
+{
+  "packages": [
+    {
+      "name": "typescript-safety",  // ❌ This is INSTALLED
+      "version": "1.0.0",
+      "files": [".cursor/rules/typescript-safety.mdc"]
+    }
+  ]
+}
+
+// prpm.lock (auto-generated)
+{
+  "packages": {
+    "@prpm/typescript-safety": {  // ✅ Already here
+      "version": "1.0.0"
+    }
+  }
+}
+```
+
+✅ **CORRECT - Only YOUR packages in prpm.json:**
+
+```json
+// prpm.json - Only packages you're publishing
+{
+  "packages": [
+    {
+      "name": "my-custom-rule",  // ✅ YOUR package
+      "version": "1.0.0",
+      "files": [".cursor/rules/my-custom-rule.mdc"]
+    }
+  ]
+}
+
+// prpm.lock - Installed dependencies
+{
+  "packages": {
+    "@prpm/typescript-safety": {  // ✅ Installed
+      "version": "1.0.0"
+    }
+  }
+}
+```
+
+### Key Principles
+
+1. **Lockfile is Auto-Generated** - Never manually edit `prpm.lock`
+2. **Separation of Concerns**:
+   - `prpm.json` = What you PUBLISH
+   - `prpm.lock` = What you INSTALL
+3. **Check Lockfile First** - Before adding to `prpm.json`, check `prpm.lock`
+4. **Trust the Lockfile** - It's authoritative for installed packages
+
+### Workflow
+
+```bash
+# Install a package (updates prpm.lock automatically)
+prpm install @prpm/typescript-safety
+
+# DO NOT add to prpm.json!
+
+# Only add to prpm.json when YOU create a package:
+# 1. Create your custom rule/skill/agent
+# 2. Add entry to prpm.json
+# 3. Publish: prpm publish
+```
+
 ## Publishing Workflow
 
 ### 1. Validate Manifest
@@ -380,7 +476,9 @@ prpm publish --package my-skill
 
 ## Remember
 
-- `prpm.json` is **only for publishing**, not for users
+- `prpm.json` is **only for publishing YOUR packages**, not installed dependencies
+- **Never add packages from `prpm.lock` to `prpm.json`** - different purposes
+- `prpm.lock` = What you INSTALL, `prpm.json` = What you PUBLISH
 - Always validate before committing
 - Keep versions in sync for related packages
 - Use consistent, searchable tags

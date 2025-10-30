@@ -449,8 +449,10 @@ export async function packageRoutes(server: FastifyInstance) {
       }
 
       // If organization is specified, ensure package name is prefixed with @org-name/
+      // Package names must be lowercase, so lowercase the organization name in the prefix
       if (organization) {
-        const expectedPrefix = `@${organization}/`;
+        const orgNameLowercase = organization.toLowerCase();
+        const expectedPrefix = `@${orgNameLowercase}/`;
         if (!packageName.startsWith(expectedPrefix)) {
           // Auto-prefix the package name
           packageName = `${expectedPrefix}${packageName}`;
@@ -474,12 +476,12 @@ export async function packageRoutes(server: FastifyInstance) {
         });
       }
 
-      // Lookup organization if specified
+      // Lookup organization if specified (case-insensitive)
       let orgId: string | undefined;
       if (organization) {
         const org = await queryOne<{ id: string }>(
           server,
-          'SELECT id FROM organizations WHERE name = $1',
+          'SELECT id FROM organizations WHERE LOWER(name) = LOWER($1)',
           [organization]
         );
 
