@@ -37,7 +37,7 @@ export async function extractSnippet(manifest: PackageManifest): Promise<string 
     // Check if path is a directory
     const stats = await stat(fullPath);
     if (stats.isDirectory()) {
-      console.warn(`⚠️  Skipping snippet extraction: "${targetFilePath}" is a directory`);
+      console.warn(`⚠️  Skipping snippet extraction: "${fullPath}" is a directory`);
       return null;
     }
 
