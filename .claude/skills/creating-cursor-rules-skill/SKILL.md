@@ -91,6 +91,99 @@ Group related rules into clear sections:
 - Types in types/ (shared), components/*/types.ts (local)
 ```
 
+## Rule Anatomy
+
+### MDC Format and Metadata
+
+Cursor rules are written in **MDC (.mdc)** format, which supports YAML frontmatter metadata and markdown content. The metadata controls how and when rules are applied.
+
+### Required YAML Frontmatter
+
+Every Cursor rule MUST start with YAML frontmatter between `---` markers:
+
+```yaml
+---
+description: Brief description of when and how to use this rule
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+```
+
+### Frontmatter Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `description` | string | **Yes** | Brief description of the rule's purpose. Used by AI to decide relevance. Never use placeholders like `---` or empty strings. |
+| `globs` | array | No | File patterns that trigger auto-attachment (e.g., `["**/*.ts"]`). Leave empty or omit if not using Auto Attached type. |
+| `alwaysApply` | boolean | No | If `true`, rule is always included in context. If `false` or omitted, behavior depends on Rule Type. |
+
+### Rule Types
+
+Control how rules are applied using the **type dropdown** in Cursor:
+
+| Rule Type | Description | When to Use |
+|-----------|-------------|-------------|
+| **Always** | Always included in model context | Core project conventions, tech stack, universal patterns that apply everywhere |
+| **Auto Attached** | Included when files matching `globs` pattern are referenced | File-type specific rules (e.g., React components, API routes, test files) |
+| **Agent Requested** | Available to AI, which decides whether to include it based on `description` | Contextual patterns, specialized workflows, optional conventions |
+| **Manual** | Only included when explicitly mentioned using `@ruleName` | Rarely-used patterns, experimental conventions, legacy documentation |
+
+### Examples by Rule Type
+
+**Always Rule** (Core conventions):
+```yaml
+---
+description: TypeScript and code style conventions for the entire project
+alwaysApply: true
+---
+```
+
+**Auto Attached Rule** (File pattern-specific):
+```yaml
+---
+description: React component patterns and conventions
+globs: ["**/components/**/*.tsx", "**/app/**/*.tsx"]
+alwaysApply: false
+---
+```
+
+**Agent Requested Rule** (Contextual):
+```yaml
+---
+description: RPC service boilerplate and patterns for creating new RPC endpoints
+globs: []
+alwaysApply: false
+---
+```
+
+**Manual Rule** (Explicit invocation):
+```yaml
+---
+description: Legacy API migration patterns (deprecated, use for reference only)
+globs: []
+alwaysApply: false
+---
+```
+
+### Best Practices for Frontmatter
+
+1. **Description is mandatory** - AI uses this to determine relevance. Be specific:
+   - ❌ Bad: `Backend code`
+   - ✅ Good: `Fastify API route patterns, error handling, and validation using Zod`
+
+2. **Use globs strategically** - Auto-attach to relevant file types:
+   - React components: `["**/*.tsx", "**/*.jsx"]`
+   - API routes: `["**/api/**/*.ts", "**/routes/**/*.ts"]`
+   - Tests: `["**/*.test.ts", "**/*.spec.ts"]`
+
+3. **Avoid always applying everything** - Use `alwaysApply: true` sparingly:
+   - ✅ Good for: Tech stack, core conventions, project structure
+   - ❌ Bad for: Framework-specific patterns, specialized workflows
+
+4. **Make Agent Requested rules discoverable** - Write descriptions that help AI understand when to use:
+   - Include keywords: "boilerplate", "template", "pattern for X"
+   - Mention specific use cases: "when creating new API routes"
+
 ## Required Sections
 
 Every Cursor rule file should include these sections:
@@ -328,12 +421,90 @@ export async function POST(request: Request) {
 
 ## Best Practices
 
+### Keep Rules Under 500 Lines
+
+- Split large rules into multiple, composable files
+- Each rule file should focus on one domain or concern
+- Reference other rule files when needed (e.g., "See `backend-api.mdc` for API patterns")
+- **Why:** Large files become unmanageable and harder for AI to process effectively
+
+### Split Into Composable Rules
+
+Break down by concern rather than creating one monolithic file:
+
+```
+.cursor/rules/
+  ├── tech-stack.mdc          # Core technologies
+  ├── typescript-patterns.mdc # Language-specific patterns
+  ├── api-conventions.mdc     # API route standards
+  ├── component-patterns.mdc  # React/UI patterns
+  └── testing-standards.mdc   # Testing approaches
+```
+
+**Why:** Easier to maintain, update, and reuse across similar projects.
+
+### Provide Concrete Examples or Referenced Files
+
+Instead of vague guidance, always include:
+- Complete, runnable code examples
+- References to actual project files: `See components/auth/LoginForm.tsx for example`
+- Links to internal docs or design system
+- Specific file paths and line numbers when relevant
+
+**❌ BAD - Vague:**
+```markdown
+Use proper error handling in API routes.
+```
+
+**✅ GOOD - Concrete:**
+```markdown
+API routes must use try/catch with typed errors. Example:
+```typescript
+// app/api/users/route.ts (lines 10-25)
+export async function POST(request: Request) {
+  try {
+    const data = await request.json();
+    return Response.json({ success: true });
+  } catch (error) {
+    return handleApiError(error); // See lib/errors.ts
+  }
+}
+```
+See `app/api/products/route.ts` for complete implementation.
+```
+
+### Write Rules Like Clear Internal Docs
+
+Rules should read like technical documentation, not casual advice:
+- Be precise and unambiguous
+- Include the "why" behind decisions
+- Document exceptions to rules
+- Reference architecture decisions
+- Link to related rules or documentation
+
+**Think:** "Could a new engineer understand this without asking questions?"
+
+### Reuse Rules When Repeating Prompts
+
+If you find yourself giving the same instructions repeatedly in chat:
+1. Document that pattern in `.cursor/rules/`
+2. Include the specific guidance you keep repeating
+3. Add examples of correct implementation
+4. Update existing rule files rather than creating new ones
+
+**Common scenarios to capture:**
+- "Always use X pattern for Y"
+- "Don't forget to Z when doing W"
+- Corrections you make frequently
+- Patterns specific to your team/codebase
+
 ### Keep It Scannable
 
 - Use clear section headers
 - Bold important terms
 - Include code examples (not just prose)
 - Use tables for comparisons
+- Add table of contents for files over 200 lines
 
 ### Update Regularly
 
@@ -341,6 +512,7 @@ export async function POST(request: Request) {
 - Remove outdated patterns
 - Add new patterns as they emerge
 - Keep examples current with latest framework versions
+- Archive deprecated rules rather than deleting (for reference)
 
 ### Test with AI
 

@@ -19,52 +19,30 @@ export async function extractSnippet(manifest: PackageManifest): Promise<string 
 
   try {
     // Validate manifest has required fields
-    if (!manifest.format || !manifest.name || !manifest.subtype) {
-      console.warn('⚠️  Cannot extract snippet: manifest missing format, name, or subtype');
+    if (!manifest.files || manifest.files.length === 0) {
+      console.warn('⚠️  Cannot extract snippet: no files specified in manifest');
       return null;
     }
 
-    // Determine which file to extract snippet from
-    let targetFilePath: string;
-
+    // Prefer main file over first file if specified
+    let fileName: string;
     if (manifest.main) {
-      // If main file is specified, use it directly (for multi-file packages)
-      targetFilePath = getInstalledFilePath(
-        manifest.name,
-        manifest.format,
-        manifest.subtype,
-        manifest.main
-      );
-    } else if (manifest.files && manifest.files.length > 0) {
-      // Get the first file from the manifest
+      fileName = manifest.main;
+    } else {
       const firstFile = manifest.files[0];
-      const fileName = typeof firstFile === 'string'
+      fileName = typeof firstFile === 'string'
         ? firstFile
         : (firstFile as PackageFileMetadata).path;
-
-      // For single-file packages or when no main is specified,
-      // use the format-aware path construction
-      targetFilePath = getInstalledFilePath(
-        manifest.name,
-        manifest.format,
-        manifest.subtype,
-        fileName
-      );
-    } else {
-      // No files specified, try to construct the default path
-      targetFilePath = getInstalledFilePath(
-        manifest.name,
-        manifest.format,
-        manifest.subtype
-      );
     }
 
-    const fullPath = join(cwd, targetFilePath);
+    // Use the file path directly - it should be relative to project root
+    // (e.g., ".claude/skills/my-skill/SKILL.md" or ".cursor/rules/my-rule.mdc")
+    const fullPath = join(cwd, fileName);
 
     // Check if path is a directory
     const stats = await stat(fullPath);
     if (stats.isDirectory()) {
-      console.warn(`⚠️  Skipping snippet extraction: "${targetFilePath}" is a directory`);
+      console.warn(`⚠️  Skipping snippet extraction: "${fullPath}" is a directory`);
       return null;
     }
 

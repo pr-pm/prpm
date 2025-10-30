@@ -1,0 +1,430 @@
+{
+  "name": "prpm-packages",
+  "license": "MIT",
+  "repository": "https://github.com/pr-pm/prpm",
+  "organization": "prpm",
+  "packages": [
+    {
+      "name": "blog-writer",
+      "version": "1.0.0",
+      "description": "Expert agent for creating PRPM blog posts - ensures consistent structure, tone, format, and technical depth aligned with PRPM's vision of distributable intelligence",
+      "private": true,
+      "format": "claude",
+      "subtype": "agent",
+      "tags": ["content", "writing", "blog", "documentation", "prpm-internal"],
+      "files": [
+        ".claude/agents/blog-writer.md"
+      ]
+    },
+    {
+      "name": "core-principles-skill",
+      "version": "1.0.0",
+      "description": "Expert agent for developing PRPM (Prompt Package Manager) - applies core architecture principles, quality standards, and development best practices for building the universal package manager for AI pr",
+      "private": true,
+      "format": "claude",
+      "subtype": "agent",
+      "tags": ["architecture", "prpm-development", "best-practices", "quality-standards", "prpm-internal"],
+      "files": [
+        ".claude/agents/core-principles.md"
+      ]
+    },
+    {
+      "name": "format-conversion-agent",
+      "version": "1.0.0",
+      "description": "Expert agent for converting between AI prompt formats (Cursor, Claude, Continue, Windsurf) - ensures lossless conversions, quality scoring, and round-trip validation",
+      "private": true,
+      "format": "claude",
+      "subtype": "agent",
+      "tags": ["conversion", "formats", "ai-prompts", "quality-assurance", "cursor", "claude", "prpm-internal"],
+      "files": [
+        ".claude/agents/format-conversion.md"
+      ]
+    },
+    {
+      "name": "testing-patterns",
+      "version": "1.0.0",
+      "description": "Expert agent for testing PRPM codebase with Vitest - applies testing patterns, coverage standards, and provides MCP-assisted test execution guidance",
+      "private": true,
+      "format": "claude",
+      "subtype": "agent",
+      "tags": ["testing", "vitest", "coverage", "mcp", "quality-assurance", "prpm-internal"],
+      "files": [
+        ".claude/agents/testing-patterns.md"
+      ]
+    },
+    {
+      "name": "documentation-standards",
+      "version": "1.0.0",
+      "description": "Standards and guidelines for organizing, structuring, and maintaining documentation in the PRPM repository - ensures consistency across user docs, development docs, and internal references",
+      "private": true,
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["documentation", "standards", "organization", "best-practices", "prpm-internal"],
+      "files": [
+        ".claude/skills/documentation-standards/SKILL.md"
+      ]
+    },
+    {
+      "name": "human-writing",
+      "version": "1.0.0",
+      "description": "Write content that sounds natural, conversational, and authentically human - avoiding AI-generated patterns, corporate speak, and generic phrasing",
+      "private": true,
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["writing", "content", "style", "communication", "prpm-internal"],
+      "files": [
+        ".claude/skills/human-writing/SKILL.md"
+      ]
+    },
+    {
+      "name": "prpm-development",
+      "version": "1.0.0",
+      "description": "Use when developing PRPM (Prompt Package Manager) - comprehensive knowledge base covering architecture, format conversion, package types, collections, quality standards, testing, and deployment",
+      "private": true,
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["prpm-development", "architecture", "package-manager", "quality-standards", "prpm-internal"],
+      "files": [
+        ".claude/skills/prpm-development/SKILL.md"
+      ]
+    },
+    {
+      "name": "prpm-json-best-practices-skill",
+      "version": "1.0.0",
+      "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
+      "private": true,
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal"],
+      "files": [
+        ".claude/skills/prpm-json-best-practices/SKILL.md"
+      ]
+    },
+    {
+      "name": "core-principles",
+      "version": "1.0.1",
+      "description": "Core development principles for building PRPM (Prompt Package Manager)",
+      "private": true,
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["prpm-development", "architecture", "best-practices", "prpm-internal"],
+      "files": [
+        ".cursor/rules/core-principles.mdc"
+      ]
+    },
+    {
+      "name": "format-conversion",
+      "version": "1.0.1",
+      "description": "Expert guidance for converting between AI prompt formats (Cursor, Claude, Continue, Windsurf) while preserving semantic meaning",
+      "private": true,
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["conversion", "formats", "ai-prompts", "cursor", "claude", "windsurf", "prpm-internal"],
+      "files": [
+        ".cursor/rules/format-conversion.mdc"
+      ]
+    },
+    {
+      "name": "prpm-json-best-practices",
+      "version": "1.0.0",
+      "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
+      "private": true,
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal"],
+      "files": [
+        ".cursor/rules/prpm-json-best-practices.mdc"
+      ]
+    },
+    {
+      "name": "agent-builder-skill",
+      "version": "1.0.1",
+      "description": "Use when creating, improving, or troubleshooting Claude Code subagents. Expert guidance on agent design, system prompts, tool access, model selection, and delegation patterns for building specialized AI assistants",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "agents", "subagents", "agent-builder", "claude-code", "plugin-development"],
+      "files": [
+        ".claude/skills/agent-builder/SKILL.md",
+        ".claude/skills/agent-builder/EXAMPLES.md"
+      ]
+    },
+    {
+      "name": "aws-beanstalk-expert",
+      "version": "1.0.1",
+      "description": "Expert knowledge for deploying, managing, and troubleshooting AWS Elastic Beanstalk applications with production best practices",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["aws", "elastic-beanstalk", "deployment", "infrastructure", "cloud", "troubleshooting"],
+      "files": [
+        ".claude/skills/aws-beanstalk-expert/SKILL.md"
+      ]
+    },
+    {
+      "name": "beanstalk-deploy-skill",
+      "version": "1.0.1",
+      "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["aws", "elastic-beanstalk", "deployment", "pulumi", "github-actions", "ci-cd", "automation"],
+      "files": [
+        ".claude/skills/beanstalk-deploy/SKILL.md"
+      ]
+    },
+    {
+      "name": "karen-repo-reviewer-skill",
+      "version": "1.0.1",
+      "description": "Use when the user requests a repository review, code assessment, or honest evaluation of their codebase. Provides brutally honest AI-powered reviews with market-aware Karen Scores (0-100) analyzing over-engineering, completion honesty, and practical value",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["code-review", "repository-analysis", "quality-assessment", "market-research", "cynical-feedback", "analysis"],
+      "files": [
+        ".claude/skills/karen-repo-reviewer/SKILL.md"
+      ]
+    },
+    {
+      "name": "slash-command-builder-skill",
+      "version": "1.0.1",
+      "description": "Use when creating, improving, or troubleshooting Claude Code slash commands. Expert guidance on command structure, arguments, frontmatter, tool permissions, and best practices for building effective custom commands",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "slash-commands", "command-builder", "claude-code", "plugin-development", "documentation"],
+      "files": [
+        ".claude/skills/slash-command-builder/SKILL.md",
+        ".claude/skills/slash-command-builder/EXAMPLES.md",
+        ".claude/skills/slash-command-builder/FRONTMATTER.md",
+        ".claude/skills/slash-command-builder/PATTERNS.md"
+      ]
+    },
+    {
+      "name": "creating-cursor-rules-skill",
+      "version": "1.0.1",
+      "description": "Expert guidance for creating effective Cursor IDE rules with best practices, patterns, and examples",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "cursor", "documentation", "best-practices", "ide", "project-setup"],
+      "files": [
+        ".claude/skills/creating-cursor-rules-skill/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-skills-skill",
+      "version": "1.0.1",
+      "description": "Use when creating new Claude Code skills or improving existing ones - ensures skills are discoverable, scannable, and effective through proper structure, CSO optimization, and real examples",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "claude-code", "skills", "documentation", "best-practices", "cso"],
+      "files": [
+        ".claude/skills/creating-skills/SKILL.md"
+      ]
+    },
+    {
+      "name": "elastic-beanstalk-deployment-skill",
+      "version": "1.0.1",
+      "description": "Use when deploying Node.js applications to AWS Elastic Beanstalk or troubleshooting deployment issues - provides dependency installation strategies, monorepo handling, and deployment best practices",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["aws", "elastic-beanstalk", "deployment", "nodejs", "monorepo", "troubleshooting"],
+      "files": [
+        ".claude/skills/elastic-beanstalk-deployment/SKILL.md"
+      ]
+    },
+    {
+      "name": "github-actions-testing-skill",
+      "version": "1.0.1",
+      "description": "Expert guidance for testing and validating GitHub Actions workflows before deployment - catches cache errors, path issues, monorepo dependencies, and service container problems that local testing miss",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["github-actions", "ci-cd", "testing", "workflows", "automation", "troubleshooting"],
+      "files": [
+        ".claude/skills/github-actions-testing/SKILL.md"
+      ]
+    },
+    {
+      "name": "postgres-migrations",
+      "version": "1.0.1",
+      "description": "Comprehensive guide to PostgreSQL migrations - common errors, generated columns, full-text search, indexes, idempotent migrations, and best practices for database schema changes",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["postgresql", "database", "migrations", "schema", "sql", "troubleshooting"],
+      "files": [
+        ".claude/skills/postgres-migrations/SKILL.md"
+      ]
+    },
+    {
+      "name": "pulumi-troubleshooting",
+      "version": "1.0.1",
+      "description": "Comprehensive guide to troubleshooting Pulumi TypeScript errors, infrastructure issues, and best practices - covers common errors, Outputs handling, AWS Beanstalk deployment, and cost optimization",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["pulumi", "infrastructure-as-code", "typescript", "aws", "troubleshooting", "cloud"],
+      "files": [
+        ".claude/skills/pulumi-troubleshooting/SKILL.md"
+      ]
+    },
+    {
+      "name": "self-improving-skill",
+      "version": "1.0.1",
+      "description": "Use when starting infrastructure, testing, deployment, or framework-specific tasks - automatically searches PRPM registry for relevant expertise packages and suggests installation to enhance capabilit",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "automation", "package-discovery", "prpm-registry", "enhancement"],
+      "files": [
+        ".claude/skills/self-improving/SKILL.md"
+      ]
+    },
+    {
+      "name": "thoroughness",
+      "version": "1.0.1",
+      "description": "Use when implementing complex multi-step tasks, fixing critical bugs, or when quality and completeness matter more than speed - ensures comprehensive implementation without shortcuts through systemati",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["methodology", "quality-assurance", "debugging", "best-practices", "workflow"],
+      "files": [
+        ".claude/skills/thoroughness/SKILL.md"
+      ]
+    },
+    {
+      "name": "typescript-type-safety-skill",
+      "version": "1.0.1",
+      "description": "Use when encountering TypeScript any types, type errors, or lax type checking - eliminates type holes and enforces strict type safety through proper interfaces, type guards, and module augmentation",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["typescript", "type-safety", "code-quality", "best-practices", "static-analysis"],
+      "files": [
+        ".claude/skills/typescript-type-safety/SKILL.md"
+      ]
+    },
+    {
+      "name": "karen-compare",
+      "version": "1.0.1",
+      "description": "Karen comparative analysis between two projects with brutally honest head-to-head scoring and recommendations",
+      "format": "claude",
+      "subtype": "slash-command",
+      "tags": ["code-review", "comparison", "analysis", "quality-assessment", "karen"],
+      "files": [
+        ".claude/commands/karen/compare.md"
+      ]
+    },
+    {
+      "name": "karen-quick-score",
+      "version": "1.0.1",
+      "description": "Quick Karen score without full review - fast repository assessment using Haiku for speed",
+      "format": "claude",
+      "subtype": "slash-command",
+      "tags": ["code-review", "quick-analysis", "quality-assessment", "karen"],
+      "files": [
+        ".claude/commands/karen/quick-score.md"
+      ]
+    },
+    {
+      "name": "karen-review",
+      "version": "1.0.1",
+      "description": "Karen repository review with market-aware scoring - brutally honest assessment with strictness levels",
+      "format": "claude",
+      "subtype": "slash-command",
+      "tags": ["code-review", "market-research", "quality-assessment", "analysis", "karen"],
+      "files": [
+        ".claude/commands/karen/review.md"
+      ]
+    },
+    {
+      "name": "beanstalk-deploy",
+      "version": "1.0.1",
+      "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["aws", "elastic-beanstalk", "deployment", "infrastructure", "devops", "pulumi", "ci-cd", "github-actions"],
+      "files": [
+        ".cursor/rules/beanstalk-deploy.mdc"
+      ]
+    },
+    {
+      "name": "creating-cursor-rules",
+      "version": "1.0.1",
+      "description": "Meta-rule for creating effective Cursor IDE rules with best practices, patterns, and examples",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "cursor", "documentation", "best-practices", "project-setup"],
+      "files": [
+        ".cursor/rules/creating-cursor-rules.mdc"
+      ]
+    },
+    {
+      "name": "creating-skills",
+      "version": "1.0.1",
+      "description": "Meta-guide for creating effective Claude Code skills with proper structure, CSO optimization, and real examples",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "claude-code", "skills", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-skills.mdc"
+      ]
+    },
+    {
+      "name": "elastic-beanstalk-deployment",
+      "version": "1.0.1",
+      "description": "Reference: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/nodejs-platform-dependencies.html",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["aws", "elastic-beanstalk", "deployment", "nodejs", "reference"],
+      "files": [
+        ".cursor/rules/elastic-beanstalk-deployment.md"
+      ]
+    },
+    {
+      "name": "github-actions-testing",
+      "version": "1.0.1",
+      "description": "Expert guidance for testing and validating GitHub Actions workflows before deployment - catches cache errors, path issues, monorepo dependencies, and service container problems that local testing miss",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["github-actions", "ci-cd", "testing", "workflows", "automation"],
+      "files": [
+        ".cursor/rules/github-actions-testing.mdc"
+      ]
+    },
+    {
+      "name": "karen-repo-reviewer",
+      "version": "1.0.1",
+      "description": "Use Karen for brutally honest repository reviews with market-aware Karen Scores. Analyzes entire codebases for over-engineering, completion honesty, and whether the project actually solves a real prob",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["code-review", "quality-assurance", "analysis", "critique", "productivity"],
+      "files": [
+        ".cursor/rules/karen-repo-reviewer.mdc"
+      ]
+    },
+    {
+      "name": "self-improve-cursor",
+      "version": "1.0.1",
+      "description": "Automatically search and install PRPM packages when working on infrastructure, testing, deployment, or framework-specific tasks",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "automation", "package-discovery", "prpm-registry", "enhancement"],
+      "files": [
+        ".cursor/rules/self-improve-cursor.mdc"
+      ]
+    },
+    {
+      "name": "typescript-type-safety",
+      "version": "1.0.1",
+      "description": "Use when encountering TypeScript any types, type errors, or lax type checking - eliminates type holes and enforces strict type safety through proper interfaces, type guards, and module augmentation",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["typescript", "type-safety", "code-quality", "best-practices"],
+      "files": [
+        ".cursor/rules/typescript-type-safety.mdc"
+      ]
+    },
+    {
+      "name": "typescript-type-specialist",
+      "version": "1.0.1",
+      "description": "Enforce strict TypeScript type safety - eliminate all 'any' types, use proper type guards, and maintain zero tolerance for type safety violations",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["typescript", "type-safety", "strict-mode", "code-quality", "enforcement"],
+      "files": [
+        ".cursor/rules/typescript-type-specialist.mdc"
+      ]
+    }
+  ]
+}

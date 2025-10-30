@@ -37,7 +37,7 @@ describe('snippet-extractor', () => {
         description: 'Test',
         format: 'cursor',
         subtype: 'rule',
-        files: ['test-package.mdc'],
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);
@@ -56,7 +56,7 @@ describe('snippet-extractor', () => {
         description: 'Test',
         format: 'cursor',
         subtype: 'rule',
-        files: ['test-package.mdc'],
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);
@@ -77,7 +77,7 @@ describe('snippet-extractor', () => {
         description: 'Test',
         format: 'cursor',
         subtype: 'rule',
-        files: ['test-package.mdc'],
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);
@@ -98,8 +98,8 @@ describe('snippet-extractor', () => {
         description: 'Test',
         format: 'cursor',
         subtype: 'rule',
-        files: ['file1.mdc', 'file2.mdc'],
-        main: 'file2.mdc',
+        files: ['.cursor/rules/file1.mdc', '.cursor/rules/file2.mdc'],
+        main: '.cursor/rules/file2.mdc',
       };
 
       const snippet = await extractSnippet(manifest);
@@ -129,7 +129,7 @@ describe('snippet-extractor', () => {
         description: 'Test',
         format: 'cursor',
         subtype: 'rule',
-        files: ['nonexistent.mdc'],
+        files: ['.cursor/rules/nonexistent.mdc'],
       };
 
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
@@ -152,7 +152,7 @@ describe('snippet-extractor', () => {
         description: 'Test',
         format: 'cursor',
         subtype: 'rule',
-        files: ['subdir'],
+        files: ['.cursor/rules/subdir'],
       };
 
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
@@ -177,7 +177,7 @@ describe('snippet-extractor', () => {
         subtype: 'rule',
         files: [
           {
-            path: 'test-package.mdc',
+            path: '.cursor/rules/test-package.mdc',
             type: 'prompt',
           },
         ],
@@ -199,7 +199,7 @@ describe('snippet-extractor', () => {
         description: 'Test',
         format: 'cursor',
         subtype: 'rule',
-        files: ['test-package.mdc'],
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);
@@ -218,7 +218,7 @@ describe('snippet-extractor', () => {
         description: 'Test',
         format: 'cursor',
         subtype: 'rule',
-        files: ['test-package.mdc'],
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);
