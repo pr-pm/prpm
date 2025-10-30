@@ -8,6 +8,7 @@ import { join, relative, basename } from 'path';
 import { telemetry } from '../core/telemetry';
 import type { PackageManifest, MultiPackageManifest } from '../types/registry';
 import { Format, Subtype } from '../types';
+import { readLockfile } from '../core/lockfile';
 
 interface DiscoveredPackage {
   path: string;
@@ -259,17 +260,36 @@ export async function handleCatalog(
       }
     }
 
-    console.log(`\n✨ Discovered ${allDiscovered.length} package(s) total:\n`);
+    // Read lockfile to exclude packages installed from other users
+    const lockfile = await readLockfile();
+    const installedPackageIds = new Set(lockfile ? Object.keys(lockfile.packages) : []);
 
-    if (allDiscovered.length === 0) {
-      console.log('No packages found. Try scanning different directories.');
+    // Filter out packages that are installed from the registry (not user-created)
+    const filteredDiscovered = allDiscovered.filter(pkg => {
+      // Check if this package exists in lockfile
+      // Package ID in lockfile could be: "package-name", "@author/package-name"
+      // Check both formats
+      const isInstalled = installedPackageIds.has(pkg.name) ||
+                         Array.from(installedPackageIds).some(id => id.endsWith(`/${pkg.name}`));
+
+      if (isInstalled) {
+        console.log(`   ⏩ Skipping ${pkg.name} (installed from registry, not user-created)`);
+        return false;
+      }
+      return true;
+    });
+
+    console.log(`\n✨ Discovered ${filteredDiscovered.length} package(s) total:\n`);
+
+    if (filteredDiscovered.length === 0) {
+      console.log('No user-created packages found. Try scanning different directories or check if all packages were installed from registry.');
       success = true;
       return;
     }
 
     // Display discovered packages
     const byFormat = new Map<Format, DiscoveredPackage[]>();
-    for (const pkg of allDiscovered) {
+    for (const pkg of filteredDiscovered) {
       if (!byFormat.has(pkg.format)) {
         byFormat.set(pkg.format, []);
       }
@@ -330,7 +350,7 @@ export async function handleCatalog(
     const existingNames = new Set(manifest.packages.map(p => p.name));
     let addedCount = 0;
 
-    for (const discovered of allDiscovered) {
+    for (const discovered of filteredDiscovered) {
       // Skip if already exists
       if (existingNames.has(discovered.name)) {
         console.log(`   ⚠️  Skipping ${discovered.name} (already in prpm.json)`);
