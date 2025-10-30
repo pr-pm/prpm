@@ -26,6 +26,7 @@ interface PublishOptions {
   access?: 'public' | 'private';
   tag?: string;
   dryRun?: boolean;
+  package?: string; // Filter to specific package name in multi-package repos
 }
 
 /**
@@ -390,7 +391,20 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     if (manifests.length > 1) {
       console.log(`   Found ${manifests.length} plugins in ${source}`);
+      if (options.package) {
+        console.log(`   Filtering to package: ${options.package}`);
+      }
       console.log('   Will publish each plugin separately\n');
+    }
+
+    // Filter to specific package if requested
+    let filteredManifests = manifests;
+    if (options.package) {
+      filteredManifests = manifests.filter(m => m.name === options.package);
+      if (filteredManifests.length === 0) {
+        throw new Error(`Package "${options.package}" not found in manifest. Available packages: ${manifests.map(m => m.name).join(', ')}`);
+      }
+      console.log(`   ✓ Found package "${options.package}"\n`);
     }
 
     // Get user info to check for organizations (once for all packages)
@@ -405,12 +419,12 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     }
     console.log('');
 
-    // Check for duplicate package names
-    if (manifests.length > 1) {
+    // Check for duplicate package names (only in filtered set)
+    if (filteredManifests.length > 1) {
       const nameMap = new Map<string, number>();
       const duplicates: string[] = [];
 
-      manifests.forEach((manifest, index) => {
+      filteredManifests.forEach((manifest, index) => {
         const existingIndex = nameMap.get(manifest.name);
         if (existingIndex !== undefined) {
           duplicates.push(`  - "${manifest.name}" appears in positions ${existingIndex + 1} and ${index + 1}`);
@@ -434,15 +448,15 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     const publishedPackages: Array<{ name: string; version: string; url: string }> = [];
     const failedPackages: Array<{ name: string; error: string }> = [];
 
-    // Publish each manifest
-    for (let i = 0; i < manifests.length; i++) {
-      const manifest = manifests[i];
+    // Publish each manifest (filtered set)
+    for (let i = 0; i < filteredManifests.length; i++) {
+      const manifest = filteredManifests[i];
       packageName = manifest.name;
       version = manifest.version;
 
-      if (manifests.length > 1) {
+      if (filteredManifests.length > 1) {
         console.log(`\n${'='.repeat(60)}`);
-        console.log(`📦 Publishing plugin ${i + 1} of ${manifests.length}`);
+        console.log(`📦 Publishing plugin ${i + 1} of ${filteredManifests.length}`);
         console.log(`${'='.repeat(60)}\n`);
       }
 
@@ -720,6 +734,7 @@ export function createPublishCommand(): Command {
     .option('--access <type>', 'Package access (public or private) - overrides manifest setting')
     .option('--tag <tag>', 'NPM-style tag (e.g., latest, beta)', 'latest')
     .option('--dry-run', 'Validate package without publishing')
+    .option('--package <name>', 'Publish only a specific package from multi-package manifest')
     .action(async (options: PublishOptions) => {
       await handlePublish(options);
       process.exit(0);

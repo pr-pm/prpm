@@ -350,23 +350,26 @@ export async function handleInstall(
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
 
-      // For Claude skills, auto-fix filename to SKILL.md if needed
+      // For Claude skills, verify SKILL.md exists
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
-        const skillMdIndex = extractedFiles.findIndex(f => f.name === 'SKILL.md');
+        const skillMdIndex = extractedFiles.findIndex(f =>
+          f.name === 'SKILL.md' || f.name.endsWith('/SKILL.md')
+        );
 
         if (skillMdIndex === -1) {
           // SKILL.md not found, look for common variations and auto-rename
           const skillFileIndex = extractedFiles.findIndex(f =>
-            f.name.toLowerCase() === 'skill.md' ||
-            f.name === 'skill.md' ||
-            f.name.endsWith('.md') && extractedFiles.length === 1 // Single .md file
+            f.name.toLowerCase().endsWith('skill.md') ||
+            (f.name.endsWith('.md') && extractedFiles.length === 1) // Single .md file
           );
 
           if (skillFileIndex !== -1) {
             const oldName = extractedFiles[skillFileIndex].name;
-            console.log(`   ⚠️  Auto-fixing skill filename: ${oldName} → SKILL.md`);
+            const basePath = oldName.substring(0, oldName.lastIndexOf('/') + 1);
+            const newName = basePath + 'SKILL.md';
+            console.log(`   ⚠️  Auto-fixing skill filename: ${oldName} → ${newName}`);
             console.log(`      (Claude skills must be named SKILL.md per official documentation)`);
-            extractedFiles[skillFileIndex].name = 'SKILL.md';
+            extractedFiles[skillFileIndex].name = newName;
           } else {
             throw new Error(
               'Claude skills must contain a SKILL.md file. ' +
