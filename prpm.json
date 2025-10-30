@@ -293,6 +293,17 @@
       ]
     },
     {
+      "name": "integrating-stripe-webhooks",
+      "version": "1.0.0",
+      "description": "Use when implementing Stripe webhook endpoints and getting 'Raw body not available' or signature verification errors - provides raw body parsing solutions and subscription period field fixes across frameworks",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["stripe", "webhooks", "payments", "subscriptions", "api-integration", "nodejs", "python", "troubleshooting"],
+      "files": [
+        ".claude/skills/integrating-stripe-webhooks/SKILL.md"
+      ]
+    },
+    {
       "name": "karen-compare",
       "version": "1.0.2",
       "description": "Karen comparative analysis between two projects with brutally honest head-to-head scoring and recommendations",
