@@ -448,6 +448,22 @@ export async function organizationRoutes(server: FastifyInstance) {
         });
       }
 
+      // Check if organization is verified for avatar_url updates
+      if (avatar_url !== undefined) {
+        const orgDetails = await queryOne<{ is_verified: boolean }>(
+          server,
+          'SELECT is_verified FROM organizations WHERE id = $1',
+          [org.id]
+        );
+
+        if (!orgDetails?.is_verified) {
+          return reply.status(403).send({
+            error: 'Forbidden',
+            message: 'Only verified organizations can set a custom avatar URL. Please upgrade to a verified plan.',
+          });
+        }
+      }
+
       // Build update query dynamically based on provided fields
       const updates: string[] = [];
       const values: any[] = [];

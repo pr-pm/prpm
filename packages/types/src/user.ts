@@ -33,6 +33,13 @@ export interface Organization {
   avatar_url?: string;
   website_url?: string;
   is_verified: boolean;
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
+  subscription_status?: 'active' | 'canceled' | 'past_due' | 'unpaid' | 'incomplete' | 'trialing' | null;
+  subscription_plan?: 'free' | 'verified';
+  subscription_start_date?: Date | string;
+  subscription_end_date?: Date | string;
+  subscription_cancel_at_period_end?: boolean;
   created_at: Date | string;
   updated_at: Date | string;
 }

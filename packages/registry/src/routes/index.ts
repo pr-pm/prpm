@@ -14,6 +14,8 @@ import authorAnalyticsRoutes from './author-analytics.js';
 import authorsRoutes from './authors.js';
 import { newsletterRoutes } from './newsletter.js';
 import { organizationRoutes } from './organizations.js';
+import { subscriptionRoutes } from './subscriptions.js';
+import { webhookRoutes } from './webhooks.js';
 
 export async function registerRoutes(server: FastifyInstance) {
   // API v1 routes
@@ -30,6 +32,8 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(authorsRoutes, { prefix: '/authors' });
       await api.register(newsletterRoutes, { prefix: '/newsletter' });
       await api.register(organizationRoutes, { prefix: '/organizations' });
+      await api.register(subscriptionRoutes, { prefix: '/subscriptions' });
+      await api.register(webhookRoutes, { prefix: '/webhooks' });
     },
     { prefix: '/api/v1' }
   );

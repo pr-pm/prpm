@@ -44,25 +44,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
 
   try {
     const content = await readFile(prpmJsonPath, 'utf-8');
-    prpmJsonExists = true;
-
-    // Try to parse JSON
-    let manifest: Manifest;
-    try {
-      manifest = JSON.parse(content) as Manifest;
-    } catch (parseError) {
-      // JSON parse error - provide specific error message
-      const error = parseError as Error;
-      throw new Error(
-        `Invalid JSON in prpm.json:\n\n` +
-        `${error.message}\n\n` +
-        `Please check your prpm.json file for syntax errors:\n` +
-        `  - Missing or extra commas\n` +
-        `  - Unclosed quotes or brackets\n` +
-        `  - Invalid JSON syntax\n\n` +
-        `You can validate your JSON at https://jsonlint.com/`
-      );
-    }
+    const manifest = JSON.parse(content) as Manifest;
 
     // Check if this is a multi-package manifest
     if ('packages' in manifest && Array.isArray(manifest.packages)) {
@@ -77,31 +59,20 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
           description: pkg.description,
           format: pkg.format,
           files: pkg.files,
-          author: pkg.author !== undefined ? pkg.author : multiManifest.author!,
-          license: pkg.license !== undefined ? pkg.license : multiManifest.license,
-          repository: pkg.repository !== undefined ? pkg.repository : multiManifest.repository,
-          homepage: pkg.homepage !== undefined ? pkg.homepage : multiManifest.homepage,
-          documentation: pkg.documentation !== undefined ? pkg.documentation : multiManifest.documentation,
-          organization: pkg.organization !== undefined ? pkg.organization : multiManifest.organization,
-          private: pkg.private !== undefined ? pkg.private : multiManifest.private,
-          tags: pkg.tags !== undefined ? pkg.tags : multiManifest.tags,
-          keywords: pkg.keywords !== undefined ? pkg.keywords : multiManifest.keywords,
+          author: pkg.author ?? multiManifest.author,
+          license: pkg.license ?? multiManifest.license,
+          repository: pkg.repository ?? multiManifest.repository,
+          homepage: pkg.homepage ?? multiManifest.homepage,
+          documentation: pkg.documentation ?? multiManifest.documentation,
+          organization: pkg.organization ?? multiManifest.organization,
+          tags: pkg.tags ?? multiManifest.tags,
+          keywords: pkg.keywords ?? multiManifest.keywords,
           subtype: pkg.subtype,
           dependencies: pkg.dependencies,
           peerDependencies: pkg.peerDependencies,
           engines: pkg.engines,
           main: pkg.main,
         };
-
-        // Debug: Log inheritance only if DEBUG env var is set
-        if (process.env.DEBUG) {
-          console.log(`\n🔍 Package ${pkg.name} inheritance:`);
-          console.log(`   - Package-level private: ${pkg.private}`);
-          console.log(`   - Top-level private: ${multiManifest.private}`);
-          console.log(`   - Inherited private: ${packageWithDefaults.private}`);
-          console.log('');
-        }
-
         return validateManifest(packageWithDefaults);
       });
 

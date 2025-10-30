@@ -487,10 +487,11 @@ export async function packageRoutes(server: FastifyInstance) {
 
       // Lookup organization if specified (case-insensitive)
       let orgId: string | undefined;
+      let orgVerified: boolean = false;
       if (organization) {
-        const org = await queryOne<{ id: string }>(
+        const org = await queryOne<{ id: string; verified: boolean }>(
           server,
-          'SELECT id FROM organizations WHERE LOWER(name) = LOWER($1)',
+          'SELECT id, verified FROM organizations WHERE LOWER(name) = LOWER($1)',
           [organization]
         );
 
@@ -502,6 +503,7 @@ export async function packageRoutes(server: FastifyInstance) {
         }
 
         orgId = org.id;
+        orgVerified = org.verified || false;
 
         // Verify user has permission to publish to this org
         const orgMembership = await queryOne<{ role: string }>(
@@ -522,6 +524,14 @@ export async function packageRoutes(server: FastifyInstance) {
           return reply.status(403).send({
             error: 'Forbidden',
             message: `You do not have permission to publish packages for the '${organization}' organization. Required role: owner, admin, or maintainer. Your role: ${orgMembership.role}`,
+          });
+        }
+
+        // Check if trying to publish private package with unverified organization
+        if (manifest.private && !orgVerified) {
+          return reply.status(403).send({
+            error: 'Forbidden',
+            message: `Cannot publish private packages for unverified organization '${organization}'. Only verified organizations can publish private packages. Please contact support to verify your organization.`,
           });
         }
       }
