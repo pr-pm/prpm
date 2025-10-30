@@ -1,0 +1,389 @@
+---
+description: Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management
+globs: ["prpm.json", "**/prpm.json"]
+alwaysApply: false
+---
+
+# PRPM JSON Best Practices
+
+Best practices for creating and maintaining `prpm.json` package manifests for PRPM (Prompt Package Manager).
+
+## Core Purpose
+
+`prpm.json` is **only needed if you're publishing packages**. Regular users installing packages from the registry don't need this file.
+
+Use `prpm.json` when you're:
+- Publishing a package to the PRPM registry
+- Creating a collection of packages
+- Distributing your own prompts/rules/skills/agents
+- Managing multiple related packages in a monorepo
+
+## File Structure
+
+### Single Package
+
+```json
+{
+  "name": "my-awesome-skill",
+  "version": "1.0.0",
+  "description": "Clear, concise description of what this package does",
+  "author": "Your Name <you@example.com>",
+  "license": "MIT",
+  "repository": "https://github.com/username/repo",
+  "organization": "your-org",
+  "format": "claude",
+  "subtype": "skill",
+  "tags": ["typescript", "best-practices", "code-quality"],
+  "files": [
+    "SKILL.md"
+  ]
+}
+```
+
+### Multi-Package Repository
+
+```json
+{
+  "name": "prpm-packages",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": "https://github.com/username/repo",
+  "organization": "your-org",
+  "packages": [
+    {
+      "name": "package-one",
+      "version": "1.0.0",
+      "description": "Description of package one",
+      "private": true,
+      "format": "claude",
+      "subtype": "agent",
+      "tags": ["tag1", "tag2"],
+      "files": ["agents/package-one.md"]
+    }
+  ]
+}
+```
+
+## Required Fields
+
+### Single Package
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | **Yes** | Package name (kebab-case, unique in registry) |
+| `version` | string | **Yes** | Semver version (e.g., `1.0.0`) |
+| `description` | string | **Yes** | Clear description of what the package does |
+| `author` | string | **Yes** | Author name and optional email |
+| `license` | string | **Yes** | SPDX license identifier (e.g., `MIT`) |
+| `format` | string | **Yes** | Target format: `claude`, `cursor`, `continue`, `windsurf` |
+| `subtype` | string | **Yes** | Package type: `agent`, `skill`, `rule`, `slash-command`, `prompt` |
+| `files` | string[] | **Yes** | Array of files to include in package |
+
+### Multi-Package
+
+Each package in `packages` array requires:
+- `name`, `version`, `description` - Package identity
+- `format`, `subtype` - Package classification
+- `files` - Files to include
+- `tags` - Recommended for discoverability
+
+## Format and Subtype Values
+
+### Format (Target AI Tool)
+
+- `claude` - Claude Code (agents, skills)
+- `cursor` - Cursor IDE (rules, MDC files)
+- `continue` - Continue.dev extension
+- `windsurf` - Windsurf IDE
+- `copilot`, `kiro`, `agents.md`, `generic`, `mcp`
+
+### Subtype (Package Type)
+
+- `agent` - Autonomous agents (Claude, agents.md)
+- `skill` - Specialized capabilities (Claude)
+- `rule` - IDE rules and guidelines (Cursor, Windsurf)
+- `slash-command`, `prompt`, `collection`, `chatmode`, `tool`
+
+## Tags Best Practices
+
+### Structure
+
+- Use **kebab-case**: `type-safety` not `typeSafety` or `type_safety`
+- Include 3-8 tags per package
+- Combine technology + domain + purpose tags
+
+### Categories
+
+**Technology:** `typescript`, `python`, `react`, `aws`, `postgresql`
+**Domain:** `deployment`, `testing`, `database`, `infrastructure`
+**Purpose:** `troubleshooting`, `best-practices`, `automation`
+**Meta:** `meta` (packages about packages), `prpm-internal` (private)
+
+### Good Example
+
+```json
+{
+  "tags": [
+    "typescript",
+    "type-safety",
+    "code-quality",
+    "best-practices",
+    "static-analysis"
+  ]
+}
+```
+
+## Organization Best Practices
+
+### Multi-Package Order
+
+Organize packages by:
+1. **Privacy** - Private packages first
+2. **Format** - Group by format (claude, cursor)
+3. **Subtype** - Group by subtype (agent, skill, rule)
+
+```json
+{
+  "packages": [
+    // Private > Claude > Agents
+    { "name": "internal-agent", "private": true, "format": "claude", "subtype": "agent" },
+
+    // Private > Claude > Skills
+    { "name": "internal-skill", "private": true, "format": "claude", "subtype": "skill" },
+
+    // Private > Cursor > Rules
+    { "name": "internal-rule", "private": true, "format": "cursor", "subtype": "rule" },
+
+    // Public > Claude > Skills
+    { "name": "public-skill", "format": "claude", "subtype": "skill" },
+
+    // Public > Cursor > Rules
+    { "name": "public-rule", "format": "cursor", "subtype": "rule" }
+  ]
+}
+```
+
+### Naming Conventions
+
+**Package Names:**
+- Use **kebab-case**: `my-awesome-skill`
+- Be **descriptive**: `typescript-type-safety` not `ts-types`
+- Avoid duplicates: use suffixes if needed
+  - `format-conversion-agent` (Claude agent)
+  - `format-conversion` (Cursor rule)
+
+**File Paths:**
+- Agents: `agents/name.md`
+- Skills: `skills/name/SKILL.md`
+- Rules: `rules/name.mdc`
+
+## Version Management
+
+### Semver
+
+- **Major (1.0.0 → 2.0.0)**: Breaking changes
+- **Minor (1.0.0 → 1.1.0)**: New features, backward compatible
+- **Patch (1.0.0 → 1.0.1)**: Bug fixes, backward compatible
+
+### Keep Related Packages in Sync
+
+```json
+{
+  "packages": [
+    { "name": "pkg-one", "version": "1.2.0" },
+    { "name": "pkg-two", "version": "1.2.0" },
+    { "name": "pkg-three", "version": "1.2.0" }
+  ]
+}
+```
+
+## File Management
+
+### Files Array
+
+List all files to include in the package:
+
+```json
+{
+  "files": [
+    "skills/my-skill/SKILL.md",
+    "skills/my-skill/examples/",
+    "skills/my-skill/README.md"
+  ]
+}
+```
+
+### Verify Files Exist
+
+```bash
+# Check all files exist
+for file in $(cat prpm.json | jq -r '.packages[].files[]'); do
+  if [ ! -f "$file" ]; then
+    echo "Missing: $file"
+  fi
+done
+```
+
+## Duplicate Detection
+
+### Check for Duplicates
+
+```bash
+# No output = no duplicates
+cat prpm.json | jq -r '.packages[].name' | sort | uniq -d
+```
+
+### Resolve Duplicates
+
+❌ **Bad:**
+```json
+{ "packages": [
+  { "name": "typescript-safety", "format": "claude" },
+  { "name": "typescript-safety", "format": "cursor" }
+]}
+```
+
+✅ **Good:**
+```json
+{ "packages": [
+  { "name": "typescript-safety", "format": "claude", "subtype": "skill" },
+  { "name": "typescript-safety-rule", "format": "cursor", "subtype": "rule" }
+]}
+```
+
+## Common Patterns
+
+### Private Internal Package
+
+```json
+{
+  "name": "internal-tool",
+  "version": "1.0.0",
+  "description": "Internal development tool",
+  "private": true,
+  "format": "claude",
+  "subtype": "skill",
+  "tags": ["prpm-internal", "development"],
+  "files": ["skills/internal-tool/SKILL.md"]
+}
+```
+
+### Meta Package (Creating Other Packages)
+
+```json
+{
+  "name": "creating-skills",
+  "version": "1.0.0",
+  "description": "Guide for creating effective Claude Code skills",
+  "format": "claude",
+  "subtype": "skill",
+  "tags": ["meta", "claude-code", "skills", "documentation"],
+  "files": ["skills/creating-skills/SKILL.md"]
+}
+```
+
+## Validation Checklist
+
+Before publishing:
+
+**Required Fields:**
+- [ ] All packages have `name`, `version`, `description`
+- [ ] All packages have `format` and `subtype`
+- [ ] All packages have `files` array
+- [ ] Top-level has `author` and `license`
+
+**File Verification:**
+- [ ] All files in `files` arrays exist
+- [ ] File paths are relative to repo root
+
+**No Duplicates:**
+- [ ] No duplicate package names
+
+**Tags:**
+- [ ] Tags use kebab-case
+- [ ] 3-8 relevant tags per package
+
+**Organization:**
+- [ ] Private packages listed first
+- [ ] Packages grouped by format and subtype
+
+## Common Mistakes
+
+### ❌ Missing Required Fields
+
+```json
+{
+  "name": "my-skill"
+  // Missing: version, description, format, subtype, files
+}
+```
+
+### ❌ Wrong Tag Format
+
+```json
+{
+  "tags": ["TypeScript", "Code_Quality"]
+  // Should be: ["typescript", "code-quality"]
+}
+```
+
+### ❌ Duplicate Names
+
+```json
+{
+  "packages": [
+    { "name": "my-skill", "format": "claude" },
+    { "name": "my-skill", "format": "cursor" }
+    // Add suffix: "my-skill-rule"
+  ]
+}
+```
+
+### ❌ Missing Files
+
+```json
+{
+  "files": ["SKILL.md"]
+  // But SKILL.md doesn't exist
+}
+```
+
+## Publishing Workflow
+
+### 1. Validate Manifest
+
+```bash
+# Validate JSON
+cat prpm.json | jq . > /dev/null
+
+# Check duplicates
+cat prpm.json | jq -r '.packages[].name' | sort | uniq -d
+
+# Verify files exist (see File Management section)
+```
+
+### 2. Bump Versions
+
+Update version numbers for changed packages.
+
+### 3. Publish
+
+```bash
+# Publish all packages
+prpm publish
+
+# Or specific package
+prpm publish --package my-skill
+```
+
+## Remember
+
+- `prpm.json` is **only for publishing**, not for users
+- Always validate before committing
+- Keep versions in sync for related packages
+- Use consistent, searchable tags
+- Organize packages logically
+- Verify all file paths exist
+- Check for duplicate names
+- Follow semver for versioning
