@@ -9,6 +9,7 @@ import { cacheGet, cacheSet, cacheDelete, cacheDeletePattern } from '../cache/re
 import { Package, PackageVersion, PackageInfo } from '../types.js';
 import { toError } from '../types/errors.js';
 import { config } from '../config.js';
+import { triggerSeoExport } from '../services/seo-export.js';
 import type {
   ListPackagesQuery,
   PackageParams,
@@ -674,6 +675,11 @@ export async function packageRoutes(server: FastifyInstance) {
         tarball_url: tarballUrl,
         message: `Successfully published ${packageName}@${version}`
       });
+
+      // Trigger SEO Lambda to regenerate export data (async, non-blocking)
+      triggerSeoExport(server).catch(err =>
+        server.log.warn({ error: err }, 'SEO export trigger failed (non-critical)')
+      );
     } catch (error: unknown) {
       server.log.error({ error: String(error) }, 'Failed to publish package');
       return reply.status(500).send({
