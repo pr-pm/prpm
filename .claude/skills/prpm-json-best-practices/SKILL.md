@@ -59,7 +59,7 @@ For repositories with one package:
   "subtype": "skill",
   "tags": ["typescript", "best-practices", "code-quality"],
   "files": [
-    "SKILL.md"
+    ".claude/skills/my-awesome-skill/SKILL.md"
   ]
 }
 ```
@@ -85,7 +85,7 @@ For repositories with multiple packages (like this one):
       "format": "claude",
       "subtype": "agent",
       "tags": ["tag1", "tag2"],
-      "files": ["agents/package-one.md"]
+      "files": [".claude/agents/package-one.md"]
     },
     {
       "name": "package-two",
@@ -94,7 +94,7 @@ For repositories with multiple packages (like this one):
       "format": "cursor",
       "subtype": "rule",
       "tags": ["tag1", "tag3"],
-      "files": ["rules/package-two.mdc"]
+      "files": [".cursor/rules/package-two.mdc"]
     }
   ]
 }
@@ -273,9 +273,11 @@ When using `packages` array:
   - `format-conversion` (Cursor rule)
 
 **File Paths:**
-- Agents: `agents/name.md`
-- Skills: `skills/name/SKILL.md`
-- Rules: `rules/name.mdc` or `rules/name.md`
+- Use **full paths from project root** (where prpm.json lives)
+- Agents: `.claude/agents/name.md`
+- Skills: `.claude/skills/name/SKILL.md`
+- Rules: `.cursor/rules/name.mdc`
+- Commands: `.claude/commands/category/name.md`
 
 ## Version Management
 
@@ -311,28 +313,70 @@ For multi-package repos, keep related packages in sync:
 
 ### Files Array
 
+**CRITICAL: File paths must be full paths from project root (where prpm.json lives).**
+
 **Required:**
 - List all files to include in the package
-- Use relative paths from repository root
+- Use **full paths from project root** - not relative to destination directories
+- Paths should start with `.claude/`, `.cursor/`, etc.
 - Include documentation files
+
+**Why Full Paths?**
+File paths in `prpm.json` are used for:
+1. **Tarball creation** - Reads files directly from these paths
+2. **Snippet extraction** - Shows file preview before install
+3. **Installation** - CLI derives destination from format/subtype
 
 **Examples:**
 
-Single file:
+Claude agent (single file):
 ```json
 {
-  "files": ["SKILL.md"]
+  "format": "claude",
+  "subtype": "agent",
+  "files": [".claude/agents/my-agent.md"]
 }
 ```
 
-Multiple files:
+Claude skill (multiple files):
 ```json
 {
+  "format": "claude",
+  "subtype": "skill",
   "files": [
-    "skills/my-skill/SKILL.md",
-    "skills/my-skill/examples/",
-    "skills/my-skill/README.md"
+    ".claude/skills/my-skill/SKILL.md",
+    ".claude/skills/my-skill/EXAMPLES.md",
+    ".claude/skills/my-skill/README.md"
   ]
+}
+```
+
+Cursor rule:
+```json
+{
+  "format": "cursor",
+  "subtype": "rule",
+  "files": [".cursor/rules/my-rule.mdc"]
+}
+```
+
+Slash command:
+```json
+{
+  "format": "claude",
+  "subtype": "slash-command",
+  "files": [".claude/commands/category/my-command.md"]
+}
+```
+
+**Common Mistake:**
+```json
+{
+  // ❌ WRONG - Relative paths without directory prefix
+  "files": ["agents/my-agent.md"]  // Will fail to find file
+
+  // ✅ CORRECT - Full path from project root
+  "files": [".claude/agents/my-agent.md"]
 }
 ```
 
@@ -396,7 +440,7 @@ If output is empty, no duplicates exist. If names appear, you have duplicates to
   "format": "claude",
   "subtype": "skill",
   "tags": ["prpm-internal", "development"],
-  "files": ["skills/internal-tool/SKILL.md"]
+  "files": [".claude/skills/internal-tool/SKILL.md"]
 }
 ```
 
@@ -410,7 +454,7 @@ If output is empty, no duplicates exist. If names appear, you have duplicates to
   "format": "claude",
   "subtype": "skill",
   "tags": ["meta", "claude-code", "skills", "documentation", "best-practices"],
-  "files": ["skills/creating-skills/SKILL.md"]
+  "files": [".claude/skills/creating-skills/SKILL.md"]
 }
 ```
 
@@ -426,14 +470,14 @@ When you have the same content for multiple formats:
       "format": "claude",
       "subtype": "agent",
       "description": "Agent for converting between AI prompt formats",
-      "files": ["agents/format-conversion.md"]
+      "files": [".claude/agents/format-conversion.md"]
     },
     {
       "name": "format-conversion",
       "format": "cursor",
       "subtype": "rule",
       "description": "Rule for converting between AI prompt formats",
-      "files": ["rules/format-conversion.mdc"]
+      "files": [".cursor/rules/format-conversion.mdc"]
     }
   ]
 }
@@ -540,8 +584,8 @@ prpm publish --package my-skill
 
 ```json
 {
-  "files": ["SKILL.md"]
-  // But SKILL.md doesn't exist in the repo
+  "files": [".claude/skills/my-skill/SKILL.md"]
+  // But .claude/skills/my-skill/SKILL.md doesn't exist in the repo
 }
 ```
 
@@ -549,8 +593,17 @@ prpm publish --package my-skill
 
 ```json
 {
-  "files": ["/Users/me/project/SKILL.md"]
-  // Should be: "SKILL.md" or "skills/name/SKILL.md"
+  "files": ["/Users/me/project/.claude/skills/my-skill/SKILL.md"]
+  // Should be: ".claude/skills/my-skill/SKILL.md" (relative to project root)
+}
+```
+
+### ❌ Missing Directory Prefix
+
+```json
+{
+  "files": ["agents/my-agent.md"]
+  // Should be: ".claude/agents/my-agent.md" (include .claude/ prefix)
 }
 ```
 

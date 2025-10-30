@@ -59,7 +59,7 @@ Use `prpm.json` when you're:
       "format": "claude",
       "subtype": "agent",
       "tags": ["tag1", "tag2"],
-      "files": ["agents/package-one.md"]
+      "files": [".claude/agents/package-one.md"]
     }
   ]
 }
@@ -265,7 +265,7 @@ cat prpm.json | jq -r '.packages[].name' | sort | uniq -d
   "format": "claude",
   "subtype": "skill",
   "tags": ["prpm-internal", "development"],
-  "files": ["skills/internal-tool/SKILL.md"]
+  "files": [".claude/skills/internal-tool/SKILL.md"]
 }
 ```
 
@@ -279,7 +279,7 @@ cat prpm.json | jq -r '.packages[].name' | sort | uniq -d
   "format": "claude",
   "subtype": "skill",
   "tags": ["meta", "claude-code", "skills", "documentation"],
-  "files": ["skills/creating-skills/SKILL.md"]
+  "files": [".claude/skills/creating-skills/SKILL.md"]
 }
 ```
 
@@ -295,7 +295,8 @@ Before publishing:
 
 **File Verification:**
 - [ ] All files in `files` arrays exist
-- [ ] File paths are relative to repo root
+- [ ] File paths use full paths from project root (e.g., `.claude/agents/name.md`)
+- [ ] Paths start with `.claude/`, `.cursor/`, etc. (not just `agents/` or `skills/`)
 
 **No Duplicates:**
 - [ ] No duplicate package names

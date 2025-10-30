@@ -13,7 +13,7 @@
       "subtype": "agent",
       "tags": ["content", "writing", "blog", "documentation", "prpm-internal"],
       "files": [
-        "agents/blog-writer.md"
+        ".claude/agents/blog-writer.md"
       ]
     },
     {
@@ -25,7 +25,7 @@
       "subtype": "agent",
       "tags": ["architecture", "prpm-development", "best-practices", "quality-standards", "prpm-internal"],
       "files": [
-        "agents/core-principles.md"
+        ".claude/agents/core-principles.md"
       ]
     },
     {
@@ -37,7 +37,7 @@
       "subtype": "agent",
       "tags": ["conversion", "formats", "ai-prompts", "quality-assurance", "cursor", "claude", "prpm-internal"],
       "files": [
-        "agents/format-conversion.md"
+        ".claude/agents/format-conversion.md"
       ]
     },
     {
@@ -49,7 +49,7 @@
       "subtype": "agent",
       "tags": ["testing", "vitest", "coverage", "mcp", "quality-assurance", "prpm-internal"],
       "files": [
-        "agents/testing-patterns.md"
+        ".claude/agents/testing-patterns.md"
       ]
     },
     {
@@ -61,7 +61,7 @@
       "subtype": "skill",
       "tags": ["documentation", "standards", "organization", "best-practices", "prpm-internal"],
       "files": [
-        "skills/documentation-standards/SKILL.md"
+        ".claude/skills/documentation-standards/SKILL.md"
       ]
     },
     {
@@ -73,7 +73,7 @@
       "subtype": "skill",
       "tags": ["writing", "content", "style", "communication", "prpm-internal"],
       "files": [
-        "skills/human-writing/SKILL.md"
+        ".claude/skills/human-writing/SKILL.md"
       ]
     },
     {
@@ -85,7 +85,7 @@
       "subtype": "skill",
       "tags": ["prpm-development", "architecture", "package-manager", "quality-standards", "prpm-internal"],
       "files": [
-        "skills/prpm-development/SKILL.md"
+        ".claude/skills/prpm-development/SKILL.md"
       ]
     },
     {
@@ -97,7 +97,7 @@
       "subtype": "skill",
       "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal"],
       "files": [
-        "skills/prpm-json-best-practices/SKILL.md"
+        ".claude/skills/prpm-json-best-practices/SKILL.md"
       ]
     },
     {
@@ -109,7 +109,7 @@
       "subtype": "rule",
       "tags": ["prpm-development", "architecture", "best-practices", "prpm-internal"],
       "files": [
-        "rules/core-principles.mdc"
+        ".cursor/rules/core-principles.mdc"
       ]
     },
     {
@@ -121,7 +121,7 @@
       "subtype": "rule",
       "tags": ["conversion", "formats", "ai-prompts", "cursor", "claude", "windsurf", "prpm-internal"],
       "files": [
-        "rules/format-conversion.mdc"
+        ".cursor/rules/format-conversion.mdc"
       ]
     },
     {
@@ -133,7 +133,7 @@
       "subtype": "rule",
       "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal"],
       "files": [
-        "rules/prpm-json-best-practices.mdc"
+        ".cursor/rules/prpm-json-best-practices.mdc"
       ]
     },
     {
@@ -144,8 +144,8 @@
       "subtype": "skill",
       "tags": ["meta", "agents", "subagents", "agent-builder", "claude-code", "plugin-development"],
       "files": [
-        "skills/agent-builder/SKILL.md",
-        "skills/agent-builder/EXAMPLES.md"
+        ".claude/skills/agent-builder/SKILL.md",
+        ".claude/skills/agent-builder/EXAMPLES.md"
       ]
     },
     {
@@ -156,7 +156,7 @@
       "subtype": "skill",
       "tags": ["aws", "elastic-beanstalk", "deployment", "infrastructure", "cloud", "troubleshooting"],
       "files": [
-        "skills/aws-beanstalk-expert/SKILL.md"
+        ".claude/skills/aws-beanstalk-expert/SKILL.md"
       ]
     },
     {
@@ -167,7 +167,7 @@
       "subtype": "skill",
       "tags": ["aws", "elastic-beanstalk", "deployment", "pulumi", "github-actions", "ci-cd", "automation"],
       "files": [
-        "skills/beanstalk-deploy/SKILL.md"
+        ".claude/skills/beanstalk-deploy/SKILL.md"
       ]
     },
     {
@@ -178,7 +178,7 @@
       "subtype": "skill",
       "tags": ["code-review", "repository-analysis", "quality-assessment", "market-research", "cynical-feedback", "analysis"],
       "files": [
-        "skills/karen-repo-reviewer/SKILL.md"
+        ".claude/skills/karen-repo-reviewer/SKILL.md"
       ]
     },
     {
@@ -189,10 +189,10 @@
       "subtype": "skill",
       "tags": ["meta", "slash-commands", "command-builder", "claude-code", "plugin-development", "documentation"],
       "files": [
-        "skills/slash-command-builder/SKILL.md",
-        "skills/slash-command-builder/EXAMPLES.md",
-        "skills/slash-command-builder/FRONTMATTER.md",
-        "skills/slash-command-builder/PATTERNS.md"
+        ".claude/skills/slash-command-builder/SKILL.md",
+        ".claude/skills/slash-command-builder/EXAMPLES.md",
+        ".claude/skills/slash-command-builder/FRONTMATTER.md",
+        ".claude/skills/slash-command-builder/PATTERNS.md"
       ]
     },
     {
@@ -203,7 +203,7 @@
       "subtype": "skill",
       "tags": ["meta", "cursor", "documentation", "best-practices", "ide", "project-setup"],
       "files": [
-        "skills/creating-cursor-rules-skill/SKILL.md"
+        ".claude/skills/creating-cursor-rules-skill/SKILL.md"
       ]
     },
     {
@@ -214,7 +214,7 @@
       "subtype": "skill",
       "tags": ["meta", "claude-code", "skills", "documentation", "best-practices", "cso"],
       "files": [
-        "skills/creating-skills/SKILL.md"
+        ".claude/skills/creating-skills/SKILL.md"
       ]
     },
     {
@@ -225,7 +225,7 @@
       "subtype": "skill",
       "tags": ["aws", "elastic-beanstalk", "deployment", "nodejs", "monorepo", "troubleshooting"],
       "files": [
-        "skills/elastic-beanstalk-deployment/SKILL.md"
+        ".claude/skills/elastic-beanstalk-deployment/SKILL.md"
       ]
     },
     {
@@ -236,7 +236,7 @@
       "subtype": "skill",
       "tags": ["github-actions", "ci-cd", "testing", "workflows", "automation", "troubleshooting"],
       "files": [
-        "skills/github-actions-testing/SKILL.md"
+        ".claude/skills/github-actions-testing/SKILL.md"
       ]
     },
     {
@@ -247,7 +247,7 @@
       "subtype": "skill",
       "tags": ["postgresql", "database", "migrations", "schema", "sql", "troubleshooting"],
       "files": [
-        "skills/postgres-migrations/SKILL.md"
+        ".claude/skills/postgres-migrations/SKILL.md"
       ]
     },
     {
@@ -258,7 +258,7 @@
       "subtype": "skill",
       "tags": ["pulumi", "infrastructure-as-code", "typescript", "aws", "troubleshooting", "cloud"],
       "files": [
-        "skills/pulumi-troubleshooting/SKILL.md"
+        ".claude/skills/pulumi-troubleshooting/SKILL.md"
       ]
     },
     {
@@ -269,7 +269,7 @@
       "subtype": "skill",
       "tags": ["meta", "automation", "package-discovery", "prpm-registry", "enhancement"],
       "files": [
-        "skills/self-improving/SKILL.md"
+        ".claude/skills/self-improving/SKILL.md"
       ]
     },
     {
@@ -280,7 +280,7 @@
       "subtype": "skill",
       "tags": ["methodology", "quality-assurance", "debugging", "best-practices", "workflow"],
       "files": [
-        "skills/thoroughness/SKILL.md"
+        ".claude/skills/thoroughness/SKILL.md"
       ]
     },
     {
@@ -291,7 +291,7 @@
       "subtype": "skill",
       "tags": ["typescript", "type-safety", "code-quality", "best-practices", "static-analysis"],
       "files": [
-        "skills/typescript-type-safety/SKILL.md"
+        ".claude/skills/typescript-type-safety/SKILL.md"
       ]
     },
     {
@@ -302,7 +302,7 @@
       "subtype": "slash-command",
       "tags": ["code-review", "comparison", "analysis", "quality-assessment", "karen"],
       "files": [
-        "commands/karen/compare.md"
+        ".claude/commands/karen/compare.md"
       ]
     },
     {
@@ -313,7 +313,7 @@
       "subtype": "slash-command",
       "tags": ["code-review", "quick-analysis", "quality-assessment", "karen"],
       "files": [
-        "commands/karen/quick-score.md"
+        ".claude/commands/karen/quick-score.md"
       ]
     },
     {
@@ -324,7 +324,7 @@
       "subtype": "slash-command",
       "tags": ["code-review", "market-research", "quality-assessment", "analysis", "karen"],
       "files": [
-        "commands/karen/review.md"
+        ".claude/commands/karen/review.md"
       ]
     },
     {
@@ -335,7 +335,7 @@
       "subtype": "rule",
       "tags": ["aws", "elastic-beanstalk", "deployment", "infrastructure", "devops", "pulumi", "ci-cd", "github-actions"],
       "files": [
-        "rules/beanstalk-deploy.mdc"
+        ".cursor/rules/beanstalk-deploy.mdc"
       ]
     },
     {
@@ -346,7 +346,7 @@
       "subtype": "rule",
       "tags": ["meta", "cursor", "documentation", "best-practices", "project-setup"],
       "files": [
-        "rules/creating-cursor-rules.mdc"
+        ".cursor/rules/creating-cursor-rules.mdc"
       ]
     },
     {
@@ -357,7 +357,7 @@
       "subtype": "rule",
       "tags": ["meta", "claude-code", "skills", "documentation", "best-practices"],
       "files": [
-        "rules/creating-skills.mdc"
+        ".cursor/rules/creating-skills.mdc"
       ]
     },
     {
@@ -368,7 +368,7 @@
       "subtype": "rule",
       "tags": ["aws", "elastic-beanstalk", "deployment", "nodejs", "reference"],
       "files": [
-        "rules/elastic-beanstalk-deployment.md"
+        ".cursor/rules/elastic-beanstalk-deployment.md"
       ]
     },
     {
@@ -379,7 +379,7 @@
       "subtype": "rule",
       "tags": ["github-actions", "ci-cd", "testing", "workflows", "automation"],
       "files": [
-        "rules/github-actions-testing.mdc"
+        ".cursor/rules/github-actions-testing.mdc"
       ]
     },
     {
@@ -390,7 +390,7 @@
       "subtype": "rule",
       "tags": ["code-review", "quality-assurance", "analysis", "critique", "productivity"],
       "files": [
-        "rules/karen-repo-reviewer.mdc"
+        ".cursor/rules/karen-repo-reviewer.mdc"
       ]
     },
     {
@@ -401,7 +401,7 @@
       "subtype": "rule",
       "tags": ["meta", "automation", "package-discovery", "prpm-registry", "enhancement"],
       "files": [
-        "rules/self-improve-cursor.mdc"
+        ".cursor/rules/self-improve-cursor.mdc"
       ]
     },
     {
@@ -412,7 +412,7 @@
       "subtype": "rule",
       "tags": ["typescript", "type-safety", "code-quality", "best-practices"],
       "files": [
-        "rules/typescript-type-safety.mdc"
+        ".cursor/rules/typescript-type-safety.mdc"
       ]
     },
     {
@@ -423,7 +423,7 @@
       "subtype": "rule",
       "tags": ["typescript", "type-safety", "strict-mode", "code-quality", "enforcement"],
       "files": [
-        "rules/typescript-type-specialist.mdc"
+        ".cursor/rules/typescript-type-specialist.mdc"
       ]
     }
   ]

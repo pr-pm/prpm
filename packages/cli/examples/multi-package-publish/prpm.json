@@ -14,7 +14,7 @@
       "description": "First package in the multi-package example",
       "format": "cursor",
       "subtype": "rule",
-      "files": ["package-one.cursorrules"]
+      "files": [".cursor/rules/package-one.cursorrules"]
     },
     {
       "name": "@prpm-examples/package-two",
@@ -22,7 +22,7 @@
       "description": "Second package in the multi-package example",
       "format": "claude",
       "subtype": "skill",
-      "files": ["SKILL.md"]
+      "files": [".claude/skills/package-two/SKILL.md"]
     }
   ]
 }
