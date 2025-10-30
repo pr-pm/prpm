@@ -23,6 +23,34 @@ Central package registry for prompts, agents, and cursor rules.
 - **Storage**: S3-compatible object storage
 - **Search**: PostgreSQL full-text search
 
+## Scripts
+
+### `npm run export-seo`
+
+Exports SEO data with full package content to S3 for static site generation.
+
+This script:
+1. Fetches all public packages from the database
+2. Downloads each package tarball from S3
+3. Extracts the full prompt content from the tarball
+4. Exports `packages.json` and `collections.json` with `fullContent` field to S3
+
+The exported data is used by the webapp's static site generation to create SEO-optimized package pages with full prompt content visible.
+
+**Usage:**
+```bash
+cd packages/registry
+npm run export-seo
+```
+
+**Environment variables required:**
+- Database connection: `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
+- S3 configuration: `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `AWS_REGION`
+- SEO bucket: `S3_SEO_BUCKET` (defaults to `prpm-prod-packages`)
+
+**Automated execution:**
+This script runs daily at 2 AM UTC via GitHub Actions (see `.github/workflows/export-seo-data.yml`)
+
 ## Getting Started
 
 ### Prerequisites
