@@ -496,8 +496,11 @@ async function extractTarball(tarball: Buffer, packageId: string): Promise<Extra
         // Read all extracted files
         const extractedFiles = await fs.promises.readdir(tmpDir, { withFileTypes: true, recursive: true });
 
+        // Files to exclude from package content (metadata files)
+        const excludeFiles = ['package.tar', 'prpm.json', 'README.md', 'LICENSE', 'LICENSE.txt', 'LICENSE.md'];
+
         for (const entry of extractedFiles) {
-          if (entry.isFile() && entry.name !== 'package.tar') {
+          if (entry.isFile() && !excludeFiles.includes(entry.name)) {
             const filePath = path.join(entry.path || tmpDir, entry.name);
             const content = await fs.promises.readFile(filePath, 'utf-8');
             const relativePath = path.relative(tmpDir, filePath);
