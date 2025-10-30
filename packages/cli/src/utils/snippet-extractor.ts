@@ -24,11 +24,16 @@ export async function extractSnippet(manifest: PackageManifest): Promise<string 
       return null;
     }
 
-    // Get the first file from the manifest
-    const firstFile = manifest.files[0];
-    const fileName = typeof firstFile === 'string'
-      ? firstFile
-      : (firstFile as PackageFileMetadata).path;
+    // Prefer main file over first file if specified
+    let fileName: string;
+    if (manifest.main) {
+      fileName = manifest.main;
+    } else {
+      const firstFile = manifest.files[0];
+      fileName = typeof firstFile === 'string'
+        ? firstFile
+        : (firstFile as PackageFileMetadata).path;
+    }
 
     // Use the file path directly - it should be relative to project root
     // (e.g., ".claude/skills/my-skill/SKILL.md" or ".cursor/rules/my-rule.mdc")
