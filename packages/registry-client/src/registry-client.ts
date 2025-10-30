@@ -188,8 +188,8 @@ export class RegistryClient {
       if (url.startsWith(prodUrl)) {
         url = url.replace(prodUrl, this.baseUrl);
         // Fix URLs that are missing /api/v1 prefix
-        // e.g., http://localhost:3000/packages/UUID/version.tar.gz
-        // should be http://localhost:3000/api/v1/packages/UUID/version.tar.gz
+        // e.g., http://localhost:3111/packages/UUID/version.tar.gz
+        // should be http://localhost:3111/api/v1/packages/UUID/version.tar.gz
         url = url.replace(/^(https?:\/\/[^/]+)\/packages\//, '$1/api/v1/packages/');
         break;
       }

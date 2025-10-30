@@ -103,6 +103,19 @@ async function buildServer() {
     },
   });
 
+  // Raw body parser for Stripe webhooks
+  server.addContentTypeParser('application/json', { parseAs: 'buffer' }, async (req: any, body: Buffer) => {
+    // Store raw body for webhook signature verification
+    req.rawBody = body;
+
+    // Parse JSON normally
+    try {
+      return JSON.parse(body.toString('utf8'));
+    } catch (err) {
+      throw new Error('Invalid JSON');
+    }
+  });
+
   // Swagger documentation
   await server.register(swagger, {
     openapi: {

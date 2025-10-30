@@ -6,36 +6,43 @@
 import { readFile, stat } from 'fs/promises';
 import { join } from 'path';
 import type { PackageManifest, PackageFileMetadata } from '../types/registry';
+import { getInstalledFilePath } from '../core/filesystem';
 
 const MAX_SNIPPET_LENGTH = 2000;
 
 /**
  * Extract a preview snippet from package files
- * Takes the first file in the package and extracts ~2000 characters
+ * Uses the same path logic as the install command to determine where files will be placed
  */
 export async function extractSnippet(manifest: PackageManifest): Promise<string | null> {
   const cwd = process.cwd();
 
   try {
-    // Get the first file from the manifest
-    const firstFile = manifest.files[0];
-    if (!firstFile) {
+    // Validate manifest has required fields
+    if (!manifest.files || manifest.files.length === 0) {
+      console.warn('⚠️  Cannot extract snippet: no files specified in manifest');
       return null;
     }
 
-    // Get file path (handle both string and object formats)
-    const filePath = typeof firstFile === 'string'
-      ? firstFile
-      : (firstFile as PackageFileMetadata).path;
+    // Prefer main file over first file if specified
+    let fileName: string;
+    if (manifest.main) {
+      fileName = manifest.main;
+    } else {
+      const firstFile = manifest.files[0];
+      fileName = typeof firstFile === 'string'
+        ? firstFile
+        : (firstFile as PackageFileMetadata).path;
+    }
 
-    // If there's a main file specified, prefer that
-    const targetFile = manifest.main || filePath;
-    const fullPath = join(cwd, targetFile);
+    // Use the file path directly - it should be relative to project root
+    // (e.g., ".claude/skills/my-skill/SKILL.md" or ".cursor/rules/my-rule.mdc")
+    const fullPath = join(cwd, fileName);
 
     // Check if path is a directory
     const stats = await stat(fullPath);
     if (stats.isDirectory()) {
-      console.warn(`⚠️  Skipping snippet extraction: "${targetFile}" is a directory`);
+      console.warn(`⚠️  Skipping snippet extraction: "${fullPath}" is a directory`);
       return null;
     }
 

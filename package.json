@@ -73,8 +73,5 @@
   "overrides": {
     "@fastify/multipart": "^7.7.3",
     "@fastify/jwt": "^7.2.4"
-  },
-  "dependencies": {
-    "prpm": "^0.0.4"
   }
 }

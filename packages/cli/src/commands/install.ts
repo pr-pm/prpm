@@ -95,7 +95,17 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
 
 export async function handleInstall(
   packageSpec: string,
-  options: { version?: string; as?: string; subtype?: Subtype; frozenLockfile?: boolean }
+  options: {
+    version?: string;
+    as?: string;
+    subtype?: Subtype;
+    frozenLockfile?: boolean;
+    fromCollection?: {
+      scope: string;
+      name_slug: string;
+      version?: string;
+    };
+  }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -340,23 +350,26 @@ export async function handleInstall(
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
 
-      // For Claude skills, auto-fix filename to SKILL.md if needed
+      // For Claude skills, verify SKILL.md exists
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
-        const skillMdIndex = extractedFiles.findIndex(f => f.name === 'SKILL.md');
+        const skillMdIndex = extractedFiles.findIndex(f =>
+          f.name === 'SKILL.md' || f.name.endsWith('/SKILL.md')
+        );
 
         if (skillMdIndex === -1) {
           // SKILL.md not found, look for common variations and auto-rename
           const skillFileIndex = extractedFiles.findIndex(f =>
-            f.name.toLowerCase() === 'skill.md' ||
-            f.name === 'skill.md' ||
-            f.name.endsWith('.md') && extractedFiles.length === 1 // Single .md file
+            f.name.toLowerCase().endsWith('skill.md') ||
+            (f.name.endsWith('.md') && extractedFiles.length === 1) // Single .md file
           );
 
           if (skillFileIndex !== -1) {
             const oldName = extractedFiles[skillFileIndex].name;
-            console.log(`   ⚠️  Auto-fixing skill filename: ${oldName} → SKILL.md`);
+            const basePath = oldName.substring(0, oldName.lastIndexOf('/') + 1);
+            const newName = basePath + 'SKILL.md';
+            console.log(`   ⚠️  Auto-fixing skill filename: ${oldName} → ${newName}`);
             console.log(`      (Claude skills must be named SKILL.md per official documentation)`);
-            extractedFiles[skillFileIndex].name = 'SKILL.md';
+            extractedFiles[skillFileIndex].name = newName;
           } else {
             throw new Error(
               'Claude skills must contain a SKILL.md file. ' +
@@ -384,6 +397,7 @@ export async function handleInstall(
       format: pkg.format, // Preserve original package format
       subtype: pkg.subtype, // Preserve original package subtype
       installedPath: destPath,
+      fromCollection: options.fromCollection,
     });
 
     setPackageIntegrity(updatedLockfile, packageId, tarball);
@@ -485,8 +499,11 @@ async function extractTarball(tarball: Buffer, packageId: string): Promise<Extra
         // Read all extracted files
         const extractedFiles = await fs.promises.readdir(tmpDir, { withFileTypes: true, recursive: true });
 
+        // Files to exclude from package content (metadata files)
+        const excludeFiles = ['package.tar', 'prpm.json', 'README.md', 'LICENSE', 'LICENSE.txt', 'LICENSE.md'];
+
         for (const entry of extractedFiles) {
-          if (entry.isFile() && entry.name !== 'package.tar') {
+          if (entry.isFile() && !excludeFiles.includes(entry.name)) {
             const filePath = path.join(entry.path || tmpDir, entry.name);
             const content = await fs.promises.readFile(filePath, 'utf-8');
             const relativePath = path.relative(tmpDir, filePath);

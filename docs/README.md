@@ -58,8 +58,9 @@ Documentation for using the Prompt Package Manager (PRPM).
 ## Publishing & Contributing
 
 ### For Package Authors
-- **[PUBLISHING.md](./PUBLISHING.md)** - How to publish packages to PRPM
+- **[PACKAGE_MANIFEST.md](./PACKAGE_MANIFEST.md)** - Creating prpm.json package manifests
   - Package format requirements
+  - File path configuration
   - Publishing workflow
   - Best practices for package authors
 
@@ -73,7 +74,8 @@ Documentation for using the Prompt Package Manager (PRPM).
 
 ## Internal Documentation
 
-For PRPM contributors and maintainers, see **[development/docs/](../development/docs/)** for:
+For PRPM contributors and maintainers, see **[development/docs/](../../development/docs/)** for:
+- **[PUBLISHING.md](../../development/docs/PUBLISHING.md)** - NPM and Homebrew publishing
 - Deployment guides
 - CI/CD workflows
 - Development environment setup

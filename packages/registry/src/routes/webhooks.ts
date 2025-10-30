@@ -11,10 +11,6 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 export async function webhookRoutes(server: FastifyInstance) {
   // Stripe webhook endpoint
   server.post('/stripe', {
-    config: {
-      // Disable body parsing for webhook verification
-      rawBody: true,
-    },
     schema: {
       tags: ['webhooks'],
       description: 'Stripe webhook endpoint for subscription events',

@@ -5,88 +5,78 @@ import type { PackageInfo } from '@pr-pm/types'
 import CopyInstallCommand from '@/components/CopyInstallCommand'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
+// During build, don't set a default S3 URL - we want to use local files only
+// Only use S3 as fallback in runtime (client-side) if explicitly configured
+const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || (typeof window !== 'undefined' ? 'https://prpm-prod-packages.s3.amazonaws.com/seo-data' : '')
 
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
 
-// Helper to get package content/snippet
+// Helper to get package content - prefer full content, fall back to snippet
 function getPackageContent(pkg: any): string | null {
-  // Use snippet field from the package if available
-  return pkg.snippet || null
+  // Use fullContent if available (from S3), otherwise fall back to snippet
+  return pkg.fullContent || pkg.snippet || null
 }
 
 // Generate static params for all packages
 export async function generateStaticParams() {
-  // During CI, return mock data to test static generation without hitting API
-  if (process.env.CI === 'true' || process.env.SKIP_SSG === 'true') {
-    console.log('[SSG Packages] Using mock data for CI build')
-    return [
-      { author: 'prpm', package: ['test-package'] },
-      { author: 'test', package: ['multi', 'segment', 'package'] },
-    ]
+  // Skip SSG entirely when explicitly disabled (for testing builds without S3 data)
+  if (process.env.SKIP_SSG === 'true') {
+    console.log('[SSG Packages] SSG disabled via SKIP_SSG=true')
+    return []
   }
 
   try {
-    const allPackages: string[] = []
-    let offset = 0
-    const limit = 100
-    let hasMore = true
+    console.log(`[SSG Packages] Starting - S3_SEO_DATA_URL: ${S3_SEO_DATA_URL}`)
 
-    console.log(`[SSG Packages] Starting - REGISTRY_URL: ${REGISTRY_URL}`)
-    console.log(`[SSG Packages] Environment check:`, {
-      NEXT_PUBLIC_REGISTRY_URL: process.env.NEXT_PUBLIC_REGISTRY_URL,
-      REGISTRY_URL: process.env.REGISTRY_URL,
-      NODE_ENV: process.env.NODE_ENV,
-      CI: process.env.CI
-    })
+    // Try to read from local filesystem first (for static builds with pre-downloaded data)
+    const fs = await import('fs/promises')
+    const path = await import('path')
 
-    // Paginate through all packages
-    while (hasMore) {
-      const url = `${REGISTRY_URL}/api/v1/search/seo/packages?limit=${limit}&offset=${offset}`
-      console.log(`[SSG Packages] Attempting fetch: ${url}`)
+    // Check if local SEO data exists (downloaded during CI build)
+    const localPath = path.join(process.cwd(), 'public', 'seo-data', 'packages.json')
+    console.log(`[SSG Packages] Checking for local file: ${localPath}`)
 
-      try {
-        const res = await fetch(url, {
-          next: { revalidate: 3600 } // Revalidate every hour
-        })
-
-        console.log(`[SSG Packages] Response status: ${res.status} ${res.statusText}`)
-
-        if (!res.ok) {
-          console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages`)
-          console.error(`[SSG Packages] Response headers:`, Object.fromEntries(res.headers.entries()))
-          break
-        }
-
-        const data = await res.json()
-        console.log(`[SSG Packages] Received data with ${data.packages?.length || 0} packages`)
-
-        if (!data.packages || !Array.isArray(data.packages)) {
-          console.error('[SSG Packages] Invalid response format:', data)
-          break
-        }
-
-        allPackages.push(...data.packages)
-        hasMore = data.hasMore
-        offset += limit
-
-        console.log(`[SSG Packages] Progress: ${allPackages.length} packages fetched`)
-      } catch (fetchError) {
-        console.error('[SSG Packages] Fetch error:', fetchError)
-        console.error('[SSG Packages] Error details:', {
-          message: fetchError instanceof Error ? fetchError.message : String(fetchError),
-          stack: fetchError instanceof Error ? fetchError.stack : undefined
-        })
-        break
+    let packages
+    try {
+      const fileContent = await fs.readFile(localPath, 'utf-8')
+      packages = JSON.parse(fileContent)
+      console.log(`[SSG Packages] ✅ Loaded ${packages.length} packages from local file`)
+    } catch (fsError) {
+      // Local file doesn't exist, try fetching from S3 if URL is configured
+      if (!S3_SEO_DATA_URL) {
+        console.error(`[SSG Packages] Local file not found and S3_SEO_DATA_URL not configured`)
+        console.error(`[SSG Packages] Make sure to run prepare-ssg-data.sh before building`)
+        return []
       }
+
+      console.log(`[SSG Packages] Local file not found, fetching from S3`)
+
+      const url = `${S3_SEO_DATA_URL}/packages.json`
+      console.log(`[SSG Packages] Fetching from: ${url}`)
+
+      const res = await fetch(url, {
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (!res.ok) {
+        console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages from S3`)
+        console.error(`[SSG Packages] Response headers:`, Object.fromEntries(res.headers.entries()))
+        return []
+      }
+
+      packages = await res.json()
+      console.log(`[SSG Packages] Received ${packages.length} packages from S3`)
     }
 
-    console.log(`[SSG Packages] ✅ Complete: ${allPackages.length} packages for static generation`)
+    if (!Array.isArray(packages)) {
+      console.error('[SSG Packages] Invalid response format - expected array')
+      return []
+    }
 
-    // Transform package names to author/package format
-    // @scope/package -> scope/package
-    // unscoped-package -> prpm/unscoped-package (default author)
-    const params = allPackages.map((name) => {
+    // Transform package data to author/package format
+    const params = packages.map((pkg: any) => {
+      const name = pkg.name
       if (name.startsWith('@')) {
         // Scoped package: @author/package/sub/path -> author + [package, sub, path]
         const withoutAt = name.substring(1) // Remove @
@@ -104,7 +94,7 @@ export async function generateStaticParams() {
       }
     })
 
-    console.log(`[SSG Packages] Returning ${params.length} params`)
+    console.log(`[SSG Packages] ✅ Complete: ${params.length} packages for static generation`)
     return params
 
   } catch (outerError) {
@@ -124,58 +114,73 @@ export async function generateMetadata({ params }: { params: { author: string; p
   const packagePath = Array.isArray(params.package) ? params.package.join('/') : params.package
   const fullName = `@${params.author}/${packagePath}`
 
-  try {
-    // URL-encode the package name to handle @ and / characters
-    const encodedName = encodeURIComponent(fullName)
-    const res = await fetch(`${REGISTRY_URL}/api/v1/packages/${encodedName}`, {
-      next: { revalidate: 3600 }
-    })
+  const pkg = await getPackage(fullName)
 
-    if (!res.ok) {
-      return {
-        title: 'Package Not Found',
-        description: 'The requested package could not be found.',
-      }
-    }
-
-    const pkg: PackageInfo = await res.json()
-
+  if (!pkg) {
     return {
-      title: `${pkg.name} - PRPM Package`,
-      description: pkg.description || `Install ${pkg.name} with PRPM - ${pkg.format} ${pkg.subtype} for your AI coding workflow`,
-      keywords: [...(pkg.tags || []), pkg.format, pkg.subtype, pkg.category, 'prpm', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
-      openGraph: {
-        title: pkg.name,
-        description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
-        type: 'website',
-      },
-      twitter: {
-        card: 'summary',
-        title: pkg.name,
-        description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
-      },
+      title: 'Package Not Found',
+      description: 'The requested package could not be found.',
     }
-  } catch (error) {
-    return {
-      title: 'Package Error',
-      description: 'Error loading package details.',
-    }
+  }
+
+  return {
+    title: `${pkg.name} ${pkg.format} ${pkg.subtype} - PRPM Package`,
+    description: pkg.description || `Install ${pkg.name} with PRPM - ${pkg.format} ${pkg.subtype} for your AI coding workflow`,
+    keywords: [...(pkg.tags || []), pkg.format, pkg.subtype, pkg.category, 'prpm', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
+    openGraph: {
+      title: pkg.name,
+      description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: pkg.name,
+      description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
+    },
   }
 }
 
 async function getPackage(name: string): Promise<PackageInfo | null> {
   try {
-    // URL-encode the package name to handle @ and / characters
-    const encodedName = encodeURIComponent(name)
-    const url = `${REGISTRY_URL}/api/v1/packages/${encodedName}`
+    let packages
 
-    const res = await fetch(url, {
-      next: { revalidate: 3600 } // Revalidate every hour
-    })
+    // Try to read from local filesystem first (for static builds)
+    try {
+      const fs = await import('fs/promises')
+      const path = await import('path')
+      const localPath = path.join(process.cwd(), 'public', 'seo-data', 'packages.json')
+      const fileContent = await fs.readFile(localPath, 'utf-8')
+      packages = JSON.parse(fileContent)
+      console.log(`[getPackage] Loaded from local file`)
+    } catch (fsError) {
+      // Local file doesn't exist, try fetching from S3 if URL is configured
+      if (!S3_SEO_DATA_URL) {
+        console.error(`[getPackage] Local file not found and S3_SEO_DATA_URL not configured`)
+        return null
+      }
 
-    if (!res.ok) return null
+      console.log(`[getPackage] Local file not found, fetching from S3`)
+      const url = `${S3_SEO_DATA_URL}/packages.json`
+      const res = await fetch(url, {
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
 
-    return res.json()
+      if (!res.ok) {
+        console.error(`Error fetching packages from S3: ${res.status}`)
+        return null
+      }
+
+      packages = await res.json()
+    }
+
+    if (!Array.isArray(packages)) {
+      console.error('Invalid packages data format from S3')
+      return null
+    }
+
+    // Find the package by name
+    const pkg = packages.find((p: any) => p.name === name)
+    return pkg || null
   } catch (error) {
     console.error('Error fetching package:', error)
     return null
@@ -272,7 +277,7 @@ export default async function PackagePage({ params }: { params: { author: string
         {/* Full Package Content - Prominently displayed at the top */}
         {content && (
           <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">📄 Prompt Content Snippet</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">📄 Full Prompt Content</h2>
             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 overflow-x-auto">
               <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
                 <code>{content}</code>

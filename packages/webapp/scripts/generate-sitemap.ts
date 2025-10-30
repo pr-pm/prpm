@@ -19,7 +19,7 @@ import * as path from 'path'
 // Environment configurations
 const ENVIRONMENTS = {
   local: {
-    REGISTRY_URL: 'http://localhost:3000',
+    REGISTRY_URL: 'http://localhost:3111',
     SITE_URL: 'http://localhost:5173',
   },
   staging: {
@@ -186,8 +186,14 @@ async function main() {
   const packages = await fetchAllPackages()
   console.log(`\n📦 Adding ${packages.length} package pages...`)
   for (const packageName of packages) {
+    // Transform @author/package/sub/path -> author/package/sub/path
+    let packageUrl = packageName
+    if (packageName.startsWith('@')) {
+      packageUrl = packageName.substring(1) // Remove @ prefix
+    }
+
     entries.push({
-      url: `${envConfig.SITE_URL}/packages/${encodeURIComponent(packageName)}`,
+      url: `${envConfig.SITE_URL}/packages/${packageUrl}`,
       lastmod: new Date().toISOString().split('T')[0],
       changefreq: 'weekly',
       priority: 0.8,
@@ -199,7 +205,7 @@ async function main() {
   console.log(`\n📚 Adding ${collections.length} collection pages...`)
   for (const collectionSlug of collections) {
     entries.push({
-      url: `${envConfig.SITE_URL}/collections/${encodeURIComponent(collectionSlug)}`,
+      url: `${envConfig.SITE_URL}/collections/${collectionSlug}`,
       lastmod: new Date().toISOString().split('T')[0],
       changefreq: 'weekly',
       priority: 0.8,

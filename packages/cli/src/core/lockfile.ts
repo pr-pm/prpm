@@ -15,12 +15,26 @@ export interface LockfilePackage {
   format?: string;
   subtype?: string;
   installedPath?: string; // Path where the package was installed
+  fromCollection?: {
+    scope: string;
+    name_slug: string;
+    version?: string;
+  };
+}
+
+export interface LockfileCollection {
+  scope: string;
+  name_slug: string;
+  version: string;
+  installedAt: string; // Timestamp
+  packages: string[]; // Package IDs installed from this collection
 }
 
 export interface Lockfile {
   version: string; // Lock file format version
   lockfileVersion: number;
   packages: Record<string, LockfilePackage>;
+  collections?: Record<string, LockfileCollection>; // Track installed collections
   generated: string; // Timestamp
 }
 
@@ -84,6 +98,11 @@ export function addToLockfile(
     format?: string;
     subtype?: string;
     installedPath?: string;
+    fromCollection?: {
+      scope: string;
+      name_slug: string;
+      version?: string;
+    };
   }
 ): void {
   lockfile.packages[packageId] = {
@@ -94,6 +113,7 @@ export function addToLockfile(
     format: packageInfo.format,
     subtype: packageInfo.subtype,
     installedPath: packageInfo.installedPath,
+    fromCollection: packageInfo.fromCollection,
   };
   lockfile.generated = new Date().toISOString();
 }
@@ -307,4 +327,74 @@ export async function getPackage(packageId: string): Promise<LockfilePackage | n
     return null;
   }
   return lockfile.packages[packageId];
+}
+
+/**
+ * Add or update collection in lock file
+ */
+export function addCollectionToLockfile(
+  lockfile: Lockfile,
+  collectionKey: string,
+  collectionInfo: {
+    scope: string;
+    name_slug: string;
+    version: string;
+    packages: string[];
+  }
+): void {
+  if (!lockfile.collections) {
+    lockfile.collections = {};
+  }
+
+  lockfile.collections[collectionKey] = {
+    scope: collectionInfo.scope,
+    name_slug: collectionInfo.name_slug,
+    version: collectionInfo.version,
+    installedAt: new Date().toISOString(),
+    packages: collectionInfo.packages,
+  };
+  lockfile.generated = new Date().toISOString();
+}
+
+/**
+ * Get collection from lock file
+ */
+export function getCollectionFromLockfile(
+  lockfile: Lockfile | null,
+  collectionKey: string
+): LockfileCollection | null {
+  if (!lockfile || !lockfile.collections) {
+    return null;
+  }
+  return lockfile.collections[collectionKey] || null;
+}
+
+/**
+ * Remove collection from lock file
+ */
+export function removeCollectionFromLockfile(
+  lockfile: Lockfile,
+  collectionKey: string
+): void {
+  if (!lockfile.collections) {
+    return;
+  }
+  delete lockfile.collections[collectionKey];
+  lockfile.generated = new Date().toISOString();
+}
+
+/**
+ * List all collections in lock file
+ */
+export function listCollectionsFromLockfile(
+  lockfile: Lockfile | null
+): Array<{ key: string } & LockfileCollection> {
+  if (!lockfile || !lockfile.collections) {
+    return [];
+  }
+
+  return Object.entries(lockfile.collections).map(([key, collection]) => ({
+    key,
+    ...collection,
+  }));
 }

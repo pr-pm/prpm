@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 interface Benefit {
   icon: string
   title: string
@@ -14,6 +16,12 @@ const benefits: Benefit[] = [
     title: 'Verified Badge',
     description: 'Display the verified checkmark on your organization and all packages',
     category: 'core',
+  },
+  {
+    icon: '💎',
+    title: 'Discounted PRPM+ for Members',
+    description: 'Team members get discounted access to PRPM+ premium features',
+    category: 'team',
   },
   {
     icon: '🎨',
@@ -32,7 +40,7 @@ const benefits: Benefit[] = [
   {
     icon: '🔒',
     title: 'Private Packages',
-    description: 'Publish up to 10 private packages for internal use only',
+    description: 'Publish unlimited private packages for internal use only',
     category: 'publishing',
   },
   {
@@ -129,6 +137,8 @@ interface VerifiedPlanBenefitsProps {
 }
 
 export default function VerifiedPlanBenefits({ showPricing = true, compact = false }: VerifiedPlanBenefitsProps) {
+  const [expanded, setExpanded] = useState(false)
+
   const groupedBenefits = benefits.reduce((acc, benefit) => {
     if (!acc[benefit.category]) {
       acc[benefit.category] = []
@@ -138,9 +148,11 @@ export default function VerifiedPlanBenefits({ showPricing = true, compact = fal
   }, {} as Record<string, Benefit[]>)
 
   if (compact) {
+    const displayedBenefits = expanded ? benefits : benefits.slice(0, 6)
+
     return (
       <div className="space-y-3">
-        {benefits.slice(0, 6).map((benefit, index) => (
+        {displayedBenefits.map((benefit, index) => (
           <div key={index} className="flex items-start gap-3">
             <span className="flex-shrink-0 w-6 h-6 bg-prpm-accent/20 rounded-full flex items-center justify-center text-prpm-accent text-sm">
               {benefit.icon}
@@ -151,7 +163,22 @@ export default function VerifiedPlanBenefits({ showPricing = true, compact = fal
             </div>
           </div>
         ))}
-        <p className="text-gray-500 text-xs text-center pt-2">+ {benefits.length - 6} more features</p>
+        {!expanded && (
+          <button
+            onClick={() => setExpanded(true)}
+            className="text-prpm-accent hover:text-prpm-accent-light text-xs text-center pt-2 w-full transition-colors"
+          >
+            + {benefits.length - 6} more features
+          </button>
+        )}
+        {expanded && (
+          <button
+            onClick={() => setExpanded(false)}
+            className="text-gray-500 hover:text-gray-400 text-xs text-center pt-2 w-full transition-colors"
+          >
+            Show less
+          </button>
+        )}
       </div>
     )
   }

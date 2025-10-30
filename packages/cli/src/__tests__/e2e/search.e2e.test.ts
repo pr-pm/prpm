@@ -37,7 +37,7 @@ describe.skip('Search Command - E2E Tests', () => {
 
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
     (getConfig as jest.Mock).mockResolvedValue({
-      registryUrl: 'http://localhost:3000',
+      registryUrl: 'http://localhost:3111',
     });
 
     jest.clearAllMocks();

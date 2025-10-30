@@ -91,7 +91,7 @@ npm run test:docker:down
 | Docker Setup | ✅ Complete | Full stack testing |
 | Browser Installation | ✅ Complete | Chromium, Firefox, Webkit downloaded |
 | System Dependencies | ⚠️ Missing | Requires sudo (can use Docker instead) |
-| Registry Running | ✅ Running | `http://localhost:3000` (healthy) |
+| Registry Running | ✅ Running | `http://localhost:3111` (healthy) |
 | Webapp Server | ✅ Running | `http://localhost:5173` (dev mode) |
 
 ## System Dependencies Issue
@@ -257,7 +257,7 @@ cd packages/registry
 docker-compose up -d
 
 # Verify health
-curl http://localhost:3000/health
+curl http://localhost:3111/health
 # {"status":"ok","services":{"database":"ok","redis":"ok","storage":"ok"}}
 
 # Terminal 2: Start webapp
@@ -318,7 +318,7 @@ cd packages/registry
 docker-compose restart registry
 
 # Verify
-curl http://localhost:3000/health
+curl http://localhost:3111/health
 ```
 
 ### Webapp Port Conflict

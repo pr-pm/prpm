@@ -28,14 +28,16 @@ describe('snippet-extractor', () => {
   describe('extractSnippet', () => {
     it('should extract full content from small files', async () => {
       const content = 'This is a short prompt file.\nIt has multiple lines.\nBut is under 2000 characters.';
-      await writeFile(join(testDir, 'prompt.md'), content);
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await writeFile(join(testDir, '.cursor/rules/test-package.mdc'), content);
 
       const manifest: PackageManifest = {
         name: 'test-package',
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
-        files: ['prompt.md'],
+        subtype: 'rule',
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);
@@ -45,14 +47,16 @@ describe('snippet-extractor', () => {
 
     it('should truncate content from large files', async () => {
       const longContent = 'A'.repeat(3000);
-      await writeFile(join(testDir, 'long-prompt.md'), longContent);
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await writeFile(join(testDir, '.cursor/rules/test-package.mdc'), longContent);
 
       const manifest: PackageManifest = {
         name: 'test-package',
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
-        files: ['long-prompt.md'],
+        subtype: 'rule',
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);
@@ -64,14 +68,16 @@ describe('snippet-extractor', () => {
 
     it('should break at newline when possible', async () => {
       const content = 'Line 1\n'.repeat(300) + 'A'.repeat(1000) + '\nFinal line';
-      await writeFile(join(testDir, 'prompt.md'), content);
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await writeFile(join(testDir, '.cursor/rules/test-package.mdc'), content);
 
       const manifest: PackageManifest = {
         name: 'test-package',
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
-        files: ['prompt.md'],
+        subtype: 'rule',
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);
@@ -82,16 +88,18 @@ describe('snippet-extractor', () => {
     });
 
     it('should prefer main file over first file', async () => {
-      await writeFile(join(testDir, 'file1.md'), 'First file content');
-      await writeFile(join(testDir, 'file2.md'), 'Second file content');
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await writeFile(join(testDir, '.cursor/rules/file1.mdc'), 'First file content');
+      await writeFile(join(testDir, '.cursor/rules/file2.mdc'), 'Second file content');
 
       const manifest: PackageManifest = {
         name: 'test-package',
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
-        files: ['file1.md', 'file2.md'],
-        main: 'file2.md',
+        subtype: 'rule',
+        files: ['.cursor/rules/file1.mdc', '.cursor/rules/file2.mdc'],
+        main: '.cursor/rules/file2.mdc',
       };
 
       const snippet = await extractSnippet(manifest);
@@ -105,6 +113,7 @@ describe('snippet-extractor', () => {
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
+        subtype: 'rule',
         files: [],
       };
 
@@ -119,7 +128,8 @@ describe('snippet-extractor', () => {
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
-        files: ['nonexistent.md'],
+        subtype: 'rule',
+        files: ['.cursor/rules/nonexistent.mdc'],
       };
 
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
@@ -133,14 +143,16 @@ describe('snippet-extractor', () => {
     });
 
     it('should return null when path is a directory', async () => {
-      await mkdir(join(testDir, 'subdir'));
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await mkdir(join(testDir, '.cursor/rules/subdir'));
 
       const manifest: PackageManifest = {
         name: 'test-package',
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
-        files: ['subdir'],
+        subtype: 'rule',
+        files: ['.cursor/rules/subdir'],
       };
 
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
@@ -154,16 +166,18 @@ describe('snippet-extractor', () => {
     });
 
     it('should handle file metadata objects', async () => {
-      await writeFile(join(testDir, 'prompt.md'), 'Test content');
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await writeFile(join(testDir, '.cursor/rules/test-package.mdc'), 'Test content');
 
       const manifest: PackageManifest = {
         name: 'test-package',
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
+        subtype: 'rule',
         files: [
           {
-            path: 'prompt.md',
+            path: '.cursor/rules/test-package.mdc',
             type: 'prompt',
           },
         ],
@@ -176,14 +190,16 @@ describe('snippet-extractor', () => {
 
     it('should trim whitespace from extracted content', async () => {
       const content = '\n\n  Prompt content with whitespace  \n\n';
-      await writeFile(join(testDir, 'prompt.md'), content);
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await writeFile(join(testDir, '.cursor/rules/test-package.mdc'), content);
 
       const manifest: PackageManifest = {
         name: 'test-package',
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
-        files: ['prompt.md'],
+        subtype: 'rule',
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);
@@ -193,14 +209,16 @@ describe('snippet-extractor', () => {
 
     it('should handle UTF-8 content correctly', async () => {
       const content = '这是中文内容\n日本語コンテンツ\nEmoji: 🚀 📦 ✨';
-      await writeFile(join(testDir, 'prompt.md'), content);
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await writeFile(join(testDir, '.cursor/rules/test-package.mdc'), content);
 
       const manifest: PackageManifest = {
         name: 'test-package',
         version: '1.0.0',
         description: 'Test',
         format: 'cursor',
-        files: ['prompt.md'],
+        subtype: 'rule',
+        files: ['.cursor/rules/test-package.mdc'],
       };
 
       const snippet = await extractSnippet(manifest);

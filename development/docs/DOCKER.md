@@ -49,7 +49,7 @@ The development setup:
 - `postgres` - PostgreSQL database on port 5434
 - `redis` - Redis cache on port 6379
 - `minio` - S3-compatible storage on ports 9000/9001
-- `registry` - API server on port 3000
+- `registry` - API server on port 3111
 - `webapp` - Next.js frontend on port 5173
 
 ### Stopping Services
@@ -162,11 +162,11 @@ npm install
 **Solution:** Stop conflicting services or change ports in `docker-compose.yml`
 ```bash
 # Check what's using the port
-lsof -i :3000
+lsof -i :3111
 
 # Or use different ports in docker-compose.yml
 ports:
-  - "3001:3000"  # Host:Container
+  - "3001:3111"  # Host:Container
 ```
 
 ### Health check failures

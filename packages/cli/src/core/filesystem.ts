@@ -8,8 +8,14 @@ import { Format, Subtype } from '../types';
 
 /**
  * Get the destination directory for a package based on format and subtype
+ * @param format - Package format (cursor, claude, etc.)
+ * @param subtype - Package subtype (skill, agent, rule, etc.)
+ * @param name - Package name (optional, only needed for Claude skills which create subdirectories)
  */
-export function getDestinationDir(format: Format, subtype: Subtype, name: string): string {
+export function getDestinationDir(format: Format, subtype: Subtype, name?: string): string {
+  // Strip author namespace from package name to avoid nested directories
+  const packageName = stripAuthorNamespace(name);
+
   switch (format) {
     case 'cursor':
       if (subtype === 'agent') return '.cursor/agents';
@@ -17,7 +23,9 @@ export function getDestinationDir(format: Format, subtype: Subtype, name: string
       return '.cursor/rules';
 
     case 'claude':
-      if (subtype === 'skill') return `.claude/skills/${name}`;
+      // Only create subdirectory for skills if name is provided
+      if (subtype === 'skill' && packageName) return `.claude/skills/${packageName}`;
+      if (subtype === 'skill') return '.claude/skills';
       if (subtype === 'slash-command') return '.claude/commands';
       if (subtype === 'agent') return '.claude/agents';
       return '.claude/agents'; // Default for claude
@@ -120,8 +128,69 @@ export function generateId(filename: string): string {
  * stripAuthorNamespace('@wshobson/commands/agent-orchestration/improve-agent') // 'improve-agent'
  * stripAuthorNamespace('git-workflow-manager') // 'git-workflow-manager'
  */
-export function stripAuthorNamespace(packageId: string): string {
+export function stripAuthorNamespace(packageId: string | undefined): string {
+  // Handle undefined or empty string
+  if (!packageId) {
+    return '';
+  }
+
   // Split by '/' and get the last segment (the actual package name)
   const parts = packageId.split('/');
   return parts[parts.length - 1];
+}
+
+/**
+ * Get the expected installed file path for a package
+ * This matches the logic used by the install command to determine where files are placed
+ *
+ * @param packageName - Full package name (e.g., '@prpm/typescript-rules')
+ * @param format - Package format
+ * @param subtype - Package subtype
+ * @param fileName - Optional specific file name (defaults to main file)
+ * @returns Path where the file will be installed relative to working directory
+ */
+export function getInstalledFilePath(
+  packageName: string,
+  format: Format,
+  subtype: Subtype,
+  fileName?: string
+): string {
+  const destDir = getDestinationDir(format, subtype, packageName);
+  const packageBaseName = stripAuthorNamespace(packageName);
+
+  // If a specific file name is provided, use it
+  if (fileName) {
+    return path.join(destDir, fileName);
+  }
+
+  // Claude skills always use SKILL.md
+  if (format === 'claude' && subtype === 'skill') {
+    return path.join(destDir, 'SKILL.md');
+  }
+
+  // Determine file extension
+  const fileExtension = format === 'cursor' ? 'mdc' : 'md';
+
+  // For other formats, use package name as filename
+  return path.join(destDir, `${packageBaseName}.${fileExtension}`);
+}
+
+/**
+ * Get all expected installed file paths for a multi-file package
+ *
+ * @param packageName - Full package name
+ * @param format - Package format
+ * @param subtype - Package subtype
+ * @param fileNames - Array of file names in the package
+ * @returns Array of paths where files will be installed
+ */
+export function getInstalledFilePaths(
+  packageName: string,
+  format: Format,
+  subtype: Subtype,
+  fileNames: string[]
+): string[] {
+  const destDir = getDestinationDir(format, subtype, packageName);
+
+  return fileNames.map(fileName => path.join(destDir, fileName));
 }

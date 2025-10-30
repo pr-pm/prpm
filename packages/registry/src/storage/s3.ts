@@ -82,15 +82,33 @@ export async function getDownloadUrl(
   const key = `packages/${packageId}/${version}/package.tar.gz`;
 
   try {
+    server.log.info({
+      packageId,
+      version,
+      key,
+      bucket: config.s3.bucket,
+      hasCredentials: !!(config.s3.accessKeyId && config.s3.secretAccessKey)
+    }, 'Generating presigned download URL');
+
     const command = new GetObjectCommand({
       Bucket: config.s3.bucket,
       Key: key,
     });
 
     const url = await getSignedUrl(s3Client, command, { expiresIn });
+
+    server.log.info({ url: url.substring(0, 100) + '...' }, 'Generated presigned URL');
     return url;
   } catch (error: unknown) {
-    server.log.error({ error: String(error) }, 'Failed to generate download URL');
+    server.log.error({
+      error: String(error),
+      packageId,
+      version,
+      key,
+      bucket: config.s3.bucket,
+      hasAccessKey: !!config.s3.accessKeyId,
+      hasSecretKey: !!config.s3.secretAccessKey
+    }, 'Failed to generate download URL');
     throw new Error('Failed to generate download URL');
   }
 }

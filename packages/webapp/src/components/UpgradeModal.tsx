@@ -33,8 +33,8 @@ export default function UpgradeModal({
       setLoading(true)
       setError(null)
 
-      const successUrl = `${window.location.origin}/orgs?name=${organizationName}&subscription=success`
-      const cancelUrl = `${window.location.origin}/orgs?name=${organizationName}&subscription=canceled`
+      const successUrl = `${window.location.origin}/orgs?name=${encodeURIComponent(organizationName)}&subscription=success`
+      const cancelUrl = `${window.location.origin}/orgs?name=${encodeURIComponent(organizationName)}&subscription=canceled`
 
       const response = await fetch(`${registryUrl}/api/v1/subscriptions/checkout`, {
         method: 'POST',

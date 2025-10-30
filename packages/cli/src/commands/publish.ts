@@ -26,6 +26,7 @@ interface PublishOptions {
   access?: 'public' | 'private';
   tag?: string;
   dryRun?: boolean;
+  package?: string; // Filter to specific package name in multi-package repos
 }
 
 /**
@@ -38,6 +39,9 @@ interface PublishOptions {
 async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; source: string }> {
   // Try prpm.json first (native format)
   const prpmJsonPath = join(process.cwd(), 'prpm.json');
+  let prpmJsonExists = false;
+  let prpmJsonError: Error | null = null;
+
   try {
     const content = await readFile(prpmJsonPath, 'utf-8');
     const manifest = JSON.parse(content) as Manifest;
@@ -55,21 +59,20 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
           description: pkg.description,
           format: pkg.format,
           files: pkg.files,
-          author: pkg.author !== undefined ? pkg.author : (multiManifest.author ?? undefined),
-          license: pkg.license !== undefined ? pkg.license : (multiManifest.license ?? undefined),
-          repository: pkg.repository !== undefined ? pkg.repository : (multiManifest.repository ?? undefined),
-          homepage: pkg.homepage !== undefined ? pkg.homepage : (multiManifest.homepage ?? undefined),
-          documentation: pkg.documentation !== undefined ? pkg.documentation : (multiManifest.documentation ?? undefined),
-          organization: pkg.organization !== undefined ? pkg.organization : (multiManifest.organization ?? undefined),
-          tags: pkg.tags !== undefined ? pkg.tags : (multiManifest.tags ?? undefined),
-          keywords: pkg.keywords !== undefined ? pkg.keywords : (multiManifest.keywords ?? undefined),
+          author: pkg.author ?? multiManifest.author,
+          license: pkg.license ?? multiManifest.license,
+          repository: pkg.repository ?? multiManifest.repository,
+          homepage: pkg.homepage ?? multiManifest.homepage,
+          documentation: pkg.documentation ?? multiManifest.documentation,
+          organization: pkg.organization ?? multiManifest.organization,
+          tags: pkg.tags ?? multiManifest.tags,
+          keywords: pkg.keywords ?? multiManifest.keywords,
           subtype: pkg.subtype,
           dependencies: pkg.dependencies,
           peerDependencies: pkg.peerDependencies,
           engines: pkg.engines,
           main: pkg.main,
         };
-
         return validateManifest(packageWithDefaults);
       });
 
@@ -80,15 +83,19 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
     const validated = validateManifest(manifest as PackageManifest);
     return { manifests: [validated], source: 'prpm.json' };
   } catch (error) {
-    // If it's a validation error, throw it immediately (don't try marketplace.json)
-    if (error instanceof Error && (
+    // Store error for later
+    prpmJsonError = error as Error;
+
+    // If it's a validation or parsing error, throw it immediately (don't try marketplace.json)
+    if (prpmJsonExists && error instanceof Error && (
+      error.message.includes('Invalid JSON') ||
       error.message.includes('Manifest validation failed') ||
       error.message.includes('Claude skill') ||
       error.message.includes('SKILL.md')
     )) {
       throw error;
     }
-    // Otherwise, prpm.json not found or invalid JSON, try marketplace.json
+    // Otherwise, prpm.json not found or other error, try marketplace.json
   }
 
   // Try .claude/marketplace.json (Claude format)
@@ -355,7 +362,20 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     if (manifests.length > 1) {
       console.log(`   Found ${manifests.length} plugins in ${source}`);
+      if (options.package) {
+        console.log(`   Filtering to package: ${options.package}`);
+      }
       console.log('   Will publish each plugin separately\n');
+    }
+
+    // Filter to specific package if requested
+    let filteredManifests = manifests;
+    if (options.package) {
+      filteredManifests = manifests.filter(m => m.name === options.package);
+      if (filteredManifests.length === 0) {
+        throw new Error(`Package "${options.package}" not found in manifest. Available packages: ${manifests.map(m => m.name).join(', ')}`);
+      }
+      console.log(`   ✓ Found package "${options.package}"\n`);
     }
 
     // Get user info to check for organizations (once for all packages)
@@ -370,23 +390,85 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     }
     console.log('');
 
+    // Check for duplicate package names (only in filtered set)
+    if (filteredManifests.length > 1) {
+      const nameMap = new Map<string, number>();
+      const duplicates: string[] = [];
+
+      filteredManifests.forEach((manifest, index) => {
+        const existingIndex = nameMap.get(manifest.name);
+        if (existingIndex !== undefined) {
+          duplicates.push(`  - "${manifest.name}" appears in positions ${existingIndex + 1} and ${index + 1}`);
+        } else {
+          nameMap.set(manifest.name, index);
+        }
+      });
+
+      if (duplicates.length > 0) {
+        console.error('❌ Duplicate package names detected:\n');
+        duplicates.forEach(dup => console.error(dup));
+        console.error('\n⚠️  Each package must have a unique name.');
+        console.error('   Package names are globally unique per author/organization.');
+        console.error('   If you want to publish the same package for different formats,');
+        console.error('   use different names (e.g., "react-rules-cursor" vs "react-rules-claude").\n');
+        throw new Error('Cannot publish packages with duplicate names');
+      }
+    }
+
     // Track published packages
     const publishedPackages: Array<{ name: string; version: string; url: string }> = [];
     const failedPackages: Array<{ name: string; error: string }> = [];
 
-    // Publish each manifest
-    for (let i = 0; i < manifests.length; i++) {
-      const manifest = manifests[i];
+    // Publish each manifest (filtered set)
+    for (let i = 0; i < filteredManifests.length; i++) {
+      const manifest = filteredManifests[i];
       packageName = manifest.name;
       version = manifest.version;
 
-      if (manifests.length > 1) {
+      if (filteredManifests.length > 1) {
         console.log(`\n${'='.repeat(60)}`);
-        console.log(`📦 Publishing plugin ${i + 1} of ${manifests.length}`);
+        console.log(`📦 Publishing plugin ${i + 1} of ${filteredManifests.length}`);
         console.log(`${'='.repeat(60)}\n`);
       }
 
       try {
+        // Debug: Log access override logic only if DEBUG env var is set
+        if (process.env.DEBUG) {
+          console.log(`\n🔍 Before access override:`);
+          console.log(`   - manifest.private: ${manifest.private}`);
+          console.log(`   - options.access: ${options.access}`);
+        }
+
+        // Determine access level:
+        // 1. If --access flag is provided, it overrides manifest setting
+        // 2. Otherwise, use manifest setting (defaults to false/public if not specified)
+        let isPrivate: boolean;
+        if (options.access !== undefined) {
+          // CLI flag explicitly provided - use it
+          isPrivate = options.access === 'private';
+          if (process.env.DEBUG) {
+            console.log(`   - Using CLI flag override: ${options.access}`);
+          }
+        } else {
+          // No CLI flag - use manifest setting
+          isPrivate = manifest.private || false;
+          if (process.env.DEBUG) {
+            console.log(`   - Using manifest setting: ${isPrivate}`);
+          }
+        }
+
+        if (process.env.DEBUG) {
+          console.log(`   - calculated isPrivate: ${isPrivate}`);
+        }
+
+        // Update manifest with final private setting
+        manifest.private = isPrivate;
+
+        if (process.env.DEBUG) {
+          console.log(`   - final manifest.private: ${manifest.private}`);
+          console.log('');
+        }
+
         let selectedOrgId: string | undefined;
 
         // Check if organization is specified in manifest
@@ -414,6 +496,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log(`   Package: ${manifest.name}@${manifest.version}`);
         console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype}`);
         console.log(`   Description: ${manifest.description}`);
+        console.log(`   Access: ${manifest.private ? 'private' : 'public'}`);
         if (selectedOrgId && userInfo) {
           const selectedOrg = userInfo.organizations.find((org: any) => org.id === selectedOrgId);
           console.log(`   Publishing to: ${selectedOrg?.name || 'organization'}`);
@@ -480,6 +563,10 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
         // Publish to registry
         console.log('🚀 Publishing to registry...');
+        if (selectedOrgId) {
+          console.log(`   Publishing as organization: ${userInfo.organizations.find((org: any) => org.id === selectedOrgId)?.name}`);
+          console.log(`   Organization ID: ${selectedOrgId}`);
+        }
         const result = await client.publish(manifest, tarball, selectedOrgId ? { orgId: selectedOrgId } : undefined);
 
         // Determine the webapp URL based on registry URL
@@ -543,6 +630,15 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           console.log(`   - ${pkg.name}: ${pkg.error}`);
         });
         console.log('');
+
+        // Provide hints for common permission errors
+        if (failedPackages.some(pkg => pkg.error.includes('Forbidden'))) {
+          console.log('💡 Forbidden errors usually mean:');
+          console.log('   - The package already exists and you don\'t have permission to update it');
+          console.log('   - The package belongs to an organization and you\'re not a member with publish rights');
+          console.log('   - Try: prpm whoami  (to check your organization memberships)');
+          console.log('');
+        }
       }
     }
 
@@ -606,9 +702,10 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 export function createPublishCommand(): Command {
   return new Command('publish')
     .description('Publish a package to the registry')
-    .option('--access <type>', 'Package access (public or private)', 'public')
+    .option('--access <type>', 'Package access (public or private) - overrides manifest setting')
     .option('--tag <tag>', 'NPM-style tag (e.g., latest, beta)', 'latest')
     .option('--dry-run', 'Validate package without publishing')
+    .option('--package <name>', 'Publish only a specific package from multi-package manifest')
     .action(async (options: PublishOptions) => {
       await handlePublish(options);
       process.exit(0);

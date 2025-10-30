@@ -12,7 +12,7 @@ npm install -g prpm
 prpm install collection/nextjs-pro  # Entire Next.js setup in one command
 ```
 
-**1,300+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro) | **One command to install**
+**1,800+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro) | **One command to install**
 
 ---
 
@@ -39,7 +39,7 @@ prpm install collection/react-fullstack
 # individually but with a single command. Perfect for onboarding or project setup!
 ```
 
-**[Browse Collections →](docs/COLLECTIONS.md)** | **[View Examples →](docs/EXAMPLES.md)**
+**[Browse Collections →](https://prpm.dev/search?tab=collections)** | **[View Examples →](docs/EXAMPLES.md)**
 
 ---
 
@@ -75,16 +75,13 @@ prpm search "test driven development"
 # See what's trending
 prpm trending
 
-# Browse by popularity
-prpm popular
-
 # Get detailed info
 prpm info react-best-practices
 # → Shows: description, downloads, rating, tags, installation instructions
 
 # Browse collections
 prpm collections
-prpm collections --category frontend
+prpm collections search frontend
 prpm collections info collection/nextjs-pro
 ```
 
@@ -130,9 +127,6 @@ If you're working on a big project and some coworkers use Copilot, others use Cl
 ### Install PRPM
 ```bash
 npm install -g prpm
-
-# Login to access registry
-prpm login
 ```
 
 ### Configure (Optional)
@@ -173,26 +167,7 @@ prpm install karen-skill --as claude
 
 ---
 
-## Popular Packages
-
-### 🔥 Most Installed
-
-**Karen** - Brutally honest code reviews
-```bash
-prpm install karen-skill  # Works in any editor
-```
-
-**Test-Driven Development** - TDD workflow
-```bash
-prpm install test-driven-development
-```
-
-**Systematic Debugging** - Debug like a senior engineer
-```bash
-prpm install systematic-debugging
-```
-
-### 📚 Package Library (1,300+)
+### 📚 Package Library (1,800+)
 
 - **🎯 Cursor Rules** - Next.js, React, Vue, Python, Laravel, TypeScript, mobile, testing, and hundreds more
 - **🤖 Claude Skills & Agents** - Repository analysis, code review, architecture, specialized workflows
@@ -202,7 +177,7 @@ prpm install systematic-debugging
 
 **Categories:** Frontend frameworks, Backend frameworks, Programming languages, Testing, Mobile development, Cloud & DevOps, AI & ML, Databases, Web3, Best practices, and more
 
-**[Package Catalog →](docs/PACKAGES.md)** | **[Browse at prpm.dev →](https://prpm.dev)**
+**[Package Catalog →](docs/PACKAGES.md)** | **[Browse at prpm.dev →](https://prpm.dev/search)**
 
 ---
 
@@ -226,7 +201,6 @@ prpm update                          # Update all packages
 
 # Discovery
 prpm trending                        # Trending packages
-prpm popular                         # Most popular packages
 prpm info <package-name>             # Package details
 ```
 
@@ -344,39 +318,12 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 
 ---
 
-## Roadmap
-
-**v1.0 (Now)** ✅
-- CLI package manager
-- Collections system
-- Format conversion (Cursor, Claude, Continue, Windsurf)
-- MCP server configuration (Claude Code only)
-
-**v1.5 (Q2 2025)**
-- 🏪 Central registry at prpm.dev
-- 🔍 Web search and discovery
-- 📊 Package analytics
-- 🎨 Collection templates
-
-**v2.0 (Q3 2025)**
-- 🤖 AI-powered package recommendations
-- 🏢 Private registries
-- 👥 Team management
-- 🔒 Enterprise features
-
-**[Full Roadmap →](ROADMAP.md)**
-
----
-
 ## Stats
 
-- **1,300+ packages** - Cursor rules, Claude skills/agents, Windsurf rules, MCP configs
+- **1,800+ packages** - Cursor rules, Claude skills/agents, Windsurf rules, MCP configs
 - **Universal package manager** - Works with Cursor, Claude, Continue, Windsurf
-- **Collections** - Complete workflow setups in one command
-- **4 editor formats** supported (server-side conversion)
-- **78/100 Karen Score** - [See our review](.karen/review.md)
-- **First-mover advantage** - Only universal prompt package manager
-- **npm + Homebrew** - Multi-platform distribution
+- **100+ Collections** - Complete workflow setups in one command
+- **6 editor formats** supported (server-side conversion)
 
 ---
 
@@ -416,12 +363,11 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 **Deployment & Infrastructure:**
 - 🚀 [Deployment Summary](development/docs/DEPLOYMENT_SUMMARY.md) - Complete deployment guide
 - 📊 [Deployment Quickstart](development/docs/DEPLOYMENT_QUICKSTART.md) - TL;DR deployment
-- 🗄️ [Seeding Production](development/docs/SEEDING_PRODUCTION.md) - Database seeding
 - 🔄 [CI/CD Workflows](development/docs/GITHUB_WORKFLOWS.md) - GitHub Actions
 
 ### 🔥 Karen Code Reviews
 - 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md)
-- 📖 [Karen GitHub Action](https://github.com/khaliqgant/karen-action)
+- 📖 [Karen GitHub Action](https://github.com/pr-pm/karen-action)
 - 💡 [Karen Implementation](KAREN_IMPLEMENTATION.md)
 
 ---
@@ -431,9 +377,6 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 ```bash
 # NPM (recommended)
 npm install -g prpm
-
-# Homebrew
-brew install khaliqgant/homebrew-prpm/prpm
 
 # Direct download
 # See releases: github.com/pr-pm/prpm/releases
@@ -470,7 +413,7 @@ MIT License - See [LICENSE](LICENSE)
 
 **Stop copy-pasting. Start installing.**
 
-**[Install PRPM](#installation)** | **[Browse Collections](docs/COLLECTIONS.md)** | **[Get Karen Score](GET_KAREN_SCORE.md)**
+**[Install PRPM](#installation)** | **[Browse Collections](https://prpm.dev/search?tab=collections)** | **[Get Karen Score](GET_KAREN_SCORE.md)**
 
 _Collections install multiple curated packages with one command • Packages work in all editors • No manual copying needed_
 

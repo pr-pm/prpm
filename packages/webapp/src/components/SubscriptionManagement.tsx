@@ -65,8 +65,8 @@ export default function SubscriptionManagement({
       setActionLoading(true)
       setError(null)
 
-      const successUrl = `${window.location.origin}/organizations/${organization.name}?subscription=success`
-      const cancelUrl = `${window.location.origin}/organizations/${organization.name}?subscription=canceled`
+      const successUrl = `${window.location.origin}/organizations/${encodeURIComponent(organization.name)}?subscription=success`
+      const cancelUrl = `${window.location.origin}/organizations/${encodeURIComponent(organization.name)}?subscription=canceled`
 
       const response = await fetch(`${registryUrl}/api/v1/subscriptions/checkout`, {
         method: 'POST',
@@ -102,7 +102,7 @@ export default function SubscriptionManagement({
       setActionLoading(true)
       setError(null)
 
-      const returnUrl = `${window.location.origin}/organizations/${organization.name}`
+      const returnUrl = `${window.location.origin}/organizations/${encodeURIComponent(organization.name)}`
 
       const response = await fetch(`${registryUrl}/api/v1/subscriptions/portal`, {
         method: 'POST',

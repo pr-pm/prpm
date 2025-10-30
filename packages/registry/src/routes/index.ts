@@ -33,12 +33,10 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(newsletterRoutes, { prefix: '/newsletter' });
       await api.register(organizationRoutes, { prefix: '/organizations' });
       await api.register(subscriptionRoutes, { prefix: '/subscriptions' });
+      await api.register(webhookRoutes, { prefix: '/webhooks' });
     },
     { prefix: '/api/v1' }
   );
-
-  // Webhooks (no /api/v1 prefix)
-  await server.register(webhookRoutes, { prefix: '/webhooks' });
 
   server.log.info('✅ Routes registered');
 }

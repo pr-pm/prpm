@@ -8,7 +8,7 @@ import { query, queryOne } from '../db/index.js';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-02-24.acacia',
 });
 
 // Subscription price IDs (to be set in environment variables)
@@ -352,6 +352,12 @@ async function handleSubscriptionUpdate(
     return;
   }
 
+  // Get period dates from first subscription item (Stripe stores it there)
+  // TypeScript types don't include these fields but they exist in the API response
+  const firstItem = subscription.items.data[0] as any;
+  const currentPeriodStart = firstItem?.current_period_start || subscription.billing_cycle_anchor;
+  const currentPeriodEnd = firstItem?.current_period_end || subscription.billing_cycle_anchor;
+
   await query(
     server,
     `UPDATE organizations
@@ -367,8 +373,8 @@ async function handleSubscriptionUpdate(
       subscription.id,
       subscription.status,
       'verified',
-      new Date(subscription.current_period_start * 1000),
-      new Date(subscription.current_period_end * 1000),
+      new Date(currentPeriodStart * 1000),
+      new Date(currentPeriodEnd * 1000),
       subscription.cancel_at_period_end,
       subscription.status === 'active' || subscription.status === 'trialing',
       orgId,

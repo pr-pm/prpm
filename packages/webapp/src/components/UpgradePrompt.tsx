@@ -32,8 +32,8 @@ export default function UpgradePrompt({
       setLoading(true)
       setError(null)
 
-      const successUrl = `${window.location.origin}/orgs?name=${organizationName}&subscription=success`
-      const cancelUrl = `${window.location.origin}/orgs?name=${organizationName}&subscription=canceled`
+      const successUrl = `${window.location.origin}/orgs?name=${encodeURIComponent(organizationName)}&subscription=success`
+      const cancelUrl = `${window.location.origin}/orgs?name=${encodeURIComponent(organizationName)}&subscription=canceled`
 
       const response = await fetch(`${registryUrl}/api/v1/subscriptions/checkout`, {
         method: 'POST',
@@ -204,7 +204,7 @@ export default function UpgradePrompt({
                 <span className="text-prpm-accent">✓</span> Priority support
               </li>
               <li className="flex items-center gap-2 text-gray-300 text-sm">
-                <span className="text-prpm-accent">✓</span> +12 more features
+                <span className="text-prpm-accent">✓</span> + more
               </li>
             </ul>
           </div>

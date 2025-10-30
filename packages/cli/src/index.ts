@@ -26,6 +26,7 @@ import { createUpgradeCommand } from './commands/upgrade';
 import { createSchemaCommand } from './commands/schema';
 import { createInitCommand } from './commands/init';
 import { createConfigCommand } from './commands/config';
+import { createCatalogCommand } from './commands/catalog';
 import { telemetry } from './core/telemetry';
 
 // Read version from package.json
@@ -48,6 +49,7 @@ program
 
 // Package creation commands
 program.addCommand(createInitCommand());
+program.addCommand(createCatalogCommand());
 
 // Registry commands (new)
 program.addCommand(createSearchCommand());

@@ -18,6 +18,7 @@ import UpgradeModal from '@/components/UpgradeModal'
 function OrganizationPageContent() {
   const searchParams = useSearchParams()
   const orgName = searchParams.get('name') || ''
+  const subscriptionStatus = searchParams.get('subscription')
   const [orgData, setOrgData] = useState<OrganizationDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -27,6 +28,9 @@ function OrganizationPageContent() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [jwtToken, setJwtToken] = useState<string | undefined>(undefined)
   const [canEdit, setCanEdit] = useState(false)
+  const [pollingSubscription, setPollingSubscription] = useState(false)
+  const [subscriptionPollError, setSubscriptionPollError] = useState<string | null>(null)
+  const [showVerifiedSuccess, setShowVerifiedSuccess] = useState(false)
 
   useEffect(() => {
     const fetchOrganization = async () => {
@@ -39,13 +43,19 @@ function OrganizationPageContent() {
       try {
         setLoading(true)
         setError(null)
-        const data = await getOrganization(orgName)
-        setOrgData(data)
 
-        // Check if user is logged in and has permission to edit
+        // Get JWT token first
         const token = localStorage.getItem('prpm_token')
         if (token) {
           setJwtToken(token)
+        }
+
+        // Fetch organization data with authentication if available
+        const data = await getOrganization(orgName, token || undefined)
+        setOrgData(data)
+
+        // Check if user has permission to edit
+        if (token) {
           try {
             const currentUser = await getCurrentUser(token)
             // Check if user is owner or admin of the organization
@@ -70,11 +80,113 @@ function OrganizationPageContent() {
     fetchOrganization()
   }, [orgName])
 
+  // Poll for subscription updates after successful checkout
+  useEffect(() => {
+    if (subscriptionStatus !== 'success' || !orgName || !jwtToken || !orgData) {
+      return
+    }
+
+    // If organization is already verified, show success modal immediately
+    // (webhook already processed while user was on Stripe checkout page)
+    if (orgData.organization.is_verified) {
+      setShowVerifiedSuccess(true)
+
+      // Remove subscription query param
+      const url = new URL(window.location.href)
+      url.searchParams.delete('subscription')
+      window.history.replaceState({}, '', url.toString())
+
+      // Hide success modal after 15 seconds
+      setTimeout(() => {
+        setShowVerifiedSuccess(false)
+      }, 15000)
+
+      return
+    }
+
+    // Organization not verified yet - start polling
+    let pollCount = 0
+    const maxPolls = 12 // Poll for up to 60 seconds (12 * 5s)
+    const pollInterval = 5000 // 5 seconds
+
+    setPollingSubscription(true)
+    setSubscriptionPollError(null)
+
+    const pollSubscription = async () => {
+      try {
+        const data = await getOrganization(orgName, jwtToken)
+
+        // Check if organization is now verified
+        if (data.is_verified) {
+          setPollingSubscription(false)
+          setOrgData(data)
+          setShowVerifiedSuccess(true)
+
+          // Remove subscription query param from URL
+          const url = new URL(window.location.href)
+          url.searchParams.delete('subscription')
+          window.history.replaceState({}, '', url.toString())
+
+          // Hide success message after 10 seconds
+          setTimeout(() => {
+            setShowVerifiedSuccess(false)
+          }, 10000)
+
+          return true // Stop polling
+        }
+
+        pollCount++
+        if (pollCount >= maxPolls) {
+          // Timeout - subscription update didn't arrive
+          setPollingSubscription(false)
+          setSubscriptionPollError(
+            'Subscription is processing. Please refresh the page in a few moments to see your verified status.'
+          )
+          return true // Stop polling
+        }
+
+        return false // Continue polling
+      } catch (err) {
+        console.error('Error polling subscription:', err)
+        pollCount++
+        if (pollCount >= maxPolls) {
+          setPollingSubscription(false)
+          setSubscriptionPollError(
+            'Unable to verify subscription status. Please refresh the page or contact support.'
+          )
+          return true // Stop polling
+        }
+        return false // Continue polling even on error
+      }
+    }
+
+    // Start polling
+    const intervalId = setInterval(async () => {
+      const shouldStop = await pollSubscription()
+      if (shouldStop) {
+        clearInterval(intervalId)
+      }
+    }, pollInterval)
+
+    // Initial poll immediately
+    pollSubscription().then((shouldStop) => {
+      if (shouldStop) {
+        clearInterval(intervalId)
+      }
+    })
+
+    // Cleanup
+    return () => {
+      clearInterval(intervalId)
+    }
+  }, [subscriptionStatus, orgName, jwtToken, orgData])
+
   async function handleEditSuccess() {
     // Reload organization data after successful edit
     if (!orgName) return
     try {
-      const data = await getOrganization(orgName)
+      const token = localStorage.getItem('prpm_token')
+      const data = await getOrganization(orgName, token || undefined)
       setOrgData(data)
     } catch (err) {
       console.error('Failed to reload organization:', err)
@@ -114,6 +226,120 @@ function OrganizationPageContent() {
 
   return (
     <main className="min-h-screen bg-prpm-dark">
+      {/* Verification Success Modal */}
+      {showVerifiedSuccess && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-prpm-dark-card border-2 border-green-500/50 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            {/* Success Icon */}
+            <div className="w-20 h-20 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+
+            {/* Success Message */}
+            <h2 className="text-3xl font-bold text-white text-center mb-3">
+              Payment Successful! 🎉
+            </h2>
+            <p className="text-green-400 font-semibold text-center text-xl mb-6">
+              Your organization is now verified
+            </p>
+
+            {/* Benefits List */}
+            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 mb-6">
+              <p className="text-gray-300 text-sm mb-3 font-medium">You now have access to:</p>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  Verified badge on your profile
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  <span className="flex-1">Custom avatar URL <span className="text-prpm-accent text-xs font-semibold">PREMIUM</span></span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  Publish unlimited private packages
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  Discounted PRPM+ for team members
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  Priority support and advanced features
+                </li>
+              </ul>
+            </div>
+
+            {/* Next Steps */}
+            <div className="bg-prpm-accent/10 border border-prpm-accent/30 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">💡</span>
+                <div>
+                  <p className="text-white font-semibold text-sm mb-1">Customize Your Profile</p>
+                  <p className="text-gray-300 text-xs">Update your organization avatar to showcase your brand. This is a premium feature available to verified organizations.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              {canEdit && (
+                <button
+                  onClick={() => {
+                    setShowVerifiedSuccess(false)
+                    setShowEditModal(true)
+                  }}
+                  className="flex-1 px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit Profile
+                </button>
+              )}
+              <button
+                onClick={() => setShowVerifiedSuccess(false)}
+                className={`${canEdit ? 'flex-1' : 'w-full'} px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-all`}
+              >
+                {canEdit ? 'Continue' : 'Get Started'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Subscription Polling Status */}
+      {pollingSubscription && (
+        <div className="bg-blue-500/10 border-b border-blue-500/30">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center gap-3">
+              <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
+              <div>
+                <p className="text-blue-400 font-semibold">Processing your subscription...</p>
+                <p className="text-blue-300 text-sm">Waiting for verification to complete. This usually takes a few seconds.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Subscription Poll Error */}
+      {subscriptionPollError && (
+        <div className="bg-yellow-500/10 border-b border-yellow-500/30">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center gap-3">
+              <div className="text-yellow-400 text-2xl">⚠️</div>
+              <div>
+                <p className="text-yellow-400 font-semibold">Subscription Processing</p>
+                <p className="text-yellow-300 text-sm">{subscriptionPollError}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-prpm-dark-card border-b border-prpm-border">
         <div className="max-w-7xl mx-auto px-6 py-12">
@@ -246,6 +472,11 @@ function OrganizationPageContent() {
                         <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-gray-400 text-xs">
                           {pkg.format}
                         </span>
+                        {pkg.visibility === 'private' && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 border border-gray-500/30 text-gray-400">
+                            🔒 Private
+                          </span>
+                        )}
                         {pkg.is_verified && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-prpm-accent/20 border border-prpm-accent/30 text-prpm-accent">
                             ✓

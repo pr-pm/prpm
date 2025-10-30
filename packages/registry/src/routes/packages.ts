@@ -326,11 +326,9 @@ export async function packageRoutes(server: FastifyInstance) {
       // For published packages with tarball_url, generate presigned download URL
       if (pkgVersion.tarball_url) {
         try {
-          // Extract package ID and version from tarball_url or use the actual values
+          // Use package_id (UUID) for S3 key - this matches how uploadPackage stores files
           const { getDownloadUrl } = await import('../storage/s3.js');
-          // Use package name for S3 key (some packages were seeded with name-based paths)
-          const pkgName = (pkgVersion as any).package_name || packageName;
-          const downloadUrl = await getDownloadUrl(server, pkgName, version);
+          const downloadUrl = await getDownloadUrl(server, pkgVersion.package_id, version);
 
           // Redirect to the presigned URL
           return reply.redirect(302, downloadUrl);
@@ -363,6 +361,15 @@ export async function packageRoutes(server: FastifyInstance) {
 
     if (!pkgVersion) {
       return reply.status(404).send({ error: 'Package version not found' });
+    }
+
+    // Transform tarball URL to registry download URL (same as package list endpoint)
+    if (pkgVersion.tarball_url) {
+      const protocol = request.protocol;
+      const host = request.headers.host || `localhost:${config.port}`;
+      const baseUrl = `${protocol}://${host}`;
+      const encodedPackageName = encodeURIComponent(packageName);
+      pkgVersion.tarball_url = `${baseUrl}/api/v1/packages/${encodedPackageName}/${pkgVersion.version}.tar.gz`;
     }
 
     // Cache for 1 hour (versions are immutable)
@@ -451,8 +458,10 @@ export async function packageRoutes(server: FastifyInstance) {
       }
 
       // If organization is specified, ensure package name is prefixed with @org-name/
+      // Package names must be lowercase, so lowercase the organization name in the prefix
       if (organization) {
-        const expectedPrefix = `@${organization}/`;
+        const orgNameLowercase = organization.toLowerCase();
+        const expectedPrefix = `@${orgNameLowercase}/`;
         if (!packageName.startsWith(expectedPrefix)) {
           // Auto-prefix the package name
           packageName = `${expectedPrefix}${packageName}`;
@@ -476,12 +485,13 @@ export async function packageRoutes(server: FastifyInstance) {
         });
       }
 
-      // Lookup organization if specified
+      // Lookup organization if specified (case-insensitive)
       let orgId: string | undefined;
+      let orgVerified: boolean = false;
       if (organization) {
-        const org = await queryOne<{ id: string }>(
+        const org = await queryOne<{ id: string; verified: boolean }>(
           server,
-          'SELECT id FROM organizations WHERE name = $1',
+          'SELECT id, verified FROM organizations WHERE LOWER(name) = LOWER($1)',
           [organization]
         );
 
@@ -493,6 +503,7 @@ export async function packageRoutes(server: FastifyInstance) {
         }
 
         orgId = org.id;
+        orgVerified = org.verified || false;
 
         // Verify user has permission to publish to this org
         const orgMembership = await queryOne<{ role: string }>(
@@ -515,6 +526,14 @@ export async function packageRoutes(server: FastifyInstance) {
             message: `You do not have permission to publish packages for the '${organization}' organization. Required role: owner, admin, or maintainer. Your role: ${orgMembership.role}`,
           });
         }
+
+        // Check if trying to publish private package with unverified organization
+        if (manifest.private && !orgVerified) {
+          return reply.status(403).send({
+            error: 'Forbidden',
+            message: `Cannot publish private packages for unverified organization '${organization}'. Only verified organizations can publish private packages. Please contact support to verify your organization.`,
+          });
+        }
       }
 
       // 2. Check if package exists and user has permission
@@ -526,7 +545,26 @@ export async function packageRoutes(server: FastifyInstance) {
 
       if (pkg) {
         // Package exists - check ownership
-        if (pkg.author_id !== userId && !request.user.is_admin) {
+        // Allow if: user is author, user is admin, OR package belongs to org and user is org member with publish rights
+        let hasPermission = false;
+
+        if (pkg.author_id === userId || request.user.is_admin) {
+          hasPermission = true;
+        } else if (pkg.org_id) {
+          // Package belongs to an organization - check if user is a member with publish rights
+          const orgMembership = await queryOne<{ role: string }>(
+            server,
+            `SELECT role FROM organization_members
+             WHERE org_id = $1 AND user_id = $2`,
+            [pkg.org_id, userId]
+          );
+
+          if (orgMembership && ['owner', 'admin', 'maintainer'].includes(orgMembership.role)) {
+            hasPermission = true;
+          }
+        }
+
+        if (!hasPermission) {
           return reply.status(403).send({
             error: 'Forbidden',
             message: 'You do not have permission to publish to this package'
@@ -548,24 +586,34 @@ export async function packageRoutes(server: FastifyInstance) {
         }
       } else {
         // New package - create it
+        // Determine visibility: private field in manifest maps to visibility in database
+        const visibility = manifest.private ? 'private' : 'public';
+
+        server.log.debug({
+          packageName,
+          manifestPrivate: manifest.private,
+          calculatedVisibility: visibility,
+        }, '📝 Creating new package with visibility');
+
         pkg = await queryOne<Package>(
           server,
           `INSERT INTO packages (
             name, description, author_id, org_id, format, subtype,
-            license, tags, keywords, last_published_at
+            license, tags, keywords, visibility, last_published_at
           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
            RETURNING *`,
           [
             packageName,
             description,
-            orgId ? null : userId,  // If publishing to org, don't set author_id
-            orgId || null,          // Set org_id if publishing to org
+            userId,                 // Always record the author (person who published)
+            orgId || null,          // Set org_id if publishing to org (org takes precedence for ownership)
             format,
             subtype,
             license || null,
             tags,
-            keywords
+            keywords,
+            visibility,
           ]
         );
 

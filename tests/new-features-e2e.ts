@@ -10,7 +10,7 @@ class NewFeaturesE2ETest {
   private registryUrl: string;
   private testResults: Array<{ test: string; passed: boolean; duration: number; data?: any; error?: string }> = [];
 
-  constructor(registryUrl: string = 'http://localhost:3000') {
+  constructor(registryUrl: string = 'http://localhost:3111') {
     this.registryUrl = registryUrl;
   }
 
@@ -251,7 +251,7 @@ class NewFeaturesE2ETest {
 }
 
 // Run tests
-const registryUrl = process.env.REGISTRY_URL || 'http://localhost:3000';
+const registryUrl = process.env.REGISTRY_URL || 'http://localhost:3111';
 const test = new NewFeaturesE2ETest(registryUrl);
 test.run().catch(error => {
   console.error('Test suite failed:', error);

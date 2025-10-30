@@ -30,8 +30,18 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
 
       // Only add text search if query is provided
       if (searchQuery && searchQuery.trim()) {
-        conditions.push(`to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')) @@ plainto_tsquery('english', $${paramIndex++})`);
-        params.push(searchQuery);
+        conditions.push(`(
+          to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')) @@ plainto_tsquery('english', $${paramIndex}) OR
+          p.name ILIKE $${paramIndex + 1} OR
+          p.name % $${paramIndex} OR
+          p.description % $${paramIndex} OR
+          $${paramIndex} = ANY(p.tags) OR
+          EXISTS (
+            SELECT 1 FROM unnest(p.tags) tag WHERE tag % $${paramIndex}
+          )
+        )`);
+        params.push(searchQuery, `%${searchQuery}%`);
+        paramIndex += 2;
       }
 
       if (format) {
@@ -64,8 +74,13 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       }
 
       if (author) {
-        conditions.push(`p.author_id = (SELECT id FROM users WHERE username = $${paramIndex++})`);
+        // Search by both author username and organization name
+        conditions.push(`(
+          p.author_id = (SELECT id FROM users WHERE username = $${paramIndex}) OR
+          p.org_id = (SELECT id FROM organizations WHERE name = $${paramIndex})
+        )`);
         params.push(author);
+        paramIndex++;
       }
 
       if (tags && tags.length > 0) {
@@ -87,6 +102,8 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
 
       // Build ORDER BY clause
       let orderBy: string;
+      const hasSearchQuery = searchQuery && searchQuery.trim();
+
       switch (sort) {
         case 'created':
           orderBy = 'p.created_at DESC';
@@ -104,17 +121,27 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
           orderBy = 'p.total_downloads DESC, p.quality_score DESC NULLS LAST';
           break;
         default:
-          // Default: prioritize quality, then downloads, then search relevance
-          orderBy = 'p.quality_score DESC NULLS LAST, rank DESC, p.total_downloads DESC';
+          // Default: when searching, prioritize relevance using trigram similarity + full-text search
+          if (hasSearchQuery) {
+            orderBy = 'relevance DESC, p.quality_score DESC NULLS LAST, p.total_downloads DESC';
+          } else {
+            orderBy = 'p.quality_score DESC NULLS LAST, p.total_downloads DESC';
+          }
           break;
       }
 
-      // Search with ranking (only calculate rank if there's a search query)
-      const rankColumn = (searchQuery && searchQuery.trim())
-        ? `ts_rank(to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')), plainto_tsquery('english', $1)) as rank`
-        : '0 as rank';
+      // Search with combined ranking (trigram similarity + full-text search)
+      const rankColumn = hasSearchQuery
+        ? `(
+            GREATEST(
+              similarity(p.name, $1),
+              similarity(COALESCE(p.description, ''), $1)
+            ) * 2 +
+            ts_rank(to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')), plainto_tsquery('english', $1))
+          ) as relevance`
+        : '0 as relevance';
 
-      const result = await query<Package & { rank: number }>(
+      const result = await query<Package & { relevance: number }>(
         server,
         `SELECT p.*, u.username as author_username, ${rankColumn}
          FROM packages p
@@ -134,7 +161,7 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       const total = parseInt(countResult?.count || '0', 10);
 
       return {
-        packages: result.rows.map(({ rank, ...pkg }) => pkg),
+        packages: result.rows.map(({ relevance, ...pkg }) => pkg),
         total,
         offset,
         limit,
