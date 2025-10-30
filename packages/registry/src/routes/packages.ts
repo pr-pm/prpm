@@ -363,6 +363,15 @@ export async function packageRoutes(server: FastifyInstance) {
       return reply.status(404).send({ error: 'Package version not found' });
     }
 
+    // Transform tarball URL to registry download URL (same as package list endpoint)
+    if (pkgVersion.tarball_url) {
+      const protocol = request.protocol;
+      const host = request.headers.host || `localhost:${config.port}`;
+      const baseUrl = `${protocol}://${host}`;
+      const encodedPackageName = encodeURIComponent(packageName);
+      pkgVersion.tarball_url = `${baseUrl}/api/v1/packages/${encodedPackageName}/${pkgVersion.version}.tar.gz`;
+    }
+
     // Cache for 1 hour (versions are immutable)
     await cacheSet(server, cacheKey, pkgVersion, 3600);
 
