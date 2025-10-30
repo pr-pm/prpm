@@ -526,7 +526,26 @@ export async function packageRoutes(server: FastifyInstance) {
 
       if (pkg) {
         // Package exists - check ownership
-        if (pkg.author_id !== userId && !request.user.is_admin) {
+        // Allow if: user is author, user is admin, OR package belongs to org and user is org member with publish rights
+        let hasPermission = false;
+
+        if (pkg.author_id === userId || request.user.is_admin) {
+          hasPermission = true;
+        } else if (pkg.org_id) {
+          // Package belongs to an organization - check if user is a member with publish rights
+          const orgMembership = await queryOne<{ role: string }>(
+            server,
+            `SELECT role FROM organization_members
+             WHERE org_id = $1 AND user_id = $2`,
+            [pkg.org_id, userId]
+          );
+
+          if (orgMembership && ['owner', 'admin', 'maintainer'].includes(orgMembership.role)) {
+            hasPermission = true;
+          }
+        }
+
+        if (!hasPermission) {
           return reply.status(403).send({
             error: 'Forbidden',
             message: 'You do not have permission to publish to this package'

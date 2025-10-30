@@ -578,6 +578,10 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
         // Publish to registry
         console.log('🚀 Publishing to registry...');
+        if (selectedOrgId) {
+          console.log(`   Publishing as organization: ${userInfo.organizations.find((org: any) => org.id === selectedOrgId)?.name}`);
+          console.log(`   Organization ID: ${selectedOrgId}`);
+        }
         const result = await client.publish(manifest, tarball, selectedOrgId ? { orgId: selectedOrgId } : undefined);
 
         // Determine the webapp URL based on registry URL
@@ -641,6 +645,15 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           console.log(`   - ${pkg.name}: ${pkg.error}`);
         });
         console.log('');
+
+        // Provide hints for common permission errors
+        if (failedPackages.some(pkg => pkg.error.includes('Forbidden'))) {
+          console.log('💡 Forbidden errors usually mean:');
+          console.log('   - The package already exists and you don\'t have permission to update it');
+          console.log('   - The package belongs to an organization and you\'re not a member with publish rights');
+          console.log('   - Try: prpm whoami  (to check your organization memberships)');
+          console.log('');
+        }
       }
     }
 
