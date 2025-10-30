@@ -326,11 +326,9 @@ export async function packageRoutes(server: FastifyInstance) {
       // For published packages with tarball_url, generate presigned download URL
       if (pkgVersion.tarball_url) {
         try {
-          // Extract package ID and version from tarball_url or use the actual values
+          // Use package_id (UUID) for S3 key - this matches how uploadPackage stores files
           const { getDownloadUrl } = await import('../storage/s3.js');
-          // Use package name for S3 key (some packages were seeded with name-based paths)
-          const pkgName = (pkgVersion as any).package_name || packageName;
-          const downloadUrl = await getDownloadUrl(server, pkgName, version);
+          const downloadUrl = await getDownloadUrl(server, pkgVersion.package_id, version);
 
           // Redirect to the presigned URL
           return reply.redirect(302, downloadUrl);
