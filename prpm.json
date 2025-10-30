@@ -6,7 +6,7 @@
   "packages": [
     {
       "name": "blog-writer",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Expert agent for creating PRPM blog posts - ensures consistent structure, tone, format, and technical depth aligned with PRPM's vision of distributable intelligence",
       "private": true,
       "format": "claude",
@@ -18,7 +18,7 @@
     },
     {
       "name": "core-principles-skill",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Expert agent for developing PRPM (Prompt Package Manager) - applies core architecture principles, quality standards, and development best practices for building the universal package manager for AI pr",
       "private": true,
       "format": "claude",
@@ -30,7 +30,7 @@
     },
     {
       "name": "format-conversion-agent",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Expert agent for converting between AI prompt formats (Cursor, Claude, Continue, Windsurf) - ensures lossless conversions, quality scoring, and round-trip validation",
       "private": true,
       "format": "claude",
@@ -42,7 +42,7 @@
     },
     {
       "name": "testing-patterns",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Expert agent for testing PRPM codebase with Vitest - applies testing patterns, coverage standards, and provides MCP-assisted test execution guidance",
       "private": true,
       "format": "claude",
@@ -54,7 +54,7 @@
     },
     {
       "name": "documentation-standards",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Standards and guidelines for organizing, structuring, and maintaining documentation in the PRPM repository - ensures consistency across user docs, development docs, and internal references",
       "private": true,
       "format": "claude",
@@ -66,7 +66,7 @@
     },
     {
       "name": "human-writing",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Write content that sounds natural, conversational, and authentically human - avoiding AI-generated patterns, corporate speak, and generic phrasing",
       "private": true,
       "format": "claude",
@@ -78,7 +78,7 @@
     },
     {
       "name": "prpm-development",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Use when developing PRPM (Prompt Package Manager) - comprehensive knowledge base covering architecture, format conversion, package types, collections, quality standards, testing, and deployment",
       "private": true,
       "format": "claude",
@@ -90,7 +90,7 @@
     },
     {
       "name": "prpm-json-best-practices-skill",
-      "version": "1.0.3",
+      "version": "1.0.5",
       "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
       "format": "claude",
       "subtype": "skill",
@@ -101,7 +101,7 @@
     },
     {
       "name": "core-principles",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Core development principles for building PRPM (Prompt Package Manager)",
       "private": true,
       "format": "cursor",
@@ -113,7 +113,7 @@
     },
     {
       "name": "format-conversion",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Expert guidance for converting between AI prompt formats (Cursor, Claude, Continue, Windsurf) while preserving semantic meaning",
       "private": true,
       "format": "cursor",
@@ -125,7 +125,7 @@
     },
     {
       "name": "prpm-json-best-practices",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
       "format": "cursor",
       "subtype": "rule",
@@ -136,7 +136,7 @@
     },
     {
       "name": "agent-builder-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use when creating, improving, or troubleshooting Claude Code subagents. Expert guidance on agent design, system prompts, tool access, model selection, and delegation patterns for building specialized AI assistants",
       "format": "claude",
       "subtype": "skill",
@@ -148,7 +148,7 @@
     },
     {
       "name": "aws-beanstalk-expert",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Expert knowledge for deploying, managing, and troubleshooting AWS Elastic Beanstalk applications with production best practices",
       "format": "claude",
       "subtype": "skill",
@@ -159,7 +159,7 @@
     },
     {
       "name": "beanstalk-deploy-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
       "format": "claude",
       "subtype": "skill",
@@ -170,7 +170,7 @@
     },
     {
       "name": "karen-repo-reviewer-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use when the user requests a repository review, code assessment, or honest evaluation of their codebase. Provides brutally honest AI-powered reviews with market-aware Karen Scores (0-100) analyzing over-engineering, completion honesty, and practical value",
       "format": "claude",
       "subtype": "skill",
@@ -181,7 +181,7 @@
     },
     {
       "name": "slash-command-builder-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use when creating, improving, or troubleshooting Claude Code slash commands. Expert guidance on command structure, arguments, frontmatter, tool permissions, and best practices for building effective custom commands",
       "format": "claude",
       "subtype": "skill",
@@ -195,7 +195,7 @@
     },
     {
       "name": "creating-cursor-rules-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Expert guidance for creating effective Cursor IDE rules with best practices, patterns, and examples",
       "format": "claude",
       "subtype": "skill",
@@ -206,7 +206,7 @@
     },
     {
       "name": "creating-skills-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use when creating new Claude Code skills or improving existing ones - ensures skills are discoverable, scannable, and effective through proper structure, CSO optimization, and real examples",
       "format": "claude",
       "subtype": "skill",
@@ -217,7 +217,7 @@
     },
     {
       "name": "elastic-beanstalk-deployment-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use when deploying Node.js applications to AWS Elastic Beanstalk or troubleshooting deployment issues - provides dependency installation strategies, monorepo handling, and deployment best practices",
       "format": "claude",
       "subtype": "skill",
@@ -228,7 +228,7 @@
     },
     {
       "name": "github-actions-testing-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Expert guidance for testing and validating GitHub Actions workflows before deployment - catches cache errors, path issues, monorepo dependencies, and service container problems that local testing miss",
       "format": "claude",
       "subtype": "skill",
@@ -239,7 +239,7 @@
     },
     {
       "name": "postgres-migrations",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Comprehensive guide to PostgreSQL migrations - common errors, generated columns, full-text search, indexes, idempotent migrations, and best practices for database schema changes",
       "format": "claude",
       "subtype": "skill",
@@ -250,7 +250,7 @@
     },
     {
       "name": "pulumi-troubleshooting",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Comprehensive guide to troubleshooting Pulumi TypeScript errors, infrastructure issues, and best practices - covers common errors, Outputs handling, AWS Beanstalk deployment, and cost optimization",
       "format": "claude",
       "subtype": "skill",
@@ -261,7 +261,7 @@
     },
     {
       "name": "self-improving-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use when starting infrastructure, testing, deployment, or framework-specific tasks - automatically searches PRPM registry for relevant expertise packages and suggests installation to enhance capabilit",
       "format": "claude",
       "subtype": "skill",
@@ -272,7 +272,7 @@
     },
     {
       "name": "thoroughness",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use when implementing complex multi-step tasks, fixing critical bugs, or when quality and completeness matter more than speed - ensures comprehensive implementation without shortcuts through systemati",
       "format": "claude",
       "subtype": "skill",
@@ -283,7 +283,7 @@
     },
     {
       "name": "typescript-type-safety-skill",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use when encountering TypeScript any types, type errors, or lax type checking - eliminates type holes and enforces strict type safety through proper interfaces, type guards, and module augmentation",
       "format": "claude",
       "subtype": "skill",
@@ -294,7 +294,7 @@
     },
     {
       "name": "karen-compare",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Karen comparative analysis between two projects with brutally honest head-to-head scoring and recommendations",
       "format": "claude",
       "subtype": "slash-command",
@@ -305,7 +305,7 @@
     },
     {
       "name": "karen-quick-score",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Quick Karen score without full review - fast repository assessment using Haiku for speed",
       "format": "claude",
       "subtype": "slash-command",
@@ -316,7 +316,7 @@
     },
     {
       "name": "karen-review",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Karen repository review with market-aware scoring - brutally honest assessment with strictness levels",
       "format": "claude",
       "subtype": "slash-command",
@@ -327,7 +327,7 @@
     },
     {
       "name": "beanstalk-deploy",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
       "format": "cursor",
       "subtype": "rule",
@@ -338,7 +338,7 @@
     },
     {
       "name": "creating-cursor-rules",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Meta-rule for creating effective Cursor IDE rules with best practices, patterns, and examples",
       "format": "cursor",
       "subtype": "rule",
@@ -349,7 +349,7 @@
     },
     {
       "name": "creating-skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Meta-guide for creating effective Claude Code skills with proper structure, CSO optimization, and real examples",
       "format": "cursor",
       "subtype": "rule",
@@ -360,7 +360,7 @@
     },
     {
       "name": "elastic-beanstalk-deployment",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Reference: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/nodejs-platform-dependencies.html",
       "format": "cursor",
       "subtype": "rule",
@@ -371,7 +371,7 @@
     },
     {
       "name": "github-actions-testing",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Expert guidance for testing and validating GitHub Actions workflows before deployment - catches cache errors, path issues, monorepo dependencies, and service container problems that local testing miss",
       "format": "cursor",
       "subtype": "rule",
@@ -382,7 +382,7 @@
     },
     {
       "name": "karen-repo-reviewer",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use Karen for brutally honest repository reviews with market-aware Karen Scores. Analyzes entire codebases for over-engineering, completion honesty, and whether the project actually solves a real prob",
       "format": "cursor",
       "subtype": "rule",
@@ -393,7 +393,7 @@
     },
     {
       "name": "self-improve-cursor",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Automatically search and install PRPM packages when working on infrastructure, testing, deployment, or framework-specific tasks",
       "format": "cursor",
       "subtype": "rule",
@@ -404,7 +404,7 @@
     },
     {
       "name": "typescript-type-safety",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Use when encountering TypeScript any types, type errors, or lax type checking - eliminates type holes and enforces strict type safety through proper interfaces, type guards, and module augmentation",
       "format": "cursor",
       "subtype": "rule",
@@ -415,7 +415,7 @@
     },
     {
       "name": "typescript-type-specialist",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Enforce strict TypeScript type safety - eliminate all 'any' types, use proper type guards, and maintain zero tolerance for type safety violations",
       "format": "cursor",
       "subtype": "rule",
