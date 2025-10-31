@@ -642,13 +642,14 @@ export async function packageRoutes(server: FastifyInstance) {
         server.log.info({ packageName, userId }, 'Created new package');
       }
 
-      // 3. Upload tarball to S3
+      // 3. Upload tarball to S3 using package name for human-readable paths
       const { uploadPackage } = await import('../storage/s3.js');
       const { url: tarballUrl, hash: tarballHash, size } = await uploadPackage(
         server,
-        pkg.id,
+        packageName,  // Use package name for S3 path (e.g., @author/package)
         version,
-        tarballBuffer
+        tarballBuffer,
+        { packageId: pkg.id }  // Pass UUID for metadata
       );
 
       // 4. Create package version record
