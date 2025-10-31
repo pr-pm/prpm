@@ -185,6 +185,13 @@ export async function packageRoutes(server: FastifyInstance) {
     // Decode URL-encoded package name (handles slashes in scoped packages)
     const packageName = decodeURIComponent(rawPackageName);
 
+    // Debug logging
+    server.log.debug({
+      packageName,
+      userId: userId || 'unauthenticated',
+      hasUser: !!request.user,
+    }, 'GET package request');
+
     // Check cache (skip cache for authenticated requests to private packages)
     const cacheKey = `package:${packageName}`;
     if (!userId) {
@@ -199,6 +206,7 @@ export async function packageRoutes(server: FastifyInstance) {
 
     if (userId) {
       // For authenticated users, check if they have access to private packages
+      server.log.debug({ packageName, userId }, 'Checking private package access');
       pkg = await queryOne<Package>(
         server,
         `SELECT p.* FROM packages p
@@ -210,6 +218,7 @@ export async function packageRoutes(server: FastifyInstance) {
                   AND om.user_id IS NOT NULL))`,
         [packageName, userId]
       );
+      server.log.debug({ packageName, userId, found: !!pkg }, 'Private package query result');
     } else {
       // For unauthenticated users, only show public packages
       pkg = await queryOne<Package>(
@@ -220,6 +229,7 @@ export async function packageRoutes(server: FastifyInstance) {
     }
 
     if (!pkg) {
+      server.log.debug({ packageName, userId: userId || 'none' }, 'Package not found');
       return reply.status(404).send({ error: 'Package not found' });
     }
 
@@ -233,7 +243,8 @@ export async function packageRoutes(server: FastifyInstance) {
     );
 
     // Transform tarball URLs to registry download URLs
-    const protocol = request.protocol;
+    // Trust X-Forwarded-Proto header from reverse proxy for correct protocol
+    const protocol = (request.headers['x-forwarded-proto'] as string) || request.protocol;
     const host = request.headers.host || `localhost:${config.port}`;
     const baseUrl = `${protocol}://${host}`;
 
@@ -459,7 +470,8 @@ export async function packageRoutes(server: FastifyInstance) {
 
     // Transform tarball URL to registry download URL (same as package list endpoint)
     if (pkgVersion.tarball_url) {
-      const protocol = request.protocol;
+      // Trust X-Forwarded-Proto header from reverse proxy for correct protocol
+      const protocol = (request.headers['x-forwarded-proto'] as string) || request.protocol;
       const host = request.headers.host || `localhost:${config.port}`;
       const baseUrl = `${protocol}://${host}`;
       const encodedPackageName = encodeURIComponent(packageName);
