@@ -77,13 +77,18 @@ export async function uploadPackage(
       size: tarball.length,
     };
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     server.log.error({
-      error: String(error),
+      error: errorMessage,
+      errorStack: error instanceof Error ? error.stack : undefined,
       packageName,
       packageId: options?.packageId,
-      key
+      key,
+      bucket: config.s3.bucket,
+      region: config.s3.region,
+      endpoint: config.s3.endpoint
     }, 'Failed to upload package to S3');
-    throw new Error('Failed to upload package to storage');
+    throw new Error(`Failed to upload package to storage: ${errorMessage}`);
   }
 }
 
