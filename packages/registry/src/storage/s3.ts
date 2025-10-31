@@ -22,14 +22,20 @@ const s3Client = new S3Client({
 
 /**
  * Upload package tarball to S3
+ * Uses package name (e.g., @author/package-name) for S3 path instead of UUID
+ * for human-readable, browseable storage structure
  */
 export async function uploadPackage(
   server: FastifyInstance,
-  packageId: string,
+  packageName: string,
   version: string,
-  tarball: Buffer
+  tarball: Buffer,
+  options?: {
+    packageId?: string; // UUID, kept for metadata only
+  }
 ): Promise<{ url: string; hash: string; size: number }> {
-  const key = `packages/${packageId}/${version}/package.tar.gz`;
+  // Use package name for S3 key path (author-based structure)
+  const key = `packages/${packageName}/${version}/package.tar.gz`;
   const hash = createHash('sha256').update(tarball).digest('hex');
 
   try {
@@ -40,7 +46,8 @@ export async function uploadPackage(
         Body: tarball,
         ContentType: 'application/gzip',
         Metadata: {
-          packageId,
+          packageId: options?.packageId || packageName,
+          packageName,
           version,
           hash,
         },
@@ -57,7 +64,12 @@ export async function uploadPackage(
       url = `https://${config.s3.bucket}.s3.${config.s3.region}.amazonaws.com/${key}`;
     }
 
-    server.log.info(`Uploaded package ${packageId}@${version} to storage: ${url}`);
+    server.log.info({
+      packageName,
+      packageId: options?.packageId,
+      version,
+      key
+    }, 'Uploaded package to storage');
 
     return {
       url,
@@ -65,27 +77,79 @@ export async function uploadPackage(
       size: tarball.length,
     };
   } catch (error: unknown) {
-    server.log.error({ error: String(error) }, 'Failed to upload package to S3');
+    server.log.error({
+      error: String(error),
+      packageName,
+      packageId: options?.packageId,
+      key
+    }, 'Failed to upload package to S3');
     throw new Error('Failed to upload package to storage');
   }
 }
 
 /**
+ * Check if an object exists in S3
+ */
+async function objectExists(bucket: string, key: string): Promise<boolean> {
+  try {
+    const { HeadObjectCommand } = await import('@aws-sdk/client-s3');
+    await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Get presigned URL for package download
+ * Supports both new UUID-based paths and legacy author-based paths
  */
 export async function getDownloadUrl(
   server: FastifyInstance,
   packageId: string,
   version: string,
-  expiresIn: number = 3600
+  options?: {
+    packageName?: string;
+    expiresIn?: number;
+  }
 ): Promise<string> {
-  const key = `packages/${packageId}/${version}/package.tar.gz`;
+  const expiresIn = options?.expiresIn || 3600;
+
+  // Try new UUID-based structure first: packages/{uuid}/{version}/package.tar.gz
+  const newKey = `packages/${packageId}/${version}/package.tar.gz`;
+
+  let key = newKey;
+  let usingLegacyPath = false;
+
+  // If we have a package name and the new path doesn't exist, try legacy path
+  if (options?.packageName) {
+    const newPathExists = await objectExists(config.s3.bucket, newKey);
+
+    if (!newPathExists) {
+      // Try legacy author-based structure: packages/{@scope/name}/{version}/package.tar.gz
+      const legacyKey = `packages/${options.packageName}/${version}/package.tar.gz`;
+      const legacyPathExists = await objectExists(config.s3.bucket, legacyKey);
+
+      if (legacyPathExists) {
+        key = legacyKey;
+        usingLegacyPath = true;
+        server.log.info({
+          packageId,
+          packageName: options.packageName,
+          version,
+          legacyKey
+        }, 'Using legacy author-based S3 path');
+      }
+    }
+  }
 
   try {
     server.log.info({
       packageId,
+      packageName: options?.packageName,
       version,
       key,
+      usingLegacyPath,
       bucket: config.s3.bucket,
       hasCredentials: !!(config.s3.accessKeyId && config.s3.secretAccessKey)
     }, 'Generating presigned download URL');
@@ -97,14 +161,16 @@ export async function getDownloadUrl(
 
     const url = await getSignedUrl(s3Client, command, { expiresIn });
 
-    server.log.info({ url: url.substring(0, 100) + '...' }, 'Generated presigned URL');
+    server.log.info({ url: url.substring(0, 100) + '...', usingLegacyPath }, 'Generated presigned URL');
     return url;
   } catch (error: unknown) {
     server.log.error({
       error: String(error),
       packageId,
+      packageName: options?.packageName,
       version,
       key,
+      usingLegacyPath,
       bucket: config.s3.bucket,
       hasAccessKey: !!config.s3.accessKeyId,
       hasSecretKey: !!config.s3.secretAccessKey
@@ -115,13 +181,27 @@ export async function getDownloadUrl(
 
 /**
  * Delete package from S3
+ * Supports both UUID-based and author-based paths
  */
 export async function deletePackage(
   server: FastifyInstance,
   packageId: string,
-  version: string
+  version: string,
+  options?: {
+    packageName?: string;
+  }
 ): Promise<void> {
-  const key = `packages/${packageId}/${version}/package.tar.gz`;
+  // Try author-based path first if package name is provided
+  let key = `packages/${packageId}/${version}/package.tar.gz`;
+
+  if (options?.packageName) {
+    const authorKey = `packages/${options.packageName}/${version}/package.tar.gz`;
+    const authorPathExists = await objectExists(config.s3.bucket, authorKey);
+
+    if (authorPathExists) {
+      key = authorKey;
+    }
+  }
 
   try {
     await s3Client.send(
@@ -131,9 +211,19 @@ export async function deletePackage(
       })
     );
 
-    server.log.info(`Deleted package ${packageId}@${version} from S3`);
+    server.log.info({
+      packageId,
+      packageName: options?.packageName,
+      version,
+      key
+    }, 'Deleted package from S3');
   } catch (error: unknown) {
-    server.log.error({ error: String(error) }, 'Failed to delete package from S3');
+    server.log.error({
+      error: String(error),
+      packageId,
+      packageName: options?.packageName,
+      key
+    }, 'Failed to delete package from S3');
     throw new Error('Failed to delete package from storage');
   }
 }
