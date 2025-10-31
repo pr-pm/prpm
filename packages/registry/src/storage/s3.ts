@@ -102,7 +102,7 @@ async function objectExists(bucket: string, key: string): Promise<boolean> {
 
 /**
  * Get presigned URL for package download
- * Supports both new UUID-based paths and legacy author-based paths
+ * Prioritizes author-based paths (standard), falls back to UUID paths (deprecated)
  */
 export async function getDownloadUrl(
   server: FastifyInstance,
@@ -115,32 +115,50 @@ export async function getDownloadUrl(
 ): Promise<string> {
   const expiresIn = options?.expiresIn || 3600;
 
-  // Try new UUID-based structure first: packages/{uuid}/{version}/package.tar.gz
-  const newKey = `packages/${packageId}/${version}/package.tar.gz`;
+  let key: string;
+  let usingDeprecatedUuidPath = false;
 
-  let key = newKey;
-  let usingLegacyPath = false;
-
-  // If we have a package name and the new path doesn't exist, try legacy path
+  // Try author-based path first (standard): packages/{@scope/name}/{version}/package.tar.gz
   if (options?.packageName) {
-    const newPathExists = await objectExists(config.s3.bucket, newKey);
+    const authorKey = `packages/${options.packageName}/${version}/package.tar.gz`;
+    const authorPathExists = await objectExists(config.s3.bucket, authorKey);
 
-    if (!newPathExists) {
-      // Try legacy author-based structure: packages/{@scope/name}/{version}/package.tar.gz
-      const legacyKey = `packages/${options.packageName}/${version}/package.tar.gz`;
-      const legacyPathExists = await objectExists(config.s3.bucket, legacyKey);
+    if (authorPathExists) {
+      key = authorKey;
+      server.log.debug({
+        packageId,
+        packageName: options.packageName,
+        version,
+        key
+      }, 'Using author-based S3 path');
+    } else {
+      // Fallback to deprecated UUID-based structure: packages/{uuid}/{version}/package.tar.gz
+      const uuidKey = `packages/${packageId}/${version}/package.tar.gz`;
+      const uuidPathExists = await objectExists(config.s3.bucket, uuidKey);
 
-      if (legacyPathExists) {
-        key = legacyKey;
-        usingLegacyPath = true;
-        server.log.info({
+      if (uuidPathExists) {
+        key = uuidKey;
+        usingDeprecatedUuidPath = true;
+        server.log.warn({
           packageId,
           packageName: options.packageName,
           version,
-          legacyKey
-        }, 'Using legacy author-based S3 path');
+          uuidKey
+        }, 'Using deprecated UUID-based S3 path - should migrate to author-based path');
+      } else {
+        // Neither path exists - use author path and let it fail with proper error
+        key = authorKey;
       }
     }
+  } else {
+    // No package name provided, use UUID path (deprecated)
+    key = `packages/${packageId}/${version}/package.tar.gz`;
+    usingDeprecatedUuidPath = true;
+    server.log.warn({
+      packageId,
+      version,
+      key
+    }, 'No package name provided - using deprecated UUID-based path');
   }
 
   try {
@@ -149,7 +167,7 @@ export async function getDownloadUrl(
       packageName: options?.packageName,
       version,
       key,
-      usingLegacyPath,
+      usingDeprecatedUuidPath,
       bucket: config.s3.bucket,
       hasCredentials: !!(config.s3.accessKeyId && config.s3.secretAccessKey)
     }, 'Generating presigned download URL');
@@ -161,7 +179,10 @@ export async function getDownloadUrl(
 
     const url = await getSignedUrl(s3Client, command, { expiresIn });
 
-    server.log.info({ url: url.substring(0, 100) + '...', usingLegacyPath }, 'Generated presigned URL');
+    server.log.info({
+      url: url.substring(0, 100) + '...',
+      usingDeprecatedUuidPath
+    }, 'Generated presigned URL');
     return url;
   } catch (error: unknown) {
     server.log.error({
@@ -170,7 +191,7 @@ export async function getDownloadUrl(
       packageName: options?.packageName,
       version,
       key,
-      usingLegacyPath,
+      usingDeprecatedUuidPath,
       bucket: config.s3.bucket,
       hasAccessKey: !!config.s3.accessKeyId,
       hasSecretKey: !!config.s3.secretAccessKey
