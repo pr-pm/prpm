@@ -73,6 +73,7 @@ export interface Package {
   author_id?: string;
   author_username?: string;
   org_id?: string;
+  org_name?: string;
   format: Format;
   subtype: Subtype; // Required, defaults to 'rule'
   license?: string;

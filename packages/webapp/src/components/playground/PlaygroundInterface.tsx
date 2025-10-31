@@ -18,6 +18,7 @@ export default function PlaygroundInterface({
   onSessionCreated,
 }: PlaygroundInterfaceProps) {
   const [packageId, setPackageId] = useState(initialPackageId || '')
+  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [packageSearch, setPackageSearch] = useState('')
   const [packages, setPackages] = useState<Package[]>([])
   const [showPackageDropdown, setShowPackageDropdown] = useState(false)
@@ -144,7 +145,10 @@ export default function PlaygroundInterface({
     return () => clearTimeout(debounce)
   }, [packageId, input, model])
 
-  const selectedPackage = packages.find(p => p.id === packageId)
+  // Helper to get package owner (org or author)
+  const getPackageOwner = (pkg: Package): string => {
+    return pkg.org_name || pkg.author_username || 'unknown'
+  }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6">
@@ -156,10 +160,13 @@ export default function PlaygroundInterface({
         <div className="relative">
           <input
             type="text"
-            value={packageId && selectedPackage ? `${(selectedPackage as any).author_username || 'unknown'}/${selectedPackage.name}` : packageSearch}
+            value={selectedPackage ? `${getPackageOwner(selectedPackage)}/${selectedPackage.name}` : packageSearch}
             onChange={(e) => {
               setPackageSearch(e.target.value)
-              if (packageId) setPackageId('') // Clear selected package when user starts typing
+              if (selectedPackage) {
+                setSelectedPackage(null)
+                setPackageId('')
+              }
             }}
             onFocus={() => setShowPackageDropdown(true)}
             placeholder="Search for a package..."
@@ -172,17 +179,18 @@ export default function PlaygroundInterface({
                 <button
                   key={pkg.id}
                   onClick={() => {
+                    setSelectedPackage(pkg)
                     setPackageId(pkg.id)
                     setPackageSearch('')
                     setShowPackageDropdown(false)
                   }}
                   className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition"
                 >
-                  <div className="font-semibold text-gray-800 dark:text-white">
-                    {(pkg as any).author_username || 'unknown'}/{pkg.name}
+                  <div className="font-semibold text-gray-900 dark:text-white">
+                    {getPackageOwner(pkg)}/{pkg.name}
                   </div>
                   {pkg.description && (
-                    <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                    <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
                       {pkg.description}
                     </div>
                   )}
