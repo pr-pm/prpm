@@ -16,6 +16,7 @@ import type {
   TrendingQuery,
   ResolveQuery,
 } from '../types/requests.js';
+import { organizationRepository } from '../db/repositories/organization-repository.js';
 
 export async function packageRoutes(server: FastifyInstance) {
   // List packages with pagination
@@ -507,11 +508,7 @@ export async function packageRoutes(server: FastifyInstance) {
       let orgId: string | undefined;
       let orgVerified: boolean = false;
       if (organization) {
-        const org = await queryOne<{ id: string; verified: boolean }>(
-          server,
-          'SELECT id, is_verified as verified FROM organizations WHERE LOWER(name) = LOWER($1)',
-          [organization]
-        );
+        const org = await organizationRepository.findByName(organization);
 
         if (!org) {
           return reply.status(404).send({
@@ -521,7 +518,7 @@ export async function packageRoutes(server: FastifyInstance) {
         }
 
         orgId = org.id;
-        orgVerified = org.verified || false;
+        orgVerified = org.isVerified || false;
 
         // Verify user has permission to publish to this org
         const orgMembership = await queryOne<{ role: string }>(
