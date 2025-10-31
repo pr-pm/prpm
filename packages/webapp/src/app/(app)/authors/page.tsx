@@ -637,15 +637,15 @@ function AuthorsPageContent() {
                     <div className="text-2xl font-bold text-prpm-purple">
                       {author.package_count}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">packages</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-400">packages</div>
                   </div>
 
                   {/* Downloads */}
                   <div className="col-span-3 text-center">
-                    <div className="text-xl font-semibold">
+                    <div className="text-xl font-semibold text-gray-900 dark:text-white">
                       {(author.total_downloads || 0).toLocaleString()}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">total downloads</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-400">total downloads</div>
                   </div>
 
                   {/* Verified Status */}

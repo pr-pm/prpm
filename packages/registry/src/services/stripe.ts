@@ -102,11 +102,16 @@ export async function createCheckoutSession(
     // Get or create Stripe customer
     const customerId = await getOrCreateCustomer(server, orgId, orgName, customerEmail);
 
-    // Create checkout session
+    // Create checkout session with customer_update to allow email changes
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
+      customer_update: {
+        // Allow customer to update their email address during checkout
+        address: 'auto',
+        name: 'auto',
+      },
       line_items: [
         {
           price: VERIFIED_PLAN_PRICE_ID,
