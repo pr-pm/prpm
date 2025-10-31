@@ -243,7 +243,8 @@ export async function packageRoutes(server: FastifyInstance) {
     );
 
     // Transform tarball URLs to registry download URLs
-    const protocol = request.protocol;
+    // Trust X-Forwarded-Proto header from reverse proxy for correct protocol
+    const protocol = (request.headers['x-forwarded-proto'] as string) || request.protocol;
     const host = request.headers.host || `localhost:${config.port}`;
     const baseUrl = `${protocol}://${host}`;
 
@@ -469,7 +470,8 @@ export async function packageRoutes(server: FastifyInstance) {
 
     // Transform tarball URL to registry download URL (same as package list endpoint)
     if (pkgVersion.tarball_url) {
-      const protocol = request.protocol;
+      // Trust X-Forwarded-Proto header from reverse proxy for correct protocol
+      const protocol = (request.headers['x-forwarded-proto'] as string) || request.protocol;
       const host = request.headers.host || `localhost:${config.port}`;
       const baseUrl = `${protocol}://${host}`;
       const encodedPackageName = encodeURIComponent(packageName);
