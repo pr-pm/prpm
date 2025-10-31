@@ -569,3 +569,281 @@ export async function updateOrganization(
 
   return response.json()
 }
+
+// ============================================
+// PLAYGROUND & CREDITS
+// ============================================
+
+/**
+ * Playground types
+ */
+export interface PlaygroundMessage {
+  role: 'user' | 'assistant'
+  content: string
+  timestamp?: string
+  tokens?: number
+}
+
+export interface PlaygroundSession {
+  id: string
+  package_id: string
+  package_name: string
+  package_version?: string
+  conversation: PlaygroundMessage[]
+  credits_spent: number
+  model: string
+  total_tokens: number
+  run_count: number
+  is_public: boolean
+  share_token?: string
+  created_at: string
+  updated_at: string
+  last_run_at: string
+}
+
+export interface CreditBalance {
+  total: number
+  monthly: number
+  rollover: number
+  purchased: number
+  monthly_used: number
+  monthly_limit: number
+  rollover_expires_at?: string
+  monthly_reset_at?: string
+}
+
+export interface CreditTransaction {
+  id: string
+  type: 'spend' | 'earn' | 'purchase' | 'monthly' | 'bonus' | 'admin'
+  amount: number
+  balance_after: number
+  description: string
+  metadata?: any
+  created_at: string
+}
+
+export interface PlaygroundRunRequest {
+  package_id: string
+  package_version?: string
+  input: string
+  model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo'
+  session_id?: string
+}
+
+export interface PlaygroundRunResponse {
+  session_id: string
+  response: string
+  credits_spent: number
+  credits_remaining: number
+  tokens_used: number
+  model: string
+  estimated_cost: number
+  conversation: PlaygroundMessage[]
+}
+
+export interface CreditPackage {
+  id: string
+  name: string
+  credits: number
+  price: number
+  popular?: boolean
+}
+
+/**
+ * Get playground credit balance
+ */
+export async function getPlaygroundCredits(jwtToken: string): Promise<CreditBalance> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/credits`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch credits' }))
+    throw new Error(error.error || error.message || 'Failed to fetch credits')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get credit transaction history
+ */
+export async function getCreditHistory(jwtToken: string, limit: number = 50, offset: number = 0): Promise<{ transactions: CreditTransaction[]; total: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/credits/history?limit=${limit}&offset=${offset}`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch history' }))
+    throw new Error(error.error || error.message || 'Failed to fetch history')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get available credit packages
+ */
+export async function getCreditPackages(): Promise<{ packages: CreditPackage[] }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/credits/packages`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch packages' }))
+    throw new Error(error.error || error.message || 'Failed to fetch packages')
+  }
+
+  return response.json()
+}
+
+/**
+ * Purchase credits
+ */
+export async function purchaseCredits(jwtToken: string, packageId: string): Promise<{ clientSecret: string; credits: number; price: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/credits/purchase`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ package: packageId }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to purchase credits' }))
+    throw new Error(error.error || error.message || 'Failed to purchase credits')
+  }
+
+  return response.json()
+}
+
+/**
+ * Run playground prompt
+ */
+export async function runPlayground(jwtToken: string, request: PlaygroundRunRequest): Promise<PlaygroundRunResponse> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/run`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to run playground' }))
+    throw new Error(error.error || error.message || 'Failed to run playground')
+  }
+
+  return response.json()
+}
+
+/**
+ * Estimate credits for playground run
+ */
+export async function estimatePlaygroundCredits(jwtToken: string, request: Omit<PlaygroundRunRequest, 'session_id'>): Promise<{ estimated_credits: number; estimated_tokens: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/estimate`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to estimate' }))
+    throw new Error(error.error || error.message || 'Failed to estimate')
+  }
+
+  return response.json()
+}
+
+/**
+ * List playground sessions
+ */
+export async function listPlaygroundSessions(jwtToken: string, limit: number = 20, offset: number = 0): Promise<{ sessions: PlaygroundSession[]; total: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/sessions?limit=${limit}&offset=${offset}`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch sessions' }))
+    throw new Error(error.error || error.message || 'Failed to fetch sessions')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get playground session
+ */
+export async function getPlaygroundSession(jwtToken: string, sessionId: string): Promise<PlaygroundSession> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/sessions/${sessionId}`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch session' }))
+    throw new Error(error.error || error.message || 'Failed to fetch session')
+  }
+
+  return response.json()
+}
+
+/**
+ * Delete playground session
+ */
+export async function deletePlaygroundSession(jwtToken: string, sessionId: string): Promise<void> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/sessions/${sessionId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to delete session' }))
+    throw new Error(error.error || error.message || 'Failed to delete session')
+  }
+}
+
+/**
+ * Share playground session
+ */
+export async function sharePlaygroundSession(jwtToken: string, sessionId: string): Promise<{ share_token: string; share_url: string }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/sessions/${sessionId}/share`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to share session' }))
+    throw new Error(error.error || error.message || 'Failed to share session')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get shared playground session (public)
+ */
+export async function getSharedPlaygroundSession(shareToken: string): Promise<PlaygroundSession> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/shared/${shareToken}`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch shared session' }))
+    throw new Error(error.error || error.message || 'Failed to fetch shared session')
+  }
+
+  return response.json()
+}

@@ -16,12 +16,15 @@ export default function Header({ showDashboard = false, showAccount = false }: H
 
   const isActive = (path: string) => pathname === path
 
-  const navigationLinks = [
+  const navigationLinks: Array<{ href: string; label: string; badge?: string }> = [
     { href: '/search', label: 'Search' },
     { href: '/authors', label: 'Authors' },
     { href: '/organizations', label: 'Organizations' },
     { href: '/blog', label: 'Blog' },
-    ...(showDashboard ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
+    ...(showDashboard ? [
+      { href: '/dashboard', label: 'Dashboard' },
+      { href: '/playground', label: 'Playground', badge: 'PRPM+' }
+    ] : []),
   ]
 
   return (
@@ -40,13 +43,18 @@ export default function Header({ showDashboard = false, showAccount = false }: H
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`transition-colors ${
+                  className={`transition-colors flex items-center gap-2 ${
                     isActive(link.href)
                       ? 'text-prpm-accent'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
                   {link.label}
+                  {link.badge && (
+                    <span className="text-xs font-bold px-2 py-0.5 bg-purple-600 text-white rounded-full">
+                      {link.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
