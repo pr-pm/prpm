@@ -86,7 +86,14 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        const userId = (request.user as any).id;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
 
         const balance = await creditsService.getBalance(userId);
 
@@ -144,7 +151,15 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        const userId = (request.user as any).id;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
         const query = TransactionHistoryQuerySchema.parse(request.query);
 
         const result = await creditsService.getTransactionHistory(userId, query);
@@ -179,7 +194,13 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
         description: 'Initiate a credit purchase via Stripe',
         tags: ['playground', 'credits'],
         security: [{ bearerAuth: [] }],
-        body: PurchaseCreditsSchema,
+        body: {
+          type: 'object',
+          required: ['package'],
+          properties: {
+            package: { type: 'string', enum: ['small', 'medium', 'large'] },
+          },
+        },
         response: {
           200: {
             type: 'object',
@@ -203,8 +224,15 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const body = PurchaseCreditsSchema.parse(request.body);
-        const userId = (request.user as any).id;
-        const userEmail = (request.user as any).email;
+        const userId = request.user?.user_id;
+        const userEmail = request.user?.email;
+
+        if (!userId || !userEmail) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
 
         // Get package details
         const packageType = body.package as keyof typeof CREDIT_PACKAGES;
@@ -387,10 +415,12 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
         return reply.code(400).send({ error: 'Missing stripe-signature header' });
       }
 
-      try {
-        // Get raw body for Stripe signature verification
-        const rawBody = await request.body as Buffer;
+      const rawBody = (request as any).rawBody;
+      if (!rawBody) {
+        return reply.code(400).send({ error: 'Raw body not available' });
+      }
 
+      try {
         // Verify webhook signature
         const event = stripe.webhooks.constructEvent(
           rawBody,

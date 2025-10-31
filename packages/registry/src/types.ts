@@ -286,5 +286,6 @@ export interface RegistryConfig {
   stripe: {
     secretKey: string;
     publishableKey: string;
+    webhookSecret: string;
   };
 }

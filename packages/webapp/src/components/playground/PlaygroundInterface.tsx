@@ -59,7 +59,7 @@ export default function PlaygroundInterface({
   }
 
   const loadSession = async (id: string) => {
-    const token = localStorage.getItem('jwt_token')
+    const token = localStorage.getItem('prpm_token')
     if (!token) return
 
     try {
@@ -76,7 +76,7 @@ export default function PlaygroundInterface({
   const handleEstimate = async () => {
     if (!packageId || !input.trim()) return
 
-    const token = localStorage.getItem('jwt_token')
+    const token = localStorage.getItem('prpm_token')
     if (!token) return
 
     try {
@@ -97,7 +97,7 @@ export default function PlaygroundInterface({
       return
     }
 
-    const token = localStorage.getItem('jwt_token')
+    const token = localStorage.getItem('prpm_token')
     if (!token) {
       setError('Not authenticated')
       return
@@ -156,10 +156,10 @@ export default function PlaygroundInterface({
         <div className="relative">
           <input
             type="text"
-            value={selectedPackage ? `${selectedPackage.author_username}/${selectedPackage.name}` : packageSearch}
+            value={packageId && selectedPackage ? `${(selectedPackage as any).author_username || 'unknown'}/${selectedPackage.name}` : packageSearch}
             onChange={(e) => {
               setPackageSearch(e.target.value)
-              if (selectedPackage) setPackageId('')
+              if (packageId) setPackageId('') // Clear selected package when user starts typing
             }}
             onFocus={() => setShowPackageDropdown(true)}
             placeholder="Search for a package..."
@@ -178,11 +178,11 @@ export default function PlaygroundInterface({
                   }}
                   className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition"
                 >
-                  <div className="font-semibold text-gray-900 dark:text-white">
-                    {pkg.author_username}/{pkg.name}
+                  <div className="font-semibold text-gray-800 dark:text-white">
+                    {(pkg as any).author_username || 'unknown'}/{pkg.name}
                   </div>
                   {pkg.description && (
-                    <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
                       {pkg.description}
                     </div>
                   )}

@@ -51,7 +51,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
                 >
                   {link.label}
                   {link.badge && (
-                    <span className="text-xs font-bold px-2 py-0.5 bg-purple-600 text-white rounded-full">
+                    <span className="text-xs font-semibold px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded border border-green-500/30">
                       {link.badge}
                     </span>
                   )}

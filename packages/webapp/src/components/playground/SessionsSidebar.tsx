@@ -29,7 +29,7 @@ export default function SessionsSidebar({
     const confirmed = confirm('Are you sure you want to delete this session?')
     if (!confirmed) return
 
-    const token = localStorage.getItem('jwt_token')
+    const token = localStorage.getItem('prpm_token')
     if (!token) return
 
     setDeletingSession(sessionId)
@@ -48,7 +48,7 @@ export default function SessionsSidebar({
   const handleShare = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation()
 
-    const token = localStorage.getItem('jwt_token')
+    const token = localStorage.getItem('prpm_token')
     if (!token) return
 
     setSharingSession(sessionId)

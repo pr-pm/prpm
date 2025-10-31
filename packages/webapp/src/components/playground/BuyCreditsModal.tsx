@@ -33,7 +33,7 @@ export default function BuyCreditsModal({ onClose, onSuccess }: BuyCreditsModalP
   }
 
   const handlePurchase = async (packageId: string) => {
-    const token = localStorage.getItem('jwt_token')
+    const token = localStorage.getItem('prpm_token')
     if (!token) {
       setError('Not authenticated')
       return

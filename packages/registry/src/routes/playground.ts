@@ -44,7 +44,17 @@ export async function playgroundRoutes(server: FastifyInstance) {
         description: 'Execute a playground run with a package prompt',
         tags: ['playground'],
         security: [{ bearerAuth: [] }],
-        body: PlaygroundRunSchema,
+        body: {
+          type: 'object',
+          required: ['packageId', 'userInput'],
+          properties: {
+            packageId: { type: 'string', format: 'uuid' },
+            packageVersion: { type: 'string' },
+            userInput: { type: 'string', minLength: 1, maxLength: 10000 },
+            conversationId: { type: 'string', format: 'uuid' },
+            model: { type: 'string', enum: ['sonnet', 'opus'], default: 'sonnet' },
+          },
+        },
         response: {
           200: {
             type: 'object',
@@ -71,8 +81,8 @@ export async function playgroundRoutes(server: FastifyInstance) {
             properties: {
               error: { type: 'string', enum: ['insufficient_credits'] },
               message: { type: 'string' },
-              required: { type: 'number' },
-              available: { type: 'number' },
+              requiredCredits: { type: 'number' },
+              availableCredits: { type: 'number' },
               purchaseUrl: { type: 'string' },
             },
           },
@@ -82,7 +92,14 @@ export async function playgroundRoutes(server: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const body = PlaygroundRunSchema.parse(request.body);
-        const userId = (request.user as any).id;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
 
         server.log.info(
           { userId, packageId: body.packageId, conversationId: body.conversationId },
@@ -102,8 +119,8 @@ export async function playgroundRoutes(server: FastifyInstance) {
             return reply.code(402).send({
               error: 'insufficient_credits',
               message: error.message,
-              required: parseInt(match[1]),
-              available: parseInt(match[2]),
+              requiredCredits: parseInt(match[1]),
+              availableCredits: parseInt(match[2]),
               purchaseUrl: '/playground/credits/buy',
             });
           }
@@ -129,7 +146,15 @@ export async function playgroundRoutes(server: FastifyInstance) {
         description: 'Estimate credit cost for a playground run',
         tags: ['playground'],
         security: [{ bearerAuth: [] }],
-        body: EstimateCreditSchema,
+        body: {
+          type: 'object',
+          required: ['packageId', 'userInput'],
+          properties: {
+            packageId: { type: 'string', format: 'uuid' },
+            userInput: { type: 'string', minLength: 1, maxLength: 10000 },
+            model: { type: 'string', enum: ['sonnet', 'opus'], default: 'sonnet' },
+          },
+        },
         response: {
           200: {
             type: 'object',
@@ -147,7 +172,14 @@ export async function playgroundRoutes(server: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const body = EstimateCreditSchema.parse(request.body);
-        const userId = (request.user as any).id;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
 
         // Load package prompt to estimate
         const packagePrompt = await playgroundService.loadPackagePrompt(body.packageId);
@@ -223,7 +255,14 @@ export async function playgroundRoutes(server: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        const userId = (request.user as any).id;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
         const { limit = 20, offset = 0 } = request.query as any;
 
         const result = await playgroundService.listSessions(userId, {
@@ -273,7 +312,14 @@ export async function playgroundRoutes(server: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { id } = request.params as { id: string };
-        const userId = (request.user as any).id;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
 
         const session = await playgroundService.getSession(id, userId);
 
@@ -319,7 +365,14 @@ export async function playgroundRoutes(server: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { id } = request.params as { id: string };
-        const userId = (request.user as any).id;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
 
         await playgroundService.deleteSession(id, userId);
 
@@ -369,7 +422,14 @@ export async function playgroundRoutes(server: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { id } = request.params as { id: string };
-        const userId = (request.user as any).id;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
 
         const shareToken = await playgroundService.shareSession(id, userId);
 
