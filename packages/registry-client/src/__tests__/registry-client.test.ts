@@ -323,7 +323,10 @@ describe('RegistryClient', () => {
 
       const result = await client.downloadPackage('https://example.com/package.tar.gz');
 
-      expect(global.fetch).toHaveBeenCalledWith('https://example.com/package.tar.gz');
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://example.com/package.tar.gz',
+        { headers: { Authorization: `Bearer ${mockToken}` } }
+      );
       expect(Buffer.isBuffer(result)).toBe(true);
     });
 
@@ -337,7 +340,8 @@ describe('RegistryClient', () => {
       await client.downloadPackage(`${mockBaseUrl}/package.tar.gz`, { format: 'cursor' });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('format=cursor')
+        expect.stringContaining('format=cursor'),
+        { headers: { Authorization: `Bearer ${mockToken}` } }
       );
     });
 

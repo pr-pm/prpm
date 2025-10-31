@@ -120,9 +120,11 @@ export async function optionalAuth(
   try {
     await request.jwtVerify();
     // User is now available in request.user if token is valid
+    request.log.debug({ userId: request.user?.user_id, hasUser: !!request.user }, 'optionalAuth: JWT verified successfully');
   } catch (err) {
     // Ignore errors, authentication is optional
     // request.user will be undefined
+    request.log.debug({ error: err instanceof Error ? err.message : String(err) }, 'optionalAuth: JWT verification failed');
   }
 }
 
