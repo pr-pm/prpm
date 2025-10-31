@@ -509,7 +509,7 @@ export async function packageRoutes(server: FastifyInstance) {
       if (organization) {
         const org = await queryOne<{ id: string; verified: boolean }>(
           server,
-          'SELECT id, verified FROM organizations WHERE LOWER(name) = LOWER($1)',
+          'SELECT id, is_verified as verified FROM organizations WHERE LOWER(name) = LOWER($1)',
           [organization]
         );
 
