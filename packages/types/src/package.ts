@@ -71,6 +71,7 @@ export interface Package {
   name: string;
   description?: string;
   author_id?: string;
+  author_username?: string;
   org_id?: string;
   format: Format;
   subtype: Subtype; // Required, defaults to 'rule'

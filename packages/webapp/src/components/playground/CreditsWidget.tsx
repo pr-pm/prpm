@@ -23,30 +23,30 @@ export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: Cred
   const { total, monthly, rollover, purchased, monthly_used, monthly_limit } = credits
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-4 min-w-[200px]">
       {/* Total Credits */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
         <div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Total Credits</div>
-          <div className="text-3xl font-bold text-gray-900 dark:text-white">{total}</div>
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Credits</div>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{total}</div>
         </div>
         <button
           onClick={onRefresh}
-          className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+          className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
           title="Refresh balance"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>
       </div>
 
       {/* Breakdown */}
-      <div className="space-y-2 mb-4 text-sm">
+      <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 text-xs sm:text-sm">
         {monthly > 0 && (
           <div className="flex justify-between text-gray-600 dark:text-gray-400">
-            <span>Monthly ({monthly_used}/{monthly_limit} used)</span>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">{monthly - monthly_used}</span>
+            <span className="truncate mr-2">Monthly ({monthly_used}/{monthly_limit})</span>
+            <span className="font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">{monthly - monthly_used}</span>
           </div>
         )}
         {rollover > 0 && (
@@ -66,7 +66,7 @@ export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: Cred
       {/* Buy Credits Button */}
       <button
         onClick={onBuyCredits}
-        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-sm"
+        className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-sm"
       >
         Buy More Credits
       </button>

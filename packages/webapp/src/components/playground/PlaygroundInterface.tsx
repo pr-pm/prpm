@@ -147,9 +147,9 @@ export default function PlaygroundInterface({
   const selectedPackage = packages.find(p => p.id === packageId)
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6">
       {/* Package Selection */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
           Select Package
         </label>
@@ -163,7 +163,7 @@ export default function PlaygroundInterface({
             }}
             onFocus={() => setShowPackageDropdown(true)}
             placeholder="Search for a package..."
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
           {showPackageDropdown && packages.length > 0 && (
@@ -194,14 +194,14 @@ export default function PlaygroundInterface({
       </div>
 
       {/* Model Selection */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
           Model
         </label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <button
             onClick={() => setModel('sonnet')}
-            className={`px-3 py-2 rounded-lg font-medium text-sm transition ${
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'sonnet'
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -212,7 +212,7 @@ export default function PlaygroundInterface({
           </button>
           <button
             onClick={() => setModel('opus')}
-            className={`px-3 py-2 rounded-lg font-medium text-sm transition ${
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'opus'
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -223,7 +223,7 @@ export default function PlaygroundInterface({
           </button>
           <button
             onClick={() => setModel('gpt-4o-mini')}
-            className={`px-3 py-2 rounded-lg font-medium text-sm transition ${
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'gpt-4o-mini'
                 ? 'bg-green-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -234,7 +234,7 @@ export default function PlaygroundInterface({
           </button>
           <button
             onClick={() => setModel('gpt-4o')}
-            className={`px-3 py-2 rounded-lg font-medium text-sm transition ${
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'gpt-4o'
                 ? 'bg-green-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -245,7 +245,7 @@ export default function PlaygroundInterface({
           </button>
           <button
             onClick={() => setModel('gpt-4-turbo')}
-            className={`px-3 py-2 rounded-lg font-medium text-sm transition ${
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'gpt-4-turbo'
                 ? 'bg-green-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -259,11 +259,11 @@ export default function PlaygroundInterface({
 
       {/* Conversation History */}
       {conversation.length > 0 && (
-        <div className="mb-6 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div className="mb-4 sm:mb-6 max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
           {conversation.map((message, index) => (
             <div
               key={index}
-              className={`p-4 ${
+              className={`p-3 sm:p-4 ${
                 message.role === 'user'
                   ? 'bg-blue-50 dark:bg-blue-900/20'
                   : 'bg-gray-50 dark:bg-gray-700/50'
@@ -272,7 +272,7 @@ export default function PlaygroundInterface({
               <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
                 {message.role}
               </div>
-              <div className="text-gray-900 dark:text-white whitespace-pre-wrap">{message.content}</div>
+              <div className="text-sm sm:text-base text-gray-900 dark:text-white whitespace-pre-wrap break-words">{message.content}</div>
             </div>
           ))}
         </div>
@@ -287,16 +287,16 @@ export default function PlaygroundInterface({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Enter your input or question here..."
-          rows={6}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          rows={4}
+          className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           disabled={loading}
         />
       </div>
 
       {/* Estimated Credits */}
       {estimatedCredits !== null && (
-        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <div className="text-sm text-blue-800 dark:text-blue-300">
+        <div className="mb-4 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="text-xs sm:text-sm text-blue-800 dark:text-blue-300">
             💡 Estimated cost: <span className="font-bold">{estimatedCredits} credits</span>
           </div>
         </div>
@@ -304,8 +304,8 @@ export default function PlaygroundInterface({
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <div className="text-sm text-red-800 dark:text-red-300">{error}</div>
+        <div className="mb-4 p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <div className="text-xs sm:text-sm text-red-800 dark:text-red-300">{error}</div>
         </div>
       )}
 
@@ -313,7 +313,7 @@ export default function PlaygroundInterface({
       <button
         onClick={handleRun}
         disabled={loading || !packageId || !input.trim()}
-        className={`w-full py-3 px-6 rounded-lg font-semibold text-white transition ${
+        className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-sm sm:text-base text-white transition ${
           loading || !packageId || !input.trim()
             ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-blue-600 hover:bg-blue-700 shadow-sm'
