@@ -17,18 +17,36 @@ export default function PlaygroundInterface({
   onCreditsChange,
   onSessionCreated,
 }: PlaygroundInterfaceProps) {
+  // Comparison mode state
+  const [comparisonMode, setComparisonMode] = useState(false)
+
+  // Package A (original/left side)
   const [packageId, setPackageId] = useState(initialPackageId || '')
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [packageSearch, setPackageSearch] = useState('')
   const [packages, setPackages] = useState<Package[]>([])
   const [showPackageDropdown, setShowPackageDropdown] = useState(false)
+
+  // Package B (comparison/right side)
+  const [packageIdB, setPackageIdB] = useState('')
+  const [selectedPackageB, setSelectedPackageB] = useState<Package | null>(null)
+  const [packageSearchB, setPackageSearchB] = useState('')
+  const [packagesB, setPackagesB] = useState<Package[]>([])
+  const [showPackageDropdownB, setShowPackageDropdownB] = useState(false)
+
+  // Shared state
   const [input, setInput] = useState('')
   const [conversation, setConversation] = useState<PlaygroundMessage[]>([])
+  const [conversationB, setConversationB] = useState<PlaygroundMessage[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingB, setLoadingB] = useState(false)
   const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null)
+  const [estimatedCreditsB, setEstimatedCreditsB] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorB, setErrorB] = useState<string | null>(null)
   const [model, setModel] = useState<'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo'>('sonnet')
   const [currentSessionId, setCurrentSessionId] = useState(sessionId)
+  const [currentSessionIdB, setCurrentSessionIdB] = useState<string | undefined>(undefined)
 
   // Load session if provided
   useEffect(() => {
@@ -40,20 +58,34 @@ export default function PlaygroundInterface({
     }
   }, [sessionId])
 
-  // Load package options when searching
+  // Load package options when searching (Package A)
   useEffect(() => {
     if (packageSearch.length > 1) {
-      searchForPackages(packageSearch)
+      searchForPackages(packageSearch, 'A')
     } else {
       setPackages([])
     }
   }, [packageSearch])
 
-  const searchForPackages = async (query: string) => {
+  // Load package options when searching (Package B)
+  useEffect(() => {
+    if (packageSearchB.length > 1) {
+      searchForPackages(packageSearchB, 'B')
+    } else {
+      setPackagesB([])
+    }
+  }, [packageSearchB])
+
+  const searchForPackages = async (query: string, target: 'A' | 'B') => {
     try {
       const result = await searchPackages({ q: query, limit: 10 })
-      setPackages(result.packages)
-      setShowPackageDropdown(true)
+      if (target === 'A') {
+        setPackages(result.packages)
+        setShowPackageDropdown(true)
+      } else {
+        setPackagesB(result.packages)
+        setShowPackageDropdownB(true)
+      }
     } catch (err) {
       console.error('Failed to search packages:', err)
     }
@@ -98,39 +130,89 @@ export default function PlaygroundInterface({
       return
     }
 
+    if (comparisonMode && !packageIdB) {
+      setErrorB('Please select a second package for comparison')
+      return
+    }
+
     const token = localStorage.getItem('prpm_token')
     if (!token) {
       setError('Not authenticated')
       return
     }
 
-    setLoading(true)
-    setError(null)
+    if (comparisonMode) {
+      // Run both packages in parallel
+      setLoading(true)
+      setLoadingB(true)
+      setError(null)
+      setErrorB(null)
 
-    try {
-      const result = await runPlayground(token, {
-        package_id: packageId,
-        input: input.trim(),
-        model,
-        session_id: currentSessionId,
-      })
+      try {
+        const [resultA, resultB] = await Promise.all([
+          runPlayground(token, {
+            package_id: packageId,
+            input: input.trim(),
+            model,
+            session_id: currentSessionId,
+          }),
+          runPlayground(token, {
+            package_id: packageIdB,
+            input: input.trim(),
+            model,
+            session_id: currentSessionIdB,
+          })
+        ])
 
-      setConversation(result.conversation)
-      setCurrentSessionId(result.session_id)
-      setInput('')
-      setEstimatedCredits(null)
-      onCreditsChange()
-      onSessionCreated()
-    } catch (err: any) {
-      console.error('Failed to run playground:', err)
-      setError(err.message || 'Failed to run playground')
-
-      // Handle insufficient credits error
-      if (err.message.includes('Insufficient credits') || err.message.includes('402')) {
-        setError('Insufficient credits. Please buy more credits to continue.')
+        setConversation(resultA.conversation)
+        setCurrentSessionId(resultA.session_id)
+        setConversationB(resultB.conversation)
+        setCurrentSessionIdB(resultB.session_id)
+        setInput('')
+        setEstimatedCredits(null)
+        setEstimatedCreditsB(null)
+        onCreditsChange()
+        onSessionCreated()
+      } catch (err: any) {
+        console.error('Failed to run comparison:', err)
+        setError(err.message || 'Failed to run comparison')
+        if (err.message.includes('Insufficient credits') || err.message.includes('402')) {
+          setError('Insufficient credits. Please buy more credits to continue.')
+        }
+      } finally {
+        setLoading(false)
+        setLoadingB(false)
       }
-    } finally {
-      setLoading(false)
+    } else {
+      // Single package mode
+      setLoading(true)
+      setError(null)
+
+      try {
+        const result = await runPlayground(token, {
+          package_id: packageId,
+          input: input.trim(),
+          model,
+          session_id: currentSessionId,
+        })
+
+        setConversation(result.conversation)
+        setCurrentSessionId(result.session_id)
+        setInput('')
+        setEstimatedCredits(null)
+        onCreditsChange()
+        onSessionCreated()
+      } catch (err: any) {
+        console.error('Failed to run playground:', err)
+        setError(err.message || 'Failed to run playground')
+
+        // Handle insufficient credits error
+        if (err.message.includes('Insufficient credits') || err.message.includes('402')) {
+          setError('Insufficient credits. Please buy more credits to continue.')
+        }
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -150,55 +232,138 @@ export default function PlaygroundInterface({
     return pkg.org_name || pkg.author_username || 'unknown'
   }
 
+  // Package selection component (reusable)
+  const PackageSelector = ({
+    side,
+    selectedPkg,
+    pkgSearch,
+    pkgs,
+    showDropdown,
+    setSelectedPkg,
+    setPkgId,
+    setPkgSearch,
+    setPkgs,
+    setShowDropdown
+  }: {
+    side: 'A' | 'B'
+    selectedPkg: Package | null
+    pkgSearch: string
+    pkgs: Package[]
+    showDropdown: boolean
+    setSelectedPkg: (pkg: Package | null) => void
+    setPkgId: (id: string) => void
+    setPkgSearch: (search: string) => void
+    setPkgs: (pkgs: Package[]) => void
+    setShowDropdown: (show: boolean) => void
+  }) => (
+    <div className="relative">
+      <input
+        type="text"
+        value={selectedPkg ? `${getPackageOwner(selectedPkg)}/${selectedPkg.name}` : pkgSearch}
+        onChange={(e) => {
+          setPkgSearch(e.target.value)
+          if (selectedPkg) {
+            setSelectedPkg(null)
+            setPkgId('')
+          }
+        }}
+        onFocus={() => setShowDropdown(true)}
+        placeholder="Search for a package..."
+        className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      />
+      {showDropdown && pkgs.length > 0 && (
+        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+          {pkgs.map((pkg) => (
+            <button
+              key={pkg.id}
+              onClick={() => {
+                setSelectedPkg(pkg)
+                setPkgId(pkg.id)
+                setPkgSearch('')
+                setShowDropdown(false)
+              }}
+              className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+            >
+              <div className="font-semibold text-gray-900 dark:text-white">
+                {getPackageOwner(pkg)}/{pkg.name}
+              </div>
+              {pkg.description && (
+                <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                  {pkg.description}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6">
-      {/* Package Selection */}
-      <div className="mb-4 sm:mb-6">
-        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          Select Package
-        </label>
-        <div className="relative">
-          <input
-            type="text"
-            value={selectedPackage ? `${getPackageOwner(selectedPackage)}/${selectedPackage.name}` : packageSearch}
-            onChange={(e) => {
-              setPackageSearch(e.target.value)
-              if (selectedPackage) {
-                setSelectedPackage(null)
-                setPackageId('')
-              }
-            }}
-            onFocus={() => setShowPackageDropdown(true)}
-            placeholder="Search for a package..."
-            className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+      {/* Comparison Mode Toggle */}
+      <div className="mb-4 sm:mb-6 flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {comparisonMode ? 'Compare Prompts' : 'Test Prompt'}
+        </h3>
+        <button
+          onClick={() => {
+            setComparisonMode(!comparisonMode)
+            if (!comparisonMode) {
+              // Clear comparison state when entering comparison mode
+              setConversationB([])
+              setErrorB(null)
+            }
+          }}
+          className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition ${
+            comparisonMode
+              ? 'bg-purple-600 text-white hover:bg-purple-700'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+          }`}
+        >
+          {comparisonMode ? '✓ Comparison Mode' : 'Compare Mode'}
+        </button>
+      </div>
 
-          {showPackageDropdown && packages.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-              {packages.map((pkg) => (
-                <button
-                  key={pkg.id}
-                  onClick={() => {
-                    setSelectedPackage(pkg)
-                    setPackageId(pkg.id)
-                    setPackageSearch('')
-                    setShowPackageDropdown(false)
-                  }}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition"
-                >
-                  <div className="font-semibold text-gray-900 dark:text-white">
-                    {getPackageOwner(pkg)}/{pkg.name}
-                  </div>
-                  {pkg.description && (
-                    <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {pkg.description}
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+      {/* Package Selection - Split or Single */}
+      <div className={comparisonMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 sm:mb-6' : 'mb-4 sm:mb-6'}>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            {comparisonMode ? 'Package A' : 'Select Package'}
+          </label>
+          <PackageSelector
+            side="A"
+            selectedPkg={selectedPackage}
+            pkgSearch={packageSearch}
+            pkgs={packages}
+            showDropdown={showPackageDropdown}
+            setSelectedPkg={setSelectedPackage}
+            setPkgId={setPackageId}
+            setPkgSearch={setPackageSearch}
+            setPkgs={setPackages}
+            setShowDropdown={setShowPackageDropdown}
+          />
         </div>
+
+        {comparisonMode && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Package B
+            </label>
+            <PackageSelector
+              side="B"
+              selectedPkg={selectedPackageB}
+              pkgSearch={packageSearchB}
+              pkgs={packagesB}
+              showDropdown={showPackageDropdownB}
+              setSelectedPkg={setSelectedPackageB}
+              setPkgId={setPackageIdB}
+              setPkgSearch={setPackageSearchB}
+              setPkgs={setPackagesB}
+              setShowDropdown={setShowPackageDropdownB}
+            />
+          </div>
+        )}
       </div>
 
       {/* Model Selection */}
@@ -266,23 +431,61 @@ export default function PlaygroundInterface({
       </div>
 
       {/* Conversation History */}
-      {conversation.length > 0 && (
-        <div className="mb-4 sm:mb-6 max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-          {conversation.map((message, index) => (
-            <div
-              key={index}
-              className={`p-3 sm:p-4 ${
-                message.role === 'user'
-                  ? 'bg-blue-50 dark:bg-blue-900/20'
-                  : 'bg-gray-50 dark:bg-gray-700/50'
-              }`}
-            >
-              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                {message.role}
+      {(conversation.length > 0 || conversationB.length > 0) && (
+        <div className={`mb-4 sm:mb-6 ${comparisonMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}`}>
+          {/* Package A Conversation */}
+          {conversation.length > 0 && (
+            <div>
+              {comparisonMode && (
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  {selectedPackage ? `${getPackageOwner(selectedPackage)}/${selectedPackage.name}` : 'Package A'}
+                </h4>
+              )}
+              <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                {conversation.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 sm:p-4 ${
+                      message.role === 'user'
+                        ? 'bg-blue-50 dark:bg-blue-900/20'
+                        : 'bg-gray-50 dark:bg-gray-700/50'
+                    }`}
+                  >
+                    <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                      {message.role}
+                    </div>
+                    <div className="text-sm sm:text-base text-gray-900 dark:text-white whitespace-pre-wrap break-words">{message.content}</div>
+                  </div>
+                ))}
               </div>
-              <div className="text-sm sm:text-base text-gray-900 dark:text-white whitespace-pre-wrap break-words">{message.content}</div>
             </div>
-          ))}
+          )}
+
+          {/* Package B Conversation */}
+          {comparisonMode && conversationB.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {selectedPackageB ? `${getPackageOwner(selectedPackageB)}/${selectedPackageB.name}` : 'Package B'}
+              </h4>
+              <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                {conversationB.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 sm:p-4 ${
+                      message.role === 'user'
+                        ? 'bg-purple-50 dark:bg-purple-900/20'
+                        : 'bg-gray-50 dark:bg-gray-700/50'
+                    }`}
+                  >
+                    <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                      {message.role}
+                    </div>
+                    <div className="text-sm sm:text-base text-gray-900 dark:text-white whitespace-pre-wrap break-words">{message.content}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -310,33 +513,48 @@ export default function PlaygroundInterface({
         </div>
       )}
 
-      {/* Error Message */}
-      {error && (
-        <div className="mb-4 p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <div className="text-xs sm:text-sm text-red-800 dark:text-red-300">{error}</div>
+      {/* Error Messages */}
+      {(error || errorB) && (
+        <div className={`mb-4 ${comparisonMode && error && errorB ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}`}>
+          {error && (
+            <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="text-xs sm:text-sm text-red-800 dark:text-red-300">
+                {comparisonMode && <span className="font-semibold">Package A: </span>}
+                {error}
+              </div>
+            </div>
+          )}
+          {comparisonMode && errorB && (
+            <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="text-xs sm:text-sm text-red-800 dark:text-red-300">
+                <span className="font-semibold">Package B: </span>
+                {errorB}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Run Button */}
       <button
         onClick={handleRun}
-        disabled={loading || !packageId || !input.trim()}
+        disabled={loading || loadingB || !packageId || !input.trim() || (comparisonMode && !packageIdB)}
         className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-sm sm:text-base text-white transition ${
           loading || !packageId || !input.trim()
             ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-blue-600 hover:bg-blue-700 shadow-sm'
         }`}
       >
-        {loading ? (
+        {loading || loadingB ? (
           <span className="flex items-center justify-center">
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Running...
+            {comparisonMode ? 'Running Comparison...' : 'Running...'}
           </span>
         ) : (
-          'Run Playground'
+          comparisonMode ? 'Compare Prompts' : 'Run Playground'
         )}
       </button>
     </div>
