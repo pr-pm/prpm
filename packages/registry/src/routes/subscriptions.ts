@@ -24,7 +24,6 @@ export async function subscriptionRoutes(server: FastifyInstance) {
       orgName: string;
       successUrl: string;
       cancelUrl: string;
-      email?: string;
     };
   }>('/checkout', {
     onRequest: [server.authenticate],
@@ -38,12 +37,11 @@ export async function subscriptionRoutes(server: FastifyInstance) {
           orgName: { type: 'string' },
           successUrl: { type: 'string', format: 'uri' },
           cancelUrl: { type: 'string', format: 'uri' },
-          email: { type: 'string', format: 'email', description: 'Optional email to override the user\'s email' },
         },
       },
     },
   }, async (request, reply) => {
-    const { orgName, successUrl, cancelUrl, email: overrideEmail } = request.body;
+    const { orgName, successUrl, cancelUrl } = request.body;
     const userId = (request as any).user?.user_id;
 
     if (!userId) {
@@ -88,17 +86,8 @@ export async function subscriptionRoutes(server: FastifyInstance) {
         });
       }
 
-      // Get user email for customer (unless overridden)
-      let customerEmail = overrideEmail;
-
-      if (!customerEmail) {
-        const user = await queryOne<{ email: string }>(
-          server,
-          'SELECT email FROM users WHERE id = $1',
-          [userId]
-        );
-        customerEmail = user?.email;
-      }
+      // Don't supply customer email - let user input it in Stripe checkout
+      // This allows them to use a different email than their account email
 
       // Create checkout session
       const checkoutUrl = await createCheckoutSession(server, {
@@ -106,7 +95,7 @@ export async function subscriptionRoutes(server: FastifyInstance) {
         orgName: org.name,
         successUrl,
         cancelUrl,
-        customerEmail,
+        customerEmail: undefined, // Let Stripe collect email
       });
 
       server.log.info({ orgId: org.id, userId }, '✅ Checkout session created');
