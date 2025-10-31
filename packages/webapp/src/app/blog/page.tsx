@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "when-to-use-claude-skill-vs-subagent",
+    title: "When to Use a Claude Skill vs a Claude Sub-Agent",
+    excerpt: "Skills and sub-agents sound similar but work completely differently. Pick the wrong one and you'll end up with context bloat or tasks that never finish. This guide shows you exactly when to use each.",
+    date: "2025-10-31",
+    author: "PRPM Team",
+    readTime: "10 min read",
+    tags: ["Technical", "Tutorial", "AI Development", "Claude Code"],
+  },
+  {
     slug: "prpm-vs-plugins",
     title: "PRPM vs Claude Plugins Marketplace: What's the Difference?",
     excerpt: "Understanding how PRPM differs from the Claude plugin marketplaces. Learn why PRPM manages AI instructions while plugins manage executable code, and why both can coexist in your workflow.",

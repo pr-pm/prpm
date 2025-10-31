@@ -1,0 +1,8 @@
+Confused when to use a Claude skill vs a sub-agent?
+
+Skills = guidance Claude loads automatically (patterns, conventions, domain knowledge)
+Sub-agents = specialists that execute complex multi-step tasks
+
+Wrong choice = context bloat or broken workflows.
+
+Full guide: https://prpm.dev/blog/when-to-use-claude-skill-vs-subagent
