@@ -1,4 +1,5 @@
 import { pgTable, uuid, varchar, text, boolean, timestamp, integer, decimal, jsonb, index } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { organizations } from './organizations.js';
 
 /**
@@ -17,7 +18,8 @@ export const packages = pgTable('packages', {
   orgId: uuid('org_id').references(() => organizations.id),
 
   // Package metadata
-  type: varchar('type', { length: 50 }).notNull(), // cursor, claude, continue, windsurf, generic
+  format: varchar('format', { length: 255 }).notNull(), // cursor, claude, continue, windsurf, copilot, kiro, generic, mcp
+  subtype: varchar('subtype', { length: 255 }).notNull().default('rule'), // rule, agent, skill, slash-command, prompt, workflow, tool, template, collection, chatmode
   license: varchar('license', { length: 50 }),
   licenseText: text('license_text'),
   licenseUrl: varchar('license_url', { length: 500 }),
@@ -69,6 +71,15 @@ export const packages = pgTable('packages', {
 
   // Content preview
   snippet: text('snippet'),
+
+  // MCP Server fields (from migration 009)
+  remoteServer: boolean('remote_server').default(false),
+  remoteUrl: text('remote_url'),
+  transportType: varchar('transport_type', { length: 50 }),
+  mcpConfig: jsonb('mcp_config').default({}),
+
+  // Full-text search (from migration 003)
+  searchVector: text('search_vector').$type<string | null>(),
 
   // Timestamps
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

@@ -10,7 +10,8 @@ describe('Packages Schema', () => {
       description: 'A test package',
       authorId: '550e8400-e29b-41d4-a716-446655440001',
       orgId: null,
-      type: 'cursor',
+      format: 'cursor',
+      subtype: 'rule',
       license: 'MIT',
       licenseText: null,
       licenseUrl: null,
@@ -48,6 +49,11 @@ describe('Packages Schema', () => {
       downloadsLast30Days: 0,
       trendingScore: '0',
       snippet: null,
+      remoteServer: false,
+      remoteUrl: null,
+      transportType: null,
+      mcpConfig: null,
+      searchVector: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       lastPublishedAt: null,
@@ -55,7 +61,8 @@ describe('Packages Schema', () => {
 
     expect(pkg).toBeDefined();
     expect(pkg.name).toBe('test-package');
-    expect(pkg.type).toBe('cursor');
+    expect(pkg.format).toBe('cursor');
+    expect(pkg.subtype).toBe('rule');
   });
 
   it('should have correct TypeScript types for NewPackage', () => {
@@ -63,7 +70,8 @@ describe('Packages Schema', () => {
     const newPkg: NewPackage = {
       name: 'new-package',
       description: 'A new package',
-      type: 'claude',
+      format: 'claude',
+      subtype: 'skill',
       authorId: '550e8400-e29b-41d4-a716-446655440001',
       license: 'Apache-2.0',
       repositoryUrl: 'https://github.com/test/new-package',
@@ -72,19 +80,20 @@ describe('Packages Schema', () => {
 
     expect(newPkg).toBeDefined();
     expect(newPkg.name).toBe('new-package');
-    expect(newPkg.type).toBe('claude');
+    expect(newPkg.format).toBe('claude');
+    expect(newPkg.subtype).toBe('skill');
   });
 
   it('should allow partial inserts with defaults', () => {
     // Verify that fields with defaults are optional
     const minimalPkg: NewPackage = {
       name: 'minimal-package',
-      type: 'generic',
+      format: 'generic',
     };
 
     expect(minimalPkg).toBeDefined();
     expect(minimalPkg.name).toBe('minimal-package');
-    expect(minimalPkg.type).toBe('generic');
+    expect(minimalPkg.format).toBe('generic');
   });
 
   it('should handle verified official packages', () => {
@@ -95,7 +104,8 @@ describe('Packages Schema', () => {
       description: 'An official verified package',
       authorId: null,
       orgId: '550e8400-e29b-41d4-a716-446655440003',
-      type: 'cursor',
+      format: 'cursor',
+      subtype: 'rule',
       license: 'MIT',
       licenseText: 'MIT License text here',
       licenseUrl: 'https://github.com/test/official-package/LICENSE',
@@ -133,6 +143,11 @@ describe('Packages Schema', () => {
       downloadsLast30Days: 2000,
       trendingScore: '0.85',
       snippet: 'This is a preview snippet of the package content...',
+      remoteServer: false,
+      remoteUrl: null,
+      transportType: null,
+      mcpConfig: null,
+      searchVector: null,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date(),
       lastPublishedAt: new Date(),
@@ -181,6 +196,11 @@ describe('Packages Schema', () => {
     expect(table.downloadsLast7Days.name).toBe('downloads_last_7_days');
     expect(table.downloadsLast30Days.name).toBe('downloads_last_30_days');
     expect(table.trendingScore.name).toBe('trending_score');
+    expect(table.remoteServer.name).toBe('remote_server');
+    expect(table.remoteUrl.name).toBe('remote_url');
+    expect(table.transportType.name).toBe('transport_type');
+    expect(table.mcpConfig.name).toBe('mcp_config');
+    expect(table.searchVector.name).toBe('search_vector');
     expect(table.createdAt.name).toBe('created_at');
     expect(table.updatedAt.name).toBe('updated_at');
     expect(table.lastPublishedAt.name).toBe('last_published_at');
@@ -194,7 +214,8 @@ describe('Packages Schema', () => {
       description: 'A test package',
       authorId: '550e8400-e29b-41d4-a716-446655440001',
       orgId: null,
-      type: 'cursor',
+      format: 'cursor',
+      subtype: 'rule',
       license: 'MIT',
       licenseText: null,
       licenseUrl: null,
@@ -232,6 +253,11 @@ describe('Packages Schema', () => {
       downloadsLast30Days: 0,
       trendingScore: '0',
       snippet: null,
+      remoteServer: false,
+      remoteUrl: null,
+      transportType: null,
+      mcpConfig: null,
+      searchVector: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       lastPublishedAt: null,
@@ -240,7 +266,8 @@ describe('Packages Schema', () => {
     // These should be the correct types
     const idIsString: string = pkg.id;
     const nameIsString: string = pkg.name;
-    const typeIsString: string = pkg.type;
+    const formatIsString: string = pkg.format;
+    const subtypeIsString: string = pkg.subtype;
     const verifiedIsBoolean: boolean = pkg.verified;
     const totalDownloadsIsNumber: number = pkg.totalDownloads;
     const createdAtIsDate: Date = pkg.createdAt;
@@ -248,7 +275,8 @@ describe('Packages Schema', () => {
 
     expect(idIsString).toBeDefined();
     expect(nameIsString).toBeDefined();
-    expect(typeIsString).toBeDefined();
+    expect(formatIsString).toBeDefined();
+    expect(subtypeIsString).toBeDefined();
     expect(verifiedIsBoolean).toBeDefined();
     expect(totalDownloadsIsNumber).toBeDefined();
     expect(createdAtIsDate).toBeDefined();
@@ -259,7 +287,7 @@ describe('Packages Schema', () => {
     // Test type safety for packages with organization ownership
     const orgPkg: NewPackage = {
       name: 'org-package',
-      type: 'cursor',
+      format: 'cursor',
       description: 'Package owned by an organization',
       orgId: '550e8400-e29b-41d4-a716-446655440003',
       authorId: null,
@@ -278,7 +306,8 @@ describe('Packages Schema', () => {
       description: 'A package with quality scores',
       authorId: '550e8400-e29b-41d4-a716-446655440001',
       orgId: null,
-      type: 'cursor',
+      format: 'cursor',
+      subtype: 'rule',
       license: 'MIT',
       licenseText: null,
       licenseUrl: null,
@@ -316,6 +345,11 @@ describe('Packages Schema', () => {
       downloadsLast30Days: 200,
       trendingScore: '0.35',
       snippet: 'Preview text...',
+      remoteServer: false,
+      remoteUrl: null,
+      transportType: null,
+      mcpConfig: null,
+      searchVector: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       lastPublishedAt: new Date(),
@@ -328,5 +362,26 @@ describe('Packages Schema', () => {
     expect(scoredPkg.scoreTrust).toBe(15);
     expect(scoredPkg.scoreRecency).toBe(10);
     expect(scoredPkg.scoreCompleteness).toBe(10);
+  });
+
+  it('should handle MCP server fields', () => {
+    // Test MCP-specific fields
+    const mcpPkg: NewPackage = {
+      name: 'mcp-server',
+      format: 'mcp',
+      subtype: 'tool',
+      description: 'An MCP server package',
+      remoteServer: true,
+      remoteUrl: 'https://mcp.example.com',
+      transportType: 'sse',
+      mcpConfig: { capabilities: ['tools', 'resources'] },
+    };
+
+    expect(mcpPkg).toBeDefined();
+    expect(mcpPkg.format).toBe('mcp');
+    expect(mcpPkg.subtype).toBe('tool');
+    expect(mcpPkg.remoteServer).toBe(true);
+    expect(mcpPkg.remoteUrl).toBe('https://mcp.example.com');
+    expect(mcpPkg.transportType).toBe('sse');
   });
 });
