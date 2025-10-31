@@ -44,3 +44,4 @@ logs/
 
 # Data files (scraped packages, checkpoints, etc.)
 data/
+.worktrees/
