@@ -357,36 +357,37 @@ async function handleSubscriptionUpdate(
     return;
   }
 
-  // Get customer email from Stripe to update user record
+  // Get customer email from Stripe to update organization billing email
   const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
+  server.log.info({ customerId, orgId }, '🔍 Attempting to fetch customer email for billing');
+
   if (customerId) {
     try {
       const customer = await stripe.customers.retrieve(customerId);
+      server.log.info({ customerId, deleted: customer.deleted, hasEmail: !customer.deleted && !!(customer as Stripe.Customer).email, email: !customer.deleted ? (customer as Stripe.Customer).email : undefined }, '📧 Customer retrieved from Stripe');
 
-      if (!customer.deleted && customer.email) {
-        // Get the user ID from the organization owner/admin
-        const owner = await queryOne<{ user_id: string }>(
-          server,
-          `SELECT user_id FROM organization_members
-           WHERE org_id = $1 AND (role = 'owner' OR role = 'admin')
-           ORDER BY created_at ASC LIMIT 1`,
-          [orgId]
-        );
-
-        if (owner) {
-          // Update the user's email to match what's in Stripe
-          await query(
+      if (!customer.deleted) {
+        const activeCustomer = customer as Stripe.Customer;
+        if (activeCustomer.email) {
+          // Update the organization's billing email
+          const result = await query(
             server,
-            'UPDATE users SET email = $1 WHERE id = $2',
-            [customer.email, owner.user_id]
+            'UPDATE organizations SET billing_email = $1 WHERE id = $2 RETURNING billing_email',
+            [activeCustomer.email, orgId]
           );
 
-          server.log.info({ userId: owner.user_id, email: customer.email }, '✅ Updated user email from Stripe customer');
+          server.log.info({ orgId, email: activeCustomer.email, rowsUpdated: result.rows.length }, '✅ Updated organization billing email from Stripe customer');
+        } else {
+          server.log.warn({ customerId, orgId }, '⚠️  Customer has no email in Stripe');
         }
+      } else {
+        server.log.warn({ customerId, orgId }, '⚠️  Customer is deleted');
       }
     } catch (error) {
       server.log.error({ error, customerId }, '⚠️  Failed to fetch customer email from Stripe');
     }
+  } else {
+    server.log.warn({ orgId }, '⚠️  No customer ID found in subscription');
   }
 
   // Get period dates from first subscription item (Stripe stores it there)
