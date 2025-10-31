@@ -357,6 +357,38 @@ async function handleSubscriptionUpdate(
     return;
   }
 
+  // Get customer email from Stripe to update user record
+  const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
+  if (customerId) {
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+
+      if (!customer.deleted && customer.email) {
+        // Get the user ID from the organization owner/admin
+        const owner = await queryOne<{ user_id: string }>(
+          server,
+          `SELECT user_id FROM organization_members
+           WHERE org_id = $1 AND (role = 'owner' OR role = 'admin')
+           ORDER BY created_at ASC LIMIT 1`,
+          [orgId]
+        );
+
+        if (owner) {
+          // Update the user's email to match what's in Stripe
+          await query(
+            server,
+            'UPDATE users SET email = $1 WHERE id = $2',
+            [customer.email, owner.user_id]
+          );
+
+          server.log.info({ userId: owner.user_id, email: customer.email }, '✅ Updated user email from Stripe customer');
+        }
+      }
+    } catch (error) {
+      server.log.error({ error, customerId }, '⚠️  Failed to fetch customer email from Stripe');
+    }
+  }
+
   // Get period dates from first subscription item (Stripe stores it there)
   // TypeScript types don't include these fields but they exist in the API response
   const firstItem = subscription.items.data[0] as any;
