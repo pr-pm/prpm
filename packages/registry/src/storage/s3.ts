@@ -71,21 +71,68 @@ export async function uploadPackage(
 }
 
 /**
+ * Check if an object exists in S3
+ */
+async function objectExists(bucket: string, key: string): Promise<boolean> {
+  try {
+    const { HeadObjectCommand } = await import('@aws-sdk/client-s3');
+    await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Get presigned URL for package download
+ * Supports both new UUID-based paths and legacy author-based paths
  */
 export async function getDownloadUrl(
   server: FastifyInstance,
   packageId: string,
   version: string,
-  expiresIn: number = 3600
+  options?: {
+    packageName?: string;
+    expiresIn?: number;
+  }
 ): Promise<string> {
-  const key = `packages/${packageId}/${version}/package.tar.gz`;
+  const expiresIn = options?.expiresIn || 3600;
+
+  // Try new UUID-based structure first: packages/{uuid}/{version}/package.tar.gz
+  const newKey = `packages/${packageId}/${version}/package.tar.gz`;
+
+  let key = newKey;
+  let usingLegacyPath = false;
+
+  // If we have a package name and the new path doesn't exist, try legacy path
+  if (options?.packageName) {
+    const newPathExists = await objectExists(config.s3.bucket, newKey);
+
+    if (!newPathExists) {
+      // Try legacy author-based structure: packages/{@scope/name}/{version}/package.tar.gz
+      const legacyKey = `packages/${options.packageName}/${version}/package.tar.gz`;
+      const legacyPathExists = await objectExists(config.s3.bucket, legacyKey);
+
+      if (legacyPathExists) {
+        key = legacyKey;
+        usingLegacyPath = true;
+        server.log.info({
+          packageId,
+          packageName: options.packageName,
+          version,
+          legacyKey
+        }, 'Using legacy author-based S3 path');
+      }
+    }
+  }
 
   try {
     server.log.info({
       packageId,
+      packageName: options?.packageName,
       version,
       key,
+      usingLegacyPath,
       bucket: config.s3.bucket,
       hasCredentials: !!(config.s3.accessKeyId && config.s3.secretAccessKey)
     }, 'Generating presigned download URL');
@@ -97,14 +144,16 @@ export async function getDownloadUrl(
 
     const url = await getSignedUrl(s3Client, command, { expiresIn });
 
-    server.log.info({ url: url.substring(0, 100) + '...' }, 'Generated presigned URL');
+    server.log.info({ url: url.substring(0, 100) + '...', usingLegacyPath }, 'Generated presigned URL');
     return url;
   } catch (error: unknown) {
     server.log.error({
       error: String(error),
       packageId,
+      packageName: options?.packageName,
       version,
       key,
+      usingLegacyPath,
       bucket: config.s3.bucket,
       hasAccessKey: !!config.s3.accessKeyId,
       hasSecretKey: !!config.s3.secretAccessKey

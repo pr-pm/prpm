@@ -309,36 +309,54 @@ export async function packageRoutes(server: FastifyInstance) {
           }
         }
 
-        // If still no content, return 404
-        if (!content || content.trim() === '' || content.trim() === '---') {
-          return reply.status(404).send({ error: 'Package content not available' });
+        // If we have valid content, serve it as gzipped
+        if (content && content.trim() !== '' && content.trim() !== '---') {
+          const zlib = await import('zlib');
+          const gzipped = zlib.gzipSync(Buffer.from(content, 'utf-8'));
+
+          const pkgName = (pkgVersion as any).package_name || packageName;
+          reply.header('Content-Type', 'application/gzip');
+          reply.header('Content-Disposition', `attachment; filename="${pkgName.replace(/[^a-z0-9-]/gi, '-')}-${version}.tar.gz"`);
+          return reply.send(gzipped);
         }
 
-        const zlib = await import('zlib');
-        const gzipped = zlib.gzipSync(Buffer.from(content, 'utf-8'));
-
-        const pkgName = (pkgVersion as any).package_name || packageName;
-        reply.header('Content-Type', 'application/gzip');
-        reply.header('Content-Disposition', `attachment; filename="${pkgName.replace(/[^a-z0-9-]/gi, '-')}-${version}.tar.gz"`);
-        return reply.send(gzipped);
+        // If no valid content and no sourceUrl, fall through to check tarball_url
+        // (Don't return 404 yet - the package might have a tarball in S3)
       }
 
       // For published packages with tarball_url, generate presigned download URL
       if (pkgVersion.tarball_url) {
         try {
           // Use package_id (UUID) for S3 key - this matches how uploadPackage stores files
+          // Also pass package name to support legacy author-based paths
           const { getDownloadUrl } = await import('../storage/s3.js');
-          const downloadUrl = await getDownloadUrl(server, pkgVersion.package_id, version);
+          const pkgName = (pkgVersion as any).package_name || packageName;
+          const downloadUrl = await getDownloadUrl(server, pkgVersion.package_id, version, {
+            packageName: pkgName
+          });
 
           // Redirect to the presigned URL
           return reply.redirect(302, downloadUrl);
         } catch (error) {
-          server.log.error({ error, version: pkgVersion }, 'Failed to generate download URL');
-          return reply.status(500).send({ error: 'Failed to generate download URL' });
+          server.log.error({
+            error,
+            packageId: pkgVersion.package_id,
+            version,
+            packageName: (pkgVersion as any).package_name || packageName,
+            tarballUrl: pkgVersion.tarball_url
+          }, 'Failed to generate download URL - S3 file may be missing');
+
+          return reply.status(404).send({
+            error: 'Package file not found in storage',
+            message: 'This package may need to be re-published. Please contact support or try again later.'
+          });
         }
       }
 
-      return reply.status(404).send({ error: 'Package tarball not available' });
+      return reply.status(404).send({
+        error: 'Package tarball not available',
+        message: 'No package content or tarball URL found for this version.'
+      });
     }
 
     // Regular version info request
