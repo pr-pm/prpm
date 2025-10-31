@@ -600,7 +600,7 @@ export class PlaygroundService {
       [userId]
     );
 
-    const sessions: PlaygroundSession[] = result.rows.map(row => ({
+    const sessions: PlaygroundSession[] = result.rows.map((row: any) => ({
       id: row.id,
       userId: row.user_id,
       orgId: row.org_id,

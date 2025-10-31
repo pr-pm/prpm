@@ -100,16 +100,3 @@ export async function runAllPlaygroundCreditJobs(server: FastifyInstance): Promi
     throw error;
   }
 }
-
-// If running as standalone script
-if (import.meta.url === `file://${process.argv[1]}`) {
-  import('../index.js').then(async ({ server }) => {
-    try {
-      await runAllPlaygroundCreditJobs(server);
-      process.exit(0);
-    } catch (error) {
-      console.error('Job failed:', error);
-      process.exit(1);
-    }
-  });
-}

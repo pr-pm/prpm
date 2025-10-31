@@ -11,7 +11,7 @@ import { PlaygroundCreditsService } from '../services/playground-credits.js';
 import { config } from '../config.js';
 
 const stripe = new Stripe(config.stripe.secretKey, {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-02-24.acacia',
 });
 
 // Request validation schemas
@@ -207,7 +207,8 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
         const userEmail = (request.user as any).email;
 
         // Get package details
-        const pkg = CREDIT_PACKAGES[body.package];
+        const packageType = body.package as keyof typeof CREDIT_PACKAGES;
+        const pkg = CREDIT_PACKAGES[packageType];
         const { credits, price } = pkg;
 
         server.log.info(
@@ -373,9 +374,6 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
   server.post(
     '/webhooks/stripe/credits',
     {
-      config: {
-        rawBody: true, // Required for Stripe signature verification
-      },
       schema: {
         description: 'Handle Stripe webhook events for credit purchases',
         tags: ['webhooks'],
@@ -390,9 +388,12 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
       }
 
       try {
+        // Get raw body for Stripe signature verification
+        const rawBody = await request.body as Buffer;
+
         // Verify webhook signature
         const event = stripe.webhooks.constructEvent(
-          request.rawBody as Buffer,
+          rawBody,
           sig as string,
           process.env.STRIPE_WEBHOOK_SECRET_CREDITS || process.env.STRIPE_WEBHOOK_SECRET || ''
         );

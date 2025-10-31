@@ -283,4 +283,8 @@ export interface RegistryConfig {
     anthropicApiKey: string;
     evaluationEnabled: boolean;
   };
+  stripe: {
+    secretKey: string;
+    publishableKey: string;
+  };
 }

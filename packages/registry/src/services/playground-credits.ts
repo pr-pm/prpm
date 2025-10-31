@@ -533,7 +533,7 @@ export class PlaygroundCreditsService {
     const countParams = options.type ? [userId, options.type] : [userId];
     const countResult = await this.db.query(countQuery, countParams);
 
-    const transactions: CreditTransaction[] = result.rows.map(row => ({
+    const transactions: CreditTransaction[] = result.rows.map((row: any) => ({
       id: row.id,
       userId: row.user_id,
       amount: row.amount,
