@@ -9,6 +9,7 @@ import { cacheGet, cacheSet, cacheDelete, cacheDeletePattern } from '../cache/re
 import { Package, PackageVersion, PackageInfo } from '../types.js';
 import { toError } from '../types/errors.js';
 import { config } from '../config.js';
+import { optionalAuth } from '../middleware/auth.js';
 import type {
   ListPackagesQuery,
   PackageParams,
@@ -166,6 +167,7 @@ export async function packageRoutes(server: FastifyInstance) {
 
   // Get package by ID
   server.get('/:packageName', {
+    onRequest: [optionalAuth],
     schema: {
       tags: ['packages'],
       description: 'Get package details by ID',
@@ -178,23 +180,44 @@ export async function packageRoutes(server: FastifyInstance) {
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { packageName: rawPackageName } = request.params as { packageName: string };
+    const userId = request.user?.user_id;
 
     // Decode URL-encoded package name (handles slashes in scoped packages)
     const packageName = decodeURIComponent(rawPackageName);
 
-    // Check cache
+    // Check cache (skip cache for authenticated requests to private packages)
     const cacheKey = `package:${packageName}`;
-    const cached = await cacheGet<PackageInfo>(server, cacheKey);
-    if (cached) {
-      return cached;
+    if (!userId) {
+      const cached = await cacheGet<PackageInfo>(server, cacheKey);
+      if (cached) {
+        return cached;
+      }
     }
 
-    // Get package
-    const pkg = await queryOne<Package>(
-      server,
-      `SELECT * FROM packages WHERE name = $1 AND visibility = 'public'`,
-      [packageName]
-    );
+    // Get package - include private packages if user is authenticated and has access
+    let pkg: Package | null = null;
+
+    if (userId) {
+      // For authenticated users, check if they have access to private packages
+      pkg = await queryOne<Package>(
+        server,
+        `SELECT p.* FROM packages p
+         LEFT JOIN organization_members om ON p.org_id = om.org_id AND om.user_id = $2
+         WHERE p.name = $1
+         AND (p.visibility = 'public'
+              OR (p.visibility = 'private'
+                  AND p.org_id IS NOT NULL
+                  AND om.user_id IS NOT NULL))`,
+        [packageName, userId]
+      );
+    } else {
+      // For unauthenticated users, only show public packages
+      pkg = await queryOne<Package>(
+        server,
+        `SELECT * FROM packages WHERE name = $1 AND visibility = 'public'`,
+        [packageName]
+      );
+    }
 
     if (!pkg) {
       return reply.status(404).send({ error: 'Package not found' });
@@ -233,14 +256,17 @@ export async function packageRoutes(server: FastifyInstance) {
       latest_version: transformedVersions[0],
     };
 
-    // Cache for 5 minutes
-    await cacheSet(server, cacheKey, packageInfo, 300);
+    // Only cache public packages (private packages should not be cached)
+    if (pkg.visibility === 'public') {
+      await cacheSet(server, cacheKey, packageInfo, 300);
+    }
 
     return packageInfo;
   });
 
   // Get specific package version
   server.get('/:packageName/:version', {
+    onRequest: [optionalAuth],
     schema: {
       tags: ['packages'],
       description: 'Get specific package version',
@@ -254,6 +280,7 @@ export async function packageRoutes(server: FastifyInstance) {
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { packageName: rawPackageName, version: versionParam } = request.params as { packageName: string; version: string };
+    const userId = request.user?.user_id;
 
     // Decode URL-encoded package name (handles slashes in scoped packages)
     const packageName = decodeURIComponent(rawPackageName);
@@ -265,18 +292,46 @@ export async function packageRoutes(server: FastifyInstance) {
       // Check if packageName is a UUID (for tarball downloads by ID)
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(packageName);
 
-      // Get package version with content
-      const pkgVersion = await queryOne<PackageVersion>(
-        server,
-        isUUID
-          ? `SELECT pv.*, p.name as package_name FROM package_versions pv
-             JOIN packages p ON p.id = pv.package_id
-             WHERE p.id = $1 AND pv.version = $2 AND p.visibility = 'public'`
-          : `SELECT pv.*, p.name as package_name FROM package_versions pv
-             JOIN packages p ON p.id = pv.package_id
-             WHERE p.name = $1 AND pv.version = $2 AND p.visibility = 'public'`,
-        [packageName, version]
-      );
+      // Get package version with content - include private packages if user has access
+      let pkgVersion: PackageVersion | null = null;
+
+      if (userId) {
+        // For authenticated users, check if they have access to private packages
+        pkgVersion = await queryOne<PackageVersion>(
+          server,
+          isUUID
+            ? `SELECT pv.*, p.name as package_name FROM package_versions pv
+               JOIN packages p ON p.id = pv.package_id
+               LEFT JOIN organization_members om ON p.org_id = om.org_id AND om.user_id = $3
+               WHERE p.id = $1 AND pv.version = $2
+               AND (p.visibility = 'public'
+                    OR (p.visibility = 'private'
+                        AND p.org_id IS NOT NULL
+                        AND om.user_id IS NOT NULL))`
+            : `SELECT pv.*, p.name as package_name FROM package_versions pv
+               JOIN packages p ON p.id = pv.package_id
+               LEFT JOIN organization_members om ON p.org_id = om.org_id AND om.user_id = $3
+               WHERE p.name = $1 AND pv.version = $2
+               AND (p.visibility = 'public'
+                    OR (p.visibility = 'private'
+                        AND p.org_id IS NOT NULL
+                        AND om.user_id IS NOT NULL))`,
+          [packageName, version, userId]
+        );
+      } else {
+        // For unauthenticated users, only show public packages
+        pkgVersion = await queryOne<PackageVersion>(
+          server,
+          isUUID
+            ? `SELECT pv.*, p.name as package_name FROM package_versions pv
+               JOIN packages p ON p.id = pv.package_id
+               WHERE p.id = $1 AND pv.version = $2 AND p.visibility = 'public'`
+            : `SELECT pv.*, p.name as package_name FROM package_versions pv
+               JOIN packages p ON p.id = pv.package_id
+               WHERE p.name = $1 AND pv.version = $2 AND p.visibility = 'public'`,
+          [packageName, version]
+        );
+      }
 
       if (!pkgVersion) {
         return reply.status(404).send({ error: 'Package version not found' });
@@ -362,20 +417,41 @@ export async function packageRoutes(server: FastifyInstance) {
     // Regular version info request
     const version = versionParam;
 
-    // Check cache
+    // Check cache (skip cache for authenticated requests to private packages)
     const cacheKey = `package:${packageName}:${version}`;
-    const cached = await cacheGet<PackageVersion>(server, cacheKey);
-    if (cached) {
-      return cached;
+    if (!userId) {
+      const cached = await cacheGet<PackageVersion>(server, cacheKey);
+      if (cached) {
+        return cached;
+      }
     }
 
-    const pkgVersion = await queryOne<PackageVersion>(
-      server,
-      `SELECT pv.* FROM package_versions pv
-       JOIN packages p ON p.id = pv.package_id
-       WHERE p.name = $1 AND pv.version = $2 AND p.visibility = 'public'`,
-      [packageName, version]
-    );
+    let pkgVersion: PackageVersion | null = null;
+
+    if (userId) {
+      // For authenticated users, check if they have access to private packages
+      pkgVersion = await queryOne<PackageVersion>(
+        server,
+        `SELECT pv.*, p.visibility FROM package_versions pv
+         JOIN packages p ON p.id = pv.package_id
+         LEFT JOIN organization_members om ON p.org_id = om.org_id AND om.user_id = $3
+         WHERE p.name = $1 AND pv.version = $2
+         AND (p.visibility = 'public'
+              OR (p.visibility = 'private'
+                  AND p.org_id IS NOT NULL
+                  AND om.user_id IS NOT NULL))`,
+        [packageName, version, userId]
+      );
+    } else {
+      // For unauthenticated users, only show public packages
+      pkgVersion = await queryOne<PackageVersion>(
+        server,
+        `SELECT pv.* FROM package_versions pv
+         JOIN packages p ON p.id = pv.package_id
+         WHERE p.name = $1 AND pv.version = $2 AND p.visibility = 'public'`,
+        [packageName, version]
+      );
+    }
 
     if (!pkgVersion) {
       return reply.status(404).send({ error: 'Package version not found' });
@@ -390,8 +466,10 @@ export async function packageRoutes(server: FastifyInstance) {
       pkgVersion.tarball_url = `${baseUrl}/api/v1/packages/${encodedPackageName}/${pkgVersion.version}.tar.gz`;
     }
 
-    // Cache for 1 hour (versions are immutable)
-    await cacheSet(server, cacheKey, pkgVersion, 3600);
+    // Only cache public packages (private packages should not be cached)
+    if ((pkgVersion as any).visibility === 'public') {
+      await cacheSet(server, cacheKey, pkgVersion, 3600);
+    }
 
     return pkgVersion;
   });
