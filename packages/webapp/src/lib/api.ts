@@ -16,7 +16,14 @@ import type {
   SearchPackagesResponse,
   SearchCollectionsParams,
   Collection,
-  SearchCollectionsResponse
+  SearchCollectionsResponse,
+  PlaygroundMessage,
+  PlaygroundSession,
+  PlaygroundRunRequest,
+  PlaygroundRunResponse,
+  CreditBalance,
+  CreditTransaction,
+  CreditPackage,
 } from '@pr-pm/types'
 
 // Re-export types for convenience
@@ -34,7 +41,14 @@ export type {
   SearchPackagesResponse,
   SearchCollectionsParams,
   Collection,
-  SearchCollectionsResponse
+  SearchCollectionsResponse,
+  PlaygroundMessage,
+  PlaygroundSession,
+  PlaygroundRunRequest,
+  PlaygroundRunResponse,
+  CreditBalance,
+  CreditTransaction,
+  CreditPackage,
 }
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'
@@ -577,78 +591,6 @@ export async function updateOrganization(
 /**
  * Playground types
  */
-export interface PlaygroundMessage {
-  role: 'user' | 'assistant'
-  content: string
-  timestamp?: string
-  tokens?: number
-}
-
-export interface PlaygroundSession {
-  id: string
-  package_id: string
-  package_name: string
-  package_version?: string
-  conversation: PlaygroundMessage[]
-  credits_spent: number
-  model: string
-  total_tokens: number
-  run_count: number
-  is_public: boolean
-  share_token?: string
-  created_at: string
-  updated_at: string
-  last_run_at: string
-}
-
-export interface CreditBalance {
-  total: number
-  monthly: number
-  rollover: number
-  purchased: number
-  monthly_used: number
-  monthly_limit: number
-  rollover_expires_at?: string
-  monthly_reset_at?: string
-}
-
-export interface CreditTransaction {
-  id: string
-  type: 'spend' | 'earn' | 'purchase' | 'monthly' | 'bonus' | 'admin'
-  amount: number
-  balance_after: number
-  description: string
-  metadata?: any
-  created_at: string
-}
-
-export interface PlaygroundRunRequest {
-  package_id: string
-  package_version?: string
-  input: string
-  model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo'
-  session_id?: string
-}
-
-export interface PlaygroundRunResponse {
-  session_id: string
-  response: string
-  credits_spent: number
-  credits_remaining: number
-  tokens_used: number
-  model: string
-  estimated_cost: number
-  conversation: PlaygroundMessage[]
-}
-
-export interface CreditPackage {
-  id: string
-  name: string
-  credits: number
-  price: number
-  popular?: boolean
-}
-
 /**
  * Get playground credit balance
  */
