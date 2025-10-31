@@ -203,7 +203,13 @@ export class RegistryClient {
       urlObj.searchParams.set('format', options.format);
     }
 
-    const response = await fetch(urlObj.toString());
+    // Use authenticated fetch for downloads (needed for private packages)
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(urlObj.toString(), { headers });
     if (!response.ok) {
       throw new Error(`Failed to download package: ${response.statusText}`);
     }
