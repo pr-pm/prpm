@@ -61,19 +61,32 @@ export interface PlaygroundRunResponse {
 
 export class PlaygroundService {
   private server: FastifyInstance;
-  private anthropic: Anthropic;
-  private openai: OpenAI;
+  private anthropic: Anthropic | null;
+  private openai: OpenAI | null;
   private creditsService: PlaygroundCreditsService;
 
   constructor(server: FastifyInstance) {
     this.server = server;
-    this.anthropic = new Anthropic({
-      apiKey: config.ai.anthropicApiKey,
-    });
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+
+    // Initialize Anthropic client if API key is available
+    this.anthropic = config.ai.anthropicApiKey
+      ? new Anthropic({ apiKey: config.ai.anthropicApiKey })
+      : null;
+
+    // Initialize OpenAI client if API key is available
+    this.openai = process.env.OPENAI_API_KEY
+      ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+      : null;
+
     this.creditsService = new PlaygroundCreditsService(server);
+
+    // Log warnings for missing API keys
+    if (!this.anthropic) {
+      this.server.log.warn('Anthropic API key not configured - Anthropic models will not be available in playground');
+    }
+    if (!this.openai) {
+      this.server.log.warn('OpenAI API key not configured - OpenAI models will not be available in playground');
+    }
   }
 
   /**
@@ -196,6 +209,13 @@ export class PlaygroundService {
       let modelName: string;
 
       if (isOpenAI) {
+        // Check if OpenAI client is available
+        if (!this.openai) {
+          throw new Error(
+            'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable to use OpenAI models.'
+          );
+        }
+
         // OpenAI models
         const openaiModelMap: Record<string, string> = {
           'gpt-4o': 'gpt-4o',
@@ -237,6 +257,13 @@ export class PlaygroundService {
         responseText = response.choices[0]?.message?.content || 'No response generated';
         tokensUsed = response.usage?.total_tokens || 0;
       } else {
+        // Check if Anthropic client is available
+        if (!this.anthropic) {
+          throw new Error(
+            'Anthropic API key not configured. Please set ANTHROPIC_API_KEY environment variable to use Anthropic models.'
+          );
+        }
+
         // Anthropic models
         modelName =
           model === 'opus'
