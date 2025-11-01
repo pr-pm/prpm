@@ -9,7 +9,7 @@ import { searchRoutes } from './search.js';
 import { userRoutes } from './users.js';
 import { collectionRoutes } from './collections.js';
 import { inviteRoutes } from './invites.js';
-import analyticsRoutes from './analytics.js';
+import { analyticsRoutes } from './analytics.js';
 import authorAnalyticsRoutes from './author-analytics.js';
 import authorsRoutes from './authors.js';
 import { newsletterRoutes } from './newsletter.js';

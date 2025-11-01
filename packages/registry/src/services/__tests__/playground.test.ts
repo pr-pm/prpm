@@ -192,7 +192,7 @@ describe('PlaygroundService', () => {
 
       expect(session).toBeDefined();
       expect(session?.id).toBe(mockSessionId);
-      expect(session?.userId).toBe(mockUserId);
+      expect(session?.user_id).toBe(mockUserId);
     });
 
     it('should return session when it is public', async () => {
@@ -224,7 +224,7 @@ describe('PlaygroundService', () => {
       const session = await service.getSession(mockSessionId, mockUserId);
 
       expect(session).toBeDefined();
-      expect(session?.isPublic).toBe(true);
+      expect(session?.is_public).toBe(true);
     });
 
     it('should return null when session not found', async () => {
@@ -382,8 +382,8 @@ describe('PlaygroundService', () => {
       const session = await service.getSessionByShareToken('abc123');
 
       expect(session).toBeDefined();
-      expect(session?.shareToken).toBe('abc123');
-      expect(session?.isPublic).toBe(true);
+      expect(session?.share_token).toBe('abc123');
+      expect(session?.is_public).toBe(true);
     });
 
     it('should return null when share token not found', async () => {

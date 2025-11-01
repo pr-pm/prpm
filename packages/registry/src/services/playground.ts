@@ -10,7 +10,9 @@ import OpenAI from 'openai';
 import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { PlaygroundCreditsService } from './playground-credits.js';
+import { getTarballContent } from '../storage/s3.js';
 import { nanoid } from 'nanoid';
+import { getModelId, isAnthropicModel, isOpenAIModel } from '../config/models.js';
 import type {
   PlaygroundMessage,
   PlaygroundSession,
@@ -53,11 +55,11 @@ export class PlaygroundService {
    */
   async loadPackagePrompt(packageId: string, version?: string): Promise<string> {
     const query = version
-      ? `SELECT pv.tarball_url, p.snippet, p.name
+      ? `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format
          FROM packages p
          JOIN package_versions pv ON p.id = pv.package_id
          WHERE p.id = $1 AND pv.version = $2`
-      : `SELECT pv.tarball_url, p.snippet, p.name
+      : `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format
          FROM packages p
          JOIN package_versions pv ON p.id = pv.package_id
          WHERE p.id = $1
@@ -73,13 +75,34 @@ export class PlaygroundService {
 
     const row = result.rows[0];
 
-    // For MVP, use snippet. In future, extract from tarball
+    // Priority order: 1) snippet field, 2) extract from S3 tarball
     if (row.snippet) {
+      this.server.log.info({ packageName: row.name }, 'Using cached snippet for playground');
       return row.snippet;
     }
 
-    // TODO: Extract full content from tarball if snippet not available
-    throw new Error('Package content not available');
+    // No snippet, try to fetch and extract from S3
+    this.server.log.info({ packageName: row.name, version: row.version }, 'Fetching package content from S3 tarball');
+
+    try {
+      const content = await getTarballContent(
+        this.server,
+        packageId,
+        row.version,
+        row.name
+      );
+      return content;
+    } catch (error) {
+      this.server.log.error({
+        error: error instanceof Error ? error.message : String(error),
+        packageName: row.name
+      }, 'Failed to fetch content from S3');
+
+      throw new Error(
+        `Package content not available for ${row.name}. ` +
+        `Failed to extract from storage: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   /**
@@ -223,11 +246,8 @@ export class PlaygroundService {
           );
         }
 
-        // Anthropic models
-        modelName =
-          model === 'opus'
-            ? 'claude-3-opus-20240229'
-            : 'claude-3-5-sonnet-20241022';
+        // Get model ID from centralized config
+        modelName = getModelId(model);
 
         // Build messages for Anthropic
         const anthropicMessages: Anthropic.MessageParam[] = [];
@@ -464,23 +484,23 @@ export class PlaygroundService {
     const row = result.rows[0];
     return {
       id: row.id,
-      userId: row.user_id,
-      orgId: row.org_id,
-      packageId: row.package_id,
-      packageVersion: row.package_version,
-      packageName: row.package_name,
+      user_id: row.user_id,
+      org_id: row.org_id,
+      package_id: row.package_id,
+      package_version: row.package_version,
+      package_name: row.package_name,
       conversation: row.conversation,
-      creditsSpent: row.credits_spent,
-      estimatedTokens: row.estimated_tokens,
+      credits_spent: row.credits_spent,
+      estimated_tokens: row.estimated_tokens,
       model: row.model,
-      totalTokens: row.total_tokens,
-      totalDurationMs: row.total_duration_ms,
-      runCount: row.run_count,
-      isPublic: row.is_public,
-      shareToken: row.share_token,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      lastRunAt: row.last_run_at,
+      total_tokens: row.total_tokens,
+      total_duration_ms: row.total_duration_ms,
+      run_count: row.run_count,
+      is_public: row.is_public,
+      share_token: row.share_token,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      last_run_at: row.last_run_at,
     };
   }
 
@@ -527,23 +547,23 @@ export class PlaygroundService {
     const row = result.rows[0];
     return {
       id: row.id,
-      userId: row.user_id,
-      orgId: row.org_id,
-      packageId: row.package_id,
-      packageVersion: row.package_version,
-      packageName: row.package_name,
+      user_id: row.user_id,
+      org_id: row.org_id,
+      package_id: row.package_id,
+      package_version: row.package_version,
+      package_name: row.package_name,
       conversation: row.conversation,
-      creditsSpent: row.credits_spent,
-      estimatedTokens: row.estimated_tokens,
+      credits_spent: row.credits_spent,
+      estimated_tokens: row.estimated_tokens,
       model: row.model,
-      totalTokens: row.total_tokens,
-      totalDurationMs: row.total_duration_ms,
-      runCount: row.run_count,
-      isPublic: row.is_public,
-      shareToken: row.share_token,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      lastRunAt: row.last_run_at,
+      total_tokens: row.total_tokens,
+      total_duration_ms: row.total_duration_ms,
+      run_count: row.run_count,
+      is_public: row.is_public,
+      share_token: row.share_token,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      last_run_at: row.last_run_at,
     };
   }
 
@@ -577,23 +597,23 @@ export class PlaygroundService {
 
     const sessions: PlaygroundSession[] = result.rows.map((row: any) => ({
       id: row.id,
-      userId: row.user_id,
-      orgId: row.org_id,
-      packageId: row.package_id,
-      packageVersion: row.package_version,
-      packageName: row.package_name,
+      user_id: row.user_id,
+      org_id: row.org_id,
+      package_id: row.package_id,
+      package_version: row.package_version,
+      package_name: row.package_name,
       conversation: row.conversation,
-      creditsSpent: row.credits_spent,
-      estimatedTokens: row.estimated_tokens,
+      credits_spent: row.credits_spent,
+      estimated_tokens: row.estimated_tokens,
       model: row.model,
-      totalTokens: row.total_tokens,
-      totalDurationMs: row.total_duration_ms,
-      runCount: row.run_count,
-      isPublic: row.is_public,
-      shareToken: row.share_token,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      lastRunAt: row.last_run_at,
+      total_tokens: row.total_tokens,
+      total_duration_ms: row.total_duration_ms,
+      run_count: row.run_count,
+      is_public: row.is_public,
+      share_token: row.share_token,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      last_run_at: row.last_run_at,
     }));
 
     return {

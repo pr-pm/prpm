@@ -20,7 +20,12 @@ export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: Cred
     )
   }
 
-  const { total, monthly, rollover, purchased, monthly_used, monthly_limit } = credits
+  const total = credits.balance
+  const monthly = credits.breakdown.monthly
+  const rollover = credits.breakdown.rollover
+  const purchased = credits.breakdown.purchased
+  const monthly_used = credits.monthly.used
+  const monthly_limit = credits.monthly.allocated
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-4 min-w-[200px]">
@@ -66,7 +71,7 @@ export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: Cred
       {/* Buy Credits Button */}
       <button
         onClick={onBuyCredits}
-        className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-sm"
+        className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-prpm-green hover:bg-prpm-green-dark text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-sm"
       >
         Buy More Credits
       </button>

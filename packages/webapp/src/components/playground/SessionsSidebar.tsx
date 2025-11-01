@@ -103,7 +103,7 @@ export default function SessionsSidebar({
       {/* New Session Button */}
       <button
         onClick={onNewSession}
-        className="w-full mb-3 sm:mb-4 py-2 px-3 sm:px-4 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2"
+        className="w-full mb-3 sm:mb-4 py-2 px-3 sm:px-4 bg-prpm-green hover:bg-prpm-green-dark text-white text-xs sm:text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2"
       >
         <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

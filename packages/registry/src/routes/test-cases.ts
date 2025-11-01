@@ -55,14 +55,8 @@ export async function testCaseRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (
-    request: FastifyRequest<{
-      Params: { packageId: string };
-      Querystring: z.infer<typeof GetTestCasesQuerySchema>;
-    }>,
-    reply: FastifyReply
-  ) => {
-    const { packageId } = request.params;
+  }, async (request, reply) => {
+    const { packageId } = request.params as { packageId: string };
     const query = GetTestCasesQuerySchema.parse(request.query);
 
     server.log.info({
@@ -120,14 +114,8 @@ export async function testCaseRoutes(server: FastifyInstance) {
         },
       },
     },
-  }, async (
-    request: FastifyRequest<{
-      Params: { collectionId: string };
-      Querystring: z.infer<typeof GetTestCasesQuerySchema>;
-    }>,
-    reply: FastifyReply
-  ) => {
-    const { collectionId } = request.params;
+  }, async (request, reply) => {
+    const { collectionId } = request.params as { collectionId: string };
     const query = GetTestCasesQuerySchema.parse(request.query);
 
     server.log.info({
@@ -176,12 +164,7 @@ export async function testCaseRoutes(server: FastifyInstance) {
         required: ['test_case_id'],
       },
     },
-  }, async (
-    request: FastifyRequest<{
-      Body: z.infer<typeof RecordUsageBodySchema>;
-    }>,
-    reply: FastifyReply
-  ) => {
+  }, async (request, reply) => {
     const { test_case_id } = RecordUsageBodySchema.parse(request.body);
 
     try {
@@ -220,12 +203,7 @@ export async function testCaseRoutes(server: FastifyInstance) {
         required: ['test_case_id', 'was_helpful'],
       },
     },
-  }, async (
-    request: FastifyRequest<{
-      Body: z.infer<typeof RecordFeedbackBodySchema>;
-    }>,
-    reply: FastifyReply
-  ) => {
+  }, async (request, reply) => {
     const userId = request.user?.user_id;
     if (!userId) {
       return reply.code(401).send({ error: 'Unauthorized' });

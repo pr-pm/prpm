@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { runPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages } from '../../lib/api'
 import type { PlaygroundMessage, Package } from '../../lib/api'
 
@@ -60,20 +62,28 @@ export default function PlaygroundInterface({
 
   // Load package options when searching (Package A)
   useEffect(() => {
-    if (packageSearch.length > 1) {
-      searchForPackages(packageSearch, 'A')
-    } else {
-      setPackages([])
-    }
+    const debounce = setTimeout(() => {
+      if (packageSearch.length > 1) {
+        searchForPackages(packageSearch, 'A')
+      } else {
+        setPackages([])
+      }
+    }, 300)
+
+    return () => clearTimeout(debounce)
   }, [packageSearch])
 
   // Load package options when searching (Package B)
   useEffect(() => {
-    if (packageSearchB.length > 1) {
-      searchForPackages(packageSearchB, 'B')
-    } else {
-      setPackagesB([])
-    }
+    const debounce = setTimeout(() => {
+      if (packageSearchB.length > 1) {
+        searchForPackages(packageSearchB, 'B')
+      } else {
+        setPackagesB([])
+      }
+    }, 300)
+
+    return () => clearTimeout(debounce)
   }, [packageSearchB])
 
   const searchForPackages = async (query: string, target: 'A' | 'B') => {
@@ -227,78 +237,6 @@ export default function PlaygroundInterface({
     return () => clearTimeout(debounce)
   }, [packageId, input, model])
 
-  // Helper to get package owner (org or author)
-  const getPackageOwner = (pkg: Package): string => {
-    return pkg.org_name || pkg.author_username || 'unknown'
-  }
-
-  // Package selection component (reusable)
-  const PackageSelector = ({
-    side,
-    selectedPkg,
-    pkgSearch,
-    pkgs,
-    showDropdown,
-    setSelectedPkg,
-    setPkgId,
-    setPkgSearch,
-    setPkgs,
-    setShowDropdown
-  }: {
-    side: 'A' | 'B'
-    selectedPkg: Package | null
-    pkgSearch: string
-    pkgs: Package[]
-    showDropdown: boolean
-    setSelectedPkg: (pkg: Package | null) => void
-    setPkgId: (id: string) => void
-    setPkgSearch: (search: string) => void
-    setPkgs: (pkgs: Package[]) => void
-    setShowDropdown: (show: boolean) => void
-  }) => (
-    <div className="relative">
-      <input
-        type="text"
-        value={selectedPkg ? `${getPackageOwner(selectedPkg)}/${selectedPkg.name}` : pkgSearch}
-        onChange={(e) => {
-          setPkgSearch(e.target.value)
-          if (selectedPkg) {
-            setSelectedPkg(null)
-            setPkgId('')
-          }
-        }}
-        onFocus={() => setShowDropdown(true)}
-        placeholder="Search for a package..."
-        className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-      />
-      {showDropdown && pkgs.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-          {pkgs.map((pkg) => (
-            <button
-              key={pkg.id}
-              onClick={() => {
-                setSelectedPkg(pkg)
-                setPkgId(pkg.id)
-                setPkgSearch('')
-                setShowDropdown(false)
-              }}
-              className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition"
-            >
-              <div className="font-semibold text-gray-900 dark:text-white">
-                {getPackageOwner(pkg)}/{pkg.name}
-              </div>
-              {pkg.description && (
-                <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                  {pkg.description}
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6">
       {/* Comparison Mode Toggle */}
@@ -331,18 +269,47 @@ export default function PlaygroundInterface({
           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             {comparisonMode ? 'Package A' : 'Select Package'}
           </label>
-          <PackageSelector
-            side="A"
-            selectedPkg={selectedPackage}
-            pkgSearch={packageSearch}
-            pkgs={packages}
-            showDropdown={showPackageDropdown}
-            setSelectedPkg={setSelectedPackage}
-            setPkgId={setPackageId}
-            setPkgSearch={setPackageSearch}
-            setPkgs={setPackages}
-            setShowDropdown={setShowPackageDropdown}
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={selectedPackage ? selectedPackage.name : packageSearch}
+              onChange={(e) => {
+                setPackageSearch(e.target.value)
+                if (selectedPackage) {
+                  setSelectedPackage(null)
+                  setPackageId('')
+                }
+              }}
+              onFocus={() => setShowPackageDropdown(true)}
+              placeholder="Search for a package..."
+              className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent"
+            />
+            {showPackageDropdown && packages.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                {packages.map((pkg) => (
+                  <button
+                    key={pkg.id}
+                    onClick={() => {
+                      setSelectedPackage(pkg)
+                      setPackageId(pkg.id)
+                      setPackageSearch('')
+                      setShowPackageDropdown(false)
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                  >
+                    <div className="font-semibold text-gray-900 dark:text-white">
+                      {pkg.name}
+                    </div>
+                    {pkg.description && (
+                      <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {pkg.description}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {comparisonMode && (
@@ -350,18 +317,47 @@ export default function PlaygroundInterface({
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               Package B
             </label>
-            <PackageSelector
-              side="B"
-              selectedPkg={selectedPackageB}
-              pkgSearch={packageSearchB}
-              pkgs={packagesB}
-              showDropdown={showPackageDropdownB}
-              setSelectedPkg={setSelectedPackageB}
-              setPkgId={setPackageIdB}
-              setPkgSearch={setPackageSearchB}
-              setPkgs={setPackagesB}
-              setShowDropdown={setShowPackageDropdownB}
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={selectedPackageB ? selectedPackageB.name : packageSearchB}
+                onChange={(e) => {
+                  setPackageSearchB(e.target.value)
+                  if (selectedPackageB) {
+                    setSelectedPackageB(null)
+                    setPackageIdB('')
+                  }
+                }}
+                onFocus={() => setShowPackageDropdownB(true)}
+                placeholder="Search for a package..."
+                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent"
+              />
+              {showPackageDropdownB && packagesB.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                  {packagesB.map((pkg) => (
+                    <button
+                      key={pkg.id}
+                      onClick={() => {
+                        setSelectedPackageB(pkg)
+                        setPackageIdB(pkg.id)
+                        setPackageSearchB('')
+                        setShowPackageDropdownB(false)
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                    >
+                      <div className="font-semibold text-gray-900 dark:text-white">
+                        {pkg.name}
+                      </div>
+                      {pkg.description && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                          {pkg.description}
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -376,7 +372,7 @@ export default function PlaygroundInterface({
             onClick={() => setModel('sonnet')}
             className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'sonnet'
-                ? 'bg-green-600 text-white'
+                ? 'bg-prpm-green text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -387,7 +383,7 @@ export default function PlaygroundInterface({
             onClick={() => setModel('opus')}
             className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'opus'
-                ? 'bg-green-600 text-white'
+                ? 'bg-prpm-green text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -398,7 +394,7 @@ export default function PlaygroundInterface({
             onClick={() => setModel('gpt-4o-mini')}
             className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'gpt-4o-mini'
-                ? 'bg-green-600 text-white'
+                ? 'bg-prpm-green text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -409,7 +405,7 @@ export default function PlaygroundInterface({
             onClick={() => setModel('gpt-4o')}
             className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'gpt-4o'
-                ? 'bg-green-600 text-white'
+                ? 'bg-prpm-green text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -420,7 +416,7 @@ export default function PlaygroundInterface({
             onClick={() => setModel('gpt-4-turbo')}
             className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
               model === 'gpt-4-turbo'
-                ? 'bg-green-600 text-white'
+                ? 'bg-prpm-green text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -438,7 +434,7 @@ export default function PlaygroundInterface({
             <div>
               {comparisonMode && (
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  {selectedPackage ? `${getPackageOwner(selectedPackage)}/${selectedPackage.name}` : 'Package A'}
+                  {selectedPackage ? selectedPackage.name : 'Package A'}
                 </h4>
               )}
               <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -447,14 +443,16 @@ export default function PlaygroundInterface({
                     key={index}
                     className={`p-3 sm:p-4 ${
                       message.role === 'user'
-                        ? 'bg-green-50 dark:bg-green-900/20'
+                        ? 'bg-prpm-green/10 dark:bg-prpm-green/20'
                         : 'bg-gray-50 dark:bg-gray-700/50'
                     }`}
                   >
                     <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
                       {message.role}
                     </div>
-                    <div className="text-sm sm:text-base text-gray-900 dark:text-white whitespace-pre-wrap break-words">{message.content}</div>
+                    <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -465,7 +463,7 @@ export default function PlaygroundInterface({
           {comparisonMode && conversationB.length > 0 && (
             <div>
               <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                {selectedPackageB ? `${getPackageOwner(selectedPackageB)}/${selectedPackageB.name}` : 'Package B'}
+                {selectedPackageB ? selectedPackageB.name : 'Package B'}
               </h4>
               <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 {conversationB.map((message, index) => (
@@ -480,7 +478,9 @@ export default function PlaygroundInterface({
                     <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
                       {message.role}
                     </div>
-                    <div className="text-sm sm:text-base text-gray-900 dark:text-white whitespace-pre-wrap break-words">{message.content}</div>
+                    <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -499,15 +499,15 @@ export default function PlaygroundInterface({
           onChange={(e) => setInput(e.target.value)}
           placeholder="Enter your input or question here..."
           rows={4}
-          className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+          className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent resize-none"
           disabled={loading}
         />
       </div>
 
       {/* Estimated Credits */}
       {estimatedCredits !== null && (
-        <div className="mb-4 p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-          <div className="text-xs sm:text-sm text-green-800 dark:text-green-300">
+        <div className="mb-4 p-2 sm:p-3 bg-prpm-green/10 dark:bg-prpm-green/20 border border-prpm-green/30 dark:border-prpm-green/30 rounded-lg">
+          <div className="text-xs sm:text-sm text-prpm-green-dark dark:text-prpm-green-light">
             💡 Estimated cost: <span className="font-bold">{estimatedCredits} credits</span>
           </div>
         </div>
@@ -542,7 +542,7 @@ export default function PlaygroundInterface({
         className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-sm sm:text-base text-white transition ${
           loading || !packageId || !input.trim()
             ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-green-600 hover:bg-green-700 shadow-sm'
+            : 'bg-prpm-green hover:bg-prpm-green-dark shadow-sm'
         }`}
       >
         {loading || loadingB ? (

@@ -29,15 +29,17 @@ describe('Playground Routes', () => {
 
     // Mock pg plugin
     const mockQuery = vi.fn();
+    const mockPool = {
+      connect: vi.fn().mockResolvedValue({
+        query: mockQuery,
+        release: vi.fn(),
+      }),
+    } as any;
+
     server.decorate('pg', {
       query: mockQuery,
-      pool: {
-        connect: vi.fn().mockResolvedValue({
-          query: mockQuery,
-          release: vi.fn(),
-        }),
-      },
-    });
+      pool: mockPool,
+    } as any);
 
     await server.register(playgroundRoutes, { prefix: '/api/v1/playground' });
     await server.ready();

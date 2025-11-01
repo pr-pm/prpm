@@ -689,6 +689,7 @@ export async function getPRPMPlusPricing(jwtToken: string): Promise<{
   return response.json()
 }
 
+/**
  * Subscribe to PRPM+
  */
 export async function subscribeToPRPMPlus(

@@ -102,11 +102,11 @@ export class PlaygroundCreditsService {
         allocated: row.monthly_credits,
         used: row.monthly_credits_used,
         remaining: row.monthly_credits - row.monthly_credits_used,
-        resetAt: row.monthly_reset_at,
+        reset_at: row.monthly_reset_at,
       },
       rollover: {
         amount: row.rollover_credits,
-        expiresAt: row.rollover_expires_at,
+        expires_at: row.rollover_expires_at,
       },
       purchased: row.purchased_credits,
       breakdown: {
@@ -238,14 +238,14 @@ export class PlaygroundCreditsService {
 
       const transaction: CreditTransaction = {
         id: txResult.rows[0].id,
-        userId,
+        user_id: userId,
         amount: -credits,
-        balanceAfter: newBalance,
+        balance_after: newBalance,
         type: 'spend',
         description,
         metadata,
-        sessionId,
-        createdAt: txResult.rows[0].created_at,
+        session_id: sessionId,
+        created_at: txResult.rows[0].created_at,
       };
 
       this.server.log.info(
@@ -360,14 +360,14 @@ export class PlaygroundCreditsService {
 
       const transaction: CreditTransaction = {
         id: txResult.rows[0].id,
-        userId,
+        user_id: userId,
         amount: credits,
-        balanceAfter: newBalance,
+        balance_after: newBalance,
         type,
         description,
         metadata,
-        purchaseId: metadata?.purchaseId,
-        createdAt: txResult.rows[0].created_at,
+        purchase_id: metadata?.purchaseId,
+        created_at: txResult.rows[0].created_at,
       };
 
       this.server.log.info(
@@ -494,15 +494,15 @@ export class PlaygroundCreditsService {
 
     const transactions: CreditTransaction[] = result.rows.map((row: any) => ({
       id: row.id,
-      userId: row.user_id,
+      user_id: row.user_id,
       amount: row.amount,
-      balanceAfter: row.balance_after,
+      balance_after: row.balance_after,
       type: row.transaction_type,
       description: row.description,
       metadata: row.metadata,
-      sessionId: row.session_id,
-      purchaseId: row.purchase_id,
-      createdAt: row.created_at,
+      session_id: row.session_id,
+      purchase_id: row.purchase_id,
+      created_at: row.created_at,
     }));
 
     return {
