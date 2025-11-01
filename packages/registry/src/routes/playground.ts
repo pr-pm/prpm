@@ -11,17 +11,31 @@ import { PlaygroundCreditsService } from '../services/playground-credits.js';
 
 // Request validation schemas
 const PlaygroundRunSchema = z.object({
-  packageId: z.string().uuid('Invalid package ID'),
+  packageId: z.string().uuid('Invalid package ID').optional(),
+  package_id: z.string().uuid('Invalid package ID').optional(),
   packageVersion: z.string().optional(),
-  userInput: z.string().min(1, 'User input is required').max(10000, 'Input too long'),
+  package_version: z.string().optional(),
+  userInput: z.string().min(1, 'User input is required').max(10000, 'Input too long').optional(),
+  input: z.string().min(1, 'User input is required').max(10000, 'Input too long').optional(),
   conversationId: z.string().uuid().optional(),
-  model: z.enum(['sonnet', 'opus']).optional().default('sonnet'),
+  session_id: z.string().uuid().optional(),
+  model: z.enum(['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo']).optional().default('sonnet'),
+}).refine(data => data.packageId || data.package_id, {
+  message: 'packageId or package_id is required',
+}).refine(data => data.userInput || data.input, {
+  message: 'userInput or input is required',
 });
 
 const EstimateCreditSchema = z.object({
-  packageId: z.string().uuid('Invalid package ID'),
-  userInput: z.string().min(1).max(10000),
-  model: z.enum(['sonnet', 'opus']).optional().default('sonnet'),
+  packageId: z.string().uuid('Invalid package ID').optional(),
+  package_id: z.string().uuid('Invalid package ID').optional(),
+  userInput: z.string().min(1).max(10000).optional(),
+  input: z.string().min(1).max(10000).optional(),
+  model: z.enum(['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo']).optional().default('sonnet'),
+}).refine(data => data.packageId || data.package_id, {
+  message: 'packageId or package_id is required',
+}).refine(data => data.userInput || data.input, {
+  message: 'userInput or input is required',
 });
 
 const ShareSessionSchema = z.object({
@@ -101,12 +115,25 @@ export async function playgroundRoutes(server: FastifyInstance) {
           });
         }
 
+        // Normalize request body to support both snake_case and camelCase
+        const packageId = body.packageId || body.package_id;
+        const packageVersion = body.packageVersion || body.package_version;
+        const userInput = body.userInput || body.input;
+        const conversationId = body.conversationId || body.session_id;
+        const model = body.model || 'sonnet';
+
         server.log.info(
-          { userId, packageId: body.packageId, conversationId: body.conversationId },
+          { userId, packageId, conversationId },
           'Starting playground run'
         );
 
-        const result = await playgroundService.executePrompt(userId, body);
+        const result = await playgroundService.executePrompt(userId, {
+          packageId: packageId!,
+          packageVersion,
+          userInput: userInput!,
+          conversationId,
+          model,
+        });
 
         return reply.code(200).send(result);
       } catch (error: any) {
@@ -181,18 +208,23 @@ export async function playgroundRoutes(server: FastifyInstance) {
           });
         }
 
+        // Normalize request body
+        const packageId = body.packageId || body.package_id;
+        const userInput = body.userInput || body.input;
+        const model = body.model || 'sonnet';
+
         // Load package prompt to estimate
-        const packagePrompt = await playgroundService.loadPackagePrompt(body.packageId);
+        const packagePrompt = await playgroundService.loadPackagePrompt(packageId!);
 
         // Estimate credits
         const estimatedCredits = playgroundService.estimateCredits(
           packagePrompt.length,
-          body.userInput.length,
-          body.model
+          userInput!.length,
+          model
         );
 
         const estimatedTokens = Math.floor(
-          ((packagePrompt.length + body.userInput.length) / 4) * 1.3
+          ((packagePrompt.length + userInput!.length) / 4) * 1.3
         );
 
         // Check if user can afford
@@ -202,7 +234,9 @@ export async function playgroundRoutes(server: FastifyInstance) {
         return reply.code(200).send({
           estimatedCredits,
           estimatedTokens,
-          model: body.model === 'opus' ? 'claude-3-opus-20240229' : 'claude-3-5-sonnet-20241022',
+          estimated_credits: estimatedCredits,
+          estimated_tokens: estimatedTokens,
+          model: model === 'opus' ? 'claude-3-opus-20240229' : 'claude-3-5-sonnet-20241022',
           canAfford,
           currentBalance: balance.balance,
         });
