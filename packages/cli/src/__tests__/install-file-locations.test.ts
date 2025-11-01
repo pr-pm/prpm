@@ -62,7 +62,7 @@ describe('install command - file locations', () => {
 
   beforeEach(async () => {
     // Clean up any existing directories
-    const dirs = ['.claude', '.cursor', '.continue', '.windsurf', '.prompts'];
+    const dirs = ['.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents'];
     for (const dir of dirs) {
       await fs.rm(path.join(testDir, dir), { recursive: true, force: true }).catch(() => {});
     }
@@ -306,6 +306,57 @@ describe('install command - file locations', () => {
 
       const destDir = getDestinationDir('windsurf', 'rule');
       expect(destDir).toBe('.windsurf/rules');
+    });
+
+    it('should install agents.md package to .agents/package-name/AGENTS.md', async () => {
+      const mockPackage = {
+        id: 'test-agents',
+        name: 'test-agents',
+        format: 'agents.md',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Agents.md Rule\n\nThis is a test rule.'));
+
+      await handleInstall('test-agents', {});
+
+      const expectedPath = '.agents/test-agents/AGENTS.md';
+      expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
+
+      const destDir = getDestinationDir('agents.md', 'rule');
+      expect(destDir).toBe('.agents');
+    });
+
+    it('should install package with --as agents.md to .agents/package-name/AGENTS.md', async () => {
+      const mockPackage = {
+        id: 'test-cursor-to-agents',
+        name: 'test-cursor-to-agents',
+        format: 'cursor',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Cursor Rule\n\nThis is a test rule.'));
+
+      await handleInstall('test-cursor-to-agents', { as: 'agents.md' });
+
+      const expectedPath = '.agents/test-cursor-to-agents/AGENTS.md';
+      expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
     });
   });
 

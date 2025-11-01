@@ -87,6 +87,7 @@ export interface CollectionCreateInput {
   id: string;
   name: string;
   description: string;
+  version?: string;                  // Defaults to 1.0.0 if not provided
   category?: CollectionCategory;
   tags?: string[];
   framework?: string;
