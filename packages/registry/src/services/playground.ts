@@ -119,120 +119,119 @@ export class PlaygroundService {
   }
 
   /**
-   * Get tools for Claude skills
-   * If package is a Claude skill/agent, return available tools
+   * Convert package into a tool definition
+   * If package is a skill/agent/slash-command, create a tool that wraps it
    */
-  private getToolsForSkill(format: string, subtype: string): Anthropic.Tool[] {
-    // Only Claude skills/agents support tools
-    if (format !== 'claude' || (subtype !== 'skill' && subtype !== 'agent')) {
-      return [];
+  private packageAsToolDefinition(
+    packageData: { prompt: string; format: string; subtype: string; name: string }
+  ): Anthropic.Tool | null {
+    // Only convert specific subtypes to tools
+    const toolableSubtypes = ['skill', 'agent', 'slash-command'];
+    if (!toolableSubtypes.includes(packageData.subtype)) {
+      return null;
     }
 
-    // Return common MCP-compatible tools for skills
-    return [
-      {
-        name: 'read_file',
-        description: 'Read the contents of a file from the filesystem',
-        input_schema: {
-          type: 'object',
-          properties: {
-            path: {
-              type: 'string',
-              description: 'Path to the file to read'
-            }
-          },
-          required: ['path']
-        }
-      },
-      {
-        name: 'list_directory',
-        description: 'List contents of a directory',
-        input_schema: {
-          type: 'object',
-          properties: {
-            path: {
-              type: 'string',
-              description: 'Path to the directory'
-            }
-          },
-          required: ['path']
-        }
-      },
-      {
-        name: 'write_file',
-        description: 'Write content to a file',
-        input_schema: {
-          type: 'object',
-          properties: {
-            path: {
-              type: 'string',
-              description: 'Path where the file should be written'
-            },
-            content: {
-              type: 'string',
-              description: 'Content to write to the file'
-            }
-          },
-          required: ['path', 'content']
-        }
-      },
-      {
-        name: 'execute_command',
-        description: 'Execute a shell command (read-only operations)',
-        input_schema: {
-          type: 'object',
-          properties: {
-            command: {
-              type: 'string',
-              description: 'Shell command to execute'
-            }
-          },
-          required: ['command']
-        }
+    // Extract a tool name from package name (sanitize for tool naming)
+    const toolName = packageData.name
+      .replace(/@/g, '')
+      .replace(/\//g, '_')
+      .replace(/-/g, '_')
+      .toLowerCase();
+
+    // Determine tool description based on subtype
+    let description = '';
+    if (packageData.subtype === 'skill') {
+      description = `A skill that can ${this.extractCapability(packageData.prompt)}`;
+    } else if (packageData.subtype === 'agent') {
+      description = `An agent that can ${this.extractCapability(packageData.prompt)}`;
+    } else if (packageData.subtype === 'slash-command') {
+      description = `A command that can ${this.extractCapability(packageData.prompt)}`;
+    }
+
+    return {
+      name: toolName,
+      description: description || `Execute the ${packageData.name} ${packageData.subtype}`,
+      input_schema: {
+        type: 'object',
+        properties: {
+          input: {
+            type: 'string',
+            description: 'The input or task to give to this skill/agent/command'
+          }
+        },
+        required: ['input']
       }
-    ];
+    };
   }
 
   /**
-   * Execute a tool call (mock implementation for playground safety)
+   * Extract capability description from prompt
+   * Looks for common patterns to describe what the skill does
    */
-  private async executeTool(toolName: string, toolInput: any): Promise<string> {
-    // For playground safety, we return mock responses
-    // In production, you could implement real tool execution in a sandboxed environment
+  private extractCapability(prompt: string): string {
+    // Try to find first sentence or description
+    const lines = prompt.split('\n').filter(l => l.trim().length > 0);
 
-    switch (toolName) {
-      case 'read_file':
-        return JSON.stringify({
-          success: true,
-          content: `[Simulated file content for: ${toolInput.path}]`,
-          note: 'This is a playground simulation. Real file operations are disabled for security.'
-        });
+    // Look for description patterns
+    for (const line of lines.slice(0, 10)) {
+      const lower = line.toLowerCase();
 
-      case 'list_directory':
-        return JSON.stringify({
-          success: true,
-          files: ['example.txt', 'data.json', 'script.py'],
-          note: 'This is a playground simulation. Real directory operations are disabled for security.'
-        });
+      // Skip headers and metadata
+      if (lower.startsWith('#') || lower.startsWith('title:') || lower.startsWith('author:')) {
+        continue;
+      }
 
-      case 'write_file':
-        return JSON.stringify({
-          success: true,
-          message: `File would be written to: ${toolInput.path}`,
-          note: 'This is a playground simulation. Real file operations are disabled for security.'
-        });
+      // Look for descriptive sentences
+      if (lower.includes('you are') || lower.includes('this is') || lower.includes('helps')) {
+        return line.trim().substring(0, 100);
+      }
+    }
 
-      case 'execute_command':
-        return JSON.stringify({
-          success: true,
-          output: `[Simulated output for command: ${toolInput.command}]`,
-          note: 'This is a playground simulation. Real command execution is disabled for security.'
-        });
+    // Fallback: use first non-header line
+    const firstLine = lines.find(l => !l.startsWith('#'));
+    return firstLine ? firstLine.substring(0, 100) : 'perform a task';
+  }
 
-      default:
-        return JSON.stringify({
-          error: `Unknown tool: ${toolName}`
-        });
+  /**
+   * Execute a tool call by running the skill/agent/slash-command
+   */
+  private async executeTool(
+    toolName: string,
+    toolInput: any,
+    packageData: { prompt: string; format: string; subtype: string; name: string },
+    model: string
+  ): Promise<string> {
+    try {
+      // Get model ID
+      const modelId = getModelId(model);
+
+      if (!this.anthropic) {
+        throw new Error('Anthropic API not configured');
+      }
+
+      // Execute the skill/agent with the tool input
+      const response = await this.anthropic.messages.create({
+        model: modelId,
+        max_tokens: 4096,
+        temperature: 0.7,
+        system: packageData.prompt,
+        messages: [
+          {
+            role: 'user',
+            content: toolInput.input || JSON.stringify(toolInput)
+          }
+        ]
+      });
+
+      const resultText = response.content[0].type === 'text'
+        ? response.content[0].text
+        : 'No response';
+
+      return resultText;
+    } catch (error: any) {
+      return JSON.stringify({
+        error: `Failed to execute ${packageData.subtype}: ${error.message}`
+      });
     }
   }
 
@@ -381,9 +380,9 @@ export class PlaygroundService {
         // Get model ID from centralized config
         modelName = getModelId(model);
 
-        // Check if this package is a Claude skill/agent that needs tools
-        const tools = this.getToolsForSkill(packageData.format, packageData.subtype);
-        const isSkill = tools.length > 0;
+        // Check if this package should be converted to a tool (skill/agent/slash-command)
+        const toolDefinition = this.packageAsToolDefinition(packageData);
+        const isSkillAsTool = toolDefinition !== null;
 
         // Build messages for Anthropic
         let anthropicMessages: Anthropic.MessageParam[] = [];
@@ -405,11 +404,18 @@ export class PlaygroundService {
         let finalResponse: string = '';
         let totalTokens = 0;
 
-        // If it's a skill with tools, handle the agentic loop
-        if (isSkill) {
+        // If it's a skill/agent/slash-command, make it available as a tool
+        if (isSkillAsTool) {
           let continueLoop = true;
           let iterations = 0;
           const maxIterations = 5; // Prevent infinite loops
+
+          // System prompt explains that Claude has access to this skill
+          const systemWithTool = `You have access to a ${packageData.subtype} that you can use to help complete tasks.
+
+When the user asks you to do something that this ${packageData.subtype} can help with, use it by calling the tool.
+
+Otherwise, respond normally to the user.`;
 
           while (continueLoop && iterations < maxIterations) {
             iterations++;
@@ -418,9 +424,9 @@ export class PlaygroundService {
               model: modelName,
               max_tokens: 4096,
               temperature: 0.7,
-              system: packagePrompt,
+              system: systemWithTool,
               messages: anthropicMessages,
-              tools: tools,
+              tools: [toolDefinition],
             });
 
             totalTokens += response.usage.input_tokens + response.usage.output_tokens;
@@ -437,8 +443,13 @@ export class PlaygroundService {
               } else if (content.type === 'tool_use') {
                 hasToolUse = true;
 
-                // Execute the tool
-                const toolResult = await this.executeTool(content.name, content.input);
+                // Execute the skill/agent by running its prompt with the tool input
+                const toolResult = await this.executeTool(
+                  content.name,
+                  content.input,
+                  packageData,
+                  model
+                );
 
                 // Add assistant message with tool use
                 anthropicMessages.push({
@@ -469,7 +480,7 @@ export class PlaygroundService {
           responseText = finalResponse || 'No response generated';
           tokensUsed = totalTokens;
         } else {
-          // Regular prompt execution without tools
+          // Regular prompt execution without tools (regular prompts, rules, etc.)
           const response = await this.anthropic.messages.create({
             model: modelName,
             max_tokens: 4096,
