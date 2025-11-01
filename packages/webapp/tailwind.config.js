@@ -8,14 +8,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'prpm-purple': '#10b981',
-        'prpm-purple-dark': '#059669',
-        'prpm-accent': '#34d399',
-        'prpm-accent-light': '#6ee7b7',
+        'prpm-green': '#10b981',
+        'prpm-green-dark': '#059669',
+        'prpm-green-light': '#34d399',
+        'prpm-green-lighter': '#6ee7b7',
         'prpm-dark': '#0a0a0f',
         'prpm-dark-lighter': '#12121a',
         'prpm-dark-card': '#1a1a24',
         'prpm-border': '#27273a',
+        // Legacy aliases for backward compatibility
+        'prpm-purple': '#10b981',
+        'prpm-purple-dark': '#059669',
+        'prpm-accent': '#34d399',
+        'prpm-accent-light': '#6ee7b7',
       },
       fontFamily: {
         mono: ['JetBrains Mono', 'Consolas', 'Monaco', 'Courier New', 'monospace'],

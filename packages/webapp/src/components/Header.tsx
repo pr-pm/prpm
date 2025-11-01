@@ -34,7 +34,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-3">
               <Image src="/logo-icon.svg" alt="PRPM Logo" width={40} height={40} className="w-10 h-10" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-prpm-accent to-prpm-purple bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-prpm-green-light to-prpm-green bg-clip-text text-transparent">
                 PRPM
               </span>
             </Link>
@@ -45,7 +45,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
                   href={link.href}
                   className={`transition-colors flex items-center gap-2 ${
                     isActive(link.href)
-                      ? 'text-prpm-accent'
+                      ? 'text-prpm-green-light'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -71,7 +71,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
               </svg>
             </a>
             {showAccount && (
-              <Link href="/dashboard" className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white border border-prpm-border rounded-lg hover:border-prpm-accent transition-all">
+              <Link href="/dashboard" className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white border border-prpm-border rounded-lg hover:border-prpm-green-light transition-all">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -106,7 +106,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
                   onClick={() => setMobileMenuOpen(false)}
                   className={`transition-colors py-2 ${
                     isActive(link.href)
-                      ? 'text-prpm-accent'
+                      ? 'text-prpm-green-light'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
