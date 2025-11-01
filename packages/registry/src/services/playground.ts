@@ -6,6 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { query as claudeQuery } from '@anthropic-ai/claude-agent-sdk';
 import OpenAI from 'openai';
 import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
@@ -13,6 +14,9 @@ import { PlaygroundCreditsService } from './playground-credits.js';
 import { getTarballContent } from '../storage/s3.js';
 import { nanoid } from 'nanoid';
 import { getModelId, isAnthropicModel, isOpenAIModel } from '../config/models.js';
+import { promises as fs } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 import type {
   PlaygroundMessage,
   PlaygroundSession,
@@ -47,6 +51,76 @@ export class PlaygroundService {
     }
     if (!this.openai) {
       this.server.log.warn('OpenAI API key not configured - OpenAI models will not be available in playground');
+    }
+  }
+
+  /**
+   * Create temporary .claude directory structure for Skills/Agents
+   * Returns the base directory path
+   */
+  private async createTempClaudeDirectory(): Promise<string> {
+    const sessionId = nanoid(12);
+    const baseDir = join(tmpdir(), `prpm-playground-${sessionId}`);
+    const claudeDir = join(baseDir, '.claude');
+    const skillsDir = join(claudeDir, 'skills');
+    const agentsDir = join(claudeDir, 'agents');
+
+    await fs.mkdir(skillsDir, { recursive: true });
+    await fs.mkdir(agentsDir, { recursive: true });
+
+    return baseDir;
+  }
+
+  /**
+   * Write skill to filesystem in proper Claude SDK format
+   */
+  private async writeSkillToFilesystem(
+    baseDir: string,
+    skillName: string,
+    prompt: string
+  ): Promise<void> {
+    // Sanitize skill name for directory
+    const dirName = skillName
+      .replace(/@/g, '')
+      .replace(/\//g, '-')
+      .toLowerCase();
+
+    const skillDir = join(baseDir, '.claude', 'skills', dirName);
+    await fs.mkdir(skillDir, { recursive: true });
+
+    const skillPath = join(skillDir, 'SKILL.md');
+    await fs.writeFile(skillPath, prompt, 'utf-8');
+  }
+
+  /**
+   * Write agent to filesystem in proper Claude SDK format
+   */
+  private async writeAgentToFilesystem(
+    baseDir: string,
+    agentName: string,
+    prompt: string
+  ): Promise<void> {
+    // Sanitize agent name for directory
+    const dirName = agentName
+      .replace(/@/g, '')
+      .replace(/\//g, '-')
+      .toLowerCase();
+
+    const agentDir = join(baseDir, '.claude', 'agents', dirName);
+    await fs.mkdir(agentDir, { recursive: true });
+
+    const agentPath = join(agentDir, 'AGENT.md');
+    await fs.writeFile(agentPath, prompt, 'utf-8');
+  }
+
+  /**
+   * Cleanup temp directory after execution
+   */
+  private async cleanupTempDirectory(baseDir: string): Promise<void> {
+    try {
+      await fs.rm(baseDir, { recursive: true, force: true });
+    } catch (error) {
+      this.server.log.warn({ baseDir, error }, 'Failed to cleanup temp directory');
     }
   }
 
@@ -119,120 +193,14 @@ export class PlaygroundService {
   }
 
   /**
-   * Convert package into a tool definition
-   * If package is a skill/agent/slash-command, create a tool that wraps it
+   * Check if package should be mounted as Skill or Agent
    */
-  private packageAsToolDefinition(
-    packageData: { prompt: string; format: string; subtype: string; name: string }
-  ): Anthropic.Tool | null {
-    // Only convert specific subtypes to tools
-    const toolableSubtypes = ['skill', 'agent', 'slash-command'];
-    if (!toolableSubtypes.includes(packageData.subtype)) {
-      return null;
-    }
-
-    // Extract a tool name from package name (sanitize for tool naming)
-    const toolName = packageData.name
-      .replace(/@/g, '')
-      .replace(/\//g, '_')
-      .replace(/-/g, '_')
-      .toLowerCase();
-
-    // Determine tool description based on subtype
-    let description = '';
-    if (packageData.subtype === 'skill') {
-      description = `A skill that can ${this.extractCapability(packageData.prompt)}`;
-    } else if (packageData.subtype === 'agent') {
-      description = `An agent that can ${this.extractCapability(packageData.prompt)}`;
-    } else if (packageData.subtype === 'slash-command') {
-      description = `A command that can ${this.extractCapability(packageData.prompt)}`;
-    }
-
-    return {
-      name: toolName,
-      description: description || `Execute the ${packageData.name} ${packageData.subtype}`,
-      input_schema: {
-        type: 'object',
-        properties: {
-          input: {
-            type: 'string',
-            description: 'The input or task to give to this skill/agent/command'
-          }
-        },
-        required: ['input']
-      }
-    };
+  private shouldMountAsSkill(subtype: string): boolean {
+    return subtype === 'skill' || subtype === 'slash-command';
   }
 
-  /**
-   * Extract capability description from prompt
-   * Looks for common patterns to describe what the skill does
-   */
-  private extractCapability(prompt: string): string {
-    // Try to find first sentence or description
-    const lines = prompt.split('\n').filter(l => l.trim().length > 0);
-
-    // Look for description patterns
-    for (const line of lines.slice(0, 10)) {
-      const lower = line.toLowerCase();
-
-      // Skip headers and metadata
-      if (lower.startsWith('#') || lower.startsWith('title:') || lower.startsWith('author:')) {
-        continue;
-      }
-
-      // Look for descriptive sentences
-      if (lower.includes('you are') || lower.includes('this is') || lower.includes('helps')) {
-        return line.trim().substring(0, 100);
-      }
-    }
-
-    // Fallback: use first non-header line
-    const firstLine = lines.find(l => !l.startsWith('#'));
-    return firstLine ? firstLine.substring(0, 100) : 'perform a task';
-  }
-
-  /**
-   * Execute a tool call by running the skill/agent/slash-command
-   */
-  private async executeTool(
-    toolName: string,
-    toolInput: any,
-    packageData: { prompt: string; format: string; subtype: string; name: string },
-    model: string
-  ): Promise<string> {
-    try {
-      // Get model ID
-      const modelId = getModelId(model);
-
-      if (!this.anthropic) {
-        throw new Error('Anthropic API not configured');
-      }
-
-      // Execute the skill/agent with the tool input
-      const response = await this.anthropic.messages.create({
-        model: modelId,
-        max_tokens: 4096,
-        temperature: 0.7,
-        system: packageData.prompt,
-        messages: [
-          {
-            role: 'user',
-            content: toolInput.input || JSON.stringify(toolInput)
-          }
-        ]
-      });
-
-      const resultText = response.content[0].type === 'text'
-        ? response.content[0].text
-        : 'No response';
-
-      return resultText;
-    } catch (error: any) {
-      return JSON.stringify({
-        error: `Failed to execute ${packageData.subtype}: ${error.message}`
-      });
-    }
+  private shouldMountAsAgent(subtype: string): boolean {
+    return subtype === 'agent';
   }
 
   /**
@@ -380,121 +348,117 @@ export class PlaygroundService {
         // Get model ID from centralized config
         modelName = getModelId(model);
 
-        // Check if this package should be converted to a tool (skill/agent/slash-command)
-        const toolDefinition = this.packageAsToolDefinition(packageData);
-        const isSkillAsTool = toolDefinition !== null;
+        // Determine if we need filesystem mounting for Skills/Agents
+        const needsSkillMount = this.shouldMountAsSkill(packageData.subtype);
+        const needsAgentMount = this.shouldMountAsAgent(packageData.subtype);
+        const needsFilesystemMount = needsSkillMount || needsAgentMount;
 
-        // Build messages for Anthropic
-        let anthropicMessages: Anthropic.MessageParam[] = [];
+        let tempDir: string | null = null;
 
-        // Add conversation history
-        for (const msg of conversationHistory) {
+        try {
+          // Build messages for Anthropic
+          let anthropicMessages: Anthropic.MessageParam[] = [];
+
+          // Add conversation history
+          for (const msg of conversationHistory) {
+            anthropicMessages.push({
+              role: msg.role as 'user' | 'assistant',
+              content: msg.content,
+            });
+          }
+
+          // Add current user input
           anthropicMessages.push({
-            role: msg.role as 'user' | 'assistant',
-            content: msg.content,
+            role: 'user',
+            content: request.input,
           });
-        }
 
-        // Add current user input
-        anthropicMessages.push({
-          role: 'user',
-          content: request.input,
-        });
+          let totalTokens = 0;
 
-        let finalResponse: string = '';
-        let totalTokens = 0;
+          // If package is a skill/agent, mount it on filesystem and use SDK
+          if (needsFilesystemMount) {
+            // Create temp directory and write skill/agent
+            tempDir = await this.createTempClaudeDirectory();
 
-        // If it's a skill/agent/slash-command, make it available as a tool
-        if (isSkillAsTool) {
-          let continueLoop = true;
-          let iterations = 0;
-          const maxIterations = 5; // Prevent infinite loops
+            if (needsSkillMount) {
+              await this.writeSkillToFilesystem(tempDir, packageData.name, packageData.prompt);
+            } else if (needsAgentMount) {
+              await this.writeAgentToFilesystem(tempDir, packageData.name, packageData.prompt);
+            }
 
-          // System prompt explains that Claude has access to this skill
-          const systemWithTool = `You have access to a ${packageData.subtype} that you can use to help complete tasks.
+            // Use Claude Agent SDK with proper filesystem mounting
+            const queryOptions: any = {
+              cwd: tempDir,
+              settingSources: ['project'] as const,
+              model: modelName,
+              maxTurns: 10,
+              allowDangerouslySkipPermissions: true, // For playground, bypass permission prompts
+            };
 
-When the user asks you to do something that this ${packageData.subtype} can help with, use it by calling the tool.
+            // For skills, enable Skill tool
+            if (needsSkillMount) {
+              queryOptions.allowedTools = ['Skill'];
+            }
 
-Otherwise, respond normally to the user.`;
+            // Build conversation context from history
+            let promptText = request.input;
+            if (conversationHistory.length > 0) {
+              const historyText = conversationHistory
+                .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+                .join('\n\n');
+              promptText = `${historyText}\n\nUser: ${request.input}`;
+            }
 
-          while (continueLoop && iterations < maxIterations) {
-            iterations++;
+            // Execute with Claude Agent SDK
+            const queryResult = claudeQuery({
+              prompt: promptText,
+              options: queryOptions,
+            });
 
+            // Collect all messages
+            let assistantText = '';
+            let tokens = 0;
+
+            for await (const message of queryResult) {
+              if (message.type === 'assistant') {
+                // Extract text from assistant message
+                for (const content of message.message.content) {
+                  if (content.type === 'text') {
+                    assistantText += content.text;
+                  }
+                }
+              } else if (message.type === 'result') {
+                // Get final result and usage
+                assistantText = message.result || assistantText;
+                tokens = message.usage.input_tokens + message.usage.output_tokens;
+                break;
+              }
+            }
+
+            responseText = assistantText || 'No response generated';
+            tokensUsed = tokens;
+          } else {
+            // Regular prompt execution without tools (regular prompts, rules, etc.)
             const response = await this.anthropic.messages.create({
               model: modelName,
               max_tokens: 4096,
               temperature: 0.7,
-              system: systemWithTool,
+              system: packagePrompt,
               messages: anthropicMessages,
-              tools: [toolDefinition],
             });
 
-            totalTokens += response.usage.input_tokens + response.usage.output_tokens;
+            responseText =
+              response.content[0].type === 'text'
+                ? response.content[0].text
+                : 'No response generated';
 
-            // Process response content
-            let hasToolUse = false;
-            const assistantContent: Anthropic.ContentBlock[] = [];
-
-            for (const content of response.content) {
-              assistantContent.push(content);
-
-              if (content.type === 'text') {
-                finalResponse += content.text;
-              } else if (content.type === 'tool_use') {
-                hasToolUse = true;
-
-                // Execute the skill/agent by running its prompt with the tool input
-                const toolResult = await this.executeTool(
-                  content.name,
-                  content.input,
-                  packageData,
-                  model
-                );
-
-                // Add assistant message with tool use
-                anthropicMessages.push({
-                  role: 'assistant',
-                  content: assistantContent,
-                });
-
-                // Add tool result
-                anthropicMessages.push({
-                  role: 'user',
-                  content: [
-                    {
-                      type: 'tool_result',
-                      tool_use_id: content.id,
-                      content: toolResult,
-                    },
-                  ],
-                });
-              }
-            }
-
-            // If no tool use, we're done
-            if (!hasToolUse || response.stop_reason === 'end_turn') {
-              continueLoop = false;
-            }
+            tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
           }
-
-          responseText = finalResponse || 'No response generated';
-          tokensUsed = totalTokens;
-        } else {
-          // Regular prompt execution without tools (regular prompts, rules, etc.)
-          const response = await this.anthropic.messages.create({
-            model: modelName,
-            max_tokens: 4096,
-            temperature: 0.7,
-            system: packagePrompt,
-            messages: anthropicMessages,
-          });
-
-          responseText =
-            response.content[0].type === 'text'
-              ? response.content[0].text
-              : 'No response generated';
-
-          tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
+        } finally {
+          // Cleanup temp directory if created
+          if (tempDir) {
+            await this.cleanupTempDirectory(tempDir);
+          }
         }
       }
 
