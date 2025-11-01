@@ -8,6 +8,8 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { PlaygroundService } from '../services/playground.js';
 import { PlaygroundCreditsService } from '../services/playground-credits.js';
+import { createRateLimiter } from '../middleware/rate-limit.js';
+import { sanitizeUserInput, SECURITY_LIMITS } from '../middleware/security.js';
 
 // Request validation schemas
 const PlaygroundRunSchema = z.object({
@@ -15,8 +17,14 @@ const PlaygroundRunSchema = z.object({
   package_id: z.string().uuid('Invalid package ID').optional(),
   packageVersion: z.string().optional(),
   package_version: z.string().optional(),
-  userInput: z.string().min(1, 'User input is required').max(10000, 'Input too long').optional(),
-  input: z.string().min(1, 'User input is required').max(10000, 'Input too long').optional(),
+  userInput: z.string()
+    .min(1, 'User input is required')
+    .max(SECURITY_LIMITS.MAX_USER_INPUT_LENGTH, `Input too long (max ${SECURITY_LIMITS.MAX_USER_INPUT_LENGTH} characters)`)
+    .optional(),
+  input: z.string()
+    .min(1, 'User input is required')
+    .max(SECURITY_LIMITS.MAX_USER_INPUT_LENGTH, `Input too long (max ${SECURITY_LIMITS.MAX_USER_INPUT_LENGTH} characters)`)
+    .optional(),
   conversationId: z.string().uuid().optional(),
   session_id: z.string().uuid().optional(),
   model: z.enum(['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo']).optional().default('sonnet'),
@@ -45,6 +53,7 @@ const ShareSessionSchema = z.object({
 export async function playgroundRoutes(server: FastifyInstance) {
   const playgroundService = new PlaygroundService(server);
   const creditsService = new PlaygroundCreditsService(server);
+  const rateLimiter = createRateLimiter();
 
   // =====================================================
   // POST /api/v1/playground/run
@@ -53,7 +62,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
   server.post(
     '/run',
     {
-      preHandler: server.authenticate,
+      preHandler: [server.authenticate, rateLimiter],
       schema: {
         description: 'Execute a playground run with a package prompt',
         tags: ['playground'],
@@ -66,7 +75,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
             packageVersion: { type: 'string' },
             userInput: { type: 'string', minLength: 1, maxLength: 10000 },
             conversationId: { type: 'string', format: 'uuid' },
-            model: { type: 'string', enum: ['sonnet', 'opus'], default: 'sonnet' },
+            model: { type: 'string', enum: ['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'], default: 'sonnet' },
           },
         },
         response: {
@@ -116,22 +125,25 @@ export async function playgroundRoutes(server: FastifyInstance) {
         }
 
         // Normalize request body to support both snake_case and camelCase
-        const packageId = body.packageId || body.package_id;
-        const packageVersion = body.packageVersion || body.package_version;
-        const userInput = body.userInput || body.input;
-        const conversationId = body.conversationId || body.session_id;
+        const package_id = body.packageId || body.package_id;
+        const package_version = body.packageVersion || body.package_version;
+        const rawInput = body.userInput || body.input;
+        const session_id = body.conversationId || body.session_id;
         const model = body.model || 'sonnet';
 
+        // Sanitize user input for security
+        const input = sanitizeUserInput(rawInput!);
+
         server.log.info(
-          { userId, packageId, conversationId },
+          { userId, package_id, session_id },
           'Starting playground run'
         );
 
         const result = await playgroundService.executePrompt(userId, {
-          packageId: packageId!,
-          packageVersion,
-          userInput: userInput!,
-          conversationId,
+          package_id: package_id!,
+          package_version,
+          input: input!,
+          session_id,
           model,
         });
 
@@ -179,7 +191,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
           properties: {
             packageId: { type: 'string', format: 'uuid' },
             userInput: { type: 'string', minLength: 1, maxLength: 10000 },
-            model: { type: 'string', enum: ['sonnet', 'opus'], default: 'sonnet' },
+            model: { type: 'string', enum: ['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'], default: 'sonnet' },
           },
         },
         response: {

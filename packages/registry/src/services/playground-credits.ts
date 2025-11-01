@@ -7,52 +7,11 @@
 
 import { FastifyInstance } from 'fastify';
 import { Pool } from 'pg';
-
-export interface CreditBalance {
-  balance: number;
-  monthly: {
-    allocated: number;
-    used: number;
-    remaining: number;
-    resetAt: Date | null;
-  };
-  rollover: {
-    amount: number;
-    expiresAt: Date | null;
-  };
-  purchased: number;
-  breakdown: {
-    monthly: number;
-    rollover: number;
-    purchased: number;
-  };
-}
-
-export interface CreditTransaction {
-  id: string;
-  userId: string;
-  amount: number;
-  balanceAfter: number;
-  type: string;
-  description: string;
-  metadata?: any;
-  sessionId?: string;
-  purchaseId?: string;
-  createdAt: Date;
-}
-
-export interface PurchaseRecord {
-  id: string;
-  userId: string;
-  credits: number;
-  amountCents: number;
-  currency: string;
-  packageType: 'small' | 'medium' | 'large';
-  stripePaymentIntentId: string;
-  stripeStatus: string;
-  createdAt: Date;
-  completedAt?: Date;
-}
+import type {
+  CreditBalance,
+  CreditTransaction,
+  PurchaseRecord,
+} from '@pr-pm/types';
 
 export class PlaygroundCreditsService {
   private db: Pool;

@@ -1,5 +1,6 @@
 /**
  * Playground types for PRPM+ testing environment
+ * Convention: snake_case for all fields (matches database and API responses)
  */
 
 export interface PlaygroundMessage {
@@ -44,20 +45,29 @@ export interface PlaygroundRunResponse {
   credits_spent: number;
   credits_remaining: number;
   tokens_used: number;
+  duration_ms: number;
   model: string;
-  estimated_cost: number;
   conversation: PlaygroundMessage[];
 }
 
 export interface CreditBalance {
-  total: number;
-  monthly: number;
-  rollover: number;
+  balance: number;
+  monthly: {
+    allocated: number;
+    used: number;
+    remaining: number;
+    reset_at: string | null;
+  };
+  rollover: {
+    amount: number;
+    expires_at: string | null;
+  };
   purchased: number;
-  monthly_used: number;
-  monthly_limit: number;
-  rollover_expires_at?: string;
-  monthly_reset_at?: string;
+  breakdown: {
+    monthly: number;
+    rollover: number;
+    purchased: number;
+  };
 }
 
 export interface CreditTransaction {
@@ -67,8 +77,9 @@ export interface CreditTransaction {
   balance_after: number;
   type: 'signup' | 'monthly' | 'purchase' | 'spend' | 'rollover' | 'expire' | 'refund' | 'bonus' | 'admin';
   description: string;
-  metadata?: Record<string, any>;
+  metadata?: any;
   session_id?: string;
+  purchase_id?: string;
   created_at: string;
 }
 
@@ -78,4 +89,54 @@ export interface CreditPackage {
   credits: number;
   price: number;
   popular?: boolean;
+}
+
+export interface PurchaseRecord {
+  id: string;
+  user_id: string;
+  credits: number;
+  amount_cents: number;
+  currency: string;
+  package_type: 'small' | 'medium' | 'large';
+  stripe_payment_intent_id: string;
+  stripe_status: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+/**
+ * AI-generated test case for playground testing
+ */
+export interface GeneratedTestCase {
+  id?: string;
+  entity_type: 'package' | 'collection';
+  entity_id: string;
+  title: string;
+  description: string;
+  input: string;
+  difficulty: 'basic' | 'intermediate' | 'advanced';
+  test_type: 'concept' | 'practical' | 'edge_case' | 'comparison' | 'quality';
+  expected_criteria: string[];
+  tags: string[];
+  confidence_score: number;
+  version_generated_from?: string;
+  usage_count?: number;
+  helpful_votes?: number;
+  unhelpful_votes?: number;
+  success_rate?: number;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * User feedback on a test case
+ */
+export interface TestCaseFeedback {
+  id: string;
+  test_case_id: string;
+  user_id: string;
+  was_helpful: boolean;
+  feedback_comment?: string;
+  created_at: string;
 }

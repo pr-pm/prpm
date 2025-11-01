@@ -52,7 +52,7 @@ export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: Cred
         {rollover > 0 && (
           <div className="flex justify-between text-gray-600 dark:text-gray-400">
             <span>Rollover</span>
-            <span className="font-semibold text-purple-600 dark:text-purple-400">{rollover}</span>
+            <span className="font-semibold text-yellow-500 dark:text-yellow-400">{rollover}</span>
           </div>
         )}
         {purchased > 0 && (
