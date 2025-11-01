@@ -18,6 +18,7 @@ import { subscriptionRoutes } from './subscriptions.js';
 import { webhookRoutes } from './webhooks.js';
 import { playgroundRoutes } from './playground.js';
 import { playgroundCreditsRoutes } from './playground-credits.js';
+import { testCaseRoutes } from './test-cases.js';
 
 export async function registerRoutes(server: FastifyInstance) {
   // API v1 routes
@@ -38,6 +39,7 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(webhookRoutes, { prefix: '/webhooks' });
       await api.register(playgroundRoutes, { prefix: '/playground' });
       await api.register(playgroundCreditsRoutes, { prefix: '/playground' });
+      await api.register(testCaseRoutes, { prefix: '/' });
     },
     { prefix: '/api/v1' }
   );

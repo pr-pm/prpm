@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getCreditPackages, purchaseCredits } from '../../lib/api'
+import { getCreditPackages, purchaseCredits, subscribeToPRPMPlus } from '../../lib/api'
 import type { CreditPackage } from '../../lib/api'
 
 interface BuyCreditsModalProps {
@@ -166,18 +166,40 @@ export default function BuyCreditsModal({ onClose, onSuccess }: BuyCreditsModalP
               {/* PRPM+ Info */}
               <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                 <h4 className="font-bold text-yellow-900 dark:text-yellow-300 mb-2">
-                  🎁 PRPM+ Subscribers get 200 monthly credits!
+                  🎁 Best Value: PRPM+ - Just $5/month!
                 </h4>
                 <p className="text-sm text-yellow-800 dark:text-yellow-400">
-                  Upgrade to PRPM+ for just $20/month and get 200 credits every month, plus priority support and exclusive features.
+                  Upgrade to PRPM+ for just $5/month and get 200 credits every month, plus priority support and exclusive features.
                 </p>
                 <button
-                  onClick={() => {
-                    window.location.href = '/dashboard?upgrade=true'
+                  onClick={async () => {
+                    const token = localStorage.getItem('prpm_token')
+                    if (!token) {
+                      setError('Not authenticated')
+                      return
+                    }
+
+                    try {
+                      const currentUrl = window.location.origin
+                      const result = await subscribeToPRPMPlus(
+                        token,
+                        `${currentUrl}/playground?subscription=success`,
+                        `${currentUrl}/playground?subscription=cancelled`
+                      )
+
+                      // Redirect to Stripe Checkout
+                      if (result.checkoutUrl) {
+                        window.location.href = result.checkoutUrl
+                      }
+                    } catch (err: any) {
+                      console.error('Failed to start subscription:', err)
+                      setError(err.message || 'Failed to start subscription')
+                    }
                   }}
-                  className="mt-3 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition"
+                  disabled={purchasing}
+                  className="mt-3 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Upgrade to PRPM+
+                  {purchasing ? 'Processing...' : 'Upgrade to PRPM+'}
                 </button>
               </div>
 

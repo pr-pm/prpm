@@ -9,6 +9,7 @@ import { z } from 'zod';
 import Stripe from 'stripe';
 import { PlaygroundCreditsService } from '../services/playground-credits.js';
 import { config } from '../config.js';
+import { createPurchaseRateLimiter } from '../middleware/rate-limit.js';
 
 const stripe = new Stripe(config.stripe.secretKey, {
   apiVersion: '2025-02-24.acacia',
@@ -36,6 +37,7 @@ const CREDIT_PACKAGES = {
 
 export async function playgroundCreditsRoutes(server: FastifyInstance) {
   const creditsService = new PlaygroundCreditsService(server);
+  const purchaseRateLimiter = createPurchaseRateLimiter();
 
   // =====================================================
   // GET /api/v1/playground/credits
@@ -189,7 +191,7 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
   server.post(
     '/credits/purchase',
     {
-      preHandler: server.authenticate,
+      preHandler: [server.authenticate, purchaseRateLimiter],
       schema: {
         description: 'Initiate a credit purchase via Stripe',
         tags: ['playground', 'credits'],
@@ -396,6 +398,440 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
   );
 
   // =====================================================
+  // GET /api/v1/playground/pricing
+  // Get user's pricing tier based on organization membership
+  // =====================================================
+  server.get(
+    '/pricing',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'Get PRPM+ pricing for current user',
+        tags: ['playground', 'subscription'],
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              price: { type: 'number' },
+              currency: { type: 'string' },
+              interval: { type: 'string' },
+              credits: { type: 'number' },
+              isOrgMember: { type: 'boolean' },
+              orgName: { type: 'string', nullable: true },
+              discount: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        // Check if user is member of a verified organization
+        const orgMemberResult = await server.pg.query(
+          `SELECT o.id, o.name, o.is_verified
+           FROM organization_members om
+           JOIN organizations o ON om.org_id = o.id
+           WHERE om.user_id = $1 AND o.is_verified = TRUE
+           LIMIT 1`,
+          [userId]
+        );
+
+        const isVerifiedOrgMember = orgMemberResult.rows.length > 0;
+        const orgName = isVerifiedOrgMember ? orgMemberResult.rows[0].name : null;
+
+        // Return pricing based on organization membership
+        if (isVerifiedOrgMember) {
+          return reply.code(200).send({
+            price: 2.00,
+            currency: 'USD',
+            interval: 'month',
+            credits: 200,
+            isOrgMember: true,
+            orgName,
+            discount: 60, // 60% off
+          });
+        } else {
+          return reply.code(200).send({
+            price: 5.00,
+            currency: 'USD',
+            interval: 'month',
+            credits: 200,
+            isOrgMember: false,
+            orgName: null,
+            discount: 0,
+          });
+        }
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to get pricing');
+        return reply.code(500).send({
+          error: 'pricing_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/subscribe
+  // Create PRPM+ subscription
+  // =====================================================
+  server.post(
+    '/subscribe',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'Subscribe to PRPM+ for 200 monthly playground credits',
+        tags: ['playground', 'subscription'],
+        security: [{ bearerAuth: [] }],
+        body: {
+          type: 'object',
+          required: ['successUrl', 'cancelUrl'],
+          properties: {
+            successUrl: { type: 'string', format: 'uri' },
+            cancelUrl: { type: 'string', format: 'uri' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              checkoutUrl: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { successUrl, cancelUrl } = request.body as { successUrl: string; cancelUrl: string };
+        const userId = request.user?.user_id;
+        const userEmail = request.user?.email;
+
+        if (!userId || !userEmail) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        // Check if user is member of a verified organization
+        const orgMemberResult = await server.pg.query(
+          `SELECT o.id, o.name, o.is_verified
+           FROM organization_members om
+           JOIN organizations o ON om.org_id = o.id
+           WHERE om.user_id = $1 AND o.is_verified = TRUE
+           LIMIT 1`,
+          [userId]
+        );
+
+        const isVerifiedOrgMember = orgMemberResult.rows.length > 0;
+        const orgId = isVerifiedOrgMember ? orgMemberResult.rows[0].id : null;
+
+        // Select appropriate price ID based on organization membership
+        let priceId: string;
+        let planType: string;
+
+        if (isVerifiedOrgMember) {
+          priceId = process.env.STRIPE_PRPM_PLUS_ORG_MEMBER_PRICE_ID || '';
+          planType = 'prpm_plus_org_member';
+          server.log.info({ userId, orgId }, 'User is verified org member - using discounted pricing');
+        } else {
+          priceId = process.env.STRIPE_PRPM_PLUS_PRICE_ID || '';
+          planType = 'prpm_plus_individual';
+        }
+
+        if (!priceId) {
+          return reply.code(500).send({
+            error: 'configuration_error',
+            message: 'PRPM+ subscription not configured',
+          });
+        }
+
+        server.log.info({ userId, planType }, 'Creating PRPM+ subscription checkout');
+
+        // Get or create Stripe customer
+        let stripeCustomerId: string;
+
+        const userResult = await server.pg.query(
+          'SELECT stripe_customer_id FROM users WHERE id = $1',
+          [userId]
+        );
+
+        if (userResult.rows[0]?.stripe_customer_id) {
+          stripeCustomerId = userResult.rows[0].stripe_customer_id;
+        } else {
+          // Create new Stripe customer
+          const customer = await stripe.customers.create({
+            email: userEmail,
+            metadata: {
+              userId,
+              type: 'prpm_plus',
+            },
+          });
+          stripeCustomerId = customer.id;
+
+          // Save customer ID
+          await server.pg.query(
+            'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+            [stripeCustomerId, userId]
+          );
+        }
+
+        // Create Stripe Checkout session for subscription
+        const session = await stripe.checkout.sessions.create({
+          customer: stripeCustomerId,
+          mode: 'subscription',
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1,
+            },
+          ],
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          metadata: {
+            userId,
+            orgId: orgId || '',
+            type: 'prpm_plus_subscription',
+            planType,
+          },
+          subscription_data: {
+            metadata: {
+              userId,
+              orgId: orgId || '',
+              type: 'prpm_plus',
+              planType,
+            },
+          },
+        });
+
+        server.log.info({ userId, sessionId: session.id }, 'PRPM+ checkout session created');
+
+        return reply.code(200).send({
+          checkoutUrl: session.url,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to create PRPM+ subscription');
+        return reply.code(500).send({
+          error: 'subscription_failed',
+          message: error.message || 'Failed to create subscription',
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // GET /api/v1/playground/subscription
+  // Get user's PRPM+ subscription status
+  // =====================================================
+  server.get(
+    '/subscription',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'Get PRPM+ subscription status',
+        tags: ['playground', 'subscription'],
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              isActive: { type: 'boolean' },
+              status: { type: 'string', nullable: true },
+              cancelAtPeriodEnd: { type: 'boolean' },
+              currentPeriodEnd: { type: 'string', format: 'date-time', nullable: true },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        const userResult = await server.pg.query(
+          `SELECT prpm_plus_status, prpm_plus_cancel_at_period_end, prpm_plus_current_period_end
+           FROM users WHERE id = $1`,
+          [userId]
+        );
+
+        const user = userResult.rows[0];
+        const isActive = user?.prpm_plus_status === 'active';
+
+        return reply.code(200).send({
+          isActive,
+          status: user?.prpm_plus_status || null,
+          cancelAtPeriodEnd: user?.prpm_plus_cancel_at_period_end || false,
+          currentPeriodEnd: user?.prpm_plus_current_period_end || null,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to get subscription status');
+        return reply.code(500).send({
+          error: 'status_check_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/subscription/cancel
+  // Cancel PRPM+ subscription
+  // =====================================================
+  server.post(
+    '/subscription/cancel',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'Cancel PRPM+ subscription at period end',
+        tags: ['playground', 'subscription'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        const userResult = await server.pg.query(
+          'SELECT prpm_plus_subscription_id FROM users WHERE id = $1',
+          [userId]
+        );
+
+        const subscriptionId = userResult.rows[0]?.prpm_plus_subscription_id;
+
+        if (!subscriptionId) {
+          return reply.code(404).send({
+            error: 'no_subscription',
+            message: 'No active subscription found',
+          });
+        }
+
+        // Cancel at period end
+        await stripe.subscriptions.update(subscriptionId, {
+          cancel_at_period_end: true,
+        });
+
+        // Update database
+        await server.pg.query(
+          'UPDATE users SET prpm_plus_cancel_at_period_end = TRUE WHERE id = $1',
+          [userId]
+        );
+
+        server.log.info({ userId, subscriptionId }, 'PRPM+ subscription cancelled');
+
+        return reply.code(200).send({
+          message: 'Subscription will be cancelled at the end of the current period',
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to cancel subscription');
+        return reply.code(500).send({
+          error: 'cancel_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/subscription/portal
+  // Get Stripe customer portal URL
+  // =====================================================
+  server.post(
+    '/subscription/portal',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'Get Stripe Customer Portal URL for managing subscription',
+        tags: ['playground', 'subscription'],
+        security: [{ bearerAuth: [] }],
+        body: {
+          type: 'object',
+          required: ['returnUrl'],
+          properties: {
+            returnUrl: { type: 'string', format: 'uri' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              portalUrl: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { returnUrl } = request.body as { returnUrl: string };
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        const userResult = await server.pg.query(
+          'SELECT stripe_customer_id FROM users WHERE id = $1',
+          [userId]
+        );
+
+        const stripeCustomerId = userResult.rows[0]?.stripe_customer_id;
+
+        if (!stripeCustomerId) {
+          return reply.code(404).send({
+            error: 'no_customer',
+            message: 'No Stripe customer found',
+          });
+        }
+
+        // Create portal session
+        const session = await stripe.billingPortal.sessions.create({
+          customer: stripeCustomerId,
+          return_url: returnUrl,
+        });
+
+        return reply.code(200).send({
+          portalUrl: session.url,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to create portal session');
+        return reply.code(500).send({
+          error: 'portal_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
   // Webhook handler for Stripe events
   // POST /api/v1/webhooks/stripe/credits
   // =====================================================
@@ -421,17 +857,127 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
       }
 
       try {
-        // Verify webhook signature
+        // Validate webhook secret exists
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_CREDITS || process.env.STRIPE_WEBHOOK_SECRET;
+
+        if (!webhookSecret) {
+          server.log.error('STRIPE_WEBHOOK_SECRET not configured');
+          return reply.code(500).send({
+            error: 'webhook_configuration_error',
+            message: 'Webhook secret not configured',
+          });
+        }
+
+        // Verify webhook signature with strict timestamp checking
         const event = stripe.webhooks.constructEvent(
           rawBody,
           sig as string,
-          process.env.STRIPE_WEBHOOK_SECRET_CREDITS || process.env.STRIPE_WEBHOOK_SECRET || ''
+          webhookSecret,
+          300 // 5 minutes tolerance
         );
 
         server.log.info({ eventType: event.type, eventId: event.id }, 'Received Stripe webhook');
 
         // Handle different event types
         switch (event.type) {
+          // ===== PRPM+ Subscription Events =====
+          case 'customer.subscription.created':
+          case 'customer.subscription.updated': {
+            const subscription = event.data.object as Stripe.Subscription;
+
+            // Check if this is a PRPM+ subscription
+            if (subscription.metadata.type === 'prpm_plus') {
+              const userId = subscription.metadata.userId;
+
+              server.log.info(
+                { userId, subscriptionId: subscription.id, status: subscription.status },
+                'Processing PRPM+ subscription update'
+              );
+
+              // Update user subscription status
+              await server.pg.query(
+                `UPDATE users
+                 SET
+                   prpm_plus_subscription_id = $1,
+                   prpm_plus_status = $2,
+                   prpm_plus_cancel_at_period_end = $3,
+                   prpm_plus_current_period_end = to_timestamp($4)
+                 WHERE id = $5`,
+                [
+                  subscription.id,
+                  subscription.status,
+                  subscription.cancel_at_period_end,
+                  subscription.current_period_end,
+                  userId,
+                ]
+              );
+
+              // If subscription becomes active, grant 200 monthly credits
+              if (subscription.status === 'active') {
+                const now = new Date();
+                const periodEnd = new Date(subscription.current_period_end * 1000);
+
+                await server.pg.query(
+                  `INSERT INTO playground_credits (user_id, monthly_credits, monthly_reset_at, balance, lifetime_earned)
+                   VALUES ($1, 200, $2, 200, 200)
+                   ON CONFLICT (user_id)
+                   DO UPDATE SET
+                     monthly_credits = 200,
+                     monthly_reset_at = $2,
+                     balance = playground_credits.balance + (200 - playground_credits.monthly_credits + playground_credits.monthly_credits_used),
+                     monthly_credits_used = 0,
+                     lifetime_earned = playground_credits.lifetime_earned + 200,
+                     updated_at = NOW()`,
+                  [userId, periodEnd]
+                );
+
+                // Log transaction
+                await server.pg.query(
+                  `INSERT INTO playground_credit_transactions (user_id, amount, balance_after, transaction_type, description, metadata)
+                   SELECT $1, 200, balance, 'monthly', 'PRPM+ monthly credits', $2
+                   FROM playground_credits WHERE user_id = $1`,
+                  [userId, JSON.stringify({ subscriptionId: subscription.id })]
+                );
+
+                server.log.info({ userId }, 'PRPM+ monthly credits granted');
+              }
+            }
+            break;
+          }
+
+          case 'customer.subscription.deleted': {
+            const subscription = event.data.object as Stripe.Subscription;
+
+            if (subscription.metadata.type === 'prpm_plus') {
+              const userId = subscription.metadata.userId;
+
+              server.log.info({ userId, subscriptionId: subscription.id }, 'PRPM+ subscription cancelled');
+
+              // Update user status
+              await server.pg.query(
+                `UPDATE users
+                 SET prpm_plus_status = 'canceled', prpm_plus_cancel_at_period_end = FALSE
+                 WHERE id = $1`,
+                [userId]
+              );
+
+              // Remove monthly credits allocation (but don't touch purchased/rollover credits)
+              await server.pg.query(
+                `UPDATE playground_credits
+                 SET
+                   monthly_credits = 0,
+                   monthly_credits_used = 0,
+                   monthly_reset_at = NULL,
+                   balance = rollover_credits + purchased_credits,
+                   updated_at = NOW()
+                 WHERE user_id = $1`,
+                [userId]
+              );
+            }
+            break;
+          }
+
+          // ===== Credit Purchase Events =====
           case 'payment_intent.succeeded': {
             const paymentIntent = event.data.object as Stripe.PaymentIntent;
 

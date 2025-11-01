@@ -20,9 +20,6 @@ module.exports = {
         'prpm-dark-lighter': '#12121a',
         'prpm-dark-card': '#1a1a24',
         'prpm-border': '#27273a',
-        // Legacy aliases for backward compatibility
-        'prpm-purple': '#10b981',
-        'prpm-purple-dark': '#059669',
         'prpm-accent': '#34d399',
         'prpm-accent-light': '#6ee7b7',
       },

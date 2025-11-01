@@ -11,53 +11,12 @@ import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { PlaygroundCreditsService } from './playground-credits.js';
 import { nanoid } from 'nanoid';
-
-export interface PlaygroundMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-  tokens?: number;
-}
-
-export interface PlaygroundSession {
-  id: string;
-  userId: string;
-  orgId?: string;
-  packageId: string;
-  packageVersion?: string;
-  packageName: string;
-  conversation: PlaygroundMessage[];
-  creditsSpent: number;
-  estimatedTokens: number;
-  model: string;
-  totalTokens: number;
-  totalDurationMs: number;
-  runCount: number;
-  isPublic: boolean;
-  shareToken?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  lastRunAt: Date;
-}
-
-export interface PlaygroundRunRequest {
-  packageId: string;
-  packageVersion?: string;
-  userInput: string;
-  conversationId?: string;
-  model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
-}
-
-export interface PlaygroundRunResponse {
-  id: string;
-  response: string;
-  conversationId: string;
-  creditsSpent: number;
-  creditsRemaining: number;
-  tokensUsed: number;
-  durationMs: number;
-  model: string;
-}
+import type {
+  PlaygroundMessage,
+  PlaygroundSession,
+  PlaygroundRunRequest,
+  PlaygroundRunResponse,
+} from '@pr-pm/types';
 
 export class PlaygroundService {
   private server: FastifyInstance;
@@ -168,14 +127,14 @@ export class PlaygroundService {
     try {
       // 1. Load package prompt
       const packagePrompt = await this.loadPackagePrompt(
-        request.packageId,
-        request.packageVersion
+        request.package_id,
+        request.package_version
       );
 
       // 2. Get or create session
       let session: any;
-      if (request.conversationId) {
-        session = await this.getSession(request.conversationId, userId);
+      if (request.session_id) {
+        session = await this.getSession(request.session_id, userId);
         if (!session) {
           throw new Error('Conversation not found');
         }
@@ -187,7 +146,7 @@ export class PlaygroundService {
       const model = request.model || 'sonnet';
       const estimatedCredits = this.estimateCredits(
         packagePrompt.length,
-        request.userInput.length,
+        request.input.length,
         model,
         conversationHistory
       );
@@ -243,7 +202,7 @@ export class PlaygroundService {
         // Add current user input
         openaiMessages.push({
           role: 'user',
-          content: request.userInput,
+          content: request.input,
         });
 
         // Call OpenAI API
@@ -284,7 +243,7 @@ export class PlaygroundService {
         // Add current user input
         anthropicMessages.push({
           role: 'user',
-          content: request.userInput,
+          content: request.input,
         });
 
         // Call Anthropic API
@@ -316,7 +275,7 @@ export class PlaygroundService {
 
       const userMessage: PlaygroundMessage = {
         role: 'user',
-        content: request.userInput,
+        content: request.input,
         timestamp: new Date().toISOString(),
       };
 
@@ -329,8 +288,8 @@ export class PlaygroundService {
         // Create new session
         sessionId = await this.createSession({
           userId,
-          packageId: request.packageId,
-          packageVersion: request.packageVersion,
+          packageId: request.package_id,
+          packageVersion: request.package_version,
           conversation: [userMessage, newMessage],
           model: modelName,
           tokensUsed,
@@ -346,22 +305,34 @@ export class PlaygroundService {
         sessionId,
         `Playground run: ${model} model`,
         {
-          packageId: request.packageId,
+          packageId: request.package_id,
           model: modelName,
           tokensUsed,
           durationMs,
         }
       );
 
-      // 9. Log usage
+      // 9. Get user's organization (if any)
+      const orgResult = await this.server.pg.query(
+        `SELECT org_id FROM organization_members WHERE user_id = $1 LIMIT 1`,
+        [userId]
+      );
+      const orgId = orgResult.rows[0]?.org_id || null;
+
+      // 10. Log usage with analytics
       await this.logUsage({
         userId,
-        packageId: request.packageId,
+        orgId,
+        packageId: request.package_id,
         sessionId,
         model: modelName,
         tokensUsed,
         durationMs,
         creditsSpent: estimatedCredits,
+        packageVersion: request.package_version,
+        inputLength: request.input.length,
+        outputLength: responseText.length,
+        comparisonMode: false, // Will be updated when comparison mode is implemented
       });
 
       // 10. Get updated balance
@@ -370,7 +341,7 @@ export class PlaygroundService {
       this.server.log.info(
         {
           userId,
-          packageId: request.packageId,
+          packageId: request.package_id,
           sessionId,
           creditsSpent: estimatedCredits,
           creditsRemaining: balance.balance,
@@ -380,20 +351,24 @@ export class PlaygroundService {
         'Playground run completed successfully'
       );
 
+      // Get the updated session to include conversation
+      const updatedSession = await this.getSession(sessionId, userId);
+      const conversation = updatedSession?.conversation || [];
+
       return {
-        id: sessionId,
+        session_id: sessionId,
         response: responseText,
-        conversationId: sessionId,
-        creditsSpent: estimatedCredits,
-        creditsRemaining: balance.balance,
-        tokensUsed,
-        durationMs,
+        credits_spent: estimatedCredits,
+        credits_remaining: balance.balance,
+        tokens_used: tokensUsed,
+        duration_ms: durationMs,
         model: modelName,
+        conversation,
       };
     } catch (error) {
       const durationMs = Date.now() - startTime;
       this.server.log.error(
-        { error, userId, packageId: request.packageId, durationMs },
+        { error, userId, packageId: request.package_id, durationMs },
         'Playground run failed'
       );
       throw error;
@@ -652,19 +627,30 @@ export class PlaygroundService {
     tokensUsed: number;
     durationMs: number;
     creditsSpent: number;
+    packageVersion?: string;
+    inputLength?: number;
+    outputLength?: number;
+    comparisonMode?: boolean;
+    orgId?: string;
   }): Promise<void> {
     await this.server.pg.query(
       `INSERT INTO playground_usage
-       (user_id, package_id, session_id, model, tokens_used, duration_ms, credits_spent)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+       (user_id, org_id, package_id, session_id, model, tokens_used, duration_ms, credits_spent,
+        package_version, input_length, output_length, comparison_mode)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [
         data.userId,
+        data.orgId || null,
         data.packageId,
         data.sessionId,
         data.model,
         data.tokensUsed,
         data.durationMs,
         data.creditsSpent,
+        data.packageVersion || null,
+        data.inputLength || null,
+        data.outputLength || null,
+        data.comparisonMode || false,
       ]
     );
   }

@@ -7,6 +7,24 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- =====================================================
+-- 0. ADD STRIPE CUSTOMER ID TO USERS TABLE
+-- =====================================================
+-- Add stripe_customer_id column to users table for individual credit purchases
+ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255) UNIQUE;
+CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id ON users(stripe_customer_id);
+COMMENT ON COLUMN users.stripe_customer_id IS 'Stripe Customer ID for individual user credit purchases and PRPM+ subscriptions';
+
+-- Add PRPM+ subscription fields to users table
+ALTER TABLE users ADD COLUMN IF NOT EXISTS prpm_plus_subscription_id VARCHAR(255) UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS prpm_plus_status VARCHAR(50);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS prpm_plus_cancel_at_period_end BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS prpm_plus_current_period_end TIMESTAMP WITH TIME ZONE;
+
+CREATE INDEX IF NOT EXISTS idx_users_prpm_plus_status ON users(prpm_plus_status) WHERE prpm_plus_status IS NOT NULL;
+COMMENT ON COLUMN users.prpm_plus_subscription_id IS 'Stripe Subscription ID for PRPM+ membership';
+COMMENT ON COLUMN users.prpm_plus_status IS 'PRPM+ subscription status: active, past_due, canceled, incomplete, incomplete_expired, trialing, unpaid';
+
+-- =====================================================
 -- 1. PLAYGROUND SESSIONS TABLE
 -- =====================================================
 -- Stores playground session data with conversation history
@@ -77,6 +95,17 @@ CREATE TABLE IF NOT EXISTS playground_usage (
   error_occurred BOOLEAN DEFAULT FALSE,
   error_message TEXT,
 
+  -- Analytics fields
+  package_version VARCHAR(50),
+  input_length INTEGER,
+  output_length INTEGER,
+  comparison_mode BOOLEAN DEFAULT FALSE,
+
+  -- Quality indicators (can be set later via feedback)
+  user_rating INTEGER CHECK (user_rating >= 1 AND user_rating <= 5),
+  was_helpful BOOLEAN,
+  user_feedback TEXT,
+
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -84,8 +113,15 @@ CREATE INDEX idx_playground_usage_user_time ON playground_usage(user_id, created
 CREATE INDEX idx_playground_usage_org_time ON playground_usage(org_id, created_at DESC) WHERE org_id IS NOT NULL;
 CREATE INDEX idx_playground_usage_package ON playground_usage(package_id) WHERE package_id IS NOT NULL;
 CREATE INDEX idx_playground_usage_session ON playground_usage(session_id) WHERE session_id IS NOT NULL;
+CREATE INDEX idx_playground_usage_model ON playground_usage(model, created_at DESC);
+CREATE INDEX idx_playground_usage_package_model ON playground_usage(package_id, model) WHERE package_id IS NOT NULL;
+CREATE INDEX idx_playground_usage_package_version ON playground_usage(package_id, package_version) WHERE package_id IS NOT NULL;
+CREATE INDEX idx_playground_usage_success ON playground_usage(error_occurred, created_at DESC);
+CREATE INDEX idx_playground_usage_rating ON playground_usage(user_rating) WHERE user_rating IS NOT NULL;
 
 COMMENT ON TABLE playground_usage IS 'Tracks individual playground runs for analytics and billing';
+COMMENT ON COLUMN playground_usage.user_rating IS 'User rating 1-5 stars for the result quality';
+COMMENT ON COLUMN playground_usage.was_helpful IS 'Quick thumbs up/down feedback';
 
 -- =====================================================
 -- 3. PLAYGROUND CREDITS TABLE
@@ -303,14 +339,14 @@ SELECT
   pc.balance as balance_after,
   'monthly' as transaction_type,
   'PRPM+ monthly credits - Thank you for being a verified member!' as description,
-  jsonb_build_object('source', 'migration', 'migration', '025') as metadata
+  jsonb_build_object('source', 'migration', 'migration', '026') as metadata
 FROM playground_credits pc
 WHERE pc.monthly_reset_at IS NOT NULL
   AND pc.user_id NOT IN (
     SELECT user_id
     FROM playground_credit_transactions
     WHERE transaction_type = 'monthly'
-      AND metadata->>'migration' = '025'
+      AND metadata->>'migration' = '026'
   );
 
 -- =====================================================
@@ -331,7 +367,8 @@ WHERE pc.monthly_reset_at IS NOT NULL
 -- Log migration completion
 DO $$
 BEGIN
-  RAISE NOTICE 'Migration 025 completed successfully!';
+  RAISE NOTICE 'Migration 026 completed successfully!';
+  RAISE NOTICE 'Added stripe_customer_id to users table';
   RAISE NOTICE 'Created tables: playground_sessions, playground_usage, playground_credits, playground_credit_transactions, playground_credit_purchases';
   RAISE NOTICE 'Seeded % users with 5 free credits', (SELECT COUNT(*) FROM playground_credits WHERE balance = 5);
   RAISE NOTICE 'Granted % verified users 200 monthly credits', (SELECT COUNT(*) FROM playground_credits WHERE monthly_reset_at IS NOT NULL);

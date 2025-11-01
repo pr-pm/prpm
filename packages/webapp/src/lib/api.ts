@@ -663,6 +663,120 @@ export async function purchaseCredits(jwtToken: string, packageId: string): Prom
 }
 
 /**
+/**
+ * Get PRPM+ pricing for current user
+ */
+export async function getPRPMPlusPricing(jwtToken: string): Promise<{
+  price: number
+  currency: string
+  interval: string
+  credits: number
+  isOrgMember: boolean
+  orgName: string | null
+  discount: number
+}> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/pricing`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to get pricing' }))
+    throw new Error(error.error || error.message || 'Failed to get pricing')
+  }
+
+  return response.json()
+}
+
+ * Subscribe to PRPM+
+ */
+export async function subscribeToPRPMPlus(
+  jwtToken: string,
+  successUrl: string,
+  cancelUrl: string
+): Promise<{ checkoutUrl: string }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/subscribe`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ successUrl, cancelUrl }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to create subscription' }))
+    throw new Error(error.error || error.message || 'Failed to create subscription')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get PRPM+ subscription status
+ */
+export async function getPRPMPlusStatus(jwtToken: string): Promise<{
+  isActive: boolean
+  status: string | null
+  cancelAtPeriodEnd: boolean
+  currentPeriodEnd: string | null
+}> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/subscription`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to get subscription status' }))
+    throw new Error(error.error || error.message || 'Failed to get subscription status')
+  }
+
+  return response.json()
+}
+
+/**
+ * Cancel PRPM+ subscription
+ */
+export async function cancelPRPMPlus(jwtToken: string): Promise<{ message: string }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/subscription/cancel`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to cancel subscription' }))
+    throw new Error(error.error || error.message || 'Failed to cancel subscription')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get Stripe Customer Portal URL
+ */
+export async function getStripePortalUrl(jwtToken: string, returnUrl: string): Promise<{ portalUrl: string }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/subscription/portal`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ returnUrl }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to get portal URL' }))
+    throw new Error(error.error || error.message || 'Failed to get portal URL')
+  }
+
+  return response.json()
+}
+
+/**
  * Run playground prompt
  */
 export async function runPlayground(jwtToken: string, request: PlaygroundRunRequest): Promise<PlaygroundRunResponse> {
