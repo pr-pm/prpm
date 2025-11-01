@@ -67,6 +67,10 @@ export function loadConfig(): RegistryConfig {
       publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
       webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     },
+
+    frontend: {
+      url: process.env.FRONTEND_URL || 'https://prpm.dev',
+    },
   };
 }
 

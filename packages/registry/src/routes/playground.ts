@@ -448,9 +448,8 @@ export async function playgroundRoutes(server: FastifyInstance) {
 
         const shareToken = await playgroundService.shareSession(id, userId);
 
-        // Build share URL
-        const baseUrl = process.env.FRONTEND_URL || 'https://prpm.dev';
-        const shareUrl = `${baseUrl}/playground/shared/${shareToken}`;
+        // Build share URL using config
+        const shareUrl = `${server.config.frontend.url}/playground/shared/${shareToken}`;
 
         return reply.code(200).send({
           shareToken,

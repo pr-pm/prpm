@@ -66,6 +66,9 @@ async function buildServer() {
     genReqId: (req) => (req.headers?.['x-request-id'] as string) || crypto.randomUUID(),
   });
 
+  // Attach config to server for access in routes
+  server.decorate('config', config);
+
   // Security headers
   await server.register(helmet, {
     contentSecurityPolicy: {

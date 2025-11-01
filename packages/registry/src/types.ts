@@ -289,4 +289,7 @@ export interface RegistryConfig {
     publishableKey: string;
     webhookSecret: string;
   };
+  frontend: {
+    url: string;
+  };
 }
