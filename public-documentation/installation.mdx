@@ -1,0 +1,77 @@
+---
+title: 'Installation'
+description: 'Install PRPM on your system'
+---
+
+## Install via npm
+
+The easiest way to install PRPM is using npm:
+
+```bash
+npm install -g prpm
+```
+
+## Verify Installation
+
+Check that PRPM is installed correctly:
+
+```bash
+prpm --version
+```
+
+You should see the version number of PRPM.
+
+## System Requirements
+
+- **Node.js**: 18.x or higher
+- **npm**: 9.x or higher
+- **Operating Systems**: macOS, Linux, Windows
+
+## Authentication Setup
+
+Before publishing packages, you'll need to authenticate:
+
+```bash
+prpm login
+```
+
+This will open GitHub OAuth in your browser to authenticate.
+
+Check your authentication status:
+
+```bash
+prpm whoami
+```
+
+## Configuration
+
+PRPM stores configuration in `~/.prpmrc`. You can view your config:
+
+```bash
+cat ~/.prpmrc
+```
+
+To change the registry URL (for development):
+
+```bash
+prpm config set registryUrl http://localhost:3000
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Install your first package
+  </Card>
+  <Card
+    title="CLI Reference"
+    icon="terminal"
+    href="/cli"
+  >
+    Explore all commands
+  </Card>
+</CardGroup>

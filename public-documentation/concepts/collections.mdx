@@ -1,0 +1,168 @@
+---
+title: 'Collections'
+description: 'Bundle multiple packages together'
+---
+
+# Collections
+
+Collections are curated bundles of packages that work together for specific development workflows.
+
+## What are Collections?
+
+Instead of installing packages one by one:
+
+```bash
+prpm install typescript-strict
+prpm install react-best-practices
+prpm install tailwind-config
+prpm install testing-patterns
+```
+
+You can install a collection:
+
+```bash
+prpm install collections/my-react-setup
+```
+
+## Creating Collections
+
+Collections are defined in your prpm.json using the `collections` array:
+
+```json
+{
+  "name": "my-prompts-repo",
+  "author": "Your Name",
+  "license": "MIT",
+  "collections": [
+    {
+      "id": "react-complete",
+      "name": "Complete React Setup",
+      "description": "Full React development setup with TypeScript and testing",
+      "version": "1.0.0",
+      "category": "development",
+      "tags": ["react", "typescript", "testing"],
+      "packages": [
+        {
+          "packageId": "typescript-strict",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Enforces strict type checking"
+        },
+        {
+          "packageId": "react-best-practices",
+          "version": "^2.0.0",
+          "required": true
+        },
+        {
+          "packageId": "tailwind-config",
+          "version": "^1.5.0",
+          "required": false,
+          "reason": "Optional Tailwind CSS setup"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Version Ranges
+
+Specify how packages should be updated:
+
+- `^1.0.0` - Compatible with 1.x.x (recommended)
+- `~1.2.0` - Compatible with 1.2.x
+- `1.0.0` - Exact version only
+- `latest` - Always use latest version
+
+## Required vs Optional Packages
+
+Mark packages as optional so users can skip them:
+
+```json
+{
+  "packageId": "storybook-setup",
+  "version": "^1.0.0",
+  "required": false,
+  "reason": "Optional Storybook configuration"
+}
+```
+
+Install without optional packages:
+
+```bash
+prpm install collections/react-complete --skip-optional
+```
+
+## Publishing Collections
+
+Collections are published alongside packages:
+
+```bash
+prpm publish
+```
+
+Or publish only a specific collection:
+
+```bash
+prpm publish --collection react-complete
+```
+
+## Use Cases
+
+### Starter Kits
+
+Bundle everything needed for new projects:
+
+```json
+{
+  "id": "nextjs-starter",
+  "name": "Next.js Starter",
+  "description": "Complete Next.js setup with TypeScript and Tailwind",
+  "packages": [...]
+}
+```
+
+### Team Standards
+
+Share team development standards:
+
+```json
+{
+  "id": "acme-standards",
+  "name": "ACME Corp Standards",
+  "description": "Company development standards",
+  "packages": [...]
+}
+```
+
+### Technology Stacks
+
+Bundle complete technology stacks:
+
+```json
+{
+  "id": "python-ml-stack",
+  "name": "Python ML Stack",
+  "description": "Machine learning development stack",
+  "packages": [...]
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Publishing Collections"
+    icon="upload"
+    href="/publishing/collections"
+  >
+    Learn how to publish your collections
+  </Card>
+  <Card
+    title="Manifest Reference"
+    icon="file-code"
+    href="/publishing/manifest"
+  >
+    Complete collection schema
+  </Card>
+</CardGroup>

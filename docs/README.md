@@ -58,11 +58,18 @@ Documentation for using the Prompt Package Manager (PRPM).
 ## Publishing & Contributing
 
 ### For Package Authors
+- **[PUBLISHING.md](./PUBLISHING.md)** - Complete publishing guide
+  - Authentication and login
+  - Publishing single packages
+  - Publishing multiple packages
+  - Creating collections
+  - Best practices
+
 - **[PACKAGE_MANIFEST.md](./PACKAGE_MANIFEST.md)** - Creating prpm.json package manifests
   - Package format requirements
   - File path configuration
-  - Publishing workflow
-  - Best practices for package authors
+  - Required fields
+  - Examples
 
 ### For Developers
 - **[TESTING.md](./TESTING.md)** - Testing guide
@@ -74,12 +81,15 @@ Documentation for using the Prompt Package Manager (PRPM).
 
 ## Internal Documentation
 
-For PRPM contributors and maintainers, see **[development/docs/](../../development/docs/)** for:
-- **[PUBLISHING.md](../../development/docs/PUBLISHING.md)** - NPM and Homebrew publishing
-- Deployment guides
-- CI/CD workflows
-- Development environment setup
-- Infrastructure documentation
+For PRPM contributors and maintainers:
+
+**Planning & Features:**
+- **[internal/VERIFIED_FEATURES_ROADMAP.md](./internal/VERIFIED_FEATURES_ROADMAP.md)** - Verified organization features roadmap
+- **[internal/VERIFIED_PLAN_UI.md](./internal/VERIFIED_PLAN_UI.md)** - Verified plan UI implementation
+- **[internal/PAID_ORGANIZATIONS.md](./internal/PAID_ORGANIZATIONS.md)** - Paid organization features
+
+**Development:**
+- See **[../../development/docs/](../../development/docs/)** for deployment, CI/CD, and infrastructure docs
 
 ---
 
@@ -111,8 +121,11 @@ For PRPM contributors and maintainers, see **[development/docs/](../../developme
 - [MCP_SERVERS_IN_COLLECTIONS.md](./MCP_SERVERS_IN_COLLECTIONS.md) - MCP configuration
 - [PACKAGE_TYPES.md](./PACKAGE_TYPES.md) - Package type reference
 
+**Publishing**
+- [PUBLISHING.md](./PUBLISHING.md) - Publishing guide
+- [PACKAGE_MANIFEST.md](./PACKAGE_MANIFEST.md) - Package manifests
+
 **Development**
-- [PUBLISHING.md](./PUBLISHING.md) - Publish packages
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System design
 - [TESTING.md](./TESTING.md) - Test guide
 

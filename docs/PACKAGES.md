@@ -69,31 +69,31 @@ prpm install typescript-strict
 
 ## Collections
 
-### @collection/nextjs-pro
+### nextjs-pro
 Complete Next.js development setup.
 
 **Includes:** React, TypeScript, Tailwind, Next.js patterns, component architecture
 
 ```bash
-prpm install @collection/nextjs-pro
+prpm install nextjs-pro
 ```
 
-### @collection/python-data
+### python-data
 Python data science stack.
 
 **Includes:** pandas, numpy, matplotlib, jupyter, ML workflows
 
 ```bash
-prpm install @collection/python-data
+prpm install python-data
 ```
 
-### @collection/devops-complete
+### devops-complete
 Full DevOps toolkit.
 
 **Includes:** Docker, Kubernetes, CI/CD, infrastructure
 
 ```bash
-prpm install @collection/devops-complete
+prpm install devops-complete
 ```
 
 ## Browse Packages

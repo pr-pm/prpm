@@ -1,0 +1,117 @@
+---
+title: 'Quickstart'
+description: 'Get started with PRPM in 5 minutes'
+---
+
+## Installation
+
+Install PRPM globally using npm:
+
+```bash
+npm install -g prpm
+```
+
+Verify the installation:
+
+```bash
+prpm --version
+```
+
+## Install Your First Package
+
+Search for packages:
+
+```bash
+prpm search typescript
+```
+
+Install a package:
+
+```bash
+prpm install @prpm/typescript-best-practices
+```
+
+List installed packages:
+
+```bash
+prpm list
+```
+
+## Install a Collection
+
+Collections bundle multiple packages together:
+
+```bash
+prpm install collections/nextjs-pro
+```
+
+This will install all packages in the Next.js professional setup collection.
+
+## Publishing Your First Package
+
+### 1. Login
+
+Authenticate with GitHub:
+
+```bash
+prpm login
+```
+
+### 2. Create prpm.json
+
+Create a manifest file in your project:
+
+```json
+{
+  "name": "my-typescript-rules",
+  "version": "1.0.0",
+  "description": "My TypeScript coding standards",
+  "author": "Your Name",
+  "license": "MIT",
+  "format": "cursor",
+  "subtype": "rule",
+  "tags": ["typescript", "best-practices"],
+  "files": [".cursor/rules/typescript.mdc"]
+}
+```
+
+### 3. Publish
+
+```bash
+prpm publish
+```
+
+That's it! Your package is now available on the PRPM registry.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Publishing Guide"
+    icon="book"
+    href="/publishing/getting-started"
+  >
+    Learn more about publishing packages
+  </Card>
+  <Card
+    title="Collections"
+    icon="boxes-stacked"
+    href="/concepts/collections"
+  >
+    Create collections of packages
+  </Card>
+  <Card
+    title="CLI Reference"
+    icon="terminal"
+    href="/cli"
+  >
+    Explore all CLI commands
+  </Card>
+  <Card
+    title="Manifest Reference"
+    icon="file-code"
+    href="/publishing/manifest"
+  >
+    Complete prpm.json documentation
+  </Card>
+</CardGroup>

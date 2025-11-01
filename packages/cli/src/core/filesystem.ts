@@ -42,6 +42,9 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
     case 'kiro':
       return '.kiro/steering';
 
+    case 'agents.md':
+      return '.agents';
+
     case 'generic':
       return '.prompts';
 

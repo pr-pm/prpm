@@ -93,7 +93,7 @@ MCP servers provide specialized capabilities to Claude Code:
 
 ### Install with All MCP Servers
 ```bash
-prpm install @collection/pulumi-infrastructure --as claude
+prpm install pulumi-infrastructure --as claude
 ```
 
 This installs:
@@ -103,7 +103,7 @@ This installs:
 
 ### Skip Optional MCP Servers
 ```bash
-prpm install @collection/pulumi-infrastructure --as claude --skip-optional-mcp
+prpm install pulumi-infrastructure --as claude --skip-optional-mcp
 ```
 
 This installs:
@@ -113,7 +113,7 @@ This installs:
 
 ### Install Without MCP (Cursor/Other IDEs)
 ```bash
-prpm install @collection/pulumi-infrastructure --as cursor
+prpm install pulumi-infrastructure --as cursor
 ```
 
 This installs:
@@ -172,10 +172,10 @@ This installs:
 **Usage**:
 ```bash
 # Full stack with MCP
-prpm install @collection/prpm-development --as claude
+prpm install prpm-development --as claude
 
 # Without bash automation
-prpm install @collection/prpm-development --as claude --skip-optional-mcp
+prpm install prpm-development --as claude --skip-optional-mcp
 ```
 
 ### 2. Pulumi AWS Complete
@@ -208,10 +208,10 @@ prpm install @collection/prpm-development --as claude --skip-optional-mcp
 **Usage**:
 ```bash
 # Claude users get Pulumi + AWS MCP servers
-prpm install @collection/pulumi-aws-complete --as claude
+prpm install pulumi-aws-complete --as claude
 
 # Cursor users get only packages
-prpm install @collection/pulumi-aws-complete --as cursor
+prpm install pulumi-aws-complete --as cursor
 ```
 
 ### 3. Kubernetes Platform
@@ -349,7 +349,7 @@ In your collection README, explain:
 
 PRPM includes three official Pulumi collections with MCP servers:
 
-### @collection/pulumi-infrastructure
+### pulumi-infrastructure
 **MCP Servers**:
 - Pulumi (required) - State inspection
 - AWS (optional) - Cloud resource queries
@@ -357,14 +357,14 @@ PRPM includes three official Pulumi collections with MCP servers:
 
 **Packages**: TypeScript, AWS, Kubernetes, GCP, Azure, State Management
 
-### @collection/pulumi-aws-complete
+### pulumi-aws-complete
 **MCP Servers**:
 - Pulumi (required) - State and resource queries
 - AWS (required) - Live AWS inspection and cost analysis
 
 **Packages**: VPC, ECS, Lambda, RDS, S3, IAM, Monitoring
 
-### @collection/pulumi-kubernetes
+### pulumi-kubernetes
 **MCP Servers**:
 - Pulumi (required) - K8s resource management
 - Kubernetes (required) - Live cluster debugging

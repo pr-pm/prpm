@@ -1,0 +1,169 @@
+---
+title: 'Manifest Reference'
+description: 'Complete prpm.json documentation'
+---
+
+# prpm.json Reference
+
+Complete reference for the PRPM package manifest.
+
+## Single Package
+
+Basic package manifest:
+
+```json
+{
+  "name": "my-package",
+  "version": "1.0.0",
+  "description": "Clear description of what this package does",
+  "author": "Your Name <you@example.com>",
+  "license": "MIT",
+  "repository": "https://github.com/username/repo",
+  "format": "cursor",
+  "subtype": "rule",
+  "tags": ["typescript", "best-practices"],
+  "files": [".cursor/rules/my-rule.mdc"]
+}
+```
+
+## Multi-Package Repository
+
+For repositories with multiple packages:
+
+```json
+{
+  "name": "my-prompts-repo",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": "https://github.com/username/repo",
+  "packages": [
+    {
+      "name": "package-one",
+      "version": "1.0.0",
+      "description": "First package",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["tag1"],
+      "files": [".cursor/rules/one.mdc"]
+    },
+    {
+      "name": "package-two",
+      "version": "1.0.0",
+      "description": "Second package",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["tag2"],
+      "files": [".claude/skills/two/SKILL.md"]
+    }
+  ]
+}
+```
+
+## Required Fields
+
+### Single Package
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Package name (kebab-case, unique) |
+| `version` | string | Semver version (e.g., `1.0.0`) |
+| `description` | string | Clear description (min 10 chars) |
+| `author` | string | Author name and optional email |
+| `license` | string | SPDX license identifier |
+| `format` | string | Target format (claude, cursor, etc.) |
+| `subtype` | string | Package type (agent, skill, rule, etc.) |
+| `files` | string[] | Files to include in package |
+
+### Multi-Package
+
+Each package in the `packages` array requires the same fields, except top-level `author`, `license`, and `repository` can be inherited.
+
+## Format Values
+
+| Format | Description |
+|--------|-------------|
+| `claude` | Claude Code |
+| `cursor` | Cursor IDE |
+| `continue` | Continue.dev |
+| `windsurf` | Windsurf IDE |
+| `agents.md` | Agents.md format |
+| `copilot` | GitHub Copilot |
+| `generic` | Multi-tool |
+
+## Subtype Values
+
+| Subtype | Description |
+|---------|-------------|
+| `agent` | Autonomous agents |
+| `skill` | Specialized capabilities |
+| `rule` | IDE rules |
+| `slash-command` | Executable commands |
+| `prompt` | Prompt templates |
+| `chatmode` | Chat modes |
+| `tool` | MCP tools |
+
+## File Paths
+
+Use full paths from project root:
+
+**Correct:**
+```json
+{
+  "files": [".cursor/rules/typescript.mdc"]
+}
+```
+
+**Wrong:**
+```json
+{
+  "files": ["rules/typescript.mdc"]  // Missing .cursor/ prefix
+}
+```
+
+## Tags
+
+Use 3-8 kebab-case tags:
+
+**Good:**
+```json
+{
+  "tags": ["typescript", "best-practices", "type-safety"]
+}
+```
+
+**Bad:**
+```json
+{
+  "tags": ["TypeScript", "code_quality"]  // Wrong case, wrong separator
+}
+```
+
+## Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `repository` | string | GitHub repository URL |
+| `homepage` | string | Package homepage |
+| `documentation` | string | Documentation URL |
+| `organization` | string | Organization name/ID |
+| `keywords` | string[] | Additional search keywords |
+| `private` | boolean | Mark as private (default: false) |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Publishing Collections"
+    icon="boxes-stacked"
+    href="/publishing/collections"
+  >
+    Create package collections
+  </Card>
+  <Card
+    title="Publishing Guide"
+    icon="upload"
+    href="/publishing/getting-started"
+  >
+    Publish your packages
+  </Card>
+</CardGroup>

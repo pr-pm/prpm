@@ -33,7 +33,7 @@ For Claude users, collections can include:
 Example:
 ```json
 {
-  "id": "@collection/claude-skills",
+  "id": "claude-skills",
   "config": {
     "defaultFormat": "claude"
   },
@@ -60,20 +60,20 @@ Collections respect your project's format or allow override:
 
 ```bash
 # Auto-detect from .cursor/, .claude/, etc.
-prpm install @collection/typescript-fullstack
+prpm install typescript-fullstack
 
 # Force specific format
-prpm install @collection/typescript-fullstack --as claude
+prpm install typescript-fullstack --as claude
 
 # Install with only required packages
-prpm install @collection/typescript-fullstack --skip-optional
+prpm install typescript-fullstack --skip-optional
 ```
 
 ## PRPM Development Collections
 
 This project uses the following collections to showcase the system:
 
-### [@collection/typescript-fullstack](../registry/scripts/seed/prpm-collections.json)
+### [typescript-fullstack](../registry/scripts/seed/prpm-collections.json)
 **Purpose**: Core TypeScript patterns for building PRPM CLI and registry backend
 
 Includes:
@@ -81,7 +81,7 @@ Includes:
 - `nodejs-backend` - Node.js server development with Express/Fastify
 - `react-typescript` - React with TypeScript and hooks (for future web UI)
 
-### [@collection/package-manager-dev](../registry/scripts/seed/prpm-collections.json)
+### [package-manager-dev](../registry/scripts/seed/prpm-collections.json)
 **Purpose**: Essential for CLI development, npm publishing, and package management features
 
 Includes:
@@ -93,7 +93,7 @@ Includes:
 - `file-system-ops` - Safe file operations and tar archives
 - `config-management` - Configuration files and user settings
 
-### [@collection/registry-backend](../registry/scripts/seed/prpm-collections.json)
+### [registry-backend](../registry/scripts/seed/prpm-collections.json)
 **Purpose**: Powers the PRPM registry with Fastify, PostgreSQL, Redis, and OAuth
 
 Includes:
@@ -105,7 +105,7 @@ Includes:
   - Claude: Includes MCP Elasticsearch integration
 - `analytics-tracking` - Usage analytics and metrics
 
-### [@collection/testing-complete](../registry/scripts/seed/prpm-collections.json)
+### [testing-complete](../registry/scripts/seed/prpm-collections.json)
 **Purpose**: Comprehensive testing with Vitest for format converters and API endpoints
 
 Includes:
@@ -114,7 +114,7 @@ Includes:
 - `api-testing` - REST API testing strategies
 - `code-coverage` - Coverage reporting and quality gates
 
-### [@collection/scraper-automation](../registry/scripts/seed/prpm-collections.json)
+### [scraper-automation](../registry/scripts/seed/prpm-collections.json)
 **Purpose**: Used for scraping cursor rules and Claude agents from GitHub repositories
 
 Includes:
@@ -124,7 +124,7 @@ Includes:
 - `data-extraction` - Data parsing and transformation
 - `markdown-parsing` - Parse and extract data from markdown files
 
-### [@collection/format-conversion](../registry/scripts/seed/prpm-collections.json)
+### [format-conversion](../registry/scripts/seed/prpm-collections.json)
 **Purpose**: Critical for converting between Cursor, Claude, Continue, and Windsurf formats
 
 Includes:
@@ -134,7 +134,7 @@ Includes:
 - `json-transformation` - JSON parsing and normalization
 - `quality-scoring` - Quality metrics and conversion scoring
 
-### [@collection/claude-skills](../registry/scripts/seed/prpm-collections.json)
+### [claude-skills](../registry/scripts/seed/prpm-collections.json)
 **Purpose**: Claude-specific skills and MCP integrations (Claude-optimized)
 
 **Format**: `claude` (optimized for Claude Code)
@@ -196,16 +196,16 @@ prpm collections list --category development
 prpm collections list --official
 
 # View collection details
-prpm collection info @collection/typescript-fullstack
+prpm collection info typescript-fullstack
 
 # Install a collection
-prpm install @collection/typescript-fullstack
+prpm install typescript-fullstack
 
 # Install with specific format
-prpm install @collection/typescript-fullstack --as claude
+prpm install typescript-fullstack --as claude
 
 # Install without optional packages
-prpm install @collection/typescript-fullstack --skip-optional
+prpm install typescript-fullstack --skip-optional
 ```
 
 ## Benefits
@@ -220,16 +220,16 @@ prpm install @collection/typescript-fullstack --skip-optional
 
 ```bash
 # Starting a new Next.js project
-prpm install @collection/nextjs-pro
+prpm install nextjs-pro
 
 # Building a CLI tool
-prpm install @collection/package-manager-dev
+prpm install package-manager-dev
 
 # Setting up testing
-prpm install @collection/testing-complete
+prpm install testing-complete
 
 # Claude-specific development
-prpm install @collection/claude-skills --as claude
+prpm install claude-skills --as claude
 ```
 
 Each collection installs the right packages in the right format for your environment.
