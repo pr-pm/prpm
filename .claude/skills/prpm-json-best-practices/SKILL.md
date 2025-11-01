@@ -532,7 +532,7 @@ Collections CAN be defined in prpm.json alongside packages using the `collection
 }
 ```
 
-See the [Collections Guide](../../../docs/COLLECTIONS.md) for details on creating collections.
+For more details on creating collections, see the PRPM documentation at https://docs.prpm.dev or run `prpm help collections`.
 
 **Summary:** `prpm.json` can contain both packages (skills, agents, rules, slash-commands, etc.) and collections.
 
