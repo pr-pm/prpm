@@ -51,15 +51,20 @@ export class PlaygroundService {
   }
 
   /**
-   * Load package prompt content from database
+   * Load package prompt content and metadata from database
    */
-  async loadPackagePrompt(packageId: string, version?: string): Promise<string> {
+  async loadPackagePrompt(packageId: string, version?: string): Promise<{
+    prompt: string;
+    format: string;
+    subtype: string;
+    name: string;
+  }> {
     const query = version
-      ? `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format
+      ? `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format, p.subtype
          FROM packages p
          JOIN package_versions pv ON p.id = pv.package_id
          WHERE p.id = $1 AND pv.version = $2`
-      : `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format
+      : `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format, p.subtype
          FROM packages p
          JOIN package_versions pv ON p.id = pv.package_id
          WHERE p.id = $1
@@ -75,33 +80,159 @@ export class PlaygroundService {
 
     const row = result.rows[0];
 
+    let prompt: string;
+
     // Priority order: 1) snippet field, 2) extract from S3 tarball
     if (row.snippet) {
       this.server.log.info({ packageName: row.name }, 'Using cached snippet for playground');
-      return row.snippet;
+      prompt = row.snippet;
+    } else {
+      // No snippet, try to fetch and extract from S3
+      this.server.log.info({ packageName: row.name, version: row.version }, 'Fetching package content from S3 tarball');
+
+      try {
+        prompt = await getTarballContent(
+          this.server,
+          packageId,
+          row.version,
+          row.name
+        );
+      } catch (error) {
+        this.server.log.error({
+          error: error instanceof Error ? error.message : String(error),
+          packageName: row.name
+        }, 'Failed to fetch content from S3');
+
+        throw new Error(
+          `Package content not available for ${row.name}. ` +
+          `Failed to extract from storage: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
     }
 
-    // No snippet, try to fetch and extract from S3
-    this.server.log.info({ packageName: row.name, version: row.version }, 'Fetching package content from S3 tarball');
+    return {
+      prompt,
+      format: row.format,
+      subtype: row.subtype,
+      name: row.name,
+    };
+  }
 
-    try {
-      const content = await getTarballContent(
-        this.server,
-        packageId,
-        row.version,
-        row.name
-      );
-      return content;
-    } catch (error) {
-      this.server.log.error({
-        error: error instanceof Error ? error.message : String(error),
-        packageName: row.name
-      }, 'Failed to fetch content from S3');
+  /**
+   * Get tools for Claude skills
+   * If package is a Claude skill/agent, return available tools
+   */
+  private getToolsForSkill(format: string, subtype: string): Anthropic.Tool[] {
+    // Only Claude skills/agents support tools
+    if (format !== 'claude' || (subtype !== 'skill' && subtype !== 'agent')) {
+      return [];
+    }
 
-      throw new Error(
-        `Package content not available for ${row.name}. ` +
-        `Failed to extract from storage: ${error instanceof Error ? error.message : String(error)}`
-      );
+    // Return common MCP-compatible tools for skills
+    return [
+      {
+        name: 'read_file',
+        description: 'Read the contents of a file from the filesystem',
+        input_schema: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              description: 'Path to the file to read'
+            }
+          },
+          required: ['path']
+        }
+      },
+      {
+        name: 'list_directory',
+        description: 'List contents of a directory',
+        input_schema: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              description: 'Path to the directory'
+            }
+          },
+          required: ['path']
+        }
+      },
+      {
+        name: 'write_file',
+        description: 'Write content to a file',
+        input_schema: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              description: 'Path where the file should be written'
+            },
+            content: {
+              type: 'string',
+              description: 'Content to write to the file'
+            }
+          },
+          required: ['path', 'content']
+        }
+      },
+      {
+        name: 'execute_command',
+        description: 'Execute a shell command (read-only operations)',
+        input_schema: {
+          type: 'object',
+          properties: {
+            command: {
+              type: 'string',
+              description: 'Shell command to execute'
+            }
+          },
+          required: ['command']
+        }
+      }
+    ];
+  }
+
+  /**
+   * Execute a tool call (mock implementation for playground safety)
+   */
+  private async executeTool(toolName: string, toolInput: any): Promise<string> {
+    // For playground safety, we return mock responses
+    // In production, you could implement real tool execution in a sandboxed environment
+
+    switch (toolName) {
+      case 'read_file':
+        return JSON.stringify({
+          success: true,
+          content: `[Simulated file content for: ${toolInput.path}]`,
+          note: 'This is a playground simulation. Real file operations are disabled for security.'
+        });
+
+      case 'list_directory':
+        return JSON.stringify({
+          success: true,
+          files: ['example.txt', 'data.json', 'script.py'],
+          note: 'This is a playground simulation. Real directory operations are disabled for security.'
+        });
+
+      case 'write_file':
+        return JSON.stringify({
+          success: true,
+          message: `File would be written to: ${toolInput.path}`,
+          note: 'This is a playground simulation. Real file operations are disabled for security.'
+        });
+
+      case 'execute_command':
+        return JSON.stringify({
+          success: true,
+          output: `[Simulated output for command: ${toolInput.command}]`,
+          note: 'This is a playground simulation. Real command execution is disabled for security.'
+        });
+
+      default:
+        return JSON.stringify({
+          error: `Unknown tool: ${toolName}`
+        });
     }
   }
 
@@ -148,11 +279,12 @@ export class PlaygroundService {
     const startTime = Date.now();
 
     try {
-      // 1. Load package prompt
-      const packagePrompt = await this.loadPackagePrompt(
+      // 1. Load package prompt and metadata
+      const packageData = await this.loadPackagePrompt(
         request.package_id,
         request.package_version
       );
+      const packagePrompt = packageData.prompt;
 
       // 2. Get or create session
       let session: any;
@@ -249,8 +381,12 @@ export class PlaygroundService {
         // Get model ID from centralized config
         modelName = getModelId(model);
 
+        // Check if this package is a Claude skill/agent that needs tools
+        const tools = this.getToolsForSkill(packageData.format, packageData.subtype);
+        const isSkill = tools.length > 0;
+
         // Build messages for Anthropic
-        const anthropicMessages: Anthropic.MessageParam[] = [];
+        let anthropicMessages: Anthropic.MessageParam[] = [];
 
         // Add conversation history
         for (const msg of conversationHistory) {
@@ -266,21 +402,89 @@ export class PlaygroundService {
           content: request.input,
         });
 
-        // Call Anthropic API
-        const response = await this.anthropic.messages.create({
-          model: modelName,
-          max_tokens: 4096,
-          temperature: 0.7,
-          system: packagePrompt,
-          messages: anthropicMessages,
-        });
+        let finalResponse: string = '';
+        let totalTokens = 0;
 
-        responseText =
-          response.content[0].type === 'text'
-            ? response.content[0].text
-            : 'No response generated';
+        // If it's a skill with tools, handle the agentic loop
+        if (isSkill) {
+          let continueLoop = true;
+          let iterations = 0;
+          const maxIterations = 5; // Prevent infinite loops
 
-        tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
+          while (continueLoop && iterations < maxIterations) {
+            iterations++;
+
+            const response = await this.anthropic.messages.create({
+              model: modelName,
+              max_tokens: 4096,
+              temperature: 0.7,
+              system: packagePrompt,
+              messages: anthropicMessages,
+              tools: tools,
+            });
+
+            totalTokens += response.usage.input_tokens + response.usage.output_tokens;
+
+            // Process response content
+            let hasToolUse = false;
+            const assistantContent: Anthropic.ContentBlock[] = [];
+
+            for (const content of response.content) {
+              assistantContent.push(content);
+
+              if (content.type === 'text') {
+                finalResponse += content.text;
+              } else if (content.type === 'tool_use') {
+                hasToolUse = true;
+
+                // Execute the tool
+                const toolResult = await this.executeTool(content.name, content.input);
+
+                // Add assistant message with tool use
+                anthropicMessages.push({
+                  role: 'assistant',
+                  content: assistantContent,
+                });
+
+                // Add tool result
+                anthropicMessages.push({
+                  role: 'user',
+                  content: [
+                    {
+                      type: 'tool_result',
+                      tool_use_id: content.id,
+                      content: toolResult,
+                    },
+                  ],
+                });
+              }
+            }
+
+            // If no tool use, we're done
+            if (!hasToolUse || response.stop_reason === 'end_turn') {
+              continueLoop = false;
+            }
+          }
+
+          responseText = finalResponse || 'No response generated';
+          tokensUsed = totalTokens;
+        } else {
+          // Regular prompt execution without tools
+          const response = await this.anthropic.messages.create({
+            model: modelName,
+            max_tokens: 4096,
+            temperature: 0.7,
+            system: packagePrompt,
+            messages: anthropicMessages,
+          });
+
+          responseText =
+            response.content[0].type === 'text'
+              ? response.content[0].text
+              : 'No response generated';
+
+          tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
+        }
       }
 
       const durationMs = Date.now() - startTime;
