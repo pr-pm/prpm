@@ -48,3 +48,4 @@ data/
 
 # Git worktrees
 .dev/
+.worktrees
