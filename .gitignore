@@ -45,3 +45,6 @@ logs/
 # Data files (scraped packages, checkpoints, etc.)
 data/
 .claude/settings.local.json
+
+# Git worktrees
+.dev/
