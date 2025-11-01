@@ -103,6 +103,11 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
       return { manifests: validatedManifests, collections, source: 'prpm.json (multi-package)' };
     }
 
+    // Collections-only manifest (no packages)
+    if (collections.length > 0) {
+      return { manifests: [], collections, source: 'prpm.json (collections-only)' };
+    }
+
     // Single package manifest
     const validated = validateManifest(manifest as PackageManifest);
     return { manifests: [validated], collections, source: 'prpm.json' };
@@ -447,9 +452,11 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       }
     }
 
-    // Track published packages
+    // Track published packages and collections
     const publishedPackages: Array<{ name: string; version: string; url: string }> = [];
     const failedPackages: Array<{ name: string; error: string }> = [];
+    const publishedCollections: Array<{ id: string; name: string; version: string }> = [];
+    const failedCollections: Array<{ id: string; error: string }> = [];
 
     // Publish each manifest (filtered set)
     for (let i = 0; i < filteredManifests.length; i++) {
@@ -651,10 +658,6 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log(`   ✓ Found collection "${options.collection}"\n`);
       }
 
-      // Track published collections
-      const publishedCollections: Array<{ id: string; name: string; version: string }> = [];
-      const failedCollections: Array<{ id: string; error: string }> = [];
-
       for (const collection of filteredCollections) {
         if (filteredCollections.length > 1) {
           console.log(`\n${'='.repeat(60)}`);
@@ -776,9 +779,10 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       }
     }
 
-    success = publishedPackages.length > 0;
+    // Success if we published any packages OR collections
+    success = publishedPackages.length > 0 || publishedCollections.length > 0;
 
-    if (failedPackages.length > 0 && publishedPackages.length === 0) {
+    if (failedPackages.length > 0 && publishedPackages.length === 0 && publishedCollections.length === 0) {
       process.exit(1);
     }
   } catch (err) {
