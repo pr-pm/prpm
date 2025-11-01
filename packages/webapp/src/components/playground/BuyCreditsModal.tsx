@@ -164,18 +164,18 @@ export default function BuyCreditsModal({ onClose, onSuccess }: BuyCreditsModalP
               </div>
 
               {/* PRPM+ Info */}
-              <div className="mt-8 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                <h4 className="font-bold text-purple-900 dark:text-purple-300 mb-2">
+              <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <h4 className="font-bold text-yellow-900 dark:text-yellow-300 mb-2">
                   🎁 PRPM+ Subscribers get 200 monthly credits!
                 </h4>
-                <p className="text-sm text-purple-800 dark:text-purple-400">
+                <p className="text-sm text-yellow-800 dark:text-yellow-400">
                   Upgrade to PRPM+ for just $20/month and get 200 credits every month, plus priority support and exclusive features.
                 </p>
                 <button
                   onClick={() => {
                     window.location.href = '/dashboard?upgrade=true'
                   }}
-                  className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition"
+                  className="mt-3 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition"
                 >
                   Upgrade to PRPM+
                 </button>

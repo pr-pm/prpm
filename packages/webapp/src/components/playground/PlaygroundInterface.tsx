@@ -317,7 +317,7 @@ export default function PlaygroundInterface({
           }}
           className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition ${
             comparisonMode
-              ? 'bg-purple-600 text-white hover:bg-purple-700'
+              ? 'bg-yellow-500 text-white hover:bg-yellow-600'
               : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
           }`}
         >
@@ -473,7 +473,7 @@ export default function PlaygroundInterface({
                     key={index}
                     className={`p-3 sm:p-4 ${
                       message.role === 'user'
-                        ? 'bg-purple-50 dark:bg-purple-900/20'
+                        ? 'bg-yellow-50 dark:bg-yellow-900/20'
                         : 'bg-gray-50 dark:bg-gray-700/50'
                     }`}
                   >
