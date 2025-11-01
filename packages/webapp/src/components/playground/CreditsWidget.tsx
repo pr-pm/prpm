@@ -46,7 +46,7 @@ export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: Cred
         {monthly > 0 && (
           <div className="flex justify-between text-gray-600 dark:text-gray-400">
             <span className="truncate mr-2">Monthly ({monthly_used}/{monthly_limit})</span>
-            <span className="font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">{monthly - monthly_used}</span>
+            <span className="font-semibold text-green-600 dark:text-green-400 whitespace-nowrap">{monthly - monthly_used}</span>
           </div>
         )}
         {rollover > 0 && (
@@ -66,7 +66,7 @@ export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: Cred
       {/* Buy Credits Button */}
       <button
         onClick={onBuyCredits}
-        className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-sm"
+        className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-sm"
       >
         Buy More Credits
       </button>
