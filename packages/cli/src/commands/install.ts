@@ -308,9 +308,12 @@ export async function handleInstall(
       const packageName = stripAuthorNamespace(packageId);
 
       // For Claude skills, use SKILL.md filename in the package directory
+      // For agents.md, use package-name/AGENTS.md directory structure
       // For other formats, use package name as filename
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
         destPath = `${destDir}/SKILL.md`;
+      } else if (effectiveFormat === 'agents.md') {
+        destPath = `${destDir}/${packageName}/AGENTS.md`;
       } else {
         destPath = `${destDir}/${packageName}.${fileExtension}`;
       }

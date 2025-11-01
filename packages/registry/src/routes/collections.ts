@@ -337,16 +337,20 @@ export async function collectionRoutes(server: FastifyInstance) {
       const user = request.user;
 
       try {
-        // Check if collection name_slug already exists for this user
+        // Determine version (use input.version or default to 1.0.0)
+        const version = input.version || '1.0.0';
+
+        // Check if this specific version already exists
         const existing = await server.pg.query(
-          `SELECT id FROM collections WHERE scope = $1 AND name_slug = $2`,
-          [user.username, input.id]
+          `SELECT id FROM collections WHERE scope = $1 AND name_slug = $2 AND version = $3`,
+          [user.username, input.id, version]
         );
 
         if (existing.rows.length > 0) {
           return reply.code(409).send({
             error: 'Collection already exists',
             name_slug: input.id,
+            version: version,
           });
         }
 
@@ -366,7 +370,6 @@ export async function collectionRoutes(server: FastifyInstance) {
         }
 
         // Create collection
-        const version = '1.0.0';
         const collectionResult = await server.pg.query(
           `
           INSERT INTO collections (

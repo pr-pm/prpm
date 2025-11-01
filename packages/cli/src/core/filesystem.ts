@@ -171,6 +171,11 @@ export function getInstalledFilePath(
     return path.join(destDir, 'SKILL.md');
   }
 
+  // agents.md uses package-name/AGENTS.md structure
+  if (format === 'agents.md') {
+    return path.join(destDir, packageBaseName, 'AGENTS.md');
+  }
+
   // Determine file extension
   const fileExtension = format === 'cursor' ? 'mdc' : 'md';
 
