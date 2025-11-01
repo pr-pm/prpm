@@ -59,7 +59,7 @@ See [Configuration Guide](./CONFIGURATION.md) for complete details.
 
 ```bash
 # Install a collection (recommended for first-time)
-prpm install @collection/nextjs-pro
+prpm install nextjs-pro
 
 # Or install individual packages
 prpm install test-driven-development
@@ -257,7 +257,7 @@ After installation:
 
 1. **Browse Collections**: `prpm collections`
 2. **Search Packages**: `prpm search react`
-3. **Install Something**: `prpm install @collection/nextjs-pro`
+3. **Install Something**: `prpm install nextjs-pro`
 4. **Configure**: See [Configuration Guide](./CONFIGURATION.md)
 5. **Learn Commands**: See [CLI Reference](./CLI.md)
 

@@ -176,8 +176,8 @@ Repository configuration supports all the same fields as user configuration, exc
   "defaultFormat": "cursor",
   "collections": {
     "installed": [
-      "@collection/frontend-react-ecosystem@1.2.0",
-      "@collection/testing-complete@2.0.0"
+      "frontend-react-ecosystem@1.2.0",
+      "testing-complete@2.0.0"
     ],
     "preferredFormats": ["cursor", "claude"],
     "autoInstall": false,
@@ -206,8 +206,8 @@ The `collections` field tracks and configures collection behavior:
 {
   "collections": {
     "installed": [
-      "@collection/frontend-react-ecosystem@1.2.0",
-      "@collection/testing-complete@2.0.0"
+      "frontend-react-ecosystem@1.2.0",
+      "testing-complete@2.0.0"
     ],
     "preferredFormats": ["cursor", "claude"],
     "defaultCategory": "frontend",
@@ -239,7 +239,7 @@ The `collections` field tracks and configures collection behavior:
   "defaultFormat": "cursor",
   "collections": {
     "installed": [
-      "@collection/frontend-react-ecosystem@1.2.0"
+      "frontend-react-ecosystem@1.2.0"
     ],
     "preferredFormats": ["cursor"],
     "includeTags": ["react", "typescript", "nextjs"]
@@ -260,8 +260,8 @@ The `collections` field tracks and configures collection behavior:
   "defaultFormat": "claude",
   "collections": {
     "installed": [
-      "@collection/python-backend-complete@2.0.0",
-      "@collection/testing-complete@1.5.0"
+      "python-backend-complete@2.0.0",
+      "testing-complete@1.5.0"
     ],
     "preferredFormats": ["claude", "generic"]
   },
@@ -278,10 +278,10 @@ The `collections` field tracks and configures collection behavior:
   "defaultFormat": "cursor",
   "collections": {
     "installed": [
-      "@collection/backend-node-typescript@1.0.0",
-      "@collection/frontend-react-ecosystem@1.2.0",
-      "@collection/database-fullstack@2.1.0",
-      "@collection/devops-infrastructure@1.5.0"
+      "backend-node-typescript@1.0.0",
+      "frontend-react-ecosystem@1.2.0",
+      "database-fullstack@2.1.0",
+      "devops-infrastructure@1.5.0"
     ],
     "preferredFormats": ["cursor", "claude"],
     "autoUpdate": true
@@ -300,7 +300,7 @@ The `collections` field tracks and configures collection behavior:
 prpm init
 
 # Install and save to config
-prpm install @collection/frontend-react-ecosystem --save
+prpm install frontend-react-ecosystem --save
 
 # View current repository config
 cat .prpmrc

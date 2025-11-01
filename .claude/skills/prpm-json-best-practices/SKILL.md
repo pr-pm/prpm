@@ -484,6 +484,58 @@ When you have the same content for multiple formats:
 }
 ```
 
+### Collections in prpm.json
+
+Collections CAN be defined in prpm.json alongside packages using the `collections` array. Collections bundle multiple packages together for easier installation.
+
+**Example with both packages and collections:**
+
+```json
+{
+  "name": "my-prompts-repo",
+  "author": "Your Name",
+  "license": "MIT",
+  "packages": [
+    {
+      "name": "typescript-rules",
+      "version": "1.0.0",
+      "description": "TypeScript best practices",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["typescript"],
+      "files": [".cursor/rules/typescript.mdc"]
+    }
+  ],
+  "collections": [
+    {
+      "id": "my-dev-setup",
+      "name": "My Development Setup",
+      "description": "Complete development setup with TypeScript and React",
+      "version": "1.0.0",
+      "category": "development",
+      "tags": ["typescript", "react"],
+      "packages": [
+        {
+          "packageId": "typescript-strict",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Enforces strict TypeScript type safety"
+        },
+        {
+          "packageId": "react-best-practices",
+          "version": "^2.0.0",
+          "required": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+For more details on creating collections, see the PRPM documentation at https://docs.prpm.dev or run `prpm help collections`.
+
+**Summary:** `prpm.json` can contain both packages (skills, agents, rules, slash-commands, etc.) and collections.
+
 ## Validation Checklist
 
 Before publishing, verify:

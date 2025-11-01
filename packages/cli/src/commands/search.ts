@@ -408,7 +408,7 @@ export function createSearchCommand(): Command {
   command
     .description('Search for packages in the registry')
     .argument('[query]', 'Search query (optional when using --format/--subtype or --author)')
-    .option('--format <format>', 'Filter by package format (cursor, claude, continue, windsurf, copilot, kiro, generic, mcp)')
+    .option('--format <format>', 'Filter by package format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, generic, mcp)')
     .option('--subtype <subtype>', 'Filter by package subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection)')
     .option('--author <username>', 'Filter by author username')
     .option('--limit <number>', 'Number of results per page', '20')
@@ -422,7 +422,7 @@ export function createSearchCommand(): Command {
       const limit = options.limit ? parseInt(options.limit, 10) : 20;
       const page = options.page ? parseInt(options.page, 10) : 1;
 
-      const validFormats: Format[] = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'];
+      const validFormats: Format[] = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'];
       const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode'];
 
       if (options.format && !validFormats.includes(format!)) {

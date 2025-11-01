@@ -1,0 +1,68 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "PRPM Documentation",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#0D9373",
+    "light": "#07C983",
+    "dark": "#0D9373",
+    "anchors": {
+      "from": "#0D9373",
+      "to": "#07C983"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/pr-pm/prpm"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://prpm.dev"
+  },
+  "tabs": [
+    {
+      "name": "CLI Reference",
+      "url": "cli"
+    },
+    {
+      "name": "API Reference",
+      "url": "api"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "installation"
+      ]
+    },
+    {
+      "group": "Core Concepts",
+      "pages": [
+        "concepts/packages",
+        "concepts/collections",
+        "concepts/formats"
+      ]
+    },
+    {
+      "group": "Publishing",
+      "pages": [
+        "publishing/getting-started",
+        "publishing/manifest",
+        "publishing/collections"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/pr-pm/prpm",
+    "twitter": "https://twitter.com/prpm_dev"
+  }
+}

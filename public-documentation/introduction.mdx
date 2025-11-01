@@ -1,0 +1,84 @@
+---
+title: Introduction to PRPM
+description: 'The universal package manager for AI prompts, rules, skills, and agents'
+---
+
+# Welcome to PRPM
+
+PRPM (Prompt Package Manager) is a universal package manager that allows you to install, share, and manage AI tool configurations across Claude Code, Cursor, Continue, Windsurf, and other AI development tools.
+
+## What is PRPM?
+
+PRPM makes it easy to:
+
+- **Install** pre-built prompts, rules, and skills from the PRPM registry
+- **Share** your AI configurations with your team or the community
+- **Manage** multiple AI tool configurations from a single place
+- **Discover** popular AI patterns and best practices
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card
+    title="Universal Format Support"
+    icon="grid"
+    href="/concepts/formats"
+  >
+    Works with Claude Code, Cursor, Continue, Windsurf, and more
+  </Card>
+  <Card
+    title="Package Collections"
+    icon="boxes-stacked"
+    href="/concepts/collections"
+  >
+    Bundle multiple packages together for easier setup
+  </Card>
+  <Card
+    title="Easy Publishing"
+    icon="upload"
+    href="/publishing/getting-started"
+  >
+    Publish your prompts and rules to share with others
+  </Card>
+  <Card
+    title="CLI Tool"
+    icon="terminal"
+    href="/cli"
+  >
+    Powerful command-line interface for managing packages
+  </Card>
+</CardGroup>
+
+## Quick Example
+
+Install a package:
+
+```bash
+prpm install @prpm/typescript-best-practices
+```
+
+Publish your own package:
+
+```bash
+prpm login
+prpm publish
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Get up and running in 5 minutes
+  </Card>
+  <Card
+    title="Publishing Guide"
+    icon="book"
+    href="/publishing/getting-started"
+  >
+    Learn how to publish your own packages
+  </Card>
+</CardGroup>

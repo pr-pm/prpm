@@ -41,10 +41,10 @@ prpm collections list
 ```
 📦 Official Collections:
 
-   @collection/frontend-react-ecosystem        Complete React ecosystem (10 packages)
-   @collection/python-backend-complete         Python backend stack (8 packages)
-   @collection/vue-fullstack                   Vue.js fullstack (8 packages)
-   @collection/devops-infrastructure           DevOps and infrastructure (7 packages)
+   frontend-react-ecosystem        Complete React ecosystem (10 packages)
+   python-backend-complete         Python backend stack (8 packages)
+   vue-fullstack                   Vue.js fullstack (8 packages)
+   devops-infrastructure           DevOps and infrastructure (7 packages)
 
 🌟 Community Collections:
 
@@ -66,12 +66,12 @@ prpm search --type collection react
 ```
 🔍 Found 3 collections matching "nextjs":
 
-📦 @collection/frontend-react-ecosystem
+📦 frontend-react-ecosystem
    Complete React ecosystem with Next.js, TypeScript, Tailwind
    Tags: react, nextjs, frontend, typescript
    Packages: 10 | Downloads: 5.4K
 
-📦 @collection/jamstack-modern
+📦 jamstack-modern
    Modern JAMstack with Astro, Eleventy, and Next.js
    Tags: jamstack, nextjs, frontend
    Packages: 6 | Downloads: 2.1K
@@ -218,7 +218,7 @@ prpm collections --format cursor --format claude
 Get detailed information about a specific collection:
 
 ```bash
-prpm collection info @collection/frontend-react-ecosystem
+prpm collection info frontend-react-ecosystem
 prpm collection info @username/my-workflow
 ```
 
@@ -248,7 +248,7 @@ prpm collection info @username/my-workflow
    ...
 
 💡 Install:
-   prpm install @collection/frontend-react-ecosystem
+   prpm install frontend-react-ecosystem
 ```
 
 ### Preview Collection Without Installing
@@ -256,8 +256,8 @@ prpm collection info @username/my-workflow
 See what would be installed without actually installing:
 
 ```bash
-prpm collection info @collection/frontend-react-ecosystem --preview
-prpm install @collection/frontend-react-ecosystem --dry-run
+prpm collection info frontend-react-ecosystem --preview
+prpm install frontend-react-ecosystem --dry-run
 ```
 
 ---
@@ -292,8 +292,8 @@ Project-specific configuration in your repository root:
   "defaultFormat": "cursor",
   "collections": {
     "installed": [
-      "@collection/frontend-react-ecosystem@1.2.0",
-      "@collection/testing-complete@2.0.0"
+      "frontend-react-ecosystem@1.2.0",
+      "testing-complete@2.0.0"
     ],
     "preferredFormats": ["cursor", "claude"],
     "excludeTags": ["experimental"],
@@ -329,7 +329,7 @@ PRPM loads configuration in this order (later overrides earlier):
   "defaultFormat": "cursor",
   "collections": {
     "installed": [
-      "@collection/frontend-react-ecosystem@1.2.0"
+      "frontend-react-ecosystem@1.2.0"
     ],
     "preferredFormats": ["cursor"],
     "includeTags": ["react", "typescript", "nextjs"]
@@ -350,8 +350,8 @@ PRPM loads configuration in this order (later overrides earlier):
   "defaultFormat": "claude",
   "collections": {
     "installed": [
-      "@collection/python-backend-complete@2.0.0",
-      "@collection/testing-complete@1.5.0"
+      "python-backend-complete@2.0.0",
+      "testing-complete@1.5.0"
     ],
     "preferredFormats": ["claude", "generic"]
   },
@@ -368,10 +368,10 @@ PRPM loads configuration in this order (later overrides earlier):
   "defaultFormat": "cursor",
   "collections": {
     "installed": [
-      "@collection/backend-node-typescript@1.0.0",
-      "@collection/frontend-react-ecosystem@1.2.0",
-      "@collection/database-fullstack@2.1.0",
-      "@collection/devops-infrastructure@1.5.0"
+      "backend-node-typescript@1.0.0",
+      "frontend-react-ecosystem@1.2.0",
+      "database-fullstack@2.1.0",
+      "devops-infrastructure@1.5.0"
     ],
     "preferredFormats": ["cursor", "claude"],
     "autoUpdate": true
@@ -396,7 +396,7 @@ prpm config list --local
 prpm config set defaultFormat cursor --local
 
 # Add installed collection to config
-prpm install @collection/frontend-react-ecosystem --save
+prpm install frontend-react-ecosystem --save
 ```
 
 ---
@@ -449,19 +449,19 @@ Once you find a collection:
 
 ```bash
 # View details
-prpm collection info @collection/frontend-react-ecosystem
+prpm collection info frontend-react-ecosystem
 
 # Install
-prpm install @collection/frontend-react-ecosystem
+prpm install frontend-react-ecosystem
 
 # Install with specific format
-prpm install @collection/frontend-react-ecosystem --format cursor
+prpm install frontend-react-ecosystem --format cursor
 
 # Install and skip optional packages
-prpm install @collection/frontend-react-ecosystem --skip-optional
+prpm install frontend-react-ecosystem --skip-optional
 
 # Preview before installing
-prpm install @collection/frontend-react-ecosystem --dry-run
+prpm install frontend-react-ecosystem --dry-run
 ```
 
 ---

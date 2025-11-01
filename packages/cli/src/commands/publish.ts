@@ -27,16 +27,33 @@ interface PublishOptions {
   tag?: string;
   dryRun?: boolean;
   package?: string; // Filter to specific package name in multi-package repos
+  collection?: string; // Filter to specific collection name in multi-collection repos
+}
+
+interface CollectionManifest {
+  id: string;
+  name: string;
+  description: string;
+  version?: string;
+  category?: string;
+  tags?: string[];
+  icon?: string;
+  packages: Array<{
+    packageId: string;
+    version?: string;
+    required?: boolean;
+    reason?: string;
+  }>;
 }
 
 /**
  * Try to find and load manifest files
  * Checks for:
- * 1. prpm.json (native format) - returns single manifest or array of packages
+ * 1. prpm.json (native format) - returns single manifest or array of packages and collections
  * 2. .claude/marketplace.json (Claude format) - returns all plugins as separate manifests
  * 3. .claude-plugin/marketplace.json (Claude format - alternative location) - returns all plugins
  */
-async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; source: string }> {
+async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; collections: CollectionManifest[]; source: string }> {
   // Try prpm.json first (native format)
   const prpmJsonPath = join(process.cwd(), 'prpm.json');
   let prpmJsonExists = false;
@@ -45,6 +62,13 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
   try {
     const content = await readFile(prpmJsonPath, 'utf-8');
     const manifest = JSON.parse(content) as Manifest;
+
+    // Extract collections if present
+    const collections: CollectionManifest[] = [];
+    if ('collections' in manifest && Array.isArray((manifest as any).collections)) {
+      const rawCollections = (manifest as any).collections;
+      collections.push(...rawCollections);
+    }
 
     // Check if this is a multi-package manifest
     if ('packages' in manifest && Array.isArray(manifest.packages)) {
@@ -76,12 +100,12 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
         return validateManifest(packageWithDefaults);
       });
 
-      return { manifests: validatedManifests, source: 'prpm.json (multi-package)' };
+      return { manifests: validatedManifests, collections, source: 'prpm.json (multi-package)' };
     }
 
     // Single package manifest
     const validated = validateManifest(manifest as PackageManifest);
-    return { manifests: [validated], source: 'prpm.json' };
+    return { manifests: [validated], collections, source: 'prpm.json' };
   } catch (error) {
     // Store error for later
     prpmJsonError = error as Error;
@@ -116,7 +140,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
       manifests.push(validated);
     }
 
-    return { manifests, source: '.claude/marketplace.json' };
+    return { manifests, collections: [], source: '.claude/marketplace.json' };
   } catch (error) {
     // marketplace.json not found or invalid at .claude path, try .claude-plugin
   }
@@ -139,7 +163,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; s
       manifests.push(validated);
     }
 
-    return { manifests, source: '.claude-plugin/marketplace.json' };
+    return { manifests, collections: [], source: '.claude-plugin/marketplace.json' };
   } catch (error) {
     // marketplace.json not found or invalid
   }
@@ -358,14 +382,22 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     // Read and validate manifests
     console.log('🔍 Validating package manifest(s)...');
-    const { manifests, source } = await findAndLoadManifests();
+    const { manifests, collections, source } = await findAndLoadManifests();
 
-    if (manifests.length > 1) {
-      console.log(`   Found ${manifests.length} plugins in ${source}`);
-      if (options.package) {
-        console.log(`   Filtering to package: ${options.package}`);
+    if (manifests.length > 1 || collections.length > 0) {
+      if (manifests.length > 0) {
+        console.log(`   Found ${manifests.length} package(s) in ${source}`);
+        if (options.package) {
+          console.log(`   Filtering to package: ${options.package}`);
+        }
       }
-      console.log('   Will publish each plugin separately\n');
+      if (collections.length > 0) {
+        console.log(`   Found ${collections.length} collection(s) in ${source}`);
+        if (options.collection) {
+          console.log(`   Filtering to collection: ${options.collection}`);
+        }
+      }
+      console.log('   Will publish each separately\n');
     }
 
     // Filter to specific package if requested
@@ -607,6 +639,108 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       }
     }
 
+    // Publish collections if present
+    if (collections.length > 0) {
+      // Filter to specific collection if requested
+      let filteredCollections = collections;
+      if (options.collection) {
+        filteredCollections = collections.filter(c => c.id === options.collection);
+        if (filteredCollections.length === 0) {
+          throw new Error(`Collection "${options.collection}" not found in manifest. Available collections: ${collections.map(c => c.id).join(', ')}`);
+        }
+        console.log(`   ✓ Found collection "${options.collection}"\n`);
+      }
+
+      // Track published collections
+      const publishedCollections: Array<{ id: string; name: string; version: string }> = [];
+      const failedCollections: Array<{ id: string; error: string }> = [];
+
+      for (const collection of filteredCollections) {
+        if (filteredCollections.length > 1) {
+          console.log(`\n${'='.repeat(60)}`);
+          console.log(`📚 Publishing collection`);
+          console.log(`${'='.repeat(60)}\n`);
+        }
+
+        try {
+          console.log(`📚 Publishing collection "${collection.name}"...`);
+          console.log(`   ID: ${collection.id}`);
+          console.log(`   Packages: ${collection.packages.length}`);
+          console.log('');
+
+          if (options.dryRun) {
+            console.log('✅ Dry run successful! Collection is ready to publish.');
+            publishedCollections.push({
+              id: collection.id,
+              name: collection.name,
+              version: collection.version || '1.0.0'
+            });
+            continue;
+          }
+
+          // Import and call the collection publish logic
+          const { handleCollectionPublish } = await import('./collections.js');
+
+          // Create a temporary manifest object for the collection
+          const collectionData = {
+            id: collection.id,
+            name: collection.name,
+            description: collection.description,
+            version: collection.version,
+            category: collection.category,
+            tags: collection.tags,
+            icon: collection.icon,
+            packages: collection.packages.map(pkg => ({
+              packageId: pkg.packageId,
+              version: pkg.version,
+              required: pkg.required !== false,
+              reason: pkg.reason,
+            })),
+          };
+
+          const result = await client.createCollection(collectionData);
+
+          console.log(`✅ Collection published successfully!`);
+          console.log(`   Scope: ${result.scope}`);
+          console.log(`   Name: ${result.name_slug}`);
+          console.log(`   Version: ${result.version || '1.0.0'}`);
+          console.log('');
+          console.log(`💡 Install: prpm install collections/${result.name_slug}`);
+          console.log('');
+
+          publishedCollections.push({
+            id: collection.id,
+            name: collection.name,
+            version: result.version || '1.0.0'
+          });
+        } catch (err) {
+          const collError = err instanceof Error ? err.message : String(err);
+          console.error(`\n❌ Failed to publish collection ${collection.id}: ${collError}\n`);
+          failedCollections.push({
+            id: collection.id,
+            error: collError
+          });
+        }
+      }
+
+      // Add collection results to summary
+      if (publishedCollections.length > 0) {
+        console.log(`✅ Successfully published ${publishedCollections.length} collection(s):`);
+        publishedCollections.forEach(coll => {
+          console.log(`   - ${coll.name} (${coll.id}) v${coll.version}`);
+        });
+        console.log('');
+      }
+
+      if (failedCollections.length > 0) {
+        console.log(`❌ Failed to publish ${failedCollections.length} collection(s):`);
+        failedCollections.forEach(coll => {
+          console.log(`   - ${coll.id}: ${coll.error}`);
+        });
+        console.log('');
+      }
+    }
+
     // Print summary if multiple packages
     if (manifests.length > 1) {
       console.log(`\n${'='.repeat(60)}`);
@@ -701,11 +835,12 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
  */
 export function createPublishCommand(): Command {
   return new Command('publish')
-    .description('Publish a package to the registry')
+    .description('Publish packages and collections to the registry')
     .option('--access <type>', 'Package access (public or private) - overrides manifest setting')
     .option('--tag <tag>', 'NPM-style tag (e.g., latest, beta)', 'latest')
     .option('--dry-run', 'Validate package without publishing')
     .option('--package <name>', 'Publish only a specific package from multi-package manifest')
+    .option('--collection <id>', 'Publish only a specific collection from manifest')
     .action(async (options: PublishOptions) => {
       await handlePublish(options);
       process.exit(0);
