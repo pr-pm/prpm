@@ -404,7 +404,7 @@ export class PlaygroundService {
             let promptText = request.input;
             if (conversationHistory.length > 0) {
               const historyText = conversationHistory
-                .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+                .map((msg: PlaygroundMessage) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
                 .join('\n\n');
               promptText = `${historyText}\n\nUser: ${request.input}`;
             }
@@ -429,7 +429,12 @@ export class PlaygroundService {
                 }
               } else if (message.type === 'result') {
                 // Get final result and usage
-                assistantText = message.result || assistantText;
+                if (message.subtype === 'success') {
+                  assistantText = message.result || assistantText;
+                } else {
+                  // Handle error result types
+                  assistantText = assistantText || `Error: ${message.errors?.join(', ')}`;
+                }
                 tokens = message.usage.input_tokens + message.usage.output_tokens;
                 break;
               }

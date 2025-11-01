@@ -197,17 +197,17 @@ export async function playgroundRoutes(server: FastifyInstance) {
         }
 
         // Load package prompt to estimate
-        const packagePrompt = await playgroundService.loadPackagePrompt(body.package_id);
+        const packageData = await playgroundService.loadPackagePrompt(body.package_id);
 
         // Estimate credits
         const estimatedCredits = playgroundService.estimateCredits(
-          packagePrompt.length,
+          packageData.prompt.length,
           body.input.length,
           body.model
         );
 
         const estimatedTokens = Math.floor(
-          ((packagePrompt.length + body.input.length) / 4) * 1.3
+          ((packageData.prompt.length + body.input.length) / 4) * 1.3
         );
 
         // Check if user can afford
