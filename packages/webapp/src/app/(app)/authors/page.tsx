@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import {
   getTopAuthors,
@@ -194,9 +195,11 @@ function AuthorsPageContent() {
               <div className="flex items-start gap-6">
                 <div className="w-24 h-24 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
                   {author.avatar_url ? (
-                    <img
+                    <Image
                       src={author.avatar_url}
                       alt={`${author.username}'s avatar`}
+                      width={96}
+                      height={96}
                       className="w-full h-full object-cover"
                     />
                   ) : (

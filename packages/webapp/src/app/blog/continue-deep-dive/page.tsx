@@ -123,11 +123,11 @@ export default function ContinueDeepDivePost() {
           <div className="bg-prpm-dark border border-prpm-border rounded-xl p-6 mb-6 font-mono text-sm">
             <div className="text-gray-500 mb-2">{'//'} Prompts (slash-command or prompt subtype)</div>
             <div className="text-prpm-accent-light">if (pkg.subtype === 'slash-command' || pkg.subtype === 'prompt') &#123;</div>
-            <div className="text-prpm-accent-light ml-4">// Generate YAML with: name, description, invokable: true</div>
+            <div className="text-prpm-accent-light ml-4">{'//'} Generate YAML with: name, description, invokable: true</div>
             <div className="text-prpm-accent-light">&#125;</div>
             <div className="text-gray-500 mt-4 mb-2">{'//'} Rules (rule subtype)</div>
             <div className="text-prpm-accent-light">if (pkg.subtype === 'rule') &#123;</div>
-            <div className="text-prpm-accent-light ml-4">// Generate YAML with: name, globs, alwaysApply, description</div>
+            <div className="text-prpm-accent-light ml-4">{'//'} Generate YAML with: name, globs, alwaysApply, description</div>
             <div className="text-prpm-accent-light">&#125;</div>
           </div>
 
