@@ -157,7 +157,10 @@ export async function collectionRoutes(server: FastifyInstance) {
             break;
         }
 
-        sql += ` ORDER BY ${orderByColumn} ${sortOrder.toUpperCase()}`;
+        // Validate sort order to prevent SQL injection
+        const validatedSortOrder = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+        sql += ` ORDER BY ${orderByColumn} ${validatedSortOrder}`;
 
         // Pagination
         const limit = query.limit || 20;

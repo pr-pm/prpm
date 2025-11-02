@@ -469,7 +469,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
         const params: (string | number)[] = [];
 
         if (type) {
-          query += ` AND type = $1`;
+          query += ` AND format = $1`;
           params.push(type);
         }
 
