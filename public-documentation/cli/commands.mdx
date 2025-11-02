@@ -52,7 +52,7 @@ prpm info <package-name>
 ```
 
 **Arguments:**
-- `package-name` - Full package name (e.g., `typescript-rules`)
+- `package-name` - Full package name (e.g., `@username/typescript-rules`)
 
 **Options:**
 - `--json` - Output in JSON format
@@ -62,13 +62,13 @@ prpm info <package-name>
 
 ```bash
 # View package details
-prpm info typescript-best-practices
+prpm info @username/typescript-best-practices
 
 # View specific version
-prpm info typescript-best-practices --version 1.2.0
+prpm info @username/typescript-best-practices --version 1.2.0
 
 # JSON output for scripting
-prpm info typescript-rules --json
+prpm info @username/typescript-rules --json
 ```
 
 **Output:**
@@ -157,22 +157,22 @@ prpm install <package-name> [additional-packages...] [options]
 
 ```bash
 # Install a package
-prpm install typescript-best-practices
+prpm install @username/typescript-best-practices
 
 # Install multiple packages
-prpm install typescript-rules1 typescript-rules2 typescript-rules3
+prpm install @username/typescript-rules1 @username/typescript-rules2 @username/typescript-rules3
 
 # Install specific version
-prpm install typescript-rules --version 2.1.0
+prpm install @username/typescript-rules --version 2.1.0
 
 # Install and convert to Cursor format
-prpm install typescript-rules --as cursor
+prpm install @username/typescript-rules --as cursor
 
 # Install and convert to Claude format
-prpm install typescript-rules --format claude
+prpm install @username/typescript-rules --format claude
 
 # Frozen lockfile (for CI)
-prpm install typescript-rules --frozen-lockfile
+prpm install @username/typescript-rules --frozen-lockfile
 ```
 
 **What happens during installation:**
@@ -202,7 +202,7 @@ prpm uninstall <package-id> [additional-packages...] [options]
 
 ```bash
 # Uninstall a package
-prpm uninstall typescript-best-practices
+prpm uninstall @username/typescript-best-practices
 
 # Uninstall multiple packages
 prpm uninstall package1 package2 package3
@@ -296,7 +296,7 @@ prpm update <package-name> [additional-packages...] [options]
 
 ```bash
 # Update a single package
-prpm update typescript-rules
+prpm update @username/typescript-rules
 
 # Update multiple packages
 prpm update package1 package2 package3
@@ -726,7 +726,7 @@ These can be useful when scripting with PRPM:
 
 ```bash
 #!/bin/bash
-if prpm install typescript-rules; then
+if prpm install @username/typescript-rules; then
   echo "Installation successful"
 else
   echo "Installation failed with code $?"

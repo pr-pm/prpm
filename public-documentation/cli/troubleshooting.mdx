@@ -30,7 +30,7 @@ description: 'Solutions to common PRPM CLI issues'
 
 3. **Use npx as alternative:**
    ```bash
-   npx prpm install typescript-rules
+   npx prpm install @username/typescript-rules
    ```
 
 4. **Reinstall with correct permissions:**
@@ -73,7 +73,7 @@ description: 'Solutions to common PRPM CLI issues'
 prpm search package-name
 
 # Check exact name
-prpm info typescript-rules
+prpm info @username/typescript-rules
 ```
 
 **Common causes:**
@@ -82,14 +82,14 @@ prpm info typescript-rules
    # Check the exact name
    prpm search typescript
    # Then use the exact package name from search results
-   prpm install typescript-rules
+   prpm install @username/typescript-rules
    ```
 
 2. **Private package without authentication:**
    ```bash
    # Login first
    prpm login
-   prpm install private-package
+   prpm install @username/private-package
    ```
 
 3. **Package doesn't exist:** Verify on [registry.prpm.dev](https://registry.prpm.dev)
@@ -108,17 +108,17 @@ prpm info typescript-rules
 2. **Uninstall conflicting package first:**
    ```bash
    prpm uninstall conflicting-package
-   prpm install new-package
+   prpm install @username/new-package
    ```
 
 3. **Force reinstall:**
    ```bash
-   prpm install typescript-rules --force
+   prpm install @username/typescript-rules --force
    ```
 
 4. **Install with custom name:**
    ```bash
-   prpm install typescript-rules --as different-name
+   prpm install @username/typescript-rules --as different-name
    ```
 
 ### Download/Network Errors
@@ -142,7 +142,7 @@ prpm info typescript-rules
    ```bash
    # Set higher timeout (in seconds)
    export REQUEST_TIMEOUT=60
-   prpm install typescript-rules
+   prpm install @username/typescript-rules
    ```
 
 4. **Check firewall/proxy settings:**
@@ -154,7 +154,7 @@ prpm info typescript-rules
 
 5. **Retry installation:**
    ```bash
-   prpm install typescript-rules
+   prpm install @username/typescript-rules
    ```
 
 ### Integrity Check Failed
@@ -166,12 +166,12 @@ prpm info typescript-rules
 1. **Clear cache and retry:**
    ```bash
    rm -rf ~/.prpm/cache
-   prpm install typescript-rules
+   prpm install @username/typescript-rules
    ```
 
 2. **Force reinstall:**
    ```bash
-   prpm install typescript-rules --force
+   prpm install @username/typescript-rules --force
    ```
 
 3. **Report issue:** This may indicate a corrupted package in the registry
@@ -217,7 +217,7 @@ prpm info typescript-rules
 prpm whoami
 
 # Verify package name doesn't conflict
-prpm info typescript-rules
+prpm info @username/typescript-rules
 ```
 
 **Solutions:**
@@ -232,7 +232,7 @@ prpm info typescript-rules
    # Can only publish to your own namespace
    # In prpm.json:
    {
-     "name": "typescript-rules"
+     "name": "@username/typescript-rules"
    }
    ```
 
@@ -260,7 +260,7 @@ prpm info typescript-rules
 2. **Check required fields:**
    ```json
    {
-     "name": "typescript-rules",
+     "name": "@username/typescript-rules",
      "version": "1.0.0",
      "description": "Package description",
      "format": "cursor",
@@ -295,7 +295,7 @@ prpm info typescript-rules
 
 2. **Check existing versions:**
    ```bash
-   prpm info typescript-rules
+   prpm info @username/typescript-rules
    ```
 
 3. **Use semantic versioning:**
@@ -382,7 +382,7 @@ prpm info typescript-rules
    prpm list
 
    # Reinstall each
-   prpm install typescript-rules --force
+   prpm install @username/typescript-rules --force
    ```
 
 ---
@@ -397,7 +397,7 @@ prpm info typescript-rules
 
 1. **Check registry directly:**
    ```bash
-   prpm info typescript-rules
+   prpm info @username/typescript-rules
    # Shows latest version
    ```
 
@@ -421,7 +421,7 @@ prpm info typescript-rules
 1. **Uninstall and reinstall:**
    ```bash
    prpm uninstall package-name
-   prpm install typescript-rules
+   prpm install @username/typescript-rules
    ```
 
 2. **Check file permissions:**
@@ -434,7 +434,7 @@ prpm info typescript-rules
    ```bash
    # Remove partial installation
    rm -f .cursor/rules/package-file.md
-   prpm install typescript-rules
+   prpm install @username/typescript-rules
    ```
 
 ---
@@ -623,10 +623,10 @@ Get detailed output for debugging:
 ```bash
 # Enable debug logs
 export DEBUG=prpm:*
-prpm install typescript-rules
+prpm install @username/typescript-rules
 
 # Or for specific command
-prpm install typescript-rules --verbose
+prpm install @username/typescript-rules --verbose
 ```
 
 ### Check PRPM Version
@@ -640,7 +640,7 @@ prpm --version
 ```bash
 # Set environment variable
 export NODE_ENV=development
-prpm install typescript-rules
+prpm install @username/typescript-rules
 # Will show full error stack traces
 ```
 
@@ -661,7 +661,7 @@ cat prpm-lock.json | jq '.packages[] | select(.id=="package-name")'
 curl -I https://registry.prpm.dev
 
 # Test package download
-curl -I https://registry.prpm.dev/packages/typescript-rules
+curl -I https://registry.prpm.dev/packages/@username/typescript-rules
 ```
 
 ---

@@ -45,7 +45,7 @@ prpm trending --format cursor
 
 **View package details:**
 ```bash
-prpm info typescript-rules
+prpm info @username/typescript-rules
 ```
 
 **Check collections:**
@@ -61,15 +61,15 @@ prpm collections web-development
 
 **Install a single package:**
 ```bash
-prpm install typescript-best-practices
+prpm install @username/typescript-best-practices
 ```
 
 **Install multiple packages at once:**
 ```bash
 prpm install \
-  react-rules \
-  typescript-config \
-  testing-guidelines
+  @username/react-rules \
+  @username/typescript-config \
+  @username/testing-guidelines
 ```
 
 **Install an entire collection:**
@@ -79,7 +79,7 @@ prpm collections web-development --install
 
 **Install and convert to a specific format:**
 ```bash
-prpm install typescript-rules --as cursor
+prpm install @username/typescript-rules --as cursor
 ```
 
 ### Verifying Installation
@@ -175,13 +175,13 @@ prpm uninstall package-name --force
 
 1. **Initialize a new package:**
    ```bash
-   mkdir my-cursor-rules
-   cd my-cursor-rules
+   mkdir @username/my-cursor-rules
+   cd @username/my-cursor-rules
    prpm init
    ```
 
 2. **Follow the interactive prompts:**
-   - Package name: `my-username/my-cursor-rules`
+   - Package name: `my-username/@username/my-cursor-rules`
    - Description: Describe what your package does
    - Format: `cursor`
    - Subtype: `rule`
@@ -202,7 +202,7 @@ prpm uninstall package-name --force
    ```bash
    # Install in a test project
    cd ../test-project
-   prpm install /path/to/my-cursor-rules
+   prpm install /path/to/@username/my-cursor-rules
    ```
 
 ### Publishing Your Package
@@ -231,7 +231,7 @@ prpm uninstall package-name --force
 
 5. **Verify publication:**
    ```bash
-   prpm info my-username/my-cursor-rules
+   prpm info my-username/@username/my-cursor-rules
    ```
 
 ### Updating Your Published Package
@@ -239,7 +239,7 @@ prpm uninstall package-name --force
 1. **Update version in `prpm.json`:**
    ```json
    {
-     "name": "my-cursor-rules",
+     "name": "@username/my-cursor-rules",
      "version": "1.1.0",
      ...
    }
@@ -271,10 +271,10 @@ Create a script to install your standard packages across projects:
 echo "Installing standard PRPM packages..."
 
 prpm install \
-  typescript-rules \
-  react-best-practices \
-  testing-guidelines \
-  git-commit-standards
+  @username/typescript-rules \
+  @username/react-best-practices \
+  @username/testing-guidelines \
+  @username/git-commit-standards
 
 echo "Setup complete!"
 ```
@@ -304,8 +304,8 @@ PRPM currently installs packages into the current project directory. To use pack
 # Create a shared setup script
 cat > ~/prpm-setup.sh << 'EOF'
 #!/bin/bash
-prpm install typescript-rules
-prpm install react-patterns
+prpm install @username/typescript-rules
+prpm install @username/react-patterns
 EOF
 
 # Run in each project
@@ -326,7 +326,7 @@ steps:
   - name: Install PRPM packages
     run: |
       npm install -g prpm
-      prpm install typescript-rules1 typescript-rules2
+      prpm install @username/typescript-rules1 @username/typescript-rules2
     env:
       PRPM_TOKEN: ${{ secrets.PRPM_TOKEN }}
 ```
@@ -352,7 +352,7 @@ if prpm list --json | jq -e '.[] | select(.id=="package-name")' > /dev/null; the
   echo "Package is installed"
 else
   echo "Package not found"
-  prpm install typescript-rules
+  prpm install @username/typescript-rules
 fi
 ```
 
@@ -404,7 +404,7 @@ prpm search package-name
 prpm whoami
 
 # Try specifying a version
-prpm install typescript-rules --version 1.0.0
+prpm install @username/typescript-rules --version 1.0.0
 ```
 
 ### Installation Fails
@@ -415,7 +415,7 @@ ls -la .cursor/rules/
 
 # Force reinstall
 prpm uninstall package-name
-prpm install typescript-rules --force
+prpm install @username/typescript-rules --force
 
 # Check disk space and permissions
 df -h
@@ -446,7 +446,7 @@ prpm update package-name --force
 
 # Or uninstall and reinstall
 prpm uninstall package-name
-prpm install typescript-rules
+prpm install @username/typescript-rules
 ```
 
 ### Lock File Conflicts
@@ -467,7 +467,7 @@ vim prpm-lock.json
 
 1. **Always check package info before installing:**
    ```bash
-   prpm info typescript-rules
+   prpm info @username/typescript-rules
    ```
 
 2. **Keep packages updated:**
@@ -489,8 +489,8 @@ vim prpm-lock.json
    ## PRPM Packages
 
    This project uses:
-   - `typescript-rules` - TypeScript coding standards
-   - `react-patterns` - React best practices
+   - `@username/typescript-rules` - TypeScript coding standards
+   - `@username/react-patterns` - React best practices
    ```
 
 ### For Package Authors
