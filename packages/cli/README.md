@@ -29,7 +29,7 @@ Download the latest binary from [GitHub Releases](https://github.com/pr-pm/prpm/
 prpm search react
 
 # Install a package from the registry
-prpm install react-rules
+prpm install @username/react-rules
 
 # Add a package from a URL
 prpm add https://raw.githubusercontent.com/user/repo/main/rules.md --as cursor
@@ -51,16 +51,16 @@ Install a package from the PRPM registry.
 
 ```bash
 # Install latest version
-prpm install react-rules
+prpm install @username/react-rules
 
 # Install specific version
-prpm install react-rules@1.2.0
+prpm install @username/react-rules@1.2.0
 
 # Install with custom format
-prpm install react-rules --as claude
+prpm install @username/react-rules --as claude
 
 # Install with frozen lockfile (CI mode)
-prpm install react-rules --frozen-lockfile
+prpm install @username/react-rules --frozen-lockfile
 ```
 
 **Options:**
@@ -72,13 +72,13 @@ prpm install react-rules --frozen-lockfile
 **Examples:**
 ```bash
 # Install for Claude
-prpm install typescript-rules --as claude
+prpm install @username/typescript-rules --as claude
 
 # Install specific version
-prpm install typescript-rules --version 2.1.0
+prpm install @username/typescript-rules --version 2.1.0
 
 # CI mode with frozen lockfile
-prpm install typescript-rules --frozen-lockfile
+prpm install @username/typescript-rules --frozen-lockfile
 ```
 
 ---
@@ -279,7 +279,7 @@ prpm popular --type cursor
 Display detailed information about a package.
 
 ```bash
-prpm info react-rules
+prpm info @username/react-rules
 ```
 
 Shows:
@@ -305,8 +305,8 @@ Latest Version: 2.1.0
 Tags: react, javascript, best-practices
 
 Installation:
-   prpm install react-rules
-   prpm install react-rules@2.1.0
+   prpm install @username/react-rules
+   prpm install @username/react-rules@2.1.0
 ```
 
 ---
@@ -750,8 +750,8 @@ prpm install @prpm/starter-kit
 
 # Or install individually
 prpm search react
-prpm install react-rules
-prpm install typescript-rules
+prpm install @username/react-rules
+prpm install @username/typescript-rules
 ```
 
 ### Keeping Packages Updated
@@ -842,10 +842,10 @@ PRPM automatically converts packages between formats:
 
 ```bash
 # Install Cursor package as Claude format
-prpm install cursor-rules --as claude
+prpm install @username/cursor-rules --as claude
 
 # Install Claude package as Cursor format
-prpm install claude-agent --as cursor
+prpm install @username/claude-agent --as cursor
 ```
 
 ## Troubleshooting
@@ -880,7 +880,7 @@ prpm login --token YOUR_TOKEN
 prpm search package-name
 
 # Get package info
-prpm info package-name
+prpm info @username/package-name
 
 # Try specific version
 prpm install package-name@1.0.0

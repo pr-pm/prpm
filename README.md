@@ -49,15 +49,15 @@ Every package works in **any** AI editor. No conversion tools, no separate downl
 
 ```bash
 # Same package, different editors
-prpm install react-best-practices --as cursor    # → .cursor/rules/
-prpm install react-best-practices --as claude    # → .claude/agents/
-prpm install react-best-practices --as continue  # → .continue/prompts/
-prpm install react-best-practices --as windsurf  # → .windsurf/rules/
-prpm install react-best-practices --as copilot   # → .github/instructions/
-prpm install react-best-practices --as kiro      # → .kiro/steering/
+prpm install @username/react-best-practices --as cursor    # → .cursor/rules/
+prpm install @username/react-best-practices --as claude    # → .claude/agents/
+prpm install @username/react-best-practices --as continue  # → .continue/prompts/
+prpm install @username/react-best-practices --as windsurf  # → .windsurf/rules/
+prpm install @username/react-best-practices --as copilot   # → .github/instructions/
+prpm install @username/react-best-practices --as kiro      # → .kiro/steering/
 
 # Or just let PRPM auto-detect
-prpm install react-best-practices  # Installs in the right place automatically
+prpm install @username/react-best-practices  # Installs in the right place automatically
 ```
 
 **Format conversion happens server-side.** Authors publish once, users install everywhere.
@@ -76,7 +76,7 @@ prpm search "test driven development"
 prpm trending
 
 # Get detailed info
-prpm info react-best-practices
+prpm info @username/react-best-practices
 # → Shows: description, downloads, rating, tags, installation instructions
 
 # Browse collections
@@ -110,8 +110,8 @@ prpm collections info collection/nextjs-pro
 # PRPM workflow (simple)
 prpm install collection/nextjs-pro  # Entire setup (multiple packages)
 # OR
-prpm install test-driven-development  # Single package
-prpm install systematic-debugging
+prpm install @username/test-driven-development  # Single package
+prpm install @username/systematic-debugging
 ```
 
 **It's npm for AI prompts. But it works everywhere.**
@@ -150,11 +150,11 @@ prpm collections
 ### Install Individual Packages
 ```bash
 # For any editor (auto-detected)
-prpm install test-driven-development
+prpm install @username/test-driven-development
 
 # Or specify the format
-prpm install test-driven-development --as cursor
-prpm install karen-skill --as claude
+prpm install @username/test-driven-development --as cursor
+prpm install @username/karen-skill --as claude
 ```
 
 ### Use It
@@ -220,16 +220,16 @@ prpm install collection/nextjs-pro
 ### Switch Between Editors
 ```bash
 # Working in Cursor today
-prpm install react-best-practices --as cursor
+prpm install @username/react-best-practices --as cursor
 
 # Trying Claude Code tomorrow
-prpm install react-best-practices --as claude
+prpm install @username/react-best-practices --as claude
 # Same package, different format. Zero conversion work.
 ```
 
 ### Get Code Reviews
 ```bash
-prpm install karen-skill
+prpm install @username/karen-skill
 # Ask in Claude Code: "Karen, review this repository"
 # Get: 78/100 score + market research + actionable fixes
 ```
@@ -288,7 +288,7 @@ Get brutally honest repository reviews with Karen Scores (0-100):
     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
 # Or interactive in your IDE
-prpm install karen-skill
+prpm install @username/karen-skill
 ```
 
 **[Get Your Karen Score →](GET_KAREN_SCORE.md)** | **[See Our Score (78/100)](.karen/review.md)**

@@ -76,7 +76,7 @@ CREATE INDEX idx_org_members_org ON organization_members(org_id);
 
 CREATE TABLE packages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name VARCHAR(255) UNIQUE NOT NULL,  -- Package name (e.g., "react-rules" or "@org/react-rules")
+  name VARCHAR(255) UNIQUE NOT NULL,  -- Package name format: @username/package-name or @org/package-name (scoped packages are strongly recommended)
   description TEXT,
 
   -- Ownership
