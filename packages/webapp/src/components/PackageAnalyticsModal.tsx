@@ -67,9 +67,6 @@ export default function PackageAnalyticsModal({
   if (!isOpen) return null
 
   const COLORS = {
-    cli: '#8b5cf6',
-    web: '#06b6d4',
-    api: '#10b981',
     cursor: '#f59e0b',
     claude: '#ec4899',
     continue: '#3b82f6',
@@ -194,59 +191,8 @@ export default function PackageAnalyticsModal({
                 </div>
               )}
 
-              {/* Client Type Breakdown */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 bg-prpm-dark-card border border-prpm-border rounded-lg">
-                  <h3 className="text-lg font-bold text-white mb-4">Downloads by Client</h3>
-                  {stats.period.by_client && (
-                    <>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { name: 'CLI', value: stats.period.by_client.cli },
-                              { name: 'Web', value: stats.period.by_client.web },
-                              { name: 'API', value: stats.period.by_client.api },
-                            ].filter(item => item.value > 0)}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={(entry: any) => `${entry.name} ${(entry.percent * 100).toFixed(0)}%`}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {[
-                              { name: 'CLI', value: stats.period.by_client.cli },
-                              { name: 'Web', value: stats.period.by_client.web },
-                              { name: 'API', value: stats.period.by_client.api },
-                            ].filter(item => item.value > 0).map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[entry.name.toLowerCase() as keyof typeof COLORS]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="mt-4 space-y-2">
-                        {[
-                          { name: 'CLI', value: stats.period.by_client.cli, color: COLORS.cli },
-                          { name: 'Web', value: stats.period.by_client.web, color: COLORS.web },
-                          { name: 'API', value: stats.period.by_client.api, color: COLORS.api },
-                        ].map(item => (
-                          <div key={item.name} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                              <span className="text-gray-400">{item.name}</span>
-                            </div>
-                            <span className="text-white font-semibold">{item.value.toLocaleString()}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Format Breakdown */}
+              {/* Format Breakdown */}
+              <div className="grid grid-cols-1 gap-6">
                 <div className="p-6 bg-prpm-dark-card border border-prpm-border rounded-lg">
                   <h3 className="text-lg font-bold text-white mb-4">Downloads by Format</h3>
                   {stats.period.by_format && (
