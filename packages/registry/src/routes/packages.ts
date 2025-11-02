@@ -1163,6 +1163,237 @@ export async function packageRoutes(server: FastifyInstance) {
       });
     }
   });
+
+  /**
+   * GET /packages/:id/related
+   * Get packages that are frequently installed together with this package
+   */
+  server.get(
+    '/:id/related',
+    {
+      schema: {
+        description: 'Get related packages based on co-installation patterns',
+        tags: ['packages', 'recommendations'],
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Package ID or name (e.g., "@username/package-name")',
+            },
+          },
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 50,
+              default: 10,
+              description: 'Maximum number of related packages to return',
+            },
+            min_confidence: {
+              type: 'number',
+              minimum: 0,
+              maximum: 100,
+              default: 10,
+              description: 'Minimum confidence score (0-100)',
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const {
+        limit = 10,
+        min_confidence = 10,
+      } = request.query as { limit?: number; min_confidence?: number };
+
+      try {
+        // Get the package by ID or name
+        const packageResult = await server.pg.query(
+          `SELECT id, name, description
+           FROM packages
+           WHERE id::text = $1 OR name = $1
+           AND visibility = 'public'
+           AND deprecated = FALSE
+           LIMIT 1`,
+          [id]
+        );
+
+        if (packageResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: `Package '${id}' not found`,
+          });
+        }
+
+        const pkg = packageResult.rows[0];
+
+        // Get related packages using the co-installations table
+        // Query both directions (package_a and package_b)
+        const relatedResult = await server.pg.query(
+          `SELECT DISTINCT
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.id
+              ELSE pa.id
+            END as id,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.name
+              ELSE pa.name
+            END as name,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.description
+              ELSE pa.description
+            END as description,
+            pc.confidence_score,
+            pc.co_install_count,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.total_downloads
+              ELSE pa.total_downloads
+            END as total_downloads,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.quality_score
+              ELSE pa.quality_score
+            END as quality_score,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.tags
+              ELSE pa.tags
+            END as tags
+           FROM package_co_installations pc
+           LEFT JOIN packages pa ON pc.package_a_id = pa.id
+           LEFT JOIN packages pb ON pc.package_b_id = pb.id
+           WHERE (pc.package_a_id = $1 OR pc.package_b_id = $1)
+           AND pc.confidence_score >= $2
+           AND ((pa.visibility = 'public' AND pa.deprecated = FALSE)
+                OR (pb.visibility = 'public' AND pb.deprecated = FALSE))
+           ORDER BY pc.confidence_score DESC, total_downloads DESC
+           LIMIT $3`,
+          [pkg.id, min_confidence, limit]
+        );
+
+        return {
+          package: {
+            id: pkg.id,
+            name: pkg.name,
+            description: pkg.description,
+          },
+          related: relatedResult.rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            description: row.description || '',
+            confidence_score: parseFloat(row.confidence_score),
+            co_install_count: row.co_install_count,
+            total_downloads: row.total_downloads || 0,
+            quality_score: row.quality_score ? parseFloat(row.quality_score) : null,
+            tags: row.tags || [],
+          })),
+        };
+      } catch (error) {
+        server.log.error(error, 'Failed to fetch related packages');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: 'Failed to fetch related packages',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /packages/installations/track
+   * Track a package installation for co-installation analysis
+   * Called by CLI after successful package install
+   */
+  server.post(
+    '/installations/track',
+    {
+      schema: {
+        description: 'Track package installation for analytics (anonymized)',
+        tags: ['installations', 'analytics'],
+        body: {
+          type: 'object',
+          required: ['package_id', 'version', 'session_id'],
+          properties: {
+            package_id: {
+              type: 'string',
+              description: 'Package ID or name',
+            },
+            version: {
+              type: 'string',
+              description: 'Installed version',
+            },
+            session_id: {
+              type: 'string',
+              description: 'Anonymous session identifier (generated by CLI)',
+            },
+            format: {
+              type: 'string',
+              description: 'Installation format (cursor, claude, etc.)',
+            },
+            install_batch_id: {
+              type: 'string',
+              description: 'Batch ID if installing multiple packages at once',
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const {
+        package_id,
+        version,
+        session_id,
+        format,
+        install_batch_id,
+      } = request.body as {
+        package_id: string;
+        version: string;
+        session_id: string;
+        format?: string;
+        install_batch_id?: string;
+      };
+
+      try {
+        // Resolve package ID from name if needed
+        const pkgResult = await server.pg.query(
+          `SELECT id FROM packages WHERE id::text = $1 OR name = $1 LIMIT 1`,
+          [package_id]
+        );
+
+        if (pkgResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: `Package '${package_id}' not found`,
+          });
+        }
+
+        const resolvedPackageId = pkgResult.rows[0].id;
+
+        // Track the installation
+        await server.pg.query(
+          `INSERT INTO package_installations
+           (package_id, version, session_id, format, install_batch_id, installed_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())`,
+          [resolvedPackageId, version, session_id, format || null, install_batch_id || null]
+        );
+
+        return reply.code(201).send({
+          success: true,
+          message: 'Installation tracked successfully',
+        });
+      } catch (error) {
+        server.log.error(error, 'Failed to track installation');
+        // Don't fail the install if tracking fails
+        return reply.code(201).send({
+          success: false,
+          message: 'Installation tracking skipped',
+        });
+      }
+    }
+  );
 }
 
 /**
