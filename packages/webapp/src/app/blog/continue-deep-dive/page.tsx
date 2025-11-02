@@ -44,8 +44,41 @@ export default function ContinueDeepDivePost() {
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">Format Specification</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
-            Continue prompts live in <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">.continue/prompts/</code> with one file per prompt. Filename becomes the slash command (e.g., <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">explain-code.md</code> → <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">/explain-code</code>).
+            Continue has two types of content: <strong>prompts</strong> (slash commands) in <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">.continue/prompts/</code> and <strong>rules</strong> in <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">.continue/rules/</code>. Both use YAML frontmatter followed by markdown content, but with different metadata requirements.
           </p>
+
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">Prompts (Slash Commands)</h3>
+          <p className="text-gray-300 leading-relaxed mb-6">
+            Prompts require YAML frontmatter with <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">name</code>, <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">description</code>, and <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">invokable: true</code>:
+          </p>
+
+          <div className="bg-prpm-dark border border-prpm-border rounded-xl p-6 mb-6 font-mono text-sm">
+            <div className="text-gray-500 mb-2">---</div>
+            <div className="text-prpm-accent-light">name: Explain Code</div>
+            <div className="text-prpm-accent-light">description: Explains the selected code in detail</div>
+            <div className="text-prpm-accent-light">invokable: true</div>
+            <div className="text-gray-500 mb-2">---</div>
+            <div className="text-gray-400 mt-2">Please explain the following code:</div>
+            <div className="text-gray-400">&#123;&#123;selectedCode&#125;&#125;</div>
+          </div>
+
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">Rules</h3>
+          <p className="text-gray-300 leading-relaxed mb-6">
+            Rules require YAML frontmatter with <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">name</code>, <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">globs</code> (file patterns), <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">alwaysApply</code>, and <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">description</code>:
+          </p>
+
+          <div className="bg-prpm-dark border border-prpm-border rounded-xl p-6 mb-6 font-mono text-sm">
+            <div className="text-gray-500 mb-2">---</div>
+            <div className="text-prpm-accent-light">name: TypeScript Best Practices</div>
+            <div className="text-prpm-accent-light">globs:</div>
+            <div className="text-prpm-accent-light ml-4">- "**/*.ts"</div>
+            <div className="text-prpm-accent-light ml-4">- "**/*.tsx"</div>
+            <div className="text-prpm-accent-light">alwaysApply: false</div>
+            <div className="text-prpm-accent-light">description: TypeScript coding standards</div>
+            <div className="text-gray-500 mb-2">---</div>
+            <div className="text-gray-400 mt-2">Always use strict type checking.</div>
+            <div className="text-gray-400">Avoid using 'any' type.</div>
+          </div>
 
           <h3 className="text-2xl font-bold text-white mt-8 mb-4">Template Variables</h3>
           <p className="text-gray-300 leading-relaxed mb-6">
@@ -79,14 +112,33 @@ export default function ContinueDeepDivePost() {
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">PRPM's Implementation</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
-            Since Continue uses the same markdown + YAML format as Claude, PRPM aliases the parsers to reduce duplication:
+            PRPM implements full Continue support with specialized converters that handle the distinctions between prompts and rules:
+          </p>
+
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">Conversion Logic</h3>
+          <p className="text-gray-300 leading-relaxed mb-6">
+            When converting to Continue format, PRPM automatically generates the correct YAML frontmatter based on package subtype:
           </p>
 
           <div className="bg-prpm-dark border border-prpm-border rounded-xl p-6 mb-6 font-mono text-sm">
-            <div className="text-gray-500 mb-2">{'//'} from-continue.ts</div>
-            <div className="text-prpm-accent-light">export &#123; fromClaude as fromContinue &#125; from './from-claude.js';</div>
-            <div className="text-gray-500 mt-4 mb-2">{'//'} to-continue.ts</div>
-            <div className="text-prpm-accent-light">export &#123; toClaude as toContinue &#125; from './to-claude.js';</div>
+            <div className="text-gray-500 mb-2">{'//'} Prompts (slash-command or prompt subtype)</div>
+            <div className="text-prpm-accent-light">if (pkg.subtype === 'slash-command' || pkg.subtype === 'prompt') &#123;</div>
+            <div className="text-prpm-accent-light ml-4">{'//'} Generate YAML with: name, description, invokable: true</div>
+            <div className="text-prpm-accent-light">&#125;</div>
+            <div className="text-gray-500 mt-4 mb-2">{'//'} Rules (rule subtype)</div>
+            <div className="text-prpm-accent-light">if (pkg.subtype === 'rule') &#123;</div>
+            <div className="text-prpm-accent-light ml-4">{'//'} Generate YAML with: name, globs, alwaysApply, description</div>
+            <div className="text-prpm-accent-light">&#125;</div>
+          </div>
+
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">Metadata Mapping</h3>
+          <p className="text-gray-300 leading-relaxed mb-6">
+            For rules, PRPM extracts glob patterns and alwaysApply flags from the canonical package metadata:
+          </p>
+
+          <div className="bg-prpm-dark border border-prpm-border rounded-xl p-6 mb-6 font-mono text-sm">
+            <div className="text-prpm-accent-light">const globs = pkg.metadata?.globs || ['**/*'];</div>
+            <div className="text-prpm-accent-light">const alwaysApply = pkg.metadata?.alwaysApply ?? false;</div>
           </div>
 
           <h3 className="text-2xl font-bold text-white mt-8 mb-4">Template Variable Preservation</h3>

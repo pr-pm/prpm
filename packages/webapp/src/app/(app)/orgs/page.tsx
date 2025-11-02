@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import {
   getOrganization,
@@ -363,9 +364,11 @@ function OrganizationPageContent() {
             {/* Avatar */}
             <div className="w-24 h-24 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
               {organization.avatar_url ? (
-                <img
+                <Image
                   src={organization.avatar_url}
                   alt={`${organization.name}'s avatar`}
+                  width={96}
+                  height={96}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -526,9 +529,11 @@ function OrganizationPageContent() {
                           {isPrivate ? (
                             <span className="text-2xl">👻</span>
                           ) : member.avatar_url ? (
-                            <img
+                            <Image
                               src={member.avatar_url}
                               alt={member.username}
+                              width={40}
+                              height={40}
                               className="w-full h-full object-cover"
                             />
                           ) : (

@@ -31,7 +31,9 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.claude/agents'; // Default for claude
 
     case 'continue':
-      return '.continue/rules';
+      // Continue has separate directories for prompts (slash commands) and rules
+      if (subtype === 'rule') return '.continue/rules';
+      return '.continue/prompts';
 
     case 'windsurf':
       return '.windsurf/rules';
