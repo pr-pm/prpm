@@ -252,7 +252,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             cp.reason,
             cp.install_order,
             cp.format_override,
-            p.id as package_id_full,
+            p.name as package_name,
             p.description as package_description,
             p.format as package_format,
             p.subtype as package_subtype,
@@ -267,16 +267,17 @@ export async function collectionRoutes(server: FastifyInstance) {
         );
 
         collection.packages = packagesResult.rows.map(row => ({
-          packageId: row.package_id,
+          packageId: row.package_name,  // Return package name, not UUID
           version: row.package_version || row.latest_version,
           required: row.required,
           reason: row.reason,
           installOrder: row.install_order,
           formatOverride: row.format_override,
           package: {
-            name: row.package_id_full,
+            name: row.package_name,
             description: row.package_description,
-            type: row.package_type,
+            format: row.package_format,
+            subtype: row.package_subtype,
           },
         }));
 
@@ -348,13 +349,14 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         if (existing.rows.length > 0) {
           return reply.code(409).send({
-            error: 'Collection already exists',
+            error: `Collection version ${version} already exists. Please increment the version number in your prpm.json.`,
             name_slug: input.id,
             version: version,
           });
         }
 
-        // Validate all packages exist
+        // Validate all packages exist and get their UUIDs
+        const packageUuidMap = new Map<string, string>();
         for (const pkg of input.packages) {
           const pkgResult = await server.pg.query(
             `SELECT id FROM packages WHERE name = $1`,
@@ -367,6 +369,9 @@ export async function collectionRoutes(server: FastifyInstance) {
               packageId: pkg.packageId,
             });
           }
+
+          // Store the UUID for this package name
+          packageUuidMap.set(pkg.packageId, pkgResult.rows[0].id);
         }
 
         // Create collection
@@ -398,9 +403,15 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         const collection = collectionResult.rows[0];
 
-        // Add packages
+        // Add packages using their UUIDs
         for (let i = 0; i < input.packages.length; i++) {
           const pkg = input.packages[i];
+          const packageUuid = packageUuidMap.get(pkg.packageId);
+
+          if (!packageUuid) {
+            throw new Error(`Package UUID not found for ${pkg.packageId}`);
+          }
+
           await server.pg.query(
             `
             INSERT INTO collection_packages (
@@ -410,7 +421,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           `,
             [
               collection.id,
-              pkg.packageId,
+              packageUuid,  // Use UUID instead of name
               pkg.version,
               pkg.required !== false,
               pkg.reason,
@@ -748,7 +759,7 @@ export async function collectionRoutes(server: FastifyInstance) {
 
       // Map packages to camelCase for client consumption
       const packages = packagesResult.rows.map(row => ({
-        packageId: row.package_id,
+        packageId: row.package_name,  // Return package name, not UUID
         version: row.package_version,
         required: row.required,
         reason: row.reason,

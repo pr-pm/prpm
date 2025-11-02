@@ -469,6 +469,7 @@ export class RegistryClient {
     id: string;
     name: string;
     description: string;
+    version?: string;
     category?: string;
     tags?: string[];
     packages: {

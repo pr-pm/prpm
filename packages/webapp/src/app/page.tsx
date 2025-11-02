@@ -1,7 +1,27 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useState } from 'react'
 
 export default function Home() {
+  const [copiedCli, setCopiedCli] = useState(false)
+  const [copiedCollection, setCopiedCollection] = useState(false)
+
+  const copyToClipboard = async (text: string, type: 'cli' | 'collection') => {
+    try {
+      await navigator.clipboard.writeText(text)
+      if (type === 'cli') {
+        setCopiedCli(true)
+        setTimeout(() => setCopiedCli(false), 2000)
+      } else {
+        setCopiedCollection(true)
+        setTimeout(() => setCopiedCollection(false), 2000)
+      }
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
   return (
     <main className="min-h-screen bg-prpm-dark relative overflow-hidden">
       {/* Animated background grid */}
@@ -75,7 +95,12 @@ export default function Home() {
               <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Install CLI</span>
-                  <button className="text-xs text-gray-500 hover:text-prpm-accent transition-colors">Copy</button>
+                  <button
+                    onClick={() => copyToClipboard('npm install -g prpm', 'cli')}
+                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                  >
+                    {copiedCli ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
                 <code className="block font-mono text-prpm-accent-light text-left">
                   <span className="text-gray-600">$</span> npm install -g prpm
@@ -85,7 +110,12 @@ export default function Home() {
               <div className="bg-prpm-dark-card border border-prpm-accent/30 rounded-xl p-6 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Try Collections</span>
-                  <button className="text-xs text-gray-500 hover:text-prpm-accent transition-colors">Copy</button>
+                  <button
+                    onClick={() => copyToClipboard('prpm install collections/essential-dev-agents', 'collection')}
+                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                  >
+                    {copiedCollection ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
                 <code className="block font-mono text-prpm-accent-light text-left space-y-1">
                   <div><span className="text-gray-600">$</span> prpm install collections/essential-dev-agents</div>
