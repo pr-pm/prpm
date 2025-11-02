@@ -110,6 +110,35 @@ prpm trending --subtype agent --limit 20
 
 ---
 
+### popular
+
+View all-time popular packages from the registry.
+
+```bash
+prpm popular [options]
+```
+
+**Options:**
+- `--format <format>` - Filter by format
+- `--subtype <subtype>` - Filter by subtype
+
+**Note:** `popular` shows all-time most downloaded packages, while `trending` shows packages gaining traction in a specific time period.
+
+**Examples:**
+
+```bash
+# View popular packages
+prpm popular
+
+# Popular Cursor rules
+prpm popular --format cursor
+
+# Popular Claude skills
+prpm popular --format claude --subtype skill
+```
+
+---
+
 ### collections
 
 Browse and view curated collections of packages.
