@@ -1,0 +1,510 @@
+---
+title: 'Meta Packages'
+description: 'Using AI to write AI prompts - packages that teach AI assistants how to create better packages'
+---
+
+## Overview
+
+Meta packages are **packages that teach AI how to create other packages**. They're "prompts about writing prompts" - expert guidance that helps AI assistants generate high-quality, well-structured PRPM packages.
+
+Think of them as:
+- Package creation templates
+- Style guides for AI prompts
+- Best practices for package structure
+- Quality standards enforcement
+
+## Why Meta Packages Matter
+
+AI assistants are great at generating content, but they need guidance to produce **consistently high-quality packages** that follow PRPM conventions.
+
+Without meta packages:
+- ❌ Inconsistent package structures
+- ❌ Poor CSO (Context Search Optimization)
+- ❌ Missing required fields
+- ❌ Unclear when to use packages
+- ❌ No real-world examples
+
+With meta packages:
+- ✅ Standardized structure across all packages
+- ✅ Optimized for AI discovery and use
+- ✅ Complete metadata and documentation
+- ✅ Clear triggering conditions
+- ✅ Real examples and patterns
+
+## PRPM's Meta Packages
+
+PRPM uses meta packages to maintain consistency across its own repository:
+
+### 1. Creating Skills (`@prpm/creating-skills-skill`)
+
+Teaches AI how to create Claude Code skills:
+
+```bash
+prpm install @prpm/creating-skills-skill
+```
+
+<Note>
+This package exists in PRPM's own repo at `.claude/skills/creating-skills/SKILL.md` and is used to generate all Claude skills in the project.
+</Note>
+
+**What it teaches:**
+- Proper frontmatter structure
+- CSO (Context Search Optimization) keywords
+- When to trigger the skill
+- Real-world examples
+- File organization
+
+**Example output:**
+```markdown
+---
+name: postgres-migrations
+description: Use when working with PostgreSQL migrations or encountering migration errors
+---
+
+# PostgreSQL Migrations Expert
+
+## When to Use
+
+- Writing new migration files
+- Debugging migration errors
+- Adding indexes or generated columns
+- Working with full-text search
+
+## Common Patterns
+
+[Real, tested examples...]
+```
+
+### 2. Creating Cursor Rules (`@prpm/creating-cursor-rules-skill`)
+
+Teaches AI how to create Cursor IDE rules:
+
+```bash
+# For Claude Code
+prpm install @prpm/creating-cursor-rules-skill
+
+# For Cursor IDE
+prpm install @prpm/creating-cursor-rules
+```
+
+<Note>
+Claude version: `.claude/skills/creating-cursor-rules-skill/SKILL.md`
+Cursor version: `.cursor/rules/creating-cursor-rules.mdc`
+</Note>
+
+**What it teaches:**
+- `.mdc` format structure
+- Frontmatter with `ruleType` and `alwaysApply`
+- Conditional vs always-applied rules
+- Best practices for rule scoping
+
+### 3. Slash Command Builder (`@prpm/slash-command-builder-skill`)
+
+Teaches AI how to create Claude Code slash commands:
+
+```bash
+prpm install @prpm/slash-command-builder-skill
+```
+
+<Note>
+This package includes multiple reference files:
+- `SKILL.md` - Main guidance
+- `EXAMPLES.md` - Real command examples
+- `FRONTMATTER.md` - Frontmatter specifications
+- `PATTERNS.md` - Common patterns
+</Note>
+
+**What it teaches:**
+- Command frontmatter structure
+- Argument and option definitions
+- Tool permissions and model selection
+- Error handling patterns
+- Testing strategies
+
+### 4. Agent Builder (`@prpm/agent-builder-skill`)
+
+Teaches AI how to create Claude Code subagents:
+
+```bash
+prpm install @prpm/agent-builder-skill
+```
+
+<Note>
+Package location: `.claude/skills/agent-builder/` with SKILL.md and EXAMPLES.md
+</Note>
+
+**What it teaches:**
+- Agent system prompt design
+- Tool access configuration
+- Model selection (Sonnet vs Haiku)
+- Delegation patterns
+- Agent lifecycle management
+
+## Creating Your Own Meta Package
+
+### Example: Package Creator for Python
+
+Let's create a meta package that teaches AI to generate Python-specific packages:
+
+```markdown
+---
+name: python-package-creator
+description: Use when creating PRPM packages for Python best practices, frameworks, or libraries
+---
+
+# Python Package Creator
+
+## When to Use
+
+Triggers when user says:
+- "Create a package for Python {topic}"
+- "Generate Python {framework} rules"
+- "Package my Python best practices"
+
+## Package Structure Standards
+
+### For Python Skills (Claude)
+
+```markdown
+---
+name: {framework}-expert
+description: Use when working with {framework} - covers common patterns, pitfalls, and best practices
+---
+
+# {Framework} Expert
+
+## When to Use
+
+- Starting a new {framework} project
+- Debugging {framework} errors
+- Optimizing {framework} performance
+
+## Common Patterns
+
+### Pattern 1: {Real Pattern Name}
+
+**Use case**: [Specific scenario]
+
+**Example**:
+```python
+# Actual working code
+```
+
+**Why it works**: [Explanation]
+```
+
+### Required Metadata
+
+Always include:
+- `tags`: ["python", "{framework}", "best-practices"]
+- `format`: "claude" or "cursor"
+- `subtype`: "skill" or "rule"
+- Real code examples that actually work
+
+### CSO Optimization
+
+Include searchable keywords:
+- Framework names: flask, django, fastapi
+- Common errors: "ModuleNotFoundError", "circular import"
+- Use cases: "async", "database migrations", "testing"
+
+## Quality Checklist
+
+Before generating, ensure:
+- [ ] Real code examples (not pseudocode)
+- [ ] Specific error messages mentioned
+- [ ] Clear triggering conditions
+- [ ] Proper frontmatter
+- [ ] Relevant tags
+
+## Example Output
+
+```markdown
+---
+name: fastapi-expert
+description: Use when building FastAPI applications or encountering async route errors
+---
+
+# FastAPI Expert
+
+## When to Use
+
+- Building REST APIs with FastAPI
+- Debugging async route handlers
+- Implementing dependency injection
+- Working with Pydantic models
+
+## Common Patterns
+
+### Dependency Injection
+
+**Use case**: Database connections, auth, logging
+
+```python
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/users/{user_id}")
+async def get_user(user_id: int, db: Session = Depends(get_db)):
+    return db.query(User).filter(User.id == user_id).first()
+```
+
+**Why it works**: FastAPI calls `get_db()` automatically, handles cleanup
+```
+
+## Anti-Patterns to Avoid
+
+❌ Generic examples without context
+❌ Incomplete code snippets
+❌ No explanation of when to use
+❌ Missing error messages
+❌ Vague descriptions
+```
+
+Save as `.claude/skills/python-package-creator/SKILL.md` and publish:
+
+```bash
+prpm publish
+```
+
+## Real-World Use Case: PRPM's Own Development
+
+PRPM uses meta packages to generate its internal packages. Here's the workflow:
+
+### 1. Install Meta Package
+```bash
+prpm install @prpm/creating-skills-skill
+```
+
+### 2. Create Package
+```
+User: "Create a skill for Stripe webhook integration"
+
+AI: *references creating-skills-skill*
+AI: *generates structured skill with:*
+  - Proper frontmatter
+  - CSO-optimized description
+  - Real webhook code examples
+  - Common error solutions
+```
+
+### 3. Publish Package
+```bash
+prpm publish
+```
+
+### 4. Share with Community
+The generated package is now available in the PRPM registry for others to use.
+
+## Meta Package Patterns
+
+### Pattern 1: Template-Based Generation
+
+Provide a complete template with placeholders:
+
+```markdown
+## Template
+
+```markdown
+---
+name: {{framework}}-{{feature}}
+description: Use when {{use_case}}
+tags: ["{{framework}}", "{{category}}", "best-practices"]
+---
+
+# {{Framework}} {{Feature}}
+
+## When to Use
+
+- {{trigger_condition_1}}
+- {{trigger_condition_2}}
+
+## Examples
+
+{{real_code_example}}
+```
+```
+
+### Pattern 2: Quality Enforcement
+
+Require specific quality standards:
+
+```markdown
+## Quality Requirements
+
+Before generating, verify:
+1. All code examples are tested and working
+2. Error messages are exact (not paraphrased)
+3. Framework version is specified
+4. At least 3 real-world use cases included
+5. Links to official docs provided
+```
+
+### Pattern 3: CSO Optimization
+
+Teach AI to optimize for searchability:
+
+```markdown
+## CSO Keywords
+
+Include these in description:
+- Exact error messages users will search for
+- Framework-specific terms
+- Common task descriptions
+- Integration names
+
+Example:
+✅ "Use when getting 'Raw body not available' in Stripe webhooks"
+❌ "Use for Stripe integration"
+```
+
+### Pattern 4: Format-Specific Guidance
+
+Different AI editors need different formats:
+
+```markdown
+## Format Selection
+
+**Cursor (.mdc files)**:
+- Use frontmatter with `ruleType`
+- Keep concise (Cursor prefers shorter rules)
+- Focus on actionable patterns
+
+**Claude (SKILL.md files)**:
+- More detailed explanations allowed
+- Include "When to Use" section
+- Can be longer with examples
+
+**Continue (.continuerc.json)**:
+- JSON-based slash commands
+- Focus on prompt engineering
+- Include system messages
+```
+
+## Advanced: Self-Generating Meta Packages
+
+Meta packages can teach AI to create **more meta packages**:
+
+```bash
+# Install meta-meta package
+prpm install @prpm/meta-package-creator
+
+# Now AI can create packages that teach how to create packages
+User: "Create a meta package for Rust best practices"
+AI: *generates rust-package-creator that teaches AI how to make Rust packages*
+```
+
+This creates a **recursive improvement loop**:
+1. Meta package teaches AI to create packages
+2. Those packages teach AI domain expertise
+3. Domain expertise helps users solve problems
+4. Users share new patterns back to packages
+
+## Testing Meta Packages
+
+Before publishing, test that your meta package actually works:
+
+### 1. Install the Meta Package
+```bash
+prpm install @your-org/python-package-creator
+```
+
+### 2. Generate a Package
+```
+User: "Create a FastAPI authentication package"
+AI: *uses python-package-creator guidance*
+AI: *generates package*
+```
+
+### 3. Verify Output Quality
+- [ ] Proper structure and frontmatter
+- [ ] Real, working code examples
+- [ ] Clear triggering conditions
+- [ ] Good CSO keywords
+- [ ] Complete metadata
+
+### 4. Iterate
+If output is poor, improve the meta package's guidance.
+
+## Best Practices
+
+### 1. Provide Complete Templates
+Show **exactly** what good packages look like, with all sections filled in.
+
+### 2. Use Real Examples
+Don't use placeholder text. Show actual packages from the registry as examples.
+
+### 3. Enforce Standards
+Include checklists and requirements that AI must follow.
+
+### 4. Optimize for Discovery
+Teach AI to include CSO keywords that users will actually search for.
+
+### 5. Version Your Guidance
+As PRPM evolves, update meta packages to reflect new best practices.
+
+## Common Pitfalls
+
+### ❌ Too Abstract
+```markdown
+"Create a well-structured package with good examples"
+```
+
+### ✅ Specific and Actionable
+```markdown
+"Include frontmatter with name, description, and tags array.
+Add 3 code examples with comments.
+Ensure description mentions exact error messages."
+```
+
+### ❌ Generic Examples
+```markdown
+"Example: Some code here..."
+```
+
+### ✅ Real, Tested Code
+```markdown
+"Example:
+```python
+from fastapi import FastAPI, HTTPException
+app = FastAPI()
+
+@app.get("/users/{user_id}")
+async def get_user(user_id: int):
+    # This pattern avoids N+1 queries
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+```
+```
+
+## Publishing Your Meta Package
+
+```bash
+# Create prpm.json
+{
+  "name": "python-package-creator",
+  "description": "Meta package for creating high-quality Python PRPM packages",
+  "tags": ["meta", "python", "package-creation", "ai-prompts"],
+  "format": "claude",
+  "subtype": "skill",
+  "files": [".claude/skills/python-package-creator/SKILL.md"]
+}
+
+# Publish
+prpm publish
+```
+
+## Related Topics
+
+- [Self-Improving Packages](/advanced/self-improving-packages)
+- [Creating Skills Guide](/guides/creating-skills)
+- [Package Quality Standards](/guides/quality-standards)

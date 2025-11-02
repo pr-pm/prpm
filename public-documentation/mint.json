@@ -29,10 +29,6 @@
     {
       "name": "CLI Reference",
       "url": "cli"
-    },
-    {
-      "name": "API Reference",
-      "url": "api"
     }
   ],
   "navigation": [
@@ -67,6 +63,13 @@
         "publishing/getting-started",
         "publishing/manifest",
         "publishing/collections"
+      ]
+    },
+    {
+      "group": "Advanced",
+      "pages": [
+        "advanced/self-improving-packages",
+        "advanced/meta-packages"
       ]
     }
   ],

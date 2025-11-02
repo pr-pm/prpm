@@ -337,7 +337,7 @@ prpm info @username/typescript-rules
 
 ## Lock File Issues
 
-### Corrupted prpm-lock.json
+### Corrupted prpm.lock
 
 **Problem:** `Error: Invalid lock file format`
 
@@ -345,23 +345,23 @@ prpm info @username/typescript-rules
 
 1. **Validate JSON syntax:**
    ```bash
-   cat prpm-lock.json | jq .
+   cat prpm.lock | jq .
    # Shows where JSON is invalid
    ```
 
 2. **Rebuild lock file:**
    ```bash
    # Backup first
-   cp prpm-lock.json prpm-lock.json.backup
+   cp prpm.lock prpm.lock.backup
 
    # Remove and regenerate
-   rm prpm-lock.json
+   rm prpm.lock
    prpm index
    ```
 
 3. **Manual fix (if you know what's wrong):**
    ```bash
-   vim prpm-lock.json
+   vim prpm.lock
    # Fix JSON syntax errors
    ```
 
@@ -648,10 +648,10 @@ prpm install @username/typescript-rules
 
 ```bash
 # Pretty print lock file
-cat prpm-lock.json | jq .
+cat prpm.lock | jq .
 
 # Check specific package
-cat prpm-lock.json | jq '.packages[] | select(.id=="package-name")'
+cat prpm.lock | jq '.packages[] | select(.id=="package-name")'
 ```
 
 ### Network Debugging
@@ -689,12 +689,7 @@ If you've tried these solutions and still have issues:
    ```
 
 3. **Join the community:**
-   - Discord server (link on prpm.dev)
    - GitHub Discussions
-
-4. **Check the docs:**
-   - [https://prpm.dev/docs](https://prpm.dev/docs)
-   - May have been updated with solutions
 
 ---
 
