@@ -148,10 +148,10 @@ prpm install <package-name> [additional-packages...] [options]
 
 **Options:**
 - `--version <version>` - Install a specific version
-- `--as <name>` - Install with a custom name
-- `--global` - Install globally (available to all projects)
-- `--save-dev` - Save as development dependency
-- `--force` - Force reinstall even if already installed
+- `--as <format>` - Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)
+- `--format <format>` - Alias for `--as`
+- `--subtype <subtype>` - Specify subtype when converting (skill, agent, rule, etc.)
+- `--frozen-lockfile` - Fail if lock file needs to be updated (for CI)
 
 **Examples:**
 
@@ -165,11 +165,14 @@ prpm install typescript-rules1 typescript-rules2 typescript-rules3
 # Install specific version
 prpm install typescript-rules --version 2.1.0
 
-# Install with custom name
-prpm install long-package-name --as short-name
+# Install and convert to Cursor format
+prpm install typescript-rules --as cursor
 
-# Force reinstall
-prpm install typescript-rules --force
+# Install and convert to Claude format
+prpm install typescript-rules --format claude
+
+# Frozen lockfile (for CI)
+prpm install typescript-rules --frozen-lockfile
 ```
 
 **What happens during installation:**

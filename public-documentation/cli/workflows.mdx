@@ -77,9 +77,9 @@ prpm install \
 prpm collections web-development --install
 ```
 
-**Install with a custom name:**
+**Install and convert to a specific format:**
 ```bash
-prpm install very-long-package-name --as short-name
+prpm install typescript-rules --as cursor
 ```
 
 ### Verifying Installation
@@ -296,14 +296,21 @@ chmod +x setup-prpm.sh
    prpm collections your-team-name --install
    ```
 
-### Global Packages (Future Feature)
+### Cross-Project Packages
 
-While not yet available, global packages will allow:
+PRPM currently installs packages into the current project directory. To use packages across projects:
+
 ```bash
-# Install globally (coming soon)
-prpm install --global typescript-rules
+# Create a shared setup script
+cat > ~/prpm-setup.sh << 'EOF'
+#!/bin/bash
+prpm install typescript-rules
+prpm install react-patterns
+EOF
 
-# Will be available in all projects
+# Run in each project
+chmod +x ~/prpm-setup.sh
+cd /path/to/project && ~/prpm-setup.sh
 ```
 
 ---
@@ -469,9 +476,10 @@ vim prpm-lock.json
    prpm outdated
    ```
 
-3. **Use meaningful custom names:**
+3. **Convert to your preferred format:**
    ```bash
-   prpm install long-package-name --as descriptive-name
+   prpm install package-name --as cursor  # Convert to Cursor format
+   prpm install package-name --as claude  # Convert to Claude format
    ```
 
 4. **Document your dependencies:**
