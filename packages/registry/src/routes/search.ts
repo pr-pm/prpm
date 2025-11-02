@@ -33,6 +33,8 @@ export async function searchRoutes(server: FastifyInstance) {
           tags: { type: 'array', items: { type: 'string' } },
           category: { type: 'string' },
           author: { type: 'string' },
+          language: { type: 'string', description: 'Filter by programming language (javascript, python, typescript, etc.)' },
+          framework: { type: 'string', description: 'Filter by framework (react, nextjs, django, etc.)' },
           verified: { type: 'boolean' },
           featured: { type: 'boolean' },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
@@ -42,13 +44,15 @@ export async function searchRoutes(server: FastifyInstance) {
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { q, format, subtype, tags, category, author, verified, featured, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
+    const { q, format, subtype, tags, category, author, language, framework, verified, featured, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
       q?: string;
       format?: Format | Format[];
       subtype?: Subtype | Subtype[];
       tags?: string[];
       category?: string;
       author?: string;
+      language?: string;
+      framework?: string;
       verified?: boolean;
       featured?: boolean;
       limit?: number;
@@ -73,6 +77,8 @@ export async function searchRoutes(server: FastifyInstance) {
       tags,
       category,
       author,
+      language,
+      framework,
       verified,
       featured,
       sort,

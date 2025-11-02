@@ -177,6 +177,8 @@ export interface SearchFilters {
   tags?: string[];
   category?: string;
   author?: string;  // Filter by author username
+  language?: string;  // Filter by programming language
+  framework?: string;  // Filter by framework
   verified?: boolean;
   featured?: boolean;
   sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
