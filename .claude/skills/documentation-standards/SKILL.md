@@ -142,7 +142,7 @@ Details...
 ## Examples
 \`\`\`bash
 # Example command
-prpm install example
+prpm install @username/package-name
 \`\`\`
 
 ## See Also
