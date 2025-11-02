@@ -40,6 +40,8 @@ Use `prpm.json` when you're:
 }
 ```
 
+**Note:** When `"organization": "your-org"` is specified, the registry automatically prefixes the package name with `@your-org/`, so this package will be published as `@your-org/my-awesome-skill` and installed with `prpm install @your-org/my-awesome-skill`.
+
 ### Multi-Package Repository
 
 ```json

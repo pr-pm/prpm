@@ -1,0 +1,733 @@
+---
+title: 'Troubleshooting'
+description: 'Solutions to common PRPM CLI issues'
+---
+
+## Installation Issues
+
+### Command Not Found After Installation
+
+**Problem:** After running `npm install -g prpm`, the `prpm` command is not found.
+
+**Solutions:**
+
+1. **Check if npm global bin is in your PATH:**
+   ```bash
+   npm config get prefix
+   # Should output something like /usr/local or ~/.npm-global
+   ```
+
+2. **Add npm global bin to PATH (if needed):**
+   ```bash
+   # For bash
+   echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.bashrc
+   source ~/.bashrc
+
+   # For zsh
+   echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+
+3. **Use npx as alternative:**
+   ```bash
+   npx prpm install @username/typescript-rules
+   ```
+
+4. **Reinstall with correct permissions:**
+   ```bash
+   # On Linux/Mac, may need sudo
+   sudo npm install -g prpm
+   ```
+
+### Permission Errors During Installation
+
+**Problem:** EACCES or permission denied errors when installing globally.
+
+**Solutions:**
+
+1. **Change npm's default directory (recommended):**
+   ```bash
+   mkdir ~/.npm-global
+   npm config set prefix '~/.npm-global'
+   echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.profile
+   source ~/.profile
+   npm install -g prpm
+   ```
+
+2. **Use sudo (less secure):**
+   ```bash
+   sudo npm install -g prpm
+   ```
+
+---
+
+## Package Installation Issues
+
+### Package Not Found
+
+**Problem:** `Error: Package 'package-name' not found`
+
+**Diagnose:**
+```bash
+# Search for the package
+prpm search package-name
+
+# Check exact name
+prpm info @username/typescript-rules
+```
+
+**Common causes:**
+1. **Typo in package name:**
+   ```bash
+   # Check the exact name
+   prpm search typescript
+   # Then use the exact package name from search results
+   prpm install @username/typescript-rules
+   ```
+
+2. **Private package without authentication:**
+   ```bash
+   # Login first
+   prpm login
+   prpm install @username/private-package
+   ```
+
+3. **Package doesn't exist:** Verify on [registry.prpm.dev](https://registry.prpm.dev)
+
+### File Already Exists
+
+**Problem:** `Error: File already exists at destination`
+
+**Solutions:**
+
+1. **Check what's already installed:**
+   ```bash
+   prpm list --verbose
+   ```
+
+2. **Uninstall conflicting package first:**
+   ```bash
+   prpm uninstall conflicting-package
+   prpm install @username/new-package
+   ```
+
+3. **Force reinstall:**
+   ```bash
+   prpm install @username/typescript-rules --force
+   ```
+
+4. **Install with custom name:**
+   ```bash
+   prpm install @username/typescript-rules --as different-name
+   ```
+
+### Download/Network Errors
+
+**Problem:** Timeouts or connection errors during installation.
+
+**Solutions:**
+
+1. **Check internet connection:**
+   ```bash
+   ping registry.prpm.dev
+   ```
+
+2. **Check registry URL:**
+   ```bash
+   prpm config get registry
+   # Should be: https://registry.prpm.dev
+   ```
+
+3. **Try with custom timeout:**
+   ```bash
+   # Set higher timeout (in seconds)
+   export REQUEST_TIMEOUT=60
+   prpm install @username/typescript-rules
+   ```
+
+4. **Check firewall/proxy settings:**
+   ```bash
+   # If behind a proxy
+   npm config set proxy http://proxy.company.com:8080
+   npm config set https-proxy http://proxy.company.com:8080
+   ```
+
+5. **Retry installation:**
+   ```bash
+   prpm install @username/typescript-rules
+   ```
+
+### Integrity Check Failed
+
+**Problem:** `Error: Package integrity check failed`
+
+**Solutions:**
+
+1. **Clear cache and retry:**
+   ```bash
+   rm -rf ~/.prpm/cache
+   prpm install @username/typescript-rules
+   ```
+
+2. **Force reinstall:**
+   ```bash
+   prpm install @username/typescript-rules --force
+   ```
+
+3. **Report issue:** This may indicate a corrupted package in the registry
+
+---
+
+## Authentication Issues
+
+### Login Fails
+
+**Problem:** Unable to authenticate with the registry.
+
+**Solutions:**
+
+1. **Clear existing auth and retry:**
+   ```bash
+   prpm config delete token
+   prpm login
+   ```
+
+2. **Check registry URL:**
+   ```bash
+   prpm config get registry
+   # Should match your intended registry
+   ```
+
+3. **Use token directly (if you have one):**
+   ```bash
+   prpm login --token YOUR_AUTH_TOKEN
+   ```
+
+4. **Check browser is opening:**
+   - If browser doesn't open, copy URL from terminal
+   - Complete authentication manually
+
+### Permission Denied When Publishing
+
+**Problem:** `Error: Insufficient permissions to publish`
+
+**Diagnose:**
+```bash
+# Check if logged in
+prpm whoami
+
+# Verify package name doesn't conflict
+prpm info @username/typescript-rules
+```
+
+**Solutions:**
+
+1. **Ensure you're logged in:**
+   ```bash
+   prpm login
+   ```
+
+2. **Use correct namespace:**
+   ```bash
+   # Can only publish to your own namespace
+   # In prpm.json:
+   {
+     "name": "@username/typescript-rules"
+   }
+   ```
+
+3. **Check package doesn't already exist:**
+   ```bash
+   prpm search package-name
+   # If exists, increment version or choose different name
+   ```
+
+---
+
+## Publishing Issues
+
+### Validation Errors
+
+**Problem:** `Error: Package validation failed`
+
+**Solutions:**
+
+1. **Validate your manifest:**
+   ```bash
+   prpm schema --validate prpm.json
+   ```
+
+2. **Check required fields:**
+   ```json
+   {
+     "name": "@username/typescript-rules",
+     "version": "1.0.0",
+     "description": "Package description",
+     "format": "cursor",
+     "subtype": "rule",
+     "author": "Your Name",
+     "files": [".cursorrules"]
+   }
+   ```
+
+3. **Ensure files exist:**
+   ```bash
+   # Check that all files in "files" array exist
+   ls -la .cursorrules
+   ```
+
+4. **Validate version format:**
+   - Must be valid semver: `1.0.0`, `2.1.3`, etc.
+   - Cannot republish same version
+
+### Package Already Exists
+
+**Problem:** `Error: Package version already exists`
+
+**Solutions:**
+
+1. **Increment version:**
+   ```json
+   {
+     "version": "1.0.1"  // Increment from 1.0.0
+   }
+   ```
+
+2. **Check existing versions:**
+   ```bash
+   prpm info @username/typescript-rules
+   ```
+
+3. **Use semantic versioning:**
+   - Patch: `1.0.1` (bug fixes)
+   - Minor: `1.1.0` (new features)
+   - Major: `2.0.0` (breaking changes)
+
+### Files Not Included in Package
+
+**Problem:** Published package missing expected files.
+
+**Solutions:**
+
+1. **Check files array in prpm.json:**
+   ```json
+   {
+     "files": [
+       ".cursorrules",
+       "README.md",
+       "examples/"
+     ]
+   }
+   ```
+
+2. **Use dry-run to preview:**
+   ```bash
+   prpm publish --dry-run
+   # Shows what will be included
+   ```
+
+3. **Verify file paths are correct:**
+   ```bash
+   # List files that match patterns
+   ls -la .cursorrules
+   ls -la README.md
+   ```
+
+---
+
+## Lock File Issues
+
+### Corrupted prpm-lock.json
+
+**Problem:** `Error: Invalid lock file format`
+
+**Solutions:**
+
+1. **Validate JSON syntax:**
+   ```bash
+   cat prpm-lock.json | jq .
+   # Shows where JSON is invalid
+   ```
+
+2. **Rebuild lock file:**
+   ```bash
+   # Backup first
+   cp prpm-lock.json prpm-lock.json.backup
+
+   # Remove and regenerate
+   rm prpm-lock.json
+   prpm index
+   ```
+
+3. **Manual fix (if you know what's wrong):**
+   ```bash
+   vim prpm-lock.json
+   # Fix JSON syntax errors
+   ```
+
+### Lock File Out of Sync
+
+**Problem:** Lock file doesn't match installed files.
+
+**Solutions:**
+
+1. **Rebuild from installed files:**
+   ```bash
+   prpm index
+   ```
+
+2. **Reinstall packages:**
+   ```bash
+   # List packages first
+   prpm list
+
+   # Reinstall each
+   prpm install @username/typescript-rules --force
+   ```
+
+---
+
+## Update/Upgrade Issues
+
+### No Updates Available (But You Know There Should Be)
+
+**Problem:** `prpm outdated` shows no updates despite new versions existing.
+
+**Solutions:**
+
+1. **Check registry directly:**
+   ```bash
+   prpm info @username/typescript-rules
+   # Shows latest version
+   ```
+
+2. **Clear cache:**
+   ```bash
+   rm -rf ~/.prpm/cache
+   prpm outdated
+   ```
+
+3. **Force update:**
+   ```bash
+   prpm update package-name --force
+   ```
+
+### Update Fails Partway Through
+
+**Problem:** Update starts but fails, leaving package in inconsistent state.
+
+**Solutions:**
+
+1. **Uninstall and reinstall:**
+   ```bash
+   prpm uninstall package-name
+   prpm install @username/typescript-rules
+   ```
+
+2. **Check file permissions:**
+   ```bash
+   ls -la .cursor/rules/
+   # Ensure you have write permissions
+   ```
+
+3. **Cleanup and retry:**
+   ```bash
+   # Remove partial installation
+   rm -f .cursor/rules/package-file.md
+   prpm install @username/typescript-rules
+   ```
+
+---
+
+## Format-Specific Issues
+
+### Cursor: Rules Not Being Applied
+
+**Problem:** Installed Cursor rules don't seem to affect the AI.
+
+**Solutions:**
+
+1. **Check MDC header is present:**
+   ```bash
+   head -5 .cursor/rules/your-rule.mdc
+   # Should show frontmatter:
+   # ---
+   # title: Your Rule
+   # tags: []
+   # ---
+   ```
+
+2. **Restart Cursor:**
+   - Close and reopen Cursor
+   - Or reload window: Cmd/Ctrl + Shift + P → "Reload Window"
+
+3. **Check file is in correct location:**
+   ```bash
+   ls -la .cursor/rules/
+   # Files should be .mdc or .cursorrules
+   ```
+
+4. **Verify file syntax:**
+   ```bash
+   # Open in Cursor and check for errors
+   cursor .cursor/rules/your-rule.mdc
+   ```
+
+### Claude: Skills Not Loading
+
+**Problem:** Claude skills installed but not available.
+
+**Solutions:**
+
+1. **Check directory structure:**
+   ```bash
+   ls -la .claude/skills/
+   # Should have subdirectories with SKILL.md files
+
+   # Example structure:
+   # .claude/skills/
+   #   └── my-skill/
+   #       └── SKILL.md
+   ```
+
+2. **Verify SKILL.md format:**
+   ```markdown
+   # Skill Name
+
+   ## Description
+   What this skill does
+
+   ## Instructions
+   How to use it
+   ```
+
+3. **Restart Claude application**
+
+---
+
+## Configuration Issues
+
+### Config Not Persisting
+
+**Problem:** Configuration changes don't persist after restart.
+
+**Solutions:**
+
+1. **Check config file location:**
+   ```bash
+   ls -la ~/.prpmrc
+   # Should exist and be writable
+   ```
+
+2. **Check file permissions:**
+   ```bash
+   chmod 600 ~/.prpmrc
+   ```
+
+3. **Manually edit config:**
+   ```bash
+   vim ~/.prpmrc
+   # Format:
+   # registry=https://registry.prpm.dev
+   # token=your-token
+   ```
+
+### Custom Registry Not Working
+
+**Problem:** Setting custom registry doesn't take effect.
+
+**Solutions:**
+
+1. **Verify config:**
+   ```bash
+   prpm config get registry
+   ```
+
+2. **Set via environment variable:**
+   ```bash
+   export PRPM_REGISTRY_URL=https://custom.registry.dev
+   prpm search test
+   ```
+
+3. **Set globally:**
+   ```bash
+   prpm config set registry https://custom.registry.dev
+   ```
+
+---
+
+## Performance Issues
+
+### Slow Package Installation
+
+**Problem:** Package installation takes longer than expected.
+
+**Diagnose:**
+```bash
+# Check network speed
+curl -o /dev/null https://registry.prpm.dev/test-file
+
+# Check disk space
+df -h
+
+# Check disk I/O
+iostat -x 1
+```
+
+**Solutions:**
+
+1. **Clear cache:**
+   ```bash
+   rm -rf ~/.prpm/cache
+   ```
+
+2. **Check DNS resolution:**
+   ```bash
+   nslookup registry.prpm.dev
+   # Should resolve quickly
+   ```
+
+3. **Use wired connection if on WiFi**
+
+4. **Close other applications using network/disk**
+
+### High Memory Usage
+
+**Problem:** PRPM CLI using excessive memory.
+
+**Solutions:**
+
+1. **Update to latest version:**
+   ```bash
+   npm update -g prpm
+   ```
+
+2. **Use smaller batch operations:**
+   ```bash
+   # Instead of:
+   prpm install pkg1 pkg2 pkg3 ... pkg50
+
+   # Do:
+   prpm install pkg1 pkg2 pkg3
+   prpm install pkg4 pkg5 pkg6
+   ```
+
+---
+
+## Debugging
+
+### Enable Verbose Logging
+
+Get detailed output for debugging:
+
+```bash
+# Enable debug logs
+export DEBUG=prpm:*
+prpm install @username/typescript-rules
+
+# Or for specific command
+prpm install @username/typescript-rules --verbose
+```
+
+### Check PRPM Version
+
+```bash
+prpm --version
+```
+
+### View Full Error Stack
+
+```bash
+# Set environment variable
+export NODE_ENV=development
+prpm install @username/typescript-rules
+# Will show full error stack traces
+```
+
+### Inspect Lock File
+
+```bash
+# Pretty print lock file
+cat prpm-lock.json | jq .
+
+# Check specific package
+cat prpm-lock.json | jq '.packages[] | select(.id=="package-name")'
+```
+
+### Network Debugging
+
+```bash
+# Test registry connection
+curl -I https://registry.prpm.dev
+
+# Test package download
+curl -I https://registry.prpm.dev/packages/@username/typescript-rules
+```
+
+---
+
+## Getting Additional Help
+
+If you've tried these solutions and still have issues:
+
+1. **Check GitHub Issues:**
+   - [https://github.com/pr-pm/prpm/issues](https://github.com/pr-pm/prpm/issues)
+   - Search for similar issues
+   - Comment on existing issues or create new one
+
+2. **Provide detailed information when reporting:**
+   ```bash
+   # Include this information:
+   prpm --version
+   node --version
+   npm --version
+   uname -a  # or `ver` on Windows
+
+   # Include error message and full command
+   # Include relevant config
+   prpm config list
+   ```
+
+3. **Join the community:**
+   - Discord server (link on prpm.dev)
+   - GitHub Discussions
+
+4. **Check the docs:**
+   - [https://prpm.dev/docs](https://prpm.dev/docs)
+   - May have been updated with solutions
+
+---
+
+## Common Error Messages Explained
+
+### `ENOENT: no such file or directory`
+**Meaning:** File or directory doesn't exist.
+**Solution:** Check that the path is correct and the file exists.
+
+### `EACCES: permission denied`
+**Meaning:** Insufficient permissions to access file/directory.
+**Solution:** Check permissions with `ls -la`, use `sudo` if appropriate, or change ownership.
+
+### `EISDIR: illegal operation on a directory`
+**Meaning:** Trying to perform file operation on a directory.
+**Solution:** Check that your target is a file, not a directory.
+
+### `EEXIST: file already exists`
+**Meaning:** Trying to create something that already exists.
+**Solution:** Use `--force` flag or remove existing file first.
+
+### `Invalid semver version`
+**Meaning:** Version number doesn't follow semantic versioning.
+**Solution:** Use format `X.Y.Z` (e.g., `1.0.0`, `2.1.3`).
+
+### `Package not found in registry`
+**Meaning:** Package doesn't exist or you lack access.
+**Solution:** Check package name, ensure you're authenticated if private.
+
+### `Authentication required`
+**Meaning:** Need to login to access resource.
+**Solution:** Run `prpm login`.
+
+### `Rate limit exceeded`
+**Meaning:** Too many requests to registry.
+**Solution:** Wait a few minutes and retry.

@@ -53,6 +53,15 @@
       ]
     },
     {
+      "group": "CLI Reference",
+      "pages": [
+        "cli/overview",
+        "cli/commands",
+        "cli/workflows",
+        "cli/troubleshooting"
+      ]
+    },
+    {
       "group": "Publishing",
       "pages": [
         "publishing/getting-started",

@@ -1,0 +1,533 @@
+---
+title: 'Common Workflows'
+description: 'Step-by-step guides for common PRPM tasks'
+---
+
+## Getting Started with PRPM
+
+### First Time Setup
+
+1. **Install the CLI:**
+   ```bash
+   npm install -g prpm
+   ```
+
+2. **Verify installation:**
+   ```bash
+   prpm --version
+   ```
+
+3. **Create an account and login:**
+   ```bash
+   prpm login
+   ```
+
+4. **Browse available packages:**
+   ```bash
+   prpm trending
+   ```
+
+---
+
+## Discovering and Installing Packages
+
+### Finding the Right Package
+
+**Search by keyword:**
+```bash
+prpm search typescript
+```
+
+**Browse trending packages:**
+```bash
+prpm trending --format cursor
+```
+
+**View package details:**
+```bash
+prpm info @username/typescript-rules
+```
+
+**Check collections:**
+```bash
+# List all collections
+prpm collections --list
+
+# View a specific collection
+prpm collections web-development
+```
+
+### Installing Packages
+
+**Install a single package:**
+```bash
+prpm install @username/typescript-best-practices
+```
+
+**Install multiple packages at once:**
+```bash
+prpm install \
+  @username/react-rules \
+  @username/typescript-config \
+  @username/testing-guidelines
+```
+
+**Install an entire collection:**
+```bash
+prpm collections web-development --install
+```
+
+**Install and convert to a specific format:**
+```bash
+prpm install @username/typescript-rules --as cursor
+```
+
+### Verifying Installation
+
+**List installed packages:**
+```bash
+prpm list
+```
+
+**List packages for a specific format:**
+```bash
+prpm list --format cursor
+```
+
+**Check package details:**
+```bash
+prpm list --verbose
+```
+
+---
+
+## Managing Existing Projects
+
+### Indexing Local Prompt Files
+
+If you have existing prompt files in your project, register them with PRPM:
+
+```bash
+# Scan and register all prompt files
+prpm index
+
+# View registered packages
+prpm list
+```
+
+This will scan these directories:
+- `.cursor/rules/`, `.cursor/agents/`, `.cursor/commands/`
+- `.claude/agents/`, `.claude/skills/`, `.claude/commands/`
+- `.continue/rules/`
+- `.windsurf/rules/`
+- `.prompts/`
+- `.mcp/`
+
+### Keeping Packages Up to Date
+
+**Check for outdated packages:**
+```bash
+prpm outdated
+```
+
+**Update a specific package:**
+```bash
+prpm update package-name
+```
+
+**Update all packages:**
+```bash
+prpm upgrade
+```
+
+**Preview updates without applying:**
+```bash
+prpm upgrade --dry-run
+```
+
+**Interactive updates (choose which to update):**
+```bash
+prpm upgrade --interactive
+```
+
+### Cleaning Up Packages
+
+**Remove a package:**
+```bash
+prpm uninstall package-name
+```
+
+**Remove multiple packages:**
+```bash
+prpm uninstall package1 package2 package3
+```
+
+**Remove without confirmation:**
+```bash
+prpm uninstall package-name --force
+```
+
+---
+
+## Creating and Publishing Packages
+
+### Creating Your First Package
+
+1. **Initialize a new package:**
+   ```bash
+   mkdir @username/my-cursor-rules
+   cd @username/my-cursor-rules
+   prpm init
+   ```
+
+2. **Follow the interactive prompts:**
+   - Package name: `my-username/@username/my-cursor-rules`
+   - Description: Describe what your package does
+   - Format: `cursor`
+   - Subtype: `rule`
+   - Author: Your name
+   - License: `MIT` (or your choice)
+   - Tags: `typescript`, `react`, `best-practices`
+
+3. **Edit the generated files:**
+   ```bash
+   # Edit your rules file
+   vim .cursorrules
+
+   # Update the README
+   vim README.md
+   ```
+
+4. **Test locally:**
+   ```bash
+   # Install in a test project
+   cd ../test-project
+   prpm install /path/to/@username/my-cursor-rules
+   ```
+
+### Publishing Your Package
+
+1. **Ensure you're logged in:**
+   ```bash
+   prpm whoami
+   # If not logged in:
+   prpm login
+   ```
+
+2. **Validate your package:**
+   ```bash
+   prpm schema --validate prpm.json
+   ```
+
+3. **Test publish (dry run):**
+   ```bash
+   prpm publish --dry-run
+   ```
+
+4. **Publish to registry:**
+   ```bash
+   prpm publish
+   ```
+
+5. **Verify publication:**
+   ```bash
+   prpm info my-username/@username/my-cursor-rules
+   ```
+
+### Updating Your Published Package
+
+1. **Update version in `prpm.json`:**
+   ```json
+   {
+     "name": "@username/my-cursor-rules",
+     "version": "1.1.0",
+     ...
+   }
+   ```
+
+2. **Publish the update:**
+   ```bash
+   prpm publish
+   ```
+
+3. **Publish a beta version:**
+   ```bash
+   # Update version to 2.0.0-beta.1
+   prpm publish --tag beta
+   ```
+
+---
+
+## Working Across Multiple Projects
+
+### Setting Up a Standardized Environment
+
+Create a script to install your standard packages across projects:
+
+```bash
+#!/bin/bash
+# setup-prpm.sh
+
+echo "Installing standard PRPM packages..."
+
+prpm install \
+  @username/typescript-rules \
+  @username/react-best-practices \
+  @username/testing-guidelines \
+  @username/git-commit-standards
+
+echo "Setup complete!"
+```
+
+Make it executable and run:
+```bash
+chmod +x setup-prpm.sh
+./setup-prpm.sh
+```
+
+### Sharing Configurations Across Teams
+
+1. **Create a collection for your team:**
+   - Contact PRPM support or create via registry API
+   - Add your team's standard packages
+
+2. **Team members can install everything at once:**
+   ```bash
+   prpm collections your-team-name --install
+   ```
+
+### Cross-Project Packages
+
+PRPM currently installs packages into the current project directory. To use packages across projects:
+
+```bash
+# Create a shared setup script
+cat > ~/prpm-setup.sh << 'EOF'
+#!/bin/bash
+prpm install @username/typescript-rules
+prpm install @username/react-patterns
+EOF
+
+# Run in each project
+chmod +x ~/prpm-setup.sh
+cd /path/to/project && ~/prpm-setup.sh
+```
+
+---
+
+## Advanced Workflows
+
+### Using PRPM in CI/CD
+
+**Install packages in CI:**
+```yaml
+# .github/workflows/ci.yml
+steps:
+  - name: Install PRPM packages
+    run: |
+      npm install -g prpm
+      prpm install @username/typescript-rules1 @username/typescript-rules2
+    env:
+      PRPM_TOKEN: ${{ secrets.PRPM_TOKEN }}
+```
+
+**Verify packages are up to date:**
+```yaml
+steps:
+  - name: Check for outdated packages
+    run: |
+      prpm outdated --json > outdated.json
+      if [ $(jq length outdated.json) -gt 0 ]; then
+        echo "Outdated packages found!"
+        exit 1
+      fi
+```
+
+### Scripting with PRPM
+
+**Check if a package is installed:**
+```bash
+#!/bin/bash
+if prpm list --json | jq -e '.[] | select(.id=="package-name")' > /dev/null; then
+  echo "Package is installed"
+else
+  echo "Package not found"
+  prpm install @username/typescript-rules
+fi
+```
+
+**Batch operations:**
+```bash
+#!/bin/bash
+# Update all cursor packages
+prpm list --format cursor --json | \
+  jq -r '.[].id' | \
+  xargs prpm update
+```
+
+### Custom Registry
+
+**Use a private registry:**
+```bash
+# Set custom registry
+prpm config set registry https://registry.example.com
+
+# Or use environment variable
+export PRPM_REGISTRY_URL=https://registry.example.com
+prpm search internal-packages
+```
+
+**Switch between registries:**
+```bash
+# Production registry
+alias prpm-prod='PRPM_REGISTRY_URL=https://registry.prpm.dev prpm'
+
+# Development registry
+alias prpm-dev='PRPM_REGISTRY_URL=https://dev.registry.prpm.dev prpm'
+
+# Use them
+prpm-prod search typescript
+prpm-dev publish
+```
+
+---
+
+## Troubleshooting Common Issues
+
+### Package Not Found
+
+```bash
+# Ensure you're using the correct package name
+prpm search package-name
+
+# Check if you're authenticated (for private packages)
+prpm whoami
+
+# Try specifying a version
+prpm install @username/typescript-rules --version 1.0.0
+```
+
+### Installation Fails
+
+```bash
+# Check for conflicting files
+ls -la .cursor/rules/
+
+# Force reinstall
+prpm uninstall package-name
+prpm install @username/typescript-rules --force
+
+# Check disk space and permissions
+df -h
+ls -la .cursor/
+```
+
+### Authentication Issues
+
+```bash
+# Re-authenticate
+prpm login
+
+# Check current auth status
+prpm whoami
+
+# Manually set token
+prpm config set token YOUR_TOKEN
+```
+
+### Updates Not Working
+
+```bash
+# Check what's outdated
+prpm outdated
+
+# Try force update
+prpm update package-name --force
+
+# Or uninstall and reinstall
+prpm uninstall package-name
+prpm install @username/typescript-rules
+```
+
+### Lock File Conflicts
+
+```bash
+# Rebuild lock file from installed packages
+prpm index
+
+# Or manually edit prpm-lock.json if needed
+vim prpm-lock.json
+```
+
+---
+
+## Best Practices
+
+### For Package Users
+
+1. **Always check package info before installing:**
+   ```bash
+   prpm info @username/typescript-rules
+   ```
+
+2. **Keep packages updated:**
+   ```bash
+   # Set up a weekly reminder
+   prpm outdated
+   ```
+
+3. **Convert to your preferred format:**
+   ```bash
+   prpm install package-name --as cursor  # Convert to Cursor format
+   prpm install package-name --as claude  # Convert to Claude format
+   ```
+
+4. **Document your dependencies:**
+   ```markdown
+   # README.md
+
+   ## PRPM Packages
+
+   This project uses:
+   - `@username/typescript-rules` - TypeScript coding standards
+   - `@username/react-patterns` - React best practices
+   ```
+
+### For Package Authors
+
+1. **Follow semantic versioning:**
+   - Patch: Bug fixes (1.0.1)
+   - Minor: New features (1.1.0)
+   - Major: Breaking changes (2.0.0)
+
+2. **Write comprehensive READMEs:**
+   - What the package does
+   - Installation instructions
+   - Usage examples
+   - Configuration options
+
+3. **Use descriptive tags:**
+   ```json
+   {
+     "tags": ["typescript", "react", "testing", "best-practices"]
+   }
+   ```
+
+4. **Test before publishing:**
+   ```bash
+   prpm publish --dry-run
+   ```
+
+5. **Keep packages focused:**
+   - One clear purpose per package
+   - Split large packages into smaller ones
+   - Use collections to group related packages
+
+---
+
+## Getting Help
+
+- **Command help:** `prpm <command> --help`
+- **Documentation:** [https://prpm.dev/docs](https://prpm.dev/docs)
+- **GitHub Issues:** [https://github.com/pr-pm/prpm/issues](https://github.com/pr-pm/prpm/issues)
+- **Community:** Join our Discord server

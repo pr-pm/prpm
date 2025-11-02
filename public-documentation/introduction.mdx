@@ -53,15 +53,43 @@ PRPM makes it easy to:
 
 Install a package:
 
-```bash Install a package
-prpm install @prpm/typescript-best-practices
+```bash
+prpm install @username/typescript-best-practices
 ```
 
 Publish your own package:
 
-```bash Publish package
-prpm login && prpm publish
+```bash
+prpm init
+prpm login
+prpm publish
 ```
+
+## How It Works
+
+PRPM manages AI prompt files across different formats and tools:
+
+1. **Search & Discover** - Find packages in the PRPM registry that match your needs
+2. **Install** - Download and install packages to the correct locations (`.cursor/`, `.claude/`, etc.)
+3. **Track** - Maintain a lock file (`prpm-lock.json`) to track what's installed
+4. **Update** - Keep your packages up to date with the latest versions
+5. **Publish** - Share your own packages with the community
+
+## Supported Formats
+
+PRPM supports a wide range of AI development tools:
+
+- **Cursor** - Rules, agents, and slash commands
+- **Claude Code** - Skills, agents, and slash commands
+- **Continue** - Coding rules
+- **Windsurf** - Coding rules
+- **GitHub Copilot** - Instructions
+- **MCP** - Model Context Protocol servers
+- **Generic** - Universal AI prompts
+
+<Info>
+  Each format has its own directory structure and file format. PRPM handles all the details automatically.
+</Info>
 
 ## Next Steps
 

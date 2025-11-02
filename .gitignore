@@ -44,3 +44,7 @@ logs/
 
 # Data files (scraped packages, checkpoints, etc.)
 data/
+
+# subtree directories
+.dev
+.worktrees

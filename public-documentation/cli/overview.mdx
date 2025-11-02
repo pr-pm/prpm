@@ -1,0 +1,161 @@
+---
+title: 'CLI Overview'
+description: 'Introduction to the PRPM command-line interface'
+---
+
+The PRPM CLI is a powerful command-line tool for managing AI prompts, rules, skills, and agents across different AI coding assistants.
+
+## Installation
+
+Install the CLI globally using npm:
+
+```bash
+npm install -g prpm
+```
+
+Or use it with npx without installation:
+
+```bash
+npx prpm <command>
+```
+
+## Getting Help
+
+View all available commands:
+
+```bash
+prpm --help
+```
+
+Get help for a specific command:
+
+```bash
+prpm <command> --help
+```
+
+## Command Categories
+
+The PRPM CLI commands are organized into several categories:
+
+### Package Discovery
+- **search** - Search for packages in the registry
+- **info** - View detailed information about a package
+- **trending** - View trending packages
+- **collections** - Browse curated package collections
+
+### Package Management
+- **install** - Install packages from the registry
+- **uninstall** - Remove installed packages
+- **list** - List all installed packages
+- **outdated** - Check for outdated packages
+- **update** - Update specific packages
+- **upgrade** - Upgrade all packages to latest versions
+
+### Package Creation
+- **init** - Initialize a new PRPM package
+- **catalog** - Discover and catalog existing packages from directories
+- **publish** - Publish a package to the registry
+
+### Local File Management
+- **index** - Scan local directories and register prompt files
+
+### User Management
+- **login** - Authenticate with the registry
+- **whoami** - Display current user information
+
+### Configuration
+- **config** - Manage CLI configuration
+- **telemetry** - Manage telemetry settings
+- **schema** - View or validate package schemas
+
+## Quick Start
+
+1. **Search for a package:**
+   ```bash
+   prpm search typescript
+   ```
+
+2. **Install a package:**
+   ```bash
+   prpm install @username/typescript-best-practices
+   ```
+
+3. **List installed packages:**
+   ```bash
+   prpm list
+   ```
+
+4. **Create a new package:**
+   ```bash
+   prpm init
+   ```
+
+## Common Workflows
+
+### Installing Your First Package
+
+```bash
+# Search for what you need
+prpm search react
+
+# Get detailed info about a package
+prpm info @username/react-rules
+
+# Install the package
+prpm install @username/react-rules
+```
+
+### Creating and Publishing a Package
+
+```bash
+# Initialize a new package
+prpm init
+
+# Follow the prompts to configure your package
+# Edit your prompt files
+
+# Publish to the registry
+prpm login
+prpm publish
+```
+
+### Managing Local Prompts
+
+```bash
+# Index existing prompt files in your project
+prpm index
+
+# See what's been registered
+prpm list
+
+# Remove a package you no longer need
+prpm uninstall package-name
+```
+
+## Global Options
+
+Most commands support these global options:
+
+- `--help` - Display help for the command
+- `--version` - Display PRPM version
+- `--verbose` - Show detailed output (where applicable)
+
+## Configuration
+
+PRPM stores configuration in `~/.prpmrc`. You can edit this file directly or use the `prpm config` command.
+
+Common configuration options:
+- Registry URL
+- Authentication tokens
+- Default format preferences
+- Telemetry settings
+
+## Next Steps
+
+<Card title="Command Reference" icon="terminal" href="/cli/commands">
+  Explore all available commands in detail
+</Card>
+
+<Card title="Package Creation" icon="box" href="/publishing/getting-started">
+  Learn how to create and publish your own packages
+</Card>

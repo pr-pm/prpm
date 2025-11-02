@@ -20,7 +20,7 @@ Instead of:
 ```bash
 prpm install typescript-strict
 prpm install nextjs-patterns
-prpm install react-best-practices
+prpm install @username/react-best-practices
 prpm install prisma-patterns
 # ...and so on
 ```
@@ -146,7 +146,7 @@ You can define both packages and collections in the same prpm.json:
   "license": "MIT",
   "packages": [
     {
-      "name": "typescript-rules",
+      "name": "@username/typescript-rules",
       "version": "1.0.0",
       "description": "TypeScript coding standards",
       "format": "cursor",
@@ -155,13 +155,13 @@ You can define both packages and collections in the same prpm.json:
       "files": [".cursor/rules/typescript.mdc"]
     },
     {
-      "name": "react-patterns",
+      "name": "@username/react-patterns",
       "version": "1.0.0",
       "description": "React best practices",
       "format": "claude",
       "subtype": "skill",
       "tags": ["react"],
-      "files": [".claude/skills/react-patterns/SKILL.md"]
+      "files": [".claude/skills/@username/react-patterns/SKILL.md"]
     }
   ],
   "collections": [
@@ -171,12 +171,12 @@ You can define both packages and collections in the same prpm.json:
       "description": "Complete full-stack development setup",
       "packages": [
         {
-          "packageId": "typescript-rules",
+          "packageId": "@username/typescript-rules",
           "version": "^1.0.0",
           "required": true
         },
         {
-          "packageId": "react-patterns",
+          "packageId": "@username/react-patterns",
           "version": "^1.0.0",
           "required": true
         },
