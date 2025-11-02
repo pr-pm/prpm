@@ -133,7 +133,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">1,500+ Packages</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">1,800+ Packages</h3>
               <p className="text-gray-400 leading-relaxed">
                 Production-ready prompts, agents, skills, and slash commands from verified contributors
               </p>
