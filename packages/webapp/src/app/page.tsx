@@ -88,8 +88,8 @@ export default function Home() {
                   <button className="text-xs text-gray-500 hover:text-prpm-accent transition-colors">Copy</button>
                 </div>
                 <code className="block font-mono text-prpm-accent-light text-left space-y-1">
-                  <div><span className="text-gray-600">$</span> prpm install collections/nextjs-pro</div>
-                  <div className="text-xs text-gray-500 mt-2"># Installs 5+ packages: react-best-practices, typescript-strict, tailwind-helper, and more</div>
+                  <div><span className="text-gray-600">$</span> prpm install collections/essential-dev-agents</div>
+                  <div className="text-xs text-gray-500 mt-2"># Installs 20 packages: backend-architect, cloud-architect, database-architect, and more</div>
                 </code>
               </div>
             </div>
