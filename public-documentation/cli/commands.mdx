@@ -384,31 +384,48 @@ prpm init --force
 
 ### catalog
 
-Generate a catalog of supported formats and subtypes.
+Discover and catalog existing packages from your directories. Scans specified directories for prompt files (Cursor rules, Claude skills, etc.) and creates or updates a `prpm.json` manifest that you can use to publish them.
 
 ```bash
-prpm catalog [options]
+prpm catalog [directories...] [options]
 ```
 
+**Arguments:**
+- `directories` - Directories to scan (default: current directory)
+
 **Options:**
-- `--format <format>` - Show details for a specific format
-- `--json` - Output in JSON format
+- `-o, --output <path>` - Output path for prpm.json (default: ./prpm.json)
+- `-a, --append` - Append to existing prpm.json instead of overwriting
+- `--dry-run` - Show what would be cataloged without making changes
 
 **Examples:**
 
 ```bash
-# View all supported formats
+# Catalog packages in current directory
 prpm catalog
 
-# Details for a specific format
-prpm catalog --format cursor
+# Catalog specific directories
+prpm catalog .claude .cursor .windsurf
 
-# JSON output
-prpm catalog --json
+# Append to existing prpm.json
+prpm catalog --append
+
+# Preview without making changes
+prpm catalog --dry-run
+
+# Output to custom location
+prpm catalog -o packages.json
 ```
 
+**What it does:**
+1. Scans directories for prompt files (`.md`, `.mdc`, `SKILL.md`, etc.)
+2. Detects format (cursor, claude, windsurf, etc.) and subtype (rule, skill, agent)
+3. Extracts package metadata from file content
+4. Filters out packages installed from registry (only catalogs user-created content)
+5. Creates/updates `prpm.json` with discovered packages
+
 **Output:**
-Lists all supported AI editor formats, their subtypes, file patterns, and directory structures.
+Creates a multi-package manifest file that you can review, edit, and publish with `prpm publish`.
 
 ---
 
@@ -566,38 +583,56 @@ View or modify CLI configuration.
 prpm config <action> [key] [value]
 ```
 
-**Actions:**
+**Subcommands:**
+- `list` (or `ls`) - List all configuration values
 - `get <key>` - Get a configuration value
 - `set <key> <value>` - Set a configuration value
-- `delete <key>` - Delete a configuration value
-- `list` - List all configuration values
-- `reset` - Reset to default configuration
+- `delete <key>` (or `rm`) - Reset a configuration value to default
 
 **Configuration Keys:**
-- `registry` - Registry URL
-- `token` - Authentication token
-- `telemetry` - Telemetry enabled (true/false)
-- `defaultFormat` - Default package format
-- `installPath` - Custom installation path
+
+**Readable keys:**
+- `registryUrl` - Registry URL
+- `telemetryEnabled` - Telemetry enabled (true/false)
+- `token` - Authentication token (set via `prpm login`)
+- `username` - Username (set via `prpm login`)
+
+**Settable keys:**
+- `registryUrl` - Change the registry URL
+- `telemetryEnabled` - Enable or disable telemetry
+
+**Note:** `token` and `username` are managed via `prpm login` and cannot be set directly.
 
 **Examples:**
 
 ```bash
-# List all config
+# List all configuration
 prpm config list
+# or just:
+prpm config
 
-# Get a value
-prpm config get registry
+# Get a specific value
+prpm config get registryUrl
+prpm config get telemetryEnabled
 
-# Set a value
-prpm config set registry https://custom-registry.com
+# Set registry URL
+prpm config set registryUrl https://custom-registry.dev
 
-# Delete a value
-prpm config delete customKey
+# Enable telemetry
+prpm config set telemetryEnabled true
 
-# Reset config
-prpm config reset
+# Disable telemetry
+prpm config set telemetryEnabled false
+
+# Reset a value to default
+prpm config delete registryUrl
+prpm config delete telemetryEnabled
 ```
+
+**Telemetry values:**
+When setting `telemetryEnabled`, you can use:
+- `true`, `1`, `yes` - Enable telemetry
+- `false`, `0`, `no` - Disable telemetry
 
 ---
 
