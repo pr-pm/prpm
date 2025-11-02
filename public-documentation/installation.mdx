@@ -8,12 +8,8 @@ description: 'Install PRPM on your system'
 The easiest way to install the PRPM CLI is using npm:
 
 ```bash
-npm install -g @pr-pm/cli
+npm install -g prpm
 ```
-
-<Note>
-  The package name is `@pr-pm/cli`, but the command you run is `prpm`.
-</Note>
 
 ## Verify Installation
 
@@ -52,8 +48,8 @@ prpm whoami
 If you don't want to install globally, you can use npx:
 
 ```bash
-npx @pr-pm/cli search typescript
-npx @pr-pm/cli install author/package
+npx prpm search typescript
+npx prpm install author/package
 ```
 
 <Warning>
@@ -130,12 +126,12 @@ If you get EACCES errors:
    npm config set prefix '~/.npm-global'
    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.profile
    source ~/.profile
-   npm install -g @pr-pm/cli
+   npm install -g prpm
    ```
 
 2. Or use sudo (less secure):
    ```bash
-   sudo npm install -g @pr-pm/cli
+   sudo npm install -g prpm
    ```
 
 <Info>

@@ -9,7 +9,7 @@ description: 'Step-by-step guides for common PRPM tasks'
 
 1. **Install the CLI:**
    ```bash
-   npm install -g @pr-pm/cli
+   npm install -g prpm
    ```
 
 2. **Verify installation:**
@@ -318,7 +318,7 @@ prpm install --global author/package
 steps:
   - name: Install PRPM packages
     run: |
-      npm install -g @pr-pm/cli
+      npm install -g prpm
       prpm install author/package1 author/package2
     env:
       PRPM_TOKEN: ${{ secrets.PRPM_TOKEN }}

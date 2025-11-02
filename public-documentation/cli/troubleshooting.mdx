@@ -7,7 +7,7 @@ description: 'Solutions to common PRPM CLI issues'
 
 ### Command Not Found After Installation
 
-**Problem:** After running `npm install -g @pr-pm/cli`, the `prpm` command is not found.
+**Problem:** After running `npm install -g prpm`, the `prpm` command is not found.
 
 **Solutions:**
 
@@ -30,13 +30,13 @@ description: 'Solutions to common PRPM CLI issues'
 
 3. **Use npx as alternative:**
    ```bash
-   npx @pr-pm/cli install author/package
+   npx prpm install author/package
    ```
 
 4. **Reinstall with correct permissions:**
    ```bash
    # On Linux/Mac, may need sudo
-   sudo npm install -g @pr-pm/cli
+   sudo npm install -g prpm
    ```
 
 ### Permission Errors During Installation
@@ -51,12 +51,12 @@ description: 'Solutions to common PRPM CLI issues'
    npm config set prefix '~/.npm-global'
    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.profile
    source ~/.profile
-   npm install -g @pr-pm/cli
+   npm install -g prpm
    ```
 
 2. **Use sudo (less secure):**
    ```bash
-   sudo npm install -g @pr-pm/cli
+   sudo npm install -g prpm
    ```
 
 ---
@@ -600,7 +600,7 @@ iostat -x 1
 
 1. **Update to latest version:**
    ```bash
-   npm update -g @pr-pm/cli
+   npm update -g prpm
    ```
 
 2. **Use smaller batch operations:**
