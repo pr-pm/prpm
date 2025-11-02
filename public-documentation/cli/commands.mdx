@@ -20,12 +20,14 @@ prpm search <query> [options]
 - `--format <format>` - Filter by format (cursor, claude, windsurf, continue, etc.)
 - `--subtype <subtype>` - Filter by subtype (rule, agent, skill, slash-command, etc.)
 - `--limit <number>` - Maximum number of results to return (default: 20)
-- `--interactive` - Enable interactive search mode with pagination
+- `--no-interactive` - Disable interactive pagination (useful for automation and scripting)
+
+**Note:** Interactive mode is enabled **by default** when there are multiple pages of results. Use `--no-interactive` when you want to search and install packages programmatically in scripts or CI/CD environments.
 
 **Examples:**
 
 ```bash
-# Basic search
+# Basic search (interactive by default)
 prpm search typescript
 
 # Filter by format
@@ -34,8 +36,11 @@ prpm search react --format cursor
 # Filter by subtype
 prpm search coding --subtype rule
 
-# Interactive mode
-prpm search python --interactive
+# Disable interactive mode for automation
+prpm search python --no-interactive
+
+# Use in scripts/CI/CD pipelines
+prpm search typescript --format cursor --no-interactive | head -n 1
 ```
 
 **Output:**
@@ -178,7 +183,7 @@ prpm install @username/typescript-rules --frozen-lockfile
 **What happens during installation:**
 1. Package is downloaded from the registry
 2. Files are extracted to the appropriate directory (`.cursor/`, `.claude/`, etc.)
-3. Package is registered in `prpm-lock.json`
+3. Package is registered in `prpm.lock`
 4. Format-specific configuration is applied (MDC headers for Cursor, etc.)
 
 ---
@@ -512,7 +517,7 @@ prpm index --verbose
 ```
 
 **Output:**
-Shows how many files were found and registered in each directory, and updates `prpm-lock.json`.
+Shows how many files were found and registered in each directory, and updates `prpm.lock`.
 
 ---
 

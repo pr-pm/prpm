@@ -1,0 +1,363 @@
+---
+title: 'Format Conversion'
+description: 'How PRPM converts packages between different AI coding tool formats'
+---
+
+## Overview
+
+PRPM supports **automatic format conversion** - you can install a package designed for one AI tool (like Cursor) and use it in another (like Claude). The registry handles conversion server-side, ensuring packages work across different editors.
+
+## Supported Formats
+
+PRPM supports conversion between these AI coding tool formats:
+
+| Format | Description | Learn More |
+|--------|-------------|------------|
+| **Cursor** | Rules in `.cursor/rules/` with MDC format | [Cursor Deep Dive](https://prpm.dev/blog/cursor-deep-dive) |
+| **Claude** | Skills, agents, and commands in `.claude/` | [Claude Deep Dive](https://prpm.dev/blog/claude-deep-dive) |
+| **Continue** | Prompts in `.continue/` config | [Continue Deep Dive](https://prpm.dev/blog/continue-deep-dive) |
+| **Windsurf** | Rules in `.windsurf/` directory | [Windsurf Deep Dive](https://prpm.dev/blog/windsurf-deep-dive) |
+| **Copilot** | Instructions in `.github/.copilot-instructions.md` | [Copilot Deep Dive](https://prpm.dev/blog/copilot-deep-dive) |
+| **Kiro** | Steering files in `.kiro/` | [Kiro Deep Dive](https://prpm.dev/blog/kiro-deep-dive) |
+| **agents.md** | OpenAI's open standard for agents | [agents.md Deep Dive](https://prpm.dev/blog/agents-md-deep-dive) |
+
+## How Conversion Works
+
+### Installing with Format Conversion
+
+Use the `--as` flag to convert a package to your preferred format:
+
+```bash
+# Install a Cursor rule as a Claude skill
+prpm install @username/typescript-rules --as claude
+
+# Install a Claude skill as a Cursor rule
+prpm install @username/react-patterns --as cursor
+
+# Install as Continue prompt
+prpm install @username/testing-guide --as continue
+```
+
+### Server-Side Conversion
+
+When you request a different format:
+
+1. **Package Request**: CLI requests the package in your desired format
+2. **Format Detection**: Registry checks if package exists in target format
+3. **Automatic Conversion**: If not, registry converts on-the-fly using format converters
+4. **Quality Check**: Converted output is validated for correctness
+5. **Delivery**: Converted package is returned to CLI
+6. **Installation**: CLI installs in the appropriate directory for your tool
+
+### Conversion Types
+
+#### 1. Rule-to-Rule Conversion
+Converting between rule-based formats (Cursor ↔ Windsurf ↔ Kiro):
+
+```bash
+# Cursor rule → Windsurf rule
+prpm install @username/typescript-rules --as windsurf
+```
+
+**What's converted:**
+- ✅ Content and guidelines
+- ✅ Code examples
+- ✅ Frontmatter metadata
+- ⚠️ Format-specific features may be adapted
+
+#### 2. Rule-to-Skill Conversion
+Converting rules to Claude skills:
+
+```bash
+# Cursor rule → Claude skill
+prpm install @username/api-design --as claude
+```
+
+**What's converted:**
+- ✅ Content becomes skill documentation
+- ✅ Examples mapped to skill patterns
+- ✅ Frontmatter adapted to skill structure
+- ✅ "When to Use" section generated
+
+#### 3. Skill-to-Rule Conversion
+Converting Claude skills to rules:
+
+```bash
+# Claude skill → Cursor rule
+prpm install @username/testing-patterns --as cursor
+```
+
+**What's converted:**
+- ✅ Skill content becomes rule guidelines
+- ✅ Patterns become rule examples
+- ✅ "When to Use" becomes rule description
+- ✅ MDC frontmatter generated
+
+#### 4. Multi-File to Single-File Conversion
+Some formats (Claude skills) support multiple files, others (Cursor rules) are single-file:
+
+```bash
+# Multi-file Claude skill → Single Cursor rule
+prpm install @username/complex-skill --as cursor
+```
+
+**What happens:**
+- ✅ Multiple files consolidated into one
+- ✅ Cross-references preserved as sections
+- ✅ Examples merged logically
+- ⚠️ Some structure flattened
+
+## Format Subtypes
+
+Different formats support different subtypes:
+
+### Claude Subtypes
+- **skill** - Reference documentation (`.claude/skills/`)
+- **agent** - Task-specific automation (`.claude/agents/`)
+- **slash-command** - Quick actions (`.claude/commands/`)
+
+### Cursor Subtypes
+- **rule** - Project guidelines (`.cursor/rules/`)
+
+### Continue Subtypes
+- **prompt** - Custom prompts (`.continue/config.json`)
+
+When converting, PRPM intelligently maps subtypes:
+
+```bash
+# Claude skill → Cursor rule
+prpm install @username/postgres-expert --as cursor
+# Result: Skill content converted to rule format
+
+# Claude slash-command → Continue prompt
+prpm install @username/quick-test --as continue
+# Result: Command converted to Continue slash command
+```
+
+## Conversion Best Practices
+
+### 1. Choose the Right Source Format
+
+For best conversion results, install from the format closest to your target:
+
+**Good conversions** (high fidelity):
+- ✅ Cursor ↔ Windsurf ↔ Kiro (all rule-based)
+- ✅ Claude skill → Cursor rule (skill docs map well to rules)
+- ✅ Cursor rule → Claude skill (rules expand nicely to skills)
+
+**Okay conversions** (some adaptation):
+- ⚠️ Claude agent → Cursor rule (task automation flattened to guidelines)
+- ⚠️ Claude slash-command → Cursor rule (quick actions become examples)
+
+**Limited conversions** (lossy):
+- ⚠️ agents.md → Other formats (complex agent workflows simplified)
+
+### 2. Specify Subtype When Needed
+
+For formats with multiple subtypes, specify the subtype:
+
+```bash
+# Convert to Claude, specify it should be a skill
+prpm install @username/package --as claude --subtype skill
+
+# Convert to Claude agent instead
+prpm install @username/package --as claude --subtype agent
+```
+
+### 3. Review Converted Content
+
+After installation, review the converted file to ensure quality:
+
+```bash
+# Install with conversion
+prpm install @username/package --as cursor
+
+# Check the result
+cat .cursor/rules/package.mdc
+```
+
+If conversion quality is poor, consider:
+- Installing from a different source format
+- Manually editing the converted file
+- Requesting the author publish in your target format
+
+### 4. Publish in Multiple Formats
+
+If you're a package author, publish native versions for maximum quality:
+
+```json
+{
+  "name": "my-packages",
+  "packages": [
+    {
+      "name": "typescript-rules-cursor",
+      "format": "cursor",
+      "files": [".cursor/rules/typescript.mdc"]
+    },
+    {
+      "name": "typescript-rules-claude",
+      "format": "claude",
+      "files": [".claude/skills/typescript/SKILL.md"]
+    }
+  ]
+}
+```
+
+Users get native versions instead of conversions when available.
+
+## Conversion Limitations
+
+### What's Preserved
+- ✅ Core content and guidelines
+- ✅ Code examples
+- ✅ Documentation structure
+- ✅ Metadata (author, description, tags)
+
+### What May Be Lost
+- ❌ Format-specific features
+- ❌ Complex cross-file references
+- ❌ Interactive elements
+- ❌ Tool-specific configuration
+
+### Format-Specific Features
+
+Some features don't translate across formats:
+
+**Cursor-specific:**
+- MDC headers with `ruleType` and `alwaysApply`
+- Cursor-specific markdown extensions
+
+**Claude-specific:**
+- Multi-file skill structure
+- Agent tool specifications
+- Slash command arguments/options
+
+**Continue-specific:**
+- Slash command JSON configuration
+- Context provider settings
+
+When these features are encountered, PRPM:
+1. Preserves the content in the converted format
+2. Adapts the feature where possible
+3. Includes a comment noting the original feature
+
+## Technical Details
+
+### Conversion Pipeline
+
+1. **Parse Source**: Extract content, metadata, and structure
+2. **Normalize**: Convert to intermediate representation
+3. **Map Features**: Translate format-specific features
+4. **Generate Target**: Create output in target format
+5. **Validate**: Ensure output meets format requirements
+6. **Return**: Deliver converted package to CLI
+
+### Caching
+
+Converted packages are cached to improve performance:
+- First conversion: Takes ~100-500ms
+- Subsequent requests: Retrieved from cache instantly
+- Cache invalidation: When package is updated
+
+## Troubleshooting
+
+### Conversion Failed
+
+If conversion fails:
+
+```bash
+prpm install @username/package --as cursor
+# Error: Conversion failed: Unsupported format
+```
+
+**Solutions:**
+1. Check if the source format is supported
+2. Try a different target format
+3. Install without `--as` flag (original format)
+4. Report the issue on GitHub
+
+### Poor Conversion Quality
+
+If converted content is low quality:
+
+1. **Check source quality**: Some packages convert better than others
+2. **Try native format**: Install without `--as` flag
+3. **Manual editing**: Edit the converted file after installation
+4. **Request native version**: Ask author to publish in your format
+
+### Missing Features
+
+If features are missing after conversion:
+
+- Expected: Format-specific features don't always translate
+- Workaround: Manually add missing features to converted file
+- Best practice: Use native format when possible
+
+## Examples
+
+### Example 1: Cross-Format Team
+
+Your team uses different editors:
+
+```bash
+# Developer 1 (Cursor user)
+prpm install @company/coding-standards --as cursor
+
+# Developer 2 (Claude user)
+prpm install @company/coding-standards --as claude
+
+# Developer 3 (Continue user)
+prpm install @company/coding-standards --as continue
+```
+
+Everyone gets the same guidelines in their preferred format.
+
+### Example 2: Trying Different Tools
+
+Testing different AI coding tools:
+
+```bash
+# Try package in Cursor
+prpm install @username/react-patterns --as cursor
+
+# Switch to Claude, reinstall in Claude format
+prpm install @username/react-patterns --as claude
+
+# Compare the results
+```
+
+### Example 3: Format-Agnostic Publishing
+
+As a package author, let users choose their format:
+
+```json
+{
+  "name": "python-best-practices",
+  "description": "Python coding standards and patterns",
+  "format": "cursor",
+  "files": [".cursor/rules/python.mdc"]
+}
+```
+
+Publish in one format, PRPM handles conversions:
+- Cursor users get native `.mdc` file
+- Claude users get auto-converted skill
+- Continue users get auto-converted prompt
+
+## Related Topics
+
+- [Package Formats](/concepts/formats)
+- [Publishing Guide](/publishing/getting-started)
+- [CLI Commands](/cli/commands)
+
+## Deep Dives by Format
+
+Want to understand how each format works? Read our technical deep dives:
+
+- **[Cursor Rules: A Technical Deep Dive](https://prpm.dev/blog/cursor-deep-dive)** - MDC format, frontmatter, and best practices
+- **[Claude Desktop & Claude Code: A Technical Deep Dive](https://prpm.dev/blog/claude-deep-dive)** - Skills, agents, slash commands, and CSO
+- **[GitHub Copilot Instructions: A Deep Dive](https://prpm.dev/blog/copilot-deep-dive)** - `.copilot-instructions.md` format
+- **[Continue Dev Prompts: A Technical Deep Dive](https://prpm.dev/blog/continue-deep-dive)** - `.continue/` config structure
+- **[Windsurf Rules: A Technical Deep Dive](https://prpm.dev/blog/windsurf-deep-dive)** - Windsurf's rule system
+- **[Kiro Steering Files: A Technical Deep Dive](https://prpm.dev/blog/kiro-deep-dive)** - Kiro's steering file format
+- **[agents.md: A Deep Dive into OpenAI's Open Standard](https://prpm.dev/blog/agents-md-deep-dive)** - The agents.md specification
