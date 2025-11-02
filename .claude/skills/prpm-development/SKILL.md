@@ -375,6 +375,12 @@ export function toFormat(pkg: CanonicalPackage): ConversionResult {
 - **README**: Keep examples up-to-date
 - **Markdown Docs**: Use code blocks with language tags
 - **Changelog**: Follow Keep a Changelog format
+- **Continuous Accuracy**: Documentation must be continuously updated and tended to for accuracy
+  - When adding features, update relevant docs immediately
+  - When fixing bugs, check if docs need corrections
+  - When refactoring, verify examples still work
+  - Review docs quarterly for outdated information
+  - Keep CLI docs, README, and Mintlify docs in sync
 
 ## Reference Documentation
 
