@@ -49,6 +49,12 @@
       ]
     },
     {
+      "group": "Guides",
+      "pages": [
+        "guides/format-conversion"
+      ]
+    },
+    {
       "group": "CLI Reference",
       "pages": [
         "cli/overview",
