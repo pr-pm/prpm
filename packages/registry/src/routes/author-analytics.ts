@@ -101,7 +101,7 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
 
         // Get recent packages (last 5)
         const recentResult = await fastify.pg.query(
-          `SELECT id, type, total_downloads, created_at
+          `SELECT id, name, format, subtype, total_downloads, created_at
            FROM packages
            WHERE author_id = $1
            ORDER BY created_at DESC
@@ -181,12 +181,16 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
           updated: 'updated_at',
         };
         const sortColumn = sortMap[sort] || 'total_downloads';
+        const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
 
-        const result = await fastify.pg.query(
-          `SELECT
+        // Build the query with safe string interpolation for column names
+        const query = `
+          SELECT
              id,
+             name,
              description,
-             type,
+             format,
+             subtype,
              visibility,
              total_downloads,
              weekly_downloads,
@@ -198,9 +202,9 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
              last_published_at
            FROM packages
            WHERE author_id = $1
-           ORDER BY ${sortColumn} ${order === 'asc' ? 'ASC' : 'DESC'}`,
-          [userId]
-        );
+           ORDER BY ${sortColumn} ${sortOrder}`;
+
+        const result = await fastify.pg.query(query, [userId]);
 
         return reply.send({
           packages: result.rows,

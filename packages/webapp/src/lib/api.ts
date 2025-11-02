@@ -569,3 +569,70 @@ export async function updateOrganization(
 
   return response.json()
 }
+
+// ============================================
+// PACKAGE ANALYTICS
+// ============================================
+
+/**
+ * Get detailed stats for a specific package
+ */
+export async function getPackageStats(
+  jwtToken: string,
+  packageId: string,
+  range: 'today' | 'week' | 'month' | 'year' | 'all' = 'month'
+) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/author/packages/${encodeURIComponent(packageId)}/stats?range=${range}`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch package stats' }))
+    throw new Error(error.error || error.message || 'Failed to fetch package stats')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get recent download events for a package
+ */
+export async function getPackageRecentDownloads(
+  jwtToken: string,
+  packageId: string,
+  limit: number = 50
+) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/author/packages/${encodeURIComponent(packageId)}/downloads/recent?limit=${limit}`, {
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch recent downloads' }))
+    throw new Error(error.error || error.message || 'Failed to fetch recent downloads')
+  }
+
+  return response.json()
+}
+
+/**
+ * Refresh author stats
+ */
+export async function refreshAuthorStats(jwtToken: string) {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/author/refresh-stats`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to refresh stats' }))
+    throw new Error(error.error || error.message || 'Failed to refresh stats')
+  }
+
+  return response.json()
+}
