@@ -52,7 +52,7 @@ prpm info <package-name>
 ```
 
 **Arguments:**
-- `package-name` - Full package name (e.g., `author/package-name`)
+- `package-name` - Full package name (e.g., `typescript-rules`)
 
 **Options:**
 - `--json` - Output in JSON format
@@ -62,13 +62,13 @@ prpm info <package-name>
 
 ```bash
 # View package details
-prpm info cursor-rules/typescript-best-practices
+prpm info typescript-best-practices
 
 # View specific version
-prpm info cursor-rules/typescript-best-practices --version 1.2.0
+prpm info typescript-best-practices --version 1.2.0
 
 # JSON output for scripting
-prpm info author/package --json
+prpm info typescript-rules --json
 ```
 
 **Output:**
@@ -157,19 +157,19 @@ prpm install <package-name> [additional-packages...] [options]
 
 ```bash
 # Install a package
-prpm install cursor-rules/typescript-best-practices
+prpm install typescript-best-practices
 
 # Install multiple packages
-prpm install author/package1 author/package2 author/package3
+prpm install typescript-rules1 typescript-rules2 typescript-rules3
 
 # Install specific version
-prpm install author/package --version 2.1.0
+prpm install typescript-rules --version 2.1.0
 
 # Install with custom name
-prpm install author/long-package-name --as short-name
+prpm install long-package-name --as short-name
 
 # Force reinstall
-prpm install author/package --force
+prpm install typescript-rules --force
 ```
 
 **What happens during installation:**
@@ -723,7 +723,7 @@ These can be useful when scripting with PRPM:
 
 ```bash
 #!/bin/bash
-if prpm install author/package; then
+if prpm install typescript-rules; then
   echo "Installation successful"
 else
   echo "Installation failed with code $?"
