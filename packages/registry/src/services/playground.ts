@@ -205,6 +205,15 @@ export class PlaygroundService {
 
   /**
    * Estimate credits required for a playground run
+   *
+   * Token-based pricing: 1 credit = 5,000 tokens
+   * Includes 30% buffer for response tokens
+   *
+   * Model multipliers based on API costs:
+   * - Sonnet: $3/$15 per 1M tokens (base 1.0x)
+   * - GPT-4o-mini: $0.60/$2.40 per 1M tokens (0.5x)
+   * - GPT-4o: $5/$20 per 1M tokens (2.0x)
+   * - Opus: $15/$75 per 1M tokens (5.0x)
    */
   estimateCredits(
     promptLength: number,
@@ -224,16 +233,30 @@ export class PlaygroundService {
     const totalChars = promptLength + userInputLength + (historyTokens * 4);
     const estimatedTokens = (totalChars / 4) * 1.3; // 30% buffer for response
 
-    // Model-specific pricing
-    if (model === 'opus') return 3;
-    if (model === 'gpt-4o') return 2;  // GPT-4o pricing similar to medium tier
-    if (model === 'gpt-4-turbo') return 3;  // GPT-4 Turbo similar to opus
-    if (model === 'gpt-4o-mini') return 1;  // Mini is cheaper
+    // Request size limits for financial protection
+    const MAX_TOKENS_PER_REQUEST = 20000;
+    if (estimatedTokens > MAX_TOKENS_PER_REQUEST) {
+      throw new Error(
+        `Request too large: ${Math.ceil(estimatedTokens)} tokens exceeds maximum of ${MAX_TOKENS_PER_REQUEST} tokens per request`
+      );
+    }
 
-    // Sonnet pricing tiers (default)
-    if (estimatedTokens < 2500) return 1;  // Basic run
-    if (estimatedTokens < 6000) return 2;  // Medium run
-    return 3;  // Large run
+    // Token-based pricing: 1 credit per 5,000 tokens
+    const TOKENS_PER_CREDIT = 5000;
+    const baseCredits = Math.ceil(estimatedTokens / TOKENS_PER_CREDIT);
+
+    // Model-specific multipliers based on actual API costs
+    let modelMultiplier = 1.0;
+    if (model === 'opus') {
+      modelMultiplier = 5.0;  // Opus is 5x more expensive than Sonnet
+    } else if (model === 'gpt-4o' || model === 'gpt-4-turbo') {
+      modelMultiplier = 2.0;  // GPT-4o is ~2x Sonnet cost
+    } else if (model === 'gpt-4o-mini') {
+      modelMultiplier = 0.5;  // GPT-4o-mini is much cheaper
+    }
+    // Sonnet defaults to 1.0x
+
+    return Math.max(1, Math.ceil(baseCredits * modelMultiplier));
   }
 
   /**

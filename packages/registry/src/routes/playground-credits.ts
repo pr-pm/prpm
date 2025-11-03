@@ -452,17 +452,17 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
         // Return pricing based on organization membership
         if (isVerifiedOrgMember) {
           return reply.code(200).send({
-            price: 2.00,
+            price: 3.00,
             currency: 'USD',
             interval: 'month',
             credits: 100,
             isOrgMember: true,
             orgName,
-            discount: 60, // 60% off
+            discount: 50, // 50% off (was 60% at $2.00)
           });
         } else {
           return reply.code(200).send({
-            price: 5.00,
+            price: 6.00,
             currency: 'USD',
             interval: 'month',
             credits: 100,
@@ -490,7 +490,7 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
     {
       preHandler: server.authenticate,
       schema: {
-        description: 'Subscribe to PRPM+ for 100 monthly playground credits',
+        description: 'Subscribe to PRPM+ for 100 monthly playground credits ($6/month individual, $3/month org member)',
         tags: ['playground', 'subscription'],
         security: [{ bearerAuth: [] }],
         body: {
