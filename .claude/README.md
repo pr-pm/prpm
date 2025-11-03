@@ -10,9 +10,13 @@ This directory contains Claude Code configuration for the PRPM project.
 │   └── blog-writer.md
 ├── commands/         # Slash commands
 ├── skills/          # Installed skills
-├── settings.json    # Project hooks and configuration
 └── README.md        # This file
+
+# Not in repo (gitignored):
+├── settings.json    # Optional: Project-level hooks for local testing
 ```
+
+**Note:** Hooks are installed globally via `./scripts/install-hooks-globally.sh`, not committed to the repo.
 
 ## Agents
 
@@ -34,11 +38,11 @@ Use the prpm-blog-writer agent to review this blog post
 
 ## Hooks
 
-Hooks are configured in `settings.json` and automatically trigger on specific events.
+Hooks are **personal workflow preferences** and should be installed globally, not committed to the repo.
 
-### Installing Hooks Globally
+### Installing Hooks Globally (Recommended)
 
-For convenience, you can install hooks globally so they work across all Claude Code sessions:
+Install hooks to `~/.claude/settings.json` so they work across all Claude Code sessions:
 
 ```bash
 # Install hooks to ~/.claude/settings.json
@@ -48,11 +52,12 @@ For convenience, you can install hooks globally so they work across all Claude C
 ./scripts/uninstall-hooks-globally.sh
 ```
 
-**Benefits of global installation:**
-- ✅ Hooks work immediately in all projects
-- ✅ No per-project configuration needed
-- ✅ Consistent experience across all repos
+**Why global installation?**
+- ✅ Works across all PRPM projects immediately
+- ✅ Personal choice - opt-in if you want it
+- ✅ Doesn't clutter the repo
 - ✅ Automatic backups before changes
+- ✅ Easy to uninstall anytime
 
 ### PostToolUse Hooks
 
@@ -94,7 +99,7 @@ This project uses a **hybrid approach** for blog post quality assurance:
 
 ### Adding New Hooks
 
-Edit `.claude/settings.json` and add to the appropriate event section:
+Edit `~/.claude/settings.json` (global) or create `.claude/settings.json` (local, gitignored) and add to the appropriate event section:
 
 ```json
 {
@@ -113,6 +118,8 @@ Edit `.claude/settings.json` and add to the appropriate event section:
   }
 }
 ```
+
+**Recommendation:** Use global hooks (`~/.claude/settings.json`) for personal preferences, or contribute to the install script if hooks would benefit all maintainers.
 
 ### Modifying Agent Glob Patterns
 
