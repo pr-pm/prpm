@@ -80,6 +80,104 @@ Content here.
       const metadataSection = pkg.content.sections.find(s => s.type === 'metadata');
       expect(metadataSection?.type === 'metadata' && metadataSection.data.title).toBe('Extracted Title');
     });
+
+    it('handles complex YAML with multiline strings', () => {
+      const content = `---
+name: complex-skill
+description: >
+  This is a multi-line
+  description that spans
+  multiple lines
+tags:
+  - python
+  - testing
+  - best-practices
+---
+
+# Complex Skill
+
+Content here.
+`;
+
+      const pkg = fromOpenSkills(content, {
+        id: 'test',
+        version: '1.0.0',
+      });
+
+      expect(pkg.name).toBe('complex-skill');
+      expect(pkg.description).toContain('multi-line');
+    });
+
+    it('handles YAML with nested objects', () => {
+      const content = `---
+name: nested-skill
+description: Skill with nested config
+config:
+  level: advanced
+  duration: 30min
+  prerequisites:
+    - basic-python
+    - git-fundamentals
+---
+
+# Nested Config Skill
+
+Content here.
+`;
+
+      const pkg = fromOpenSkills(content, {
+        id: 'test',
+        version: '1.0.0',
+      });
+
+      expect(pkg.name).toBe('nested-skill');
+      expect(pkg.format).toBe('openskills');
+    });
+
+    it('handles YAML with quoted strings containing colons', () => {
+      const content = `---
+name: quoted-skill
+description: "This description: contains a colon"
+example: "Use like: prpm install"
+---
+
+# Quoted String Skill
+
+Content here.
+`;
+
+      const pkg = fromOpenSkills(content, {
+        id: 'test',
+        version: '1.0.0',
+      });
+
+      expect(pkg.name).toBe('quoted-skill');
+      expect(pkg.description).toBe('This description: contains a colon');
+    });
+
+    it('handles malformed YAML gracefully', () => {
+      const content = `---
+name: bad-skill
+description: This is valid
+  but this line: has bad indentation
+    and this: is worse
+---
+
+# Malformed YAML Skill
+
+Content should still be parsed.
+`;
+
+      const pkg = fromOpenSkills(content, {
+        id: 'test',
+        version: '1.0.0',
+      });
+
+      // Should use fallback metadata when YAML fails to parse
+      expect(pkg.format).toBe('openskills');
+      expect(pkg.subtype).toBe('skill');
+      expect(pkg.content.sections.length).toBeGreaterThan(0);
+    });
   });
 
   describe('toOpenSkills', () => {

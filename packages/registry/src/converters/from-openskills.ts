@@ -9,6 +9,7 @@
  * Body is markdown with instructions for AI agents
  */
 
+import yaml from 'js-yaml';
 import type {
   CanonicalPackage,
   CanonicalContent,
@@ -101,18 +102,21 @@ function parseFrontmatter(content: string): {
   }
 
   const [, frontmatterContent, body] = match;
-  const frontmatter: Record<string, any> = {};
 
-  // Simple YAML parser for key: value pairs
-  const lines = frontmatterContent.split('\n');
-  for (const line of lines) {
-    const colonIndex = line.indexOf(':');
-    if (colonIndex > 0) {
-      const key = line.slice(0, colonIndex).trim();
-      const value = line.slice(colonIndex + 1).trim();
-      frontmatter[key] = value;
-    }
+  // Use js-yaml for robust YAML parsing
+  try {
+    const frontmatter = yaml.load(frontmatterContent) as Record<string, any>;
+    return {
+      frontmatter: frontmatter || {},
+      body
+    };
+  } catch (error) {
+    // If YAML parsing fails, return empty frontmatter
+    // This handles malformed YAML gracefully
+    console.warn('Failed to parse OpenSkills YAML frontmatter:', error);
+    return {
+      frontmatter: {},
+      body,
+    };
   }
-
-  return { frontmatter, body };
 }
