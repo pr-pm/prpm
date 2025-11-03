@@ -31,6 +31,8 @@ export const packages = pgTable('packages', {
   tags: text('tags').array().default([]),
   keywords: text('keywords').array().default([]),
   category: varchar('category', { length: 100 }),
+  language: varchar('language', { length: 50 }), // Primary programming language (javascript, python, typescript, go, rust, etc.)
+  framework: varchar('framework', { length: 100 }), // Primary framework (react, nextjs, vue, django, fastapi, rails, etc.)
 
   // Package status
   visibility: varchar('visibility', { length: 50 }).default('public'), // public, private, unlisted

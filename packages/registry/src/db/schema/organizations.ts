@@ -24,6 +24,9 @@ export const organizations = pgTable('organizations', {
   subscriptionStartDate: timestamp('subscription_start_date', { withTimezone: true }),
   subscriptionEndDate: timestamp('subscription_end_date', { withTimezone: true }),
   subscriptionCancelAtPeriodEnd: boolean('subscription_cancel_at_period_end').default(false).notNull(),
+
+  // Billing information (from migration 025)
+  billingEmail: varchar('billing_email', { length: 255 }), // Billing email address from Stripe checkout
 });
 
 // Type inference for TypeScript

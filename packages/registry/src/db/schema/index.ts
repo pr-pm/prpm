@@ -7,3 +7,4 @@ export * from './organizations.js';
 export * from './packages.js';
 export * from './users.js';
 export * from './collections.js';
+export * from './package-installations.js';

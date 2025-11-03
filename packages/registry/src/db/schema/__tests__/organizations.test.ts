@@ -20,6 +20,7 @@ describe('Organizations Schema', () => {
       subscriptionStartDate: null,
       subscriptionEndDate: null,
       subscriptionCancelAtPeriodEnd: false,
+      billingEmail: null,
     };
 
     expect(org).toBeDefined();
@@ -68,6 +69,7 @@ describe('Organizations Schema', () => {
       subscriptionStartDate: new Date('2025-01-01'),
       subscriptionEndDate: null,
       subscriptionCancelAtPeriodEnd: false,
+      billingEmail: 'billing@verified.example.com',
     };
 
     expect(verifiedOrg).toBeDefined();
@@ -115,6 +117,7 @@ describe('Organizations Schema', () => {
       subscriptionStartDate: null,
       subscriptionEndDate: null,
       subscriptionCancelAtPeriodEnd: false,
+      billingEmail: null,
     };
 
     // These should be the correct types
