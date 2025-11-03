@@ -49,6 +49,48 @@ export default function PlaygroundInterface({
   const [model, setModel] = useState<'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo'>('sonnet')
   const [currentSessionId, setCurrentSessionId] = useState(sessionId)
   const [currentSessionIdB, setCurrentSessionIdB] = useState<string | undefined>(undefined)
+  const [collapsedExchanges, setCollapsedExchanges] = useState<Set<number>>(new Set())
+  const [collapsedExchangesB, setCollapsedExchangesB] = useState<Set<number>>(new Set())
+
+  // Helper function to group messages into exchanges (user input + assistant response pairs)
+  const groupIntoExchanges = (messages: PlaygroundMessage[]): Array<{ user: PlaygroundMessage; assistant: PlaygroundMessage | null; index: number }> => {
+    const exchanges: Array<{ user: PlaygroundMessage; assistant: PlaygroundMessage | null; index: number }> = []
+    for (let i = 0; i < messages.length; i += 2) {
+      if (messages[i]?.role === 'user') {
+        exchanges.push({
+          user: messages[i],
+          assistant: messages[i + 1]?.role === 'assistant' ? messages[i + 1] : null,
+          index: exchanges.length
+        })
+      }
+    }
+    return exchanges
+  }
+
+  // Toggle collapse state for an exchange
+  const toggleExchange = (exchangeIndex: number, isPackageB: boolean = false) => {
+    if (isPackageB) {
+      setCollapsedExchangesB(prev => {
+        const next = new Set(prev)
+        if (next.has(exchangeIndex)) {
+          next.delete(exchangeIndex)
+        } else {
+          next.add(exchangeIndex)
+        }
+        return next
+      })
+    } else {
+      setCollapsedExchanges(prev => {
+        const next = new Set(prev)
+        if (next.has(exchangeIndex)) {
+          next.delete(exchangeIndex)
+        } else {
+          next.add(exchangeIndex)
+        }
+        return next
+      })
+    }
+  }
 
   // Load session if provided
   useEffect(() => {
@@ -59,6 +101,38 @@ export default function PlaygroundInterface({
       setCurrentSessionId(undefined)
     }
   }, [sessionId])
+
+  // Auto-collapse older exchanges (keep last 2 expanded)
+  useEffect(() => {
+    const exchanges = groupIntoExchanges(conversation)
+    if (exchanges.length > 2) {
+      const newCollapsed = new Set<number>()
+      // Collapse all except the last 2
+      for (let i = 0; i < exchanges.length - 2; i++) {
+        newCollapsed.add(exchanges[i].index)
+      }
+      setCollapsedExchanges(newCollapsed)
+    } else {
+      setCollapsedExchanges(new Set())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation.length])
+
+  // Auto-collapse older exchanges for Package B (keep last 2 expanded)
+  useEffect(() => {
+    const exchanges = groupIntoExchanges(conversationB)
+    if (exchanges.length > 2) {
+      const newCollapsed = new Set<number>()
+      // Collapse all except the last 2
+      for (let i = 0; i < exchanges.length - 2; i++) {
+        newCollapsed.add(exchanges[i].index)
+      }
+      setCollapsedExchangesB(newCollapsed)
+    } else {
+      setCollapsedExchangesB(new Set())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationB.length])
 
   // Load package options when searching (Package A)
   useEffect(() => {
@@ -174,6 +248,7 @@ export default function PlaygroundInterface({
           })
         ])
 
+        console.log('[Playground] Comparison run complete. Credits spent:', resultA.credits_spent + resultB.credits_spent, 'Remaining:', resultA.credits_remaining)
         setConversation(resultA.conversation)
         setCurrentSessionId(resultA.session_id)
         setConversationB(resultB.conversation)
@@ -181,6 +256,7 @@ export default function PlaygroundInterface({
         setInput('')
         setEstimatedCredits(null)
         setEstimatedCreditsB(null)
+        console.log('[Playground] Triggering credits refresh...')
         onCreditsChange()
         onSessionCreated()
       } catch (err: any) {
@@ -206,10 +282,12 @@ export default function PlaygroundInterface({
           session_id: currentSessionId,
         })
 
+        console.log('[Playground] Run complete. Credits spent:', result.credits_spent, 'Remaining:', result.credits_remaining)
         setConversation(result.conversation)
         setCurrentSessionId(result.session_id)
         setInput('')
         setEstimatedCredits(null)
+        console.log('[Playground] Triggering credits refresh...')
         onCreditsChange()
         onSessionCreated()
       } catch (err: any) {
@@ -438,23 +516,81 @@ export default function PlaygroundInterface({
                 </h4>
               )}
               <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                {conversation.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`p-3 sm:p-4 ${
-                      message.role === 'user'
-                        ? 'bg-prpm-green/10 dark:bg-prpm-green/20'
-                        : 'bg-gray-50 dark:bg-gray-700/50'
-                    }`}
-                  >
-                    <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                      {message.role}
+                {groupIntoExchanges(conversation).map((exchange, exchangeIdx) => {
+                  const isCollapsed = collapsedExchanges.has(exchange.index)
+                  const isLatest = exchangeIdx >= groupIntoExchanges(conversation).length - 2
+
+                  return (
+                    <div key={exchange.index} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                      {/* Exchange Header */}
+                      <div
+                        onClick={() => toggleExchange(exchange.index, false)}
+                        className={`flex items-center justify-between p-3 sm:p-4 cursor-pointer transition-all ${
+                          isCollapsed
+                            ? 'bg-prpm-green/10 dark:bg-prpm-green/20 hover:bg-prpm-green/15 dark:hover:bg-prpm-green/25 border-l-4 border-prpm-green'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                            isCollapsed
+                              ? 'bg-prpm-green text-white'
+                              : 'bg-prpm-green/20 dark:bg-prpm-green/30 text-prpm-green-dark dark:text-prpm-green-light'
+                          }`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-semibold text-prpm-green-dark dark:text-prpm-green-light uppercase mb-1">
+                              Exchange #{exchange.index + 1}
+                            </div>
+                            <div className="text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
+                              {exchange.user.content}
+                            </div>
+                          </div>
+                        </div>
+                        <button className="ml-3 text-gray-500 hover:text-prpm-green dark:hover:text-prpm-green-light flex-shrink-0 transition-colors">
+                          <svg
+                            className={`w-5 h-5 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Exchange Content */}
+                      {!isCollapsed && (
+                        <div>
+                          {/* User Message */}
+                          <div className="p-3 sm:p-4 bg-prpm-green/10 dark:bg-prpm-green/20">
+                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                              User
+                            </div>
+                            <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.user.content}</ReactMarkdown>
+                            </div>
+                          </div>
+
+                          {/* Assistant Response */}
+                          {exchange.assistant && (
+                            <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
+                              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                                Assistant
+                              </div>
+                              <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
@@ -466,23 +602,81 @@ export default function PlaygroundInterface({
                 {selectedPackageB ? selectedPackageB.name : 'Package B'}
               </h4>
               <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                {conversationB.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`p-3 sm:p-4 ${
-                      message.role === 'user'
-                        ? 'bg-yellow-50 dark:bg-yellow-900/20'
-                        : 'bg-gray-50 dark:bg-gray-700/50'
-                    }`}
-                  >
-                    <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                      {message.role}
+                {groupIntoExchanges(conversationB).map((exchange, exchangeIdx) => {
+                  const isCollapsed = collapsedExchangesB.has(exchange.index)
+                  const isLatest = exchangeIdx >= groupIntoExchanges(conversationB).length - 2
+
+                  return (
+                    <div key={exchange.index} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                      {/* Exchange Header */}
+                      <div
+                        onClick={() => toggleExchange(exchange.index, true)}
+                        className={`flex items-center justify-between p-3 sm:p-4 cursor-pointer transition-all ${
+                          isCollapsed
+                            ? 'bg-amber-500/10 dark:bg-amber-500/20 hover:bg-amber-500/15 dark:hover:bg-amber-500/25 border-l-4 border-amber-500'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                            isCollapsed
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-amber-500/20 dark:bg-amber-500/30 text-amber-600 dark:text-amber-400'
+                          }`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase mb-1">
+                              Exchange #{exchange.index + 1}
+                            </div>
+                            <div className="text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
+                              {exchange.user.content}
+                            </div>
+                          </div>
+                        </div>
+                        <button className="ml-3 text-gray-500 hover:text-amber-500 dark:hover:text-amber-400 flex-shrink-0 transition-colors">
+                          <svg
+                            className={`w-5 h-5 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Exchange Content */}
+                      {!isCollapsed && (
+                        <div>
+                          {/* User Message */}
+                          <div className="p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20">
+                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                              User
+                            </div>
+                            <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.user.content}</ReactMarkdown>
+                            </div>
+                          </div>
+
+                          {/* Assistant Response */}
+                          {exchange.assistant && (
+                            <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
+                              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                                Assistant
+                              </div>
+                              <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
@@ -505,10 +699,21 @@ export default function PlaygroundInterface({
       </div>
 
       {/* Estimated Credits */}
-      {estimatedCredits !== null && (
-        <div className="mb-4 p-2 sm:p-3 bg-prpm-green/10 dark:bg-prpm-green/20 border border-prpm-green/30 dark:border-prpm-green/30 rounded-lg">
-          <div className="text-xs sm:text-sm text-prpm-green-dark dark:text-prpm-green-light">
-            💡 Estimated cost: <span className="font-bold">{estimatedCredits} credits</span>
+      {estimatedCredits !== null && estimatedCredits > 0 && (
+        <div className="mb-4 p-3 sm:p-4 bg-gradient-to-r from-prpm-green/10 to-prpm-green/5 dark:from-prpm-green/20 dark:to-prpm-green/10 border border-prpm-green/30 dark:border-prpm-green/40 rounded-lg">
+          <div className="flex items-center gap-2 text-sm sm:text-base">
+            <svg className="w-5 h-5 text-prpm-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <span className="text-gray-700 dark:text-gray-300">
+              Estimated cost:
+            </span>
+            <span className="font-bold text-lg text-prpm-green-dark dark:text-prpm-green-light">
+              {estimatedCredits}
+            </span>
+            <span className="text-gray-600 dark:text-gray-400">
+              {estimatedCredits === 1 ? 'credit' : 'credits'}
+            </span>
           </div>
         </div>
       )}

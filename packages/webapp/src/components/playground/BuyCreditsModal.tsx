@@ -169,7 +169,7 @@ export default function BuyCreditsModal({ onClose, onSuccess }: BuyCreditsModalP
                   🎁 Best Value: PRPM+ - Just $5/month!
                 </h4>
                 <p className="text-sm text-yellow-800 dark:text-yellow-400">
-                  Upgrade to PRPM+ for just $5/month and get 200 credits every month, plus priority support and exclusive features.
+                  Upgrade to PRPM+ for just $5/month and get 100 credits every month, plus priority support and exclusive features.
                 </p>
                 <button
                   onClick={async () => {

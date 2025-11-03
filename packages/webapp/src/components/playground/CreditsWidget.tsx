@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import type { CreditBalance } from '../../lib/api'
 
 interface CreditsWidgetProps {
@@ -9,6 +10,13 @@ interface CreditsWidgetProps {
 }
 
 export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: CreditsWidgetProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    await onRefresh()
+    setTimeout(() => setIsRefreshing(false), 500)
+  }
   if (!credits) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
@@ -36,11 +44,12 @@ export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: Cred
           <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{total}</div>
         </div>
         <button
-          onClick={onRefresh}
+          onClick={handleRefresh}
           className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
           title="Refresh balance"
+          disabled={isRefreshing}
         >
-          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 sm:w-5 sm:h-5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>

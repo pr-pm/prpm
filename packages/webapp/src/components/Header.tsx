@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
 interface HeaderProps {
@@ -12,19 +12,37 @@ interface HeaderProps {
 
 export default function Header({ showDashboard = false, showAccount = false }: HeaderProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [hamburgerMenuOpen, setHamburgerMenuOpen] = useState(false)
+  const hamburgerRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname?.() || ''
 
   const isActive = (path: string) => pathname === path
 
-  const navigationLinks: Array<{ href: string; label: string; badge?: string }> = [
+  // Close hamburger menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (hamburgerRef.current && !hamburgerRef.current.contains(event.target as Node)) {
+        setHamburgerMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Primary navigation links (shown in top bar)
+  const primaryLinks: Array<{ href: string; label: string; badge?: string }> = [
     { href: '/search', label: 'Search' },
-    { href: '/authors', label: 'Authors' },
-    { href: '/organizations', label: 'Organizations' },
     { href: '/blog', label: 'Blog' },
     ...(showDashboard ? [
-      { href: '/dashboard', label: 'Dashboard' },
       { href: '/playground', label: 'Playground', badge: 'PRPM+' }
     ] : []),
+  ]
+
+  // Secondary navigation links (shown in hamburger menu)
+  const secondaryLinks: Array<{ href: string; label: string }> = [
+    { href: '/authors', label: 'Authors' },
+    { href: '/organizations', label: 'Organizations' },
+    { href: 'https://docs.prpm.dev', label: 'Docs' },
   ]
 
   return (
@@ -39,7 +57,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
               </span>
             </Link>
             <div className="hidden md:flex items-center gap-6">
-              {navigationLinks.map((link) => (
+              {primaryLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -70,6 +88,52 @@ export default function Header({ showDashboard = false, showAccount = false }: H
                 <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
               </svg>
             </a>
+
+            {/* Hamburger menu for desktop */}
+            <div className="hidden md:block relative" ref={hamburgerRef}>
+              <button
+                onClick={() => setHamburgerMenuOpen(!hamburgerMenuOpen)}
+                className="text-gray-400 hover:text-white transition-colors p-2"
+                aria-label="More options"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+
+              {hamburgerMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-prpm-dark-card border border-prpm-border rounded-lg shadow-lg py-2 z-50">
+                  {secondaryLinks.map((link) => (
+                    link.href.startsWith('http') ? (
+                      <a
+                        key={link.href}
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-prpm-border transition-colors"
+                        onClick={() => setHamburgerMenuOpen(false)}
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          isActive(link.href)
+                            ? 'text-prpm-green-light bg-prpm-border'
+                            : 'text-gray-400 hover:text-white hover:bg-prpm-border'
+                        }`}
+                        onClick={() => setHamburgerMenuOpen(false)}
+                      >
+                        {link.label}
+                      </Link>
+                    )
+                  ))}
+                </div>
+              )}
+            </div>
+
             {showAccount && (
               <Link href="/dashboard" className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white border border-prpm-border rounded-lg hover:border-prpm-green-light transition-all">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,6 +142,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
                 Account
               </Link>
             )}
+
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -99,20 +164,56 @@ export default function Header({ showDashboard = false, showAccount = false }: H
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 border-t border-prpm-border mt-2">
             <div className="flex flex-col gap-3 pt-4">
-              {navigationLinks.map((link) => (
+              {/* Primary links */}
+              {primaryLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`transition-colors py-2 ${
+                  className={`transition-colors py-2 flex items-center gap-2 ${
                     isActive(link.href)
                       ? 'text-prpm-green-light'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
                   {link.label}
+                  {link.badge && (
+                    <span className="text-xs font-semibold px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded border border-green-500/30">
+                      {link.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
+
+              {/* Secondary links */}
+              {secondaryLinks.map((link) => (
+                link.href.startsWith('http') ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`transition-colors py-2 ${
+                      isActive(link.href)
+                        ? 'text-prpm-green-light'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                )
+              ))}
+
               <a
                 href="https://github.com/pr-pm/prpm"
                 target="_blank"

@@ -919,14 +919,14 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
 
                 await server.pg.query(
                   `INSERT INTO playground_credits (user_id, monthly_credits, monthly_reset_at, balance, lifetime_earned)
-                   VALUES ($1, 200, $2, 200, 200)
+                   VALUES ($1, 100, $2, 100, 100)
                    ON CONFLICT (user_id)
                    DO UPDATE SET
-                     monthly_credits = 200,
+                     monthly_credits = 100,
                      monthly_reset_at = $2,
-                     balance = playground_credits.balance + (200 - playground_credits.monthly_credits + playground_credits.monthly_credits_used),
+                     balance = playground_credits.balance + (100 - playground_credits.monthly_credits + playground_credits.monthly_credits_used),
                      monthly_credits_used = 0,
-                     lifetime_earned = playground_credits.lifetime_earned + 200,
+                     lifetime_earned = playground_credits.lifetime_earned + 100,
                      updated_at = NOW()`,
                   [userId, periodEnd]
                 );
@@ -934,7 +934,7 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
                 // Log transaction
                 await server.pg.query(
                   `INSERT INTO playground_credit_transactions (user_id, amount, balance_after, transaction_type, description, metadata)
-                   SELECT $1, 200, balance, 'monthly', 'PRPM+ monthly credits', $2
+                   SELECT $1, 100, balance, 'monthly', 'PRPM+ monthly credits', $2
                    FROM playground_credits WHERE user_id = $1`,
                   [userId, JSON.stringify({ subscriptionId: subscription.id })]
                 );

@@ -397,7 +397,7 @@ export class PlaygroundCreditsService {
       const result = await client.query(
         `UPDATE playground_credits
          SET
-           monthly_credits = 200,
+           monthly_credits = 100,
            monthly_credits_used = 0,
            monthly_reset_at = NOW() + INTERVAL '1 month',
            balance = balance + 200,
@@ -548,7 +548,7 @@ export class PlaygroundCreditsService {
           await client.query(
             `UPDATE playground_credits
              SET
-               monthly_credits = 200,
+               monthly_credits = 100,
                monthly_credits_used = 0,
                monthly_reset_at = NOW() + INTERVAL '1 month',
                rollover_credits = $1,
