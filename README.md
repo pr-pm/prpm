@@ -5,7 +5,7 @@
 <!-- karen-badge-end -->
 
 
-**Stop copy-pasting prompts from GitHub.** Install Cursor rules, Claude skills, and AI agents like npm packages.
+**The largest collection of Cursor rules, Claude agents, and slash commands.** Install cursor slash commands, claude slash commands, cursor rules, claude agents, and claude plugins like npm packages.
 
 ```bash
 npm install -g prpm
