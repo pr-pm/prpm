@@ -1,10 +1,12 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { db } from '../db.js';
 import {
   collectionPackages,
   type CollectionPackage,
   type NewCollectionPackage,
 } from '../schema/collections.js';
+import { packages } from '../schema/packages.js';
+import { packageVersions } from '../schema/package-versions.js';
 
 /**
  * Collection Package Repository
@@ -179,6 +181,94 @@ export class CollectionPackageRepository {
       return results.length;
     } catch (error) {
       console.error('Failed to count packages in collection', {
+        collectionId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get packages with full details for a collection
+   *
+   * Joins with packages and package_versions tables to provide
+   * complete package information for collection detail endpoints.
+   * Returns packages ordered by install_order.
+   */
+  async getPackagesWithDetails(collectionId: string): Promise<Array<{
+    id: string;
+    packageId: string;
+    name: string;
+    description: string | null;
+    format: string | null;
+    subtype: string | null;
+    version: string;
+    packageVersion: string | null;
+    required: boolean;
+    reason: string | null;
+    installOrder: number;
+  }>> {
+    try {
+      // Get all collection packages with package details
+      const results = await db
+        .select({
+          id: collectionPackages.collectionId, // For compatibility
+          packageId: collectionPackages.packageId,
+          name: packages.name,
+          description: packages.description,
+          format: packages.format,
+          subtype: packages.subtype,
+          packageVersion: collectionPackages.packageVersion,
+          required: collectionPackages.required,
+          reason: collectionPackages.reason,
+          installOrder: collectionPackages.installOrder,
+        })
+        .from(collectionPackages)
+        .innerJoin(packages, eq(collectionPackages.packageId, packages.id))
+        .where(eq(collectionPackages.collectionId, collectionId))
+        .orderBy(collectionPackages.installOrder);
+
+      // For each package, get the version (latest if packageVersion is null)
+      const packagesWithVersions = await Promise.all(
+        results.map(async (pkg) => {
+          let version = 'latest';
+
+          if (pkg.packageVersion) {
+            // Specific version requested
+            version = pkg.packageVersion;
+          } else {
+            // Get latest version
+            const [latestVersion] = await db
+              .select({ version: packageVersions.version })
+              .from(packageVersions)
+              .where(eq(packageVersions.packageId, pkg.packageId))
+              .orderBy(desc(packageVersions.publishedAt))
+              .limit(1);
+
+            if (latestVersion) {
+              version = latestVersion.version;
+            }
+          }
+
+          return {
+            id: pkg.id,
+            packageId: pkg.packageId,
+            name: pkg.name,
+            description: pkg.description,
+            format: pkg.format,
+            subtype: pkg.subtype,
+            version,
+            packageVersion: pkg.packageVersion,
+            required: pkg.required,
+            reason: pkg.reason,
+            installOrder: pkg.installOrder,
+          };
+        })
+      );
+
+      return packagesWithVersions;
+    } catch (error) {
+      console.error('Failed to get packages with details', {
         collectionId,
         error: error instanceof Error ? error.message : String(error),
       });

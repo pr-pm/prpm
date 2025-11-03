@@ -1,6 +1,7 @@
 import { eq, and, sql, desc, or, ilike, SQL } from 'drizzle-orm';
 import { db } from '../db.js';
-import { collections, type Collection, type NewCollection } from '../schema/collections.js';
+import { collections, collectionPackages, type Collection, type NewCollection } from '../schema/collections.js';
+import { users } from '../schema/users.js';
 
 /**
  * Collection Repository
@@ -292,6 +293,293 @@ export class CollectionRepository {
     } catch (error) {
       console.error('Failed to search collections', {
         params,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Search collections with enriched details
+   *
+   * Similar to search() but includes author username and package count.
+   * Used by GET /collections endpoint for richer listing data.
+   */
+  async searchWithDetails(params: {
+    search?: string;
+    category?: string;
+    tag?: string;
+    framework?: string;
+    official?: boolean;
+    verified?: boolean;
+    scope?: string;
+    author?: string;
+    sort?: 'downloads' | 'stars' | 'created' | 'updated' | 'name';
+    sortOrder?: 'asc' | 'desc';
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    collections: Array<Collection & { author: string | null; packageCount: number }>;
+    total: number;
+  }> {
+    try {
+      const {
+        search,
+        category,
+        tag,
+        framework,
+        official,
+        verified,
+        scope,
+        author,
+        sort = 'downloads',
+        sortOrder = 'desc',
+        limit = 20,
+        offset = 0,
+      } = params;
+
+      // Build WHERE conditions
+      const conditions: SQL[] = [];
+
+      if (category) {
+        conditions.push(eq(collections.category, category));
+      }
+
+      if (tag) {
+        conditions.push(sql`${tag} = ANY(${collections.tags})`);
+      }
+
+      if (framework) {
+        conditions.push(eq(collections.framework, framework));
+      }
+
+      if (official !== undefined) {
+        conditions.push(eq(collections.official, official));
+      }
+
+      if (verified !== undefined) {
+        conditions.push(eq(collections.verified, verified));
+      }
+
+      if (scope) {
+        conditions.push(eq(collections.scope, scope));
+      }
+
+      if (author) {
+        conditions.push(eq(users.username, author));
+      }
+
+      if (search) {
+        conditions.push(
+          or(
+            sql`to_tsvector('english', coalesce(${collections.name}, '') || ' ' || coalesce(${collections.description}, '') || ' ' || coalesce(${collections.nameSlug}, '')) @@ websearch_to_tsquery('english', ${search})`,
+            ilike(collections.name, `%${search}%`),
+            ilike(collections.description, `%${search}%`),
+            ilike(collections.nameSlug, `%${search}%`),
+            sql`${search} = ANY(${collections.tags})`
+          )!
+        );
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      // Get total count with joins
+      const countResult = await db
+        .select({ count: sql<number>`count(DISTINCT ${collections.id})::int` })
+        .from(collections)
+        .leftJoin(users, eq(collections.authorId, users.id))
+        .where(whereClause);
+
+      const total = countResult[0]?.count || 0;
+
+      // Build ORDER BY
+      let orderBy;
+      switch (sort) {
+        case 'stars':
+          orderBy = sortOrder === 'asc' ? collections.stars : desc(collections.stars);
+          break;
+        case 'created':
+          orderBy = sortOrder === 'asc' ? collections.createdAt : desc(collections.createdAt);
+          break;
+        case 'updated':
+          orderBy = sortOrder === 'asc' ? collections.updatedAt : desc(collections.updatedAt);
+          break;
+        case 'name':
+          orderBy = sortOrder === 'asc' ? collections.name : desc(collections.name);
+          break;
+        case 'downloads':
+        default:
+          orderBy = sortOrder === 'asc' ? collections.downloads : desc(collections.downloads);
+          break;
+      }
+
+      // Get collections with author and package count
+      const results = await db
+        .select({
+          // All collection fields
+          collection: collections,
+          // Author username
+          author: users.username,
+          // Package count (subquery)
+          packageCount: sql<number>`(
+            SELECT COUNT(*)::int
+            FROM ${collectionPackages}
+            WHERE ${collectionPackages.collectionId} = ${collections.id}
+          )`,
+        })
+        .from(collections)
+        .leftJoin(users, eq(collections.authorId, users.id))
+        .where(whereClause)
+        .orderBy(orderBy)
+        .limit(limit)
+        .offset(offset);
+
+      // Flatten results
+      const enrichedCollections = results.map((row) => ({
+        ...row.collection,
+        author: row.author,
+        packageCount: row.packageCount,
+      }));
+
+      return {
+        collections: enrichedCollections,
+        total,
+      };
+    } catch (error) {
+      console.error('Failed to search collections with details', {
+        params,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Find collection by slug with author details
+   *
+   * Enhanced version of findBySlug that includes author username.
+   * Used by collection detail endpoints.
+   */
+  async findBySlugWithAuthor(
+    scope: string,
+    nameSlug: string,
+    version?: string
+  ): Promise<(Collection & { author: string | null }) | null> {
+    try {
+      const conditions = [
+        eq(collections.scope, scope),
+        eq(collections.nameSlug, nameSlug),
+      ];
+
+      if (version) {
+        conditions.push(eq(collections.version, version));
+      }
+
+      const [result] = await db
+        .select({
+          collection: collections,
+          author: users.username,
+        })
+        .from(collections)
+        .leftJoin(users, eq(collections.authorId, users.id))
+        .where(and(...conditions))
+        .orderBy(desc(collections.createdAt))
+        .limit(1);
+
+      if (!result) {
+        return null;
+      }
+
+      return {
+        ...result.collection,
+        author: result.author,
+      };
+    } catch (error) {
+      console.error('Failed to find collection by slug with author', {
+        scope,
+        nameSlug,
+        version,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Find best matching collection by name slug
+   *
+   * Searches across all scopes prioritizing official, verified, then downloads.
+   * Used by install endpoint when scope is 'collection'.
+   */
+  async findBestMatchByNameSlug(
+    nameSlug: string,
+    version?: string
+  ): Promise<Collection | null> {
+    try {
+      const conditions: SQL[] = [eq(collections.nameSlug, nameSlug)];
+
+      if (version) {
+        conditions.push(eq(collections.version, version));
+      }
+
+      const [result] = await db
+        .select()
+        .from(collections)
+        .where(and(...conditions))
+        .orderBy(
+          desc(collections.official),
+          desc(collections.verified),
+          desc(collections.downloads)
+        )
+        .limit(1);
+
+      return result || null;
+    } catch (error) {
+      console.error('Failed to find best match by name slug', {
+        nameSlug,
+        version,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get featured collections with details
+   *
+   * Returns official and verified collections with author and package count.
+   * Used by the /featured endpoint.
+   */
+  async getFeaturedWithDetails(limit: number = 20): Promise<
+    Array<Collection & { author: string | null; packageCount: number }>
+  > {
+    try {
+      const results = await db
+        .select({
+          collection: collections,
+          author: users.username,
+          packageCount: sql<number>`(
+            SELECT COUNT(*)::int
+            FROM ${collectionPackages}
+            WHERE ${collectionPackages.collectionId} = ${collections.id}
+          )`,
+        })
+        .from(collections)
+        .leftJoin(users, eq(collections.authorId, users.id))
+        .where(
+          and(eq(collections.official, true), eq(collections.verified, true))
+        )
+        .orderBy(desc(collections.stars), desc(collections.downloads))
+        .limit(limit);
+
+      return results.map((row) => ({
+        ...row.collection,
+        author: row.author,
+        packageCount: row.packageCount,
+      }));
+    } catch (error) {
+      console.error('Failed to get featured collections with details', {
+        limit,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
