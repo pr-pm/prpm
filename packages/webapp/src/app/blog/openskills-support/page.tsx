@@ -199,138 +199,130 @@ prpm convert SKILL.md --to cursor
 prpm install @user/openskills-package --as claude`}</code>
           </pre>
 
-          <h2 className="text-3xl font-bold text-white mt-12 mb-4">Technical Deep Dive: Robust YAML Parsing</h2>
+          <h2 className="text-3xl font-bold text-white mt-12 mb-4">How PRPM's Architecture Made This Easy</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
-            One of the key challenges in supporting OpenSkills was handling the variety of YAML frontmatter that users might write. We initially built a simple string-based parser, but quickly realized it couldn't handle real-world complexity.
+            Adding OpenSkills support took less than a day because PRPM was built from the ground up to be <strong className="text-white">format-agnostic</strong>. Here's how the architecture makes this possible:
           </p>
 
-          <h3 className="text-2xl font-bold text-white mt-8 mb-4">The Problem with Simple Parsing</h3>
-          <p className="text-gray-300 leading-relaxed mb-4">
-            Our first implementation used basic string splitting:
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">The Canonical Format Core</h3>
+          <p className="text-gray-300 leading-relaxed mb-6">
+            At the heart of PRPM is a <strong className="text-white">canonical format</strong>—a universal representation that captures the essence of any prompt, skill, or agent regardless of its source format. Every package in PRPM's registry is stored in this canonical format.
           </p>
-          <pre className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 overflow-x-auto mb-6">
-            <code className="text-sm text-gray-300">{`// ❌ Simple parser - breaks on complex YAML
-const lines = frontmatterContent.split('\\n');
-for (const line of lines) {
-  const colonIndex = line.indexOf(':');
-  if (colonIndex > 0) {
-    const key = line.slice(0, colonIndex).trim();
-    const value = line.slice(colonIndex + 1).trim();
-    frontmatter[key] = value;
+
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-6">
+            <pre className="text-sm text-gray-300 overflow-x-auto">{`// Canonical format structure
+{
+  id: "python-expert",
+  format: "openskills",
+  subtype: "skill",
+  content: {
+    sections: [
+      { type: "metadata", data: { title, description } },
+      { type: "instructions", content: "..." },
+      { type: "rules", rules: [...] },
+      { type: "examples", examples: [...] }
+    ]
   }
 }`}</code>
-          </pre>
+            </pre>
+          </div>
 
-          <p className="text-gray-300 leading-relaxed mb-4">
-            <strong className="text-white">This failed on:</strong>
+          <p className="text-gray-300 leading-relaxed mb-6">
+            This means we don't need N×N converters (Cursor→Claude, Claude→Continue, Continue→Windsurf, etc.). We just need <strong className="text-white">N converters</strong>: one to/from each format to canonical.
           </p>
-          <ul className="space-y-2 text-gray-300 mb-6 ml-6">
-            <li className="flex items-start gap-3">
-              <span className="text-red-400">✗</span>
-              <div>Multi-line strings (<code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">description: &gt;</code>)</div>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-red-400">✗</span>
-              <div>Arrays (<code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">tags: [python, testing]</code>)</div>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-red-400">✗</span>
-              <div>Nested objects</div>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-red-400">✗</span>
-              <div>Quoted strings with colons (<code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-xs">"Contains: colon"</code>)</div>
-            </li>
-          </ul>
 
-          <h3 className="text-2xl font-bold text-white mt-8 mb-4">The Solution: js-yaml</h3>
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">Adding OpenSkills: Just Two Functions</h3>
           <p className="text-gray-300 leading-relaxed mb-4">
-            We replaced the simple parser with <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded">js-yaml</code>, the industry-standard YAML parsing library:
+            To add OpenSkills support, we only needed:
           </p>
-          <pre className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 overflow-x-auto mb-6">
-            <code className="text-sm text-gray-300">{`// ✅ Robust parser with js-yaml
-import yaml from 'js-yaml';
 
-try {
-  const frontmatter = yaml.load(frontmatterContent) as Record<string, any>;
-  return { frontmatter: frontmatter || {}, body };
-} catch (error) {
-  // Graceful fallback for malformed YAML
-  console.warn('Failed to parse YAML:', error);
-  return { frontmatter: {}, body };
-}`}</code>
-          </pre>
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6">
+              <h4 className="text-lg font-bold text-blue-400 mb-3">fromOpenSkills()</h4>
+              <p className="text-gray-300 text-sm mb-3">
+                Parse SKILL.md → canonical
+              </p>
+              <ul className="space-y-2 text-gray-300 text-sm">
+                <li>• Extract YAML frontmatter</li>
+                <li>• Parse markdown body</li>
+                <li>• Map to canonical sections</li>
+              </ul>
+            </div>
+
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-6">
+              <h4 className="text-lg font-bold text-purple-400 mb-3">toOpenSkills()</h4>
+              <p className="text-gray-300 text-sm mb-3">
+                Canonical → SKILL.md
+              </p>
+              <ul className="space-y-2 text-gray-300 text-sm">
+                <li>• Generate YAML frontmatter</li>
+                <li>• Convert sections to markdown</li>
+                <li>• Score conversion quality</li>
+              </ul>
+            </div>
+          </div>
+
+          <p className="text-gray-300 leading-relaxed mb-6">
+            That's it. Once these two functions exist, OpenSkills packages can instantly be converted to/from <strong className="text-white">all 8 other formats</strong> that PRPM supports (Cursor, Claude, Continue, Windsurf, Copilot, Kiro, agents.md, generic).
+          </p>
+
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">Production-Grade from Day One</h3>
+          <p className="text-gray-300 leading-relaxed mb-6">
+            Because we use battle-tested tools and patterns across all converters, OpenSkills support inherited production-grade quality:
+          </p>
 
           <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 mb-6">
-            <h4 className="text-lg font-bold text-green-400 mb-3">✨ Benefits of js-yaml</h4>
-            <ul className="space-y-2 text-gray-300">
+            <ul className="space-y-3 text-gray-300">
               <li className="flex items-start gap-3">
-                <span className="text-green-400">✓</span>
-                <div><strong className="text-white">Handles complex YAML</strong> - Multi-line strings, arrays, nested objects</div>
+                <span className="text-green-400 font-bold">✓</span>
+                <div><strong className="text-white">Robust YAML parsing</strong> - Uses js-yaml (8.7M weekly downloads) just like our agents.md, Kiro, and Copilot converters</div>
               </li>
               <li className="flex items-start gap-3">
-                <span className="text-green-400">✓</span>
-                <div><strong className="text-white">Battle-tested</strong> - Used by thousands of projects, 8.7M weekly downloads on npm</div>
+                <span className="text-green-400 font-bold">✓</span>
+                <div><strong className="text-white">Comprehensive testing</strong> - 11 tests covering edge cases, malformed input, round-trip conversions</div>
               </li>
               <li className="flex items-start gap-3">
-                <span className="text-green-400">✓</span>
-                <div><strong className="text-white">Graceful error handling</strong> - Falls back to empty frontmatter on parse errors</div>
+                <span className="text-green-400 font-bold">✓</span>
+                <div><strong className="text-white">Quality scoring</strong> - Transparent conversion quality metrics (95-100% for most content)</div>
               </li>
               <li className="flex items-start gap-3">
-                <span className="text-green-400">✓</span>
-                <div><strong className="text-white">Consistent</strong> - Same library used in our agents.md, Kiro, and Copilot converters</div>
+                <span className="text-green-400 font-bold">✓</span>
+                <div><strong className="text-white">Graceful degradation</strong> - Handles missing frontmatter, malformed YAML, unsupported sections</div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-green-400 font-bold">✓</span>
+                <div><strong className="text-white">Server-side caching</strong> - Converted packages cached with Redis for fast delivery</div>
               </li>
             </ul>
           </div>
 
-          <h3 className="text-2xl font-bold text-white mt-8 mb-4">Now Supports Complex YAML</h3>
-          <p className="text-gray-300 leading-relaxed mb-4">
-            With js-yaml, PRPM can parse sophisticated OpenSkills frontmatter:
+          <h3 className="text-2xl font-bold text-white mt-8 mb-4">This is Infrastructure</h3>
+          <p className="text-gray-300 leading-relaxed mb-6">
+            PRPM isn't just another package registry—it's <strong className="text-white">infrastructure for the AI coding ecosystem</strong>. The architecture decisions we made (canonical format, converter pattern, quality scoring, caching) mean that:
           </p>
-          <pre className="bg-prpm-dark border border-prpm-border rounded-xl p-6 overflow-x-auto mb-6">
-            <code className="text-sm text-gray-300">{`---
-name: advanced-skill
-description: >
-  This is a multi-line description
-  that spans multiple lines and
-  preserves line breaks appropriately
-tags:
-  - python
-  - testing
-  - best-practices
-config:
-  level: advanced
-  duration: 30min
-  prerequisites:
-    - basic-python
-    - git-fundamentals
-examples:
-  - "Use like: prpm install"
-  - "Convert: prpm convert"
----`}</code>
-          </pre>
+
+          <ul className="space-y-3 text-gray-300 mb-6 ml-6">
+            <li className="flex items-start gap-3">
+              <span className="text-purple-400">→</span>
+              <div><strong className="text-white">Adding new formats is fast</strong> - OpenSkills took <1 day, new formats can be added in hours</div>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-purple-400">→</span>
+              <div><strong className="text-white">Quality is consistent</strong> - All converters use the same patterns, same tools, same testing approach</div>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-purple-400">→</span>
+              <div><strong className="text-white">Users get choice</strong> - Publish once, install anywhere, no vendor lock-in</div>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-purple-400">→</span>
+              <div><strong className="text-white">Ecosystem grows together</strong> - OpenSkills community + PRPM community = stronger ecosystem for everyone</div>
+            </li>
+          </ul>
 
           <p className="text-gray-300 leading-relaxed mb-6">
-            All of this now parses correctly, extracting nested config, arrays of tags, and quoted strings with special characters.
+            This is the same philosophy that made npm, cargo, and pip successful: <strong className="text-white">be the universal layer</strong> that the ecosystem builds on top of.
           </p>
-
-          <h2 className="text-3xl font-bold text-white mt-12 mb-4">Test Coverage: 11/11 Passing</h2>
-          <p className="text-gray-300 leading-relaxed mb-4">
-            We added comprehensive test coverage to ensure robustness:
-          </p>
-          <pre className="bg-prpm-dark border border-prpm-border rounded-xl p-6 overflow-x-auto mb-6">
-            <code className="text-sm text-gray-300">{`✓ fromOpenSkills > parses basic SKILL.md format
-✓ fromOpenSkills > handles missing frontmatter gracefully
-✓ fromOpenSkills > extracts H1 title from body
-✓ fromOpenSkills > handles complex YAML with multiline strings
-✓ fromOpenSkills > handles YAML with nested objects
-✓ fromOpenSkills > handles YAML with quoted strings containing colons
-✓ fromOpenSkills > handles malformed YAML gracefully
-✓ toOpenSkills > converts canonical to SKILL.md format
-✓ toOpenSkills > handles tools section with warning
-✓ toOpenSkills > handles rules and examples sections
-✓ round-trip conversion > preserves content through round-trip`}</code>
-          </pre>
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">Conversion Quality</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
