@@ -2,37 +2,33 @@
 
 > **📚 Official Documentation**: [docs.prpm.dev/guides/mcp-servers](https://docs.prpm.dev/guides/mcp-servers)
 
-PRPM can automatically configure MCP (Model Context Protocol) servers when installing collections for Claude Code. This guide explains how MCP servers work with PRPM and how to use them.
+> **Note**: PRPM **catalogs** MCP servers, it doesn't install them automatically. You stay in control of your Claude Code configuration.
+
+PRPM helps you discover which MCP (Model Context Protocol) servers work well with collections. Collections can recommend MCP servers, and PRPM shows you exactly how to configure them for Claude Code.
 
 ## Quick Start
 
-### Install a Collection with MCP Servers
+### Discover Recommended MCP Servers
 
 ```bash
-# Install with all MCP servers (recommended)
-prpm install collection/pulumi-infrastructure --as claude
-
-# Install without optional MCP servers
-prpm install collection/pulumi-infrastructure --as claude --skip-optional-mcp
+# View collection details to see recommended MCP servers
+prpm info collection/pulumi-infrastructure
 ```
 
-After installation:
-1. **Restart Claude Code** (required for MCP servers to load)
-2. Start a conversation in Claude Code
-3. Claude now has access to Pulumi state, AWS resources, etc.
+This shows:
+- Which MCP servers enhance the collection
+- What each server provides
+- Exact installation commands
+- Configuration examples
+- Required vs optional servers
 
-### Using MCP Servers in Claude Code
+### Configure MCP Servers Manually
 
-Once installed, you can ask Claude to use the MCP servers:
-
-```
-"Show me all resources in my Pulumi stack"
-"Query the database for all users created in the last week"
-"Search the web for the latest Next.js documentation"
-"Run npm install and show me the output"
-```
-
-Claude will automatically use the appropriate MCP server to fulfill your request.
+After discovering recommendations:
+1. Copy the MCP server configuration from the output
+2. Add to your Claude Code config file (`claude_desktop_config.json`)
+3. Restart Claude Code
+4. Use the enhanced capabilities in conversations
 
 ## What are MCP Servers?
 
@@ -58,48 +54,51 @@ Claude will automatically use the appropriate MCP server to fulfill your request
 
 ## How PRPM Handles MCP Servers
 
-### The Problem PRPM Solves
+### Discovery, Not Installation
 
-Setting up MCP servers manually is tedious:
-1. Find the right MCP server packages
-2. Figure out the correct command and arguments
-3. Configure environment variables
-4. Add to Claude Code's `claude_desktop_config.json`
-5. Repeat for every project
+PRPM takes a **cataloging approach** to MCP servers:
 
-### The PRPM Solution
+**What PRPM Does:**
+- ✅ Shows which MCP servers work with each collection
+- ✅ Provides installation commands
+- ✅ Displays configuration examples
+- ✅ Explains what each server provides
+- ✅ Marks required vs optional servers
 
-Collections can include MCP server configurations. When you install a collection:
+**What PRPM Doesn't Do:**
+- ❌ Modify your Claude Code configuration
+- ❌ Install MCP servers automatically
+- ❌ Manage MCP server lifecycle
+- ❌ Handle conflicts or updates
 
-```bash
-prpm install collection/nextjs-pro --as claude
-```
+**Why This Approach?**
+- You stay in control of your Claude Code setup
+- No risk of breaking existing configurations
+- Works with global or per-project MCP setups
+- Educational - you learn about each MCP server
+- Flexible - configure however you prefer
 
-PRPM automatically:
-1. ✅ Installs all packages in the collection
-2. ✅ Configures MCP servers in Claude Code
-3. ✅ Sets up environment variables
-4. ✅ Handles required vs optional servers
-5. ✅ Only applies to Claude Code (other editors ignore MCP config)
+## Recommended MCP Server Format
 
-## Collection with MCP Servers
-
-### Configuration Format
+Collections define recommended MCP servers in their manifest:
 
 ```json
 {
   "id": "my-collection",
   "config": {
     "defaultFormat": "claude",
-    "mcpServers": {
+    "recommendedMcpServers": {
       "server-name": {
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-package"],
-        "env": {
-          "ENV_VAR": "value"
-        },
+        "package": "@modelcontextprotocol/server-package",
         "description": "What this server provides",
-        "optional": false
+        "required": true | false,
+        "configExample": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-package"],
+          "env": {
+            "ENV_VAR": "value"
+          }
+        }
       }
     }
   }
