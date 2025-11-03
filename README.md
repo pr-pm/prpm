@@ -12,7 +12,7 @@ npm install -g prpm
 prpm install collection/nextjs-pro  # Entire Next.js setup in one command
 ```
 
-**2,100+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro) | **One command to install**
+**2,100+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro, OpenSkills) | **One command to install**
 
 📚 **[Official Documentation](https://docs.prpm.dev)** | 🌐 **[Browse Packages](https://prpm.dev)**
 
@@ -51,12 +51,13 @@ Every package works in **any** AI editor. No conversion tools, no separate downl
 
 ```bash
 # Same package, different editors
-prpm install @username/react-best-practices --as cursor    # → .cursor/rules/
-prpm install @username/react-best-practices --as claude    # → .claude/agents/
-prpm install @username/react-best-practices --as continue  # → .continue/prompts/
-prpm install @username/react-best-practices --as windsurf  # → .windsurf/rules/
-prpm install @username/react-best-practices --as copilot   # → .github/instructions/
-prpm install @username/react-best-practices --as kiro      # → .kiro/steering/
+prpm install @username/react-best-practices --as cursor     # → .cursor/rules/
+prpm install @username/react-best-practices --as claude     # → .claude/agents/
+prpm install @username/react-best-practices --as continue   # → .continue/prompts/
+prpm install @username/react-best-practices --as windsurf   # → .windsurf/rules/
+prpm install @username/react-best-practices --as copilot    # → .github/instructions/
+prpm install @username/react-best-practices --as kiro       # → .kiro/steering/
+prpm install @username/react-best-practices --as openskills # → .claude/skills/
 
 # Or just let PRPM auto-detect
 prpm install @username/react-best-practices  # Installs in the right place automatically
