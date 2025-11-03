@@ -1,6 +1,7 @@
 import { pgTable, uuid, varchar, text, boolean, timestamp, integer, jsonb, index, primaryKey } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { packages } from './packages.js';
+import { users } from './users.js';
 
 /**
  * Collections Schema
@@ -85,3 +86,49 @@ export const collectionPackages = pgTable('collection_packages', {
 
 export type CollectionPackage = typeof collectionPackages.$inferSelect;
 export type NewCollectionPackage = typeof collectionPackages.$inferInsert;
+
+/**
+ * Collection Installs Table
+ *
+ * Tracks when users install collections for analytics.
+ *
+ * Migration history:
+ * - 004_add_collections.sql: Initial table with composite FK to collections
+ * - 014_collections_uuid_id.sql: Migrated to UUID collection_id
+ */
+export const collectionInstalls = pgTable('collection_installs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  collectionId: uuid('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+  format: varchar('format', { length: 50 }),
+  installedAt: timestamp('installed_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  collectionIdx: index('idx_collection_installs_collection').on(table.collectionId),
+  userIdx: index('idx_collection_installs_user').on(table.userId),
+}));
+
+export type CollectionInstall = typeof collectionInstalls.$inferSelect;
+export type NewCollectionInstall = typeof collectionInstalls.$inferInsert;
+
+/**
+ * Collection Stars Table
+ *
+ * Tracks which users have starred which collections.
+ * Composite primary key: (collection_id, user_id)
+ *
+ * Migration history:
+ * - 004_add_collections.sql: Initial table with composite FK to collections
+ * - 014_collections_uuid_id.sql: Migrated to UUID collection_id
+ */
+export const collectionStars = pgTable('collection_stars', {
+  collectionId: uuid('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  starredAt: timestamp('starred_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.collectionId, table.userId] }),
+  collectionIdx: index('idx_collection_stars_collection').on(table.collectionId),
+  userIdx: index('idx_collection_stars_user').on(table.userId),
+}));
+
+export type CollectionStar = typeof collectionStars.$inferSelect;
+export type NewCollectionStar = typeof collectionStars.$inferInsert;
