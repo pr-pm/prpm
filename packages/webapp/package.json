@@ -26,10 +26,11 @@
   },
   "dependencies": {
     "@nangohq/frontend": "^0.69.5",
-    "@pr-pm/types": "^0.1.0",
+    "@pr-pm/types": "^0.2.0",
     "next": "^14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
+    "recharts": "^3.3.0",
     "tar-stream": "^3.1.7"
   },
   "devDependencies": {

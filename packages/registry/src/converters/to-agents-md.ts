@@ -3,7 +3,7 @@
  * Converts canonical format to OpenAI agents.md format
  *
  * File structure:
- * - Project root: agents.md (standard location)
+ * - Standard location: .agents/package-name/AGENTS.md
  * - Custom location: can be placed anywhere in the repo
  *
  * Format:
@@ -306,18 +306,21 @@ export function isAgentsMdFormat(content: string): boolean {
 
 /**
  * Generate suggested filename for agents.md file
+ * Format: package-name/AGENTS.md
  */
 export function generateFilename(
   pkg: CanonicalPackage,
   config?: AgentsMdConfig
 ): string {
-  // agents.md is the standard filename
-  // If scope is provided, use it as a prefix
+  // agents.md files should be in package-name/AGENTS.md structure
+  const packageName = sanitizeFilename(pkg.name);
+
+  // If scope is provided, use it as a prefix in the directory name
   if (config?.scope) {
-    return `${sanitizeFilename(config.scope)}-agents.md`;
+    return `${sanitizeFilename(config.scope)}-${packageName}/AGENTS.md`;
   }
 
-  return 'agents.md';
+  return `${packageName}/AGENTS.md`;
 }
 
 /**

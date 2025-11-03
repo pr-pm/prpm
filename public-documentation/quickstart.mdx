@@ -1,0 +1,184 @@
+---
+title: 'Quickstart'
+description: 'Get started with PRPM in 5 minutes'
+---
+
+## Installation
+
+Install the PRPM CLI globally using npm:
+
+```bash
+npm install -g prpm
+```
+
+Verify the installation:
+
+```bash
+prpm --version
+```
+
+<Tip>
+  You can also use `npx prpm` to run commands without installing globally.
+</Tip>
+
+## Install Your First Package
+
+Search for packages:
+
+```bash
+prpm search typescript
+```
+
+Install a package (replace with actual package name from search results):
+
+```bash
+prpm install @username/typescript-best-practices
+```
+
+<Info>
+  Packages are namespaced by author. The format is `@username/typescript-rules`.
+</Info>
+
+List installed packages:
+
+```bash
+prpm list
+```
+
+## Discover More Packages
+
+View trending packages:
+
+```bash
+prpm trending
+```
+
+Browse collections (curated package bundles):
+
+```bash
+prpm collections --list
+```
+
+Install an entire collection:
+
+```bash
+prpm collections web-development --install
+```
+
+<Info>
+  Collections bundle multiple related packages together for easier setup of common stacks and workflows.
+</Info>
+
+## Publishing Your First Package
+
+### 1. Initialize a Package
+
+Use the interactive init command to scaffold a new package:
+
+```bash
+prpm init
+```
+
+This will prompt you for:
+- Package name (format: `@username/typescript-rules`)
+- Description
+- Format (cursor, claude, windsurf, etc.)
+- Subtype (rule, agent, skill, etc.)
+- Author information
+- License
+- Tags
+
+It creates:
+- `prpm.json` - Package manifest
+- `README.md` - Documentation template
+- Example files based on your selected format
+
+### 2. Add Your Content
+
+Edit the generated files with your rules, prompts, or skills:
+
+```bash
+# For Cursor rules
+vim .cursorrules
+
+# For Claude skills
+vim .claude/skills/my-skill/SKILL.md
+
+# Update the README
+vim README.md
+```
+
+### 3. Login to PRPM
+
+Authenticate with the registry:
+
+```bash
+prpm login
+```
+
+### 4. Publish
+
+Test your package first (optional but recommended):
+
+```bash
+prpm publish --dry-run
+```
+
+Then publish for real:
+
+```bash
+prpm publish
+```
+
+<Success>
+  Your package is now live on the PRPM registry! Others can find it with `prpm search` and install it with `prpm install @username/typescript-rules`.
+</Success>
+
+### 5. Update Your Package
+
+When you make changes, increment the version in `prpm.json`:
+
+```json
+{
+  "version": "1.1.0"  // Was 1.0.0
+}
+```
+
+Then publish again:
+
+```bash
+prpm publish
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Publishing Guide"
+    icon="book"
+    href="/publishing/getting-started"
+  >
+    Learn more about publishing packages
+  </Card>
+  <Card
+    title="Collections"
+    icon="boxes-stacked"
+    href="/concepts/collections"
+  >
+    Create collections of packages
+  </Card>
+  <Card
+    title="CLI Reference"
+    icon="terminal"
+    href="/cli"
+  >
+    Explore all CLI commands
+  </Card>
+  <Card
+    title="Manifest Reference"
+    icon="file-code"
+    href="/publishing/manifest"
+  >
+    Complete prpm.json documentation
+  </Card>
+</CardGroup>

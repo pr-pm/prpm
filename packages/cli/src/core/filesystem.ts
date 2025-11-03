@@ -31,7 +31,9 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.claude/agents'; // Default for claude
 
     case 'continue':
-      return '.continue/rules';
+      // Continue has separate directories for prompts (slash commands) and rules
+      if (subtype === 'rule') return '.continue/rules';
+      return '.continue/prompts';
 
     case 'windsurf':
       return '.windsurf/rules';
@@ -41,6 +43,9 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
 
     case 'kiro':
       return '.kiro/steering';
+
+    case 'agents.md':
+      return '.agents';
 
     case 'generic':
       return '.prompts';
@@ -166,6 +171,11 @@ export function getInstalledFilePath(
   // Claude skills always use SKILL.md
   if (format === 'claude' && subtype === 'skill') {
     return path.join(destDir, 'SKILL.md');
+  }
+
+  // agents.md uses package-name/AGENTS.md structure
+  if (format === 'agents.md') {
+    return path.join(destDir, packageBaseName, 'AGENTS.md');
   }
 
   // Determine file extension

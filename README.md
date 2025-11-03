@@ -5,14 +5,16 @@
 <!-- karen-badge-end -->
 
 
-**Stop copy-pasting prompts from GitHub.** Install Cursor rules, Claude skills, and AI agents like npm packages.
+**The largest collection of Cursor rules, Claude agents, and slash commands.** Install cursor slash commands, claude slash commands, cursor rules, claude agents, and claude plugins like npm packages.
 
 ```bash
 npm install -g prpm
 prpm install collection/nextjs-pro  # Entire Next.js setup in one command
 ```
 
-**1,800+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro) | **One command to install**
+**2,100+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro) | **One command to install**
+
+📚 **[Official Documentation](https://docs.prpm.dev)** | 🌐 **[Browse Packages](https://prpm.dev)**
 
 ---
 
@@ -49,15 +51,15 @@ Every package works in **any** AI editor. No conversion tools, no separate downl
 
 ```bash
 # Same package, different editors
-prpm install react-best-practices --as cursor    # → .cursor/rules/
-prpm install react-best-practices --as claude    # → .claude/agents/
-prpm install react-best-practices --as continue  # → .continue/prompts/
-prpm install react-best-practices --as windsurf  # → .windsurf/rules/
-prpm install react-best-practices --as copilot   # → .github/instructions/
-prpm install react-best-practices --as kiro      # → .kiro/steering/
+prpm install @username/react-best-practices --as cursor    # → .cursor/rules/
+prpm install @username/react-best-practices --as claude    # → .claude/agents/
+prpm install @username/react-best-practices --as continue  # → .continue/prompts/
+prpm install @username/react-best-practices --as windsurf  # → .windsurf/rules/
+prpm install @username/react-best-practices --as copilot   # → .github/instructions/
+prpm install @username/react-best-practices --as kiro      # → .kiro/steering/
 
 # Or just let PRPM auto-detect
-prpm install react-best-practices  # Installs in the right place automatically
+prpm install @username/react-best-practices  # Installs in the right place automatically
 ```
 
 **Format conversion happens server-side.** Authors publish once, users install everywhere.
@@ -76,7 +78,7 @@ prpm search "test driven development"
 prpm trending
 
 # Get detailed info
-prpm info react-best-practices
+prpm info @username/react-best-practices
 # → Shows: description, downloads, rating, tags, installation instructions
 
 # Browse collections
@@ -87,7 +89,7 @@ prpm collections info collection/nextjs-pro
 
 **Smart filters:** Category, tags, editor type, trending vs popular, official vs community
 
-**[Full CLI Reference →](docs/CLI.md)**
+📚 **[Full Documentation](https://docs.prpm.dev)** | **[CLI Reference](https://docs.prpm.dev/cli/overview)**
 
 ---
 
@@ -110,8 +112,8 @@ prpm collections info collection/nextjs-pro
 # PRPM workflow (simple)
 prpm install collection/nextjs-pro  # Entire setup (multiple packages)
 # OR
-prpm install test-driven-development  # Single package
-prpm install systematic-debugging
+prpm install @username/test-driven-development  # Single package
+prpm install @username/systematic-debugging
 ```
 
 **It's npm for AI prompts. But it works everywhere.**
@@ -150,11 +152,11 @@ prpm collections
 ### Install Individual Packages
 ```bash
 # For any editor (auto-detected)
-prpm install test-driven-development
+prpm install @username/test-driven-development
 
 # Or specify the format
-prpm install test-driven-development --as cursor
-prpm install karen-skill --as claude
+prpm install @username/test-driven-development --as cursor
+prpm install @username/karen-skill --as claude
 ```
 
 ### Use It
@@ -163,11 +165,11 @@ prpm install karen-skill --as claude
 - **Continue**: Prompts ready to use
 - **Windsurf**: Rules integrated automatically
 
-**[Full Installation Guide →](docs/INSTALLATION.md)** | **[Configuration Guide →](docs/CONFIGURATION.md)**
+📚 **[Installation Guide](https://docs.prpm.dev/installation)** | **[Configuration Guide](https://docs.prpm.dev/installation#configuration)**
 
 ---
 
-### 📚 Package Library (1,800+)
+### 📚 Package Library (2,100+)
 
 - **🎯 Cursor Rules** - Next.js, React, Vue, Python, Laravel, TypeScript, mobile, testing, and hundreds more
 - **🤖 Claude Skills & Agents** - Repository analysis, code review, architecture, specialized workflows
@@ -177,7 +179,7 @@ prpm install karen-skill --as claude
 
 **Categories:** Frontend frameworks, Backend frameworks, Programming languages, Testing, Mobile development, Cloud & DevOps, AI & ML, Databases, Web3, Best practices, and more
 
-**[Package Catalog →](docs/PACKAGES.md)** | **[Browse at prpm.dev →](https://prpm.dev/search)**
+🌐 **[Browse Packages](https://prpm.dev/search)** | 📚 **[Documentation](https://docs.prpm.dev)**
 
 ---
 
@@ -204,7 +206,7 @@ prpm trending                        # Trending packages
 prpm info <package-name>             # Package details
 ```
 
-**[Full CLI Reference →](docs/CLI.md)**
+📚 **[Full CLI Reference](https://docs.prpm.dev/cli/commands)** | **[All Documentation](https://docs.prpm.dev)**
 
 ---
 
@@ -220,21 +222,19 @@ prpm install collection/nextjs-pro
 ### Switch Between Editors
 ```bash
 # Working in Cursor today
-prpm install react-best-practices --as cursor
+prpm install @username/react-best-practices --as cursor
 
 # Trying Claude Code tomorrow
-prpm install react-best-practices --as claude
+prpm install @username/react-best-practices --as claude
 # Same package, different format. Zero conversion work.
 ```
 
 ### Get Code Reviews
 ```bash
-prpm install karen-skill
+prpm install @username/karen-skill
 # Ask in Claude Code: "Karen, review this repository"
 # Get: 78/100 score + market research + actionable fixes
 ```
-
-**[More Examples →](docs/EXAMPLES.md)**
 
 ---
 
@@ -258,7 +258,7 @@ prpm install karen-skill
 - **Version locking** - prpm-lock.json for consistent installs
 - **Collections** - Install multiple packages as bundles
 
-**[Architecture Details →](docs/ARCHITECTURE.md)**
+📚 **[Learn More](https://docs.prpm.dev/guides/format-conversion)**
 
 ---
 
@@ -274,26 +274,6 @@ prpm install karen-skill
 | **Dependency handling** | ✅ | ❌ | ❌ |
 | **Works with Cursor + Claude + Continue + Windsurf** | ✅ | ⚠️ | ❌ |
 | **Configures MCP servers (Claude Code)** | ✅ | ❌ | ❌ |
-
----
-
-## 🔥 Bonus: Karen Code Reviews
-
-Get brutally honest repository reviews with Karen Scores (0-100):
-
-```bash
-# GitHub Action (automated)
-- uses: khaliqgant/karen-action@v1
-  with:
-    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-
-# Or interactive in your IDE
-prpm install karen-skill
-```
-
-**[Get Your Karen Score →](GET_KAREN_SCORE.md)** | **[See Our Score (78/100)](.karen/review.md)**
-
-Karen analyzes: Bullshit Factor, Actually Works, Code Quality, Completion Honesty, and Practical Value (with competitor research).
 
 ---
 
@@ -320,7 +300,7 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 
 ## Stats
 
-- **1,800+ packages** - Cursor rules, Claude skills/agents, Windsurf rules, MCP configs
+- **2,100+ packages** - Cursor rules, Claude skills/agents, Windsurf rules, MCP configs
 - **Universal package manager** - Works with Cursor, Claude, Continue, Windsurf
 - **100+ Collections** - Complete workflow setups in one command
 - **6 editor formats** supported (server-side conversion)
@@ -329,46 +309,33 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 
 ## Documentation
 
-### 📚 User Documentation
+### 📚 Official Documentation
 
-**Get Started:**
-- 📖 **[User Docs Index](docs/)** - Complete user documentation
-- 📦 [Installation Guide](docs/INSTALLATION.md)
-- ⚙️ [Configuration Guide](docs/CONFIGURATION.md) - ~/.prpmrc, prpm.lock, format customization
-- 💻 [CLI Reference](docs/CLI.md) - Complete command reference
+**➡️ [docs.prpm.dev](https://docs.prpm.dev) - Complete documentation**
 
-**Core Concepts:**
-- 📚 [Collections](docs/COLLECTIONS.md) - Multi-package bundles
-- 🔄 [Format Conversion](docs/FORMAT_CONVERSION.md) - Universal packages explained
-- 📦 [Packages](docs/PACKAGES.md) - Package catalog
-- 🎯 [Examples](docs/EXAMPLES.md) - Real-world usage
+**Quick Links:**
+- 🚀 [Getting Started](https://docs.prpm.dev/installation) - Install and configure PRPM
+- 💻 [CLI Reference](https://docs.prpm.dev/cli/commands) - All commands and options
+- 📦 [Collections Guide](https://docs.prpm.dev/concepts/collections) - Multi-package bundles
+- 🔄 [Format Conversion](https://docs.prpm.dev/concepts/formats) - Universal packages explained
+- 🔌 [MCP Servers](https://docs.prpm.dev/guides/mcp-servers) - Model Context Protocol configuration
 
-**Advanced:**
-- 🏗️ [Architecture](docs/ARCHITECTURE.md) - System design
-- 🔌 [MCP Servers](docs/MCP_SERVERS_IN_COLLECTIONS.md) - MCP configuration
-- 📝 [Publishing](docs/PUBLISHING.md) - Publish your packages
-
-**Format-Specific Guides:**
-- ✈️ [GitHub Copilot](docs/GITHUB_COPILOT.md) - Instructions for GitHub Copilot
-- 🎯 [Kiro](docs/KIRO.md) - Steering files for Kiro AI
-- 🌊 [Windsurf](docs/WINDSURF.md) - Rules for Windsurf editor
-
-### 🛠️ Developer Documentation
+### 🛠️ Developer & Contributor Docs
 
 **For Contributors:**
-- 🔧 **[Development Docs](development/docs/)** - Internal documentation index
-- 💻 [Development Setup](development/docs/DEVELOPMENT.md) - Local environment
+- 💻 [Development Setup](development/docs/DEVELOPMENT.md) - Local environment setup
 - 🐳 [Docker Services](development/docs/DOCKER.md) - PostgreSQL, Redis, MinIO
+- 🔧 [Development Docs](development/docs/) - Internal documentation
 
 **Deployment & Infrastructure:**
-- 🚀 [Deployment Summary](development/docs/DEPLOYMENT_SUMMARY.md) - Complete deployment guide
-- 📊 [Deployment Quickstart](development/docs/DEPLOYMENT_QUICKSTART.md) - TL;DR deployment
+- 🚀 [Deployment Guide](development/docs/DEPLOYMENT_SUMMARY.md) - Complete deployment guide
+- 📊 [Deployment Quickstart](development/docs/DEPLOYMENT_QUICKSTART.md) - Quick deployment
 - 🔄 [CI/CD Workflows](development/docs/GITHUB_WORKFLOWS.md) - GitHub Actions
 
 ### 🔥 Karen Code Reviews
-- 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md)
-- 📖 [Karen GitHub Action](https://github.com/pr-pm/karen-action)
-- 💡 [Karen Implementation](KAREN_IMPLEMENTATION.md)
+- 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md) - Brutally honest AI code reviews
+- 📖 [Karen GitHub Action](https://github.com/pr-pm/karen-action) - Automate reviews in CI
+- 💡 [Karen Implementation](KAREN_IMPLEMENTATION.md) - Technical details
 
 ---
 
@@ -413,7 +380,7 @@ MIT License - See [LICENSE](LICENSE)
 
 **Stop copy-pasting. Start installing.**
 
-**[Install PRPM](#installation)** | **[Browse Collections](https://prpm.dev/search?tab=collections)** | **[Get Karen Score](GET_KAREN_SCORE.md)**
+**[Read the Docs](https://docs.prpm.dev)** | **[Install PRPM](#installation)** | **[Browse Packages](https://prpm.dev)** | **[Get Karen Score](GET_KAREN_SCORE.md)**
 
 _Collections install multiple curated packages with one command • Packages work in all editors • No manual copying needed_
 

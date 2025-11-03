@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { Organization } from '@pr-pm/types'
 import VerifiedPlanBenefits from './VerifiedPlanBenefits'
 
@@ -29,11 +29,7 @@ export default function SubscriptionManagement({
 
   const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3000'
 
-  useEffect(() => {
-    fetchSubscriptionStatus()
-  }, [organization.name])
-
-  async function fetchSubscriptionStatus() {
+  const fetchSubscriptionStatus = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -58,7 +54,11 @@ export default function SubscriptionManagement({
     } finally {
       setLoading(false)
     }
-  }
+  }, [registryUrl, organization.name, jwtToken])
+
+  useEffect(() => {
+    fetchSubscriptionStatus()
+  }, [fetchSubscriptionStatus])
 
   async function handleUpgrade() {
     try {

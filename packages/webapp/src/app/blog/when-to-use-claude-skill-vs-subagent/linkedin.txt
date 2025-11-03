@@ -1,0 +1,30 @@
+Claude Code offers both skills and sub-agents. Most developers don't know when to use which—and picking wrong breaks your workflow.
+
+Here's what I learned after analyzing both and testing with real projects:
+
+Skills are prompt templates that inject specialized instructions into Claude's context. Think of them as reference cards Claude pulls out when relevant. They're model-invoked (Claude decides when), lightweight (under 2K tokens), and perfect for patterns that apply across many situations.
+
+Use skills for:
+• Coding conventions (TypeScript patterns, naming rules)
+• Framework-specific knowledge (Next.js App Router gotchas)
+• Domain glossaries (fintech terms, medical vocabulary)
+• Testing standards that apply everywhere
+
+Sub-agents are specialized AI assistants that run in isolated context windows. They have full tool access, maintain their own state, and complete complex multi-step tasks autonomously.
+
+Use sub-agents for:
+• Security audits across multiple files
+• Large-scale refactoring with coordination
+• Architecture analysis and documentation
+• Any complex task requiring systematic execution
+
+The mistake most developers make: trying to use skills for execution (they can't—they're guidance only) or using sub-agents for simple patterns (waste of context window).
+
+Real example: We tried using a skill for code review. It failed—skills can't analyze multiple files systematically. Switched to a sub-agent. Worked perfectly. Found 3 critical security issues in authentication that would've reached production.
+
+PRPM packages both skills and sub-agents. Same format, same install command, automatic format conversion across editors. Browse 2,100+ packages at registry.prpm.dev.
+
+Full guide with decision framework and code examples:
+https://prpm.dev/blog/when-to-use-claude-skill-vs-subagent
+
+#AI #DeveloperTools #ClaudeAI #AIAssistants #DevEx

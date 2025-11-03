@@ -43,6 +43,7 @@ function SearchPageContent() {
     format: searchParams.get('format') as Format || '',
     subtype: searchParams.get('subtype') as Subtype || '',
     category: searchParams.get('category') || '',
+    author: searchParams.get('author') || '',
     tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
     sort: searchParams.get('sort') as SortType || 'downloads',
     page: Number(searchParams.get('page')) || 1,
@@ -54,6 +55,7 @@ function SearchPageContent() {
   const [selectedFormat, setSelectedFormat] = useState<Format | ''>(initialParams.format)
   const [selectedSubtype, setSelectedSubtype] = useState<Subtype | ''>(initialParams.subtype)
   const [selectedCategory, setSelectedCategory] = useState(initialParams.category)
+  const [selectedAuthor, setSelectedAuthor] = useState(initialParams.author)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialParams.tags)
   const [sort, setSort] = useState<SortType>(initialParams.sort)
   const [packages, setPackages] = useState<Package[]>([])
@@ -101,13 +103,14 @@ function SearchPageContent() {
     if (selectedFormat) params.set('format', selectedFormat)
     if (selectedSubtype) params.set('subtype', selectedSubtype)
     if (selectedCategory) params.set('category', selectedCategory)
+    if (selectedAuthor) params.set('author', selectedAuthor)
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','))
     if (sort !== 'downloads') params.set('sort', sort)
     if (page !== 1) params.set('page', String(page))
 
     const newUrl = params.toString() ? `/search?${params.toString()}` : '/search'
     router.replace(newUrl, { scroll: false })
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, page, router, isInitialized])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedAuthor, selectedTags, sort, page, router, isInitialized])
 
   // Fetch packages
   const fetchPackages = async () => {
@@ -124,6 +127,7 @@ function SearchPageContent() {
       if (selectedSubtype) params.subtype = selectedSubtype
       if (selectedCategory) params.category = selectedCategory
       if (selectedTags.length > 0) params.tags = selectedTags
+      if (selectedAuthor) params.author = selectedAuthor
 
       const result = await searchPackages(params)
       setPackages(result.packages)
@@ -254,7 +258,7 @@ function SearchPageContent() {
       fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, page])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page])
 
   // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {
@@ -268,6 +272,7 @@ function SearchPageContent() {
       selectedSubtype !== initialParams.subtype ||
       selectedCategory !== initialParams.category ||
       JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
+      selectedAuthor !== initialParams.author ||
       sort !== initialParams.sort ||
       activeTab !== initialParams.tab
 
@@ -276,7 +281,7 @@ function SearchPageContent() {
       setPage(1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, activeTab, isInitialized])
+  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, activeTab, isInitialized])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -295,6 +300,7 @@ function SearchPageContent() {
     setSelectedFormat('')
     setSelectedCategory('')
     setSelectedTags([])
+    setSelectedAuthor('')
     setQuery('')
   }
 
@@ -304,7 +310,7 @@ function SearchPageContent() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || query
+  const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || selectedAuthor || query
 
   return (
     <main className="min-h-screen bg-prpm-dark">
@@ -513,6 +519,20 @@ function SearchPageContent() {
                 </select>
               </div>
 
+              {/* Author Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Author
+                </label>
+                <input
+                  type="text"
+                  value={selectedAuthor}
+                  onChange={(e) => setSelectedAuthor(e.target.value)}
+                  placeholder="e.g., prpm, voltagent"
+                  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent placeholder-gray-500"
+                />
+              </div>
+
               {/* Popular Tags */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -572,7 +592,7 @@ function SearchPageContent() {
                               prpm install @org/cursor-rules --as {selectedFormat}
                             </div>
                             <p className="text-gray-400 text-sm mt-3">
-                              This means you have access to <strong>1,700+ packages</strong> across all formats, not just {selectedFormat}-specific ones!
+                              This means you have access to <strong>2,100+ packages</strong> across all formats, not just {selectedFormat}-specific ones!
                             </p>
                           </div>
                         )}
@@ -583,7 +603,7 @@ function SearchPageContent() {
                           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
                             <h4 className="text-sm font-bold text-blue-400 mb-2">💡 Cross-Platform Tip</h4>
                             <p className="text-gray-300 text-sm mb-2">
-                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>1,700+ packages</strong> by installing packages from other formats:
+                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>2,100+ packages</strong> by installing packages from other formats:
                             </p>
                             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 font-mono text-xs text-gray-300">
                               prpm install @org/any-package --as {selectedFormat}
@@ -678,6 +698,34 @@ function SearchPageContent() {
                 {/* Collection Results */}
                 {activeTab === 'collections' && (
                   <div className="space-y-4">
+                    {/* Collections Explainer */}
+                    <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-4 mb-6">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <svg className="w-5 h-5 text-prpm-accent" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-white mb-1">What are collections?</h4>
+                          <p className="text-sm text-gray-400 mb-2">
+                            Collections are curated sets of packages grouped together for a specific purpose or workflow. Install an entire collection at once to get everything you need.
+                          </p>
+                          <a
+                            href="https://docs.prpm.dev/concepts/collections"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-prpm-accent hover:underline inline-flex items-center gap-1"
+                          >
+                            Learn more about collections
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
                     {collections.length === 0 ? (
                       <div className="text-center py-20">
                         <p className="text-gray-400">No collections found</p>
@@ -714,7 +762,9 @@ function SearchPageContent() {
                               </p>
                               <p className="text-gray-400 mb-3">{collection.description || 'No description'}</p>
                               <div className="flex items-center gap-4 text-sm text-gray-500">
-                                <span>by @{collection.author}</span>
+                                {collection.author && (
+                                    <span>by @{collection.author}</span>
+                                )}
                                 {collection.category && (
                                   <span>{collection.category}</span>
                                 )}

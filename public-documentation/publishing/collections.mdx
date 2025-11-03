@@ -1,0 +1,286 @@
+---
+title: 'Publishing Collections'
+description: 'Create and publish package collections'
+---
+
+# Publishing Collections
+
+Learn how to create and publish collections that bundle multiple packages together.
+
+## What are Collections?
+
+Collections allow users to install multiple related packages with a single command:
+
+```bash
+prpm install collections/fullstack-nextjs
+```
+
+Instead of:
+
+```bash
+prpm install typescript-strict
+prpm install nextjs-patterns
+prpm install @username/react-best-practices
+prpm install prisma-patterns
+# ...and so on
+```
+
+## Creating a Collection
+
+Collections are defined in prpm.json using the `collections` array:
+
+```json
+{
+  "name": "my-prompts-repo",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": "https://github.com/username/repo",
+  "collections": [
+    {
+      "id": "fullstack-nextjs",
+      "name": "Full-Stack Next.js",
+      "description": "Complete Next.js setup with TypeScript, Prisma, and testing",
+      "version": "1.0.0",
+      "category": "development",
+      "tags": ["nextjs", "typescript", "fullstack"],
+      "icon": "⚡",
+      "packages": [
+        {
+          "packageId": "typescript-strict",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Enforces strict TypeScript type safety"
+        },
+        {
+          "packageId": "nextjs-patterns",
+          "version": "^2.0.0",
+          "required": true,
+          "reason": "Next.js best practices"
+        },
+        {
+          "packageId": "tailwind-config",
+          "version": "^3.0.0",
+          "required": false,
+          "reason": "Optional Tailwind CSS setup"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Collection Fields
+
+### Required Fields
+
+| Field | Description |
+|-------|-------------|
+| `id` | Unique identifier (kebab-case) |
+| `name` | Display name |
+| `description` | What this collection provides |
+| `packages` | Array of packages to include |
+
+### Optional Fields
+
+| Field | Description |
+|-------|-------------|
+| `version` | Semantic version (default: 1.0.0) |
+| `category` | Category (development, testing, etc.) |
+| `tags` | Tags for discoverability |
+| `icon` | Emoji or icon |
+
+## Package Entries
+
+Each package in the `packages` array:
+
+```json
+{
+  "packageId": "package-name",
+  "version": "^1.0.0",
+  "required": true,
+  "reason": "Why this package is included"
+}
+```
+
+### Version Ranges
+
+- `^1.0.0` - Compatible with 1.x.x (recommended)
+- `~1.2.0` - Compatible with 1.2.x
+- `1.0.0` - Exact version only
+- `latest` - Always use latest
+
+### Required vs Optional
+
+Optional packages can be skipped during installation:
+
+```bash
+prpm install collections/fullstack-nextjs --skip-optional
+```
+
+## Publishing Collections
+
+### Publish All
+
+Publish all packages and collections:
+
+```bash
+prpm publish
+```
+
+### Publish Specific Collection
+
+Publish only one collection:
+
+```bash
+prpm publish --collection fullstack-nextjs
+```
+
+## Collections with Packages
+
+You can define both packages and collections in the same prpm.json:
+
+```json
+{
+  "name": "my-prompts-repo",
+  "author": "Your Name",
+  "license": "MIT",
+  "packages": [
+    {
+      "name": "@username/typescript-rules",
+      "version": "1.0.0",
+      "description": "TypeScript coding standards",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["typescript"],
+      "files": [".cursor/rules/typescript.mdc"]
+    },
+    {
+      "name": "@username/react-patterns",
+      "version": "1.0.0",
+      "description": "React best practices",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["react"],
+      "files": [".claude/skills/@username/react-patterns/SKILL.md"]
+    }
+  ],
+  "collections": [
+    {
+      "id": "fullstack-setup",
+      "name": "Full-Stack Setup",
+      "description": "Complete full-stack development setup",
+      "packages": [
+        {
+          "packageId": "@username/typescript-rules",
+          "version": "^1.0.0",
+          "required": true
+        },
+        {
+          "packageId": "@username/react-patterns",
+          "version": "^1.0.0",
+          "required": true
+        },
+        {
+          "packageId": "@prpm/testing-patterns",
+          "version": "^1.0.0",
+          "required": false
+        }
+      ]
+    }
+  ]
+}
+```
+
+This allows you to:
+1. Publish your own packages
+2. Create collections that bundle your packages with others from the registry
+
+## Collection Categories
+
+Common categories:
+
+- `development` - General development setups
+- `testing` - Testing configurations
+- `deployment` - Deployment workflows
+- `data-science` - Data science and ML
+- `devops` - DevOps and infrastructure
+- `design` - Design and UI/UX
+- `documentation` - Documentation tools
+- `security` - Security patterns
+- `performance` - Performance optimization
+
+## Best Practices
+
+### Use Semantic Version Ranges
+
+```json
+{
+  "packageId": "package-name",
+  "version": "^1.0.0"  // ✓ Allows compatible updates
+}
+```
+
+Not:
+
+```json
+{
+  "packageId": "package-name",
+  "version": "1.0.0"  // ✗ Too strict
+}
+```
+
+### Provide Clear Descriptions
+
+```json
+{
+  "description": "Complete Next.js setup with TypeScript, Tailwind, and Vitest testing"
+}
+```
+
+Not:
+
+```json
+{
+  "description": "My stuff"  // ✗ Too vague
+}
+```
+
+### Use Relevant Tags
+
+```json
+{
+  "tags": ["nextjs", "typescript", "testing", "tailwind"]
+}
+```
+
+### Add Reasons
+
+Explain why each package is included:
+
+```json
+{
+  "packageId": "typescript-strict",
+  "version": "^1.0.0",
+  "required": true,
+  "reason": "Enforces strict TypeScript type safety and prevents common errors"
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Manifest Reference"
+    icon="file-code"
+    href="/publishing/manifest"
+  >
+    Complete schema documentation
+  </Card>
+  <Card
+    title="Publishing Guide"
+    icon="upload"
+    href="/publishing/getting-started"
+  >
+    Learn more about publishing
+  </Card>
+</CardGroup>

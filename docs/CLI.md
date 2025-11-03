@@ -31,10 +31,10 @@ prpm install <package-name> --as continue
 prpm install <package-name> --as windsurf
 
 # Install collection
-prpm install @collection/nextjs-pro
+prpm install nextjs-pro
 
 # Skip optional packages in collection
-prpm install @collection/nextjs-pro --skip-optional
+prpm install nextjs-pro --skip-optional
 ```
 
 **Options:**
@@ -50,7 +50,7 @@ prpm install test-driven-development
 prpm install react-best-practices --as cursor
 
 # Install Next.js collection
-prpm install @collection/nextjs-pro
+prpm install nextjs-pro
 ```
 
 ### `prpm uninstall`
@@ -233,10 +233,10 @@ Get detailed collection information.
 
 ```bash
 # Collection details
-prpm collection info @collection/nextjs-pro
+prpm collection info nextjs-pro
 
 # Specific version
-prpm collection info @collection/nextjs-pro@1.0.0
+prpm collection info nextjs-pro@1.0.0
 ```
 
 **Output:**
@@ -431,7 +431,7 @@ cat packages.txt | xargs prpm install
 ```bash
 # Non-interactive mode
 export PRPM_TOKEN="your-token"
-prpm install @collection/production --skip-optional --no-telemetry
+prpm install production --skip-optional --no-telemetry
 ```
 
 ### Custom Lockfile Location
@@ -453,7 +453,7 @@ npm install -g prpm
 prpm login
 
 # 3. Install collection for your stack
-prpm install @collection/nextjs-pro
+prpm install nextjs-pro
 
 # 4. Verify installation
 prpm list

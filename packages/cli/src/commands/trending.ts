@@ -69,7 +69,7 @@ export function createTrendingCommand(): Command {
 
   command
     .description('Show trending packages')
-    .option('--format <format>', 'Filter by format (cursor, claude, continue, windsurf, copilot, kiro, generic)')
+    .option('--format <format>', 'Filter by format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, generic)')
     .option('--subtype <subtype>', 'Filter by subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection)')
     .option('--limit <number>', 'Number of packages to show', '10')
     .action(async (options: { limit?: string; format?: string; subtype?: string }) => {
@@ -77,7 +77,7 @@ export function createTrendingCommand(): Command {
       const subtype = options.subtype as Subtype | undefined;
       const limit = options.limit ? parseInt(options.limit, 10) : 10;
 
-      const validFormats = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'generic', 'mcp'];
+      const validFormats = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'];
       const validSubtypes = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'];
 
       if (options.format && !validFormats.includes(format!)) {

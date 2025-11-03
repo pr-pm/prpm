@@ -7,7 +7,7 @@ Real-world examples of using PRPM in different scenarios.
 ### Install a Complete Next.js Setup
 
 ```bash
-prpm install @collection/nextjs-pro
+prpm install nextjs-pro
 ```
 
 **What gets installed:**
@@ -48,7 +48,7 @@ prpm install karen-skill
 ### Python Data Science Stack
 
 ```bash
-prpm install @collection/python-data
+prpm install python-data
 ```
 
 **Includes:**
@@ -150,7 +150,7 @@ prpm install @company/internal-patterns
 ### Full-Stack TypeScript
 
 ```bash
-prpm install @collection/typescript-fullstack
+prpm install typescript-fullstack
 ```
 
 **Packages included:**
@@ -163,7 +163,7 @@ prpm install @collection/typescript-fullstack
 ### DevOps & Infrastructure
 
 ```bash
-prpm install @collection/devops-complete
+prpm install devops-complete
 ```
 
 **Packages included:**

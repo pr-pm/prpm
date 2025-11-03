@@ -157,7 +157,10 @@ export async function collectionRoutes(server: FastifyInstance) {
             break;
         }
 
-        sql += ` ORDER BY ${orderByColumn} ${sortOrder.toUpperCase()}`;
+        // Validate sort order to prevent SQL injection
+        const validatedSortOrder = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+        sql += ` ORDER BY ${orderByColumn} ${validatedSortOrder}`;
 
         // Pagination
         const limit = query.limit || 20;
@@ -215,8 +218,9 @@ export async function collectionRoutes(server: FastifyInstance) {
       try {
         // Get collection
         let sql = `
-          SELECT c.*
+          SELECT c.*, u.username as author
           FROM collections c
+          LEFT JOIN users u ON c.author_id = u.id
           WHERE c.scope = $1 AND c.name_slug = $2
         `;
 
@@ -252,7 +256,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             cp.reason,
             cp.install_order,
             cp.format_override,
-            p.id as package_id_full,
+            p.name as package_name,
             p.description as package_description,
             p.format as package_format,
             p.subtype as package_subtype,
@@ -267,16 +271,17 @@ export async function collectionRoutes(server: FastifyInstance) {
         );
 
         collection.packages = packagesResult.rows.map(row => ({
-          packageId: row.package_id,
+          packageId: row.package_name,  // Return package name, not UUID
           version: row.package_version || row.latest_version,
           required: row.required,
           reason: row.reason,
           installOrder: row.install_order,
           formatOverride: row.format_override,
           package: {
-            name: row.package_id_full,
+            name: row.package_name,
             description: row.package_description,
-            type: row.package_type,
+            format: row.package_format,
+            subtype: row.package_subtype,
           },
         }));
 
@@ -337,20 +342,25 @@ export async function collectionRoutes(server: FastifyInstance) {
       const user = request.user;
 
       try {
-        // Check if collection name_slug already exists for this user
+        // Determine version (use input.version or default to 1.0.0)
+        const version = input.version || '1.0.0';
+
+        // Check if this specific version already exists
         const existing = await server.pg.query(
-          `SELECT id FROM collections WHERE scope = $1 AND name_slug = $2`,
-          [user.username, input.id]
+          `SELECT id FROM collections WHERE scope = $1 AND name_slug = $2 AND version = $3`,
+          [user.username, input.id, version]
         );
 
         if (existing.rows.length > 0) {
           return reply.code(409).send({
-            error: 'Collection already exists',
+            error: `Collection version ${version} already exists. Please increment the version number in your prpm.json.`,
             name_slug: input.id,
+            version: version,
           });
         }
 
-        // Validate all packages exist
+        // Validate all packages exist and get their UUIDs
+        const packageUuidMap = new Map<string, string>();
         for (const pkg of input.packages) {
           const pkgResult = await server.pg.query(
             `SELECT id FROM packages WHERE name = $1`,
@@ -363,10 +373,12 @@ export async function collectionRoutes(server: FastifyInstance) {
               packageId: pkg.packageId,
             });
           }
+
+          // Store the UUID for this package name
+          packageUuidMap.set(pkg.packageId, pkgResult.rows[0].id);
         }
 
         // Create collection
-        const version = '1.0.0';
         const collectionResult = await server.pg.query(
           `
           INSERT INTO collections (
@@ -395,9 +407,15 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         const collection = collectionResult.rows[0];
 
-        // Add packages
+        // Add packages using their UUIDs
         for (let i = 0; i < input.packages.length; i++) {
           const pkg = input.packages[i];
+          const packageUuid = packageUuidMap.get(pkg.packageId);
+
+          if (!packageUuid) {
+            throw new Error(`Package UUID not found for ${pkg.packageId}`);
+          }
+
           await server.pg.query(
             `
             INSERT INTO collection_packages (
@@ -407,7 +425,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           `,
             [
               collection.id,
-              pkg.packageId,
+              packageUuid,  // Use UUID instead of name
               pkg.version,
               pkg.required !== false,
               pkg.reason,
@@ -466,16 +484,39 @@ export async function collectionRoutes(server: FastifyInstance) {
 
       try {
         // Get collection
-        const collectionResult = await server.pg.query(
-          `
-          SELECT * FROM collections
-          WHERE scope = $1 AND name_slug = $2
-          ${input.version ? 'AND version = $3' : ''}
-          ORDER BY created_at DESC
-          LIMIT 1
-        `,
-          input.version ? [scope, name_slug, input.version] : [scope, name_slug]
-        );
+        // If scope is 'collection' (default), search across all scopes
+        // to find the most popular collection with that name_slug
+        let collectionResult;
+
+        if (scope === 'collection') {
+          // Search across all scopes, prefer official/verified, then by downloads
+          collectionResult = await server.pg.query(
+            `
+            SELECT * FROM collections
+            WHERE name_slug = $1
+            ${input.version ? 'AND version = $2' : ''}
+            ORDER BY
+              official DESC,
+              verified DESC,
+              downloads DESC,
+              created_at DESC
+            LIMIT 1
+          `,
+            input.version ? [name_slug, input.version] : [name_slug]
+          );
+        } else {
+          // Specific scope requested
+          collectionResult = await server.pg.query(
+            `
+            SELECT * FROM collections
+            WHERE scope = $1 AND name_slug = $2
+            ${input.version ? 'AND version = $3' : ''}
+            ORDER BY created_at DESC
+            LIMIT 1
+          `,
+            input.version ? [scope, name_slug, input.version] : [scope, name_slug]
+          );
+        }
 
         if (collectionResult.rows.length === 0) {
           return reply.code(404).send({
@@ -745,7 +786,7 @@ export async function collectionRoutes(server: FastifyInstance) {
 
       // Map packages to camelCase for client consumption
       const packages = packagesResult.rows.map(row => ({
-        packageId: row.package_id,
+        packageId: row.package_name,  // Return package name, not UUID
         version: row.package_version,
         required: row.required,
         reason: row.reason,

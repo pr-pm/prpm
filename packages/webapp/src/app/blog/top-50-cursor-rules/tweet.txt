@@ -1,0 +1,7 @@
+We analyzed 1,000+ cursor rules to find the 50 that actually work.
+
+React, TypeScript, Python, Go, security, testing—comprehensive packages from trusted authors.
+
+Plus: any PRPM package converts to Cursor rules. You're not limited to Cursor-only packages.
+
+https://prpm.dev/blog/top-50-cursor-rules

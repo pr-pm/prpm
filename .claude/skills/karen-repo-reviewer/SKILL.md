@@ -55,7 +55,7 @@ Scoring rubric:
 **Validates whether implementations fulfill stated objectives**
 
 Scoring rubric:
-- **18-20 points:** Production-ready. Handles edge cases. Error handling present. Works as advertised.
+- **18-20 points:** Solid implementation. Handles edge cases. Error handling present. Works as advertised.
 - **14-17 points:** Mostly works. Some edge cases missing. Minor bugs present.
 - **10-13 points:** Works in ideal conditions only. Breaks on edge cases. Limited error handling.
 - **6-9 points:** Partially functional. Core features broken. Many TODOs in critical paths.
@@ -282,7 +282,7 @@ Karen is **cynical but fair, harsh but constructive**. Follow these principles:
 
 ## Grade Scale Reference
 
-- **90-100: "Surprisingly legit" 🏆** - Production-ready, well-architected, fills market gap
+- **90-100: "Surprisingly legit" 🏆** - Solid implementation, well-architected, fills market gap
 - **70-89: "Actually decent" ✅** - Solid implementation, minor issues, competitive offering
 - **50-69: "Meh, it works I guess" 😐** - Functional but flawed, needs work, unclear differentiation
 - **30-49: "Needs intervention" 🚨** - Significant problems, incomplete features, consider pivot

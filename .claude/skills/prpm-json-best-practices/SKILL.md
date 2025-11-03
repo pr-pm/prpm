@@ -44,62 +44,36 @@ Use `prpm.json` when you're:
 ## File Structure
 
 ### Single Package
+See `examples/single-package.json` for complete structure.
 
-For repositories with one package:
-
-```json
-{
-  "name": "my-awesome-skill",
-  "version": "1.0.0",
-  "description": "Clear, concise description of what this package does",
-  "author": "Your Name <you@example.com>",
-  "license": "MIT",
-  "repository": "https://github.com/username/repo",
-  "organization": "your-org",
-  "format": "claude",
-  "subtype": "skill",
-  "tags": ["typescript", "best-practices", "code-quality"],
-  "files": [
-    ".claude/skills/my-awesome-skill/SKILL.md"
-  ]
-}
-```
+**Key fields:** `name`, `version`, `description`, `author`, `license`, `format`, `subtype`, `files`
 
 ### Multi-Package Repository
+See `examples/multi-package.json` for complete structure.
 
-For repositories with multiple packages (like this one):
+**Use when:** Publishing multiple related packages from one repo
+**Key difference:** Top-level `packages` array with individual package definitions
 
-```json
-{
-  "name": "prpm-packages",
-  "version": "1.0.0",
-  "author": "Your Name",
-  "license": "MIT",
-  "repository": "https://github.com/username/repo",
-  "organization": "your-org",
-  "packages": [
-    {
-      "name": "package-one",
-      "version": "1.0.0",
-      "description": "Description of package one",
-      "private": true,
-      "format": "claude",
-      "subtype": "agent",
-      "tags": ["tag1", "tag2"],
-      "files": [".claude/agents/package-one.md"]
-    },
-    {
-      "name": "package-two",
-      "version": "1.0.0",
-      "description": "Description of package two",
-      "format": "cursor",
-      "subtype": "rule",
-      "tags": ["tag1", "tag3"],
-      "files": [".cursor/rules/package-two.mdc"]
-    }
-  ]
-}
-```
+### Collections Repository
+See `examples/collections-repository.json` for complete structure.
+
+**Use when:** Bundling existing published packages into curated collections
+**Key points:**
+- `collections` array references packages by `packageId` (not files)
+- Each collection has `id`, `name`, `description`, `packages`
+- Packages can be `required: true` (default) or `false` (optional)
+- Use version ranges (`^1.0.0`) or `latest`
+- Add `reason` to explain why package is included
+
+### Packages + Collections (Combined)
+See `examples/packages-with-collections.json` for complete structure.
+
+**Use when:** Publishing packages AND creating collections that bundle them
+**Key points:**
+- Define packages in `packages` array with files
+- Define collections in `collections` array referencing those packages
+- Collections can reference both local packages and external ones
+- Publish both individual packages and collection bundles from same repo
 
 ## Required Fields
 
@@ -144,6 +118,37 @@ When using `packages` array:
 | `tags` | string[] | Recommended | Searchable tags |
 | `files` | string[] | **Yes** | Files to include |
 | `private` | boolean | No | Mark as private |
+
+### Collection Fields
+
+When using `collections` array:
+
+**Top-level (repository with collections):**
+- `name`, `version`, `description`, `author`, `license` - **Required**
+- `repository`, `organization` - Recommended
+- Note: No `format`, `subtype`, or `files` required at top level
+
+**Each collection object:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | **Yes** | Unique collection identifier (kebab-case, 3-100 chars) |
+| `name` | string | **Yes** | Display name (3-100 chars) |
+| `description` | string | **Yes** | What the collection provides (10-500 chars) |
+| `packages` | array | **Yes** | Array of packages to include (minimum 1) |
+| `version` | string | Recommended | Semantic version of collection |
+| `category` | string | Recommended | Collection category (development, testing, etc.) |
+| `tags` | string[] | Recommended | Searchable tags (kebab-case, 1-10 items) |
+| `icon` | string | Optional | Emoji or icon (max 10 chars) |
+
+**Each package within collection:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `packageId` | string | **Yes** | Package to include |
+| `version` | string | Optional | Version range (^1.0.0, ~2.1.0, 1.0.0, latest) |
+| `required` | boolean | Optional | Whether package is required (default: true) |
+| `reason` | string | Optional | Why package is included (max 200 chars) |
 
 ## Format and Subtype Values
 
@@ -484,6 +489,58 @@ When you have the same content for multiple formats:
 }
 ```
 
+### Collections in prpm.json
+
+Collections CAN be defined in prpm.json alongside packages using the `collections` array. Collections bundle multiple packages together for easier installation.
+
+**Example with both packages and collections:**
+
+```json
+{
+  "name": "my-prompts-repo",
+  "author": "Your Name",
+  "license": "MIT",
+  "packages": [
+    {
+      "name": "typescript-rules",
+      "version": "1.0.0",
+      "description": "TypeScript best practices",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["typescript"],
+      "files": [".cursor/rules/typescript.mdc"]
+    }
+  ],
+  "collections": [
+    {
+      "id": "my-dev-setup",
+      "name": "My Development Setup",
+      "description": "Complete development setup with TypeScript and React",
+      "version": "1.0.0",
+      "category": "development",
+      "tags": ["typescript", "react"],
+      "packages": [
+        {
+          "packageId": "typescript-strict",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Enforces strict TypeScript type safety"
+        },
+        {
+          "packageId": "react-best-practices",
+          "version": "^2.0.0",
+          "required": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+For more details on creating collections, see the PRPM documentation at https://docs.prpm.dev or run `prpm help collections`.
+
+**Summary:** `prpm.json` can contain both packages (skills, agents, rules, slash-commands, etc.) and collections.
+
 ## Validation Checklist
 
 Before publishing, verify:
@@ -720,15 +777,17 @@ prpm publish --package my-skill
 
 ## Remember
 
-- `prpm.json` is **only for publishing YOUR packages**, not for installed dependencies
+- `prpm.json` is **only for publishing YOUR packages/collections**, not for installed dependencies
 - **Never add packages from `prpm.lock` to `prpm.json`** - they serve different purposes
 - `prpm.lock` tracks what you INSTALL, `prpm.json` defines what you PUBLISH
+- Use `collections` array to bundle existing packages (references by packageId)
+- Use `packages` array to define packages with files
+- Can combine both `packages` and `collections` in same repo
 - Always validate before committing
 - Keep versions in sync for related packages
 - Use consistent, searchable tags
-- Organize packages logically (private > format > subtype)
 - Verify all file paths exist
 - Check for duplicate names
 - Follow semver for version management
 
-**Goal:** Create maintainable, well-organized package manifests that are easy to publish and discover in the PRPM registry, while keeping installed dependencies separate in `prpm.lock`.
+**Goal:** Create maintainable, well-organized package manifests and curated collections that are easy to publish and discover in the PRPM registry.

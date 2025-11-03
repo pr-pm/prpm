@@ -1,0 +1,786 @@
+---
+title: 'Command Reference'
+description: 'Complete reference for all PRPM CLI commands'
+---
+
+## Package Discovery Commands
+
+### search
+
+Search for packages in the PRPM registry.
+
+```bash
+prpm search <query> [options]
+```
+
+**Arguments:**
+- `query` - Search term to find packages
+
+**Options:**
+- `--format <format>` - Filter by format (cursor, claude, windsurf, continue, etc.)
+- `--subtype <subtype>` - Filter by subtype (rule, agent, skill, slash-command, etc.)
+- `--limit <number>` - Maximum number of results to return (default: 20)
+- `--no-interactive` - Disable interactive pagination (useful for automation and scripting)
+
+**Note:** Interactive mode is enabled **by default** when there are multiple pages of results. Use `--no-interactive` when you want to search and install packages programmatically in scripts or CI/CD environments.
+
+**Examples:**
+
+```bash
+# Basic search (interactive by default)
+prpm search typescript
+
+# Filter by format
+prpm search react --format cursor
+
+# Filter by subtype
+prpm search coding --subtype rule
+
+# Disable interactive mode for automation
+prpm search python --no-interactive
+
+# Use in scripts/CI/CD pipelines
+prpm search typescript --format cursor --no-interactive | head -n 1
+```
+
+**Output:**
+Displays matching packages with their name, description, format, downloads, and installation command.
+
+---
+
+### info
+
+Display detailed information about a specific package.
+
+```bash
+prpm info <package-name>
+```
+
+**Arguments:**
+- `package-name` - Full package name (e.g., `@username/typescript-rules`)
+
+**Options:**
+- `--json` - Output in JSON format
+- `--version <version>` - Show info for a specific version
+
+**Examples:**
+
+```bash
+# View package details
+prpm info @username/typescript-best-practices
+
+# View specific version
+prpm info @username/typescript-best-practices --version 1.2.0
+
+# JSON output for scripting
+prpm info @username/typescript-rules --json
+```
+
+**Output:**
+Shows package name, version, description, author, format, subtype, dependencies, installation instructions, and README content.
+
+---
+
+### trending
+
+View trending packages from the registry.
+
+```bash
+prpm trending [options]
+```
+
+**Options:**
+- `--format <format>` - Filter by format
+- `--subtype <subtype>` - Filter by subtype
+- `--limit <number>` - Number of packages to display (default: 10)
+- `--period <period>` - Time period (day, week, month) (default: week)
+
+**Examples:**
+
+```bash
+# View trending packages
+prpm trending
+
+# Trending Cursor rules this month
+prpm trending --format cursor --period month
+
+# Top 20 trending agents
+prpm trending --subtype agent --limit 20
+```
+
+---
+
+### popular
+
+View all-time popular packages from the registry.
+
+```bash
+prpm popular [options]
+```
+
+**Options:**
+- `--format <format>` - Filter by format
+- `--subtype <subtype>` - Filter by subtype
+
+**Note:** `popular` shows all-time most downloaded packages, while `trending` shows packages gaining traction in a specific time period.
+
+**Examples:**
+
+```bash
+# View popular packages
+prpm popular
+
+# Popular Cursor rules
+prpm popular --format cursor
+
+# Popular Claude skills
+prpm popular --format claude --subtype skill
+```
+
+---
+
+### collections
+
+Browse and view curated collections of packages.
+
+```bash
+prpm collections [options]
+prpm collections <collection-name>
+```
+
+**Options:**
+- `--list` - List all available collections
+- `--install` - Install all packages in a collection
+
+**Examples:**
+
+```bash
+# List all collections
+prpm collections --list
+
+# View a specific collection
+prpm collections web-development
+
+# Install all packages in a collection
+prpm collections web-development --install
+```
+
+---
+
+## Package Management Commands
+
+### install
+
+Install one or more packages from the registry.
+
+```bash
+prpm install <package-name> [additional-packages...] [options]
+```
+
+**Arguments:**
+- `package-name` - Package to install (supports multiple packages)
+
+**Options:**
+- `--version <version>` - Install a specific version
+- `--as <format>` - Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)
+- `--format <format>` - Alias for `--as`
+- `--subtype <subtype>` - Specify subtype when converting (skill, agent, rule, etc.)
+- `--frozen-lockfile` - Fail if lock file needs to be updated (for CI)
+
+**Examples:**
+
+```bash
+# Install a package
+prpm install @username/typescript-best-practices
+
+# Install multiple packages
+prpm install @username/typescript-rules1 @username/typescript-rules2 @username/typescript-rules3
+
+# Install specific version
+prpm install @username/typescript-rules --version 2.1.0
+
+# Install and convert to Cursor format
+prpm install @username/typescript-rules --as cursor
+
+# Install and convert to Claude format
+prpm install @username/typescript-rules --format claude
+
+# Frozen lockfile (for CI)
+prpm install @username/typescript-rules --frozen-lockfile
+```
+
+**What happens during installation:**
+1. Package is downloaded from the registry
+2. Files are extracted to the appropriate directory (`.cursor/`, `.claude/`, etc.)
+3. Package is registered in `prpm.lock`
+4. Format-specific configuration is applied (MDC headers for Cursor, etc.)
+
+---
+
+### uninstall
+
+Remove installed packages from your project.
+
+```bash
+prpm uninstall <package-id> [additional-packages...] [options]
+```
+
+**Arguments:**
+- `package-id` - ID of the package to uninstall
+
+**Options:**
+- `--force` - Skip confirmation prompts
+- `--keep-files` - Remove from lock file but keep the files
+
+**Examples:**
+
+```bash
+# Uninstall a package
+prpm uninstall @username/typescript-best-practices
+
+# Uninstall multiple packages
+prpm uninstall package1 package2 package3
+
+# Uninstall without confirmation
+prpm uninstall package-name --force
+```
+
+---
+
+### list
+
+List all installed packages in the current project.
+
+```bash
+prpm list [options]
+```
+
+**Options:**
+- `--format <format>` - Filter by format
+- `--subtype <subtype>` - Filter by subtype
+- `--json` - Output in JSON format
+- `--verbose` - Show additional details (file paths, versions)
+
+**Examples:**
+
+```bash
+# List all packages
+prpm list
+
+# List only Cursor packages
+prpm list --format cursor
+
+# List all agents
+prpm list --subtype agent
+
+# Detailed output
+prpm list --verbose
+
+# JSON output
+prpm list --json
+```
+
+**Output:**
+Shows package ID, format, subtype, version, and file path for each installed package.
+
+---
+
+### outdated
+
+Check for packages that have newer versions available.
+
+```bash
+prpm outdated [options]
+```
+
+**Options:**
+- `--json` - Output in JSON format
+
+**Examples:**
+
+```bash
+# Check for outdated packages
+prpm outdated
+
+# JSON output for scripting
+prpm outdated --json
+```
+
+**Output:**
+Displays packages with their current version, latest available version, and update command.
+
+---
+
+### update
+
+Update specific packages to their latest versions.
+
+```bash
+prpm update <package-name> [additional-packages...] [options]
+```
+
+**Arguments:**
+- `package-name` - Package(s) to update
+
+**Options:**
+- `--version <version>` - Update to a specific version
+- `--force` - Force update even if at latest version
+
+**Examples:**
+
+```bash
+# Update a single package
+prpm update @username/typescript-rules
+
+# Update multiple packages
+prpm update package1 package2 package3
+
+# Update to specific version
+prpm update package-name --version 2.5.0
+```
+
+---
+
+### upgrade
+
+Upgrade all installed packages to their latest versions.
+
+```bash
+prpm upgrade [options]
+```
+
+**Options:**
+- `--dry-run` - Show what would be upgraded without making changes
+- `--interactive` - Prompt for confirmation for each package
+- `--skip-breaking` - Skip packages with breaking changes (major version bumps)
+
+**Examples:**
+
+```bash
+# Upgrade all packages
+prpm upgrade
+
+# Preview upgrades
+prpm upgrade --dry-run
+
+# Interactive upgrades
+prpm upgrade --interactive
+```
+
+---
+
+## Package Creation Commands
+
+### init
+
+Initialize a new PRPM package in the current directory.
+
+```bash
+prpm init [options]
+```
+
+**Options:**
+- `--yes` - Use default values, skip prompts
+- `--private` - Create a private package
+- `--force` - Overwrite existing `prpm.json` if present
+
+**Interactive Prompts:**
+- Package name
+- Version
+- Description
+- Format (cursor, claude, windsurf, etc.)
+- Subtype (rule, agent, skill, etc.)
+- Author name
+- License
+- Repository URL
+- Tags
+- Files to include
+
+**Examples:**
+
+```bash
+# Interactive initialization
+prpm init
+
+# Use defaults
+prpm init --yes
+
+# Create private package
+prpm init --private
+
+# Force overwrite
+prpm init --force
+```
+
+**What gets created:**
+- `prpm.json` - Package manifest
+- `README.md` - Package documentation template
+- Format-specific example files based on your selection
+
+---
+
+### catalog
+
+Discover and catalog existing packages from your directories. Scans specified directories for prompt files (Cursor rules, Claude skills, etc.) and creates or updates a `prpm.json` manifest that you can use to publish them.
+
+```bash
+prpm catalog [directories...] [options]
+```
+
+**Arguments:**
+- `directories` - Directories to scan (default: current directory)
+
+**Options:**
+- `-o, --output <path>` - Output path for prpm.json (default: ./prpm.json)
+- `-a, --append` - Append to existing prpm.json instead of overwriting
+- `--dry-run` - Show what would be cataloged without making changes
+
+**Examples:**
+
+```bash
+# Catalog packages in current directory
+prpm catalog
+
+# Catalog specific directories
+prpm catalog .claude .cursor .windsurf
+
+# Append to existing prpm.json
+prpm catalog --append
+
+# Preview without making changes
+prpm catalog --dry-run
+
+# Output to custom location
+prpm catalog -o packages.json
+```
+
+**What it does:**
+1. Scans directories for prompt files (`.md`, `.mdc`, `SKILL.md`, etc.)
+2. Detects format (cursor, claude, windsurf, etc.) and subtype (rule, skill, agent)
+3. Extracts package metadata from file content
+4. Filters out packages installed from registry (only catalogs user-created content)
+5. Creates/updates `prpm.json` with discovered packages
+
+**Output:**
+Creates a multi-package manifest file that you can review, edit, and publish with `prpm publish`.
+
+---
+
+### publish
+
+Publish your package to the PRPM registry.
+
+```bash
+prpm publish [options]
+```
+
+**Options:**
+- `--dry-run` - Test publishing without actually uploading
+- `--tag <tag>` - Publish with a specific tag (e.g., `beta`, `next`)
+- `--access <public|private>` - Set package access level
+- `--force` - Skip validation warnings
+
+**Prerequisites:**
+- Must be logged in (`prpm login`)
+- Must have a valid `prpm.json` in current directory
+- Package version must not already exist in registry
+
+**Examples:**
+
+```bash
+# Publish package
+prpm publish
+
+# Test publish
+prpm publish --dry-run
+
+# Publish beta version
+prpm publish --tag beta
+
+# Publish private package
+prpm publish --access private
+```
+
+**What happens during publish:**
+1. Package is validated against schema
+2. Files are packaged into a tarball
+3. Package metadata is uploaded to registry
+4. Tarball is uploaded to storage
+5. Package becomes available for installation
+
+---
+
+## Local File Management Commands
+
+### index
+
+Scan your project directories for existing prompt files and register them in PRPM.
+
+```bash
+prpm index [options]
+```
+
+**Options:**
+- `--verbose` - Show detailed output for each file
+
+**Scanned Directories:**
+- `.cursor/rules/` - Cursor rules
+- `.cursor/agents/` - Cursor agents
+- `.cursor/commands/` - Cursor slash commands
+- `.claude/agents/` - Claude agents
+- `.claude/skills/` - Claude skills
+- `.claude/commands/` - Claude slash commands
+- `.continue/rules/` - Continue rules
+- `.windsurf/rules/` - Windsurf rules
+- `.prompts/` - Generic prompts
+- `.mcp/` - MCP servers
+
+**Examples:**
+
+```bash
+# Index local files
+prpm index
+
+# Verbose output
+prpm index --verbose
+```
+
+**Output:**
+Shows how many files were found and registered in each directory, and updates `prpm.lock`.
+
+---
+
+## User Management Commands
+
+### login
+
+Authenticate with the PRPM registry.
+
+```bash
+prpm login [options]
+```
+
+**Options:**
+- `--token <token>` - Use an existing authentication token
+- `--registry <url>` - Specify a custom registry URL
+
+**Examples:**
+
+```bash
+# Interactive login
+prpm login
+
+# Login with token
+prpm login --token your-auth-token
+
+# Login to custom registry
+prpm login --registry https://custom-registry.example.com
+```
+
+**Authentication Flow:**
+1. Opens browser for authentication (or uses provided token)
+2. Saves authentication token to `~/.prpmrc`
+3. Token is used for future authenticated requests
+
+---
+
+### whoami
+
+Display information about the currently authenticated user.
+
+```bash
+prpm whoami [options]
+```
+
+**Options:**
+- `--json` - Output in JSON format
+
+**Examples:**
+
+```bash
+# Show current user
+prpm whoami
+
+# JSON output
+prpm whoami --json
+```
+
+**Output:**
+Displays username, email, and authentication status.
+
+---
+
+## Configuration Commands
+
+### config
+
+View or modify CLI configuration.
+
+```bash
+prpm config <action> [key] [value]
+```
+
+**Subcommands:**
+- `list` (or `ls`) - List all configuration values
+- `get <key>` - Get a configuration value
+- `set <key> <value>` - Set a configuration value
+- `delete <key>` (or `rm`) - Reset a configuration value to default
+
+**Configuration Keys:**
+
+**Readable keys:**
+- `registryUrl` - Registry URL
+- `telemetryEnabled` - Telemetry enabled (true/false)
+- `token` - Authentication token (set via `prpm login`)
+- `username` - Username (set via `prpm login`)
+
+**Settable keys:**
+- `registryUrl` - Change the registry URL
+- `telemetryEnabled` - Enable or disable telemetry
+
+**Note:** `token` and `username` are managed via `prpm login` and cannot be set directly.
+
+**Examples:**
+
+```bash
+# List all configuration
+prpm config list
+# or just:
+prpm config
+
+# Get a specific value
+prpm config get registryUrl
+prpm config get telemetryEnabled
+
+# Set registry URL
+prpm config set registryUrl https://custom-registry.dev
+
+# Enable telemetry
+prpm config set telemetryEnabled true
+
+# Disable telemetry
+prpm config set telemetryEnabled false
+
+# Reset a value to default
+prpm config delete registryUrl
+prpm config delete telemetryEnabled
+```
+
+**Telemetry values:**
+When setting `telemetryEnabled`, you can use:
+- `true`, `1`, `yes` - Enable telemetry
+- `false`, `0`, `no` - Disable telemetry
+
+---
+
+### telemetry
+
+Manage anonymous usage telemetry.
+
+```bash
+prpm telemetry <action>
+```
+
+**Actions:**
+- `enable` - Enable telemetry
+- `disable` - Disable telemetry
+- `status` - Show current telemetry status
+
+**Examples:**
+
+```bash
+# Check status
+prpm telemetry status
+
+# Enable telemetry
+prpm telemetry enable
+
+# Disable telemetry
+prpm telemetry disable
+```
+
+**What we collect:**
+- Command usage (anonymized)
+- Error messages (anonymized)
+- Installation success/failure rates
+- Package popularity
+
+**We do NOT collect:**
+- Personal information
+- File contents
+- Project details
+- Authentication tokens
+
+---
+
+### schema
+
+View or validate package schemas.
+
+```bash
+prpm schema [options]
+```
+
+**Options:**
+- `--validate <file>` - Validate a package manifest against schema
+- `--format <format>` - Show schema for a specific format
+- `--output <file>` - Write schema to file
+
+**Examples:**
+
+```bash
+# View main package schema
+prpm schema
+
+# Validate your package
+prpm schema --validate prpm.json
+
+# Get schema for specific format
+prpm schema --format cursor
+
+# Save schema to file
+prpm schema --output schema.json
+```
+
+---
+
+## Exit Codes
+
+The PRPM CLI uses standard exit codes:
+
+- `0` - Success
+- `1` - General error
+- `2` - Invalid arguments or usage
+- `3` - Network error
+- `4` - Authentication error
+- `5` - Package not found
+- `6` - Validation error
+
+These can be useful when scripting with PRPM:
+
+```bash
+#!/bin/bash
+if prpm install @username/typescript-rules; then
+  echo "Installation successful"
+else
+  echo "Installation failed with code $?"
+fi
+```
+
+---
+
+## Environment Variables
+
+PRPM respects these environment variables:
+
+- `PRPM_REGISTRY_URL` - Override default registry URL
+- `PRPM_TOKEN` - Authentication token
+- `PRPM_TELEMETRY` - Enable/disable telemetry (true/false)
+- `PRPM_CONFIG_PATH` - Custom config file location
+- `NO_COLOR` - Disable colored output
+
+**Example:**
+
+```bash
+PRPM_REGISTRY_URL=https://custom.registry.dev prpm search typescript
+```

@@ -24,6 +24,24 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "top-50-cursor-rules",
+    title: "Top 50 Cursor Rules to Supercharge Your Development Workflow",
+    excerpt: "We analyzed over 1,000 cursor rules to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.",
+    date: "2025-11-03",
+    author: "PRPM Team",
+    readTime: "12 min read",
+    tags: ["Cursor", "AI Development", "Developer Tools", "Best Practices"],
+  },
+  {
+    slug: "when-to-use-claude-skill-vs-subagent",
+    title: "When to Use a Claude Skill vs a Claude Sub-Agent",
+    excerpt: "Skills and sub-agents sound similar but work completely differently. Pick the wrong one and you'll end up with context bloat or tasks that never finish. This guide shows you exactly when to use each.",
+    date: "2025-10-31",
+    author: "PRPM Team",
+    readTime: "10 min read",
+    tags: ["Technical", "Tutorial", "AI Development", "Claude Code"],
+  },
+  {
     slug: "prpm-vs-plugins",
     title: "PRPM vs Claude Plugins Marketplace: What's the Difference?",
     excerpt: "Understanding how PRPM differs from the Claude plugin marketplaces. Learn why PRPM manages AI instructions while plugins manage executable code, and why both can coexist in your workflow.",

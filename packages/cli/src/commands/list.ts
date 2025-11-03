@@ -29,6 +29,8 @@ function getDestinationDir(type: string): string {
       return '.continue/rules';
     case 'windsurf':
       return '.windsurf/rules';
+    case 'agents.md':
+      return '.agents';
     case 'generic':
       return '.prompts';
     case 'mcp':

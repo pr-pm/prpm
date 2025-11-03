@@ -1,0 +1,87 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "PRPM Documentation",
+  "logo": {
+    "dark": "/logo/wordmark-dark.svg",
+    "light": "/logo/wordmark-light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#0D9373",
+    "light": "#07C983",
+    "dark": "#0D9373",
+    "anchors": {
+      "from": "#0D9373",
+      "to": "#07C983"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/pr-pm/prpm"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://prpm.dev"
+  },
+  "tabs": [
+    {
+      "name": "CLI Reference",
+      "url": "cli"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "installation"
+      ]
+    },
+    {
+      "group": "Core Concepts",
+      "pages": [
+        "concepts/packages",
+        "concepts/collections",
+        "concepts/formats"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "guides/format-conversion",
+        "guides/mcp-servers"
+      ]
+    },
+    {
+      "group": "CLI Reference",
+      "pages": [
+        "cli/overview",
+        "cli/commands",
+        "cli/workflows",
+        "cli/troubleshooting"
+      ]
+    },
+    {
+      "group": "Publishing",
+      "pages": [
+        "publishing/getting-started",
+        "publishing/manifest",
+        "publishing/collections"
+      ]
+    },
+    {
+      "group": "Advanced",
+      "pages": [
+        "advanced/self-improving-packages",
+        "advanced/meta-packages"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/pr-pm/prpm",
+    "twitter": "https://twitter.com/prpmdev"
+  }
+}

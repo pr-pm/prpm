@@ -153,27 +153,206 @@ export const metadata: Metadata = {
 ```
 
 #### 5. Content with Prose Styling
+
+**CRITICAL**: Tailwind prose variant classes (like `prose-h2:text-3xl`) don't always apply correctly. Use explicit styling patterns instead.
+
+##### Pattern 1: Major Section Headings (H2) - ALWAYS Use `not-prose` Wrappers
+
 ```tsx
-<div className="prose prose-invert prose-lg max-w-none
-  prose-headings:text-white prose-headings:font-bold
-  prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6
-  prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
-  prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-6
-  prose-a:text-prpm-accent prose-a:no-underline hover:prose-a:underline
-  prose-strong:text-white prose-strong:font-semibold
-  prose-code:text-prpm-accent prose-code:bg-prpm-dark-card prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm
-  prose-pre:bg-prpm-dark-card prose-pre:border prose-pre:border-prpm-border prose-pre:rounded-xl prose-pre:p-6
-  prose-ul:text-gray-300 prose-ul:mb-6
-  prose-ol:text-gray-300 prose-ol:mb-6
-  prose-li:mb-2
-  prose-blockquote:border-l-4 prose-blockquote:border-prpm-accent prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-gray-400
-  prose-table:border-collapse prose-table:w-full prose-table:mb-8
-  prose-th:bg-prpm-dark-card prose-th:border prose-th:border-prpm-border prose-th:p-4 prose-th:text-left prose-th:font-semibold
-  prose-td:border prose-td:border-prpm-border prose-td:p-4
-">
-  {/* Your blog content here */}
+<div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+  <h2 className="text-3xl font-bold text-white mb-0">Section Title</h2>
 </div>
 ```
+
+**Why**: This ensures headings:
+- Break out of prose context completely
+- Get explicit visual treatment with background and borders
+- Render consistently across all browsers
+- Match the established PRPM blog aesthetic
+
+##### Pattern 2: Subsection Headings (H3) - Use `not-prose` Blocks
+
+```tsx
+<div className="not-prose mb-10">
+  <h3 className="text-2xl font-bold text-white mb-4">Subsection Title</h3>
+  <p className="text-gray-300 leading-relaxed mb-6">Your content</p>
+  {/* More content with explicit classes */}
+</div>
+```
+
+##### Pattern 3: Body Content - Explicit Classes
+
+```tsx
+<div className="prose prose-invert prose-lg max-w-none
+  prose-headings:text-white prose-headings:font-bold prose-headings:tracking-tight
+  prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-6 prose-h2:scroll-mt-20
+  prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:scroll-mt-20
+  prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-6
+  prose-a:text-prpm-accent prose-a:no-underline prose-a:font-medium hover:prose-a:underline
+  prose-code:text-prpm-accent prose-code:bg-prpm-dark-card/50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-[0.9em] prose-code:font-mono prose-code:border prose-code:border-prpm-border/30
+  prose-pre:bg-prpm-dark-card prose-pre:border prose-pre:border-prpm-border prose-pre:rounded-xl prose-pre:p-6 prose-pre:my-8 prose-pre:overflow-x-auto
+  prose-strong:text-white prose-strong:font-semibold
+  prose-ul:my-6 prose-ul:space-y-2 prose-ul:text-gray-300
+  prose-ol:my-6 prose-ol:space-y-2 prose-ol:text-gray-300
+  prose-li:text-gray-300 prose-li:leading-relaxed
+  prose-blockquote:border-l-4 prose-blockquote:border-prpm-accent prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-gray-400 prose-blockquote:my-8
+  prose-table:border-collapse prose-table:w-full prose-table:my-8 prose-table:text-gray-300
+  prose-thead:border-b-2 prose-thead:border-prpm-border
+  prose-th:text-left prose-th:text-white prose-th:bg-prpm-dark-card prose-th:px-4 prose-th:py-3 prose-th:font-semibold prose-th:border prose-th:border-prpm-border
+  prose-td:px-4 prose-td:py-3 prose-td:border prose-td:border-prpm-border
+  prose-hr:border-prpm-border prose-hr:my-12
+">
+  {/* Intro paragraphs */}
+  <p className="text-gray-300 leading-relaxed mb-6">
+    Opening content...
+  </p>
+
+  {/* Major section - USE not-prose wrapper! */}
+  <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+    <h2 className="text-3xl font-bold text-white mb-0">The Core Distinction</h2>
+  </div>
+
+  {/* Subsection */}
+  <div className="not-prose mb-10">
+    <h3 className="text-2xl font-bold text-white mb-4">Scenario 1: Example</h3>
+    <p className="text-gray-300 leading-relaxed mb-6">Content here</p>
+
+    {/* Code example with explicit classes */}
+    <pre className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 overflow-x-auto mb-6">
+      <code className="text-sm text-gray-300 font-mono">
+        {`npm install package`}
+      </code>
+    </pre>
+  </div>
+
+  {/* Tables can stay in prose context */}
+  <table>
+    <thead>
+      <tr>
+        <th>Column 1</th>
+        <th>Column 2</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Data 1</td>
+        <td>Data 2</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+**Key Rules**:
+1. **All H2 headings** MUST be wrapped in `not-prose` styled divs
+2. **All H3 headings** MUST be wrapped in `not-prose` blocks with explicit classes
+3. **Paragraphs** within `not-prose` blocks need explicit `text-gray-300 leading-relaxed mb-6` or `mb-8` classes
+4. **Code blocks** need explicit pre/code styling, don't rely on prose variants
+5. **Tables** MUST be wrapped in `not-prose` divs with explicit styling (see Tables section below)
+6. **Lists** within `not-prose` need explicit classes: `list-disc ml-6 text-gray-300 space-y-3 mb-8`
+7. **Ordered lists** need: `list-decimal list-inside text-gray-300 space-y-6 mb-8`
+
+##### Spacing Guidelines for Better Readability
+
+Use generous spacing to avoid cramped appearance:
+
+**Paragraphs:**
+- Standard paragraphs: `mb-6` (24px)
+- Paragraphs before lists/code: `mb-8` (32px)
+- Intro paragraphs after H2: `mb-8` (32px)
+
+**Lists:**
+- Between list items: `space-y-3` (12px between items)
+- After lists: `mb-8` (32px)
+- Unordered lists: `list-disc ml-6` (bullets with left margin)
+- Ordered lists: `list-decimal list-inside space-y-6` (wider spacing for numbered lists)
+- Nested lists: `list-disc ml-6 mt-3` (add top margin for nested)
+
+**Subsection Blocks:**
+- Wrapper div: `mb-16` (64px after each subsection)
+- H3 headings: `mb-6` (24px after heading)
+- Subheadings within sections: `mb-4` (16px)
+
+**Tables:**
+- Wrapper: `mb-8` after tables
+- Cell padding: `px-4 py-4` (generous padding for readability)
+- Header padding: `px-4 py-4` (same as cells for consistency)
+
+##### Tables - MUST Use Explicit Styling
+
+**CRITICAL**: Tables need explicit styling, not prose classes. Wrap in `not-prose` div:
+
+```tsx
+<div className="not-prose mb-8">
+  <table className="w-full border-collapse text-gray-300">
+    <thead className="border-b-2 border-prpm-border">
+      <tr>
+        <th className="text-left text-white bg-prpm-dark-card px-4 py-4 font-semibold border border-prpm-border">Header</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td className="px-4 py-4 border border-prpm-border">Cell content</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+**Why py-4?**: Vertical padding of 16px makes tables much more readable than default 12px (py-3).
+
+##### Lists - MUST Include list-disc or list-decimal
+
+**Unordered Lists (Bullets):**
+```tsx
+<ul className="text-gray-300 space-y-3 mb-8 list-disc ml-6">
+  <li>List item with bullet point</li>
+  <li>Another item</li>
+</ul>
+```
+
+**Ordered Lists (Numbers):**
+```tsx
+<ol className="text-gray-300 space-y-6 mb-8 list-decimal list-inside">
+  <li><strong className="text-white">Step one:</strong> Description</li>
+  <li><strong className="text-white">Step two:</strong> Description</li>
+</ol>
+```
+
+**Nested Lists:**
+```tsx
+<li>
+  Main item
+  <ul className="text-gray-300 space-y-2 mt-3 ml-6 list-disc">
+    <li>Nested item</li>
+    <li>Another nested item</li>
+  </ul>
+</li>
+```
+
+**Why?** Without `list-disc ml-6` or `list-decimal list-inside`, bullets/numbers won't display.
+
+##### Call-Out Sections (Questions, CTAs)
+
+Use the same gradient styling as H2 sections for important call-outs:
+
+```tsx
+<hr className="border-prpm-border my-12" />
+
+<div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+  <h2 className="text-3xl font-bold text-white mb-4">Questions?</h2>
+
+  <p className="text-gray-300 leading-relaxed text-lg mb-0">
+    <Link href="/contact" className="text-prpm-accent hover:underline font-medium">Get in touch</Link> if you need help.
+  </p>
+</div>
+```
+
+**Use for:**
+- Questions sections at end of posts
+- Important CTAs mid-article
+- Key takeaways or summaries
+- Author notes or warnings
 
 #### 6. CTAs and Footer
 ```tsx
@@ -243,10 +422,12 @@ export const metadata: Metadata = {
 ### Technical Accuracy
 
 1. **Package Examples**
-   - Use actual packages from registry.prpm.dev
-   - Verify package names and versions
+   - Use actual packages from the production registry
+   - **CRITICAL**: When verifying packages with `prpm search`, ensure you're checking against production registry
+   - If `PRPM_REGISTRY_URL` is set to localhost in your environment, unset it or explicitly use production: `PRPM_REGISTRY_URL=https://registry.prpm.dev prpm search "package-name"`
+   - Verify package names and versions exist in production before referencing them
    - Test CLI commands before publishing
-   - Link to packages in registry
+   - Link to packages using https://prpm.dev/package/[package-name] URLs (prpm.dev is the web interface, registry.prpm.dev is only the API)
 
 2. **Claims and Data**
    - Cite sources for performance claims
@@ -312,6 +493,8 @@ Before publishing, verify:
 - [ ] **`linkedin.txt` file created with 1,300-2,000 char post**
 - [ ] **LinkedIn post tested for character count**
 - [ ] **LinkedIn post includes clear CTA and link**
+- [ ] **CRITICAL: Sitemap updated at `packages/webapp/public/sitemap.xml`**
+- [ ] **Sitemap entry added with correct slug, lastmod date, and priority 0.7**
 
 ## File Structure
 
@@ -435,7 +618,7 @@ Instead of copy-pasting .cursorrules files between projects, you can:
 • Install curated packages: prpm install @nextjs/app-router
 • Publish your own patterns for others to use
 • Get automatic format conversion for your specific AI editor
-• Browse 1,500+ packages from the community
+• Browse 2,100+ packages from the community
 
 We built the infrastructure we wanted to exist: format-agnostic, privacy-first, and as reliable as npm.
 

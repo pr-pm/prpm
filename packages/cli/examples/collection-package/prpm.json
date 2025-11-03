@@ -1,49 +1,107 @@
 {
-  "name": "@username/my-collection",
-  "version": "1.0.0",
-  "description": "A collection of prompts for different IDEs and use cases",
-  "type": "collection",
+  "name": "@username/my-prompts-repo",
   "author": "Your Name",
   "license": "MIT",
   "repository": "https://github.com/username/my-collection",
   "homepage": "https://example.com",
-  "keywords": ["prompts", "ai", "development"],
-  "tags": ["productivity", "coding"],
-  "files": [
+  "packages": [
     {
-      "path": ".claude/skills/tdd.md",
-      "type": "claude-skill",
-      "name": "Test-Driven Development",
+      "name": "tdd-skill",
+      "version": "1.0.0",
       "description": "Guides you through TDD workflow",
-      "tags": ["testing", "tdd"]
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["testing", "tdd"],
+      "files": [".claude/skills/tdd.md"]
     },
     {
-      "path": ".claude/agents/test-generator.md",
-      "type": "claude-agent",
-      "name": "Test Generator",
+      "name": "test-generator",
+      "version": "1.0.0",
       "description": "Generates comprehensive test suites",
-      "tags": ["testing", "automation"]
+      "format": "claude",
+      "subtype": "agent",
+      "tags": ["testing", "automation"],
+      "files": [".claude/agents/test-generator.md"]
     },
     {
-      "path": ".claude/commands/review.md",
-      "type": "claude-slash-command",
-      "name": "Code Review",
+      "name": "code-review-command",
+      "version": "1.0.0",
       "description": "Reviews code for best practices",
-      "tags": ["review", "quality"]
+      "format": "claude",
+      "subtype": "slash-command",
+      "tags": ["review", "quality"],
+      "files": [".claude/commands/review.md"]
     },
     {
-      "path": ".cursor/rules/typescript.mdc",
-      "type": "cursor",
-      "name": "TypeScript Rules",
+      "name": "typescript-rules",
+      "version": "1.0.0",
       "description": "Best practices for TypeScript development",
-      "tags": ["typescript", "frontend"]
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["typescript", "frontend"],
+      "files": [".cursor/rules/typescript.mdc"]
     },
     {
-      "path": ".cursor/rules/python.mdc",
-      "type": "cursor",
-      "name": "Python Rules",
+      "name": "python-rules",
+      "version": "1.0.0",
       "description": "Python development standards",
-      "tags": ["python", "backend"]
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["python", "backend"],
+      "files": [".cursor/rules/python.mdc"]
+    }
+  ],
+  "collections": [
+    {
+      "id": "testing-suite",
+      "name": "Complete Testing Suite",
+      "description": "A collection of testing tools and best practices for TDD and code review",
+      "version": "1.0.0",
+      "category": "testing",
+      "tags": ["testing", "tdd", "code-review", "productivity"],
+      "icon": "🧪",
+      "packages": [
+        {
+          "packageId": "tdd-skill",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Essential TDD workflow guidance"
+        },
+        {
+          "packageId": "test-generator",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Automated test suite generation"
+        },
+        {
+          "packageId": "code-review-command",
+          "version": "^1.0.0",
+          "required": false,
+          "reason": "Optional code review automation"
+        }
+      ]
+    },
+    {
+      "id": "ide-rules",
+      "name": "Multi-Language IDE Rules",
+      "description": "Coding standards and best practices for TypeScript and Python",
+      "version": "1.0.0",
+      "category": "development",
+      "tags": ["typescript", "python", "coding-standards"],
+      "packages": [
+        {
+          "packageId": "typescript-rules",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "TypeScript development standards"
+        },
+        {
+          "packageId": "python-rules",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Python development standards"
+        }
+      ]
     }
   ]
 }
