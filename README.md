@@ -165,7 +165,7 @@ prpm install @username/karen-skill --as claude
 - **Continue**: Prompts ready to use
 - **Windsurf**: Rules integrated automatically
 
-📚 **[Installation Guide](https://docs.prpm.dev/getting-started/installation)** | **[Configuration Guide](https://docs.prpm.dev/getting-started/configuration)**
+📚 **[Installation Guide](https://docs.prpm.dev/installation)** | **[Configuration Guide](https://docs.prpm.dev/installation#configuration)**
 
 ---
 
@@ -236,8 +236,6 @@ prpm install @username/karen-skill
 # Get: 78/100 score + market research + actionable fixes
 ```
 
-📚 **[More Examples & Tutorials](https://docs.prpm.dev/guides/usage-examples)**
-
 ---
 
 ## How It Works
@@ -260,7 +258,7 @@ prpm install @username/karen-skill
 - **Version locking** - prpm-lock.json for consistent installs
 - **Collections** - Install multiple packages as bundles
 
-📚 **[Learn More](https://docs.prpm.dev/concepts/how-it-works)**
+📚 **[Learn More](https://docs.prpm.dev/guides/format-conversion)**
 
 ---
 
@@ -276,26 +274,6 @@ prpm install @username/karen-skill
 | **Dependency handling** | ✅ | ❌ | ❌ |
 | **Works with Cursor + Claude + Continue + Windsurf** | ✅ | ⚠️ | ❌ |
 | **Configures MCP servers (Claude Code)** | ✅ | ❌ | ❌ |
-
----
-
-## 🔥 Bonus: Karen Code Reviews
-
-Get brutally honest repository reviews with Karen Scores (0-100):
-
-```bash
-# GitHub Action (automated)
-- uses: khaliqgant/karen-action@v1
-  with:
-    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-
-# Or interactive in your IDE
-prpm install @username/karen-skill
-```
-
-**[Get Your Karen Score →](GET_KAREN_SCORE.md)** | **[See Our Score (78/100)](.karen/review.md)**
-
-Karen analyzes: Bullshit Factor, Actually Works, Code Quality, Completion Honesty, and Practical Value (with competitor research).
 
 ---
 
@@ -336,11 +314,10 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 **➡️ [docs.prpm.dev](https://docs.prpm.dev) - Complete documentation**
 
 **Quick Links:**
-- 🚀 [Getting Started](https://docs.prpm.dev/getting-started/installation) - Install and configure PRPM
+- 🚀 [Getting Started](https://docs.prpm.dev/installation) - Install and configure PRPM
 - 💻 [CLI Reference](https://docs.prpm.dev/cli/commands) - All commands and options
 - 📦 [Collections Guide](https://docs.prpm.dev/concepts/collections) - Multi-package bundles
-- 🔄 [Format Conversion](https://docs.prpm.dev/concepts/format-conversion) - Universal packages explained
-- 🎯 [Usage Examples](https://docs.prpm.dev/guides/usage-examples) - Real-world workflows
+- 🔄 [Format Conversion](https://docs.prpm.dev/concepts/formats) - Universal packages explained
 - 🔌 [MCP Servers](https://docs.prpm.dev/guides/mcp-servers) - Model Context Protocol configuration
 
 ### 🛠️ Developer & Contributor Docs

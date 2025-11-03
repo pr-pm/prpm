@@ -2,8 +2,8 @@
   "$schema": "https://mintlify.com/schema.json",
   "name": "PRPM Documentation",
   "logo": {
-    "dark": "/logo/logo.svg",
-    "light": "/logo/logo.svg"
+    "dark": "/logo/wordmark.svg",
+    "light": "/logo/wordmark.svg"
   },
   "favicon": "/favicon.svg",
   "colors": {
