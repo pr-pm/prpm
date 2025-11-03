@@ -10,6 +10,7 @@ import { Package, PackageVersion, PackageInfo } from '../types.js';
 import { toError } from '../types/errors.js';
 import { config } from '../config.js';
 import { optionalAuth } from '../middleware/auth.js';
+import type { AIMetadataResult } from '../scoring/ai-evaluator.js';
 import type {
   ListPackagesQuery,
   PackageParams,
@@ -557,6 +558,8 @@ export async function packageRoutes(server: FastifyInstance) {
       const license = manifest.license as string | undefined;
       const tags = (manifest.tags as string[]) || [];
       const keywords = (manifest.keywords as string[]) || [];
+      const language = manifest.language as string | undefined;
+      const framework = manifest.framework as string | undefined;
       const isPrivate = manifest.private === true; // Explicitly extract private field
 
       if (!packageName || !version || !description || !format) {
@@ -708,9 +711,9 @@ export async function packageRoutes(server: FastifyInstance) {
           server,
           `INSERT INTO packages (
             name, description, author_id, org_id, format, subtype,
-            license, tags, keywords, visibility, last_published_at
+            license, tags, keywords, language, framework, visibility, last_published_at
           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
            RETURNING *`,
           [
             packageName,
@@ -722,6 +725,8 @@ export async function packageRoutes(server: FastifyInstance) {
             license || null,
             tags,
             keywords,
+            language || null,
+            framework || null,
             visibility,
           ]
         );
@@ -769,17 +774,17 @@ export async function packageRoutes(server: FastifyInstance) {
         [pkg.id]
       );
 
-      // 5. Calculate and store quality score + explanation (async, don't block response)
-      server.log.info({ packageId: pkg.id }, '🎯 Starting quality score calculation');
+      // 5. Calculate and store quality score + explanation + metadata (async, don't block response)
+      server.log.info({ packageId: pkg.id }, '🎯 Starting quality score calculation and metadata extraction');
       (async () => {
         try {
           const { updatePackageQualityScore } = await import('../scoring/quality-scorer.js');
-          const { getDetailedAIEvaluation } = await import('../scoring/ai-evaluator.js');
+          const { getDetailedAIEvaluation, extractMetadataWithAI } = await import('../scoring/ai-evaluator.js');
 
           // Get content for evaluation (need to fetch latest package data)
-          const pkgData = await queryOne<{ content: any }>(
+          const pkgData = await queryOne<{ content: any; language: string | null; framework: string | null; category: string | null }>(
             server,
-            'SELECT content FROM packages WHERE id = $1',
+            'SELECT content, language, framework, category FROM packages WHERE id = $1',
             [pkg.id]
           );
 
@@ -791,22 +796,64 @@ export async function packageRoutes(server: FastifyInstance) {
             // Calculate quality score
             const qualityScore = await updatePackageQualityScore(server, pkg.id);
 
-            // Update with explanation
+            // Extract metadata if not already provided
+            const needsMetadata = !language || !framework || !pkgData.category;
+            let extractedMetadata: AIMetadataResult = {};
+            if (needsMetadata) {
+              extractedMetadata = await extractMetadataWithAI(
+                pkgData.content,
+                {
+                  language: language || undefined,
+                  framework: framework || undefined,
+                  category: pkgData.category || undefined,
+                  tags,
+                  description,
+                },
+                server
+              );
+            }
+
+            // Build update query dynamically based on what needs updating
+            const updates: string[] = ['quality_explanation = $1'];
+            const params: any[] = [explanation];
+            let paramIndex = 2;
+
+            if (!language && extractedMetadata.language) {
+              updates.push(`language = $${paramIndex++}`);
+              params.push(extractedMetadata.language);
+            }
+            if (!framework && extractedMetadata.framework) {
+              updates.push(`framework = $${paramIndex++}`);
+              params.push(extractedMetadata.framework);
+            }
+            if (!pkgData.category && extractedMetadata.category) {
+              updates.push(`category = $${paramIndex++}`);
+              params.push(extractedMetadata.category);
+            }
+
+            params.push(pkg.id);
+
+            // Update with explanation and extracted metadata
             await query(
               server,
-              'UPDATE packages SET quality_explanation = $1 WHERE id = $2',
-              [explanation, pkg.id]
+              `UPDATE packages SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
+              params
             );
 
             server.log.info(
-              { packageId: pkg.id, qualityScore, explanationLength: explanation.length },
-              '✅ Quality score and explanation updated'
+              {
+                packageId: pkg.id,
+                qualityScore,
+                explanationLength: explanation.length,
+                extractedMetadata,
+              },
+              '✅ Quality score, explanation, and metadata updated'
             );
           }
         } catch (error) {
           server.log.error(
             { packageId: pkg.id, error: String(error) },
-            '⚠️  Failed to calculate quality score (non-blocking)'
+            '⚠️  Failed to calculate quality score or extract metadata (non-blocking)'
           );
         }
       })();

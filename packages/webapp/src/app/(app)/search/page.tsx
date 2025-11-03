@@ -43,8 +43,7 @@ function SearchPageContent() {
     format: searchParams.get('format') as Format || '',
     subtype: searchParams.get('subtype') as Subtype || '',
     category: searchParams.get('category') || '',
-    language: searchParams.get('language') || '',
-    framework: searchParams.get('framework') || '',
+    author: searchParams.get('author') || '',
     tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
     sort: searchParams.get('sort') as SortType || 'downloads',
     page: Number(searchParams.get('page')) || 1,
@@ -56,8 +55,7 @@ function SearchPageContent() {
   const [selectedFormat, setSelectedFormat] = useState<Format | ''>(initialParams.format)
   const [selectedSubtype, setSelectedSubtype] = useState<Subtype | ''>(initialParams.subtype)
   const [selectedCategory, setSelectedCategory] = useState(initialParams.category)
-  const [selectedLanguage, setSelectedLanguage] = useState(initialParams.language)
-  const [selectedFramework, setSelectedFramework] = useState(initialParams.framework)
+  const [selectedAuthor, setSelectedAuthor] = useState(initialParams.author)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialParams.tags)
   const [sort, setSort] = useState<SortType>(initialParams.sort)
   const [packages, setPackages] = useState<Package[]>([])
@@ -105,15 +103,14 @@ function SearchPageContent() {
     if (selectedFormat) params.set('format', selectedFormat)
     if (selectedSubtype) params.set('subtype', selectedSubtype)
     if (selectedCategory) params.set('category', selectedCategory)
-    if (selectedLanguage) params.set('language', selectedLanguage)
-    if (selectedFramework) params.set('framework', selectedFramework)
+    if (selectedAuthor) params.set('author', selectedAuthor)
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','))
     if (sort !== 'downloads') params.set('sort', sort)
     if (page !== 1) params.set('page', String(page))
 
     const newUrl = params.toString() ? `/search?${params.toString()}` : '/search'
     router.replace(newUrl, { scroll: false })
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedLanguage, selectedFramework, selectedTags, sort, page, router, isInitialized])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedAuthor, selectedTags, sort, page, router, isInitialized])
 
   // Fetch packages
   const fetchPackages = async () => {
@@ -130,8 +127,7 @@ function SearchPageContent() {
       if (selectedSubtype) params.subtype = selectedSubtype
       if (selectedCategory) params.category = selectedCategory
       if (selectedTags.length > 0) params.tags = selectedTags
-      if (selectedLanguage) params.language = selectedLanguage
-      if (selectedFramework) params.framework = selectedFramework
+      if (selectedAuthor) params.author = selectedAuthor
 
       const result = await searchPackages(params)
       setPackages(result.packages)
@@ -262,7 +258,7 @@ function SearchPageContent() {
       fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedLanguage, selectedFramework, sort, page])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page])
 
   // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {
@@ -276,8 +272,7 @@ function SearchPageContent() {
       selectedSubtype !== initialParams.subtype ||
       selectedCategory !== initialParams.category ||
       JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
-      selectedLanguage !== initialParams.language ||
-      selectedFramework !== initialParams.framework ||
+      selectedAuthor !== initialParams.author ||
       sort !== initialParams.sort ||
       activeTab !== initialParams.tab
 
@@ -286,7 +281,7 @@ function SearchPageContent() {
       setPage(1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedLanguage, selectedFramework, sort, activeTab, isInitialized])
+  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, activeTab, isInitialized])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -305,8 +300,7 @@ function SearchPageContent() {
     setSelectedFormat('')
     setSelectedCategory('')
     setSelectedTags([])
-    setSelectedLanguage('')
-    setSelectedFramework('')
+    setSelectedAuthor('')
     setQuery('')
   }
 
@@ -316,7 +310,7 @@ function SearchPageContent() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || selectedLanguage || selectedFramework || query
+  const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || selectedAuthor || query
 
   return (
     <main className="min-h-screen bg-prpm-dark">
@@ -525,53 +519,18 @@ function SearchPageContent() {
                 </select>
               </div>
 
-              {/* Language Filter */}
+              {/* Author Filter */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Language
+                  Author
                 </label>
-                <select
-                  value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
-                >
-                  <option value="">All Languages</option>
-                  <option value="javascript">JavaScript</option>
-                  <option value="typescript">TypeScript</option>
-                  <option value="python">Python</option>
-                  <option value="rust">Rust</option>
-                  <option value="go">Go</option>
-                  <option value="java">Java</option>
-                  <option value="csharp">C#</option>
-                  <option value="ruby">Ruby</option>
-                  <option value="php">PHP</option>
-                </select>
-              </div>
-
-              {/* Framework Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Framework
-                </label>
-                <select
-                  value={selectedFramework}
-                  onChange={(e) => setSelectedFramework(e.target.value)}
-                  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
-                >
-                  <option value="">All Frameworks</option>
-                  <option value="react">React</option>
-                  <option value="nextjs">Next.js</option>
-                  <option value="vue">Vue</option>
-                  <option value="angular">Angular</option>
-                  <option value="svelte">Svelte</option>
-                  <option value="django">Django</option>
-                  <option value="flask">Flask</option>
-                  <option value="fastapi">FastAPI</option>
-                  <option value="express">Express</option>
-                  <option value="nestjs">NestJS</option>
-                  <option value="rails">Rails</option>
-                  <option value="laravel">Laravel</option>
-                </select>
+                <input
+                  type="text"
+                  value={selectedAuthor}
+                  onChange={(e) => setSelectedAuthor(e.target.value)}
+                  placeholder="e.g., prpm, voltagent"
+                  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent placeholder-gray-500"
+                />
               </div>
 
               {/* Popular Tags */}
@@ -803,7 +762,9 @@ function SearchPageContent() {
                               </p>
                               <p className="text-gray-400 mb-3">{collection.description || 'No description'}</p>
                               <div className="flex items-center gap-4 text-sm text-gray-500">
-                                <span>by @{collection.author}</span>
+                                {collection.author && (
+                                    <span>by @{collection.author}</span>
+                                )}
                                 {collection.category && (
                                   <span>{collection.category}</span>
                                 )}

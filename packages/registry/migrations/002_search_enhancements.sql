@@ -8,15 +8,15 @@
 
 -- Add language and framework fields for better filtering
 ALTER TABLE packages
-  ADD COLUMN language VARCHAR(50),  -- primary programming language (javascript, python, typescript, go, rust, etc.)
-  ADD COLUMN framework VARCHAR(100); -- primary framework (react, nextjs, vue, django, fastapi, rails, etc.)
+  ADD COLUMN IF NOT EXISTS language VARCHAR(50),  -- primary programming language (javascript, python, typescript, go, rust, etc.)
+  ADD COLUMN IF NOT EXISTS framework VARCHAR(100); -- primary framework (react, nextjs, vue, django, fastapi, rails, etc.)
 
 -- Add indexes for new filter fields
-CREATE INDEX idx_packages_language ON packages(language) WHERE language IS NOT NULL;
-CREATE INDEX idx_packages_framework ON packages(framework) WHERE framework IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_packages_language ON packages(language) WHERE language IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_packages_framework ON packages(framework) WHERE framework IS NOT NULL;
 
 -- Add composite index for common filter combinations
-CREATE INDEX idx_packages_lang_framework ON packages(language, framework)
+CREATE INDEX IF NOT EXISTS idx_packages_lang_framework ON packages(language, framework)
   WHERE language IS NOT NULL OR framework IS NOT NULL;
 
 -- ============================================
@@ -24,7 +24,7 @@ CREATE INDEX idx_packages_lang_framework ON packages(language, framework)
 -- ============================================
 
 -- Track package co-installations to power "users also installed" recommendations
-CREATE TABLE package_co_installations (
+CREATE TABLE IF NOT EXISTS package_co_installations (
   package_a_id UUID REFERENCES packages(id) ON DELETE CASCADE,
   package_b_id UUID REFERENCES packages(id) ON DELETE CASCADE,
 
@@ -48,10 +48,10 @@ CREATE TABLE package_co_installations (
 );
 
 -- Indexes for efficient related package queries
-CREATE INDEX idx_co_installs_package_a ON package_co_installations(package_a_id, confidence_score DESC);
-CREATE INDEX idx_co_installs_package_b ON package_co_installations(package_b_id, confidence_score DESC);
-CREATE INDEX idx_co_installs_confidence ON package_co_installations(confidence_score DESC);
-CREATE INDEX idx_co_installs_count ON package_co_installations(co_install_count DESC);
+CREATE INDEX IF NOT EXISTS idx_co_installs_package_a ON package_co_installations(package_a_id, confidence_score DESC);
+CREATE INDEX IF NOT EXISTS idx_co_installs_package_b ON package_co_installations(package_b_id, confidence_score DESC);
+CREATE INDEX IF NOT EXISTS idx_co_installs_confidence ON package_co_installations(confidence_score DESC);
+CREATE INDEX IF NOT EXISTS idx_co_installs_count ON package_co_installations(co_install_count DESC);
 
 -- ============================================
 -- INSTALLATION TRACKING (for co-install analysis)
@@ -59,7 +59,7 @@ CREATE INDEX idx_co_installs_count ON package_co_installations(co_install_count 
 
 -- Track individual package installations to calculate co-installations
 -- This is separate from download stats (which track HTTP downloads)
-CREATE TABLE package_installations (
+CREATE TABLE IF NOT EXISTS package_installations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
   -- What was installed
@@ -81,11 +81,11 @@ CREATE TABLE package_installations (
   install_batch_id UUID  -- packages installed in same batch get same ID
 );
 
-CREATE INDEX idx_installations_package ON package_installations(package_id);
-CREATE INDEX idx_installations_user ON package_installations(user_id) WHERE user_id IS NOT NULL;
-CREATE INDEX idx_installations_session ON package_installations(session_id) WHERE session_id IS NOT NULL;
-CREATE INDEX idx_installations_batch ON package_installations(install_batch_id) WHERE install_batch_id IS NOT NULL;
-CREATE INDEX idx_installations_date ON package_installations(installed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_installations_package ON package_installations(package_id);
+CREATE INDEX IF NOT EXISTS idx_installations_user ON package_installations(user_id) WHERE user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_installations_session ON package_installations(session_id) WHERE session_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_installations_batch ON package_installations(install_batch_id) WHERE install_batch_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_installations_date ON package_installations(installed_at DESC);
 
 -- ============================================
 -- FUNCTIONS FOR CO-INSTALLATION ANALYSIS
