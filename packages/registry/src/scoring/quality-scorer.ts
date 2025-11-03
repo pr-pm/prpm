@@ -53,7 +53,6 @@ export interface PackageQualityData {
   verified: boolean;
   official?: boolean;
   total_downloads: number;
-  stars: number;
   rating_average?: number;
   rating_count: number;
   version_count: number;
@@ -88,7 +87,7 @@ export function calculateQualityScore(pkg: PackageQualityData): number {
 
     // Engagement (20% = 1.0 points)
     downloadScore: scoreDownloads(pkg.total_downloads),
-    starScore: scoreStars(pkg.stars),
+    starScore: scoreStars(0), // Stars not yet implemented
     ratingScore: scoreRating(pkg.rating_average, pkg.rating_count),
 
     // Maintenance (10% = 0.5 points)
@@ -132,7 +131,7 @@ export async function calculateQualityScoreWithAI(
 
     // Engagement (20% = 1.0 points)
     downloadScore: scoreDownloads(pkg.total_downloads),
-    starScore: scoreStars(pkg.stars),
+    starScore: scoreStars(0), // Stars not yet implemented
     ratingScore: scoreRating(pkg.rating_average, pkg.rating_count),
 
     // Maintenance (10% = 0.5 points)
@@ -390,22 +389,23 @@ async function getAuthorPackageCount(server: FastifyInstance, authorId: string):
 
 /**
  * Update quality score for a single package
+ * @param content - Optional package content. If not provided, will be fetched from package_versions.metadata
  */
 export async function updatePackageQualityScore(
   server: FastifyInstance,
-  packageId: string
+  packageId: string,
+  content?: string
 ): Promise<number> {
   server.log.info({ packageId }, '🎯 Starting quality score calculation');
 
-  // Fetch package data with content fields for prompt analysis
+  // Fetch package data
   const pkgResult = await query<PackageQualityData>(
     server,
     `SELECT
       id, description, documentation_url, repository_url,
       homepage_url, keywords, tags, author_id, verified, official,
-      total_downloads, stars, rating_average, rating_count, version_count,
-      last_published_at, created_at,
-      content, readme, file_size
+      total_downloads, rating_average, rating_count, version_count,
+      last_published_at, created_at
      FROM packages
      WHERE id = $1`,
     [packageId]
@@ -423,9 +423,11 @@ export async function updatePackageQualityScore(
     verified: pkg.verified,
     official: pkg.official,
     downloads: pkg.total_downloads,
-    stars: pkg.stars,
     versions: pkg.version_count
   }, '📋 Package metadata retrieved');
+
+  // Add content to package data
+  pkg.content = content;
 
   // Calculate base score with AI evaluation
   const startTime = Date.now();
@@ -544,9 +546,8 @@ export async function getQualityScoreBreakdown(
     `SELECT
       id, description, documentation_url, repository_url,
       homepage_url, keywords, tags, author_id, verified, official,
-      total_downloads, stars, rating_average, rating_count, version_count,
-      last_published_at, created_at,
-      content, readme, file_size
+      total_downloads, rating_average, rating_count, version_count,
+      last_published_at, created_at
      FROM packages
      WHERE id = $1`,
     [packageId]
@@ -582,7 +583,7 @@ export async function getQualityScoreBreakdown(
 
     // Engagement (20% = 1.0 points)
     downloadScore: scoreDownloads(pkg.total_downloads),
-    starScore: scoreStars(pkg.stars),
+    starScore: scoreStars(0), // Stars not yet implemented
     ratingScore: scoreRating(pkg.rating_average, pkg.rating_count),
 
     // Maintenance (10% = 0.5 points)
