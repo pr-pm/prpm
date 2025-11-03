@@ -422,10 +422,12 @@ Use the same gradient styling as H2 sections for important call-outs:
 ### Technical Accuracy
 
 1. **Package Examples**
-   - Use actual packages from registry.prpm.dev
-   - Verify package names and versions
+   - Use actual packages from the production registry
+   - **CRITICAL**: When verifying packages with `prpm search`, ensure you're checking against production registry
+   - If `PRPM_REGISTRY_URL` is set to localhost in your environment, unset it or explicitly use production: `PRPM_REGISTRY_URL=https://registry.prpm.dev prpm search "package-name"`
+   - Verify package names and versions exist in production before referencing them
    - Test CLI commands before publishing
-   - Link to packages in registry
+   - Link to packages using https://prpm.dev/package/[package-name] URLs (prpm.dev is the web interface, registry.prpm.dev is only the API)
 
 2. **Claims and Data**
    - Cite sources for performance claims
@@ -491,6 +493,8 @@ Before publishing, verify:
 - [ ] **`linkedin.txt` file created with 1,300-2,000 char post**
 - [ ] **LinkedIn post tested for character count**
 - [ ] **LinkedIn post includes clear CTA and link**
+- [ ] **CRITICAL: Sitemap updated at `packages/webapp/public/sitemap.xml`**
+- [ ] **Sitemap entry added with correct slug, lastmod date, and priority 0.7**
 
 ## File Structure
 
