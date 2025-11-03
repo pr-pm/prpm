@@ -768,7 +768,49 @@ export async function packageRoutes(server: FastifyInstance) {
         [pkg.id]
       );
 
-      // 5. Invalidate caches
+      // 5. Calculate and store quality score + explanation (async, don't block response)
+      server.log.info({ packageId: pkg.id }, '🎯 Starting quality score calculation');
+      (async () => {
+        try {
+          const { updatePackageQualityScore } = await import('../scoring/quality-scorer.js');
+          const { getDetailedAIEvaluation } = await import('../scoring/ai-evaluator.js');
+
+          // Get content for evaluation (need to fetch latest package data)
+          const pkgData = await queryOne<{ content: any }>(
+            server,
+            'SELECT content FROM packages WHERE id = $1',
+            [pkg.id]
+          );
+
+          if (pkgData?.content) {
+            // Get AI evaluation for explanation
+            const evaluation = await getDetailedAIEvaluation(pkgData.content, server);
+            const explanation = `${evaluation.reasoning}\n\nStrengths: ${evaluation.strengths.join(', ')}\n\nWeaknesses: ${evaluation.weaknesses.join(', ') || 'None identified'}`;
+
+            // Calculate quality score
+            const qualityScore = await updatePackageQualityScore(server, pkg.id);
+
+            // Update with explanation
+            await query(
+              server,
+              'UPDATE packages SET quality_explanation = $1 WHERE id = $2',
+              [explanation, pkg.id]
+            );
+
+            server.log.info(
+              { packageId: pkg.id, qualityScore, explanationLength: explanation.length },
+              '✅ Quality score and explanation updated'
+            );
+          }
+        } catch (error) {
+          server.log.error(
+            { packageId: pkg.id, error: String(error) },
+            '⚠️  Failed to calculate quality score (non-blocking)'
+          );
+        }
+      })();
+
+      // 6. Invalidate caches
       await cacheDelete(server, `package:${packageName}`);
       await cacheDelete(server, `package:${packageName}:${version}`);
       await cacheDeletePattern(server, `packages:list:*`);

@@ -633,7 +633,7 @@ prpm install @documentation/api-documenter`}</code></pre>
               <li><strong className="text-white">Collections:</strong> Install related skills as bundles:
                 <pre className="bg-prpm-dark-card border border-prpm-border rounded-xl p-4 overflow-x-auto mt-3"><code className="text-sm text-gray-300 font-mono">prpm install collection/nextjs-full-stack  # Gets app-router, api-routes, deployment skills</code></pre>
               </li>
-              <li><strong className="text-white">Discovery:</strong> Browse 744+ packages in the registry. Find skills for your framework, language, or domain.</li>
+              <li><strong className="text-white">Discovery:</strong> Browse 2,100+ packages in the registry. Find skills for your framework, language, or domain.</li>
             </ol>
           </div>
 
