@@ -21,7 +21,7 @@ Several services catalog and manage MCP servers:
 
 ### Package Managers
 
-- **[Smithery](https://smithery.ai)** ([CLI](https://github.com/smithery-ai/cli)) - 2,000+ servers, automated installation
+- **[Smithery](https://smithery.ai)** ([CLI](https://github.com/smithery-ai/cli)) - Large catalog, automated installation
 - Install: `npm install -g @smithery/cli`
 
 ### Directories & Catalogs
@@ -32,7 +32,7 @@ Several services catalog and manage MCP servers:
 
 ### Integration Platforms
 
-- **[Composio](https://composio.dev)** ([Docs](https://docs.composio.dev/docs/mcp-overview)) - 100+ tool integrations, built-in auth
+- **[Composio](https://composio.dev)** ([Docs](https://docs.composio.dev/docs/mcp-overview)) - Extensive tool integrations, built-in auth
 - **[Microsoft MCP Catalog](https://github.com/microsoft/mcp)** - Azure, DevOps, AKS integrations
 
 ## MCP Servers + PRPM Collections
@@ -64,11 +64,11 @@ Now you have:
 
 ## Resources
 
-- **[Smithery](https://smithery.ai)** - 2,000+ servers with CLI
+- **[Smithery](https://smithery.ai)** - Large catalog with CLI
 - **[MCP Server Finder](https://mcpserverfinder.com)** - Comprehensive directory
 - **[Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers)** - Curated list
 - **[Official MCP Servers](https://github.com/modelcontextprotocol/servers)** - Reference code
-- **[Composio](https://composio.dev)** - 100+ tool integrations
+- **[Composio](https://composio.dev)** - Extensive tool integrations
 - **[Microsoft MCP](https://github.com/microsoft/mcp)** - Azure integrations
 - **[MCP Specification](https://modelcontextprotocol.io)** - Protocol docs
 - **[PRPM Collections](./COLLECTIONS.md)** - PRPM docs
@@ -77,7 +77,7 @@ Now you have:
 
 **Why doesn't PRPM manage MCP servers?**
 
-PRPM focuses on prompts, rules, agents, and skills. Multiple specialized services already catalog 2,000+ MCP servers. We recommend using dedicated tools for MCP server management.
+PRPM focuses on prompts, rules, agents, and skills. Multiple specialized services already catalog thousands of MCP servers. We recommend using dedicated tools for MCP server management.
 
 **Which MCP catalog should I use?**
 
