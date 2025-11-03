@@ -627,8 +627,8 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log('');
         console.log('✅ Package published successfully!');
         console.log('');
-        console.log(`   Package: ${manifest.name}@${result.version}`);
-        console.log(`   Install: prpm install ${manifest.name}`);
+        console.log(`   Package: ${result.name}@${result.version}`);
+        console.log(`   Install: prpm install ${result.name}`);
         console.log('');
 
         publishedPackages.push({

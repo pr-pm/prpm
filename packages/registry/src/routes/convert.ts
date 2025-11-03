@@ -6,6 +6,7 @@
 import type { FastifyInstance } from 'fastify';
 import { toCursor } from '../converters/to-cursor.js';
 import { toClaude, toClaudeMd } from '../converters/to-claude.js';
+import { toContinue } from '../converters/to-continue.js';
 import { toCopilot } from '../converters/to-copilot.js';
 import { toKiro } from '../converters/to-kiro.js';
 import { toWindsurf } from '../converters/to-windsurf.js';
@@ -324,11 +325,7 @@ async function convertPackage(
       return toClaudeMd(pkg);
 
     case 'continue':
-      // TODO: Implement Continue converter
-      return {
-        content: JSON.stringify(pkg, null, 2),
-        warnings: ['Continue format not yet implemented'],
-      };
+      return toContinue(pkg);
 
     case 'windsurf':
       return toWindsurf(pkg);

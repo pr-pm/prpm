@@ -38,7 +38,7 @@ export default function Home() {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-prpm-dark-card border border-prpm-border rounded-full text-sm text-gray-400">
               <span className="w-2 h-2 bg-prpm-accent rounded-full animate-pulse"></span>
-              Alpha · 1,800+ packages · 100+ collections
+              Alpha · 2,100+ packages · 100+ collections
             </div>
 
             <div className="flex justify-center mb-8">
@@ -133,7 +133,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">1,800+ Packages</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">2,100+ Packages</h3>
               <p className="text-gray-400 leading-relaxed">
                 Battle-tested prompts, agents, skills, and slash commands from verified contributors
               </p>
@@ -256,6 +256,72 @@ export default function Home() {
             <p className="text-sm text-gray-500">
               Plus any tool supporting Model Context Protocol (MCP) or the agents.md open standard
             </p>
+          </div>
+
+          {/* What You Can Install */}
+          <div className="mb-20 max-w-5xl mx-auto">
+            <h2 className="text-3xl font-bold text-white mb-8 text-center">What You Can Install</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Cursor Rules</h3>
+                <p className="text-gray-400 mb-4">
+                  Production-ready Cursor rules for every framework. React, TypeScript, Python, and more.
+                </p>
+                <Link href="/search?format=cursor" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Cursor Rules →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Claude Agents</h3>
+                <p className="text-gray-400 mb-4">
+                  Specialized Claude agents for code review, architecture, testing, and more.
+                </p>
+                <Link href="/search?format=claude&subtype=agent" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Claude Agents →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Slash Commands</h3>
+                <p className="text-gray-400 mb-4">
+                  Cursor slash commands and Claude slash commands for faster workflows.
+                </p>
+                <Link href="/search?subtype=slash-command" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Slash Commands →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Claude Skills</h3>
+                <p className="text-gray-400 mb-4">
+                  Claude Code skills for specialized domain knowledge and patterns.
+                </p>
+                <Link href="/search?format=claude&subtype=skill" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Claude Skills →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Windsurf Rules</h3>
+                <p className="text-gray-400 mb-4">
+                  Windsurf-specific rules for frontend, backend, and full-stack development.
+                </p>
+                <Link href="/search?format=windsurf" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Windsurf Rules →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-accent/50 rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Collections</h3>
+                <p className="text-gray-400 mb-4">
+                  Complete workflow setups with multiple packages. Install everything you need in one command.
+                </p>
+                <Link href="/search?tab=collections" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Collections →
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Footer */}

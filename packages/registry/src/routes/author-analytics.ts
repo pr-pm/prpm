@@ -101,7 +101,7 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
 
         // Get recent packages (last 5)
         const recentResult = await fastify.pg.query(
-          `SELECT id, type, total_downloads, created_at
+          `SELECT id, name, format, subtype, total_downloads, created_at
            FROM packages
            WHERE author_id = $1
            ORDER BY created_at DESC
@@ -181,12 +181,16 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
           updated: 'updated_at',
         };
         const sortColumn = sortMap[sort] || 'total_downloads';
+        const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
 
-        const result = await fastify.pg.query(
-          `SELECT
+        // Build the query with safe string interpolation for column names
+        const query = `
+          SELECT
              id,
+             name,
              description,
-             type,
+             format,
+             subtype,
              visibility,
              total_downloads,
              weekly_downloads,
@@ -198,9 +202,9 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
              last_published_at
            FROM packages
            WHERE author_id = $1
-           ORDER BY ${sortColumn} ${order === 'asc' ? 'ASC' : 'DESC'}`,
-          [userId]
-        );
+           ORDER BY ${sortColumn} ${sortOrder}`;
+
+        const result = await fastify.pg.query(query, [userId]);
 
         return reply.send({
           packages: result.rows,
@@ -310,7 +314,7 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
         );
 
         // Calculate totals for the period
-        const totals = dailyStatsResult.rows.reduce(
+        let totals = dailyStatsResult.rows.reduce(
           (acc, row) => ({
             downloads: acc.downloads + (row.total_downloads || 0),
             unique_downloads: acc.unique_downloads + (row.unique_downloads || 0),
@@ -340,6 +344,54 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
             generic: 0,
           }
         );
+
+        // Fallback: If package_stats is empty or has no downloads, query download_events directly
+        if (totals.downloads === 0) {
+          const dateRanges: Record<TimeRange, string> = {
+            today: "created_at >= CURRENT_DATE",
+            week: "created_at >= CURRENT_DATE - INTERVAL '7 days'",
+            month: "created_at >= CURRENT_DATE - INTERVAL '30 days'",
+            year: "created_at >= CURRENT_DATE - INTERVAL '365 days'",
+            all: "created_at IS NOT NULL",
+          };
+
+          const eventWhereClause = dateRanges[range] || dateRanges.month;
+
+          const eventsResult = await fastify.pg.query(
+            `SELECT
+               COUNT(*) as total_downloads,
+               COUNT(DISTINCT COALESCE(user_id::text, client_id, ip_hash)) as unique_downloads,
+               COUNT(*) FILTER (WHERE client_type = 'cli') as cli_downloads,
+               COUNT(*) FILTER (WHERE client_type = 'web') as web_downloads,
+               COUNT(*) FILTER (WHERE client_type = 'api') as api_downloads,
+               COUNT(*) FILTER (WHERE format = 'cursor') as cursor_downloads,
+               COUNT(*) FILTER (WHERE format = 'claude') as claude_downloads,
+               COUNT(*) FILTER (WHERE format = 'continue') as continue_downloads,
+               COUNT(*) FILTER (WHERE format = 'windsurf') as windsurf_downloads,
+               COUNT(*) FILTER (WHERE format = 'generic') as generic_downloads
+             FROM download_events
+             WHERE package_id = $1 AND ${eventWhereClause}`,
+            [packageId]
+          );
+
+          if (eventsResult.rows.length > 0) {
+            const eventData = eventsResult.rows[0];
+            totals = {
+              downloads: parseInt(eventData.total_downloads) || 0,
+              unique_downloads: parseInt(eventData.unique_downloads) || 0,
+              views: 0, // Views not tracked in download_events
+              unique_views: 0,
+              cli: parseInt(eventData.cli_downloads) || 0,
+              web: parseInt(eventData.web_downloads) || 0,
+              api: parseInt(eventData.api_downloads) || 0,
+              cursor: parseInt(eventData.cursor_downloads) || 0,
+              claude: parseInt(eventData.claude_downloads) || 0,
+              continue: parseInt(eventData.continue_downloads) || 0,
+              windsurf: parseInt(eventData.windsurf_downloads) || 0,
+              generic: parseInt(eventData.generic_downloads) || 0,
+            };
+          }
+        }
 
         // Get top referrers (last 30 days)
         const referrersResult = await fastify.pg.query(

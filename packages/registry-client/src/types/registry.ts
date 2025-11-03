@@ -58,7 +58,9 @@ export interface ResolveResponse {
 export interface PublishResponse {
   success: boolean;
   package_id: string;
+  name: string;
   version: string;
+  tarball_url: string;
   message: string;
 }
 

@@ -1,13 +1,25 @@
-# PRPM User Documentation
+# PRPM Documentation
 
-Documentation for using the Prompt Package Manager (PRPM).
+> **📚 For the most up-to-date documentation, visit [docs.prpm.dev](https://docs.prpm.dev)**
 
-## Quick Links
+This directory contains legacy documentation files. We recommend using the official documentation site for the best experience.
 
-📦 **[Main README](../README.md)** - Project overview and quick start
-🚀 **[Installation Guide](./INSTALLATION.md)** - Get started with PRPM
-💻 **[CLI Reference](./CLI.md)** - Complete command reference
-⚙️ **[Configuration](./CONFIGURATION.md)** - Configure PRPM for your workflow
+## 🌐 Official Documentation
+
+**➡️ [docs.prpm.dev](https://docs.prpm.dev)** - Complete, searchable documentation
+
+**Quick Links:**
+- 🚀 [Getting Started](https://docs.prpm.dev/getting-started/installation) - Install and configure PRPM
+- 💻 [CLI Reference](https://docs.prpm.dev/cli/commands) - All commands and options
+- 📦 [Collections Guide](https://docs.prpm.dev/concepts/collections) - Multi-package bundles
+- 🎯 [Usage Examples](https://docs.prpm.dev/guides/usage-examples) - Real-world workflows
+- 📝 [Publishing Guide](https://docs.prpm.dev/publishing/overview) - Publish your packages
+
+---
+
+## Legacy Local Documentation
+
+These files are maintained for reference but may be outdated. **Use [docs.prpm.dev](https://docs.prpm.dev) for current information.**
 
 ---
 

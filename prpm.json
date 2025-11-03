@@ -265,7 +265,7 @@
     },
     {
       "name": "self-improving-skill",
-      "version": "1.0.2",
+      "version": "1.0.4",
       "description": "Use when starting infrastructure, testing, deployment, or framework-specific tasks - automatically searches PRPM registry for relevant expertise packages and suggests installation to enhance capabilit",
       "format": "claude",
       "subtype": "skill",
@@ -408,7 +408,7 @@
     },
     {
       "name": "self-improve-cursor",
-      "version": "1.0.2",
+      "version": "1.0.4",
       "description": "Automatically search and install PRPM packages when working on infrastructure, testing, deployment, or framework-specific tasks",
       "format": "cursor",
       "subtype": "rule",

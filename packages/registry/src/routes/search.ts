@@ -313,7 +313,7 @@ export async function searchRoutes(server: FastifyInstance) {
       return cached;
     }
 
-    const conditions: string[] = ["p.visibility = 'public'", "p.type = 'claude-slash-command'"];
+    const conditions: string[] = ["p.visibility = 'public'", "p.subtype = 'slash-command'"];
     const params: unknown[] = [];
     let paramIndex = 1;
 

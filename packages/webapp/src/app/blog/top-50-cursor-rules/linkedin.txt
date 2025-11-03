@@ -1,0 +1,37 @@
+You've probably wasted hours searching GitHub for cursor rules that actually work.
+
+We analyzed over 1,000 cursor rules in the PRPM registry to save you the trouble. These aren't just popular packages—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.
+
+What makes this different: we evaluated based on verification status, real download counts, comprehensiveness (structure + performance + security + testing), and author reputation. No fluff, just rules that solve real problems.
+
+The breakdown:
+• 5 meta packages (including creating your own cursor rules)
+• 10 frontend framework packages (React, Next.js, Vue, tRPC)
+• 7 TypeScript/JavaScript packages (most downloaded: @lst97/typescript-pro)
+• 10 backend language packages (Python, Go, Rust, Swift)
+• 8 quality/testing/security packages (code review, pen testing, automation)
+• 3 DevOps packages (Kubernetes specialists)
+• 2 ML/AI packages (PyTorch, machine learning)
+
+But here's what makes PRPM powerful: you're not limited to packages originally built for Cursor. Every package in our registry—over 1,000 Claude skills, agents, and prompts—can be converted to Cursor rules with one command.
+
+Search for "testing" and you'll see every testing-related package across all AI editors. Install any of them, and PRPM converts it to Cursor's format automatically. That's 10x more options than browsing cursor-specific packages alone.
+
+Key insights from analyzing 1,000+ packages:
+1. Quality correlates with author reputation (@prpm, @voltagent, @lst97, @sanjeed5)
+2. Comprehensive rules beat narrow ones (structure + performance + security + testing)
+3. Security and testing packages are rising fast
+4. Framework-specific depth wins (use the most specific rule for your stack)
+
+Installation takes seconds:
+npm install -g prpm
+
+Install our starter set with one command:
+prpm install @lst97/typescript-pro @voltagent/nextjs-developer @voltagent/code-reviewer @prpm/creating-cursor-rules @voltagent/security-auditor
+
+This gives you: type safety, modern web apps, quality checks, the ability to create your own rules, and security auditing—everything you need to get started.
+
+Read the full breakdown with all 50 packages:
+https://prpm.dev/blog/top-50-cursor-rules
+
+#AI #DeveloperTools #CursorIDE #SoftwareEngineering #DevEx

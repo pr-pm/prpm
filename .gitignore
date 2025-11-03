@@ -48,3 +48,5 @@ data/
 # subtree directories
 .dev
 .worktrees
+
+.claude/settings.local.json

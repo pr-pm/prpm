@@ -22,7 +22,7 @@ The mistake most developers make: trying to use skills for execution (they can't
 
 Real example: We tried using a skill for code review. It failed—skills can't analyze multiple files systematically. Switched to a sub-agent. Worked perfectly. Found 3 critical security issues in authentication that would've reached production.
 
-PRPM packages both skills and sub-agents. Same format, same install command, automatic format conversion across editors. Browse 744+ packages at registry.prpm.dev.
+PRPM packages both skills and sub-agents. Same format, same install command, automatic format conversion across editors. Browse 2,100+ packages at registry.prpm.dev.
 
 Full guide with decision framework and code examples:
 https://prpm.dev/blog/when-to-use-claude-skill-vs-subagent

@@ -1,0 +1,245 @@
+---
+title: 'MCP Servers'
+description: 'Using MCP servers with PRPM collections'
+---
+
+PRPM focuses on managing prompts, rules, agents, and skills. For MCP (Model Context Protocol) servers, use dedicated MCP catalogs and package managers.
+
+## What are MCP Servers?
+
+**MCP (Model Context Protocol)** servers provide specialized capabilities to Claude Code and other AI clients, like:
+
+- 📁 File system operations
+- 🗄️ Database queries
+- 🔍 Web search
+- ☁️ Cloud resource management (Azure, AWS, GCP)
+- 🎯 Custom tools and APIs
+- 🔗 Third-party integrations (Slack, GitHub, Notion, etc.)
+
+Think of MCP servers as "superpowers" that extend what AI assistants can do.
+
+## MCP Server Catalogs & Managers
+
+Several services catalog and manage MCP servers. Choose based on your needs:
+
+### Package Managers
+
+**[Smithery](https://smithery.ai)** ([CLI](https://github.com/smithery-ai/cli))
+- Large catalog of MCP servers
+- CLI for installing and managing servers
+- Automatic configuration for Claude Code
+- Community-driven catalog
+
+```bash
+npm install -g @smithery/cli
+smithery search database
+smithery install @modelcontextprotocol/server-postgres
+```
+
+### Directories & Catalogs
+
+**[MCP Server Finder](https://mcpserverfinder.com)**
+- Comprehensive directory with detailed profiles
+- Step-by-step implementation guides
+- Compatibility information
+- Community reviews and ratings
+
+**[Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers)**
+- Curated list on GitHub
+- Production-ready and experimental servers
+- Web-based directory synced with repository
+- Community contributions
+
+**[Official MCP Servers](https://github.com/modelcontextprotocol/servers)**
+- Reference implementations by Anthropic
+- Servers for Google Drive, Slack, GitHub, PostgreSQL, Puppeteer, Stripe
+- Playground for testing and debugging
+
+### Integration Platforms
+
+**[Composio](https://composio.dev)** ([Docs](https://docs.composio.dev/docs/mcp-overview))
+- Wide range of tool integrations (Gmail, Linear, Slack, etc.)
+- Built-in authentication
+- MCP SDK for developers
+- Pre-built servers for common integrations
+
+**[Microsoft MCP Catalog](https://github.com/microsoft/mcp)**
+- Azure MCP Server (Azure services integration)
+- Azure AI Foundry MCP Server
+- Azure DevOps MCP Server
+- Azure Kubernetes Service (AKS) Server
+
+## MCP Servers + PRPM Collections
+
+PRPM collections provide prompts, rules, and agents. MCP servers complement them by providing capabilities.
+
+### Example: Pulumi Development
+
+```bash
+# Install Pulumi prompts and rules via PRPM
+prpm install collection/pulumi-infrastructure
+
+# Install Pulumi MCP server (choose your method)
+smithery install @modelcontextprotocol/server-pulumi
+# or configure manually from MCP Server Finder
+```
+
+Now you have:
+- **PRPM**: Pulumi best practices, agents, and workflows
+- **MCP Server**: Live Pulumi state inspection
+
+### Example: Full-Stack Development
+
+```bash
+# Install development prompts via PRPM
+prpm install collection/nextjs-pro
+
+# Install useful MCP servers
+# Filesystem access
+# Database queries
+# Web search
+# (Use any catalog/manager above)
+```
+
+### Example: Azure Development
+
+```bash
+# Install Azure/DevOps prompts via PRPM
+prpm install collection/azure-devops
+
+# Install Azure MCP servers from Microsoft
+# Azure services integration
+# AKS operations
+# DevOps automation
+```
+
+## Choosing an MCP Solution
+
+Consider these factors:
+
+**For Quick Start:**
+- Smithery CLI for automated installation
+- MCP Server Finder for guided setup
+
+**For Discovery:**
+- Awesome MCP Servers for curated lists
+- MCP Server Finder for detailed profiles
+- Official MCP Servers for reference implementations
+
+**For Enterprise:**
+- Composio for extensive pre-built integrations
+- Microsoft MCP Catalog for Azure integration
+- Official implementations for production use
+
+**For Specific Needs:**
+- Search multiple catalogs
+- Check compatibility
+- Read community reviews
+
+## Manual Installation
+
+If not using a package manager, MCP servers are configured in Claude Code's config file:
+
+<CodeGroup>
+```bash macOS
+~/Library/Application Support/Claude/claude_desktop_config.json
+```
+
+```bash Linux
+~/.config/Claude/claude_desktop_config.json
+```
+
+```bash Windows
+%APPDATA%\Claude\claude_desktop_config.json
+```
+</CodeGroup>
+
+Add MCP server configurations:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"]
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://localhost/mydb"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Code after configuration changes.
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="Smithery" icon="cube" href="https://smithery.ai">
+    Large catalog with CLI
+  </Card>
+  <Card title="MCP Server Finder" icon="magnifying-glass" href="https://mcpserverfinder.com">
+    Comprehensive directory
+  </Card>
+  <Card title="Awesome MCP Servers" icon="star" href="https://github.com/punkpeye/awesome-mcp-servers">
+    Curated GitHub list
+  </Card>
+  <Card title="Official MCP Servers" icon="book" href="https://github.com/modelcontextprotocol/servers">
+    Reference implementations
+  </Card>
+  <Card title="Composio" icon="puzzle-piece" href="https://composio.dev">
+    Extensive tool integrations
+  </Card>
+  <Card title="Microsoft MCP" icon="microsoft" href="https://github.com/microsoft/mcp">
+    Azure integrations
+  </Card>
+  <Card title="MCP Specification" icon="file-code" href="https://modelcontextprotocol.io">
+    Protocol documentation
+  </Card>
+  <Card title="PRPM Collections" icon="layer-group" href="/concepts/collections">
+    PRPM package management
+  </Card>
+</CardGroup>
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Why doesn't PRPM manage MCP servers?">
+    PRPM focuses on prompts, rules, agents, and skills. Multiple specialized services already catalog thousands of MCP servers. We recommend using dedicated tools for MCP server management.
+  </Accordion>
+
+  <Accordion title="Which MCP catalog should I use?">
+    It depends on your needs:
+    - **Quick automation**: Smithery CLI
+    - **Detailed guides**: MCP Server Finder
+    - **Curated lists**: Awesome MCP Servers
+    - **Pre-built integrations**: Composio
+    - **Azure focus**: Microsoft MCP Catalog
+    - **Reference code**: Official MCP Servers
+  </Accordion>
+
+  <Accordion title="Can PRPM collections include MCP servers?">
+    Not directly. PRPM collections bundle prompts and agents. For MCP servers, use dedicated MCP catalogs. You can use both together - PRPM for prompts, MCP catalogs for capabilities.
+  </Accordion>
+
+  <Accordion title="Do I need MCP servers to use PRPM?">
+    No! PRPM collections work great on their own. MCP servers are optional enhancements that add extra capabilities to Claude Code.
+  </Accordion>
+
+  <Accordion title="Which AI clients support MCP?">
+    MCP is supported by:
+    - Claude Code (Claude Desktop)
+    - OpenAI ChatGPT Desktop (as of March 2025)
+    - Various MCP-compatible clients
+
+    Check each MCP catalog for compatibility information.
+  </Accordion>
+
+  <Accordion title="Can I create my own MCP server?">
+    Yes! See the [MCP Specification](https://modelcontextprotocol.io) for documentation. You can also reference implementations in the [Official MCP Servers](https://github.com/modelcontextprotocol/servers) repository.
+  </Accordion>
+</AccordionGroup>

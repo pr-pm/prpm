@@ -14,7 +14,7 @@ There's an active GitHub discussion in the Gemini CLI repository asking about ag
 
 Post in this discussion to:
 1. ✅ Confirm that agents.md is supported by Google Gemini Code Assist
-2. ✅ Share that PRPM has 1,700+ packages available in agents.md format
+2. ✅ Share that PRPM has 2,100+ packages available in agents.md format
 3. ✅ Offer PRPM as a distribution layer for agents.md files
 4. ✅ Link to our FORMAT_COMPATIBILITY guide
 5. ✅ Show Gemini community that there's already an ecosystem around agents.md
@@ -42,7 +42,7 @@ prpm install @sanjeed5/typescript-best-practices --format agents.md
 ```
 
 **What PRPM offers:**
-- 1,700+ packages available for agents.md format
+- 2,100+ packages available for agents.md format
 - Cross-platform compatibility (works with Codex, Copilot, Gemini, etc.)
 - Package versioning and updates
 - Collections for bundling multiple configurations

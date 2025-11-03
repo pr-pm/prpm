@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getUnclaimedPackages, claimPackages } from '@/lib/api'
+import { getUnclaimedPackages, claimPackages, getAuthorDashboard, getAuthorPackages } from '@/lib/api'
+import PackageAnalyticsModal from '@/components/PackageAnalyticsModal'
 
 interface User {
   id: string
@@ -29,6 +30,12 @@ export default function DashboardPage() {
   const [websiteInput, setWebsiteInput] = useState('')
   const [websiteError, setWebsiteError] = useState<string | null>(null)
   const [websiteSaving, setWebsiteSaving] = useState(false)
+  const [dashboardData, setDashboardData] = useState<any>(null)
+  const [packages, setPackages] = useState<any[]>([])
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
+  const [selectedPackage, setSelectedPackage] = useState<any>(null)
 
   useEffect(() => {
     // Check if user is logged in
@@ -74,6 +81,9 @@ export default function DashboardPage() {
           console.error('Error checking unclaimed packages:', error)
           // Non-fatal error, continue
         }
+
+        // Load analytics dashboard
+        loadAnalytics(token)
       } catch (error) {
         console.error('Error fetching user:', error)
         // Token might be invalid, redirect to login
@@ -87,6 +97,22 @@ export default function DashboardPage() {
 
     fetchUserInfo()
   }, [router])
+
+  const loadAnalytics = async (token: string) => {
+    try {
+      setAnalyticsLoading(true)
+      const [dashboard, packagesData] = await Promise.all([
+        getAuthorDashboard(token),
+        getAuthorPackages(token, 'downloads'),
+      ])
+      setDashboardData(dashboard)
+      setPackages(packagesData.packages || [])
+    } catch (error) {
+      console.error('Error loading analytics:', error)
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('prpm_token')
@@ -385,6 +411,93 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Analytics Section */}
+        {dashboardData && dashboardData.summary && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-white mb-6">📊 Your Analytics</h2>
+
+            {/* Key Metrics */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <div className="text-gray-400 text-sm mb-2">Today</div>
+                <div className="text-3xl font-bold text-prpm-accent mb-1">{dashboardData.summary.downloads_today || 0}</div>
+                <div className="text-xs text-gray-500">downloads</div>
+              </div>
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <div className="text-gray-400 text-sm mb-2">This Week</div>
+                <div className="text-3xl font-bold text-prpm-accent mb-1">{dashboardData.summary.downloads_week || 0}</div>
+                <div className="text-xs text-gray-500">downloads</div>
+              </div>
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <div className="text-gray-400 text-sm mb-2">This Month</div>
+                <div className="text-3xl font-bold text-prpm-accent mb-1">{dashboardData.summary.downloads_month || 0}</div>
+                <div className="text-xs text-gray-500">downloads</div>
+              </div>
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <div className="text-gray-400 text-sm mb-2">Total Views</div>
+                <div className="text-3xl font-bold text-prpm-purple mb-1">{dashboardData.summary.total_views || 0}</div>
+                <div className="text-xs text-gray-500">page views</div>
+              </div>
+            </div>
+
+            {/* Most Popular Package */}
+            {dashboardData.most_popular && dashboardData.most_popular.package_name && (
+              <div className="bg-gradient-to-r from-prpm-accent/10 to-prpm-purple/10 border border-prpm-accent/30 rounded-xl p-6 mb-6">
+                <div className="text-sm text-gray-400 mb-1">🏆 Most Popular Package</div>
+                <div className="text-2xl font-bold text-white mb-1">{dashboardData.most_popular.package_name}</div>
+                <div className="text-lg text-prpm-accent font-semibold">
+                  {(dashboardData.most_popular.downloads || 0).toLocaleString()} downloads
+                </div>
+              </div>
+            )}
+
+            {/* Your Packages with Analytics */}
+            {packages && packages.length > 0 && (
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-lg font-bold text-white mb-4">Your Packages</h3>
+                <div className="space-y-3">
+                  {packages.slice(0, 5).map((pkg: any) => (
+                    <div key={pkg.id} className="flex items-center justify-between p-4 bg-prpm-dark border border-prpm-border rounded-lg hover:border-prpm-accent transition-all group">
+                      <div className="flex-1">
+                        <div className="font-semibold text-white group-hover:text-prpm-accent transition-colors">{pkg.name || pkg.id}</div>
+                        <div className="text-xs text-gray-400 flex items-center gap-3 mt-1">
+                          <span>⬇️ {pkg.total_downloads || 0}</span>
+                          <span className="px-2 py-0.5 bg-prpm-dark border border-prpm-border rounded text-xs">{pkg.format}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedPackage(pkg)
+                          setShowAnalyticsModal(true)
+                        }}
+                        className="px-4 py-2 bg-prpm-accent/20 hover:bg-prpm-accent/30 text-prpm-accent rounded-lg font-semibold transition-all text-sm flex items-center gap-2"
+                      >
+                        📊 View Analytics
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {packages.length > 5 && (
+                  <Link
+                    href={`/authors?username=${user.username}`}
+                    className="block mt-4 text-center text-prpm-accent hover:text-prpm-accent-light transition-colors text-sm"
+                  >
+                    View all {packages.length} packages →
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Loading State for Analytics */}
+        {analyticsLoading && (
+          <div className="mb-12 bg-prpm-dark-card border border-prpm-border rounded-xl p-12 text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-prpm-accent mb-4"></div>
+            <p className="text-gray-400">Loading analytics...</p>
+          </div>
+        )}
+
         {/* Getting Started */}
         <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-8">
           <h2 className="text-2xl font-bold text-white mb-4">Getting Started with PRPM</h2>
@@ -467,6 +580,20 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Package Analytics Modal */}
+      {selectedPackage && (
+        <PackageAnalyticsModal
+          packageId={selectedPackage.id}
+          packageName={selectedPackage.name || selectedPackage.id}
+          isOpen={showAnalyticsModal}
+          onClose={() => {
+            setShowAnalyticsModal(false)
+            setSelectedPackage(null)
+          }}
+          jwtToken={localStorage.getItem('prpm_token') || ''}
+        />
       )}
     </main>
   )
