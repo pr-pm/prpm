@@ -15,7 +15,7 @@ export interface CanonicalPackage {
   tags: string[];
 
   // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
+  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'openskills' | 'generic' | 'mcp';
   subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode';
 
 
@@ -60,10 +60,11 @@ export interface CanonicalPackage {
     copilot?: number;
     kiro?: number;
     'agents.md'?: number;
+    openskills?: number;
   };
 
   // Source information
-  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic';
+  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'openskills' | 'generic';
   sourceUrl?: string;
 
   // Quality & verification flags

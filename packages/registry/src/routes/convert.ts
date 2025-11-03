@@ -11,6 +11,7 @@ import { toCopilot } from '../converters/to-copilot.js';
 import { toKiro } from '../converters/to-kiro.js';
 import { toWindsurf } from '../converters/to-windsurf.js';
 import { toAgentsMd } from '../converters/to-agents-md.js';
+import { toOpenSkills } from '../converters/to-openskills.js';
 import type { CanonicalPackage } from '../types/canonical.js';
 
 export async function convertRoutes(server: FastifyInstance) {
@@ -34,7 +35,7 @@ export async function convertRoutes(server: FastifyInstance) {
           properties: {
             format: {
               type: 'string',
-              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical'],
+              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'openskills', 'canonical'],
               default: 'canonical',
             },
             version: { type: 'string' },
@@ -145,7 +146,7 @@ export async function convertRoutes(server: FastifyInstance) {
           properties: {
             format: {
               type: 'string',
-              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical'],
+              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'openskills', 'canonical'],
               default: 'canonical',
             },
             version: { type: 'string' },
@@ -352,6 +353,9 @@ async function convertPackage(
     case 'agents.md':
       return toAgentsMd(pkg);
 
+    case 'openskills':
+      return toOpenSkills(pkg);
+
     case 'canonical':
     default:
       return {
@@ -389,6 +393,8 @@ function getFilenameForFormat(format: string, packageId: string, pkg?: Canonical
     }
     case 'agents.md':
       return 'AGENTS.md';
+    case 'openskills':
+      return 'SKILL.md';
     default:
       return `${packageId}.json`;
   }
