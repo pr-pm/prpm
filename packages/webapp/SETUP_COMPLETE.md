@@ -271,6 +271,6 @@ Added to root `package.json` scripts:
 - Clean, modern UI
 - Fully functional invite claiming
 - GitHub OAuth integration
-- Production-ready build
+- Optimized build
 - Mobile responsive
 - Ready for Phase 2 (Package Discovery)

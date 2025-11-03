@@ -1,0 +1,179 @@
+---
+title: 'Publishing Guide'
+description: 'Publish your packages to the PRPM registry'
+---
+
+# Publishing to PRPM
+
+Learn how to publish your AI tool configurations to the PRPM registry.
+
+## Prerequisites
+
+1. **PRPM CLI installed**: `npm install -g prpm`
+2. **GitHub account**: Required for authentication
+3. **Valid prpm.json**: Package manifest in your repository
+
+## Authentication
+
+Login using GitHub:
+
+```bash
+prpm login
+```
+
+Check authentication status:
+
+```bash
+prpm whoami
+```
+
+## Publishing Your First Package
+
+### 1. Create prpm.json
+
+<Tip>
+**Let AI help you create prpm.json!** Install the prpm-json package for expert guidance:
+
+```bash
+# For Claude Code
+prpm install @prpm/prpm-json-best-practices-skill
+
+# For Cursor
+prpm install @prpm/prpm-json-best-practices
+```
+
+The AI will then help you structure your manifest with proper fields, tags, and examples.
+</Tip>
+
+Create a manifest file in your project root:
+
+```json
+{
+  "name": "my-@username/typescript-rules",
+  "version": "1.0.0",
+  "description": "My TypeScript coding standards and best practices",
+  "author": "Your Name <you@example.com>",
+  "license": "MIT",
+  "repository": "https://github.com/username/repo",
+  "format": "cursor",
+  "subtype": "rule",
+  "tags": ["typescript", "best-practices"],
+  "files": [".cursor/rules/typescript.mdc"]
+}
+```
+
+### 2. Validate
+
+Test your manifest before publishing:
+
+```bash
+prpm publish --dry-run
+```
+
+This checks:
+- ✓ prpm.json syntax is valid
+- ✓ All required fields are present
+- ✓ All files exist
+- ✓ Tags are properly formatted
+- ✓ Version follows semver
+
+### 3. Publish
+
+Publish your package:
+
+```bash
+prpm publish
+```
+
+That's it! Your package is now available on the PRPM registry.
+
+## Publishing Multiple Packages
+
+For repositories containing multiple packages, use the `packages` array:
+
+```json
+{
+  "name": "my-prompts-repo",
+  "author": "Your Name",
+  "license": "MIT",
+  "packages": [
+    {
+      "name": "typescript-cursor-rules",
+      "version": "1.0.0",
+      "description": "TypeScript rules for Cursor",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["typescript"],
+      "files": [".cursor/rules/typescript.mdc"]
+    },
+    {
+      "name": "python-claude-skill",
+      "version": "1.0.0",
+      "description": "Python best practices for Claude",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["python"],
+      "files": [".claude/skills/python-expert/SKILL.md"]
+    }
+  ]
+}
+```
+
+Publish all packages:
+
+```bash
+prpm publish
+```
+
+Or publish only a specific package:
+
+```bash
+prpm publish --package typescript-cursor-rules
+```
+
+## Versioning
+
+Follow [Semantic Versioning](https://semver.org):
+
+| Change Type | Version Bump | Example |
+|-------------|--------------|---------|
+| Bug fix, typo | Patch | 1.0.0 → 1.0.1 |
+| New feature (backward compatible) | Minor | 1.0.0 → 1.1.0 |
+| Breaking change | Major | 1.0.0 → 2.0.0 |
+
+## Tags
+
+Use 3-8 relevant tags per package:
+
+**Good tags:**
+```json
+{
+  "tags": ["typescript", "type-safety", "best-practices"]
+}
+```
+
+**Bad tags:**
+```json
+{
+  "tags": ["code", "stuff", "TypeScript"]  // Too generic, wrong case
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Manifest Reference"
+    icon="file-code"
+    href="/publishing/manifest"
+  >
+    Complete prpm.json documentation
+  </Card>
+  <Card
+    title="Publishing Collections"
+    icon="boxes-stacked"
+    href="/publishing/collections"
+  >
+    Create package collections
+  </Card>
+</CardGroup>

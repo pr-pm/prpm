@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import {
   getTopAuthors,
@@ -13,6 +14,7 @@ import {
   type Author,
 } from '@/lib/api'
 import PackageModal from '@/components/PackageModal'
+import PackageAnalyticsModal from '@/components/PackageAnalyticsModal'
 
 interface AuthorStats {
   total_packages: number
@@ -80,6 +82,8 @@ function AuthorsPageContent() {
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [showPackageModal, setShowPackageModal] = useState(false)
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
+  const [analyticsPackage, setAnalyticsPackage] = useState<Package | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -194,9 +198,11 @@ function AuthorsPageContent() {
               <div className="flex items-start gap-6">
                 <div className="w-24 h-24 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
                   {author.avatar_url ? (
-                    <img
+                    <Image
                       src={author.avatar_url}
                       alt={`${author.username}'s avatar`}
+                      width={96}
+                      height={96}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -290,32 +296,119 @@ function AuthorsPageContent() {
             </div>
 
             {/* Analytics Dashboard for Own Profile */}
-            {isOwnProfile && showAnalytics && dashboardData && dashboardData.summary && (
-              <div className="mt-8 p-6 bg-prpm-dark border border-prpm-border rounded-lg">
-                <h3 className="text-xl font-bold text-white mb-4">📊 Your Analytics</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <div className="text-gray-400 text-sm">Downloads Today</div>
-                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.downloads_today || 0}</div>
+            {isOwnProfile && showAnalytics && (
+              <div className="mt-8 space-y-6">
+                {/* Loading State */}
+                {!dashboardData && (
+                  <div className="p-6 bg-prpm-dark border border-prpm-border rounded-lg text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-prpm-accent mb-2"></div>
+                    <p className="text-gray-400">Loading analytics...</p>
                   </div>
-                  <div>
-                    <div className="text-gray-400 text-sm">Downloads This Week</div>
-                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.downloads_week || 0}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400 text-sm">Downloads This Month</div>
-                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.downloads_month || 0}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400 text-sm">Total Views</div>
-                    <div className="text-xl font-bold text-prpm-accent">{dashboardData.summary.total_views || 0}</div>
-                  </div>
-                </div>
-                {dashboardData.most_popular && dashboardData.most_popular.downloads !== undefined && (
-                  <div className="mt-4 p-4 bg-prpm-dark-card border border-prpm-border rounded-lg">
-                    <div className="text-sm text-gray-400 mb-1">Most Popular Package</div>
-                    <div className="text-lg font-semibold text-white">{dashboardData.most_popular.package_name}</div>
-                    <div className="text-sm text-gray-400">{(dashboardData.most_popular.downloads || 0).toLocaleString()} downloads</div>
+                )}
+
+                {/* Dashboard Data */}
+                {dashboardData && dashboardData.summary && (
+                  <>
+                    <div className="p-6 bg-prpm-dark border border-prpm-border rounded-lg">
+                      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        📊 Your Analytics Dashboard
+                      </h3>
+
+                      {/* Key Metrics Grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div className="p-4 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                          <div className="text-gray-400 text-sm mb-1">Today</div>
+                          <div className="text-2xl font-bold text-prpm-accent">{dashboardData.summary.downloads_today || 0}</div>
+                          <div className="text-xs text-gray-500">downloads</div>
+                        </div>
+                        <div className="p-4 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                          <div className="text-gray-400 text-sm mb-1">This Week</div>
+                          <div className="text-2xl font-bold text-prpm-accent">{dashboardData.summary.downloads_week || 0}</div>
+                          <div className="text-xs text-gray-500">downloads</div>
+                        </div>
+                        <div className="p-4 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                          <div className="text-gray-400 text-sm mb-1">This Month</div>
+                          <div className="text-2xl font-bold text-prpm-accent">{dashboardData.summary.downloads_month || 0}</div>
+                          <div className="text-xs text-gray-500">downloads</div>
+                        </div>
+                        <div className="p-4 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                          <div className="text-gray-400 text-sm mb-1">Total Views</div>
+                          <div className="text-2xl font-bold text-prpm-accent">{dashboardData.summary.total_views || 0}</div>
+                          <div className="text-xs text-gray-500">page views</div>
+                        </div>
+                      </div>
+
+                      {/* Additional Stats */}
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="p-4 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                          <div className="text-gray-400 text-sm mb-1">Total Packages</div>
+                          <div className="text-xl font-bold text-white">{dashboardData.summary.total_packages || 0}</div>
+                          <div className="text-xs text-gray-500">
+                            {dashboardData.summary.public_packages || 0} public · {dashboardData.summary.private_packages || 0} private
+                          </div>
+                        </div>
+                        <div className="p-4 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                          <div className="text-gray-400 text-sm mb-1">All-Time Downloads</div>
+                          <div className="text-xl font-bold text-white">{(dashboardData.summary.total_downloads || 0).toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">across all packages</div>
+                        </div>
+                        {dashboardData.summary.average_rating !== null && (
+                          <div className="p-4 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                            <div className="text-gray-400 text-sm mb-1">Average Rating</div>
+                            <div className="text-xl font-bold text-white flex items-center gap-1">
+                              {dashboardData.summary.average_rating.toFixed(1)}
+                              <span className="text-yellow-400">★</span>
+                            </div>
+                            <div className="text-xs text-gray-500">{dashboardData.summary.total_ratings || 0} ratings</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Most Popular Package */}
+                    {dashboardData.most_popular && dashboardData.most_popular.package_name && (
+                      <div className="p-6 bg-gradient-to-r from-prpm-accent/10 to-prpm-purple/10 border border-prpm-accent/30 rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="text-sm text-gray-400 mb-1">🏆 Most Popular Package</div>
+                            <div className="text-2xl font-bold text-white mb-1">{dashboardData.most_popular.package_name}</div>
+                            <div className="text-lg text-prpm-accent font-semibold">
+                              {(dashboardData.most_popular.downloads || 0).toLocaleString()} downloads
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recent Packages */}
+                    {dashboardData.recent_packages && dashboardData.recent_packages.length > 0 && (
+                      <div className="p-6 bg-prpm-dark border border-prpm-border rounded-lg">
+                        <h4 className="text-lg font-bold text-white mb-4">📦 Recently Published</h4>
+                        <div className="space-y-3">
+                          {dashboardData.recent_packages.slice(0, 5).map((pkg: any) => (
+                            <div key={pkg.id} className="flex items-center justify-between p-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                              <div>
+                                <div className="font-semibold text-white">{pkg.name || pkg.id}</div>
+                                <div className="text-xs text-gray-400">
+                                  {new Date(pkg.created_at).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-prpm-accent">{pkg.total_downloads || 0}</div>
+                                <div className="text-xs text-gray-400">downloads</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Error State */}
+                {dashboardData && !dashboardData.summary && (
+                  <div className="p-6 bg-prpm-dark border border-prpm-border rounded-lg text-center">
+                    <p className="text-gray-400">No analytics data available yet. Publish some packages to see your stats!</p>
                   </div>
                 )}
               </div>
@@ -365,19 +458,36 @@ function AuthorsPageContent() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {packages.map((pkg) => (
-                <button
+                <div
                   key={pkg.id}
-                  onClick={() => {
-                    setSelectedPackage(pkg)
-                    setShowPackageModal(true)
-                  }}
-                  className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-all group text-left"
+                  className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-all group"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-white group-hover:text-prpm-accent transition-colors">
-                      {pkg.name}
-                    </h3>
+                    <button
+                      onClick={() => {
+                        setSelectedPackage(pkg)
+                        setShowPackageModal(true)
+                      }}
+                      className="flex-1 text-left"
+                    >
+                      <h3 className="text-lg font-semibold text-white group-hover:text-prpm-accent transition-colors">
+                        {pkg.name}
+                      </h3>
+                    </button>
                     <div className="flex items-center gap-2">
+                      {isOwnProfile && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setAnalyticsPackage(pkg)
+                            setShowAnalyticsModal(true)
+                          }}
+                          className="p-1.5 bg-prpm-accent/20 hover:bg-prpm-accent/30 text-prpm-accent rounded transition-all"
+                          title="View Analytics"
+                        >
+                          📊
+                        </button>
+                      )}
                       <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-gray-400 text-xs">
                         {pkg.format}
                       </span>
@@ -389,45 +499,53 @@ function AuthorsPageContent() {
                     </div>
                   </div>
 
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                    {pkg.description || 'No description'}
-                  </p>
+                  <button
+                    onClick={() => {
+                      setSelectedPackage(pkg)
+                      setShowPackageModal(true)
+                    }}
+                    className="w-full text-left"
+                  >
+                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                      {pkg.description || 'No description'}
+                    </p>
 
-                  {pkg.license && (
-                    <div className="mb-3">
-                      <span className="px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-xs">
-                        {pkg.license}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <span>⬇️</span>
-                      <span>{pkg.total_downloads.toLocaleString()}</span>
-                    </div>
-                    {pkg.rating_average !== null && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-yellow-400">★</span>
-                        <span>{pkg.rating_average.toFixed(1)}</span>
-                        <span className="text-gray-600">({pkg.rating_count})</span>
+                    {pkg.license && (
+                      <div className="mb-3">
+                        <span className="px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-xs">
+                          {pkg.license}
+                        </span>
                       </div>
                     )}
-                  </div>
 
-                  {pkg.tags && pkg.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {pkg.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-xs text-gray-400"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <span>⬇️</span>
+                        <span>{pkg.total_downloads.toLocaleString()}</span>
+                      </div>
+                      {pkg.rating_average !== null && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-yellow-400">★</span>
+                          <span>{pkg.rating_average.toFixed(1)}</span>
+                          <span className="text-gray-600">({pkg.rating_count})</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </button>
+
+                    {pkg.tags && pkg.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {pkg.tags.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-xs text-gray-400"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -519,6 +637,20 @@ function AuthorsPageContent() {
             package={selectedPackage}
             isOpen={showPackageModal}
             onClose={() => setShowPackageModal(false)}
+          />
+        )}
+
+        {/* Package Analytics Modal */}
+        {analyticsPackage && (
+          <PackageAnalyticsModal
+            packageId={analyticsPackage.id}
+            packageName={analyticsPackage.name}
+            isOpen={showAnalyticsModal}
+            onClose={() => {
+              setShowAnalyticsModal(false)
+              setAnalyticsPackage(null)
+            }}
+            jwtToken={typeof window !== 'undefined' ? localStorage.getItem('prpm_token') || '' : ''}
           />
         )}
       </main>

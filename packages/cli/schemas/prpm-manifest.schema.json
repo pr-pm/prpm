@@ -367,6 +367,100 @@
         "$ref": "#"
       },
       "minItems": 1
+    },
+    "collections": {
+      "type": "array",
+      "description": "Array of collections to publish. Collections bundle multiple packages together for easier installation.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "packages"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique collection identifier (kebab-case)",
+            "pattern": "^[a-z0-9-]+$",
+            "minLength": 3,
+            "maxLength": 100,
+            "examples": ["nextjs-complete", "fullstack-setup", "react-essentials"]
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the collection",
+            "minLength": 3,
+            "maxLength": 100,
+            "examples": ["Next.js Complete", "Full Stack Setup"]
+          },
+          "description": {
+            "type": "string",
+            "description": "What this collection provides",
+            "minLength": 10,
+            "maxLength": 500
+          },
+          "version": {
+            "type": "string",
+            "description": "Semantic version of the collection",
+            "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$",
+            "examples": ["1.0.0", "2.1.0"]
+          },
+          "category": {
+            "type": "string",
+            "description": "Collection category",
+            "enum": ["development", "testing", "deployment", "data-science", "devops", "design", "documentation", "security", "performance", "general"],
+            "examples": ["development", "testing"]
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags for discoverability (kebab-case)",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]+$"
+            },
+            "minItems": 1,
+            "maxItems": 10,
+            "examples": [["react", "typescript", "nextjs"], ["python", "data-science", "ml"]]
+          },
+          "icon": {
+            "type": "string",
+            "description": "Emoji or icon for the collection",
+            "maxLength": 10,
+            "examples": ["⚛️", "🚀", "📦"]
+          },
+          "packages": {
+            "type": "array",
+            "description": "Array of packages included in this collection",
+            "items": {
+              "type": "object",
+              "required": ["packageId"],
+              "properties": {
+                "packageId": {
+                  "type": "string",
+                  "description": "Package identifier to include",
+                  "minLength": 1,
+                  "examples": ["typescript-strict", "react-best-practices"]
+                },
+                "version": {
+                  "type": "string",
+                  "description": "Version range (semver) or 'latest'",
+                  "examples": ["^1.0.0", "~2.1.0", "1.0.0", "latest"]
+                },
+                "required": {
+                  "type": "boolean",
+                  "description": "Whether this package is required (true) or optional (false)",
+                  "default": true
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Explanation of why this package is included",
+                  "maxLength": 200,
+                  "examples": ["Enforces strict TypeScript type safety", "React component best practices"]
+                }
+              }
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "minItems": 1
     }
   },
   "additionalProperties": false,
@@ -546,6 +640,58 @@
           "private": true,
           "files": [
             "package-two/.cursor/rules/main.mdc"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "@username/multi-package-with-collection",
+      "version": "1.0.0",
+      "description": "Repository with both packages and a collection",
+      "author": "Your Name",
+      "license": "MIT",
+      "packages": [
+        {
+          "name": "typescript-rules",
+          "version": "1.0.0",
+          "description": "TypeScript coding standards",
+          "format": "cursor",
+          "subtype": "rule",
+          "tags": ["typescript", "cursor"],
+          "files": [".cursor/rules/typescript.mdc"]
+        },
+        {
+          "name": "react-patterns",
+          "version": "1.0.0",
+          "description": "React best practices",
+          "format": "claude",
+          "subtype": "skill",
+          "tags": ["react", "best-practices"],
+          "files": [".claude/skills/react-patterns/SKILL.md"]
+        }
+      ],
+      "collections": [
+        {
+          "id": "fullstack-setup",
+          "name": "Full Stack Setup",
+          "description": "Complete full-stack development setup with TypeScript and React",
+          "version": "1.0.0",
+          "category": "development",
+          "tags": ["typescript", "react", "fullstack"],
+          "icon": "🚀",
+          "packages": [
+            {
+              "packageId": "typescript-rules",
+              "version": "^1.0.0",
+              "required": true,
+              "reason": "TypeScript coding standards for the project"
+            },
+            {
+              "packageId": "react-patterns",
+              "version": "^1.0.0",
+              "required": true,
+              "reason": "React component best practices"
+            }
           ]
         }
       ]

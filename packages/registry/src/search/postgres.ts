@@ -16,6 +16,8 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
         tags,
         category,
         author,
+        language,
+        framework,
         verified,
         featured,
         sort = 'downloads',
@@ -86,6 +88,16 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       if (tags && tags.length > 0) {
         conditions.push(`p.tags && $${paramIndex++}`);
         params.push(tags);
+      }
+
+      if (language) {
+        conditions.push(`LOWER(p.language) = LOWER($${paramIndex++})`);
+        params.push(language);
+      }
+
+      if (framework) {
+        conditions.push(`LOWER(p.framework) = LOWER($${paramIndex++})`);
+        params.push(framework);
       }
 
       if (verified !== undefined) {

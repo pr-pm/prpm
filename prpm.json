@@ -90,13 +90,17 @@
     },
     {
       "name": "prpm-json-best-practices-skill",
-      "version": "1.0.6",
+      "version": "1.0.8",
       "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
       "format": "claude",
       "subtype": "skill",
       "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal"],
       "files": [
-        ".claude/skills/prpm-json-best-practices/SKILL.md"
+        ".claude/skills/prpm-json-best-practices/SKILL.md",
+        ".claude/skills/prpm-json-best-practices/examples/single-package.json",
+        ".claude/skills/prpm-json-best-practices/examples/multi-package.json",
+        ".claude/skills/prpm-json-best-practices/examples/collections-repository.json",
+        ".claude/skills/prpm-json-best-practices/examples/packages-with-collections.json"
       ]
     },
     {
@@ -125,7 +129,7 @@
     },
     {
       "name": "prpm-json-best-practices",
-      "version": "1.0.2",
+      "version": "1.0.4",
       "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
       "format": "cursor",
       "subtype": "rule",
@@ -160,7 +164,7 @@
     {
       "name": "beanstalk-deploy-skill",
       "version": "1.0.2",
-      "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
+      "description": "Robust deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
       "format": "claude",
       "subtype": "skill",
       "tags": ["aws", "elastic-beanstalk", "deployment", "pulumi", "github-actions", "ci-cd", "automation"],
@@ -261,7 +265,7 @@
     },
     {
       "name": "self-improving-skill",
-      "version": "1.0.2",
+      "version": "1.0.4",
       "description": "Use when starting infrastructure, testing, deployment, or framework-specific tasks - automatically searches PRPM registry for relevant expertise packages and suggests installation to enhance capabilit",
       "format": "claude",
       "subtype": "skill",
@@ -339,7 +343,7 @@
     {
       "name": "beanstalk-deploy",
       "version": "1.0.2",
-      "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
+      "description": "Robust deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
       "format": "cursor",
       "subtype": "rule",
       "tags": ["aws", "elastic-beanstalk", "deployment", "infrastructure", "devops", "pulumi", "ci-cd", "github-actions"],
@@ -404,7 +408,7 @@
     },
     {
       "name": "self-improve-cursor",
-      "version": "1.0.2",
+      "version": "1.0.4",
       "description": "Automatically search and install PRPM packages when working on infrastructure, testing, deployment, or framework-specific tasks",
       "format": "cursor",
       "subtype": "rule",

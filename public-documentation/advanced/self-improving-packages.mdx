@@ -1,0 +1,255 @@
+---
+title: 'Self-Improving Packages'
+description: 'How AI assistants can automatically discover and install expertise packages from PRPM to enhance their capabilities'
+---
+
+## Overview
+
+Self-improving packages enable AI assistants (Claude, Cursor, etc.) to **automatically search and install PRPM packages** when they detect they're working on specialized tasks. Instead of relying only on their base training, the AI can dynamically acquire domain-specific expertise from the PRPM registry.
+
+## How It Works
+
+### 1. Task Detection
+
+The AI analyzes the user's request for domain-specific keywords:
+
+- **Infrastructure**: aws, pulumi, terraform, kubernetes, docker, beanstalk
+- **Testing**: playwright, jest, cypress, vitest, e2e
+- **Deployment**: ci/cd, github-actions, gitlab-ci, workflows
+- **Frameworks**: react, vue, next.js, express, django, fastapi
+
+### 2. Automatic Package Search
+
+When keywords are detected, the AI searches the PRPM registry:
+
+```bash
+prpm search "pulumi aws infrastructure" --limit 5
+```
+
+### 3. Quality Assessment
+
+The AI evaluates packages based on confidence levels:
+
+**High Confidence (Auto-suggest)**
+- ✅ Official packages (`@prpm/*`)
+- ✅ Featured packages
+- ✅ High downloads (>1,000)
+- ✅ Verified authors
+
+**Medium Confidence (Present options)**
+- ⚠️ Community packages (&lt;1,000 downloads)
+- ⚠️ Multiple similar packages
+
+**Low Confidence (Skip)**
+- ❌ Unverified packages
+- ❌ Zero downloads
+
+### 4. User Approval
+
+The AI presents findings and asks permission:
+
+```
+I found a package that can help:
+
+📦 @prpm/pulumi-infrastructure (Official, 3.2K downloads)
+   - Pulumi + AWS best practices
+   - Cost optimization patterns
+   - Production deployment guides
+
+Should I install this to enhance my Pulumi knowledge?
+```
+
+### 5. Installation & Application
+
+After approval, the package is installed and immediately applied:
+
+```bash
+prpm install @prpm/pulumi-infrastructure
+```
+
+The AI then uses the package's expertise to help with the task.
+
+## Real-World Example
+
+### User Request
+```
+"Help me deploy a Node.js app to AWS Elastic Beanstalk using Pulumi"
+```
+
+### AI Detection & Response
+```
+Keywords detected: Elastic Beanstalk, Pulumi, deployment
+
+Searching PRPM registry...
+
+Found relevant packages:
+1. @prpm/pulumi-infrastructure (Official, 5.2K downloads)
+   - Pulumi best practices and AWS patterns
+
+2. @prpm/beanstalk-deploy (Official, 2.1K downloads)
+   - Elastic Beanstalk deployment patterns
+   - GitHub Actions integration
+
+Should I install these packages to provide expert guidance?
+```
+
+### After Installation
+The AI now has access to:
+- Production-tested Pulumi patterns
+- Beanstalk deployment best practices
+- Common pitfalls and solutions
+- CI/CD integration examples
+
+## Installing Self-Improving Packages
+
+### For Claude Code
+
+```bash
+prpm install @prpm/self-improving-skill
+```
+
+This skill teaches Claude to:
+- Detect task-specific keywords
+- Search the registry proactively
+- Evaluate package quality
+- Request permission before installing
+- Apply package knowledge immediately
+
+### For Cursor
+
+```bash
+prpm install @prpm/self-improve-cursor
+```
+
+This rule enables Cursor to:
+- Automatically trigger searches on infrastructure/testing tasks
+- Present top packages with download counts
+- Install packages after user approval
+- Load expertise for the current task
+
+## Creating Your Own Self-Improving Package
+
+You can create packages that teach AI assistants to be self-improving:
+
+```markdown
+# self-improving-python.md
+
+## When to Use
+
+Triggers when detecting Python-specific tasks:
+- web frameworks: flask, django, fastapi
+- data science: pandas, numpy, scikit-learn
+- async: asyncio, aiohttp
+
+## Search Strategy
+
+When Python framework detected:
+1. Extract framework name
+2. Search: `prpm search "python {framework} best-practices"`
+3. Filter for packages with >500 downloads
+4. Present top 3 options to user
+
+## Example
+
+User: "Help me build a FastAPI app"
+Action: Search "python fastapi best-practices"
+Result: Suggest @community/fastapi-expert (1.2K downloads)
+```
+
+Publish it:
+
+```bash
+prpm publish
+```
+
+## Meta-Dogfooding
+
+PRPM uses its own self-improving packages for development:
+
+- **`@prpm/pulumi-infrastructure`** → PRPM's infrastructure (74% cost savings)
+- **`@prpm/github-actions-testing`** → PRPM's workflow validation
+- **`@prpm/postgres-migrations`** → PRPM's database patterns
+
+**Benefit**: Users get the same battle-tested expertise that built PRPM itself.
+
+## Privacy & Security
+
+- ✅ All searches query the PRPM registry API
+- ✅ No personal data collected during searches
+- ✅ Download tracking only on install (anonymous)
+- ✅ User approval required before installation
+- ✅ Packages are scanned for quality and safety
+
+## Best Practices
+
+### 1. Be Proactive
+Search for packages **before** starting complex tasks, not after encountering errors.
+
+### 2. Verify Quality
+Always check:
+- Download counts
+- Official/verified status
+- Package description relevance
+
+### 3. Ask Permission
+Never install packages without explicit user approval.
+
+### 4. Apply Immediately
+Once installed, use the package knowledge right away on the current task.
+
+### 5. Track Helpfulness
+Note which packages were useful for future reference.
+
+## Advanced Patterns
+
+### Chaining Package Discovery
+
+AI can discover packages that help discover more packages:
+
+```bash
+# Install the package discovery expert
+prpm install @prpm/self-improving-skill
+
+# Now the AI can discover domain-specific packages
+User: "Build a Kubernetes deployment"
+AI: *searches for kubernetes packages*
+AI: *finds @prpm/k8s-expert*
+AI: *suggests installation*
+```
+
+### Context-Aware Installation
+
+AI can choose package format based on the editor:
+
+```bash
+# For Claude Code users
+prpm install @prpm/pulumi-infrastructure --as claude
+
+# For Cursor users
+prpm install @prpm/pulumi-infrastructure --as cursor
+```
+
+### Temporary vs Permanent
+
+Some packages are task-specific, others are project-wide:
+
+```bash
+# Temporary: install for one-time task
+prpm install @prpm/stripe-webhooks
+
+# Permanent: add to project
+prpm install @prpm/typescript-type-safety
+```
+
+## Limitations
+
+1. **Search Quality**: Results depend on package descriptions and tags
+2. **Installation Friction**: Requires user approval (by design)
+3. **Context Window**: Very large packages may exceed token limits
+4. **Network Required**: Registry search needs internet access
+
+## Related Topics
+
+- [Creating Meta Packages](/advanced/meta-packages)
+- [Package Collections](/cli/workflows#working-with-collections)
+- [AI Prompt Formats](/concepts/formats)

@@ -8,11 +8,19 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://prpm.dev'),
   title: {
-    default: 'PRPM - The Universal Registry for AI Coding Tools',
+    default: 'PRPM - Largest Collection of Cursor Rules, Claude Agents & Slash Commands',
     template: '%s | PRPM'
   },
-  description: 'Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, and more — all from one file.',
+  description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 2,100+ packages including cursor slash commands, claude slash commands, and claude plugins. Install AI coding tools with one command.',
   keywords: [
+    'cursor rules',
+    'cursor slash commands',
+    'claude agents',
+    'claude slash commands',
+    'largest collection of cursor rules',
+    'largest collection of claude plugins',
+    'claude plugins',
+    'cursor plugins',
     'AI prompts',
     'cursor prompts',
     'claude prompts',
@@ -24,7 +32,6 @@ export const metadata: Metadata = {
     'AI agents',
     'prompt registry',
     'slash commands',
-    'cursor rules',
     'claude code',
     'AI coding assistant',
     'developer tools'
@@ -45,8 +52,8 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://prpm.dev',
-    title: 'PRPM - The Universal Registry for AI Coding Tools',
-    description: 'Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, and more — all from one file.',
+    title: 'PRPM - Largest Collection of Cursor Rules, Claude Agents & Slash Commands',
+    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 2,100+ packages including cursor slash commands, claude slash commands, and claude plugins.',
     siteName: 'PRPM',
     images: [
       {
@@ -59,8 +66,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PRPM - The Universal Registry for AI Coding Tools',
-    description: 'Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, and more.',
+    title: 'PRPM - Largest Collection of Cursor Rules, Claude Agents & Slash Commands',
+    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 2,100+ packages including cursor slash commands, claude slash commands, and claude plugins.',
     images: ['/og-image.png'],
     creator: '@prpmdev',
   },
@@ -89,6 +96,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-RH5GKLVYK2"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-RH5GKLVYK2');
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <AuthProvider>{children}</AuthProvider>
       </body>

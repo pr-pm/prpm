@@ -308,9 +308,12 @@ export async function handleInstall(
       const packageName = stripAuthorNamespace(packageId);
 
       // For Claude skills, use SKILL.md filename in the package directory
+      // For agents.md, use package-name/AGENTS.md directory structure
       // For other formats, use package name as filename
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
         destPath = `${destDir}/SKILL.md`;
+      } else if (effectiveFormat === 'agents.md') {
+        destPath = `${destDir}/${packageName}/AGENTS.md`;
       } else {
         destPath = `${destDir}/${packageName}.${fileExtension}`;
       }
@@ -560,7 +563,7 @@ export function createInstallCommand(): Command {
     .description('Install a package from the registry')
     .argument('<package>', 'Package to install (e.g., react-rules or react-rules@1.2.0)')
     .option('--version <version>', 'Specific version to install')
-    .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, canonical)')
+    .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)')
     .option('--format <format>', 'Alias for --as')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
@@ -568,11 +571,13 @@ export function createInstallCommand(): Command {
       // Support both --as and --format (format is alias for as)
       const convertTo = options.format || options.as;
 
-      if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'canonical'].includes(convertTo)) {
-        console.error('❌ Format must be one of: cursor, claude, continue, windsurf, canonical');
+      if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical'].includes(convertTo)) {
+        console.error('❌ Format must be one of: cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical');
         console.log('\n💡 Examples:');
         console.log('   prpm install my-package --as cursor       # Convert to Cursor format');
         console.log('   prpm install my-package --format claude   # Convert to Claude format');
+        console.log('   prpm install my-package --format kiro     # Convert to Kiro format');
+        console.log('   prpm install my-package --format agents.md # Convert to Agents.md format');
         console.log('   prpm install my-package                   # Install in native format');
         process.exit(1);
       }

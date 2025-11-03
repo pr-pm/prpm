@@ -18,6 +18,12 @@ export interface AIEvaluationResult {
   suggestions: string[];
 }
 
+export interface AIMetadataResult {
+  language?: string;
+  framework?: string;
+  category?: string;
+}
+
 /**
  * Evaluate prompt content quality using Claude AI
  * Returns a score from 0.0 to 1.0
@@ -354,5 +360,76 @@ export async function getDetailedAIEvaluation(
       weaknesses: ['AI evaluation error'],
       suggestions: ['Check API key and connectivity'],
     };
+  }
+}
+
+/**
+ * Extract metadata (language, framework, category) from package content using AI
+ */
+export async function extractMetadataWithAI(
+  content: any,
+  existingMetadata: { language?: string; framework?: string; category?: string; tags?: string[]; description?: string },
+  server: FastifyInstance
+): Promise<AIMetadataResult> {
+  if (!config.ai.evaluationEnabled || !config.ai.anthropicApiKey) {
+    return {};
+  }
+
+  try {
+    const anthropic = new Anthropic({
+      apiKey: config.ai.anthropicApiKey,
+    });
+
+    const promptText = extractPromptText(content);
+    const tags = existingMetadata.tags?.join(', ') || 'none';
+    const description = existingMetadata.description || '';
+
+    const message = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 512,
+      temperature: 0,
+      messages: [
+        {
+          role: 'user',
+          content: `Analyze this package and extract metadata. Return ONLY a JSON object with these fields (use null if not applicable):
+{
+  "language": "primary programming language (javascript, typescript, python, go, rust, java, csharp, php, ruby, swift, kotlin, or null)",
+  "framework": "primary framework (react, nextjs, vue, angular, svelte, django, fastapi, flask, rails, laravel, express, nestjs, spring, dotnet, or null)",
+  "category": "best category from this list: development, development/frontend, development/backend, development/fullstack, development/testing, development/debugging, development/code-review, development/refactoring, development/framework, data, data/analysis, data/ml, data/etl, security, security/audit, security/pentest, documentation, documentation/api, documentation/technical, framework, framework/frontend, framework/backend, framework/fullstack, workflow, workflow/agile, workflow/project-management, automation, automation/ci-cd, automation/deployment, automation/testing, or null"
+}
+
+Package description: ${description}
+Tags: ${tags}
+
+Content preview (first 1000 chars):
+${promptText.substring(0, 1000)}
+
+Return ONLY the JSON object, nothing else.`,
+        },
+      ],
+    });
+
+    const responseText = message.content[0].type === 'text'
+      ? message.content[0].text
+      : '';
+
+    // Parse JSON response
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const result = JSON.parse(jsonMatch[0]);
+      server.log.info({ extracted: result }, '🤖 Extracted metadata with AI');
+      return {
+        language: result.language || undefined,
+        framework: result.framework || undefined,
+        category: result.category || undefined,
+      };
+    }
+
+    return {};
+
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    server.log.warn({ error: err.message }, '⚠️  AI metadata extraction failed');
+    return {};
   }
 }

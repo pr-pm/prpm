@@ -1,6 +1,6 @@
 /**
  * Continue Format Converter
- * Continue uses plain markdown without frontmatter
+ * Continue uses YAML frontmatter for both prompts (slash commands) and rules
  */
 
 import type {
@@ -13,7 +13,9 @@ import type {
 
 /**
  * Convert canonical package to Continue format
- * Continue format is plain markdown without YAML frontmatter
+ * Continue format requires YAML frontmatter:
+ * - Prompts (slash commands): name, description, invokable: true
+ * - Rules: name, globs, alwaysApply, description
  */
 export function toContinue(pkg: CanonicalPackage): ConversionResult {
   const warnings: string[] = [];
@@ -22,25 +24,71 @@ export function toContinue(pkg: CanonicalPackage): ConversionResult {
   try {
     const lines: string[] = [];
 
-    // Extract metadata for title
+    // Extract metadata
     const metadata = pkg.content.sections.find(s => s.type === 'metadata');
+    const title = metadata?.type === 'metadata' ? (metadata.data.title as string || pkg.name || pkg.id) : (pkg.name || pkg.id);
+    const description = metadata?.type === 'metadata' ? (metadata.data.description as string || pkg.description) : pkg.description;
 
-    // Add title
-    if (metadata?.type === 'metadata') {
-      const title = metadata.data.title as string || pkg.id;
-      const icon = metadata.data.icon as string | undefined;
+    // Determine if this is a prompt/slash-command or a rule
+    const isPrompt = pkg.subtype === 'slash-command' || pkg.subtype === 'prompt';
+    const isRule = pkg.subtype === 'rule';
 
-      if (icon) {
-        lines.push(`# ${icon} ${title}`);
-      } else {
-        lines.push(`# ${title}`);
+    // Generate YAML frontmatter based on type
+    if (isPrompt) {
+      // Prompts (slash commands) need: name, description, invokable: true
+      lines.push('---');
+      lines.push(`name: ${title}`);
+      if (description) {
+        lines.push(`description: ${description}`);
       }
+      lines.push('invokable: true');
+      lines.push('---');
+      lines.push('');
+    } else if (isRule) {
+      // Rules need: name, globs, alwaysApply, description
+      lines.push('---');
+      lines.push(`name: ${title}`);
 
-      // Add description
-      if (metadata.data.description) {
-        lines.push('');
-        lines.push(metadata.data.description as string);
+      // Get globs from metadata or use defaults
+      const globs = pkg.metadata?.globs || ['**/*'];
+      lines.push(`globs:`);
+      globs.forEach(glob => {
+        lines.push(`  - "${glob}"`);
+      });
+
+      // Get alwaysApply from metadata (default false)
+      const alwaysApply = pkg.metadata?.alwaysApply ?? false;
+      lines.push(`alwaysApply: ${alwaysApply}`);
+
+      if (description) {
+        lines.push(`description: ${description}`);
       }
+      lines.push('---');
+      lines.push('');
+    } else {
+      // For other subtypes, create a basic prompt
+      warnings.push(`Subtype '${pkg.subtype}' not directly supported - converting as prompt`);
+      lines.push('---');
+      lines.push(`name: ${title}`);
+      if (description) {
+        lines.push(`description: ${description}`);
+      }
+      lines.push('invokable: true');
+      lines.push('---');
+      lines.push('');
+    }
+
+    // Add title and description in markdown body
+    const icon = metadata?.type === 'metadata' ? (metadata.data.icon as string | undefined) : undefined;
+    if (icon) {
+      lines.push(`# ${icon} ${title}`);
+    } else {
+      lines.push(`# ${title}`);
+    }
+
+    if (description) {
+      lines.push('');
+      lines.push(description);
     }
 
     // Convert all sections (except metadata)

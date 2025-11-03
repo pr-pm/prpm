@@ -1,0 +1,158 @@
+---
+title: 'Installation'
+description: 'Install PRPM on your system'
+---
+
+## Install via npm
+
+The easiest way to install the PRPM CLI is using npm:
+
+```bash
+npm install -g prpm
+```
+
+## Verify Installation
+
+Check that PRPM is installed correctly:
+
+```bash
+prpm --version
+```
+
+You should see the version number of PRPM.
+
+## System Requirements
+
+- **Node.js**: 18.x or higher
+- **npm**: 9.x or higher
+- **Operating Systems**: macOS, Linux, Windows
+
+## Authentication Setup
+
+Before publishing packages, you'll need to authenticate:
+
+```bash
+prpm login
+```
+
+This will open GitHub OAuth in your browser to authenticate.
+
+Check your authentication status:
+
+```bash
+prpm whoami
+```
+
+## Alternative: Use with npx
+
+If you don't want to install globally, you can use npx:
+
+```bash
+npx prpm search typescript
+npx prpm install @username/typescript-rules
+```
+
+<Warning>
+  Using npx will download the CLI each time, which is slower than installing globally.
+</Warning>
+
+## Configuration
+
+PRPM stores configuration in `~/.prpmrc`.
+
+View all configuration:
+
+```bash
+prpm config list
+```
+
+View a specific setting:
+
+```bash
+prpm config get registry
+```
+
+Set a configuration value:
+
+```bash
+prpm config set registry https://custom-registry.dev
+```
+
+### Common Configuration Options
+
+- `registry` - Registry URL (default: `https://registry.prpm.dev`)
+- `token` - Authentication token (set automatically by `prpm login`)
+- `telemetry` - Enable/disable telemetry (default: `true`)
+
+### Environment Variables
+
+You can also configure PRPM using environment variables:
+
+```bash
+export PRPM_REGISTRY_URL=https://custom-registry.dev
+export PRPM_TOKEN=your-auth-token
+export PRPM_TELEMETRY=false
+```
+
+## Troubleshooting
+
+### Command not found
+
+If `prpm` command is not found after installation:
+
+1. Check if npm global bin is in your PATH:
+   ```bash
+   npm config get prefix
+   ```
+
+2. Add npm global bin to PATH:
+   ```bash
+   # For bash
+   echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.bashrc
+   source ~/.bashrc
+
+   # For zsh
+   echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+
+### Permission errors
+
+If you get EACCES errors:
+
+1. Change npm's default directory (recommended):
+   ```bash
+   mkdir ~/.npm-global
+   npm config set prefix '~/.npm-global'
+   echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.profile
+   source ~/.profile
+   npm install -g prpm
+   ```
+
+2. Or use sudo (less secure):
+   ```bash
+   sudo npm install -g prpm
+   ```
+
+<Info>
+  For more troubleshooting help, see the [Troubleshooting Guide](/cli/troubleshooting).
+</Info>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Install your first package
+  </Card>
+  <Card
+    title="CLI Reference"
+    icon="terminal"
+    href="/cli"
+  >
+    Explore all commands
+  </Card>
+</CardGroup>

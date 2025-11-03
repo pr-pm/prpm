@@ -145,11 +145,154 @@ Collections are curated bundles of packages that solve specific use cases.
 }
 ```
 
+### Collection Installation Behavior
+
+Collections can be installed using multiple identifier formats. The system intelligently resolves collections based on the format provided.
+
+#### Installation Formats (Priority Order)
+
+**1. Recommended Format: `collections/{slug}`**
+```bash
+prpm install collections/nextjs-pro
+prpm install collections/nextjs-pro@2.0.0
+```
+- **Behavior**: Searches across ALL scopes for `name_slug = "nextjs-pro"`
+- **Resolution**: Prioritizes by official → verified → downloads → created_at
+- **Use Case**: User-friendly format for discovering popular collections
+- **Example**: Finds `khaliqgant/nextjs-pro` even when searching `collections/nextjs-pro`
+
+**2. Explicit Scope: `{scope}/{slug}` or `@{scope}/{slug}`**
+```bash
+prpm install khaliqgant/nextjs-pro
+prpm install @khaliqgant/nextjs-pro
+prpm install khaliqgant/nextjs-pro@2.0.0
+```
+- **Behavior**: Searches for specific `scope` and `name_slug` combination
+- **Resolution**: Exact match only within that scope
+- **Use Case**: Installing a specific author's version when multiple exist
+- **Example**: Gets specifically the collection published by `khaliqgant`
+
+**3. Name-Only Format: `{slug}`** (Legacy/Fallback)
+```bash
+prpm install nextjs-pro
+prpm install nextjs-pro@1.0.0
+```
+- **Behavior**: Defaults to `scope = "collection"`, then falls back to cross-scope search
+- **Resolution**: First tries scope="collection", then searches all scopes
+- **Use Case**: Quick installs when collection origin doesn't matter
+- **Recommendation**: Prefer `collections/{slug}` for clarity
+
+#### Registry Resolution Logic
+
+**Implementation Location**: `app/packages/registry/src/routes/collections.ts:485-519`
+
+```typescript
+// When scope is 'collection' (default from CLI for collections/* prefix):
+if (scope === 'collection') {
+  // Search across ALL scopes, prioritize by:
+  // 1. Official collections (official = true)
+  // 2. Verified authors (verified = true)
+  // 3. Most downloads
+  // 4. Most recent
+  SELECT * FROM collections
+  WHERE name_slug = $1
+  ORDER BY official DESC, verified DESC, downloads DESC, created_at DESC
+  LIMIT 1
+} else {
+  // Explicit scope: exact match only
+  SELECT * FROM collections
+  WHERE scope = $1 AND name_slug = $2
+  ORDER BY created_at DESC
+  LIMIT 1
+}
+```
+
+#### CLI Resolution Logic
+
+**Implementation Location**: `app/packages/cli/src/commands/collections.ts:487-504`
+
+```typescript
+// Parse collection spec:
+// - collections/nextjs-pro → scope='collection', name_slug='nextjs-pro'
+// - khaliqgant/nextjs-pro → scope='khaliqgant', name_slug='nextjs-pro'
+// - @khaliqgant/nextjs-pro → scope='khaliqgant', name_slug='nextjs-pro'
+// - nextjs-pro → scope='collection', name_slug='nextjs-pro'
+
+const matchWithScope = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
+if (matchWithScope) {
+  [, scope, name_slug, version] = matchWithScope;
+} else {
+  // No scope: default to 'collection'
+  [, name_slug, version] = collectionSpec.match(/^([^/@]+)(?:@(.+))?$/);
+  scope = 'collection';
+}
+```
+
+#### Version Resolution
+
+Collections support semantic versioning:
+
+```bash
+# Latest version (default)
+prpm install collections/nextjs-pro
+
+# Specific version
+prpm install collections/nextjs-pro@2.0.4
+
+# With scope and version
+prpm install khaliqgant/nextjs-pro@2.0.4
+```
+
+**Registry Behavior**:
+- Without version: Returns latest (most recent `created_at`)
+- With version: Exact match required
+
+#### Discovery Prioritization
+
+When searching across all scopes (`collections/*` format), the system prioritizes:
+
+1. **Official Collections** (official = true)
+   - Curated by PRPM maintainers
+   - Highest trust level
+
+2. **Verified Authors** (verified = true)
+   - Known community contributors
+   - GitHub verified
+
+3. **Download Count** (downloads DESC)
+   - Most popular collections
+   - Community validation
+
+4. **Recency** (created_at DESC)
+   - Latest versions
+   - Actively maintained
+
+#### Error Handling
+
+**Collection Not Found**:
+```bash
+prpm install collections/nonexistent
+# ❌ Failed to install collection: Collection not found
+```
+
+**Scope-Specific Not Found**:
+```bash
+prpm install wrongscope/nextjs-pro
+# ❌ Failed to install collection: Collection not found
+# Suggestion: Try 'collections/nextjs-pro' to search all scopes
+```
+
 ### Collection Best Practices
+
 1. **Required vs Optional**: Clearly mark essential vs nice-to-have packages
 2. **Reason Documentation**: Every package explains why it's included
 3. **IDE-Specific Variants**: Different packages per editor when needed
 4. **Installation Order**: Consider dependencies
+5. **Scope Naming**:
+   - Use your username/org as scope for personal collections
+   - Reserve "collection" scope for official PRPM collections
+6. **User-Friendly IDs**: Use descriptive slugs (e.g., "nextjs-pro" not "np-setup")
+7. **Version Incrementing**: Bump versions on meaningful changes (follow semver)
 
 ## Quality & Ranking System
 
@@ -380,6 +523,12 @@ export function toFormat(pkg: CanonicalPackage): ConversionResult {
 - **README**: Keep examples up-to-date
 - **Markdown Docs**: Use code blocks with language tags
 - **Changelog**: Follow Keep a Changelog format
+- **Continuous Accuracy**: Documentation must be continuously updated and tended to for accuracy
+  - When adding features, update relevant docs immediately
+  - When fixing bugs, check if docs need corrections
+  - When refactoring, verify examples still work
+  - Review docs quarterly for outdated information
+  - Keep CLI docs, README, and Mintlify docs in sync
 
 ## Reference Documentation
 

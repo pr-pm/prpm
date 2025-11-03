@@ -1,0 +1,67 @@
+---
+title: 'Packages'
+description: 'Understanding PRPM packages'
+---
+
+# Packages
+
+Packages are the core unit of distribution in PRPM. A package contains prompts, rules, skills, agents, or other AI tool configurations.
+
+## Package Types
+
+PRPM supports different package subtypes:
+
+| Subtype | Description | Example |
+|---------|-------------|---------|
+| `agent` | Autonomous multi-step agents | Complex workflow automation |
+| `skill` | Specialized knowledge/capabilities | Domain expertise, best practices |
+| `rule` | IDE rules and guidelines | Coding standards, conventions |
+| `slash-command` | Executable commands | Quick actions, shortcuts |
+| `prompt` | Reusable prompt templates | Common tasks, queries |
+
+## Package Formats
+
+Packages target different AI tools:
+
+- **claude**: Claude Code agents and skills
+- **cursor**: Cursor IDE rules
+- **continue**: Continue.dev extension
+- **windsurf**: Windsurf IDE
+- **agents.md**: Agents.md format
+- **generic**: Works across multiple tools
+
+## Package Structure
+
+A basic package in prpm.json:
+
+```json
+{
+  "name": "@username/typescript-best-practices",
+  "version": "1.0.0",
+  "description": "TypeScript coding standards and best practices",
+  "author": "Your Name",
+  "license": "MIT",
+  "format": "cursor",
+  "subtype": "rule",
+  "tags": ["typescript", "best-practices"],
+  "files": [".cursor/rules/typescript.mdc"]
+}
+```
+
+## Installing Packages
+
+Install a package:
+
+```bash
+prpm install @prpm/@username/typescript-best-practices
+```
+
+Install for a specific format:
+
+```bash
+prpm install @prpm/@username/typescript-best-practices --as cursor
+```
+
+## Publishing Packages
+
+See the [Publishing Guide](/publishing/getting-started) for details on publishing your packages.

@@ -58,20 +58,11 @@ export interface CollectionPackage {
   };
 }
 
-export interface MCPServerConfig {
-  command: string;
-  args?: string[];
-  env?: Record<string, string>;
-  description?: string;
-  optional?: boolean;
-}
-
 export interface CollectionConfig {
   defaultFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf';
   installOrder?: 'sequential' | 'parallel';
   postInstall?: string;              // Script to run after install
   extends?: string;                  // Base collection to extend
-  mcpServers?: Record<string, MCPServerConfig>;  // MCP servers for Claude users
 }
 
 export type CollectionCategory =
@@ -87,6 +78,7 @@ export interface CollectionCreateInput {
   id: string;
   name: string;
   description: string;
+  version?: string;                  // Defaults to 1.0.0 if not provided
   category?: CollectionCategory;
   tags?: string[];
   framework?: string;

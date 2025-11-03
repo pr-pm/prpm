@@ -56,6 +56,7 @@ program.addCommand(createSearchCommand());
 program.addCommand(createInstallCommand());
 program.addCommand(createInfoCommand());
 program.addCommand(createTrendingCommand());
+program.addCommand(createPopularCommand());
 program.addCommand(createPublishCommand());
 program.addCommand(createLoginCommand());
 program.addCommand(createWhoamiCommand());

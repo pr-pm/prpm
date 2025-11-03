@@ -1,0 +1,96 @@
+---
+title: 'Formats'
+description: 'Understanding PRPM format support'
+---
+
+# Formats
+
+PRPM supports multiple AI tool formats, allowing you to install packages for different IDEs and development environments.
+
+## Supported Formats
+
+| Format | Tool | Description |
+|--------|------|-------------|
+| `claude` | Claude Code | Agents and skills for Claude Code |
+| `cursor` | Cursor IDE | Rules and configurations for Cursor |
+| `continue` | Continue.dev | Prompts for Continue extension |
+| `windsurf` | Windsurf IDE | Rules for Windsurf |
+| `agents.md` | Agents.md | Agent definitions in agents.md format |
+| `copilot` | GitHub Copilot | Copilot configurations |
+| `generic` | Multiple | Works across multiple tools |
+
+## Installing for Specific Formats
+
+Auto-detect format from your project:
+
+```bash
+prpm install @prpm/@username/typescript-best-practices
+```
+
+Specify a format explicitly:
+
+```bash
+prpm install @prpm/@username/typescript-best-practices --as cursor
+```
+
+## Format Detection
+
+PRPM auto-detects the format based on your project structure:
+
+- `.claude/` directory → `claude`
+- `.cursor/` directory → `cursor`
+- `.continue/` directory → `continue`
+- `.windsurf/` directory → `windsurf`
+- `.agents/` directory → `agents.md`
+
+## File Installation Paths
+
+Each format has a standard installation path:
+
+| Format | Directory | Example |
+|--------|-----------|---------|
+| `claude` | `.claude/agents/` or `.claude/skills/` | `.claude/skills/my-skill/SKILL.md` |
+| `cursor` | `.cursor/rules/` | `.cursor/rules/typescript.mdc` |
+| `continue` | `.continue/prompts/` | `.continue/prompts/refactor.md` |
+| `windsurf` | `.windsurf/rules/` | `.windsurf/rules/python.md` |
+| `agents.md` | `.agents/` | `.agents/code-reviewer.md` |
+
+## Multi-Format Packages
+
+Some packages support multiple formats. PRPM will install the appropriate version based on your environment:
+
+```json
+{
+  "name": "@username/typescript-rules",
+  "version": "1.0.0",
+  "files": [
+    {
+      "path": ".cursor/rules/typescript.mdc",
+      "format": "cursor"
+    },
+    {
+      "path": ".windsurf/rules/typescript.md",
+      "format": "windsurf"
+    }
+  ]
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Packages"
+    icon="box"
+    href="/concepts/packages"
+  >
+    Learn more about packages
+  </Card>
+  <Card
+    title="Publishing Guide"
+    icon="book"
+    href="/publishing/getting-started"
+  >
+    Publish multi-format packages
+  </Card>
+</CardGroup>

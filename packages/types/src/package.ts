@@ -83,6 +83,8 @@ export interface Package {
   tags: string[];
   keywords: string[];
   category?: string;
+  language?: string; // Primary programming language (javascript, python, typescript, etc.)
+  framework?: string; // Primary framework (react, nextjs, django, etc.)
   visibility: PackageVisibility;
   deprecated: boolean;
   deprecated_reason?: string;

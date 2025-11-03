@@ -1,7 +1,27 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useState } from 'react'
 
 export default function Home() {
+  const [copiedCli, setCopiedCli] = useState(false)
+  const [copiedCollection, setCopiedCollection] = useState(false)
+
+  const copyToClipboard = async (text: string, type: 'cli' | 'collection') => {
+    try {
+      await navigator.clipboard.writeText(text)
+      if (type === 'cli') {
+        setCopiedCli(true)
+        setTimeout(() => setCopiedCli(false), 2000)
+      } else {
+        setCopiedCollection(true)
+        setTimeout(() => setCopiedCollection(false), 2000)
+      }
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
   return (
     <main className="min-h-screen bg-prpm-dark relative overflow-hidden">
       {/* Animated background grid */}
@@ -18,7 +38,7 @@ export default function Home() {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-prpm-dark-card border border-prpm-border rounded-full text-sm text-gray-400">
               <span className="w-2 h-2 bg-prpm-accent rounded-full animate-pulse"></span>
-              Alpha · 1,800+ packages · 100+ collections
+              Alpha · 2,100+ packages · 100+ collections
             </div>
 
             <div className="flex justify-center mb-8">
@@ -75,7 +95,12 @@ export default function Home() {
               <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Install CLI</span>
-                  <button className="text-xs text-gray-500 hover:text-prpm-accent transition-colors">Copy</button>
+                  <button
+                    onClick={() => copyToClipboard('npm install -g prpm', 'cli')}
+                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                  >
+                    {copiedCli ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
                 <code className="block font-mono text-prpm-accent-light text-left">
                   <span className="text-gray-600">$</span> npm install -g prpm
@@ -85,11 +110,16 @@ export default function Home() {
               <div className="bg-prpm-dark-card border border-prpm-accent/30 rounded-xl p-6 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Try Collections</span>
-                  <button className="text-xs text-gray-500 hover:text-prpm-accent transition-colors">Copy</button>
+                  <button
+                    onClick={() => copyToClipboard('prpm install collections/essential-dev-agents', 'collection')}
+                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                  >
+                    {copiedCollection ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
                 <code className="block font-mono text-prpm-accent-light text-left space-y-1">
-                  <div><span className="text-gray-600">$</span> prpm install collections/nextjs-pro</div>
-                  <div className="text-xs text-gray-500 mt-2"># Installs 5+ packages: react-best-practices, typescript-strict, tailwind-helper, and more</div>
+                  <div><span className="text-gray-600">$</span> prpm install collections/essential-dev-agents</div>
+                  <div className="text-xs text-gray-500 mt-2"># Installs 20 packages: backend-architect, cloud-architect, database-architect, and more</div>
                 </code>
               </div>
             </div>
@@ -103,9 +133,9 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">1,500+ Packages</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">2,100+ Packages</h3>
               <p className="text-gray-400 leading-relaxed">
-                Production-ready prompts, agents, skills, and slash commands from verified contributors
+                Battle-tested prompts, agents, skills, and slash commands from verified contributors
               </p>
             </div>
 
@@ -228,6 +258,72 @@ export default function Home() {
             </p>
           </div>
 
+          {/* What You Can Install */}
+          <div className="mb-20 max-w-5xl mx-auto">
+            <h2 className="text-3xl font-bold text-white mb-8 text-center">What You Can Install</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Cursor Rules</h3>
+                <p className="text-gray-400 mb-4">
+                  Production-ready Cursor rules for every framework. React, TypeScript, Python, and more.
+                </p>
+                <Link href="/search?format=cursor" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Cursor Rules →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Claude Agents</h3>
+                <p className="text-gray-400 mb-4">
+                  Specialized Claude agents for code review, architecture, testing, and more.
+                </p>
+                <Link href="/search?format=claude&subtype=agent" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Claude Agents →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Slash Commands</h3>
+                <p className="text-gray-400 mb-4">
+                  Cursor slash commands and Claude slash commands for faster workflows.
+                </p>
+                <Link href="/search?subtype=slash-command" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Slash Commands →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Claude Skills</h3>
+                <p className="text-gray-400 mb-4">
+                  Claude Code skills for specialized domain knowledge and patterns.
+                </p>
+                <Link href="/search?format=claude&subtype=skill" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Claude Skills →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Windsurf Rules</h3>
+                <p className="text-gray-400 mb-4">
+                  Windsurf-specific rules for frontend, backend, and full-stack development.
+                </p>
+                <Link href="/search?format=windsurf" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Windsurf Rules →
+                </Link>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-accent/50 rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Collections</h3>
+                <p className="text-gray-400 mb-4">
+                  Complete workflow setups with multiple packages. Install everything you need in one command.
+                </p>
+                <Link href="/search?tab=collections" className="text-prpm-accent hover:text-prpm-accent-light text-sm">
+                  Browse Collections →
+                </Link>
+              </div>
+            </div>
+          </div>
+
           {/* Footer */}
           <footer className="border-t border-prpm-border/50 pt-8 mt-20">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
@@ -235,6 +331,9 @@ export default function Home() {
                 © 2025 PRPM. Open source under MIT License.
               </div>
               <div className="flex gap-6">
+                <Link href="https://docs.prpm.dev" className="hover:text-white transition-colors">
+                  Docs
+                </Link>
                 <Link href="/blog" className="hover:text-white transition-colors">
                   Blog
                 </Link>

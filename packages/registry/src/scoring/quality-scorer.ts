@@ -53,17 +53,14 @@ export interface PackageQualityData {
   verified: boolean;
   official?: boolean;
   total_downloads: number;
-  stars: number;
   rating_average?: number;
   rating_count: number;
   version_count: number;
   last_published_at?: Date;
   created_at: Date;
 
-  // Prompt content fields
+  // Prompt content fields (passed in, not from DB)
   content?: any; // Canonical format content
-  readme?: string; // README content
-  file_size?: number; // Tarball size as proxy for content
 }
 
 /**
@@ -73,7 +70,7 @@ export function calculateQualityScore(pkg: PackageQualityData): number {
   const factors: QualityScoreFactors = {
     // Content Quality (40% = 2.0 points) - PROMPT CONTENT FIRST
     promptContentQuality: scorePromptContent(pkg.content),           // 1.0 - THE MAIN FACTOR
-    promptLength: scorePromptLength(pkg.content, pkg.readme),        // 0.3
+    promptLength: scorePromptLength(pkg.content),        // 0.3
     hasExamples: scoreExamples(pkg.content),                         // 0.2
     hasDocumentation: pkg.documentation_url ? 0.2 : 0,               // 0.2
     hasDescription: pkg.description && pkg.description.length > 20 ? 0.1 : 0,  // 0.1
@@ -88,7 +85,7 @@ export function calculateQualityScore(pkg: PackageQualityData): number {
 
     // Engagement (20% = 1.0 points)
     downloadScore: scoreDownloads(pkg.total_downloads),
-    starScore: scoreStars(pkg.stars),
+    starScore: scoreStars(0), // Stars not yet implemented
     ratingScore: scoreRating(pkg.rating_average, pkg.rating_count),
 
     // Maintenance (10% = 0.5 points)
@@ -117,7 +114,7 @@ export async function calculateQualityScoreWithAI(
   const factors: QualityScoreFactors = {
     // Content Quality (40% = 2.0 points) - AI-POWERED PROMPT EVALUATION
     promptContentQuality: aiScore,                                   // 1.0 - AI-EVALUATED
-    promptLength: scorePromptLength(pkg.content, pkg.readme),        // 0.3
+    promptLength: scorePromptLength(pkg.content),        // 0.3
     hasExamples: scoreExamples(pkg.content),                         // 0.2
     hasDocumentation: pkg.documentation_url ? 0.2 : 0,               // 0.2
     hasDescription: pkg.description && pkg.description.length > 20 ? 0.1 : 0,  // 0.1
@@ -132,7 +129,7 @@ export async function calculateQualityScoreWithAI(
 
     // Engagement (20% = 1.0 points)
     downloadScore: scoreDownloads(pkg.total_downloads),
-    starScore: scoreStars(pkg.stars),
+    starScore: scoreStars(0), // Stars not yet implemented
     ratingScore: scoreRating(pkg.rating_average, pkg.rating_count),
 
     // Maintenance (10% = 0.5 points)
@@ -210,9 +207,9 @@ function scorePromptContent(content?: any): number {
 
 /**
  * Score prompt length and substance (0-0.3 points)
- * Checks both structured content and README
+ * Checks structured content from tarball
  */
-function scorePromptLength(content?: any, readme?: string): number {
+function scorePromptLength(content?: any): number {
   let totalLength = 0;
 
   // Content length
@@ -224,12 +221,7 @@ function scorePromptLength(content?: any, readme?: string): number {
     }
   }
 
-  // README length (additional documentation)
-  if (readme) {
-    totalLength += readme.length;
-  }
-
-  // Score based on combined length
+  // Score based on content length
   if (totalLength >= 5000) return 0.3;  // Very comprehensive
   if (totalLength >= 3000) return 0.25;
   if (totalLength >= 2000) return 0.2;
@@ -393,19 +385,19 @@ async function getAuthorPackageCount(server: FastifyInstance, authorId: string):
  */
 export async function updatePackageQualityScore(
   server: FastifyInstance,
-  packageId: string
+  packageId: string,
+  content?: string
 ): Promise<number> {
   server.log.info({ packageId }, '🎯 Starting quality score calculation');
 
-  // Fetch package data with content fields for prompt analysis
+  // Fetch package data (metadata only, content passed as parameter from tarball)
   const pkgResult = await query<PackageQualityData>(
     server,
     `SELECT
       id, description, documentation_url, repository_url,
       homepage_url, keywords, tags, author_id, verified, official,
-      total_downloads, stars, rating_average, rating_count, version_count,
-      last_published_at, created_at,
-      content, readme, file_size
+      total_downloads, rating_average, rating_count, version_count,
+      last_published_at, created_at
      FROM packages
      WHERE id = $1`,
     [packageId]
@@ -417,14 +409,17 @@ export async function updatePackageQualityScore(
 
   const pkg = pkgResult.rows[0];
 
+  // Add content from parameter (extracted from tarball during publish)
+  pkg.content = content;
+
   server.log.info({
     packageId,
     type: 'metadata',
     verified: pkg.verified,
     official: pkg.official,
     downloads: pkg.total_downloads,
-    stars: pkg.stars,
-    versions: pkg.version_count
+    versions: pkg.version_count,
+    hasContent: !!content
   }, '📋 Package metadata retrieved');
 
   // Calculate base score with AI evaluation
@@ -567,7 +562,7 @@ export async function getQualityScoreBreakdown(
   const factors: QualityScoreFactors = {
     // Content Quality (40% = 2.0 points) - AI-POWERED
     promptContentQuality: aiScore,
-    promptLength: scorePromptLength(pkg.content, pkg.readme),
+    promptLength: scorePromptLength(pkg.content),
     hasExamples: scoreExamples(pkg.content),
     hasDocumentation: pkg.documentation_url ? 0.2 : 0,
     hasDescription: pkg.description && pkg.description.length > 20 ? 0.1 : 0,
@@ -582,7 +577,7 @@ export async function getQualityScoreBreakdown(
 
     // Engagement (20% = 1.0 points)
     downloadScore: scoreDownloads(pkg.total_downloads),
-    starScore: scoreStars(pkg.stars),
+    starScore: scoreStars(0), // Stars not yet implemented
     ratingScore: scoreRating(pkg.rating_average, pkg.rating_count),
 
     // Maintenance (10% = 0.5 points)

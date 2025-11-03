@@ -109,15 +109,13 @@ Action:
 
 ## Search Commands
 
+### Package Search
 ```bash
 # Basic search
 prpm search "keyword1 keyword2"
 
-# Category filter
-prpm search --category devops "pulumi"
-
-# Type filter
-prpm search --type claude "infrastructure"
+# Subtype filter (rule, agent, skill, slash-command, prompt)
+prpm search "react" --subtype rule
 
 # Limit results
 prpm search "github actions" --limit 5
@@ -125,6 +123,23 @@ prpm search "github actions" --limit 5
 # Sort by downloads
 prpm search "testing" --sort downloads
 ```
+
+### Collection Search
+```bash
+# List all collections
+prpm collection list
+
+# Search for collections
+prpm collection search "frontend"
+
+# Get collection details
+prpm collection info essential-dev-agents
+
+# Install a collection (installs all packages in the collection)
+prpm install essential-dev-agents
+```
+
+**Note:** Collections bundle multiple related packages together. Use collections when you need a complete toolkit for a specific domain (e.g., "startup-mvp", "security-review-agents", "essential-dev-agents").
 
 ## Best Practices
 

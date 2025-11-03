@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { listOrganizations, type OrganizationListItem } from '@/lib/api'
 import CreateOrganizationModal from '@/components/CreateOrganizationModal'
 
@@ -133,9 +134,11 @@ export default function OrganizationsPage() {
                       {/* Avatar */}
                       <div className="flex-shrink-0 w-12 h-12 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
                         {org.avatar_url ? (
-                          <img
+                          <Image
                             src={org.avatar_url}
                             alt={`${org.name}'s avatar`}
+                            width={48}
+                            height={48}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -204,9 +207,11 @@ export default function OrganizationsPage() {
                     {/* Avatar */}
                     <div className="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
                       {org.avatar_url ? (
-                        <img
+                        <Image
                           src={org.avatar_url}
                           alt={`${org.name}'s avatar`}
+                          width={64}
+                          height={64}
                           className="w-full h-full object-cover"
                         />
                       ) : (

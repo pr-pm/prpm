@@ -217,9 +217,10 @@ File paths in `prpm.json` are used for:
 | `rule` | IDE rules and guidelines | Coding standards, conventions |
 | `slash-command` | Executable commands | Quick actions, shortcuts |
 | `prompt` | Reusable prompt templates | Common tasks, queries |
-| `collection` | Package bundles | Multi-package setups |
 | `chatmode` | Chat modes | Kiro IDE interactions |
 | `tool` | MCP tools | External integrations |
+
+**Note:** Collections are not a package subtype. They are defined separately in the `collections` array in prpm.json. See the [Collections Guide](./COLLECTIONS.md).
 
 ## Tags
 
@@ -597,31 +598,57 @@ cat prpm.json | jq -r '.packages[].name' | sort | uniq -d
 
 ### Collection
 
+Collections are defined in the `collections` array within prpm.json:
+
 ```json
 {
-  "name": "@collection/typescript-complete",
-  "version": "1.0.0",
-  "description": "Complete TypeScript development setup with best practices",
+  "name": "my-prompts-repo",
   "author": "PRPM Team",
   "license": "MIT",
-  "format": "generic",
-  "subtype": "collection",
-  "tags": [
-    "typescript",
-    "collection",
-    "best-practices",
-    "setup"
+  "packages": [
+    {
+      "name": "typescript-rules",
+      "version": "1.0.0",
+      "description": "TypeScript coding standards",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["typescript"],
+      "files": [".cursor/rules/typescript.mdc"]
+    }
   ],
-  "dependencies": {
-    "typescript-type-safety": "^1.0.0",
-    "typescript-strict": "^1.0.0",
-    "eslint-typescript": "^1.0.0"
-  },
-  "files": [
-    ".prompts/collections/typescript-complete.md"
+  "collections": [
+    {
+      "id": "typescript-complete",
+      "name": "Complete TypeScript Setup",
+      "description": "Complete TypeScript development setup with best practices",
+      "version": "1.0.0",
+      "category": "development",
+      "tags": ["typescript", "best-practices", "setup"],
+      "packages": [
+        {
+          "packageId": "typescript-type-safety",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Enforces strict type checking"
+        },
+        {
+          "packageId": "typescript-strict",
+          "version": "^1.0.0",
+          "required": true
+        },
+        {
+          "packageId": "eslint-typescript",
+          "version": "^1.0.0",
+          "required": false,
+          "reason": "Optional linting configuration"
+        }
+      ]
+    }
   ]
 }
 ```
+
+See the [Collections Guide](./COLLECTIONS.md) for more details on creating collections.
 
 ## Schema Validation
 
