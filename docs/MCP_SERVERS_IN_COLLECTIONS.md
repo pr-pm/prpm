@@ -30,8 +30,9 @@ Several services catalog and manage MCP servers:
 - **[Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers)** - Curated GitHub list
 - **[Official MCP Servers](https://github.com/modelcontextprotocol/servers)** - Reference implementations
 
-### Platform-Specific
+### Integration Platforms
 
+- **[Composio](https://composio.dev)** ([Docs](https://docs.composio.dev/docs/mcp-overview)) - 100+ tool integrations, built-in auth
 - **[Microsoft MCP Catalog](https://github.com/microsoft/mcp)** - Azure, DevOps, AKS integrations
 
 ## MCP Servers + PRPM Collections
@@ -59,7 +60,7 @@ Now you have:
 
 **For Discovery:** Awesome MCP Servers, MCP Server Finder, Official MCP Servers
 
-**For Enterprise:** Microsoft MCP Catalog, Official implementations
+**For Enterprise:** Composio, Microsoft MCP Catalog, Official implementations
 
 ## Resources
 
@@ -67,6 +68,7 @@ Now you have:
 - **[MCP Server Finder](https://mcpserverfinder.com)** - Comprehensive directory
 - **[Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers)** - Curated list
 - **[Official MCP Servers](https://github.com/modelcontextprotocol/servers)** - Reference code
+- **[Composio](https://composio.dev)** - 100+ tool integrations
 - **[Microsoft MCP](https://github.com/microsoft/mcp)** - Azure integrations
 - **[MCP Specification](https://modelcontextprotocol.io)** - Protocol docs
 - **[PRPM Collections](./COLLECTIONS.md)** - PRPM docs
@@ -83,6 +85,7 @@ It depends on your needs:
 - Quick automation: Smithery CLI
 - Detailed guides: MCP Server Finder
 - Curated lists: Awesome MCP Servers
+- Pre-built integrations: Composio
 - Azure focus: Microsoft MCP Catalog
 
 **Do I need MCP servers to use PRPM?**
