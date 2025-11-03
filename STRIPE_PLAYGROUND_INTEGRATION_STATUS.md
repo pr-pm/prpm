@@ -57,7 +57,7 @@ large:  600 credits @ $20.00 ($0.033/credit) - Best Value
   - Returns user-specific pricing based on organization membership
   - **Verified Org Members:** $2.00/month (60% off)
   - **Individual Users:** $5.00/month
-  - Includes 200 monthly credits
+  - Includes 100 monthly credits
 
 - **POST `/api/v1/playground/subscribe`** (lines 488-632)
   - Creates Stripe Checkout session for subscription
@@ -105,7 +105,7 @@ large:  600 credits @ $20.00 ($0.033/credit) - Best Value
 
 - **`customer.subscription.created`** (lines 884-945)
   - Updates user subscription status
-  - Grants 200 monthly credits on activation
+  - Grants 100 monthly credits on activation
   - Records transaction in credit history
 
 - **`customer.subscription.updated`** (lines 884-945)
@@ -209,13 +209,13 @@ STRIPE_WEBHOOK_SECRET_CREDITS=whsec_...          # Optional (falls back to STRIP
 
 **Product 1: PRPM+ Individual**
 - Name: `PRPM+ Individual`
-- Description: `200 monthly playground credits for prompt testing and experimentation`
+- Description: `100 monthly playground credits for prompt testing and experimentation`
 - Pricing: **$5.00/month** recurring
 - Copy Price ID → Set as `STRIPE_PRPM_PLUS_PRICE_ID`
 
 **Product 2: PRPM+ Org Member**
 - Name: `PRPM+ Organization Member`
-- Description: `200 monthly playground credits - discounted for verified organization members`
+- Description: `100 monthly playground credits - discounted for verified organization members`
 - Pricing: **$2.00/month** recurring
 - Copy Price ID → Set as `STRIPE_PRPM_PLUS_ORG_MEMBER_PRICE_ID`
 
@@ -277,7 +277,7 @@ STRIPE_WEBHOOK_SECRET_CREDITS=whsec_...          # Optional (falls back to STRIP
   - Verify checkout URL uses `STRIPE_PRPM_PLUS_PRICE_ID`
   - Complete checkout
   - Verify webhook `customer.subscription.created` fires
-  - Verify 200 monthly credits granted
+  - Verify 100 monthly credits granted
   - Verify `monthly_reset_at` set to period end
 
 - [ ] **Test Org Member Subscription**

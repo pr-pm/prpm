@@ -455,7 +455,7 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
             price: 2.00,
             currency: 'USD',
             interval: 'month',
-            credits: 200,
+            credits: 100,
             isOrgMember: true,
             orgName,
             discount: 60, // 60% off
@@ -465,7 +465,7 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
             price: 5.00,
             currency: 'USD',
             interval: 'month',
-            credits: 200,
+            credits: 100,
             isOrgMember: false,
             orgName: null,
             discount: 0,
@@ -490,7 +490,7 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
     {
       preHandler: server.authenticate,
       schema: {
-        description: 'Subscribe to PRPM+ for 200 monthly playground credits',
+        description: 'Subscribe to PRPM+ for 100 monthly playground credits',
         tags: ['playground', 'subscription'],
         security: [{ bearerAuth: [] }],
         body: {
@@ -912,7 +912,7 @@ export async function playgroundCreditsRoutes(server: FastifyInstance) {
                 ]
               );
 
-              // If subscription becomes active, grant 200 monthly credits
+              // If subscription becomes active, grant 100 monthly credits
               if (subscription.status === 'active') {
                 const now = new Date();
                 const periodEnd = new Date(subscription.current_period_end * 1000);
