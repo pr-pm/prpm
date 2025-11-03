@@ -11,6 +11,7 @@ import OpenAI from 'openai';
 import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { PlaygroundCreditsService } from './playground-credits.js';
+import { CostMonitoringService } from './cost-monitoring.js';
 import { getTarballContent } from '../storage/s3.js';
 import { nanoid } from 'nanoid';
 import { getModelId, isAnthropicModel, isOpenAIModel } from '../config/models.js';
@@ -29,6 +30,7 @@ export class PlaygroundService {
   private anthropic: Anthropic | null;
   private openai: OpenAI | null;
   private creditsService: PlaygroundCreditsService;
+  private costMonitoring: CostMonitoringService;
 
   constructor(server: FastifyInstance) {
     this.server = server;
@@ -44,6 +46,7 @@ export class PlaygroundService {
       : null;
 
     this.creditsService = new PlaygroundCreditsService(server);
+    this.costMonitoring = new CostMonitoringService(server);
 
     // Log warnings for missing API keys
     if (!this.anthropic) {
@@ -287,7 +290,7 @@ export class PlaygroundService {
 
       const conversationHistory = session?.conversation || [];
 
-      // 3. Estimate credits needed
+      // 3. Estimate credits needed and API cost
       const model = request.model || 'sonnet';
       const estimatedCredits = this.estimateCredits(
         packagePrompt.length,
@@ -296,7 +299,20 @@ export class PlaygroundService {
         conversationHistory
       );
 
-      // 4. Check user can afford
+      // Calculate estimated tokens and API cost
+      const totalChars = packagePrompt.length + request.input.length +
+        (conversationHistory.reduce((sum, msg) => sum + msg.content.length, 0));
+      const estimatedTokens = (totalChars / 4) * 1.3; // 30% buffer
+
+      const costEstimate = this.costMonitoring.calculateCost(estimatedTokens, model);
+
+      // 4. Check if user can afford API cost (throttling check)
+      const costCheck = await this.costMonitoring.canAffordRequest(userId, costEstimate.estimatedCost);
+      if (!costCheck.allowed) {
+        throw new Error(costCheck.reason || 'Request not allowed due to cost limits');
+      }
+
+      // 5. Check user can afford credits
       const canAfford = await this.creditsService.canAfford(userId, estimatedCredits);
       if (!canAfford) {
         const balance = await this.creditsService.getBalance(userId);
@@ -546,7 +562,15 @@ export class PlaygroundService {
       );
       const orgId = orgResult.rows[0]?.org_id || null;
 
-      // 10. Log usage with analytics
+      // 10. Calculate and record actual API cost
+      const actualCost = this.costMonitoring.calculateCost(tokensUsed, model);
+      await this.costMonitoring.recordCost(userId, actualCost.estimatedCost, {
+        sessionId,
+        model: modelName,
+        tokens: tokensUsed,
+      });
+
+      // 11. Log usage with analytics and cost tracking
       await this.logUsage({
         userId,
         orgId,
@@ -560,9 +584,12 @@ export class PlaygroundService {
         inputLength: request.input.length,
         outputLength: responseText.length,
         comparisonMode: false, // Will be updated when comparison mode is implemented
+        estimatedApiCost: actualCost.estimatedCost,
+        actualInputTokens: actualCost.inputTokens,
+        actualOutputTokens: actualCost.outputTokens,
       });
 
-      // 10. Get updated balance
+      // 12. Get updated balance
       const balance = await this.creditsService.getBalance(userId);
 
       this.server.log.info(
@@ -859,12 +886,15 @@ export class PlaygroundService {
     outputLength?: number;
     comparisonMode?: boolean;
     orgId?: string;
+    estimatedApiCost?: number;
+    actualInputTokens?: number;
+    actualOutputTokens?: number;
   }): Promise<void> {
     await this.server.pg.query(
       `INSERT INTO playground_usage
        (user_id, org_id, package_id, session_id, model, tokens_used, duration_ms, credits_spent,
-        package_version, input_length, output_length, comparison_mode)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        package_version, input_length, output_length, comparison_mode, estimated_api_cost, actual_input_tokens, actual_output_tokens)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         data.userId,
         data.orgId || null,
@@ -878,6 +908,9 @@ export class PlaygroundService {
         data.inputLength || null,
         data.outputLength || null,
         data.comparisonMode || false,
+        data.estimatedApiCost || null,
+        data.actualInputTokens || null,
+        data.actualOutputTokens || null,
       ]
     );
   }
