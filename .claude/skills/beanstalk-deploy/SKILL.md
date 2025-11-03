@@ -1,6 +1,6 @@
 ---
 name: "AWS Elastic Beanstalk Deployment Best Practices"
-description: "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling"
+description: "Robust deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling"
 version: "1.0.0"
 globs:
   - "**/.github/workflows/*deploy*.yml"

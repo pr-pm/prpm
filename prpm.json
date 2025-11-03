@@ -164,7 +164,7 @@
     {
       "name": "beanstalk-deploy-skill",
       "version": "1.0.2",
-      "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
+      "description": "Robust deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
       "format": "claude",
       "subtype": "skill",
       "tags": ["aws", "elastic-beanstalk", "deployment", "pulumi", "github-actions", "ci-cd", "automation"],
@@ -343,7 +343,7 @@
     {
       "name": "beanstalk-deploy",
       "version": "1.0.2",
-      "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
+      "description": "Robust deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
       "format": "cursor",
       "subtype": "rule",
       "tags": ["aws", "elastic-beanstalk", "deployment", "infrastructure", "devops", "pulumi", "ci-cd", "github-actions"],

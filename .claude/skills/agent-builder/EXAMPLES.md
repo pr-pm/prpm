@@ -1,6 +1,6 @@
 # Complete Subagent Examples
 
-Production-ready subagent implementations for common development workflows.
+Real-world subagent implementations for common development workflows.
 
 ## Code Review & Quality
 
@@ -919,4 +919,4 @@ describe('[Component/Function]', () => {
 
 ---
 
-These are production-ready examples you can use directly or customize for your needs. Each agent is focused, well-documented, and follows best practices for Claude Code subagents.
+These are battle-tested examples you can use directly or customize for your needs. Each agent is focused, well-documented, and follows best practices for Claude Code subagents.

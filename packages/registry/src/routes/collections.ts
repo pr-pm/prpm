@@ -218,8 +218,9 @@ export async function collectionRoutes(server: FastifyInstance) {
       try {
         // Get collection
         let sql = `
-          SELECT c.*
+          SELECT c.*, u.username as author
           FROM collections c
+          LEFT JOIN users u ON c.author_id = u.id
           WHERE c.scope = $1 AND c.name_slug = $2
         `;
 
@@ -483,16 +484,39 @@ export async function collectionRoutes(server: FastifyInstance) {
 
       try {
         // Get collection
-        const collectionResult = await server.pg.query(
-          `
-          SELECT * FROM collections
-          WHERE scope = $1 AND name_slug = $2
-          ${input.version ? 'AND version = $3' : ''}
-          ORDER BY created_at DESC
-          LIMIT 1
-        `,
-          input.version ? [scope, name_slug, input.version] : [scope, name_slug]
-        );
+        // If scope is 'collection' (default), search across all scopes
+        // to find the most popular collection with that name_slug
+        let collectionResult;
+
+        if (scope === 'collection') {
+          // Search across all scopes, prefer official/verified, then by downloads
+          collectionResult = await server.pg.query(
+            `
+            SELECT * FROM collections
+            WHERE name_slug = $1
+            ${input.version ? 'AND version = $2' : ''}
+            ORDER BY
+              official DESC,
+              verified DESC,
+              downloads DESC,
+              created_at DESC
+            LIMIT 1
+          `,
+            input.version ? [name_slug, input.version] : [name_slug]
+          );
+        } else {
+          // Specific scope requested
+          collectionResult = await server.pg.query(
+            `
+            SELECT * FROM collections
+            WHERE scope = $1 AND name_slug = $2
+            ${input.version ? 'AND version = $3' : ''}
+            ORDER BY created_at DESC
+            LIMIT 1
+          `,
+            input.version ? [scope, name_slug, input.version] : [scope, name_slug]
+          );
+        }
 
         if (collectionResult.rows.length === 0) {
           return reply.code(404).send({

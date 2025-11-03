@@ -10,6 +10,7 @@ import { Package, PackageVersion, PackageInfo } from '../types.js';
 import { toError } from '../types/errors.js';
 import { config } from '../config.js';
 import { optionalAuth } from '../middleware/auth.js';
+import type { AIMetadataResult } from '../scoring/ai-evaluator.js';
 import type {
   ListPackagesQuery,
   PackageParams,
@@ -557,6 +558,8 @@ export async function packageRoutes(server: FastifyInstance) {
       const license = manifest.license as string | undefined;
       const tags = (manifest.tags as string[]) || [];
       const keywords = (manifest.keywords as string[]) || [];
+      const language = manifest.language as string | undefined;
+      const framework = manifest.framework as string | undefined;
       const isPrivate = manifest.private === true; // Explicitly extract private field
 
       if (!packageName || !version || !description || !format) {
@@ -708,9 +711,9 @@ export async function packageRoutes(server: FastifyInstance) {
           server,
           `INSERT INTO packages (
             name, description, author_id, org_id, format, subtype,
-            license, tags, keywords, visibility, last_published_at
+            license, tags, keywords, language, framework, visibility, last_published_at
           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
            RETURNING *`,
           [
             packageName,
@@ -722,6 +725,8 @@ export async function packageRoutes(server: FastifyInstance) {
             license || null,
             tags,
             keywords,
+            language || null,
+            framework || null,
             visibility,
           ]
         );
@@ -769,17 +774,17 @@ export async function packageRoutes(server: FastifyInstance) {
         [pkg.id]
       );
 
-      // 5. Calculate and store quality score + explanation (async, don't block response)
-      server.log.info({ packageId: pkg.id }, '🎯 Starting quality score calculation');
+      // 5. Calculate and store quality score + explanation + metadata (async, don't block response)
+      server.log.info({ packageId: pkg.id }, '🎯 Starting quality score calculation and metadata extraction');
       (async () => {
         try {
           const { updatePackageQualityScore } = await import('../scoring/quality-scorer.js');
-          const { getDetailedAIEvaluation } = await import('../scoring/ai-evaluator.js');
+          const { getDetailedAIEvaluation, extractMetadataWithAI } = await import('../scoring/ai-evaluator.js');
 
           // Get content for evaluation (need to fetch latest package data)
-          const pkgData = await queryOne<{ content: any }>(
+          const pkgData = await queryOne<{ content: any; language: string | null; framework: string | null; category: string | null }>(
             server,
-            'SELECT content FROM packages WHERE id = $1',
+            'SELECT content, language, framework, category FROM packages WHERE id = $1',
             [pkg.id]
           );
 
@@ -791,22 +796,64 @@ export async function packageRoutes(server: FastifyInstance) {
             // Calculate quality score
             const qualityScore = await updatePackageQualityScore(server, pkg.id);
 
-            // Update with explanation
+            // Extract metadata if not already provided
+            const needsMetadata = !language || !framework || !pkgData.category;
+            let extractedMetadata: AIMetadataResult = {};
+            if (needsMetadata) {
+              extractedMetadata = await extractMetadataWithAI(
+                pkgData.content,
+                {
+                  language: language || undefined,
+                  framework: framework || undefined,
+                  category: pkgData.category || undefined,
+                  tags,
+                  description,
+                },
+                server
+              );
+            }
+
+            // Build update query dynamically based on what needs updating
+            const updates: string[] = ['quality_explanation = $1'];
+            const params: any[] = [explanation];
+            let paramIndex = 2;
+
+            if (!language && extractedMetadata.language) {
+              updates.push(`language = $${paramIndex++}`);
+              params.push(extractedMetadata.language);
+            }
+            if (!framework && extractedMetadata.framework) {
+              updates.push(`framework = $${paramIndex++}`);
+              params.push(extractedMetadata.framework);
+            }
+            if (!pkgData.category && extractedMetadata.category) {
+              updates.push(`category = $${paramIndex++}`);
+              params.push(extractedMetadata.category);
+            }
+
+            params.push(pkg.id);
+
+            // Update with explanation and extracted metadata
             await query(
               server,
-              'UPDATE packages SET quality_explanation = $1 WHERE id = $2',
-              [explanation, pkg.id]
+              `UPDATE packages SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
+              params
             );
 
             server.log.info(
-              { packageId: pkg.id, qualityScore, explanationLength: explanation.length },
-              '✅ Quality score and explanation updated'
+              {
+                packageId: pkg.id,
+                qualityScore,
+                explanationLength: explanation.length,
+                extractedMetadata,
+              },
+              '✅ Quality score, explanation, and metadata updated'
             );
           }
         } catch (error) {
           server.log.error(
             { packageId: pkg.id, error: String(error) },
-            '⚠️  Failed to calculate quality score (non-blocking)'
+            '⚠️  Failed to calculate quality score or extract metadata (non-blocking)'
           );
         }
       })();
@@ -1206,6 +1253,237 @@ export async function packageRoutes(server: FastifyInstance) {
       });
     }
   });
+
+  /**
+   * GET /packages/:id/related
+   * Get packages that are frequently installed together with this package
+   */
+  server.get(
+    '/:id/related',
+    {
+      schema: {
+        description: 'Get related packages based on co-installation patterns',
+        tags: ['packages', 'recommendations'],
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Package ID or name (e.g., "@username/package-name")',
+            },
+          },
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 50,
+              default: 10,
+              description: 'Maximum number of related packages to return',
+            },
+            min_confidence: {
+              type: 'number',
+              minimum: 0,
+              maximum: 100,
+              default: 10,
+              description: 'Minimum confidence score (0-100)',
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const {
+        limit = 10,
+        min_confidence = 10,
+      } = request.query as { limit?: number; min_confidence?: number };
+
+      try {
+        // Get the package by ID or name
+        const packageResult = await server.pg.query(
+          `SELECT id, name, description
+           FROM packages
+           WHERE id::text = $1 OR name = $1
+           AND visibility = 'public'
+           AND deprecated = FALSE
+           LIMIT 1`,
+          [id]
+        );
+
+        if (packageResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: `Package '${id}' not found`,
+          });
+        }
+
+        const pkg = packageResult.rows[0];
+
+        // Get related packages using the co-installations table
+        // Query both directions (package_a and package_b)
+        const relatedResult = await server.pg.query(
+          `SELECT DISTINCT
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.id
+              ELSE pa.id
+            END as id,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.name
+              ELSE pa.name
+            END as name,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.description
+              ELSE pa.description
+            END as description,
+            pc.confidence_score,
+            pc.co_install_count,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.total_downloads
+              ELSE pa.total_downloads
+            END as total_downloads,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.quality_score
+              ELSE pa.quality_score
+            END as quality_score,
+            CASE
+              WHEN pc.package_a_id = $1 THEN pb.tags
+              ELSE pa.tags
+            END as tags
+           FROM package_co_installations pc
+           LEFT JOIN packages pa ON pc.package_a_id = pa.id
+           LEFT JOIN packages pb ON pc.package_b_id = pb.id
+           WHERE (pc.package_a_id = $1 OR pc.package_b_id = $1)
+           AND pc.confidence_score >= $2
+           AND ((pa.visibility = 'public' AND pa.deprecated = FALSE)
+                OR (pb.visibility = 'public' AND pb.deprecated = FALSE))
+           ORDER BY pc.confidence_score DESC, total_downloads DESC
+           LIMIT $3`,
+          [pkg.id, min_confidence, limit]
+        );
+
+        return {
+          package: {
+            id: pkg.id,
+            name: pkg.name,
+            description: pkg.description,
+          },
+          related: relatedResult.rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            description: row.description || '',
+            confidence_score: parseFloat(row.confidence_score),
+            co_install_count: row.co_install_count,
+            total_downloads: row.total_downloads || 0,
+            quality_score: row.quality_score ? parseFloat(row.quality_score) : null,
+            tags: row.tags || [],
+          })),
+        };
+      } catch (error) {
+        server.log.error(error, 'Failed to fetch related packages');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: 'Failed to fetch related packages',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /packages/installations/track
+   * Track a package installation for co-installation analysis
+   * Called by CLI after successful package install
+   */
+  server.post(
+    '/installations/track',
+    {
+      schema: {
+        description: 'Track package installation for analytics (anonymized)',
+        tags: ['installations', 'analytics'],
+        body: {
+          type: 'object',
+          required: ['package_id', 'version', 'session_id'],
+          properties: {
+            package_id: {
+              type: 'string',
+              description: 'Package ID or name',
+            },
+            version: {
+              type: 'string',
+              description: 'Installed version',
+            },
+            session_id: {
+              type: 'string',
+              description: 'Anonymous session identifier (generated by CLI)',
+            },
+            format: {
+              type: 'string',
+              description: 'Installation format (cursor, claude, etc.)',
+            },
+            install_batch_id: {
+              type: 'string',
+              description: 'Batch ID if installing multiple packages at once',
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const {
+        package_id,
+        version,
+        session_id,
+        format,
+        install_batch_id,
+      } = request.body as {
+        package_id: string;
+        version: string;
+        session_id: string;
+        format?: string;
+        install_batch_id?: string;
+      };
+
+      try {
+        // Resolve package ID from name if needed
+        const pkgResult = await server.pg.query(
+          `SELECT id FROM packages WHERE id::text = $1 OR name = $1 LIMIT 1`,
+          [package_id]
+        );
+
+        if (pkgResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: 'Not Found',
+            message: `Package '${package_id}' not found`,
+          });
+        }
+
+        const resolvedPackageId = pkgResult.rows[0].id;
+
+        // Track the installation
+        await server.pg.query(
+          `INSERT INTO package_installations
+           (package_id, version, session_id, format, install_batch_id, installed_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())`,
+          [resolvedPackageId, version, session_id, format || null, install_batch_id || null]
+        );
+
+        return reply.code(201).send({
+          success: true,
+          message: 'Installation tracked successfully',
+        });
+      } catch (error) {
+        server.log.error(error, 'Failed to track installation');
+        // Don't fail the install if tracking fails
+        return reply.code(201).send({
+          success: false,
+          message: 'Installation tracking skipped',
+        });
+      }
+    }
+  );
 }
 
 /**

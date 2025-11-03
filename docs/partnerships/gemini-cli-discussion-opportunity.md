@@ -65,7 +65,7 @@ If the Gemini CLI adds native agents.md support, PRPM packages will work seamles
 2. **Gemini Visibility**: Gets PRPM in front of Gemini users early
 3. **Open Standard Advocacy**: Reinforces PRPM's position as neutral infrastructure
 4. **Network Effect**: If Gemini CLI adds agents.md support, PRPM benefits automatically
-5. **Credibility**: Demonstrates PRPM already has production-ready agents.md support
+5. **Credibility**: Demonstrates PRPM already has working agents.md support
 
 ## Timing
 

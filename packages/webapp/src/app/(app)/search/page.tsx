@@ -43,6 +43,7 @@ function SearchPageContent() {
     format: searchParams.get('format') as Format || '',
     subtype: searchParams.get('subtype') as Subtype || '',
     category: searchParams.get('category') || '',
+    author: searchParams.get('author') || '',
     tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
     sort: searchParams.get('sort') as SortType || 'downloads',
     page: Number(searchParams.get('page')) || 1,
@@ -54,6 +55,7 @@ function SearchPageContent() {
   const [selectedFormat, setSelectedFormat] = useState<Format | ''>(initialParams.format)
   const [selectedSubtype, setSelectedSubtype] = useState<Subtype | ''>(initialParams.subtype)
   const [selectedCategory, setSelectedCategory] = useState(initialParams.category)
+  const [selectedAuthor, setSelectedAuthor] = useState(initialParams.author)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialParams.tags)
   const [sort, setSort] = useState<SortType>(initialParams.sort)
   const [packages, setPackages] = useState<Package[]>([])
@@ -101,13 +103,14 @@ function SearchPageContent() {
     if (selectedFormat) params.set('format', selectedFormat)
     if (selectedSubtype) params.set('subtype', selectedSubtype)
     if (selectedCategory) params.set('category', selectedCategory)
+    if (selectedAuthor) params.set('author', selectedAuthor)
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','))
     if (sort !== 'downloads') params.set('sort', sort)
     if (page !== 1) params.set('page', String(page))
 
     const newUrl = params.toString() ? `/search?${params.toString()}` : '/search'
     router.replace(newUrl, { scroll: false })
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, page, router, isInitialized])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedAuthor, selectedTags, sort, page, router, isInitialized])
 
   // Fetch packages
   const fetchPackages = async () => {
@@ -124,6 +127,7 @@ function SearchPageContent() {
       if (selectedSubtype) params.subtype = selectedSubtype
       if (selectedCategory) params.category = selectedCategory
       if (selectedTags.length > 0) params.tags = selectedTags
+      if (selectedAuthor) params.author = selectedAuthor
 
       const result = await searchPackages(params)
       setPackages(result.packages)
@@ -254,7 +258,7 @@ function SearchPageContent() {
       fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, page])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page])
 
   // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {
@@ -268,6 +272,7 @@ function SearchPageContent() {
       selectedSubtype !== initialParams.subtype ||
       selectedCategory !== initialParams.category ||
       JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
+      selectedAuthor !== initialParams.author ||
       sort !== initialParams.sort ||
       activeTab !== initialParams.tab
 
@@ -276,7 +281,7 @@ function SearchPageContent() {
       setPage(1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, sort, activeTab, isInitialized])
+  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, activeTab, isInitialized])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -295,6 +300,7 @@ function SearchPageContent() {
     setSelectedFormat('')
     setSelectedCategory('')
     setSelectedTags([])
+    setSelectedAuthor('')
     setQuery('')
   }
 
@@ -304,7 +310,7 @@ function SearchPageContent() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || query
+  const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || selectedAuthor || query
 
   return (
     <main className="min-h-screen bg-prpm-dark">
@@ -511,6 +517,20 @@ function SearchPageContent() {
                   <option value="security">Security</option>
                   <option value="best-practices">Best Practices</option>
                 </select>
+              </div>
+
+              {/* Author Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Author
+                </label>
+                <input
+                  type="text"
+                  value={selectedAuthor}
+                  onChange={(e) => setSelectedAuthor(e.target.value)}
+                  placeholder="e.g., prpm, voltagent"
+                  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent placeholder-gray-500"
+                />
               </div>
 
               {/* Popular Tags */}
@@ -742,7 +762,9 @@ function SearchPageContent() {
                               </p>
                               <p className="text-gray-400 mb-3">{collection.description || 'No description'}</p>
                               <div className="flex items-center gap-4 text-sm text-gray-500">
-                                <span>by @{collection.author}</span>
+                                {collection.author && (
+                                    <span>by @{collection.author}</span>
+                                )}
                                 {collection.category && (
                                   <span>{collection.category}</span>
                                 )}

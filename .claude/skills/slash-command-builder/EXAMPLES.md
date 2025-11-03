@@ -1,6 +1,6 @@
 # Real-World Slash Command Examples
 
-Production-ready slash command examples for common development workflows.
+Real-world slash command examples for common development workflows.
 
 ## Code Quality & Review
 
