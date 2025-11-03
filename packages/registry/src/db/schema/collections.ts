@@ -1,5 +1,6 @@
-import { pgTable, uuid, varchar, text, boolean, timestamp, integer, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, timestamp, integer, jsonb, index, primaryKey } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
+import { packages } from './packages.js';
 
 /**
  * Collections Schema
@@ -59,3 +60,28 @@ export const collections = pgTable('collections', {
 // Type inference for TypeScript
 export type Collection = typeof collections.$inferSelect;
 export type NewCollection = typeof collections.$inferInsert;
+
+/**
+ * Collection Packages Join Table
+ *
+ * Maps packages to collections with metadata (order, required status, reason).
+ * Composite primary key: (collection_id, package_id)
+ *
+ * Migration history:
+ * - 004_add_collections.sql: Initial table with composite FK to collections (scope, id, version)
+ * - 014_collections_uuid_id.sql: Migrated to UUID collection_id, composite PK (collection_id, package_id)
+ */
+export const collectionPackages = pgTable('collection_packages', {
+  collectionId: uuid('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+  packageId: uuid('package_id').notNull().references(() => packages.id, { onDelete: 'cascade' }),
+  packageVersion: varchar('package_version', { length: 50 }), // NULL means 'latest'
+  required: boolean('required').default(true).notNull(),
+  reason: text('reason'),
+  installOrder: integer('install_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.collectionId, table.packageId] }),
+}));
+
+export type CollectionPackage = typeof collectionPackages.$inferSelect;
+export type NewCollectionPackage = typeof collectionPackages.$inferInsert;
