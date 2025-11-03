@@ -25,10 +25,9 @@ export function startAnalyticsCron(fastify: FastifyInstance) {
 
       fastify.log.info(`✅ Daily analytics aggregation completed for ${targetDate}`);
     } catch (error) {
-      fastify.log.error('❌ Daily analytics aggregation failed:', error);
+      fastify.log.error({ error }, '❌ Daily analytics aggregation failed');
     }
   }, {
-    scheduled: true,
     timezone: 'UTC'
   });
 
@@ -56,7 +55,7 @@ export function startAnalyticsCron(fastify: FastifyInstance) {
 
       fastify.log.info('✅ Initial analytics aggregation completed');
     } catch (error) {
-      fastify.log.error('❌ Initial analytics aggregation failed:', error);
+      fastify.log.error({ error }, '❌ Initial analytics aggregation failed');
     }
   }, 5000); // Wait 5 seconds after startup
 
