@@ -12,6 +12,7 @@ import { toKiro } from '../converters/to-kiro.js';
 import { toWindsurf } from '../converters/to-windsurf.js';
 import { toAgentsMd } from '../converters/to-agents-md.js';
 import type { CanonicalPackage } from '../types/canonical.js';
+import { packageRepository, packageVersionRepository } from '../db/repositories/index.js';
 
 export async function convertRoutes(server: FastifyInstance) {
   /**
@@ -51,19 +52,8 @@ export async function convertRoutes(server: FastifyInstance) {
 
       try {
         // Get package from database
-        const result = await server.pg.query(
-          `
-          SELECT p.*, pv.version, pv.canonical_format, pv.tarball_url
-          FROM packages p
-          JOIN package_versions pv ON p.id = pv.package_id
-          WHERE p.id = $1 AND (pv.version = $2 OR $2 = 'latest')
-          ORDER BY pv.published_at DESC
-          LIMIT 1
-        `,
-          [id, version]
-        );
-
-        if (result.rows.length === 0) {
+        const pkg = await packageRepository.findById(id);
+        if (!pkg) {
           return reply.code(404).send({
             error: 'Package not found',
             id,
@@ -71,10 +61,30 @@ export async function convertRoutes(server: FastifyInstance) {
           });
         }
 
-        const pkg = result.rows[0];
+        // Get version (latest or specific)
+        const pkgVersion = version === 'latest'
+          ? await packageVersionRepository.findLatestVersion(pkg.id)
+          : await packageVersionRepository.findByPackageAndVersion(pkg.id, version);
+
+        if (!pkgVersion) {
+          return reply.code(404).send({
+            error: 'Version not found',
+            id,
+            version,
+          });
+        }
+
+        // Merge package and version data for compatibility with existing code
+        const pkgData: any = {
+          ...pkg,
+          version: pkgVersion.version,
+          canonical_format: pkgVersion.metadata, // metadata contains canonical format
+          tarball_url: pkgVersion.tarballUrl,
+          author: pkg.authorId, // Map authorId to author for compatibility
+        };
 
         // Check cache first
-        const cacheKey = `pkg:${id}:${pkg.version}:${format}`;
+        const cacheKey = `pkg:${id}:${pkgData.version}:${format}`;
         const cached = await server.redis.get(cacheKey);
 
         let content: string;
@@ -83,7 +93,7 @@ export async function convertRoutes(server: FastifyInstance) {
           content = cached;
         } else {
           // Convert to requested format
-          const canonicalPkg: CanonicalPackage = pkg.canonical_format || pkg;
+          const canonicalPkg: CanonicalPackage = pkgData.canonical_format || pkgData;
           const converted = await convertPackage(canonicalPkg, format);
 
           content = converted.content;
@@ -102,7 +112,7 @@ export async function convertRoutes(server: FastifyInstance) {
         }
 
         // Return as file download
-        const canonicalPkg: CanonicalPackage = pkg.canonical_format || pkg;
+        const canonicalPkg: CanonicalPackage = pkgData.canonical_format || pkgData;
         const filename = getFilenameForFormat(format, id, canonicalPkg);
 
         return reply
@@ -112,7 +122,7 @@ export async function convertRoutes(server: FastifyInstance) {
             `attachment; filename="${filename}"`
           )
           .header('X-Package-Id', id)
-          .header('X-Package-Version', pkg.version)
+          .header('X-Package-Version', pkgData.version)
           .header('X-Format', format)
           .send(content);
       } catch (error) {
@@ -162,31 +172,39 @@ export async function convertRoutes(server: FastifyInstance) {
 
       try {
         // Get package
-        const result = await server.pg.query(
-          `
-          SELECT p.*, pv.version, pv.canonical_format, pv.tarball_url,
-                 pv.tarball_hash, pv.size
-          FROM packages p
-          JOIN package_versions pv ON p.id = pv.package_id
-          WHERE p.id = $1 AND (pv.version = $2 OR $2 = 'latest')
-          ORDER BY pv.published_at DESC
-          LIMIT 1
-        `,
-          [id, version]
-        );
-
-        if (result.rows.length === 0) {
+        const pkg = await packageRepository.findById(id);
+        if (!pkg) {
           return reply.code(404).send({
             error: 'Package not found',
           });
         }
 
-        const pkg = result.rows[0];
+        // Get version (latest or specific)
+        const pkgVersion = version === 'latest'
+          ? await packageVersionRepository.findLatestVersion(pkg.id)
+          : await packageVersionRepository.findByPackageAndVersion(pkg.id, version);
+
+        if (!pkgVersion) {
+          return reply.code(404).send({
+            error: 'Version not found',
+          });
+        }
+
+        // Merge package and version data
+        const pkgData: any = {
+          ...pkg,
+          version: pkgVersion.version,
+          canonical_format: pkgVersion.metadata,
+          tarball_url: pkgVersion.tarballUrl,
+          tarball_hash: pkgVersion.contentHash,
+          size: pkgVersion.fileSize,
+          author: pkg.authorId, // Map authorId to author for compatibility
+        };
 
         // For canonical format, return original tarball
-        if (format === 'canonical' && pkg.tarball_url) {
+        if (format === 'canonical' && pkgData.tarball_url) {
           // Redirect to S3
-          return reply.redirect(302, pkg.tarball_url);
+          return reply.redirect(302, pkgData.tarball_url);
         }
 
         // Generate on-the-fly tarball with converted content
@@ -195,19 +213,19 @@ export async function convertRoutes(server: FastifyInstance) {
         const pack = tar.pack();
 
         // Get converted content
-        const canonicalPkg: CanonicalPackage = pkg.canonical_format || pkg;
+        const canonicalPkg: CanonicalPackage = pkgData.canonical_format || pkgData;
         const converted = await convertPackage(canonicalPkg, format);
 
         // Create package.json
         const packageJson = {
-          name: pkg.id,
-          version: pkg.version,
-          description: pkg.description,
-          format: pkg.format,
-          subtype: pkg.subtype,
+          name: pkgData.id,
+          version: pkgData.version,
+          description: pkgData.description,
+          format: pkgData.format,
+          subtype: pkgData.subtype,
           targetFormat: format,
-          author: pkg.author,
-          license: pkg.license || 'MIT',
+          author: pkgData.author,
+          license: pkgData.license || 'MIT',
         };
 
         // Add package.json to tarball
@@ -217,7 +235,7 @@ export async function convertRoutes(server: FastifyInstance) {
         );
 
         // Add converted content
-        const filename = getFilenameForFormat(format, pkg.id, pkg);
+        const filename = getFilenameForFormat(format, pkgData.id, pkgData);
         pack.entry({ name: filename }, converted.content);
 
         // Finalize
@@ -231,10 +249,10 @@ export async function convertRoutes(server: FastifyInstance) {
           .header('Content-Type', 'application/gzip')
           .header(
             'Content-Disposition',
-            `attachment; filename="${id}-${pkg.version}.tar.gz"`
+            `attachment; filename="${id}-${pkgData.version}.tar.gz"`
           )
           .header('X-Package-Id', id)
-          .header('X-Package-Version', pkg.version)
+          .header('X-Package-Version', pkgData.version)
           .header('X-Format', format)
           .send(gzip);
       } catch (error) {

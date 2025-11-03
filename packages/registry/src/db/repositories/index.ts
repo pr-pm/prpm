@@ -5,6 +5,7 @@
  * Import repositories from here rather than individual files.
  */
 export * from './package-repository.js';
+export * from './package-version-repository.js';
 export * from './collection-repository.js';
 export * from './organization-repository.js';
 export * from './user-repository.js';
