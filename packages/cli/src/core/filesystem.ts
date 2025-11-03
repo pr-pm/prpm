@@ -47,6 +47,11 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
     case 'agents.md':
       return '.agents';
 
+    case 'openskills':
+      // OpenSkills creates subdirectories for each skill
+      if (packageName) return `.claude/skills/${packageName}`;
+      return '.claude/skills';
+
     case 'generic':
       return '.prompts';
 
@@ -170,6 +175,11 @@ export function getInstalledFilePath(
 
   // Claude skills always use SKILL.md
   if (format === 'claude' && subtype === 'skill') {
+    return path.join(destDir, 'SKILL.md');
+  }
+
+  // OpenSkills always use SKILL.md
+  if (format === 'openskills') {
     return path.join(destDir, 'SKILL.md');
   }
 
