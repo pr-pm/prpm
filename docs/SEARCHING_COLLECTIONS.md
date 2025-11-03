@@ -49,7 +49,7 @@ prpm collections list
 🌟 Community Collections:
 
    @username/my-workflow                       Custom workflow (3 packages)
-   @team/production-ready                      Production setup (12 packages)
+   @team/enterprise-setup                      Enterprise setup (12 packages)
 ```
 
 ### Search Collections by Keyword

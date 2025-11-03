@@ -135,7 +135,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2 text-white">1,800+ Packages</h3>
               <p className="text-gray-400 leading-relaxed">
-                Production-ready prompts, agents, skills, and slash commands from verified contributors
+                Battle-tested prompts, agents, skills, and slash commands from verified contributors
               </p>
             </div>
 
