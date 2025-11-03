@@ -36,6 +36,24 @@ Use the prpm-blog-writer agent to review this blog post
 
 Hooks are configured in `settings.json` and automatically trigger on specific events.
 
+### Installing Hooks Globally
+
+For convenience, you can install hooks globally so they work across all Claude Code sessions:
+
+```bash
+# Install hooks to ~/.claude/settings.json
+./scripts/install-hooks-globally.sh
+
+# Uninstall hooks from ~/.claude/settings.json
+./scripts/uninstall-hooks-globally.sh
+```
+
+**Benefits of global installation:**
+- ✅ Hooks work immediately in all projects
+- ✅ No per-project configuration needed
+- ✅ Consistent experience across all repos
+- ✅ Automatic backups before changes
+
 ### PostToolUse Hooks
 
 #### Blog Post Notifications
