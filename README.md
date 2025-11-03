@@ -14,6 +14,8 @@ prpm install collection/nextjs-pro  # Entire Next.js setup in one command
 
 **1,800+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro) | **One command to install**
 
+📚 **[Official Documentation](https://docs.prpm.dev)** | 🌐 **[Browse Packages](https://prpm.dev)**
+
 ---
 
 ## 📦 Collections - Complete Setups in One Command
@@ -87,7 +89,7 @@ prpm collections info collection/nextjs-pro
 
 **Smart filters:** Category, tags, editor type, trending vs popular, official vs community
 
-**[Full CLI Reference →](docs/CLI.md)**
+📚 **[Full Documentation](https://docs.prpm.dev)** | **[CLI Reference](https://docs.prpm.dev/cli/overview)**
 
 ---
 
@@ -163,7 +165,7 @@ prpm install @username/karen-skill --as claude
 - **Continue**: Prompts ready to use
 - **Windsurf**: Rules integrated automatically
 
-**[Full Installation Guide →](docs/INSTALLATION.md)** | **[Configuration Guide →](docs/CONFIGURATION.md)**
+📚 **[Installation Guide](https://docs.prpm.dev/getting-started/installation)** | **[Configuration Guide](https://docs.prpm.dev/getting-started/configuration)**
 
 ---
 
@@ -177,7 +179,7 @@ prpm install @username/karen-skill --as claude
 
 **Categories:** Frontend frameworks, Backend frameworks, Programming languages, Testing, Mobile development, Cloud & DevOps, AI & ML, Databases, Web3, Best practices, and more
 
-**[Package Catalog →](docs/PACKAGES.md)** | **[Browse at prpm.dev →](https://prpm.dev/search)**
+🌐 **[Browse Packages](https://prpm.dev/search)** | 📚 **[Documentation](https://docs.prpm.dev)**
 
 ---
 
@@ -204,7 +206,7 @@ prpm trending                        # Trending packages
 prpm info <package-name>             # Package details
 ```
 
-**[Full CLI Reference →](docs/CLI.md)**
+📚 **[Full CLI Reference](https://docs.prpm.dev/cli/commands)** | **[All Documentation](https://docs.prpm.dev)**
 
 ---
 
@@ -234,7 +236,7 @@ prpm install @username/karen-skill
 # Get: 78/100 score + market research + actionable fixes
 ```
 
-**[More Examples →](docs/EXAMPLES.md)**
+📚 **[More Examples & Tutorials](https://docs.prpm.dev/guides/usage-examples)**
 
 ---
 
@@ -258,7 +260,7 @@ prpm install @username/karen-skill
 - **Version locking** - prpm-lock.json for consistent installs
 - **Collections** - Install multiple packages as bundles
 
-**[Architecture Details →](docs/ARCHITECTURE.md)**
+📚 **[Learn More](https://docs.prpm.dev/concepts/how-it-works)**
 
 ---
 
@@ -329,46 +331,34 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 
 ## Documentation
 
-### 📚 User Documentation
+### 📚 Official Documentation
 
-**Get Started:**
-- 📖 **[User Docs Index](docs/)** - Complete user documentation
-- 📦 [Installation Guide](docs/INSTALLATION.md)
-- ⚙️ [Configuration Guide](docs/CONFIGURATION.md) - ~/.prpmrc, prpm.lock, format customization
-- 💻 [CLI Reference](docs/CLI.md) - Complete command reference
+**➡️ [docs.prpm.dev](https://docs.prpm.dev) - Complete documentation**
 
-**Core Concepts:**
-- 📚 [Collections](docs/COLLECTIONS.md) - Multi-package bundles
-- 🔄 [Format Conversion](docs/FORMAT_CONVERSION.md) - Universal packages explained
-- 📦 [Packages](docs/PACKAGES.md) - Package catalog
-- 🎯 [Examples](docs/EXAMPLES.md) - Real-world usage
+**Quick Links:**
+- 🚀 [Getting Started](https://docs.prpm.dev/getting-started/installation) - Install and configure PRPM
+- 💻 [CLI Reference](https://docs.prpm.dev/cli/commands) - All commands and options
+- 📦 [Collections Guide](https://docs.prpm.dev/concepts/collections) - Multi-package bundles
+- 🔄 [Format Conversion](https://docs.prpm.dev/concepts/format-conversion) - Universal packages explained
+- 🎯 [Usage Examples](https://docs.prpm.dev/guides/usage-examples) - Real-world workflows
+- 🔌 [MCP Servers](https://docs.prpm.dev/guides/mcp-servers) - Model Context Protocol configuration
 
-**Advanced:**
-- 🏗️ [Architecture](docs/ARCHITECTURE.md) - System design
-- 🔌 [MCP Servers](docs/MCP_SERVERS_IN_COLLECTIONS.md) - MCP configuration
-- 📝 [Publishing](docs/PUBLISHING.md) - Publish your packages
-
-**Format-Specific Guides:**
-- ✈️ [GitHub Copilot](docs/GITHUB_COPILOT.md) - Instructions for GitHub Copilot
-- 🎯 [Kiro](docs/KIRO.md) - Steering files for Kiro AI
-- 🌊 [Windsurf](docs/WINDSURF.md) - Rules for Windsurf editor
-
-### 🛠️ Developer Documentation
+### 🛠️ Developer & Contributor Docs
 
 **For Contributors:**
-- 🔧 **[Development Docs](development/docs/)** - Internal documentation index
-- 💻 [Development Setup](development/docs/DEVELOPMENT.md) - Local environment
+- 💻 [Development Setup](development/docs/DEVELOPMENT.md) - Local environment setup
 - 🐳 [Docker Services](development/docs/DOCKER.md) - PostgreSQL, Redis, MinIO
+- 🔧 [Development Docs](development/docs/) - Internal documentation
 
 **Deployment & Infrastructure:**
-- 🚀 [Deployment Summary](development/docs/DEPLOYMENT_SUMMARY.md) - Complete deployment guide
-- 📊 [Deployment Quickstart](development/docs/DEPLOYMENT_QUICKSTART.md) - TL;DR deployment
+- 🚀 [Deployment Guide](development/docs/DEPLOYMENT_SUMMARY.md) - Complete deployment guide
+- 📊 [Deployment Quickstart](development/docs/DEPLOYMENT_QUICKSTART.md) - Quick deployment
 - 🔄 [CI/CD Workflows](development/docs/GITHUB_WORKFLOWS.md) - GitHub Actions
 
 ### 🔥 Karen Code Reviews
-- 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md)
-- 📖 [Karen GitHub Action](https://github.com/pr-pm/karen-action)
-- 💡 [Karen Implementation](KAREN_IMPLEMENTATION.md)
+- 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md) - Brutally honest AI code reviews
+- 📖 [Karen GitHub Action](https://github.com/pr-pm/karen-action) - Automate reviews in CI
+- 💡 [Karen Implementation](KAREN_IMPLEMENTATION.md) - Technical details
 
 ---
 
@@ -413,7 +403,7 @@ MIT License - See [LICENSE](LICENSE)
 
 **Stop copy-pasting. Start installing.**
 
-**[Install PRPM](#installation)** | **[Browse Collections](https://prpm.dev/search?tab=collections)** | **[Get Karen Score](GET_KAREN_SCORE.md)**
+**[Read the Docs](https://docs.prpm.dev)** | **[Install PRPM](#installation)** | **[Browse Packages](https://prpm.dev)** | **[Get Karen Score](GET_KAREN_SCORE.md)**
 
 _Collections install multiple curated packages with one command • Packages work in all editors • No manual copying needed_
 
