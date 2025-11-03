@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "openskills-support",
+    title: "PRPM Now Supports OpenSkills: Universal Skills for AI Coding Agents",
+    excerpt: "PRPM adds native OpenSkills format support with robust js-yaml parsing. Install OpenSkills packages from PRPM's registry or publish your own - all with automatic format conversion to Cursor, Claude, Continue, and more.",
+    date: "2025-11-03",
+    author: "PRPM Team",
+    readTime: "12 min read",
+    tags: ["OpenSkills", "Format Support", "Launch", "Technical"],
+  },
+  {
     slug: "top-50-cursor-rules",
     title: "Top 50 Cursor Rules to Supercharge Your Development Workflow",
     excerpt: "We analyzed over 1,000 cursor rules to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.",

@@ -1,0 +1,63 @@
+🎓 Excited to announce: PRPM now supports OpenSkills!
+
+The Problem:
+AI coding tools are fragmented—Cursor, Claude Code, Continue, Windsurf, GitHub Copilot all use different formats for prompts and skills. This creates duplication, vendor lock-in, and makes sharing hard.
+
+The Solution:
+OpenSkills (https://github.com/numman-ali/openskills) launched Oct 26 as a universal skills loader—one format that works across multiple AI coding platforms. It gained 629 stars in 2 days, signaling strong demand.
+
+Today, PRPM adds native OpenSkills support with automatic format conversion.
+
+What This Means:
+
+✅ Publish Once, Install Anywhere
+Write a skill in OpenSkills format → publish to PRPM → users install in their preferred format (Cursor, Claude, Continue, Windsurf, etc.)
+
+✅ Centralized Discovery
+OpenSkills uses GitHub for distribution. PRPM adds a centralized registry with search, categories, analytics, and versioning.
+
+✅ Robust YAML Parsing
+We implemented js-yaml for parsing complex frontmatter—handling multiline strings, arrays, nested objects, and gracefully handling errors.
+
+Technical Highlights:
+
+• 11/11 tests passing
+• Conversion quality scoring (transparent about lossy conversions)
+• Installs to .claude/skills/{package-name}/SKILL.md
+• Consistent with other PRPM converters (agents.md, Kiro, Copilot)
+
+Example Usage:
+
+```bash
+# Install in OpenSkills format
+prpm install @user/python-expert --as openskills
+
+# Or auto-convert to your preferred format
+prpm install @user/python-expert --as cursor
+prpm install @user/python-expert --as claude
+```
+
+Why This Matters:
+
+1. Network Effects
+OpenSkills community + PRPM community = stronger ecosystem for everyone
+
+2. Universal Package Manager
+PRPM now supports 9 formats: Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro, agents.md, OpenSkills, and generic
+
+3. Reduces Fragmentation
+One package, many formats. No more rewriting the same skill for different tools.
+
+What's Next:
+
+→ Bundled resources support (references/, scripts/, assets/)
+→ Cross-promotion with OpenSkills creator
+→ Example repository showcasing real-world skills
+
+Huge thanks to the OpenSkills creator (@numman-ali on GitHub) for building this universal format. We're excited to support it in PRPM.
+
+Read the full blog post: https://prpm.dev/blog/openskills-support
+
+Try it today: npm install -g prpm
+
+#OpenSkills #PRPM #AI #DeveloperTools #PackageManager #Claude #Cursor #Windsurf #GitHubCopilot
