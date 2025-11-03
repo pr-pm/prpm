@@ -11,8 +11,8 @@
     <rect x="-1" y="-6" width="2" height="18" fill="#34d399"/>
   </g>
 
-  <!-- PRPM text -->
-  <text x="38" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" fill="currentColor">
+  <!-- PRPM text - WHITE for dark mode -->
+  <text x="38" y="23" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" fill="#ffffff">
     PRPM
   </text>
 </svg>

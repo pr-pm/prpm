@@ -1,0 +1,18 @@
+<svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Package box icon (compact) -->
+  <g transform="translate(16, 16)">
+    <!-- Top face -->
+    <path d="M 0,-8 L 8,-4 L 0,0 L -8,-4 Z" fill="#10b981"/>
+    <!-- Left face -->
+    <path d="M -8,-4 L -8,8 L 0,12 L 0,0 Z" fill="#047857"/>
+    <!-- Right face -->
+    <path d="M 8,-4 L 8,8 L 0,12 L 0,0 Z" fill="#059669"/>
+    <!-- Ribbon -->
+    <rect x="-1" y="-6" width="2" height="18" fill="#34d399"/>
+  </g>
+
+  <!-- PRPM text - BLACK for light mode -->
+  <text x="38" y="23" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" fill="#000000">
+    PRPM
+  </text>
+</svg>
