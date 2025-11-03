@@ -78,17 +78,6 @@ export interface CollectionPackage {
 }
 
 /**
- * MCP server configuration (for Claude)
- */
-export interface MCPServerConfig {
-  command: string;
-  args?: string[];
-  env?: Record<string, string>;
-  description?: string;
-  optional?: boolean;
-}
-
-/**
  * Collection configuration
  */
 export interface CollectionConfig {
@@ -96,7 +85,6 @@ export interface CollectionConfig {
   installOrder?: 'sequential' | 'parallel';
   postInstall?: string; // Script to run after install
   extends?: string; // Base collection to extend
-  mcpServers?: Record<string, MCPServerConfig>; // MCP servers for Claude users
 }
 
 /**

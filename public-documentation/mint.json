@@ -51,7 +51,8 @@
     {
       "group": "Guides",
       "pages": [
-        "guides/format-conversion"
+        "guides/format-conversion",
+        "guides/mcp-servers"
       ]
     },
     {
