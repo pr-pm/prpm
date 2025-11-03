@@ -1,0 +1,371 @@
+---
+title: 'MCP Servers'
+description: 'How PRPM automatically configures MCP servers for Claude Code'
+---
+
+PRPM can automatically configure MCP (Model Context Protocol) servers when installing collections for Claude Code. This guide explains how MCP servers work with PRPM and how to use them.
+
+## Quick Start
+
+### Install a Collection with MCP Servers
+
+```bash
+# Install with all MCP servers (recommended)
+prpm install collection/pulumi-infrastructure --as claude
+
+# Install without optional MCP servers
+prpm install collection/pulumi-infrastructure --as claude --skip-optional-mcp
+```
+
+After installation:
+1. **Restart Claude Code** (required for MCP servers to load)
+2. Start a conversation in Claude Code
+3. Claude now has access to Pulumi state, AWS resources, etc.
+
+### Using MCP Servers in Claude Code
+
+Once installed, you can ask Claude to use the MCP servers:
+
+```
+"Show me all resources in my Pulumi stack"
+"Query the database for all users created in the last week"
+"Search the web for the latest Next.js documentation"
+"Run npm install and show me the output"
+```
+
+Claude will automatically use the appropriate MCP server to fulfill your request.
+
+## What are MCP Servers?
+
+**MCP (Model Context Protocol)** is a protocol that allows Claude Code to connect to external tools and services. Think of MCP servers as "superpowers" for Claude - they let it:
+
+- 📁 **Read and write files** with advanced filesystem operations
+- 🗄️ **Query databases** directly (PostgreSQL, MySQL, SQLite, etc.)
+- 🔍 **Search the web** for real-time information
+- ⚡ **Execute commands** via bash/shell integration
+- ☁️ **Inspect cloud resources** (AWS, GCP, Azure)
+- 🎯 **Access APIs** and specialized tools
+
+### Common MCP Servers
+
+- **Filesystem** (`@modelcontextprotocol/server-filesystem`) - Advanced file operations and code navigation
+- **Database** (`@modelcontextprotocol/server-postgres`) - Direct database queries and schema inspection
+- **Brave Search** (`@modelcontextprotocol/server-brave-search`) - Real-time web search and documentation lookup
+- **Bash** (`@modelcontextprotocol/server-bash`) - Command execution and automation
+- **Pulumi** (`@modelcontextprotocol/server-pulumi`) - Infrastructure state inspection
+- **AWS** (`@modelcontextprotocol/server-aws`) - Cloud resource management and cost analysis
+- **Kubernetes** (`@modelcontextprotocol/server-kubernetes`) - Cluster inspection and debugging
+- **Git** (`@modelcontextprotocol/server-git`) - Repository operations and history
+
+## How PRPM Handles MCP Servers
+
+### The Problem PRPM Solves
+
+Setting up MCP servers manually is tedious:
+1. Find the right MCP server packages
+2. Figure out the correct command and arguments
+3. Configure environment variables
+4. Add to Claude Code's `claude_desktop_config.json`
+5. Repeat for every project
+
+### The PRPM Solution
+
+Collections can include MCP server configurations. When you install a collection:
+
+```bash
+prpm install collection/nextjs-pro --as claude
+```
+
+PRPM automatically:
+1. ✅ Installs all packages in the collection
+2. ✅ Configures MCP servers in Claude Code
+3. ✅ Sets up environment variables
+4. ✅ Handles required vs optional servers
+5. ✅ Only applies to Claude Code (other editors ignore MCP config)
+
+## Configuration Format
+
+Collections define MCP servers in their manifest:
+
+```json
+{
+  "id": "my-collection",
+  "config": {
+    "defaultFormat": "claude",
+    "mcpServers": {
+      "server-name": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-package"],
+        "env": {
+          "ENV_VAR": "value"
+        },
+        "description": "What this server provides",
+        "optional": false
+      }
+    }
+  }
+}
+```
+
+### Required vs Optional Servers
+
+**Required MCP Servers** (`"optional": false`):
+- Essential for collection functionality
+- Always installed for Claude users
+- Example: Pulumi server for Pulumi collection
+
+**Optional MCP Servers** (`"optional": true`):
+- Enhanced features but not essential
+- Can be skipped with `--skip-optional-mcp`
+- Example: AWS/Kubernetes servers for multi-cloud support
+
+## How MCP Configuration Works
+
+### Where MCP Servers Are Configured
+
+PRPM writes MCP server configurations to Claude Code's configuration file:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+### Important Notes
+
+<Warning>
+**Global Configuration**: MCP servers are configured globally for Claude Code, not per-project. This means they're available in all conversations.
+</Warning>
+
+<Info>
+**Merge Behavior**: PRPM merges new MCP servers with existing ones (doesn't overwrite your existing configuration).
+</Info>
+
+<Note>
+**Restart Required**: You must restart Claude Code after installing MCP servers for them to load.
+</Note>
+
+## Examples
+
+### Example 1: Pulumi Infrastructure Collection
+
+```json
+{
+  "id": "pulumi-infrastructure",
+  "scope": "collection",
+  "name": "Pulumi Infrastructure as Code",
+  "config": {
+    "defaultFormat": "claude",
+    "mcpServers": {
+      "pulumi": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-pulumi"],
+        "description": "Pulumi state inspection and resource queries",
+        "optional": false
+      },
+      "aws": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-aws"],
+        "env": {
+          "AWS_REGION": "us-east-1"
+        },
+        "description": "AWS resource inspection and cost analysis",
+        "optional": true
+      }
+    }
+  }
+}
+```
+
+**Usage**:
+```bash
+# Full installation with AWS MCP
+prpm install collection/pulumi-infrastructure --as claude
+
+# Without optional AWS MCP server
+prpm install collection/pulumi-infrastructure --as claude --skip-optional-mcp
+```
+
+### Example 2: Development Environment
+
+```json
+{
+  "id": "dev-environment",
+  "config": {
+    "mcpServers": {
+      "filesystem": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"],
+        "description": "Navigate project codebase",
+        "optional": false
+      },
+      "database": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-postgres"],
+        "env": {
+          "DATABASE_URL": "postgresql://localhost/myapp"
+        },
+        "description": "Query application database",
+        "optional": false
+      },
+      "bash": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-bash"],
+        "description": "Run tests and build commands",
+        "optional": true
+      }
+    }
+  }
+}
+```
+
+## Environment Variables
+
+MCP servers can use environment variables for configuration:
+
+```json
+{
+  "mcpServers": {
+    "database": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://user:pass@localhost/db",
+        "PGSSL": "true"
+      }
+    }
+  }
+}
+```
+
+<Warning>
+**Security Note**: For sensitive values, use environment variable references instead of hardcoding:
+
+```json
+{
+  "env": {
+    "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+    "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}"
+  }
+}
+```
+</Warning>
+
+## Troubleshooting
+
+### MCP Server Not Working
+
+**1. Restart Claude Code**
+
+MCP servers only load when Claude Code starts. After installing a collection with MCP servers:
+- Quit Claude Code completely
+- Reopen Claude Code
+- Start a new conversation
+
+**2. Verify Configuration**
+
+Check that MCP servers were added:
+
+<CodeGroup>
+```bash macOS
+cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
+
+```bash Linux
+cat ~/.config/Claude/claude_desktop_config.json
+```
+
+```bash Windows
+type %APPDATA%\Claude\claude_desktop_config.json
+```
+</CodeGroup>
+
+**3. Check NPX Installation**
+
+Most MCP servers use `npx` to run:
+
+```bash
+npx --version
+```
+
+If not installed, install Node.js from [nodejs.org](https://nodejs.org).
+
+**4. Test MCP Server Manually**
+
+Try running the MCP server command directly:
+
+```bash
+npx -y @modelcontextprotocol/server-filesystem /path/to/dir
+```
+
+### Environment Variables Not Working
+
+MCP servers inherit environment from Claude Code, not your shell. To use env vars:
+
+**Option 1: Set in Collection Config**
+```json
+{
+  "env": {
+    "DATABASE_URL": "postgresql://localhost/mydb"
+  }
+}
+```
+
+**Option 2: Set System-Wide**
+- **macOS/Linux**: Add to `~/.zshrc` or `~/.bashrc`, then restart computer
+- **Windows**: Set in System Environment Variables, then restart
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Can I use MCP servers without collections?">
+    Yes! You can manually add MCP servers to Claude Code's config file. PRPM just makes it easier by bundling them with collections.
+  </Accordion>
+
+  <Accordion title="Do MCP servers work with Cursor/Windsurf/Continue?">
+    No, MCP is specific to Claude Code. When you install a collection for Cursor/Windsurf/Continue, PRPM automatically skips MCP configuration.
+  </Accordion>
+
+  <Accordion title="Are MCP servers project-specific or global?">
+    **Global**. MCP servers are configured globally for Claude Code, not per-project. This means:
+    - ✅ Available in all conversations
+    - ⚠️ Multiple projects can conflict (e.g., different database URLs)
+    - 💡 Use environment variables to switch between projects
+  </Accordion>
+
+  <Accordion title="Can I manually edit MCP configuration?">
+    Yes! PRPM writes to the standard Claude Code config file. You can manually edit:
+    - `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
+    - `%APPDATA%/Claude/claude_desktop_config.json` (Windows)
+    - `~/.config/Claude/claude_desktop_config.json` (Linux)
+
+    Just restart Claude Code after editing.
+  </Accordion>
+
+  <Accordion title="What happens if I install multiple collections with MCP servers?">
+    PRPM **merges** MCP server configurations. If two collections define the same MCP server with different configs, the last one installed wins.
+  </Accordion>
+
+  <Accordion title="How do I remove an MCP server?">
+    Manually edit Claude Code's config file and remove the server entry, then restart Claude Code.
+  </Accordion>
+
+  <Accordion title="Do I need to install MCP server packages separately?">
+    No! When using `npx -y`, packages are auto-installed on first use. That's why most PRPM collections use `npx -y` in their MCP configs.
+  </Accordion>
+</AccordionGroup>
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Collections Guide" icon="layer-group" href="/concepts/collections">
+    Learn about multi-package collections
+  </Card>
+  <Card title="Format Conversion" icon="arrow-right-arrow-left" href="/guides/format-conversion">
+    How universal packages work
+  </Card>
+  <Card title="MCP Specification" icon="book" href="https://modelcontextprotocol.io">
+    Official MCP Protocol docs
+  </Card>
+  <Card title="MCP Servers" icon="github" href="https://github.com/modelcontextprotocol/servers">
+    Official MCP server packages
+  </Card>
+</CardGroup>
