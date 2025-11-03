@@ -66,6 +66,7 @@ export interface PublishResponse {
   package_id: string;
   name: string;
   version: string;
+  tarball_url: string;
   message: string;
 }
 
