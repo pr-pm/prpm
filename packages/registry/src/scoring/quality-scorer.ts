@@ -59,8 +59,10 @@ export interface PackageQualityData {
   last_published_at?: Date;
   created_at: Date;
 
-  // Prompt content fields (passed in, not from DB)
+  // Prompt content fields
   content?: any; // Canonical format content
+  readme?: string; // README content
+  file_size?: number; // Tarball size as proxy for content
 }
 
 /**
@@ -70,7 +72,7 @@ export function calculateQualityScore(pkg: PackageQualityData): number {
   const factors: QualityScoreFactors = {
     // Content Quality (40% = 2.0 points) - PROMPT CONTENT FIRST
     promptContentQuality: scorePromptContent(pkg.content),           // 1.0 - THE MAIN FACTOR
-    promptLength: scorePromptLength(pkg.content),        // 0.3
+    promptLength: scorePromptLength(pkg.content, pkg.readme),        // 0.3
     hasExamples: scoreExamples(pkg.content),                         // 0.2
     hasDocumentation: pkg.documentation_url ? 0.2 : 0,               // 0.2
     hasDescription: pkg.description && pkg.description.length > 20 ? 0.1 : 0,  // 0.1
@@ -114,7 +116,7 @@ export async function calculateQualityScoreWithAI(
   const factors: QualityScoreFactors = {
     // Content Quality (40% = 2.0 points) - AI-POWERED PROMPT EVALUATION
     promptContentQuality: aiScore,                                   // 1.0 - AI-EVALUATED
-    promptLength: scorePromptLength(pkg.content),        // 0.3
+    promptLength: scorePromptLength(pkg.content, pkg.readme),        // 0.3
     hasExamples: scoreExamples(pkg.content),                         // 0.2
     hasDocumentation: pkg.documentation_url ? 0.2 : 0,               // 0.2
     hasDescription: pkg.description && pkg.description.length > 20 ? 0.1 : 0,  // 0.1
@@ -207,9 +209,9 @@ function scorePromptContent(content?: any): number {
 
 /**
  * Score prompt length and substance (0-0.3 points)
- * Checks structured content from tarball
+ * Checks both structured content and README
  */
-function scorePromptLength(content?: any): number {
+function scorePromptLength(content?: any, readme?: string): number {
   let totalLength = 0;
 
   // Content length
@@ -221,7 +223,12 @@ function scorePromptLength(content?: any): number {
     }
   }
 
-  // Score based on content length
+  // README length (additional documentation)
+  if (readme) {
+    totalLength += readme.length;
+  }
+
+  // Score based on combined length
   if (totalLength >= 5000) return 0.3;  // Very comprehensive
   if (totalLength >= 3000) return 0.25;
   if (totalLength >= 2000) return 0.2;
@@ -382,6 +389,7 @@ async function getAuthorPackageCount(server: FastifyInstance, authorId: string):
 
 /**
  * Update quality score for a single package
+ * @param content - Optional package content. If not provided, will be fetched from package_versions.metadata
  */
 export async function updatePackageQualityScore(
   server: FastifyInstance,
@@ -390,7 +398,7 @@ export async function updatePackageQualityScore(
 ): Promise<number> {
   server.log.info({ packageId }, '🎯 Starting quality score calculation');
 
-  // Fetch package data (metadata only, content passed as parameter from tarball)
+  // Fetch package data
   const pkgResult = await query<PackageQualityData>(
     server,
     `SELECT
@@ -409,18 +417,17 @@ export async function updatePackageQualityScore(
 
   const pkg = pkgResult.rows[0];
 
-  // Add content from parameter (extracted from tarball during publish)
-  pkg.content = content;
-
   server.log.info({
     packageId,
     type: 'metadata',
     verified: pkg.verified,
     official: pkg.official,
     downloads: pkg.total_downloads,
-    versions: pkg.version_count,
-    hasContent: !!content
+    versions: pkg.version_count
   }, '📋 Package metadata retrieved');
+
+  // Add content to package data
+  pkg.content = content;
 
   // Calculate base score with AI evaluation
   const startTime = Date.now();
@@ -539,9 +546,8 @@ export async function getQualityScoreBreakdown(
     `SELECT
       id, description, documentation_url, repository_url,
       homepage_url, keywords, tags, author_id, verified, official,
-      total_downloads, stars, rating_average, rating_count, version_count,
-      last_published_at, created_at,
-      content, readme, file_size
+      total_downloads, rating_average, rating_count, version_count,
+      last_published_at, created_at
      FROM packages
      WHERE id = $1`,
     [packageId]
@@ -562,7 +568,7 @@ export async function getQualityScoreBreakdown(
   const factors: QualityScoreFactors = {
     // Content Quality (40% = 2.0 points) - AI-POWERED
     promptContentQuality: aiScore,
-    promptLength: scorePromptLength(pkg.content),
+    promptLength: scorePromptLength(pkg.content, pkg.readme),
     hasExamples: scoreExamples(pkg.content),
     hasDocumentation: pkg.documentation_url ? 0.2 : 0,
     hasDescription: pkg.description && pkg.description.length > 20 ? 0.1 : 0,

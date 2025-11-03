@@ -89,6 +89,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
           homepage: pkg.homepage ?? multiManifest.homepage,
           documentation: pkg.documentation ?? multiManifest.documentation,
           organization: pkg.organization ?? multiManifest.organization,
+          private: pkg.private ?? multiManifest.private,
           tags: pkg.tags ?? multiManifest.tags,
           keywords: pkg.keywords ?? multiManifest.keywords,
           subtype: pkg.subtype,

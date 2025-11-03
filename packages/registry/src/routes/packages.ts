@@ -560,7 +560,6 @@ export async function packageRoutes(server: FastifyInstance) {
       const keywords = (manifest.keywords as string[]) || [];
       const language = manifest.language as string | undefined;
       const framework = manifest.framework as string | undefined;
-      const category = manifest.category as string | undefined;
       const isPrivate = manifest.private === true; // Explicitly extract private field
 
       if (!packageName || !version || !description || !format) {
@@ -775,7 +774,7 @@ export async function packageRoutes(server: FastifyInstance) {
         [pkg.id]
       );
 
-      // 5. Calculate and store quality score + explanation + metadata (async, don't block response)
+      // 5. Calculate quality score and extract metadata (async, don't block response)
       server.log.info({ packageId: pkg.id }, '🎯 Starting quality score calculation and metadata extraction');
       (async () => {
         try {
@@ -818,11 +817,20 @@ export async function packageRoutes(server: FastifyInstance) {
             const evaluation = await getDetailedAIEvaluation(packageContent, server);
             const explanation = `${evaluation.reasoning}\n\nStrengths: ${evaluation.strengths.join(', ')}\n\nWeaknesses: ${evaluation.weaknesses.join(', ') || 'None identified'}`;
 
-            // Calculate quality score (pass content from tarball)
+            // Calculate quality score with the extracted content
             const qualityScore = await updatePackageQualityScore(server, pkg.id, packageContent);
 
+            // Get current package data to check what metadata needs extraction
+            const currentPkg = await queryOne<{
+              category: string | null;
+            }>(
+              server,
+              'SELECT category FROM packages WHERE id = $1',
+              [pkg.id]
+            );
+
             // Extract metadata if not already provided
-            const needsMetadata = !language || !framework || !category;
+            const needsMetadata = !language || !framework || !currentPkg?.category;
             let extractedMetadata: AIMetadataResult = {};
             if (needsMetadata) {
               extractedMetadata = await extractMetadataWithAI(
@@ -830,7 +838,7 @@ export async function packageRoutes(server: FastifyInstance) {
                 {
                   language: language || undefined,
                   framework: framework || undefined,
-                  category: category || undefined,
+                  category: currentPkg?.category || undefined,
                   tags,
                   description,
                 },
@@ -851,7 +859,7 @@ export async function packageRoutes(server: FastifyInstance) {
               updates.push(`framework = $${paramIndex++}`);
               params.push(extractedMetadata.framework);
             }
-            if (!category && extractedMetadata.category) {
+            if (!currentPkg?.category && extractedMetadata.category) {
               updates.push(`category = $${paramIndex++}`);
               params.push(extractedMetadata.category);
             }

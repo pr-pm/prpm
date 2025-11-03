@@ -33,9 +33,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
   const primaryLinks: Array<{ href: string; label: string; badge?: string }> = [
     { href: '/search', label: 'Search' },
     { href: '/blog', label: 'Blog' },
-    ...(showDashboard ? [
-      { href: '/playground', label: 'Playground', badge: 'PRPM+' }
-    ] : []),
+    { href: '/playground', label: 'Playground', badge: 'PRPM+' },
   ]
 
   // Secondary navigation links (shown in hamburger menu)
