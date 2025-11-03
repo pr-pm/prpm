@@ -557,6 +557,7 @@ export async function packageRoutes(server: FastifyInstance) {
       const license = manifest.license as string | undefined;
       const tags = (manifest.tags as string[]) || [];
       const keywords = (manifest.keywords as string[]) || [];
+      const isPrivate = manifest.private === true; // Explicitly extract private field
 
       if (!packageName || !version || !description || !format) {
         return reply.status(400).send({
@@ -636,7 +637,7 @@ export async function packageRoutes(server: FastifyInstance) {
         }
 
         // Check if trying to publish private package with unverified organization
-        if (manifest.private && !orgVerified) {
+        if (isPrivate && !orgVerified) {
           return reply.status(403).send({
             error: 'Forbidden',
             message: `Cannot publish private packages for unverified organization '${organization}'. Only verified organizations can publish private packages. Please contact support to verify your organization.`,
@@ -695,11 +696,11 @@ export async function packageRoutes(server: FastifyInstance) {
       } else {
         // New package - create it
         // Determine visibility: private field in manifest maps to visibility in database
-        const visibility = manifest.private ? 'private' : 'public';
+        const visibility = isPrivate ? 'private' : 'public';
 
         server.log.debug({
           packageName,
-          manifestPrivate: manifest.private,
+          manifestPrivate: isPrivate,
           calculatedVisibility: visibility,
         }, '📝 Creating new package with visibility');
 
