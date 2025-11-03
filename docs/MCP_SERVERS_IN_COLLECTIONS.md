@@ -2,41 +2,37 @@
 
 > **📚 Official Documentation**: [docs.prpm.dev/guides/mcp-servers](https://docs.prpm.dev/guides/mcp-servers)
 
-PRPM focuses on managing prompts, rules, agents, and skills. For MCP (Model Context Protocol) server management, we recommend using **Smithery**.
+PRPM focuses on managing prompts, rules, agents, and skills. For MCP (Model Context Protocol) servers, use dedicated MCP catalogs and package managers.
 
 ## What are MCP Servers?
 
-**MCP (Model Context Protocol)** servers provide specialized capabilities to Claude Code, like:
+**MCP (Model Context Protocol)** servers provide specialized capabilities to Claude Code and other AI clients, like:
 
 - 📁 File system operations
 - 🗄️ Database queries
 - 🔍 Web search
 - ☁️ Cloud resource management
 - 🎯 Custom tools and APIs
+- 🔗 Third-party integrations
 
-## Use Smithery for MCP Servers
+## MCP Server Catalogs & Managers
 
-**[Smithery.ai](https://smithery.ai)** is a package manager specifically for MCP servers, with 2,000+ servers cataloged.
+Several services catalog and manage MCP servers:
 
-### Install Smithery CLI
+### Package Managers
 
-```bash
-npm install -g @smithery/cli
-```
+- **[Smithery](https://smithery.ai)** ([CLI](https://github.com/smithery-ai/cli)) - 2,000+ servers, automated installation
+- Install: `npm install -g @smithery/cli`
 
-### Common Commands
+### Directories & Catalogs
 
-```bash
-# Search for MCP servers
-smithery search pulumi
-smithery search database
+- **[MCP Server Finder](https://mcpserverfinder.com)** - Comprehensive directory with guides
+- **[Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers)** - Curated GitHub list
+- **[Official MCP Servers](https://github.com/modelcontextprotocol/servers)** - Reference implementations
 
-# Install an MCP server
-smithery install @modelcontextprotocol/server-pulumi
+### Platform-Specific
 
-# List installed servers
-smithery list
-```
+- **[Microsoft MCP Catalog](https://github.com/microsoft/mcp)** - Azure, DevOps, AKS integrations
 
 ## MCP Servers + PRPM Collections
 
@@ -48,35 +44,47 @@ PRPM collections provide prompts, rules, and agents. MCP servers complement them
 # Install Pulumi prompts and rules via PRPM
 prpm install collection/pulumi-infrastructure
 
-# Install Pulumi MCP server via Smithery
+# Install Pulumi MCP server (choose your method)
 smithery install @modelcontextprotocol/server-pulumi
+# or configure manually from any catalog
 ```
 
 Now you have:
 - **PRPM**: Pulumi best practices, agents, and workflows
-- **Smithery**: Live Pulumi state inspection via MCP
+- **MCP Server**: Live Pulumi state inspection
+
+## Choosing an MCP Solution
+
+**For Quick Start:** Smithery CLI, MCP Server Finder
+
+**For Discovery:** Awesome MCP Servers, MCP Server Finder, Official MCP Servers
+
+**For Enterprise:** Microsoft MCP Catalog, Official implementations
 
 ## Resources
 
-- **[Smithery.ai](https://smithery.ai)** - Browse 2,000+ MCP servers
-- **[Smithery CLI](https://github.com/smithery-ai/cli)** - MCP server package manager
-- **[MCP Specification](https://modelcontextprotocol.io)** - Official MCP Protocol docs
-- **[PRPM Collections](./COLLECTIONS.md)** - Learn about PRPM collections
+- **[Smithery](https://smithery.ai)** - 2,000+ servers with CLI
+- **[MCP Server Finder](https://mcpserverfinder.com)** - Comprehensive directory
+- **[Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers)** - Curated list
+- **[Official MCP Servers](https://github.com/modelcontextprotocol/servers)** - Reference code
+- **[Microsoft MCP](https://github.com/microsoft/mcp)** - Azure integrations
+- **[MCP Specification](https://modelcontextprotocol.io)** - Protocol docs
+- **[PRPM Collections](./COLLECTIONS.md)** - PRPM docs
 
 ## FAQ
 
 **Why doesn't PRPM manage MCP servers?**
 
-PRPM focuses on prompts, rules, agents, and skills. Smithery specializes in MCP servers with 2,000+ servers already cataloged. We recommend using the right tool for each job.
+PRPM focuses on prompts, rules, agents, and skills. Multiple specialized services already catalog 2,000+ MCP servers. We recommend using dedicated tools for MCP server management.
 
-**Can PRPM collections include MCP servers?**
+**Which MCP catalog should I use?**
 
-Not directly. PRPM collections bundle prompts and agents. For MCP servers, use Smithery. You can use both tools together - PRPM for prompts, Smithery for capabilities.
+It depends on your needs:
+- Quick automation: Smithery CLI
+- Detailed guides: MCP Server Finder
+- Curated lists: Awesome MCP Servers
+- Azure focus: Microsoft MCP Catalog
 
 **Do I need MCP servers to use PRPM?**
 
-No! PRPM collections work great on their own. MCP servers are optional enhancements that add extra capabilities to Claude Code.
-
-**Does PRPM work with Smithery?**
-
-Yes! They're complementary tools. Use PRPM to install prompts/rules/agents, and Smithery to install MCP servers. Both enhance your AI development workflow.
+No! PRPM collections work great on their own. MCP servers are optional enhancements.
