@@ -757,6 +757,154 @@ export class PackageRepository {
       throw error;
     }
   }
+
+  /**
+   * Get author statistics
+   *
+   * Aggregates package stats for an author (total packages, downloads, ratings).
+   * Used by GET /authors/:username endpoint.
+   */
+  async getAuthorStats(
+    authorId: string,
+    includePrivate: boolean = false
+  ): Promise<{
+    totalPackages: number;
+    totalDownloads: number;
+    totalRatings: number;
+    avgRating: number;
+  }> {
+    try {
+      const conditions: SQL[] = [eq(packages.authorId, authorId)];
+
+      if (!includePrivate) {
+        conditions.push(eq(packages.visibility, 'public'));
+      }
+
+      const [result] = await db
+        .select({
+          totalPackages: sql<number>`COUNT(*)::int`,
+          totalDownloads: sql<number>`COALESCE(SUM(${packages.totalDownloads}), 0)::int`,
+          totalRatings: sql<number>`COALESCE(SUM(${packages.ratingCount}), 0)::int`,
+          weightedRatingSum: sql<number>`COALESCE(SUM(${packages.ratingAverage} * ${packages.ratingCount}), 0)`,
+        })
+        .from(packages)
+        .where(and(...conditions));
+
+      const avgRating = result.totalRatings > 0
+        ? result.weightedRatingSum / result.totalRatings
+        : 0;
+
+      return {
+        totalPackages: result.totalPackages,
+        totalDownloads: result.totalDownloads,
+        totalRatings: result.totalRatings,
+        avgRating,
+      };
+    } catch (error) {
+      console.error('Failed to get author stats', {
+        authorId,
+        includePrivate,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get packages by author with sorting and pagination
+   *
+   * Supports visibility filtering and multiple sort options.
+   * Used by GET /authors/:username endpoint.
+   */
+  async getAuthorPackages(
+    authorId: string,
+    options: {
+      includePrivate?: boolean;
+      sort?: 'downloads' | 'recent' | 'name';
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<Package[]> {
+    try {
+      const {
+        includePrivate = false,
+        sort = 'downloads',
+        limit = 100,
+        offset = 0,
+      } = options;
+
+      const conditions: SQL[] = [eq(packages.authorId, authorId)];
+
+      if (!includePrivate) {
+        conditions.push(eq(packages.visibility, 'public'));
+      }
+
+      // Determine sort order
+      let orderByClause: SQL;
+      switch (sort) {
+        case 'recent':
+          orderByClause = desc(packages.createdAt);
+          break;
+        case 'name':
+          orderByClause = asc(packages.id);
+          break;
+        case 'downloads':
+        default:
+          orderByClause = desc(packages.totalDownloads);
+          break;
+      }
+
+      const results = await db
+        .select()
+        .from(packages)
+        .where(and(...conditions))
+        .orderBy(orderByClause)
+        .limit(limit)
+        .offset(offset);
+
+      return results;
+    } catch (error) {
+      console.error('Failed to get author packages', {
+        authorId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get unclaimed packages by author name
+   *
+   * Finds packages where the name starts with username/ or @username/
+   * but have no author_id set. Used for package claiming feature.
+   * Used by GET /authors/:username/unclaimed endpoint.
+   */
+  async getUnclaimedByAuthorName(username: string): Promise<Package[]> {
+    try {
+      const results = await db
+        .select()
+        .from(packages)
+        .where(
+          and(
+            or(
+              sql`LOWER(${packages.name}) LIKE LOWER(${username}) || '/%'`,
+              sql`LOWER(${packages.name}) LIKE '@' || LOWER(${username}) || '/%'`
+            ),
+            sql`${packages.authorId} IS NULL`,
+            eq(packages.visibility, 'public')
+          )
+        )
+        .orderBy(desc(packages.totalDownloads));
+
+      return results;
+    } catch (error) {
+      console.error('Failed to get unclaimed packages by author name', {
+        username,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

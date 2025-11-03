@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '../db.js';
 import { users, type User, type NewUser } from '../schema/users.js';
 
@@ -50,6 +50,30 @@ export class UserRepository {
       return user || null;
     } catch (error) {
       console.error('Failed to find user by username', {
+        username,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Find user by username (case-insensitive)
+   *
+   * Used for author profile lookups where case doesn't matter.
+   * Returns user with additional author-relevant fields.
+   */
+  async findByUsernameCaseInsensitive(username: string): Promise<User | null> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(sql`LOWER(${users.username}) = LOWER(${username})`)
+        .limit(1);
+
+      return user || null;
+    } catch (error) {
+      console.error('Failed to find user by username (case-insensitive)', {
         username,
         error: error instanceof Error ? error.message : String(error),
       });
