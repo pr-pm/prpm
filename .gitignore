@@ -44,9 +44,4 @@ logs/
 
 # Data files (scraped packages, checkpoints, etc.)
 data/
-
-# subtree directories
-.dev
-.worktrees
-
-.claude/settings.local.json
+.worktrees/

@@ -18,6 +18,9 @@ import type {
   TrendingQuery,
   ResolveQuery,
 } from '../types/requests.js';
+import { organizationRepository } from '../db/repositories/organization-repository.js';
+import { packageRepository } from '../db/repositories/package-repository.js';
+import { packageInstallationRepository } from '../db/repositories/package-installation-repository.js';
 
 export async function packageRoutes(server: FastifyInstance) {
   // List packages with pagination
@@ -601,11 +604,7 @@ export async function packageRoutes(server: FastifyInstance) {
       let orgId: string | undefined;
       let orgVerified: boolean = false;
       if (organization) {
-        const org = await queryOne<{ id: string; verified: boolean }>(
-          server,
-          'SELECT id, is_verified as verified FROM organizations WHERE LOWER(name) = LOWER($1)',
-          [organization]
-        );
+        const org = await organizationRepository.findByName(organization);
 
         if (!org) {
           return reply.status(404).send({
@@ -615,7 +614,7 @@ export async function packageRoutes(server: FastifyInstance) {
         }
 
         orgId = org.id;
-        orgVerified = org.verified || false;
+        orgVerified = org.isVerified || false;
 
         // Verify user has permission to publish to this org
         const orgMembership = await queryOne<{ role: string }>(
@@ -1337,66 +1336,57 @@ export async function packageRoutes(server: FastifyInstance) {
 
       try {
         // Get the package by ID or name
-        const packageResult = await server.pg.query(
-          `SELECT id, name, description
-           FROM packages
-           WHERE id::text = $1 OR name = $1
-           AND visibility = 'public'
-           AND deprecated = FALSE
-           LIMIT 1`,
-          [id]
-        );
+        // Try as UUID first, then fall back to name lookup
+        let pkg = await packageRepository.findById(id);
+        if (!pkg) {
+          pkg = await packageRepository.findPublicByName(id);
+        }
 
-        if (packageResult.rows.length === 0) {
+        if (!pkg || pkg.deprecated) {
           return reply.code(404).send({
             error: 'Not Found',
             message: `Package '${id}' not found`,
           });
         }
 
-        const pkg = packageResult.rows[0];
-
         // Get related packages using the co-installations table
-        // Query both directions (package_a and package_b)
-        const relatedResult = await server.pg.query(
-          `SELECT DISTINCT
-            CASE
-              WHEN pc.package_a_id = $1 THEN pb.id
-              ELSE pa.id
-            END as id,
-            CASE
-              WHEN pc.package_a_id = $1 THEN pb.name
-              ELSE pa.name
-            END as name,
-            CASE
-              WHEN pc.package_a_id = $1 THEN pb.description
-              ELSE pa.description
-            END as description,
-            pc.confidence_score,
-            pc.co_install_count,
-            CASE
-              WHEN pc.package_a_id = $1 THEN pb.total_downloads
-              ELSE pa.total_downloads
-            END as total_downloads,
-            CASE
-              WHEN pc.package_a_id = $1 THEN pb.quality_score
-              ELSE pa.quality_score
-            END as quality_score,
-            CASE
-              WHEN pc.package_a_id = $1 THEN pb.tags
-              ELSE pa.tags
-            END as tags
-           FROM package_co_installations pc
-           LEFT JOIN packages pa ON pc.package_a_id = pa.id
-           LEFT JOIN packages pb ON pc.package_b_id = pb.id
-           WHERE (pc.package_a_id = $1 OR pc.package_b_id = $1)
-           AND pc.confidence_score >= $2
-           AND ((pa.visibility = 'public' AND pa.deprecated = FALSE)
-                OR (pb.visibility = 'public' AND pb.deprecated = FALSE))
-           ORDER BY pc.confidence_score DESC, total_downloads DESC
-           LIMIT $3`,
-          [pkg.id, min_confidence, limit]
+        const coInstalls = await packageInstallationRepository.getCoInstallations(
+          pkg.id,
+          limit
         );
+
+        // Filter by confidence score and fetch full package details
+        const relatedPackages = await Promise.all(
+          coInstalls
+            .filter((co) => parseFloat(co.confidenceScore) >= min_confidence)
+            .map(async (co) => {
+              const relatedPkg = await packageRepository.findById(co.packageId);
+              if (!relatedPkg || relatedPkg.visibility !== 'public' || relatedPkg.deprecated) {
+                return null;
+              }
+              return {
+                id: relatedPkg.id,
+                name: relatedPkg.name,
+                description: relatedPkg.description || '',
+                confidence_score: parseFloat(co.confidenceScore),
+                co_install_count: co.coInstallCount,
+                total_downloads: relatedPkg.totalDownloads || 0,
+                quality_score: relatedPkg.qualityScore ? parseFloat(relatedPkg.qualityScore.toString()) : null,
+                tags: relatedPkg.tags || [],
+              };
+            })
+        );
+
+        // Filter out nulls and sort
+        const related = relatedPackages
+          .filter((p): p is NonNullable<typeof p> => p !== null)
+          .sort((a, b) => {
+            // Sort by confidence first, then downloads
+            if (a.confidence_score !== b.confidence_score) {
+              return b.confidence_score - a.confidence_score;
+            }
+            return b.total_downloads - a.total_downloads;
+          });
 
         return {
           package: {
@@ -1404,16 +1394,7 @@ export async function packageRoutes(server: FastifyInstance) {
             name: pkg.name,
             description: pkg.description,
           },
-          related: relatedResult.rows.map((row) => ({
-            id: row.id,
-            name: row.name,
-            description: row.description || '',
-            confidence_score: parseFloat(row.confidence_score),
-            co_install_count: row.co_install_count,
-            total_downloads: row.total_downloads || 0,
-            quality_score: row.quality_score ? parseFloat(row.quality_score) : null,
-            tags: row.tags || [],
-          })),
+          related,
         };
       } catch (error) {
         server.log.error(error, 'Failed to fetch related packages');
@@ -1481,27 +1462,26 @@ export async function packageRoutes(server: FastifyInstance) {
 
       try {
         // Resolve package ID from name if needed
-        const pkgResult = await server.pg.query(
-          `SELECT id FROM packages WHERE id::text = $1 OR name = $1 LIMIT 1`,
-          [package_id]
-        );
+        let pkg = await packageRepository.findById(package_id);
+        if (!pkg) {
+          pkg = await packageRepository.findByName(package_id);
+        }
 
-        if (pkgResult.rows.length === 0) {
+        if (!pkg) {
           return reply.code(404).send({
             error: 'Not Found',
             message: `Package '${package_id}' not found`,
           });
         }
 
-        const resolvedPackageId = pkgResult.rows[0].id;
-
         // Track the installation
-        await server.pg.query(
-          `INSERT INTO package_installations
-           (package_id, version, session_id, format, install_batch_id, installed_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())`,
-          [resolvedPackageId, version, session_id, format || null, install_batch_id || null]
-        );
+        await packageInstallationRepository.trackInstallation({
+          packageId: pkg.id,
+          version,
+          sessionId: session_id,
+          format: format || undefined,
+          installBatchId: install_batch_id || undefined,
+        });
 
         return reply.code(201).send({
           success: true,
