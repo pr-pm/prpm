@@ -12,7 +12,7 @@ npm install -g prpm
 prpm install collection/nextjs-pro  # Entire Next.js setup in one command
 ```
 
-**1,800+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro) | **One command to install**
+**2,100+ packages** | **Works everywhere** (Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro) | **One command to install**
 
 📚 **[Official Documentation](https://docs.prpm.dev)** | 🌐 **[Browse Packages](https://prpm.dev)**
 
@@ -169,7 +169,7 @@ prpm install @username/karen-skill --as claude
 
 ---
 
-### 📚 Package Library (1,800+)
+### 📚 Package Library (2,100+)
 
 - **🎯 Cursor Rules** - Next.js, React, Vue, Python, Laravel, TypeScript, mobile, testing, and hundreds more
 - **🤖 Claude Skills & Agents** - Repository analysis, code review, architecture, specialized workflows
@@ -322,7 +322,7 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 
 ## Stats
 
-- **1,800+ packages** - Cursor rules, Claude skills/agents, Windsurf rules, MCP configs
+- **2,100+ packages** - Cursor rules, Claude skills/agents, Windsurf rules, MCP configs
 - **Universal package manager** - Works with Cursor, Claude, Continue, Windsurf
 - **100+ Collections** - Complete workflow setups in one command
 - **6 editor formats** supported (server-side conversion)
