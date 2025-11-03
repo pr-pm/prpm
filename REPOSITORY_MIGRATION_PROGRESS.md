@@ -1,8 +1,9 @@
 # Repository Pattern Migration Progress
 
 **Date Started:** 2025-11-03
-**Status:** In Progress - Phase 1 Complete
-**Estimated Completion:** 20-40 hours remaining
+**Last Updated:** 2025-11-03
+**Status:** In Progress - Phase 2 Complete, Phase 3 Infrastructure Ready
+**Estimated Completion:** 10-15 hours remaining (route refactoring only)
 
 ## Overview
 
@@ -75,19 +76,19 @@ All PostgreSQL tables now have corresponding Drizzle schemas:
 - **Purpose:** Central export point for all repositories
 - **Usage:** `import { packageRepository, userRepository } from '@/db/repositories'`
 
-### 3. SQL Query Audit (100% Complete)
+### 3. SQL Query Audit & Migration Status
 
-**Summary:** 75 raw SQL queries across 7 route files
+**Summary:** 75 raw SQL queries total → 10 migrated (13% complete)
 
 | File | Query Count | Priority | Status |
 |------|-------------|----------|--------|
+| `convert.ts` | 2 | High | ✅ **COMPLETE** |
+| `packages.ts` | 4 | High | ✅ **COMPLETE** |
+| `authors.ts` | 4 | Medium | ✅ **COMPLETE** |
+| `collections.ts` | 19 | High | 🚧 **INFRASTRUCTURE READY** |
 | `invites.ts` | 21 | Medium | Pending |
-| `collections.ts` | 19 | High | Pending |
-| `analytics.ts` | 13 | Low | Pending |
-| `author-analytics.ts` | 12 | Low | Pending |
-| `packages.ts` | 4 | High | Pending |
-| `authors.ts` | 4 | Medium | Pending |
-| `convert.ts` | 2 | High | **BLOCKED** |
+| `analytics.ts` | 13 | Low (Deferred) | Pending |
+| `author-analytics.ts` | 12 | Low (Deferred) | Pending |
 
 **Files with NO raw SQL queries:**
 - `organizations.ts` ✅
@@ -98,84 +99,224 @@ All PostgreSQL tables now have corresponding Drizzle schemas:
 - `webhooks.ts` ✅
 - `newsletter.ts` ✅
 
+**Migration Progress by Phase:**
+- Phase 1: Schema Setup - ✅ 100% Complete
+- Phase 2: Core Package Routes - ✅ 100% Complete (10/10 queries)
+- Phase 3: Collections Infrastructure - ✅ 100% Complete (schemas + repos)
+- Phase 3: Collections Routes - 🚧 0% Complete (0/19 queries) - Ready to start
+- Phase 4: Remaining Routes - ⏳ Pending
+
+## 🎯 Phase 2 Complete: Core Package Routes (✅ Done)
+
+### Completed Routes (10 queries migrated)
+
+#### 1. **convert.ts** - Format Conversion (2 queries) ✅
+- **Route:** `GET /:id/download` - Download package in different format
+- **Route:** `GET /:id/tarball` - Download tarball
+- **Repository Used:** `packageRepository`, `packageVersionRepository`
+- **Key Changes:**
+  - Replaced raw SQL joins with repository methods
+  - Separate package and version lookups with conditional logic for 'latest'
+  - Type-safe merging of package + version data
+
+#### 2. **packages.ts** - Package Management (4 queries) ✅
+- **Route:** `GET /:id/related` - Get related packages via co-installations (2 queries)
+- **Route:** `POST /installations/track` - Track package installs (2 queries)
+- **Repositories Used:** `packageRepository`, `packageInstallationRepository`
+- **Key Changes:**
+  - UUID-first lookup with name fallback
+  - Co-installation query uses repository + Promise.all for package details
+  - Installation tracking via dedicated repository method
+
+#### 3. **authors.ts** - Author Profiles (4 queries) ✅
+- **Route:** `GET /:username` - Author profile with stats and packages (3 queries)
+- **Route:** `GET /:username/unclaimed` - Unclaimed packages by author (1 query)
+- **Repositories Used:** `userRepository`, `packageRepository`
+- **Repository Enhancements:**
+  - Added `userRepository.findByUsernameCaseInsensitive()`
+  - Added `packageRepository.getAuthorStats()` - aggregate stats
+  - Added `packageRepository.getAuthorPackages()` - with sorting/pagination
+  - Added `packageRepository.getUnclaimedByAuthorName()` - pattern matching
+
+### Phase 2 Impact
+- **Routes Migrated:** 3 files (convert.ts, packages.ts, authors.ts)
+- **Queries Eliminated:** 10 raw SQL queries
+- **Type Safety:** 100% - All queries now use Drizzle schemas
+- **New Repositories:** PackageVersionRepository (10 methods)
+- **Repository Enhancements:** UserRepository (+1 method), PackageRepository (+3 methods)
+
+## 🏗️ Phase 3 In Progress: Collections (Infrastructure Complete)
+
+### Completed Infrastructure (100% Ready)
+
+#### New Schemas Created
+1. **collectionPackages** - Join table for packages in collections
+   - Composite PK: (collection_id, package_id)
+   - Fields: packageVersion, required, reason, installOrder
+   - Cascade deletes on collection/package removal
+
+2. **collectionInstalls** - Installation tracking for collections
+   - Fields: collectionId, userId, format, installedAt
+   - Indexed on collection and user
+
+3. **collectionStars** - User starring/favoriting
+   - Composite PK: (collection_id, user_id)
+   - Cascade deletes on both sides
+
+#### New Repositories Created
+1. **CollectionPackageRepository** (8 methods)
+   - `getPackagesByCollection()` - Basic join table data
+   - `getPackagesWithDetails()` - ⭐ **Full package info with versions via joins**
+   - `findByCollectionAndPackage()` - Check membership
+   - `addPackage()` / `addPackages()` - Single/bulk insert
+   - `removePackage()` / `removeAllPackages()` - Delete operations
+   - `countByCollection()` - Package count aggregation
+
+2. **CollectionInstallRepository** (1 method)
+   - `trackInstall()` - Record collection installations
+
+3. **CollectionStarRepository** (4 methods)
+   - `addStar()` - Idempotent star creation (ON CONFLICT DO NOTHING)
+   - `removeStar()` - Idempotent star removal
+   - `getStarCount()` - Aggregate star count
+   - `hasUserStarred()` - Boolean check
+
+#### Enhanced CollectionRepository (+4 methods)
+1. **`searchWithDetails()`** - ⭐ Enhanced search with author username and package count
+   - Joins with users table for author
+   - Subquery for package count
+   - Supports all existing filters + author filter
+   - Returns enriched collection objects
+
+2. **`findBySlugWithAuthor()`** - Collection details with author username
+   - Left join with users table
+   - Returns collection + author field
+
+3. **`findBestMatchByNameSlug()`** - Smart collection matching
+   - Searches across all scopes
+   - Orders by official DESC, verified DESC, downloads DESC
+   - Used by install endpoint for "collection" scope
+
+4. **`getFeaturedWithDetails()`** - Featured collections with enriched data
+   - Official + verified only
+   - Includes author username and package count
+
+### Collections Route Mapping (Ready to Implement)
+
+**19 queries → 9 routes** (All infrastructure ready)
+
+| Route | Queries | Repository Methods Ready |
+|-------|---------|-------------------------|
+| GET `/collections` | 2 | ✅ `searchWithDetails()` |
+| GET `/collections/:scope/:slug` | 2 | ✅ `findBySlugWithAuthor()`, `getPackagesWithDetails()` |
+| POST `/collections` | 4 | ✅ `findBySlug()`, `findByName()`, `create()`, `addPackages()` |
+| POST `/collections/:scope/:slug/install` | 4 | ✅ `findBestMatchByNameSlug()`, `findBySlug()`, `getPackagesWithDetails()`, `trackInstall()` |
+| POST `/collections/:scope/:slug/star` | 4 | ✅ `findBySlug()`, `addStar()`, `removeStar()`, `getStarCount()` |
+| GET `/collections/featured` | 1 | ✅ `getFeaturedWithDetails()` |
+| GET `/collections/:scope/:slug/:version` | 2 | ✅ `findBySlugWithAuthor()`, `getPackagesWithDetails()` |
+
+### Testing Checklist
+- **Document Created:** `COLLECTIONS_TESTING_CHECKLIST.md`
+- **Test Cases:** 95 detailed test cases
+- **Coverage:** All 9 endpoints, database integrity, performance, security
+- **Ready for QA:** ✅ Yes
+
 ## 🚧 Blockers & Gaps
 
-### Critical Blockers
+### Critical Blockers (All Resolved! ✅)
 
-1. **Missing Schema: package_versions**
-   - Table exists in PostgreSQL (migrations 001, 002, etc.)
-   - No Drizzle schema file
-   - Blocks: `convert.ts` refactoring (2 queries join packages + package_versions)
-   - **Action Required:** Create `/src/db/schema/package-versions.ts`
+1. ~~**Missing Schema: package_versions**~~ ✅ RESOLVED
+   - **Solution:** Created `/src/db/schema/package-versions.ts`
+   - Includes all fields: version, description, changelog, tarballUrl, dependencies, etc.
+   - Exported from schema index
 
-2. **Missing Repository: invites**
+2. ~~**Missing Schema: collection_packages**~~ ✅ RESOLVED
+   - **Solution:** Added to `/src/db/schema/collections.ts`
+   - Composite PK, cascade deletes configured
+
+3. ~~**Missing Schema: collection_installs**~~ ✅ RESOLVED
+   - **Solution:** Added to `/src/db/schema/collections.ts`
+
+4. ~~**Missing Schema: collection_stars**~~ ✅ RESOLVED
+   - **Solution:** Added to `/src/db/schema/collections.ts`
+
+### Non-Critical Gaps
+
+1. **Missing Repository: invites**
    - Table exists (organization_member_invites)
-   - No repository implementation
    - Blocks: `invites.ts` refactoring (21 queries)
+   - **Status:** Medium priority, can defer
    - **Action Required:** Create `/src/db/repositories/invite-repository.ts`
 
-### Repository Method Gaps
-
-Existing repositories lack methods for complex queries:
-
-1. **UserRepository** - Missing aggregate methods:
-   ```typescript
-   // Needed by authors.ts:
-   - getAuthorStats(userId: string) // SUM downloads, COUNT packages, AVG rating
-   - getAuthorProfile(username: string) // Case-insensitive lookup
-   ```
-
-2. **PackageRepository** - Missing advanced filters:
-   ```typescript
-   // Needed by authors.ts:
-   - getByAuthorWithVisibility(authorId: string, includePrivate: boolean, sort, pagination)
-   - getUnclaimedByAuthorName(username: string) // Pattern matching on name
-   ```
-
-3. **All Repositories** - Missing patterns:
-   - Aggregate functions (SUM, COUNT, AVG, weighted averages)
-   - Dynamic ORDER BY (currently some routes use string interpolation - security risk)
-   - Conditional WHERE clauses based on auth context
-   - Time-series grouping (for analytics)
+2. **Analytics Routes** - Low priority (deferred)
+   - `analytics.ts` (13 queries) - Complex time-series aggregations
+   - `author-analytics.ts` (12 queries) - Complex time-series aggregations
+   - **Status:** Deferred - Not critical for core functionality
 
 ## 📋 Remaining Work
 
-### Phase 2: High-Value Routes (Recommended Next)
+### Phase 3: Collections Routes (Next Step - Infrastructure Complete!)
 
-#### Task 1: Create package_versions Schema
-**Estimated Time:** 30 minutes
-**Files to Create:**
-- `/src/db/schema/package-versions.ts`
+**Estimated Time:** 6-8 hours
 
-**Schema Fields (from migration 001):**
-```typescript
-{
-  id: uuid (PK)
-  packageId: uuid (FK -> packages.id)
-  version: varchar(50)
-  canonicalFormat: jsonb
-  tarballUrl: varchar(500)
-  tarballHash: varchar(100)
-  size: integer
-  publishedAt: timestamp
-  downloadCount: integer
-}
-```
+All infrastructure is ready. Just need to refactor the 9 routes to use repository methods:
 
-**Add to:** `/src/db/schema/index.ts`
+#### Ready to Implement (Step-by-step)
+1. **GET /collections** - Replace raw SQL with `searchWithDetails()` (30 min)
+2. **GET /collections/:scope/:slug** - Use `findBySlugWithAuthor()` + `getPackagesWithDetails()` (30 min)
+3. **GET /collections/featured** - Replace with `getFeaturedWithDetails()` (15 min)
+4. **GET /collections/:scope/:slug/:version** - Use `findBySlugWithAuthor()` (15 min)
+5. **POST /collections** - Use `create()` + `addPackages()` (45 min)
+6. **POST /collections/:scope/:slug/install** - Use `findBestMatchByNameSlug()` + `trackInstall()` (45 min)
+7. **POST /collections/:scope/:slug/star** - Use `addStar()` / `removeStar()` (30 min)
+8. **PUT /collections/:scope/:slug** - Update logic (45 min)
+9. **DELETE /collections/:scope/:slug** - Delete logic (15 min)
 
-#### Task 2: Create PackageVersionRepository
-**Estimated Time:** 1 hour
-**Location:** `/src/db/repositories/package-version-repository.ts`
+**Testing:** Use `COLLECTIONS_TESTING_CHECKLIST.md` (95 test cases prepared)
 
-**Required Methods:**
-```typescript
-- findByPackageAndVersion(packageId: string, version: string)
-- findLatestVersion(packageId: string)
-- getVersionHistory(packageId: string)
-- create(data: NewPackageVersion)
-- incrementDownloadCount(id: string)
-```
+### Phase 4: Remaining Routes (Optional/Deferred)
+
+#### invites.ts (21 queries) - Medium Priority
+**Estimated Time:** 4-5 hours
+- Need to create InviteRepository first
+- Complex authorization logic
+
+#### analytics.ts + author-analytics.ts (25 queries) - Low Priority
+**Estimated Time:** 10-14 hours
+- Complex time-series queries with window functions
+- Can defer until later - not critical for core functionality
+
+## 🧪 Testing Strategy
+
+### Collections Testing (Ready to Use)
+- **Document:** `COLLECTIONS_TESTING_CHECKLIST.md`
+- **Test Cases:** 95 comprehensive test cases
+- **Coverage:**
+  - All 9 collection endpoints
+  - Database integrity tests
+  - Performance tests
+  - Security & authorization tests
+  - Regression tests
+
+### General Testing After Each Route Migration
+
+1. **Unit Tests:** Test new repository methods
+   - Location: `/src/db/repositories/__tests__/`
+   - Pattern: Mirror existing test files
+
+2. **Integration Tests:** Test route endpoints
+   - Location: `/src/routes/__tests__/`
+   - Update existing test files
+
+3. **Manual Testing:**
+   - Start registry: `npm run dev`
+   - Test affected endpoints with curl/Postman
+   - Verify response structure unchanged
+
+4. **Build Verification:**
+   ```bash
+   npm run build
+   ```
 
 #### Task 3: Refactor convert.ts (2 queries)
 **Estimated Time:** 1 hour
@@ -446,31 +587,25 @@ Current raw SQL has security concerns:
 - Phase 4 (Analytics): 14-16 hours (optional)
 - **Remaining:** 24-28 hours (excluding analytics: 10-12 hours)
 
-## 🚀 Next Session Checklist
+## 🚀 Next Session: Collections Routes Refactoring
 
-**Resume with:**
-1. ✅ Read this document
-2. ✅ Decide on migration path (Option A recommended)
-3. ✅ Start with: Create package_versions schema
-4. ✅ Then: Create PackageVersionRepository
-5. ✅ Then: Refactor convert.ts
+**All infrastructure is ready!** Just refactor the 9 routes to use repository methods.
+
+**Start with:** `GET /collections` route - replace raw SQL with `searchWithDetails()`
 
 **Quick start command:**
 ```bash
-cd /Users/khaliqgant/Projects/prpm/app/packages/registry
-npm run build  # Verify everything still compiles
+cd /home/khaliqgant/projects/prompt-package-manager/packages/registry
+npm run build  # Verify everything compiles
 npm run dev    # Start registry for testing
 ```
 
-## 📞 Questions for Next Session
-
-1. **Scope:** Do you want to include analytics routes, or defer them indefinitely?
-2. **Testing:** Should I write tests for each new repository method, or just integration tests?
-3. **Breaking Changes:** Can I change method signatures for consistency, or must they match current SQL exactly?
-4. **Performance:** Should I add caching to repository methods, or handle that at route level?
+**Testing:**
+- Use `COLLECTIONS_TESTING_CHECKLIST.md` for comprehensive test cases
+- 95 test cases prepared covering all scenarios
 
 ---
 
-**Last Updated:** 2025-11-03
-**Author:** Claude Code
-**Session:** Repository Pattern Migration - Phase 1
+**Last Updated:** 2025-11-03 (Session 2)
+**Progress:** Phase 2 Complete (10 queries), Phase 3 Infrastructure Complete
+**Next:** Phase 3 Routes - Collections.ts route refactoring (19 queries)
