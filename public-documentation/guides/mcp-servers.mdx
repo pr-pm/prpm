@@ -1,506 +1,120 @@
 ---
 title: 'MCP Servers'
-description: 'Discover which MCP servers enhance PRPM collections'
+description: 'Using MCP servers with PRPM collections'
 ---
 
-PRPM helps you discover which MCP (Model Context Protocol) servers work well with collections. Collections can recommend MCP servers, and PRPM shows you exactly how to configure them for Claude Code.
-
-<Note>
-**PRPM catalogs MCP servers, it doesn't install them.** You stay in control of your Claude Code configuration.
-</Note>
-
-## Quick Start
-
-### Discover Recommended MCP Servers
-
-```bash
-# View collection details to see recommended MCP servers
-prpm info collection/pulumi-infrastructure
-```
-
-This shows:
-- Which MCP servers enhance the collection
-- What each server provides
-- Exact installation commands
-- Configuration examples
-- Required vs optional servers
-
-### Configure MCP Servers
-
-After discovering recommendations:
-
-1. Copy the MCP server configuration
-2. Add to your Claude Code config file
-3. Restart Claude Code
-4. Use the enhanced capabilities
+PRPM focuses on managing prompts, rules, agents, and skills. For MCP (Model Context Protocol) server management, we recommend using **Smithery**.
 
 ## What are MCP Servers?
 
-**MCP (Model Context Protocol)** is a protocol that allows Claude Code to connect to external tools and services. Think of MCP servers as "superpowers" for Claude - they let it:
+**MCP (Model Context Protocol)** servers provide specialized capabilities to Claude Code, like:
 
-- 📁 **Read and write files** with advanced filesystem operations
-- 🗄️ **Query databases** directly (PostgreSQL, MySQL, SQLite, etc.)
-- 🔍 **Search the web** for real-time information
-- ⚡ **Execute commands** via bash/shell integration
-- ☁️ **Inspect cloud resources** (AWS, GCP, Azure)
-- 🎯 **Access APIs** and specialized tools
+- 📁 File system operations
+- 🗄️ Database queries
+- 🔍 Web search
+- ☁️ Cloud resource management
+- 🎯 Custom tools and APIs
 
-### Common MCP Servers
+Think of MCP servers as "superpowers" that extend what Claude Code can do.
 
-- **Filesystem** (`@modelcontextprotocol/server-filesystem`) - Advanced file operations and code navigation
-- **Database** (`@modelcontextprotocol/server-postgres`) - Direct database queries and schema inspection
-- **Brave Search** (`@modelcontextprotocol/server-brave-search`) - Real-time web search and documentation lookup
-- **Bash** (`@modelcontextprotocol/server-bash`) - Command execution and automation
-- **Pulumi** (`@modelcontextprotocol/server-pulumi`) - Infrastructure state inspection
-- **AWS** (`@modelcontextprotocol/server-aws`) - Cloud resource management and cost analysis
-- **Kubernetes** (`@modelcontextprotocol/server-kubernetes`) - Cluster inspection and debugging
-- **Git** (`@modelcontextprotocol/server-git`) - Repository operations and history
+## Use Smithery for MCP Servers
 
-## How PRPM Catalogs MCP Servers
+**[Smithery](https://smithery.ai)** is a package manager specifically for MCP servers, with 2,000+ servers cataloged.
 
-### Discovery, Not Installation
-
-PRPM takes a **cataloging approach** to MCP servers:
-
-**What PRPM Does:**
-- ✅ Shows which MCP servers work with each collection
-- ✅ Provides installation commands
-- ✅ Displays configuration examples
-- ✅ Explains what each server provides
-- ✅ Marks required vs optional servers
-
-**What PRPM Doesn't Do:**
-- ❌ Modify your Claude Code configuration
-- ❌ Install MCP servers automatically
-- ❌ Manage MCP server lifecycle
-- ❌ Handle conflicts or updates
-
-**Why This Approach?**
-- You stay in control of your Claude Code setup
-- No risk of breaking existing configurations
-- Works with global or per-project MCP setups
-- Educational - you learn about each MCP server
-- Flexible - configure however you prefer
-
-## Recommended MCP Server Format
-
-Collections define recommended MCP servers in their manifest:
-
-```json
-{
-  "id": "pulumi-infrastructure",
-  "config": {
-    "recommendedMcpServers": {
-      "pulumi": {
-        "package": "@modelcontextprotocol/server-pulumi",
-        "description": "Query Pulumi state and inspect resources",
-        "required": true,
-        "configExample": {
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-pulumi"]
-        }
-      },
-      "aws": {
-        "package": "@modelcontextprotocol/server-aws",
-        "description": "Inspect AWS resources and analyze costs",
-        "required": false,
-        "configExample": {
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-aws"],
-          "env": {
-            "AWS_REGION": "us-east-1"
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-### Required vs Optional
-
-**Required MCP Servers** (`"required": true`):
-- Essential for collection's core functionality
-- Example: Pulumi server for Pulumi collection
-- Shown prominently in collection info
-
-**Optional MCP Servers** (`"required": false`):
-- Enhanced features but not essential
-- Example: AWS/Kubernetes servers for multi-cloud support
-- Clearly marked as optional
-
-## Viewing MCP Recommendations
-
-When you run `prpm info` on a collection with MCP recommendations:
+### Install Smithery CLI
 
 ```bash
-prpm info collection/pulumi-infrastructure
+npm install -g @smithery/cli
 ```
 
-You'll see:
-
-```
-📦 Pulumi Infrastructure as Code
-================================
-
-Full-featured Pulumi infrastructure development with TypeScript
-
-📊 Stats:
-   Downloads: 1,234
-   Packages: 8
-   ...
-
-🔌 Recommended MCP Servers (for Claude Code users):
-
-   Required:
-   ✓ Pulumi
-     Query Pulumi state and inspect resources
-     Package: @modelcontextprotocol/server-pulumi
-
-   Optional:
-   ○ AWS
-     Inspect AWS resources and analyze costs
-     Package: @modelcontextprotocol/server-aws
-
-💡 To configure MCP servers for Claude Code:
-   1. Copy the configuration examples below
-   2. Add to: ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
-   3. Restart Claude Code
-
-   See full guide: https://docs.prpm.dev/guides/mcp-servers
-```
-
-## Manual Configuration Guide
-
-### Step 1: Locate Your Claude Code Config
-
-<CodeGroup>
-```bash macOS
-~/Library/Application Support/Claude/claude_desktop_config.json
-```
-
-```bash Linux
-~/.config/Claude/claude_desktop_config.json
-```
-
-```bash Windows
-%APPDATA%\Claude\claude_desktop_config.json
-```
-</CodeGroup>
-
-### Step 2: Add MCP Server Configuration
-
-Edit the config file and add the recommended servers:
-
-```json
-{
-  "mcpServers": {
-    "pulumi": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-pulumi"]
-    },
-    "aws": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-aws"],
-      "env": {
-        "AWS_REGION": "us-east-1"
-      }
-    }
-  }
-}
-```
-
-<Note>
-If you already have MCP servers configured, add the new ones to the existing `mcpServers` object.
-</Note>
-
-### Step 3: Restart Claude Code
-
-MCP servers only load when Claude Code starts:
-1. Quit Claude Code completely
-2. Reopen Claude Code
-3. Start a new conversation
-
-### Step 4: Verify MCP Servers Work
-
-Ask Claude to use the MCP servers:
-
-```
-"Show me all resources in my Pulumi stack"
-"List AWS EC2 instances in us-east-1"
-```
-
-## Example Collections with MCP Recommendations
-
-### Example 1: Pulumi Infrastructure
-
-```json
-{
-  "id": "pulumi-infrastructure",
-  "name": "Pulumi Infrastructure as Code",
-  "config": {
-    "recommendedMcpServers": {
-      "pulumi": {
-        "package": "@modelcontextprotocol/server-pulumi",
-        "description": "Pulumi state inspection and resource queries",
-        "required": true,
-        "configExample": {
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-pulumi"]
-        }
-      },
-      "aws": {
-        "package": "@modelcontextprotocol/server-aws",
-        "description": "AWS resource inspection",
-        "required": false,
-        "configExample": {
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-aws"],
-          "env": {
-            "AWS_REGION": "us-east-1"
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-**Usage:**
-```bash
-# View MCP recommendations
-prpm info collection/pulumi-infrastructure
-
-# Install collection packages (MCP servers shown as recommendations)
-prpm install collection/pulumi-infrastructure --as claude
-```
-
-### Example 2: Development Environment
-
-```json
-{
-  "id": "dev-environment",
-  "name": "Full-Stack Development Setup",
-  "config": {
-    "recommendedMcpServers": {
-      "filesystem": {
-        "package": "@modelcontextprotocol/server-filesystem",
-        "description": "Navigate project codebase",
-        "required": true,
-        "configExample": {
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"]
-        }
-      },
-      "database": {
-        "package": "@modelcontextprotocol/server-postgres",
-        "description": "Query application database",
-        "required": true,
-        "configExample": {
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-postgres"],
-          "env": {
-            "DATABASE_URL": "postgresql://localhost/myapp"
-          }
-        }
-      },
-      "bash": {
-        "package": "@modelcontextprotocol/server-bash",
-        "description": "Run tests and build commands",
-        "required": false,
-        "configExample": {
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-bash"]
-        }
-      }
-    }
-  }
-}
-```
-
-## Environment Variables
-
-MCP servers can use environment variables for configuration:
-
-```json
-{
-  "mcpServers": {
-    "database": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres"],
-      "env": {
-        "DATABASE_URL": "postgresql://user:pass@localhost/db",
-        "PGSSL": "true"
-      }
-    }
-  }
-}
-```
-
-<Warning>
-**Security**: For sensitive values, use environment variable references:
-
-```json
-{
-  "env": {
-    "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
-    "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}"
-  }
-}
-```
-</Warning>
-
-## Troubleshooting
-
-### MCP Server Not Working
-
-**1. Restart Claude Code**
-
-MCP servers only load when Claude Code starts:
-- Quit Claude Code completely
-- Reopen Claude Code
-- Start a new conversation
-
-**2. Verify Configuration**
-
-Check that MCP servers were added correctly:
-
-<CodeGroup>
-```bash macOS
-cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
-```
-
-```bash Linux
-cat ~/.config/Claude/claude_desktop_config.json
-```
-
-```bash Windows
-type %APPDATA%\Claude\claude_desktop_config.json
-```
-</CodeGroup>
-
-**3. Check NPX Installation**
-
-Most MCP servers use `npx`:
+### Common Commands
 
 ```bash
-npx --version
+# Search for MCP servers
+smithery search pulumi
+smithery search database
+
+# Install an MCP server
+smithery install @modelcontextprotocol/server-pulumi
+
+# List installed servers
+smithery list
+
+# Browse all servers
+smithery search
 ```
 
-If not installed, install Node.js from [nodejs.org](https://nodejs.org).
+### Why Smithery?
 
-**4. Test MCP Server Manually**
+- ✅ **2,000+ MCP servers** - Comprehensive catalog
+- ✅ **Easy installation** - One command to install
+- ✅ **Automatic configuration** - Sets up Claude Code for you
+- ✅ **Client-agnostic** - Works with multiple AI clients
+- ✅ **Active development** - Regularly updated
 
-Run the MCP server command directly:
+## MCP Servers + PRPM Collections
+
+PRPM collections provide prompts, rules, and agents. MCP servers complement them by providing capabilities:
+
+### Example: Pulumi Development
 
 ```bash
-npx -y @modelcontextprotocol/server-filesystem /path/to/dir
+# Install Pulumi prompts and rules via PRPM
+prpm install collection/pulumi-infrastructure
+
+# Install Pulumi MCP server via Smithery
+smithery install @modelcontextprotocol/server-pulumi
 ```
 
-### JSON Syntax Errors
+Now you have:
+- **PRPM**: Pulumi best practices, agents, and workflows
+- **Smithery**: Live Pulumi state inspection via MCP
 
-Make sure your JSON is valid:
-- Proper comma placement
-- Matching braces
-- No trailing commas
-- Valid JSON formatting
+### Example: Full-Stack Development
 
-Use a JSON validator or editor with syntax highlighting.
+```bash
+# Install development prompts via PRPM
+prpm install collection/nextjs-pro
 
-## FAQ
-
-<AccordionGroup>
-  <Accordion title="Does PRPM install MCP servers automatically?">
-    **No.** PRPM shows you which MCP servers are recommended for each collection, but you manually configure them in Claude Code. This gives you full control over your setup.
-  </Accordion>
-
-  <Accordion title="Why doesn't PRPM install MCP servers for me?">
-    Several reasons:
-    - **Control**: You decide what goes in your Claude Code config
-    - **Conflicts**: Avoid breaking existing MCP setups
-    - **Flexibility**: Works with global, local, or custom configurations
-    - **Simplicity**: No magic, just clear instructions
-  </Accordion>
-
-  <Accordion title="Do MCP servers work with Cursor/Windsurf/Continue?">
-    No, MCP is specific to Claude Code. PRPM only shows MCP recommendations for collections when you're using Claude Code format.
-  </Accordion>
-
-  <Accordion title="Are MCP servers project-specific or global?">
-    **Global by default.** Claude Code reads MCP configuration from a global config file, not per-project. However, you can use environment variables to make MCP servers work with different projects.
-  </Accordion>
-
-  <Accordion title="Can I have per-project MCP configurations?">
-    Claude Code doesn't natively support per-project MCP configs. Workarounds:
-    - Use environment variables for project-specific values
-    - Manually switch MCP configs when switching projects
-    - Use different Claude Code profiles (if supported)
-  </Accordion>
-
-  <Accordion title="How do I remove an MCP server?">
-    Edit your Claude Code config file, remove the server entry, then restart Claude Code.
-  </Accordion>
-
-  <Accordion title="Do I need to install MCP server packages separately?">
-    No! When using `npx -y`, packages are auto-installed on first use. That's why most recommendations use `npx -y`.
-  </Accordion>
-
-  <Accordion title="Can I create collections with MCP recommendations?">
-    Yes! When publishing a collection, include `recommendedMcpServers` in your config. PRPM will display them when users run `prpm info` on your collection.
-  </Accordion>
-</AccordionGroup>
-
-## For Collection Authors
-
-### Adding MCP Recommendations
-
-When creating a collection, you can recommend MCP servers that enhance the collection's packages:
-
-```json
-{
-  "id": "my-collection",
-  "name": "My Collection",
-  "config": {
-    "recommendedMcpServers": {
-      "server-name": {
-        "package": "@modelcontextprotocol/server-package",
-        "description": "What this server provides",
-        "required": true | false,
-        "configExample": {
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-package"],
-          "env": {
-            "ENV_VAR": "value"
-          }
-        }
-      }
-    }
-  }
-}
+# Install useful MCP servers via Smithery
+smithery install @modelcontextprotocol/server-filesystem
+smithery install @modelcontextprotocol/server-postgres
+smithery install @modelcontextprotocol/server-brave-search
 ```
 
-### Best Practices
-
-1. **Only recommend relevant servers** - Don't add MCP servers just because they exist
-2. **Mark required vs optional correctly** - Required = essential for core functionality
-3. **Provide clear descriptions** - Explain what the MCP server adds
-4. **Include config examples** - Show exact configuration
-5. **Document environment variables** - Explain what values users need to set
-6. **Test the recommendations** - Verify MCP servers work with your packages
-
-## See Also
+## Resources
 
 <CardGroup cols={2}>
-  <Card title="Collections Guide" icon="layer-group" href="/concepts/collections">
-    Learn about multi-package collections
+  <Card title="Smithery.ai" icon="cube" href="https://smithery.ai">
+    Browse 2,000+ MCP servers
   </Card>
-  <Card title="Publishing Collections" icon="upload" href="/publishing/collections">
-    Publish collections with MCP recommendations
+  <Card title="Smithery CLI" icon="terminal" href="https://github.com/smithery-ai/cli">
+    MCP server package manager
   </Card>
   <Card title="MCP Specification" icon="book" href="https://modelcontextprotocol.io">
     Official MCP Protocol docs
   </Card>
-  <Card title="MCP Servers" icon="github" href="https://github.com/modelcontextprotocol/servers">
-    Official MCP server packages
+  <Card title="PRPM Collections" icon="layer-group" href="/concepts/collections">
+    Learn about PRPM collections
   </Card>
 </CardGroup>
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Why doesn't PRPM manage MCP servers?">
+    PRPM focuses on prompts, rules, agents, and skills. Smithery specializes in MCP servers with 2,000+ servers already cataloged. We recommend using the right tool for each job.
+  </Accordion>
+
+  <Accordion title="Can PRPM collections include MCP servers?">
+    Not directly. PRPM collections bundle prompts and agents. For MCP servers, use Smithery. You can use both tools together - PRPM for prompts, Smithery for capabilities.
+  </Accordion>
+
+  <Accordion title="Do I need MCP servers to use PRPM?">
+    No! PRPM collections work great on their own. MCP servers are optional enhancements that add extra capabilities to Claude Code.
+  </Accordion>
+
+  <Accordion title="Does PRPM work with Smithery?">
+    Yes! They're complementary tools. Use PRPM to install prompts/rules/agents, and Smithery to install MCP servers. Both enhance your AI development workflow.
+  </Accordion>
+</AccordionGroup>
