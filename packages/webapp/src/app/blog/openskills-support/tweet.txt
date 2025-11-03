@@ -1,34 +1,7 @@
-🎓 PRPM now supports OpenSkills!
+PRPM now supports OpenSkills format—added in less than 1 day thanks to our canonical format architecture.
 
-OpenSkills is a universal skills loader for AI coding agents that launched Oct 26 with 629 stars in 2 days.
+OpenSkills is a universal skills loader that launched Oct 26 with 629 stars in 2 days. Strong community momentum.
 
-Now you can:
-✅ Publish OpenSkills to PRPM's registry
-✅ Install with auto-conversion to Cursor, Claude, Continue, Windsurf
-✅ Parse complex YAML with js-yaml
+Publish once in OpenSkills format, install in any format (Cursor, Claude, Continue, Windsurf). Same infrastructure pattern as npm, cargo, pip.
 
-Why this matters:
-→ Reduces ecosystem fragmentation
-→ Network effects (OpenSkills + PRPM communities)
-→ Universal package manager positioning
-
-Example:
-```
-prpm install @user/python-expert --as openskills
-# → Installs to .claude/skills/python-expert/SKILL.md
-
-prpm install @user/python-expert --as cursor
-# → Auto-converts and installs to .cursor/rules/
-```
-
-Technical highlights:
-• Robust YAML parsing (handles multiline, arrays, nested objects)
-• 11/11 tests passing
-• Graceful error handling
-• Conversion quality scoring (95-100% for most content)
-
-Read more: https://prpm.dev/blog/openskills-support
-
-OpenSkills by @numman-ali: https://github.com/numman-ali/openskills
-
-#OpenSkills #PRPM #AICodeAgents #Claude #Cursor #Windsurf
+https://prpm.dev/blog/openskills-support

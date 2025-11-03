@@ -1,63 +1,61 @@
-🎓 Excited to announce: PRPM now supports OpenSkills!
+Today PRPM adds native OpenSkills format support. This took less than 1 day to implement—showing how PRPM's architecture makes it easy to support new formats.
 
 The Problem:
-AI coding tools are fragmented—Cursor, Claude Code, Continue, Windsurf, GitHub Copilot all use different formats for prompts and skills. This creates duplication, vendor lock-in, and makes sharing hard.
+AI coding tools are fragmented. Cursor, Claude Code, Continue, Windsurf, GitHub Copilot all use different formats for prompts and skills. This creates duplication, vendor lock-in, and makes sharing hard.
 
 The Solution:
-OpenSkills (https://github.com/numman-ali/openskills) launched Oct 26 as a universal skills loader—one format that works across multiple AI coding platforms. It gained 629 stars in 2 days, signaling strong demand.
+OpenSkills launched Oct 26 as a universal skills loader—one format that works across multiple AI coding platforms. It gained 629 stars in 2 days, signaling strong demand for universal formats.
 
-Today, PRPM adds native OpenSkills support with automatic format conversion.
+PRPM now bridges these ecosystems with automatic format conversion.
 
 What This Means:
 
-✅ Publish Once, Install Anywhere
-Write a skill in OpenSkills format → publish to PRPM → users install in their preferred format (Cursor, Claude, Continue, Windsurf, etc.)
+Publish Once, Install Anywhere
+Write a skill in OpenSkills format, publish to PRPM, users install in their preferred format (Cursor, Claude, Continue, Windsurf, etc.)
 
-✅ Centralized Discovery
+Centralized Discovery
 OpenSkills uses GitHub for distribution. PRPM adds a centralized registry with search, categories, analytics, and versioning.
 
-✅ Robust YAML Parsing
-We implemented js-yaml for parsing complex frontmatter—handling multiline strings, arrays, nested objects, and gracefully handling errors.
+How PRPM's Architecture Made This Fast:
 
-Technical Highlights:
+At the core of PRPM is a canonical format—a universal representation for all prompts, skills, and agents. Every format just needs two functions: to/from canonical.
 
-• 11/11 tests passing
-• Conversion quality scoring (transparent about lossy conversions)
-• Installs to .claude/skills/{package-name}/SKILL.md
-• Consistent with other PRPM converters (agents.md, Kiro, Copilot)
+This means we don't need N×N converters. Just N converters total. Adding OpenSkills required just:
+- fromOpenSkills() - Parse SKILL.md to canonical
+- toOpenSkills() - Convert canonical to SKILL.md
 
-Example Usage:
+Once those exist, OpenSkills packages can instantly convert to all 8 other formats PRPM supports.
 
-```bash
-# Install in OpenSkills format
-prpm install @user/python-expert --as openskills
+Technical Quality:
+- 11/11 tests passing
+- Robust YAML parsing with js-yaml (8.7M weekly downloads)
+- Conversion quality scoring (95-100% for most content)
+- Graceful degradation for edge cases
+- Server-side caching with Redis
 
-# Or auto-convert to your preferred format
-prpm install @user/python-expert --as cursor
-prpm install @user/python-expert --as claude
-```
+This is Infrastructure:
+
+PRPM isn't just another package registry. It's infrastructure for the AI coding ecosystem—like npm, cargo, and pip.
+
+The architecture decisions (canonical format, converter pattern, quality scoring, caching) mean:
+- Adding new formats takes hours, not weeks
+- Quality is consistent across all converters
+- Users get choice—publish once, install anywhere
+- Ecosystem grows together
 
 Why This Matters:
 
-1. Network Effects
-OpenSkills community + PRPM community = stronger ecosystem for everyone
+Network Effects: OpenSkills community + PRPM community = stronger ecosystem for everyone
 
-2. Universal Package Manager
-PRPM now supports 9 formats: Cursor, Claude, Continue, Windsurf, GitHub Copilot, Kiro, agents.md, OpenSkills, and generic
+Reduces Fragmentation: One package, many formats. No more rewriting the same skill for different tools.
 
-3. Reduces Fragmentation
-One package, many formats. No more rewriting the same skill for different tools.
+Future-Proof: As new AI coding tools emerge, they'll likely support OpenSkills or other established formats. PRPM can add support quickly.
 
-What's Next:
+Try it today:
 
-→ Bundled resources support (references/, scripts/, assets/)
-→ Cross-promotion with OpenSkills creator
-→ Example repository showcasing real-world skills
-
-Huge thanks to the OpenSkills creator (@numman-ali on GitHub) for building this universal format. We're excited to support it in PRPM.
+npm install -g prpm
+prpm install @user/python-expert --as openskills
 
 Read the full blog post: https://prpm.dev/blog/openskills-support
 
-Try it today: npm install -g prpm
-
-#OpenSkills #PRPM #AI #DeveloperTools #PackageManager #Claude #Cursor #Windsurf #GitHubCopilot
+#AI #DeveloperTools #OpenSource #PackageManager #Infrastructure
