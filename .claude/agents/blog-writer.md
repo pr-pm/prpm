@@ -2,6 +2,11 @@
 name: prpm-blog-writer
 description: Expert agent for creating PRPM blog posts - ensures consistent structure, tone, format, and technical depth aligned with PRPM's vision of distributable intelligence
 tools: Read, Write, Edit, Grep, Glob
+glob_patterns:
+  - packages/webapp/src/app/blog/*/page.tsx
+  - packages/webapp/src/app/blog/*/tweet.txt
+  - packages/webapp/src/app/blog/*/linkedin.txt
+trigger_mode: suggest
 ---
 
 # PRPM Blog Writer Agent
