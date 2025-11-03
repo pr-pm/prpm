@@ -64,6 +64,7 @@ export interface ResolveResponse {
 export interface PublishResponse {
   success: boolean;
   package_id: string;
+  name: string;
   version: string;
   message: string;
 }
