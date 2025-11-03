@@ -774,38 +774,71 @@ export async function packageRoutes(server: FastifyInstance) {
         [pkg.id]
       );
 
-      // 5. Calculate and store quality score + explanation + metadata (async, don't block response)
+      // 5. Calculate quality score and extract metadata (async, don't block response)
       server.log.info({ packageId: pkg.id }, '🎯 Starting quality score calculation and metadata extraction');
       (async () => {
         try {
           const { updatePackageQualityScore } = await import('../scoring/quality-scorer.js');
           const { getDetailedAIEvaluation, extractMetadataWithAI } = await import('../scoring/ai-evaluator.js');
 
-          // Get content for evaluation (need to fetch latest package data)
-          const pkgData = await queryOne<{ content: any; language: string | null; framework: string | null; category: string | null }>(
-            server,
-            'SELECT content, language, framework, category FROM packages WHERE id = $1',
-            [pkg.id]
-          );
+          // Extract content from the tarball we just uploaded
+          // @ts-ignore - tar-stream doesn't have types
+          const tar = await import('tar-stream');
+          const zlib = await import('zlib');
+          const { Readable } = await import('stream');
 
-          if (pkgData?.content) {
+          const extract = tar.extract();
+          let packageContent = '';
+
+          // Collect all file contents from tarball
+          extract.on('entry', (header: any, stream: any, next: any) => {
+            const chunks: Buffer[] = [];
+            stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+            stream.on('end', () => {
+              if (header.type === 'file') {
+                packageContent += `\n\n=== ${header.name} ===\n${Buffer.concat(chunks).toString('utf-8')}`;
+              }
+              next();
+            });
+            stream.resume();
+          });
+
+          // Decompress and extract tarball
+          await new Promise((resolve, reject) => {
+            extract.on('finish', resolve);
+            extract.on('error', reject);
+            Readable.from(tarballBuffer)
+              .pipe(zlib.createGunzip())
+              .pipe(extract);
+          });
+
+          if (packageContent) {
             // Get AI evaluation for explanation
-            const evaluation = await getDetailedAIEvaluation(pkgData.content, server);
+            const evaluation = await getDetailedAIEvaluation(packageContent, server);
             const explanation = `${evaluation.reasoning}\n\nStrengths: ${evaluation.strengths.join(', ')}\n\nWeaknesses: ${evaluation.weaknesses.join(', ') || 'None identified'}`;
 
-            // Calculate quality score
-            const qualityScore = await updatePackageQualityScore(server, pkg.id);
+            // Calculate quality score with the extracted content
+            const qualityScore = await updatePackageQualityScore(server, pkg.id, packageContent);
+
+            // Get current package data to check what metadata needs extraction
+            const currentPkg = await queryOne<{
+              category: string | null;
+            }>(
+              server,
+              'SELECT category FROM packages WHERE id = $1',
+              [pkg.id]
+            );
 
             // Extract metadata if not already provided
-            const needsMetadata = !language || !framework || !pkgData.category;
+            const needsMetadata = !language || !framework || !currentPkg?.category;
             let extractedMetadata: AIMetadataResult = {};
             if (needsMetadata) {
               extractedMetadata = await extractMetadataWithAI(
-                pkgData.content,
+                packageContent,
                 {
                   language: language || undefined,
                   framework: framework || undefined,
-                  category: pkgData.category || undefined,
+                  category: currentPkg?.category || undefined,
                   tags,
                   description,
                 },
@@ -826,7 +859,7 @@ export async function packageRoutes(server: FastifyInstance) {
               updates.push(`framework = $${paramIndex++}`);
               params.push(extractedMetadata.framework);
             }
-            if (!pkgData.category && extractedMetadata.category) {
+            if (!currentPkg?.category && extractedMetadata.category) {
               updates.push(`category = $${paramIndex++}`);
               params.push(extractedMetadata.category);
             }
