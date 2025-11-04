@@ -2,32 +2,37 @@
 
 Quick guide to finding what you need in the PRPM documentation.
 
+## 🌐 Official Documentation Site
+
+**➡️ [docs.prpm.dev](https://docs.prpm.dev)** - The primary source for all user-facing documentation
+
 ## 📍 I want to...
 
 ### Use PRPM
-→ **[docs/](./docs/)** - User documentation
-- **Install PRPM**: [docs/INSTALLATION.md](./docs/INSTALLATION.md)
-- **Learn commands**: [docs/CLI.md](./docs/CLI.md)
-- **Configure PRPM**: [docs/CONFIGURATION.md](./docs/CONFIGURATION.md)
-- **Install collections**: [docs/COLLECTIONS.md](./docs/COLLECTIONS.md)
-- **See examples**: [docs/EXAMPLES.md](./docs/EXAMPLES.md)
+→ **[docs.prpm.dev](https://docs.prpm.dev)** - Official documentation
+- **Install PRPM**: [Installation Guide](https://docs.prpm.dev/installation)
+- **Learn commands**: [CLI Reference](https://docs.prpm.dev/cli/commands)
+- **Configure PRPM**: [Configuration Guide](https://docs.prpm.dev/concepts/configuration)
+- **Install collections**: [Collections Guide](https://docs.prpm.dev/concepts/collections)
+- **See examples**: [Usage Examples](https://docs.prpm.dev/guides/examples)
+- **Publish packages**: [Publishing Guide](https://docs.prpm.dev/publishing/getting-started)
+
+### Browse Local Documentation
+→ **[public-documentation/](./public-documentation/)** - Source files for docs.prpm.dev
+- Complete documentation in MDX format
+- Built with Mintlify
+- Run locally: `cd public-documentation && mintlify dev`
 
 ### Contribute to PRPM
 → **[development/docs/](./development/docs/)** - Internal documentation
 - **Set up dev environment**: [development/docs/DEVELOPMENT.md](./development/docs/DEVELOPMENT.md)
 - **Run local services**: [development/docs/DOCKER.md](./development/docs/DOCKER.md)
 - **Understand workflows**: [development/docs/GITHUB_WORKFLOWS.md](./development/docs/GITHUB_WORKFLOWS.md)
+- **Testing guide**: [development/docs/GITHUB_ACTIONS_TESTING_REFERENCE.md](./development/docs/GITHUB_ACTIONS_TESTING_REFERENCE.md)
 
 ### Deploy PRPM
 → **[development/docs/](./development/docs/)** - Deployment guides
-- **Deploy to production**: [development/docs/DEPLOYMENT_SUMMARY.md](./development/docs/DEPLOYMENT_SUMMARY.md)
-- **Quick deployment guide**: [development/docs/DEPLOYMENT_QUICKSTART.md](./development/docs/DEPLOYMENT_QUICKSTART.md)
-- **Seed database**: [development/docs/SEEDING_PRODUCTION.md](./development/docs/SEEDING_PRODUCTION.md)
-- **Manage data (S3)**: [development/docs/DEPLOYMENT_DATA_STRATEGY.md](./development/docs/DEPLOYMENT_DATA_STRATEGY.md)
-
-### Publish Packages
-→ **Dual documentation**
-- **User guide**: [docs/PUBLISHING.md](./docs/PUBLISHING.md) - How to publish packages to PRPM
+- **Complete deployment guide**: See deployment docs in development/docs/
 - **NPM publishing**: [development/docs/PUBLISHING.md](./development/docs/PUBLISHING.md) - How to publish PRPM itself to npm
 
 ---
@@ -37,44 +42,67 @@ Quick guide to finding what you need in the PRPM documentation.
 ```
 prpm/
 │
-├── README.md                      # 👋 START HERE - Project overview
-├── DOCUMENTATION_MAP.md           # 📍 THIS FILE - Documentation navigator
+├── README.md                          # 👋 START HERE - Project overview
+├── DOCUMENTATION_MAP.md               # 📍 THIS FILE - Documentation navigator
+├── CONTRIBUTING.md                    # How to contribute
+├── CHANGELOG.md                       # Version history
 │
-├── docs/                          # 📚 USER DOCUMENTATION
-│   ├── README.md                 # User docs index
-│   ├── INSTALLATION.md           # Getting started
-│   ├── CLI.md                    # Command reference
-│   ├── CONFIGURATION.md          # Configuration guide
-│   ├── COLLECTIONS.md            # Collections explained
-│   ├── EXAMPLES.md               # Usage examples
-│   ├── FORMAT_CONVERSION.md      # Universal packages
-│   ├── PACKAGES.md               # Package catalog
-│   └── ...more user guides...
+├── public-documentation/              # 📚 OFFICIAL USER DOCUMENTATION (docs.prpm.dev)
+│   ├── mint.json                     # Mintlify configuration
+│   ├── introduction.mdx              # Introduction
+│   ├── quickstart.mdx                # Quick start guide
+│   ├── installation.mdx              # Installation
+│   │
+│   ├── concepts/                     # Core Concepts
+│   │   ├── packages.mdx
+│   │   ├── package-types.mdx
+│   │   ├── collections.mdx
+│   │   ├── formats.mdx
+│   │   └── configuration.mdx
+│   │
+│   ├── guides/                       # User Guides
+│   │   ├── examples.mdx
+│   │   ├── playground.mdx
+│   │   ├── format-conversion.mdx
+│   │   └── mcp-servers.mdx
+│   │
+│   ├── integrations/                 # Integration Guides
+│   │   ├── github-copilot.mdx
+│   │   └── windsurf.mdx
+│   │
+│   ├── cli/                          # CLI Reference
+│   │   ├── overview.mdx
+│   │   ├── commands.mdx
+│   │   ├── workflows.mdx
+│   │   └── troubleshooting.mdx
+│   │
+│   ├── publishing/                   # Publishing Guides
+│   │   ├── getting-started.mdx
+│   │   ├── manifest.mdx
+│   │   └── collections.mdx
+│   │
+│   └── advanced/                     # Advanced Topics
+│       ├── architecture.mdx
+│       ├── self-improving-packages.mdx
+│       └── meta-packages.mdx
 │
-├── development/docs/              # 🛠️ INTERNAL DOCUMENTATION
-│   ├── README.md                 # Dev docs index
-│   │
-│   ├── Deployment & Production
-│   │   ├── DEPLOYMENT_SUMMARY.md      # Complete deployment overview
-│   │   ├── DEPLOYMENT_QUICKSTART.md   # TL;DR deployment
-│   │   ├── DEPLOYMENT_DATA_STRATEGY.md # S3 data management
-│   │   ├── SEEDING_PRODUCTION.md      # Database seeding
-│   │   └── SEEDING_ALTERNATIVES.md    # Hook comparison
-│   │
-│   ├── Development
-│   │   ├── DEVELOPMENT.md        # Local setup
-│   │   └── DOCKER.md             # Services (PostgreSQL, Redis, MinIO)
-│   │
-│   ├── CI/CD
-│   │   └── GITHUB_WORKFLOWS.md   # GitHub Actions reference
-│   │
-│   └── Publishing
-│       └── PUBLISHING.md         # NPM package publishing
+├── docs/                              # 📦 LEGACY DOCUMENTATION (reference only)
+│   ├── README.md                     # Points to official docs
+│   ├── internal/                     # Internal planning docs
+│   └── partnerships/                 # Partnership discussions
 │
-├── CONTRIBUTING.md                # How to contribute
-├── ROADMAP.md                    # Future plans
-├── CHANGELOG.md                  # Version history
-└── ...
+├── development/docs/                  # 🛠️ INTERNAL DEVELOPER DOCUMENTATION
+│   ├── README.md                     # Dev docs index
+│   ├── DEVELOPMENT.md                # Local setup
+│   ├── DOCKER.md                     # Services (PostgreSQL, Redis, MinIO)
+│   ├── GITHUB_WORKFLOWS.md           # GitHub Actions reference
+│   ├── GITHUB_ACTIONS_TESTING_REFERENCE.md  # Testing guide
+│   └── PUBLISHING.md                 # NPM package publishing
+│
+└── packages/                          # Package-specific documentation
+    ├── cli/README.md
+    ├── registry/README.md
+    └── webapp/README.md
 ```
 
 ---
@@ -83,14 +111,14 @@ prpm/
 
 ### I'm a User
 1. **[README.md](./README.md)** - Understand what PRPM is
-2. **[docs/INSTALLATION.md](./docs/INSTALLATION.md)** - Install PRPM
-3. **[docs/CLI.md](./docs/CLI.md)** - Learn commands
-4. **[docs/EXAMPLES.md](./docs/EXAMPLES.md)** - See it in action
+2. **[Installation Guide](https://docs.prpm.dev/installation)** - Install PRPM
+3. **[CLI Reference](https://docs.prpm.dev/cli/commands)** - Learn commands
+4. **[Usage Examples](https://docs.prpm.dev/guides/examples)** - See it in action
 
 ### I'm a Package Author
-1. **[docs/PUBLISHING.md](./docs/PUBLISHING.md)** - Publishing guide
-2. **[docs/PACKAGE_TYPES.md](./docs/PACKAGE_TYPES.md)** - Package formats
-3. **[docs/COLLECTIONS.md](./docs/COLLECTIONS.md)** - Creating collections
+1. **[Publishing Guide](https://docs.prpm.dev/publishing/getting-started)** - Publishing guide
+2. **[Package Types](https://docs.prpm.dev/concepts/package-types)** - Package formats
+3. **[Collections Guide](https://docs.prpm.dev/concepts/collections)** - Creating collections
 
 ### I'm a Contributor
 1. **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
@@ -98,23 +126,24 @@ prpm/
 3. **[development/docs/GITHUB_WORKFLOWS.md](./development/docs/GITHUB_WORKFLOWS.md)** - CI/CD
 
 ### I'm Deploying PRPM
-1. **[development/docs/DEPLOYMENT_SUMMARY.md](./development/docs/DEPLOYMENT_SUMMARY.md)** - Complete guide
-2. **[development/docs/DEPLOYMENT_QUICKSTART.md](./development/docs/DEPLOYMENT_QUICKSTART.md)** - Quick start
-3. **[development/docs/SEEDING_PRODUCTION.md](./development/docs/SEEDING_PRODUCTION.md)** - Database setup
+1. **[development/docs/](./development/docs/)** - See deployment documentation
+2. **[development/docs/PUBLISHING.md](./development/docs/PUBLISHING.md)** - NPM publishing
 
 ---
 
 ## 📖 Documentation Categories
 
-### User-Facing (docs/)
-- **Getting Started** - Installation, configuration, examples
-- **Using PRPM** - CLI, packages, collections
-- **Advanced** - Format conversion, MCP servers, architecture
-- **Publishing** - How to publish packages
+### User-Facing (public-documentation/)
+- **Getting Started** - Installation, quickstart, introduction
+- **Core Concepts** - Packages, collections, formats, configuration
+- **Guides** - Examples, format conversion, MCP servers, playground
+- **Integrations** - GitHub Copilot, Windsurf
+- **CLI Reference** - Commands, workflows, troubleshooting
+- **Publishing** - Getting started, manifests, collections
+- **Advanced** - Architecture, self-improving packages, meta-packages
 
 ### Internal (development/docs/)
 - **Development** - Local setup, Docker, testing
-- **Deployment** - Production deployment, seeding, data management
 - **CI/CD** - GitHub Actions, workflows, automation
 - **Publishing** - NPM package publishing (PRPM itself)
 
@@ -123,35 +152,44 @@ prpm/
 ## 🔗 Cross-References
 
 ### From Main README
-- User docs: [docs/](./docs/)
+- Official docs: [docs.prpm.dev](https://docs.prpm.dev)
+- Source docs: [public-documentation/](./public-documentation/)
 - Dev docs: [development/docs/](./development/docs/)
 
-### From User Docs
+### From Public Documentation
 - Main README: [../README.md](./README.md)
 - Dev docs: [../development/docs/](./development/docs/)
 
 ### From Dev Docs
 - Main README: [../../README.md](./README.md)
-- User docs: [../../docs/](./docs/)
+- Official docs: [docs.prpm.dev](https://docs.prpm.dev)
 
 ---
 
 ## 🆘 Still Can't Find It?
 
-1. **Check the indexes:**
-   - [docs/README.md](./docs/README.md) - User docs index
+1. **Check the official docs first:**
+   - [docs.prpm.dev](https://docs.prpm.dev) - Searchable, complete documentation
+
+2. **Check the indexes:**
+   - [public-documentation/README.md](./public-documentation/README.md) - Mintlify docs
+   - [docs/README.md](./docs/README.md) - Legacy docs (reference only)
    - [development/docs/README.md](./development/docs/README.md) - Dev docs index
 
-2. **Search the repo:**
+3. **Search the repo:**
    ```bash
-   grep -r "your search term" docs/
+   # Search public documentation
+   grep -r "your search term" public-documentation/
+
+   # Search development docs
    grep -r "your search term" development/docs/
    ```
 
-3. **Ask for help:**
+4. **Ask for help:**
    - [GitHub Discussions](https://github.com/pr-pm/prpm/discussions)
    - [GitHub Issues](https://github.com/pr-pm/prpm/issues)
    - Email: team@prpm.dev
+   - Docs: [docs.prpm.dev](https://docs.prpm.dev)
 
 ---
 

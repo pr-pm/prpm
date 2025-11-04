@@ -1,0 +1,204 @@
+---
+title: 'GitHub Copilot'
+description: 'Use PRPM packages with GitHub Copilot instructions'
+icon: 'github'
+---
+
+## Overview
+
+PRPM supports GitHub Copilot instructions, allowing you to package and distribute custom instructions for GitHub Copilot across your projects.
+
+GitHub Copilot uses instructions files to customize its behavior:
+- **Repository-wide instructions**: `.github/copilot-instructions.md` - applies to entire repository
+- **Path-specific instructions**: `.github/instructions/*.instructions.md` - applies to specific file patterns
+
+## Installation
+
+Install Copilot instructions from the PRPM registry:
+
+```bash
+# Install as copilot format
+prpm install <package-name> --as copilot
+
+# Example
+prpm install @prpm/react-best-practices --as copilot
+```
+
+## Package Types
+
+<Tabs>
+  <Tab title="Repository-Wide">
+    Repository-wide instructions apply to your entire codebase:
+
+    ```markdown .github/copilot-instructions.md
+    # React Best Practices
+
+    Follow these React guidelines throughout the project.
+
+    ## Component Structure
+
+    - Use functional components with hooks
+    - Keep components small and focused
+    - Separate business logic from presentation
+
+    ## State Management
+
+    - Use useState for local state
+    - Use useReducer for complex state logic
+    - Consider Context API for shared state
+    ```
+
+    **Install location**: `.github/copilot-instructions.md`
+  </Tab>
+
+  <Tab title="Path-Specific">
+    Path-specific instructions target files matching specific patterns:
+
+    ```markdown .github/instructions/testing.instructions.md
+    ---
+    applyTo:
+      - src/**/*.test.ts
+      - src/**/*.test.tsx
+    ---
+
+    # Testing Guidelines
+
+    Apply these rules when working with test files.
+
+    ## Test Structure
+
+    - Use describe blocks for grouping
+    - One assertion per test when possible
+    - Use meaningful test names
+
+    ## Best Practices
+
+    - Test behavior, not implementation
+    - Mock external dependencies
+    - Maintain test independence
+    ```
+
+    **Install location**: `.github/instructions/<name>.instructions.md`
+  </Tab>
+</Tabs>
+
+## Publishing Copilot Packages
+
+### 1. Create Package Metadata
+
+```json prpm.json
+{
+  "name": "@your-org/copilot-instructions",
+  "version": "1.0.0",
+  "description": "Custom Copilot instructions for our project",
+  "format": "copilot",
+  "subtype": "tool",
+  "tags": ["copilot", "instructions", "coding-standards"],
+  "files": [".github/copilot-instructions.md"]
+}
+```
+
+<Note>
+Configuration like `applyTo` patterns should be defined **in the file's frontmatter**, not in `prpm.json`. PRPM automatically extracts this configuration when parsing the file.
+</Note>
+
+### 2. Publish
+
+```bash
+prpm publish
+```
+
+## Converting Existing Rules
+
+Convert packages from other formats to Copilot:
+
+```bash
+# Convert from Cursor to Copilot
+prpm install cursor-package --as copilot
+
+# Convert from Claude to Copilot
+prpm install claude-skill --as copilot
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Path-Specific Instructions for Focused Rules">
+    Define `applyTo` patterns in the file's frontmatter:
+
+    ```markdown
+    ---
+    applyTo: src/api/**/*.ts
+    ---
+
+    # API Security Rules
+
+    ...
+    ```
+  </Accordion>
+
+  <Accordion title="Keep Instructions Clear and Concise">
+    ```markdown
+    # API Security Rules
+
+    ## Authentication
+
+    - Always validate JWT tokens
+    - Check user permissions before operations
+    - Log all authentication failures
+
+    ## Input Validation
+
+    - Sanitize all user inputs
+    - Use zod for schema validation
+    - Return descriptive error messages
+    ```
+  </Accordion>
+
+  <Accordion title="Organize by Domain">
+    Create separate instruction files for different concerns:
+    - `backend-api.instructions.md` for API routes
+    - `frontend-components.instructions.md` for React components
+    - `database-queries.instructions.md` for database operations
+  </Accordion>
+
+  <Accordion title="Include Examples">
+    ```markdown
+    ## Error Handling
+
+    Always use try-catch for async operations:
+
+    \`\`\`typescript
+    try {
+      const data = await fetchData();
+      return { success: true, data };
+    } catch (error) {
+      logger.error('Fetch failed', error);
+      return { success: false, error };
+    }
+    \`\`\`
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Instructions Not Applying">
+    1. Check file location: Must be in `.github/instructions/` for path-specific
+    2. Verify glob pattern in frontmatter matches your files
+    3. Restart VS Code to reload Copilot configuration
+  </Accordion>
+
+  <Accordion title="Pattern Not Matching Files">
+    Use `.gitignore`-style glob patterns:
+    - `src/**/*.ts` - All TypeScript files in src
+    - `**/*.test.ts` - All test files
+    - `src/api/*.ts` - Only files directly in src/api (not subdirectories)
+  </Accordion>
+</AccordionGroup>
+
+## Resources
+
+- [GitHub Copilot Instructions Documentation](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot)
+- [PRPM Publishing Guide](/publishing/getting-started)

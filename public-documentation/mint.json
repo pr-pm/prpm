@@ -44,16 +44,26 @@
       "group": "Core Concepts",
       "pages": [
         "concepts/packages",
+        "concepts/package-types",
         "concepts/collections",
-        "concepts/formats"
+        "concepts/formats",
+        "concepts/configuration"
       ]
     },
     {
       "group": "Guides",
       "pages": [
+        "guides/examples",
         "guides/playground",
         "guides/format-conversion",
         "guides/mcp-servers"
+      ]
+    },
+    {
+      "group": "Integrations",
+      "pages": [
+        "integrations/github-copilot",
+        "integrations/windsurf"
       ]
     },
     {
@@ -76,6 +86,7 @@
     {
       "group": "Advanced",
       "pages": [
+        "advanced/architecture",
         "advanced/self-improving-packages",
         "advanced/meta-packages"
       ]

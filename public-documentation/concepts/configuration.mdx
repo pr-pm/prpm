@@ -1,0 +1,455 @@
+---
+title: 'Configuration'
+description: 'Configure PRPM for your development environment with global, repository, and project settings'
+---
+
+## Overview
+
+PRPM uses configuration files at multiple levels:
+
+1. **`~/.prpmrc`** - Global user configuration (auth, preferences)
+2. **`.prpmrc`** - Repository-level configuration (project-specific settings)
+3. **`prpm.lock`** - Project lockfile (installed packages)
+
+### Configuration Priority
+
+PRPM loads configuration in this order (later overrides earlier):
+
+1. **Default values** - Built-in defaults
+2. **User config** (`~/.prpmrc`) - Global user preferences
+3. **Repository config** (`.prpmrc`) - Project-specific settings
+4. **Environment variables** (`PRPM_REGISTRY_URL`, etc.)
+5. **Command-line flags** - Explicit flags override everything
+
+## Global Configuration
+
+Your global PRPM configuration is stored in `~/.prpmrc` in your home directory. This file contains authentication, registry settings, and format preferences.
+
+### Location
+
+- **macOS/Linux**: `~/.prpmrc`
+- **Windows**: `%USERPROFILE%\.prpmrc`
+
+### Structure
+
+```json
+{
+  "registryUrl": "https://registry.prpm.dev",
+  "token": "your-auth-token",
+  "username": "your-username",
+  "telemetryEnabled": true,
+  "defaultFormat": "cursor",
+  "cursor": {
+    "version": "1.0.0",
+    "author": "Your Name",
+    "alwaysApply": true
+  },
+  "claude": {
+    "tools": "Read, Write, Grep, Bash",
+    "model": "sonnet"
+  }
+}
+```
+
+### Configuration Fields
+
+#### Authentication & Registry
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `registryUrl` | string | PRPM registry URL | `https://registry.prpm.dev` |
+| `token` | string | Authentication token (set via `prpm login`) | - |
+| `username` | string | Your username (set via `prpm login`) | - |
+
+#### Preferences
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `telemetryEnabled` | boolean | Enable anonymous usage telemetry | `true` |
+| `defaultFormat` | string | Default package format (`cursor`, `claude`, `continue`, `windsurf`) | Auto-detected |
+
+#### Cursor MDC Configuration
+
+The `cursor` field customizes Cursor MDC frontmatter for all installed packages:
+
+```json
+{
+  "cursor": {
+    "version": "1.0.0",
+    "author": "Your Name",
+    "alwaysApply": true,
+    "globs": ["**/*.ts", "**/*.tsx"],
+    "tags": ["typescript", "react"]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `version` | string | Version to add to MDC frontmatter |
+| `author` | string | Author name for MDC frontmatter |
+| `alwaysApply` | boolean | Set `alwaysApply: true` in frontmatter |
+| `globs` | string[] | File glob patterns |
+| `tags` | string[] | Tags to add to packages |
+
+<Note>
+These values are applied when you install packages in Cursor format. They override any values from the package itself.
+</Note>
+
+#### Claude Agent Configuration
+
+The `claude` field customizes Claude agent YAML frontmatter:
+
+```json
+{
+  "claude": {
+    "tools": "Read, Write, Grep, Bash",
+    "model": "sonnet"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `tools` | string | Comma-separated list of tools available to agents |
+| `model` | string | Model to use: `sonnet`, `opus`, `haiku`, or `inherit` |
+
+<Note>
+These values are applied when you install packages in Claude format. User config takes priority over package defaults.
+</Note>
+
+### Managing Global Config
+
+```bash
+# View current config
+cat ~/.prpmrc
+
+# Disable telemetry
+prpm config set telemetryEnabled false
+
+# Set default format
+prpm config set defaultFormat claude
+
+# Set custom registry
+prpm config set registryUrl https://your-registry.com
+```
+
+### Environment Variables
+
+Override configuration with environment variables:
+
+```bash
+# Override registry URL
+export PRPM_REGISTRY_URL=https://custom-registry.com
+
+# Disable telemetry
+export PRPM_TELEMETRY_ENABLED=false
+```
+
+## Repository Configuration
+
+Repository-level configuration allows you to define project-specific settings in your repository root. This is useful for:
+
+- **Team collaboration** - Share consistent format and collection preferences
+- **Project defaults** - Override global settings per-project
+- **Collection tracking** - Track installed collections in version control
+- **Format preferences** - Specify preferred AI tool formats for the project
+
+### Location
+
+```
+your-project/
+├── .prpmrc          ← Repository config
+├── .cursor/
+├── .claude/
+├── package.json
+└── README.md
+```
+
+### Structure
+
+```json
+{
+  "defaultFormat": "cursor",
+  "collections": {
+    "installed": [
+      "frontend-react-ecosystem@1.2.0",
+      "testing-complete@2.0.0"
+    ],
+    "preferredFormats": ["cursor", "claude"],
+    "autoInstall": false,
+    "includeTags": ["react", "typescript"],
+    "excludeTags": ["experimental"]
+  },
+  "cursor": {
+    "version": "0.1.0",
+    "globs": ["src/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
+    "alwaysApply": true,
+    "author": "Frontend Team",
+    "tags": ["react", "typescript"]
+  },
+  "claude": {
+    "model": "sonnet",
+    "tools": "Read,Write,Edit,Bash,Grep"
+  }
+}
+```
+
+### Collections Configuration
+
+Track and configure collection behavior:
+
+```json
+{
+  "collections": {
+    "installed": [
+      "frontend-react-ecosystem@1.2.0",
+      "testing-complete@2.0.0"
+    ],
+    "preferredFormats": ["cursor", "claude"],
+    "defaultCategory": "frontend",
+    "preferOfficial": true,
+    "autoUpdate": false,
+    "includeTags": ["react", "typescript", "testing"],
+    "excludeTags": ["experimental", "beta"],
+    "autoInstall": false
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `installed` | string[] | List of installed collections with versions |
+| `preferredFormats` | string[] | Preferred formats for collection installation |
+| `defaultCategory` | string | Default category when browsing collections |
+| `preferOfficial` | boolean | Prefer official collections in search results |
+| `autoUpdate` | boolean | Automatically update collections |
+| `includeTags` | string[] | Tags to include when searching |
+| `excludeTags` | string[] | Tags to exclude when searching |
+| `autoInstall` | boolean | Auto-install collections from config |
+
+### Example Repository Configs
+
+<CodeGroup>
+
+```json Frontend React Project
+{
+  "defaultFormat": "cursor",
+  "collections": {
+    "installed": [
+      "frontend-react-ecosystem@1.2.0"
+    ],
+    "preferredFormats": ["cursor"],
+    "includeTags": ["react", "typescript", "nextjs"]
+  },
+  "cursor": {
+    "version": "0.1.0",
+    "globs": ["src/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
+    "alwaysApply": true,
+    "author": "Frontend Team",
+    "tags": ["react", "typescript"]
+  }
+}
+```
+
+```json Python Backend Project
+{
+  "defaultFormat": "claude",
+  "collections": {
+    "installed": [
+      "python-backend-complete@2.0.0",
+      "testing-complete@1.5.0"
+    ],
+    "preferredFormats": ["claude", "generic"]
+  },
+  "claude": {
+    "model": "sonnet",
+    "tools": "Read,Write,Edit,Bash,Grep"
+  }
+}
+```
+
+```json Full-Stack TypeScript Project
+{
+  "defaultFormat": "cursor",
+  "collections": {
+    "installed": [
+      "backend-node-typescript@1.0.0",
+      "frontend-react-ecosystem@1.2.0",
+      "database-fullstack@2.1.0",
+      "devops-infrastructure@1.5.0"
+    ],
+    "preferredFormats": ["cursor", "claude"],
+    "autoUpdate": true
+  },
+  "cursor": {
+    "version": "0.1.0",
+    "alwaysApply": true
+  }
+}
+```
+
+</CodeGroup>
+
+### Managing Repository Config
+
+```bash
+# Initialize repository config
+prpm init
+
+# Install and save to config
+prpm install frontend-react-ecosystem --save
+
+# View current repository config
+cat .prpmrc
+
+# Check which config is being used
+prpm config list
+```
+
+### Version Control
+
+<Check>
+**Should you commit `.prpmrc`?**
+
+**Yes** - Commit repository config to share with your team:
+- Consistent format preferences
+- Shared collection installations
+- Team-wide configuration
+</Check>
+
+<Warning>
+**Don't commit** sensitive information:
+- Authentication tokens (only in `~/.prpmrc`)
+- Personal preferences that vary by developer
+</Warning>
+
+## Project Lockfile
+
+The lockfile tracks installed packages in your project, similar to `package-lock.json` or `Cargo.lock`.
+
+### Location
+
+`prpm.lock` is created in your project root directory (wherever you run `prpm install`).
+
+### Structure
+
+```json
+{
+  "version": "1.0.0",
+  "lockfileVersion": 1,
+  "packages": {
+    "react-best-practices": {
+      "version": "2.1.0",
+      "resolved": "https://registry.prpm.dev/packages/react-best-practices/2.1.0/download",
+      "integrity": "sha256-abc123...",
+      "type": "skill",
+      "format": "cursor",
+      "dependencies": {
+        "typescript-strict": "^1.0.0"
+      }
+    }
+  },
+  "generated": "2025-01-20T10:30:00.000Z"
+}
+```
+
+### Lockfile Best Practices
+
+<Check>
+**DO**:
+- Commit `prpm.lock` to version control
+- Let PRPM manage the lockfile automatically
+- Use `prpm install` to sync lockfile with installed packages
+</Check>
+
+<Warning>
+**DON'T**:
+- Manually edit `prpm.lock`
+- Delete `prpm.lock` (it ensures reproducible installs)
+- Ignore `prpm.lock` in `.gitignore`
+</Warning>
+
+## Configuration Workflows
+
+### First-Time Setup
+
+```bash
+# 1. Install PRPM
+npm install -g prpm
+
+# 2. Login (creates ~/.prpmrc with token)
+prpm login
+
+# 3. Configure preferences (optional)
+prpm config set defaultFormat cursor
+prpm config set cursor.author "Your Name"
+```
+
+### Team Setup
+
+<Tabs>
+  <Tab title="Share These">
+    - `prpm.lock` - Ensures everyone has same package versions
+    - `.cursor/rules/` or `.claude/` - The actual installed files
+    - `.prpmrc` - Repository configuration
+  </Tab>
+  <Tab title="Don't Share">
+    - `~/.prpmrc` - Contains personal auth tokens
+  </Tab>
+</Tabs>
+
+### Multi-IDE Setup
+
+If you work with multiple IDEs (Cursor + Claude Code):
+
+```bash
+# Install for Cursor
+prpm install react-patterns --as cursor
+
+# Install for Claude
+prpm install react-patterns --as claude
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Config not being applied">
+    **Solution**:
+    1. Check config exists: `cat ~/.prpmrc`
+    2. Verify format is correct (valid JSON)
+    3. Reinstall package: `prpm install <package> --as cursor`
+  </Accordion>
+
+  <Accordion title="Lockfile conflicts">
+    **Solution**:
+    ```bash
+    # 1. Accept both changes in prpm.lock
+    git checkout --theirs prpm.lock  # or --ours
+
+    # 2. Reinstall to regenerate lockfile
+    prpm install
+
+    # 3. Commit resolved lockfile
+    git add prpm.lock
+    git commit -m "Resolve prpm.lock conflict"
+    ```
+  </Accordion>
+
+  <Accordion title="Reset configuration">
+    **Solution**:
+    ```bash
+    # Backup current config
+    cp ~/.prpmrc ~/.prpmrc.backup
+
+    # Remove config
+    rm ~/.prpmrc
+
+    # Login again (recreates config)
+    prpm login
+
+    # Reconfigure preferences
+    prpm config set defaultFormat cursor
+    ```
+  </Accordion>
+</AccordionGroup>

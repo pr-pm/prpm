@@ -1,0 +1,278 @@
+---
+title: 'Windsurf'
+description: 'Use PRPM packages with Windsurf AI editor'
+icon: 'wind'
+---
+
+## Overview
+
+PRPM supports Windsurf rules files, allowing you to package and distribute custom coding rules for the Windsurf AI editor.
+
+Windsurf uses a simple markdown file for coding rules:
+- **Location**: `.windsurfrules` (root of project)
+- **Format**: Plain markdown without special frontmatter
+- **Scope**: Repository-wide rules and guidelines
+
+## Installation
+
+Install Windsurf rules from the PRPM registry:
+
+```bash
+# Install as windsurf format
+prpm install <package-name> --as windsurf
+
+# Example
+prpm install @prpm/react-best-practices --as windsurf
+```
+
+## Package Structure
+
+### Basic Windsurf Rules File
+
+```markdown .windsurfrules
+# React Best Practices
+
+Follow these guidelines when working with React code.
+
+## Component Structure
+
+- Use functional components with hooks
+- Keep components small and focused
+- Separate business logic from presentation
+
+## State Management
+
+- Use useState for local state
+- Use useReducer for complex state logic
+- Consider Context API for shared state
+
+## Code Style
+
+- Always use TypeScript
+- Prefer const over let
+- Use descriptive variable names
+```
+
+**Install location**: `.windsurfrules`
+
+### Rules with Examples
+
+```markdown
+# Error Handling
+
+## Best Practices
+
+Always use try-catch for async operations:
+
+\`\`\`typescript
+try {
+  const data = await fetchData();
+  return { success: true, data };
+} catch (error) {
+  logger.error('Fetch failed', error);
+  return { success: false, error };
+}
+\`\`\`
+```
+
+## Publishing Windsurf Packages
+
+### 1. Create Package Metadata
+
+```json prpm.json
+{
+  "name": "@your-org/windsurf-rules",
+  "version": "1.0.0",
+  "description": "Custom coding rules for Windsurf",
+  "type": "windsurf",
+  "tags": ["windsurf", "coding-standards", "best-practices"],
+  "category": "coding-standards"
+}
+```
+
+### 2. Create Your Rules File
+
+```markdown rules.md
+# Your Project Rules
+
+Clear, actionable guidelines for your codebase.
+
+## Code Style
+
+- Always use semicolons
+- Prefer const over let
+- Use 2 spaces for indentation
+
+## Testing
+
+- Write tests for all new features
+- Keep tests fast and isolated
+- Use meaningful test descriptions
+```
+
+### 3. Publish
+
+```bash
+prpm publish
+```
+
+## Converting Existing Rules
+
+Convert packages from other formats to Windsurf:
+
+```bash
+# Convert from Cursor to Windsurf
+prpm install cursor-package --as windsurf
+
+# Convert from Claude to Windsurf
+prpm install claude-skill --as windsurf
+
+# Convert from GitHub Copilot to Windsurf
+prpm install copilot-instructions --as windsurf
+```
+
+## Best Practices
+
+<Check>
+**Keep Rules Clear and Actionable**
+
+```markdown
+✅ Good:
+- Use async/await instead of .then() chains
+- Extract complex logic into separate functions
+- Write unit tests for all business logic
+
+❌ Bad:
+- Write good code
+- Be careful
+- Try to avoid bugs
+```
+</Check>
+
+<Tip>
+**Organize by Topic**
+
+```markdown
+# Project Guidelines
+
+## Architecture
+
+- Use feature-based folder structure
+- Keep components in src/components
+- Store utilities in src/utils
+
+## Testing
+
+- Write tests in __tests__ folders
+- Use jest for unit tests
+- Use cypress for E2E tests
+
+## Documentation
+
+- Document all public APIs
+- Include usage examples
+- Keep README up to date
+```
+</Tip>
+
+<Info>
+**Include Context and Rationale**
+
+```markdown
+## Performance Guidelines
+
+- Memoize expensive computations with useMemo
+   - *Rationale: Prevents unnecessary recalculations on every render*
+   - Example: `const total = useMemo(() => items.reduce(...), [items])`
+```
+</Info>
+
+## File Structure
+
+Windsurf uses a single `.windsurfrules` file, so organize your content with clear headers:
+
+```markdown
+# Project Name - Coding Standards
+
+## 1. Code Style
+
+### TypeScript
+- Use strict mode
+- Avoid any type
+
+### Formatting
+- Use Prettier
+- 2 space indentation
+
+## 2. Architecture
+
+### Folder Structure
+- Feature-based organization
+- Shared code in common/
+
+### Module Design
+- Single responsibility
+- Clear interfaces
+
+## 3. Testing
+
+### Unit Tests
+- Test behavior, not implementation
+- Use descriptive names
+
+### Integration Tests
+- Test critical paths
+- Mock external services
+```
+
+## Supported Content
+
+<Check>
+**Supported**
+- Headers (H1-H6)
+- Lists (bullet and numbered)
+- Code blocks with syntax highlighting
+- Bold and italic text
+- Links
+- Blockquotes
+</Check>
+
+<Warning>
+**Not Supported**
+- Special frontmatter (plain markdown only)
+- Custom MDC components
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Rules Not Being Applied">
+    1. Check file location: Must be `.windsurfrules` in project root
+    2. Verify file is plain markdown (no special frontmatter)
+    3. Restart Windsurf to reload rules
+  </Accordion>
+
+  <Accordion title="Formatting Issues">
+    - Use standard markdown syntax
+    - Avoid custom HTML or components
+    - Test with a markdown preview tool
+  </Accordion>
+
+  <Accordion title="File Not Found After Installation">
+    Check that PRPM installed to the correct location:
+    ```bash
+    ls -la .windsurfrules
+    ```
+
+    If missing, try reinstalling:
+    ```bash
+    prpm install <package-name> --as windsurf
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Resources
+
+- [Windsurf Documentation](https://codeium.com/windsurf)
+- [PRPM Publishing Guide](/publishing/getting-started)
+- [Markdown Guide](https://www.markdownguide.org/)
