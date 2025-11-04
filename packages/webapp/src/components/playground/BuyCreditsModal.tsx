@@ -28,7 +28,14 @@ export default function BuyCreditsModal({ onClose, onSuccess }: BuyCreditsModalP
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [purchaseDetails, setPurchaseDetails] = useState<{ credits: number; price: number } | null>(null)
 
+  // Check authentication on mount
   useEffect(() => {
+    const token = localStorage.getItem('prpm_token')
+    if (!token) {
+      // Redirect to login if not authenticated
+      window.location.href = '/login?redirect=/playground?buyCredits=true'
+      return
+    }
     loadPackages()
   }, [])
 
@@ -47,7 +54,8 @@ export default function BuyCreditsModal({ onClose, onSuccess }: BuyCreditsModalP
   const handlePurchase = async (packageId: string) => {
     const token = localStorage.getItem('prpm_token')
     if (!token) {
-      setError('Not authenticated')
+      // Redirect to login if not authenticated
+      window.location.href = '/login?redirect=/playground?buyCredits=true'
       return
     }
 
@@ -254,7 +262,8 @@ export default function BuyCreditsModal({ onClose, onSuccess }: BuyCreditsModalP
                     onClick={async () => {
                       const token = localStorage.getItem('prpm_token')
                       if (!token) {
-                        setError('Not authenticated')
+                        // Redirect to login if not authenticated
+                        window.location.href = '/login?redirect=/playground?buyCredits=true'
                         return
                       }
 
