@@ -132,6 +132,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
           input,
           session_id: body.session_id,
           model: body.model,
+          use_no_prompt: body.use_no_prompt,
         });
 
         return reply.code(200).send(result);
