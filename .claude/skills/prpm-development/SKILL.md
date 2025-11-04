@@ -446,6 +446,7 @@ describe('install', () => {
    - ❌ Wrong: `/playground/shared/[token]/page.tsx` with `'use client'`
    - ✅ Correct: `/playground/shared/page.tsx` with `?token=xxx` query param
    - Implementation: Use `useSearchParams()` instead of `useParams()`
+   - **IMPORTANT**: Must wrap `useSearchParams()` in `<Suspense>` boundary
    - Example:
      ```typescript
      // ❌ Dynamic route (doesn't work with 'use client')
@@ -453,10 +454,23 @@ describe('install', () => {
      const params = useParams();
      const token = params.token;
 
-     // ✅ Query string (works with 'use client')
+     // ✅ Query string with Suspense (works with 'use client')
      // /app/shared/page.tsx
-     const searchParams = useSearchParams();
-     const token = searchParams.get('token');
+     import { Suspense } from 'react';
+
+     function Content() {
+       const searchParams = useSearchParams();
+       const token = searchParams.get('token');
+       // ... component logic
+     }
+
+     export default function Page() {
+       return (
+         <Suspense fallback={<div>Loading...</div>}>
+           <Content />
+         </Suspense>
+       );
+     }
      ```
 
 2. **Server components in static export**
