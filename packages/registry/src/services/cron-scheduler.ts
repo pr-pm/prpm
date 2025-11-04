@@ -7,7 +7,7 @@
  * - Cost monitoring and analytics refresh
  */
 
-import cron from 'node-cron';
+import cron, { ScheduledTask } from 'node-cron';
 import type { FastifyInstance } from 'fastify';
 import { PlaygroundCreditsService } from './playground-credits.js';
 import { CostMonitoringService } from './cost-monitoring.js';
@@ -16,7 +16,7 @@ interface CronJob {
   name: string;
   schedule: string;
   task: () => Promise<void>;
-  cronInstance?: cron.ScheduledTask;
+  cronInstance?: ScheduledTask;
 }
 
 export class CronScheduler {
@@ -232,7 +232,6 @@ export class CronScheduler {
       try {
         job.cronInstance = cron.schedule(job.schedule, job.task, {
           timezone: 'UTC',
-          scheduled: true,
         });
 
         this.server.log.info(

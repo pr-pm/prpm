@@ -4,7 +4,25 @@
  * Provides analytics endpoints for playground author features.
  */
 
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply, RouteGenericInterface } from 'fastify';
+
+interface PackageParamsInterface extends RouteGenericInterface {
+  Params: { packageId: string };
+}
+
+interface InputParamsInterface extends RouteGenericInterface {
+  Params: { inputId: string };
+}
+
+interface PackageTimeSeriesInterface extends RouteGenericInterface {
+  Params: { packageId: string };
+  Querystring: { days?: number };
+}
+
+interface InputTimeSeriesInterface extends RouteGenericInterface {
+  Params: { inputId: string };
+  Querystring: { days?: number };
+}
 
 export async function playgroundAnalyticsRoutes(server: FastifyInstance) {
   // =====================================================
@@ -123,9 +141,7 @@ export async function playgroundAnalyticsRoutes(server: FastifyInstance) {
       },
     },
     async (
-      request: FastifyRequest<{
-        Params: { packageId: string };
-      }>,
+      request: FastifyRequest<PackageParamsInterface>,
       reply: FastifyReply
     ) => {
       try {
@@ -221,9 +237,7 @@ export async function playgroundAnalyticsRoutes(server: FastifyInstance) {
       },
     },
     async (
-      request: FastifyRequest<{
-        Params: { packageId: string };
-      }>,
+      request: FastifyRequest<PackageParamsInterface>,
       reply: FastifyReply
     ) => {
       try {
@@ -345,10 +359,7 @@ export async function playgroundAnalyticsRoutes(server: FastifyInstance) {
       },
     },
     async (
-      request: FastifyRequest<{
-        Params: { packageId: string };
-        Querystring: { days?: number };
-      }>,
+      request: FastifyRequest<PackageTimeSeriesInterface>,
       reply: FastifyReply
     ) => {
       try {
@@ -448,10 +459,7 @@ export async function playgroundAnalyticsRoutes(server: FastifyInstance) {
       },
     },
     async (
-      request: FastifyRequest<{
-        Params: { inputId: string };
-        Querystring: { days?: number };
-      }>,
+      request: FastifyRequest<InputTimeSeriesInterface>,
       reply: FastifyReply
     ) => {
       try {

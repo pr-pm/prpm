@@ -303,7 +303,7 @@ export class PlaygroundService {
 
       // Calculate estimated tokens and API cost
       const totalChars = packagePrompt.length + request.input.length +
-        (conversationHistory.reduce((sum, msg) => sum + msg.content.length, 0));
+        (conversationHistory.reduce((sum: number, msg: PlaygroundMessage) => sum + msg.content.length, 0));
       const estimatedTokens = (totalChars / 4) * 1.3; // 30% buffer
 
       const costEstimate = this.costMonitoring.calculateCost(estimatedTokens, model);

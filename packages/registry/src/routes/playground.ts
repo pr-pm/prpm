@@ -4,7 +4,16 @@
  * Handles playground execution, session management, and sharing.
  */
 
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply, RouteGenericInterface } from 'fastify';
+
+interface ToggleFeaturedInterface extends RouteGenericInterface {
+  Params: { sessionId: string };
+  Body: {
+    is_featured?: boolean;
+    feature_description?: string;
+    feature_display_order?: number;
+  };
+}
 import { z } from 'zod';
 import { PlaygroundService } from '../services/playground.js';
 import { PlaygroundCreditsService } from '../services/playground-credits.js';
@@ -683,14 +692,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
         },
       },
     },
-    async (request: FastifyRequest<{
-      Params: { sessionId: string };
-      Body: {
-        is_featured?: boolean;
-        feature_description?: string;
-        feature_display_order?: number;
-      };
-    }>, reply: FastifyReply) => {
+    async (request: FastifyRequest<ToggleFeaturedInterface>, reply: FastifyReply) => {
       try {
         const { sessionId } = request.params;
         const { is_featured, feature_description, feature_display_order } = request.body;
