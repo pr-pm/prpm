@@ -20,20 +20,20 @@ interface CreditsBalance {
  */
 async function apiCall(endpoint: string): Promise<Response> {
   const config = await getConfig();
-  const baseUrl = config.registry.url.replace(/\/$/, '');
+  const baseUrl = (config.registryUrl || 'https://registry.prpm.dev').replace(/\/$/, '');
 
-  if (!config.auth?.token) {
+  if (!config.token) {
     throw new Error('Authentication required. Please run `prpm login` first.');
   }
 
   const response = await fetch(`${baseUrl}${endpoint}`, {
     headers: {
-      Authorization: `Bearer ${config.auth.token}`,
+      Authorization: `Bearer ${config.token}`,
     },
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await response.json().catch(() => ({} as { message?: string })) as { message?: string };
     throw new Error(errorData.message || `API request failed: ${response.statusText}`);
   }
 
@@ -45,7 +45,7 @@ async function apiCall(endpoint: string): Promise<Response> {
  */
 async function getBalance(): Promise<CreditsBalance> {
   const response = await apiCall('/api/v1/playground/credits/balance');
-  return response.json();
+  return response.json() as Promise<CreditsBalance>;
 }
 
 /**
@@ -117,7 +117,7 @@ export async function handleBuyCredits(options: { package?: string }): Promise<v
 
   try {
     const config = await getConfig();
-    if (!config.auth?.token) {
+    if (!config.token) {
       console.error('❌ Authentication required');
       console.log('\n💡 Please login first:');
       console.log('   prpm login');
@@ -137,7 +137,8 @@ export async function handleBuyCredits(options: { package?: string }): Promise<v
     console.log('💡 Tip: Subscribe to PRPM+ for 100 monthly credits at just $6/month');
 
     // Build URL with package parameter if specified
-    let purchaseUrl = `${config.registry.url.replace(/api\/?$/, '')}/playground/credits/buy`;
+    const baseUrl = (config.registryUrl || 'https://registry.prpm.dev').replace(/api\/?$/, '');
+    let purchaseUrl = `${baseUrl}/playground/credits/buy`;
     if (options.package) {
       const validPackages = ['small', 'medium', 'large'];
       if (!validPackages.includes(options.package)) {

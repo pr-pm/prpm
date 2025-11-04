@@ -62,9 +62,9 @@ async function apiCall(
   body?: any
 ): Promise<Response> {
   const config = await getConfig();
-  const baseUrl = config.registry.url.replace(/\/$/, '');
+  const baseUrl = (config.registryUrl || "https://registry.prpm.dev").replace(/\/$/, '');
 
-  if (!config.auth?.token) {
+  if (!config.token) {
     throw new Error('Authentication required. Please run `prpm login` first.');
   }
 
@@ -72,13 +72,13 @@ async function apiCall(
     method,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.auth.token}`,
+      Authorization: `Bearer ${config.token}`,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await response.json().catch(() => ({} as { message?: string })) as { message?: string };
     throw new Error(errorData.message || `API request failed: ${response.statusText}`);
   }
 
@@ -103,7 +103,7 @@ async function runPlayground(
     session_id: sessionId,
   });
 
-  return response.json();
+  return response.json() as Promise<PlaygroundResponse>;
 }
 
 /**
@@ -244,7 +244,7 @@ export async function handlePlayground(
   try {
     // Validate authentication
     const config = await getConfig();
-    if (!config.auth?.token) {
+    if (!config.token) {
       console.error('❌ Authentication required');
       console.log('\n💡 Please login first:');
       console.log('   prpm login');

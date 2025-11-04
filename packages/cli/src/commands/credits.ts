@@ -31,20 +31,20 @@ interface CreditTransaction {
  */
 async function apiCall(endpoint: string): Promise<Response> {
   const config = await getConfig();
-  const baseUrl = config.registry.url.replace(/\/$/, '');
+  const baseUrl = (config.registryUrl || "https://registry.prpm.dev").replace(/\/$/, '');
 
-  if (!config.auth?.token) {
+  if (!config.token) {
     throw new Error('Authentication required. Please run `prpm login` first.');
   }
 
   const response = await fetch(`${baseUrl}${endpoint}`, {
     headers: {
-      Authorization: `Bearer ${config.auth.token}`,
+      Authorization: `Bearer ${config.token}`,
     },
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await response.json().catch(() => ({} as { message?: string })) as { message?: string };
     throw new Error(errorData.message || `API request failed: ${response.statusText}`);
   }
 
@@ -58,7 +58,7 @@ async function showBalance(): Promise<void> {
   console.log('💳 Fetching playground credits balance...\n');
 
   const response = await apiCall('/api/v1/playground/credits/balance');
-  const balance: CreditsBalance = await response.json();
+  const balance: CreditsBalance = await response.json() as CreditsBalance;
 
   console.log('═'.repeat(60));
   console.log('  PLAYGROUND CREDITS BALANCE');
@@ -109,7 +109,7 @@ async function showHistory(limit: number = 10): Promise<void> {
   console.log(`💳 Fetching recent credit transactions...\n`);
 
   const response = await apiCall(`/api/v1/playground/credits/transactions?limit=${limit}`);
-  const data: { transactions: CreditTransaction[] } = await response.json();
+  const data: { transactions: CreditTransaction[] } = await response.json() as { transactions: CreditTransaction[] };
 
   if (data.transactions.length === 0) {
     console.log('No transaction history yet.');
@@ -150,7 +150,7 @@ export async function handleCredits(options: {
 
   try {
     const config = await getConfig();
-    if (!config.auth?.token) {
+    if (!config.token) {
       console.error('❌ Authentication required');
       console.log('\n💡 Please login first:');
       console.log('   prpm login');

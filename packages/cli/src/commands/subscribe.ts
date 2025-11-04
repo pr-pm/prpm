@@ -21,20 +21,20 @@ interface CreditsBalance {
  */
 async function apiCall(endpoint: string): Promise<Response> {
   const config = await getConfig();
-  const baseUrl = config.registry.url.replace(/\/$/, '');
+  const baseUrl = (config.registryUrl || "https://registry.prpm.dev").replace(/\/$/, '');
 
-  if (!config.auth?.token) {
+  if (!config.token) {
     throw new Error('Authentication required. Please run `prpm login` first.');
   }
 
   const response = await fetch(`${baseUrl}${endpoint}`, {
     headers: {
-      Authorization: `Bearer ${config.auth.token}`,
+      Authorization: `Bearer ${config.token}`,
     },
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await response.json().catch(() => ({} as { message?: string })) as { message?: string };
     throw new Error(errorData.message || `API request failed: ${response.statusText}`);
   }
 
@@ -46,7 +46,7 @@ async function apiCall(endpoint: string): Promise<Response> {
  */
 async function getSubscriptionStatus(): Promise<CreditsBalance> {
   const response = await apiCall('/api/v1/playground/credits/balance');
-  return response.json();
+  return response.json() as Promise<CreditsBalance>;
 }
 
 /**
@@ -118,7 +118,7 @@ export async function handleSubscribe(): Promise<void> {
 
   try {
     const config = await getConfig();
-    if (!config.auth?.token) {
+    if (!config.token) {
       console.error('❌ Authentication required');
       console.log('\n💡 Please login first:');
       console.log('   prpm login');
@@ -150,7 +150,7 @@ export async function handleSubscribe(): Promise<void> {
     console.log('   $3/month for verified organization members (50% off)');
 
     // Open subscription page
-    const subscribeUrl = `${config.registry.url.replace(/api\/?$/, '')}/playground/credits/subscribe`;
+    const subscribeUrl = `${(config.registryUrl || "https://registry.prpm.dev").replace(/api\/?$/, '')}/playground/credits/subscribe`;
     console.log(`\n🌐 Opening subscription page in your browser...`);
     await openBrowser(subscribeUrl);
 
