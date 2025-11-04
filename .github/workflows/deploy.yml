@@ -30,11 +30,6 @@ on:
           - all
           - registry-only
           - webapp-only
-      skip_ssg:
-        description: 'Skip SSG (faster webapp build, no pre-rendered pages)'
-        required: false
-        default: false
-        type: boolean
 
 env:
   AWS_REGION: us-west-2
@@ -376,27 +371,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # SSG Strategy:
-      # - Scheduled builds (every 6h): Run SSG to pick up new packages/collections
-      # - Push to main: Skip SSG for faster deploys (code changes don't need full rebuild)
-      # - Manual deploys: Choose via skip_ssg checkbox
-      #
-      # Benefits of skipping SSG:
-      # - Much faster builds (~2 min vs ~10 min)
-      # - Good for quick fixes, UI changes, bug fixes
-      # - Pages still work, just not pre-rendered (rendered on-demand)
-
       - name: Prepare SSG data
-        # Only do SSG for scheduled builds (to pick up new packages) or manual deploys without skip_ssg
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_ssg != 'true')
         run: |
           # Use centralized script for SSG data preparation
           chmod +x scripts/prepare-ssg-data.sh
           DEBUG=true ./scripts/prepare-ssg-data.sh
 
-      - name: Build webapp with SSG
-        # Only do SSG for scheduled builds (to pick up new packages) or manual deploys without skip_ssg
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_ssg != 'true')
+      - name: Build webapp
         run: |
           cd packages/webapp
           npm ci
@@ -407,19 +388,6 @@ jobs:
           REGISTRY_URL: "https://registry.prpm.dev"
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
           # Don't set NEXT_PUBLIC_S3_SEO_DATA_URL - we want to use local files only during build
-
-      - name: Build webapp (fast mode, no SSG)
-        # Fast mode: skip SSG for push events (code changes) or manual deploys with skip_ssg=true
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_ssg == 'true')
-        run: |
-          cd packages/webapp
-          npm ci
-          SKIP_SSG=true npm run build
-        env:
-          CI: false
-          NEXT_PUBLIC_REGISTRY_URL: "https://registry.prpm.dev"
-          REGISTRY_URL: "https://registry.prpm.dev"
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
 
       - name: Verify build output
         run: |
