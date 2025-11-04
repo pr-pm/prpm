@@ -313,6 +313,7 @@ export default function PlaygroundInterface({
     }, 500)
 
     return () => clearTimeout(debounce)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageId, input, model])
 
   return (

@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+// Required for static export with dynamic routes
+// Returns empty array since these are user-generated, client-side only routes
+export function generateStaticParams() {
+  return [];
+}
+
 interface PlaygroundMessage {
   role: 'user' | 'assistant';
   content: string;

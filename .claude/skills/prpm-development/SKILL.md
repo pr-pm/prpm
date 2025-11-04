@@ -419,7 +419,9 @@ describe('install', () => {
 
 ## Deployment
 
-### AWS Infrastructure (Elastic Beanstalk)
+### AWS Infrastructure
+
+#### Registry Backend (Elastic Beanstalk)
 - **Environment**: Node.js 20 on 64bit Amazon Linux 2023
 - **Instance**: t3.micro (cost-optimized)
 - **Database**: RDS PostgreSQL
@@ -427,10 +429,41 @@ describe('install', () => {
 - **DNS**: Route 53
 - **SSL**: ACM certificates
 
+#### Webapp (S3 Static Export) ⚠️ CRITICAL
+**The webapp MUST be deployable as a static site via S3/CloudFront.**
+
+**Requirements:**
+- Next.js with `output: 'export'` configuration
+- **NO server-side rendering (SSR)** - all pages must be static or client-side rendered
+- **NO API routes** - all API calls go to the registry backend
+- **Dynamic routes require `generateStaticParams()`** - return empty array `[]` for client-side only routes
+- All data fetching must be client-side (useEffect, fetch, etc.)
+
+**Common Issues:**
+1. **Dynamic routes without `generateStaticParams()`**
+   - Error: `Page "/path/[param]" is missing "generateStaticParams()"`
+   - Fix: Add `export function generateStaticParams() { return []; }` for client-side routes
+   - Example: `/playground/shared/[token]` uses empty array since tokens are user-generated
+
+2. **Server components in static export**
+   - All pages with dynamic content must use `'use client'` directive
+   - Shared session pages, playground interfaces, etc. are client-rendered
+
+3. **Environment variables**
+   - Build-time: Embedded in static bundle (public/exposed)
+   - Runtime: Fetched via API from registry backend
+
+**Why S3 Static Export?**
+- Cost: $0.023/GB vs $30+/month for server hosting
+- Scale: CloudFront CDN handles traffic spikes
+- Reliability: No server maintenance or downtime
+- Performance: Pre-rendered static pages are instant
+
 ### GitHub Actions Workflows
 - **Test & Deploy**: Runs on push to main
 - **NPM Publish**: Manual trigger for releases
 - **Homebrew Publish**: Updates tap formula
+- **Webapp Deploy**: Builds static export and deploys to S3
 
 ### Publishing PRPM to NPM
 
