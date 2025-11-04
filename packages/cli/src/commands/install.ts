@@ -50,6 +50,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'kiro': '🎯',
     'mcp': '🔗',
     'agents.md': '📝',
+    'openskills': '🎓',
     'generic': '📦',
   };
 
@@ -67,6 +68,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'continue': 'Continue',
     'copilot': 'GitHub Copilot',
     'kiro': 'Kiro',
+    'openskills': 'OpenSkills',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
     'generic': '',

@@ -35,6 +35,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'kiro': '🎯',
     'mcp': '🔗',
     'agents.md': '📝',
+    'openskills': '🎓',
     'generic': '📦',
   };
 
@@ -54,6 +55,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'kiro': 'Kiro',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
+    'openskills': 'OpenSkills',
     'generic': '',
   };
 

@@ -1,0 +1,61 @@
+Today PRPM adds native OpenSkills format support. This took less than 1 day to implement—showing how PRPM's architecture makes it easy to support new formats.
+
+The Problem:
+AI coding tools are fragmented. Cursor, Claude Code, Continue, Windsurf, GitHub Copilot all use different formats for prompts and skills. This creates duplication, vendor lock-in, and makes sharing hard.
+
+The Solution:
+OpenSkills launched Oct 26 as a universal skills loader—one format that works across multiple AI coding platforms. It gained 629 stars in 2 days, signaling strong demand for universal formats.
+
+PRPM now bridges these ecosystems with automatic format conversion.
+
+What This Means:
+
+Publish Once, Install Anywhere
+Write a skill in OpenSkills format, publish to PRPM, users install in their preferred format (Cursor, Claude, Continue, Windsurf, etc.)
+
+Centralized Discovery
+OpenSkills uses GitHub for distribution. PRPM adds a centralized registry with search, categories, analytics, and versioning.
+
+How PRPM's Architecture Made This Fast:
+
+At the core of PRPM is a canonical format—a universal representation for all prompts, skills, and agents. Every format just needs two functions: to/from canonical.
+
+This means we don't need N×N converters. Just N converters total. Adding OpenSkills required just:
+- fromOpenSkills() - Parse SKILL.md to canonical
+- toOpenSkills() - Convert canonical to SKILL.md
+
+Once those exist, OpenSkills packages can instantly convert to all 8 other formats PRPM supports.
+
+Technical Quality:
+- 11/11 tests passing
+- Robust YAML parsing with js-yaml (8.7M weekly downloads)
+- Conversion quality scoring (95-100% for most content)
+- Graceful degradation for edge cases
+- Server-side caching with Redis
+
+This is Infrastructure:
+
+PRPM isn't just another package registry. It's infrastructure for the AI coding ecosystem—like npm, cargo, and pip.
+
+The architecture decisions (canonical format, converter pattern, quality scoring, caching) mean:
+- Adding new formats takes hours, not weeks
+- Quality is consistent across all converters
+- Users get choice—publish once, install anywhere
+- Ecosystem grows together
+
+Why This Matters:
+
+Network Effects: OpenSkills community + PRPM community = stronger ecosystem for everyone
+
+Reduces Fragmentation: One package, many formats. No more rewriting the same skill for different tools.
+
+Future-Proof: As new AI coding tools emerge, they'll likely support OpenSkills or other established formats. PRPM can add support quickly.
+
+Try it today:
+
+npm install -g prpm
+prpm install @user/python-expert --as openskills
+
+Read the full blog post: https://prpm.dev/blog/openskills-support
+
+#AI #DeveloperTools #OpenSource #PackageManager #Infrastructure

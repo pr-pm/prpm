@@ -2,7 +2,7 @@
  * Core types for the Prompt Package Manager
  */
 
-export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
+export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'openskills' | 'generic' | 'mcp';
 export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'collection' | 'chatmode' | 'tool';
 
 /**
@@ -17,6 +17,7 @@ export const FORMATS: readonly Format[] = [
   'copilot',
   'kiro',
   'agents.md',
+  'openskills',
   'generic',
   'mcp',
 ] as const;

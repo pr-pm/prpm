@@ -2,6 +2,55 @@
 
 This directory contains utility scripts for the PRPM project.
 
+## Hook Management Scripts
+
+### install-hooks-globally.sh
+
+Installs PRPM blog writer hooks to your global Claude Code settings (`~/.claude/settings.json`).
+
+**Usage:**
+```bash
+./scripts/install-hooks-globally.sh
+```
+
+**What it does:**
+- Backs up your existing `~/.claude/settings.json`
+- Merges PRPM blog post hooks into global settings
+- Skips hooks that are already installed
+- Preserves existing hooks and settings
+
+**Installed hooks:**
+- `Write:packages/webapp/src/app/blog/*/page.tsx` - Triggers on new blog posts
+- `Edit:packages/webapp/src/app/blog/*/page.tsx` - Triggers on blog post edits
+
+**Effect:**
+After installation, whenever you create or edit blog post files in any PRPM project, you'll see a reminder to review with the `prpm-blog-writer` agent.
+
+### uninstall-hooks-globally.sh
+
+Removes PRPM blog writer hooks from your global Claude Code settings.
+
+**Usage:**
+```bash
+./scripts/uninstall-hooks-globally.sh
+```
+
+**Reverting:**
+Both scripts create backups at `~/.claude/settings.json.backup`. To revert:
+```bash
+cp ~/.claude/settings.json.backup ~/.claude/settings.json
+```
+
+**Why use global hooks?**
+- ✅ Work across all Claude Code sessions
+- ✅ Work immediately, no cd needed
+- ✅ Consistent experience across all projects
+- ✅ Personal workflow optimization
+
+See [`.claude/README.md`](../.claude/README.md) for full documentation.
+
+---
+
 ## prepare-ssg-data.sh
 
 Prepares SSG (Static Site Generation) data for Next.js builds by downloading data from S3 and creating fallback files if needed.

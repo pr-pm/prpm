@@ -1,0 +1,7 @@
+PRPM now supports OpenSkills format—added in less than 1 day thanks to our canonical format architecture.
+
+OpenSkills is a universal skills loader that launched Oct 26 with 629 stars in 2 days. Strong community momentum.
+
+Publish once in OpenSkills format, install in any format (Cursor, Claude, Continue, Windsurf). Same infrastructure pattern as npm, cargo, pip.
+
+https://prpm.dev/blog/openskills-support

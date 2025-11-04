@@ -1,0 +1,254 @@
+---
+title: 'OpenSkills Compatibility'
+description: 'Using OpenSkills format with PRPM'
+---
+
+PRPM now supports the **OpenSkills** format, allowing you to publish and install packages compatible with the [OpenSkills](https://github.com/numman-ali/openskills) universal skills loader.
+
+## What is OpenSkills?
+
+OpenSkills is a universal skills loader for AI coding agents that replicates Anthropic's Claude Code skills system across multiple AI platforms (Claude Code, Cursor, Windsurf, Aider).
+
+**Key Features:**
+- Universal SKILL.md format
+- Works across multiple AI editors
+- Progressive skill disclosure
+- CLI-based skill management
+
+## Installing OpenSkills Packages
+
+Install any OpenSkills-compatible package from PRPM:
+
+```bash
+# Install as OpenSkills format
+prpm install @user/python-expert --as openskills
+
+# Installs to: .claude/skills/python-expert/SKILL.md
+```
+
+PRPM automatically places OpenSkills packages in `.claude/skills/{package-name}/SKILL.md`, following OpenSkills conventions.
+
+## Publishing OpenSkills Packages
+
+### 1. Create SKILL.md
+
+Create a skill using OpenSkills format:
+
+```markdown
+---
+name: python-expert
+description: Expert Python development guidance with best practices
+---
+
+# Python Expert
+
+This skill provides comprehensive Python development guidance.
+
+## When to Use
+
+Load this skill when:
+- Writing Python code
+- Debugging Python issues
+- Optimizing Python performance
+
+## Instructions
+
+To write idiomatic Python:
+
+1. Follow PEP 8 style guidelines
+2. Use type hints for function signatures
+3. Prefer list comprehensions over loops
+4. Use context managers for resource management
+
+## Best Practices
+
+- Write in imperative form: "To do X, execute Y"
+- Keep SKILL.md under 5,000 words
+- Move detailed content to references/ directory
+- Use scripts/ for executable code
+```
+
+### 2. Create prpm.json
+
+```json
+{
+  "name": "python-expert",
+  "version": "1.0.0",
+  "description": "Expert Python development guidance",
+  "format": "openskills",
+  "subtype": "skill",
+  "author": "your-username",
+  "tags": ["python", "development", "best-practices"],
+  "files": ["SKILL.md"]
+}
+```
+
+### 3. Publish
+
+```bash
+prpm publish --format openskills
+```
+
+## Format Conversion
+
+PRPM can convert between OpenSkills and other formats:
+
+```bash
+# Convert Claude skill to OpenSkills
+prpm convert my-skill.md --to openskills
+
+# Convert OpenSkills to Cursor
+prpm convert SKILL.md --to cursor
+
+# Install OpenSkills package as Cursor format
+prpm install @user/python-expert --as cursor
+```
+
+### Conversion Quality
+
+**High Quality (95-100%):**
+- OpenSkills ↔ Claude Skills (both use similar markdown + frontmatter)
+- Instructions, rules, examples convert cleanly
+
+**Lossy Conversions:**
+- **Tools** → Converted to markdown section (OpenSkills doesn't have explicit tools support)
+- **Persona** → Converted to markdown section (OpenSkills doesn't have persona concept)
+
+## OpenSkills Directory Structure
+
+OpenSkills supports bundled resources:
+
+```
+my-skill/
+├── SKILL.md               # Main skill instructions
+├── references/            # Optional supporting docs
+│   └── api-guide.md
+├── scripts/               # Optional helper scripts
+│   └── setup.sh
+└── assets/                # Optional templates/configs
+    └── template.py
+```
+
+PRPM packages these automatically when you include them in the `files` array:
+
+```json
+{
+  "files": [
+    "SKILL.md",
+    "references/api-guide.md",
+    "scripts/setup.sh"
+  ]
+}
+```
+
+## OpenSkills vs PRPM Skills
+
+| Feature | OpenSkills | PRPM |
+|---------|-----------|------|
+| **Format** | SKILL.md only | Multiple formats (Cursor, Claude, Continue, Windsurf, etc.) |
+| **Discovery** | GitHub-based | Centralized registry with search |
+| **Installation** | CLI tool | CLI + Web UI |
+| **Conversion** | Not supported | Auto-converts between all formats |
+| **Collections** | Not supported | Bundle multiple packages |
+| **Analytics** | No | Downloads, views, trends |
+
+## Using Both Together
+
+OpenSkills and PRPM complement each other:
+
+**OpenSkills** - Universal skills format, multi-platform support
+**PRPM** - Discovery, versioning, format conversion, collections
+
+### Example Workflow
+
+```bash
+# 1. Publish to PRPM in OpenSkills format
+prpm publish --format openskills
+
+# 2. Users discover via PRPM registry
+prpm search python
+
+# 3. Install with auto-conversion to their preferred format
+prpm install @you/python-expert --as cursor
+
+# 4. Or install in native OpenSkills format
+prpm install @you/python-expert --as openskills
+```
+
+## Best Practices
+
+### Writing OpenSkills-Compatible Content
+
+1. **Use Imperative Form**
+   ```markdown
+   ✅ To debug issues, add logging statements
+   ❌ You should add logging statements to debug
+   ```
+
+2. **Keep Skills Focused**
+   - One skill = one domain/capability
+   - Under 5,000 words in SKILL.md
+   - Move details to references/
+
+3. **Structure Instructions Clearly**
+   ```markdown
+   ## When to Use
+   Load this skill when...
+
+   ## Instructions
+   Step-by-step guidance...
+
+   ## Best Practices
+   Key principles...
+   ```
+
+4. **Include Examples**
+   - Show good vs bad examples
+   - Provide code snippets
+   - Demonstrate common patterns
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="OpenSkills GitHub" icon="github" href="https://github.com/numman-ali/openskills">
+    Official OpenSkills repository
+  </Card>
+  <Card title="OpenSkills CLI" icon="terminal" href="https://www.npmjs.com/package/openskills">
+    OpenSkills NPM package
+  </Card>
+  <Card title="PRPM Search" icon="magnifying-glass" href="https://prpm.dev/search?format=openskills">
+    Browse OpenSkills packages
+  </Card>
+  <Card title="Publishing Guide" icon="upload" href="/publishing/overview">
+    PRPM publishing documentation
+  </Card>
+</CardGroup>
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Can I convert existing PRPM packages to OpenSkills?">
+    Yes! Use `prpm convert <file> --to openskills` or install with `--as openskills` flag. PRPM automatically converts from any supported format.
+  </Accordion>
+
+  <Accordion title="Where are OpenSkills packages installed?">
+    PRPM installs OpenSkills packages to `.claude/skills/{package-name}/SKILL.md` following OpenSkills conventions.
+  </Accordion>
+
+  <Accordion title="Do I need OpenSkills CLI to use OpenSkills format in PRPM?">
+    No. PRPM has native OpenSkills support built-in. However, you can use both tools together - PRPM for discovery/publishing, OpenSkills CLI for management.
+  </Accordion>
+
+  <Accordion title="What's lost when converting to/from OpenSkills?">
+    OpenSkills doesn't support:
+    - Explicit tools lists (converted to markdown)
+    - Persona sections (converted to markdown)
+    - Multi-file agents (only SKILL.md supported)
+
+    These limitations result in 85-95% conversion quality scores.
+  </Accordion>
+
+  <Accordion title="Can I publish the same package in multiple formats?">
+    Yes! Publish once in any format, and PRPM automatically converts to all supported formats on-demand. Users can install in their preferred format.
+  </Accordion>
+</AccordionGroup>
