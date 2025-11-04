@@ -9,6 +9,7 @@ import type { PlaygroundMessage, Package } from '../../lib/api'
 interface PlaygroundInterfaceProps {
   initialPackageId?: string
   sessionId?: string
+  initialCompareMode?: boolean
   onCreditsChange: () => void
   onSessionCreated: () => void
 }
@@ -16,11 +17,12 @@ interface PlaygroundInterfaceProps {
 export default function PlaygroundInterface({
   initialPackageId,
   sessionId,
+  initialCompareMode = false,
   onCreditsChange,
   onSessionCreated,
 }: PlaygroundInterfaceProps) {
   // Comparison mode state
-  const [comparisonMode, setComparisonMode] = useState(false)
+  const [comparisonMode, setComparisonMode] = useState(initialCompareMode)
 
   // Package A (original/left side)
   const [packageId, setPackageId] = useState(initialPackageId || '')

@@ -17,6 +17,7 @@ function PlaygroundContent() {
   const buyCredits = searchParams.get('buyCredits')
   const purchaseSuccess = searchParams.get('purchase')
   const subscriptionStatus = searchParams.get('subscription')
+  const compareMode = searchParams.get('compare') === 'true'
 
   const [credits, setCredits] = useState<CreditBalance | null>(null)
   const [sessions, setSessions] = useState<PlaygroundSession[]>([])
@@ -185,9 +186,23 @@ function PlaygroundContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                PRPM+ Playground
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                  PRPM+ Playground
+                </h1>
+                <a
+                  href="https://github.com/pr-pm/prpm/issues"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-xs font-semibold rounded-full hover:bg-yellow-500/20 transition"
+                  title="Report issues on GitHub"
+                >
+                  <span>BETA</span>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Test prompts with AI agents in a virtual environment
               </p>
@@ -221,6 +236,7 @@ function PlaygroundContent() {
             <PlaygroundInterface
               initialPackageId={packageId || undefined}
               sessionId={selectedSession || undefined}
+              initialCompareMode={compareMode}
               onCreditsChange={handleRefreshCredits}
               onSessionCreated={handleRefreshSessions}
             />
