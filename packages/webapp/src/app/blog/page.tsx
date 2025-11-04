@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "playground-launch",
+    title: "Introducing PRPM Playground: Test AI Prompts Before You Install",
+    excerpt: "Test any PRPM package with real AI models directly in your browser or CLI. Compare results, share discoveries, and make informed decisions before installing. Start with 5 free credits.",
+    date: "2025-11-04",
+    author: "PRPM Team",
+    readTime: "8 min read",
+    tags: ["Launch", "Feature", "Playground", "Testing"],
+  },
+  {
     slug: "top-50-cursor-rules",
     title: "Top 50 Cursor Rules to Supercharge Your Development Workflow",
     excerpt: "We analyzed over 1,000 cursor rules to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.",
