@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "self-improving-ai",
+    title: "Self-Improving AI: How PRPM Teaches AI Assistants to Get Better at Their Job",
+    excerpt: "Watch AI assistants automatically discover and install expertise packages from PRPM when they need specialized knowledge. A new paradigm for distributable intelligence.",
+    date: "2025-11-05",
+    author: "PRPM Team",
+    readTime: "12 min read",
+    tags: ["Technical", "Innovation", "AI Development", "Self-Improvement"],
+  },
+  {
     slug: "playground-launch",
     title: "Introducing PRPM Playground: Test AI Prompts Before You Install",
     excerpt: "Test any PRPM package with real AI models directly in your browser or CLI. Compare results, share discoveries, and make informed decisions before installing. Start with 5 free credits.",
