@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { PackageInfo } from '@pr-pm/types'
 import CopyInstallCommand from '@/components/CopyInstallCommand'
+import SharedResults from '@/components/SharedResults'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 // During build, don't set a default S3 URL - we want to use local files only
@@ -308,6 +309,11 @@ export default async function PackagePage({ params }: { params: { author: string
             </div>
           </div>
         )}
+
+        {/* Shared Test Results */}
+        <div className="mb-8">
+          <SharedResults packageId={pkg.id} limit={5} />
+        </div>
 
         {/* README */}
         {pkg.readme && (

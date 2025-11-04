@@ -499,11 +499,145 @@ export async function playgroundRoutes(server: FastifyInstance) {
           });
         }
 
+        // Record view (get viewer user ID if authenticated, IP hash for anonymous)
+        const viewerUserId = request.user?.user_id || null;
+        const ipHash = await playgroundService.recordView(
+          session.id,
+          viewerUserId,
+          request.ip
+        );
+
         return reply.code(200).send(session);
       } catch (error: any) {
         server.log.error({ error }, 'Failed to get shared session');
         return reply.code(500).send({
           error: 'get_shared_session_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/shared/:token/feedback
+  // Record helpful/not-helpful feedback on shared result
+  // =====================================================
+  server.post(
+    '/shared/:token/feedback',
+    {
+      schema: {
+        description: 'Record helpful/not-helpful feedback on shared result',
+        tags: ['playground'],
+        params: {
+          type: 'object',
+          properties: {
+            token: { type: 'string' },
+          },
+          required: ['token'],
+        },
+        body: {
+          type: 'object',
+          required: ['is_helpful'],
+          properties: {
+            is_helpful: { type: 'boolean' },
+            feedback_text: { type: 'string', maxLength: 1000 },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { token } = request.params as { token: string };
+        const { is_helpful, feedback_text } = request.body as {
+          is_helpful: boolean;
+          feedback_text?: string;
+        };
+
+        // Get session to verify it exists
+        const session = await playgroundService.getSessionByShareToken(token);
+        if (!session) {
+          return reply.code(404).send({
+            error: 'session_not_found',
+            message: 'Shared session not found',
+          });
+        }
+
+        // Record feedback (requires view_id from a previous view)
+        await playgroundService.recordFeedback(
+          session.id,
+          request.user?.user_id || null,
+          request.ip,
+          is_helpful,
+          feedback_text
+        );
+
+        return reply.code(200).send({
+          message: 'Feedback recorded successfully',
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to record feedback');
+        return reply.code(400).send({
+          error: 'record_feedback_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // GET /api/v1/playground/packages/:packageId/top-results
+  // Get top shared results for a package
+  // =====================================================
+  server.get(
+    '/packages/:packageId/top-results',
+    {
+      schema: {
+        description: 'Get top shared playground results for a package',
+        tags: ['playground'],
+        params: {
+          type: 'object',
+          properties: {
+            packageId: { type: 'string', format: 'uuid' },
+          },
+          required: ['packageId'],
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', default: 10, maximum: 50 },
+            sort: { type: 'string', enum: ['popular', 'recent', 'helpful'], default: 'popular' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              results: { type: 'array' },
+              total: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { packageId } = request.params as { packageId: string };
+        const { limit = 10, sort = 'popular' } = request.query as any;
+
+        const results = await playgroundService.getTopResultsForPackage(
+          packageId,
+          Math.min(limit, 50),
+          sort
+        );
+
+        return reply.code(200).send({
+          results: results.results,
+          total: results.total,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to get top results');
+        return reply.code(500).send({
+          error: 'get_top_results_failed',
           message: error.message,
         });
       }

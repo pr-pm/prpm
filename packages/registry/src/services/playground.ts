@@ -916,4 +916,127 @@ export class PlaygroundService {
       ]
     );
   }
+
+  /**
+   * Record a view on a shared result
+   * Returns IP hash for tracking
+   */
+  async recordView(
+    sessionId: string,
+    viewerUserId: string | null,
+    ip: string
+  ): Promise<string> {
+    // Create SHA-256 hash of IP for privacy
+    const crypto = await import('crypto');
+    const ipHash = crypto.createHash('sha256').update(ip).digest('hex');
+
+    // Use the database function to record view and update counters
+    await this.server.pg.query(
+      `SELECT record_shared_result_view($1, $2, $3)`,
+      [sessionId, viewerUserId, ipHash]
+    );
+
+    return ipHash;
+  }
+
+  /**
+   * Record helpful/not-helpful feedback on shared result
+   */
+  async recordFeedback(
+    sessionId: string,
+    viewerUserId: string | null,
+    ip: string,
+    isHelpful: boolean,
+    feedbackText?: string
+  ): Promise<void> {
+    // Create IP hash
+    const crypto = await import('crypto');
+    const ipHash = crypto.createHash('sha256').update(ip).digest('hex');
+
+    // Find the most recent view by this user/IP
+    const viewResult = await this.server.pg.query(
+      `SELECT id FROM shared_result_views
+       WHERE session_id = $1
+         AND (
+           ($2::uuid IS NOT NULL AND viewer_user_id = $2)
+           OR ($3 IS NOT NULL AND ip_hash = $3)
+         )
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [sessionId, viewerUserId, ipHash]
+    );
+
+    if (viewResult.rows.length === 0) {
+      throw new Error('No view record found. Please view the result first.');
+    }
+
+    const viewId = viewResult.rows[0].id;
+
+    // Use the database function to record feedback and update counters
+    await this.server.pg.query(
+      `SELECT record_helpful_feedback($1, $2, $3, $4)`,
+      [sessionId, viewId, isHelpful, feedbackText || null]
+    );
+  }
+
+  /**
+   * Get top shared results for a package
+   */
+  async getTopResultsForPackage(
+    packageId: string,
+    limit: number = 10,
+    sort: 'popular' | 'recent' | 'helpful' = 'popular'
+  ): Promise<{ results: any[]; total: number }> {
+    let orderBy: string;
+    switch (sort) {
+      case 'popular':
+        orderBy = 'view_count DESC, helpful_count DESC, shared_at DESC';
+        break;
+      case 'recent':
+        orderBy = 'shared_at DESC';
+        break;
+      case 'helpful':
+        orderBy = 'helpfulness_ratio DESC, helpful_count DESC';
+        break;
+      default:
+        orderBy = 'view_count DESC';
+    }
+
+    const result = await this.server.pg.query(
+      `SELECT
+        session_id,
+        share_token,
+        package_name,
+        package_version,
+        model,
+        view_count,
+        helpful_count,
+        not_helpful_count,
+        helpfulness_ratio,
+        user_input,
+        assistant_response,
+        credits_spent,
+        total_tokens,
+        shared_at,
+        created_at
+       FROM top_shared_results
+       WHERE package_id = $1
+         AND rank_by_popularity <= $2
+       ORDER BY ${orderBy}
+       LIMIT $2`,
+      [packageId, limit]
+    );
+
+    // Also get total count of public results for this package
+    const countResult = await this.server.pg.query(
+      `SELECT COUNT(*) FROM playground_sessions
+       WHERE package_id = $1 AND is_public = TRUE AND share_token IS NOT NULL`,
+      [packageId]
+    );
+
+    return {
+      results: result.rows,
+      total: parseInt(countResult.rows[0].count),
+    };
+  }
 }

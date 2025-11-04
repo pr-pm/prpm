@@ -198,6 +198,29 @@ export class CronScheduler {
           }
         },
       },
+
+      // =====================================================
+      // SHARED RESULTS ANALYTICS REFRESH
+      // Hourly at :30 (offset from cost analytics)
+      // =====================================================
+      {
+        name: 'Shared Results Analytics Refresh',
+        schedule: '30 * * * *', // Every hour at :30
+        task: async () => {
+          try {
+            this.server.log.info('🔄 Refreshing shared results analytics...');
+
+            await this.server.pg.query('SELECT refresh_top_shared_results()');
+
+            this.server.log.info('✅ Shared results analytics refresh completed');
+          } catch (error) {
+            this.server.log.error(
+              { error },
+              '❌ Shared results analytics refresh failed'
+            );
+          }
+        },
+      },
     ];
   }
 
@@ -267,6 +290,17 @@ export class CronScheduler {
         this.server.log.error({ error }, '❌ Initial cost analytics refresh failed');
       }
     }, 10000);
+
+    // Refresh shared results analytics after 15 seconds
+    setTimeout(async () => {
+      try {
+        this.server.log.info('🔄 Initial shared results analytics refresh on startup...');
+        await this.server.pg.query('SELECT refresh_top_shared_results()');
+        this.server.log.info('✅ Initial shared results analytics refresh completed');
+      } catch (error) {
+        this.server.log.error({ error }, '❌ Initial shared results analytics refresh failed');
+      }
+    }, 15000);
   }
 
   /**
