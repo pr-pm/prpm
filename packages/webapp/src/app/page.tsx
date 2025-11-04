@@ -24,12 +24,38 @@ export default function Home() {
   }
   return (
     <main className="min-h-screen bg-prpm-dark relative overflow-hidden">
+      {/* Playground Launch Announcement Banner */}
+      <div className="relative z-50 bg-gradient-to-r from-[#1a472a] via-[#2a5a3a] to-[#1a472a] border-b border-prpm-accent/30">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-xs font-semibold text-white">
+                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                NEW
+              </span>
+              <p className="text-sm sm:text-base text-white font-medium truncate">
+                Introducing PRPM+ Playground: Test prompts with Claude, GPT-4o & more!
+              </p>
+            </div>
+            <Link
+              href="/playground"
+              className="flex cursor-pointer items-center gap-1.5 px-4 py-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg text-sm font-semibold text-white transition-all border border-white/20 hover:border-white/40 whitespace-nowrap"
+            >
+              Try it now
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Animated background grid */}
       <div className="absolute inset-0 bg-grid-pattern bg-[size:50px_50px] opacity-20"></div>
 
       {/* Gradient orbs for depth */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-prpm-accent/20 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-prpm-purple/20 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-prpm-green/20 rounded-full blur-3xl"></div>
 
       {/* Hero Section */}
       <div className="relative flex min-h-screen flex-col items-center justify-center p-8 lg:p-24">
@@ -197,6 +223,70 @@ export default function Home() {
               <p className="text-gray-400 leading-relaxed">
                 Semantic versioning with dependency resolution and updates
               </p>
+            </div>
+          </div>
+
+          {/* Playground Section */}
+          <div className="mb-20">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gradient-to-br from-yellow-600/10 via-orange-600/10 to-yellow-600/10 border-2 border-yellow-500/30 rounded-2xl p-8 sm:p-12 text-center relative overflow-hidden">
+                {/* Background decoration */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl"></div>
+
+                <div className="relative z-10">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
+                    <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                    <span className="text-sm font-semibold text-yellow-300">PRPM+ Playground</span>
+                  </div>
+
+                  <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                    Test Before You Install
+                  </h2>
+
+                  <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
+                    Try any package with leading AI models in a virtual environment. See real responses before installing anything.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+                    <Link
+                      href="/playground"
+                      className="px-8 py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-yellow-500/30"
+                    >
+                      Try the Playground
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-semibold rounded-xl transition-all"
+                    >
+                      View Pricing
+                    </Link>
+                  </div>
+
+                  <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span>5 free trial credits</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span>PRPM+ from $6/month</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span>Credits roll over</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

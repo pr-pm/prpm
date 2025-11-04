@@ -46,8 +46,6 @@ vi.mock('../../db/index.js', () => ({
               { type: 'examples', examples: [{ code: 'test' }] }
             ]
           },
-          readme: 'Test README content',
-          file_size: 5000
         }]
       });
     }
@@ -108,8 +106,6 @@ describe('Quality Scorer', () => {
             { type: 'examples', examples: [{ code: 'example' }] }
           ]
         },
-        readme: 'Comprehensive README',
-        file_size: 5000
       };
 
       const score = calculateQualityScore(pkg);
@@ -222,7 +218,6 @@ describe('Quality Scorer', () => {
             { type: 'metadata', content: 'Metadata' }
           ]
         },
-        readme: 'Comprehensive README',
         description: 'Detailed description',
         documentation_url: 'https://docs.example.com'
       };
@@ -258,8 +253,6 @@ describe('Quality Scorer', () => {
             content: 'A'.repeat(500)
           })
         },
-        readme: 'A'.repeat(5000),
-        file_size: 100000
       };
 
       const score = calculateQualityScore(perfect);

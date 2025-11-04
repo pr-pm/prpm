@@ -51,6 +51,7 @@
     {
       "group": "Guides",
       "pages": [
+        "guides/playground",
         "guides/format-conversion",
         "guides/mcp-servers"
       ]

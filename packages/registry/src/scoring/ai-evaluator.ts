@@ -8,6 +8,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
+import { ANTHROPIC_MODELS } from '../config/models.js';
 
 export interface AIEvaluationResult {
   score: number; // 0.0 to 1.0 (maps to 1.0 points in quality algorithm)
@@ -23,7 +24,6 @@ export interface AIMetadataResult {
   category?: string;
 }
 
-const CLAUDE_MODEL = 'claude-sonnet-4-5-20250929';
 /**
  * Evaluate prompt content quality using Claude AI
  * Returns a score from 0.0 to 1.0
@@ -65,7 +65,7 @@ export async function evaluatePromptWithAI(
     // Call Claude API with structured evaluation prompt
     const startTime = Date.now();
     const message = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
+      model: ANTHROPIC_MODELS.SONNET_4_5,
       max_tokens: 1024,
       temperature: 0,
       messages: [
@@ -331,7 +331,7 @@ export async function getDetailedAIEvaluation(
     const promptText = extractPromptText(content);
 
     const message = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
+      model: ANTHROPIC_MODELS.SONNET_4_5,
       max_tokens: 2048,
       temperature: 0,
       messages: [
@@ -385,7 +385,7 @@ export async function extractMetadataWithAI(
     const description = existingMetadata.description || '';
 
     const message = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
+      model: ANTHROPIC_MODELS.SONNET_4_5,
       max_tokens: 512,
       temperature: 0,
       messages: [

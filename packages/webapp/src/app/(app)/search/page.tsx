@@ -631,7 +631,7 @@ function SearchPageContent() {
                                   </svg>
                                 )}
                                 {pkg.featured && (
-                                  <span className="px-2 py-1 bg-prpm-purple/20 text-prpm-purple text-xs rounded-full">
+                                  <span className="px-2 py-1 bg-prpm-green/20 text-prpm-green text-xs rounded-full">
                                     Featured
                                   </span>
                                 )}
@@ -665,28 +665,57 @@ function SearchPageContent() {
                               )}
                             </div>
                           </div>
-                          <div className="mt-4 pt-4 border-t border-prpm-border flex items-center justify-between gap-2">
-                            <code className="text-sm text-prpm-accent-light">
-                              prpm install {pkg.name}
-                            </code>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                copyToClipboard(`prpm install ${pkg.name}`, pkg.id)
-                              }}
-                              className="p-2 hover:bg-prpm-dark rounded transition-colors flex-shrink-0"
-                              title="Copy install command"
-                            >
-                              {copiedId === pkg.id ? (
-                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <div className="mt-4 pt-4 border-t border-prpm-border space-y-3">
+                            {/* Install Command */}
+                            <div className="flex items-center justify-between gap-2">
+                              <code className="text-sm text-prpm-accent-light">
+                                prpm install {pkg.name}
+                              </code>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  copyToClipboard(`prpm install ${pkg.name}`, pkg.id)
+                                }}
+                                className="p-2 hover:bg-prpm-dark rounded transition-colors flex-shrink-0"
+                                title="Copy install command"
+                              >
+                                {copiedId === pkg.id ? (
+                                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4 text-gray-400 hover:text-prpm-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
+
+                            {/* Playground CTAs */}
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/playground?package=${pkg.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex-1 px-3 py-2 bg-prpm-accent hover:bg-prpm-accent/80 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                              ) : (
-                                <svg className="w-4 h-4 text-gray-400 hover:text-prpm-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                Test in Playground
+                              </Link>
+                              <Link
+                                href={`/playground?package=${pkg.id}&compare=true`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-3 py-2 bg-prpm-dark-card hover:bg-prpm-dark border border-prpm-border hover:border-prpm-accent text-gray-300 text-sm rounded-lg transition-colors flex items-center gap-2"
+                                title="Compare against no prompt"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
-                              )}
-                            </button>
+                                Compare
+                              </Link>
+                            </div>
                           </div>
                         </button>
                       ))}

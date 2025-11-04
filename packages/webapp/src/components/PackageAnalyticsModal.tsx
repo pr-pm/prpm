@@ -43,6 +43,7 @@ export default function PackageAnalyticsModal({
     if (isOpen) {
       loadAnalytics()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, timeRange])
 
   async function loadAnalytics() {

@@ -1,0 +1,22 @@
+You wouldn't install an npm package without reading the README. You wouldn't adopt a new library without trying it first. Yet that's exactly how AI prompt packages have worked—until today.
+
+We're launching PRPM Playground: test any package with real AI models (Claude Sonnet, Opus, GPT-4o, GPT-4o Mini) directly in your browser or CLI. No installation. No setup. Just instant testing with the models you actually use.
+
+The problem we're solving: discovery friction. Before Playground, you had to install a package, set up your AI environment, create test scenarios, and only then discover if it worked for your use case. That's 5+ steps before you know if a package is worth keeping.
+
+Now you can:
+• Test instantly with "Test in Playground" buttons on every package
+• Compare results with --compare mode (with vs without the package)
+• See community test results before you install
+• Share discoveries with your team
+• Make informed decisions in minutes, not hours
+
+Real example: You're looking for a code review package. You find three options. Instead of installing all three and trying them individually, you test each with the same code snippet in Playground. One catches subtle bugs the others miss. Community results confirm it works well for React code. Decision made in 5 minutes.
+
+For package authors, this removes the biggest barrier to adoption: uncertainty. When users can test your package instantly, they're more likely to trust it and install it. Show, don't tell.
+
+Start with 5 free credits. No credit card required. Test in seconds.
+
+Try it now: https://prpm.dev/blog/playground-launch
+
+#AI #DeveloperTools #SoftwareEngineering #DevEx #OpenSource

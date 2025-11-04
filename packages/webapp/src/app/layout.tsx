@@ -96,6 +96,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* eslint-disable-next-line @next/next/next-script-for-ga */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-RH5GKLVYK2"></script>
+        {/* eslint-disable-next-line @next/next/next-script-for-ga */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-RH5GKLVYK2');
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <AuthProvider>{children}</AuthProvider>
       </body>

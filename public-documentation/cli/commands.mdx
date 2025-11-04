@@ -510,6 +510,147 @@ prpm publish --access private
 
 ---
 
+## Playground Commands
+
+### playground
+
+Test packages with real AI models before installing.
+
+```bash
+prpm playground <package> [input] [options]
+```
+
+**Arguments:**
+- `package` - Package identifier (e.g., `@user/package-name`)
+- `input` - Test input text (optional if using `--interactive`)
+
+**Options:**
+- `-m, --model <model>` - AI model to use (sonnet, opus, gpt-4o, gpt-4o-mini) (default: sonnet)
+- `-c, --compare` - Compare with and without package prompt (baseline test)
+- `-i, --interactive` - Start interactive multi-turn conversation mode
+
+**Examples:**
+
+```bash
+# Basic test
+prpm playground @user/code-reviewer "Review this: console.log('hello')"
+
+# Interactive conversation
+prpm playground @user/brainstorm-assistant --interactive
+
+# Compare mode (with and without prompt)
+prpm playground @user/optimizer "Optimize this function" --compare
+
+# Use a specific model
+prpm playground @user/complex-task "Analyze this" --model opus
+prpm playground @user/simple-task "Format this" --model gpt-4o-mini
+```
+
+**Supported Models:**
+- `sonnet` (Claude Sonnet 3.5) - Balanced performance, 1x credits (default)
+- `gpt-4o-mini` - Fast and economical, 0.5x credits
+- `gpt-4o` - Advanced reasoning, 2x credits
+- `opus` (Claude Opus) - Most capable, 5x credits
+
+**Credits:**
+- 1 credit = 5,000 tokens (input + output combined)
+- Free tier: 5 trial credits
+- PRPM+: 100 monthly credits ($6/month)
+- Credit packs: Buy additional credits that never expire
+
+See the [Playground Guide](/guides/playground) for detailed information.
+
+---
+
+### subscribe
+
+Manage your PRPM+ subscription.
+
+```bash
+prpm subscribe [command]
+```
+
+**Commands:**
+- (no command) - Subscribe to PRPM+
+- `status` - View subscription status and credit balance
+- `cancel` - Cancel your PRPM+ subscription
+
+**Examples:**
+
+```bash
+# Subscribe to PRPM+
+prpm subscribe
+
+# Check subscription status and credits
+prpm subscribe status
+
+# Cancel subscription
+prpm subscribe cancel
+```
+
+**PRPM+ Benefits:**
+- 100 monthly playground credits
+- Credits roll over (max 200 balance)
+- $6/month (or $3/month for organization members)
+- Priority support
+
+---
+
+### buy-credits
+
+Purchase additional playground credits.
+
+```bash
+prpm buy-credits
+```
+
+Opens an interactive prompt to select and purchase credit packs.
+
+**Credit Packs:**
+- 100 credits = $5.00
+- Credits never expire
+- Stack with monthly PRPM+ credits
+
+**Examples:**
+
+```bash
+# Open credit purchase flow
+prpm buy-credits
+```
+
+---
+
+### suggested-inputs
+
+Manage suggested test inputs for your packages (authors only).
+
+```bash
+prpm suggested-inputs <command> <package> [input]
+```
+
+**Commands:**
+- `add <package> <input>` - Add a suggested test input
+- `list <package>` - List all suggested inputs for a package
+- `remove <package> <id>` - Remove a suggested input
+
+**Examples:**
+
+```bash
+# Add suggested input
+prpm suggested-inputs add @user/my-package "Review this authentication code"
+
+# List all inputs
+prpm suggested-inputs list @user/my-package
+
+# Remove an input
+prpm suggested-inputs remove @user/my-package abc123
+```
+
+**What it does:**
+Suggested inputs appear automatically in the playground web interface, making it easier for users to test your package with relevant examples.
+
+---
+
 ## Local File Management Commands
 
 ### index

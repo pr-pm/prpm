@@ -17,7 +17,7 @@ import { setupRedis } from './cache/redis.js';
 import { setupAuth } from './auth/index.js';
 import { registerRoutes } from './routes/index.js';
 import { registerTelemetryPlugin, telemetry } from './telemetry/index.js';
-import { startAnalyticsCron } from './services/analytics-cron.js';
+import { startCronScheduler } from './services/cron-scheduler.js';
 
 async function buildServer() {
   // Configure logger with pino-pretty for colored output
@@ -66,6 +66,9 @@ async function buildServer() {
     requestIdHeader: 'x-request-id',
     genReqId: (req) => (req.headers?.['x-request-id'] as string) || crypto.randomUUID(),
   });
+
+  // Attach config to server for access in routes
+  server.decorate('config', config);
 
   // Security headers
   await server.register(helmet, {
@@ -196,9 +199,9 @@ async function buildServer() {
   await registerRoutes(server);
   server.log.info('✅ Routes registered');
 
-  // Analytics cron jobs
-  server.log.info('⏰ Starting analytics cron...');
-  startAnalyticsCron(server);
+  // Start centralized cron scheduler
+  server.log.info('⏰ Starting cron scheduler...');
+  startCronScheduler(server);
 
   // Request logging hook
   server.addHook('onRequest', async (request, reply) => {
@@ -216,8 +219,8 @@ async function buildServer() {
       method: request.method,
       url: request.url,
       statusCode: reply.statusCode,
-      responseTime: reply.getResponseTime()
-    }, `⬅️  ${request.method} ${request.url} - ${reply.statusCode} (${Math.round(reply.getResponseTime())}ms)`);
+      responseTime: reply.elapsedTime
+    }, `⬅️  ${request.method} ${request.url} - ${reply.statusCode} (${Math.round(reply.elapsedTime)}ms)`);
   });
 
   // Enhanced health check with dependency status
@@ -360,3 +363,6 @@ process.on('SIGTERM', async () => {
     process.exit(1);
   }
 })();
+
+// Export server instance for use in jobs
+export { serverInstance as server, buildServer };
