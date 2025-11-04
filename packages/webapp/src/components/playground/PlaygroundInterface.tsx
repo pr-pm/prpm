@@ -99,7 +99,13 @@ export default function PlaygroundInterface({
   // Check if user is anonymous (no token)
   useEffect(() => {
     const token = localStorage.getItem('prpm_token')
-    setIsAnonymousUser(!token)
+    const isAnon = !token
+    setIsAnonymousUser(isAnon)
+
+    // Default to gpt-4o-mini for anonymous users (only available model)
+    if (isAnon) {
+      setModel('gpt-4o-mini')
+    }
   }, [])
 
   // Load session if provided
