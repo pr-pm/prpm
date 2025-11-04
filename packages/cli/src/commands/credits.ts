@@ -166,8 +166,8 @@ export async function handleCredits(options: {
     console.log('\n💡 Tips:');
     console.log('   - Test packages:      prpm playground <package> "<input>"');
     console.log('   - View history:       prpm credits --history');
-    console.log('   - Purchase credits:   https://prpm.dev/playground/credits/buy');
-    console.log('   - Upgrade to PRPM+:   https://prpm.dev/pricing');
+    console.log('   - Purchase credits:   prpm buy-credits');
+    console.log('   - Subscribe to PRPM+: prpm subscribe');
 
     success = true;
   } catch (err) {

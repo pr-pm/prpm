@@ -29,6 +29,8 @@ import { createConfigCommand } from './commands/config';
 import { createCatalogCommand } from './commands/catalog';
 import { createPlaygroundCommand } from './commands/playground';
 import { createCreditsCommand } from './commands/credits';
+import { createSubscribeCommand } from './commands/subscribe';
+import { createBuyCreditsCommand } from './commands/buy-credits';
 import { telemetry } from './core/telemetry';
 
 // Read version from package.json
@@ -76,6 +78,8 @@ program.addCommand(createTelemetryCommand());
 // Playground commands
 program.addCommand(createPlaygroundCommand());
 program.addCommand(createCreditsCommand());
+program.addCommand(createSubscribeCommand());
+program.addCommand(createBuyCreditsCommand());
 
 // Utility commands
 program.addCommand(createSchemaCommand());

@@ -176,7 +176,10 @@ async function runInteractive(
       } catch (error) {
         console.error(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}`);
         if (error instanceof Error && error.message.includes('Insufficient credits')) {
-          console.log('\n💡 Get more credits at: https://prpm.dev/playground/credits');
+          console.log('\n💡 Get more credits:');
+          console.log('   - Purchase credits:   prpm buy-credits');
+          console.log('   - Subscribe to PRPM+: prpm subscribe');
+          console.log('   - Check balance:      prpm credits');
           break;
         }
       }
@@ -217,7 +220,10 @@ async function runSingle(
   } catch (error) {
     console.error(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}`);
     if (error instanceof Error && error.message.includes('Insufficient credits')) {
-      console.log('\n💡 Get more credits at: https://prpm.dev/playground/credits');
+      console.log('\n💡 Get more credits:');
+      console.log('   - Purchase credits:   prpm buy-credits');
+      console.log('   - Subscribe to PRPM+: prpm subscribe');
+      console.log('   - Check balance:      prpm credits');
     }
     process.exit(1);
   }
