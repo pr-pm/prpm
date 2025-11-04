@@ -93,13 +93,6 @@ export default function StripePaymentForm({ onSuccess, onCancel, credits, price 
           {processing ? 'Processing...' : `Pay $${(price / 100).toFixed(2)}`}
         </button>
       </div>
-
-      {/* Test Card Info */}
-      <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1">
-        <p className="font-semibold">Test Mode - Use test cards:</p>
-        <p>4242 4242 4242 4242 (Success)</p>
-        <p>Any future expiry date, any 3-digit CVC</p>
-      </div>
     </form>
   )
 }
