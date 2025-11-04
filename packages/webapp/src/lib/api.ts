@@ -112,8 +112,8 @@ export async function getCurrentUser(jwtToken: string) {
 /**
  * Get top authors
  */
-export async function getTopAuthors(limit: number = 50): Promise<TopAuthorsResponse> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/search/authors?limit=${limit}`)
+export async function getTopAuthors(limit: number = 50, sort: 'downloads' | 'count' = 'downloads'): Promise<TopAuthorsResponse> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/search/authors?limit=${limit}&sort=${sort}`)
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Failed to fetch authors' }))

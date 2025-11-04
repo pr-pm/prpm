@@ -123,6 +123,7 @@ export default function PlaygroundInterface({
     if (initialPackageId && !selectedPackage) {
       loadInitialPackage(initialPackageId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPackageId])
 
   const loadInitialPackage = async (packageIdToLoad: string) => {
@@ -603,7 +604,7 @@ export default function PlaygroundInterface({
             title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             Claude Sonnet
-            <div className="text-xs opacity-75">1 credit</div>
+            <div className="text-xs opacity-75">2 credits</div>
             {isAnonymousUser && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -625,7 +626,7 @@ export default function PlaygroundInterface({
             title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             Claude Opus
-            <div className="text-xs opacity-75">3 credits</div>
+            <div className="text-xs opacity-75">~7 credits</div>
             {isAnonymousUser && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -658,7 +659,7 @@ export default function PlaygroundInterface({
             title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             GPT-4o
-            <div className="text-xs opacity-75">2 credits</div>
+            <div className="text-xs opacity-75">~3 credits</div>
             {isAnonymousUser && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -680,7 +681,7 @@ export default function PlaygroundInterface({
             title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             GPT-4 Turbo
-            <div className="text-xs opacity-75">3 credits</div>
+            <div className="text-xs opacity-75">~4 credits</div>
             {isAnonymousUser && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">

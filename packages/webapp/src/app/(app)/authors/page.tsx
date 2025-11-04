@@ -73,6 +73,7 @@ function AuthorsPageContent() {
   const username = searchParams.get('username')
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = parseInt(searchParams.get('limit') || '100')
+  const sortBy = (searchParams.get('sort') as 'downloads' | 'count') || 'downloads'
 
   const [authors, setAuthors] = useState<Author[]>([])
   const [authorData, setAuthorData] = useState<AuthorData | null>(null)
@@ -91,16 +92,16 @@ function AuthorsPageContent() {
     if (username) {
       loadAuthorProfile(username, offset, limit)
     } else {
-      loadAuthors()
+      loadAuthors(sortBy)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username, offset, limit])
+  }, [username, offset, limit, sortBy])
 
-  async function loadAuthors() {
+  async function loadAuthors(sort: 'downloads' | 'count' = 'downloads') {
     try {
       setLoading(true)
       setError(null)
-      const data = await getTopAuthors(100)
+      const data = await getTopAuthors(100, sort)
       setAuthors(data.authors)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load authors')
@@ -718,6 +719,33 @@ function AuthorsPageContent() {
             </svg>
             Sign in with GitHub
           </Link>
+        </div>
+
+        {/* Sort Toggle */}
+        <div className="mb-6 flex justify-center">
+          <div className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-md">
+            <span className="text-sm text-gray-600 dark:text-gray-400 px-2">Sort by:</span>
+            <a
+              href="/authors?sort=downloads"
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                sortBy === 'downloads'
+                  ? 'bg-prpm-green text-white shadow-sm'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Downloads
+            </a>
+            <a
+              href="/authors?sort=count"
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                sortBy === 'count'
+                  ? 'bg-prpm-green text-white shadow-sm'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Package Count
+            </a>
+          </div>
         </div>
 
         {/* Leaderboard */}

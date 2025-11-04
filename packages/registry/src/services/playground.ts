@@ -244,20 +244,23 @@ export class PlaygroundService {
       );
     }
 
-    // Token-based pricing: 1 credit per 5,000 tokens
+    // Token-based pricing: 1 credit per 5,000 tokens (base)
     const TOKENS_PER_CREDIT = 5000;
     const baseCredits = Math.ceil(estimatedTokens / TOKENS_PER_CREDIT);
 
-    // Model-specific multipliers based on actual API costs
-    let modelMultiplier = 1.0;
+    // Model-specific multipliers based on actual API costs + healthy margins
+    // Updated multipliers to ensure profitability across all models
+    let modelMultiplier = 2.0;  // Sonnet default (was 1.0x)
     if (model === 'opus') {
-      modelMultiplier = 5.0;  // Opus is 5x more expensive than Sonnet
-    } else if (model === 'gpt-4o' || model === 'gpt-4-turbo') {
-      modelMultiplier = 2.0;  // GPT-4o is ~2x Sonnet cost
+      modelMultiplier = 7.0;  // Opus (was 5.0x) - $45 API cost
+    } else if (model === 'gpt-4-turbo') {
+      modelMultiplier = 4.0;  // GPT-4 Turbo (was 2.0x) - $20 API cost, was breaking even
+    } else if (model === 'gpt-4o') {
+      modelMultiplier = 3.0;  // GPT-4o (was 2.0x) - $12.50 API cost
     } else if (model === 'gpt-4o-mini') {
-      modelMultiplier = 0.5;  // GPT-4o-mini is much cheaper
+      modelMultiplier = 0.5;  // GPT-4o-mini (no change) - $1.50 API cost
     }
-    // Sonnet defaults to 1.0x
+    // Sonnet: 2.0x multiplier - $9 API cost, 55% margin
 
     return Math.max(1, Math.ceil(baseCredits * modelMultiplier));
   }

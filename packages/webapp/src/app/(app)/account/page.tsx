@@ -25,6 +25,7 @@ function AccountPageContent() {
 
   useEffect(() => {
     loadAccount()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Poll for subscription updates after successful subscription
@@ -56,6 +57,7 @@ function AccountPageContent() {
 
       return () => clearInterval(pollInterval)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subscriptionSuccess, account?.prpm_plus_status])
 
   const loadAccount = async () => {

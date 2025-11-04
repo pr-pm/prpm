@@ -13,12 +13,6 @@ export const dynamicParams = true
 
 // Generate static params for all collections
 export async function generateStaticParams() {
-  // Skip SSG entirely when explicitly disabled (for testing builds without S3 data)
-  if (process.env.SKIP_SSG === 'true') {
-    console.log('[SSG Collections] SSG disabled via SKIP_SSG=true')
-    return []
-  }
-
   try {
     console.log(`[SSG Collections] Starting - S3_SEO_DATA_URL: ${S3_SEO_DATA_URL}`)
 

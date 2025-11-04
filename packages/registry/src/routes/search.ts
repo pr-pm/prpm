@@ -371,17 +371,23 @@ export async function searchRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number', default: 50, minimum: 1, maximum: 500 },
+          sort: { type: 'string', enum: ['downloads', 'count'], default: 'downloads' },
         },
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { limit = 50 } = request.query as { limit?: number };
+    const { limit = 50, sort = 'downloads' } = request.query as { limit?: number; sort?: 'downloads' | 'count' };
 
-    const cacheKey = `search:authors:${limit}`;
+    const cacheKey = `search:authors:${limit}:${sort}`;
     const cached = await cacheGet<any>(server, cacheKey);
     if (cached) {
       return cached;
     }
+
+    // Determine sort order
+    const orderBy = sort === 'count'
+      ? 'COUNT(p.id) DESC, SUM(p.total_downloads) DESC'
+      : 'SUM(p.total_downloads) DESC, COUNT(p.id) DESC';
 
     // Get author stats by aggregating packages
     const result = await query<{
@@ -406,7 +412,7 @@ export async function searchRoutes(server: FastifyInstance) {
        WHERE p.visibility = 'public'
        GROUP BY u.id, u.username, u.verified_author
        HAVING COUNT(p.id) > 0
-       ORDER BY COUNT(p.id) DESC, SUM(p.total_downloads) DESC
+       ORDER BY ${orderBy}
        LIMIT $1`,
       [limit]
     );
