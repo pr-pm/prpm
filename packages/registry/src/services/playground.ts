@@ -277,7 +277,9 @@ export class PlaygroundService {
         request.package_id,
         request.package_version
       );
-      const packagePrompt = packageData.prompt;
+
+      // Use empty prompt if comparing against "no prompt" mode (raw model baseline)
+      const packagePrompt = request.use_no_prompt ? '' : packageData.prompt;
 
       // 2. Get or create session
       let session: any;

@@ -37,6 +37,7 @@ export interface PlaygroundRunRequest {
   input: string;
   model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
   session_id?: string;
+  use_no_prompt?: boolean; // Compare against raw model with no system prompt
 }
 
 export interface PlaygroundRunResponse {

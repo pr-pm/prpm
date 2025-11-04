@@ -21,6 +21,7 @@ const PlaygroundRunSchema = z.object({
     .max(SECURITY_LIMITS.MAX_USER_INPUT_LENGTH, `Input too long (max ${SECURITY_LIMITS.MAX_USER_INPUT_LENGTH} characters)`),
   session_id: z.string().uuid().optional(),
   model: z.enum(['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo']).optional().default('sonnet'),
+  use_no_prompt: z.boolean().optional().default(false),
 });
 
 const EstimateCreditSchema = z.object({
@@ -47,7 +48,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
     {
       preHandler: [server.authenticate, rateLimiter],
       schema: {
-        description: 'Execute a playground run with a package prompt',
+        description: 'Execute a playground run with a package prompt (or compare against no prompt)',
         tags: ['playground'],
         security: [{ bearerAuth: [] }],
         body: {
@@ -59,6 +60,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
             input: { type: 'string', minLength: 1, maxLength: 10000 },
             session_id: { type: 'string', format: 'uuid' },
             model: { type: 'string', enum: ['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'], default: 'sonnet' },
+            use_no_prompt: { type: 'boolean', default: false, description: 'Compare against raw model with no system prompt' },
           },
         },
         response: {
