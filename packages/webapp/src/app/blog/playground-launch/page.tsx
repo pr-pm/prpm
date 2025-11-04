@@ -58,7 +58,7 @@ export default function PlaygroundLaunchPost() {
           </div>
 
           <p className="text-gray-300 leading-relaxed mb-8">
-            Imagine finding an npm package with a great README but no way to try it before installing. You'd download it, import it into your codebase, and only then discover it doesn't solve your problem. That's exactly how AI prompt packages worked until today.
+            Imagine finding an claude agent package with great content but no way to try it before installing. You'd download it, import it into your codebase, and only then discover it doesn't solve your problem. That's exactly how AI prompt packages worked until today.
           </p>
 
           <p className="text-gray-300 leading-relaxed mb-8">
@@ -205,14 +205,14 @@ prpm playground @user/complex-task "Analyze this" --model opus`}</code>
               Shared test results become living documentation. Instead of writing examples in your README, users see real examples from actual testing. The best use cases naturally surface through community testing.
             </p>
 
-            <h3 className="text-2xl font-bold text-white mb-6">Real Usage Data</h3>
+            <h3 className="text-2xl font-bold text-white mb-6">Real Usage Analytics</h3>
             <p className="text-gray-300 leading-relaxed mb-8">
-              See how users are actually testing your package. What inputs are they trying? What models do they prefer? This data helps you improve your package to match real-world usage patterns.
+              Package authors get a comprehensive analytics dashboard showing exactly how users test their packages. See test volumes, popular models, credit usage patterns, session durations, and more. This real-world data helps you optimize your package for actual usage patterns.
             </p>
 
-            <h3 className="text-2xl font-bold text-white mb-6">Social Proof</h3>
+            <h3 className="text-2xl font-bold text-white mb-6">Social Proof & Recognition</h3>
             <p className="text-gray-300 leading-relaxed mb-0">
-              When users share helpful test results, it creates social proof for your package. High helpfulness ratings and view counts signal quality to potential users. The best packages naturally rise to the top.
+              When users share helpful test results, it creates social proof for your package. High helpfulness ratings and view counts signal quality to potential users. PRPM+ subscribers also get a special badge on their profile and packages, showing their commitment to the ecosystem.
             </p>
           </div>
 
@@ -316,19 +316,19 @@ prpm playground @user/complex-task "Analyze this" --model opus`}</code>
           <div className="not-prose mb-16">
             <ul className="list-disc ml-6 text-gray-300 space-y-4 mb-0">
               <li>
-                <strong className="text-white">A/B Testing:</strong> Compare multiple packages side-by-side with the same input
+                <strong className="text-white">Enhanced A/B Testing:</strong> Compare multiple packages side-by-side with the same input in a unified interface
               </li>
               <li>
-                <strong className="text-white">Analytics Dashboard:</strong> Package authors get detailed analytics on how users test their packages
-              </li>
-              <li>
-                <strong className="text-white">More Models:</strong> Gemini, Llama, and other models coming soon
+                <strong className="text-white">More Models:</strong> Gemini, Llama, and other leading AI models coming soon
               </li>
               <li>
                 <strong className="text-white">Test Collections:</strong> Test entire collections of packages in one flow
               </li>
               <li>
                 <strong className="text-white">Shareable Test Suites:</strong> Create and share comprehensive test suites for package validation
+              </li>
+              <li>
+                <strong className="text-white">Advanced Analytics:</strong> Deeper insights into package performance, user satisfaction metrics, and optimization recommendations
               </li>
             </ul>
           </div>
