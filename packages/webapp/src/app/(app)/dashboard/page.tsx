@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getUnclaimedPackages, claimPackages, getAuthorDashboard, getAuthorPackages } from '@/lib/api'
 import PackageAnalyticsModal from '@/components/PackageAnalyticsModal'
+import PlaygroundAnalyticsDashboard from '@/components/PlaygroundAnalyticsDashboard'
 
 interface User {
   id: string
@@ -497,6 +498,11 @@ export default function DashboardPage() {
             <p className="text-gray-400">Loading analytics...</p>
           </div>
         )}
+
+        {/* Playground Analytics */}
+        <div className="mb-12">
+          <PlaygroundAnalyticsDashboard />
+        </div>
 
         {/* Getting Started */}
         <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-8">

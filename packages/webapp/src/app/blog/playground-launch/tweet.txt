@@ -1,0 +1,5 @@
+You wouldn't install an npm package without checking the README first. Why install AI prompts blind?
+
+PRPM Playground lets you test any package with Claude or GPT-4 before installing. Compare results, see what actually improves output.
+
+https://prpm.dev/blog/playground-launch

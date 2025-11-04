@@ -20,6 +20,8 @@ import { playgroundRoutes } from './playground.js';
 import { playgroundCreditsRoutes } from './playground-credits.js';
 import { testCaseRoutes } from './test-cases.js';
 import { adminCostMonitoringRoutes } from './admin-cost-monitoring.js';
+import { suggestedTestInputsRoutes } from './suggested-test-inputs.js';
+import { playgroundAnalyticsRoutes } from './playground-analytics.js';
 
 export async function registerRoutes(server: FastifyInstance) {
   // API v1 routes
@@ -42,6 +44,8 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(playgroundCreditsRoutes, { prefix: '/playground' });
       await api.register(testCaseRoutes, { prefix: '/' });
       await api.register(adminCostMonitoringRoutes, { prefix: '/admin/cost-analytics' });
+      await api.register(suggestedTestInputsRoutes, { prefix: '/suggested-inputs' });
+      await api.register(playgroundAnalyticsRoutes, { prefix: '/analytics' });
     },
     { prefix: '/api/v1' }
   );

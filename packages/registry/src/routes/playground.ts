@@ -643,4 +643,216 @@ export async function playgroundRoutes(server: FastifyInstance) {
       }
     }
   );
+
+  // =====================================================
+  // PATCH /api/v1/playground/sessions/:sessionId/feature
+  // Toggle featured status of a playground session
+  // =====================================================
+  server.patch(
+    '/sessions/:sessionId/feature',
+    {
+      preHandler: [server.authenticate],
+      schema: {
+        description: 'Toggle featured status of a playground session (author only)',
+        tags: ['playground'],
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: 'object',
+          required: ['sessionId'],
+          properties: {
+            sessionId: { type: 'string', format: 'uuid' },
+          },
+        },
+        body: {
+          type: 'object',
+          properties: {
+            is_featured: { type: 'boolean' },
+            feature_description: { type: 'string', maxLength: 500 },
+            feature_display_order: { type: 'number', minimum: 0 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              session_id: { type: 'string' },
+              is_featured: { type: 'boolean' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{
+      Params: { sessionId: string };
+      Body: {
+        is_featured?: boolean;
+        feature_description?: string;
+        feature_display_order?: number;
+      };
+    }>, reply: FastifyReply) => {
+      try {
+        const { sessionId } = request.params;
+        const { is_featured, feature_description, feature_display_order } = request.body;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        // Get the session to verify ownership
+        const sessionResult = await server.pg.query(
+          `SELECT ps.*, p.author_id
+           FROM playground_sessions ps
+           JOIN packages p ON ps.package_id = p.id
+           WHERE ps.id = $1`,
+          [sessionId]
+        );
+
+        if (sessionResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: 'session_not_found',
+            message: 'Playground session not found',
+          });
+        }
+
+        const session = sessionResult.rows[0];
+
+        // Verify the user is the package author
+        if (session.author_id !== userId) {
+          return reply.code(403).send({
+            error: 'forbidden',
+            message: 'Only the package author can feature playground results',
+          });
+        }
+
+        // Update featured status
+        const updateFields = [];
+        const values = [];
+        let paramCount = 1;
+
+        if (is_featured !== undefined) {
+          updateFields.push(`is_featured_by_author = $${paramCount++}`);
+          values.push(is_featured);
+
+          if (is_featured) {
+            updateFields.push(`featured_at = NOW()`);
+            updateFields.push(`featured_by_user_id = $${paramCount++}`);
+            values.push(userId);
+          } else {
+            updateFields.push(`featured_at = NULL`);
+            updateFields.push(`featured_by_user_id = NULL`);
+            updateFields.push(`feature_description = NULL`);
+          }
+        }
+
+        if (feature_description !== undefined && is_featured !== false) {
+          updateFields.push(`feature_description = $${paramCount++}`);
+          values.push(feature_description);
+        }
+
+        if (feature_display_order !== undefined) {
+          updateFields.push(`feature_display_order = $${paramCount++}`);
+          values.push(feature_display_order);
+        }
+
+        values.push(sessionId);
+
+        await server.pg.query(
+          `UPDATE playground_sessions
+           SET ${updateFields.join(', ')}
+           WHERE id = $${paramCount}`,
+          values
+        );
+
+        return reply.code(200).send({
+          success: true,
+          session_id: sessionId,
+          is_featured: is_featured ?? session.is_featured_by_author,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to update featured status');
+        return reply.code(500).send({
+          error: 'update_featured_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // GET /api/v1/playground/packages/:packageId/featured
+  // Get featured results for a package
+  // =====================================================
+  server.get(
+    '/packages/:packageId/featured',
+    {
+      schema: {
+        description: 'Get featured playground results for a package',
+        tags: ['playground'],
+        params: {
+          type: 'object',
+          required: ['packageId'],
+          properties: {
+            packageId: { type: 'string', format: 'uuid' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              results: { type: 'array' },
+              total: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{
+      Params: { packageId: string };
+    }>, reply: FastifyReply) => {
+      try {
+        const { packageId } = request.params;
+
+        const result = await server.pg.query(
+          `SELECT
+            ps.id as session_id,
+            ps.share_token,
+            p.name as package_name,
+            ps.package_version,
+            ps.model,
+            ps.feature_description,
+            ps.feature_display_order,
+            ps.conversation->0->>'content' as user_input,
+            ps.conversation->1->>'content' as assistant_response,
+            ps.credits_spent,
+            ps.total_tokens,
+            ps.featured_at,
+            ps.created_at
+           FROM playground_sessions ps
+           JOIN packages p ON ps.package_id = p.id
+           WHERE ps.package_id = $1
+             AND ps.is_featured_by_author = TRUE
+             AND ps.is_public = TRUE
+           ORDER BY ps.feature_display_order ASC, ps.featured_at DESC
+           LIMIT 10`,
+          [packageId]
+        );
+
+        return reply.code(200).send({
+          results: result.rows,
+          total: result.rows.length,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to get featured results');
+        return reply.code(500).send({
+          error: 'get_featured_results_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
 }
