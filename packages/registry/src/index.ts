@@ -17,7 +17,7 @@ import { setupRedis } from './cache/redis.js';
 import { setupAuth } from './auth/index.js';
 import { registerRoutes } from './routes/index.js';
 import { registerTelemetryPlugin, telemetry } from './telemetry/index.js';
-import { startAnalyticsCron } from './services/analytics-cron.js';
+import { startCronScheduler } from './services/cron-scheduler.js';
 
 async function buildServer() {
   // Configure logger with pino-pretty for colored output
@@ -199,9 +199,9 @@ async function buildServer() {
   await registerRoutes(server);
   server.log.info('✅ Routes registered');
 
-  // Analytics cron jobs
-  server.log.info('⏰ Starting analytics cron...');
-  startAnalyticsCron(server);
+  // Start centralized cron scheduler
+  server.log.info('⏰ Starting cron scheduler...');
+  startCronScheduler(server);
 
   // Request logging hook
   server.addHook('onRequest', async (request, reply) => {
