@@ -440,10 +440,24 @@ describe('install', () => {
 - All data fetching must be client-side (useEffect, fetch, etc.)
 
 **Common Issues:**
-1. **Dynamic routes without `generateStaticParams()`**
-   - Error: `Page "/path/[param]" is missing "generateStaticParams()"`
-   - Fix: Add `export function generateStaticParams() { return []; }` for client-side routes
-   - Example: `/playground/shared/[token]` uses empty array since tokens are user-generated
+1. **Dynamic routes in client components** ⚠️ CANNOT USE BOTH
+   - Error: `Page "page" cannot use both "use client" and export function "generateStaticParams()"`
+   - **Solution**: Use query strings instead of path parameters
+   - ❌ Wrong: `/playground/shared/[token]/page.tsx` with `'use client'`
+   - ✅ Correct: `/playground/shared/page.tsx` with `?token=xxx` query param
+   - Implementation: Use `useSearchParams()` instead of `useParams()`
+   - Example:
+     ```typescript
+     // ❌ Dynamic route (doesn't work with 'use client')
+     // /app/shared/[token]/page.tsx
+     const params = useParams();
+     const token = params.token;
+
+     // ✅ Query string (works with 'use client')
+     // /app/shared/page.tsx
+     const searchParams = useSearchParams();
+     const token = searchParams.get('token');
+     ```
 
 2. **Server components in static export**
    - All pages with dynamic content must use `'use client'` directive

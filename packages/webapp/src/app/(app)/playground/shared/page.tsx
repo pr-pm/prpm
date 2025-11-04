@@ -1,14 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-// Required for static export with dynamic routes
-// Returns empty array since these are user-generated, client-side only routes
-export function generateStaticParams() {
-  return [];
-}
 
 interface PlaygroundMessage {
   role: 'user' | 'assistant';
@@ -34,9 +28,9 @@ interface SharedSession {
 }
 
 export default function SharedResultPage() {
-  const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const token = params?.token as string;
+  const token = searchParams?.get('token');
 
   const [session, setSession] = useState<SharedSession | null>(null);
   const [loading, setLoading] = useState(true);

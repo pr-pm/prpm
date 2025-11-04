@@ -71,7 +71,7 @@ export default function FeaturedResults({ packageId }: FeaturedResultsProps) {
         {results.map((result) => (
           <Link
             key={result.session_id}
-            href={`/playground/shared/${result.share_token}`}
+            href={`/playground/shared?token=${result.share_token}`}
             className="block bg-prpm-dark border border-prpm-accent/30 hover:border-prpm-accent rounded-lg p-4 transition-colors"
           >
             {/* Header */}

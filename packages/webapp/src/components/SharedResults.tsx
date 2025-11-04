@@ -137,7 +137,7 @@ export default function SharedResults({ packageId, limit = 5 }: SharedResultsPro
           return (
             <Link
               key={result.session_id}
-              href={`/playground/shared/${result.share_token}`}
+              href={`/playground/shared?token=${result.share_token}`}
               className="block bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
             >
               {/* Header */}
