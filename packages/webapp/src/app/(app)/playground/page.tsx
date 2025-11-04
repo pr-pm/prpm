@@ -28,14 +28,16 @@ function PlaygroundContent() {
   const [error, setError] = useState<string | null>(null)
   const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null)
 
-  // Check authentication
+  // Check authentication (allow anonymous users)
   useEffect(() => {
     const token = localStorage.getItem('prpm_token')
-    if (!token) {
-      router.push('/login?redirect=/playground')
-      return
+    if (token) {
+      // User is authenticated - load their data
+      loadData(token)
+    } else {
+      // Anonymous user - just mark as loaded, they can use the free run
+      setLoading(false)
     }
-    loadData(token)
   }, [router])
 
   // Auto-open buy credits modal if URL parameter is present

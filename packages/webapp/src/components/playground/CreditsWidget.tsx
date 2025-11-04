@@ -19,6 +19,29 @@ export default function CreditsWidget({ credits, onBuyCredits, onSubscribe, onRe
     setTimeout(() => setIsRefreshing(false), 500)
   }
   if (!credits) {
+    // Check if user is actually anonymous (no token) vs just loading
+    const isAnonymous = typeof window !== 'undefined' && !localStorage.getItem('prpm_token')
+
+    if (isAnonymous) {
+      return (
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-3 sm:p-4 min-w-[200px]">
+          <div className="text-xs sm:text-sm text-blue-900 dark:text-blue-200 mb-2">
+            <strong>Free Trial</strong>
+          </div>
+          <div className="text-sm text-blue-800 dark:text-blue-300 mb-3">
+            1 free run with gpt-4o-mini
+          </div>
+          <a
+            href="/login"
+            className="block w-full bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition text-center"
+          >
+            Sign Up for 5 Free Credits
+          </a>
+        </div>
+      )
+    }
+
+    // Loading state for authenticated users
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <div className="animate-pulse">

@@ -581,30 +581,52 @@ export default function PlaygroundInterface({
       {/* Model Selection */}
       <div className="mb-4 sm:mb-6">
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          Model
+          Model {isAnonymousUser && <span className="text-xs font-normal text-gray-500">(only gpt-4o-mini available for free trial)</span>}
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <button
-            onClick={() => setModel('sonnet')}
-            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
+            onClick={() => !isAnonymousUser && setModel('sonnet')}
+            disabled={isAnonymousUser}
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition relative ${
               model === 'sonnet'
                 ? 'bg-prpm-green text-white'
+                : isAnonymousUser
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
+            title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             Claude Sonnet
             <div className="text-xs opacity-75">1 credit</div>
+            {isAnonymousUser && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
           </button>
           <button
-            onClick={() => setModel('opus')}
-            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
+            onClick={() => !isAnonymousUser && setModel('opus')}
+            disabled={isAnonymousUser}
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition relative ${
               model === 'opus'
                 ? 'bg-prpm-green text-white'
+                : isAnonymousUser
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
+            title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             Claude Opus
             <div className="text-xs opacity-75">3 credits</div>
+            {isAnonymousUser && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
           </button>
           <button
             onClick={() => setModel('gpt-4o-mini')}
@@ -618,26 +640,48 @@ export default function PlaygroundInterface({
             <div className="text-xs opacity-75">1 credit</div>
           </button>
           <button
-            onClick={() => setModel('gpt-4o')}
-            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
+            onClick={() => !isAnonymousUser && setModel('gpt-4o')}
+            disabled={isAnonymousUser}
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition relative ${
               model === 'gpt-4o'
                 ? 'bg-prpm-green text-white'
+                : isAnonymousUser
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
+            title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             GPT-4o
             <div className="text-xs opacity-75">2 credits</div>
+            {isAnonymousUser && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
           </button>
           <button
-            onClick={() => setModel('gpt-4-turbo')}
-            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
+            onClick={() => !isAnonymousUser && setModel('gpt-4-turbo')}
+            disabled={isAnonymousUser}
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition relative ${
               model === 'gpt-4-turbo'
                 ? 'bg-prpm-green text-white'
+                : isAnonymousUser
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
+            title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             GPT-4 Turbo
             <div className="text-xs opacity-75">3 credits</div>
+            {isAnonymousUser && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
           </button>
         </div>
       </div>
