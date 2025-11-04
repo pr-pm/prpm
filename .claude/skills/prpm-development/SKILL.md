@@ -395,6 +395,34 @@ describe('install', () => {
 3. **Check Round-Trip**: Ensure conversions still work
 4. **Update Fixtures**: Add bug case to test fixtures
 
+### Dependency Management Best Practices
+
+**AVOID Runtime Dependencies (Dynamic Imports)**
+
+❌ **Bad**: Using dynamic imports for runtime dependencies
+```typescript
+// BAD - tar-stream is imported dynamically at runtime
+const tarStream = await import('tar-stream');
+```
+
+**Problems with Dynamic Imports:**
+1. **Module Resolution Failures**: In production (Elastic Beanstalk, Docker), dynamic imports can fail to resolve even if the package is installed as a transitive dependency
+2. **Build Complexity**: TypeScript compilation doesn't validate dynamic imports
+3. **Deployment Issues**: Package may not be in the module resolution path in production
+4. **Harder to Debug**: Failures happen at runtime, not at build time
+
+✅ **Good**: Declare all dependencies explicitly
+```typescript
+// GOOD - Import normally at the top
+import * as tarStream from 'tar-stream';
+```
+
+**Dependency Guidelines:**
+1. **Explicit Dependencies**: Always declare dependencies in package.json, never rely on transitive dependencies
+2. **Static Imports**: Use static imports whenever possible for compile-time validation
+3. **Production Dependencies**: If you import it, it should be in `dependencies`, not `devDependencies`
+4. **Build-Time Validation**: Let TypeScript catch missing dependencies at build time, not runtime
+
 ### When Designing APIs
 - **REST Best Practices**: Proper HTTP methods and status codes
 - **Versioning**: All routes under `/api/v1/`

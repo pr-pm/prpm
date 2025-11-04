@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { runPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages } from '../../lib/api'
+import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages } from '../../lib/api'
 import type { PlaygroundMessage, Package } from '../../lib/api'
 
 interface PlaygroundInterfaceProps {
@@ -53,6 +53,8 @@ export default function PlaygroundInterface({
   const [currentSessionIdB, setCurrentSessionIdB] = useState<string | undefined>(undefined)
   const [collapsedExchanges, setCollapsedExchanges] = useState<Set<number>>(new Set())
   const [collapsedExchangesB, setCollapsedExchangesB] = useState<Set<number>>(new Set())
+  const [showAnonymousLoginPrompt, setShowAnonymousLoginPrompt] = useState(false)
+  const [isAnonymousUser, setIsAnonymousUser] = useState(false)
 
   // Helper function to group messages into exchanges (user input + assistant response pairs)
   const groupIntoExchanges = (messages: PlaygroundMessage[]): Array<{ user: PlaygroundMessage; assistant: PlaygroundMessage | null; index: number }> => {
@@ -93,6 +95,12 @@ export default function PlaygroundInterface({
       })
     }
   }
+
+  // Check if user is anonymous (no token)
+  useEffect(() => {
+    const token = localStorage.getItem('prpm_token')
+    setIsAnonymousUser(!token)
+  }, [])
 
   // Load session if provided
   useEffect(() => {
@@ -248,8 +256,51 @@ export default function PlaygroundInterface({
     }
 
     const token = localStorage.getItem('prpm_token')
+
+    // Handle anonymous users (one free run)
     if (!token) {
-      setError('Not authenticated')
+      setLoading(true)
+      setError(null)
+
+      try {
+        const result = await runAnonymousPlayground({
+          package_id: packageId,
+          input: input.trim(),
+        })
+
+        // Create a conversation with the result
+        const newConversation: PlaygroundMessage[] = [
+          {
+            role: 'user',
+            content: input.trim(),
+            timestamp: new Date().toISOString(),
+          },
+          {
+            role: 'assistant',
+            content: result.response,
+            timestamp: new Date().toISOString(),
+          },
+        ]
+
+        setConversation(newConversation)
+        setInput('')
+
+        // Show login prompt
+        setShowAnonymousLoginPrompt(true)
+
+      } catch (err: any) {
+        console.error('Anonymous playground run failed:', err)
+
+        // Check if limit exceeded (already used free run)
+        if (err.message.includes('limit_exceeded') || err.message.includes('429')) {
+          setError('You have already used your free playground run. Please sign up to get 5 free credits and continue testing packages.')
+          setShowAnonymousLoginPrompt(true)
+        } else {
+          setError(err.message || 'Failed to run playground')
+        }
+      } finally {
+        setLoading(false)
+      }
       return
     }
 
@@ -388,6 +439,15 @@ export default function PlaygroundInterface({
           {comparisonMode ? '✓ Comparison Mode' : 'Compare Mode'}
         </button>
       </div>
+
+      {/* Anonymous User Notice */}
+      {isAnonymousUser && !showAnonymousLoginPrompt && conversation.length === 0 && (
+        <div className="mb-4 sm:mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-sm text-blue-900 dark:text-blue-200">
+            <strong>Try it free!</strong> Get one free playground run (using gpt-4o-mini). Sign up to get 5 free credits and access to all models.
+          </p>
+        </div>
+      )}
 
       {/* Package Selection - Split or Single */}
       <div className={comparisonMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 sm:mb-6' : 'mb-4 sm:mb-6'}>
@@ -840,6 +900,34 @@ export default function PlaygroundInterface({
           comparisonMode ? 'Compare Prompts' : 'Run Playground'
         )}
       </button>
+
+      {/* Anonymous User Login Prompt */}
+      {showAnonymousLoginPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              🎉 Great! Now sign up for 5 free credits
+            </h3>
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              You've used your free playground run! Sign up now to get <strong>5 free credits</strong> and continue testing packages.
+            </p>
+            <div className="flex gap-3">
+              <a
+                href="/login"
+                className="flex-1 bg-prpm-green text-white px-4 py-2 rounded-lg font-medium hover:bg-prpm-green/90 transition text-center"
+              >
+                Sign Up / Login
+              </a>
+              <button
+                onClick={() => setShowAnonymousLoginPrompt(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -868,6 +868,33 @@ export async function runPlayground(jwtToken: string, request: PlaygroundRunRequ
 }
 
 /**
+ * Run anonymous playground (one free run for non-logged-in users)
+ */
+export async function runAnonymousPlayground(request: { package_id: string; input: string }): Promise<{
+  response: string
+  tokens_used: number
+  duration_ms: number
+  model: string
+  login_required: boolean
+  message: string
+}> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/anonymous-run`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to run playground' }))
+    throw new Error(error.error || error.message || 'Failed to run playground')
+  }
+
+  return response.json()
+}
+
+/**
  * Estimate credits for playground run
  */
 export async function estimatePlaygroundCredits(jwtToken: string, request: Omit<PlaygroundRunRequest, 'session_id'>): Promise<{ estimated_credits: number; estimated_tokens: number }> {
