@@ -390,8 +390,10 @@ export class PlaygroundService {
         modelName = getModelId(model);
 
         // Determine if we need filesystem mounting for Skills/Agents
-        const needsSkillMount = this.shouldMountAsSkill(packageData.subtype);
-        const needsAgentMount = this.shouldMountAsAgent(packageData.subtype);
+        // IMPORTANT: Don't mount skills/agents in baseline mode (use_no_prompt=true)
+        // Baseline should be a clean Anthropic environment with no extra capabilities
+        const needsSkillMount = !request.use_no_prompt && this.shouldMountAsSkill(packageData.subtype);
+        const needsAgentMount = !request.use_no_prompt && this.shouldMountAsAgent(packageData.subtype);
         const needsFilesystemMount = needsSkillMount || needsAgentMount;
 
         let tempDir: string | null = null;
