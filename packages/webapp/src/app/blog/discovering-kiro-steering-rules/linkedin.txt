@@ -1,0 +1,20 @@
+Kiro's domain-organized steering system is elegant—separate concerns for frontend, backend, and testing. But finding quality steering files is a mess.
+
+No centralized marketplace exists. You search GitHub repos for ".kiro" files, ask around in Discord, or manually share files with teammates. Good steering files don't get discovered, tested setups aren't shared, and everyone reinvents the wheel.
+
+PRPM changes this. We built the first centralized marketplace for Kiro steering files with real package management: CLI installation, semantic versioning, testing playground, quality metrics, and format conversion.
+
+Real example: Setting up full-stack Kiro steering (frontend + backend + testing) used to take 30-45 minutes of repo hunting and manual file copying. With PRPM, it's one command: prpm install @prpm/kiro-fullstack. Takes 30 seconds.
+
+Kiro is a newer tool, which makes now the perfect time to establish good discovery practices. Early adoption of centralized package management will shape how the ecosystem develops.
+
+For Kiro users: Search packages, test in playground, install with CLI, get automatic updates
+For package authors: Publish once, reach all users, get analytics and community feedback
+For the community: Build a shared knowledge base that grows with the ecosystem
+
+We compared the before/after in detail, including real workflows and feature tables. If you use Kiro or are considering it, this shows what centralized discovery enables.
+
+Read the full post:
+https://prpm.dev/blog/discovering-kiro-steering-rules
+
+#Kiro #AI #DeveloperTools #PackageManagement #OpenSource
