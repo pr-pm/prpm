@@ -27,6 +27,8 @@ import { createSchemaCommand } from './commands/schema';
 import { createInitCommand } from './commands/init';
 import { createConfigCommand } from './commands/config';
 import { createCatalogCommand } from './commands/catalog';
+import { createPlaygroundCommand } from './commands/playground';
+import { createCreditsCommand } from './commands/credits';
 import { telemetry } from './core/telemetry';
 
 // Read version from package.json
@@ -70,6 +72,10 @@ program.addCommand(createListCommand());
 program.addCommand(createUninstallCommand());
 program.addCommand(createIndexCommand());
 program.addCommand(createTelemetryCommand());
+
+// Playground commands
+program.addCommand(createPlaygroundCommand());
+program.addCommand(createCreditsCommand());
 
 // Utility commands
 program.addCommand(createSchemaCommand());
