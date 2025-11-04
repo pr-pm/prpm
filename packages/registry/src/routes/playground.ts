@@ -438,8 +438,8 @@ export async function playgroundRoutes(server: FastifyInstance) {
           200: {
             type: 'object',
             properties: {
-              shareToken: { type: 'string' },
-              shareUrl: { type: 'string' },
+              share_token: { type: 'string' },
+              share_url: { type: 'string' },
             },
           },
         },
@@ -459,12 +459,12 @@ export async function playgroundRoutes(server: FastifyInstance) {
 
         const shareToken = await playgroundService.shareSession(id, userId);
 
-        // Build share URL using config
-        const shareUrl = `${server.config.frontend.url}/playground/shared/${shareToken}`;
+        // Build share URL using config (using query string format for static export compatibility)
+        const shareUrl = `${server.config.frontend.url}/playground/shared?token=${shareToken}`;
 
         return reply.code(200).send({
-          shareToken,
-          shareUrl,
+          share_token: shareToken,
+          share_url: shareUrl,
         });
       } catch (error: any) {
         server.log.error({ error }, 'Failed to share session');

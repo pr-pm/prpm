@@ -119,6 +119,22 @@ COMMENT ON COLUMN cost_limits_config.monthly_cost_limit IS 'Maximum API cost per
 COMMENT ON COLUMN cost_limits_config.throttle_on_exceed IS 'Whether to automatically throttle user when limit exceeded';
 
 -- =====================================================
+-- 4.5. ENSURE PRPM_PLUS_STATUS COLUMN EXISTS
+-- =====================================================
+-- This column should have been added in migration 026, but ensure it exists
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'prpm_plus_status'
+  ) THEN
+    ALTER TABLE users ADD COLUMN prpm_plus_status VARCHAR(50);
+    RAISE NOTICE 'Added missing prpm_plus_status column to users table';
+  END IF;
+END $$;
+
+-- =====================================================
 -- 5. CREATE COST ANALYTICS MATERIALIZED VIEW
 -- =====================================================
 -- Pre-aggregated cost analytics for admin dashboard

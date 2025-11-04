@@ -383,6 +383,7 @@ jobs:
           CI: false
           NEXT_PUBLIC_REGISTRY_URL: "https://registry.prpm.dev"
           REGISTRY_URL: "https://registry.prpm.dev"
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
           # Don't set NEXT_PUBLIC_S3_SEO_DATA_URL - we want to use local files only during build
 
       - name: Verify build output

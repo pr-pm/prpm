@@ -87,7 +87,7 @@ export default function PlaygroundAnalyticsDashboard() {
       if (!token) return;
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'}/api/v1/packages/author`,
+        `${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'}/api/v1/author/packages`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

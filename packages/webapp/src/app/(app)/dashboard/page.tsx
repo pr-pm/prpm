@@ -17,6 +17,7 @@ interface User {
   is_admin: boolean
   package_count?: number
   total_downloads?: number
+  prpm_plus_status?: string
 }
 
 export default function DashboardPage() {
@@ -266,18 +267,25 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
           <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
             <div className="flex items-center gap-4 mb-4">
-              {user.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.avatar_url}
-                  alt={user.username}
-                  className="w-16 h-16 rounded-full"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-prpm-accent flex items-center justify-center text-white text-2xl font-bold">
-                  {user.username[0].toUpperCase()}
-                </div>
-              )}
+              <div className="relative">
+                {user.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.avatar_url}
+                    alt={user.username}
+                    className="w-16 h-16 rounded-full"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-prpm-accent flex items-center justify-center text-white text-2xl font-bold">
+                    {user.username[0].toUpperCase()}
+                  </div>
+                )}
+                {user.prpm_plus_status === 'active' && (
+                  <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-prpm-dark shadow-lg">
+                    PRPM+
+                  </div>
+                )}
+              </div>
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-white">{user.username}</h3>
                 <p className="text-gray-400 text-sm">{user.email}</p>
@@ -404,11 +412,14 @@ export default function DashboardPage() {
               <p className="text-gray-400 text-sm">Browse package authors</p>
             </Link>
 
-            <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 opacity-50 cursor-not-allowed">
-              <div className="text-4xl mb-3">⚙️</div>
+            <Link
+              href="/account"
+              className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 hover:border-prpm-accent transition-all group"
+            >
+              <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">⚙️</div>
               <h3 className="text-lg font-semibold text-white mb-2">Settings</h3>
-              <p className="text-gray-400 text-sm">Coming soon</p>
-            </div>
+              <p className="text-gray-400 text-sm">Manage settings</p>
+            </Link>
           </div>
         </div>
 

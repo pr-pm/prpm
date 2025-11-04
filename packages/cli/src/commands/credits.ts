@@ -57,12 +57,12 @@ async function apiCall(endpoint: string): Promise<Response> {
 async function showBalance(): Promise<void> {
   console.log('💳 Fetching playground credits balance...\n');
 
-  const response = await apiCall('/api/v1/playground/credits/balance');
+  const response = await apiCall('/api/v1/playground/credits');
   const balance: CreditsBalance = await response.json() as CreditsBalance;
 
-  console.log('═'.repeat(60));
+  console.log('═'.repeat(5));
   console.log('  PLAYGROUND CREDITS BALANCE');
-  console.log('═'.repeat(60));
+  console.log('═'.repeat(5));
 
   // Total balance
   console.log(`\n💰 Total Balance: ${balance.balance} credits`);
@@ -99,7 +99,7 @@ async function showBalance(): Promise<void> {
     console.log('   Visit: https://prpm.dev/pricing');
   }
 
-  console.log('\n═'.repeat(60));
+  console.log('\n═'.repeat(5));
 }
 
 /**
@@ -108,7 +108,7 @@ async function showBalance(): Promise<void> {
 async function showHistory(limit: number = 10): Promise<void> {
   console.log(`💳 Fetching recent credit transactions...\n`);
 
-  const response = await apiCall(`/api/v1/playground/credits/transactions?limit=${limit}`);
+  const response = await apiCall(`/api/v1/playground/credits/history?limit=${limit}`);
   const data: { transactions: CreditTransaction[] } = await response.json() as { transactions: CreditTransaction[] };
 
   if (data.transactions.length === 0) {
@@ -116,9 +116,9 @@ async function showHistory(limit: number = 10): Promise<void> {
     return;
   }
 
-  console.log('═'.repeat(80));
+  console.log('═'.repeat(5));
   console.log('  CREDIT TRANSACTION HISTORY');
-  console.log('═'.repeat(80));
+  console.log('═'.repeat(5));
   console.log();
 
   for (const tx of data.transactions) {
@@ -134,7 +134,7 @@ async function showHistory(limit: number = 10): Promise<void> {
     console.log();
   }
 
-  console.log('═'.repeat(80));
+  console.log('═'.repeat(5));
 }
 
 /**

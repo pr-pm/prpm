@@ -10,12 +10,34 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 0. ADD STRIPE CUSTOMER ID TO USERS TABLE
 -- =====================================================
 -- Add stripe_customer_id column to users table for individual credit purchases
-ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255) UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255);
+-- Add UNIQUE constraint separately (can't combine with IF NOT EXISTS)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'users_stripe_customer_id_key'
+    AND conrelid = 'users'::regclass
+  ) THEN
+    ALTER TABLE users ADD CONSTRAINT users_stripe_customer_id_key UNIQUE (stripe_customer_id);
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id ON users(stripe_customer_id);
 COMMENT ON COLUMN users.stripe_customer_id IS 'Stripe Customer ID for individual user credit purchases and PRPM+ subscriptions';
 
 -- Add PRPM+ subscription fields to users table
-ALTER TABLE users ADD COLUMN IF NOT EXISTS prpm_plus_subscription_id VARCHAR(255) UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS prpm_plus_subscription_id VARCHAR(255);
+-- Add UNIQUE constraint separately
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'users_prpm_plus_subscription_id_key'
+    AND conrelid = 'users'::regclass
+  ) THEN
+    ALTER TABLE users ADD CONSTRAINT users_prpm_plus_subscription_id_key UNIQUE (prpm_plus_subscription_id);
+  END IF;
+END $$;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS prpm_plus_status VARCHAR(50);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS prpm_plus_cancel_at_period_end BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS prpm_plus_current_period_end TIMESTAMP WITH TIME ZONE;

@@ -45,7 +45,7 @@ async function apiCall(endpoint: string): Promise<Response> {
  * Get current subscription status
  */
 async function getSubscriptionStatus(): Promise<CreditsBalance> {
-  const response = await apiCall('/api/v1/playground/credits/balance');
+  const response = await apiCall('/api/v1/playground/credits');
   return response.json() as Promise<CreditsBalance>;
 }
 

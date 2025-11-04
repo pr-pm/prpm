@@ -58,7 +58,7 @@ export default function SuggestedInputsManager() {
 
       // Get user's packages
       const packagesRes = await fetch(
-        `${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'}/api/v1/packages/author`,
+        `${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'}/api/v1/author/packages`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (packagesRes.ok) {

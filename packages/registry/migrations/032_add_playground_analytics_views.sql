@@ -38,7 +38,9 @@ LEFT JOIN suggested_input_usage siu ON sti.id = siu.suggested_input_id
 WHERE sti.is_active = TRUE
 GROUP BY sti.id, sti.package_id, sti.author_id, sti.title, sti.category, sti.difficulty, sti.created_at;
 
--- Create index for faster queries
+-- Create indexes for faster queries
+-- Must have a UNIQUE index to support REFRESH MATERIALIZED VIEW CONCURRENTLY
+CREATE UNIQUE INDEX idx_suggested_input_analytics_pkey ON suggested_input_analytics(suggested_input_id);
 CREATE INDEX idx_suggested_input_analytics_package ON suggested_input_analytics(package_id);
 CREATE INDEX idx_suggested_input_analytics_author ON suggested_input_analytics(author_id);
 
@@ -85,7 +87,8 @@ LEFT JOIN suggested_test_inputs sti ON p.id = sti.package_id
 GROUP BY p.id, p.name, p.author_id;
 
 -- Create indexes
-CREATE INDEX idx_package_playground_analytics_package ON package_playground_analytics(package_id);
+-- Must have a UNIQUE index to support REFRESH MATERIALIZED VIEW CONCURRENTLY
+CREATE UNIQUE INDEX idx_package_playground_analytics_pkey ON package_playground_analytics(package_id);
 CREATE INDEX idx_package_playground_analytics_author ON package_playground_analytics(author_id);
 
 -- =====================================================
@@ -129,8 +132,10 @@ LEFT JOIN packages p ON u.id = p.author_id
 LEFT JOIN package_playground_analytics ppa ON p.id = ppa.package_id
 GROUP BY u.id, u.username;
 
--- Create index
-CREATE INDEX idx_author_dashboard_summary_author ON author_dashboard_summary(author_id);
+-- Create indexes
+-- Must have a UNIQUE index to support REFRESH MATERIALIZED VIEW CONCURRENTLY
+CREATE UNIQUE INDEX idx_author_dashboard_summary_pkey ON author_dashboard_summary(author_id);
+CREATE INDEX idx_author_dashboard_summary_username ON author_dashboard_summary(username);
 
 -- =====================================================
 -- View: Time Series Data for Playground Usage

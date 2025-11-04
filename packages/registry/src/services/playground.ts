@@ -746,11 +746,12 @@ export class PlaygroundService {
   async shareSession(sessionId: string, userId: string): Promise<string> {
     const shareToken = nanoid(16);
 
+    // Update the session to be public with share token
     const result = await this.server.pg.query(
       `UPDATE playground_sessions
-       SET is_public = TRUE, share_token = $1, updated_at = NOW()
+       SET is_public = TRUE, share_token = $1, updated_at = NOW(), shared_at = NOW()
        WHERE id = $2 AND user_id = $3
-       RETURNING share_token`,
+       RETURNING share_token, is_comparison, comparison_session_id`,
       [shareToken, sessionId, userId]
     );
 
@@ -758,7 +759,19 @@ export class PlaygroundService {
       throw new Error('Session not found or unauthorized');
     }
 
-    return result.rows[0].share_token;
+    const session = result.rows[0];
+
+    // If this is a comparison session, also share the paired session
+    if (session.is_comparison && session.comparison_session_id) {
+      await this.server.pg.query(
+        `UPDATE playground_sessions
+         SET is_public = TRUE, share_token = $1, updated_at = NOW(), shared_at = NOW()
+         WHERE id = $2 AND user_id = $3`,
+        [shareToken, session.comparison_session_id, userId]
+      );
+    }
+
+    return session.share_token;
   }
 
   /**

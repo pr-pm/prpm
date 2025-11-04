@@ -44,7 +44,8 @@ function SharedResultContent() {
 
     const fetchSession = async () => {
       try {
-        const response = await fetch(`/api/v1/playground/shared/${token}`);
+        const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111';
+        const response = await fetch(`${registryUrl}/api/v1/playground/shared/${token}`);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -70,7 +71,8 @@ function SharedResultContent() {
 
   const handleFeedback = async (isHelpful: boolean) => {
     try {
-      const response = await fetch(`/api/v1/playground/shared/${token}/feedback`, {
+      const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111';
+      const response = await fetch(`${registryUrl}/api/v1/playground/shared/${token}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -6,10 +6,11 @@ import type { CreditBalance } from '../../lib/api'
 interface CreditsWidgetProps {
   credits: CreditBalance | null
   onBuyCredits: () => void
+  onSubscribe?: () => void
   onRefresh: () => void
 }
 
-export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: CreditsWidgetProps) {
+export default function CreditsWidget({ credits, onBuyCredits, onSubscribe, onRefresh }: CreditsWidgetProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleRefresh = async () => {
@@ -77,13 +78,23 @@ export default function CreditsWidget({ credits, onBuyCredits, onRefresh }: Cred
         )}
       </div>
 
-      {/* Buy Credits Button */}
-      <button
-        onClick={onBuyCredits}
-        className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-prpm-green hover:bg-prpm-green-dark text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-sm"
-      >
-        Buy More Credits
-      </button>
+      {/* Action Buttons */}
+      <div className="space-y-2">
+        {onSubscribe && monthly_limit === 0 && (
+          <button
+            onClick={onSubscribe}
+            className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-sm"
+          >
+            Subscribe to PRPM+ ($6/mo)
+          </button>
+        )}
+        <button
+          onClick={onBuyCredits}
+          className="w-full py-1.5 sm:py-2 px-3 sm:px-4 bg-prpm-green hover:bg-prpm-green-dark text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-sm"
+        >
+          Buy Credits
+        </button>
+      </div>
 
       {/* Low Credits Warning */}
       {total < 10 && total > 0 && (

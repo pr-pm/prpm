@@ -55,6 +55,7 @@ interface AuthorData {
     website?: string | null
     joined: string
     has_claimed_account: boolean
+    prpm_plus_status?: string
   }
   stats: AuthorStats
   packages: Package[]
@@ -196,19 +197,26 @@ function AuthorsPageContent() {
             </Link>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-6">
-                <div className="w-24 h-24 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
-                  {author.avatar_url ? (
-                    <Image
-                      src={author.avatar_url}
-                      alt={`${author.username}'s avatar`}
-                      width={96}
-                      height={96}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-4xl font-bold text-white">
-                      {author.username.charAt(0).toUpperCase()}
-                    </span>
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full bg-prpm-accent/20 border-2 border-prpm-accent flex items-center justify-center overflow-hidden">
+                    {author.avatar_url ? (
+                      <Image
+                        src={author.avatar_url}
+                        alt={`${author.username}'s avatar`}
+                        width={96}
+                        height={96}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-4xl font-bold text-white">
+                        {author.username.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  {author.prpm_plus_status === 'active' && (
+                    <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-prpm-dark shadow-lg">
+                      PRPM+
+                    </div>
                   )}
                 </div>
 

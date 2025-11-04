@@ -102,6 +102,31 @@ export default function PlaygroundInterface({
     }
   }, [sessionId])
 
+  // Load package details if initialPackageId is provided
+  useEffect(() => {
+    if (initialPackageId && !selectedPackage) {
+      loadInitialPackage(initialPackageId)
+    }
+  }, [initialPackageId])
+
+  const loadInitialPackage = async (packageIdToLoad: string) => {
+    try {
+      // Use searchPackages to find the package by searching for packages
+      // and filtering by ID client-side (not ideal but works for now)
+      const result = await searchPackages({ q: '', limit: 100 })
+      const pkg = result.packages.find((p) => p.id === packageIdToLoad)
+
+      if (pkg) {
+        setSelectedPackage(pkg)
+        setPackageId(pkg.id)
+      } else {
+        console.warn(`Package with ID ${packageIdToLoad} not found`)
+      }
+    } catch (err) {
+      console.error('Failed to load initial package:', err)
+    }
+  }
+
   // Auto-collapse older exchanges (keep last 2 expanded)
   useEffect(() => {
     const exchanges = groupIntoExchanges(conversation)
@@ -215,8 +240,9 @@ export default function PlaygroundInterface({
     }
 
     if (comparisonMode && !packageIdB) {
-      setErrorB('Please select a second package for comparison')
-      return
+      // In comparison mode, allow Package B to be empty (baseline comparison)
+      // setErrorB('Please select a second package for comparison')
+      // return
     }
 
     const token = localStorage.getItem('prpm_token')
@@ -226,27 +252,46 @@ export default function PlaygroundInterface({
     }
 
     if (comparisonMode) {
-      // Run both packages in parallel
+      // Run both packages in parallel (or just Package A if B is empty for baseline)
       setLoading(true)
       setLoadingB(true)
       setError(null)
       setErrorB(null)
 
       try {
-        const [resultA, resultB] = await Promise.all([
+        // If packageIdB is empty, run baseline comparison (no package)
+        const promises = [
           runPlayground(token, {
             package_id: packageId,
             input: input.trim(),
             model,
             session_id: currentSessionId,
-          }),
-          runPlayground(token, {
-            package_id: packageIdB,
-            input: input.trim(),
-            model,
-            session_id: currentSessionIdB,
           })
-        ])
+        ]
+
+        if (packageIdB) {
+          promises.push(
+            runPlayground(token, {
+              package_id: packageIdB,
+              input: input.trim(),
+              model,
+              session_id: currentSessionIdB,
+            })
+          )
+        } else {
+          // Baseline: run without package using use_no_prompt flag
+          promises.push(
+            runPlayground(token, {
+              package_id: packageId, // Use same package ID for tracking, but with use_no_prompt
+              input: input.trim(),
+              model,
+              session_id: currentSessionIdB,
+              use_no_prompt: true, // This tells backend to skip the system prompt
+            })
+          )
+        }
+
+        const [resultA, resultB] = await Promise.all(promises)
 
         console.log('[Playground] Comparison run complete. Credits spent:', resultA.credits_spent + resultB.credits_spent, 'Remaining:', resultA.credits_remaining)
         setConversation(resultA.conversation)
@@ -361,8 +406,23 @@ export default function PlaygroundInterface({
               }}
               onFocus={() => setShowPackageDropdown(true)}
               placeholder="Search for a package..."
-              className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent"
             />
+            {(selectedPackage || packageSearch) && (
+              <button
+                onClick={() => {
+                  setSelectedPackage(null)
+                  setPackageId('')
+                  setPackageSearch('')
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                aria-label="Clear package selection"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
             {showPackageDropdown && packages.length > 0 && (
               <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                 {packages.map((pkg) => (
@@ -394,7 +454,7 @@ export default function PlaygroundInterface({
         {comparisonMode && (
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Package B
+              Package B <span className="text-xs font-normal text-gray-500">(leave empty for baseline)</span>
             </label>
             <div className="relative">
               <input
@@ -408,9 +468,24 @@ export default function PlaygroundInterface({
                   }
                 }}
                 onFocus={() => setShowPackageDropdownB(true)}
-                placeholder="Search for a package..."
-                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent"
+                placeholder="Search for a package or leave empty for baseline..."
+                className="w-full px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent"
               />
+              {(selectedPackageB || packageSearchB) && (
+                <button
+                  onClick={() => {
+                    setSelectedPackageB(null)
+                    setPackageIdB('')
+                    setPackageSearchB('')
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  aria-label="Clear package B selection"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
               {showPackageDropdownB && packagesB.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                   {packagesB.map((pkg) => (
@@ -600,7 +675,7 @@ export default function PlaygroundInterface({
           {comparisonMode && conversationB.length > 0 && (
             <div>
               <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                {selectedPackageB ? selectedPackageB.name : 'Package B'}
+                {selectedPackageB ? selectedPackageB.name : packageIdB ? 'Package B' : 'Baseline (No Package)'}
               </h4>
               <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 {groupIntoExchanges(conversationB).map((exchange, exchangeIdx) => {
@@ -744,7 +819,7 @@ export default function PlaygroundInterface({
       {/* Run Button */}
       <button
         onClick={handleRun}
-        disabled={loading || loadingB || !packageId || !input.trim() || (comparisonMode && !packageIdB)}
+        disabled={loading || loadingB || !packageId || !input.trim()}
         className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-sm sm:text-base text-white transition ${
           loading || !packageId || !input.trim()
             ? 'bg-gray-400 cursor-not-allowed'

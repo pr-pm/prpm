@@ -182,7 +182,7 @@ prpm playground @user/complex-task "Analyze this" --model opus`}</code>
 
             <h3 className="text-2xl font-bold text-white mb-6">Try Before You Subscribe</h3>
             <p className="text-gray-300 leading-relaxed mb-0">
-              Start with 5 free trial credits. Test a few packages, find your favorites, then subscribe to PRPM+ for unlimited testing. No commitment until you're sure this is valuable.
+              Start with 5 free trial credits. Test a few packages, find your favorites, then subscribe to PRPM+ for 100 monthly credits. No commitment until you're sure this is valuable.
             </p>
           </div>
 
@@ -266,62 +266,6 @@ prpm playground @user/complex-task "Analyze this" --model opus`}</code>
               <li><strong className="text-white">Credit packs:</strong> Buy additional credits that never expire ($5 for 100)</li>
               <li><strong className="text-white">Token-based pricing:</strong> 1 credit = 5,000 tokens (prevents abuse)</li>
               <li><strong className="text-white">Rollover credits:</strong> Unused monthly credits roll over (max 200, 1-month expiry)</li>
-            </ul>
-          </div>
-
-          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
-            <h2 className="text-3xl font-bold text-white mb-0">Technical Details</h2>
-          </div>
-
-          <p className="text-gray-300 leading-relaxed mb-8">
-            For the technically curious, here's how Playground works under the hood:
-          </p>
-
-          <div className="not-prose mb-16">
-            <h3 className="text-2xl font-bold text-white mb-6">Architecture</h3>
-
-            <ol className="list-decimal list-inside text-gray-300 space-y-4 mb-8">
-              <li>
-                <strong className="text-white">Package Loading:</strong> When you click "Test in Playground", we fetch the package prompt from our registry or S3 storage
-              </li>
-              <li>
-                <strong className="text-white">Model Integration:</strong> We send your input plus the package prompt to the selected AI model via official APIs (Anthropic or OpenAI)
-              </li>
-              <li>
-                <strong className="text-white">Token Counting:</strong> We calculate exact token usage using the same tokenizers as the model providers
-              </li>
-              <li>
-                <strong className="text-white">Credit Deduction:</strong> Credits are deducted based on actual tokens used (1 credit = 5,000 tokens) with model multipliers
-              </li>
-              <li>
-                <strong className="text-white">Session Persistence:</strong> Multi-turn conversations are stored server-side with session IDs for continuity
-              </li>
-              <li>
-                <strong className="text-white">Result Sharing:</strong> When you share a result, we generate a unique token and make the session publicly viewable
-              </li>
-            </ol>
-          </div>
-
-          <div className="not-prose mb-16">
-            <h3 className="text-2xl font-bold text-white mb-6">Privacy & Security</h3>
-
-            <ul className="list-disc ml-6 text-gray-300 space-y-3 mb-8">
-              <li><strong className="text-white">No prompt storage:</strong> Package prompts are loaded on-demand and never stored with your inputs</li>
-              <li><strong className="text-white">Private by default:</strong> All test sessions are private unless you explicitly share them</li>
-              <li><strong className="text-white">IP hashing:</strong> View tracking uses SHA-256 hashed IPs for privacy</li>
-              <li><strong className="text-white">Official APIs:</strong> We use official Anthropic and OpenAI APIs with enterprise-grade security</li>
-              <li><strong className="text-white">Cost monitoring:</strong> Real-time cost tracking prevents abuse and ensures sustainability</li>
-            </ul>
-          </div>
-
-          <div className="not-prose mb-16">
-            <h3 className="text-2xl font-bold text-white mb-6">Performance Optimizations</h3>
-
-            <ul className="list-disc ml-6 text-gray-300 space-y-3 mb-0">
-              <li><strong className="text-white">Materialized views:</strong> Top shared results are pre-computed and refreshed hourly for instant loading</li>
-              <li><strong className="text-white">Session caching:</strong> Multi-turn conversations reuse session data to avoid re-sending context</li>
-              <li><strong className="text-white">Efficient polling:</strong> CLI commands poll APIs every 2 seconds with exponential backoff</li>
-              <li><strong className="text-white">Token limits:</strong> 20,000 token limit per request prevents runaway costs</li>
             </ul>
           </div>
 
@@ -492,7 +436,6 @@ prpm playground @user/package "your test input"`}</code>
 
             <ul className="list-disc ml-6 text-gray-300 space-y-2 mb-0">
               <li>Twitter: <a href="https://twitter.com/prpm_dev" className="text-prpm-accent hover:underline font-medium">@prpm_dev</a></li>
-              <li>Discord: <a href="https://discord.gg/prpm" className="text-prpm-accent hover:underline font-medium">Join our community</a></li>
               <li>Email: <a href="mailto:hello@prpm.dev" className="text-prpm-accent hover:underline font-medium">hello@prpm.dev</a></li>
             </ul>
           </div>

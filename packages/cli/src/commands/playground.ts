@@ -86,6 +86,38 @@ async function apiCall(
 }
 
 /**
+ * Resolve package name to UUID
+ */
+async function resolvePackageId(packageName: string): Promise<string> {
+  // If it's already a UUID, return it
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(packageName)) {
+    return packageName;
+  }
+
+  // Search for the package by name
+  const config = await getConfig();
+  const baseUrl = (config.registryUrl || "https://registry.prpm.dev").replace(/\/$/, '');
+
+  const response = await fetch(`${baseUrl}/api/v1/search?q=${encodeURIComponent(packageName)}&limit=10`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to search for package: ${response.statusText}`);
+  }
+
+  const data = await response.json() as { packages: Array<{ id: string; name: string }> };
+
+  // Find exact match
+  const exactMatch = data.packages.find(pkg => pkg.name === packageName);
+  if (exactMatch) {
+    return exactMatch.id;
+  }
+
+  // If no exact match, throw error
+  throw new Error(`Package not found: ${packageName}`);
+}
+
+/**
  * Execute a playground run
  */
 async function runPlayground(
@@ -94,8 +126,11 @@ async function runPlayground(
   options: PlaygroundOptions,
   sessionId?: string
 ): Promise<PlaygroundResponse> {
+  // Resolve package name to UUID
+  const packageId = await resolvePackageId(packageName);
+
   const response = await apiCall('/api/v1/playground/run', 'POST', {
-    package_id: packageName,
+    package_id: packageId,
     package_version: options.version,
     input,
     model: options.model || 'sonnet',
@@ -204,18 +239,48 @@ async function runSingle(
   console.log(`\n🎮 Testing package: ${packageName}`);
   console.log(`   Model: ${options.model || 'sonnet'}`);
   if (options.compare) {
-    console.log(`   Mode: Comparing against no prompt (raw model baseline)`);
+    console.log(`   Mode: Comparing with package vs. without (baseline)`);
   }
 
   try {
-    console.log('\n⏳ Processing...');
-    const result = await runPlayground(packageName, input, options);
+    if (options.compare) {
+      // Comparison mode: run both with package and without
+      console.log('\n⏳ Processing comparison (2 requests)...');
 
-    displayResponse(result, true);
+      // Run with package (without use_no_prompt flag)
+      const withPackageOptions = { ...options, compare: false };
+      const resultWithPackage = await runPlayground(packageName, input, withPackageOptions);
+
+      // Run without package (with use_no_prompt flag)
+      const withoutPackageOptions = { ...options, compare: true };
+      const resultWithoutPackage = await runPlayground(packageName, input, withoutPackageOptions);
+
+      // Display both results
+      console.log('\n' + '═'.repeat(60));
+      console.log('📦 WITH PACKAGE PROMPT');
+      console.log('═'.repeat(60));
+      displayResponse(resultWithPackage, false);
+
+      console.log('\n' + '═'.repeat(60));
+      console.log('🔵 WITHOUT PACKAGE (BASELINE)');
+      console.log('═'.repeat(60));
+      displayResponse(resultWithoutPackage, false);
+
+      // Combined stats
+      console.log(`\n📊 Combined Stats:`);
+      console.log(`   Total tokens: ${resultWithPackage.tokens_used + resultWithoutPackage.tokens_used}`);
+      console.log(`   Total credits: ${resultWithPackage.credits_spent + resultWithoutPackage.credits_spent}`);
+      console.log(`   Credits remaining: ${resultWithoutPackage.credits_remaining}`);
+    } else {
+      // Single mode: run with package only
+      console.log('\n⏳ Processing...');
+      const result = await runPlayground(packageName, input, options);
+      displayResponse(result, true);
+    }
 
     console.log(`\n💡 Tips:`);
     console.log(`   - Use --interactive for multi-turn conversation`);
-    console.log(`   - Use --compare to test without the package prompt`);
+    console.log(`   - Use --compare to test with and without the package prompt`);
     console.log(`   - Use --model to choose different models (sonnet, opus, gpt-4o, etc.)`);
   } catch (error) {
     console.error(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}`);

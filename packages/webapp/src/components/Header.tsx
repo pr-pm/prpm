@@ -34,6 +34,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
     { href: '/search', label: 'Search' },
     { href: '/blog', label: 'Blog' },
     { href: '/playground', label: 'Playground', badge: 'PRPM+' },
+    { href: '/pricing', label: 'Pricing' },
   ]
 
   // Secondary navigation links (shown in hamburger menu)
@@ -225,7 +226,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
               </a>
               {showAccount && (
                 <Link
-                  href="/dashboard"
+                  href="/account"
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-gray-400 hover:text-white transition-colors py-2 flex items-center gap-2"
                 >

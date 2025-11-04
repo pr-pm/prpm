@@ -6,6 +6,7 @@ import CreditsWidget from '../../../components/playground/CreditsWidget'
 import PlaygroundInterface from '../../../components/playground/PlaygroundInterface'
 import SessionsSidebar from '../../../components/playground/SessionsSidebar'
 import BuyCreditsModal from '../../../components/playground/BuyCreditsModal'
+import SubscribePRPMPlusModal from '../../../components/SubscribePRPMPlusModal'
 import { getPlaygroundCredits, listPlaygroundSessions } from '../../../lib/api'
 import type { CreditBalance, PlaygroundSession } from '../../../lib/api'
 
@@ -13,13 +14,18 @@ function PlaygroundContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const packageId = searchParams.get('package')
+  const buyCredits = searchParams.get('buyCredits')
+  const purchaseSuccess = searchParams.get('purchase')
+  const subscriptionStatus = searchParams.get('subscription')
 
   const [credits, setCredits] = useState<CreditBalance | null>(null)
   const [sessions, setSessions] = useState<PlaygroundSession[]>([])
   const [selectedSession, setSelectedSession] = useState<string | null>(null)
   const [showBuyCredits, setShowBuyCredits] = useState(false)
+  const [showSubscribe, setShowSubscribe] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null)
 
   // Check authentication
   useEffect(() => {
@@ -30,6 +36,54 @@ function PlaygroundContent() {
     }
     loadData(token)
   }, [router])
+
+  // Auto-open buy credits modal if URL parameter is present
+  useEffect(() => {
+    if (buyCredits === 'true' && !loading) {
+      setShowBuyCredits(true)
+    }
+  }, [buyCredits, loading])
+
+  // Show success message for purchases or subscriptions
+  useEffect(() => {
+    if (purchaseSuccess === 'success') {
+      setShowSuccessMessage('Processing your purchase... Credits will appear shortly.')
+
+      // Poll for credit updates every 2 seconds for up to 30 seconds
+      let pollCount = 0
+      const maxPolls = 15
+      const pollInterval = setInterval(async () => {
+        pollCount++
+        await handleRefreshCredits()
+
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval)
+          setShowSuccessMessage('Purchase complete! If credits don\'t appear, please refresh the page.')
+          setTimeout(() => setShowSuccessMessage(null), 5000)
+        }
+      }, 2000)
+
+      return () => clearInterval(pollInterval)
+    } else if (subscriptionStatus === 'success') {
+      setShowSuccessMessage('Activating your PRPM+ subscription... Credits will appear shortly.')
+
+      // Poll for credit updates every 2 seconds for up to 30 seconds
+      let pollCount = 0
+      const maxPolls = 15
+      const pollInterval = setInterval(async () => {
+        pollCount++
+        await handleRefreshCredits()
+
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval)
+          setShowSuccessMessage('Subscription activated! If credits don\'t appear, please refresh the page.')
+          setTimeout(() => setShowSuccessMessage(null), 5000)
+        }
+      }, 2000)
+
+      return () => clearInterval(pollInterval)
+    }
+  }, [purchaseSuccess, subscriptionStatus])
 
   const loadData = async (token: string) => {
     try {
@@ -119,6 +173,13 @@ function PlaygroundContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Success Message Banner */}
+      {showSuccessMessage && (
+        <div className="bg-green-500 text-white px-4 py-3 text-center font-semibold">
+          ✅ {showSuccessMessage}
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -134,6 +195,7 @@ function PlaygroundContent() {
             <CreditsWidget
               credits={credits}
               onBuyCredits={() => setShowBuyCredits(true)}
+              onSubscribe={() => setShowSubscribe(true)}
               onRefresh={handleRefreshCredits}
             />
           </div>
@@ -171,6 +233,13 @@ function PlaygroundContent() {
         <BuyCreditsModal
           onClose={() => setShowBuyCredits(false)}
           onSuccess={handleCreditsUpdated}
+        />
+      )}
+
+      {/* Subscribe to PRPM+ Modal */}
+      {showSubscribe && (
+        <SubscribePRPMPlusModal
+          onClose={() => setShowSubscribe(false)}
         />
       )}
     </div>
