@@ -54,8 +54,6 @@ export default function DiscoveringClaudeSkillsPost() {
             <ul className="list-disc ml-6 text-gray-300 space-y-2">
               <li><a href="https://ctx.directory" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">ctx.directory</a> - Browse by creator, copy markdown files</li>
               <li><a href="https://skillsmp.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">SkillsMP</a> - Search marketplace, download files</li>
-              <li><a href="https://www.cursorhow.com/en/agent-skills-hub" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">CursorHow Agent Skills Hub</a> - Collection mixed with Cursor rules</li>
-              <li><a href="https://dotcursorrules.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">dotcursorrules.com</a> - Primarily Cursor, some Claude content</li>
               <li><a href="https://davila7.github.io/claude-code-templates/" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude Code Templates</a> - GitHub Pages collection, manual copy</li>
               <li><a href="https://claude-plugins.dev" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude Plugins</a> - MCP plugins (different from skills)</li>
               <li>GitHub repos, Discord, Reddit</li>
@@ -85,8 +83,7 @@ export default function DiscoveringClaudeSkillsPost() {
                   <th className="text-left p-3 text-white font-semibold">Feature</th>
                   <th className="text-left p-3 text-white font-semibold">ctx.directory</th>
                   <th className="text-left p-3 text-white font-semibold">SkillsMP</th>
-                  <th className="text-left p-3 text-white font-semibold">CursorHow</th>
-                  <th className="text-left p-3 text-white font-semibold">dotcursorrules</th>
+                  <th className="text-left p-3 text-white font-semibold">Claude Code Templates</th>
                   <th className="text-left p-3 text-prpm-accent font-semibold">PRPM</th>
                 </tr>
               </thead>
@@ -95,13 +92,11 @@ export default function DiscoveringClaudeSkillsPost() {
                   <td className="p-3">Large Collection</td>
                   <td className="p-3">Partial</td>
                   <td className="p-3">Claude only</td>
-                  <td className="p-3">Mixed</td>
-                  <td className="p-3">Cursor focus</td>
+                  <td className="p-3">Small</td>
                   <td className="p-3 text-green-400">✅ All formats</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">CLI Install</td>
-                  <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
@@ -112,12 +107,10 @@ export default function DiscoveringClaudeSkillsPost() {
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
-                  <td className="p-3">❌</td>
                   <td className="p-3 text-green-400">✅</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Format Conversion</td>
-                  <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
@@ -128,20 +121,17 @@ export default function DiscoveringClaudeSkillsPost() {
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
-                  <td className="p-3">❌</td>
                   <td className="p-3 text-green-400">✅</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Unified Search</td>
                   <td className="p-3">Partial</td>
                   <td className="p-3">Claude only</td>
-                  <td className="p-3">Mixed</td>
-                  <td className="p-3">Cursor focus</td>
+                  <td className="p-3">❌</td>
                   <td className="p-3 text-green-400">✅ All formats</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Collections</td>
-                  <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
