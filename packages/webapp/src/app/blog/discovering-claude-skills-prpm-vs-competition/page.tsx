@@ -55,7 +55,7 @@ export default function DiscoveringClaudeSkillsPost() {
               <li><a href="https://ctx.directory" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">ctx.directory</a> - Browse by creator, copy markdown files</li>
               <li><a href="https://skillsmp.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">SkillsMP</a> - Search marketplace, download files</li>
               <li><a href="https://davila7.github.io/claude-code-templates/" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude Code Templates</a> - GitHub Pages collection, manual copy</li>
-              <li><a href="https://claude-plugins.dev" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude Plugins</a> - MCP plugins (different from skills)</li>
+              <li><a href="https://claude-plugins.dev" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude Plugins</a> - Third-party plugin directory (different from skills)</li>
               <li>GitHub repos, Discord, Reddit</li>
             </ul>
           </div>
