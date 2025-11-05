@@ -7,6 +7,7 @@ import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { getWebappUrl } from '../utils/webapp-url';
 
 const execAsync = promisify(exec);
 
@@ -150,7 +151,8 @@ export async function handleSubscribe(): Promise<void> {
     console.log('   $3/month for verified organization members (50% off)');
 
     // Open subscription page
-    const subscribeUrl = `${(config.registryUrl || "https://registry.prpm.dev").replace(/api\/?$/, '')}/playground/credits/subscribe`;
+    const webappUrl = getWebappUrl(config.registryUrl || 'https://registry.prpm.dev');
+    const subscribeUrl = `${webappUrl}/playground/credits/subscribe`;
     console.log(`\n🌐 Opening subscription page in your browser...`);
     await openBrowser(subscribeUrl);
 

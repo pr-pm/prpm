@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile, getDestinationDir, stripAuthorNamespace } from '../core/filesystem';
+import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { Package, Format, Subtype } from '../types';
@@ -228,8 +228,20 @@ export async function handleInstall(
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 
-    // Determine format preference
-    let format = options.as || pkg.format;
+    // Determine format preference with auto-detection
+    let format: string | undefined = options.as;
+
+    // Auto-detect format if not explicitly specified
+    if (!format) {
+      const detectedFormat = await autoDetectFormat();
+      if (detectedFormat) {
+        format = detectedFormat;
+        console.log(`   🔍 Auto-detected ${format} format (found .${format}/ directory)`);
+      } else {
+        // No existing directories found, use package's native format
+        format = pkg.format;
+      }
+    }
 
     // Special handling for Claude packages: default to CLAUDE.md if it doesn't exist
     // BUT only for packages that are generic rules (not skills, agents, or commands)
