@@ -396,7 +396,28 @@ export async function handleInstall(
       }
 
       for (const file of extractedFiles) {
-        const filePath = `${packageDir}/${file.name}`;
+        // Strip the tarball's root directory prefix to preserve subdirectories
+        // Example: ".claude/skills/agent-builder/docs/examples.md" → "docs/examples.md"
+        //          ".claude/skills/agent-builder/SKILL.md" → "SKILL.md"
+
+        // Find the common prefix (the package's root directory in the tarball)
+        const pathParts = file.name.split('/');
+
+        // For Claude skills, the tarball structure is typically: .claude/skills/package-name/...
+        // We want to strip everything up to and including the package-name directory
+        let relativeFileName = file.name;
+
+        // Find the skills directory index
+        const skillsDirIndex = pathParts.indexOf('skills');
+        if (skillsDirIndex !== -1 && pathParts.length > skillsDirIndex + 2) {
+          // Skip: .claude/skills/package-name/ and keep the rest
+          relativeFileName = pathParts.slice(skillsDirIndex + 2).join('/');
+        } else if (pathParts.length > 1) {
+          // Fallback: just take the filename (last part)
+          relativeFileName = pathParts[pathParts.length - 1];
+        }
+
+        const filePath = `${packageDir}/${relativeFileName}`;
         await saveFile(filePath, file.content);
         fileCount++;
       }
