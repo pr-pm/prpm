@@ -203,7 +203,10 @@ prpm update`}</code></pre>
         </div>
       </article>
 
-      <BlogFooter />
+      <BlogFooter
+        postTitle="Discovering Kiro Steering Rules: The First Marketplace"
+        postUrl="/blog/discovering-kiro-steering-rules"
+      />
     </main>
   )
 }

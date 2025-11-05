@@ -240,7 +240,10 @@ prpm update`}</code></pre>
         </div>
       </article>
 
-      <BlogFooter />
+      <BlogFooter
+        postTitle="Best Way to Discover Claude Skills: Large Collection"
+        postUrl="/blog/discovering-claude-skills-prpm-vs-competition"
+      />
     </main>
   )
 }

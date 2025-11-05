@@ -207,7 +207,10 @@ prpm update`}</code></pre>
         </div>
       </article>
 
-      <BlogFooter />
+      <BlogFooter
+        postTitle="Finding the Best Cursor Rules: Beyond cursor.directory"
+        postUrl="/blog/discovering-cursor-rules"
+      />
     </main>
   )
 }

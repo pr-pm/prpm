@@ -204,7 +204,10 @@ prpm update`}</code></pre>
         </div>
       </article>
 
-      <BlogFooter />
+      <BlogFooter
+        postTitle="GitHub Copilot Instructions Discovery: The PRPM Advantage"
+        postUrl="/blog/discovering-copilot-instructions"
+      />
     </main>
   )
 }

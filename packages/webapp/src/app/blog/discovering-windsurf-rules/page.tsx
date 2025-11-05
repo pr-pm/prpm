@@ -206,7 +206,10 @@ prpm publish`}</code></pre>
         </div>
       </article>
 
-      <BlogFooter />
+      <BlogFooter
+        postTitle="Windsurf Rules Discovery: Centralized from Day One"
+        postUrl="/blog/discovering-windsurf-rules"
+      />
     </main>
   )
 }
