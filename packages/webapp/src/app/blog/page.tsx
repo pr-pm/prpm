@@ -25,8 +25,8 @@ interface BlogPost {
 const blogPosts: BlogPost[] = [
   {
     slug: "discovering-claude-skills-prpm-vs-competition",
-    title: "Discovering Claude Skills: PRPM vs The Competition",
-    excerpt: "Compare PRPM to ctx.directory, SkillsMP, and Claude Plugins. One command vs manual copy-paste, version control vs stale files.",
+    title: "Large Collection of Claude Skills: PRPM vs The Competition",
+    excerpt: "Access a large collection of Claude skills. Compare PRPM to ctx.directory, SkillsMP, CursorHow, and dotcursorrules. One command vs manual copy-paste.",
     date: "2025-11-04",
     author: "PRPM Team",
     readTime: "5 min read",

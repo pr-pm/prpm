@@ -6,11 +6,11 @@ import BackLink from '@/components/BackLink'
 import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
-  title: "Discovering Claude Skills: PRPM vs ctx.directory, SkillsMP, Claude Plugins - PRPM",
-  description: "Compare PRPM to ctx.directory, SkillsMP, and Claude Plugins for discovering Claude skills. One command vs manual copy-paste, version control vs stale files.",
+  title: "Large Collection of Claude Skills - PRPM vs ctx.directory, SkillsMP, CursorHow - PRPM",
+  description: "Access a large collection of Claude skills with PRPM. Compare to ctx.directory, SkillsMP, CursorHow, and dotcursorrules. One command vs manual copy-paste, version control vs stale files.",
   openGraph: {
-    title: "Discovering Claude Skills: PRPM vs The Competition",
-    description: "Why PRPM beats scattered marketplaces for Claude skills discovery and installation.",
+    title: "Large Collection of Claude Skills - PRPM vs The Competition",
+    description: "Why PRPM's large collection of Claude skills beats scattered marketplaces for discovery and installation.",
   },
 }
 
@@ -24,8 +24,8 @@ export default function DiscoveringClaudeSkillsPost() {
 
         <BlogPostHeader
           tags={['Claude', 'Discovery', 'Comparison']}
-          title="Discovering Claude Skills: PRPM vs The Competition"
-          subtitle="Compare PRPM to ctx.directory, SkillsMP, and Claude Plugins"
+          title="Large Collection of Claude Skills: PRPM vs The Competition"
+          subtitle="Compare PRPM's large collection to ctx.directory, SkillsMP, CursorHow, and dotcursorrules"
           author="PRPM Team"
           date="November 4, 2025"
           readTime="5 min read"
@@ -48,18 +48,20 @@ export default function DiscoveringClaudeSkillsPost() {
             <h2 className="text-3xl font-bold text-white mb-0">The Current State</h2>
           </div>
 
-          <p>Finding Claude skills means checking multiple places:</p>
+          <p>Looking for a large collection of Claude skills? You'll find scattered options across multiple platforms with no unified access:</p>
 
           <div className="not-prose mb-8">
             <ul className="list-disc ml-6 text-gray-300 space-y-2">
               <li><a href="https://ctx.directory" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">ctx.directory</a> - Browse by creator, copy markdown files</li>
               <li><a href="https://skillsmp.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">SkillsMP</a> - Search marketplace, download files</li>
+              <li><a href="https://www.cursorhow.com/en/agent-skills-hub" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">CursorHow Agent Skills Hub</a> - Collection mixed with Cursor rules</li>
+              <li><a href="https://dotcursorrules.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">dotcursorrules.com</a> - Primarily Cursor, some Claude content</li>
               <li><a href="https://claude-plugins.dev" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude Plugins</a> - MCP plugins (different from skills)</li>
               <li>GitHub repos, Discord, Reddit</li>
             </ul>
           </div>
 
-          <p>Every platform has different formats, installation steps, and no unified way to manage updates.</p>
+          <p>PRPM provides a large collection of Claude skills unified with Cursor rules, Copilot instructions, and more — all in one searchable registry with CLI installation and version control.</p>
 
           <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-6 my-8">
             <h2 className="text-3xl font-bold text-white mb-0">Feature Comparison</h2>
@@ -72,13 +74,23 @@ export default function DiscoveringClaudeSkillsPost() {
                   <th className="text-left p-3 text-white font-semibold">Feature</th>
                   <th className="text-left p-3 text-white font-semibold">ctx.directory</th>
                   <th className="text-left p-3 text-white font-semibold">SkillsMP</th>
-                  <th className="text-left p-3 text-white font-semibold">Claude Plugins</th>
+                  <th className="text-left p-3 text-white font-semibold">CursorHow</th>
+                  <th className="text-left p-3 text-white font-semibold">dotcursorrules</th>
                   <th className="text-left p-3 text-prpm-accent font-semibold">PRPM</th>
                 </tr>
               </thead>
               <tbody className="text-gray-300">
                 <tr className="border-b border-prpm-border/30">
+                  <td className="p-3">Large Collection</td>
+                  <td className="p-3">Partial</td>
+                  <td className="p-3">Claude only</td>
+                  <td className="p-3">Mixed</td>
+                  <td className="p-3">Cursor focus</td>
+                  <td className="p-3 text-green-400">✅ All formats</td>
+                </tr>
+                <tr className="border-b border-prpm-border/30">
                   <td className="p-3">CLI Install</td>
+                  <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
@@ -89,10 +101,12 @@ export default function DiscoveringClaudeSkillsPost() {
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
+                  <td className="p-3">❌</td>
                   <td className="p-3 text-green-400">✅</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Format Conversion</td>
+                  <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
@@ -103,17 +117,20 @@ export default function DiscoveringClaudeSkillsPost() {
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
+                  <td className="p-3">❌</td>
                   <td className="p-3 text-green-400">✅</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Unified Search</td>
                   <td className="p-3">Partial</td>
                   <td className="p-3">Claude only</td>
-                  <td className="p-3">Plugins only</td>
+                  <td className="p-3">Mixed</td>
+                  <td className="p-3">Cursor focus</td>
                   <td className="p-3 text-green-400">✅ All formats</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Collections</td>
+                  <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
                   <td className="p-3">❌</td>
@@ -186,16 +203,16 @@ prpm install @author/code-review-skill
 prpm update`}</code></pre>
 
           <div className="not-prose my-12 p-8 bg-gradient-to-br from-prpm-accent/10 to-prpm-green/10 border border-prpm-accent/30 rounded-2xl">
-            <h3 className="text-2xl font-bold text-white mb-4">Try PRPM</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">Access Our Large Collection of Claude Skills</h3>
             <p className="text-gray-300 mb-6">
-              One package manager for Claude skills, Cursor rules, Copilot instructions, and more. CLI installation, version control, testing playground.
+              Browse our large collection of Claude skills, Cursor rules, Copilot instructions, and more. CLI installation, version control, testing playground.
             </p>
             <div className="flex gap-4">
               <Link
                 href="/search?format=claude"
                 className="px-6 py-3 bg-prpm-accent hover:bg-prpm-accent/80 text-white font-semibold rounded-lg transition-all"
               >
-                Browse Claude Packages
+                Browse Large Collection
               </Link>
               <Link
                 href="/playground"
