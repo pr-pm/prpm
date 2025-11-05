@@ -35,7 +35,7 @@ jest.mock('../core/filesystem', () => {
 /**
  * Helper to create a tar.gz archive from multiple files
  */
-async function createTarGz(files: Record<string, string>): Promise<Buffer> {
+async function createTarGz(files: Record<string, string>, options?: { format?: string, subtype?: string, packageName?: string }): Promise<Buffer> {
   const fs = await import('fs');
   const os = await import('os');
   const path = await import('path');
@@ -44,9 +44,19 @@ async function createTarGz(files: Record<string, string>): Promise<Buffer> {
   const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'prpm-test-'));
 
   try {
-    // Write all files to temp directory
+    // Determine the tarball prefix based on format/subtype (realistic structure)
+    let prefix = '';
+    if (options?.format === 'claude' && options?.subtype === 'skill' && options?.packageName) {
+      prefix = `.claude/skills/${options.packageName}/`;
+    } else if (options?.format === 'claude' && options?.subtype === 'agent' && options?.packageName) {
+      prefix = `.claude/agents/${options.packageName}/`;
+    } else if (options?.format === 'claude' && options?.subtype === 'slash-command' && options?.packageName) {
+      prefix = `.claude/commands/${options.packageName}/`;
+    }
+
+    // Write all files to temp directory with prefix
     for (const [filename, content] of Object.entries(files)) {
-      const filePath = path.join(tmpDir, filename);
+      const filePath = path.join(tmpDir, prefix + filename);
       const fileDir = path.dirname(filePath);
       await fs.promises.mkdir(fileDir, { recursive: true });
       await fs.promises.writeFile(filePath, content);
@@ -59,7 +69,7 @@ async function createTarGz(files: Record<string, string>): Promise<Buffer> {
         gzip: true,
         cwd: tmpDir,
       },
-      Object.keys(files)
+      [prefix ? prefix.split('/')[0] : '.'] // Start from the root directory
     );
 
     // Collect chunks
@@ -164,25 +174,25 @@ describe('install command - multi-file packages', () => {
         'SKILL.md': '# Main Skill File',
         'helpers/utils.md': '# Utility Functions',
         'examples/demo.md': '# Demo Examples',
-      });
+      }, { format: 'claude', subtype: 'skill', packageName: 'complex-skill' });
 
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.downloadPackage.mockResolvedValue(tarGz);
 
       await handleInstall('complex-skill', {});
 
-      // Should save to directory with multiple files
+      // Should save to directory with multiple files, preserving subdirectories
       expect(saveFile).toHaveBeenCalledTimes(3);
       expect(saveFile).toHaveBeenCalledWith(
         '.claude/skills/complex-skill/SKILL.md',
         '# Main Skill File'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/complex-skill/utils.md',
+        '.claude/skills/complex-skill/helpers/utils.md',
         '# Utility Functions'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/complex-skill/demo.md',
+        '.claude/skills/complex-skill/examples/demo.md',
         '# Demo Examples'
       );
     });
@@ -205,7 +215,7 @@ describe('install command - multi-file packages', () => {
       const tarGz = await createTarGz({
         'skill.md': '# Main Skill File',
         'helpers/utils.md': '# Utility Functions',
-      });
+      }, { format: 'claude', subtype: 'skill', packageName: 'legacy-skill' });
 
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.downloadPackage.mockResolvedValue(tarGz);
@@ -215,19 +225,19 @@ describe('install command - multi-file packages', () => {
 
       await handleInstall('legacy-skill', {});
 
-      // Should auto-rename skill.md to SKILL.md
+      // Should auto-rename skill.md to SKILL.md and preserve subdirectories
       expect(saveFile).toHaveBeenCalledWith(
         '.claude/skills/legacy-skill/SKILL.md',
         '# Main Skill File'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/legacy-skill/utils.md',
+        '.claude/skills/legacy-skill/helpers/utils.md',
         '# Utility Functions'
       );
 
-      // Should log a warning about the auto-fix
+      // Should log a warning about the auto-fix (with full path from tarball)
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Auto-fixing skill filename: skill.md → SKILL.md')
+        expect.stringContaining('Auto-fixing skill filename: .claude/skills/legacy-skill/skill.md → .claude/skills/legacy-skill/SKILL.md')
       );
 
       consoleLogSpy.mockRestore();
@@ -251,7 +261,7 @@ describe('install command - multi-file packages', () => {
         'agent.md': '# Agent Definition',
         'prompts/system.md': '# System Prompt',
         'prompts/user.md': '# User Prompt',
-      });
+      }, { format: 'claude', subtype: 'agent', packageName: 'complex-agent' });
 
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.downloadPackage.mockResolvedValue(tarGz);
