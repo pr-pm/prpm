@@ -48,9 +48,18 @@ export default function DiscoveringCursorRulesPost() {
             <h2 className="text-3xl font-bold text-white mb-0">The Current State</h2>
           </div>
 
-          <p>cursor.directory has become the go-to place for Cursor rules. Browse by category, preview content, copy <code>.cursorrules</code> files.</p>
+          <p>Finding Cursor rules means browsing multiple sources:</p>
 
-          <p>This works fine for single-project setups, but falls short when you need:</p>
+          <div className="not-prose mb-8">
+            <ul className="list-disc ml-6 text-gray-300 space-y-2">
+              <li><a href="https://cursor.directory" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">cursor.directory</a> - The main marketplace, browse and copy files</li>
+              <li><a href="https://dotcursorrules.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">dotcursorrules.com</a> - Community collection, manual download</li>
+              <li><a href="https://www.cursorhow.com/en/agent-skills-hub" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">CursorHow</a> - Mixed with Claude skills</li>
+              <li>GitHub repos, Discord, Reddit</li>
+            </ul>
+          </div>
+
+          <p>These work fine for single-project setups, but fall short when you need:</p>
 
           <div className="not-prose mb-8">
             <ul className="list-disc ml-6 text-gray-300 space-y-2">
@@ -72,44 +81,52 @@ export default function DiscoveringCursorRulesPost() {
                 <tr className="border-b border-prpm-border">
                   <th className="text-left p-3 text-white font-semibold">Feature</th>
                   <th className="text-left p-3 text-white font-semibold">cursor.directory</th>
+                  <th className="text-left p-3 text-white font-semibold">dotcursorrules</th>
                   <th className="text-left p-3 text-prpm-accent font-semibold">PRPM</th>
                 </tr>
               </thead>
               <tbody className="text-gray-300">
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Installation</td>
-                  <td className="p-3">Copy-paste manually</td>
+                  <td className="p-3">Copy-paste</td>
+                  <td className="p-3">Manual download</td>
                   <td className="p-3 text-green-400">CLI command</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Version Control</td>
-                  <td className="p-3">None</td>
-                  <td className="p-3 text-green-400">Semantic versioning</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3 text-green-400">✅</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Updates</td>
-                  <td className="p-3">Manual check & copy</td>
+                  <td className="p-3">Manual</td>
+                  <td className="p-3">Manual</td>
                   <td className="p-3 text-green-400">prpm update</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Format Conversion</td>
-                  <td className="p-3">Cursor only</td>
-                  <td className="p-3 text-green-400">All editors</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3 text-green-400">✅ All editors</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Testing</td>
-                  <td className="p-3">None</td>
-                  <td className="p-3 text-green-400">Playground</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3 text-green-400">✅ Playground</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">Collections</td>
-                  <td className="p-3">Individual rules only</td>
-                  <td className="p-3 text-green-400">Curated bundles</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3 text-green-400">✅</td>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3">CI/CD Integration</td>
-                  <td className="p-3">Not possible</td>
-                  <td className="p-3 text-green-400">Scriptable</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3">❌</td>
+                  <td className="p-3 text-green-400">✅</td>
                 </tr>
               </tbody>
             </table>
