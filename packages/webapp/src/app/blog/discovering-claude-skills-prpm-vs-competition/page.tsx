@@ -56,6 +56,7 @@ export default function DiscoveringClaudeSkillsPost() {
               <li><a href="https://skillsmp.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">SkillsMP</a> - Search marketplace, download files</li>
               <li><a href="https://www.cursorhow.com/en/agent-skills-hub" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">CursorHow Agent Skills Hub</a> - Collection mixed with Cursor rules</li>
               <li><a href="https://dotcursorrules.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">dotcursorrules.com</a> - Primarily Cursor, some Claude content</li>
+              <li><a href="https://davila7.github.io/claude-code-templates/" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude Code Templates</a> - GitHub Pages collection, manual copy</li>
               <li><a href="https://claude-plugins.dev" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">Claude Plugins</a> - MCP plugins (different from skills)</li>
               <li>GitHub repos, Discord, Reddit</li>
             </ul>
@@ -64,12 +65,12 @@ export default function DiscoveringClaudeSkillsPost() {
           <p>PRPM provides a large collection of Claude skills unified with Cursor rules, Copilot instructions, and more — all in one searchable registry with CLI installation and version control.</p>
 
           <div className="not-prose bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 my-6">
-            <p className="text-blue-400 font-semibold mb-2">💡 Note: Skills vs Plugins (MCP)</p>
+            <p className="text-blue-400 font-semibold mb-2">💡 Note: Skills vs Anthropic's Plugin System</p>
             <p className="text-gray-300 text-sm mb-2">
-              Claude has two extension systems: <strong>Skills</strong> (markdown files with instructions) and <strong>MCP plugins</strong> (tool integrations from Anthropic's Model Context Protocol).
+              Claude Code has an <a href="https://www.claude.com/blog/claude-code-plugins" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">official plugin system</a> that packages slash commands, subagents, MCP servers, and hooks. Skills are markdown files with instructions that can be part of plugins.
             </p>
             <p className="text-gray-300 text-sm mb-0">
-              PRPM focuses on distributing skills as portable packages, while MCP provides runtime tool integration. They complement each other! <a href="/blog/prpm-vs-plugins" className="text-blue-400 hover:underline">Learn more about the difference →</a>
+              PRPM focuses on cross-platform package distribution (Claude, Cursor, Copilot, etc.) with CLI installation and version control, while Anthropic's plugins are Claude Code-specific. <a href="/blog/prpm-vs-plugins" className="text-blue-400 hover:underline">Learn more about the difference →</a>
             </p>
           </div>
 
