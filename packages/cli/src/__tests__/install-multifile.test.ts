@@ -178,11 +178,11 @@ describe('install command - multi-file packages', () => {
         '# Main Skill File'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/complex-skill/helpers/utils.md',
+        '.claude/skills/complex-skill/utils.md',
         '# Utility Functions'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/complex-skill/examples/demo.md',
+        '.claude/skills/complex-skill/demo.md',
         '# Demo Examples'
       );
     });
@@ -221,7 +221,7 @@ describe('install command - multi-file packages', () => {
         '# Main Skill File'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/legacy-skill/helpers/utils.md',
+        '.claude/skills/legacy-skill/utils.md',
         '# Utility Functions'
       );
 
@@ -264,11 +264,11 @@ describe('install command - multi-file packages', () => {
         '# Agent Definition'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/agents/complex-agent/prompts/system.md',
+        '.claude/agents/complex-agent/system.md',
         '# System Prompt'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.claude/agents/complex-agent/prompts/user.md',
+        '.claude/agents/complex-agent/user.md',
         '# User Prompt'
       );
     });
