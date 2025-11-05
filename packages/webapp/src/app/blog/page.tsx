@@ -25,8 +25,8 @@ interface BlogPost {
 const blogPosts: BlogPost[] = [
   {
     slug: "discovering-claude-skills-prpm-vs-competition",
-    title: "Large Collection of Claude Skills: PRPM vs The Competition",
-    excerpt: "Access a large collection of Claude skills. Compare PRPM to ctx.directory, SkillsMP, CursorHow, and dotcursorrules. One command vs manual copy-paste.",
+    title: "Best Way to Discover Claude Skills: Large Collection",
+    excerpt: "The best way to discover Claude skills. Access a large collection with PRPM vs ctx.directory, SkillsMP, CursorHow, and dotcursorrules.",
     date: "2025-11-04",
     author: "PRPM Team",
     readTime: "5 min read",

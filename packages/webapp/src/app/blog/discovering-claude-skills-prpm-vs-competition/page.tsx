@@ -6,11 +6,11 @@ import BackLink from '@/components/BackLink'
 import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
-  title: "Large Collection of Claude Skills - PRPM vs ctx.directory, SkillsMP, CursorHow - PRPM",
-  description: "Access a large collection of Claude skills with PRPM. Compare to ctx.directory, SkillsMP, CursorHow, and dotcursorrules. One command vs manual copy-paste, version control vs stale files.",
+  title: "Best Way to Discover Claude Skills - Large Collection - PRPM vs ctx.directory, SkillsMP, CursorHow",
+  description: "The best way to discover Claude skills. Access a large collection with PRPM. Compare to ctx.directory, SkillsMP, CursorHow, and dotcursorrules. One command vs manual copy-paste.",
   openGraph: {
-    title: "Large Collection of Claude Skills - PRPM vs The Competition",
-    description: "Why PRPM's large collection of Claude skills beats scattered marketplaces for discovery and installation.",
+    title: "Best Way to Discover Claude Skills - Large Collection",
+    description: "Why PRPM is the best way to discover Claude skills with a large collection and unified marketplace.",
   },
 }
 
@@ -24,7 +24,7 @@ export default function DiscoveringClaudeSkillsPost() {
 
         <BlogPostHeader
           tags={['Claude', 'Discovery', 'Comparison']}
-          title="Large Collection of Claude Skills: PRPM vs The Competition"
+          title="Best Way to Discover Claude Skills: Large Collection"
           subtitle="Compare PRPM's large collection to ctx.directory, SkillsMP, CursorHow, and dotcursorrules"
           author="PRPM Team"
           date="November 4, 2025"
