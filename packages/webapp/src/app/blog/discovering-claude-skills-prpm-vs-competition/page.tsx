@@ -63,6 +63,16 @@ export default function DiscoveringClaudeSkillsPost() {
 
           <p>PRPM provides a large collection of Claude skills unified with Cursor rules, Copilot instructions, and more — all in one searchable registry with CLI installation and version control.</p>
 
+          <div className="not-prose bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 my-6">
+            <p className="text-blue-400 font-semibold mb-2">💡 Note: Skills vs Plugins (MCP)</p>
+            <p className="text-gray-300 text-sm mb-2">
+              Claude has two extension systems: <strong>Skills</strong> (markdown files with instructions) and <strong>MCP plugins</strong> (tool integrations from Anthropic's Model Context Protocol).
+            </p>
+            <p className="text-gray-300 text-sm mb-0">
+              PRPM focuses on distributing skills as portable packages, while MCP provides runtime tool integration. They complement each other! <a href="/blog/prpm-vs-plugins" className="text-blue-400 hover:underline">Learn more about the difference →</a>
+            </p>
+          </div>
+
           <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-6 my-8">
             <h2 className="text-3xl font-bold text-white mb-0">Feature Comparison</h2>
           </div>
@@ -228,6 +238,10 @@ prpm update`}</code></pre>
           </div>
 
           <div className="not-prose grid gap-4 md:grid-cols-2 mb-8">
+            <Link href="/blog/prpm-vs-plugins" className="block p-6 bg-prpm-dark-card border border-prpm-border hover:border-prpm-accent rounded-xl transition-all">
+              <h3 className="text-lg font-bold text-white mb-2">PRPM vs Claude Plugins</h3>
+              <p className="text-gray-400 text-sm">Skills vs MCP: What's the difference?</p>
+            </Link>
             <Link href="/blog/discovering-cursor-rules" className="block p-6 bg-prpm-dark-card border border-prpm-border hover:border-prpm-accent rounded-xl transition-all">
               <h3 className="text-lg font-bold text-white mb-2">Finding Cursor Rules</h3>
               <p className="text-gray-400 text-sm">Beyond cursor.directory</p>
@@ -235,6 +249,10 @@ prpm update`}</code></pre>
             <Link href="/blog/playground-launch" className="block p-6 bg-prpm-dark-card border border-prpm-border hover:border-prpm-accent rounded-xl transition-all">
               <h3 className="text-lg font-bold text-white mb-2">PRPM Playground</h3>
               <p className="text-gray-400 text-sm">Test before installing</p>
+            </Link>
+            <Link href="/blog/when-to-use-claude-skill-vs-subagent" className="block p-6 bg-prpm-dark-card border border-prpm-border hover:border-prpm-accent rounded-xl transition-all">
+              <h3 className="text-lg font-bold text-white mb-2">Skills vs Sub-Agents</h3>
+              <p className="text-gray-400 text-sm">When to use each in Claude Code</p>
             </Link>
           </div>
         </div>
