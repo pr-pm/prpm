@@ -52,10 +52,11 @@ export default function CreditsWidget({ credits, onBuyCredits, onSubscribe, onRe
     )
   }
 
-  const total = credits.balance
+  // Calculate total from breakdown (more reliable than backend balance field)
   const monthly = credits.breakdown.monthly
   const rollover = credits.breakdown.rollover
   const purchased = credits.breakdown.purchased
+  const total = monthly + rollover + purchased
   const monthly_used = credits.monthly.used
   const monthly_limit = credits.monthly.allocated
 
