@@ -442,9 +442,17 @@ export class PlaygroundService {
               allowDangerouslySkipPermissions: true, // For playground, bypass permission prompts
             };
 
-            // For skills, enable Skill tool
+            // Configure allowed tools for playground
+            // Web tools - for fetching and searching external content
+            queryOptions.allowedTools = ['WebFetch', 'WebSearch'];
+
+            // Task tool - for spawning subagents (useful for complex multi-agent patterns)
+            // Note: Subagents inherit the same tool restrictions and credit limits
+            queryOptions.allowedTools.push('Task');
+
+            // For skills, also enable Skill tool
             if (needsSkillMount) {
-              queryOptions.allowedTools = ['Skill'];
+              queryOptions.allowedTools.push('Skill');
             }
 
             // Build conversation context from history

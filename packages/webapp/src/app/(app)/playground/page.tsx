@@ -185,8 +185,8 @@ function PlaygroundContent() {
 
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
@@ -206,7 +206,7 @@ function PlaygroundContent() {
                 </a>
               </div>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Test prompts with AI agents in a virtual environment
+                Test any package with real AI models before installing
               </p>
             </div>
             <CreditsWidget
@@ -215,6 +215,42 @@ function PlaygroundContent() {
               onSubscribe={() => setShowSubscribe(true)}
               onRefresh={handleRefreshCredits}
             />
+          </div>
+
+          {/* Getting Started Info */}
+          <div className="bg-gradient-to-r from-prpm-accent/10 to-prpm-green/10 dark:from-prpm-accent/20 dark:to-prpm-green/20 border border-prpm-accent/30 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <svg className="w-5 h-5 text-prpm-accent dark:text-prpm-accent-light mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">How to Use the Playground</h3>
+                <div className="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
+                  <div className="flex items-start gap-2">
+                    <span className="text-prpm-accent font-semibold">1.</span>
+                    <span>Search for a package or <a href="/search" className="text-prpm-accent hover:text-prpm-accent-light underline">browse the registry</a></span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-prpm-accent font-semibold">2.</span>
+                    <span>Enter your test input (e.g., "Review this code" or "Explain async/await")</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-prpm-accent font-semibold">3.</span>
+                    <span>Choose an AI model (Claude Sonnet, GPT-4o, etc.)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-prpm-accent font-semibold">4.</span>
+                    <span>See how the package performs with real AI responses</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-prpm-accent font-semibold">💡</span>
+                    <span>Use <strong>Compare Mode</strong> to see the difference with and without the package</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </header>

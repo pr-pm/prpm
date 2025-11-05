@@ -7,6 +7,7 @@ import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { getWebappUrl } from '../utils/webapp-url';
 
 const execAsync = promisify(exec);
 
@@ -137,8 +138,8 @@ export async function handleBuyCredits(options: { package?: string }): Promise<v
     console.log('💡 Tip: Subscribe to PRPM+ for 100 monthly credits at just $6/month');
 
     // Build URL with package parameter if specified
-    const baseUrl = (config.registryUrl || 'https://registry.prpm.dev').replace(/api\/?$/, '');
-    let purchaseUrl = `${baseUrl}/playground/credits/buy`;
+    const webappUrl = getWebappUrl(config.registryUrl || 'https://registry.prpm.dev');
+    let purchaseUrl = `${webappUrl}/playground/credits/buy`;
     if (options.package) {
       const validPackages = ['small', 'medium', 'large'];
       if (!validPackages.includes(options.package)) {

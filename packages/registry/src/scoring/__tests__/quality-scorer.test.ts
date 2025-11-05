@@ -105,7 +105,7 @@ describe('Quality Scorer', () => {
             { type: 'rules', rules: ['Rule 1', 'Rule 2'] },
             { type: 'examples', examples: [{ code: 'example' }] }
           ]
-        },
+        } as any,
       };
 
       const score = calculateQualityScore(pkg);
@@ -204,7 +204,7 @@ describe('Quality Scorer', () => {
         created_at: new Date(),
         tags: [],
         keywords: [],
-        content: null
+        content: undefined
       };
 
       const comprehensive: PackageQualityData = {
@@ -217,7 +217,7 @@ describe('Quality Scorer', () => {
             { type: 'guidelines', content: 'Guidelines' },
             { type: 'metadata', content: 'Metadata' }
           ]
-        },
+        } as any,
         description: 'Detailed description',
         documentation_url: 'https://docs.example.com'
       };
@@ -252,7 +252,7 @@ describe('Quality Scorer', () => {
             type: 'instructions',
             content: 'A'.repeat(500)
           })
-        },
+        } as any,
       };
 
       const score = calculateQualityScore(perfect);
@@ -276,7 +276,7 @@ describe('Quality Scorer', () => {
         keywords: [],
         content: {
           sections: [{ type: 'instructions', content: 'Test' }]
-        }
+        } as any
       };
 
       const score = await calculateQualityScoreWithAI(pkg, mockServer);
@@ -303,7 +303,7 @@ describe('Quality Scorer', () => {
         keywords: [],
         content: {
           sections: [{ type: 'instructions', content: 'High quality content' }]
-        }
+        } as any
       };
 
       const score = await calculateQualityScoreWithAI(pkg, mockServer);

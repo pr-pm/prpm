@@ -518,6 +518,32 @@ export default function PlaygroundInterface({
               </div>
             )}
           </div>
+          {/* CLI Install Command */}
+          {selectedPackage && (
+            <div className="mt-2 p-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-wider">Install via CLI</span>
+                <button
+                  onClick={async () => {
+                    const command = `prpm install ${selectedPackage.name}`
+                    try {
+                      await navigator.clipboard.writeText(command)
+                      // You could add a toast notification here
+                    } catch (err) {
+                      console.error('Failed to copy:', err)
+                    }
+                  }}
+                  className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+              <code className="text-sm font-mono text-prpm-accent-light block overflow-x-auto">
+                <span className="text-gray-600">$ </span>
+                prpm install {selectedPackage.name}
+              </code>
+            </div>
+          )}
         </div>
 
         {comparisonMode && (
@@ -581,6 +607,31 @@ export default function PlaygroundInterface({
                 </div>
               )}
             </div>
+            {/* CLI Install Command for Package B */}
+            {selectedPackageB && (
+              <div className="mt-2 p-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-wider">Install via CLI</span>
+                  <button
+                    onClick={async () => {
+                      const command = `prpm install ${selectedPackageB.name}`
+                      try {
+                        await navigator.clipboard.writeText(command)
+                      } catch (err) {
+                        console.error('Failed to copy:', err)
+                      }
+                    }}
+                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                  >
+                    Copy
+                  </button>
+                </div>
+                <code className="text-sm font-mono text-prpm-accent-light block overflow-x-auto">
+                  <span className="text-gray-600">$ </span>
+                  prpm install {selectedPackageB.name}
+                </code>
+              </div>
+            )}
           </div>
         )}
       </div>

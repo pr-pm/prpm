@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile, getDestinationDir, stripAuthorNamespace } from '../core/filesystem';
+import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { Package, Format, Subtype } from '../types';
@@ -228,8 +228,20 @@ export async function handleInstall(
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 
-    // Determine format preference
-    let format = options.as || pkg.format;
+    // Determine format preference with auto-detection
+    let format: string | undefined = options.as;
+
+    // Auto-detect format if not explicitly specified
+    if (!format) {
+      const detectedFormat = await autoDetectFormat();
+      if (detectedFormat) {
+        format = detectedFormat;
+        console.log(`   🔍 Auto-detected ${format} format (found .${format}/ directory)`);
+      } else {
+        // No existing directories found, use package's native format
+        format = pkg.format;
+      }
+    }
 
     // Special handling for Claude packages: default to CLAUDE.md if it doesn't exist
     // BUT only for packages that are generic rules (not skills, agents, or commands)
@@ -384,7 +396,28 @@ export async function handleInstall(
       }
 
       for (const file of extractedFiles) {
-        const filePath = `${packageDir}/${file.name}`;
+        // Strip the tarball's root directory prefix to preserve subdirectories
+        // Example: ".claude/skills/agent-builder/docs/examples.md" → "docs/examples.md"
+        //          ".claude/skills/agent-builder/SKILL.md" → "SKILL.md"
+
+        // Find the common prefix (the package's root directory in the tarball)
+        const pathParts = file.name.split('/');
+
+        // For Claude skills, the tarball structure is typically: .claude/skills/package-name/...
+        // We want to strip everything up to and including the package-name directory
+        let relativeFileName = file.name;
+
+        // Find the skills directory index
+        const skillsDirIndex = pathParts.indexOf('skills');
+        if (skillsDirIndex !== -1 && pathParts.length > skillsDirIndex + 2) {
+          // Skip: .claude/skills/package-name/ and keep the rest
+          relativeFileName = pathParts.slice(skillsDirIndex + 2).join('/');
+        } else if (pathParts.length > 1) {
+          // Fallback: just take the filename (last part)
+          relativeFileName = pathParts[pathParts.length - 1];
+        }
+
+        const filePath = `${packageDir}/${relativeFileName}`;
         await saveFile(filePath, file.content);
         fileCount++;
       }

@@ -114,6 +114,42 @@ export async function fileExists(filePath: string): Promise<boolean> {
 }
 
 /**
+ * Check if a directory exists
+ */
+export async function directoryExists(dirPath: string): Promise<boolean> {
+  try {
+    const stats = await fs.stat(dirPath);
+    return stats.isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Auto-detect the format based on existing directories in the current project
+ * Returns the format if a matching directory is found, or null if none found
+ */
+export async function autoDetectFormat(): Promise<Format | null> {
+  const formatDirs: Array<{ format: Format; dir: string }> = [
+    { format: 'cursor', dir: '.cursor' },
+    { format: 'claude', dir: '.claude' },
+    { format: 'continue', dir: '.continue' },
+    { format: 'windsurf', dir: '.windsurf' },
+    { format: 'copilot', dir: '.github/instructions' },
+    { format: 'kiro', dir: '.kiro' },
+    { format: 'agents.md', dir: '.agents' },
+  ];
+
+  for (const { format, dir } of formatDirs) {
+    if (await directoryExists(dir)) {
+      return format;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Generate a unique ID from filename
  */
 export function generateId(filename: string): string {
