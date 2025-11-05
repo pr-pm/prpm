@@ -231,7 +231,7 @@ prpm update`}</code></pre>
           <div className="not-prose grid gap-4 md:grid-cols-2 mb-8">
             <Link href="/blog/prpm-vs-plugins" className="block p-6 bg-prpm-dark-card border border-prpm-border hover:border-prpm-accent rounded-xl transition-all">
               <h3 className="text-lg font-bold text-white mb-2">PRPM vs Claude Plugins</h3>
-              <p className="text-gray-400 text-sm">Skills vs MCP: What's the difference?</p>
+              <p className="text-gray-400 text-sm">What's the difference?</p>
             </Link>
             <Link href="/blog/discovering-cursor-rules" className="block p-6 bg-prpm-dark-card border border-prpm-border hover:border-prpm-accent rounded-xl transition-all">
               <h3 className="text-lg font-bold text-white mb-2">Finding Cursor Rules</h3>
