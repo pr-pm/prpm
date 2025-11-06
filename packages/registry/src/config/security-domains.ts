@@ -63,7 +63,7 @@ export const ALLOWED_WEBFETCH_DOMAINS = [
   'techcrunch.com',
   'theverge.com',
   'arstechnica.com',
-  'hacker news.ycombinator.com',
+  'news.ycombinator.com',
 ];
 
 /**
