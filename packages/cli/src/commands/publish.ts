@@ -623,7 +623,8 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           webappUrl = registryUrl;
         }
 
-        const packageUrl = `${webappUrl}/packages/${encodeURIComponent(manifest.name)}`;
+        // Use the name returned from the API (which includes auto-prefixed scope)
+        const packageUrl = `${webappUrl}/packages/${encodeURIComponent(result.name)}`;
 
         console.log('');
         console.log('✅ Package published successfully!');
@@ -633,7 +634,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log('');
 
         publishedPackages.push({
-          name: manifest.name,
+          name: result.name, // Use scoped name from server
           version: result.version,
           url: packageUrl
         });
