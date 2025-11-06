@@ -15,6 +15,6 @@ For the community: Build a shared knowledge base that grows with the ecosystem
 We compared the before/after in detail, including real workflows and feature tables. If you use Kiro or are considering it, this shows what centralized discovery enables.
 
 Read the full post:
-https://prpm.dev/blog/discovering-kiro-steering-rules
+https://prpm.dev/blog/best-kiro-steering-rules
 
 #Kiro #AI #DeveloperTools #PackageManagement #OpenSource

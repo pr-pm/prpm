@@ -2,4 +2,4 @@ Finding Kiro steering files = searching GitHub repos, asking in Discord, manuall
 
 PRPM is the first centralized marketplace for Kiro with CLI install, version control, testing playground, and format conversion.
 
-https://prpm.dev/blog/discovering-kiro-steering-rules
+https://prpm.dev/blog/best-kiro-steering-rules

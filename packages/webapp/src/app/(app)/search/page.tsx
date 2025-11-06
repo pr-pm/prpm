@@ -26,10 +26,10 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'continue': ['rule', 'agent', 'slash-command', 'tool'],
   'windsurf': ['rule', 'agent', 'slash-command', 'tool'],
   'copilot': ['tool', 'chatmode'],
-  'kiro': ['rule', 'agent', 'tool'],
+  'kiro': ['rule', 'agent', 'tool', 'hook'],
   'mcp': ['tool'],
   'agents.md': ['agent', 'tool'],
-  'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode'],
+  'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],
 }
 
 function SearchPageContent() {
@@ -75,10 +75,10 @@ function SearchPageContent() {
   const limit = 20
 
   // Get available subtypes for the selected format
-  const availableSubtypes = useMemo(() =>
+  const availableSubtypes = useMemo<Subtype[]>(() =>
     selectedFormat
       ? FORMAT_SUBTYPES[selectedFormat] || []
-      : ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode'],
+      : ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],
     [selectedFormat]
   )
 
@@ -469,12 +469,24 @@ function SearchPageContent() {
                       className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
                     >
                       <option value="">All Subtypes</option>
-                      {availableSubtypes.includes('rule') && <option value="rule">Rule</option>}
-                      {availableSubtypes.includes('agent') && <option value="agent">Agent</option>}
-                      {availableSubtypes.includes('skill') && <option value="skill">Skill</option>}
-                      {availableSubtypes.includes('slash-command') && <option value="slash-command">Slash Command</option>}
-                      {availableSubtypes.includes('tool') && <option value="tool">Tool</option>}
-                      {availableSubtypes.includes('chatmode') && <option value="chatmode">Chat Mode</option>}
+                      {availableSubtypes.map((subtype) => {
+                        const labels: Record<Subtype, string> = {
+                          'rule': 'Rule',
+                          'agent': 'Agent',
+                          'skill': 'Skill',
+                          'slash-command': 'Slash Command',
+                          'prompt': 'Prompt',
+                          'collection': 'Collection',
+                          'chatmode': 'Chat Mode',
+                          'tool': 'Tool',
+                          'hook': 'Hook',
+                        }
+                        return (
+                          <option key={subtype} value={subtype}>
+                            {labels[subtype]}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
                 </>

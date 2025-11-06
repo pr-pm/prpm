@@ -38,6 +38,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'collection': '📦',
     'chatmode': '💬',
     'tool': '🔧',
+    'hook': '🪝',
   };
 
   // Format-specific icons for rules/defaults
@@ -81,6 +82,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'collection': 'Collection',
     'chatmode': 'Chat Mode',
     'tool': 'Tool',
+    'hook': 'Hook',
   };
 
   const formatLabel = formatLabels[format];
@@ -322,11 +324,24 @@ export async function handleInstall(
 
       // For Claude skills, use SKILL.md filename in the package directory
       // For agents.md, use package-name/AGENTS.md directory structure
+      // For Copilot, use official naming conventions
       // For other formats, use package name as filename
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
         destPath = `${destDir}/SKILL.md`;
       } else if (effectiveFormat === 'agents.md') {
         destPath = `${destDir}/${packageName}/AGENTS.md`;
+      } else if (effectiveFormat === 'copilot') {
+        // Official GitHub Copilot naming conventions
+        if (effectiveSubtype === 'chatmode') {
+          // Chat modes: .github/chatmodes/NAME.chatmode.md
+          destPath = `${destDir}/${packageName}.chatmode.md`;
+        } else {
+          // Path-specific instructions: .github/instructions/NAME.instructions.md
+          destPath = `${destDir}/${packageName}.instructions.md`;
+        }
+      } else if (effectiveFormat === 'kiro' && effectiveSubtype === 'hook') {
+        // Kiro hooks use .kiro.hook extension (JSON files)
+        destPath = `${destDir}/${packageName}.kiro.hook`;
       } else {
         destPath = `${destDir}/${packageName}.${fileExtension}`;
       }

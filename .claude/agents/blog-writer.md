@@ -428,6 +428,7 @@ Use the same gradient styling as H2 sections for important call-outs:
    - Verify package names and versions exist in production before referencing them
    - Test CLI commands before publishing
    - Link to packages using https://prpm.dev/package/[package-name] URLs (prpm.dev is the web interface, registry.prpm.dev is only the API)
+   - **CRITICAL DOMAIN**: The website is **prpm.dev** (NOT prpm.ai). Always use prpm.dev in all references, URLs, and comparisons. This is the correct production domain.
 
 2. **Claims and Data**
    - Cite sources for performance claims

@@ -6,11 +6,11 @@ import BackLink from '@/components/BackLink'
 import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
-  title: "Best Way to Discover Claude Skills - Large Collection - PRPM vs ctx.directory, SkillsMP, CursorHow",
-  description: "The best way to discover Claude skills. Access a large collection with PRPM. Compare to ctx.directory, SkillsMP, CursorHow, and dotcursorrules. One command vs manual copy-paste.",
+  title: "Best Claude Skills: Complete Guide 2025 - PRPM",
+  description: "Discover the best Claude skills for AI-powered development. Compare PRPM vs ctx.directory, SkillsMP, and CursorHow. Get CLI installation, version control, and quality-scored collections.",
   openGraph: {
-    title: "Best Way to Discover Claude Skills - Large Collection",
-    description: "Why PRPM is the best way to discover Claude skills with a large collection and unified marketplace.",
+    title: "Best Claude Skills: Complete Guide 2025",
+    description: "Find and install the best Claude skills. Get CLI installation, version control, quality metrics, and testing playground. Compare PRPM vs ctx.directory and other marketplaces.",
   },
 }
 
@@ -24,8 +24,8 @@ export default function DiscoveringClaudeSkillsPost() {
 
         <BlogPostHeader
           tags={['Claude', 'Discovery', 'Comparison']}
-          title="Best Way to Discover Claude Skills: Large Collection"
-          subtitle="Compare PRPM's large collection to ctx.directory, SkillsMP, CursorHow, and dotcursorrules"
+          title="Best Claude Skills: Complete Guide 2025"
+          subtitle="Compare PRPM vs ctx.directory, SkillsMP, and CursorHow for discovering Claude skills"
           author="PRPM Team"
           date="November 4, 2025"
           readTime="5 min read"
@@ -154,7 +154,7 @@ export default function DiscoveringClaudeSkillsPost() {
             <ol className="list-decimal ml-6 text-gray-300 space-y-2">
               <li>Find skill on website</li>
               <li>Copy markdown content</li>
-              <li>Create <code className="text-prpm-accent bg-prpm-dark px-2 py-1 rounded text-sm">.claude/skills/name.md</code></li>
+              <li>Create <code className="text-prpm-accent bg-prpm-dark px-2 py-1 rounded text-sm">.claude/skills/skill-name/SKILL.md</code></li>
               <li>Paste content</li>
               <li>Hope it works</li>
             </ol>
@@ -250,7 +250,7 @@ prpm update`}</code></pre>
       </article>
 
       <BlogFooter
-        postTitle="Best Way to Discover Claude Skills: Large Collection"
+        postTitle="Best Claude Skills: Complete Guide 2025"
         postUrl="/blog/discovering-claude-skills-prpm-vs-competition"
       />
     </main>

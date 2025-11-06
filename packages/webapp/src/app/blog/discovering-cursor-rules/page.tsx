@@ -6,11 +6,11 @@ import BackLink from '@/components/BackLink'
 import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
-  title: "Finding the Best Cursor Rules: Beyond cursor.directory - PRPM",
-  description: "How PRPM improves on cursor.directory for discovering Cursor rules. Get CLI installation, version control, format conversion, and a testing playground.",
+  title: "Best Cursor Rules: Complete Guide 2025 - PRPM",
+  description: "Discover the best Cursor rules for AI-powered development. Compare PRPM vs cursor.directory. Get CLI installation, version control, format conversion, and a testing playground.",
   openGraph: {
-    title: "Finding the Best Cursor Rules: Beyond cursor.directory",
-    description: "Why PRPM's unified package management beats manual .cursorrules file copying from cursor.directory and GitHub repos.",
+    title: "Best Cursor Rules: Complete Guide 2025",
+    description: "Find and install the best Cursor rules. Get CLI installation, version control, format conversion, and testing playground. Compare PRPM vs cursor.directory.",
   },
 }
 
@@ -24,8 +24,8 @@ export default function DiscoveringCursorRulesPost() {
 
         <BlogPostHeader
           tags={['Cursor', 'Discovery', 'Comparison']}
-          title="Finding the Best Cursor Rules: Beyond cursor.directory"
-          subtitle="Why unified package management beats manual .cursorrules file copying"
+          title="Best Cursor Rules: Complete Guide 2025"
+          subtitle="Compare PRPM vs cursor.directory for discovering and installing Cursor rules"
           author="PRPM Team"
           date="November 4, 2025"
           readTime="5 min read"
@@ -225,7 +225,7 @@ prpm update`}</code></pre>
       </article>
 
       <BlogFooter
-        postTitle="Finding the Best Cursor Rules: Beyond cursor.directory"
+        postTitle="Best Cursor Rules: Complete Guide 2025"
         postUrl="/blog/discovering-cursor-rules"
       />
     </main>

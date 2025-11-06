@@ -43,7 +43,8 @@ export type Subtype =
   | 'prompt'
   | 'collection'
   | 'chatmode'
-  | 'tool';
+  | 'tool'
+  | 'hook';
 
 /**
  * Available subtypes as a constant array
@@ -58,6 +59,7 @@ export const SUBTYPES: readonly Subtype[] = [
   'collection',
   'chatmode',
   'tool',
+  'hook',
 ] as const;
 
 

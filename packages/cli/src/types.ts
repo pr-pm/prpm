@@ -3,7 +3,7 @@
  */
 
 export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
-export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'collection' | 'chatmode' | 'tool';
+export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'collection' | 'chatmode' | 'tool' | 'hook';
 
 /**
  * Available formats as a constant array
@@ -34,6 +34,7 @@ export const SUBTYPES: readonly Subtype[] = [
   'collection',
   'chatmode',
   'tool',
+  'hook',
 ] as const;
 
 export interface Package {
