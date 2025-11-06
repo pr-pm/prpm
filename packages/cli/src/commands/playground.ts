@@ -54,6 +54,75 @@ function prompt(rl: readline.Interface, question: string): Promise<string> {
 }
 
 /**
+ * Ask user for feedback on the result (subtle, non-intrusive)
+ */
+async function promptFeedback(sessionId: string): Promise<void> {
+  const rl = createReadline();
+
+  try {
+    console.log('\n💭 Was this result effective? (y/n, or press Enter to skip)');
+    const answer = await prompt(rl, '   ');
+
+    const normalized = answer.toLowerCase().trim();
+
+    if (normalized === 'y' || normalized === 'yes') {
+      // Optional comment
+      console.log('\n   Any comments? (optional, press Enter to skip)');
+      const comment = await prompt(rl, '   ');
+
+      await submitFeedback(sessionId, true, comment.trim() || undefined);
+
+      if (comment.trim()) {
+        console.log('   ✓ Feedback submitted with comment\n');
+      } else {
+        console.log('   ✓ Feedback submitted\n');
+      }
+    } else if (normalized === 'n' || normalized === 'no') {
+      // Optional comment
+      console.log('\n   Any comments? (optional, press Enter to skip)');
+      const comment = await prompt(rl, '   ');
+
+      await submitFeedback(sessionId, false, comment.trim() || undefined);
+
+      if (comment.trim()) {
+        console.log('   ✓ Feedback submitted with comment\n');
+      } else {
+        console.log('   ✓ Feedback submitted\n');
+      }
+    }
+    // If empty or anything else, silently skip
+  } catch (error) {
+    // Silently fail - feedback is optional
+  } finally {
+    rl.close();
+  }
+}
+
+/**
+ * Submit feedback to the API
+ */
+async function submitFeedback(
+  sessionId: string,
+  isEffective: boolean,
+  comment?: string
+): Promise<void> {
+  try {
+    const response = await apiCall('/api/v1/playground/feedback', 'POST', {
+      session_id: sessionId,
+      is_effective: isEffective,
+      comment: comment || undefined,
+    });
+
+    if (!response.ok) {
+      // Silently fail - don't interrupt user flow
+      return;
+    }
+  } catch (error) {
+    // Silently fail - feedback is optional
+  }
+}
+
+/**
  * Make authenticated API call to registry
  */
 async function apiCall(
@@ -208,6 +277,9 @@ async function runInteractive(
         turnCount++;
 
         displayResponse(result, true);
+
+        // Prompt for feedback in interactive mode (subtle, can skip)
+        await promptFeedback(result.session_id);
       } catch (error) {
         console.error(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}`);
         if (error instanceof Error && error.message.includes('Insufficient credits')) {
@@ -271,11 +343,17 @@ async function runSingle(
       console.log(`   Total tokens: ${resultWithPackage.tokens_used + resultWithoutPackage.tokens_used}`);
       console.log(`   Total credits: ${resultWithPackage.credits_spent + resultWithoutPackage.credits_spent}`);
       console.log(`   Credits remaining: ${resultWithoutPackage.credits_remaining}`);
+
+      // Prompt for feedback on the with-package result
+      await promptFeedback(resultWithPackage.session_id);
     } else {
       // Single mode: run with package only
       console.log('\n⏳ Processing...');
       const result = await runPlayground(packageName, input, options);
       displayResponse(result, true);
+
+      // Prompt for feedback
+      await promptFeedback(result.session_id);
     }
 
     console.log(`\n💡 Tips:`);
