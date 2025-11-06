@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import { PostHog } from 'posthog-node';
+import { getConfig } from './user-config.js';
 
 export interface TelemetryEvent {
   timestamp: string;
@@ -64,6 +65,21 @@ class Telemetry {
     }
   }
 
+  /**
+   * Load userId from user config and update telemetry config
+   */
+  private async loadUserIdFromConfig(): Promise<void> {
+    try {
+      const userConfig = await getConfig();
+      if (userConfig.userId && userConfig.userId !== this.config.userId) {
+        this.config.userId = userConfig.userId;
+        await this.saveConfig();
+      }
+    } catch {
+      // Silently fail - telemetry shouldn't break the CLI
+    }
+  }
+
   private generateSessionId(): string {
     return Math.random().toString(36).substring(2, 15) + 
            Math.random().toString(36).substring(2, 15);
@@ -80,6 +96,9 @@ class Telemetry {
 
   async track(event: Omit<TelemetryEvent, 'timestamp' | 'version' | 'platform' | 'arch' | 'nodeVersion'>): Promise<void> {
     if (!this.config.enabled) return;
+
+    // Load userId from user config before tracking
+    await this.loadUserIdFromConfig();
 
     const fullEvent: TelemetryEvent = {
       ...event,
@@ -163,6 +182,38 @@ class Telemetry {
       } finally {
         this.posthog = null;
       }
+    }
+  }
+
+  /**
+   * Identify user in PostHog with user properties
+   * Called after successful login to set user attributes
+   */
+  async identifyUser(userId: string, traits: Record<string, any>): Promise<void> {
+    if (!this.posthog || !this.config.enabled) return;
+
+    try {
+      // Update local config with userId
+      this.config.userId = userId;
+      await this.saveConfig();
+
+      // Send $identify event to PostHog
+      this.posthog.identify({
+        distinctId: userId,
+        properties: traits,
+      });
+
+      // Also capture the $identify event explicitly
+      this.posthog.capture({
+        distinctId: userId,
+        event: '$identify',
+        properties: traits,
+      });
+
+      // Flush immediately to ensure identification happens
+      await this.posthog.flush();
+    } catch (error) {
+      // Silently fail - telemetry shouldn't break the CLI
     }
   }
 
