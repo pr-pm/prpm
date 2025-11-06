@@ -494,8 +494,11 @@ export class PlaygroundService {
             // Collect all messages
             let assistantText = '';
             let tokens = 0;
+            let messageCount = 0;
 
             for await (const message of queryResult) {
+              messageCount++;
+
               if (message.type === 'assistant') {
                 // Extract text from assistant message
                 for (const content of message.message.content) {
@@ -508,15 +511,28 @@ export class PlaygroundService {
                 if (message.subtype === 'success') {
                   assistantText = message.result || assistantText;
                 } else {
-                  // Handle error result types
-                  assistantText = assistantText || `Error: ${message.errors?.join(', ')}`;
+                  // Handle error result types (error_during_execution, error_max_turns, error_max_budget_usd)
+                  const errorMessage = message.subtype.startsWith('error_')
+                    ? `Error: ${message.subtype.replace('error_', '').replace(/_/g, ' ')}`
+                    : 'Agent execution failed';
+                  assistantText = assistantText || errorMessage;
                 }
                 tokens = message.usage.input_tokens + message.usage.output_tokens;
                 break;
               }
             }
 
-            responseText = assistantText || 'No response generated';
+            // Log if no response was captured
+            if (!assistantText) {
+              this.server.log.warn({
+                packageId: request.package_id,
+                sessionId,
+                messageCount,
+                tokens,
+              }, 'Agent completed but produced no text output');
+            }
+
+            responseText = assistantText || 'Agent completed execution but did not produce a text response. This may occur when the agent only performs tool calls without generating output text.';
             tokensUsed = tokens;
           } else {
             // Regular prompt execution without tools (regular prompts, rules, etc.)
