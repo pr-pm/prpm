@@ -15,6 +15,8 @@ import { CostMonitoringService } from './cost-monitoring.js';
 import { getTarballContent } from '../storage/s3.js';
 import { nanoid } from 'nanoid';
 import { getModelId, isAnthropicModel, isOpenAIModel } from '../config/models.js';
+import { getAllowedTools, TASK_TOOL_CONFIG } from '../config/security-domains.js';
+import { createWebFetchValidationHook } from '../middleware/webfetch-validator.js';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -438,22 +440,41 @@ export class PlaygroundService {
               cwd: tempDir,
               settingSources: ['project'] as const,
               model: modelName,
-              maxTurns: 10,
-              allowDangerouslySkipPermissions: true, // For playground, bypass permission prompts
+              maxTurns: TASK_TOOL_CONFIG.MAX_RECURSION_DEPTH + 1,
+              // SECURITY: Removed allowDangerouslySkipPermissions
+              // Tools now require explicit approval or run in restricted mode
             };
 
-            // Configure allowed tools for playground
-            // Web tools - for fetching and searching external content
-            queryOptions.allowedTools = ['WebFetch', 'WebSearch'];
+            // SECURITY: Configure allowed tools based on package subtype
+            // Uses allowlist from security-domains.ts to prevent tool abuse
+            queryOptions.allowedTools = getAllowedTools(packageData.subtype);
 
-            // Task tool - for spawning subagents (useful for complex multi-agent patterns)
-            // Note: Subagents inherit the same tool restrictions and credit limits
-            queryOptions.allowedTools.push('Task');
+            // SECURITY: Add WebFetch domain validation hook
+            // This intercepts WebFetch calls and blocks non-allowlisted domains
+            const sessionId = request.session_id || 'new-session';
+            queryOptions.hooks = {
+              PreToolUse: [
+                {
+                  hooks: [
+                    createWebFetchValidationHook(
+                      this.server,
+                      userId,
+                      request.package_id,
+                      sessionId
+                    ),
+                  ],
+                },
+              ],
+            };
 
-            // For skills, also enable Skill tool
-            if (needsSkillMount) {
-              queryOptions.allowedTools.push('Skill');
-            }
+            // Log tool configuration for security audit
+            this.server.log.info({
+              packageId: request.package_id,
+              subtype: packageData.subtype,
+              allowedTools: queryOptions.allowedTools,
+              maxTurns: queryOptions.maxTurns,
+              securityHooks: ['WebFetchValidation'],
+            }, 'Playground execution with security restrictions');
 
             // Build conversation context from history
             let promptText = request.input;
@@ -473,8 +494,11 @@ export class PlaygroundService {
             // Collect all messages
             let assistantText = '';
             let tokens = 0;
+            let messageCount = 0;
 
             for await (const message of queryResult) {
+              messageCount++;
+
               if (message.type === 'assistant') {
                 // Extract text from assistant message
                 for (const content of message.message.content) {
@@ -487,15 +511,28 @@ export class PlaygroundService {
                 if (message.subtype === 'success') {
                   assistantText = message.result || assistantText;
                 } else {
-                  // Handle error result types
-                  assistantText = assistantText || `Error: ${message.errors?.join(', ')}`;
+                  // Handle error result types (error_during_execution, error_max_turns, error_max_budget_usd)
+                  const errorMessage = message.subtype.startsWith('error_')
+                    ? `Error: ${message.subtype.replace('error_', '').replace(/_/g, ' ')}`
+                    : 'Agent execution failed';
+                  assistantText = assistantText || errorMessage;
                 }
                 tokens = message.usage.input_tokens + message.usage.output_tokens;
                 break;
               }
             }
 
-            responseText = assistantText || 'No response generated';
+            // Log if no response was captured
+            if (!assistantText) {
+              this.server.log.warn({
+                packageId: request.package_id,
+                sessionId,
+                messageCount,
+                tokens,
+              }, 'Agent completed but produced no text output');
+            }
+
+            responseText = assistantText || 'Agent completed execution but did not produce a text response. This may occur when the agent only performs tool calls without generating output text.';
             tokensUsed = tokens;
           } else {
             // Regular prompt execution without tools (regular prompts, rules, etc.)
