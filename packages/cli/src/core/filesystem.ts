@@ -39,9 +39,19 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.windsurf/rules';
 
     case 'copilot':
+      // Copilot has different locations based on subtype:
+      // - Repository-wide instructions: .github/copilot-instructions.md
+      // - Path-specific instructions: .github/instructions/*.instructions.md
+      // - Chat modes: .github/chatmodes/*.chatmode.md
+      if (subtype === 'chatmode') return '.github/chatmodes';
+      // Default to path-specific instructions directory
       return '.github/instructions';
 
     case 'kiro':
+      // Kiro has different locations based on subtype:
+      // - Steering files: .kiro/steering/*.md
+      // - Hooks: .kiro/hooks/*.kiro.hook (JSON files)
+      if (subtype === 'hook') return '.kiro/hooks';
       return '.kiro/steering';
 
     case 'agents.md':

@@ -1,0 +1,5 @@
+Tests fall out of sync. Docs get stale. Security issues slip through.
+
+Kiro hooks automate it—event-driven AI that updates tests when code changes, syncs docs when APIs evolve, and runs accessibility audits on UI edits.
+
+https://prpm.dev/blog/kiro-hooks-automation

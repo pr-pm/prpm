@@ -23,6 +23,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'collection': '📦',
     'chatmode': '💬',
     'tool': '🔧',
+    'hook': '🪝',
   };
 
   // Format-specific icons for rules/defaults
@@ -66,6 +67,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'collection': 'Collection',
     'chatmode': 'Chat Mode',
     'tool': 'Tool',
+    'hook': 'Hook',
   };
 
   const formatLabel = formatLabels[format];
@@ -419,7 +421,7 @@ export function createSearchCommand(): Command {
     .description('Search for packages in the registry')
     .argument('[query]', 'Search query (optional when using --format/--subtype or --author)')
     .option('--format <format>', 'Filter by package format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, generic, mcp)')
-    .option('--subtype <subtype>', 'Filter by package subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection)')
+    .option('--subtype <subtype>', 'Filter by package subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection, chatmode, hook)')
     .option('--author <username>', 'Filter by author username')
     .option('--language <language>', 'Filter by programming language (javascript, typescript, python, etc.)')
     .option('--framework <framework>', 'Filter by framework (react, nextjs, django, etc.)')

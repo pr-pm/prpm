@@ -38,6 +38,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'collection': '📦',
     'chatmode': '💬',
     'tool': '🔧',
+    'hook': '🪝',
   };
 
   // Format-specific icons for rules/defaults
@@ -81,6 +82,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'collection': 'Collection',
     'chatmode': 'Chat Mode',
     'tool': 'Tool',
+    'hook': 'Hook',
   };
 
   const formatLabel = formatLabels[format];
@@ -100,6 +102,7 @@ export async function handleInstall(
     as?: string;
     subtype?: Subtype;
     frozenLockfile?: boolean;
+    force?: boolean;
     fromCollection?: {
       scope: string;
       name_slug: string;
@@ -161,8 +164,8 @@ export async function handleInstall(
       version = options.version || specVersion || lockedVersion || 'latest';
     }
 
-    // Check if package is already installed
-    if (lockfile && lockfile.packages[packageId]) {
+    // Check if package is already installed (skip if --force option is set)
+    if (!options.force && lockfile && lockfile.packages[packageId]) {
       const installedPkg = lockfile.packages[packageId];
       const requestedVersion = options.version || specVersion;
 
@@ -321,11 +324,24 @@ export async function handleInstall(
 
       // For Claude skills, use SKILL.md filename in the package directory
       // For agents.md, use package-name/AGENTS.md directory structure
+      // For Copilot, use official naming conventions
       // For other formats, use package name as filename
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
         destPath = `${destDir}/SKILL.md`;
       } else if (effectiveFormat === 'agents.md') {
         destPath = `${destDir}/${packageName}/AGENTS.md`;
+      } else if (effectiveFormat === 'copilot') {
+        // Official GitHub Copilot naming conventions
+        if (effectiveSubtype === 'chatmode') {
+          // Chat modes: .github/chatmodes/NAME.chatmode.md
+          destPath = `${destDir}/${packageName}.chatmode.md`;
+        } else {
+          // Path-specific instructions: .github/instructions/NAME.instructions.md
+          destPath = `${destDir}/${packageName}.instructions.md`;
+        }
+      } else if (effectiveFormat === 'kiro' && effectiveSubtype === 'hook') {
+        // Kiro hooks use .kiro.hook extension (JSON files)
+        destPath = `${destDir}/${packageName}.kiro.hook`;
       } else {
         destPath = `${destDir}/${packageName}.${fileExtension}`;
       }
@@ -472,7 +488,7 @@ export async function handleInstall(
       error,
       duration: Date.now() - startTime,
       data: {
-        packageId: packageSpec.split('@')[0],
+        packageId: packageSpec ? packageSpec.split('@')[0] : 'lockfile',
         version: options.version || 'latest',
         convertTo: options.as,
       },
@@ -589,18 +605,88 @@ function detectProjectFormat(): string | null {
   return null;
 }
 
+/**
+ * Install all packages from prpm.lock
+ */
+export async function installFromLockfile(options: {
+  as?: string;
+  subtype?: Subtype;
+  frozenLockfile?: boolean;
+}): Promise<void> {
+  try {
+    // Read lockfile
+    const lockfile = await readLockfile();
+
+    if (!lockfile) {
+      console.error('❌ No prpm.lock file found');
+      console.log('\n💡 Run "prpm install <package>" first to create a lockfile, or initialize a new project with "prpm init"');
+      process.exit(1);
+    }
+
+    const packageIds = Object.keys(lockfile.packages);
+
+    if (packageIds.length === 0) {
+      console.log('✅ No packages to install (prpm.lock is empty)');
+      return;
+    }
+
+    console.log(`📦 Installing ${packageIds.length} package${packageIds.length === 1 ? '' : 's'} from prpm.lock...\n`);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // Install each package from lockfile
+    for (const packageId of packageIds) {
+      const lockEntry = lockfile.packages[packageId];
+
+      try {
+        // Extract package spec (strip version if present in packageId)
+        const packageSpec = packageId.includes('@') && !packageId.startsWith('@')
+          ? packageId.substring(0, packageId.lastIndexOf('@'))
+          : packageId;
+
+        console.log(`  Installing ${packageId}...`);
+
+        await handleInstall(packageSpec, {
+          version: lockEntry.version,
+          as: options.as || lockEntry.format,
+          subtype: options.subtype || lockEntry.subtype as Subtype | undefined,
+          frozenLockfile: options.frozenLockfile,
+          force: true, // Force reinstall when installing from lockfile
+        });
+
+        successCount++;
+      } catch (error) {
+        failCount++;
+        console.error(`  ❌ Failed to install ${packageId}: ${error}`);
+      }
+    }
+
+    console.log(`\n✅ Installed ${successCount}/${packageIds.length} packages`);
+
+    if (failCount > 0) {
+      console.error(`❌ ${failCount} package${failCount === 1 ? '' : 's'} failed to install`);
+      process.exit(1);
+    }
+
+  } catch (error) {
+    console.error(`❌ Failed to install from lockfile: ${error}`);
+    process.exit(1);
+  }
+}
+
 export function createInstallCommand(): Command {
   const command = new Command('install');
 
   command
-    .description('Install a package from the registry')
-    .argument('<package>', 'Package to install (e.g., react-rules or react-rules@1.2.0)')
+    .description('Install a package from the registry, or install all packages from prpm.lock if no package specified')
+    .argument('[package]', 'Package to install (e.g., react-rules or react-rules@1.2.0). If omitted, installs all packages from prpm.lock')
     .option('--version <version>', 'Specific version to install')
     .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)')
     .option('--format <format>', 'Alias for --as')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean }) => {
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = options.format || options.as;
 
@@ -613,6 +699,17 @@ export function createInstallCommand(): Command {
         console.log('   prpm install my-package --format agents.md # Convert to Agents.md format');
         console.log('   prpm install my-package                   # Install in native format');
         process.exit(1);
+      }
+
+      // If no package specified, install from lockfile
+      if (!packageSpec) {
+        await installFromLockfile({
+          as: convertTo,
+          subtype: options.subtype as Subtype | undefined,
+          frozenLockfile: options.frozenLockfile
+        });
+        process.exit(0);
+        return;
       }
 
       await handleInstall(packageSpec, {

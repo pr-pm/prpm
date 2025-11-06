@@ -1,0 +1,27 @@
+You change a component. Do you remember to update the tests? The documentation? Check accessibility?
+
+Most development workflows rely on memory and code reviews to catch these issues. Tests fall out of sync with implementation. API documentation gets stale. Accessibility becomes a pre-release audit instead of a development practice.
+
+Kiro hooks flip this model with event-driven automation. Instead of asking AI to help (request-response), hooks trigger automatically based on file events:
+
+• File edited? Update corresponding tests.
+• API route saved? Sync OpenAPI documentation.
+• UI component changed? Run accessibility audit.
+• Code saved? Check for security vulnerabilities.
+
+It's automation that understands your codebase context. Hooks use glob patterns to target specific files and trigger AI agents with precise instructions. Test synchronization runs only on implementation files (not tests). Documentation updates trigger only on API routes. Accessibility checks focus on UI components.
+
+Real examples:
+→ Test sync hook: Automatically adds tests for new functionality when you edit implementation files
+→ Documentation hook: Updates OpenAPI specs when API routes are saved
+→ Accessibility hook: Checks WCAG compliance whenever UI components change
+→ Security hook: Scans for hardcoded secrets, SQL injection, XSS on every save
+
+PRPM now supports Kiro hooks as a package format: `prpm install @author/test-sync-hook` places hooks in `.kiro/hooks/` with semantic versioning and quality metrics. Test hooks before installing with the playground. Browse by use case (testing, docs, accessibility, security).
+
+The difference between manual checks and automated hooks is the difference between remembering to run tests and having them run automatically. Quality becomes part of the development loop, not a pre-commit checklist.
+
+Learn about Kiro hooks and find automation patterns for your workflow:
+https://prpm.dev/blog/kiro-hooks-automation
+
+#AI #Automation #DeveloperTools #Testing #DevEx

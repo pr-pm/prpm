@@ -1,0 +1,5 @@
+cursor.directory is great for browsing Cursor rules. But installing them means copy-pasting into .cursorrules files, manually checking for updates, and starting over if you switch editors.
+
+PRPM brings package management: CLI install, version control, format conversion, testing playground.
+
+https://prpm.dev/blog/discovering-cursor-rules
