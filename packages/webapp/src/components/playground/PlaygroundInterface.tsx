@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages } from '../../lib/api'
 import type { PlaygroundMessage, Package } from '../../lib/api'
+import FeedbackPrompt from './FeedbackPrompt'
 
 interface PlaygroundInterfaceProps {
   initialPackageId?: string
@@ -832,6 +833,17 @@ export default function PlaygroundInterface({
                   )
                 })}
               </div>
+
+              {/* Feedback Prompt - shown after response */}
+              {!loading && conversation.length > 0 && currentSessionId && (
+                <FeedbackPrompt
+                  sessionId={currentSessionId}
+                  onFeedbackSubmitted={() => {
+                    // Optional: Could refresh analytics or show thank you message
+                    console.log('Feedback submitted for session:', currentSessionId);
+                  }}
+                />
+              )}
             </div>
           )}
 
@@ -918,6 +930,16 @@ export default function PlaygroundInterface({
                   )
                 })}
               </div>
+
+              {/* Feedback Prompt for Package B */}
+              {!loadingB && conversationB.length > 0 && currentSessionIdB && (
+                <FeedbackPrompt
+                  sessionId={currentSessionIdB}
+                  onFeedbackSubmitted={() => {
+                    console.log('Feedback submitted for Package B session:', currentSessionIdB);
+                  }}
+                />
+              )}
             </div>
           )}
         </div>

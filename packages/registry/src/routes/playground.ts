@@ -43,6 +43,12 @@ const ShareSessionSchema = z.object({
   session_id: z.string().uuid('Invalid session ID'),
 });
 
+const FeedbackSchema = z.object({
+  session_id: z.string().uuid('Invalid session ID'),
+  is_effective: z.boolean(),
+  comment: z.string().max(1000, 'Comment too long (max 1000 characters)').optional(),
+});
+
 export async function playgroundRoutes(server: FastifyInstance) {
   const playgroundService = new PlaygroundService(server);
   const creditsService = new PlaygroundCreditsService(server);
@@ -982,6 +988,102 @@ export async function playgroundRoutes(server: FastifyInstance) {
         server.log.error({ error }, 'Failed to get featured results');
         return reply.code(500).send({
           error: 'get_featured_results_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/feedback
+  // Submit feedback for a playground session
+  // =====================================================
+  server.post(
+    '/api/v1/playground/feedback',
+    {
+      preHandler: [rateLimiter],
+      schema: {
+        description: 'Submit feedback on playground session effectiveness',
+        tags: ['playground'],
+        body: {
+          type: 'object',
+          required: ['session_id', 'is_effective'],
+          properties: {
+            session_id: { type: 'string', format: 'uuid' },
+            is_effective: { type: 'boolean' },
+            comment: { type: 'string', maxLength: 1000 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              feedback_id: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const body = FeedbackSchema.parse(request.body);
+        const userId = request.user?.user_id || null;
+
+        // Hash IP for anonymous tracking
+        const crypto = await import('crypto');
+        const ipAddress = request.ip || request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || 'unknown';
+        const ipHash = crypto.createHash('sha256').update(String(ipAddress)).digest('hex');
+
+        // Verify session exists
+        const sessionCheck = await server.db.query(
+          'SELECT id FROM playground_sessions WHERE id = $1',
+          [body.session_id]
+        );
+
+        if (sessionCheck.rowCount === 0) {
+          return reply.code(404).send({
+            error: 'session_not_found',
+            message: 'Playground session not found',
+          });
+        }
+
+        // Check if feedback already exists for this session
+        const existingFeedback = await server.db.query(
+          'SELECT id FROM playground_session_feedback WHERE session_id = $1',
+          [body.session_id]
+        );
+
+        if (existingFeedback.rowCount > 0) {
+          return reply.code(409).send({
+            error: 'feedback_exists',
+            message: 'Feedback already submitted for this session',
+          });
+        }
+
+        // Insert feedback
+        const result = await server.db.query(
+          `INSERT INTO playground_session_feedback (session_id, user_id, ip_hash, is_effective, comment)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id`,
+          [body.session_id, userId, ipHash, body.is_effective, body.comment || null]
+        );
+
+        return reply.code(200).send({
+          success: true,
+          feedback_id: result.rows[0].id,
+        });
+      } catch (error: any) {
+        if (error.name === 'ZodError') {
+          return reply.code(400).send({
+            error: 'validation_error',
+            message: error.errors[0]?.message || 'Invalid request data',
+          });
+        }
+
+        server.log.error({ error }, 'Failed to submit feedback');
+        return reply.code(500).send({
+          error: 'feedback_submission_failed',
           message: error.message,
         });
       }
