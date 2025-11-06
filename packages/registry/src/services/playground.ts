@@ -16,6 +16,7 @@ import { getTarballContent } from '../storage/s3.js';
 import { nanoid } from 'nanoid';
 import { getModelId, isAnthropicModel, isOpenAIModel } from '../config/models.js';
 import { getAllowedTools, TASK_TOOL_CONFIG } from '../config/security-domains.js';
+import { createWebFetchValidationHook } from '../middleware/webfetch-validator.js';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -448,12 +449,31 @@ export class PlaygroundService {
             // Uses allowlist from security-domains.ts to prevent tool abuse
             queryOptions.allowedTools = getAllowedTools(packageData.subtype);
 
+            // SECURITY: Add WebFetch domain validation hook
+            // This intercepts WebFetch calls and blocks non-allowlisted domains
+            const sessionId = request.session_id || 'new-session';
+            queryOptions.hooks = {
+              PreToolUse: [
+                {
+                  hooks: [
+                    createWebFetchValidationHook(
+                      this.server,
+                      userId,
+                      request.package_id,
+                      sessionId
+                    ),
+                  ],
+                },
+              ],
+            };
+
             // Log tool configuration for security audit
             this.server.log.info({
               packageId: request.package_id,
               subtype: packageData.subtype,
               allowedTools: queryOptions.allowedTools,
               maxTurns: queryOptions.maxTurns,
+              securityHooks: ['WebFetchValidation'],
             }, 'Playground execution with security restrictions');
 
             // Build conversation context from history
