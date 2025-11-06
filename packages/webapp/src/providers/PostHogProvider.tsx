@@ -12,6 +12,31 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
     person_profiles: 'identified_only',
     capture_pageview: true,
     capture_pageleave: true,
+    // Session replay configuration for screen recordings
+    session_recording: {
+      recordCanvas: true, // Record canvas elements
+      recordCrossOriginIframes: false, // Don't record cross-origin iframes
+      maskAllInputs: false, // Don't mask all inputs by default (selectively mask sensitive ones)
+      maskTextSelector: '[data-ph-mask]', // Use data attribute for sensitive fields
+      maskInputOptions: {
+        password: true, // Always mask password fields
+        email: false, // Show emails (already authenticated users)
+        color: false,
+        date: false,
+        'datetime-local': false,
+        month: false,
+        number: false,
+        range: false,
+        search: false,
+        tel: false,
+        text: false,
+        time: false,
+        url: false,
+        week: false,
+        textarea: false,
+        select: false,
+      },
+    },
     loaded: (posthog) => {
       if (process.env.NODE_ENV === 'development') {
         // Optionally disable in development
