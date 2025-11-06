@@ -488,7 +488,7 @@ export async function handleInstall(
       error,
       duration: Date.now() - startTime,
       data: {
-        packageId: packageSpec.split('@')[0],
+        packageId: packageSpec ? packageSpec.split('@')[0] : 'lockfile',
         version: options.version || 'latest',
         convertTo: options.as,
       },
@@ -608,7 +608,7 @@ function detectProjectFormat(): string | null {
 /**
  * Install all packages from prpm.lock
  */
-async function installFromLockfile(options: {
+export async function installFromLockfile(options: {
   as?: string;
   subtype?: Subtype;
   frozenLockfile?: boolean;
