@@ -15,6 +15,7 @@ import { CostMonitoringService } from './cost-monitoring.js';
 import { getTarballContent } from '../storage/s3.js';
 import { nanoid } from 'nanoid';
 import { getModelId, isAnthropicModel, isOpenAIModel } from '../config/models.js';
+import { getAllowedTools, TASK_TOOL_CONFIG } from '../config/security-domains.js';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -438,22 +439,22 @@ export class PlaygroundService {
               cwd: tempDir,
               settingSources: ['project'] as const,
               model: modelName,
-              maxTurns: 10,
-              allowDangerouslySkipPermissions: true, // For playground, bypass permission prompts
+              maxTurns: TASK_TOOL_CONFIG.MAX_RECURSION_DEPTH + 1,
+              // SECURITY: Removed allowDangerouslySkipPermissions
+              // Tools now require explicit approval or run in restricted mode
             };
 
-            // Configure allowed tools for playground
-            // Web tools - for fetching and searching external content
-            queryOptions.allowedTools = ['WebFetch', 'WebSearch'];
+            // SECURITY: Configure allowed tools based on package subtype
+            // Uses allowlist from security-domains.ts to prevent tool abuse
+            queryOptions.allowedTools = getAllowedTools(packageData.subtype);
 
-            // Task tool - for spawning subagents (useful for complex multi-agent patterns)
-            // Note: Subagents inherit the same tool restrictions and credit limits
-            queryOptions.allowedTools.push('Task');
-
-            // For skills, also enable Skill tool
-            if (needsSkillMount) {
-              queryOptions.allowedTools.push('Skill');
-            }
+            // Log tool configuration for security audit
+            this.server.log.info({
+              packageId: request.package_id,
+              subtype: packageData.subtype,
+              allowedTools: queryOptions.allowedTools,
+              maxTurns: queryOptions.maxTurns,
+            }, 'Playground execution with security restrictions');
 
             // Build conversation context from history
             let promptText = request.input;
