@@ -1,0 +1,18 @@
+If you use Cursor, you've probably been through this workflow: browse cursor.directory, find a rule, copy the content, create a .cursorrules file, paste, save, hope it works. Repeat for every project.
+
+This works for individual developers on single projects. But it doesn't scale. No version control means you won't know when rules update. No CLI means you can't script setup. No format conversion means switching to Claude or Copilot requires starting over.
+
+It's 2025, and we're managing AI instructions like it's 1995—manual copy-paste from websites.
+
+PRPM brings modern package management to Cursor rules (and all AI coding tools). Install with a single CLI command, get automatic updates with semantic versioning, convert to other editor formats, and test in a playground before installing.
+
+Real example: Setting up a new Next.js project with rules for React, TypeScript, and testing takes 15-20 minutes with cursor.directory (search, copy, paste, repeat). With PRPM, it's one command: prpm install @prpm/nextjs-complete. Takes 30 seconds.
+
+This isn't about replacing cursor.directory—it's a great discovery platform. It's about adding package management capabilities that developers expect in 2025. Think of it as the difference between downloading libraries from websites versus using npm.
+
+We wrote a detailed comparison covering installation methods, version control, format conversion, testing, collections, and real workflows. If you're managing multiple Cursor projects or working with a team, this will save you hours.
+
+Read the full comparison:
+https://prpm.dev/blog/discovering-cursor-rules
+
+#Cursor #AI #DeveloperTools #PackageManagement #Productivity

@@ -3,7 +3,7 @@
  */
 
 export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
-export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'collection' | 'chatmode' | 'tool';
+export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'collection' | 'chatmode' | 'tool' | 'hook';
 
 export interface Package {
   id: string;

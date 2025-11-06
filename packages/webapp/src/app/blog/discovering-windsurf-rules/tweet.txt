@@ -1,0 +1,5 @@
+Windsurf is new. Its ecosystem is forming. Will it follow Cursor's path—scattered GitHub repos, years before centralized discovery?
+
+Or can it start with the right infrastructure? PRPM offers centralized discovery, CLI install, and testing from day one.
+
+https://prpm.dev/blog/discovering-windsurf-rules
