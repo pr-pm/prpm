@@ -342,14 +342,14 @@ describe('install command - multi-file packages', () => {
 
       await handleInstall('complex-skill', { as: 'cursor' });
 
-      // Should save to .cursor/rules directory
+      // Should save to .cursor/rules directory with flat structure (Cursor uses flat structure)
       expect(saveFile).toHaveBeenCalledTimes(2);
       expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/rules/complex-skill/skill.md',
+        '.cursor/rules/skill.md',
         '# Main Skill'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/rules/complex-skill/helper.md',
+        '.cursor/rules/helper.md',
         '# Helper'
       );
     });

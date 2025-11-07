@@ -394,13 +394,15 @@ export class PlaygroundService {
         // Get model ID from centralized config
         modelName = getModelId(model);
 
-        // Determine if we need filesystem mounting for Skills/Agents
+        // Determine if we need filesystem mounting for Agents only
         // IMPORTANT: Don't mount skills/agents in baseline mode (use_no_prompt=true)
         // Baseline should be a clean Anthropic environment with no extra capabilities
-        // Even if the package being tested is a skill/agent, baseline mode should not use filesystem mounting
-        const needsSkillMount = !request.use_no_prompt && this.shouldMountAsSkill(packageData.subtype);
+        //
+        // SKILLS IN PLAYGROUND: Skills should NOT be mounted as files that require explicit invocation.
+        // Instead, their content should be applied directly in the system prompt (handled in else branch).
+        // This provides immediate answers rather than Claude announcing "Let me invoke the skill..."
         const needsAgentMount = !request.use_no_prompt && this.shouldMountAsAgent(packageData.subtype);
-        const needsFilesystemMount = !request.use_no_prompt && (needsSkillMount || needsAgentMount);
+        const needsFilesystemMount = !request.use_no_prompt && needsAgentMount;
 
         let tempDir: string | null = null;
 
@@ -424,16 +426,12 @@ export class PlaygroundService {
 
           let totalTokens = 0;
 
-          // If package is a skill/agent, mount it on filesystem and use SDK
+          // If package is an agent, mount it on filesystem and use SDK
+          // Skills are handled as regular prompts (content in system message)
           if (needsFilesystemMount) {
-            // Create temp directory and write skill/agent
+            // Create temp directory and write agent
             tempDir = await this.createTempClaudeDirectory();
-
-            if (needsSkillMount) {
-              await this.writeSkillToFilesystem(tempDir, packageData.name, packageData.prompt);
-            } else if (needsAgentMount) {
-              await this.writeAgentToFilesystem(tempDir, packageData.name, packageData.prompt);
-            }
+            await this.writeAgentToFilesystem(tempDir, packageData.name, packageData.prompt);
 
             // Use Claude Agent SDK with proper filesystem mounting
             const queryOptions: any = {
@@ -499,6 +497,13 @@ export class PlaygroundService {
             for await (const message of queryResult) {
               messageCount++;
 
+              // Log all message types for debugging
+              this.server.log.debug({
+                messageType: message.type,
+                messageSubtype: (message as any).subtype,
+                messageCount,
+              }, 'Claude SDK message received');
+
               if (message.type === 'assistant') {
                 // Extract text from assistant message
                 for (const content of message.message.content) {
@@ -509,7 +514,16 @@ export class PlaygroundService {
               } else if (message.type === 'result') {
                 // Get final result and usage
                 if (message.subtype === 'success') {
+                  // Prefer message.result but fall back to accumulated assistant text
+                  // message.result contains the final textual output
+                  // assistantText contains all intermediate text from turns
                   assistantText = message.result || assistantText;
+
+                  this.server.log.debug({
+                    hasResult: !!message.result,
+                    resultLength: message.result?.length || 0,
+                    accumulatedLength: assistantText.length,
+                  }, 'Final result captured');
                 } else {
                   // Handle error result types (error_during_execution, error_max_turns, error_max_budget_usd)
                   const errorMessage = message.subtype.startsWith('error_')
@@ -636,7 +650,7 @@ export class PlaygroundService {
         packageVersion: request.package_version,
         inputLength: request.input.length,
         outputLength: responseText.length,
-        comparisonMode: false, // Will be updated when comparison mode is implemented
+        comparisonMode: !!request.use_no_prompt, // Track when running in baseline/comparison mode
         estimatedApiCost: actualCost.estimatedCost,
         actualInputTokens: actualCost.inputTokens,
         actualOutputTokens: actualCost.outputTokens,

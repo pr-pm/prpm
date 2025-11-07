@@ -374,9 +374,13 @@ export async function handleInstall(
 
       // Multi-file package - create directory for package
       // For Claude skills, destDir already includes package name, so use it directly
+      // For Cursor rules converted from Claude skills, use flat structure
       const packageName = stripAuthorNamespace(packageId);
+      const isCursorConversion = (effectiveFormat === 'cursor' && pkg.format === 'claude' && pkg.subtype === 'skill');
       const packageDir = (effectiveFormat === 'claude' && effectiveSubtype === 'skill')
         ? destDir
+        : isCursorConversion
+        ? destDir // Cursor uses flat structure
         : `${destDir}/${packageName}`;
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
@@ -411,6 +415,9 @@ export async function handleInstall(
         }
       }
 
+      // Track JSON files for @reference insertion in Cursor conversion
+      const jsonFiles: string[] = [];
+
       for (const file of extractedFiles) {
         // Strip the tarball's root directory prefix to preserve subdirectories
         // Example: ".claude/skills/agent-builder/docs/examples.md" → "docs/examples.md"
@@ -433,9 +440,65 @@ export async function handleInstall(
           relativeFileName = pathParts[pathParts.length - 1];
         }
 
-        const filePath = `${packageDir}/${relativeFileName}`;
-        await saveFile(filePath, file.content);
+        let fileContent = file.content;
+        let fileName = relativeFileName;
+
+        // Handle Cursor conversion from Claude skill
+        if (isCursorConversion) {
+          // Convert SKILL.md to .mdc
+          if (fileName === 'SKILL.md' || fileName.endsWith('/SKILL.md')) {
+            fileName = `${packageName}.mdc`;
+
+            // Add MDC header if missing
+            if (!hasMDCHeader(fileContent)) {
+              console.log(`   ⚠️  Adding MDC header to converted skill...`);
+              fileContent = addMDCHeader(fileContent, pkg.description);
+            }
+
+            // Apply cursor config if available
+            if (config.cursor) {
+              console.log(`   ⚙️  Applying cursor config...`);
+              fileContent = applyCursorConfig(fileContent, config.cursor);
+            }
+          }
+          // Track JSON files for @reference
+          else if (fileName.endsWith('.json')) {
+            // Flatten structure - remove subdirectories
+            const jsonFileName = fileName.split('/').pop() || fileName;
+            fileName = jsonFileName;
+            jsonFiles.push(jsonFileName);
+          }
+          // For other files (docs, etc), flatten the structure
+          else {
+            fileName = fileName.split('/').pop() || fileName;
+          }
+        }
+
+        const filePath = `${packageDir}/${fileName}`;
+        await saveFile(filePath, fileContent);
         fileCount++;
+      }
+
+      // Add @references to .mdc file for JSON files
+      if (isCursorConversion && jsonFiles.length > 0) {
+        const mdcFile = `${packageDir}/${packageName}.mdc`;
+        const { readFile } = await import('fs/promises');
+        let mdcContent = await readFile(mdcFile, 'utf-8');
+
+        // Find the end of frontmatter (if exists)
+        const frontmatterMatch = mdcContent.match(/^---\n[\s\S]*?\n---\n/);
+        if (frontmatterMatch) {
+          const frontmatterEnd = frontmatterMatch[0].length;
+          const beforeFrontmatter = mdcContent.slice(0, frontmatterEnd);
+          const afterFrontmatter = mdcContent.slice(frontmatterEnd);
+
+          // Add @references right after frontmatter
+          const references = jsonFiles.map(f => `@${f}`).join('\n');
+          mdcContent = `${beforeFrontmatter}\n${references}\n${afterFrontmatter}`;
+
+          await saveFile(mdcFile, mdcContent);
+          console.log(`   ✓ Added ${jsonFiles.length} @reference(s) to ${packageName}.mdc`);
+        }
       }
     }
 
