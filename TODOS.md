@@ -2,54 +2,34 @@
 
 **Last Updated**: 2025-11-07
 **Total TODOs**: 22
+**Fixed**: 16 ✅
+**Remaining**: 6
 
 ---
 
-## 🔴 High Priority (Security & Core Functionality)
+## ✅ Fixed - High Priority (Security & Core Functionality)
 
-### 1. Admin Authorization Checks
-**Location**: `packages/registry/src/routes/admin-cost-monitoring.ts`
-**Lines**: 20, 43, 71, 117, 153, 183, 212, 237, 274, 292
+### 1. ~~Admin Authorization Checks~~ ✅ FIXED
+**Commit**: 62bb1df
+**Files**: admin-cost-monitoring.ts, invites.ts, auth.ts
 
-**Issue**: All admin endpoints use `server.authenticate` but lack proper admin authorization checks. Any authenticated user can access admin-only endpoints.
-
-**Current**:
-```typescript
-preHandler: server.authenticate, // TODO: Add admin auth check
-// TODO: Add proper admin authorization check
-```
-
-**Required Fix**: Create admin middleware and apply to all admin routes.
+Applied `requireAdmin()` middleware to all 15 admin endpoints. Removed redundant auth checks from route handlers.
 
 ---
 
-### 2. Admin Checks in Invites Routes
-**Location**: `packages/registry/src/routes/invites.ts`
-**Lines**: 404, 487, 601, 693
+### 2. ~~Admin Checks in Invites Routes~~ ✅ FIXED
+**Commit**: 62bb1df
+**Files**: invites.ts
 
-**Issue**: Invite management endpoints missing admin authorization.
-
-**Routes Affected**:
-- POST `/api/v1/invites/generate` (line 404)
-- GET `/api/v1/invites/list` (line 487)
-- POST `/api/v1/invites/:code/revoke` (line 601)
-- GET `/api/v1/invites/stats` (line 693)
-
-**Required Fix**: Same admin middleware as admin-cost-monitoring.
+Applied `requireAdmin()` middleware to 4 invite management routes.
 
 ---
 
-### 3. Add Verified Field to JWT Payload
-**Location**: `packages/registry/src/middleware/auth.ts:151`
+### 3. ~~Add Verified Field to JWT Payload~~ ✅ FIXED
+**Commit**: 62bb1df
+**Files**: types.ts, auth.ts, middleware/auth.ts
 
-**Issue**: JWT payload doesn't include `verified_author` field, but other parts of the code expect it.
-
-**Current**:
-```typescript
-// TODO: Add verified field to JWT payload
-```
-
-**Required Fix**: Add `verified_author` to JWT claims when token is generated.
+Added `verified_author` field to JWTPayload interface and all JWT sign calls.
 
 ---
 
