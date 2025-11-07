@@ -955,13 +955,13 @@ export class PlaygroundService {
    */
   private async logUsage(data: {
     userId: string;
-    packageId: string;
+    packageId: string | null;
     sessionId: string;
     model: string;
     tokensUsed: number;
     durationMs: number;
     creditsSpent: number;
-    packageVersion?: string;
+    packageVersion?: string | null;
     inputLength?: number;
     outputLength?: number;
     comparisonMode?: boolean;
@@ -1134,6 +1134,7 @@ export class PlaygroundService {
       input: string;
       session_id?: string;
       model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
+      sandbox_mode?: 'strict' | 'moderate' | 'permissive';
     }
   ): Promise<PlaygroundRunResponse> {
     const startTime = Date.now();
