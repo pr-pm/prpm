@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages } from '../../lib/api'
+import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages, runCustomPrompt, getCurrentUser } from '../../lib/api'
 import type { PlaygroundMessage, Package } from '../../lib/api'
+import CustomPromptInput from './CustomPromptInput'
 
 interface PlaygroundInterfaceProps {
   initialPackageId?: string
@@ -56,6 +57,11 @@ export default function PlaygroundInterface({
   const [showAnonymousLoginPrompt, setShowAnonymousLoginPrompt] = useState(false)
   const [isAnonymousUser, setIsAnonymousUser] = useState(false)
 
+  // Custom prompt mode state
+  const [useCustomPrompt, setUseCustomPrompt] = useState(false)
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [isVerifiedAuthor, setIsVerifiedAuthor] = useState(false)
+
   // Helper function to group messages into exchanges (user input + assistant response pairs)
   const groupIntoExchanges = (messages: PlaygroundMessage[]): Array<{ user: PlaygroundMessage; assistant: PlaygroundMessage | null; index: number }> => {
     const exchanges: Array<{ user: PlaygroundMessage; assistant: PlaygroundMessage | null; index: number }> = []
@@ -105,6 +111,16 @@ export default function PlaygroundInterface({
     // Default to gpt-4o-mini for anonymous users (only available model)
     if (isAnon) {
       setModel('gpt-4o-mini')
+    }
+  }, [])
+
+  // Fetch user verification status for custom prompt feature
+  useEffect(() => {
+    const token = localStorage.getItem('prpm_token')
+    if (token) {
+      getCurrentUser(token).then(user => {
+        setIsVerifiedAuthor(user.verified_author || false)
+      }).catch(() => setIsVerifiedAuthor(false))
     }
   }, [])
 
@@ -251,9 +267,18 @@ export default function PlaygroundInterface({
   }
 
   const handleRun = async () => {
-    if (!packageId || !input.trim()) {
-      setError('Please select a package and enter input')
-      return
+    // Validation for custom prompt mode
+    if (useCustomPrompt) {
+      if (!customPrompt.trim() || !input.trim()) {
+        setError('Please enter both a custom prompt and input')
+        return
+      }
+    } else {
+      // Regular package mode validation
+      if (!packageId || !input.trim()) {
+        setError('Please select a package and enter input')
+        return
+      }
     }
 
     if (comparisonMode && !packageIdB) {
@@ -375,17 +400,30 @@ export default function PlaygroundInterface({
         setLoadingB(false)
       }
     } else {
-      // Single package mode
+      // Single package or custom prompt mode
       setLoading(true)
       setError(null)
 
       try {
-        const result = await runPlayground(token, {
-          package_id: packageId,
-          input: input.trim(),
-          model,
-          session_id: currentSessionId,
-        })
+        let result
+
+        if (useCustomPrompt) {
+          // Custom prompt mode
+          result = await runCustomPrompt(token, {
+            custom_prompt: customPrompt,
+            input: input.trim(),
+            session_id: currentSessionId,
+            model,
+          })
+        } else {
+          // Regular package mode
+          result = await runPlayground(token, {
+            package_id: packageId,
+            input: input.trim(),
+            model,
+            session_id: currentSessionId,
+          })
+        }
 
         console.log('[Playground] Run complete. Credits spent:', result.credits_spent, 'Remaining:', result.credits_remaining)
         setConversation(result.conversation)
@@ -470,6 +508,7 @@ export default function PlaygroundInterface({
         <div>
           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             {comparisonMode ? 'Package A' : 'Select Package'}
+            {useCustomPrompt && <span className="ml-2 text-xs text-gray-500">(disabled in custom prompt mode)</span>}
           </label>
           <div className="relative">
             <input
@@ -484,7 +523,8 @@ export default function PlaygroundInterface({
               }}
               onFocus={() => setShowPackageDropdown(true)}
               placeholder="Search for a package..."
-              className="w-full px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent"
+              disabled={useCustomPrompt}
+              className={`w-full px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent ${useCustomPrompt ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
             {(selectedPackage || packageSearch) && (
               <button
@@ -930,6 +970,15 @@ export default function PlaygroundInterface({
             </div>
           )}
         </div>
+      )}
+
+      {/* Custom Prompt Input - Only show when not in comparison mode */}
+      {!comparisonMode && (
+        <CustomPromptInput
+          onPromptChange={setCustomPrompt}
+          onUseCustom={setUseCustomPrompt}
+          isVerifiedAuthor={isVerifiedAuthor}
+        />
       )}
 
       {/* Input Area */}
