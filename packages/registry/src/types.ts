@@ -234,6 +234,7 @@ export interface JWTPayload {
   username: string;
   email: string;
   is_admin: boolean;
+  verified_author: boolean;
   scopes: string[];
   iat: number;
   exp: number;

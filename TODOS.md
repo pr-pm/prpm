@@ -1,0 +1,192 @@
+# PRPM Repository TODOs
+
+**Last Updated**: 2025-11-07
+**Total TODOs**: 22
+
+---
+
+## 🔴 High Priority (Security & Core Functionality)
+
+### 1. Admin Authorization Checks
+**Location**: `packages/registry/src/routes/admin-cost-monitoring.ts`
+**Lines**: 20, 43, 71, 117, 153, 183, 212, 237, 274, 292
+
+**Issue**: All admin endpoints use `server.authenticate` but lack proper admin authorization checks. Any authenticated user can access admin-only endpoints.
+
+**Current**:
+```typescript
+preHandler: server.authenticate, // TODO: Add admin auth check
+// TODO: Add proper admin authorization check
+```
+
+**Required Fix**: Create admin middleware and apply to all admin routes.
+
+---
+
+### 2. Admin Checks in Invites Routes
+**Location**: `packages/registry/src/routes/invites.ts`
+**Lines**: 404, 487, 601, 693
+
+**Issue**: Invite management endpoints missing admin authorization.
+
+**Routes Affected**:
+- POST `/api/v1/invites/generate` (line 404)
+- GET `/api/v1/invites/list` (line 487)
+- POST `/api/v1/invites/:code/revoke` (line 601)
+- GET `/api/v1/invites/stats` (line 693)
+
+**Required Fix**: Same admin middleware as admin-cost-monitoring.
+
+---
+
+### 3. Add Verified Field to JWT Payload
+**Location**: `packages/registry/src/middleware/auth.ts:151`
+
+**Issue**: JWT payload doesn't include `verified_author` field, but other parts of the code expect it.
+
+**Current**:
+```typescript
+// TODO: Add verified field to JWT payload
+```
+
+**Required Fix**: Add `verified_author` to JWT claims when token is generated.
+
+---
+
+## 🟡 Medium Priority (Features & Improvements)
+
+### 4. Implement Format Conversion Parsers
+**Location**: `packages/registry/src/routes/convert.ts:289`
+
+**Issue**: Format conversion endpoint has placeholder for parsers.
+
+**Current**:
+```typescript
+// TODO: Implement parsers for each format
+```
+
+**Required Fix**: Implement parsers for Continue, Windsurf, and other formats.
+
+---
+
+### 5. Add Organizations to Whoami Command
+**Location**: `packages/cli/src/commands/whoami.ts:41`
+
+**Issue**: Whoami command doesn't show user organizations.
+
+**Current**:
+```typescript
+// TODO: Add organizations when implemented in the database
+```
+
+**Required Fix**:
+1. Add organizations table/relationships in database
+2. Update whoami to fetch and display organizations
+
+---
+
+### 6. Implement Proper Tar Extraction
+**Location**: `packages/cli/src/commands/install.ts:565`
+
+**Issue**: Using manual tar extraction instead of proper tar library.
+
+**Current**:
+```typescript
+/**
+ * TODO: Implement proper tar extraction with tar library
+ */
+```
+
+**Required Fix**: Replace manual extraction with `tar` library (already in dependencies).
+
+---
+
+## 🟢 Low Priority (Tests & Nice-to-Haves)
+
+### 7. Fix Flaky Collection Tests
+**Location**: `packages/cli/src/__tests__/collections.test.ts`
+**Lines**: 373, 546
+
+**Issues**:
+- Line 373: Error message changed after collection display updates
+- Line 546: Passes locally but fails in CI
+
+**Current**:
+```typescript
+// TODO: Fix flaky test - error message changed after collection display updates
+// TODO: Fix flaky test - passes locally but fails in CI
+```
+
+**Required Fix**: Update assertions to match new error messages, investigate CI-specific failures.
+
+---
+
+### 8. Fix Collections Test Version Parameter
+**Location**: `packages/registry/src/routes/__tests__/collections.test.ts:342`
+
+**Issue**: Version parameter test needs proper mock handling.
+
+**Current**:
+```typescript
+// TODO: Fix version parameter test - needs proper mock handling
+```
+
+**Required Fix**: Add proper mocks for version parameter tests.
+
+---
+
+### 9. Fix Init Test (Jest Worker Crash)
+**Location**: `packages/cli/src/__tests__/init.test.ts:12`
+
+**Issue**: Init command calls `process.exit(1)` which crashes Jest workers.
+
+**Current**:
+```typescript
+// TODO KJG: Init command calls process.exit(1) which crashes Jest workers.
+```
+
+**Required Fix**: Mock `process.exit` or refactor init command to throw errors instead.
+
+---
+
+## 📊 Summary by Category
+
+| Category | Count | Priority |
+|----------|-------|----------|
+| Security (Admin Auth) | 15 | 🔴 High |
+| Core Features | 3 | 🟡 Medium |
+| Tests | 4 | 🟢 Low |
+| **Total** | **22** | |
+
+---
+
+## 🎯 Recommended Fix Order
+
+1. **Admin Authorization Middleware** (Fixes 15 TODOs)
+   - Create `requireAdmin` middleware
+   - Apply to admin-cost-monitoring.ts (11 TODOs)
+   - Apply to invites.ts (4 TODOs)
+
+2. **JWT Verified Field** (Fixes 1 TODO)
+   - Add `verified_author` to JWT payload
+   - Update auth middleware
+
+3. **Format Conversion Parsers** (Fixes 1 TODO)
+   - Implement Continue/Windsurf parsers
+
+4. **CLI Improvements** (Fixes 2 TODOs)
+   - Add organizations to whoami
+   - Implement proper tar extraction
+
+5. **Test Fixes** (Fixes 3 TODOs)
+   - Fix flaky collection tests
+   - Fix version parameter test
+   - Fix init test Jest crash
+
+---
+
+## ✅ Next Steps
+
+Starting with highest priority: **Admin Authorization Middleware**
+
+This single fix will resolve 15 TODOs and close a critical security gap.
