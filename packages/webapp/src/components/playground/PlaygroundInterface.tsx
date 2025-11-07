@@ -447,6 +447,15 @@ export default function PlaygroundInterface({
         </button>
       </div>
 
+      {/* Comparison Mode Notice */}
+      {comparisonMode && (
+        <div className="mb-4 sm:mb-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-sm text-yellow-900 dark:text-yellow-200">
+            <strong>ℹ️ Comparison Mode:</strong> Running two prompts side-by-side uses 2× credits (one for each response).
+          </p>
+        </div>
+      )}
+
       {/* Anonymous User Notice */}
       {isAnonymousUser && !showAnonymousLoginPrompt && conversation.length === 0 && (
         <div className="mb-4 sm:mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">

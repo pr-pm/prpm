@@ -559,15 +559,49 @@ export async function packageRoutes(server: FastifyInstance) {
         });
       }
 
-      // If organization is specified, ensure package name is prefixed with @org-name/
-      // Package names must be lowercase, so lowercase the organization name in the prefix
+      // Fetch user info for scoping and validation
+      const user = await queryOne<{ username: string }>(
+        server,
+        'SELECT username FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (!user) {
+        return reply.status(500).send({
+          error: 'Internal Server Error',
+          message: 'Could not fetch user information'
+        });
+      }
+
+      const usernameLowercase = user.username.toLowerCase();
+
+      // Auto-prefix package name with scope and validate ownership
+      // If organization is specified, use @org-name/, otherwise use @username/
       if (organization) {
+        // Organization packages: @org-name/package
         const orgNameLowercase = organization.toLowerCase();
         const expectedPrefix = `@${orgNameLowercase}/`;
         if (!packageName.startsWith(expectedPrefix)) {
           // Auto-prefix the package name
           packageName = `${expectedPrefix}${packageName}`;
           server.log.info({ originalName: manifest.name, newName: packageName }, 'Auto-prefixed package name with organization');
+        }
+      } else if (!packageName.startsWith('@')) {
+        // Author packages: @username/package (if not already scoped)
+        packageName = `@${usernameLowercase}/${packageName}`;
+        server.log.info({ originalName: manifest.name, newName: packageName }, 'Auto-prefixed package name with author username');
+      } else {
+        // Package already has a scope - validate the user owns this scope
+        // Extract scope from package name (e.g., "@alice/package" -> "alice")
+        const scopeMatch = packageName.match(/^@([a-z0-9-]+)\//);
+        if (scopeMatch) {
+          const scopeUsername = scopeMatch[1];
+          if (scopeUsername !== usernameLowercase) {
+            return reply.status(403).send({
+              error: 'Forbidden',
+              message: `You cannot publish packages under @${scopeUsername}/ scope. You can only publish under @${usernameLowercase}/ or specify an organization you belong to.`
+            });
+          }
         }
       }
 

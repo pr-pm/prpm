@@ -297,6 +297,36 @@ function normalizeFilePaths(files: string[] | PackageFileMetadata[]): string[] {
 }
 
 /**
+ * Predict what the scoped package name will be after publishing
+ * This matches the server-side logic in packages.ts
+ */
+function predictScopedPackageName(
+  manifestName: string,
+  username: string,
+  organization?: string
+): string {
+  const usernameLowercase = username.toLowerCase();
+
+  // If organization is specified, use @org-name/
+  if (organization) {
+    const orgNameLowercase = organization.toLowerCase();
+    const expectedPrefix = `@${orgNameLowercase}/`;
+    if (!manifestName.startsWith(expectedPrefix)) {
+      return `${expectedPrefix}${manifestName}`;
+    }
+    return manifestName;
+  }
+
+  // If package name doesn't already have a scope, add @username/
+  if (!manifestName.startsWith('@')) {
+    return `@${usernameLowercase}/${manifestName}`;
+  }
+
+  // Package already has a scope, return as-is
+  return manifestName;
+}
+
+/**
  * Create tarball from current directory
  */
 async function createTarball(manifest: PackageManifest): Promise<Buffer> {
@@ -510,6 +540,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         }
 
         let selectedOrgId: string | undefined;
+        let selectedOrgName: string | undefined;
 
         // Check if organization is specified in manifest
         if (manifest.organization && userInfo) {
@@ -530,10 +561,18 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           }
 
           selectedOrgId = orgFromManifest.id;
+          selectedOrgName = orgFromManifest.name;
         }
 
+        // Predict what the scoped package name will be
+        const scopedPackageName = predictScopedPackageName(
+          manifest.name,
+          userInfo?.username || config.username || 'unknown',
+          selectedOrgName || manifest.organization
+        );
+
         console.log(`   Source: ${source}`);
-        console.log(`   Package: ${manifest.name}@${manifest.version}`);
+        console.log(`   Package: ${scopedPackageName}@${manifest.version}`);
         console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype}`);
         console.log(`   Description: ${manifest.description}`);
         console.log(`   Access: ${manifest.private ? 'private' : 'public'}`);
@@ -560,7 +599,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         }
 
         // Validate and warn about license (optional - will extract if present)
-        validateLicenseInfo(licenseInfo, manifest.name);
+        validateLicenseInfo(licenseInfo, scopedPackageName);
         console.log('');
 
         // Extract content snippet
@@ -569,7 +608,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         if (snippet) {
           manifest.snippet = snippet;
         }
-        validateSnippet(snippet, manifest.name);
+        validateSnippet(snippet, scopedPackageName);
         console.log('');
 
         // Create tarball
@@ -594,7 +633,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         if (options.dryRun) {
           console.log('✅ Dry run successful! Package is ready to publish.');
           publishedPackages.push({
-            name: manifest.name,
+            name: scopedPackageName,
             version: manifest.version,
             url: ''
           });
@@ -623,7 +662,8 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           webappUrl = registryUrl;
         }
 
-        const packageUrl = `${webappUrl}/packages/${encodeURIComponent(manifest.name)}`;
+        // Use the name returned from the API (which includes auto-prefixed scope)
+        const packageUrl = `${webappUrl}/packages/${encodeURIComponent(result.name)}`;
 
         console.log('');
         console.log('✅ Package published successfully!');
@@ -633,15 +673,23 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log('');
 
         publishedPackages.push({
-          name: manifest.name,
+          name: result.name, // Use scoped name from server
           version: result.version,
           url: packageUrl
         });
       } catch (err) {
         const pkgError = err instanceof Error ? err.message : String(err);
-        console.error(`\n❌ Failed to publish ${manifest.name}: ${pkgError}\n`);
+        // Try to use scoped name if we have user info, otherwise fall back to manifest name
+        const displayName = userInfo
+          ? predictScopedPackageName(
+              manifest.name,
+              userInfo.username,
+              manifest.organization
+            )
+          : manifest.name;
+        console.error(`\n❌ Failed to publish ${displayName}: ${pkgError}\n`);
         failedPackages.push({
-          name: manifest.name,
+          name: displayName,
           error: pkgError
         });
       }
