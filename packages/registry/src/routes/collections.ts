@@ -58,7 +58,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             c.version,
             c.name,
             c.description,
-            u.username as author,
+            COALESCE(o.name, u.username) as author,
             c.official,
             c.verified,
             c.category,
@@ -72,6 +72,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             COALESCE(cp.package_count, 0) as package_count
           FROM collections c
           LEFT JOIN users u ON c.author_id = u.id
+          LEFT JOIN organizations o ON c.org_id = o.id
           LEFT JOIN (
             SELECT collection_id, COUNT(*) as package_count
             FROM collection_packages
@@ -218,9 +219,10 @@ export async function collectionRoutes(server: FastifyInstance) {
       try {
         // Get collection
         let sql = `
-          SELECT c.*, u.username as author
+          SELECT c.*, COALESCE(o.name, u.username) as author
           FROM collections c
           LEFT JOIN users u ON c.author_id = u.id
+          LEFT JOIN organizations o ON c.org_id = o.id
           WHERE c.scope = $1 AND c.name_slug = $2
         `;
 
@@ -681,7 +683,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           c.version,
           c.name,
           c.description,
-          u.username as author,
+          COALESCE(o.name, u.username) as author,
           c.official,
           c.verified,
           c.category,
@@ -695,6 +697,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           COALESCE(cp.package_count, 0) as package_count
         FROM collections c
         LEFT JOIN users u ON c.author_id = u.id
+        LEFT JOIN organizations o ON c.org_id = o.id
         LEFT JOIN (
           SELECT collection_id, COUNT(*) as package_count
           FROM collection_packages
@@ -739,7 +742,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           c.version,
           c.name,
           c.description,
-          u.username as author,
+          COALESCE(o.name, u.username) as author,
           c.official,
           c.verified,
           c.category,
@@ -752,6 +755,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           c.updated_at
         FROM collections c
         LEFT JOIN users u ON c.author_id = u.id
+        LEFT JOIN organizations o ON c.org_id = o.id
         WHERE c.scope = $1 AND c.name_slug = $2 AND c.version = $3`,
         [scope, name_slug, version]
       );
