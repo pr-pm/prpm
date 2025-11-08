@@ -542,14 +542,23 @@ export async function handleCollectionInstall(
       try {
         console.log(`\n  ${progress} Installing ${pkg.packageId}@${pkg.version}...`);
 
-        await handleInstall(`${pkg.packageId}@${pkg.version}`, {
-          as: pkg.format,
+        // Only pass 'as' format if user explicitly requested it via --as flag
+        // Otherwise, let handleInstall auto-detect the format based on existing directories
+        // This ensures collections respect existing .claude or .cursor directories
+        const installOptions: any = {
           fromCollection: {
             scope,
             name_slug,
             version: collection.version || version || '1.0.0',
           },
-        });
+        };
+
+        // Only set 'as' if user explicitly provided a format
+        if (options.format) {
+          installOptions.as = options.format;
+        }
+
+        await handleInstall(`${pkg.packageId}@${pkg.version}`, installOptions);
 
         console.log(`  ${progress} ✓ ${pkg.packageId}`);
         installedPackageIds.push(pkg.packageId);
