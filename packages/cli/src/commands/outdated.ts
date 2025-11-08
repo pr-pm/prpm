@@ -7,6 +7,7 @@ import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { listPackages } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
+import { CLIError } from '../core/errors';
 
 /**
  * Check for outdated packages
@@ -108,8 +109,7 @@ export async function handleOutdated(): Promise<void> {
     success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
-    console.error(`\n❌ Failed to check for updates: ${error}`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to check for updates: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'outdated',
@@ -144,6 +144,5 @@ export function createOutdatedCommand(): Command {
     .description('Check for package updates')
     .action(async () => {
       await handleOutdated();
-      process.exit(0);
     });
 }

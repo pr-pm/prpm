@@ -11,6 +11,7 @@ import { gzipSync } from 'zlib';
 import * as tar from 'tar';
 import { Readable } from 'stream';
 import * as path from 'path';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -116,9 +117,6 @@ describe('install command - multi-file packages', () => {
 
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
-    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-      throw new Error(`Process exited with code ${code}`);
-    }) as any);
   });
 
   afterEach(() => {

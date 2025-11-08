@@ -6,6 +6,7 @@ import { handleSearch } from '../../commands/search';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../../core/user-config';
 import { createTestDir, cleanupTestDir } from './test-helpers';
+import { CLIError } from '../../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -288,41 +289,23 @@ describe.skip('Search Command - E2E Tests', () => {
     it('should handle search API errors', async () => {
       mockClient.search.mockRejectedValue(new Error('API unavailable'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleSearch('test', {})).rejects.toThrow('Process exited');
+      await expect(handleSearch('test', {})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Failed to search')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle network errors', async () => {
       mockClient.search.mockRejectedValue(new Error('Network error'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleSearch('test', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleSearch('test', {})).rejects.toThrow(CLIError);
     });
 
     it('should handle rate limiting', async () => {
       mockClient.search.mockRejectedValue(new Error('Rate limit exceeded'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleSearch('test', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleSearch('test', {})).rejects.toThrow(CLIError);
     });
   });
 

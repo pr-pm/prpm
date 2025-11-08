@@ -10,6 +10,7 @@ import { existsSync } from 'fs';
 import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
 import { FORMATS, SUBTYPES } from '../types';
+import { CLIError } from '../core/errors';
 
 interface InitOptions {
   yes?: boolean; // Skip prompts and use defaults
@@ -746,7 +747,9 @@ async function initPackage(options: InitOptions): Promise<void> {
   // Create example files
   if (config.files && config.format && config.name) {
     console.log('Creating example files...\n');
-    await createExampleFiles(config.format, config.files, config.name);
+    // Filter out README.md since createReadme will handle it with proper content
+    const filesToCreate = config.files.filter(f => f !== 'README.md');
+    await createExampleFiles(config.format, filesToCreate, config.name);
 
     // Create README
     await createReadme(config as PackageConfig);
@@ -773,10 +776,9 @@ export function createInitCommand(): Command {
     .action(async (options: InitOptions) => {
       try {
         await initPackage(options);
-        process.exit(0);
       } catch (error) {
         console.error('\n❌ Error:', error instanceof Error ? error.message : error);
-        process.exit(1);
+        throw new CLIError('\n❌ Error: ' + (error instanceof Error ? error.message : error), 1);
       }
     });
 
