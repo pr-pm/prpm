@@ -99,6 +99,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build types package
+        run: npm run build --workspace=@pr-pm/types
+
       - name: Build registry
         run: npm run build --workspace=@pr-pm/registry
 
@@ -374,7 +377,7 @@ jobs:
           chmod +x scripts/prepare-ssg-data.sh
           DEBUG=true ./scripts/prepare-ssg-data.sh
 
-      - name: Build webapp with SSG
+      - name: Build webapp
         run: |
           cd packages/webapp
           npm ci

@@ -6,6 +6,7 @@ import { Command } from 'commander';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import * as readline from 'readline';
+import { CLIError } from '../core/errors';
 
 interface PlaygroundOptions {
   model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
@@ -290,7 +291,7 @@ async function runSingle(
       console.log('   - Subscribe to PRPM+: prpm subscribe');
       console.log('   - Check balance:      prpm credits');
     }
-    process.exit(1);
+    throw new CLIError(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}`, 1);
   }
 }
 
@@ -313,7 +314,7 @@ export async function handlePlayground(
       console.error('❌ Authentication required');
       console.log('\n💡 Please login first:');
       console.log('   prpm login');
-      process.exit(1);
+      throw new CLIError('❌ Authentication required', 1);
     }
 
     // Interactive mode or single query
@@ -329,7 +330,7 @@ export async function handlePlayground(
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Playground execution failed: ${error}`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Playground execution failed: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'playground',
@@ -401,7 +402,6 @@ Note: Playground usage requires credits. Run 'prpm credits' to check balance.
     )
     .action(async (packageName: string, input: string | undefined, options: PlaygroundOptions) => {
       await handlePlayground(packageName, input, options);
-      process.exit(0);
     });
 
   return command;

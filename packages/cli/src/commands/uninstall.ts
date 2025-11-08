@@ -7,6 +7,7 @@ import { removePackage } from '../core/lockfile';
 import { getDestinationDir, deleteFile, fileExists, stripAuthorNamespace } from '../core/filesystem';
 import { promises as fs } from 'fs';
 import { Format, Subtype } from '../types';
+import { CLIError } from '../core/errors';
 
 /**
  * Handle the uninstall command
@@ -19,8 +20,7 @@ export async function handleUninstall(name: string): Promise<void> {
     const pkg = await removePackage(name);
 
     if (!pkg) {
-      console.error(`❌ Package "${name}" not found`);
-      process.exit(1);
+      throw new CLIError(`❌ Package "${name}" not found`, 1);
     }
 
     // Get destination directory using format and subtype
@@ -30,39 +30,22 @@ export async function handleUninstall(name: string): Promise<void> {
     const destDir = getDestinationDir(format as Format, subtype as Subtype, packageName);
     const fileExtension = pkg.format === 'cursor' ? 'mdc' : 'md';
 
-    // For Claude skills, check the directory structure first (since they use SKILL.md)
+    // For Claude skills, delete the entire directory (may contain multiple files)
     if (format === 'claude' && subtype === 'skill') {
-      // Claude skills are in .claude/skills/${packageName}/ with SKILL.md file
-      const skillPath = `${destDir}/SKILL.md`;
-
-      if (await fileExists(skillPath)) {
-        // Delete the SKILL.md file
-        await deleteFile(skillPath);
-        console.log(`   🗑️  Deleted file: ${skillPath}`);
-
-        // If the directory is empty or only contains SKILL.md, delete the directory too
-        try {
-          const dirContents = await fs.readdir(destDir);
-          if (dirContents.length === 0) {
-            await fs.rmdir(destDir);
-            console.log(`   🗑️  Deleted empty directory: ${destDir}`);
-          }
-        } catch (error) {
-          // Directory doesn't exist or can't be deleted, that's okay
+      // Claude skills are in .claude/skills/${packageName}/ directory
+      // Delete the entire directory (includes SKILL.md, EXAMPLES.md, docs/, etc.)
+      try {
+        const stats = await fs.stat(destDir);
+        if (stats.isDirectory()) {
+          await fs.rm(destDir, { recursive: true, force: true });
+          console.log(`   🗑️  Deleted directory: ${destDir}`);
         }
-      } else {
-        // Try the whole directory
-        try {
-          const stats = await fs.stat(destDir);
-          if (stats.isDirectory()) {
-            await fs.rm(destDir, { recursive: true, force: true });
-            console.log(`   🗑️  Deleted directory: ${destDir}`);
-          }
-        } catch (error) {
-          const err = error as NodeJS.ErrnoException;
-          if (err.code !== 'ENOENT') {
-            console.warn(`   ⚠️  Could not delete package files: ${err.message}`);
-          }
+      } catch (error) {
+        const err = error as NodeJS.ErrnoException;
+        if (err.code === 'ENOENT') {
+          console.warn(`   ⚠️  Skill directory not found: ${destDir}`);
+        } else {
+          console.warn(`   ⚠️  Could not delete skill directory: ${err.message}`);
         }
       }
     } else {
@@ -94,10 +77,11 @@ export async function handleUninstall(name: string): Promise<void> {
 
     console.log(`✅ Successfully uninstalled ${name}`);
 
-    process.exit(0);
   } catch (error) {
-    console.error(`❌ Failed to uninstall package: ${error}`);
-    process.exit(1);
+    if (error instanceof CLIError) {
+      throw error;
+    }
+    throw new CLIError(`❌ Failed to uninstall package: ${error}`, 1);
   }
 }
 

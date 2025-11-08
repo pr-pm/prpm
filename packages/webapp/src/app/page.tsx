@@ -97,7 +97,7 @@ export default function Home() {
               </Link>
               <div className="flex gap-4 justify-center flex-wrap">
                 <Link
-                  href="/signup"
+                  href="/getting-started"
                   className="px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift"
                 >
                   Get Started

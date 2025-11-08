@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { runPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages } from '../../lib/api'
+import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages } from '../../lib/api'
 import type { PlaygroundMessage, Package } from '../../lib/api'
 
 interface PlaygroundInterfaceProps {
@@ -53,6 +53,8 @@ export default function PlaygroundInterface({
   const [currentSessionIdB, setCurrentSessionIdB] = useState<string | undefined>(undefined)
   const [collapsedExchanges, setCollapsedExchanges] = useState<Set<number>>(new Set())
   const [collapsedExchangesB, setCollapsedExchangesB] = useState<Set<number>>(new Set())
+  const [showAnonymousLoginPrompt, setShowAnonymousLoginPrompt] = useState(false)
+  const [isAnonymousUser, setIsAnonymousUser] = useState(false)
 
   // Helper function to group messages into exchanges (user input + assistant response pairs)
   const groupIntoExchanges = (messages: PlaygroundMessage[]): Array<{ user: PlaygroundMessage; assistant: PlaygroundMessage | null; index: number }> => {
@@ -94,6 +96,18 @@ export default function PlaygroundInterface({
     }
   }
 
+  // Check if user is anonymous (no token)
+  useEffect(() => {
+    const token = localStorage.getItem('prpm_token')
+    const isAnon = !token
+    setIsAnonymousUser(isAnon)
+
+    // Default to gpt-4o-mini for anonymous users (only available model)
+    if (isAnon) {
+      setModel('gpt-4o-mini')
+    }
+  }, [])
+
   // Load session if provided
   useEffect(() => {
     if (sessionId) {
@@ -109,6 +123,7 @@ export default function PlaygroundInterface({
     if (initialPackageId && !selectedPackage) {
       loadInitialPackage(initialPackageId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPackageId])
 
   const loadInitialPackage = async (packageIdToLoad: string) => {
@@ -248,8 +263,51 @@ export default function PlaygroundInterface({
     }
 
     const token = localStorage.getItem('prpm_token')
+
+    // Handle anonymous users (one free run)
     if (!token) {
-      setError('Not authenticated')
+      setLoading(true)
+      setError(null)
+
+      try {
+        const result = await runAnonymousPlayground({
+          package_id: packageId,
+          input: input.trim(),
+        })
+
+        // Create a conversation with the result
+        const newConversation: PlaygroundMessage[] = [
+          {
+            role: 'user',
+            content: input.trim(),
+            timestamp: new Date().toISOString(),
+          },
+          {
+            role: 'assistant',
+            content: result.response,
+            timestamp: new Date().toISOString(),
+          },
+        ]
+
+        setConversation(newConversation)
+        setInput('')
+
+        // Show login prompt
+        setShowAnonymousLoginPrompt(true)
+
+      } catch (err: any) {
+        console.error('Anonymous playground run failed:', err)
+
+        // Check if limit exceeded (already used free run)
+        if (err.message.includes('limit_exceeded') || err.message.includes('429')) {
+          setError('You have already used your free playground run. Please sign up to get 5 free credits and continue testing packages.')
+          setShowAnonymousLoginPrompt(true)
+        } else {
+          setError(err.message || 'Failed to run playground')
+        }
+      } finally {
+        setLoading(false)
+      }
       return
     }
 
@@ -389,6 +447,24 @@ export default function PlaygroundInterface({
         </button>
       </div>
 
+      {/* Comparison Mode Notice */}
+      {comparisonMode && (
+        <div className="mb-4 sm:mb-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-sm text-yellow-900 dark:text-yellow-200">
+            <strong>ℹ️ Comparison Mode:</strong> Running two prompts side-by-side uses 2× credits (one for each response).
+          </p>
+        </div>
+      )}
+
+      {/* Anonymous User Notice */}
+      {isAnonymousUser && !showAnonymousLoginPrompt && conversation.length === 0 && (
+        <div className="mb-4 sm:mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-sm text-blue-900 dark:text-blue-200">
+            <strong>Try it free!</strong> Get one free playground run (using gpt-4o-mini). Sign up to get 5 free credits and access to all models.
+          </p>
+        </div>
+      )}
+
       {/* Package Selection - Split or Single */}
       <div className={comparisonMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4 sm:mb-6' : 'mb-4 sm:mb-6'}>
         <div>
@@ -451,6 +527,32 @@ export default function PlaygroundInterface({
               </div>
             )}
           </div>
+          {/* CLI Install Command */}
+          {selectedPackage && (
+            <div className="mt-2 p-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-wider">Install via CLI</span>
+                <button
+                  onClick={async () => {
+                    const command = `prpm install ${selectedPackage.name}`
+                    try {
+                      await navigator.clipboard.writeText(command)
+                      // You could add a toast notification here
+                    } catch (err) {
+                      console.error('Failed to copy:', err)
+                    }
+                  }}
+                  className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+              <code className="text-sm font-mono text-prpm-accent-light block overflow-x-auto">
+                <span className="text-gray-600">$ </span>
+                prpm install {selectedPackage.name}
+              </code>
+            </div>
+          )}
         </div>
 
         {comparisonMode && (
@@ -514,6 +616,31 @@ export default function PlaygroundInterface({
                 </div>
               )}
             </div>
+            {/* CLI Install Command for Package B */}
+            {selectedPackageB && (
+              <div className="mt-2 p-3 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-wider">Install via CLI</span>
+                  <button
+                    onClick={async () => {
+                      const command = `prpm install ${selectedPackageB.name}`
+                      try {
+                        await navigator.clipboard.writeText(command)
+                      } catch (err) {
+                        console.error('Failed to copy:', err)
+                      }
+                    }}
+                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                  >
+                    Copy
+                  </button>
+                </div>
+                <code className="text-sm font-mono text-prpm-accent-light block overflow-x-auto">
+                  <span className="text-gray-600">$ </span>
+                  prpm install {selectedPackageB.name}
+                </code>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -521,30 +648,52 @@ export default function PlaygroundInterface({
       {/* Model Selection */}
       <div className="mb-4 sm:mb-6">
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          Model
+          Model {isAnonymousUser && <span className="text-xs font-normal text-gray-500">(only gpt-4o-mini available for free trial)</span>}
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <button
-            onClick={() => setModel('sonnet')}
-            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
+            onClick={() => !isAnonymousUser && setModel('sonnet')}
+            disabled={isAnonymousUser}
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition relative ${
               model === 'sonnet'
                 ? 'bg-prpm-green text-white'
+                : isAnonymousUser
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
+            title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             Claude Sonnet
-            <div className="text-xs opacity-75">1 credit</div>
+            <div className="text-xs opacity-75">2 credits</div>
+            {isAnonymousUser && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
           </button>
           <button
-            onClick={() => setModel('opus')}
-            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
+            onClick={() => !isAnonymousUser && setModel('opus')}
+            disabled={isAnonymousUser}
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition relative ${
               model === 'opus'
                 ? 'bg-prpm-green text-white'
+                : isAnonymousUser
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
+            title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             Claude Opus
-            <div className="text-xs opacity-75">3 credits</div>
+            <div className="text-xs opacity-75">~7 credits</div>
+            {isAnonymousUser && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
           </button>
           <button
             onClick={() => setModel('gpt-4o-mini')}
@@ -558,26 +707,48 @@ export default function PlaygroundInterface({
             <div className="text-xs opacity-75">1 credit</div>
           </button>
           <button
-            onClick={() => setModel('gpt-4o')}
-            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
+            onClick={() => !isAnonymousUser && setModel('gpt-4o')}
+            disabled={isAnonymousUser}
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition relative ${
               model === 'gpt-4o'
                 ? 'bg-prpm-green text-white'
+                : isAnonymousUser
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
+            title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             GPT-4o
-            <div className="text-xs opacity-75">2 credits</div>
+            <div className="text-xs opacity-75">~3 credits</div>
+            {isAnonymousUser && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
           </button>
           <button
-            onClick={() => setModel('gpt-4-turbo')}
-            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition ${
+            onClick={() => !isAnonymousUser && setModel('gpt-4-turbo')}
+            disabled={isAnonymousUser}
+            className={`px-2 sm:px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition relative ${
               model === 'gpt-4-turbo'
                 ? 'bg-prpm-green text-white'
+                : isAnonymousUser
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
+            title={isAnonymousUser ? 'Sign up to access this model' : ''}
           >
             GPT-4 Turbo
-            <div className="text-xs opacity-75">3 credits</div>
+            <div className="text-xs opacity-75">~4 credits</div>
+            {isAnonymousUser && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
           </button>
         </div>
       </div>
@@ -840,6 +1011,34 @@ export default function PlaygroundInterface({
           comparisonMode ? 'Compare Prompts' : 'Run Playground'
         )}
       </button>
+
+      {/* Anonymous User Login Prompt */}
+      {showAnonymousLoginPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              🎉 Great! Now sign up for 5 free credits
+            </h3>
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              You've used your free playground run! Sign up now to get <strong>5 free credits</strong> and continue testing packages.
+            </p>
+            <div className="flex gap-3">
+              <a
+                href="/login"
+                className="flex-1 bg-prpm-green text-white px-4 py-2 rounded-lg font-medium hover:bg-prpm-green/90 transition text-center"
+              >
+                Sign Up / Login
+              </a>
+              <button
+                onClick={() => setShowAnonymousLoginPrompt(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

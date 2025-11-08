@@ -14,7 +14,8 @@ export default function SubscribePRPMPlusModal({ onClose }: SubscribePRPMPlusMod
   const handleSubscribe = async () => {
     const token = localStorage.getItem('prpm_token')
     if (!token) {
-      setError('Not authenticated. Please log in first.')
+      // Redirect to login if not authenticated
+      window.location.href = '/login?redirect=/playground'
       return
     }
 

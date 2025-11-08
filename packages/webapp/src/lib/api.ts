@@ -112,8 +112,8 @@ export async function getCurrentUser(jwtToken: string) {
 /**
  * Get top authors
  */
-export async function getTopAuthors(limit: number = 50): Promise<TopAuthorsResponse> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/search/authors?limit=${limit}`)
+export async function getTopAuthors(limit: number = 50, sort: 'downloads' | 'count' = 'downloads'): Promise<TopAuthorsResponse> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/search/authors?limit=${limit}&sort=${sort}`)
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Failed to fetch authors' }))
@@ -854,6 +854,33 @@ export async function runPlayground(jwtToken: string, request: PlaygroundRunRequ
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to run playground' }))
+    throw new Error(error.error || error.message || 'Failed to run playground')
+  }
+
+  return response.json()
+}
+
+/**
+ * Run anonymous playground (one free run for non-logged-in users)
+ */
+export async function runAnonymousPlayground(request: { package_id: string; input: string }): Promise<{
+  response: string
+  tokens_used: number
+  duration_ms: number
+  model: string
+  login_required: boolean
+  message: string
+}> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/anonymous-run`, {
+    method: 'POST',
+    headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(request),

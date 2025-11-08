@@ -189,7 +189,7 @@ CREATE INDEX idx_playground_credits_rollover_expires ON playground_credits(rollo
   WHERE rollover_expires_at IS NOT NULL;
 
 COMMENT ON TABLE playground_credits IS 'Stores user credit balances, monthly allocations, and rollover credits';
-COMMENT ON COLUMN playground_credits.monthly_credits IS 'Total monthly allocation (200 for PRPM+, 0 for free)';
+COMMENT ON COLUMN playground_credits.monthly_credits IS 'Total monthly allocation (100 for PRPM+, 0 for free)';
 COMMENT ON COLUMN playground_credits.rollover_credits IS 'Unused credits from last month (max 200, expires after 1 month)';
 COMMENT ON COLUMN playground_credits.purchased_credits IS 'Credits purchased separately (never expire)';
 

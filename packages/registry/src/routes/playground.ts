@@ -132,6 +132,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
           input,
           session_id: body.session_id,
           model: body.model,
+          use_no_prompt: body.use_no_prompt,
         });
 
         return reply.code(200).send(result);
@@ -152,6 +153,135 @@ export async function playgroundRoutes(server: FastifyInstance) {
           }
         }
 
+        return reply.code(400).send({
+          error: 'playground_run_failed',
+          message: error.message || 'Failed to execute playground run',
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/anonymous-run
+  // Execute ONE free playground run for anonymous users
+  // =====================================================
+  server.post(
+    '/anonymous-run',
+    {
+      preHandler: [rateLimiter],
+      schema: {
+        description: 'Execute one free playground run for anonymous users (gpt-4o-mini only)',
+        tags: ['playground'],
+        body: {
+          type: 'object',
+          required: ['package_id', 'input'],
+          properties: {
+            package_id: { type: 'string', format: 'uuid' },
+            input: { type: 'string', minLength: 1, maxLength: 10000 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              response: { type: 'string' },
+              tokens_used: { type: 'number' },
+              duration_ms: { type: 'number' },
+              model: { type: 'string' },
+              login_required: { type: 'boolean' },
+              message: { type: 'string' },
+            },
+          },
+          429: {
+            type: 'object',
+            properties: {
+              error: { type: 'string', enum: ['limit_exceeded'] },
+              message: { type: 'string' },
+              login_url: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { package_id, input } = request.body as { package_id: string; input: string };
+
+        // Get IP address for rate limiting
+        const ipAddress = request.ip;
+
+        // Check if this IP has already used their free run (store in Redis with 24h expiry)
+        const anonymousKey = `anonymous_playground:${ipAddress}`;
+        const hasUsedFreeRun = await server.redis.get(anonymousKey);
+
+        if (hasUsedFreeRun) {
+          return reply.code(429).send({
+            error: 'limit_exceeded',
+            message: 'You have already used your free playground run. Please sign up to get 5 free credits and continue testing packages.',
+            login_url: '/login',
+          });
+        }
+
+        // Sanitize user input
+        const sanitizedInput = sanitizeUserInput(input);
+
+        server.log.info(
+          { ip: ipAddress, package_id },
+          'Anonymous playground run'
+        );
+
+        // Load package data
+        const packageData = await playgroundService.loadPackagePrompt(package_id);
+
+        // Force gpt-4o-mini for anonymous users (1 credit)
+        const model = 'gpt-4o-mini';
+
+        // Execute with OpenAI (gpt-4o-mini)
+        if (!process.env.OPENAI_API_KEY) {
+          throw new Error('OpenAI API is not configured');
+        }
+
+        const openai = new (await import('openai')).default({
+          apiKey: process.env.OPENAI_API_KEY,
+        });
+
+        const startTime = Date.now();
+
+        const openaiMessages: any[] = [
+          {
+            role: 'system',
+            content: packageData.prompt,
+          },
+          {
+            role: 'user',
+            content: sanitizedInput,
+          },
+        ];
+
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: openaiMessages,
+          max_tokens: 4096,
+          temperature: 0.7,
+        });
+
+        const responseText = response.choices[0]?.message?.content || 'No response generated';
+        const tokensUsed = response.usage?.total_tokens || 0;
+        const duration = Date.now() - startTime;
+
+        // Mark this IP as having used their free run (expires in 24 hours)
+        await server.redis.setex(anonymousKey, 86400, '1');
+
+        return reply.code(200).send({
+          response: responseText,
+          tokens_used: tokensUsed,
+          duration_ms: duration,
+          model: 'gpt-4o-mini',
+          login_required: true,
+          message: 'Sign up to get 5 free credits and continue testing packages!',
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Anonymous playground run failed');
         return reply.code(400).send({
           error: 'playground_run_failed',
           message: error.message || 'Failed to execute playground run',

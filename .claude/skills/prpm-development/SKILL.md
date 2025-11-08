@@ -387,13 +387,84 @@ describe('install', () => {
 2. **Update Types First**: TypeScript interfaces drive implementation
 3. **Write Tests**: Create test fixtures and cases
 4. **Document**: Update README and relevant docs
-5. **Telemetry**: Add tracking for new commands (with privacy)
+5. **Environment Variables**: If adding new env vars, update `.env.example` immediately
+6. **Telemetry**: Add tracking for new commands (with privacy)
 
 ### When Fixing Bugs
 1. **Write Failing Test**: Reproduce the bug in a test
 2. **Fix Minimally**: Smallest change that fixes the issue
 3. **Check Round-Trip**: Ensure conversions still work
 4. **Update Fixtures**: Add bug case to test fixtures
+
+### Dependency Management Best Practices
+
+**AVOID Runtime Dependencies (Dynamic Imports)**
+
+❌ **Bad**: Using dynamic imports for runtime dependencies
+```typescript
+// BAD - tar-stream is imported dynamically at runtime
+const tarStream = await import('tar-stream');
+```
+
+**Problems with Dynamic Imports:**
+1. **Module Resolution Failures**: In production (Elastic Beanstalk, Docker), dynamic imports can fail to resolve even if the package is installed as a transitive dependency
+2. **Build Complexity**: TypeScript compilation doesn't validate dynamic imports
+3. **Deployment Issues**: Package may not be in the module resolution path in production
+4. **Harder to Debug**: Failures happen at runtime, not at build time
+
+✅ **Good**: Declare all dependencies explicitly
+```typescript
+// GOOD - Import normally at the top
+import * as tarStream from 'tar-stream';
+```
+
+**Dependency Guidelines:**
+1. **Explicit Dependencies**: Always declare dependencies in package.json, never rely on transitive dependencies
+2. **Static Imports**: Use static imports whenever possible for compile-time validation
+3. **Production Dependencies**: If you import it, it should be in `dependencies`, not `devDependencies`
+4. **Build-Time Validation**: Let TypeScript catch missing dependencies at build time, not runtime
+
+### Environment Variable Management
+
+**ALWAYS Update .env.example When Adding New Environment Variables**
+
+Environment variables are configuration points. When adding new ones, follow this checklist:
+
+1. **Add to `.env.example` immediately** - Don't wait until later
+2. **Group logically** - Place in appropriate section (DATABASE, AUTH, etc.)
+3. **Add clear comments** - Explain what it does and where to get values
+4. **Include examples** - Show format (e.g., `sk-ant-api03-...` for API keys)
+5. **Mark optional vs required** - Comment out optional variables with `#`
+6. **Update production notes** - Add to deployment checklist if needed
+
+**Example:**
+```bash
+# ==============================================================================
+# NEW FEATURE SECTION
+# ==============================================================================
+
+# Description of what this variable does
+# Get from: https://where-to-get-it.com
+NEW_FEATURE_API_KEY=your-key-here
+
+# Optional feature flag (default: false)
+# ENABLE_NEW_FEATURE=true
+```
+
+**Why this matters:**
+- New developers need to know what env vars to set
+- `.env.example` is the source of truth for configuration
+- Missing env vars cause runtime errors that are hard to debug
+- Production deployments fail without proper env var documentation
+
+**Finding missing env vars:**
+```bash
+# Search for all process.env usage
+grep -rh "process.env\." packages/ --include="*.ts" --include="*.tsx" | \
+  grep -o "process\.env\.[A-Z_][A-Z0-9_]*" | sort -u
+
+# Compare with .env.example to find gaps
+```
 
 ### When Designing APIs
 - **REST Best Practices**: Proper HTTP methods and status codes

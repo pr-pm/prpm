@@ -102,22 +102,16 @@ export async function packageRoutes(server: FastifyInstance) {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // Build ORDER BY clause
-    let orderBy = 'total_downloads DESC';
-    switch (sort) {
-      case 'created':
-        orderBy = 'created_at DESC';
-        break;
-      case 'updated':
-        orderBy = 'updated_at DESC';
-        break;
-      case 'quality':
-        orderBy = 'quality_score DESC NULLS LAST';
-        break;
-      case 'rating':
-        orderBy = 'rating_average DESC NULLS LAST';
-        break;
-    }
+    // Build ORDER BY clause - SECURITY: Use allowlist to prevent SQL injection
+    const ALLOWED_SORT_COLUMNS: Record<string, string> = {
+      'downloads': 'p.total_downloads DESC',
+      'created': 'p.created_at DESC',
+      'updated': 'p.updated_at DESC',
+      'quality': 'p.quality_score DESC NULLS LAST',
+      'rating': 'p.rating_average DESC NULLS LAST',
+    };
+
+    const orderByClause = ALLOWED_SORT_COLUMNS[sort] || ALLOWED_SORT_COLUMNS['downloads'];
 
     // Get total count
     const countResult = await queryOne<{ count: string }>(
@@ -128,12 +122,8 @@ export async function packageRoutes(server: FastifyInstance) {
     const total = parseInt(countResult?.count || '0', 10);
 
     // Get packages (select only needed columns for list view)
-    // Prefix table name for WHERE clause
+    // SECURITY: Prefix table name safely - whereClause already built with parameterized queries
     const whereClauseWithPrefix = whereClause.replace(/(\w+)\s*=/g, 'p.$1 =').replace(/(\w+)\s+ILIKE/g, 'p.$1 ILIKE');
-    const orderByWithPrefix = orderBy.split(',').map(o => {
-      const [col, dir] = o.trim().split(/\s+/);
-      return `p.${col} ${dir || ''}`.trim();
-    }).join(', ');
 
     const result = await query<Package>(
       server,
@@ -148,7 +138,7 @@ export async function packageRoutes(server: FastifyInstance) {
        FROM packages p
        LEFT JOIN users u ON p.author_id = u.id
        ${whereClauseWithPrefix}
-       ORDER BY ${orderByWithPrefix}
+       ORDER BY ${orderByClause}
        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
       [...params, limit, offset]
     );
@@ -569,15 +559,49 @@ export async function packageRoutes(server: FastifyInstance) {
         });
       }
 
-      // If organization is specified, ensure package name is prefixed with @org-name/
-      // Package names must be lowercase, so lowercase the organization name in the prefix
+      // Fetch user info for scoping and validation
+      const user = await queryOne<{ username: string }>(
+        server,
+        'SELECT username FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (!user) {
+        return reply.status(500).send({
+          error: 'Internal Server Error',
+          message: 'Could not fetch user information'
+        });
+      }
+
+      const usernameLowercase = user.username.toLowerCase();
+
+      // Auto-prefix package name with scope and validate ownership
+      // If organization is specified, use @org-name/, otherwise use @username/
       if (organization) {
+        // Organization packages: @org-name/package
         const orgNameLowercase = organization.toLowerCase();
         const expectedPrefix = `@${orgNameLowercase}/`;
         if (!packageName.startsWith(expectedPrefix)) {
           // Auto-prefix the package name
           packageName = `${expectedPrefix}${packageName}`;
           server.log.info({ originalName: manifest.name, newName: packageName }, 'Auto-prefixed package name with organization');
+        }
+      } else if (!packageName.startsWith('@')) {
+        // Author packages: @username/package (if not already scoped)
+        packageName = `@${usernameLowercase}/${packageName}`;
+        server.log.info({ originalName: manifest.name, newName: packageName }, 'Auto-prefixed package name with author username');
+      } else {
+        // Package already has a scope - validate the user owns this scope
+        // Extract scope from package name (e.g., "@alice/package" -> "alice")
+        const scopeMatch = packageName.match(/^@([a-z0-9-]+)\//);
+        if (scopeMatch) {
+          const scopeUsername = scopeMatch[1];
+          if (scopeUsername !== usernameLowercase) {
+            return reply.status(403).send({
+              error: 'Forbidden',
+              message: `You cannot publish packages under @${scopeUsername}/ scope. You can only publish under @${usernameLowercase}/ or specify an organization you belong to.`
+            });
+          }
         }
       }
 

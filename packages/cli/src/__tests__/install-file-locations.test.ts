@@ -45,7 +45,7 @@ describe('install command - file locations', () => {
   const mockConfig = {
     registryUrl: 'https://test-registry.com',
     token: 'test-token',
-    defaultFormat: 'cursor',
+    // Don't set defaultFormat so tests can verify native format installation
   };
 
   beforeAll(async () => {

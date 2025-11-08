@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { getManifestSchema } from '../core/schema-validator';
+import { CLIError } from '../core/errors';
 
 /**
  * Handle the schema command
@@ -13,15 +14,16 @@ export async function handleSchema(): Promise<void> {
     const schema = getManifestSchema();
 
     if (!schema) {
-      console.error('❌ Schema not available');
-      process.exit(1);
+      throw new CLIError('❌ Schema not available', 1);
     }
 
     // Output the schema as pretty-printed JSON
     console.log(JSON.stringify(schema, null, 2));
   } catch (error) {
-    console.error(`❌ Failed to export schema: ${error}`);
-    process.exit(1);
+    if (error instanceof CLIError) {
+      throw error;
+    }
+    throw new CLIError(`❌ Failed to export schema: ${error}`, 1);
   }
 }
 
@@ -35,7 +37,6 @@ export function createSchemaCommand(): Command {
     .description('Display the PRPM manifest JSON schema')
     .action(async () => {
       await handleSchema();
-      process.exit(0);
     });
 
   return command;

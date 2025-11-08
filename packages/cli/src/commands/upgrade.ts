@@ -8,6 +8,7 @@ import { getConfig } from '../core/user-config';
 import { listPackages } from '../core/lockfile';
 import { handleInstall } from './install';
 import { telemetry } from '../core/telemetry';
+import { CLIError } from '../core/errors';
 
 /**
  * Upgrade packages to latest versions (including major updates)
@@ -89,8 +90,7 @@ export async function handleUpgrade(
     success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
-    console.error(`\n❌ Upgrade failed: ${error}`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Upgrade failed: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'upgrade',
@@ -132,6 +132,5 @@ export function createUpgradeCommand(): Command {
     .option('--force', 'Skip warning for major version upgrades')
     .action(async (packageName?: string, options?: { all?: boolean; force?: boolean }) => {
       await handleUpgrade(packageName, options);
-      process.exit(0);
     });
 }

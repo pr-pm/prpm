@@ -15,6 +15,8 @@ import { CostMonitoringService } from './cost-monitoring.js';
 import { getTarballContent } from '../storage/s3.js';
 import { nanoid } from 'nanoid';
 import { getModelId, isAnthropicModel, isOpenAIModel } from '../config/models.js';
+import { getAllowedTools, TASK_TOOL_CONFIG } from '../config/security-domains.js';
+import { createWebFetchValidationHook } from '../middleware/webfetch-validator.js';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -244,20 +246,23 @@ export class PlaygroundService {
       );
     }
 
-    // Token-based pricing: 1 credit per 5,000 tokens
+    // Token-based pricing: 1 credit per 5,000 tokens (base)
     const TOKENS_PER_CREDIT = 5000;
     const baseCredits = Math.ceil(estimatedTokens / TOKENS_PER_CREDIT);
 
-    // Model-specific multipliers based on actual API costs
-    let modelMultiplier = 1.0;
+    // Model-specific multipliers based on actual API costs + healthy margins
+    // Updated multipliers to ensure profitability across all models
+    let modelMultiplier = 2.0;  // Sonnet default (was 1.0x)
     if (model === 'opus') {
-      modelMultiplier = 5.0;  // Opus is 5x more expensive than Sonnet
-    } else if (model === 'gpt-4o' || model === 'gpt-4-turbo') {
-      modelMultiplier = 2.0;  // GPT-4o is ~2x Sonnet cost
+      modelMultiplier = 7.0;  // Opus (was 5.0x) - $45 API cost
+    } else if (model === 'gpt-4-turbo') {
+      modelMultiplier = 4.0;  // GPT-4 Turbo (was 2.0x) - $20 API cost, was breaking even
+    } else if (model === 'gpt-4o') {
+      modelMultiplier = 3.0;  // GPT-4o (was 2.0x) - $12.50 API cost
     } else if (model === 'gpt-4o-mini') {
-      modelMultiplier = 0.5;  // GPT-4o-mini is much cheaper
+      modelMultiplier = 0.5;  // GPT-4o-mini (no change) - $1.50 API cost
     }
-    // Sonnet defaults to 1.0x
+    // Sonnet: 2.0x multiplier - $9 API cost, 55% margin
 
     return Math.max(1, Math.ceil(baseCredits * modelMultiplier));
   }
@@ -389,10 +394,15 @@ export class PlaygroundService {
         // Get model ID from centralized config
         modelName = getModelId(model);
 
-        // Determine if we need filesystem mounting for Skills/Agents
-        const needsSkillMount = this.shouldMountAsSkill(packageData.subtype);
-        const needsAgentMount = this.shouldMountAsAgent(packageData.subtype);
-        const needsFilesystemMount = needsSkillMount || needsAgentMount;
+        // Determine if we need filesystem mounting for Agents only
+        // IMPORTANT: Don't mount skills/agents in baseline mode (use_no_prompt=true)
+        // Baseline should be a clean Anthropic environment with no extra capabilities
+        //
+        // SKILLS IN PLAYGROUND: Skills should NOT be mounted as files that require explicit invocation.
+        // Instead, their content should be applied directly in the system prompt (handled in else branch).
+        // This provides immediate answers rather than Claude announcing "Let me invoke the skill..."
+        const needsAgentMount = !request.use_no_prompt && this.shouldMountAsAgent(packageData.subtype);
+        const needsFilesystemMount = !request.use_no_prompt && needsAgentMount;
 
         let tempDir: string | null = null;
 
@@ -416,30 +426,53 @@ export class PlaygroundService {
 
           let totalTokens = 0;
 
-          // If package is a skill/agent, mount it on filesystem and use SDK
+          // If package is an agent, mount it on filesystem and use SDK
+          // Skills are handled as regular prompts (content in system message)
           if (needsFilesystemMount) {
-            // Create temp directory and write skill/agent
+            // Create temp directory and write agent
             tempDir = await this.createTempClaudeDirectory();
-
-            if (needsSkillMount) {
-              await this.writeSkillToFilesystem(tempDir, packageData.name, packageData.prompt);
-            } else if (needsAgentMount) {
-              await this.writeAgentToFilesystem(tempDir, packageData.name, packageData.prompt);
-            }
+            await this.writeAgentToFilesystem(tempDir, packageData.name, packageData.prompt);
 
             // Use Claude Agent SDK with proper filesystem mounting
             const queryOptions: any = {
               cwd: tempDir,
               settingSources: ['project'] as const,
               model: modelName,
-              maxTurns: 10,
-              allowDangerouslySkipPermissions: true, // For playground, bypass permission prompts
+              maxTurns: TASK_TOOL_CONFIG.MAX_RECURSION_DEPTH + 1,
+              // SECURITY: Removed allowDangerouslySkipPermissions
+              // Tools now require explicit approval or run in restricted mode
             };
 
-            // For skills, enable Skill tool
-            if (needsSkillMount) {
-              queryOptions.allowedTools = ['Skill'];
-            }
+            // SECURITY: Configure allowed tools based on package subtype
+            // Uses allowlist from security-domains.ts to prevent tool abuse
+            queryOptions.allowedTools = getAllowedTools(packageData.subtype);
+
+            // SECURITY: Add WebFetch domain validation hook
+            // This intercepts WebFetch calls and blocks non-allowlisted domains
+            const sessionId = request.session_id || 'new-session';
+            queryOptions.hooks = {
+              PreToolUse: [
+                {
+                  hooks: [
+                    createWebFetchValidationHook(
+                      this.server,
+                      userId,
+                      request.package_id,
+                      sessionId
+                    ),
+                  ],
+                },
+              ],
+            };
+
+            // Log tool configuration for security audit
+            this.server.log.info({
+              packageId: request.package_id,
+              subtype: packageData.subtype,
+              allowedTools: queryOptions.allowedTools,
+              maxTurns: queryOptions.maxTurns,
+              securityHooks: ['WebFetchValidation'],
+            }, 'Playground execution with security restrictions');
 
             // Build conversation context from history
             let promptText = request.input;
@@ -459,8 +492,18 @@ export class PlaygroundService {
             // Collect all messages
             let assistantText = '';
             let tokens = 0;
+            let messageCount = 0;
 
             for await (const message of queryResult) {
+              messageCount++;
+
+              // Log all message types for debugging
+              this.server.log.debug({
+                messageType: message.type,
+                messageSubtype: (message as any).subtype,
+                messageCount,
+              }, 'Claude SDK message received');
+
               if (message.type === 'assistant') {
                 // Extract text from assistant message
                 for (const content of message.message.content) {
@@ -471,17 +514,39 @@ export class PlaygroundService {
               } else if (message.type === 'result') {
                 // Get final result and usage
                 if (message.subtype === 'success') {
+                  // Prefer message.result but fall back to accumulated assistant text
+                  // message.result contains the final textual output
+                  // assistantText contains all intermediate text from turns
                   assistantText = message.result || assistantText;
+
+                  this.server.log.debug({
+                    hasResult: !!message.result,
+                    resultLength: message.result?.length || 0,
+                    accumulatedLength: assistantText.length,
+                  }, 'Final result captured');
                 } else {
-                  // Handle error result types
-                  assistantText = assistantText || `Error: ${message.errors?.join(', ')}`;
+                  // Handle error result types (error_during_execution, error_max_turns, error_max_budget_usd)
+                  const errorMessage = message.subtype.startsWith('error_')
+                    ? `Error: ${message.subtype.replace('error_', '').replace(/_/g, ' ')}`
+                    : 'Agent execution failed';
+                  assistantText = assistantText || errorMessage;
                 }
                 tokens = message.usage.input_tokens + message.usage.output_tokens;
                 break;
               }
             }
 
-            responseText = assistantText || 'No response generated';
+            // Log if no response was captured
+            if (!assistantText) {
+              this.server.log.warn({
+                packageId: request.package_id,
+                sessionId,
+                messageCount,
+                tokens,
+              }, 'Agent completed but produced no text output');
+            }
+
+            responseText = assistantText || 'Agent completed execution but did not produce a text response. This may occur when the agent only performs tool calls without generating output text.';
             tokensUsed = tokens;
           } else {
             // Regular prompt execution without tools (regular prompts, rules, etc.)
@@ -585,7 +650,7 @@ export class PlaygroundService {
         packageVersion: request.package_version,
         inputLength: request.input.length,
         outputLength: responseText.length,
-        comparisonMode: false, // Will be updated when comparison mode is implemented
+        comparisonMode: !!request.use_no_prompt, // Track when running in baseline/comparison mode
         estimatedApiCost: actualCost.estimatedCost,
         actualInputTokens: actualCost.inputTokens,
         actualOutputTokens: actualCost.outputTokens,

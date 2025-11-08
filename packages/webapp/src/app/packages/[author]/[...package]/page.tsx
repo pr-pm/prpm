@@ -23,11 +23,6 @@ function getPackageContent(pkg: any): string | null {
 
 // Generate static params for all packages
 export async function generateStaticParams() {
-  // Skip SSG entirely when explicitly disabled (for testing builds without S3 data)
-  if (process.env.SKIP_SSG === 'true') {
-    console.log('[SSG Packages] SSG disabled via SKIP_SSG=true')
-    return []
-  }
 
   try {
     console.log(`[SSG Packages] Starting - S3_SEO_DATA_URL: ${S3_SEO_DATA_URL}`)

@@ -39,9 +39,19 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.windsurf/rules';
 
     case 'copilot':
+      // Copilot has different locations based on subtype:
+      // - Repository-wide instructions: .github/copilot-instructions.md
+      // - Path-specific instructions: .github/instructions/*.instructions.md
+      // - Chat modes: .github/chatmodes/*.chatmode.md
+      if (subtype === 'chatmode') return '.github/chatmodes';
+      // Default to path-specific instructions directory
       return '.github/instructions';
 
     case 'kiro':
+      // Kiro has different locations based on subtype:
+      // - Steering files: .kiro/steering/*.md
+      // - Hooks: .kiro/hooks/*.kiro.hook (JSON files)
+      if (subtype === 'hook') return '.kiro/hooks';
       return '.kiro/steering';
 
     case 'agents.md':
@@ -111,6 +121,42 @@ export async function fileExists(filePath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Check if a directory exists
+ */
+export async function directoryExists(dirPath: string): Promise<boolean> {
+  try {
+    const stats = await fs.stat(dirPath);
+    return stats.isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Auto-detect the format based on existing directories in the current project
+ * Returns the format if a matching directory is found, or null if none found
+ */
+export async function autoDetectFormat(): Promise<Format | null> {
+  const formatDirs: Array<{ format: Format; dir: string }> = [
+    { format: 'cursor', dir: '.cursor' },
+    { format: 'claude', dir: '.claude' },
+    { format: 'continue', dir: '.continue' },
+    { format: 'windsurf', dir: '.windsurf' },
+    { format: 'copilot', dir: '.github/instructions' },
+    { format: 'kiro', dir: '.kiro' },
+    { format: 'agents.md', dir: '.agents' },
+  ];
+
+  for (const { format, dir } of formatDirs) {
+    if (await directoryExists(dir)) {
+      return format;
+    }
+  }
+
+  return null;
 }
 
 /**
