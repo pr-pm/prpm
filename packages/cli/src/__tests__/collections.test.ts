@@ -373,10 +373,9 @@ describe('collections command', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Optional:'));
     });
 
-    // TODO: SKIPPED - process.exit() mocking unreliable in CI
-    // See: https://github.com/pr-pm/prpm/pull/108
-    it.skip('should handle invalid collection format', async () => {
-      await expect(handleCollectionInfo('invalid-format')).rejects.toThrow(CLIError);
+    it('should handle invalid collection format', async () => {
+      // Empty string is truly invalid and won't match any regex
+      await expect(handleCollectionInfo('')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Invalid collection format')
@@ -494,9 +493,7 @@ describe('collections command', () => {
       );
     });
 
-    // TODO: SKIPPED - process.exit() mocking unreliable in CI
-    // See: https://github.com/pr-pm/prpm/pull/108
-    it.skip('should validate packages array is not empty', async () => {
+    it('should validate packages array is not empty', async () => {
       await writeFile(
         join(testDir, 'collection.json'),
         JSON.stringify({

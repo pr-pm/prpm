@@ -21,7 +21,13 @@ describe('catalog command', () => {
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
+    try {
+      process.chdir(originalCwd);
+    } catch (err) {
+      // Ignore errors if originalCwd no longer exists (parallel test cleanup)
+      // Just change to a safe directory instead
+      process.chdir(tmpdir());
+    }
     await rm(testDir, { recursive: true, force: true });
   });
 

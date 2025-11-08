@@ -86,7 +86,7 @@ describe('install from lockfile', () => {
   });
 
   describe('no lockfile', () => {
-    it.skip('should exit with error when no lockfile exists', async () => {
+    it('should exit with error when no lockfile exists', async () => {
       // Arrange
       mockReadLockfile.mockResolvedValue(null);
 
@@ -96,7 +96,7 @@ describe('install from lockfile', () => {
   });
 
   describe('empty lockfile', () => {
-    it.skip('should handle empty lockfile gracefully', async () => {
+    it('should handle empty lockfile gracefully', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',

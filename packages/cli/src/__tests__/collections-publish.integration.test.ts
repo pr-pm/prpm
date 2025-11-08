@@ -295,7 +295,7 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
     });
   });
 
-  describe.skip('Fixture Content Validation', () => {
+  describe('Fixture Content Validation', () => {
     it('should verify all valid fixtures have required fields', async () => {
       const validFixtures = [
         'valid-collection.json',
