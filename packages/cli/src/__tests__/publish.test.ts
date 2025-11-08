@@ -44,7 +44,7 @@ describe('Publish Command', () => {
     process.chdir(testDir);
 
     // Mock config
-    mockGetConfig.mockResolvedValue({
+    mockGetConfig.mockReturnValue({
       token: 'test-token',
       registryUrl: 'http://localhost:3111',
     });
@@ -84,7 +84,7 @@ describe('Publish Command', () => {
           name: 'Invalid_Package_Name',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -101,7 +101,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: 'invalid',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -118,7 +118,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'invalid-type',
+          format: 'invalid-type',
           files: ['.cursorrules'],
         })
       );
@@ -134,7 +134,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -240,11 +240,11 @@ describe('Publish Command', () => {
       await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
       await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '# Test skill');
 
-      await expect(handlePublish({})).rejects.toThrow(/invalid characters/);
+      await expect(handlePublish({})).rejects.toThrow(/pattern|Manifest validation failed/);
     });
 
-    it('should reject Claude skills with description longer than 1024 characters', async () => {
-      const longDescription = 'a'.repeat(1025); // 1025 characters
+    it('should reject Claude skills with description longer than 500 characters', async () => {
+      const longDescription = 'a'.repeat(501); // 501 characters (schema max is 500)
       await writeFile(
         join(testDir, 'prpm.json'),
         JSON.stringify({
@@ -260,7 +260,7 @@ describe('Publish Command', () => {
       await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
       await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '# Test skill');
 
-      await expect(handlePublish({})).rejects.toThrow(/1024 character limit/);
+      await expect(handlePublish({})).rejects.toThrow(/maxLength|Manifest validation failed/);
     });
 
     it('should warn about short descriptions for Claude skills', async () => {
@@ -269,7 +269,7 @@ describe('Publish Command', () => {
         JSON.stringify({
           name: 'test-skill',
           version: '1.0.0',
-          description: 'Too short', // Only 9 characters
+          description: 'Short but valid', // 16 characters - passes schema validation but triggers warning
           format: 'claude',
           subtype: 'skill',
           files: ['.claude/skills/test-skill/SKILL.md'],
@@ -292,7 +292,7 @@ describe('Publish Command', () => {
       await handlePublish({});
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('only 9 characters')
+        expect.stringContaining('only 15 characters')
       );
 
       consoleWarnSpy.mockRestore();
@@ -301,7 +301,7 @@ describe('Publish Command', () => {
 
   describe('Authentication', () => {
     it('should require authentication token', async () => {
-      mockGetConfig.mockResolvedValue({
+      mockGetConfig.mockReturnValue({
         token: undefined,
         registryUrl: 'http://localhost:3111',
       });
@@ -316,7 +316,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -350,7 +350,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -382,7 +382,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['prpm.json', 'custom-file.txt'],
         })
       );
@@ -410,7 +410,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['prpm.json', 'large-file.txt'],
         })
       );
@@ -429,7 +429,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['non-existent.txt'],
         })
       );
@@ -446,7 +446,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -481,7 +481,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
           author: 'test-author',
           license: 'MIT',
@@ -508,10 +508,11 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         }),
-        expect.any(Buffer)
+        expect.any(Buffer),
+        undefined
       );
 
       expect(telemetry.track).toHaveBeenCalledWith(
@@ -533,7 +534,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -578,7 +579,7 @@ describe('Publish Command', () => {
             name: `test-${type}-package`,
             version: '1.0.0',
             description: `Test ${type} package for testing purposes`,
-            type,
+            format: type,
             files: [typeFiles[type]],
           })
         );
@@ -598,9 +599,10 @@ describe('Publish Command', () => {
 
         expect(mockPublish).toHaveBeenCalledWith(
           expect.objectContaining({
-            type,
+            format: type,
           }),
-          expect.any(Buffer)
+          expect.any(Buffer),
+          undefined
         );
       });
     });
@@ -614,7 +616,7 @@ describe('Publish Command', () => {
           name: '@myorg/test-package',
           version: '1.0.0',
           description: 'Test scoped package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -636,7 +638,8 @@ describe('Publish Command', () => {
         expect.objectContaining({
           name: '@myorg/test-package',
         }),
-        expect.any(Buffer)
+        expect.any(Buffer),
+        undefined
       );
     });
   });
@@ -649,7 +652,7 @@ describe('Publish Command', () => {
           name: '@company/team-package',
           version: '1.0.0',
           description: 'Test organization package',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
           organization: 'my-company',
         })
@@ -695,7 +698,7 @@ describe('Publish Command', () => {
           name: 'org-package',
           version: '1.0.0',
           description: 'Test org package by ID',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
           organization: 'org-123',
         })
@@ -736,7 +739,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
           organization: 'nonexistent-org',
         })
@@ -766,7 +769,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
           organization: 'my-company',
         })
@@ -796,7 +799,7 @@ describe('Publish Command', () => {
           name: 'owner-package',
           version: '1.0.0',
           description: 'Package published by owner',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
           organization: 'my-company',
         })
@@ -833,7 +836,7 @@ describe('Publish Command', () => {
           name: 'admin-package',
           version: '1.0.0',
           description: 'Package published by admin',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
           organization: 'my-company',
         })
@@ -870,7 +873,7 @@ describe('Publish Command', () => {
           name: 'maintainer-package',
           version: '1.0.0',
           description: 'Package published by maintainer',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
           organization: 'my-company',
         })
@@ -907,7 +910,7 @@ describe('Publish Command', () => {
           name: 'personal-package',
           version: '1.0.0',
           description: 'Personal package',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -948,7 +951,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
           organization: 'my-company',
         })
@@ -973,7 +976,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -1009,7 +1012,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );
@@ -1045,7 +1048,7 @@ describe('Publish Command', () => {
           name: 'test-package',
           version: '1.0.0',
           description: 'Test package for testing purposes',
-          type: 'cursor',
+          format: 'cursor',
           files: ['.cursorrules'],
         })
       );

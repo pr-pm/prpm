@@ -62,6 +62,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
 
   try {
     const content = await readFile(prpmJsonPath, 'utf-8');
+    prpmJsonExists = true; // Mark file as found after successful read
     const manifest = JSON.parse(content) as Manifest;
 
     // Extract collections if present
@@ -832,13 +833,15 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     success = publishedPackages.length > 0 || publishedCollections.length > 0;
 
     if (failedPackages.length > 0 && publishedPackages.length === 0 && publishedCollections.length === 0) {
-      throw new CLIError('', 1);
+      // Use the first failed package's error for telemetry
+      const firstError = failedPackages[0]?.error || 'Unknown error';
+      throw new CLIError(firstError, 1);
     }
   } catch (err) {
+    error = err instanceof Error ? err.message : String(err);
     if (err instanceof CLIError) {
       throw err;
     }
-    error = err instanceof Error ? err.message : String(err);
     let errorMsg = `\n❌ Failed to publish package: ${error}\n`;
 
     // Provide helpful hints based on error type

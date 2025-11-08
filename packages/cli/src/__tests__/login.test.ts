@@ -27,12 +27,19 @@ describe('login command', () => {
   });
 
   describe('login flow', () => {
-    it('should handle login errors and exit gracefully', async () => {
+    it('should handle login errors and throw CLIError', async () => {
       // Login will fail in test environment since there's no real OAuth implementation
       await expect(handleLogin({})).rejects.toThrow(CLIError);
 
-      // Verify error handling was triggered
-      expect(console.error).toHaveBeenCalled();
+      // Verify error message includes helpful information
+      try {
+        await handleLogin({});
+      } catch (err) {
+        expect(err).toBeInstanceOf(CLIError);
+        if (err instanceof CLIError) {
+          expect(err.message).toContain('Login failed');
+        }
+      }
     });
   });
 });

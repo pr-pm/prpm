@@ -715,8 +715,18 @@ export async function installFromLockfile(options: {
 
         successCount++;
       } catch (error) {
-        failCount++;
-        console.error(`  ❌ Failed to install ${packageId}: ${error}`);
+        // Check if this is a success exit (CLIError with exitCode 0)
+        if (error instanceof CLIError && error.exitCode === 0) {
+          successCount++;
+        } else {
+          failCount++;
+          console.error(`  ❌ Failed to install ${packageId}:`);
+          console.error(`     Type: ${error?.constructor?.name}`);
+          console.error(`     Message: ${error instanceof Error ? error.message : String(error)}`);
+          if (error instanceof CLIError) {
+            console.error(`     ExitCode: ${error.exitCode}`);
+          }
+        }
       }
     }
 

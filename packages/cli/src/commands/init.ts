@@ -747,7 +747,9 @@ async function initPackage(options: InitOptions): Promise<void> {
   // Create example files
   if (config.files && config.format && config.name) {
     console.log('Creating example files...\n');
-    await createExampleFiles(config.format, config.files, config.name);
+    // Filter out README.md since createReadme will handle it with proper content
+    const filesToCreate = config.files.filter(f => f !== 'README.md');
+    await createExampleFiles(config.format, filesToCreate, config.name);
 
     // Create README
     await createReadme(config as PackageConfig);
@@ -776,6 +778,10 @@ export function createInitCommand(): Command {
         await initPackage(options);
         throw new CLIError('', 0);
       } catch (error) {
+        // Re-throw CLIError with exit code 0 (success)
+        if (error instanceof CLIError && error.exitCode === 0) {
+          throw error;
+        }
         console.error('\n❌ Error:', error instanceof Error ? error.message : error);
         throw new CLIError('\n❌ Error: ' + (error instanceof Error ? error.message : error), 1);
       }
