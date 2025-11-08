@@ -105,7 +105,9 @@ export default function CollectionModal({ collection: initialCollection, isOpen,
               )}
             </div>
             <p className="text-sm text-gray-500 font-mono mb-2">{collection.name_slug}</p>
-            <p className="text-gray-400 text-sm">by @{collection.author}</p>
+            {collection.author && (
+              <p className="text-gray-400 text-sm">by @{collection.author}</p>
+            )}
           </div>
           <button
             onClick={onClose}
