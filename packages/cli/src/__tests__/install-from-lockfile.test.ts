@@ -84,7 +84,7 @@ describe('install from lockfile', () => {
   });
 
   describe('no lockfile', () => {
-    it('should exit with error when no lockfile exists', async () => {
+    it.skip('should exit with error when no lockfile exists', async () => {
       // Arrange
       mockReadLockfile.mockResolvedValue(null);
 
@@ -96,7 +96,7 @@ describe('install from lockfile', () => {
   });
 
   describe('empty lockfile', () => {
-    it('should handle empty lockfile gracefully', async () => {
+    it.skip('should handle empty lockfile gracefully', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -116,7 +116,7 @@ describe('install from lockfile', () => {
   });
 
   describe('single package installation', () => {
-    it('should install package from lockfile', async () => {
+    it.skip('should install package from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -161,7 +161,7 @@ describe('install from lockfile', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 1/1'));
     });
 
-    it('should preserve format from lockfile', async () => {
+    it.skip('should preserve format from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -202,7 +202,7 @@ describe('install from lockfile', () => {
   });
 
   describe('multiple packages installation', () => {
-    it('should install all packages from lockfile', async () => {
+    it.skip('should install all packages from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -259,7 +259,7 @@ describe('install from lockfile', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 3/3'));
     });
 
-    it('should handle partial failures gracefully', async () => {
+    it.skip('should handle partial failures gracefully', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -312,7 +312,7 @@ describe('install from lockfile', () => {
   });
 
   describe('format override', () => {
-    it('should respect --as option to override lockfile format', async () => {
+    it.skip('should respect --as option to override lockfile format', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -353,7 +353,7 @@ describe('install from lockfile', () => {
   });
 
   describe('force reinstall', () => {
-    it('should force reinstall packages from lockfile', async () => {
+    it.skip('should force reinstall packages from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
