@@ -233,24 +233,26 @@ export async function handleInstall(
 
     // Determine format preference with priority order:
     // 1. CLI --as flag (highest priority)
-    // 2. Auto-detection based on existing directories
-    // 3. defaultFormat from .prpmrc config
+    // 2. defaultFormat from .prpmrc config
+    // 3. Auto-detection based on existing directories
     // 4. Package native format (fallback)
     let format: string | undefined = options.as;
 
-    // Auto-detect format if not explicitly specified
     if (!format) {
-      const detectedFormat = await autoDetectFormat();
-      if (detectedFormat) {
-        format = detectedFormat;
-        console.log(`   🔍 Auto-detected ${format} format (found .${format}/ directory)`);
-      } else if (config.defaultFormat) {
-        // Use defaultFormat from .prpmrc if no directories exist
+      // Check for config default format
+      if (config.defaultFormat) {
         format = config.defaultFormat;
         console.log(`   ⚙️  Using default format from config: ${format}`);
       } else {
-        // No existing directories found and no config, use package's native format
-        format = pkg.format;
+        // Auto-detect format based on existing directories
+        const detectedFormat = await autoDetectFormat();
+        if (detectedFormat) {
+          format = detectedFormat;
+          console.log(`   🔍 Auto-detected ${format} format (found .${format}/ directory)`);
+        } else {
+          // No config or detection, use package's native format
+          format = pkg.format;
+        }
       }
     }
 

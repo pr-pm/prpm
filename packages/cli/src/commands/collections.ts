@@ -542,14 +542,25 @@ export async function handleCollectionInstall(
       try {
         console.log(`\n  ${progress} Installing ${pkg.packageId}@${pkg.version}...`);
 
-        await handleInstall(`${pkg.packageId}@${pkg.version}`, {
-          as: pkg.format,
+        // Only pass 'as' format if user explicitly requested it via --as flag
+        // Otherwise, handleInstall will use this priority order:
+        // 1. defaultFormat from .prpmrc config
+        // 2. Auto-detection based on existing directories
+        // 3. Package native format
+        const installOptions: any = {
           fromCollection: {
             scope,
             name_slug,
             version: collection.version || version || '1.0.0',
           },
-        });
+        };
+
+        // Only set 'as' if user explicitly provided a format
+        if (options.format) {
+          installOptions.as = options.format;
+        }
+
+        await handleInstall(`${pkg.packageId}@${pkg.version}`, installOptions);
 
         console.log(`  ${progress} ✓ ${pkg.packageId}`);
         installedPackageIds.push(pkg.packageId);
