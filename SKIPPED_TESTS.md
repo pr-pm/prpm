@@ -1,10 +1,18 @@
 # PRPM Skipped Tests Audit
 
-**Last Updated**: 2025-11-07  
-**Total Originally Skipped**: 46 tests  
-**Fixed**: 20 tests ✅ (Commit 1a40906)  
-**Remaining**: 26 tests (26 acceptable DB tests, 0 critical)  
-**Status**: 🎉 **ALL CRITICAL ISSUES RESOLVED!**
+**Last Updated**: 2025-11-07 (Updated after CI investigation)
+**Total Skipped**: 46 tests
+**Status**: ⚠️ **20 CLI tests require architectural refactoring to test**
+
+## ⚠️ Update: Tests Reverted (Commit 33aad3c)
+
+Initial attempt to re-enable tests failed in CI due to architectural issues.
+Tests work locally but fail in GitHub Actions parallel workers.
+
+**Root Cause**: `process.exit()` mocking is unreliable in Jest CI environments
+**Solution**: Requires refactoring CLI commands to throw errors instead of calling process.exit()
+**Impact**: 20 CLI tests remain skipped until architectural refactoring is complete
+**Reference**: See PR #108 for detailed analysis and solution options
 
 ---
 
@@ -12,63 +20,66 @@
 
 | Category | Original | Fixed | Remaining | Status |
 |----------|----------|-------|-----------|--------|
-| **CLI Tests** | 20 | **20** ✅ | **0** | 🎉 **100% FIXED** |
+| **CLI Tests** | 20 | 0 | 20 | 🔴 **Requires refactoring** |
 | **Registry API Tests** | 9 | 0 | 9 | 🟡 Medium (unfixed) |
 | **Search Tests (DB)** | 26 | 0 | 26 | 🟢 Acceptable (conditional skipIf) |
 | **E2E Test Suites** | 4 | 0 | 4 | 🟡 Medium (unfixed) |
-| **TOTAL** | **46** | **20** | **26** | **43% fixed, 57% acceptable** |
+| **TOTAL** | **46** | **0** | **46** | **20 blocked by architecture, 26 acceptable** |
 
 ---
 
-## 🎉 FIXED - All 20 Critical CLI Tests (Commit 1a40906)
+## 🔴 BLOCKED - All 20 Critical CLI Tests (Architectural Issue)
 
-### ✅ 1. Publish Command Tests (publish.test.ts)
-- **Status**: Entire test suite re-enabled
-- **What was fixed**: Removed `describe.skip` wrapper
-- **Why it was skipped**: Comment said "process.exit crashes Jest workers" but mocking was already in place
-- **Impact**: Core publishing functionality now has full unit test coverage
+These tests were temporarily re-enabled (commit 1a40906) but **reverted** (commit 33aad3c) due to CI failures.
 
-### ✅ 2. Install Command Tests (install.test.ts)
-- **Status**: All 3 describe blocks re-enabled
+**The Problem**: All CLI commands use `process.exit()` for error handling, which cannot be reliably mocked in Jest, especially in GitHub Actions parallel workers. Tests pass locally but fail in CI.
+
+**Architectural Solutions Required**:
+1. Refactor CLI commands to throw errors instead of calling `process.exit()`
+2. Extract business logic from CLI layer and test separately
+3. Use dependency injection to inject exit behavior (testable in mocks)
+
+### 🔴 1. Publish Command Tests (publish.test.ts)
+- **Status**: SKIPPED - Requires architectural refactoring
+- **File**: `packages/cli/src/__tests__/publish.test.ts`
+- **Why skipped**: CLI calls `process.exit()` which crashes Jest workers in CI
+- **Tests affected**: Entire test suite (publish workflow)
+
+### 🔴 2. Install Command Tests (install.test.ts)
+- **Status**: SKIPPED - Requires architectural refactoring
+- **File**: `packages/cli/src/__tests__/install.test.ts`
+- **Why skipped**: CLI calls `process.exit()` which crashes Jest workers in CI
+- **Tests affected**:
   - `describe('basic installation')` - package installation tests
   - `describe('lockfile handling')` - lockfile operation tests
   - `describe('type overrides')` - format conversion tests
-- **What was fixed**: Removed `describe.skip` from all 3 blocks
-- **Why they were skipped**: No clear reason, all had proper mocking
-- **Impact**: Core installation functionality fully tested
 
-### ✅ 3. Install from Lockfile Tests (install-from-lockfile.test.ts)
-- **Status**: All 6 individual tests re-enabled
+### 🔴 3. Install from Lockfile Tests (install-from-lockfile.test.ts)
+- **Status**: SKIPPED - Requires architectural refactoring
+- **File**: `packages/cli/src/__tests__/install-from-lockfile.test.ts`
+- **Why skipped**: CLI calls `process.exit()` which crashes Jest workers in CI
+- **Tests affected** (6 tests):
   1. Install package from lockfile
   2. Preserve format from lockfile
   3. Install all packages from lockfile
   4. Handle partial failures gracefully
   5. Respect --as option to override lockfile format
   6. Force reinstall packages from lockfile
-- **What was fixed**: Changed `it.skip()` to `it()` for all 6 tests
-- **Why they were skipped**: No clear reason, tests were well-structured
-- **Impact**: Lockfile-based installation workflow now fully tested
 
-### ✅ 4. Collections Tests (collections.test.ts)
-- **Status**: 3 individual tests fixed and re-enabled
+### 🔴 4. Collections Tests (collections.test.ts)
+- **Status**: SKIPPED - Requires architectural refactoring
+- **File**: `packages/cli/src/__tests__/collections.test.ts`
+- **Why skipped**: CLI calls `process.exit()` which crashes Jest workers in CI
+- **Tests affected** (3 tests):
   - Line 377: Invalid collection format handling
   - Line 550: Validate packages array is not empty
   - Line 598: Successfully publish valid collection
-- **What was fixed**:
-  - Line 377: Updated mock to return invalid data instead of expecting specific error message
-  - Line 550: Removed TODO comment, test logic was already correct
-  - Line 598: Re-enabled core feature test
-- **Why they were skipped**: TODO comments mentioned flaky behavior and error message changes
-- **Impact**: Collections feature now fully tested
 
-### ✅ 5. Init Command Tests (init.test.ts)
-- **Status**: Entire test suite re-enabled with proper mocking
-- **What was fixed**:
-  - Added `process.exit` mock in `beforeEach` hook
-  - Added console mocks to reduce test output noise
-  - Added proper cleanup in `afterEach` hook
-- **Why it was skipped**: Comment said "Init command calls process.exit(1) which crashes Jest workers"
-- **Impact**: Init command can now be tested safely without crashing Jest
+### 🔴 5. Init Command Tests (init.test.ts)
+- **Status**: SKIPPED - Requires architectural refactoring
+- **File**: `packages/cli/src/__tests__/init.test.ts`
+- **Why skipped**: CLI calls `process.exit()` which crashes Jest workers in CI
+- **Tests affected**: Entire test suite (init command workflow)
 
 ---
 
@@ -131,39 +142,52 @@ These are less critical but should eventually be addressed:
 
 ## 📋 Recommended Next Steps
 
-### ✅ Phase 1: Critical (COMPLETE)
-- ✅ Fix publish.test.ts - Entire suite re-enabled
-- ✅ Fix install.test.ts - All 3 suites re-enabled
-- ✅ Fix install-from-lockfile.test.ts - All 6 tests re-enabled
-- ✅ Fix collections tests - 3 tests re-enabled
-- ✅ Fix init test - Entire suite re-enabled with mocking
+### 🔴 Phase 1: Critical - CLI Architectural Refactoring (REQUIRED)
+**Effort**: Medium - Requires changes to command architecture
+**Impact**: Enables testing of 20 critical CLI tests
 
-### Phase 2: Medium Priority (Optional)
+**Options**:
+1. **Refactor commands to throw errors** (Recommended)
+   - Change all `process.exit()` calls to `throw new Error()`
+   - Move `process.exit()` to top-level CLI wrapper only
+   - Allows Jest to catch errors instead of exiting
+
+2. **Extract business logic from CLI layer**
+   - Separate command logic from CLI concerns
+   - Test business logic independently
+   - CLI becomes thin wrapper
+
+3. **Dependency injection for exit behavior**
+   - Inject exit function into commands
+   - Mock exit function in tests
+   - More invasive change
+
+**Reference**: See PR #108 for detailed analysis
+
+### 🟡 Phase 2: Medium Priority (Optional)
 1. Fix registry API tests (9 tests) - Lower risk, feature-specific
 2. Evaluate E2E test infrastructure - Determine if environment setup is worth it
 
-### Phase 3: Low Priority (No Action Needed)
+### 🟢 Phase 3: Low Priority (No Action Needed)
 - ✅ Postgres search tests - Already properly handled with conditional skips
 
 ---
 
-## ✅ Success Metrics - ACHIEVED!
+## 📊 Current Status
 
-- ✅ Publish command fully tested
-- ✅ Install command fully tested
-- ✅ Collections feature fully tested
-- ✅ Init command testable (with mocked process.exit)
-- ✅ All hard-skipped CLI tests either fixed or documented
+- 🔴 **20 CLI tests blocked** - Architectural refactoring required
+- 🟢 **26 DB tests acceptable** - Conditional skipIf pattern is correct
+- 🟡 **13 other tests** - Medium priority (registry API + E2E)
 
-**Result**: All critical test coverage restored! 🎉
+**Result**: Security fixes complete. Test re-enabling blocked by architectural issue.
 
 ---
 
 ## 💡 Key Learnings
 
-1. **process.exit mocking was already implemented** - Tests were skipped unnecessarily
-2. **Many skips had no clear reason** - Likely added during development and forgotten
+1. **process.exit() mocking unreliable in CI** - Works locally, fails in GitHub Actions parallel workers
+2. **Architectural issue discovered** - CLI commands need refactoring to be testable
 3. **Conditional skips (skipIf) are acceptable** - Proper pattern for environment-dependent tests
-4. **E2E tests require infrastructure** - Unit tests provide sufficient coverage for now
+4. **Quick fixes not always possible** - Some issues require architectural changes
 
-The project now has comprehensive test coverage for all core CLI functionality!
+**Next action**: Refactor CLI commands to enable comprehensive test coverage
