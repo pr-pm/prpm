@@ -16,7 +16,7 @@ function createStatusCommand() {
   return new Command('status')
     .description('Show current telemetry status')
     .action(async () => {
-      const enabled = telemetry.isEnabled();
+      const enabled = await telemetry.isEnabled();
       const stats = await telemetry.getStats();
 
       console.log('📊 Telemetry Status:');
