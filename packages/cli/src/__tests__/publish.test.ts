@@ -89,7 +89,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
     });
 
@@ -106,7 +106,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
     });
 
@@ -123,7 +123,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
     });
 

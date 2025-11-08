@@ -370,17 +370,11 @@ describe('collections command', () => {
     // Actual: "Cannot read properties of undefined (reading 'icon')"
     // Need to mock getCollection to return proper error or update validation logic
     it.skip('should handle invalid collection format', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionInfo('invalid-format')).rejects.toThrow('Process exited');
+      await expect(handleCollectionInfo('invalid-format')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Invalid collection format')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle collection not found', async () => {
@@ -509,17 +503,11 @@ describe('collections command', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection must include at least one package')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should validate each package has packageId', async () => {

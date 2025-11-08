@@ -3,6 +3,7 @@
  */
 
 import { handleLogin } from '../commands/login';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('../core/user-config');
@@ -18,11 +19,6 @@ describe('login command', () => {
     // Mock console methods
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
-
-    // Mock process.exit to prevent actual exit during tests
-    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-      throw new Error(`Process exited with code ${code}`);
-    }) as unknown);
   });
 
   afterEach(() => {
@@ -33,7 +29,7 @@ describe('login command', () => {
   describe('login flow', () => {
     it('should handle login errors and exit gracefully', async () => {
       // Login will fail in test environment since there's no real OAuth implementation
-      await expect(handleLogin({})).rejects.toThrow('Process exited');
+      await expect(handleLogin({})).rejects.toThrow(CLIError);
 
       // Verify error handling was triggered
       expect(console.error).toHaveBeenCalled();

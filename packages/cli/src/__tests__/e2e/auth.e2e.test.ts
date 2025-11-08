@@ -9,6 +9,7 @@ import { createTestDir, cleanupTestDir } from './test-helpers';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
 import os from 'os';
+import { CLIError } from '../../core/errors';
 
 // Mock dependencies
 jest.mock('../../core/user-config');
@@ -144,16 +145,11 @@ describe.skip('Auth Commands - E2E Tests', () => {
         json: async () => ({ error: 'authorization_pending' }),
       });
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
       // This would timeout in real scenario, but we'll mock it to fail quickly
       jest.setTimeout(1000);
 
       await expect(handleLogin()).rejects.toThrow();
 
-      mockExit.mockRestore();
       jest.setTimeout(5000); // Reset timeout
     });
 
@@ -164,13 +160,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
       (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
       await expect(handleLogin()).rejects.toThrow();
-
-      mockExit.mockRestore();
     });
 
     it('should handle invalid token error', async () => {
@@ -184,13 +174,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
         json: async () => ({ error: 'Invalid token' }),
       });
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
       await expect(handleLogin({ token: 'invalid-token' })).rejects.toThrow();
-
-      mockExit.mockRestore();
     });
   });
 
@@ -224,17 +208,11 @@ describe.skip('Auth Commands - E2E Tests', () => {
         token: undefined,
       });
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleWhoami()).rejects.toThrow('Process exited');
+      await expect(handleWhoami()).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Not logged in')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle invalid/expired token', async () => {
@@ -249,17 +227,11 @@ describe.skip('Auth Commands - E2E Tests', () => {
         json: async () => ({ error: 'Invalid token' }),
       });
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleWhoami()).rejects.toThrow('Process exited');
+      await expect(handleWhoami()).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Invalid token')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should display user stats', async () => {
@@ -315,13 +287,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
       (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleWhoami()).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleWhoami()).rejects.toThrow(CLIError);
     });
   });
 

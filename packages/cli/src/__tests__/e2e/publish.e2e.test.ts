@@ -8,6 +8,7 @@ import { getConfig } from '../../core/user-config';
 import { createTestDir, cleanupTestDir, createMockPackage } from './test-helpers';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
+import { CLIError } from '../../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -143,17 +144,11 @@ describe.skip('Publish Command - E2E Tests', () => {
 
   describe('Validation', () => {
     it('should reject package without prpm.json', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('prpm.json not found')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should validate package name format', async () => {
@@ -168,17 +163,11 @@ describe.skip('Publish Command - E2E Tests', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Package name must be lowercase')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should validate version format', async () => {
@@ -193,17 +182,11 @@ describe.skip('Publish Command - E2E Tests', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Version must be semver format')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should validate package type', async () => {
@@ -218,17 +201,11 @@ describe.skip('Publish Command - E2E Tests', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Type must be one of')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should reject packages over size limit', async () => {
@@ -243,17 +220,11 @@ describe.skip('Publish Command - E2E Tests', () => {
       manifest.files = ['prpm.json', '.cursorrules', 'large-file.txt'];
       await writeFile(join(testDir, 'prpm.json'), JSON.stringify(manifest));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('exceeds 10MB limit')
       );
-
-      mockExit.mockRestore();
     });
   });
 
@@ -266,17 +237,11 @@ describe.skip('Publish Command - E2E Tests', () => {
 
       await createMockPackage(testDir, 'test-package', 'cursor');
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Authentication required')
       );
-
-      mockExit.mockRestore();
     });
   });
 
@@ -306,17 +271,11 @@ describe.skip('Publish Command - E2E Tests', () => {
 
       mockClient.publish.mockRejectedValue(new Error('Network error'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Network error')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle package already exists error', async () => {
@@ -324,17 +283,11 @@ describe.skip('Publish Command - E2E Tests', () => {
 
       mockClient.publish.mockRejectedValue(new Error('Package already exists'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Package already exists')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle permission errors', async () => {
@@ -342,13 +295,7 @@ describe.skip('Publish Command - E2E Tests', () => {
 
       mockClient.publish.mockRejectedValue(new Error('Permission denied'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
   });
 
