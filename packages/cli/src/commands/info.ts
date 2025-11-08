@@ -6,6 +6,7 @@ import { Command } from 'commander';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
+import { CLIError } from '../core/errors';
 
 export async function handleInfo(packageName: string): Promise<void> {
   const startTime = Date.now();
@@ -58,12 +59,7 @@ export async function handleInfo(packageName: string): Promise<void> {
     success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
-    console.error(`\n❌ Failed to fetch package info: ${error}`);
-    console.log(`\n💡 Tips:`);
-    console.log(`   - Check the package ID spelling`);
-    console.log(`   - Search for packages: prpm search <query>`);
-    console.log(`   - View trending: prpm trending`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to fetch package info: ${error}\n\n💡 Tips:\n   - Check the package ID spelling\n   - Search for packages: prpm search <query>\n   - View trending: prpm trending`, 1);
   } finally {
     await telemetry.track({
       command: 'info',
@@ -86,7 +82,7 @@ export function createInfoCommand(): Command {
     .argument('<package>', 'Package ID to get information about')
     .action(async (packageId: string) => {
       await handleInfo(packageId);
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 
   return command;

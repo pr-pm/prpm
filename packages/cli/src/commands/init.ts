@@ -10,6 +10,7 @@ import { existsSync } from 'fs';
 import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
 import { FORMATS, SUBTYPES } from '../types';
+import { CLIError } from '../core/errors';
 
 interface InitOptions {
   yes?: boolean; // Skip prompts and use defaults
@@ -773,10 +774,10 @@ export function createInitCommand(): Command {
     .action(async (options: InitOptions) => {
       try {
         await initPackage(options);
-        process.exit(0);
+        throw new CLIError('', 0);
       } catch (error) {
         console.error('\n❌ Error:', error instanceof Error ? error.message : error);
-        process.exit(1);
+        throw new CLIError('\n❌ Error: ' + (error instanceof Error ? error.message : error), 1);
       }
     });
 

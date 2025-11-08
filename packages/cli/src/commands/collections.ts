@@ -14,6 +14,7 @@ import {
   addCollectionToLockfile,
   getCollectionFromLockfile,
 } from '../core/lockfile';
+import { CLIError } from '../core/errors';
 
 /**
  * Search collections by query
@@ -114,7 +115,7 @@ export async function handleCollectionsSearch(
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to search collections: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -216,7 +217,7 @@ export async function handleCollectionsList(options: {
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to list collections: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -346,7 +347,7 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to get collection info: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -367,7 +368,7 @@ export async function handleCollectionPublish(
     // Check authentication
     if (!config.token) {
       console.error('\n❌ Authentication required. Run `prpm login` first.\n');
-      process.exit(1);
+      throw new CLIError('\n❌ Authentication required. Run `prpm login` first.', 1);
     }
 
     console.log('📦 Publishing collection...\n');
@@ -462,7 +463,7 @@ export async function handleCollectionPublish(
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to publish collection: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -610,7 +611,7 @@ export async function handleCollectionInstall(
         failed: packagesFailed,
       },
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to install collection: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }

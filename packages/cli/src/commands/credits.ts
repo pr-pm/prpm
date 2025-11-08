@@ -5,6 +5,7 @@
 import { Command } from 'commander';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
+import { CLIError } from '../core/errors';
 
 interface CreditsBalance {
   balance: number;
@@ -154,7 +155,7 @@ export async function handleCredits(options: {
       console.error('❌ Authentication required');
       console.log('\n💡 Please login first:');
       console.log('   prpm login');
-      process.exit(1);
+      throw new CLIError('❌ Authentication required', 1);
     }
 
     if (options.history) {
@@ -173,7 +174,7 @@ export async function handleCredits(options: {
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Failed to fetch credits: ${error}`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to fetch credits: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'credits',
@@ -227,7 +228,7 @@ Get more credits:
         history: options.history,
         limit: options.limit ? parseInt(options.limit, 10) : undefined,
       });
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 
   return command;

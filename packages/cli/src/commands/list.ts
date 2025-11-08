@@ -8,6 +8,7 @@ import type { LockfilePackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { CLIError } from '../core/errors';
 import { Format, Subtype } from '../types';
 
 /**
@@ -172,8 +173,7 @@ export async function handleList(): Promise<void> {
     success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
-    console.error(`❌ Failed to list packages: ${error}`);
-    process.exit(1);
+    throw new CLIError(`❌ Failed to list packages: ${error}`, 1);
   } finally {
     // Track telemetry
     await telemetry.track({
@@ -199,7 +199,7 @@ export function createListCommand(): Command {
     .description('List all installed prompt packages')
     .action(async () => {
       await handleList();
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 
   return command;

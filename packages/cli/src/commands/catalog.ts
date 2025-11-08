@@ -9,6 +9,7 @@ import { telemetry } from '../core/telemetry';
 import type { PackageManifest, MultiPackageManifest } from '../types/registry';
 import { Format, Subtype } from '../types';
 import { readLockfile } from '../core/lockfile';
+import { CLIError } from '../core/errors';
 
 interface DiscoveredPackage {
   path: string;
@@ -400,7 +401,7 @@ export async function handleCatalog(
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Failed to catalog packages: ${error}\n`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to catalog packages: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'catalog',
@@ -427,6 +428,6 @@ export function createCatalogCommand(): Command {
     .option('--dry-run', 'Show what would be cataloged without making changes')
     .action(async (directories: string[], options: { output?: string; append?: boolean; dryRun?: boolean }) => {
       await handleCatalog(directories, options);
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 }

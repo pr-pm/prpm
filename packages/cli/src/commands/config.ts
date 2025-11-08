@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { getConfig, saveConfig } from '../core/user-config';
+import { CLIError } from '../core/errors';
 
 /**
  * Get a config value
@@ -14,15 +15,15 @@ async function handleConfigGet(key: string): Promise<void> {
     const value = (config as any)[key];
 
     if (value === undefined) {
-      console.error(`❌ Config key "${key}" not found`);
-      console.log('\nAvailable keys: registryUrl, telemetryEnabled, token, username');
-      process.exit(1);
+      throw new CLIError(`❌ Config key "${key}" not found\n\nAvailable keys: registryUrl, telemetryEnabled, token, username`, 1);
     }
 
     console.log(value);
   } catch (error) {
-    console.error(`❌ Failed to get config: ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
+    if (error instanceof CLIError) {
+      throw error;
+    }
+    throw new CLIError(`❌ Failed to get config: ${error instanceof Error ? error.message : String(error)}`, 1);
   }
 }
 
@@ -36,10 +37,7 @@ async function handleConfigSet(key: string, value: string): Promise<void> {
     // Validate key
     const validKeys = ['registryUrl', 'telemetryEnabled'];
     if (!validKeys.includes(key)) {
-      console.error(`❌ Cannot set config key "${key}"`);
-      console.log('\nSettable keys: registryUrl, telemetryEnabled');
-      console.log('Note: token and username are set via "prpm login"');
-      process.exit(1);
+      throw new CLIError(`❌ Cannot set config key "${key}"\n\nSettable keys: registryUrl, telemetryEnabled\nNote: token and username are set via "prpm login"`, 1);
     }
 
     // Parse boolean values
@@ -50,8 +48,7 @@ async function handleConfigSet(key: string, value: string): Promise<void> {
       } else if (value === 'false' || value === '0' || value === 'no') {
         parsedValue = false;
       } else {
-        console.error(`❌ Invalid boolean value "${value}". Use: true, false, yes, no, 1, or 0`);
-        process.exit(1);
+        throw new CLIError(`❌ Invalid boolean value "${value}". Use: true, false, yes, no, 1, or 0`, 1);
       }
     }
 
@@ -61,8 +58,10 @@ async function handleConfigSet(key: string, value: string): Promise<void> {
 
     console.log(`✅ Set ${key} = ${parsedValue}`);
   } catch (error) {
-    console.error(`❌ Failed to set config: ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
+    if (error instanceof CLIError) {
+      throw error;
+    }
+    throw new CLIError(`❌ Failed to set config: ${error instanceof Error ? error.message : String(error)}`, 1);
   }
 }
 
@@ -85,8 +84,7 @@ async function handleConfigList(): Promise<void> {
       : `${process.env.HOME}/.prpmrc`;
     console.log(`Config file: ${configPath}`);
   } catch (error) {
-    console.error(`❌ Failed to list config: ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
+    throw new CLIError(`❌ Failed to list config: ${error instanceof Error ? error.message : String(error)}`, 1);
   }
 }
 
@@ -100,8 +98,7 @@ async function handleConfigDelete(key: string): Promise<void> {
     // Validate key
     const deletableKeys = ['registryUrl', 'telemetryEnabled', 'token', 'username'];
     if (!deletableKeys.includes(key)) {
-      console.error(`❌ Cannot delete config key "${key}"`);
-      process.exit(1);
+      throw new CLIError(`❌ Cannot delete config key "${key}"`, 1);
     }
 
     // Reset to defaults
@@ -119,8 +116,10 @@ async function handleConfigDelete(key: string): Promise<void> {
 
     console.log(`✅ Reset ${key} to default value`);
   } catch (error) {
-    console.error(`❌ Failed to delete config: ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
+    if (error instanceof CLIError) {
+      throw error;
+    }
+    throw new CLIError(`❌ Failed to delete config: ${error instanceof Error ? error.message : String(error)}`, 1);
   }
 }
 
@@ -138,7 +137,7 @@ export function createConfigCommand(): Command {
     .description('List all configuration values')
     .action(async () => {
       await handleConfigList();
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 
   // config get <key>
@@ -147,7 +146,7 @@ export function createConfigCommand(): Command {
     .description('Get a configuration value')
     .action(async (key: string) => {
       await handleConfigGet(key);
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 
   // config set <key> <value>
@@ -156,7 +155,7 @@ export function createConfigCommand(): Command {
     .description('Set a configuration value')
     .action(async (key: string, value: string) => {
       await handleConfigSet(key, value);
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 
   // config delete <key>
@@ -166,13 +165,13 @@ export function createConfigCommand(): Command {
     .description('Reset a configuration value to default')
     .action(async (key: string) => {
       await handleConfigDelete(key);
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 
   // Default action (show list if no subcommand)
   command.action(async () => {
     await handleConfigList();
-    process.exit(0);
+    throw new CLIError('', 0);
   });
 
   return command;

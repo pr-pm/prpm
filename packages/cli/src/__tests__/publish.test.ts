@@ -1,8 +1,5 @@
 /**
  * Tests for package publishing flow
- *
- * Note: These tests are currently skipped due to issues with mocking process.exit
- * in Jest parallel workers. Re-enable when jest.mock() setup is fixed.
  */
 
 import { handlePublish } from '../commands/publish';
@@ -12,6 +9,7 @@ import { telemetry } from '../core/telemetry';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -26,10 +24,9 @@ jest.mock('../core/telemetry', () => ({
 const mockGetConfig = getConfig as jest.MockedFunction<typeof getConfig>;
 const mockGetRegistryClient = getRegistryClient as jest.MockedFunction<typeof getRegistryClient>;
 
-describe.skip('Publish Command', () => {
+describe('Publish Command', () => {
   let testDir: string;
   let originalCwd: string;
-  let exitMock: jest.SpyInstance;
   let consoleMock: jest.SpyInstance;
   let consoleErrorMock: jest.SpyInstance;
 
@@ -37,10 +34,6 @@ describe.skip('Publish Command', () => {
     // Mock console methods (persist across tests)
     consoleMock = jest.spyOn(console, 'log').mockImplementation();
     consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
-    // Mock process.exit to prevent tests from actually exiting
-    exitMock = jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-      throw new Error(`Process exited with code ${code}`);
-    }) as any);
   });
 
   beforeEach(async () => {
@@ -67,13 +60,10 @@ describe.skip('Publish Command', () => {
 
   describe('Manifest Validation', () => {
     it('should require prpm.json to exist', async () => {
-
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
-
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
     it('should validate required fields', async () => {
-
       await writeFile(
         join(testDir, 'prpm.json'),
         JSON.stringify({
@@ -82,7 +72,7 @@ describe.skip('Publish Command', () => {
         })
       );
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
     });
 
@@ -311,14 +301,12 @@ describe.skip('Publish Command', () => {
 
   describe('Authentication', () => {
     it('should require authentication token', async () => {
-
       mockGetConfig.mockResolvedValue({
         token: undefined,
         registryUrl: 'http://localhost:3111',
       });
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
-
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
     it('should pass token to registry client', async () => {
@@ -416,7 +404,6 @@ describe.skip('Publish Command', () => {
     });
 
     it('should reject packages over 10MB', async () => {
-
       await writeFile(
         join(testDir, 'prpm.json'),
         JSON.stringify({
@@ -432,12 +419,10 @@ describe.skip('Publish Command', () => {
       const largeContent = Buffer.alloc(11 * 1024 * 1024); // 11MB
       await writeFile(join(testDir, 'large-file.txt'), largeContent);
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
-
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
     it('should fail if no files to include', async () => {
-
       await writeFile(
         join(testDir, 'prpm.json'),
         JSON.stringify({
@@ -449,8 +434,7 @@ describe.skip('Publish Command', () => {
         })
       );
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
-
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
   });
 
@@ -543,7 +527,6 @@ describe.skip('Publish Command', () => {
     });
 
     it('should handle publish errors', async () => {
-
       await writeFile(
         join(testDir, 'prpm.json'),
         JSON.stringify({
@@ -563,7 +546,7 @@ describe.skip('Publish Command', () => {
         publish: mockPublish,
       } as any);
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(telemetry.track).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -572,7 +555,6 @@ describe.skip('Publish Command', () => {
           error: 'Package already exists',
         })
       );
-
     });
   });
 
@@ -774,7 +756,7 @@ describe.skip('Publish Command', () => {
         publish: jest.fn(),
       } as any);
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
     it('should fail when user has insufficient permissions', async () => {
@@ -804,7 +786,7 @@ describe.skip('Publish Command', () => {
         publish: jest.fn(),
       } as any);
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
     it('should accept owner role for publishing', async () => {
@@ -981,7 +963,7 @@ describe.skip('Publish Command', () => {
         publish: jest.fn(),
       } as any);
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
     it('should fallback to personal publishing on network error when no org specified', async () => {
@@ -1057,7 +1039,6 @@ describe.skip('Publish Command', () => {
     });
 
     it('should track failed publish', async () => {
-
       await writeFile(
         join(testDir, 'prpm.json'),
         JSON.stringify({
@@ -1077,7 +1058,7 @@ describe.skip('Publish Command', () => {
         publish: mockPublish,
       } as any);
 
-      await expect(handlePublish({})).rejects.toThrow('Process exited');
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
 
       expect(telemetry.track).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1086,7 +1067,6 @@ describe.skip('Publish Command', () => {
           error: 'Network error',
         })
       );
-
     });
 
     it('should handle multi-package manifest from prpm.json', async () => {

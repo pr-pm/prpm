@@ -8,10 +8,9 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { createInitCommand } from '../commands/init';
+import { CLIError } from '../core/errors';
 
-// TODO KJG: Init command calls process.exit(1) which crashes Jest workers.
-// Need to either mock process.exit or refactor init command to throw errors instead.
-describe.skip('prpm init command', () => {
+describe('prpm init command', () => {
   let testDir: string;
 
   beforeEach(async () => {

@@ -13,6 +13,7 @@ import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import type { PackageManifest, PackageFileMetadata, MultiPackageManifest, Manifest } from '../types/registry';
+import { CLIError } from '../core/errors';
 import {
   marketplaceToManifest,
   validateMarketplaceJson,
@@ -410,8 +411,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     // Check if logged in
     if (!config.token) {
-      console.error('❌ Not logged in. Run "prpm login" first.');
-      process.exit(1);
+      throw new CLIError('❌ Not logged in. Run "prpm login" first.', 1);
     }
 
     console.log('📦 Publishing package...\n');
@@ -832,40 +832,38 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     success = publishedPackages.length > 0 || publishedCollections.length > 0;
 
     if (failedPackages.length > 0 && publishedPackages.length === 0 && publishedCollections.length === 0) {
-      process.exit(1);
+      throw new CLIError('', 1);
     }
   } catch (err) {
+    if (err instanceof CLIError) {
+      throw err;
+    }
     error = err instanceof Error ? err.message : String(err);
-    console.error(`\n❌ Failed to publish package: ${error}\n`);
+    let errorMsg = `\n❌ Failed to publish package: ${error}\n`;
 
     // Provide helpful hints based on error type
     if (error.includes('Manifest validation failed')) {
-      console.log('💡 Common validation issues:');
-      console.log('   - Missing required fields (name, version, description, format)');
-      console.log('   - Invalid format or subtype values');
-      console.log('   - Description too short (min 10 chars) or too long (max 500 chars)');
-      console.log('   - Package name must be lowercase with hyphens only');
-      console.log('');
-      console.log('💡 For Claude skills specifically:');
-      console.log('   - Add "subtype": "skill" to your prpm.json');
-      console.log('   - Ensure files include a SKILL.md file');
-      console.log('   - Package name must be max 64 characters');
-      console.log('');
-      console.log('💡 View the schema: prpm schema');
-      console.log('');
+      errorMsg += '\n💡 Common validation issues:\n';
+      errorMsg += '   - Missing required fields (name, version, description, format)\n';
+      errorMsg += '   - Invalid format or subtype values\n';
+      errorMsg += '   - Description too short (min 10 chars) or too long (max 500 chars)\n';
+      errorMsg += '   - Package name must be lowercase with hyphens only\n';
+      errorMsg += '\n💡 For Claude skills specifically:\n';
+      errorMsg += '   - Add "subtype": "skill" to your prpm.json\n';
+      errorMsg += '   - Ensure files include a SKILL.md file\n';
+      errorMsg += '   - Package name must be max 64 characters\n';
+      errorMsg += '\n💡 View the schema: prpm schema\n';
     } else if (error.includes('SKILL.md')) {
-      console.log('💡 Claude skills require:');
-      console.log('   - A file named SKILL.md (all caps) in your package');
-      console.log('   - "format": "claude" and "subtype": "skill" in prpm.json');
-      console.log('');
+      errorMsg += '\n💡 Claude skills require:\n';
+      errorMsg += '   - A file named SKILL.md (all caps) in your package\n';
+      errorMsg += '   - "format": "claude" and "subtype": "skill" in prpm.json\n';
     } else if (error.includes('No manifest file found')) {
-      console.log('💡 Create a manifest file:');
-      console.log('   - Run: prpm init');
-      console.log('   - Or create prpm.json manually');
-      console.log('');
+      errorMsg += '\n💡 Create a manifest file:\n';
+      errorMsg += '   - Run: prpm init\n';
+      errorMsg += '   - Or create prpm.json manually\n';
     }
 
-    process.exit(1);
+    throw new CLIError(errorMsg, 1);
   } finally {
     // Track telemetry
     await telemetry.track({
@@ -896,6 +894,6 @@ export function createPublishCommand(): Command {
     .option('--collection <id>', 'Publish only a specific collection from manifest')
     .action(async (options: PublishOptions) => {
       await handlePublish(options);
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 }

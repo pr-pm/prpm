@@ -32,6 +32,7 @@ import { createCreditsCommand } from './commands/credits';
 import { createSubscribeCommand } from './commands/subscribe';
 import { createBuyCreditsCommand } from './commands/buy-credits';
 import { telemetry } from './core/telemetry';
+import { CLIError } from './core/errors';
 
 // Read version from package.json
 function getVersion(): string {
@@ -85,8 +86,25 @@ program.addCommand(createBuyCreditsCommand());
 program.addCommand(createSchemaCommand());
 program.addCommand(createConfigCommand());
 
-// Parse command line arguments
-program.parse();
+// Parse command line arguments with error handling
+(async () => {
+  try {
+    await program.parseAsync();
+  } catch (error) {
+    if (error instanceof CLIError) {
+      // Print error message if present
+      if (error.message) {
+        console.error(error.message);
+      }
+      // Exit with the error's exit code
+      process.exit(error.exitCode);
+    } else {
+      // Unexpected error - print and exit with code 1
+      console.error('Unexpected error:', error);
+      process.exit(1);
+    }
+  }
+})();
 
 // Cleanup telemetry on exit
 process.on('exit', () => {

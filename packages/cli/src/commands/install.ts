@@ -13,6 +13,7 @@ import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { createGunzip } from 'zlib';
 import * as tar from 'tar';
+import { CLIError } from '../core/errors';
 import {
   readLockfile,
   writeLockfile,
@@ -539,11 +540,7 @@ export async function handleInstall(
     success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
-    console.error(`\n❌ Installation failed: ${error}`);
-    console.log(`\n💡 Tips:`);
-    console.log(`   - Check package name: prpm search <query>`);
-    console.log(`   - Get package info: prpm info <package>`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Installation failed: ${error}\n\n💡 Tips:\n   - Check package name: prpm search <query>\n   - Get package info: prpm info <package>`, 1);
   } finally {
     await telemetry.track({
       command: 'install',
@@ -681,9 +678,7 @@ export async function installFromLockfile(options: {
     const lockfile = await readLockfile();
 
     if (!lockfile) {
-      console.error('❌ No prpm.lock file found');
-      console.log('\n💡 Run "prpm install <package>" first to create a lockfile, or initialize a new project with "prpm init"');
-      process.exit(1);
+      throw new CLIError('❌ No prpm.lock file found\n\n💡 Run "prpm install <package>" first to create a lockfile, or initialize a new project with "prpm init"', 1);
     }
 
     const packageIds = Object.keys(lockfile.packages);
@@ -728,13 +723,14 @@ export async function installFromLockfile(options: {
     console.log(`\n✅ Installed ${successCount}/${packageIds.length} packages`);
 
     if (failCount > 0) {
-      console.error(`❌ ${failCount} package${failCount === 1 ? '' : 's'} failed to install`);
-      process.exit(1);
+      throw new CLIError(`❌ ${failCount} package${failCount === 1 ? '' : 's'} failed to install`, 1);
     }
 
   } catch (error) {
-    console.error(`❌ Failed to install from lockfile: ${error}`);
-    process.exit(1);
+    if (error instanceof CLIError) {
+      throw error;
+    }
+    throw new CLIError(`❌ Failed to install from lockfile: ${error}`, 1);
   }
 }
 
@@ -754,14 +750,7 @@ export function createInstallCommand(): Command {
       const convertTo = options.format || options.as;
 
       if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical'].includes(convertTo)) {
-        console.error('❌ Format must be one of: cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical');
-        console.log('\n💡 Examples:');
-        console.log('   prpm install my-package --as cursor       # Convert to Cursor format');
-        console.log('   prpm install my-package --format claude   # Convert to Claude format');
-        console.log('   prpm install my-package --format kiro     # Convert to Kiro format');
-        console.log('   prpm install my-package --format agents.md # Convert to Agents.md format');
-        console.log('   prpm install my-package                   # Install in native format');
-        process.exit(1);
+        throw new CLIError('❌ Format must be one of: cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package                   # Install in native format', 1);
       }
 
       // If no package specified, install from lockfile
@@ -771,8 +760,7 @@ export function createInstallCommand(): Command {
           subtype: options.subtype as Subtype | undefined,
           frozenLockfile: options.frozenLockfile
         });
-        process.exit(0);
-        return;
+        throw new CLIError('', 0);
       }
 
       await handleInstall(packageSpec, {
@@ -781,7 +769,7 @@ export function createInstallCommand(): Command {
         subtype: options.subtype as Subtype | undefined,
         frozenLockfile: options.frozenLockfile
       });
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 
   return command;

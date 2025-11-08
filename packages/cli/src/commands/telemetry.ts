@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { telemetry } from '../core/telemetry';
+import { CLIError } from '../core/errors';
 
 export function createTelemetryCommand() {
   return new Command('telemetry')
@@ -33,7 +34,7 @@ function createStatusCommand() {
       } else {
         console.log('\n💡 Telemetry is disabled. Run "prpm telemetry enable" to help improve the tool.');
       }
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 }
 
@@ -44,7 +45,7 @@ function createEnableCommand() {
       await telemetry.enable();
       console.log('✅ Telemetry enabled');
       console.log('📊 Anonymous usage data will be collected to help improve the tool.');
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 }
 
@@ -55,7 +56,7 @@ function createDisableCommand() {
       await telemetry.disable();
       console.log('❌ Telemetry disabled');
       console.log('📊 No usage data will be collected.');
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 }
 
@@ -69,7 +70,7 @@ function createStatsCommand() {
       if (stats.lastEvent) {
         console.log(`   Last event: ${stats.lastEvent}`);
       }
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 }
 
@@ -110,9 +111,8 @@ function createTestCommand() {
         console.log('4. Events may take 1-2 minutes to appear');
         
       } catch (error) {
-        console.error('❌ Failed to send test event:', error);
-        process.exit(1);
+        throw new CLIError(`❌ Failed to send test event: ${error}`, 1);
       }
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 }

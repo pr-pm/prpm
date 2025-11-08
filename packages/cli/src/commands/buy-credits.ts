@@ -8,6 +8,7 @@ import { telemetry } from '../core/telemetry';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { getWebappUrl } from '../utils/webapp-url';
+import { CLIError } from '../core/errors';
 
 const execAsync = promisify(exec);
 
@@ -122,7 +123,7 @@ export async function handleBuyCredits(options: { package?: string }): Promise<v
       console.error('❌ Authentication required');
       console.log('\n💡 Please login first:');
       console.log('   prpm login');
-      process.exit(1);
+      throw new CLIError('❌ Authentication required', 1);
     }
 
     // Get current balance
@@ -145,7 +146,7 @@ export async function handleBuyCredits(options: { package?: string }): Promise<v
       if (!validPackages.includes(options.package)) {
         console.error(`\n❌ Invalid package: ${options.package}`);
         console.log('   Valid options: small, medium, large');
-        process.exit(1);
+        throw new CLIError(`\n❌ Invalid package: ${options.package}`, 1);
       }
       purchaseUrl += `?package=${options.package}`;
     }
@@ -178,7 +179,7 @@ export async function handleBuyCredits(options: { package?: string }): Promise<v
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Purchase failed: ${error}`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Purchase failed: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'buy-credits',
@@ -249,7 +250,7 @@ Note: Purchased credits are one-time and never expire, unlike monthly credits.
     )
     .action(async (options: { package?: string }) => {
       await handleBuyCredits(options);
-      process.exit(0);
+      throw new CLIError('', 0);
     });
 
   return command;

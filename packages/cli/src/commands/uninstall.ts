@@ -7,6 +7,7 @@ import { removePackage } from '../core/lockfile';
 import { getDestinationDir, deleteFile, fileExists, stripAuthorNamespace } from '../core/filesystem';
 import { promises as fs } from 'fs';
 import { Format, Subtype } from '../types';
+import { CLIError } from '../core/errors';
 
 /**
  * Handle the uninstall command
@@ -19,8 +20,7 @@ export async function handleUninstall(name: string): Promise<void> {
     const pkg = await removePackage(name);
 
     if (!pkg) {
-      console.error(`❌ Package "${name}" not found`);
-      process.exit(1);
+      throw new CLIError(`❌ Package "${name}" not found`, 1);
     }
 
     // Get destination directory using format and subtype
@@ -77,10 +77,12 @@ export async function handleUninstall(name: string): Promise<void> {
 
     console.log(`✅ Successfully uninstalled ${name}`);
 
-    process.exit(0);
+    throw new CLIError('', 0);
   } catch (error) {
-    console.error(`❌ Failed to uninstall package: ${error}`);
-    process.exit(1);
+    if (error instanceof CLIError) {
+      throw error;
+    }
+    throw new CLIError(`❌ Failed to uninstall package: ${error}`, 1);
   }
 }
 

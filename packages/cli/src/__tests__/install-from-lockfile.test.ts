@@ -9,6 +9,7 @@ import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
 import { gzipSync } from 'zlib';
 import type { Lockfile } from '../core/lockfile';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client', () => ({
@@ -72,11 +73,6 @@ describe('install from lockfile', () => {
     // Mock console methods to suppress output during tests
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
-
-    // Mock process.exit to prevent actual exit during tests
-    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-      throw new Error(`Process exited with code ${code}`);
-    }) as any);
   });
 
   afterEach(() => {
@@ -89,8 +85,7 @@ describe('install from lockfile', () => {
       mockReadLockfile.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(installFromLockfile({})).rejects.toThrow('Process exited with code 1');
-      expect(process.exit).toHaveBeenCalledWith(1);
+      await expect(installFromLockfile({})).rejects.toThrow(CLIError);
       expect(console.error).toHaveBeenCalledWith('❌ No prpm.lock file found');
     });
   });
@@ -116,7 +111,7 @@ describe('install from lockfile', () => {
   });
 
   describe('single package installation', () => {
-    it.skip('should install package from lockfile', async () => {
+    it('should install package from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -161,7 +156,7 @@ describe('install from lockfile', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 1/1'));
     });
 
-    it.skip('should preserve format from lockfile', async () => {
+    it('should preserve format from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -202,7 +197,7 @@ describe('install from lockfile', () => {
   });
 
   describe('multiple packages installation', () => {
-    it.skip('should install all packages from lockfile', async () => {
+    it('should install all packages from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -259,7 +254,7 @@ describe('install from lockfile', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 3/3'));
     });
 
-    it.skip('should handle partial failures gracefully', async () => {
+    it('should handle partial failures gracefully', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -312,7 +307,7 @@ describe('install from lockfile', () => {
   });
 
   describe('format override', () => {
-    it.skip('should respect --as option to override lockfile format', async () => {
+    it('should respect --as option to override lockfile format', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -353,7 +348,7 @@ describe('install from lockfile', () => {
   });
 
   describe('force reinstall', () => {
-    it.skip('should force reinstall packages from lockfile', async () => {
+    it('should force reinstall packages from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',

@@ -8,6 +8,7 @@ import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
 import { readLockfile, writeLockfile, addPackage, addToLockfile, createLockfile } from '../core/lockfile';
 import { gzipSync } from 'zlib';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -65,11 +66,6 @@ describe('install command', () => {
     // Mock console methods
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
-
-    // Mock process.exit to prevent actual exit during tests
-    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-      throw new Error(`Process exited with code ${code}`);
-    }) as unknown);
   });
 
   afterEach(() => {
@@ -77,7 +73,7 @@ describe('install command', () => {
     jest.restoreAllMocks();
   });
 
-  describe.skip('basic installation', () => {
+  describe('basic installation', () => {
     it('should install package successfully', async () => {
       const mockPackage = {
         id: 'test-package',
@@ -158,25 +154,13 @@ describe('install command', () => {
     it('should handle package not found', async () => {
       mockClient.getPackage.mockRejectedValue(new Error('Package not found'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleInstall('nonexistent', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleInstall('nonexistent', {})).rejects.toThrow(CLIError);
     });
 
     it('should handle network errors', async () => {
       mockClient.getPackage.mockRejectedValue(new Error('Network error'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleInstall('test-package', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleInstall('test-package', {})).rejects.toThrow(CLIError);
     });
 
     it('should handle download failures', async () => {
@@ -196,17 +180,11 @@ describe('install command', () => {
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.downloadPackage.mockRejectedValue(new Error('Download failed'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleInstall('test-package', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleInstall('test-package', {})).rejects.toThrow(CLIError);
     });
   });
 
-  describe.skip('lockfile handling', () => {
+  describe('lockfile handling', () => {
     it('should create lockfile entry', async () => {
       const mockPackage = {
         id: 'test-package',
@@ -271,19 +249,13 @@ describe('install command', () => {
     it('should fail on frozen lockfile without entry', async () => {
       (readLockfile as jest.Mock).mockResolvedValue({ packages: {} });
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
       await expect(
         handleInstall('test-package', { frozenLockfile: true })
-      ).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      ).rejects.toThrow(CLIError);
     });
   });
 
-  describe.skip('type overrides', () => {
+  describe('type overrides', () => {
     it('should use format parameter for format conversion', async () => {
       const mockPackage = {
         id: 'test-package',
