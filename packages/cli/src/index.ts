@@ -90,8 +90,7 @@ program.addCommand(createConfigCommand());
 (async () => {
   try {
     await program.parseAsync();
-    // Command completed successfully - exit with code 0
-    process.exit(0);
+    // Command completed successfully - let Node.js exit naturally
   } catch (error) {
     if (error instanceof CLIError) {
       // Print error message if present
