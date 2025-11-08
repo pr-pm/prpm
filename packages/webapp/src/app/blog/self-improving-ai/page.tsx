@@ -438,7 +438,10 @@ prpm install @prpm/self-improve-continue --as continue`}</code></pre>
         </div>
       </article>
 
-      <BlogFooter />
+      <BlogFooter
+        postTitle="Self-Improving AI: How PRPM Teaches AI Assistants to Get Better at Their Job"
+        postUrl="/blog/self-improving-ai"
+      />
     </main>
   )
 }
