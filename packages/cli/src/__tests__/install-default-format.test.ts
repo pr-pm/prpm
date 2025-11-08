@@ -107,7 +107,7 @@ describe('install command - defaultFormat config', () => {
     );
   });
 
-  it('should use auto-detected format over config defaultFormat', async () => {
+  it('should use config defaultFormat over auto-detected format', async () => {
     (getConfig as jest.Mock).mockResolvedValue({
       registryUrl: 'https://test-registry.com',
       defaultFormat: 'cursor',
@@ -116,13 +116,14 @@ describe('install command - defaultFormat config', () => {
 
     await handleInstall('test-package', {});
 
-    // Should use auto-detected claude format, not cursor from config
+    // Should use cursor from config, not auto-detected claude
+    // Config defaultFormat takes precedence over auto-detection
     expect(mockClient.downloadPackage).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ format: 'claude' })
+      expect.objectContaining({ format: 'cursor' })
     );
     expect(console.log).toHaveBeenCalledWith(
-      expect.stringContaining('Auto-detected claude format')
+      expect.stringContaining('Using default format from config: cursor')
     );
   });
 
