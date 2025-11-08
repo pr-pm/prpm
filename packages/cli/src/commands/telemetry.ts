@@ -34,7 +34,7 @@ function createStatusCommand() {
       } else {
         console.log('\n💡 Telemetry is disabled. Run "prpm telemetry enable" to help improve the tool.');
       }
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }
 
@@ -45,7 +45,7 @@ function createEnableCommand() {
       await telemetry.enable();
       console.log('✅ Telemetry enabled');
       console.log('📊 Anonymous usage data will be collected to help improve the tool.');
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }
 
@@ -56,7 +56,7 @@ function createDisableCommand() {
       await telemetry.disable();
       console.log('❌ Telemetry disabled');
       console.log('📊 No usage data will be collected.');
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }
 
@@ -70,7 +70,7 @@ function createStatsCommand() {
       if (stats.lastEvent) {
         console.log(`   Last event: ${stats.lastEvent}`);
       }
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }
 
@@ -113,6 +113,6 @@ function createTestCommand() {
       } catch (error) {
         throw new CLIError(`❌ Failed to send test event: ${error}`, 1);
       }
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }

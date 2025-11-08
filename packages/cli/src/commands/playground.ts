@@ -402,7 +402,7 @@ Note: Playground usage requires credits. Run 'prpm credits' to check balance.
     )
     .action(async (packageName: string, input: string | undefined, options: PlaygroundOptions) => {
       await handlePlayground(packageName, input, options);
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 
   return command;

@@ -144,6 +144,6 @@ export function createOutdatedCommand(): Command {
     .description('Check for package updates')
     .action(async () => {
       await handleOutdated();
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }

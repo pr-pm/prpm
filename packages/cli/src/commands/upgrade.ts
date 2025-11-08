@@ -132,6 +132,6 @@ export function createUpgradeCommand(): Command {
     .option('--force', 'Skip warning for major version upgrades')
     .action(async (packageName?: string, options?: { all?: boolean; force?: boolean }) => {
       await handleUpgrade(packageName, options);
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }

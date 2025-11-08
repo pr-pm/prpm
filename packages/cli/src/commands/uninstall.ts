@@ -77,7 +77,7 @@ export async function handleUninstall(name: string): Promise<void> {
 
     console.log(`✅ Successfully uninstalled ${name}`);
 
-    throw new CLIError('', 0);
+    // Handler completes normally = success (exit 0)
   } catch (error) {
     if (error instanceof CLIError) {
       throw error;

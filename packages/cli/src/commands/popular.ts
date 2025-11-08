@@ -30,6 +30,6 @@ export function createPopularCommand(): Command {
     .option('--subtype <subtype>', 'Filter by subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection)')
     .action(async (options: { format?: string; subtype?: string }) => {
       await handlePopular(options);
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }

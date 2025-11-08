@@ -132,6 +132,6 @@ export function createUpdateCommand(): Command {
     .option('--all', 'Update all packages')
     .action(async (packageName?: string, options?: { all?: boolean }) => {
       await handleUpdate(packageName, options);
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }

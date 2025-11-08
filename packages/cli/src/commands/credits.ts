@@ -228,7 +228,7 @@ Get more credits:
         history: options.history,
         limit: options.limit ? parseInt(options.limit, 10) : undefined,
       });
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 
   return command;

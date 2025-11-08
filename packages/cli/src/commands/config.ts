@@ -137,7 +137,7 @@ export function createConfigCommand(): Command {
     .description('List all configuration values')
     .action(async () => {
       await handleConfigList();
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 
   // config get <key>
@@ -146,7 +146,7 @@ export function createConfigCommand(): Command {
     .description('Get a configuration value')
     .action(async (key: string) => {
       await handleConfigGet(key);
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 
   // config set <key> <value>
@@ -155,7 +155,7 @@ export function createConfigCommand(): Command {
     .description('Set a configuration value')
     .action(async (key: string, value: string) => {
       await handleConfigSet(key, value);
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 
   // config delete <key>
@@ -165,13 +165,13 @@ export function createConfigCommand(): Command {
     .description('Reset a configuration value to default')
     .action(async (key: string) => {
       await handleConfigDelete(key);
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 
   // Default action (show list if no subcommand)
   command.action(async () => {
     await handleConfigList();
-    throw new CLIError('', 0);
+    // Handler completes normally = success (exit 0)
   });
 
   return command;

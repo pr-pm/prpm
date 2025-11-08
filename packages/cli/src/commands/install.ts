@@ -770,7 +770,8 @@ export function createInstallCommand(): Command {
           subtype: options.subtype as Subtype | undefined,
           frozenLockfile: options.frozenLockfile
         });
-        throw new CLIError('', 0);
+        // Handler completes normally = success (exit 0)
+        return;
       }
 
       await handleInstall(packageSpec, {
@@ -779,7 +780,7 @@ export function createInstallCommand(): Command {
         subtype: options.subtype as Subtype | undefined,
         frozenLockfile: options.frozenLockfile
       });
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 
   return command;

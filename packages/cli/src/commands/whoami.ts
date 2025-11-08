@@ -84,6 +84,6 @@ export function createWhoamiCommand(): Command {
     .description('Show current logged-in user')
     .action(async () => {
       await handleWhoami();
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }

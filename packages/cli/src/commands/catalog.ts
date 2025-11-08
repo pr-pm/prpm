@@ -428,6 +428,6 @@ export function createCatalogCommand(): Command {
     .option('--dry-run', 'Show what would be cataloged without making changes')
     .action(async (directories: string[], options: { output?: string; append?: boolean; dryRun?: boolean }) => {
       await handleCatalog(directories, options);
-      throw new CLIError('', 0);
+      // Handler completes normally = success (exit 0)
     });
 }
