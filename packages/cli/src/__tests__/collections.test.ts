@@ -2,22 +2,30 @@
  * Tests for collections command
  */
 
-import { handleCollectionsList, handleCollectionInfo, handleCollectionPublish } from '../commands/collections';
+import { handleCollectionsList, handleCollectionInfo, handleCollectionPublish, handleCollectionInstall } from '../commands/collections';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { mkdtemp, writeFile, rm } from 'fs/promises';
+import { mkdtemp, writeFile, rm, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { handleInstall } from '../commands/install';
 import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
 jest.mock('../core/user-config');
+jest.mock('../commands/install');
 jest.mock('../core/telemetry', () => ({
   telemetry: {
     track: jest.fn(),
     shutdown: jest.fn(),
   },
+}));
+jest.mock('../core/lockfile', () => ({
+  readLockfile: jest.fn().mockResolvedValue(null),
+  writeLockfile: jest.fn(),
+  createLockfile: jest.fn().mockReturnValue({ packages: {}, collections: {} }),
+  addCollectionToLockfile: jest.fn(),
 }));
 
 describe('collections command', () => {
@@ -674,6 +682,208 @@ describe('collections command', () => {
             expect.objectContaining({ packageId: 'pkg-2', required: true }),
           ],
         })
+      );
+    });
+  });
+
+  describe('handleCollectionInstall', () => {
+    const mockInstallCollection = {
+      collection: {
+        id: 'uuid-test-coll',
+        scope: 'official',
+        name_slug: 'test-collection',
+        name: 'Test Collection',
+        description: 'A test collection',
+        version: '1.0.0',
+        author: 'prpm',
+        official: true,
+        verified: true,
+        packages: [],
+        downloads: 100,
+        stars: 10,
+        package_count: 2,
+      },
+      packagesToInstall: [
+        {
+          packageId: '@prpm/pkg1',
+          version: '1.0.0',
+          format: 'cursor',
+          required: true,
+        },
+        {
+          packageId: '@prpm/pkg2',
+          version: '2.0.0',
+          format: 'cursor',
+          required: false,
+        },
+      ],
+      totalPackages: 2,
+      requiredPackages: 1,
+      optionalPackages: 1,
+    };
+
+    beforeEach(() => {
+      mockClient.installCollection = jest.fn().mockResolvedValue(mockInstallCollection);
+      (handleInstall as jest.Mock).mockResolvedValue(undefined);
+    });
+
+    it('should auto-detect format when no --as flag is provided', async () => {
+      // Create .claude directory to simulate existing Claude setup
+      await mkdir(join(testDir, '.claude'), { recursive: true });
+
+      await handleCollectionInstall('test-collection', {});
+
+      // Verify handleInstall was called WITHOUT 'as' parameter for auto-detection
+      expect(handleInstall).toHaveBeenCalledWith(
+        '@prpm/pkg1@1.0.0',
+        expect.objectContaining({
+          fromCollection: expect.any(Object),
+          // Should NOT have 'as' property to allow auto-detection
+        })
+      );
+
+      expect(handleInstall).toHaveBeenCalledWith(
+        '@prpm/pkg2@2.0.0',
+        expect.objectContaining({
+          fromCollection: expect.any(Object),
+          // Should NOT have 'as' property to allow auto-detection
+        })
+      );
+
+      // Verify 'as' is not set
+      const firstCall = (handleInstall as jest.Mock).mock.calls[0][1];
+      expect(firstCall).not.toHaveProperty('as');
+    });
+
+    it('should respect explicit --as flag when provided', async () => {
+      await handleCollectionInstall('test-collection', {
+        format: 'claude',
+      });
+
+      // Verify handleInstall was called WITH 'as' parameter set to 'claude'
+      expect(handleInstall).toHaveBeenCalledWith(
+        '@prpm/pkg1@1.0.0',
+        expect.objectContaining({
+          as: 'claude',
+          fromCollection: expect.any(Object),
+        })
+      );
+
+      expect(handleInstall).toHaveBeenCalledWith(
+        '@prpm/pkg2@2.0.0',
+        expect.objectContaining({
+          as: 'claude',
+          fromCollection: expect.any(Object),
+        })
+      );
+    });
+
+    it('should install all packages in collection', async () => {
+      await handleCollectionInstall('test-collection', {});
+
+      expect(handleInstall).toHaveBeenCalledTimes(2);
+      expect(handleInstall).toHaveBeenNthCalledWith(
+        1,
+        '@prpm/pkg1@1.0.0',
+        expect.any(Object)
+      );
+      expect(handleInstall).toHaveBeenNthCalledWith(
+        2,
+        '@prpm/pkg2@2.0.0',
+        expect.any(Object)
+      );
+    });
+
+    it('should handle scoped collection names', async () => {
+      await handleCollectionInstall('@official/test-collection', {});
+
+      expect(mockClient.installCollection).toHaveBeenCalledWith({
+        scope: 'official',
+        id: 'test-collection',
+        version: undefined,
+        format: undefined,
+        skipOptional: undefined,
+      });
+    });
+
+    it('should handle collection names without scope', async () => {
+      await handleCollectionInstall('test-collection', {});
+
+      expect(mockClient.installCollection).toHaveBeenCalledWith({
+        scope: 'collection',
+        id: 'test-collection',
+        version: undefined,
+        format: undefined,
+        skipOptional: undefined,
+      });
+    });
+
+    it('should handle specific version', async () => {
+      await handleCollectionInstall('test-collection@2.0.0', {});
+
+      expect(mockClient.installCollection).toHaveBeenCalledWith({
+        scope: 'collection',
+        id: 'test-collection',
+        version: '2.0.0',
+        format: undefined,
+        skipOptional: undefined,
+      });
+    });
+
+    it('should skip optional packages when skipOptional is true', async () => {
+      await handleCollectionInstall('test-collection', {
+        skipOptional: true,
+      });
+
+      expect(mockClient.installCollection).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skipOptional: true,
+        })
+      );
+    });
+
+    it('should continue installing after optional package failure', async () => {
+      (handleInstall as jest.Mock)
+        .mockResolvedValueOnce(undefined) // First package succeeds
+        .mockRejectedValueOnce(new Error('Install failed')); // Second package fails
+
+      await handleCollectionInstall('test-collection', {});
+
+      // Both packages should be attempted
+      expect(handleInstall).toHaveBeenCalledTimes(2);
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Install failed')
+      );
+    });
+
+    it('should fail if required package installation fails', async () => {
+      // Make the first (required) package fail
+      (handleInstall as jest.Mock).mockRejectedValueOnce(new Error('Required package failed'));
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+        throw new Error(`Process exited with code ${code}`);
+      });
+
+      await expect(handleCollectionInstall('test-collection', {})).rejects.toThrow('Process exited');
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to install required package')
+      );
+
+      mockExit.mockRestore();
+    });
+
+    it('should perform dry run without installing', async () => {
+      await handleCollectionInstall('test-collection', {
+        dryRun: true,
+      });
+
+      // Should not call handleInstall in dry run mode
+      expect(handleInstall).not.toHaveBeenCalled();
+
+      // Should display what would be installed
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Dry run - would install')
       );
     });
   });
