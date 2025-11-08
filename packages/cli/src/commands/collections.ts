@@ -554,8 +554,10 @@ export async function handleCollectionInstall(
         console.log(`\n  ${progress} Installing ${pkg.packageId}@${pkg.version}...`);
 
         // Only pass 'as' format if user explicitly requested it via --as flag
-        // Otherwise, let handleInstall auto-detect the format based on existing directories
-        // This ensures collections respect existing .claude or .cursor directories
+        // Otherwise, handleInstall will use this priority order:
+        // 1. defaultFormat from .prpmrc config
+        // 2. Auto-detection based on existing directories
+        // 3. Package native format
         const installOptions: any = {
           fromCollection: {
             scope,
