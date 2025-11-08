@@ -776,7 +776,6 @@ export function createInitCommand(): Command {
     .action(async (options: InitOptions) => {
       try {
         await initPackage(options);
-        // Handler completes normally = success (exit 0)
       } catch (error) {
         console.error('\n❌ Error:', error instanceof Error ? error.message : error);
         throw new CLIError('\n❌ Error: ' + (error instanceof Error ? error.message : error), 1);

@@ -308,6 +308,5 @@ export function createLoginCommand(): Command {
     .option('--token <token>', 'Login with a personal access token')
     .action(async (options: LoginOptions) => {
       await handleLogin(options);
-      // Handler completes normally = success (exit 0)
     });
 }

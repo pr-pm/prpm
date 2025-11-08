@@ -897,6 +897,5 @@ export function createPublishCommand(): Command {
     .option('--collection <id>', 'Publish only a specific collection from manifest')
     .action(async (options: PublishOptions) => {
       await handlePublish(options);
-      // Handler completes normally = success (exit 0)
     });
 }

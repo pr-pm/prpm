@@ -250,7 +250,6 @@ Note: Purchased credits are one-time and never expire, unlike monthly credits.
     )
     .action(async (options: { package?: string }) => {
       await handleBuyCredits(options);
-      // Handler completes normally = success (exit 0)
     });
 
   return command;

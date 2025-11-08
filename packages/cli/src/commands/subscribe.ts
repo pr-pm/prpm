@@ -139,7 +139,6 @@ export async function handleSubscribe(): Promise<void> {
       console.log(`   🚀 Early access to new features`);
       console.log('\n💡 Manage your subscription at:');
       console.log('   https://prpm.dev/settings/billing');
-      // Handler completes normally = success (exit 0)
       return;
     }
 
@@ -236,7 +235,6 @@ Note: You can cancel anytime from https://prpm.dev/settings/billing
     )
     .action(async () => {
       await handleSubscribe();
-      // Handler completes normally = success (exit 0)
     });
 
   return command;

@@ -182,7 +182,6 @@ export async function handleIndex(options: { verbose?: boolean } = {}): Promise<
     console.error(`❌ Failed to index packages: ${error}`);
     throw new CLIError(`❌ Failed to index packages: ${error}`, 1);
   }
-  // Handler completes normally = success (exit 0)
 }
 
 /**

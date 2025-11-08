@@ -770,7 +770,6 @@ export function createInstallCommand(): Command {
           subtype: options.subtype as Subtype | undefined,
           frozenLockfile: options.frozenLockfile
         });
-        // Handler completes normally = success (exit 0)
         return;
       }
 
@@ -780,7 +779,6 @@ export function createInstallCommand(): Command {
         subtype: options.subtype as Subtype | undefined,
         frozenLockfile: options.frozenLockfile
       });
-      // Handler completes normally = success (exit 0)
     });
 
   return command;

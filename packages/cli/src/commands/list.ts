@@ -199,7 +199,6 @@ export function createListCommand(): Command {
     .description('List all installed prompt packages')
     .action(async () => {
       await handleList();
-      // Handler completes normally = success (exit 0)
     });
 
   return command;

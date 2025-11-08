@@ -460,7 +460,6 @@ export function createSearchCommand(): Command {
       }
 
       await handleSearch(query || '', { format, subtype, author, language: options.language, framework: options.framework, limit, page, interactive: options.interactive });
-      // Handler completes normally = success (exit 0)
     });
 
   return command;

@@ -82,7 +82,6 @@ export function createInfoCommand(): Command {
     .argument('<package>', 'Package ID to get information about')
     .action(async (packageId: string) => {
       await handleInfo(packageId);
-      // Handler completes normally = success (exit 0)
     });
 
   return command;
