@@ -8,6 +8,7 @@ import { getConfig } from '../core/user-config';
 import { mkdtemp, writeFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -232,17 +233,11 @@ describe('collections command', () => {
     it('should handle errors', async () => {
       mockClient.getCollections.mockRejectedValue(new Error('Network error'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionsList({})).rejects.toThrow('Process exited');
+      await expect(handleCollectionsList({})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Failed to list collections')
       );
-
-      mockExit.mockRestore();
     });
   });
 
@@ -375,31 +370,17 @@ describe('collections command', () => {
     // Actual: "Cannot read properties of undefined (reading 'icon')"
     // Need to mock getCollection to return proper error or update validation logic
     it.skip('should handle invalid collection format', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionInfo('invalid-format')).rejects.toThrow('Process exited');
+      await expect(handleCollectionInfo('invalid-format')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Invalid collection format')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle collection not found', async () => {
       mockClient.getCollection.mockRejectedValue(new Error('Collection not found'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionInfo('@official/nonexistent')).rejects.toThrow(
-        'Process exited'
-      );
-
-      mockExit.mockRestore();
+      await expect(handleCollectionInfo('@official/nonexistent')).rejects.toThrow(CLIError);
     });
   });
 
@@ -425,27 +406,15 @@ describe('collections command', () => {
         token: undefined,
       });
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Authentication required')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should validate collection.json exists', async () => {
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
     });
 
     it('should validate required fields', async () => {
@@ -458,17 +427,11 @@ describe('collections command', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Missing required fields')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should validate collection id format', async () => {
@@ -482,17 +445,11 @@ describe('collections command', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection id must be lowercase alphanumeric')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should validate name length', async () => {
@@ -506,17 +463,11 @@ describe('collections command', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection name must be at least 3 characters')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should validate description length', async () => {
@@ -530,17 +481,11 @@ describe('collections command', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection description must be at least 10 characters')
       );
-
-      mockExit.mockRestore();
     });
 
     // TODO: Fix flaky test - passes locally but fails in CI
@@ -558,17 +503,11 @@ describe('collections command', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection must include at least one package')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should validate each package has packageId', async () => {
@@ -582,20 +521,14 @@ describe('collections command', () => {
         })
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Package at index 0 is missing packageId')
       );
-
-      mockExit.mockRestore();
     });
 
-    it.skip('should successfully publish valid collection', async () => {
+    it('should successfully publish valid collection', async () => {
       await writeFile(
         join(testDir, 'collection.json'),
         JSON.stringify({
@@ -686,13 +619,7 @@ describe('collections command', () => {
     it('should handle invalid JSON', async () => {
       await writeFile(join(testDir, 'collection.json'), 'invalid json {]');
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
     });
 
     it('should handle API errors', async () => {
@@ -710,17 +637,11 @@ describe('collections command', () => {
         new Error('Collection already exists')
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish('./collection.json')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection already exists')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should set required to true by default', async () => {

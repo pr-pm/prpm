@@ -8,10 +8,9 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { createInitCommand } from '../commands/init';
+import { CLIError } from '../core/errors';
 
-// TODO KJG: Init command calls process.exit(1) which crashes Jest workers.
-// Need to either mock process.exit or refactor init command to throw errors instead.
-describe.skip('prpm init command', () => {
+describe('prpm init command', () => {
   let testDir: string;
 
   beforeEach(async () => {
@@ -32,8 +31,15 @@ describe.skip('prpm init command', () => {
     it('should create prpm.json with defaults', async () => {
       const command = createInitCommand();
 
-      // Run init with --yes flag
-      await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      // Run init with --yes flag - expect CLIError with code 0 (success)
+      try {
+        await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      } catch (err) {
+        // CLIError with code 0 is expected for successful completion
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       // Check prpm.json was created
       const manifestPath = join(testDir, 'prpm.json');
@@ -58,7 +64,13 @@ describe.skip('prpm init command', () => {
     it('should create example files for cursor format', async () => {
       const command = createInitCommand();
 
-      await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      try {
+        await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      } catch (err) {
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       // Check that .cursorrules was created
       const cursorrulesPath = join(testDir, '.cursorrules');
@@ -73,7 +85,13 @@ describe.skip('prpm init command', () => {
       const command = createInitCommand();
 
       // Run init once
-      await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      try {
+        await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      } catch (err) {
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       // Try to run again without --force
       const command2 = createInitCommand();
@@ -86,13 +104,24 @@ describe.skip('prpm init command', () => {
       const command = createInitCommand();
 
       // Run init once
-      await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      try {
+        await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      } catch (err) {
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       // Run again with --force
       const command2 = createInitCommand();
-      await expect(
-        command2.parseAsync(['node', 'prpm', 'init', '--yes', '--force'])
-      ).resolves.not.toThrow();
+      try {
+        await command2.parseAsync(['node', 'prpm', 'init', '--yes', '--force']);
+      } catch (err) {
+        // CLIError with code 0 is expected for successful completion
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       // Verify prpm.json still exists
       const manifestPath = join(testDir, 'prpm.json');
@@ -103,7 +132,13 @@ describe.skip('prpm init command', () => {
   describe('manifest structure', () => {
     it('should create valid JSON', async () => {
       const command = createInitCommand();
-      await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      try {
+        await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      } catch (err) {
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       const manifestPath = join(testDir, 'prpm.json');
       const content = await readFile(manifestPath, 'utf-8');
@@ -114,7 +149,13 @@ describe.skip('prpm init command', () => {
 
     it('should format JSON with 2-space indentation', async () => {
       const command = createInitCommand();
-      await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      try {
+        await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      } catch (err) {
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       const manifestPath = join(testDir, 'prpm.json');
       const content = await readFile(manifestPath, 'utf-8');
@@ -126,7 +167,13 @@ describe.skip('prpm init command', () => {
 
     it('should end with newline', async () => {
       const command = createInitCommand();
-      await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      try {
+        await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      } catch (err) {
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       const manifestPath = join(testDir, 'prpm.json');
       const content = await readFile(manifestPath, 'utf-8');
@@ -138,7 +185,13 @@ describe.skip('prpm init command', () => {
   describe('README generation', () => {
     it('should create README.md with package info', async () => {
       const command = createInitCommand();
-      await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      try {
+        await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      } catch (err) {
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       const readmePath = join(testDir, 'README.md');
       expect(existsSync(readmePath)).toBe(true);
@@ -160,7 +213,13 @@ describe.skip('prpm init command', () => {
       await writeFile(readmePath, existingContent, 'utf-8');
 
       const command = createInitCommand();
-      await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      try {
+        await command.parseAsync(['node', 'prpm', 'init', '--yes']);
+      } catch (err) {
+        if (err instanceof CLIError && err.exitCode !== 0) {
+          throw err;
+        }
+      }
 
       // Check README was not overwritten
       const content = await readFile(readmePath, 'utf-8');
