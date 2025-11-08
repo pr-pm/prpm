@@ -14,6 +14,7 @@ import {
   addCollectionToLockfile,
   getCollectionFromLockfile,
 } from '../core/lockfile';
+import { CLIError } from '../core/errors';
 
 /**
  * Search collections by query
@@ -68,7 +69,9 @@ export async function handleCollectionsSearch(
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
-        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        if (c.author) {
+          console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        }
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -83,7 +86,9 @@ export async function handleCollectionsSearch(
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
-        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        if (c.author) {
+          console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        }
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -114,7 +119,7 @@ export async function handleCollectionsSearch(
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to search collections: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -163,7 +168,9 @@ export async function handleCollectionsList(options: {
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
-        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        if (c.author) {
+          console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        }
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -178,7 +185,9 @@ export async function handleCollectionsList(options: {
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
-        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        if (c.author) {
+          console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        }
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -216,7 +225,7 @@ export async function handleCollectionsList(options: {
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to list collections: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -268,7 +277,9 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
     console.log(`   Stars: ${collection.stars.toLocaleString()}`);
     console.log(`   Version: ${collection.version}`);
     console.log(`   Packages: ${collection.packages.length}`);
-    console.log(`   Author: ${collection.author}${collection.verified ? ' ✓' : ''}`);
+    if (collection.author) {
+      console.log(`   Author: ${collection.author}${collection.verified ? ' ✓' : ''}`);
+    }
     if (collection.category) {
       console.log(`   Category: ${collection.category}`);
     }
@@ -346,7 +357,7 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to get collection info: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -367,7 +378,7 @@ export async function handleCollectionPublish(
     // Check authentication
     if (!config.token) {
       console.error('\n❌ Authentication required. Run `prpm login` first.\n');
-      process.exit(1);
+      throw new CLIError('\n❌ Authentication required. Run `prpm login` first.', 1);
     }
 
     console.log('📦 Publishing collection...\n');
@@ -462,7 +473,7 @@ export async function handleCollectionPublish(
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to publish collection: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -621,7 +632,7 @@ export async function handleCollectionInstall(
         failed: packagesFailed,
       },
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to install collection: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }

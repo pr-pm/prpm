@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import { PostHog } from 'posthog-node';
+import { getConfig } from './user-config';
 
 export interface TelemetryEvent {
   timestamp: string;
@@ -29,14 +30,38 @@ class Telemetry {
   private events: TelemetryEvent[] = [];
   private readonly maxEvents = 100; // Keep only last 100 events locally
   private posthog: PostHog | null = null;
+  private userConfigChecked = false;
+  private userTelemetryEnabled = true; // Default to true until checked
 
   constructor() {
     this.configPath = path.join(os.homedir(), '.prpm', 'telemetry.json');
     this.config = this.loadConfig();
-    this.initializePostHog();
   }
 
-  private initializePostHog(): void {
+  private async checkUserConfig(): Promise<void> {
+    if (this.userConfigChecked) return;
+
+    try {
+      const userConfig = await getConfig();
+      this.userTelemetryEnabled = userConfig.telemetryEnabled ?? true;
+    } catch (error) {
+      // If we can't load user config, default to enabled
+      this.userTelemetryEnabled = true;
+    }
+
+    this.userConfigChecked = true;
+  }
+
+  private async initializePostHog(): Promise<void> {
+    // Check user config first
+    await this.checkUserConfig();
+
+    // Only initialize if telemetry is enabled in user config
+    if (!this.userTelemetryEnabled) {
+      this.posthog = null;
+      return;
+    }
+
     try {
       this.posthog = new PostHog('phc_aO5lXLILeylHfb1ynszVwKbQKSzO91UGdXNhN5Q0Snl', {
         host: 'https://app.posthog.com',
@@ -79,6 +104,12 @@ class Telemetry {
   }
 
   async track(event: Omit<TelemetryEvent, 'timestamp' | 'version' | 'platform' | 'arch' | 'nodeVersion'>): Promise<void> {
+    // Check user config first
+    await this.checkUserConfig();
+
+    // Return early if telemetry is disabled in user config
+    if (!this.userTelemetryEnabled) return;
+
     if (!this.config.enabled) return;
 
     const fullEvent: TelemetryEvent = {
@@ -117,6 +148,11 @@ class Telemetry {
   }
 
   private async sendToAnalytics(event: TelemetryEvent): Promise<void> {
+    // Initialize PostHog if needed (this will check user config)
+    if (!this.posthog && this.userTelemetryEnabled) {
+      await this.initializePostHog();
+    }
+
     // Send to PostHog
     await this.sendToPostHog(event);
   }
@@ -131,8 +167,9 @@ class Telemetry {
     await this.saveConfig();
   }
 
-  isEnabled(): boolean {
-    return this.config.enabled;
+  async isEnabled(): Promise<boolean> {
+    await this.checkUserConfig();
+    return this.userTelemetryEnabled && this.config.enabled;
   }
 
   async getStats(): Promise<{ totalEvents: number; lastEvent?: string }> {

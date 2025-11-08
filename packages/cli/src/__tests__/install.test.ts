@@ -8,6 +8,7 @@ import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
 import { readLockfile, writeLockfile, addPackage, addToLockfile, createLockfile } from '../core/lockfile';
 import { gzipSync } from 'zlib';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -19,6 +20,8 @@ jest.mock('../core/filesystem', () => ({
   deleteFile: jest.fn(),
   fileExists: jest.fn(() => Promise.resolve(false)),
   generateId: jest.fn((name) => name),
+  stripAuthorNamespace: jest.fn((name) => name.split('/').pop() || name),
+  autoDetectFormat: jest.fn(() => Promise.resolve('cursor')),
 }));
 jest.mock('../core/lockfile', () => ({
   readLockfile: jest.fn(),
@@ -44,6 +47,7 @@ describe('install command', () => {
     getPackage: jest.fn(),
     getPackageVersion: jest.fn(),
     downloadPackage: jest.fn(),
+    trackDownload: jest.fn(),
   };
 
   const mockConfig = {
@@ -61,15 +65,11 @@ describe('install command', () => {
     (addPackage as jest.Mock).mockResolvedValue(undefined);
     (addToLockfile as jest.Mock).mockImplementation(() => {});
     (createLockfile as jest.Mock).mockReturnValue({ packages: {} });
+    mockClient.trackDownload.mockResolvedValue(undefined);
 
     // Mock console methods
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
-
-    // Mock process.exit to prevent actual exit during tests
-    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-      throw new Error(`Process exited with code ${code}`);
-    }) as unknown);
   });
 
   afterEach(() => {
@@ -77,7 +77,7 @@ describe('install command', () => {
     jest.restoreAllMocks();
   });
 
-  describe.skip('basic installation', () => {
+  describe('basic installation', () => {
     it('should install package successfully', async () => {
       const mockPackage = {
         id: 'test-package',
@@ -158,25 +158,13 @@ describe('install command', () => {
     it('should handle package not found', async () => {
       mockClient.getPackage.mockRejectedValue(new Error('Package not found'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleInstall('nonexistent', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleInstall('nonexistent', {})).rejects.toThrow(CLIError);
     });
 
     it('should handle network errors', async () => {
       mockClient.getPackage.mockRejectedValue(new Error('Network error'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleInstall('test-package', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleInstall('test-package', {})).rejects.toThrow(CLIError);
     });
 
     it('should handle download failures', async () => {
@@ -196,17 +184,11 @@ describe('install command', () => {
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.downloadPackage.mockRejectedValue(new Error('Download failed'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleInstall('test-package', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleInstall('test-package', {})).rejects.toThrow(CLIError);
     });
   });
 
-  describe.skip('lockfile handling', () => {
+  describe('lockfile handling', () => {
     it('should create lockfile entry', async () => {
       const mockPackage = {
         id: 'test-package',
@@ -241,7 +223,7 @@ describe('install command', () => {
         },
       };
 
-      const { getLockedVersion } = require('../core/lockfile');
+      const { getLockedVersion } = jest.requireMock('../core/lockfile');
       (readLockfile as jest.Mock).mockResolvedValue(mockLockfile);
       (getLockedVersion as jest.Mock).mockReturnValue('1.0.0');
 
@@ -249,6 +231,7 @@ describe('install command', () => {
         id: 'test-package',
         name: 'test-package',
         type: 'cursor',
+        format: 'cursor',
         tags: [],
         total_downloads: 100,
         verified: true,
@@ -263,7 +246,7 @@ describe('install command', () => {
       mockClient.getPackageVersion.mockResolvedValue(mockVersion);
       mockClient.downloadPackage.mockResolvedValue(gzipSync('test-content'));
 
-      await handleInstall('test-package', { frozenLockfile: true });
+      await handleInstall('test-package', { frozenLockfile: true, force: true });
 
       expect(mockClient.getPackageVersion).toHaveBeenCalledWith('test-package', '1.0.0');
     });
@@ -271,24 +254,19 @@ describe('install command', () => {
     it('should fail on frozen lockfile without entry', async () => {
       (readLockfile as jest.Mock).mockResolvedValue({ packages: {} });
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
       await expect(
         handleInstall('test-package', { frozenLockfile: true })
-      ).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      ).rejects.toThrow(CLIError);
     });
   });
 
-  describe.skip('type overrides', () => {
+  describe('type overrides', () => {
     it('should use format parameter for format conversion', async () => {
       const mockPackage = {
         id: 'test-package',
         name: 'test-package',
         type: 'cursor',
+        format: 'cursor',  // Package's native format
         tags: [],
         total_downloads: 100,
         verified: true,
@@ -303,12 +281,19 @@ describe('install command', () => {
 
       await handleInstall('test-package', { as: 'claude' });
 
+      // Verify the download was requested with the conversion format
+      expect(mockClient.downloadPackage).toHaveBeenCalledWith(
+        expect.any(String),
+        { format: 'claude' }
+      );
+
+      // Verify lockfile stores the package's original format, not the conversion format
       expect(addToLockfile).toHaveBeenCalledWith(
         expect.any(Object),
         'test-package',
         expect.objectContaining({
-          type: 'cursor',  // Type from package, not from --as
-          format: 'claude',  // Format from --as parameter
+          format: 'cursor',  // Package's native format is stored in lockfile
+          version: '1.0.0',
         })
       );
     });

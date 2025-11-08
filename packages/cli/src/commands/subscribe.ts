@@ -8,6 +8,7 @@ import { telemetry } from '../core/telemetry';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { getWebappUrl } from '../utils/webapp-url';
+import { CLIError } from '../core/errors';
 
 const execAsync = promisify(exec);
 
@@ -123,7 +124,7 @@ export async function handleSubscribe(): Promise<void> {
       console.error('❌ Authentication required');
       console.log('\n💡 Please login first:');
       console.log('   prpm login');
-      process.exit(1);
+      throw new CLIError('❌ Authentication required', 1);
     }
 
     // Get current status
@@ -138,7 +139,7 @@ export async function handleSubscribe(): Promise<void> {
       console.log(`   🚀 Early access to new features`);
       console.log('\n💡 Manage your subscription at:');
       console.log('   https://prpm.dev/settings/billing');
-      process.exit(0);
+      return;
     }
 
     console.log('\n✨ Subscribe to PRPM+ and get:');
@@ -179,7 +180,7 @@ export async function handleSubscribe(): Promise<void> {
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Subscription failed: ${error}`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Subscription failed: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'subscribe',
@@ -234,7 +235,6 @@ Note: You can cancel anytime from https://prpm.dev/settings/billing
     )
     .action(async () => {
       await handleSubscribe();
-      process.exit(0);
     });
 
   return command;
