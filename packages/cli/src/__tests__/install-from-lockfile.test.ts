@@ -116,7 +116,7 @@ describe('install from lockfile', () => {
   });
 
   describe('single package installation', () => {
-    it.skip('should install package from lockfile', async () => {
+    it('should install package from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -161,7 +161,7 @@ describe('install from lockfile', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 1/1'));
     });
 
-    it.skip('should preserve format from lockfile', async () => {
+    it('should preserve format from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -202,7 +202,7 @@ describe('install from lockfile', () => {
   });
 
   describe('multiple packages installation', () => {
-    it.skip('should install all packages from lockfile', async () => {
+    it('should install all packages from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -259,7 +259,7 @@ describe('install from lockfile', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 3/3'));
     });
 
-    it.skip('should handle partial failures gracefully', async () => {
+    it('should handle partial failures gracefully', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -312,7 +312,7 @@ describe('install from lockfile', () => {
   });
 
   describe('format override', () => {
-    it.skip('should respect --as option to override lockfile format', async () => {
+    it('should respect --as option to override lockfile format', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -353,7 +353,7 @@ describe('install from lockfile', () => {
   });
 
   describe('force reinstall', () => {
-    it.skip('should force reinstall packages from lockfile', async () => {
+    it('should force reinstall packages from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',

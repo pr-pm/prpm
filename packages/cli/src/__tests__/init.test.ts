@@ -9,12 +9,23 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import { createInitCommand } from '../commands/init';
 
-// TODO KJG: Init command calls process.exit(1) which crashes Jest workers.
-// Need to either mock process.exit or refactor init command to throw errors instead.
-describe.skip('prpm init command', () => {
+// Fixed: Added process.exit mock to prevent Jest worker crashes
+describe('prpm init command', () => {
   let testDir: string;
+  let exitMock: jest.SpyInstance;
+  let consoleLogMock: jest.SpyInstance;
+  let consoleErrorMock: jest.SpyInstance;
 
   beforeEach(async () => {
+    // Mock process.exit to prevent actual exit
+    exitMock = jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+      throw new Error(`Process exited with code ${code}`);
+    }) as any);
+
+    // Mock console methods to reduce noise in test output
+    consoleLogMock = jest.spyOn(console, 'log').mockImplementation();
+    consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+
     // Create temporary directory for each test
     testDir = await mkdtemp(join(tmpdir(), 'prpm-init-test-'));
     // Change to test directory
@@ -22,6 +33,11 @@ describe.skip('prpm init command', () => {
   });
 
   afterEach(async () => {
+    // Restore mocks
+    exitMock.mockRestore();
+    consoleLogMock.mockRestore();
+    consoleErrorMock.mockRestore();
+
     // Clean up test directory
     if (testDir && existsSync(testDir)) {
       await rm(testDir, { recursive: true, force: true });

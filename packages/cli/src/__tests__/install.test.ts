@@ -77,7 +77,7 @@ describe('install command', () => {
     jest.restoreAllMocks();
   });
 
-  describe.skip('basic installation', () => {
+  describe('basic installation', () => {
     it('should install package successfully', async () => {
       const mockPackage = {
         id: 'test-package',
@@ -206,7 +206,7 @@ describe('install command', () => {
     });
   });
 
-  describe.skip('lockfile handling', () => {
+  describe('lockfile handling', () => {
     it('should create lockfile entry', async () => {
       const mockPackage = {
         id: 'test-package',
@@ -283,7 +283,7 @@ describe('install command', () => {
     });
   });
 
-  describe.skip('type overrides', () => {
+  describe('type overrides', () => {
     it('should use format parameter for format conversion', async () => {
       const mockPackage = {
         id: 'test-package',
