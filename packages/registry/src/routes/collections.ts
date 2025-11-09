@@ -817,4 +817,116 @@ export async function collectionRoutes(server: FastifyInstance) {
       });
     }
   });
+
+  /**
+   * GET /api/v1/collections/ssg-data
+   * Get all public collections for static site generation
+   * Used by webapp during build for generateStaticParams
+   * REQUIRES: X-SSG-Token header for authentication
+   */
+  server.get(
+    '/ssg-data',
+    {
+      schema: {
+        description: 'Get all collections for SSG (requires X-SSG-Token header)',
+        headers: {
+          type: 'object',
+          properties: {
+            'x-ssg-token': { type: 'string' },
+          },
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', default: 1000 },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{ Querystring: { limit?: number } }>, reply: FastifyReply) => {
+      try {
+        // Authenticate SSG token
+        const ssgToken = request.headers['x-ssg-token'];
+        const expectedToken = process.env.SSG_DATA_TOKEN;
+
+        if (!expectedToken) {
+          server.log.error('SSG_DATA_TOKEN environment variable not configured');
+          return reply.code(500).send({
+            error: 'Internal Server Error',
+            message: 'SSG endpoint not properly configured',
+          });
+        }
+
+        if (!ssgToken || ssgToken !== expectedToken) {
+          server.log.warn({ ip: request.ip }, 'Unauthorized SSG data access attempt');
+          return reply.code(401).send({
+            error: 'Unauthorized',
+            message: 'Valid X-SSG-Token header required',
+          });
+        }
+
+        const { limit = 1000 } = request.query;
+
+        server.log.info({ limit }, 'Fetching collections SSG data');
+
+        const result = await server.pg.query(
+          `SELECT
+            c.id,
+            c.scope,
+            c.name,
+            c.name_slug,
+            c.description,
+            c.category,
+            c.framework,
+            c.tags,
+            c.icon,
+            c.official,
+            c.verified,
+            c.downloads,
+            c.stars,
+            c.created_at,
+            c.updated_at,
+            u.username as author_username
+          FROM collections c
+          LEFT JOIN users u ON c.author_id = u.id
+          ORDER BY c.downloads DESC
+          LIMIT $1`,
+          [limit]
+        );
+
+        const collections = result.rows.map((row: any) => ({
+          id: row.id,
+          scope: row.scope,
+          name: row.name,
+          name_slug: row.name_slug,
+          description: row.description,
+          category: row.category,
+          framework: row.framework,
+          tags: row.tags || [],
+          icon: row.icon,
+          official: row.official || false,
+          verified: row.verified || false,
+          downloads: row.downloads || 0,
+          stars: row.stars || 0,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          author: row.author_username ? { username: row.author_username } : null,
+        }));
+
+        server.log.info({ count: collections.length }, 'Collections SSG data fetched successfully');
+
+        return {
+          collections,
+          total: collections.length,
+          generated_at: new Date().toISOString(),
+        };
+      } catch (error) {
+        server.log.error(error, 'Failed to fetch collections SSG data');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: 'Failed to fetch collections SSG data',
+        });
+      }
+    }
+  );
 }

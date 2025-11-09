@@ -34,8 +34,9 @@ export default function SuggestedTestInputs({ packageId, onInputSelect }: Sugges
         if (selectedCategory) params.append('category', selectedCategory);
         if (selectedDifficulty) params.append('difficulty', selectedDifficulty);
 
+        const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111';
         const response = await fetch(
-          `/api/v1/suggested-inputs/package/${packageId}?${params.toString()}`
+          `${registryUrl}/api/v1/suggested-inputs/package/${packageId}?${params.toString()}`
         );
 
         if (response.ok) {
@@ -54,8 +55,9 @@ export default function SuggestedTestInputs({ packageId, onInputSelect }: Sugges
 
   const handleTryThis = async (input: SuggestedInput) => {
     try {
+      const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111';
       // Record usage
-      await fetch('/api/v1/suggested-inputs/record-usage', {
+      await fetch(`${registryUrl}/api/v1/suggested-inputs/record-usage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ suggested_input_id: input.id }),

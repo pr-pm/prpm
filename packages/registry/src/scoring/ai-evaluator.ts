@@ -704,3 +704,76 @@ Return ONLY the JSON object, nothing else.`,
     return {};
   }
 }
+
+/**
+ * Generate a display name for a package using AI
+ * Falls back to formatting the package name if AI is disabled or fails
+ */
+export async function generateDisplayName(
+  packageName: string,
+  description: string,
+  content: CanonicalContent | string | undefined | any,
+  server: FastifyInstance
+): Promise<string> {
+  // Fallback: format package name nicely (remove scope, capitalize words)
+  const fallbackDisplayName = packageName
+    .replace(/^@[^/]+\//, '') // Remove scope
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  if (!config.ai.evaluationEnabled || !config.ai.anthropicApiKey) {
+    return fallbackDisplayName;
+  }
+
+  try {
+    const anthropic = new Anthropic({
+      apiKey: config.ai.anthropicApiKey,
+    });
+
+    const promptText = extractPromptText(content);
+
+    const message = await anthropic.messages.create({
+      model: ANTHROPIC_MODELS.SONNET_4_5,
+      max_tokens: 100,
+      temperature: 0,
+      messages: [
+        {
+          role: 'user',
+          content: `Generate a concise, human-readable display name for this package. The display name should:
+- Be 2-5 words maximum
+- Be clear and descriptive
+- Use title case
+- NOT include version numbers, format names, or technical jargon
+- Sound natural and professional
+
+Package name: ${packageName}
+Description: ${description}
+
+Content preview (first 500 chars):
+${promptText.substring(0, 500)}
+
+Return ONLY the display name, nothing else. Example: "React TypeScript Rules" or "Python Testing Agent"`,
+        },
+      ],
+    });
+
+    const responseText = message.content[0].type === 'text'
+      ? message.content[0].text.trim()
+      : '';
+
+    // Validate the response is reasonable (not too long, not empty)
+    if (responseText && responseText.length > 0 && responseText.length <= 60 && !responseText.includes('\n')) {
+      server.log.info({ packageName, displayName: responseText }, '✅ Generated display name with AI');
+      return responseText;
+    }
+
+    server.log.warn({ packageName, responseText }, '⚠️  Invalid AI display name response, using fallback');
+    return fallbackDisplayName;
+
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    server.log.warn({ error: err.message, packageName }, '⚠️  AI display name generation failed, using fallback');
+    return fallbackDisplayName;
+  }
+}

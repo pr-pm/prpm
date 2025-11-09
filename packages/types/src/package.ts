@@ -71,6 +71,7 @@ export type PackageVisibility = 'public' | 'private' | 'unlisted';
 export interface Package {
   id: string;
   name: string;
+  display_name?: string;
   description?: string;
   author_id?: string;
   author_username?: string;

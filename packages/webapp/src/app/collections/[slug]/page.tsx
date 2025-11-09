@@ -4,9 +4,7 @@ import Link from 'next/link'
 import type { Collection } from '@pr-pm/types'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
-// During build, don't set a default S3 URL - we want to use local files only
-// Only use S3 as fallback in runtime (client-side) if explicitly configured
-const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || (typeof window !== 'undefined' ? 'https://prpm-prod-packages.s3.amazonaws.com/seo-data' : '')
+const SSG_TOKEN = process.env.SSG_DATA_TOKEN
 
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
@@ -14,52 +12,48 @@ export const dynamicParams = true
 // Generate static params for all collections
 export async function generateStaticParams() {
   try {
-    console.log(`[SSG Collections] Starting - S3_SEO_DATA_URL: ${S3_SEO_DATA_URL}`)
+    console.log(`[SSG Collections] Fetching from registry API: ${REGISTRY_URL}`)
+    console.log(`[SSG Collections] Environment check:`, {
+      SSG_TOKEN_exists: !!SSG_TOKEN,
+      SSG_TOKEN_length: SSG_TOKEN?.length || 0,
+      SSG_TOKEN_type: typeof SSG_TOKEN,
+      SSG_TOKEN_first_10: SSG_TOKEN?.substring(0, 10) || 'undefined',
+      env_keys: Object.keys(process.env).filter(k => k.includes('SSG')).join(', ') || 'none'
+    })
 
-    // Try to read from local filesystem first (for static builds with pre-downloaded data)
-    const fs = await import('fs/promises')
-    const path = await import('path')
+    if (!SSG_TOKEN) {
+      console.error('[SSG Collections] ⚠️  SSG_DATA_TOKEN environment variable not set')
+      console.error('[SSG Collections] This is REQUIRED for production builds.')
+      console.error('[SSG Collections] Available env vars:', Object.keys(process.env).filter(k => k.includes('TOKEN')))
 
-    // Check if local SEO data exists (downloaded during CI build)
-    const localPath = path.join(process.cwd(), 'public', 'seo-data', 'collections.json')
-    console.log(`[SSG Collections] Checking for local file: ${localPath}`)
-
-    let collections
-    try {
-      const fileContent = await fs.readFile(localPath, 'utf-8')
-      collections = JSON.parse(fileContent)
-      console.log(`[SSG Collections] ✅ Loaded ${collections.length} collections from local file`)
-    } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3 if URL is configured
-      if (!S3_SEO_DATA_URL) {
-        console.error(`[SSG Collections] Local file not found and S3_SEO_DATA_URL not configured`)
-        console.error(`[SSG Collections] Make sure to run prepare-ssg-data.sh before building`)
-        return []
-      }
-
-      console.log(`[SSG Collections] Local file not found, fetching from S3`)
-
-      const url = `${S3_SEO_DATA_URL}/collections.json`
-      console.log(`[SSG Collections] Fetching from: ${url}`)
-
-      const res = await fetch(url, {
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
-
-      if (!res.ok) {
-        console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections from S3`)
-        console.error(`[SSG Collections] Response headers:`, Object.fromEntries(res.headers.entries()))
-        return []
-      }
-
-      collections = await res.json()
-      console.log(`[SSG Collections] Received ${collections.length} collections from S3`)
+      // In static export mode, Next.js requires at least one path for dynamic routes
+      // Return empty array would cause: "Page is missing generateStaticParams()" error
+      // So we fail explicitly with a clear error message
+      throw new Error('SSG_DATA_TOKEN environment variable is required for static build')
     }
+
+    const url = `${REGISTRY_URL}/api/v1/collections/ssg-data`
+    const res = await fetch(url, {
+      headers: {
+        'X-SSG-Token': SSG_TOKEN,
+      },
+      next: { revalidate: 3600 } // Revalidate every hour
+    })
+
+    if (!res.ok) {
+      console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections from registry`)
+      return []
+    }
+
+    const data = await res.json()
+    const collections = data.collections || []
 
     if (!Array.isArray(collections)) {
       console.error('[SSG Collections] Invalid response format - expected array')
       return []
     }
+
+    console.log(`[SSG Collections] ✅ Loaded ${collections.length} collections from registry`)
 
     // Map to slug params
     const params = collections.map((collection: any) => ({
@@ -69,13 +63,9 @@ export async function generateStaticParams() {
     console.log(`[SSG Collections] ✅ Complete: ${params.length} collections for static generation`)
     return params
 
-  } catch (outerError) {
-    // Catch any unexpected errors and log them
-    console.error('[SSG Collections] CRITICAL ERROR in generateStaticParams:', outerError)
-    console.error('[SSG Collections] Error stack:', outerError instanceof Error ? outerError.stack : undefined)
-
-    // Return empty array to prevent build failure
-    console.log('[SSG Collections] Returning empty array due to error')
+  } catch (error) {
+    console.error('[SSG Collections] ERROR in generateStaticParams:', error)
+    console.error('[SSG Collections] Error stack:', error instanceof Error ? error.stack : undefined)
     return []
   }
 }
@@ -110,39 +100,29 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 async function getCollection(slug: string): Promise<Collection | null> {
   try {
-    let collections
-
-    // Try to read from local filesystem first (for static builds)
-    try {
-      const fs = await import('fs/promises')
-      const path = await import('path')
-      const localPath = path.join(process.cwd(), 'public', 'seo-data', 'collections.json')
-      const fileContent = await fs.readFile(localPath, 'utf-8')
-      collections = JSON.parse(fileContent)
-      console.log(`[getCollection] Loaded from local file`)
-    } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3 if URL is configured
-      if (!S3_SEO_DATA_URL) {
-        console.error(`[getCollection] Local file not found and S3_SEO_DATA_URL not configured`)
-        return null
-      }
-
-      console.log(`[getCollection] Local file not found, fetching from S3`)
-      const url = `${S3_SEO_DATA_URL}/collections.json`
-      const res = await fetch(url, {
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
-
-      if (!res.ok) {
-        console.error(`Error fetching collections from S3: ${res.status}`)
-        return null
-      }
-
-      collections = await res.json()
+    if (!SSG_TOKEN) {
+      console.error('SSG_DATA_TOKEN environment variable not set')
+      return null
     }
 
+    const url = `${REGISTRY_URL}/api/v1/collections/ssg-data`
+    const res = await fetch(url, {
+      headers: {
+        'X-SSG-Token': SSG_TOKEN,
+      },
+      next: { revalidate: 3600 } // Revalidate every hour
+    })
+
+    if (!res.ok) {
+      console.error(`Error fetching collections from registry: ${res.status}`)
+      return null
+    }
+
+    const data = await res.json()
+    const collections = data.collections || []
+
     if (!Array.isArray(collections)) {
-      console.error('Invalid collections data format from S3')
+      console.error('Invalid collections data format from registry')
       return null
     }
 

@@ -541,6 +541,7 @@ export async function packageRoutes(server: FastifyInstance) {
       // 1. Validate manifest
       let packageName = manifest.name as string;
       const version = manifest.version as string;
+      const displayName = manifest.displayName as string | undefined;
       const description = manifest.description as string;
       const format = manifest.format as string;
       const subtype = (manifest.subtype as string) || 'rule';
@@ -734,13 +735,14 @@ export async function packageRoutes(server: FastifyInstance) {
         pkg = await queryOne<Package>(
           server,
           `INSERT INTO packages (
-            name, description, author_id, org_id, format, subtype,
+            name, display_name, description, author_id, org_id, format, subtype,
             license, tags, keywords, language, framework, visibility, last_published_at
           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
            RETURNING *`,
           [
             packageName,
+            displayName || null,
             description,
             userId,                 // Always record the author (person who published)
             orgId || null,          // Set org_id if publishing to org (org takes precedence for ownership)
@@ -762,7 +764,61 @@ export async function packageRoutes(server: FastifyInstance) {
         server.log.info({ packageName, userId }, 'Created new package');
       }
 
-      // 3. Upload tarball to S3 using package name for human-readable paths
+      // 3. Extract file metadata and content from tarball
+      interface FileMetadata {
+        path: string;
+        size: number;
+        type: 'file' | 'directory' | 'symlink';
+      }
+
+      const files: FileMetadata[] = [];
+      let fullContent = '';
+
+      try {
+        // @ts-ignore - tar-stream doesn't have types
+        const tar = await import('tar-stream');
+        const zlib = await import('zlib');
+        const { Readable } = await import('stream');
+
+        const extract = tar.extract();
+
+        extract.on('entry', (header: any, stream: any, next: any) => {
+          // Record file metadata
+          files.push({
+            path: header.name,
+            size: header.size || 0,
+            type: header.type === 'directory' ? 'directory' : header.type === 'symlink' ? 'symlink' : 'file'
+          });
+
+          // Collect file content for full_content column
+          const chunks: Buffer[] = [];
+          stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+          stream.on('end', () => {
+            if (header.type === 'file') {
+              const content = Buffer.concat(chunks).toString('utf-8');
+              fullContent += `\n\n=== ${header.name} ===\n${content}`;
+            }
+            next();
+          });
+          stream.resume();
+        });
+
+        // Decompress and extract tarball to get file list and content
+        await new Promise((resolve, reject) => {
+          extract.on('finish', resolve);
+          extract.on('error', reject);
+          Readable.from(tarballBuffer)
+            .pipe(zlib.createGunzip())
+            .pipe(extract);
+        });
+
+        server.log.info({ packageName, fileCount: files.length, contentLength: fullContent.length }, 'Extracted file metadata and content from tarball');
+      } catch (error) {
+        server.log.warn({ packageName, error }, 'Failed to extract file metadata from tarball');
+        // Continue with publish even if file extraction fails
+      }
+
+      // 4. Upload tarball to S3 using package name for human-readable paths
       const { uploadPackage } = await import('../storage/s3.js');
       const { url: tarballUrl, hash: tarballHash, size } = await uploadPackage(
         server,
@@ -772,7 +828,7 @@ export async function packageRoutes(server: FastifyInstance) {
         { packageId: pkg.id }  // Pass UUID for metadata
       );
 
-      // 4. Create package version record
+      // 5. Create package version record with file metadata
       const packageVersion = await queryOne(
         server,
         `INSERT INTO package_versions (
@@ -787,78 +843,61 @@ export async function packageRoutes(server: FastifyInstance) {
           tarballUrl,
           tarballHash,
           size,
-          JSON.stringify({ manifest, readme: undefined })
+          JSON.stringify({ manifest, readme: undefined, files })
         ]
       );
 
-      // Update package updated_at and last_published_at
+      // Update package updated_at, last_published_at, and full_content (always use latest version content)
       await query(
         server,
-        'UPDATE packages SET last_published_at = NOW(), updated_at = NOW() WHERE id = $1',
-        [pkg.id]
+        'UPDATE packages SET last_published_at = NOW(), updated_at = NOW(), full_content = $2 WHERE id = $1',
+        [pkg.id, fullContent || null]
       );
 
-      // 5. Calculate quality score and extract metadata (async, don't block response)
+      // 6. Calculate quality score and extract metadata (async, don't block response)
       server.log.info({ packageId: pkg.id }, '🎯 Starting quality score calculation and metadata extraction');
+      // Use the already-extracted content to avoid re-processing the tarball
+      const packageContentForScoring = fullContent;
       (async () => {
         try {
           const { updatePackageQualityScore } = await import('../scoring/quality-scorer.js');
-          const { getDetailedAIEvaluation, extractMetadataWithAI } = await import('../scoring/ai-evaluator.js');
+          const { getDetailedAIEvaluation, extractMetadataWithAI, generateDisplayName } = await import('../scoring/ai-evaluator.js');
 
-          // Extract content from the tarball we just uploaded
-          // @ts-ignore - tar-stream doesn't have types
-          const tar = await import('tar-stream');
-          const zlib = await import('zlib');
-          const { Readable } = await import('stream');
-
-          const extract = tar.extract();
-          let packageContent = '';
-
-          // Collect all file contents from tarball
-          extract.on('entry', (header: any, stream: any, next: any) => {
-            const chunks: Buffer[] = [];
-            stream.on('data', (chunk: Buffer) => chunks.push(chunk));
-            stream.on('end', () => {
-              if (header.type === 'file') {
-                packageContent += `\n\n=== ${header.name} ===\n${Buffer.concat(chunks).toString('utf-8')}`;
-              }
-              next();
-            });
-            stream.resume();
-          });
-
-          // Decompress and extract tarball
-          await new Promise((resolve, reject) => {
-            extract.on('finish', resolve);
-            extract.on('error', reject);
-            Readable.from(tarballBuffer)
-              .pipe(zlib.createGunzip())
-              .pipe(extract);
-          });
-
-          if (packageContent) {
+          if (packageContentForScoring) {
             // Get AI evaluation for explanation
-            const evaluation = await getDetailedAIEvaluation(packageContent, server);
+            const evaluation = await getDetailedAIEvaluation(packageContentForScoring, server);
             const explanation = `${evaluation.reasoning}\n\nStrengths: ${evaluation.strengths.join(', ')}\n\nWeaknesses: ${evaluation.weaknesses.join(', ') || 'None identified'}`;
 
             // Calculate quality score with the extracted content
-            const qualityScore = await updatePackageQualityScore(server, pkg.id, packageContent);
+            const qualityScore = await updatePackageQualityScore(server, pkg.id, packageContentForScoring);
 
             // Get current package data to check what metadata needs extraction
             const currentPkg = await queryOne<{
               category: string | null;
+              display_name: string | null;
             }>(
               server,
-              'SELECT category FROM packages WHERE id = $1',
+              'SELECT category, display_name FROM packages WHERE id = $1',
               [pkg.id]
             );
+
+            // Generate display name if not provided
+            let generatedDisplayName: string | undefined;
+            if (!displayName && !currentPkg?.display_name) {
+              generatedDisplayName = await generateDisplayName(
+                packageName,
+                description,
+                packageContentForScoring,
+                server
+              );
+            }
 
             // Extract metadata if not already provided
             const needsMetadata = !language || !framework || !currentPkg?.category;
             let extractedMetadata: AIMetadataResult = {};
             if (needsMetadata) {
               extractedMetadata = await extractMetadataWithAI(
-                packageContent,
+                packageContentForScoring,
                 {
                   language: language || undefined,
                   framework: framework || undefined,
@@ -875,6 +914,10 @@ export async function packageRoutes(server: FastifyInstance) {
             const params: any[] = [explanation];
             let paramIndex = 2;
 
+            if (generatedDisplayName) {
+              updates.push(`display_name = $${paramIndex++}`);
+              params.push(generatedDisplayName);
+            }
             if (!language && extractedMetadata.language) {
               updates.push(`language = $${paramIndex++}`);
               params.push(extractedMetadata.language);
@@ -903,8 +946,9 @@ export async function packageRoutes(server: FastifyInstance) {
                 qualityScore,
                 explanationLength: explanation.length,
                 extractedMetadata,
+                generatedDisplayName,
               },
-              '✅ Quality score, explanation, and metadata updated'
+              '✅ Quality score, explanation, metadata, and display name updated'
             );
           }
         } catch (error) {
@@ -1444,6 +1488,179 @@ export async function packageRoutes(server: FastifyInstance) {
         return reply.code(500).send({
           error: 'Internal Server Error',
           message: 'Failed to fetch related packages',
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /packages/ssg-data
+   * Get all public packages with full content for static site generation
+   * Used by webapp during build for generateStaticParams
+   * REQUIRES: X-SSG-Token header for authentication
+   */
+  server.get(
+    '/ssg-data',
+    {
+      schema: {
+        tags: ['packages'],
+        description: 'Get all packages with full content for SSG (requires X-SSG-Token header)',
+        headers: {
+          type: 'object',
+          properties: {
+            'x-ssg-token': { type: 'string' },
+          },
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            format: { type: 'string' },
+            limit: { type: 'number', default: 1000 },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{ Querystring: { format?: string; limit?: number } }>, reply: FastifyReply) => {
+      try {
+        // Authenticate SSG token
+        const ssgToken = request.headers['x-ssg-token'];
+        const expectedToken = process.env.SSG_DATA_TOKEN;
+
+        if (!expectedToken) {
+          server.log.error('SSG_DATA_TOKEN environment variable not configured');
+          return reply.code(500).send({
+            error: 'Internal Server Error',
+            message: 'SSG endpoint not properly configured',
+          });
+        }
+
+        if (!ssgToken || ssgToken !== expectedToken) {
+          server.log.warn({ ip: request.ip }, 'Unauthorized SSG data access attempt');
+          return reply.code(401).send({
+            error: 'Unauthorized',
+            message: 'Valid X-SSG-Token header required',
+          });
+        }
+
+        const { format, limit = 1000 } = request.query;
+
+        server.log.info({ format, limit }, 'Fetching SSG data');
+
+        // Build WHERE clause
+        const conditions: string[] = ["visibility = 'public'", "deprecated = FALSE"];
+        const params: unknown[] = [];
+        let paramIndex = 1;
+
+        if (format) {
+          conditions.push(`format = $${paramIndex++}`);
+          params.push(format);
+        }
+
+        // Add limit
+        params.push(limit);
+
+        // Get all public packages with full_content and latest version metadata
+        const result = await query(
+          server,
+          `SELECT
+            p.id,
+            p.name,
+            p.display_name,
+            p.description,
+            p.format,
+            p.subtype,
+            p.category,
+            p.tags,
+            p.keywords,
+            p.license,
+            p.repository_url,
+            p.homepage_url,
+            p.documentation_url,
+            p.total_downloads,
+            p.weekly_downloads,
+            p.monthly_downloads,
+            p.quality_score,
+            p.rating_average,
+            p.rating_count,
+            p.verified,
+            p.featured,
+            p.deprecated,
+            p.deprecated_reason,
+            p.full_content,
+            p.snippet,
+            p.created_at,
+            p.updated_at,
+            p.last_published_at,
+            u.username as author_username,
+            pv.version as latest_version,
+            pv.metadata as latest_version_metadata,
+            pv.file_size,
+            pv.published_at as version_published_at
+          FROM packages p
+          LEFT JOIN users u ON p.author_id = u.id
+          LEFT JOIN LATERAL (
+            SELECT version, metadata, file_size, published_at
+            FROM package_versions
+            WHERE package_id = p.id
+            ORDER BY published_at DESC
+            LIMIT 1
+          ) pv ON true
+          WHERE ${conditions.join(' AND ')}
+          ORDER BY p.total_downloads DESC
+          LIMIT $${paramIndex}`,
+          params
+        );
+
+        const packages = result.rows.map((row: any) => ({
+          id: row.id,
+          name: row.name,
+          display_name: row.display_name,
+          description: row.description,
+          format: row.format,
+          subtype: row.subtype,
+          category: row.category,
+          tags: row.tags || [],
+          keywords: row.keywords || [],
+          license: row.license,
+          repository_url: row.repository_url,
+          homepage_url: row.homepage_url,
+          documentation_url: row.documentation_url,
+          total_downloads: row.total_downloads || 0,
+          weekly_downloads: row.weekly_downloads || 0,
+          monthly_downloads: row.monthly_downloads || 0,
+          quality_score: row.quality_score ? parseFloat(row.quality_score) : null,
+          rating_average: row.rating_average ? parseFloat(row.rating_average) : null,
+          rating_count: row.rating_count || 0,
+          verified: row.verified || false,
+          featured: row.featured || false,
+          deprecated: row.deprecated || false,
+          deprecated_reason: row.deprecated_reason,
+          fullContent: row.full_content, // Include full content for SSG
+          snippet: row.snippet,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          last_published_at: row.last_published_at,
+          author: row.author_username ? { username: row.author_username } : null,
+          latest_version: row.latest_version ? {
+            version: row.latest_version,
+            metadata: row.latest_version_metadata,
+            file_size: row.file_size,
+            published_at: row.version_published_at,
+          } : null,
+        }));
+
+        server.log.info({ count: packages.length }, 'SSG data fetched successfully');
+
+        return {
+          packages,
+          total: packages.length,
+          generated_at: new Date().toISOString(),
+        };
+      } catch (error) {
+        server.log.error(error, 'Failed to fetch SSG data');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: 'Failed to fetch SSG data',
         });
       }
     }
