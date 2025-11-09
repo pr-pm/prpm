@@ -25,8 +25,14 @@ export async function generateStaticParams() {
     console.log(`[SSG Packages] Fetching from registry API: ${REGISTRY_URL}`)
 
     if (!SSG_TOKEN) {
-      console.error('[SSG Packages] SSG_DATA_TOKEN environment variable not set')
-      return []
+      console.error('[SSG Packages] ⚠️  SSG_DATA_TOKEN environment variable not set')
+      console.error('[SSG Packages] This is REQUIRED for production builds.')
+      console.error('[SSG Packages] Please set SSG_DATA_TOKEN in GitHub Actions secrets.')
+
+      // In static export mode, Next.js requires at least one path for dynamic routes
+      // Return empty array would cause: "Page is missing generateStaticParams()" error
+      // So we fail explicitly with a clear error message
+      throw new Error('SSG_DATA_TOKEN environment variable is required for static build')
     }
 
     const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
