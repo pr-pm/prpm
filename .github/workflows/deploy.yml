@@ -364,6 +364,19 @@ jobs:
       - name: Build types package
         run: npm run build --workspace=@pr-pm/types
 
+      - name: Verify SSG token is set
+        run: |
+          if [ -z "$SSG_DATA_TOKEN" ]; then
+            echo "❌ ERROR: SSG_DATA_TOKEN secret is not set in GitHub repository"
+            echo "Please add SSG_DATA_TOKEN to repository secrets:"
+            echo "https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          else
+            echo "✅ SSG_DATA_TOKEN is set (length: ${#SSG_DATA_TOKEN} chars)"
+          fi
+        env:
+          SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
+
       - name: Build webapp
         run: |
           cd packages/webapp
