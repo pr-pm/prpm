@@ -1558,7 +1558,7 @@ export async function packageRoutes(server: FastifyInstance) {
         }
 
         // Get total count for pagination
-        const countResult = await query(
+        const countResult = await query<{ total: string }>(
           server,
           `SELECT COUNT(*) as total FROM packages p WHERE ${conditions.join(' AND ')}`,
           params.slice(0, paramIndex - 1) // Only use WHERE clause params
