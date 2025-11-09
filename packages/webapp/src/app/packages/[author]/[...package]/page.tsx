@@ -8,9 +8,7 @@ import SuggestedTestInputs from '@/components/SuggestedTestInputs'
 import FeaturedResults from '@/components/FeaturedResults'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
-// During build, don't set a default S3 URL - we want to use local files only
-// Only use S3 as fallback in runtime (client-side) if explicitly configured
-const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || (typeof window !== 'undefined' ? 'https://prpm-prod-packages.s3.amazonaws.com/seo-data' : '')
+const SSG_TOKEN = process.env.SSG_DATA_TOKEN
 
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
@@ -23,54 +21,36 @@ function getPackageContent(pkg: any): string | null {
 
 // Generate static params for all packages
 export async function generateStaticParams() {
-
   try {
-    console.log(`[SSG Packages] Starting - S3_SEO_DATA_URL: ${S3_SEO_DATA_URL}`)
+    console.log(`[SSG Packages] Fetching from registry API: ${REGISTRY_URL}`)
 
-    // Try to read from local filesystem first (for static builds with pre-downloaded data)
-    const fs = await import('fs/promises')
-    const path = await import('path')
-
-    // Check if local SEO data exists (downloaded during CI build)
-    const localPath = path.join(process.cwd(), 'public', 'seo-data', 'packages.json')
-    console.log(`[SSG Packages] Checking for local file: ${localPath}`)
-
-    let packages
-    try {
-      const fileContent = await fs.readFile(localPath, 'utf-8')
-      packages = JSON.parse(fileContent)
-      console.log(`[SSG Packages] ✅ Loaded ${packages.length} packages from local file`)
-    } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3 if URL is configured
-      if (!S3_SEO_DATA_URL) {
-        console.error(`[SSG Packages] Local file not found and S3_SEO_DATA_URL not configured`)
-        console.error(`[SSG Packages] Make sure to run prepare-ssg-data.sh before building`)
-        return []
-      }
-
-      console.log(`[SSG Packages] Local file not found, fetching from S3`)
-
-      const url = `${S3_SEO_DATA_URL}/packages.json`
-      console.log(`[SSG Packages] Fetching from: ${url}`)
-
-      const res = await fetch(url, {
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
-
-      if (!res.ok) {
-        console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages from S3`)
-        console.error(`[SSG Packages] Response headers:`, Object.fromEntries(res.headers.entries()))
-        return []
-      }
-
-      packages = await res.json()
-      console.log(`[SSG Packages] Received ${packages.length} packages from S3`)
+    if (!SSG_TOKEN) {
+      console.error('[SSG Packages] SSG_DATA_TOKEN environment variable not set')
+      return []
     }
+
+    const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
+    const res = await fetch(url, {
+      headers: {
+        'X-SSG-Token': SSG_TOKEN,
+      },
+      next: { revalidate: 3600 } // Revalidate every hour
+    })
+
+    if (!res.ok) {
+      console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages from registry`)
+      return []
+    }
+
+    const data = await res.json()
+    const packages = data.packages || []
 
     if (!Array.isArray(packages)) {
       console.error('[SSG Packages] Invalid response format - expected array')
       return []
     }
+
+    console.log(`[SSG Packages] ✅ Loaded ${packages.length} packages from registry`)
 
     // Transform package data to author/package format
     const params = packages.map((pkg: any) => {
@@ -95,13 +75,9 @@ export async function generateStaticParams() {
     console.log(`[SSG Packages] ✅ Complete: ${params.length} packages for static generation`)
     return params
 
-  } catch (outerError) {
-    // Catch any unexpected errors and log them
-    console.error('[SSG Packages] CRITICAL ERROR in generateStaticParams:', outerError)
-    console.error('[SSG Packages] Error stack:', outerError instanceof Error ? outerError.stack : undefined)
-
-    // Return empty array to prevent build failure
-    console.log('[SSG Packages] Returning empty array due to error')
+  } catch (error) {
+    console.error('[SSG Packages] ERROR in generateStaticParams:', error)
+    console.error('[SSG Packages] Error stack:', error instanceof Error ? error.stack : undefined)
     return []
   }
 }
@@ -121,18 +97,20 @@ export async function generateMetadata({ params }: { params: { author: string; p
     }
   }
 
+  const displayTitle = pkg.display_name || pkg.name
+
   return {
-    title: `${pkg.name} ${pkg.format} ${pkg.subtype} - PRPM Package`,
-    description: pkg.description || `Install ${pkg.name} with PRPM - ${pkg.format} ${pkg.subtype} for your AI coding workflow`,
+    title: `${displayTitle} - PRPM Package`,
+    description: pkg.description || `Install ${displayTitle} with PRPM - ${pkg.format} ${pkg.subtype} for your AI coding workflow`,
     keywords: [...(pkg.tags || []), pkg.format, pkg.subtype, pkg.category, 'prpm', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
     openGraph: {
-      title: pkg.name,
+      title: displayTitle,
       description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: pkg.name,
+      title: displayTitle,
       description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
     },
   }
@@ -140,39 +118,29 @@ export async function generateMetadata({ params }: { params: { author: string; p
 
 async function getPackage(name: string): Promise<PackageInfo | null> {
   try {
-    let packages
-
-    // Try to read from local filesystem first (for static builds)
-    try {
-      const fs = await import('fs/promises')
-      const path = await import('path')
-      const localPath = path.join(process.cwd(), 'public', 'seo-data', 'packages.json')
-      const fileContent = await fs.readFile(localPath, 'utf-8')
-      packages = JSON.parse(fileContent)
-      console.log(`[getPackage] Loaded from local file`)
-    } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3 if URL is configured
-      if (!S3_SEO_DATA_URL) {
-        console.error(`[getPackage] Local file not found and S3_SEO_DATA_URL not configured`)
-        return null
-      }
-
-      console.log(`[getPackage] Local file not found, fetching from S3`)
-      const url = `${S3_SEO_DATA_URL}/packages.json`
-      const res = await fetch(url, {
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
-
-      if (!res.ok) {
-        console.error(`Error fetching packages from S3: ${res.status}`)
-        return null
-      }
-
-      packages = await res.json()
+    if (!SSG_TOKEN) {
+      console.error('SSG_DATA_TOKEN environment variable not set')
+      return null
     }
 
+    const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
+    const res = await fetch(url, {
+      headers: {
+        'X-SSG-Token': SSG_TOKEN,
+      },
+      next: { revalidate: 3600 } // Revalidate every hour
+    })
+
+    if (!res.ok) {
+      console.error(`Error fetching packages from registry: ${res.status}`)
+      return null
+    }
+
+    const data = await res.json()
+    const packages = data.packages || []
+
     if (!Array.isArray(packages)) {
-      console.error('Invalid packages data format from S3')
+      console.error('Invalid packages data format from registry')
       return null
     }
 
@@ -212,7 +180,7 @@ export default async function PackagePage({ params }: { params: { author: string
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <h1 className="text-4xl font-bold text-white">{pkg.name}</h1>
+            <h1 className="text-4xl font-bold text-white">{pkg.display_name || pkg.name}</h1>
             {pkg.verified && (
               <svg className="w-8 h-8 text-prpm-accent" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -229,6 +197,9 @@ export default async function PackagePage({ params }: { params: { author: string
               </span>
             )}
           </div>
+          {pkg.display_name && (
+            <p className="text-sm text-gray-500 mb-2 font-mono">{pkg.name}</p>
+          )}
 
           {pkg.description && (
             <p className="text-xl text-gray-300 mb-4">{pkg.description}</p>
@@ -468,6 +439,41 @@ export default async function PackagePage({ params }: { params: { author: string
                 <dd className="text-white whitespace-pre-wrap text-sm">{pkg.latest_version.changelog}</dd>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Package Files */}
+        {pkg.latest_version?.metadata?.files && pkg.latest_version.metadata.files.length > 0 && (
+          <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-white mb-4">📁 Package Contents</h2>
+            <div className="space-y-2">
+              {pkg.latest_version.metadata.files.map((file: any, idx: number) => (
+                <div key={idx} className="flex items-center gap-3 py-2 px-3 hover:bg-prpm-dark/50 rounded transition-colors">
+                  {file.type === 'directory' ? (
+                    <svg className="w-5 h-5 text-prpm-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                    </svg>
+                  ) : file.type === 'symlink' ? (
+                    <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="flex-1 font-mono text-sm text-gray-300 truncate" title={file.path}>
+                    {file.path}
+                  </span>
+                  <span className="text-xs text-gray-500 flex-shrink-0">
+                    {file.type === 'file' ? `${(file.size / 1024).toFixed(2)} KB` : file.type}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-4 border-t border-prpm-border text-sm text-gray-400">
+              Total files: {pkg.latest_version.metadata.files.length}
+            </div>
           </div>
         )}
 
