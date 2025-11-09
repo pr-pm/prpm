@@ -23,11 +23,18 @@ function getPackageContent(pkg: any): string | null {
 export async function generateStaticParams() {
   try {
     console.log(`[SSG Packages] Fetching from registry API: ${REGISTRY_URL}`)
+    console.log(`[SSG Packages] Environment check:`, {
+      SSG_TOKEN_exists: !!SSG_TOKEN,
+      SSG_TOKEN_length: SSG_TOKEN?.length || 0,
+      SSG_TOKEN_type: typeof SSG_TOKEN,
+      SSG_TOKEN_first_10: SSG_TOKEN?.substring(0, 10) || 'undefined',
+      env_keys: Object.keys(process.env).filter(k => k.includes('SSG')).join(', ') || 'none'
+    })
 
     if (!SSG_TOKEN) {
       console.error('[SSG Packages] ⚠️  SSG_DATA_TOKEN environment variable not set')
       console.error('[SSG Packages] This is REQUIRED for production builds.')
-      console.error('[SSG Packages] Please set SSG_DATA_TOKEN in GitHub Actions secrets.')
+      console.error('[SSG Packages] Available env vars:', Object.keys(process.env).filter(k => k.includes('TOKEN')))
 
       // In static export mode, Next.js requires at least one path for dynamic routes
       // Return empty array would cause: "Page is missing generateStaticParams()" error
