@@ -838,12 +838,13 @@ export async function collectionRoutes(server: FastifyInstance) {
         querystring: {
           type: 'object',
           properties: {
-            limit: { type: 'number', default: 1000 },
+            limit: { type: 'number', default: 500 },
+            offset: { type: 'number', default: 0 },
           },
         },
       },
     },
-    async (request: FastifyRequest<{ Querystring: { limit?: number } }>, reply: FastifyReply) => {
+    async (request: FastifyRequest<{ Querystring: { limit?: number; offset?: number } }>, reply: FastifyReply) => {
       try {
         // Authenticate SSG token
         const ssgToken = request.headers['x-ssg-token'];
@@ -865,9 +866,15 @@ export async function collectionRoutes(server: FastifyInstance) {
           });
         }
 
-        const { limit = 1000 } = request.query;
+        const { limit = 500, offset = 0 } = request.query;
 
-        server.log.info({ limit }, 'Fetching collections SSG data');
+        server.log.info({ limit, offset }, 'Fetching collections SSG data');
+
+        // Get total count
+        const countResult = await server.pg.query(
+          `SELECT COUNT(*) as total FROM collections c`
+        );
+        const totalCount = parseInt(countResult.rows[0]?.total || '0', 10);
 
         const result = await server.pg.query(
           `SELECT
@@ -890,8 +897,8 @@ export async function collectionRoutes(server: FastifyInstance) {
           FROM collections c
           LEFT JOIN users u ON c.author_id = u.id
           ORDER BY c.downloads DESC
-          LIMIT $1`,
-          [limit]
+          LIMIT $1 OFFSET $2`,
+          [limit, offset]
         );
 
         const collections = result.rows.map((row: any) => ({
@@ -913,11 +920,20 @@ export async function collectionRoutes(server: FastifyInstance) {
           author: row.author_username || '', // Return string, not object
         }));
 
-        server.log.info({ count: collections.length }, 'Collections SSG data fetched successfully');
+        server.log.info({
+          count: collections.length,
+          total: totalCount,
+          offset,
+          limit
+        }, 'Collections SSG data fetched successfully');
 
         return {
           collections,
-          total: collections.length,
+          total: totalCount, // Total count across all pages
+          count: collections.length, // Count in this page
+          limit,
+          offset,
+          hasMore: offset + collections.length < totalCount,
           generated_at: new Date().toISOString(),
         };
       } catch (error) {

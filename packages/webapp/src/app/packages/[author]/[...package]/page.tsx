@@ -16,8 +16,8 @@ export const dynamicParams = true
 
 // Helper to get package content - prefer full content, fall back to snippet
 function getPackageContent(pkg: any): string | null {
-  // Use fullContent if available (from S3), otherwise fall back to snippet
-  return pkg.fullContent || pkg.snippet || null
+  // Try fullContent (camelCase from SSG), full_content (snake_case from direct API), then snippet
+  return pkg.fullContent || pkg.full_content || pkg.snippet || null
 }
 
 // Generate static params for all packages
@@ -43,31 +43,49 @@ export async function generateStaticParams() {
       throw new Error('SSG_DATA_TOKEN environment variable is required for static build')
     }
 
-    const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
-    const res = await fetch(url, {
-      headers: {
-        'X-SSG-Token': SSG_TOKEN,
-      },
-      next: { revalidate: 3600 } // Revalidate every hour
-    })
+    // Paginate through ALL packages
+    const allPackages: any[] = []
+    const limit = 500
+    let offset = 0
+    let hasMore = true
 
-    if (!res.ok) {
-      console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages from registry`)
-      return []
+    console.log(`[SSG Packages] Starting pagination with limit=${limit}`)
+
+    while (hasMore) {
+      const url = `${REGISTRY_URL}/api/v1/packages/ssg-data?limit=${limit}&offset=${offset}`
+      console.log(`[SSG Packages] Fetching page: offset=${offset}`)
+
+      const res = await fetch(url, {
+        headers: {
+          'X-SSG-Token': SSG_TOKEN,
+        },
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (!res.ok) {
+        console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages at offset ${offset}`)
+        break
+      }
+
+      const data = await res.json()
+      const packages = data.packages || []
+
+      if (!Array.isArray(packages)) {
+        console.error('[SSG Packages] Invalid response format - expected array')
+        break
+      }
+
+      allPackages.push(...packages)
+      hasMore = data.hasMore || false
+      offset += limit
+
+      console.log(`[SSG Packages] Page loaded: ${packages.length} packages, total so far: ${allPackages.length}, hasMore: ${hasMore}`)
     }
 
-    const data = await res.json()
-    const packages = data.packages || []
-
-    if (!Array.isArray(packages)) {
-      console.error('[SSG Packages] Invalid response format - expected array')
-      return []
-    }
-
-    console.log(`[SSG Packages] ✅ Loaded ${packages.length} packages from registry`)
+    console.log(`[SSG Packages] ✅ Loaded ${allPackages.length} packages from registry (${Math.ceil(allPackages.length / limit)} pages)`)
 
     // Transform package data to author/package format
-    const params = packages.map((pkg: any) => {
+    const params = allPackages.map((pkg: any) => {
       const name = pkg.name
       if (name.startsWith('@')) {
         // Scoped package: @author/package/sub/path -> author + [package, sub, path]
@@ -78,9 +96,10 @@ export async function generateStaticParams() {
           package: packageParts, // Array for catch-all route
         }
       } else {
-        // Unscoped package: assume prpm as default author
+        // Unscoped package: use actual author from package data
+        const author = pkg.author?.username || 'prpm'
         return {
-          author: 'prpm',
+          author,
           package: [name], // Array for catch-all route
         }
       }
@@ -100,9 +119,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: { author: string; package: string[] } }): Promise<Metadata> {
   // Reconstruct full package name: author/[package, parts] -> @author/package/parts
   const packagePath = Array.isArray(params.package) ? params.package.join('/') : params.package
-  const fullName = `@${params.author}/${packagePath}`
+  const scopedName = `@${params.author}/${packagePath}`
+  const unscopedName = packagePath // without @ prefix
 
-  const pkg = await getPackage(fullName)
+  const pkg = await getPackage(scopedName, params.author, unscopedName)
 
   if (!pkg) {
     return {
@@ -130,37 +150,63 @@ export async function generateMetadata({ params }: { params: { author: string; p
   }
 }
 
-async function getPackage(name: string): Promise<PackageInfo | null> {
+async function getPackage(scopedName: string, author: string, unscopedName: string): Promise<PackageInfo | null> {
   try {
-    if (!SSG_TOKEN) {
-      console.error('SSG_DATA_TOKEN environment variable not set')
-      return null
+    // First try to find in SSG data (top 500 most downloaded packages)
+    if (SSG_TOKEN) {
+      const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
+      const res = await fetch(url, {
+        headers: {
+          'X-SSG-Token': SSG_TOKEN,
+        },
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        const packages = data.packages || []
+
+        if (Array.isArray(packages)) {
+          // Find the package by name (try scoped first, then unscoped with author match)
+          let pkg = packages.find((p: any) => p.name === scopedName)
+
+          // If not found by scoped name, try unscoped name with author match
+          if (!pkg) {
+            pkg = packages.find((p: any) =>
+              p.name === unscopedName && p.author?.username === author
+            )
+          }
+
+          if (pkg) {
+            return pkg
+          }
+        }
+      }
     }
 
-    const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
-    const res = await fetch(url, {
-      headers: {
-        'X-SSG-Token': SSG_TOKEN,
-      },
-      next: { revalidate: 3600 } // Revalidate every hour
+    // Fallback: Package not in SSG data (outside top 500), fetch directly from registry
+    console.log(`[Package] Not in SSG data, fetching ${scopedName} directly from registry`)
+
+    // Try fetching by scoped name first
+    let directUrl = `${REGISTRY_URL}/api/v1/packages/${encodeURIComponent(scopedName)}`
+    let directRes = await fetch(directUrl, {
+      next: { revalidate: 3600 }
     })
 
-    if (!res.ok) {
-      console.error(`Error fetching packages from registry: ${res.status}`)
-      return null
+    if (!directRes.ok && directRes.status === 404) {
+      // Try unscoped name
+      directUrl = `${REGISTRY_URL}/api/v1/packages/${encodeURIComponent(unscopedName)}`
+      directRes = await fetch(directUrl, {
+        next: { revalidate: 3600 }
+      })
     }
 
-    const data = await res.json()
-    const packages = data.packages || []
-
-    if (!Array.isArray(packages)) {
-      console.error('Invalid packages data format from registry')
-      return null
+    if (directRes.ok) {
+      const packageData = await directRes.json()
+      return packageData
     }
 
-    // Find the package by name
-    const pkg = packages.find((p: any) => p.name === name)
-    return pkg || null
+    return null
   } catch (error) {
     console.error('Error fetching package:', error)
     return null
@@ -170,8 +216,9 @@ async function getPackage(name: string): Promise<PackageInfo | null> {
 export default async function PackagePage({ params }: { params: { author: string; package: string[] } }) {
   // Reconstruct full package name: author/[package, parts] -> @author/package/parts
   const packagePath = Array.isArray(params.package) ? params.package.join('/') : params.package
-  const fullName = `@${params.author}/${packagePath}`
-  const pkg = await getPackage(fullName)
+  const scopedName = `@${params.author}/${packagePath}`
+  const unscopedName = packagePath // without @ prefix
+  const pkg = await getPackage(scopedName, params.author, unscopedName)
 
   if (!pkg) {
     notFound()

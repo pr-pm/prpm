@@ -620,7 +620,7 @@ function SearchPageContent() {
                         {packages.map((pkg) => (
                         <Link
                           key={pkg.id}
-                          href={getPackageUrl(pkg.name)}
+                          href={getPackageUrl(pkg.name, pkg.author_username)}
                           className="block w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
                         >
                           <div className="flex items-start justify-between mb-2">
