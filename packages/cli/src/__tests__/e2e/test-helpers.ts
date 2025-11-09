@@ -33,16 +33,16 @@ export async function cleanupTestDir(testDir: string): Promise<void> {
 export async function createMockPackage(
   testDir: string,
   name: string,
-  type: string = 'cursor',
+  format: string = 'cursor',
   version: string = '1.0.0'
 ): Promise<string> {
   const manifest = {
     name,
     version,
     description: `Test package ${name}`,
-    type,
+    format,
     author: 'test-author',
-    tags: ['test', type],
+    tags: ['test', format],
   };
 
   const manifestPath = join(testDir, 'prpm.json');

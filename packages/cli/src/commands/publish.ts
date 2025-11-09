@@ -329,6 +329,33 @@ function predictScopedPackageName(
 }
 
 /**
+ * Safely get package name for error messages, with fallbacks
+ */
+function getSafePackageName(
+  manifest: PackageManifest | undefined,
+  userInfo: any,
+  fallbackName?: string
+): string {
+  if (!manifest?.name) {
+    return fallbackName || 'unknown-package';
+  }
+
+  try {
+    if (userInfo?.username) {
+      return predictScopedPackageName(
+        manifest.name,
+        userInfo.username,
+        manifest.organization
+      );
+    }
+  } catch {
+    // Fall through to return manifest name
+  }
+
+  return manifest.name;
+}
+
+/**
  * Create tarball from current directory
  */
 async function createTarball(manifest: PackageManifest): Promise<Buffer> {
@@ -680,14 +707,8 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         });
       } catch (err) {
         const pkgError = err instanceof Error ? err.message : String(err);
-        // Try to use scoped name if we have user info, otherwise fall back to manifest name
-        const displayName = userInfo
-          ? predictScopedPackageName(
-              manifest.name,
-              userInfo.username,
-              manifest.organization
-            )
-          : manifest.name;
+        // Safely construct display name with fallbacks
+        const displayName = getSafePackageName(manifest, userInfo, packageName);
         console.error(`\n❌ Failed to publish ${displayName}: ${pkgError}\n`);
         failedPackages.push({
           name: displayName,
