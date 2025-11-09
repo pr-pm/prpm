@@ -87,39 +87,29 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 async function getCollection(slug: string): Promise<Collection | null> {
   try {
-    let collections
-
-    // Try to read from local filesystem first (for static builds)
-    try {
-      const fs = await import('fs/promises')
-      const path = await import('path')
-      const localPath = path.join(process.cwd(), 'public', 'seo-data', 'collections.json')
-      const fileContent = await fs.readFile(localPath, 'utf-8')
-      collections = JSON.parse(fileContent)
-      console.log(`[getCollection] Loaded from local file`)
-    } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3 if URL is configured
-      if (!S3_SEO_DATA_URL) {
-        console.error(`[getCollection] Local file not found and S3_SEO_DATA_URL not configured`)
-        return null
-      }
-
-      console.log(`[getCollection] Local file not found, fetching from S3`)
-      const url = `${S3_SEO_DATA_URL}/collections.json`
-      const res = await fetch(url, {
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
-
-      if (!res.ok) {
-        console.error(`Error fetching collections from S3: ${res.status}`)
-        return null
-      }
-
-      collections = await res.json()
+    if (!SSG_TOKEN) {
+      console.error('SSG_DATA_TOKEN environment variable not set')
+      return null
     }
 
+    const url = `${REGISTRY_URL}/api/v1/collections/ssg-data`
+    const res = await fetch(url, {
+      headers: {
+        'X-SSG-Token': SSG_TOKEN,
+      },
+      next: { revalidate: 3600 } // Revalidate every hour
+    })
+
+    if (!res.ok) {
+      console.error(`Error fetching collections from registry: ${res.status}`)
+      return null
+    }
+
+    const data = await res.json()
+    const collections = data.collections || []
+
     if (!Array.isArray(collections)) {
-      console.error('Invalid collections data format from S3')
+      console.error('Invalid collections data format from registry')
       return null
     }
 
