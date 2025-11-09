@@ -230,7 +230,7 @@ export default async function PackagePage({ params }: { params: { author: string
           {/* Playground CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <Link
-              href={`/playground?package=${pkg.id}`}
+              href={`/playground?package=${pkg.id}${content ? `&input=${encodeURIComponent(content)}` : ''}`}
               className="flex-1 px-4 py-3 bg-prpm-accent hover:bg-prpm-accent/80 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,7 +240,7 @@ export default async function PackagePage({ params }: { params: { author: string
               Test in Playground
             </Link>
             <Link
-              href={`/playground?package=${pkg.id}&compare=true`}
+              href={`/playground?package=${pkg.id}&compare=true${content ? `&input=${encodeURIComponent(content)}` : ''}`}
               className="px-4 py-3 bg-prpm-dark-card hover:bg-prpm-dark border border-prpm-border hover:border-prpm-accent text-gray-300 font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
