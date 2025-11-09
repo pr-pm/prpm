@@ -910,7 +910,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           stars: row.stars || 0,
           created_at: row.created_at,
           updated_at: row.updated_at,
-          author: row.author_username ? { username: row.author_username } : null,
+          author: row.author_username || '', // Return string, not object
         }));
 
         server.log.info({ count: collections.length }, 'Collections SSG data fetched successfully');

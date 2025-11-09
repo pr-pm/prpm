@@ -86,6 +86,13 @@ async function buildServer() {
   await server.register(rateLimit, {
     max: 100, // 100 requests
     timeWindow: '1 minute',
+    // Skip rate limiting for SSG endpoints (used during webapp build)
+    skipOnError: true,
+    skip: (request) => {
+      // Exempt SSG data endpoints from rate limiting
+      const path = request.url;
+      return path.includes('/ssg-data') || path.includes('/seo/');
+    },
     errorResponseBuilder: () => ({
       error: 'Too Many Requests',
       message: 'Rate limit exceeded. Please try again later.',

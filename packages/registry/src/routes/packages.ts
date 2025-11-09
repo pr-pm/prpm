@@ -1515,7 +1515,7 @@ export async function packageRoutes(server: FastifyInstance) {
           type: 'object',
           properties: {
             format: { type: 'string' },
-            limit: { type: 'number', default: 1000 },
+            limit: { type: 'number', default: 500 },
           },
         },
       },
@@ -1542,7 +1542,7 @@ export async function packageRoutes(server: FastifyInstance) {
           });
         }
 
-        const { format, limit = 1000 } = request.query;
+        const { format, limit = 500 } = request.query; // Reduced to 500 to keep response under 2MB cache limit
 
         server.log.info({ format, limit }, 'Fetching SSG data');
 
@@ -1559,7 +1559,8 @@ export async function packageRoutes(server: FastifyInstance) {
         // Add limit
         params.push(limit);
 
-        // Get all public packages with full_content and latest version metadata
+        // Get public packages with minimal fields + full_content (keep response under 2MB for Next.js cache)
+        // Exclude weekly_downloads, monthly_downloads, quality_score, keywords, created_at, updated_at to reduce size
         const result = await query(
           server,
           `SELECT
@@ -1571,15 +1572,11 @@ export async function packageRoutes(server: FastifyInstance) {
             p.subtype,
             p.category,
             p.tags,
-            p.keywords,
             p.license,
             p.repository_url,
             p.homepage_url,
             p.documentation_url,
             p.total_downloads,
-            p.weekly_downloads,
-            p.monthly_downloads,
-            p.quality_score,
             p.rating_average,
             p.rating_count,
             p.verified,
@@ -1587,10 +1584,6 @@ export async function packageRoutes(server: FastifyInstance) {
             p.deprecated,
             p.deprecated_reason,
             p.full_content,
-            p.snippet,
-            p.created_at,
-            p.updated_at,
-            p.last_published_at,
             u.username as author_username,
             pv.version as latest_version,
             pv.metadata as latest_version_metadata,
@@ -1620,26 +1613,18 @@ export async function packageRoutes(server: FastifyInstance) {
           subtype: row.subtype,
           category: row.category,
           tags: row.tags || [],
-          keywords: row.keywords || [],
           license: row.license,
           repository_url: row.repository_url,
           homepage_url: row.homepage_url,
           documentation_url: row.documentation_url,
           total_downloads: row.total_downloads || 0,
-          weekly_downloads: row.weekly_downloads || 0,
-          monthly_downloads: row.monthly_downloads || 0,
-          quality_score: row.quality_score ? parseFloat(row.quality_score) : null,
           rating_average: row.rating_average ? parseFloat(row.rating_average) : null,
           rating_count: row.rating_count || 0,
           verified: row.verified || false,
           featured: row.featured || false,
           deprecated: row.deprecated || false,
           deprecated_reason: row.deprecated_reason,
-          fullContent: row.full_content, // Include full content for SSG
-          snippet: row.snippet,
-          created_at: row.created_at,
-          updated_at: row.updated_at,
-          last_published_at: row.last_published_at,
+          fullContent: row.full_content, // Include full content - essential for page rendering
           author: row.author_username ? { username: row.author_username } : null,
           latest_version: row.latest_version ? {
             version: row.latest_version,
