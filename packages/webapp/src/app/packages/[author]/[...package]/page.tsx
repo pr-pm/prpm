@@ -253,6 +253,24 @@ export default async function PackagePage({ params }: { params: { author: string
 
           {/* Stats */}
           <div className="flex flex-wrap gap-6 text-gray-400 mb-8">
+            {(pkg.author as any)?.username && (
+              <div className="flex items-center gap-2">
+                {(pkg.author as any)?.avatar_url ? (
+                  <img
+                    src={(pkg.author as any).avatar_url}
+                    alt={`${(pkg.author as any).username}'s avatar`}
+                    className="w-5 h-5 rounded-full"
+                  />
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                )}
+                <Link href={`/authors?username=${(pkg.author as any).username}`} className="hover:text-prpm-accent">
+                  @{(pkg.author as any).username}
+                </Link>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -287,24 +305,6 @@ export default async function PackagePage({ params }: { params: { author: string
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                   )}
-                </Link>
-              </div>
-            )}
-            {(pkg.author as any)?.username && (
-              <div className="flex items-center gap-2">
-                {(pkg.author as any)?.avatar_url ? (
-                  <img
-                    src={(pkg.author as any).avatar_url}
-                    alt={`${(pkg.author as any).username}'s avatar`}
-                    className="w-5 h-5 rounded-full"
-                  />
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                )}
-                <Link href={`/authors?author=${(pkg.author as any).username}`} className="hover:text-prpm-accent">
-                  @{(pkg.author as any).username}
                 </Link>
               </div>
             )}
