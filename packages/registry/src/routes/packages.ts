@@ -1560,7 +1560,7 @@ export async function packageRoutes(server: FastifyInstance) {
         params.push(limit);
 
         // Get public packages with minimal fields + full_content (keep response under 2MB for Next.js cache)
-        // Exclude weekly_downloads, monthly_downloads, quality_score, keywords, created_at, updated_at to reduce size
+        // Exclude: monthly_downloads, quality_score, keywords, created_at, updated_at, snippet (not displayed on SEO page)
         const result = await query(
           server,
           `SELECT
@@ -1577,6 +1577,8 @@ export async function packageRoutes(server: FastifyInstance) {
             p.homepage_url,
             p.documentation_url,
             p.total_downloads,
+            p.weekly_downloads,
+            p.version_count,
             p.rating_average,
             p.rating_count,
             p.verified,
@@ -1588,11 +1590,13 @@ export async function packageRoutes(server: FastifyInstance) {
             pv.version as latest_version,
             pv.metadata as latest_version_metadata,
             pv.file_size,
+            pv.downloads as version_downloads,
+            pv.changelog,
             pv.published_at as version_published_at
           FROM packages p
           LEFT JOIN users u ON p.author_id = u.id
           LEFT JOIN LATERAL (
-            SELECT version, metadata, file_size, published_at
+            SELECT version, metadata, file_size, downloads, changelog, published_at
             FROM package_versions
             WHERE package_id = p.id
             ORDER BY published_at DESC
@@ -1618,6 +1622,8 @@ export async function packageRoutes(server: FastifyInstance) {
           homepage_url: row.homepage_url,
           documentation_url: row.documentation_url,
           total_downloads: row.total_downloads || 0,
+          weekly_downloads: row.weekly_downloads || 0,
+          version_count: row.version_count || 0,
           rating_average: row.rating_average ? parseFloat(row.rating_average) : null,
           rating_count: row.rating_count || 0,
           verified: row.verified || false,
@@ -1630,6 +1636,8 @@ export async function packageRoutes(server: FastifyInstance) {
             version: row.latest_version,
             metadata: row.latest_version_metadata,
             file_size: row.file_size,
+            downloads: row.version_downloads || 0,
+            changelog: row.changelog,
             published_at: row.version_published_at,
           } : null,
         }));
