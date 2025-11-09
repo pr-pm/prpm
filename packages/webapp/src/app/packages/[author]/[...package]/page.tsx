@@ -6,6 +6,7 @@ import CopyInstallCommand from '@/components/CopyInstallCommand'
 import SharedResults from '@/components/SharedResults'
 import SuggestedTestInputs from '@/components/SuggestedTestInputs'
 import FeaturedResults from '@/components/FeaturedResults'
+import CollapsibleContent from '@/components/CollapsibleContent'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 const SSG_TOKEN = process.env.SSG_DATA_TOKEN
@@ -266,6 +267,29 @@ export default async function PackagePage({ params }: { params: { author: string
                 <span>{pkg.weekly_downloads.toLocaleString()} this week</span>
               </div>
             )}
+            {(pkg.organization as any)?.name && (
+              <div className="flex items-center gap-2">
+                {(pkg.organization as any)?.avatar_url ? (
+                  <img
+                    src={(pkg.organization as any).avatar_url}
+                    alt={`${(pkg.organization as any).name}'s avatar`}
+                    className="w-5 h-5 rounded-full"
+                  />
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                )}
+                <Link href={`/organizations/${(pkg.organization as any).name}`} className="hover:text-prpm-accent">
+                  {(pkg.organization as any).name}
+                  {(pkg.organization as any).is_verified && (
+                    <svg className="inline-block w-4 h-4 ml-1 text-prpm-accent" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </Link>
+              </div>
+            )}
             {(pkg.author as any)?.username && (
               <div className="flex items-center gap-2">
                 {(pkg.author as any)?.avatar_url ? (
@@ -292,16 +316,15 @@ export default async function PackagePage({ params }: { params: { author: string
           <SuggestedTestInputs packageId={pkg.id} />
         </div>
 
-        {/* Full Package Content - Prominently displayed at the top */}
+        {/* Full Package Content - Collapsible */}
         {content && (
-          <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">📄 Full Prompt Content</h2>
+          <CollapsibleContent title="📄 Full Prompt Content" defaultOpen={false}>
             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 overflow-x-auto">
               <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
                 <code>{content}</code>
               </pre>
             </div>
-          </div>
+          </CollapsibleContent>
         )}
 
         {/* Featured Results (author curated) */}
