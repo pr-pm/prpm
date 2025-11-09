@@ -287,6 +287,11 @@ export default async function PackagePage({ params }: { params: { author: string
           </div>
         </div>
 
+        {/* Suggested Test Inputs */}
+        <div className="mb-8">
+          <SuggestedTestInputs packageId={pkg.id} />
+        </div>
+
         {/* Full Package Content - Prominently displayed at the top */}
         {content && (
           <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
@@ -302,11 +307,6 @@ export default async function PackagePage({ params }: { params: { author: string
         {/* Featured Results (author curated) */}
         <div className="mb-8">
           <FeaturedResults packageId={pkg.id} />
-        </div>
-
-        {/* Suggested Test Inputs */}
-        <div className="mb-8">
-          <SuggestedTestInputs packageId={pkg.id} />
         </div>
 
         {/* Shared Test Results */}
