@@ -8,6 +8,7 @@ import type { PlaygroundMessage, Package } from '../../lib/api'
 
 interface PlaygroundInterfaceProps {
   initialPackageId?: string
+  initialInput?: string
   sessionId?: string
   initialCompareMode?: boolean
   onCreditsChange: () => void
@@ -16,6 +17,7 @@ interface PlaygroundInterfaceProps {
 
 export default function PlaygroundInterface({
   initialPackageId,
+  initialInput,
   sessionId,
   initialCompareMode = false,
   onCreditsChange,
@@ -125,6 +127,14 @@ export default function PlaygroundInterface({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPackageId])
+
+  // Set initial input if provided via URL parameter
+  useEffect(() => {
+    if (initialInput && input === '') {
+      setInput(initialInput)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialInput])
 
   const loadInitialPackage = async (packageIdToLoad: string) => {
     try {

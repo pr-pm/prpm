@@ -6,6 +6,7 @@ import CopyInstallCommand from '@/components/CopyInstallCommand'
 import SharedResults from '@/components/SharedResults'
 import SuggestedTestInputs from '@/components/SuggestedTestInputs'
 import FeaturedResults from '@/components/FeaturedResults'
+import CollapsibleContent from '@/components/CollapsibleContent'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 const SSG_TOKEN = process.env.SSG_DATA_TOKEN
@@ -15,8 +16,8 @@ export const dynamicParams = true
 
 // Helper to get package content - prefer full content, fall back to snippet
 function getPackageContent(pkg: any): string | null {
-  // Use fullContent if available (from S3), otherwise fall back to snippet
-  return pkg.fullContent || pkg.snippet || null
+  // Try fullContent (camelCase from SSG), full_content (snake_case from direct API), then snippet
+  return pkg.fullContent || pkg.full_content || pkg.snippet || null
 }
 
 // Generate static params for all packages
@@ -42,31 +43,49 @@ export async function generateStaticParams() {
       throw new Error('SSG_DATA_TOKEN environment variable is required for static build')
     }
 
-    const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
-    const res = await fetch(url, {
-      headers: {
-        'X-SSG-Token': SSG_TOKEN,
-      },
-      next: { revalidate: 3600 } // Revalidate every hour
-    })
+    // Paginate through ALL packages
+    const allPackages: any[] = []
+    const limit = 500
+    let offset = 0
+    let hasMore = true
 
-    if (!res.ok) {
-      console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages from registry`)
-      return []
+    console.log(`[SSG Packages] Starting pagination with limit=${limit}`)
+
+    while (hasMore) {
+      const url = `${REGISTRY_URL}/api/v1/packages/ssg-data?limit=${limit}&offset=${offset}`
+      console.log(`[SSG Packages] Fetching page: offset=${offset}`)
+
+      const res = await fetch(url, {
+        headers: {
+          'X-SSG-Token': SSG_TOKEN,
+        },
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (!res.ok) {
+        console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages at offset ${offset}`)
+        break
+      }
+
+      const data = await res.json()
+      const packages = data.packages || []
+
+      if (!Array.isArray(packages)) {
+        console.error('[SSG Packages] Invalid response format - expected array')
+        break
+      }
+
+      allPackages.push(...packages)
+      hasMore = data.hasMore || false
+      offset += limit
+
+      console.log(`[SSG Packages] Page loaded: ${packages.length} packages, total so far: ${allPackages.length}, hasMore: ${hasMore}`)
     }
 
-    const data = await res.json()
-    const packages = data.packages || []
-
-    if (!Array.isArray(packages)) {
-      console.error('[SSG Packages] Invalid response format - expected array')
-      return []
-    }
-
-    console.log(`[SSG Packages] ✅ Loaded ${packages.length} packages from registry`)
+    console.log(`[SSG Packages] ✅ Loaded ${allPackages.length} packages from registry (${Math.ceil(allPackages.length / limit)} pages)`)
 
     // Transform package data to author/package format
-    const params = packages.map((pkg: any) => {
+    const params = allPackages.map((pkg: any) => {
       const name = pkg.name
       if (name.startsWith('@')) {
         // Scoped package: @author/package/sub/path -> author + [package, sub, path]
@@ -77,9 +96,10 @@ export async function generateStaticParams() {
           package: packageParts, // Array for catch-all route
         }
       } else {
-        // Unscoped package: assume prpm as default author
+        // Unscoped package: use actual author from package data
+        const author = pkg.author?.username || 'prpm'
         return {
-          author: 'prpm',
+          author,
           package: [name], // Array for catch-all route
         }
       }
@@ -99,9 +119,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: { author: string; package: string[] } }): Promise<Metadata> {
   // Reconstruct full package name: author/[package, parts] -> @author/package/parts
   const packagePath = Array.isArray(params.package) ? params.package.join('/') : params.package
-  const fullName = `@${params.author}/${packagePath}`
+  const scopedName = `@${params.author}/${packagePath}`
+  const unscopedName = packagePath // without @ prefix
 
-  const pkg = await getPackage(fullName)
+  const pkg = await getPackage(scopedName, params.author, unscopedName)
 
   if (!pkg) {
     return {
@@ -129,37 +150,63 @@ export async function generateMetadata({ params }: { params: { author: string; p
   }
 }
 
-async function getPackage(name: string): Promise<PackageInfo | null> {
+async function getPackage(scopedName: string, author: string, unscopedName: string): Promise<PackageInfo | null> {
   try {
-    if (!SSG_TOKEN) {
-      console.error('SSG_DATA_TOKEN environment variable not set')
-      return null
+    // First try to find in SSG data (top 500 most downloaded packages)
+    if (SSG_TOKEN) {
+      const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
+      const res = await fetch(url, {
+        headers: {
+          'X-SSG-Token': SSG_TOKEN,
+        },
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        const packages = data.packages || []
+
+        if (Array.isArray(packages)) {
+          // Find the package by name (try scoped first, then unscoped with author match)
+          let pkg = packages.find((p: any) => p.name === scopedName)
+
+          // If not found by scoped name, try unscoped name with author match
+          if (!pkg) {
+            pkg = packages.find((p: any) =>
+              p.name === unscopedName && p.author?.username === author
+            )
+          }
+
+          if (pkg) {
+            return pkg
+          }
+        }
+      }
     }
 
-    const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
-    const res = await fetch(url, {
-      headers: {
-        'X-SSG-Token': SSG_TOKEN,
-      },
-      next: { revalidate: 3600 } // Revalidate every hour
+    // Fallback: Package not in SSG data (outside top 500), fetch directly from registry
+    console.log(`[Package] Not in SSG data, fetching ${scopedName} directly from registry`)
+
+    // Try fetching by scoped name first
+    let directUrl = `${REGISTRY_URL}/api/v1/packages/${encodeURIComponent(scopedName)}`
+    let directRes = await fetch(directUrl, {
+      next: { revalidate: 3600 }
     })
 
-    if (!res.ok) {
-      console.error(`Error fetching packages from registry: ${res.status}`)
-      return null
+    if (!directRes.ok && directRes.status === 404) {
+      // Try unscoped name
+      directUrl = `${REGISTRY_URL}/api/v1/packages/${encodeURIComponent(unscopedName)}`
+      directRes = await fetch(directUrl, {
+        next: { revalidate: 3600 }
+      })
     }
 
-    const data = await res.json()
-    const packages = data.packages || []
-
-    if (!Array.isArray(packages)) {
-      console.error('Invalid packages data format from registry')
-      return null
+    if (directRes.ok) {
+      const packageData = await directRes.json()
+      return packageData
     }
 
-    // Find the package by name
-    const pkg = packages.find((p: any) => p.name === name)
-    return pkg || null
+    return null
   } catch (error) {
     console.error('Error fetching package:', error)
     return null
@@ -169,8 +216,9 @@ async function getPackage(name: string): Promise<PackageInfo | null> {
 export default async function PackagePage({ params }: { params: { author: string; package: string[] } }) {
   // Reconstruct full package name: author/[package, parts] -> @author/package/parts
   const packagePath = Array.isArray(params.package) ? params.package.join('/') : params.package
-  const fullName = `@${params.author}/${packagePath}`
-  const pkg = await getPackage(fullName)
+  const scopedName = `@${params.author}/${packagePath}`
+  const unscopedName = packagePath // without @ prefix
+  const pkg = await getPackage(scopedName, params.author, unscopedName)
 
   if (!pkg) {
     notFound()
@@ -230,7 +278,7 @@ export default async function PackagePage({ params }: { params: { author: string
           {/* Playground CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <Link
-              href={`/playground?package=${pkg.id}`}
+              href={`/playground?package=${pkg.id}${content ? `&input=${encodeURIComponent(content)}` : ''}`}
               className="flex-1 px-4 py-3 bg-prpm-accent hover:bg-prpm-accent/80 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,7 +288,7 @@ export default async function PackagePage({ params }: { params: { author: string
               Test in Playground
             </Link>
             <Link
-              href={`/playground?package=${pkg.id}&compare=true`}
+              href={`/playground?package=${pkg.id}&compare=true${content ? `&input=${encodeURIComponent(content)}` : ''}`}
               className="px-4 py-3 bg-prpm-dark-card hover:bg-prpm-dark border border-prpm-border hover:border-prpm-accent text-gray-300 font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,6 +300,24 @@ export default async function PackagePage({ params }: { params: { author: string
 
           {/* Stats */}
           <div className="flex flex-wrap gap-6 text-gray-400 mb-8">
+            {(pkg.author as any)?.username && (
+              <div className="flex items-center gap-2">
+                {(pkg.author as any)?.avatar_url ? (
+                  <img
+                    src={(pkg.author as any).avatar_url}
+                    alt={`${(pkg.author as any).username}'s avatar`}
+                    className="w-5 h-5 rounded-full"
+                  />
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                )}
+                <Link href={`/authors?username=${(pkg.author as any).username}`} className="hover:text-prpm-accent">
+                  @{(pkg.author as any).username}
+                </Link>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -266,39 +332,51 @@ export default async function PackagePage({ params }: { params: { author: string
                 <span>{pkg.weekly_downloads.toLocaleString()} this week</span>
               </div>
             )}
-            {(pkg.author as any)?.username && (
+            {(pkg.organization as any)?.name && (
               <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <Link href={`/authors?author=${(pkg.author as any).username}`} className="hover:text-prpm-accent">
-                  @{(pkg.author as any).username}
+                {(pkg.organization as any)?.avatar_url ? (
+                  <img
+                    src={(pkg.organization as any).avatar_url}
+                    alt={`${(pkg.organization as any).name}'s avatar`}
+                    className="w-5 h-5 rounded-full"
+                  />
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                )}
+                <Link href={`/organizations/${(pkg.organization as any).name}`} className="hover:text-prpm-accent">
+                  {(pkg.organization as any).name}
+                  {(pkg.organization as any).is_verified && (
+                    <svg className="inline-block w-4 h-4 ml-1 text-prpm-accent" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  )}
                 </Link>
               </div>
             )}
           </div>
         </div>
 
-        {/* Full Package Content - Prominently displayed at the top */}
+        {/* Suggested Test Inputs */}
+        <div className="mb-8">
+          <SuggestedTestInputs packageId={pkg.id} />
+        </div>
+
+        {/* Full Package Content - Collapsible */}
         {content && (
-          <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">📄 Full Prompt Content</h2>
+          <CollapsibleContent title="📄 Full Prompt Content" defaultOpen={false}>
             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 overflow-x-auto">
               <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
                 <code>{content}</code>
               </pre>
             </div>
-          </div>
+          </CollapsibleContent>
         )}
 
         {/* Featured Results (author curated) */}
         <div className="mb-8">
           <FeaturedResults packageId={pkg.id} />
-        </div>
-
-        {/* Suggested Test Inputs */}
-        <div className="mb-8">
-          <SuggestedTestInputs packageId={pkg.id} />
         </div>
 
         {/* Shared Test Results */}

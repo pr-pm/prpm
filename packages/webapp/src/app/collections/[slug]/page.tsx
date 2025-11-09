@@ -32,31 +32,49 @@ export async function generateStaticParams() {
       throw new Error('SSG_DATA_TOKEN environment variable is required for static build')
     }
 
-    const url = `${REGISTRY_URL}/api/v1/collections/ssg-data`
-    const res = await fetch(url, {
-      headers: {
-        'X-SSG-Token': SSG_TOKEN,
-      },
-      next: { revalidate: 3600 } // Revalidate every hour
-    })
+    // Paginate through ALL collections
+    const allCollections: any[] = []
+    const limit = 500
+    let offset = 0
+    let hasMore = true
 
-    if (!res.ok) {
-      console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections from registry`)
-      return []
+    console.log(`[SSG Collections] Starting pagination with limit=${limit}`)
+
+    while (hasMore) {
+      const url = `${REGISTRY_URL}/api/v1/collections/ssg-data?limit=${limit}&offset=${offset}`
+      console.log(`[SSG Collections] Fetching page: offset=${offset}`)
+
+      const res = await fetch(url, {
+        headers: {
+          'X-SSG-Token': SSG_TOKEN,
+        },
+        next: { revalidate: 3600 } // Revalidate every hour
+      })
+
+      if (!res.ok) {
+        console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections at offset ${offset}`)
+        break
+      }
+
+      const data = await res.json()
+      const collections = data.collections || []
+
+      if (!Array.isArray(collections)) {
+        console.error('[SSG Collections] Invalid response format - expected array')
+        break
+      }
+
+      allCollections.push(...collections)
+      hasMore = data.hasMore || false
+      offset += limit
+
+      console.log(`[SSG Collections] Page loaded: ${collections.length} collections, total so far: ${allCollections.length}, hasMore: ${hasMore}`)
     }
 
-    const data = await res.json()
-    const collections = data.collections || []
-
-    if (!Array.isArray(collections)) {
-      console.error('[SSG Collections] Invalid response format - expected array')
-      return []
-    }
-
-    console.log(`[SSG Collections] ✅ Loaded ${collections.length} collections from registry`)
+    console.log(`[SSG Collections] ✅ Loaded ${allCollections.length} collections from registry (${Math.ceil(allCollections.length / limit)} pages)`)
 
     // Map to slug params
-    const params = collections.map((collection: any) => ({
+    const params = allCollections.map((collection: any) => ({
       slug: collection.name_slug,
     }))
 

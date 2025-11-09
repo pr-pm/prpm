@@ -1516,11 +1516,12 @@ export async function packageRoutes(server: FastifyInstance) {
           properties: {
             format: { type: 'string' },
             limit: { type: 'number', default: 500 },
+            offset: { type: 'number', default: 0 },
           },
         },
       },
     },
-    async (request: FastifyRequest<{ Querystring: { format?: string; limit?: number } }>, reply: FastifyReply) => {
+    async (request: FastifyRequest<{ Querystring: { format?: string; limit?: number; offset?: number } }>, reply: FastifyReply) => {
       try {
         // Authenticate SSG token
         const ssgToken = request.headers['x-ssg-token'];
@@ -1542,9 +1543,9 @@ export async function packageRoutes(server: FastifyInstance) {
           });
         }
 
-        const { format, limit = 500 } = request.query; // Reduced to 500 to keep response under 2MB cache limit
+        const { format, limit = 500, offset = 0 } = request.query;
 
-        server.log.info({ format, limit }, 'Fetching SSG data');
+        server.log.info({ format, limit, offset }, 'Fetching SSG data');
 
         // Build WHERE clause
         const conditions: string[] = ["visibility = 'public'", "deprecated = FALSE"];
@@ -1556,10 +1557,21 @@ export async function packageRoutes(server: FastifyInstance) {
           params.push(format);
         }
 
-        // Add limit
-        params.push(limit);
+        // Get total count for pagination
+        const countResult = await query<{ total: string }>(
+          server,
+          `SELECT COUNT(*) as total FROM packages p WHERE ${conditions.join(' AND ')}`,
+          params.slice(0, paramIndex - 1) // Only use WHERE clause params
+        );
+        const totalCount = parseInt(countResult.rows[0]?.total || '0', 10);
 
-        // Get public packages with minimal fields + full_content (keep response under 2MB for Next.js cache)
+        // Add limit and offset
+        const limitIndex = paramIndex++;
+        const offsetIndex = paramIndex++;
+        params.push(limit);
+        params.push(offset);
+
+        // Get public packages with minimal fields + full_content (paginated)
         // Exclude: monthly_downloads, quality_score, keywords, created_at, updated_at, snippet (not displayed on SEO page)
         const result = await query(
           server,
@@ -1604,7 +1616,7 @@ export async function packageRoutes(server: FastifyInstance) {
           ) pv ON true
           WHERE ${conditions.join(' AND ')}
           ORDER BY p.total_downloads DESC
-          LIMIT $${paramIndex}`,
+          LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
           params
         );
 
@@ -1642,11 +1654,20 @@ export async function packageRoutes(server: FastifyInstance) {
           } : null,
         }));
 
-        server.log.info({ count: packages.length }, 'SSG data fetched successfully');
+        server.log.info({
+          count: packages.length,
+          total: totalCount,
+          offset,
+          limit
+        }, 'SSG data fetched successfully');
 
         return {
           packages,
-          total: packages.length,
+          total: totalCount, // Total count across all pages
+          count: packages.length, // Count in this page
+          limit,
+          offset,
+          hasMore: offset + packages.length < totalCount,
           generated_at: new Date().toISOString(),
         };
       } catch (error) {
