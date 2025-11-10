@@ -9,6 +9,7 @@ import FeaturedResults from '@/components/FeaturedResults'
 import CollapsibleContent from '@/components/CollapsibleContent'
 import LatestVersionBadge from '@/components/LatestVersionBadge'
 import DynamicPackageContent from '@/components/DynamicPackageContent'
+import { getLicenseUrl } from '@/lib/license-utils'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 const SSG_TOKEN = process.env.SSG_DATA_TOKEN
@@ -249,6 +250,7 @@ export default async function PackagePage({ params }: { params: { author: string
   const content = getPackageContent(pkg)
   const author = (pkg.author as any)?.username || params.author
   const packageUrl = `https://prpm.dev/packages/${params.author}/${packagePath}`
+  const licenseUrl = getLicenseUrl((pkg as any).license_url, pkg.repository_url)
 
   // Structured data for SEO - Software Package
   const softwareData = {
@@ -514,9 +516,40 @@ export default async function PackagePage({ params }: { params: { author: string
                 <div>
                   <dt className="text-sm text-gray-400">License</dt>
                   <dd className="text-white">
-                    <span className="px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-sm">
-                      {pkg.license}
-                    </span>
+                    {licenseUrl ? (
+                      <a
+                        href={licenseUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-sm hover:bg-green-500/20 transition-colors"
+                      >
+                        {pkg.license}
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    ) : (
+                      <span className="px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-sm">
+                        {pkg.license}
+                      </span>
+                    )}
+
+                    {/* Collapsible full license text if available */}
+                    {(pkg as any).license_text && (
+                      <details className="mt-2 group">
+                        <summary className="text-xs text-gray-400 hover:text-gray-300 cursor-pointer list-none flex items-center gap-1">
+                          <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                          View full license text
+                        </summary>
+                        <div className="mt-2 bg-prpm-dark border border-prpm-border rounded-lg p-3 overflow-x-auto">
+                          <pre className="text-xs text-gray-300 whitespace-pre-wrap break-words leading-relaxed font-mono">
+                            <code>{(pkg as any).license_text}</code>
+                          </pre>
+                        </div>
+                      </details>
+                    )}
                   </dd>
                 </div>
               )}

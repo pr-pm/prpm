@@ -868,6 +868,35 @@ export async function runPlayground(jwtToken: string, request: PlaygroundRunRequ
 }
 
 /**
+ * Run custom prompt in playground (verified authors only)
+ */
+export async function runCustomPrompt(
+  jwtToken: string,
+  request: {
+    custom_prompt: string
+    input: string
+    session_id?: string
+    model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo'
+  }
+): Promise<PlaygroundRunResponse> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/custom-prompt/run`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to run custom prompt' }))
+    throw new Error(error.error || error.message || 'Failed to run custom prompt')
+  }
+
+  return response.json()
+}
+
+/**
  * Run anonymous playground (one free run for non-logged-in users)
  */
 export async function runAnonymousPlayground(request: { package_id: string; input: string }): Promise<{
