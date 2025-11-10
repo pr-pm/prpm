@@ -134,20 +134,39 @@ export async function generateMetadata({ params }: { params: { author: string; p
   }
 
   const displayTitle = pkg.display_name || pkg.name
+  const author = (pkg.author as any)?.username || params.author
+  const packageUrl = `https://prpm.dev/packages/${params.author}/${packagePath}`
+  const description = pkg.description || `Install ${displayTitle} with PRPM - ${pkg.format} ${pkg.subtype} for your AI coding workflow`
 
   return {
     title: `${displayTitle} - PRPM Package`,
-    description: pkg.description || `Install ${displayTitle} with PRPM - ${pkg.format} ${pkg.subtype} for your AI coding workflow`,
+    description,
     keywords: [...(pkg.tags || []), pkg.format, pkg.subtype, pkg.category, 'prpm', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
+    authors: author ? [{ name: author }] : undefined,
+    creator: author,
+    publisher: 'PRPM',
+    alternates: {
+      canonical: packageUrl,
+    },
     openGraph: {
       title: displayTitle,
-      description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
-      type: 'website',
+      description,
+      type: 'article',
+      url: packageUrl,
+      siteName: 'PRPM',
+      locale: 'en_US',
+      authors: author ? [author] : undefined,
+      publishedTime: pkg.created_at ? new Date(pkg.created_at).toISOString() : undefined,
+      modifiedTime: pkg.updated_at ? new Date(pkg.updated_at).toISOString() : undefined,
+      section: pkg.category || undefined,
+      tags: pkg.tags || undefined,
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
+      site: '@prpmdev',
       title: displayTitle,
-      description: pkg.description || `${pkg.format} ${pkg.subtype} package`,
+      description,
+      creator: author ? `@${author}` : undefined,
     },
   }
 }
@@ -228,9 +247,79 @@ export default async function PackagePage({ params }: { params: { author: string
   }
 
   const content = getPackageContent(pkg)
+  const author = (pkg.author as any)?.username || params.author
+  const packageUrl = `https://prpm.dev/packages/${params.author}/${packagePath}`
+
+  // Structured data for SEO - Software Package
+  const softwareData = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    name: pkg.display_name || pkg.name,
+    description: pkg.description,
+    codeRepository: pkg.repository_url,
+    programmingLanguage: pkg.format,
+    applicationCategory: pkg.category,
+    keywords: pkg.tags?.join(', '),
+    author: author ? {
+      '@type': 'Person',
+      name: author,
+    } : undefined,
+    datePublished: pkg.created_at,
+    dateModified: pkg.updated_at,
+    license: pkg.license || 'MIT',
+    version: pkg.latest_version?.version,
+    downloadUrl: pkg.latest_version?.version ? `https://registry.prpm.dev/api/v1/packages/${encodeURIComponent(pkg.name)}/${pkg.latest_version.version}.tar.gz` : undefined,
+    aggregateRating: pkg.rating_average && pkg.rating_count ? {
+      '@type': 'AggregateRating',
+      ratingValue: pkg.rating_average,
+      ratingCount: pkg.rating_count,
+    } : undefined,
+    interactionStatistic: {
+      '@type': 'InteractionCounter',
+      interactionType: 'https://schema.org/DownloadAction',
+      userInteractionCount: pkg.total_downloads,
+    },
+  }
+
+  // Breadcrumb structured data
+  const breadcrumbData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://prpm.dev',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Packages',
+        item: 'https://prpm.dev/search',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: pkg.display_name || pkg.name,
+        item: packageUrl,
+      },
+    ],
+  }
 
   return (
     <main className="min-h-screen bg-prpm-dark">
+      {/* Structured Data for SEO - Software Package */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareData) }}
+      />
+      {/* Structured Data for SEO - Breadcrumbs */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+      />
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="mb-6 text-sm text-gray-400">
