@@ -8,7 +8,7 @@ import { config } from '../core/config';
 import { telemetry } from '../core/telemetry';
 import { CLIError } from '../core/errors';
 
-interface StarredOptions {
+export interface StarredOptions {
   packages?: boolean;
   collections?: boolean;
   format?: string;
