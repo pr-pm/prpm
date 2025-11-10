@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Collection } from '@pr-pm/types'
+import CollapsibleContent from '@/components/CollapsibleContent'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 const SSG_TOKEN = process.env.SSG_DATA_TOKEN
@@ -295,15 +296,16 @@ export default async function CollectionPage({ params }: { params: { slug: strin
                     </div>
                   </div>
 
-                  {/* Full prompt content */}
+                  {/* Full prompt content - Collapsible */}
                   {(pkg as any).fullContent && (
                     <div className="mt-4 border-t border-prpm-border pt-4">
-                      <h4 className="text-sm font-semibold text-gray-400 mb-2">📄 Prompt Content</h4>
-                      <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 overflow-x-auto">
-                        <pre className="text-xs text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
-                          <code>{(pkg as any).fullContent}</code>
-                        </pre>
-                      </div>
+                      <CollapsibleContent title="📄 Full Prompt Content" defaultOpen={false}>
+                        <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 overflow-x-auto">
+                          <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
+                            <code>{(pkg as any).fullContent}</code>
+                          </pre>
+                        </div>
+                      </CollapsibleContent>
                     </div>
                   )}
                 </div>
