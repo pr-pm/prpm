@@ -7,6 +7,8 @@ import SharedResults from '@/components/SharedResults'
 import SuggestedTestInputs from '@/components/SuggestedTestInputs'
 import FeaturedResults from '@/components/FeaturedResults'
 import CollapsibleContent from '@/components/CollapsibleContent'
+import LatestVersionBadge from '@/components/LatestVersionBadge'
+import DynamicPackageContent from '@/components/DynamicPackageContent'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 const SSG_TOKEN = process.env.SSG_DATA_TOKEN
@@ -263,6 +265,15 @@ export default async function PackagePage({ params }: { params: { author: string
             <p className="text-sm text-gray-500 mb-2 font-mono">{pkg.name}</p>
           )}
 
+          {/* Dynamic Version Badge - fetches fresh data */}
+          <div className="mb-3">
+            <LatestVersionBadge
+              packageId={pkg.name}
+              fallbackVersion={pkg.latest_version?.version}
+              fallbackDate={pkg.latest_version?.published_at ? String(pkg.latest_version.published_at) : undefined}
+            />
+          </div>
+
           {pkg.description && (
             <p className="text-xl text-gray-300 mb-4">{pkg.description}</p>
           )}
@@ -364,14 +375,10 @@ export default async function PackagePage({ params }: { params: { author: string
           <SuggestedTestInputs packageId={pkg.id} />
         </div>
 
-        {/* Full Package Content - Collapsible */}
+        {/* Full Package Content - Collapsible with Dynamic Hydration */}
         {content && (
           <CollapsibleContent title="📄 Full Prompt Content" defaultOpen={false}>
-            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 overflow-x-auto">
-              <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
-                <code>{content}</code>
-              </pre>
-            </div>
+            <DynamicPackageContent packageName={pkg.name} fallbackContent={content} />
           </CollapsibleContent>
         )}
 
