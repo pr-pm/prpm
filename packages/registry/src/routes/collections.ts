@@ -901,24 +901,70 @@ export async function collectionRoutes(server: FastifyInstance) {
           [limit, offset]
         );
 
-        const collections = result.rows.map((row: any) => ({
-          id: row.id,
-          scope: row.scope,
-          name: row.name,
-          name_slug: row.name_slug,
-          description: row.description,
-          category: row.category,
-          framework: row.framework,
-          tags: row.tags || [],
-          icon: row.icon,
-          official: row.official || false,
-          verified: row.verified || false,
-          downloads: row.downloads || 0,
-          stars: row.stars || 0,
-          created_at: row.created_at,
-          updated_at: row.updated_at,
-          author: row.author_username || '', // Return string, not object
-        }));
+        // Fetch packages for each collection
+        const collections = await Promise.all(
+          result.rows.map(async (row: any) => {
+            // Get packages for this collection
+            const packagesResult = await server.pg.query(
+              `SELECT
+                cp.package_id,
+                cp.package_version,
+                cp.required,
+                cp.reason,
+                cp.install_order,
+                p.name as package_name,
+                p.description,
+                p.format,
+                p.subtype,
+                p.tags,
+                p.full_content
+              FROM collection_packages cp
+              LEFT JOIN packages p ON cp.package_id = p.id
+              WHERE cp.collection_id = $1
+              ORDER BY cp.install_order ASC, cp.package_id ASC`,
+              [row.id]
+            );
+
+            // Map packages to structure expected by frontend
+            const packages = packagesResult.rows.map((pkg: any) => ({
+              packageId: pkg.package_name,  // Use package name, not UUID
+              packageName: pkg.package_name, // Also provide as packageName for frontend
+              version: pkg.package_version,
+              required: pkg.required,
+              reason: pkg.reason,
+              installOrder: pkg.install_order,
+              package: pkg.package_name ? {
+                name: pkg.package_name,
+                description: pkg.description,
+                format: pkg.format,
+                subtype: pkg.subtype,
+                tags: pkg.tags,
+              } : null,
+              fullContent: pkg.full_content, // Include full package content for SEO page
+            }));
+
+            return {
+              id: row.id,
+              scope: row.scope,
+              name: row.name,
+              name_slug: row.name_slug,
+              description: row.description,
+              category: row.category,
+              framework: row.framework,
+              tags: row.tags || [],
+              icon: row.icon,
+              official: row.official || false,
+              verified: row.verified || false,
+              downloads: row.downloads || 0,
+              stars: row.stars || 0,
+              created_at: row.created_at,
+              updated_at: row.updated_at,
+              author: row.author_username || '', // Return string, not object
+              packages, // Include packages array
+              package_count: packages.length,
+            };
+          })
+        );
 
         server.log.info({
           count: collections.length,
