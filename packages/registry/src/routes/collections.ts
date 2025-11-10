@@ -991,4 +991,64 @@ export async function collectionRoutes(server: FastifyInstance) {
       }
     }
   );
+
+  /**
+   * GET /api/v1/collections/starred
+   * Get user's starred collections
+   */
+  server.get(
+    '/starred',
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: 'Get collections starred by the current user',
+        tags: ['collections', 'stars'],
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
+            offset: { type: 'number', default: 0, minimum: 0 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { limit = 20, offset = 0 } = request.query as { limit?: number; offset?: number };
+      const user = request.user;
+
+      try {
+        const result = await server.pg.query(
+          `
+          SELECT
+            c.*,
+            cs.starred_at,
+            u.username as author_username
+          FROM collection_stars cs
+          JOIN collections c ON cs.collection_id = c.id
+          LEFT JOIN users u ON c.author_id = u.id
+          WHERE cs.user_id = $1
+          ORDER BY cs.starred_at DESC
+          LIMIT $2 OFFSET $3
+        `,
+          [user.user_id, limit, offset]
+        );
+
+        const collections = result.rows.map((row) => ({
+          ...row,
+          author: row.author_username || '',
+        }));
+
+        return reply.send({
+          collections,
+          total: collections.length,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Failed to get starred collections',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
 }

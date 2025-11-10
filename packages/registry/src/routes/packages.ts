@@ -1772,6 +1772,155 @@ export async function packageRoutes(server: FastifyInstance) {
       }
     }
   );
+
+  /**
+   * POST /api/v1/packages/:packageId/star
+   * Star/unstar a package
+   */
+  server.post(
+    '/:packageId/star',
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: 'Star or unstar a package',
+        tags: ['packages', 'stars'],
+        params: {
+          type: 'object',
+          required: ['packageId'],
+          properties: {
+            packageId: { type: 'string', description: 'Package ID (UUID)' },
+          },
+        },
+        body: {
+          type: 'object',
+          required: ['starred'],
+          properties: {
+            starred: { type: 'boolean' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { packageId } = request.params as { packageId: string };
+      const { starred } = request.body as { starred: boolean };
+      const user = request.user;
+
+      try {
+        if (starred) {
+          // Add star
+          await server.pg.query(
+            `
+            INSERT INTO package_stars (package_id, user_id)
+            VALUES ($1, $2)
+            ON CONFLICT DO NOTHING
+          `,
+            [packageId, user.user_id]
+          );
+        } else {
+          // Remove star
+          await server.pg.query(
+            `
+            DELETE FROM package_stars
+            WHERE package_id = $1 AND user_id = $2
+          `,
+            [packageId, user.user_id]
+          );
+        }
+
+        // Get updated star count
+        const result = await server.pg.query(
+          `SELECT stars FROM packages WHERE id = $1`,
+          [packageId]
+        );
+
+        return reply.send({
+          starred,
+          stars: result.rows[0]?.stars || 0,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Failed to star package',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/v1/packages/starred
+   * Get user's starred packages
+   */
+  server.get(
+    '/starred',
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: 'Get packages starred by the current user',
+        tags: ['packages', 'stars'],
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
+            offset: { type: 'number', default: 0, minimum: 0 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { limit = 20, offset = 0 } = request.query as { limit?: number; offset?: number };
+      const user = request.user;
+
+      try {
+        const result = await server.pg.query(
+          `
+          SELECT
+            p.*,
+            ps.starred_at,
+            u.username as author_username,
+            u.verified_author,
+            u.avatar_url as author_avatar_url,
+            o.name as org_name,
+            o.is_verified as org_verified,
+            o.avatar_url as org_avatar_url
+          FROM package_stars ps
+          JOIN packages p ON ps.package_id = p.id
+          LEFT JOIN users u ON p.author_id = u.id
+          LEFT JOIN organizations o ON p.org_id = o.id
+          WHERE ps.user_id = $1
+          ORDER BY ps.starred_at DESC
+          LIMIT $2 OFFSET $3
+        `,
+          [user.user_id, limit, offset]
+        );
+
+        const packages = result.rows.map((row) => ({
+          ...row,
+          author: row.author_username ? {
+            username: row.author_username,
+            verified_author: row.verified_author,
+            avatar_url: row.author_avatar_url,
+          } : null,
+          organization: row.org_name ? {
+            name: row.org_name,
+            is_verified: row.org_verified,
+            avatar_url: row.org_avatar_url,
+          } : null,
+        }));
+
+        return reply.send({
+          packages,
+          total: packages.length,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Failed to get starred packages',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
 }
 
 /**
