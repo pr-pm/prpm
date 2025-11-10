@@ -9,6 +9,7 @@ import FeaturedResults from '@/components/FeaturedResults'
 import CollapsibleContent from '@/components/CollapsibleContent'
 import LatestVersionBadge from '@/components/LatestVersionBadge'
 import DynamicPackageContent from '@/components/DynamicPackageContent'
+import StarButtonWrapper from '@/components/StarButtonWrapper'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 const SSG_TOKEN = process.env.SSG_DATA_TOKEN
@@ -344,6 +345,11 @@ export default async function PackagePage({ params }: { params: { author: string
                 <span>{pkg.weekly_downloads.toLocaleString()} this week</span>
               </div>
             )}
+            <StarButtonWrapper
+              type="package"
+              id={pkg.id}
+              initialStars={pkg.stars || 0}
+            />
             {(pkg.organization as any)?.name && (
               <div className="flex items-center gap-2">
                 {(pkg.organization as any)?.avatar_url ? (
