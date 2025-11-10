@@ -14,6 +14,7 @@ function PlaygroundContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const packageId = searchParams.get('package')
+  const initialInput = searchParams.get('input')
   const buyCredits = searchParams.get('buyCredits')
   const purchaseSuccess = searchParams.get('purchase')
   const subscriptionStatus = searchParams.get('subscription')
@@ -273,6 +274,7 @@ function PlaygroundContent() {
           <div className="lg:col-span-3 order-1 lg:order-2">
             <PlaygroundInterface
               initialPackageId={packageId || undefined}
+              initialInput={initialInput || undefined}
               sessionId={selectedSession || undefined}
               initialCompareMode={compareMode}
               onCreditsChange={handleRefreshCredits}

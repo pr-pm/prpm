@@ -83,6 +83,7 @@ export async function customPromptRoutes(server: FastifyInstance) {
               tokens_used: { type: 'number' },
               duration_ms: { type: 'number' },
               model: { type: 'string' },
+              conversation: { type: 'array' },
               is_custom_prompt: { type: 'boolean' },
               warnings: { type: 'array' },
             },

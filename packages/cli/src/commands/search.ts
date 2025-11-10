@@ -8,6 +8,7 @@ import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { Format, Subtype } from '../types';
 import * as readline from 'readline';
+import { CLIError } from '../core/errors';
 
 /**
  * Get icon for package format and subtype
@@ -390,7 +391,7 @@ export async function handleSearch(
       console.log(`   To use the production registry, remove the registryUrl from ~/.prpmrc`);
     }
 
-    process.exit(1);
+    throw new CLIError(`\n❌ Search failed: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'search',
@@ -441,7 +442,7 @@ export function createSearchCommand(): Command {
 
       if (options.format && !validFormats.includes(format!)) {
         console.error(`❌ Format must be one of: ${validFormats.join(', ')}`);
-        process.exit(1);
+        throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}`, 1);
       }
 
       if (options.subtype && !validSubtypes.includes(subtype!)) {
@@ -455,11 +456,10 @@ export function createSearchCommand(): Command {
         console.log(`   prpm search --subtype skill  # List all skills`);
         console.log(`   prpm search --format claude  # List all Claude packages`);
         console.log(`   prpm search --author prpm  # List packages by @prpm`);
-        process.exit(1);
+        throw new CLIError(`❌ Subtype must be one of: ${validSubtypes.join(', ')}`, 1);
       }
 
       await handleSearch(query || '', { format, subtype, author, language: options.language, framework: options.framework, limit, page, interactive: options.interactive });
-      process.exit(0);
     });
 
   return command;

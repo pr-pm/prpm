@@ -14,8 +14,7 @@ import {
   Subtype,
   SortType,
 } from '@/lib/api'
-import PackageModal from '@/components/PackageModal'
-import CollectionModal from '@/components/CollectionModal'
+import { getPackageUrl } from '@/lib/package-url'
 
 type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
 
@@ -66,11 +65,7 @@ function SearchPageContent() {
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [availableCategories, setAvailableCategories] = useState<string[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
-  const [showPackageModal, setShowPackageModal] = useState(false)
-  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [showCollectionModal, setShowCollectionModal] = useState(false)
 
   const limit = 20
 
@@ -623,12 +618,9 @@ function SearchPageContent() {
                           </div>
                         )}
                         {packages.map((pkg) => (
-                        <button
+                        <Link
                           key={pkg.id}
-                          onClick={() => {
-                            setSelectedPackage(pkg)
-                            setShowPackageModal(true)
-                          }}
+                          href={getPackageUrl(pkg.name, pkg.author_username)}
                           className="block w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
                         >
                           <div className="flex items-start justify-between mb-2">
@@ -729,7 +721,7 @@ function SearchPageContent() {
                               </Link>
                             </div>
                           </div>
-                        </button>
+                        </Link>
                       ))}
                       </>
                     )}
@@ -773,13 +765,10 @@ function SearchPageContent() {
                       </div>
                     ) : (
                       collections.map((collection) => (
-                        <button
+                        <Link
                           key={collection.id}
-                          onClick={() => {
-                            setSelectedCollection(collection)
-                            setShowCollectionModal(true)
-                          }}
-                          className="w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
+                          href={`/collections/${collection.name_slug}`}
+                          className="block w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -850,7 +839,7 @@ function SearchPageContent() {
                               )}
                             </button>
                           </div>
-                        </button>
+                        </Link>
                       ))
                     )}
                   </div>
@@ -883,23 +872,6 @@ function SearchPageContent() {
           </div>
         </div>
 
-        {/* Package Modal */}
-        {selectedPackage && (
-          <PackageModal
-            package={selectedPackage}
-            isOpen={showPackageModal}
-            onClose={() => setShowPackageModal(false)}
-          />
-        )}
-
-        {/* Collection Modal */}
-        {selectedCollection && (
-          <CollectionModal
-            collection={selectedCollection}
-            isOpen={showCollectionModal}
-            onClose={() => setShowCollectionModal(false)}
-          />
-        )}
       </div>
     </main>
   )

@@ -7,6 +7,7 @@ import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { Format, Subtype } from '../types';
+import { CLIError } from '../core/errors';
 
 export async function handleTrending(options: { format?: Format; subtype?: Subtype; limit?: number }): Promise<void> {
   const startTime = Date.now();
@@ -47,7 +48,7 @@ export async function handleTrending(options: { format?: Format; subtype?: Subty
     error = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Failed to fetch trending packages: ${error}`);
     console.log(`\n💡 Tip: Check your internet connection`);
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to fetch trending packages: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'trending',
@@ -82,16 +83,15 @@ export function createTrendingCommand(): Command {
 
       if (options.format && !validFormats.includes(format!)) {
         console.error(`❌ Format must be one of: ${validFormats.join(', ')}`);
-        process.exit(1);
+        throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}`, 1);
       }
 
       if (options.subtype && !validSubtypes.includes(subtype!)) {
         console.error(`❌ Subtype must be one of: ${validSubtypes.join(', ')}`);
-        process.exit(1);
+        throw new CLIError(`❌ Subtype must be one of: ${validSubtypes.join(', ')}`, 1);
       }
 
       await handleTrending({ format, subtype, limit });
-      process.exit(0);
     });
 
   return command;

@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "self-improving-ai",
+    title: "Self-Improving AI: How PRPM Teaches AI Assistants to Get Better at Their Job",
+    excerpt: "Watch AI assistants automatically discover and install expertise packages from PRPM when they need specialized knowledge. A new paradigm for distributable intelligence.",
+    date: "2025-11-08",
+    author: "PRPM Team",
+    readTime: "8 min read",
+    tags: ["Technical", "Innovation", "AI Development", "Self-Improvement"],
+  },
+  {
     slug: "kiro-hooks-automation",
     title: "Best Kiro Hooks for Development Automation: Complete Guide 2025",
     excerpt: "Discover the best Kiro hooks for event-driven automation. Test synchronization, documentation updates, accessibility audits. Compare PRPM vs GitHub vs manual hooks. Get CLI installation and quality metrics.",

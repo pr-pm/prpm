@@ -879,7 +879,7 @@ export async function runCustomPrompt(
     model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo'
   }
 ): Promise<PlaygroundRunResponse> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/custom`, {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/custom-prompt/run`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${jwtToken}`,

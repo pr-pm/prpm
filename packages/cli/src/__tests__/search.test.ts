@@ -5,6 +5,7 @@
 import { handleSearch } from '../commands/search';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -239,29 +240,17 @@ describe('search command', () => {
     it('should handle search errors', async () => {
       mockClient.search.mockRejectedValue(new Error('Network error'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleSearch('test', {})).rejects.toThrow('Process exited');
+      await expect(handleSearch('test', {})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Search failed')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle timeout errors', async () => {
       mockClient.search.mockRejectedValue(new Error('Request timeout'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleSearch('test', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleSearch('test', {})).rejects.toThrow(CLIError);
     });
   });
 

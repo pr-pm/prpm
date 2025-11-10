@@ -13,6 +13,7 @@ interface CustomPromptInputProps {
   onPromptChange: (prompt: string) => void;
   onUseCustom: (enabled: boolean) => void;
   isVerifiedAuthor: boolean;
+  isAnonymousUser?: boolean;
 }
 
 interface FeatureInfo {
@@ -46,6 +47,7 @@ export default function CustomPromptInput({
   onPromptChange,
   onUseCustom,
   isVerifiedAuthor,
+  isAnonymousUser = false,
 }: CustomPromptInputProps) {
   const [customPrompt, setCustomPrompt] = useState('');
   const [isEnabled, setIsEnabled] = useState(false);
@@ -57,7 +59,8 @@ export default function CustomPromptInput({
   useEffect(() => {
     async function fetchInfo() {
       try {
-        const response = await fetch('/api/v1/custom-prompt/info', {
+        const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'https://registry.prpm.dev';
+        const response = await fetch(`${registryUrl}/api/v1/custom-prompt/info`, {
           credentials: 'include',
         });
         if (response.ok) {
@@ -99,6 +102,19 @@ export default function CustomPromptInput({
   };
 
   if (!isVerifiedAuthor) {
+    // Different message for anonymous vs logged-in non-verified users
+    const title = isAnonymousUser
+      ? "Custom Prompts (Login Required)"
+      : "Custom Prompts (Verification Required)";
+
+    const description = isAnonymousUser
+      ? "Sign in with GitHub to test your own prompts against published packages. This feature is available to verified authors with linked GitHub accounts."
+      : "You're logged in! To use custom prompts, you need to verify your authorship by linking your GitHub account. This ensures quality and prevents abuse.";
+
+    const buttonText = isAnonymousUser
+      ? "Sign in with GitHub"
+      : "Verify Author Status";
+
     return (
       <div className="mt-6 p-6 bg-prpm-dark-card border border-prpm-border rounded-lg">
         <div className="flex items-start gap-4">
@@ -109,10 +125,10 @@ export default function CustomPromptInput({
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-white mb-2">
-              Custom Prompts (Verified Authors Only)
+              {title}
             </h3>
             <p className="text-gray-300 mb-4">
-              Test your own prompts against published packages. This feature is available to verified authors with linked GitHub accounts.
+              {description}
             </p>
             <a
               href="/auth/github"
@@ -121,7 +137,7 @@ export default function CustomPromptInput({
               <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                 <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
               </svg>
-              Link GitHub Account
+              {buttonText}
             </a>
           </div>
         </div>
@@ -172,16 +188,24 @@ export default function CustomPromptInput({
           {featureInfo.sandbox && (
             <div className="text-sm text-gray-300">
               <p className="font-medium text-yellow-400 mb-1">⚠️ Sandbox Mode:</p>
-              <p className="mb-2">{featureInfo.sandbox.description}</p>
-              <p className="text-xs text-gray-400">{featureInfo.sandbox.why}</p>
+              {featureInfo.sandbox.description && (
+                <p className="mb-2">{featureInfo.sandbox.description}</p>
+              )}
+              {featureInfo.sandbox.why && (
+                <p className="text-xs text-gray-400">{featureInfo.sandbox.why}</p>
+              )}
             </div>
           )}
 
           {featureInfo.pricing && (
             <div className="text-sm text-gray-300">
               <p className="font-medium text-orange-400 mb-1">💰 Pricing:</p>
-              <p className="mb-1">{featureInfo.pricing.description}</p>
-              <p className="text-xs text-gray-400">Example: {featureInfo.pricing.example}</p>
+              {featureInfo.pricing.description && (
+                <p className="mb-1">{featureInfo.pricing.description}</p>
+              )}
+              {featureInfo.pricing.example && (
+                <p className="text-xs text-gray-400">Example: {featureInfo.pricing.example}</p>
+              )}
             </div>
           )}
 
@@ -189,10 +213,18 @@ export default function CustomPromptInput({
             <div className="text-sm text-gray-300">
               <p className="font-medium text-gray-400 mb-1">📊 Limits:</p>
               <ul className="text-xs text-gray-400 space-y-1">
-                <li>• Max length: {featureInfo.limits.max_prompt_length.toLocaleString()} chars</li>
-                <li>• Recommended: {featureInfo.limits.recommended_length}</li>
-                <li>• Max output: {featureInfo.limits.max_tokens_output} tokens</li>
-                <li>• Timeout: {featureInfo.limits.timeout_seconds}s</li>
+                {featureInfo.limits.max_prompt_length != null && (
+                  <li>• Max length: {featureInfo.limits.max_prompt_length.toLocaleString()} chars</li>
+                )}
+                {featureInfo.limits.recommended_length && (
+                  <li>• Recommended: {featureInfo.limits.recommended_length}</li>
+                )}
+                {featureInfo.limits.max_tokens_output != null && (
+                  <li>• Max output: {featureInfo.limits.max_tokens_output} tokens</li>
+                )}
+                {featureInfo.limits.timeout_seconds != null && (
+                  <li>• Timeout: {featureInfo.limits.timeout_seconds}s</li>
+                )}
               </ul>
             </div>
           )}

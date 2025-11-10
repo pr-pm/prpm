@@ -2,11 +2,10 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Collection } from '@pr-pm/types'
+import CollapsibleContent from '@/components/CollapsibleContent'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
-// During build, don't set a default S3 URL - we want to use local files only
-// Only use S3 as fallback in runtime (client-side) if explicitly configured
-const S3_SEO_DATA_URL = process.env.NEXT_PUBLIC_S3_SEO_DATA_URL || (typeof window !== 'undefined' ? 'https://prpm-prod-packages.s3.amazonaws.com/seo-data' : '')
+const SSG_TOKEN = process.env.SSG_DATA_TOKEN
 
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
@@ -14,68 +13,78 @@ export const dynamicParams = true
 // Generate static params for all collections
 export async function generateStaticParams() {
   try {
-    console.log(`[SSG Collections] Starting - S3_SEO_DATA_URL: ${S3_SEO_DATA_URL}`)
+    console.log(`[SSG Collections] Fetching from registry API: ${REGISTRY_URL}`)
+    console.log(`[SSG Collections] Environment check:`, {
+      SSG_TOKEN_exists: !!SSG_TOKEN,
+      SSG_TOKEN_length: SSG_TOKEN?.length || 0,
+      SSG_TOKEN_type: typeof SSG_TOKEN,
+      SSG_TOKEN_first_10: SSG_TOKEN?.substring(0, 10) || 'undefined',
+      env_keys: Object.keys(process.env).filter(k => k.includes('SSG')).join(', ') || 'none'
+    })
 
-    // Try to read from local filesystem first (for static builds with pre-downloaded data)
-    const fs = await import('fs/promises')
-    const path = await import('path')
+    if (!SSG_TOKEN) {
+      console.error('[SSG Collections] ⚠️  SSG_DATA_TOKEN environment variable not set')
+      console.error('[SSG Collections] This is REQUIRED for production builds.')
+      console.error('[SSG Collections] Available env vars:', Object.keys(process.env).filter(k => k.includes('TOKEN')))
 
-    // Check if local SEO data exists (downloaded during CI build)
-    const localPath = path.join(process.cwd(), 'public', 'seo-data', 'collections.json')
-    console.log(`[SSG Collections] Checking for local file: ${localPath}`)
+      // In static export mode, Next.js requires at least one path for dynamic routes
+      // Return empty array would cause: "Page is missing generateStaticParams()" error
+      // So we fail explicitly with a clear error message
+      throw new Error('SSG_DATA_TOKEN environment variable is required for static build')
+    }
 
-    let collections
-    try {
-      const fileContent = await fs.readFile(localPath, 'utf-8')
-      collections = JSON.parse(fileContent)
-      console.log(`[SSG Collections] ✅ Loaded ${collections.length} collections from local file`)
-    } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3 if URL is configured
-      if (!S3_SEO_DATA_URL) {
-        console.error(`[SSG Collections] Local file not found and S3_SEO_DATA_URL not configured`)
-        console.error(`[SSG Collections] Make sure to run prepare-ssg-data.sh before building`)
-        return []
-      }
+    // Paginate through ALL collections
+    const allCollections: any[] = []
+    const limit = 500
+    let offset = 0
+    let hasMore = true
 
-      console.log(`[SSG Collections] Local file not found, fetching from S3`)
+    console.log(`[SSG Collections] Starting pagination with limit=${limit}`)
 
-      const url = `${S3_SEO_DATA_URL}/collections.json`
-      console.log(`[SSG Collections] Fetching from: ${url}`)
+    while (hasMore) {
+      const url = `${REGISTRY_URL}/api/v1/collections/ssg-data?limit=${limit}&offset=${offset}`
+      console.log(`[SSG Collections] Fetching page: offset=${offset}`)
 
       const res = await fetch(url, {
+        headers: {
+          'X-SSG-Token': SSG_TOKEN,
+        },
         next: { revalidate: 3600 } // Revalidate every hour
       })
 
       if (!res.ok) {
-        console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections from S3`)
-        console.error(`[SSG Collections] Response headers:`, Object.fromEntries(res.headers.entries()))
-        return []
+        console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections at offset ${offset}`)
+        break
       }
 
-      collections = await res.json()
-      console.log(`[SSG Collections] Received ${collections.length} collections from S3`)
+      const data = await res.json()
+      const collections = data.collections || []
+
+      if (!Array.isArray(collections)) {
+        console.error('[SSG Collections] Invalid response format - expected array')
+        break
+      }
+
+      allCollections.push(...collections)
+      hasMore = data.hasMore || false
+      offset += limit
+
+      console.log(`[SSG Collections] Page loaded: ${collections.length} collections, total so far: ${allCollections.length}, hasMore: ${hasMore}`)
     }
 
-    if (!Array.isArray(collections)) {
-      console.error('[SSG Collections] Invalid response format - expected array')
-      return []
-    }
+    console.log(`[SSG Collections] ✅ Loaded ${allCollections.length} collections from registry (${Math.ceil(allCollections.length / limit)} pages)`)
 
     // Map to slug params
-    const params = collections.map((collection: any) => ({
+    const params = allCollections.map((collection: any) => ({
       slug: collection.name_slug,
     }))
 
     console.log(`[SSG Collections] ✅ Complete: ${params.length} collections for static generation`)
     return params
 
-  } catch (outerError) {
-    // Catch any unexpected errors and log them
-    console.error('[SSG Collections] CRITICAL ERROR in generateStaticParams:', outerError)
-    console.error('[SSG Collections] Error stack:', outerError instanceof Error ? outerError.stack : undefined)
-
-    // Return empty array to prevent build failure
-    console.log('[SSG Collections] Returning empty array due to error')
+  } catch (error) {
+    console.error('[SSG Collections] ERROR in generateStaticParams:', error)
+    console.error('[SSG Collections] Error stack:', error instanceof Error ? error.stack : undefined)
     return []
   }
 }
@@ -91,18 +100,22 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     }
   }
 
+  // Use name for human-readable display, fall back to name_slug
+  const displayName = collection.name || collection.name_slug;
+
   return {
-    title: `${collection.name} - PRPM Collection`,
-    description: collection.description || `Install ${collection.name_slug} collection with PRPM - curated package collection`,
+    title: `${displayName} - PRPM Collection`,
+    description: collection.description || `Install ${displayName} collection with PRPM - curated package collection`,
     keywords: [...(collection.tags || []), collection.category, collection.framework, 'prpm', 'collection', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
     openGraph: {
-      title: collection.name_slug,
+      title: displayName,
       description: collection.description || 'Curated package collection',
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: collection.name_slug,
+      site: '@prpmdev',
+      title: displayName,
       description: collection.description || 'Curated package collection',
     },
   }
@@ -110,39 +123,29 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 async function getCollection(slug: string): Promise<Collection | null> {
   try {
-    let collections
-
-    // Try to read from local filesystem first (for static builds)
-    try {
-      const fs = await import('fs/promises')
-      const path = await import('path')
-      const localPath = path.join(process.cwd(), 'public', 'seo-data', 'collections.json')
-      const fileContent = await fs.readFile(localPath, 'utf-8')
-      collections = JSON.parse(fileContent)
-      console.log(`[getCollection] Loaded from local file`)
-    } catch (fsError) {
-      // Local file doesn't exist, try fetching from S3 if URL is configured
-      if (!S3_SEO_DATA_URL) {
-        console.error(`[getCollection] Local file not found and S3_SEO_DATA_URL not configured`)
-        return null
-      }
-
-      console.log(`[getCollection] Local file not found, fetching from S3`)
-      const url = `${S3_SEO_DATA_URL}/collections.json`
-      const res = await fetch(url, {
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
-
-      if (!res.ok) {
-        console.error(`Error fetching collections from S3: ${res.status}`)
-        return null
-      }
-
-      collections = await res.json()
+    if (!SSG_TOKEN) {
+      console.error('SSG_DATA_TOKEN environment variable not set')
+      return null
     }
 
+    const url = `${REGISTRY_URL}/api/v1/collections/ssg-data`
+    const res = await fetch(url, {
+      headers: {
+        'X-SSG-Token': SSG_TOKEN,
+      },
+      next: { revalidate: 3600 } // Revalidate every hour
+    })
+
+    if (!res.ok) {
+      console.error(`Error fetching collections from registry: ${res.status}`)
+      return null
+    }
+
+    const data = await res.json()
+    const collections = data.collections || []
+
     if (!Array.isArray(collections)) {
-      console.error('Invalid collections data format from S3')
+      console.error('Invalid collections data format from registry')
       return null
     }
 
@@ -177,7 +180,7 @@ export default async function CollectionPage({ params }: { params: { slug: strin
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <h1 className="text-4xl font-bold text-white">{collection.name_slug}</h1>
+            <h1 className="text-4xl font-bold text-white">{collection.name || collection.name_slug}</h1>
             {collection.verified && (
               <svg className="w-8 h-8 text-prpm-accent" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -201,36 +204,37 @@ export default async function CollectionPage({ params }: { params: { slug: strin
 
           {/* Stats */}
           <div className="flex flex-wrap gap-6 text-gray-400">
+            {/* Author - positioned first to match package page */}
+            {collection.author && (
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <Link href={`/authors?username=${collection.author}`} className="hover:text-prpm-accent">
+                  @{collection.author}
+                </Link>
+              </div>
+            )}
+            {collection.downloads != null && (
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                <span>{collection.downloads.toLocaleString()} total installs</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
               <span>{collection.package_count} packages</span>
             </div>
-            {collection.downloads != null && (
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                </svg>
-                <span>{collection.downloads.toLocaleString()} installs</span>
-              </div>
-            )}
             {collection.stars != null && (
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                 </svg>
                 <span>{collection.stars} stars</span>
-              </div>
-            )}
-            {collection.author && (
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <Link href={`/authors?author=${collection.author}`} className="hover:text-prpm-accent">
-                  @{collection.author}
-                </Link>
               </div>
             )}
           </div>
@@ -270,9 +274,11 @@ export default async function CollectionPage({ params }: { params: { slug: strin
                         <p className="text-gray-400 text-sm mb-2">{(pkg as any).package.description}</p>
                       )}
                       {pkg.reason && (
-                        <p className="text-gray-500 text-sm italic mb-2">
-                          <span className="font-semibold">Why included:</span> {pkg.reason}
-                        </p>
+                        <div className="bg-prpm-dark/50 border border-prpm-border rounded p-3 mb-2">
+                          <p className="text-gray-300 text-sm">
+                            <span className="font-semibold text-prpm-accent">Why included:</span> {pkg.reason}
+                          </p>
+                        </div>
                       )}
                       <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span>Version: {pkg.version || 'latest'}</span>
@@ -295,15 +301,16 @@ export default async function CollectionPage({ params }: { params: { slug: strin
                     </div>
                   </div>
 
-                  {/* Full prompt content */}
+                  {/* Full prompt content - Collapsible */}
                   {(pkg as any).fullContent && (
                     <div className="mt-4 border-t border-prpm-border pt-4">
-                      <h4 className="text-sm font-semibold text-gray-400 mb-2">📄 Prompt Content</h4>
-                      <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 overflow-x-auto">
-                        <pre className="text-xs text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
-                          <code>{(pkg as any).fullContent}</code>
-                        </pre>
-                      </div>
+                      <CollapsibleContent title="📄 Full Prompt Content" defaultOpen={false}>
+                        <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 overflow-x-auto">
+                          <pre className="text-sm text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
+                            <code>{(pkg as any).fullContent}</code>
+                          </pre>
+                        </div>
+                      </CollapsibleContent>
                     </div>
                   )}
                 </div>

@@ -9,6 +9,7 @@ import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
 import { gzipSync } from 'zlib';
 import type { Lockfile } from '../core/lockfile';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client', () => ({
@@ -32,6 +33,11 @@ jest.mock('../core/filesystem', () => ({
   deleteFile: jest.fn(),
   fileExists: jest.fn(() => Promise.resolve(false)),
   generateId: jest.fn((name) => name),
+  stripAuthorNamespace: jest.fn((packageId: string) => {
+    // Strip @author/ prefix from package names
+    return packageId.replace(/^@[^/]+\//, '');
+  }),
+  autoDetectFormat: jest.fn(() => Promise.resolve(null)),
 }));
 jest.mock('../core/telemetry', () => ({
   telemetry: {
@@ -53,6 +59,7 @@ describe('install from lockfile', () => {
     getPackageVersion: jest.fn(),
     downloadPackage: jest.fn(),
     trackDownload: jest.fn(),
+    getCollection: jest.fn(),
   };
 
   const mockConfig = {
@@ -63,20 +70,15 @@ describe('install from lockfile', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetRegistryClient.mockResolvedValue(mockClient as any);
+    mockGetRegistryClient.mockReturnValue(mockClient as any);
     mockGetConfig.mockReturnValue(mockConfig);
     mockWriteLockfile.mockResolvedValue(undefined);
     mockAddToLockfile.mockResolvedValue(undefined);
     mockSaveFile.mockResolvedValue(undefined);
 
-    // Mock console methods to suppress output during tests
+    // Mock console methods
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
-
-    // Mock process.exit to prevent actual exit during tests
-    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-      throw new Error(`Process exited with code ${code}`);
-    }) as any);
   });
 
   afterEach(() => {
@@ -89,9 +91,7 @@ describe('install from lockfile', () => {
       mockReadLockfile.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(installFromLockfile({})).rejects.toThrow('Process exited with code 1');
-      expect(process.exit).toHaveBeenCalledWith(1);
-      expect(console.error).toHaveBeenCalledWith('❌ No prpm.lock file found');
+      await expect(installFromLockfile({})).rejects.toThrow('❌ No prpm.lock file found');
     });
   });
 
@@ -116,7 +116,7 @@ describe('install from lockfile', () => {
   });
 
   describe('single package installation', () => {
-    it.skip('should install package from lockfile', async () => {
+    it('should install package from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -135,16 +135,25 @@ describe('install from lockfile', () => {
       mockReadLockfile.mockResolvedValue(lockfile);
 
       const mockPackage = {
-        id: 'cursor-rule',
-        name: 'cursor-rule',
+        id: '@test/cursor-rule',
+        name: '@test/cursor-rule',
         author: 'test',
         version: '1.0.0',
         format: 'cursor',
         subtype: 'rule',
         files: ['rule.md'],
-        description: 'Test cursor rule'
+        description: 'Test cursor rule',
+        total_downloads: 0,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://registry.prpm.dev/packages/@test/cursor-rule/1.0.0/download'
+        }
       };
       mockClient.getPackage.mockResolvedValue(mockPackage as any);
+      mockClient.getPackageVersion.mockResolvedValue({
+        version: '1.0.0',
+        tarball_url: 'https://registry.prpm.dev/packages/@test/cursor-rule/1.0.0/download'
+      } as any);
 
       const fileContent = '# Cursor Rule\nTest content';
       const tarballContent = gzipSync(fileContent);
@@ -154,14 +163,14 @@ describe('install from lockfile', () => {
       await installFromLockfile({});
 
       // Assert
-      expect(mockClient.getPackage).toHaveBeenCalledWith('test', 'cursor-rule');
-      expect(mockClient.downloadPackage).toHaveBeenCalledWith('test', 'cursor-rule', '1.0.0');
+      expect(mockClient.getPackage).toHaveBeenCalledWith('@test/cursor-rule');
+      expect(mockClient.downloadPackage).toHaveBeenCalled();
       expect(mockSaveFile).toHaveBeenCalled();
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installing 1 package'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 1/1'));
     });
 
-    it.skip('should preserve format from lockfile', async () => {
+    it('should preserve format from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -180,29 +189,38 @@ describe('install from lockfile', () => {
       mockReadLockfile.mockResolvedValue(lockfile);
 
       const mockPackage = {
-        id: 'claude-skill',
-        name: 'claude-skill',
+        id: '@test/claude-skill',
+        name: '@test/claude-skill',
         author: 'test',
         version: '2.0.0',
         format: 'cursor', // Original format
         subtype: 'rule',
         files: ['SKILL.md'],
-        description: 'Test skill'
+        description: 'Test skill',
+        total_downloads: 0,
+        latest_version: {
+          version: '2.0.0',
+          tarball_url: 'https://registry.prpm.dev/packages/@test/claude-skill/2.0.0/download'
+        }
       };
       mockClient.getPackage.mockResolvedValue(mockPackage as any);
+      mockClient.getPackageVersion.mockResolvedValue({
+        version: '2.0.0',
+        tarball_url: 'https://registry.prpm.dev/packages/@test/claude-skill/2.0.0/download'
+      } as any);
       mockClient.downloadPackage.mockResolvedValue(gzipSync('# Skill'));
 
       // Act
       await installFromLockfile({});
 
       // Assert - should request the package and install as claude format (from lockfile)
-      expect(mockClient.getPackage).toHaveBeenCalledWith('test', 'claude-skill');
-      expect(mockClient.downloadPackage).toHaveBeenCalledWith('test', 'claude-skill', '2.0.0');
+      expect(mockClient.getPackage).toHaveBeenCalledWith('@test/claude-skill');
+      expect(mockClient.downloadPackage).toHaveBeenCalled();
     });
   });
 
   describe('multiple packages installation', () => {
-    it.skip('should install all packages from lockfile', async () => {
+    it('should install all packages from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -235,15 +253,24 @@ describe('install from lockfile', () => {
       mockReadLockfile.mockResolvedValue(lockfile);
 
       // Mock each package
-      mockClient.getPackage.mockImplementation(async (author: string, name: string) => ({
-        id: name,
-        name,
-        author,
+      mockClient.getPackage.mockImplementation(async (packageId: string) => ({
+        id: packageId,
+        name: packageId,
+        author: 'test',
         version: '1.0.0',
         format: 'cursor',
         subtype: 'rule',
         files: ['file.md'],
-        description: `Test ${name}`
+        description: `Test ${packageId}`,
+        total_downloads: 0,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: `https://registry.prpm.dev/packages/${packageId}/1.0.0/download`
+        }
+      } as any));
+      mockClient.getPackageVersion.mockImplementation(async (packageId: string, version: string) => ({
+        version: version,
+        tarball_url: `https://registry.prpm.dev/packages/${packageId}/${version}/download`
       } as any));
       mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test'));
 
@@ -252,14 +279,14 @@ describe('install from lockfile', () => {
 
       // Assert
       expect(mockClient.getPackage).toHaveBeenCalledTimes(3);
-      expect(mockClient.getPackage).toHaveBeenCalledWith('test', 'package1');
-      expect(mockClient.getPackage).toHaveBeenCalledWith('test', 'package2');
-      expect(mockClient.getPackage).toHaveBeenCalledWith('test', 'package3');
+      expect(mockClient.getPackage).toHaveBeenCalledWith('@test/package1');
+      expect(mockClient.getPackage).toHaveBeenCalledWith('@test/package2');
+      expect(mockClient.getPackage).toHaveBeenCalledWith('@test/package3');
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installing 3 packages'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 3/3'));
     });
 
-    it.skip('should handle partial failures gracefully', async () => {
+    it('should handle partial failures gracefully', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -285,34 +312,48 @@ describe('install from lockfile', () => {
       mockReadLockfile.mockResolvedValue(lockfile);
 
       // Mock one success, one failure
-      mockClient.getPackage.mockImplementation(async (author: string, name: string) => {
-        if (name === 'bad-package') {
+      mockClient.getPackage.mockImplementation(async (packageId: string) => {
+        if (packageId === '@test/bad-package') {
           throw new Error('Package not found');
         }
         return {
-          id: name,
-          name,
-          author,
+          id: packageId,
+          name: packageId,
+          author: 'test',
           version: '1.0.0',
           format: 'cursor',
           subtype: 'rule',
           files: ['file.md'],
-          description: `Test ${name}`
+          description: `Test ${packageId}`,
+          total_downloads: 0,
+          latest_version: {
+            version: '1.0.0',
+            tarball_url: `https://registry.prpm.dev/packages/${packageId}/1.0.0/download`
+          }
+        } as any;
+      });
+      mockClient.getPackageVersion.mockImplementation(async (packageId: string, version: string) => {
+        if (packageId === '@test/bad-package') {
+          throw new Error('Package not found');
+        }
+        return {
+          version: version,
+          tarball_url: `https://registry.prpm.dev/packages/${packageId}/${version}/download`
         } as any;
       });
       mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test'));
 
-      // Act
-      await installFromLockfile({});
+      // Act & Assert
+      await expect(installFromLockfile({})).rejects.toThrow('1 package failed to install');
 
-      // Assert
+      // Verify partial success was logged
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 1/2'));
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Failed to install'));
     });
   });
 
   describe('format override', () => {
-    it.skip('should respect --as option to override lockfile format', async () => {
+    it('should respect --as option to override lockfile format', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -331,29 +372,38 @@ describe('install from lockfile', () => {
       mockReadLockfile.mockResolvedValue(lockfile);
 
       const mockPackage = {
-        id: 'package',
-        name: 'package',
+        id: '@test/package',
+        name: '@test/package',
         author: 'test',
         version: '1.0.0',
         format: 'cursor',
         subtype: 'rule',
         files: ['file.md'],
-        description: 'Test'
+        description: 'Test',
+        total_downloads: 0,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://registry.prpm.dev/packages/@test/package/1.0.0/download'
+        }
       };
       mockClient.getPackage.mockResolvedValue(mockPackage as any);
+      mockClient.getPackageVersion.mockResolvedValue({
+        version: '1.0.0',
+        tarball_url: 'https://registry.prpm.dev/packages/@test/package/1.0.0/download'
+      } as any);
       mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test'));
 
       // Act - override with --as claude
       await installFromLockfile({ as: 'claude' });
 
       // Assert - should still install but check that package was fetched
-      expect(mockClient.getPackage).toHaveBeenCalledWith('test', 'package');
+      expect(mockClient.getPackage).toHaveBeenCalledWith('@test/package');
       // The actual format conversion happens in handleInstall which we're testing indirectly
     });
   });
 
   describe('force reinstall', () => {
-    it.skip('should force reinstall packages from lockfile', async () => {
+    it('should force reinstall packages from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
         version: '1.0.0',
@@ -372,16 +422,25 @@ describe('install from lockfile', () => {
       mockReadLockfile.mockResolvedValue(lockfile);
 
       const mockPackage = {
-        id: 'package',
-        name: 'package',
+        id: '@test/package',
+        name: '@test/package',
         author: 'test',
         version: '1.0.0',
         format: 'cursor',
         subtype: 'rule',
         files: ['file.md'],
-        description: 'Test'
+        description: 'Test',
+        total_downloads: 0,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://registry.prpm.dev/packages/@test/package/1.0.0/download'
+        }
       };
       mockClient.getPackage.mockResolvedValue(mockPackage as any);
+      mockClient.getPackageVersion.mockResolvedValue({
+        version: '1.0.0',
+        tarball_url: 'https://registry.prpm.dev/packages/@test/package/1.0.0/download'
+      } as any);
       mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test'));
 
       // Act
@@ -389,7 +448,7 @@ describe('install from lockfile', () => {
 
       // Assert - should install even if package exists
       // (force: true is passed internally to handleInstall)
-      expect(mockClient.getPackage).toHaveBeenCalledWith('test', 'package');
+      expect(mockClient.getPackage).toHaveBeenCalledWith('@test/package');
       expect(mockClient.downloadPackage).toHaveBeenCalled();
     });
   });
