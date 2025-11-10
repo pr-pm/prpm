@@ -1591,6 +1591,7 @@ export async function packageRoutes(server: FastifyInstance) {
             p.total_downloads,
             p.weekly_downloads,
             p.version_count,
+            p.stars,
             p.rating_average,
             p.rating_count,
             p.verified,
