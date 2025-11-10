@@ -268,9 +268,11 @@ export default async function CollectionPage({ params }: { params: { slug: strin
                         <p className="text-gray-400 text-sm mb-2">{(pkg as any).package.description}</p>
                       )}
                       {pkg.reason && (
-                        <p className="text-gray-500 text-sm italic mb-2">
-                          <span className="font-semibold">Why included:</span> {pkg.reason}
-                        </p>
+                        <div className="bg-prpm-dark/50 border border-prpm-border rounded p-3 mb-2">
+                          <p className="text-gray-300 text-sm">
+                            <span className="font-semibold text-prpm-accent">Why included:</span> {pkg.reason}
+                          </p>
+                        </div>
                       )}
                       <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span>Version: {pkg.version || 'latest'}</span>
