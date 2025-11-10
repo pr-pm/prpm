@@ -92,12 +92,12 @@ export async function generateStaticParams() {
         const withoutAt = name.substring(1) // Remove @
         const [author, ...packageParts] = withoutAt.split('/')
         return {
-          author,
+          author: author.toLowerCase(), // Use lowercase for consistent URLs
           package: packageParts, // Array for catch-all route
         }
       } else {
-        // Unscoped package: use actual author from package data
-        const author = pkg.author?.username || 'prpm'
+        // Unscoped package: use actual author from package data (lowercase for consistent URLs)
+        const author = (pkg.author?.username || 'prpm').toLowerCase()
         return {
           author,
           package: [name], // Array for catch-all route
@@ -168,12 +168,13 @@ async function getPackage(scopedName: string, author: string, unscopedName: stri
 
         if (Array.isArray(packages)) {
           // Find the package by name (try scoped first, then unscoped with author match)
-          let pkg = packages.find((p: any) => p.name === scopedName)
+          // Use case-insensitive comparison for scoped names since author can vary in case
+          let pkg = packages.find((p: any) => p.name.toLowerCase() === scopedName.toLowerCase())
 
-          // If not found by scoped name, try unscoped name with author match
+          // If not found by scoped name, try unscoped name with case-insensitive author match
           if (!pkg) {
             pkg = packages.find((p: any) =>
-              p.name === unscopedName && p.author?.username === author
+              p.name === unscopedName && p.author?.username?.toLowerCase() === author.toLowerCase()
             )
           }
 
