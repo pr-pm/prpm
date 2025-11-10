@@ -102,26 +102,23 @@ async function resolvePackageId(packageName: string): Promise<string> {
     return packageName;
   }
 
-  // Search for the package by name
+  // Look up package by name directly
   const config = await getConfig();
   const baseUrl = (config.registryUrl || "https://registry.prpm.dev").replace(/\/$/, '');
 
-  const response = await fetch(`${baseUrl}/api/v1/search?q=${encodeURIComponent(packageName)}&limit=10`);
+  // URL encode the package name to handle scoped packages like @user/package
+  const encodedName = encodeURIComponent(packageName);
+  const response = await fetch(`${baseUrl}/api/v1/packages/${encodedName}`);
 
   if (!response.ok) {
-    throw new Error(`Failed to search for package: ${response.statusText}`);
+    if (response.status === 404) {
+      throw new Error(`Package not found: ${packageName}`);
+    }
+    throw new Error(`Failed to fetch package: ${response.statusText}`);
   }
 
-  const data = await response.json() as { packages: Array<{ id: string; name: string }> };
-
-  // Find exact match
-  const exactMatch = data.packages.find(pkg => pkg.name === packageName);
-  if (exactMatch) {
-    return exactMatch.id;
-  }
-
-  // If no exact match, throw error
-  throw new Error(`Package not found: ${packageName}`);
+  const data = await response.json() as { id: string; name: string };
+  return data.id;
 }
 
 /**
