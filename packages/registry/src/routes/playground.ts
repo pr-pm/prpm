@@ -19,6 +19,8 @@ import { PlaygroundService } from '../services/playground.js';
 import { PlaygroundCreditsService } from '../services/playground-credits.js';
 import { createRateLimiter } from '../middleware/rate-limit.js';
 import { createSessionSecurityMiddleware } from '../middleware/session-security.js';
+import { createAnonymousRestrictionMiddleware, recordAnonymousUsageHook } from '../middleware/anonymous-restriction.js';
+import { optionalAuth } from '../middleware/auth.js';
 import { sanitizeUserInput, SECURITY_LIMITS } from '../middleware/security.js';
 import { getModelId } from '../config/models.js';
 
@@ -49,6 +51,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
   const creditsService = new PlaygroundCreditsService(server);
   const rateLimiter = createRateLimiter();
   const sessionSecurity = createSessionSecurityMiddleware();
+  const anonymousRestriction = createAnonymousRestrictionMiddleware();
 
   // =====================================================
   // POST /api/v1/playground/run
@@ -57,7 +60,8 @@ export async function playgroundRoutes(server: FastifyInstance) {
   server.post(
     '/run',
     {
-      preHandler: [server.authenticate, sessionSecurity, rateLimiter],
+      preHandler: [optionalAuth, anonymousRestriction, sessionSecurity, rateLimiter],
+      onResponse: recordAnonymousUsageHook,
       schema: {
         description: 'Execute a playground run with a package prompt (or compare against no prompt)',
         tags: ['playground'],
@@ -113,22 +117,23 @@ export async function playgroundRoutes(server: FastifyInstance) {
         const body = PlaygroundRunSchema.parse(request.body);
         const userId = request.user?.user_id;
 
-        if (!userId) {
-          return reply.code(401).send({
-            error: 'unauthorized',
-            message: 'User not authenticated',
-          });
-        }
+        // For anonymous users, use a special anonymous ID
+        const effectiveUserId = userId || 'anonymous';
 
         // Sanitize user input for security
         const input = sanitizeUserInput(body.input);
 
         server.log.info(
-          { userId, package_id: body.package_id, session_id: body.session_id },
+          {
+            userId: effectiveUserId,
+            isAnonymous: !userId,
+            package_id: body.package_id,
+            session_id: body.session_id,
+          },
           'Starting playground run'
         );
 
-        const result = await playgroundService.executePrompt(userId, {
+        const result = await playgroundService.executePrompt(effectiveUserId, {
           package_id: body.package_id,
           package_version: body.package_version,
           input,
