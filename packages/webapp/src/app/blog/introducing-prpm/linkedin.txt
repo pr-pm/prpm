@@ -8,7 +8,7 @@ Instead of copy-pasting .cursorrules files between projects, you can:
 • Install curated packages: prpm install @nextjs/app-router
 • Publish your own patterns for others to use
 • Get automatic format conversion for your specific AI editor
-• Browse 2,100+ packages from the community
+• Browse 4,000+ packages from the community
 
 We built the infrastructure we wanted to exist: format-agnostic, privacy-first, and as reliable as npm.
 
