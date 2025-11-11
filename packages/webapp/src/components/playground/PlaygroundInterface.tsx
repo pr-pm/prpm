@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages, runCustomPrompt, getCurrentUser } from '../../lib/api'
+import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages, getPackageById, runCustomPrompt, getCurrentUser } from '../../lib/api'
 import type { PlaygroundMessage, Package } from '../../lib/api'
 import CustomPromptInput from './CustomPromptInput'
 
@@ -154,10 +154,8 @@ export default function PlaygroundInterface({
 
   const loadInitialPackage = async (packageIdToLoad: string) => {
     try {
-      // Use searchPackages to find the package by searching for packages
-      // and filtering by ID client-side (not ideal but works for now)
-      const result = await searchPackages({ q: '', limit: 100 })
-      const pkg = result.packages.find((p) => p.id === packageIdToLoad)
+      // Use direct UUID lookup for fast package retrieval
+      const pkg = await getPackageById(packageIdToLoad)
 
       if (pkg) {
         setSelectedPackage(pkg)

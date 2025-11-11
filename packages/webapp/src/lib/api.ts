@@ -204,6 +204,20 @@ export async function login(email: string, password: string) {
 // ============================================
 
 /**
+ * Get package by ID (fast UUID lookup)
+ */
+export async function getPackageById(packageId: string): Promise<Package> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/packages/by-id/${packageId}`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Package not found' }))
+    throw new Error(error.error || error.message || 'Package not found')
+  }
+
+  return response.json()
+}
+
+/**
  * Search for packages
  */
 export async function searchPackages(params: SearchPackagesParams): Promise<SearchPackagesResponse> {

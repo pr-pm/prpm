@@ -266,6 +266,114 @@ export async function packageRoutes(server: FastifyInstance) {
     return packageInfo;
   });
 
+  // Get package by ID (for fast UUID lookups)
+  server.get('/by-id/:packageId', {
+    onRequest: [optionalAuth],
+    schema: {
+      tags: ['packages'],
+      description: 'Get package details by ID (fast UUID lookup)',
+      params: {
+        type: 'object',
+        properties: {
+          packageId: { type: 'string', format: 'uuid' },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { packageId } = request.params as { packageId: string };
+    const userId = request.user?.user_id;
+
+    // Debug logging
+    server.log.debug({
+      packageId,
+      userId: userId || 'unauthenticated',
+      hasUser: !!request.user,
+    }, 'GET package by ID request');
+
+    // Check cache (skip cache for authenticated requests to private packages)
+    const cacheKey = `package:id:${packageId}`;
+    if (!userId) {
+      const cached = await cacheGet<PackageInfo>(server, cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    // Get package - include private packages if user is authenticated and has access
+    let pkg: Package | null = null;
+
+    if (userId) {
+      // For authenticated users, check if they have access to private packages
+      server.log.debug({ packageId, userId }, 'Checking private package access');
+      pkg = await queryOne<Package>(
+        server,
+        `SELECT p.*, u.username as author_username FROM packages p
+         LEFT JOIN users u ON p.author_id = u.id
+         LEFT JOIN organization_members om ON p.org_id = om.org_id AND om.user_id = $2
+         WHERE p.id = $1
+         AND (p.visibility = 'public'
+              OR (p.visibility = 'private'
+                  AND p.org_id IS NOT NULL
+                  AND om.user_id IS NOT NULL))`,
+        [packageId, userId]
+      );
+      server.log.debug({ packageId, userId, found: !!pkg }, 'Private package query result');
+    } else {
+      // For unauthenticated users, only show public packages
+      pkg = await queryOne<Package>(
+        server,
+        `SELECT p.*, u.username as author_username FROM packages p
+         LEFT JOIN users u ON p.author_id = u.id
+         WHERE p.id = $1 AND p.visibility = 'public'`,
+        [packageId]
+      );
+    }
+
+    if (!pkg) {
+      server.log.debug({ packageId, userId: userId || 'none' }, 'Package not found');
+      return reply.status(404).send({ error: 'Package not found' });
+    }
+
+    // Get versions
+    const versionsResult = await query<PackageVersion>(
+      server,
+      `SELECT * FROM package_versions
+       WHERE package_id = $1
+       ORDER BY published_at DESC`,
+      [pkg.id]
+    );
+
+    // Transform tarball URLs to registry download URLs
+    const protocol = (request.headers['x-forwarded-proto'] as string) || request.protocol;
+    const host = request.headers.host || `localhost:${config.port}`;
+    const baseUrl = `${protocol}://${host}`;
+
+    const transformedVersions = versionsResult.rows.map(version => {
+      if (version.tarball_url) {
+        // URL-encode package name to handle slashes in scoped packages
+        const encodedPackageName = encodeURIComponent(pkg.name);
+        return {
+          ...version,
+          tarball_url: `${baseUrl}/api/v1/packages/${encodedPackageName}/${version.version}.tar.gz`
+        };
+      }
+      return version;
+    });
+
+    const packageInfo: PackageInfo = {
+      ...pkg,
+      versions: transformedVersions,
+      latest_version: transformedVersions[0],
+    };
+
+    // Only cache public packages (private packages should not be cached)
+    if (pkg.visibility === 'public') {
+      await cacheSet(server, cacheKey, packageInfo, 300);
+    }
+
+    return packageInfo;
+  });
+
   // Get specific package version
   server.get('/:packageName/:version', {
     onRequest: [optionalAuth],
