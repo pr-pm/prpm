@@ -244,12 +244,14 @@ jobs:
           FALLBACK_PACKAGES: '[{"name":"@prpm/test-package","description":"Test package for CI builds","format":"cursor","subtype":"rules","total_downloads":0,"weekly_downloads":0}]'
           FALLBACK_COLLECTIONS: '[{"name_slug":"test-collection","description":"Test collection for CI builds","package_count":0,"downloads":0,"stars":0}]'
           SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
+          NEXT_PUBLIC_SKIP_SSG: "true"
 
       - name: Build
         working-directory: ./packages/webapp
         run: npm run build
         env:
           SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
+          NEXT_PUBLIC_SKIP_SSG: "true"
 
   # Webapp E2E Tests with Playwright
   webapp-e2e-tests:
