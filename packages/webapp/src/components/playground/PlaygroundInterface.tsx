@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages } from '../../lib/api'
+import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages, getPackageById, runCustomPrompt, getCurrentUser } from '../../lib/api'
 import type { PlaygroundMessage, Package } from '../../lib/api'
+import CustomPromptInput from './CustomPromptInput'
 
 interface PlaygroundInterfaceProps {
   initialPackageId?: string
+  initialInput?: string
   sessionId?: string
   initialCompareMode?: boolean
   onCreditsChange: () => void
@@ -16,6 +18,7 @@ interface PlaygroundInterfaceProps {
 
 export default function PlaygroundInterface({
   initialPackageId,
+  initialInput,
   sessionId,
   initialCompareMode = false,
   onCreditsChange,
@@ -55,6 +58,11 @@ export default function PlaygroundInterface({
   const [collapsedExchangesB, setCollapsedExchangesB] = useState<Set<number>>(new Set())
   const [showAnonymousLoginPrompt, setShowAnonymousLoginPrompt] = useState(false)
   const [isAnonymousUser, setIsAnonymousUser] = useState(false)
+
+  // Custom prompt mode state
+  const [useCustomPrompt, setUseCustomPrompt] = useState(false)
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [isVerifiedAuthor, setIsVerifiedAuthor] = useState(false)
 
   // Helper function to group messages into exchanges (user input + assistant response pairs)
   const groupIntoExchanges = (messages: PlaygroundMessage[]): Array<{ user: PlaygroundMessage; assistant: PlaygroundMessage | null; index: number }> => {
@@ -108,6 +116,16 @@ export default function PlaygroundInterface({
     }
   }, [])
 
+  // Fetch user verification status for custom prompt feature
+  useEffect(() => {
+    const token = localStorage.getItem('prpm_token')
+    if (token) {
+      getCurrentUser(token).then(user => {
+        setIsVerifiedAuthor(user.verified_author || false)
+      }).catch(() => setIsVerifiedAuthor(false))
+    }
+  }, [])
+
   // Load session if provided
   useEffect(() => {
     if (sessionId) {
@@ -126,12 +144,18 @@ export default function PlaygroundInterface({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPackageId])
 
+  // Set initial input if provided via URL parameter
+  useEffect(() => {
+    if (initialInput && input === '') {
+      setInput(initialInput)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialInput])
+
   const loadInitialPackage = async (packageIdToLoad: string) => {
     try {
-      // Use searchPackages to find the package by searching for packages
-      // and filtering by ID client-side (not ideal but works for now)
-      const result = await searchPackages({ q: '', limit: 100 })
-      const pkg = result.packages.find((p) => p.id === packageIdToLoad)
+      // Use direct UUID lookup for fast package retrieval
+      const pkg = await getPackageById(packageIdToLoad)
 
       if (pkg) {
         setSelectedPackage(pkg)
@@ -146,6 +170,7 @@ export default function PlaygroundInterface({
 
   // Auto-collapse older exchanges (keep last 2 expanded)
   useEffect(() => {
+    if (!conversation) return
     const exchanges = groupIntoExchanges(conversation)
     if (exchanges.length > 2) {
       const newCollapsed = new Set<number>()
@@ -158,10 +183,11 @@ export default function PlaygroundInterface({
       setCollapsedExchanges(new Set())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation.length])
+  }, [conversation])
 
   // Auto-collapse older exchanges for Package B (keep last 2 expanded)
   useEffect(() => {
+    if (!conversationB) return
     const exchanges = groupIntoExchanges(conversationB)
     if (exchanges.length > 2) {
       const newCollapsed = new Set<number>()
@@ -174,7 +200,7 @@ export default function PlaygroundInterface({
       setCollapsedExchangesB(new Set())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationB.length])
+  }, [conversationB])
 
   // Load package options when searching (Package A)
   useEffect(() => {
@@ -251,9 +277,18 @@ export default function PlaygroundInterface({
   }
 
   const handleRun = async () => {
-    if (!packageId || !input.trim()) {
-      setError('Please select a package and enter input')
-      return
+    // Validation for custom prompt mode
+    if (useCustomPrompt) {
+      if (!customPrompt.trim() || !input.trim()) {
+        setError('Please enter both a custom prompt and input')
+        return
+      }
+    } else {
+      // Regular package mode validation
+      if (!packageId || !input.trim()) {
+        setError('Please select a package and enter input')
+        return
+      }
     }
 
     if (comparisonMode && !packageIdB) {
@@ -375,17 +410,30 @@ export default function PlaygroundInterface({
         setLoadingB(false)
       }
     } else {
-      // Single package mode
+      // Single package or custom prompt mode
       setLoading(true)
       setError(null)
 
       try {
-        const result = await runPlayground(token, {
-          package_id: packageId,
-          input: input.trim(),
-          model,
-          session_id: currentSessionId,
-        })
+        let result
+
+        if (useCustomPrompt) {
+          // Custom prompt mode
+          result = await runCustomPrompt(token, {
+            custom_prompt: customPrompt,
+            input: input.trim(),
+            session_id: currentSessionId,
+            model,
+          })
+        } else {
+          // Regular package mode
+          result = await runPlayground(token, {
+            package_id: packageId,
+            input: input.trim(),
+            model,
+            session_id: currentSessionId,
+          })
+        }
 
         console.log('[Playground] Run complete. Credits spent:', result.credits_spent, 'Remaining:', result.credits_remaining)
         setConversation(result.conversation)
@@ -457,7 +505,7 @@ export default function PlaygroundInterface({
       )}
 
       {/* Anonymous User Notice */}
-      {isAnonymousUser && !showAnonymousLoginPrompt && conversation.length === 0 && (
+      {isAnonymousUser && !showAnonymousLoginPrompt && (conversation?.length ?? 0) === 0 && (
         <div className="mb-4 sm:mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p className="text-sm text-blue-900 dark:text-blue-200">
             <strong>Try it free!</strong> Get one free playground run (using gpt-4o-mini). Sign up to get 5 free credits and access to all models.
@@ -470,6 +518,7 @@ export default function PlaygroundInterface({
         <div>
           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             {comparisonMode ? 'Package A' : 'Select Package'}
+            {useCustomPrompt && <span className="ml-2 text-xs text-gray-500">(disabled in custom prompt mode)</span>}
           </label>
           <div className="relative">
             <input
@@ -484,7 +533,8 @@ export default function PlaygroundInterface({
               }}
               onFocus={() => setShowPackageDropdown(true)}
               placeholder="Search for a package..."
-              className="w-full px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent"
+              disabled={useCustomPrompt}
+              className={`w-full px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent ${useCustomPrompt ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
             {(selectedPackage || packageSearch) && (
               <button
@@ -753,11 +803,104 @@ export default function PlaygroundInterface({
         </div>
       </div>
 
+      {/* Custom Prompt Input - Only show when not in comparison mode */}
+      {!comparisonMode && (
+        <CustomPromptInput
+          onPromptChange={setCustomPrompt}
+          onUseCustom={setUseCustomPrompt}
+          isVerifiedAuthor={isVerifiedAuthor}
+          isAnonymousUser={isAnonymousUser}
+        />
+      )}
+
+      {/* Input Area */}
+      <div className="mb-4">
+        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Your Input
+        </label>
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Enter your input or question here..."
+          rows={4}
+          className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent resize-none"
+          disabled={loading}
+        />
+      </div>
+
+      {/* Estimated Credits */}
+      {estimatedCredits !== null && estimatedCredits > 0 && (
+        <div className="mb-4 p-3 sm:p-4 bg-gradient-to-r from-prpm-green/10 to-prpm-green/5 dark:from-prpm-green/20 dark:to-prpm-green/10 border border-prpm-green/30 dark:border-prpm-green/40 rounded-lg">
+          <div className="flex items-center gap-2 text-sm sm:text-base">
+            <svg className="w-5 h-5 text-prpm-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <span className="text-gray-700 dark:text-gray-300">
+              Estimated cost:
+            </span>
+            <span className="font-bold text-lg text-prpm-green-dark dark:text-prpm-green-light">
+              {estimatedCredits}
+            </span>
+            <span className="text-gray-600 dark:text-gray-400">
+              {estimatedCredits === 1 ? 'credit' : 'credits'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Error Messages */}
+      {(error || errorB) && (
+        <div className={`mb-4 ${comparisonMode && error && errorB ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}`}>
+          {error && (
+            <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="text-xs sm:text-sm text-red-800 dark:text-red-300">
+                {comparisonMode && <span className="font-semibold">Package A: </span>}
+                {error}
+              </div>
+            </div>
+          )}
+          {comparisonMode && errorB && (
+            <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="text-xs sm:text-sm text-red-800 dark:text-red-300">
+                <span className="font-semibold">Package B: </span>
+                {errorB}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Run Button */}
+      <button
+        onClick={handleRun}
+        disabled={
+          loading || loadingB || !input.trim() ||
+          (useCustomPrompt ? !customPrompt.trim() : !packageId)
+        }
+        className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-sm sm:text-base text-white transition ${
+          loading || !input.trim() || (useCustomPrompt ? !customPrompt.trim() : !packageId)
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-prpm-green hover:bg-prpm-green-dark shadow-sm'
+        }`}
+      >
+        {loading || loadingB ? (
+          <span className="flex items-center justify-center">
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {comparisonMode ? 'Running Comparison...' : 'Running...'}
+          </span>
+        ) : (
+          comparisonMode ? 'Compare Prompts' : 'Run Playground'
+        )}
+      </button>
+
       {/* Conversation History */}
-      {(conversation.length > 0 || conversationB.length > 0) && (
+      {((conversation?.length ?? 0) > 0 || (conversationB?.length ?? 0) > 0) && (
         <div className={`mb-4 sm:mb-6 ${comparisonMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}`}>
           {/* Package A Conversation */}
-          {conversation.length > 0 && (
+          {(conversation?.length ?? 0) > 0 && (
             <div>
               {comparisonMode && (
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -765,9 +908,9 @@ export default function PlaygroundInterface({
                 </h4>
               )}
               <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                {groupIntoExchanges(conversation).map((exchange, exchangeIdx) => {
+                {groupIntoExchanges(conversation || []).map((exchange, exchangeIdx) => {
                   const isCollapsed = collapsedExchanges.has(exchange.index)
-                  const isLatest = exchangeIdx >= groupIntoExchanges(conversation).length - 2
+                  const isLatest = exchangeIdx >= groupIntoExchanges(conversation || []).length - 2
 
                   return (
                     <div key={exchange.index} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
@@ -845,15 +988,15 @@ export default function PlaygroundInterface({
           )}
 
           {/* Package B Conversation */}
-          {comparisonMode && conversationB.length > 0 && (
+          {comparisonMode && (conversationB?.length ?? 0) > 0 && (
             <div>
               <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 {selectedPackageB ? selectedPackageB.name : packageIdB ? 'Package B' : 'Baseline (No Package)'}
               </h4>
               <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                {groupIntoExchanges(conversationB).map((exchange, exchangeIdx) => {
+                {groupIntoExchanges(conversationB || []).map((exchange, exchangeIdx) => {
                   const isCollapsed = collapsedExchangesB.has(exchange.index)
-                  const isLatest = exchangeIdx >= groupIntoExchanges(conversationB).length - 2
+                  const isLatest = exchangeIdx >= groupIntoExchanges(conversationB || []).length - 2
 
                   return (
                     <div key={exchange.index} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
@@ -931,86 +1074,6 @@ export default function PlaygroundInterface({
           )}
         </div>
       )}
-
-      {/* Input Area */}
-      <div className="mb-4">
-        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          Your Input
-        </label>
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Enter your input or question here..."
-          rows={4}
-          className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent resize-none"
-          disabled={loading}
-        />
-      </div>
-
-      {/* Estimated Credits */}
-      {estimatedCredits !== null && estimatedCredits > 0 && (
-        <div className="mb-4 p-3 sm:p-4 bg-gradient-to-r from-prpm-green/10 to-prpm-green/5 dark:from-prpm-green/20 dark:to-prpm-green/10 border border-prpm-green/30 dark:border-prpm-green/40 rounded-lg">
-          <div className="flex items-center gap-2 text-sm sm:text-base">
-            <svg className="w-5 h-5 text-prpm-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-            <span className="text-gray-700 dark:text-gray-300">
-              Estimated cost:
-            </span>
-            <span className="font-bold text-lg text-prpm-green-dark dark:text-prpm-green-light">
-              {estimatedCredits}
-            </span>
-            <span className="text-gray-600 dark:text-gray-400">
-              {estimatedCredits === 1 ? 'credit' : 'credits'}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Error Messages */}
-      {(error || errorB) && (
-        <div className={`mb-4 ${comparisonMode && error && errorB ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}`}>
-          {error && (
-            <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <div className="text-xs sm:text-sm text-red-800 dark:text-red-300">
-                {comparisonMode && <span className="font-semibold">Package A: </span>}
-                {error}
-              </div>
-            </div>
-          )}
-          {comparisonMode && errorB && (
-            <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <div className="text-xs sm:text-sm text-red-800 dark:text-red-300">
-                <span className="font-semibold">Package B: </span>
-                {errorB}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Run Button */}
-      <button
-        onClick={handleRun}
-        disabled={loading || loadingB || !packageId || !input.trim()}
-        className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-sm sm:text-base text-white transition ${
-          loading || !packageId || !input.trim()
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-prpm-green hover:bg-prpm-green-dark shadow-sm'
-        }`}
-      >
-        {loading || loadingB ? (
-          <span className="flex items-center justify-center">
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            {comparisonMode ? 'Running Comparison...' : 'Running...'}
-          </span>
-        ) : (
-          comparisonMode ? 'Compare Prompts' : 'Run Playground'
-        )}
-      </button>
 
       {/* Anonymous User Login Prompt */}
       {showAnonymousLoginPrompt && (

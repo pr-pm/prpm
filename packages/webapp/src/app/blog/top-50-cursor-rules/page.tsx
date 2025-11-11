@@ -7,11 +7,11 @@ import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
   title: "Top 50 Cursor Rules to Supercharge Your Development Workflow - PRPM",
-  description: "Discover the top 50 Cursor rules from 1000+ packages. Install production-ready AI assistance for React, TypeScript, Python, Go, and more. PRPM converts any package to Cursor rules.",
+  description: "Discover the top 50 Cursor rules from 4,000+ packages. Install production-ready AI assistance for React, TypeScript, Python, Go, and more. PRPM converts any package to Cursor rules.",
   keywords: ["cursor rules", "cursor IDE", "AI code assistant", "PRPM packages", "development tools", "cursor ai", "code generation"],
   openGraph: {
     title: "Top 50 Cursor Rules to Supercharge Your Development Workflow",
-    description: "Discover the top 50 Cursor rules from 1000+ packages. Install production-ready AI assistance for React, TypeScript, Python, Go, and more.",
+    description: "Discover the top 50 Cursor rules from 4,000+ packages. Install production-ready AI assistance for React, TypeScript, Python, Go, and more.",
   },
 }
 
@@ -437,7 +437,7 @@ export default function Top50CursorRulesPost() {
 
             <p className="text-gray-300 leading-relaxed mb-4">That includes:</p>
             <ul className="text-gray-300 space-y-3 mb-8 list-disc ml-6">
-              <li>1,000+ Claude skills and agents</li>
+              <li>4,000+ packages across all formats (Claude skills, agents, prompts)</li>
               <li>Format-agnostic prompts</li>
               <li>Multi-agent workflows</li>
               <li>Industry-specific patterns</li>

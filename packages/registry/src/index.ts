@@ -65,6 +65,7 @@ async function buildServer() {
     requestIdLogLabel: 'reqId',
     requestIdHeader: 'x-request-id',
     genReqId: (req) => (req.headers?.['x-request-id'] as string) || crypto.randomUUID(),
+    bodyLimit: 100 * 1024 * 1024, // 100MB max request body (for large package uploads)
   });
 
   // Attach config to server for access in routes
@@ -82,15 +83,89 @@ async function buildServer() {
     },
   });
 
-  // Rate limiting
+  // Setup Redis first (required for rate limiting)
+  // NOTE: Redis must be set up before rate limiting because we use it as the store
+  // for distributed, per-IP and per-user rate limiting across multiple server instances
+  server.log.info('🔌 Connecting to Redis...');
+  try {
+    await setupRedis(server);
+    server.log.info('✅ Redis connected');
+  } catch (error) {
+    server.log.error({ error }, '❌ Redis connection failed');
+    throw new Error(`Redis connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  // Rate limiting with Redis store (per-IP or per-user)
+  // Uses Redis to track limits across distributed server instances
+  // Authenticated users: limited per user ID
+  // Anonymous users: limited per IP address
   await server.register(rateLimit, {
     max: 100, // 100 requests
     timeWindow: '1 minute',
+    skipOnError: true,
+    redis: server.redis, // Use Redis for distributed rate limiting
+    // Generate unique key per IP address or authenticated user
+    keyGenerator: (request) => {
+      // For authenticated users, use user ID
+      const userId = (request.user as any)?.user_id;
+      if (userId) {
+        return `ratelimit:user:${userId}`;
+      }
+
+      // For anonymous users, use IP address
+      // Support both direct connections and proxied connections
+      const ip = request.headers['x-forwarded-for'] ||
+                 request.headers['x-real-ip'] ||
+                 request.ip;
+
+      return `ratelimit:ip:${ip}`;
+    },
     errorResponseBuilder: () => ({
       error: 'Too Many Requests',
       message: 'Rate limit exceeded. Please try again later.',
       statusCode: 429,
     }),
+    // Exempt requests from official webapp, CLI, and specific endpoints
+    allowList: (request) => {
+      const path = request.url || '';
+      const origin = request.headers.origin || '';
+      const referer = request.headers.referer || '';
+      const userAgent = request.headers['user-agent'] || '';
+
+      // NEVER rate limit requests from official webapp domains
+      const webappDomains = [
+        'prpm.dev',
+        'www.prpm.dev',
+        'localhost:3000',
+        'localhost:5173',
+      ];
+
+      const isWebappRequest = webappDomains.some(domain =>
+        origin.includes(domain) || referer.includes(domain)
+      );
+
+      if (isWebappRequest) {
+        return true; // Exempt all webapp requests
+      }
+
+      // NEVER rate limit requests from official CLI
+      // CLI identifies itself with User-Agent: prpm-cli/version
+      const isCliRequest = userAgent.startsWith('prpm-cli/');
+
+      if (isCliRequest) {
+        return true; // Exempt all CLI requests
+      }
+
+      // Also exempt build-time and SEO endpoints
+      // These endpoints are authenticated via tokens and used for:
+      // - /ssg-data: Fetching all packages for static site generation (X-SSG-Token)
+      // - /seo/: Generating sitemap data for search engines
+      // NO RATE LIMITS on these endpoints to allow fast builds
+      return (
+        path.includes('/ssg-data') ||    // Build-time data fetching (unlimited)
+        path.includes('/seo/')            // SEO sitemap generation (unlimited)
+      );
+    },
   });
 
   // CORS
@@ -162,16 +237,6 @@ async function buildServer() {
   } catch (error) {
     server.log.error({ error }, '❌ Database connection failed');
     throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-
-  // Redis cache with retry logic
-  server.log.info('🔌 Connecting to Redis...');
-  try {
-    await setupRedis(server);
-    server.log.info('✅ Redis connected');
-  } catch (error) {
-    server.log.error({ error }, '❌ Redis connection failed');
-    throw new Error(`Redis connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
   // Authentication

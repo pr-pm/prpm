@@ -860,17 +860,11 @@ describe('collections command', () => {
       // Make the first (required) package fail
       (handleInstall as jest.Mock).mockRejectedValueOnce(new Error('Required package failed'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionInstall('test-collection', {})).rejects.toThrow('Process exited');
+      await expect(handleCollectionInstall('test-collection', {})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Failed to install required package')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should perform dry run without installing', async () => {

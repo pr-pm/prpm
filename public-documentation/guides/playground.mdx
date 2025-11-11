@@ -121,6 +121,210 @@ prpm playground @user/simple-formatter "format this" --model gpt-4o-mini
 prpm playground @user/problem-solver "solve this" --model gpt-4o
 ```
 
+## Custom Prompts (Verified Authors Only)
+
+Custom prompts let verified authors test their own system prompts before publishing as packages. This is the fastest way to iterate on prompts.
+
+### Requirements
+
+To use custom prompts, you must be a verified author:
+
+1. Run `prpm login` and link your GitHub account
+2. Complete GitHub OAuth flow
+3. You're now verified and can use custom prompts
+
+Check your status: `prpm whoami`
+
+### Why 2x Cost?
+
+Custom prompts cost **2x normal credits** because they don't benefit from prompt caching:
+- Published packages cache the system prompt (cheaper follow-ups)
+- Custom prompts can change between requests (no caching possible)
+- Still cheaper than running your own API keys
+
+### Web UI Usage
+
+1. Go to [prpm.dev/playground](https://prpm.dev/playground)
+2. Toggle **"Use Custom Prompt"** (verified authors only)
+3. Enter your system prompt (10-50,000 characters)
+4. Enter your test input
+5. Click **"Run Playground"**
+
+<Tip>
+The web UI is great for quick experiments. The CLI is better for rapid iteration on prompt files.
+</Tip>
+
+### CLI Usage
+
+#### Option 1: Inline String
+
+```bash
+prpm playground --custom "You are a helpful coding assistant" --input "Explain async/await"
+```
+
+#### Option 2: From File (Recommended)
+
+```bash
+# Create prompt file
+cat > my-prompt.txt <<'EOF'
+You are a helpful coding assistant that specializes in TypeScript and React.
+
+When answering questions:
+1. Be concise and practical
+2. Provide code examples when relevant
+3. Explain trade-offs and best practices
+
+Always prioritize type safety and clean code.
+EOF
+
+# Test it
+prpm playground --prompt-file ./my-prompt.txt --input "Explain async/await"
+```
+
+#### Interactive Mode
+
+```bash
+prpm playground --prompt-file ./my-prompt.txt --interactive
+```
+
+### A/B Testing with --compare
+
+The most powerful feature for custom prompts is `--compare` mode. It runs your custom prompt and a baseline (no prompt) side-by-side:
+
+```bash
+prpm playground --custom "You are concise. Use 2 sentences max." --input "Explain recursion" --compare
+```
+
+**Output:**
+
+```
+⏳ Processing comparison (2 requests)...
+
+═══════════════════════════════════════════════════════════
+✨ WITH CUSTOM PROMPT
+═══════════════════════════════════════════════════════════
+🤖 Assistant:
+Recursion is when a function calls itself until a base condition is met.
+Each call breaks the problem into smaller pieces until it's simple enough
+to solve directly.
+
+═══════════════════════════════════════════════════════════
+🔵 WITHOUT PROMPT (BASELINE)
+═══════════════════════════════════════════════════════════
+🤖 Assistant:
+Recursion is a programming technique where a function calls itself to solve
+a problem. It works by breaking down a complex problem into smaller, more
+manageable sub-problems of the same type. Each recursive call works on a
+smaller portion of the problem until a base case is reached... [continues]
+
+📊 Combined Stats:
+   Total tokens: 423
+   Total credits: 8
+   Credits remaining: 492
+
+💡 Compare the responses to evaluate your custom prompt's effectiveness!
+```
+
+You can instantly see your prompt made the response 60% shorter.
+
+### File-Based Workflow (Best for Iteration)
+
+This workflow enables 10 iterations in 10 minutes instead of 10 days:
+
+```bash
+# 1. Create prompt file
+vim security-reviewer.txt
+
+# 2. Test it with compare mode
+prpm playground --prompt-file ./security-reviewer.txt \
+  --input "const query = 'SELECT * FROM users WHERE id = ' + userId" \
+  --compare
+
+# 3. See results, tweak prompt
+
+# 4. Test again (up-arrow to repeat command)
+# ...iterate until perfect
+
+# 5. Publish as package
+prpm publish
+```
+
+### Workflow Comparison
+
+<AccordionGroup>
+  <Accordion title="Without PRPM (Editor Reload Cycle)">
+    1. Write prompt in `.cursor/rules` or `.claude/skills/`
+    2. Reload/restart your editor
+    3. Ask AI a test question in your editor
+    4. Realize it needs work
+    5. Edit the prompt file
+    6. Reload/restart editor again
+    7. Test again
+    8. **Repeat 10x** (lots of reloading, no comparison mode)
+  </Accordion>
+
+  <Accordion title="With PRPM but Without Custom Prompts">
+    1. Write prompt locally
+    2. Create `prpm.json` manifest
+    3. Publish package (version 0.0.1)
+    4. Test in Playground
+    5. Realize it needs work
+    6. Edit prompt locally
+    7. Bump version (0.0.2) and publish again
+    8. Test new version
+    9. **Repeat 10x** (versions 0.0.3 through 0.0.12)
+  </Accordion>
+
+  <Accordion title="With PRPM + Custom Prompts">
+    1. Write prompt in file
+    2. `prpm playground --prompt-file ./prompt.txt --input "test" --compare`
+    3. Edit prompt
+    4. ↑ (up arrow to repeat command)
+    5. **Repeat until perfect** (seconds per iteration)
+    6. Publish once
+  </Accordion>
+</AccordionGroup>
+
+### Example: Security Code Reviewer
+
+You're building a security-focused code reviewer that catches SQL injection, XSS, and auth bugs without false positives:
+
+```bash
+# Test with real vulnerable code
+prpm playground --prompt-file ./security-reviewer.txt \
+  --input "const query = 'SELECT * FROM users WHERE id = ' + userId" \
+  --compare
+```
+
+The baseline might give generic advice. Your prompt should catch the specific SQL injection vulnerability and suggest parameterized queries.
+
+Iterate until your prompt consistently catches real vulnerabilities without false positives, then publish it.
+
+### Custom Prompt Limits
+
+| Limit | Value | Why |
+|-------|-------|-----|
+| Min length | 10 chars | Sanity check |
+| Max length | 50,000 chars | Avoids token limits |
+| Recommended | 500-5,000 chars | Best results, manageable cost |
+| Max output | 1,024 tokens | ~750 words |
+| Timeout | 30 seconds | Prevents runaway requests |
+| Cost | 2x normal | No caching |
+
+<Warning>
+Custom prompts run in isolated sandboxes (text-only, no tools). This is by design for safe experimentation.
+</Warning>
+
+### Best Practices for Custom Prompts
+
+1. **Start simple** - Write 2-3 sentences, test, iterate
+2. **Use files** - Version control your prompts
+3. **Compare early** - Use `--compare` to ensure you're adding value
+4. **Test multiple inputs** - Don't optimize for one example
+5. **Check token usage** - Long prompts = high costs
+6. **Be specific** - "Review for security issues" beats "Review code"
+7. **Iterate rapidly** - Edit file → ↑ (repeat command) → see results
+
 ## Sharing Results
 
 ### Web Interface
@@ -180,36 +384,38 @@ Suggested inputs appear automatically in the playground, making it easier for us
 
 ### `prpm playground`
 
-Test a package with AI models.
+Test a package or custom prompt with AI models.
 
 ```bash
-prpm playground <package> [input] [options]
+prpm playground [options]
 ```
 
-**Arguments:**
-- `<package>` - Package identifier (e.g., `@user/package-name`)
-- `[input]` - Test input text (optional, required if not using `--interactive`)
-
 **Options:**
-- `-m, --model <model>` - AI model to use (sonnet, opus, gpt-4o, gpt-4o-mini)
-- `-c, --compare` - Compare with and without package prompt
+- `-p, --package <name>` - Package name to test
+- `--input <text>` - Input text (omit for interactive mode)
+- `-m, --model <model>` - AI model (sonnet, opus, gpt-4o, gpt-4o-mini, gpt-4-turbo)
+- `-c, --compare` - Compare with and without prompt (baseline)
 - `-i, --interactive` - Start interactive conversation mode
-- `--help` - Show help information
+- `-v, --version <version>` - Specific package version to test
+- `--custom <prompt>` - Use custom prompt string (verified authors only)
+- `--prompt-file <file>` - Load custom prompt from file (verified authors only)
 
 **Examples:**
 
 ```bash
-# Basic test
-prpm playground @anthropic/code-reviewer "Review this: console.log('hi')"
+# Package testing
+prpm playground --package @anthropic/code-reviewer --input "Review this: console.log('hi')"
+prpm playground -p @user/brainstorm -i
+prpm playground -p @user/optimizer --input "Optimize this" --compare
 
-# Interactive session
-prpm playground @user/brainstorm --interactive
+# Custom prompts (verified authors only)
+prpm playground --custom "You are a concise assistant" --input "Explain async"
+prpm playground --prompt-file ./my-prompt.txt --input "Test"
+prpm playground --prompt-file ./my-prompt.txt --input "Test" --compare
 
-# Compare mode
-prpm playground @user/optimizer "Optimize this function" --compare
-
-# Specific model
-prpm playground @user/complex-task "Analyze" --model opus
+# Interactive mode
+prpm playground -p @user/prompt -i
+prpm playground --prompt-file ./my-prompt.txt --interactive
 ```
 
 ### `prpm subscribe`

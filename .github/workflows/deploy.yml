@@ -8,7 +8,7 @@ on:
       - 'packages/types/**'
       - 'packages/webapp/**'
   schedule:
-    # Rebuild webapp every 6 hours to pick up new packages/collections
+    # Rebuild webapp every 6 hours to regenerate static pages with latest data from registry API
     - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
@@ -364,18 +364,18 @@ jobs:
       - name: Build types package
         run: npm run build --workspace=@pr-pm/types
 
-      - name: Configure AWS credentials for S3 data
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Prepare SSG data
+      - name: Verify SSG token is set
         run: |
-          # Use centralized script for SSG data preparation
-          chmod +x scripts/prepare-ssg-data.sh
-          DEBUG=true ./scripts/prepare-ssg-data.sh
+          if [ -z "$SSG_DATA_TOKEN" ]; then
+            echo "❌ ERROR: SSG_DATA_TOKEN secret is not set in GitHub repository"
+            echo "Please add SSG_DATA_TOKEN to repository secrets:"
+            echo "https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          else
+            echo "✅ SSG_DATA_TOKEN is set (length: ${#SSG_DATA_TOKEN} chars)"
+          fi
+        env:
+          SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
 
       - name: Build webapp
         run: |
@@ -387,7 +387,7 @@ jobs:
           NEXT_PUBLIC_REGISTRY_URL: "https://registry.prpm.dev"
           REGISTRY_URL: "https://registry.prpm.dev"
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
-          # Don't set NEXT_PUBLIC_S3_SEO_DATA_URL - we want to use local files only during build
+          SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
 
       - name: Verify build output
         run: |

@@ -1,0 +1,5 @@
+Building a prompt package? Custom Prompts lets you test your own system prompts in PRPM Playground before publishing.
+
+The killer feature: --compare mode A/B tests your prompt against baseline. Edit, test, iterate—10 times in 10 minutes vs 10 days.
+
+https://prpm.dev/blog/custom-prompts-for-verified-authors

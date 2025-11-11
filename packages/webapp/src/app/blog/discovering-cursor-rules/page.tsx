@@ -189,7 +189,7 @@ prpm update`}</code></pre>
           <div className="not-prose my-12 p-8 bg-gradient-to-br from-prpm-accent/10 to-prpm-green/10 border border-prpm-accent/30 rounded-2xl">
             <h3 className="text-2xl font-bold text-white mb-4">Upgrade Your Cursor Workflow</h3>
             <p className="text-gray-300 mb-6">
-              2,100+ packages with CLI installation, version control, and format conversion. Move beyond manual copy-paste.
+              4,000+ packages with CLI installation, version control, and format conversion. Move beyond manual copy-paste.
             </p>
             <div className="flex gap-4">
               <Link
