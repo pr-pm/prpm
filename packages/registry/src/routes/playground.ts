@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { PlaygroundService } from '../services/playground.js';
 import { PlaygroundCreditsService } from '../services/playground-credits.js';
 import { createRateLimiter } from '../middleware/rate-limit.js';
+import { createSessionSecurityMiddleware } from '../middleware/session-security.js';
 import { sanitizeUserInput, SECURITY_LIMITS } from '../middleware/security.js';
 import { getModelId } from '../config/models.js';
 
@@ -47,6 +48,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
   const playgroundService = new PlaygroundService(server);
   const creditsService = new PlaygroundCreditsService(server);
   const rateLimiter = createRateLimiter();
+  const sessionSecurity = createSessionSecurityMiddleware();
 
   // =====================================================
   // POST /api/v1/playground/run
@@ -55,7 +57,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
   server.post(
     '/run',
     {
-      preHandler: [server.authenticate, rateLimiter],
+      preHandler: [server.authenticate, sessionSecurity, rateLimiter],
       schema: {
         description: 'Execute a playground run with a package prompt (or compare against no prompt)',
         tags: ['playground'],
