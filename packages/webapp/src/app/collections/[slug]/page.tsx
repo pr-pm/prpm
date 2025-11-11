@@ -13,6 +13,15 @@ export const dynamicParams = true
 // Generate static params for all collections
 export async function generateStaticParams() {
   try {
+    // Skip SSG in CI/test builds to speed up builds and avoid hitting registry
+    if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
+      console.log('[SSG Collections] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params for fast build')
+      // Return one dummy collection to satisfy Next.js requirements
+      return [{
+        slug: 'test-collection'
+      }]
+    }
+
     console.log(`[SSG Collections] Fetching from registry API: ${REGISTRY_URL}`)
     console.log(`[SSG Collections] Environment check:`, {
       SSG_TOKEN_exists: !!SSG_TOKEN,

@@ -1606,6 +1606,10 @@ export async function packageRoutes(server: FastifyInstance) {
    * Get all public packages with full content for static site generation
    * Used by webapp during build for generateStaticParams
    * REQUIRES: X-SSG-Token header for authentication
+   * RATE LIMITING: Exempt from global rate limits (see index.ts allowList)
+   * PAGINATION: Default 500 packages per request (max 1000 to avoid payload size issues)
+   *             With 4000 packages: 8 requests needed to fetch all
+   * PAYLOAD SIZE: ~500 packages × ~10KB avg = ~5MB response (safe for JSON parsing)
    */
   server.get(
     '/ssg-data',
@@ -1623,8 +1627,8 @@ export async function packageRoutes(server: FastifyInstance) {
           type: 'object',
           properties: {
             format: { type: 'string' },
-            limit: { type: 'number', default: 500 },
-            offset: { type: 'number', default: 0 },
+            limit: { type: 'number', default: 500, minimum: 1, maximum: 1000 },
+            offset: { type: 'number', default: 0, minimum: 0 },
           },
         },
       },

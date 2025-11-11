@@ -26,6 +26,16 @@ function getPackageContent(pkg: any): string | null {
 // Generate static params for all packages
 export async function generateStaticParams() {
   try {
+    // Skip SSG in CI/test builds to speed up builds and avoid hitting registry
+    if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
+      console.log('[SSG Packages] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params for fast build')
+      // Return one dummy package to satisfy Next.js requirements
+      return [{
+        author: 'prpm',
+        package: ['test-package']
+      }]
+    }
+
     console.log(`[SSG Packages] Fetching from registry API: ${REGISTRY_URL}`)
     console.log(`[SSG Packages] Environment check:`, {
       SSG_TOKEN_exists: !!SSG_TOKEN,
