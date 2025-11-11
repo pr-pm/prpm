@@ -377,6 +377,15 @@ jobs:
         env:
           SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
 
+      - name: Prepare SSG data
+        run: |
+          chmod +x scripts/prepare-ssg-data.sh
+          ./scripts/prepare-ssg-data.sh
+        env:
+          SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
+          REGISTRY_URL: "https://registry.prpm.dev"
+          DEBUG: "false"
+
       - name: Build webapp
         run: |
           cd packages/webapp
