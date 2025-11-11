@@ -92,10 +92,33 @@ async function buildServer() {
       message: 'Rate limit exceeded. Please try again later.',
       statusCode: 429,
     }),
-    // Exempt SSG data endpoints from rate limiting (used during webapp build)
+    // Exempt requests from official webapp and specific endpoints
     allowList: (request) => {
       const path = request.url || '';
-      return path.includes('/ssg-data') || path.includes('/seo/');
+      const origin = request.headers.origin || '';
+      const referer = request.headers.referer || '';
+
+      // NEVER rate limit requests from official webapp domains
+      const webappDomains = [
+        'prpm.dev',
+        'www.prpm.dev',
+        'localhost:3000',
+        'localhost:5173',
+      ];
+
+      const isWebappRequest = webappDomains.some(domain =>
+        origin.includes(domain) || referer.includes(domain)
+      );
+
+      if (isWebappRequest) {
+        return true; // Exempt all webapp requests
+      }
+
+      // Also exempt build-time and SEO endpoints
+      return (
+        path.includes('/ssg-data') ||    // Build-time data fetching
+        path.includes('/seo/')            // SEO sitemap generation
+      );
     },
   });
 
