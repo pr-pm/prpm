@@ -17,6 +17,10 @@ const SSG_TOKEN = process.env.SSG_DATA_TOKEN
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
 
+// Disable fetch caching during build to prevent "items over 2MB cannot be cached" errors
+// SSG responses are 5-22MB each, which exceeds Next.js's 2MB cache limit
+export const fetchCache = 'force-no-store'
+
 // Helper to get package content - prefer full content, fall back to snippet
 function getPackageContent(pkg: any): string | null {
   // Try fullContent (camelCase from SSG), full_content (snake_case from direct API), then snippet
@@ -58,7 +62,7 @@ export async function generateStaticParams() {
 
     // Paginate through ALL packages
     const allPackages: any[] = []
-    const limit = 500
+    const limit = 1000 // Fetch 1000 per request (fetchCache disabled, so no 2MB cache limit)
     let offset = 0
     let hasMore = true
 
@@ -68,31 +72,53 @@ export async function generateStaticParams() {
       const url = `${REGISTRY_URL}/api/v1/packages/ssg-data?limit=${limit}&offset=${offset}`
       console.log(`[SSG Packages] Fetching page: offset=${offset}`)
 
-      const res = await fetch(url, {
-        headers: {
-          'X-SSG-Token': SSG_TOKEN,
-        },
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
+      try {
+        const res = await fetch(url, {
+          headers: {
+            'X-SSG-Token': SSG_TOKEN,
+          },
+          // No revalidate during build - fetch everything fresh
+          cache: 'no-store',
+        })
 
-      if (!res.ok) {
-        console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages at offset ${offset}`)
+        if (!res.ok) {
+          console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages at offset ${offset}`)
+          const errorText = await res.text().catch(() => 'Unable to read error')
+          console.error(`[SSG Packages] Error response: ${errorText}`)
+          break
+        }
+
+        const data = await res.json()
+        const packages = data.packages || []
+
+        if (!Array.isArray(packages)) {
+          console.error('[SSG Packages] Invalid response format - expected array')
+          console.error('[SSG Packages] Response data:', JSON.stringify(data).substring(0, 200))
+          break
+        }
+
+        // Stop if we got an empty page (pagination complete)
+        if (packages.length === 0) {
+          console.log('[SSG Packages] Received empty page, pagination complete')
+          break
+        }
+
+        allPackages.push(...packages)
+        hasMore = data.hasMore || false
+        offset += limit
+
+        console.log(`[SSG Packages] Page loaded: ${packages.length} packages, total so far: ${allPackages.length}, hasMore: ${hasMore}`)
+
+        // Safety check: if we've fetched more than expected, something might be wrong
+        if (allPackages.length > 10000) {
+          console.warn(`[SSG Packages] Warning: Fetched ${allPackages.length} packages, stopping to prevent infinite loop`)
+          break
+        }
+      } catch (error) {
+        console.error(`[SSG Packages] Fetch error at offset ${offset}:`, error)
+        console.error(`[SSG Packages] Stopping pagination due to error`)
         break
       }
-
-      const data = await res.json()
-      const packages = data.packages || []
-
-      if (!Array.isArray(packages)) {
-        console.error('[SSG Packages] Invalid response format - expected array')
-        break
-      }
-
-      allPackages.push(...packages)
-      hasMore = data.hasMore || false
-      offset += limit
-
-      console.log(`[SSG Packages] Page loaded: ${packages.length} packages, total so far: ${allPackages.length}, hasMore: ${hasMore}`)
     }
 
     console.log(`[SSG Packages] ✅ Loaded ${allPackages.length} packages from registry (${Math.ceil(allPackages.length / limit)} pages)`)

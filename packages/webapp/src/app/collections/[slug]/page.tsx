@@ -10,6 +10,10 @@ const SSG_TOKEN = process.env.SSG_DATA_TOKEN
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
 
+// Disable fetch caching during build to prevent "items over 2MB cannot be cached" errors
+// SSG responses are 5-22MB each, which exceeds Next.js's 2MB cache limit
+export const fetchCache = 'force-no-store'
+
 // Generate static params for all collections
 export async function generateStaticParams() {
   try {
@@ -44,7 +48,7 @@ export async function generateStaticParams() {
 
     // Paginate through ALL collections
     const allCollections: any[] = []
-    const limit = 500
+    const limit = 1000 // Fetch 1000 per request (fetchCache disabled, so no 2MB cache limit)
     let offset = 0
     let hasMore = true
 
@@ -54,31 +58,53 @@ export async function generateStaticParams() {
       const url = `${REGISTRY_URL}/api/v1/collections/ssg-data?limit=${limit}&offset=${offset}`
       console.log(`[SSG Collections] Fetching page: offset=${offset}`)
 
-      const res = await fetch(url, {
-        headers: {
-          'X-SSG-Token': SSG_TOKEN,
-        },
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
+      try {
+        const res = await fetch(url, {
+          headers: {
+            'X-SSG-Token': SSG_TOKEN,
+          },
+          // No revalidate during build - fetch everything fresh
+          cache: 'no-store',
+        })
 
-      if (!res.ok) {
-        console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections at offset ${offset}`)
+        if (!res.ok) {
+          console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections at offset ${offset}`)
+          const errorText = await res.text().catch(() => 'Unable to read error')
+          console.error(`[SSG Collections] Error response: ${errorText}`)
+          break
+        }
+
+        const data = await res.json()
+        const collections = data.collections || []
+
+        if (!Array.isArray(collections)) {
+          console.error('[SSG Collections] Invalid response format - expected array')
+          console.error('[SSG Collections] Response data:', JSON.stringify(data).substring(0, 200))
+          break
+        }
+
+        // Stop if we got an empty page (pagination complete)
+        if (collections.length === 0) {
+          console.log('[SSG Collections] Received empty page, pagination complete')
+          break
+        }
+
+        allCollections.push(...collections)
+        hasMore = data.hasMore || false
+        offset += limit
+
+        console.log(`[SSG Collections] Page loaded: ${collections.length} collections, total so far: ${allCollections.length}, hasMore: ${hasMore}`)
+
+        // Safety check
+        if (allCollections.length > 1000) {
+          console.warn(`[SSG Collections] Warning: Fetched ${allCollections.length} collections, stopping to prevent infinite loop`)
+          break
+        }
+      } catch (error) {
+        console.error(`[SSG Collections] Fetch error at offset ${offset}:`, error)
+        console.error(`[SSG Collections] Stopping pagination due to error`)
         break
       }
-
-      const data = await res.json()
-      const collections = data.collections || []
-
-      if (!Array.isArray(collections)) {
-        console.error('[SSG Collections] Invalid response format - expected array')
-        break
-      }
-
-      allCollections.push(...collections)
-      hasMore = data.hasMore || false
-      offset += limit
-
-      console.log(`[SSG Collections] Page loaded: ${collections.length} collections, total so far: ${allCollections.length}, hasMore: ${hasMore}`)
     }
 
     console.log(`[SSG Collections] ✅ Loaded ${allCollections.length} collections from registry (${Math.ceil(allCollections.length / limit)} pages)`)
