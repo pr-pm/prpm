@@ -1,6 +1,9 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { cache } from 'react'
 import Link from 'next/link'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 import type { Collection } from '@pr-pm/types'
 import CollapsibleContent from '@/components/CollapsibleContent'
 
@@ -156,10 +159,38 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-async function getCollection(slug: string): Promise<Collection | null> {
+// Wrap with cache() to deduplicate fetches across generateMetadata and page component
+const getCollection = cache(async (slug: string): Promise<Collection | null> => {
   try {
+    // During SSG build, read from local JSON file prepared by prepare-ssg-data.sh
+    // This avoids API calls during build and uses pre-fetched data
+    const ssgDataPath = join(process.cwd(), 'public', 'seo-data', 'collections.json')
+
+    try {
+      const fileContent = await readFile(ssgDataPath, 'utf-8')
+      const collections: Collection[] = JSON.parse(fileContent)
+
+      // Find the collection by slug
+      const collection = collections.find((c: any) => c.name_slug === slug)
+
+      if (collection) {
+        console.log(`[Collection] ✅ Found ${slug} in SSG data`)
+        return collection
+      }
+
+      console.log(`[Collection] ⚠️  Collection ${slug} not in SSG data (${collections.length} collections loaded)`)
+    } catch (fileError) {
+      // SSG file doesn't exist or can't be read - fall back to fetching from registry
+      // This can happen during dev mode or if SSG prep failed
+      console.log(`[Collection] SSG data file not available, falling back to registry fetch`)
+    }
+
+    // Fallback: fetch directly from registry
+    // This happens in dev mode or if collection not found in SSG data
+    console.log(`[Collection] Fetching ${slug} directly from registry`)
+
     if (!SSG_TOKEN) {
-      console.error('SSG_DATA_TOKEN environment variable not set')
+      console.error('[Collection] SSG_DATA_TOKEN environment variable not set')
       return null
     }
 
@@ -168,11 +199,11 @@ async function getCollection(slug: string): Promise<Collection | null> {
       headers: {
         'X-SSG-Token': SSG_TOKEN,
       },
-      next: { revalidate: 3600 } // Revalidate every hour
+      next: { revalidate: 3600 }
     })
 
     if (!res.ok) {
-      console.error(`Error fetching collections from registry: ${res.status}`)
+      console.error(`[Collection] Error fetching from registry: ${res.status}`)
       return null
     }
 
@@ -180,7 +211,7 @@ async function getCollection(slug: string): Promise<Collection | null> {
     const collections = data.collections || []
 
     if (!Array.isArray(collections)) {
-      console.error('Invalid collections data format from registry')
+      console.error('[Collection] Invalid collections data format from registry')
       return null
     }
 
@@ -188,10 +219,10 @@ async function getCollection(slug: string): Promise<Collection | null> {
     const collection = collections.find((c: any) => c.name_slug === slug)
     return collection || null
   } catch (error) {
-    console.error('Error fetching collection:', error)
+    console.error('[Collection] Error in getCollection:', error)
     return null
   }
-}
+})
 
 export default async function CollectionPage({ params }: { params: { slug: string } }) {
   const collection = await getCollection(params.slug)
