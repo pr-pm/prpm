@@ -24,6 +24,24 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "claude-hooks-best-practices",
+    title: "Claude Hooks Best Practices: Write Hooks That Work",
+    excerpt: "Security, reliability, and performance patterns for Claude Code hooks. Validate input, quote paths, handle failures, optimize performance. 16-point checklist for production-ready automation.",
+    date: "2025-11-12",
+    author: "PRPM Team",
+    readTime: "12 min read",
+    tags: ["Tutorial", "Claude Code", "Hooks", "Best Practices"],
+  },
+  {
+    slug: "claude-hooks-support",
+    title: "PRPM Now Supports Claude Code Hooks",
+    excerpt: "Install Claude Code hooks as packages. One command replaces manual JSON config. Auto-format code, log commands, protect files—share hooks via PRPM registry.",
+    date: "2025-11-12",
+    author: "PRPM Team",
+    readTime: "7 min read",
+    tags: ["Feature Release", "Claude Code", "Hooks", "Automation"],
+  },
+  {
     slug: "custom-prompts-for-verified-authors",
     title: "Custom Prompts for Verified Authors: Test and Iterate on Prompts Before Publishing",
     excerpt: "Test your own custom system prompts in PRPM Playground. Use --compare mode to A/B test prompts against baselines. Perfect for authors who want to iterate rapidly before publishing packages.",

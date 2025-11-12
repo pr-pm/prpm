@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/validate-credentials/dist/hook.js",
+            "timeout": 3000
+          }
+        ]
+      }
+    ]
+  }
+}

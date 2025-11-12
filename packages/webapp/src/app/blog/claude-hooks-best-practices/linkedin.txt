@@ -1,0 +1,47 @@
+Claude Code hooks run with your full user permissions. They can read, modify, or delete any file you can access. Write them wrong and they'll fail silently, break your workflow, or expose sensitive data.
+
+If you're writing hooks for automation—auto-formatting code, logging commands, protecting sensitive files—you need to follow security and reliability best practices.
+
+Here's what we've learned from building and testing dozens of Claude hooks:
+
+Security fundamentals:
+• Validate ALL input from stdin (never trust JSON data)
+• Quote every file path and variable (spaces and Unicode break things)
+• Block sensitive files (.env, *.key, .git/* directories)
+• Use absolute paths for scripts (relative paths fail unpredictably)
+• Sanitize command input before execution
+
+Reliability patterns:
+• Check if required tools exist before running them
+• Set reasonable timeouts (default is 60s, long hooks block Claude)
+• Log failures to stderr or log files (not stdout)
+• Test with edge cases: spaces in filenames, Unicode, deep paths
+• Handle missing files gracefully
+
+Performance tips:
+• Keep hooks fast—5 seconds means Claude waits 5 seconds
+• Use specific matchers (Edit|Write, not *)
+• Run expensive operations in background jobs
+• Cache results for type checking and linting
+
+Common patterns you can copy:
+• Format on save (prettier, black, gofmt by file extension)
+• Command logger (timestamp every bash command)
+• File protection (block writes to protected directories)
+• Desktop notifications (libnotify or terminal-notifier)
+
+Before publishing:
+✓ Validated all input from stdin
+✓ Quoted all file paths
+✓ Blocked sensitive files
+✓ Handled missing tools
+✓ Tested with edge cases
+✓ Documented dependencies
+✓ Clear description and tags
+
+The best hooks are invisible—they just work, every time, without slowing you down.
+
+Full guide with code examples:
+https://prpm.dev/blog/claude-hooks-best-practices
+
+#AI #DeveloperTools #BestPractices #ClaudeCode #Automation

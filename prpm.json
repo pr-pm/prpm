@@ -297,6 +297,18 @@
       ]
     },
     {
+      "name": "typescript-hook-writer",
+      "version": "1.0.0",
+      "description": "Expert guidance for developing Claude Code hooks in TypeScript with shared utilities, esbuild compilation, and Vitest testing - distributes compiled JS while maintaining TypeScript development experience",
+      "private": true,
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["typescript", "hooks", "claude-code", "esbuild", "vitest", "testing", "prpm-internal"],
+      "files": [
+        ".claude/skills/typescript-hook-writer/skill.md"
+      ]
+    },
+    {
       "name": "integrating-stripe-webhooks",
       "version": "1.0.0",
       "description": "Use when implementing Stripe webhook endpoints and getting 'Raw body not available' or signature verification errors - provides raw body parsing solutions and subscription period field fixes across frameworks",
@@ -338,6 +350,97 @@
       "tags": ["code-review", "market-research", "quality-assessment", "analysis", "karen"],
       "files": [
         ".claude/commands/karen/review.md"
+      ]
+    },
+    {
+      "name": "prettier-on-save",
+      "version": "1.0.0",
+      "description": "Automatically formats code files with Prettier after Claude edits or creates them",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["formatting", "prettier", "automation", "code-quality", "post-tool-use"],
+      "files": [
+        ".claude/hooks/prettier-on-save/hook.json",
+        ".claude/hooks/prettier-on-save/dist/hook.js",
+        ".claude/hooks/prettier-on-save/README.md"
+      ]
+    },
+    {
+      "name": "command-logger",
+      "version": "1.0.0",
+      "description": "Logs all bash commands Claude executes to a file for audit and debugging",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["logging", "audit", "bash", "commands", "security", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/command-logger/hook.json",
+        ".claude/hooks/command-logger/dist/hook.js",
+        ".claude/hooks/command-logger/README.md"
+      ]
+    },
+    {
+      "name": "block-env-writes",
+      "version": "1.0.0",
+      "description": "Prevents Claude from writing to or editing sensitive files that may contain credentials or secrets",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["security", "credentials", "env-files", "protection", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/block-env-writes/hook.json",
+        ".claude/hooks/block-env-writes/dist/hook.js",
+        ".claude/hooks/block-env-writes/README.md"
+      ]
+    },
+    {
+      "name": "desktop-alerts",
+      "version": "1.0.0",
+      "description": "Sends desktop notifications when Claude Code shows alerts or needs input",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["notifications", "desktop", "alerts", "ux", "productivity"],
+      "files": [
+        ".claude/hooks/desktop-alerts/hook.json",
+        ".claude/hooks/desktop-alerts/dist/hook.js",
+        ".claude/hooks/desktop-alerts/README.md"
+      ]
+    },
+    {
+      "name": "validate-credentials",
+      "version": "1.0.0",
+      "description": "Warns when Claude attempts to write code that may contain hardcoded credentials or secrets",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["security", "credentials", "validation", "secrets", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/validate-credentials/hook.json",
+        ".claude/hooks/validate-credentials/dist/hook.js",
+        ".claude/hooks/validate-credentials/README.md"
+      ]
+    },
+    {
+      "name": "audit-file-deletes",
+      "version": "1.0.0",
+      "description": "Logs all file deletion operations Claude performs for security auditing and recovery",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["audit", "logging", "security", "file-operations", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/audit-file-deletes/hook.json",
+        ".claude/hooks/audit-file-deletes/dist/hook.js",
+        ".claude/hooks/audit-file-deletes/README.md"
+      ]
+    },
+    {
+      "name": "sensitive-data-scanner",
+      "version": "1.0.0",
+      "description": "Scans code for sensitive data patterns like API keys, private keys, and tokens before files are written",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["security", "scanning", "secrets", "api-keys", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/sensitive-data-scanner/hook.json",
+        ".claude/hooks/sensitive-data-scanner/dist/hook.js",
+        ".claude/hooks/sensitive-data-scanner/README.md"
       ]
     },
     {
@@ -437,6 +540,43 @@
       "tags": ["typescript", "type-safety", "strict-mode", "code-quality", "enforcement"],
       "files": [
         ".cursor/rules/typescript-type-specialist.mdc"
+      ]
+    }
+  ],
+  "collections": [
+    {
+      "id": "secure-coding",
+      "name": "Secure Coding Suite",
+      "description": "Complete security policy with environment protection, credential validation, audit logging, and data scanning for Claude Code",
+      "version": "1.0.0",
+      "category": "security",
+      "tags": ["security", "credentials", "audit", "compliance", "best-practices"],
+      "icon": "🔒",
+      "packages": [
+        {
+          "packageId": "@prpm/block-env-writes",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Blocks writes to sensitive files (.env, .pem, .key) to prevent credential exposure"
+        },
+        {
+          "packageId": "@prpm/validate-credentials",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Warns when hardcoded credentials detected in code (passwords, API keys, tokens)"
+        },
+        {
+          "packageId": "@prpm/audit-file-deletes",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Logs all file deletion operations for audit trail and compliance"
+        },
+        {
+          "packageId": "@prpm/sensitive-data-scanner",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Scans for AWS keys, private keys, JWT tokens, and other sensitive data patterns"
+        }
       ]
     }
   ]
