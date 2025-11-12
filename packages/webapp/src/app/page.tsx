@@ -64,7 +64,7 @@ export default function Home() {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-prpm-dark-card border border-prpm-border rounded-full text-sm text-gray-400">
               <span className="w-2 h-2 bg-prpm-accent rounded-full animate-pulse"></span>
-              Alpha · 2,100+ packages · 100+ collections
+              Alpha · 6,000+ packages · 100+ collections
             </div>
 
             <div className="flex justify-center mb-8">
@@ -85,7 +85,7 @@ export default function Home() {
               Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, GitHub Copilot, OpenAI Codex, Google Gemini, Kiro, and more — all from one file.
             </p>
 
-            <div className="flex flex-col gap-4 items-center mb-12">
+            <div className="flex flex-col gap-4 items-center mb-8">
               <Link
                 href="/search"
                 className="px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift flex items-center gap-2"
@@ -114,6 +114,12 @@ export default function Home() {
                   GitHub
                 </a>
               </div>
+            </div>
+
+            <div className="flex justify-center mb-12">
+              <a href="https://startupfa.me/s/prpm.dev?utm_source=prpm.dev" target="_blank" rel="noopener noreferrer">
+                <img src="https://startupfa.me/badges/featured-badge.webp" alt="PRPM - Featured on Startup Fame" width={171} height={54} />
+              </a>
             </div>
 
             {/* Quick install commands */}
@@ -159,7 +165,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">2,100+ Packages</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">6,000+ Packages</h3>
               <p className="text-gray-400 leading-relaxed">
                 Battle-tested prompts, agents, skills, and slash commands from verified contributors
               </p>

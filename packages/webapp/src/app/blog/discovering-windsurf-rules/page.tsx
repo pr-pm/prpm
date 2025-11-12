@@ -157,7 +157,7 @@ export default function DiscoveringWindsurfRulesPost() {
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3 font-semibold">Collection Size</td>
-                  <td className="p-3 text-green-400">2100+ packages</td>
+                  <td className="p-3 text-green-400">6000+ packages</td>
                   <td className="p-3 text-yellow-400">~50 curated</td>
                   <td className="p-3 text-yellow-400">~30 tutorials</td>
                 </tr>
@@ -302,7 +302,7 @@ prpm publish`}</code></pre>
             </ul>
           </div>
 
-          <p className="mt-6">Browse all 2100+ packages at <Link href="/search?format=windsurf" className="text-prpm-accent hover:underline">prpm.dev/search</Link></p>
+          <p className="mt-6">Browse all 6000+ packages at <Link href="/search?format=windsurf" className="text-prpm-accent hover:underline">prpm.dev/search</Link></p>
 
           <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-6 my-8">
             <h2 className="text-3xl font-bold text-white mb-0">Choosing the Right Platform</h2>
@@ -319,7 +319,7 @@ prpm publish`}</code></pre>
           <div className="not-prose my-12 p-8 bg-gradient-to-br from-prpm-accent/10 to-prpm-green/10 border border-prpm-accent/30 rounded-2xl">
             <h3 className="text-2xl font-bold text-white mb-4">Start Using the Best Windsurf Rules Today</h3>
             <p className="text-gray-300 mb-6">
-              Get CLI installation, quality metrics, testing playground, and version control for your Windsurf AI editor. 2100+ packages available now.
+              Get CLI installation, quality metrics, testing playground, and version control for your Windsurf AI editor. 6000+ packages available now.
             </p>
             <div className="flex gap-4 flex-wrap">
               <Link

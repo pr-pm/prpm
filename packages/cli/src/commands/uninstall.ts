@@ -4,9 +4,8 @@
 
 import { Command } from 'commander';
 import { removePackage } from '../core/lockfile';
-import { getDestinationDir, deleteFile, fileExists, stripAuthorNamespace } from '../core/filesystem';
+import { stripAuthorNamespace } from '../core/filesystem';
 import { promises as fs } from 'fs';
-import { Format, Subtype } from '../types';
 import { CLIError } from '../core/errors';
 
 /**
@@ -23,55 +22,86 @@ export async function handleUninstall(name: string): Promise<void> {
       throw new CLIError(`❌ Package "${name}" not found`, 1);
     }
 
-    // Get destination directory using format and subtype
-    const format = pkg.format || 'generic';
-    const subtype = pkg.subtype || 'rule';
-    const packageName = stripAuthorNamespace(name);
-    const destDir = getDestinationDir(format as Format, subtype as Subtype, packageName);
-    const fileExtension = pkg.format === 'cursor' ? 'mdc' : 'md';
+    // Special handling for Claude hooks
+    if (pkg.format === 'claude' && pkg.subtype === 'hook' && pkg.hookMetadata) {
+      const settingsPath = pkg.installedPath || '.claude/settings.json';
 
-    // For Claude skills, delete the entire directory (may contain multiple files)
-    if (format === 'claude' && subtype === 'skill') {
-      // Claude skills are in .claude/skills/${packageName}/ directory
-      // Delete the entire directory (includes SKILL.md, EXAMPLES.md, docs/, etc.)
       try {
-        const stats = await fs.stat(destDir);
-        if (stats.isDirectory()) {
-          await fs.rm(destDir, { recursive: true, force: true });
-          console.log(`   🗑️  Deleted directory: ${destDir}`);
+        // Read settings.json
+        const settingsContent = await fs.readFile(settingsPath, 'utf-8');
+        const settings = JSON.parse(settingsContent);
+
+        if (settings.hooks) {
+          let removedCount = 0;
+
+          // Remove hooks with matching hook ID from each event
+          for (const event of pkg.hookMetadata.events) {
+            if (settings.hooks[event]) {
+              const originalLength = settings.hooks[event].length;
+              settings.hooks[event] = settings.hooks[event].filter(
+                (hook: any) => hook.__prpm_hook_id !== pkg.hookMetadata!.hookId
+              );
+              const newLength = settings.hooks[event].length;
+              removedCount += originalLength - newLength;
+
+              // Clean up empty event arrays
+              if (settings.hooks[event].length === 0) {
+                delete settings.hooks[event];
+              }
+            }
+          }
+
+          // Write updated settings back
+          await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+          console.log(`   🪝 Removed ${removedCount} hook(s) from ${settingsPath}`);
         }
       } catch (error) {
         const err = error as NodeJS.ErrnoException;
         if (err.code === 'ENOENT') {
-          console.warn(`   ⚠️  Skill directory not found: ${destDir}`);
+          console.warn(`   ⚠️  Settings file not found: ${settingsPath}`);
         } else {
-          console.warn(`   ⚠️  Could not delete skill directory: ${err.message}`);
+          throw new Error(`Failed to remove hooks from settings: ${error}`);
         }
       }
+
+      console.log(`✅ Successfully uninstalled ${name}`);
+      return;
+    }
+
+    // Standard file/directory uninstall for non-hook packages
+    const packageName = stripAuthorNamespace(name);
+    let targetPath: string;
+
+    if (pkg.installedPath) {
+      // Use the exact path where it was installed (from lock file)
+      targetPath = pkg.installedPath;
+      console.log(`   📍 Using installation path from lock file: ${targetPath}`);
     } else {
-      // For other formats, try single file first
-      const singleFilePath = `${destDir}/${packageName}.${fileExtension}`;
+      // Fallback: warn user that installedPath is missing (shouldn't happen with recent installations)
+      console.warn(`   ⚠️  No installation path in lock file for ${name}`);
+      console.warn(`   ⚠️  This may indicate an old or corrupted lock file`);
+      throw new CLIError(`Cannot uninstall ${name}: installation path unknown`, 1);
+    }
 
-      if (await fileExists(singleFilePath)) {
-        // Single file package
-        await deleteFile(singleFilePath);
-        console.log(`   🗑️  Deleted file: ${singleFilePath}`);
+    // Check if the target path is a directory or file and delete accordingly
+    try {
+      const stats = await fs.stat(targetPath);
+
+      if (stats.isDirectory()) {
+        // Delete entire directory
+        await fs.rm(targetPath, { recursive: true, force: true });
+        console.log(`   🗑️  Deleted directory: ${targetPath}`);
+      } else if (stats.isFile()) {
+        // Delete single file
+        await fs.unlink(targetPath);
+        console.log(`   🗑️  Deleted file: ${targetPath}`);
+      }
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      if (err.code === 'ENOENT') {
+        console.warn(`   ⚠️  File/directory not found: ${targetPath}`);
       } else {
-        // Try multi-file package directory
-        const packageDir = `${destDir}/${packageName}`;
-
-        try {
-          const stats = await fs.stat(packageDir);
-          if (stats.isDirectory()) {
-            await fs.rm(packageDir, { recursive: true, force: true });
-            console.log(`   🗑️  Deleted directory: ${packageDir}`);
-          }
-        } catch (error) {
-          const err = error as NodeJS.ErrnoException;
-          if (err.code !== 'ENOENT') {
-            console.warn(`   ⚠️  Could not delete package files: ${err.message}`);
-          }
-        }
+        throw err;
       }
     }
 

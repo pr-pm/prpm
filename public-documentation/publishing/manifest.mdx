@@ -162,6 +162,150 @@ Use 3-8 kebab-case tags:
 | `organization` | string | Organization name/ID |
 | `keywords` | string[] | Additional search keywords |
 | `private` | boolean | Mark as private (default: false) |
+| `scripts` | object | Lifecycle scripts (multi-package only) |
+
+## Lifecycle Scripts
+
+<Warning>
+The `scripts` field only applies to **multi-package manifests** (prpm.json with a `packages` array). It does not work in single-package manifests.
+</Warning>
+
+Use the `scripts` field to run commands automatically during package operations:
+
+```json
+{
+  "name": "my-packages",
+  "license": "MIT",
+  "repository": "https://github.com/username/repo",
+  "scripts": {
+    "prepublishOnly": "cd packages/hooks && npm run build"
+  },
+  "packages": [...]
+}
+```
+
+### Available Scripts
+
+| Script | When it Runs | Use Case |
+|--------|--------------|----------|
+| `prepublishOnly` | Before `prpm publish` | Build TypeScript hooks, compile assets |
+| `prepublish` | Before publish AND on install | Not recommended - use prepublishOnly |
+
+### prepublishOnly (Recommended)
+
+Use `prepublishOnly` to build hooks or compile code before publishing:
+
+```json
+{
+  "scripts": {
+    "prepublishOnly": "cd .claude/hooks/my-hook && npm run build"
+  }
+}
+```
+
+**What happens:**
+1. You run `prpm publish`
+2. PRPM runs your `prepublishOnly` script
+3. If the script succeeds, publishing continues
+4. If the script fails, publishing is aborted
+
+**Common use cases:**
+- Building TypeScript hooks to JavaScript
+- Compiling assets
+- Running tests before publish
+- Validating package contents
+
+### Multiple Commands
+
+Chain multiple commands with `&&`:
+
+```json
+{
+  "scripts": {
+    "prepublishOnly": "npm test && npm run build && npm run validate"
+  }
+}
+```
+
+### Example: Building Multiple Hooks
+
+```json
+{
+  "name": "my-hooks",
+  "scripts": {
+    "prepublishOnly": "cd .claude/hooks/hook-one && npm run build && cd ../hook-two && npm run build"
+  },
+  "packages": [
+    {
+      "name": "hook-one",
+      "version": "1.0.0",
+      "format": "claude",
+      "subtype": "hook",
+      "files": [
+        ".claude/hooks/hook-one/hook.ts",
+        ".claude/hooks/hook-one/hook.json",
+        ".claude/hooks/hook-one/dist/hook.js"
+      ]
+    },
+    {
+      "name": "hook-two",
+      "version": "1.0.0",
+      "format": "claude",
+      "subtype": "hook",
+      "files": [
+        ".claude/hooks/hook-two/hook.ts",
+        ".claude/hooks/hook-two/hook.json",
+        ".claude/hooks/hook-two/dist/hook.js"
+      ]
+    }
+  ]
+}
+```
+
+### Script Execution Details
+
+**Working Directory:** Scripts run from the directory containing prpm.json
+
+**Timeout:** Default 5 minutes (300,000ms)
+
+**Environment:** Inherits your shell's environment variables
+
+**Error Handling:**
+- Exit code 0 = success (publishing continues)
+- Exit code non-zero = failure (publishing aborted)
+- Script output is shown in real-time
+
+### Best Practices
+
+<Tip>
+**Always use prepublishOnly for builds**
+
+This ensures your published packages always contain up-to-date compiled code, preventing the common mistake of publishing stale JavaScript files.
+</Tip>
+
+**Good:**
+```json
+{
+  "scripts": {
+    "prepublishOnly": "npm run build"
+  }
+}
+```
+
+**Bad:**
+```json
+{
+  "scripts": {
+    "prepublish": "npm run build"  // Runs on install too!
+  }
+}
+```
+
+### Why Not prepublish?
+
+The `prepublish` script runs both before publishing AND when someone runs `npm install` in your repository. This can cause unexpected build steps for users installing your packages.
+
+Use `prepublishOnly` which ONLY runs before `prpm publish`.
 
 ## Next Steps
 
