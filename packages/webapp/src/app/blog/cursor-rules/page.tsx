@@ -12,11 +12,86 @@ export const metadata: Metadata = {
     title: "Cursor Rules: The Complete Guide to AI-Powered Coding Standards",
     description: "Master cursor rules to guide AI assistants. Discover 2500+ ready-to-use packages for React, Python, TypeScript, security, and more.",
   },
+  keywords: [
+    'cursor rules',
+    'cursor IDE rules',
+    '.cursorrules',
+    'cursor AI configuration',
+    'AI coding assistant',
+    'cursor agent rules',
+    'cursor rules tutorial',
+    'how to use cursor rules',
+    'best cursor rules',
+    'cursor IDE setup',
+    'AI code generation rules',
+    'cursor vs copilot',
+    'cursor rules examples',
+    'install cursor rules'
+  ],
 }
 
 export default function CursorRulesPost() {
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Do cursor rules work with Cursor Tab autocomplete?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Cursor Tab uses a different context system optimized for speed. Rules apply to Agent (Chat) and Inline Edit only. For Tab, use the LSP configuration instead."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I update cursor rules when my dependencies change?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Run 'prpm outdated' to check for updates, then 'prpm update' to get the latest versions. PRPM tracks which rules are installed in your project."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I use cursor rules in VS Code with Cline or Claude Desktop?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. PRPM converts cursor rules to the appropriate format. Install with 'prpm install @vendor/package --as claude' for Claude Desktop, or let PRPM auto-detect your AI IDE."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What's the difference between .cursorrules and .cursor/rules/?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": ".cursorrules is the legacy single-file format (deprecated). .cursor/rules/ is the new multi-file MDC format with frontmatter and glob patterns. Both work, but the MDC format is more powerful."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How many cursor rules should I install?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Start with 3-5: one meta-package (@prpm/creating-cursor-rules), one for your primary language, one for your framework, and 1-2 for testing/security. Add more as you encounter repetitive patterns."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do cursor rules slow down the AI?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Marginally. Each rule adds to the prompt context. Keep individual rules under 500 lines. Total prompt overhead is typically 2-5K tokens for 5-10 rules—negligible compared to your codebase context."
+        }
+      }
+    ]
+  };
+
   return (
     <main className="min-h-screen bg-prpm-dark">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <Header />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -484,6 +559,114 @@ prpm install @ivangrynenko/python-security-misconfiguration`}</code></pre>
             <p className="text-gray-300 leading-relaxed mb-8">
               The AI should generate code matching your installed rules (error handling, type definitions, response formats).
             </p>
+          </div>
+
+          <hr className="border-prpm-border my-12" />
+
+          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+            <h2 className="text-3xl font-bold text-white mb-0">Cursor Rules vs GitHub Copilot Instructions</h2>
+          </div>
+
+          <p className="text-gray-300 leading-relaxed mb-6">
+            If you've used GitHub Copilot, you might wonder how cursor rules differ from Copilot's `.github/copilot-instructions.md` file.
+          </p>
+
+          <div className="not-prose mb-8">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-prpm-border">
+                  <th className="text-left py-3 px-4 text-white font-semibold">Feature</th>
+                  <th className="text-left py-3 px-4 text-white font-semibold">Cursor Rules</th>
+                  <th className="text-left py-3 px-4 text-white font-semibold">Copilot Instructions</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-300">
+                <tr className="border-b border-prpm-border/30">
+                  <td className="py-3 px-4 font-medium">File Location</td>
+                  <td className="py-3 px-4"><code className="text-prpm-accent">.cursor/rules/*.mdc</code></td>
+                  <td className="py-3 px-4"><code className="text-prpm-accent">.github/copilot-instructions.md</code></td>
+                </tr>
+                <tr className="border-b border-prpm-border/30">
+                  <td className="py-3 px-4 font-medium">Format</td>
+                  <td className="py-3 px-4">MDC (Markdown + Frontmatter)</td>
+                  <td className="py-3 px-4">Plain Markdown</td>
+                </tr>
+                <tr className="border-b border-prpm-border/30">
+                  <td className="py-3 px-4 font-medium">File Scoping</td>
+                  <td className="py-3 px-4">Glob patterns per rule</td>
+                  <td className="py-3 px-4">Single global file</td>
+                </tr>
+                <tr className="border-b border-prpm-border/30">
+                  <td className="py-3 px-4 font-medium">Modularity</td>
+                  <td className="py-3 px-4">Multiple focused rules</td>
+                  <td className="py-3 px-4">One file for everything</td>
+                </tr>
+                <tr className="border-b border-prpm-border/30">
+                  <td className="py-3 px-4 font-medium">Package Manager</td>
+                  <td className="py-3 px-4">PRPM (2500+ packages)</td>
+                  <td className="py-3 px-4">Manual copy/paste</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-medium">Cross-Platform</td>
+                  <td className="py-3 px-4">Works in Claude, Windsurf, Cline</td>
+                  <td className="py-3 px-4">Copilot-only</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-gray-300 leading-relaxed mb-8">
+            <strong className="text-white">Bottom line:</strong> Cursor rules are more granular and portable. Copilot instructions are simpler but less flexible. PRPM bridges the gap with automatic format conversion.
+          </p>
+
+          <hr className="border-prpm-border my-12" />
+
+          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+            <h2 className="text-3xl font-bold text-white mb-0">Common Questions About Cursor Rules</h2>
+          </div>
+
+          <div className="not-prose space-y-8 mb-12">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-3">Do cursor rules work with Cursor Tab autocomplete?</h3>
+              <p className="text-gray-300 leading-relaxed">
+                No. Cursor Tab uses a different context system optimized for speed. Rules apply to Agent (Chat) and Inline Edit only. For Tab, use the LSP configuration instead.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-white mb-3">How do I update cursor rules when my dependencies change?</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Run <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-[0.9em] font-mono border border-prpm-border/30">prpm outdated</code> to check for updates, then <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-[0.9em] font-mono border border-prpm-border/30">prpm update</code> to get the latest versions. PRPM tracks which rules are installed in your project.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-white mb-3">Can I use cursor rules in VS Code with Cline or Claude Desktop?</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Yes. PRPM converts cursor rules to the appropriate format. Install with <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-[0.9em] font-mono border border-prpm-border/30">prpm install @vendor/package --as claude</code> for Claude Desktop, or let PRPM auto-detect your AI IDE.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-white mb-3">What's the difference between .cursorrules and .cursor/rules/?</h3>
+              <p className="text-gray-300 leading-relaxed">
+                <code className="text-prpm-accent">.cursorrules</code> is the legacy single-file format (deprecated). <code className="text-prpm-accent">.cursor/rules/</code> is the new multi-file MDC format with frontmatter and glob patterns. Both work, but the MDC format is more powerful.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-white mb-3">How many cursor rules should I install?</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Start with 3-5: one meta-package (@prpm/creating-cursor-rules), one for your primary language, one for your framework, and 1-2 for testing/security. Add more as you encounter repetitive patterns.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-white mb-3">Do cursor rules slow down the AI?</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Marginally. Each rule adds to the prompt context. Keep individual rules under 500 lines. Total prompt overhead is typically 2-5K tokens for 5-10 rules—negligible compared to your codebase context.
+              </p>
+            </div>
           </div>
 
           <hr className="border-prpm-border my-12" />
