@@ -76,10 +76,10 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       }
 
       if (author) {
-        // Search by both author username and organization name
+        // Search by both author username and organization name (case-insensitive)
         conditions.push(`(
-          p.author_id = (SELECT id FROM users WHERE username = $${paramIndex}) OR
-          p.org_id = (SELECT id FROM organizations WHERE name = $${paramIndex})
+          p.author_id = (SELECT id FROM users WHERE LOWER(username) = LOWER($${paramIndex})) OR
+          p.org_id = (SELECT id FROM organizations WHERE LOWER(name) = LOWER($${paramIndex}))
         )`);
         params.push(author);
         paramIndex++;

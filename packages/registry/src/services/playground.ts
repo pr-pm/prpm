@@ -394,13 +394,15 @@ export class PlaygroundService {
         // Get model ID from centralized config
         modelName = getModelId(model);
 
-        // Determine if we need filesystem mounting for Skills/Agents
+        // Determine if we need filesystem mounting for Agents only
         // IMPORTANT: Don't mount skills/agents in baseline mode (use_no_prompt=true)
         // Baseline should be a clean Anthropic environment with no extra capabilities
-        // Even if the package being tested is a skill/agent, baseline mode should not use filesystem mounting
-        const needsSkillMount = !request.use_no_prompt && this.shouldMountAsSkill(packageData.subtype);
+        //
+        // SKILLS IN PLAYGROUND: Skills should NOT be mounted as files that require explicit invocation.
+        // Instead, their content should be applied directly in the system prompt (handled in else branch).
+        // This provides immediate answers rather than Claude announcing "Let me invoke the skill..."
         const needsAgentMount = !request.use_no_prompt && this.shouldMountAsAgent(packageData.subtype);
-        const needsFilesystemMount = !request.use_no_prompt && (needsSkillMount || needsAgentMount);
+        const needsFilesystemMount = !request.use_no_prompt && needsAgentMount;
 
         let tempDir: string | null = null;
 
@@ -424,16 +426,12 @@ export class PlaygroundService {
 
           let totalTokens = 0;
 
-          // If package is a skill/agent, mount it on filesystem and use SDK
+          // If package is an agent, mount it on filesystem and use SDK
+          // Skills are handled as regular prompts (content in system message)
           if (needsFilesystemMount) {
-            // Create temp directory and write skill/agent
+            // Create temp directory and write agent
             tempDir = await this.createTempClaudeDirectory();
-
-            if (needsSkillMount) {
-              await this.writeSkillToFilesystem(tempDir, packageData.name, packageData.prompt);
-            } else if (needsAgentMount) {
-              await this.writeAgentToFilesystem(tempDir, packageData.name, packageData.prompt);
-            }
+            await this.writeAgentToFilesystem(tempDir, packageData.name, packageData.prompt);
 
             // Use Claude Agent SDK with proper filesystem mounting
             const queryOptions: any = {
@@ -499,6 +497,13 @@ export class PlaygroundService {
             for await (const message of queryResult) {
               messageCount++;
 
+              // Log all message types for debugging
+              this.server.log.debug({
+                messageType: message.type,
+                messageSubtype: (message as any).subtype,
+                messageCount,
+              }, 'Claude SDK message received');
+
               if (message.type === 'assistant') {
                 // Extract text from assistant message
                 for (const content of message.message.content) {
@@ -509,7 +514,16 @@ export class PlaygroundService {
               } else if (message.type === 'result') {
                 // Get final result and usage
                 if (message.subtype === 'success') {
+                  // Prefer message.result but fall back to accumulated assistant text
+                  // message.result contains the final textual output
+                  // assistantText contains all intermediate text from turns
                   assistantText = message.result || assistantText;
+
+                  this.server.log.debug({
+                    hasResult: !!message.result,
+                    resultLength: message.result?.length || 0,
+                    accumulatedLength: assistantText.length,
+                  }, 'Final result captured');
                 } else {
                   // Handle error result types (error_during_execution, error_max_turns, error_max_budget_usd)
                   const errorMessage = message.subtype.startsWith('error_')
@@ -636,7 +650,7 @@ export class PlaygroundService {
         packageVersion: request.package_version,
         inputLength: request.input.length,
         outputLength: responseText.length,
-        comparisonMode: false, // Will be updated when comparison mode is implemented
+        comparisonMode: !!request.use_no_prompt, // Track when running in baseline/comparison mode
         estimatedApiCost: actualCost.estimatedCost,
         actualInputTokens: actualCost.inputTokens,
         actualOutputTokens: actualCost.outputTokens,
@@ -941,13 +955,13 @@ export class PlaygroundService {
    */
   private async logUsage(data: {
     userId: string;
-    packageId: string;
+    packageId: string | null;
     sessionId: string;
     model: string;
     tokensUsed: number;
     durationMs: number;
     creditsSpent: number;
-    packageVersion?: string;
+    packageVersion?: string | null;
     inputLength?: number;
     outputLength?: number;
     comparisonMode?: boolean;
@@ -1102,5 +1116,322 @@ export class PlaygroundService {
       results: result.rows,
       total: parseInt(countResult.rows[0].count),
     };
+  }
+
+  /**
+   * Execute custom prompt in isolated sandbox
+   * SECURITY: Simplified approach - no complex validation, just isolation
+   * - Custom prompt IS the system (no other context)
+   * - NO tools enabled (text-only)
+   * - Lower token limits
+   * - 2x credit cost
+   * - Verified authors only
+   */
+  async executeCustomPrompt(
+    userId: string,
+    request: {
+      custom_prompt: string;
+      input: string;
+      session_id?: string;
+      model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
+      sandbox_mode?: 'strict' | 'moderate' | 'permissive';
+    }
+  ): Promise<PlaygroundRunResponse> {
+    const startTime = Date.now();
+
+    try {
+      const model = request.model || 'sonnet';
+
+      // 1. Get or create session (track custom prompt sessions separately)
+      let session: any;
+      if (request.session_id) {
+        // For custom prompts, only allow continuing same custom prompt sessions
+        const sessionCheck = await this.server.pg.query(
+          `SELECT id, conversation, package_id FROM playground_sessions
+           WHERE id = $1 AND user_id = $2 AND package_id IS NULL`,
+          [request.session_id, userId]
+        );
+
+        if (sessionCheck.rows.length > 0) {
+          session = sessionCheck.rows[0];
+        }
+      }
+
+      const conversationHistory = session?.conversation || [];
+
+      // 2. Estimate credits (2x multiplier for custom prompts)
+      const baseCredits = this.estimateCredits(
+        request.custom_prompt.length,
+        request.input.length,
+        model,
+        conversationHistory
+      );
+      const estimatedCredits = baseCredits * 2; // 2x cost for custom prompts
+
+      this.server.log.info({
+        userId,
+        customPromptLength: request.custom_prompt.length,
+        baseCredits,
+        estimatedCredits,
+        model,
+      }, 'Custom prompt execution - 2x credit cost');
+
+      // 3. Calculate estimated API cost
+      const totalChars = request.custom_prompt.length + request.input.length +
+        (conversationHistory.reduce((sum: number, msg: PlaygroundMessage) => sum + msg.content.length, 0));
+      const estimatedTokens = (totalChars / 4) * 1.3;
+      const costEstimate = this.costMonitoring.calculateCost(estimatedTokens, model);
+
+      // 4. Check cost throttling
+      const costCheck = await this.costMonitoring.canAffordRequest(userId, costEstimate.estimatedCost);
+      if (!costCheck.allowed) {
+        throw new Error(costCheck.reason || 'Request not allowed due to cost limits');
+      }
+
+      // 5. Check credits
+      const canAfford = await this.creditsService.canAfford(userId, estimatedCredits);
+      if (!canAfford) {
+        const balance = await this.creditsService.getBalance(userId);
+        throw new Error(
+          `Insufficient credits. Need ${estimatedCredits} but have ${balance.balance}`
+        );
+      }
+
+      // 6. Execute in STRICT SANDBOX MODE
+      const isOpenAI = model.startsWith('gpt');
+      let responseText: string;
+      let tokensUsed: number;
+      let modelName: string;
+
+      if (isOpenAI) {
+        if (!this.openai) {
+          throw new Error('OpenAI API not configured');
+        }
+
+        modelName = getModelId(model);
+
+        // Build messages - CUSTOM PROMPT IS THE SYSTEM
+        const openaiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+          {
+            role: 'system',
+            content: request.custom_prompt, // User's prompt, nothing else
+          },
+        ];
+
+        // Add conversation history
+        for (const msg of conversationHistory) {
+          openaiMessages.push({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+          });
+        }
+
+        // Add current input
+        openaiMessages.push({
+          role: 'user',
+          content: request.input,
+        });
+
+        // SECURITY: Strict limits for custom prompts
+        const response = await this.openai.chat.completions.create({
+          model: modelName,
+          messages: openaiMessages,
+          max_tokens: 1024,  // Lower than normal (vs 4096)
+          temperature: 0.7,
+          // NO tools, NO functions, NO extra capabilities
+        });
+
+        responseText = response.choices[0]?.message?.content || 'No response generated';
+        tokensUsed = response.usage?.total_tokens || 0;
+      } else {
+        if (!this.anthropic) {
+          throw new Error('Anthropic API not configured');
+        }
+
+        modelName = getModelId(model);
+
+        // Build messages for Anthropic
+        let anthropicMessages: Anthropic.MessageParam[] = [];
+
+        // Add conversation history
+        for (const msg of conversationHistory) {
+          anthropicMessages.push({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+          });
+        }
+
+        // Add current user input
+        anthropicMessages.push({
+          role: 'user',
+          content: request.input,
+        });
+
+        // SECURITY: Execute with NO tools, custom prompt as system
+        const response = await this.anthropic.messages.create({
+          model: modelName,
+          max_tokens: 1024,  // Lower than normal (vs 4096)
+          temperature: 0.7,
+          system: request.custom_prompt,  // User's prompt IS the system
+          messages: anthropicMessages,
+          // NO tools at all - pure text generation
+        });
+
+        responseText =
+          response.content[0].type === 'text'
+            ? response.content[0].text
+            : 'No response generated';
+
+        tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
+      }
+
+      const durationMs = Date.now() - startTime;
+
+      // 7. Create or update session
+      const newMessage: PlaygroundMessage = {
+        role: 'assistant',
+        content: responseText,
+        timestamp: new Date().toISOString(),
+        tokens: tokensUsed,
+      };
+
+      const userMessage: PlaygroundMessage = {
+        role: 'user',
+        content: request.input,
+        timestamp: new Date().toISOString(),
+      };
+
+      let sessionId: string;
+      if (session) {
+        sessionId = session.id;
+        await this.updateSession(sessionId, [userMessage, newMessage], estimatedCredits);
+      } else {
+        // Create new custom prompt session (package_id is NULL)
+        sessionId = await this.createCustomPromptSession({
+          userId,
+          customPrompt: request.custom_prompt,
+          conversation: [userMessage, newMessage],
+          model: modelName,
+          tokensUsed,
+          durationMs,
+          creditsSpent: estimatedCredits,
+        });
+      }
+
+      // 8. Deduct credits
+      await this.creditsService.spendCredits(
+        userId,
+        estimatedCredits,
+        sessionId,
+        `Custom prompt run: ${model} model (2x cost)`,
+        {
+          custom_prompt: true,
+          model: modelName,
+          tokensUsed,
+          durationMs,
+        }
+      );
+
+      // 9. Record cost
+      const orgResult = await this.server.pg.query(
+        `SELECT org_id FROM organization_members WHERE user_id = $1 LIMIT 1`,
+        [userId]
+      );
+      const orgId = orgResult.rows[0]?.org_id || null;
+
+      const actualCost = this.costMonitoring.calculateCost(tokensUsed, model);
+      await this.costMonitoring.recordCost(userId, actualCost.estimatedCost, {
+        sessionId,
+        model: modelName,
+        tokens: tokensUsed,
+      });
+
+      // 10. Log usage
+      await this.logUsage({
+        userId,
+        orgId,
+        packageId: null, // Custom prompts don't have package ID
+        sessionId,
+        model: modelName,
+        tokensUsed,
+        durationMs,
+        creditsSpent: estimatedCredits,
+        packageVersion: null,
+        inputLength: request.input.length,
+        outputLength: responseText.length,
+        comparisonMode: false,
+        estimatedApiCost: actualCost.estimatedCost,
+        actualInputTokens: actualCost.inputTokens,
+        actualOutputTokens: actualCost.outputTokens,
+      });
+
+      // 11. Get balance
+      const balance = await this.creditsService.getBalance(userId);
+
+      this.server.log.info({
+        userId,
+        sessionId,
+        creditsSpent: estimatedCredits,
+        creditsRemaining: balance.balance,
+        tokensUsed,
+        durationMs,
+        customPrompt: true,
+      }, 'Custom prompt run completed');
+
+      // Get conversation
+      const updatedSession = await this.getSession(sessionId, userId);
+      const conversation = updatedSession?.conversation || [];
+
+      return {
+        session_id: sessionId,
+        response: responseText,
+        credits_spent: estimatedCredits,
+        credits_remaining: balance.balance,
+        tokens_used: tokensUsed,
+        duration_ms: durationMs,
+        model: modelName,
+        conversation,
+      };
+    } catch (error) {
+      const durationMs = Date.now() - startTime;
+      this.server.log.error(
+        { error, userId, durationMs, customPrompt: true },
+        'Custom prompt run failed'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Create new custom prompt session
+   */
+  private async createCustomPromptSession(data: {
+    userId: string;
+    customPrompt: string;
+    conversation: PlaygroundMessage[];
+    model: string;
+    tokensUsed: number;
+    durationMs: number;
+    creditsSpent: number;
+  }): Promise<string> {
+    const result = await this.server.pg.query(
+      `INSERT INTO playground_sessions
+       (user_id, package_id, package_version, package_name, conversation,
+        model, total_tokens, total_duration_ms, credits_spent, estimated_tokens)
+       VALUES ($1, NULL, NULL, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
+      [
+        data.userId,
+        'Custom Prompt', // Special marker for custom prompts
+        JSON.stringify(data.conversation),
+        data.model,
+        data.tokensUsed,
+        data.durationMs,
+        data.creditsSpent,
+        data.tokensUsed,
+      ]
+    );
+
+    return result.rows[0].id;
   }
 }

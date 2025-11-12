@@ -228,4 +228,24 @@ describe('Package Routes', () => {
       expect(response.statusCode).toBe(200);
     });
   });
+
+  describe('POST /api/v1/packages - Author Scoping', () => {
+    // These tests verify automatic author-scoping for package names
+    // Skip these tests for now as they require full auth and S3 mocking
+    it.skip('should auto-prefix unscoped package name with @username/', async () => {
+      // Test that publishing "my-package" becomes "@testuser/my-package"
+    });
+
+    it.skip('should preserve existing @author/ scope', async () => {
+      // Test that "@testuser/my-package" stays "@testuser/my-package"
+    });
+
+    it.skip('should use organization scope when organization is specified', async () => {
+      // Test that with organization: "myorg", "my-package" becomes "@myorg/my-package"
+    });
+
+    it.skip('should prevent publishing to other authors scope', async () => {
+      // Test that user "alice" cannot publish "@bob/package"
+    });
+  });
 });

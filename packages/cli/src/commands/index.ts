@@ -8,6 +8,7 @@ import path from 'path';
 import { listPackages, addPackage } from '../core/lockfile';
 import { generateId } from '../core/filesystem';
 import { Format, Subtype } from '../types';
+import { CLIError } from '../core/errors';
 
 /**
  * Scan directory for files and return file information
@@ -179,9 +180,7 @@ export async function handleIndex(options: { verbose?: boolean } = {}): Promise<
 
   } catch (error) {
     console.error(`❌ Failed to index packages: ${error}`);
-    process.exit(1);
-  } finally {
-    process.exit(0);
+    throw new CLIError(`❌ Failed to index packages: ${error}`, 1);
   }
 }
 

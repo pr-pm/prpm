@@ -1,0 +1,10 @@
+{
+  "name": "blog-workflow",
+  "version": "1.0.0",
+  "description": "Enforces blog writing standards and sitemap updates",
+  "type": "UserPromptSubmit",
+  "enabled": true,
+  "config": {
+    "strictMode": true
+  }
+}

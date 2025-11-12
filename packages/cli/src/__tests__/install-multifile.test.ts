@@ -11,6 +11,7 @@ import { gzipSync } from 'zlib';
 import * as tar from 'tar';
 import { Readable } from 'stream';
 import * as path from 'path';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -116,9 +117,6 @@ describe('install command - multi-file packages', () => {
 
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
-    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-      throw new Error(`Process exited with code ${code}`);
-    }) as any);
   });
 
   afterEach(() => {
@@ -342,14 +340,14 @@ describe('install command - multi-file packages', () => {
 
       await handleInstall('complex-skill', { as: 'cursor' });
 
-      // Should save to .cursor/rules directory
+      // Should save to .cursor/rules directory with flat structure (Cursor uses flat structure)
       expect(saveFile).toHaveBeenCalledTimes(2);
       expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/rules/complex-skill/skill.md',
+        '.cursor/rules/skill.md',
         '# Main Skill'
       );
       expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/rules/complex-skill/helper.md',
+        '.cursor/rules/helper.md',
         '# Helper'
       );
     });

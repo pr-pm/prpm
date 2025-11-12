@@ -1,0 +1,28 @@
+You're writing a new AI prompt package. You tweak the system prompt and wonder: does this actually improve the output, or am I just moving words around?
+
+Before today, testing meant publishing drafts, testing in Playground, realizing it needs work, editing locally, publishing again, and repeating this cycle 10 times. Slow, annoying, and your package history gets polluted with draft versions.
+
+We're launching Custom Prompts for verified authors—test your own system prompts directly in PRPM Playground before publishing. No draft spam. No guessing.
+
+The game-changer: --compare mode. It runs two tests side-by-side:
+• Baseline (no prompt): AI responds with no custom prompt
+• Your custom prompt: Same input with your prompt applied
+
+You see exactly how your prompt changes behavior. Does it make output more structured? Catch more bugs? Provide better examples? You'll know immediately.
+
+Real workflow:
+1. Write your prompt in a local file
+2. Run: prpm playground --prompt-file ./prompt.txt --input "test case" --compare
+3. Review the diff
+4. Edit your prompt
+5. Up-arrow, enter—see new results in seconds
+6. Iterate 10 times in 10 minutes instead of 10 days
+
+This is how you build great prompts: scientific A/B testing with the same input every time. No more guessing if your changes help.
+
+Custom Prompts are available now for verified authors (link your GitHub account). Test in the web UI or CLI. Perfect your prompts before publishing.
+
+Read the full guide:
+https://prpm.dev/blog/custom-prompts-for-verified-authors
+
+#AI #DeveloperTools #PromptEngineering #Testing #DevEx

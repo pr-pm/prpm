@@ -5,9 +5,10 @@
 import { handleInstall } from '../../commands/install';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../../core/user-config';
-import { createTestDir, cleanupTestDir, createMockFetch, mockProcessExit } from './test-helpers';
+import { createTestDir, cleanupTestDir, createMockFetch } from './test-helpers';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { CLIError } from '../../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -132,15 +133,11 @@ describe.skip('Install Command - E2E Tests', () => {
     it('should handle package not found', async () => {
       mockClient.getPackage.mockRejectedValue(new Error('Package not found'));
 
-      const mockExit = mockProcessExit();
-
-      await expect(handleInstall('nonexistent-pkg', {})).rejects.toThrow('Process exited');
+      await expect(handleInstall('nonexistent-pkg', {})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Package not found')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should install to custom directory', async () => {
@@ -261,11 +258,7 @@ describe.skip('Install Command - E2E Tests', () => {
       mockClient.downloadPackage.mockResolvedValue(Buffer.from('test-data'));
 
       // First call should fail and retry
-      const mockExit = mockProcessExit();
-
-      await expect(handleInstall('test-pkg', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleInstall('test-pkg', {})).rejects.toThrow(CLIError);
     });
 
     it('should handle download failures', async () => {
@@ -281,11 +274,7 @@ describe.skip('Install Command - E2E Tests', () => {
 
       mockClient.downloadPackage.mockRejectedValue(new Error('Download failed'));
 
-      const mockExit = mockProcessExit();
-
-      await expect(handleInstall('test-pkg', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleInstall('test-pkg', {})).rejects.toThrow(CLIError);
     });
 
     it('should handle corrupted tarball', async () => {
@@ -302,11 +291,7 @@ describe.skip('Install Command - E2E Tests', () => {
       // Return invalid tarball data
       mockClient.downloadPackage.mockResolvedValue(Buffer.from('invalid-tarball'));
 
-      const mockExit = mockProcessExit();
-
       await expect(handleInstall('test-pkg', {})).rejects.toThrow();
-
-      mockExit.mockRestore();
     });
   });
 

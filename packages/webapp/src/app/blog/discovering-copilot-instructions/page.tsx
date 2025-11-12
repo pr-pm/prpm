@@ -71,7 +71,7 @@ export default function DiscoveringCopilotInstructionsPost() {
               <li><strong>Version control:</strong> Semantic versioning, update management, dependency tracking</li>
               <li><strong>Format conversion:</strong> Install Cursor rules, Claude skills, or Windsurf rules as Copilot format</li>
               <li><strong>All Copilot types:</strong> Repository-wide (<code>.github/copilot-instructions.md</code>), path-specific (<code>.github/instructions/*.instructions.md</code>), and chat modes (<code>.github/chatmodes/*.chatmode.md</code>)</li>
-              <li><strong>2100+ packages:</strong> Largest collection including awesome-copilot packages</li>
+              <li><strong>6000+ packages:</strong> Largest collection including awesome-copilot packages</li>
               <li><strong>Free tier:</strong> Unlimited browsing, installation, and publishing</li>
             </ul>
           </div>
@@ -185,7 +185,7 @@ export default function DiscoveringCopilotInstructionsPost() {
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="p-3 font-semibold">Collection Size</td>
-                  <td className="p-3 text-green-400">2100+ packages</td>
+                  <td className="p-3 text-green-400">6000+ packages</td>
                   <td className="p-3 text-yellow-400">~60 official</td>
                   <td className="p-3 text-yellow-400">Scattered</td>
                   <td className="p-3 text-yellow-400">Unknown</td>
@@ -344,7 +344,7 @@ prpm update`}</code></pre>
             </ul>
           </div>
 
-          <p className="mt-6">Browse all 2100+ packages at <Link href="/search?format=copilot" className="text-prpm-accent hover:underline">prpm.dev/search</Link></p>
+          <p className="mt-6">Browse all 6000+ packages at <Link href="/search?format=copilot" className="text-prpm-accent hover:underline">prpm.dev/search</Link></p>
 
           <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-6 my-8">
             <h2 className="text-3xl font-bold text-white mb-0">Choosing the Right Source</h2>
@@ -363,7 +363,7 @@ prpm update`}</code></pre>
           <div className="not-prose my-12 p-8 bg-gradient-to-br from-prpm-accent/10 to-prpm-green/10 border border-prpm-accent/30 rounded-2xl">
             <h3 className="text-2xl font-bold text-white mb-4">Start Using the Best GitHub Copilot Instructions Today</h3>
             <p className="text-gray-300 mb-6">
-              Get CLI installation, quality metrics, testing playground, and version control for your GitHub Copilot workflow. 2100+ packages including all awesome-copilot instructions.
+              Get CLI installation, quality metrics, testing playground, and version control for your GitHub Copilot workflow. 6000+ packages including all awesome-copilot instructions.
             </p>
             <div className="flex gap-4 flex-wrap">
               <Link

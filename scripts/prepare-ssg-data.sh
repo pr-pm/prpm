@@ -61,22 +61,134 @@ mkdir -p "$SSG_DATA_DIR"
 success "Directory created: $SSG_DATA_DIR"
 echo ""
 
-# Download from S3 if available
-echo "Step 2: Attempting to download data from S3..."
+# Try S3 first, then fetch from registry API
+echo "Step 2: Fetching SSG data..."
+
+# Try downloading from S3 first (faster if available)
+S3_SUCCESS=false
 if command -v aws &> /dev/null; then
-  debug "AWS CLI found, attempting download"
+  debug "AWS CLI found, attempting S3 download"
 
   if aws s3 sync "$S3_BUCKET" "$SSG_DATA_DIR" \
     --exclude "*" \
     --include "packages.json" \
     --include "collections.json" \
     --no-progress 2>/dev/null; then
-    success "Downloaded data from S3"
+
+    # Verify we got real data (not empty)
+    if [ -f "$SSG_DATA_DIR/packages.json" ] && [ -s "$SSG_DATA_DIR/packages.json" ]; then
+      PKG_COUNT=$(jq '. | length' "$SSG_DATA_DIR/packages.json" 2>/dev/null || echo "0")
+      if [ "$PKG_COUNT" -gt 100 ]; then
+        success "Downloaded data from S3 ($PKG_COUNT packages)"
+        S3_SUCCESS=true
+      else
+        warn "S3 data exists but seems incomplete ($PKG_COUNT packages), will fetch from registry"
+      fi
+    fi
   else
-    warn "Could not download from S3 (might not have credentials or bucket might be empty)"
+    warn "Could not download from S3"
   fi
 else
-  warn "AWS CLI not found, skipping S3 download"
+  warn "AWS CLI not found"
+fi
+
+# If S3 failed or had incomplete data, fetch from registry API
+if [ "$S3_SUCCESS" = false ]; then
+  if [ -n "$SSG_DATA_TOKEN" ]; then
+    warn "Fetching fresh data from registry API (this may take a minute)..."
+
+    REGISTRY_URL="${REGISTRY_URL:-https://registry.prpm.dev}"
+    debug "Registry URL: $REGISTRY_URL"
+
+    # Fetch packages
+    echo "  Fetching packages..."
+    ALL_PACKAGES="[]"
+    OFFSET=0
+    LIMIT=1000
+    HAS_MORE=true
+
+    while [ "$HAS_MORE" = true ]; do
+      debug "Fetching packages at offset $OFFSET"
+      RESPONSE=$(curl -s -H "X-SSG-Token: $SSG_DATA_TOKEN" \
+        "${REGISTRY_URL}/api/v1/packages/ssg-data?limit=${LIMIT}&offset=${OFFSET}")
+
+      if [ $? -ne 0 ]; then
+        error "Failed to fetch packages from registry"
+        break
+      fi
+
+      PACKAGES=$(echo "$RESPONSE" | jq -r '.packages // []')
+      PAGE_COUNT=$(echo "$PACKAGES" | jq '. | length')
+
+      if [ "$PAGE_COUNT" = "0" ]; then
+        break
+      fi
+
+      # Merge packages
+      ALL_PACKAGES=$(echo "$ALL_PACKAGES" "$PACKAGES" | jq -s '.[0] + .[1]')
+      OFFSET=$((OFFSET + LIMIT))
+
+      HAS_MORE=$(echo "$RESPONSE" | jq -r '.hasMore // false')
+      debug "Page: $PAGE_COUNT packages, total: $(echo "$ALL_PACKAGES" | jq '. | length'), hasMore: $HAS_MORE"
+
+      if [ "$HAS_MORE" != "true" ]; then
+        break
+      fi
+
+      # Safety: stop after 10K packages
+      TOTAL=$(echo "$ALL_PACKAGES" | jq '. | length')
+      if [ "$TOTAL" -gt 10000 ]; then
+        warn "Reached 10K packages, stopping"
+        break
+      fi
+    done
+
+    echo "$ALL_PACKAGES" > "$SSG_DATA_DIR/packages.json"
+    PKG_COUNT=$(echo "$ALL_PACKAGES" | jq '. | length')
+    success "Fetched $PKG_COUNT packages from registry"
+
+    # Fetch collections
+    echo "  Fetching collections..."
+    ALL_COLLECTIONS="[]"
+    OFFSET=0
+    HAS_MORE=true
+
+    while [ "$HAS_MORE" = true ]; do
+      debug "Fetching collections at offset $OFFSET"
+      RESPONSE=$(curl -s -H "X-SSG-Token: $SSG_DATA_TOKEN" \
+        "${REGISTRY_URL}/api/v1/collections/ssg-data?limit=${LIMIT}&offset=${OFFSET}")
+
+      if [ $? -ne 0 ]; then
+        error "Failed to fetch collections from registry"
+        break
+      fi
+
+      COLLECTIONS=$(echo "$RESPONSE" | jq -r '.collections // []')
+      PAGE_COUNT=$(echo "$COLLECTIONS" | jq '. | length')
+
+      if [ "$PAGE_COUNT" = "0" ]; then
+        break
+      fi
+
+      # Merge collections
+      ALL_COLLECTIONS=$(echo "$ALL_COLLECTIONS" "$COLLECTIONS" | jq -s '.[0] + .[1]')
+      OFFSET=$((OFFSET + LIMIT))
+
+      HAS_MORE=$(echo "$RESPONSE" | jq -r '.hasMore // false')
+      debug "Page: $PAGE_COUNT collections, total: $(echo "$ALL_COLLECTIONS" | jq '. | length'), hasMore: $HAS_MORE"
+
+      if [ "$HAS_MORE" != "true" ]; then
+        break
+      fi
+    done
+
+    echo "$ALL_COLLECTIONS" > "$SSG_DATA_DIR/collections.json"
+    COLL_COUNT=$(echo "$ALL_COLLECTIONS" | jq '. | length')
+    success "Fetched $COLL_COUNT collections from registry"
+
+  else
+    warn "SSG_DATA_TOKEN not set and S3 failed, using fallback data"
+  fi
 fi
 echo ""
 

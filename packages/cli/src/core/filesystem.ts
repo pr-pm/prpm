@@ -28,6 +28,8 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       if (subtype === 'skill') return '.claude/skills';
       if (subtype === 'slash-command') return '.claude/commands';
       if (subtype === 'agent') return '.claude/agents';
+      // Hooks are configured in settings.json, return .claude directory
+      if (subtype === 'hook') return '.claude';
       return '.claude/agents'; // Default for claude
 
     case 'continue':

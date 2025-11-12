@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import * as jwt from 'jsonwebtoken';
 import { telemetry } from '../core/telemetry';
 import { getConfig, saveConfig } from '../core/user-config';
+import { CLIError } from '../core/errors';
 
 interface LoginOptions {
   token?: string;
@@ -306,9 +307,7 @@ export async function handleLogin(options: LoginOptions): Promise<void> {
     success = true;
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
-    console.error(`\n❌ Login failed: ${error}\n`);
-    console.error('💡 Try again or use "prpm login --token YOUR_TOKEN"\n');
-    process.exit(1);
+    throw new CLIError(`\n❌ Login failed: ${error}\n\n💡 Try again or use "prpm login --token YOUR_TOKEN"\n`, 1);
   } finally {
     // Track telemetry
     await telemetry.track({
@@ -333,6 +332,5 @@ export function createLoginCommand(): Command {
     .option('--token <token>', 'Login with a personal access token')
     .action(async (options: LoginOptions) => {
       await handleLogin(options);
-      process.exit(0);
     });
 }

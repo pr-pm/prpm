@@ -13,6 +13,7 @@ import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import type { PackageManifest, PackageFileMetadata, MultiPackageManifest, Manifest } from '../types/registry';
+import { CLIError } from '../core/errors';
 import {
   marketplaceToManifest,
   validateMarketplaceJson,
@@ -21,6 +22,7 @@ import {
 import { validateManifestSchema } from '../core/schema-validator';
 import { extractLicenseInfo, validateLicenseInfo } from '../utils/license-extractor';
 import { extractSnippet, validateSnippet } from '../utils/snippet-extractor';
+import { executePrepublishOnly } from '../utils/script-executor';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -61,6 +63,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
 
   try {
     const content = await readFile(prpmJsonPath, 'utf-8');
+    prpmJsonExists = true; // Mark file as found after successful read
     const manifest = JSON.parse(content) as Manifest;
 
     // Extract collections if present
@@ -297,6 +300,36 @@ function normalizeFilePaths(files: string[] | PackageFileMetadata[]): string[] {
 }
 
 /**
+ * Predict what the scoped package name will be after publishing
+ * This matches the server-side logic in packages.ts
+ */
+function predictScopedPackageName(
+  manifestName: string,
+  username: string,
+  organization?: string
+): string {
+  const usernameLowercase = username.toLowerCase();
+
+  // If organization is specified, use @org-name/
+  if (organization) {
+    const orgNameLowercase = organization.toLowerCase();
+    const expectedPrefix = `@${orgNameLowercase}/`;
+    if (!manifestName.startsWith(expectedPrefix)) {
+      return `${expectedPrefix}${manifestName}`;
+    }
+    return manifestName;
+  }
+
+  // If package name doesn't already have a scope, add @username/
+  if (!manifestName.startsWith('@')) {
+    return `@${usernameLowercase}/${manifestName}`;
+  }
+
+  // Package already has a scope, return as-is
+  return manifestName;
+}
+
+/**
  * Create tarball from current directory
  */
 async function createTarball(manifest: PackageManifest): Promise<Buffer> {
@@ -380,8 +413,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     // Check if logged in
     if (!config.token) {
-      console.error('❌ Not logged in. Run "prpm login" first.');
-      process.exit(1);
+      throw new CLIError('❌ Not logged in. Run "prpm login" first.', 1);
     }
 
     console.log('📦 Publishing package...\n');
@@ -389,6 +421,27 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     // Read and validate manifests
     console.log('🔍 Validating package manifest(s)...');
     const { manifests, collections, source } = await findAndLoadManifests();
+
+    // Execute prepublishOnly script if defined (for multi-package manifests)
+    // This runs before any packages are published
+    if (source === 'prpm.json (multi-package)' || source === 'prpm.json') {
+      try {
+        // Re-read the raw prpm.json to check for scripts
+        const prpmJsonPath = join(process.cwd(), 'prpm.json');
+        const prpmContent = await readFile(prpmJsonPath, 'utf-8');
+        const prpmManifest = JSON.parse(prpmContent);
+
+        if (prpmManifest.scripts) {
+          await executePrepublishOnly(prpmManifest.scripts);
+        }
+      } catch (error) {
+        // If script execution fails, abort publish
+        if (error instanceof Error && error.message.includes('script')) {
+          throw error;
+        }
+        // Ignore other errors (e.g., file not found - shouldn't happen at this point)
+      }
+    }
 
     if (manifests.length > 1 || collections.length > 0) {
       if (manifests.length > 0) {
@@ -510,6 +563,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         }
 
         let selectedOrgId: string | undefined;
+        let selectedOrgName: string | undefined;
 
         // Check if organization is specified in manifest
         if (manifest.organization && userInfo) {
@@ -530,10 +584,18 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           }
 
           selectedOrgId = orgFromManifest.id;
+          selectedOrgName = orgFromManifest.name;
         }
 
+        // Predict what the scoped package name will be
+        const scopedPackageName = predictScopedPackageName(
+          manifest.name,
+          userInfo?.username || config.username || 'unknown',
+          selectedOrgName || manifest.organization
+        );
+
         console.log(`   Source: ${source}`);
-        console.log(`   Package: ${manifest.name}@${manifest.version}`);
+        console.log(`   Package: ${scopedPackageName}@${manifest.version}`);
         console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype}`);
         console.log(`   Description: ${manifest.description}`);
         console.log(`   Access: ${manifest.private ? 'private' : 'public'}`);
@@ -560,7 +622,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         }
 
         // Validate and warn about license (optional - will extract if present)
-        validateLicenseInfo(licenseInfo, manifest.name);
+        validateLicenseInfo(licenseInfo, scopedPackageName);
         console.log('');
 
         // Extract content snippet
@@ -569,7 +631,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         if (snippet) {
           manifest.snippet = snippet;
         }
-        validateSnippet(snippet, manifest.name);
+        validateSnippet(snippet, scopedPackageName);
         console.log('');
 
         // Create tarball
@@ -594,7 +656,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         if (options.dryRun) {
           console.log('✅ Dry run successful! Package is ready to publish.');
           publishedPackages.push({
-            name: manifest.name,
+            name: scopedPackageName,
             version: manifest.version,
             url: ''
           });
@@ -623,7 +685,8 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           webappUrl = registryUrl;
         }
 
-        const packageUrl = `${webappUrl}/packages/${encodeURIComponent(manifest.name)}`;
+        // Use the name returned from the API (which includes auto-prefixed scope)
+        const packageUrl = `${webappUrl}/packages/${encodeURIComponent(result.name)}`;
 
         console.log('');
         console.log('✅ Package published successfully!');
@@ -633,15 +696,23 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log('');
 
         publishedPackages.push({
-          name: manifest.name,
+          name: result.name, // Use scoped name from server
           version: result.version,
           url: packageUrl
         });
       } catch (err) {
         const pkgError = err instanceof Error ? err.message : String(err);
-        console.error(`\n❌ Failed to publish ${manifest.name}: ${pkgError}\n`);
+        // Try to use scoped name if we have user info, otherwise fall back to manifest name
+        const displayName = userInfo
+          ? predictScopedPackageName(
+              manifest.name,
+              userInfo.username,
+              manifest.organization
+            )
+          : manifest.name;
+        console.error(`\n❌ Failed to publish ${displayName}: ${pkgError}\n`);
         failedPackages.push({
-          name: manifest.name,
+          name: displayName,
           error: pkgError
         });
       }
@@ -784,40 +855,40 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     success = publishedPackages.length > 0 || publishedCollections.length > 0;
 
     if (failedPackages.length > 0 && publishedPackages.length === 0 && publishedCollections.length === 0) {
-      process.exit(1);
+      // Use the first failed package's error for telemetry
+      const firstError = failedPackages[0]?.error || 'Unknown error';
+      throw new CLIError(firstError, 1);
     }
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
-    console.error(`\n❌ Failed to publish package: ${error}\n`);
+    if (err instanceof CLIError) {
+      throw err;
+    }
+    let errorMsg = `\n❌ Failed to publish package: ${error}\n`;
 
     // Provide helpful hints based on error type
     if (error.includes('Manifest validation failed')) {
-      console.log('💡 Common validation issues:');
-      console.log('   - Missing required fields (name, version, description, format)');
-      console.log('   - Invalid format or subtype values');
-      console.log('   - Description too short (min 10 chars) or too long (max 500 chars)');
-      console.log('   - Package name must be lowercase with hyphens only');
-      console.log('');
-      console.log('💡 For Claude skills specifically:');
-      console.log('   - Add "subtype": "skill" to your prpm.json');
-      console.log('   - Ensure files include a SKILL.md file');
-      console.log('   - Package name must be max 64 characters');
-      console.log('');
-      console.log('💡 View the schema: prpm schema');
-      console.log('');
+      errorMsg += '\n💡 Common validation issues:\n';
+      errorMsg += '   - Missing required fields (name, version, description, format)\n';
+      errorMsg += '   - Invalid format or subtype values\n';
+      errorMsg += '   - Description too short (min 10 chars) or too long (max 500 chars)\n';
+      errorMsg += '   - Package name must be lowercase with hyphens only\n';
+      errorMsg += '\n💡 For Claude skills specifically:\n';
+      errorMsg += '   - Add "subtype": "skill" to your prpm.json\n';
+      errorMsg += '   - Ensure files include a SKILL.md file\n';
+      errorMsg += '   - Package name must be max 64 characters\n';
+      errorMsg += '\n💡 View the schema: prpm schema\n';
     } else if (error.includes('SKILL.md')) {
-      console.log('💡 Claude skills require:');
-      console.log('   - A file named SKILL.md (all caps) in your package');
-      console.log('   - "format": "claude" and "subtype": "skill" in prpm.json');
-      console.log('');
+      errorMsg += '\n💡 Claude skills require:\n';
+      errorMsg += '   - A file named SKILL.md (all caps) in your package\n';
+      errorMsg += '   - "format": "claude" and "subtype": "skill" in prpm.json\n';
     } else if (error.includes('No manifest file found')) {
-      console.log('💡 Create a manifest file:');
-      console.log('   - Run: prpm init');
-      console.log('   - Or create prpm.json manually');
-      console.log('');
+      errorMsg += '\n💡 Create a manifest file:\n';
+      errorMsg += '   - Run: prpm init\n';
+      errorMsg += '   - Or create prpm.json manually\n';
     }
 
-    process.exit(1);
+    throw new CLIError(errorMsg, 1);
   } finally {
     // Track telemetry
     await telemetry.track({
@@ -848,6 +919,5 @@ export function createPublishCommand(): Command {
     .option('--collection <id>', 'Publish only a specific collection from manifest')
     .action(async (options: PublishOptions) => {
       await handlePublish(options);
-      process.exit(0);
     });
 }
