@@ -138,50 +138,85 @@ export class PlaygroundService {
     subtype: string;
     name: string;
   }> {
-    const query = version
-      ? `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format, p.subtype
+    // If a specific version is requested, fetch from package_versions
+    if (version) {
+      const query = `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format, p.subtype
          FROM packages p
          JOIN package_versions pv ON p.id = pv.package_id
-         WHERE p.id = $1 AND pv.version = $2`
-      : `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format, p.subtype
-         FROM packages p
-         JOIN package_versions pv ON p.id = pv.package_id
-         WHERE p.id = $1
-         ORDER BY pv.published_at DESC
-         LIMIT 1`;
+         WHERE p.id = $1 AND pv.version = $2 AND p.visibility = 'public'`;
 
-    const params = version ? [packageId, version] : [packageId];
-    const result = await this.server.pg.query(query, params);
+      const result = await this.server.pg.query(query, [packageId, version]);
+
+      if (result.rows.length === 0) {
+        throw new Error('Package version not found or not public');
+      }
+
+      const row = result.rows[0];
+      let prompt: string;
+
+      // Priority order: 1) snippet field, 2) extract from S3 tarball
+      if (row.snippet) {
+        this.server.log.info({ packageName: row.name, version }, 'Using cached snippet for playground');
+        prompt = row.snippet;
+      } else {
+        this.server.log.info({ packageName: row.name, version }, 'Fetching package content from S3 tarball');
+        try {
+          prompt = await getTarballContent(this.server, packageId, version, row.name);
+        } catch (error) {
+          throw new Error(
+            `Package content not available for ${row.name}. ` +
+            `Failed to extract from storage: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
+
+      return {
+        prompt,
+        format: row.format,
+        subtype: row.subtype,
+        name: row.name,
+      };
+    }
+
+    // No version specified - use latest content from packages table
+    const query = `SELECT p.full_content, p.snippet, p.name, p.format, p.subtype
+         FROM packages p
+         WHERE p.id = $1 AND p.visibility = 'public'`;
+
+    const result = await this.server.pg.query(query, [packageId]);
 
     if (result.rows.length === 0) {
-      throw new Error('Package not found');
+      throw new Error('Package not found or not public');
     }
 
     const row = result.rows[0];
 
+    // Priority order: 1) full_content, 2) snippet, 3) fetch from latest version tarball
     let prompt: string;
 
-    // Priority order: 1) snippet field, 2) extract from S3 tarball
-    if (row.snippet) {
+    if (row.full_content) {
+      this.server.log.info({ packageName: row.name }, 'Using full_content for playground');
+      prompt = row.full_content;
+    } else if (row.snippet) {
       this.server.log.info({ packageName: row.name }, 'Using cached snippet for playground');
       prompt = row.snippet;
     } else {
-      // No snippet, try to fetch and extract from S3
-      this.server.log.info({ packageName: row.name, version: row.version }, 'Fetching package content from S3 tarball');
+      // Fallback: fetch from latest version
+      const versionQuery = `SELECT pv.version FROM package_versions pv
+                           WHERE pv.package_id = $1
+                           ORDER BY pv.published_at DESC LIMIT 1`;
+      const versionResult = await this.server.pg.query(versionQuery, [packageId]);
+
+      if (versionResult.rows.length === 0) {
+        throw new Error(`Package ${row.name} has no published versions`);
+      }
+
+      const latestVersion = versionResult.rows[0].version;
+      this.server.log.info({ packageName: row.name, version: latestVersion }, 'Fetching package content from S3 tarball');
 
       try {
-        prompt = await getTarballContent(
-          this.server,
-          packageId,
-          row.version,
-          row.name
-        );
+        prompt = await getTarballContent(this.server, packageId, latestVersion, row.name);
       } catch (error) {
-        this.server.log.error({
-          error: error instanceof Error ? error.message : String(error),
-          packageName: row.name
-        }, 'Failed to fetch content from S3');
-
         throw new Error(
           `Package content not available for ${row.name}. ` +
           `Failed to extract from storage: ${error instanceof Error ? error.message : String(error)}`
