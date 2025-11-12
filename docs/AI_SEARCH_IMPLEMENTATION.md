@@ -453,13 +453,12 @@ prpm ai-search "CI/CD setup" --format generic
 
 ## 🎉 Latest Update: Anonymous AI Search (Jan 12, 2025)
 
-In response to competitive analysis of SkillsMP (9,614 Claude skills with free AI search), we've made PRPM's AI search **100% free and completely anonymous**.
+We've made PRPM's AI search **100% free and completely anonymous**.
 
 ### Why Anonymous?
 
-**Competitive Parity:**
-- SkillsMP offers free AI search without login
-- We need to match this to stay competitive
+**Industry Trends:**
+- Free AI search is becoming table stakes in the ecosystem
 - Our advantage: multi-format support (Cursor, Claude, Continue, Windsurf, etc.)
 
 **Better User Experience:**

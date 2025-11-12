@@ -7,7 +7,7 @@
 
 ## Strategic Decision
 
-In response to competitive landscape analysis (SkillsMP offering free AI search), we've made **AI-powered semantic search completely free** for all authenticated PRPM users.
+In response to competitive landscape analysis, we've made **AI-powered semantic search completely free** for all authenticated PRPM users.
 
 ---
 
@@ -89,7 +89,7 @@ In response to competitive landscape analysis (SkillsMP offering free AI search)
 ## Strategic Benefits
 
 ### 1. **Competitive Positioning** ✅
-- Match SkillsMP on AI search (table stakes)
+- Free AI search (industry standard)
 - Win on multi-format support (Cursor, Windsurf, Continue, etc.)
 - Win on curated collections
 - Win on playground integration
@@ -119,8 +119,8 @@ More Users → Repeat
 
 ### 4. **Market Positioning** 🎯
 - "PRPM: Free AI search across all formats"
-- "SkillsMP: Free AI search for Claude only"
-- **Clear winner:** PRPM (broader scope)
+- Multi-format support (Cursor, Claude, Continue, Windsurf, etc.)
+- **Differentiator:** Broadest ecosystem coverage
 
 ---
 
@@ -260,17 +260,18 @@ const rateLimiter = {
 
 ---
 
-## Competitive Response
+## Market Advantages
 
-### If SkillsMP Adds Multi-Format Support
-- We already have: Collections, Playground, Format conversion
-- They would need months to catch up
+### PRPM Differentiators
+- Multi-format support (Cursor, Claude, Continue, Windsurf, etc.)
+- Collections, Playground, Format conversion
 - First-mover advantage on curated content
+- Comprehensive developer tools
 
-### If They Stay Claude-Only
-- We win on format coverage
-- Cursor/Windsurf users choose PRPM
-- Clear differentiation
+### Clear Positioning
+- Broadest format coverage in the ecosystem
+- Free AI search plus unique features
+- Strong developer experience
 
 **Bottom Line:** Making AI search free was the right move.
 
