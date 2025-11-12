@@ -21,7 +21,7 @@ type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agent
 // Define which subtypes are available for each format
 const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'cursor': ['rule', 'agent', 'slash-command', 'tool'],
-  'claude': ['skill', 'agent', 'slash-command', 'tool'],
+  'claude': ['skill', 'agent', 'slash-command', 'tool', 'hook'],
   'continue': ['rule', 'agent', 'slash-command', 'tool'],
   'windsurf': ['rule', 'agent', 'slash-command', 'tool'],
   'copilot': ['tool', 'chatmode'],
@@ -599,7 +599,7 @@ function SearchPageContent() {
                               prpm install @org/cursor-rules --as {selectedFormat}
                             </div>
                             <p className="text-gray-400 text-sm mt-3">
-                              This means you have access to <strong>2,100+ packages</strong> across all formats, not just {selectedFormat}-specific ones!
+                              This means you have access to <strong>6,000+ packages</strong> across all formats, not just {selectedFormat}-specific ones!
                             </p>
                           </div>
                         )}
@@ -610,7 +610,7 @@ function SearchPageContent() {
                           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
                             <h4 className="text-sm font-bold text-blue-400 mb-2">💡 Cross-Platform Tip</h4>
                             <p className="text-gray-300 text-sm mb-2">
-                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>2,100+ packages</strong> by installing packages from other formats:
+                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>6,000+ packages</strong> by installing packages from other formats:
                             </p>
                             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 font-mono text-xs text-gray-300">
                               prpm install @org/any-package --as {selectedFormat}

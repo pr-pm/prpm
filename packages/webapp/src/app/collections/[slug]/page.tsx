@@ -1,6 +1,9 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { cache } from 'react'
 import Link from 'next/link'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 import type { Collection } from '@pr-pm/types'
 import CollapsibleContent from '@/components/CollapsibleContent'
 
@@ -10,9 +13,22 @@ const SSG_TOKEN = process.env.SSG_DATA_TOKEN
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
 
+// Disable fetch caching during build to prevent "items over 2MB cannot be cached" errors
+// SSG responses are 5-22MB each, which exceeds Next.js's 2MB cache limit
+export const fetchCache = 'force-no-store'
+
 // Generate static params for all collections
 export async function generateStaticParams() {
   try {
+    // Skip SSG in CI/test builds to speed up builds and avoid hitting registry
+    if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
+      console.log('[SSG Collections] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params for fast build')
+      // Return one dummy collection to satisfy Next.js requirements
+      return [{
+        slug: 'test-collection'
+      }]
+    }
+
     console.log(`[SSG Collections] Fetching from registry API: ${REGISTRY_URL}`)
     console.log(`[SSG Collections] Environment check:`, {
       SSG_TOKEN_exists: !!SSG_TOKEN,
@@ -35,7 +51,7 @@ export async function generateStaticParams() {
 
     // Paginate through ALL collections
     const allCollections: any[] = []
-    const limit = 500
+    const limit = 1000 // Fetch 1000 per request (fetchCache disabled, so no 2MB cache limit)
     let offset = 0
     let hasMore = true
 
@@ -45,31 +61,53 @@ export async function generateStaticParams() {
       const url = `${REGISTRY_URL}/api/v1/collections/ssg-data?limit=${limit}&offset=${offset}`
       console.log(`[SSG Collections] Fetching page: offset=${offset}`)
 
-      const res = await fetch(url, {
-        headers: {
-          'X-SSG-Token': SSG_TOKEN,
-        },
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
+      try {
+        const res = await fetch(url, {
+          headers: {
+            'X-SSG-Token': SSG_TOKEN,
+          },
+          // No revalidate during build - fetch everything fresh
+          cache: 'no-store',
+        })
 
-      if (!res.ok) {
-        console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections at offset ${offset}`)
+        if (!res.ok) {
+          console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections at offset ${offset}`)
+          const errorText = await res.text().catch(() => 'Unable to read error')
+          console.error(`[SSG Collections] Error response: ${errorText}`)
+          break
+        }
+
+        const data = await res.json()
+        const collections = data.collections || []
+
+        if (!Array.isArray(collections)) {
+          console.error('[SSG Collections] Invalid response format - expected array')
+          console.error('[SSG Collections] Response data:', JSON.stringify(data).substring(0, 200))
+          break
+        }
+
+        // Stop if we got an empty page (pagination complete)
+        if (collections.length === 0) {
+          console.log('[SSG Collections] Received empty page, pagination complete')
+          break
+        }
+
+        allCollections.push(...collections)
+        hasMore = data.hasMore || false
+        offset += limit
+
+        console.log(`[SSG Collections] Page loaded: ${collections.length} collections, total so far: ${allCollections.length}, hasMore: ${hasMore}`)
+
+        // Safety check
+        if (allCollections.length > 1000) {
+          console.warn(`[SSG Collections] Warning: Fetched ${allCollections.length} collections, stopping to prevent infinite loop`)
+          break
+        }
+      } catch (error) {
+        console.error(`[SSG Collections] Fetch error at offset ${offset}:`, error)
+        console.error(`[SSG Collections] Stopping pagination due to error`)
         break
       }
-
-      const data = await res.json()
-      const collections = data.collections || []
-
-      if (!Array.isArray(collections)) {
-        console.error('[SSG Collections] Invalid response format - expected array')
-        break
-      }
-
-      allCollections.push(...collections)
-      hasMore = data.hasMore || false
-      offset += limit
-
-      console.log(`[SSG Collections] Page loaded: ${collections.length} collections, total so far: ${allCollections.length}, hasMore: ${hasMore}`)
     }
 
     console.log(`[SSG Collections] ✅ Loaded ${allCollections.length} collections from registry (${Math.ceil(allCollections.length / limit)} pages)`)
@@ -121,10 +159,38 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-async function getCollection(slug: string): Promise<Collection | null> {
+// Wrap with cache() to deduplicate fetches across generateMetadata and page component
+const getCollection = cache(async (slug: string): Promise<Collection | null> => {
   try {
+    // During SSG build, read from local JSON file prepared by prepare-ssg-data.sh
+    // This avoids API calls during build and uses pre-fetched data
+    const ssgDataPath = join(process.cwd(), 'public', 'seo-data', 'collections.json')
+
+    try {
+      const fileContent = await readFile(ssgDataPath, 'utf-8')
+      const collections: Collection[] = JSON.parse(fileContent)
+
+      // Find the collection by slug
+      const collection = collections.find((c: any) => c.name_slug === slug)
+
+      if (collection) {
+        console.log(`[Collection] ✅ Found ${slug} in SSG data`)
+        return collection
+      }
+
+      console.log(`[Collection] ⚠️  Collection ${slug} not in SSG data (${collections.length} collections loaded)`)
+    } catch (fileError) {
+      // SSG file doesn't exist or can't be read - fall back to fetching from registry
+      // This can happen during dev mode or if SSG prep failed
+      console.log(`[Collection] SSG data file not available, falling back to registry fetch`)
+    }
+
+    // Fallback: fetch directly from registry
+    // This happens in dev mode or if collection not found in SSG data
+    console.log(`[Collection] Fetching ${slug} directly from registry`)
+
     if (!SSG_TOKEN) {
-      console.error('SSG_DATA_TOKEN environment variable not set')
+      console.error('[Collection] SSG_DATA_TOKEN environment variable not set')
       return null
     }
 
@@ -133,11 +199,11 @@ async function getCollection(slug: string): Promise<Collection | null> {
       headers: {
         'X-SSG-Token': SSG_TOKEN,
       },
-      next: { revalidate: 3600 } // Revalidate every hour
+      next: { revalidate: 3600 }
     })
 
     if (!res.ok) {
-      console.error(`Error fetching collections from registry: ${res.status}`)
+      console.error(`[Collection] Error fetching from registry: ${res.status}`)
       return null
     }
 
@@ -145,7 +211,7 @@ async function getCollection(slug: string): Promise<Collection | null> {
     const collections = data.collections || []
 
     if (!Array.isArray(collections)) {
-      console.error('Invalid collections data format from registry')
+      console.error('[Collection] Invalid collections data format from registry')
       return null
     }
 
@@ -153,10 +219,10 @@ async function getCollection(slug: string): Promise<Collection | null> {
     const collection = collections.find((c: any) => c.name_slug === slug)
     return collection || null
   } catch (error) {
-    console.error('Error fetching collection:', error)
+    console.error('[Collection] Error in getCollection:', error)
     return null
   }
-}
+})
 
 export default async function CollectionPage({ params }: { params: { slug: string } }) {
   const collection = await getCollection(params.slug)

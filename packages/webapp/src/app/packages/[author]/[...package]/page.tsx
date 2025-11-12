@@ -1,6 +1,9 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { cache } from 'react'
 import Link from 'next/link'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 import type { PackageInfo } from '@pr-pm/types'
 import CopyInstallCommand from '@/components/CopyInstallCommand'
 import SharedResults from '@/components/SharedResults'
@@ -17,6 +20,10 @@ const SSG_TOKEN = process.env.SSG_DATA_TOKEN
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
 
+// Disable fetch caching during build to prevent "items over 2MB cannot be cached" errors
+// SSG responses are 5-22MB each, which exceeds Next.js's 2MB cache limit
+export const fetchCache = 'force-no-store'
+
 // Helper to get package content - prefer full content, fall back to snippet
 function getPackageContent(pkg: any): string | null {
   // Try fullContent (camelCase from SSG), full_content (snake_case from direct API), then snippet
@@ -26,6 +33,16 @@ function getPackageContent(pkg: any): string | null {
 // Generate static params for all packages
 export async function generateStaticParams() {
   try {
+    // Skip SSG in CI/test builds to speed up builds and avoid hitting registry
+    if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
+      console.log('[SSG Packages] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params for fast build')
+      // Return one dummy package to satisfy Next.js requirements
+      return [{
+        author: 'prpm',
+        package: ['test-package']
+      }]
+    }
+
     console.log(`[SSG Packages] Fetching from registry API: ${REGISTRY_URL}`)
     console.log(`[SSG Packages] Environment check:`, {
       SSG_TOKEN_exists: !!SSG_TOKEN,
@@ -48,46 +65,71 @@ export async function generateStaticParams() {
 
     // Paginate through ALL packages
     const allPackages: any[] = []
-    const limit = 500
+    const limit = 1000 // Fetch 1000 per request (fetchCache disabled, so no 2MB cache limit)
     let offset = 0
     let hasMore = true
 
     console.log(`[SSG Packages] Starting pagination with limit=${limit}`)
+    console.time('[SSG Packages] Total fetch time')
 
     while (hasMore) {
       const url = `${REGISTRY_URL}/api/v1/packages/ssg-data?limit=${limit}&offset=${offset}`
       console.log(`[SSG Packages] Fetching page: offset=${offset}`)
 
-      const res = await fetch(url, {
-        headers: {
-          'X-SSG-Token': SSG_TOKEN,
-        },
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
+      try {
+        const res = await fetch(url, {
+          headers: {
+            'X-SSG-Token': SSG_TOKEN,
+          },
+          // No revalidate during build - fetch everything fresh
+          cache: 'no-store',
+        })
 
-      if (!res.ok) {
-        console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages at offset ${offset}`)
+        if (!res.ok) {
+          console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages at offset ${offset}`)
+          const errorText = await res.text().catch(() => 'Unable to read error')
+          console.error(`[SSG Packages] Error response: ${errorText}`)
+          break
+        }
+
+        const data = await res.json()
+        const packages = data.packages || []
+
+        if (!Array.isArray(packages)) {
+          console.error('[SSG Packages] Invalid response format - expected array')
+          console.error('[SSG Packages] Response data:', JSON.stringify(data).substring(0, 200))
+          break
+        }
+
+        // Stop if we got an empty page (pagination complete)
+        if (packages.length === 0) {
+          console.log('[SSG Packages] Received empty page, pagination complete')
+          break
+        }
+
+        allPackages.push(...packages)
+        hasMore = data.hasMore || false
+        offset += limit
+
+        console.log(`[SSG Packages] Page loaded: ${packages.length} packages, total so far: ${allPackages.length}, hasMore: ${hasMore}`)
+
+        // Safety check: if we've fetched more than expected, something might be wrong
+        if (allPackages.length > 10000) {
+          console.warn(`[SSG Packages] Warning: Fetched ${allPackages.length} packages, stopping to prevent infinite loop`)
+          break
+        }
+      } catch (error) {
+        console.error(`[SSG Packages] Fetch error at offset ${offset}:`, error)
+        console.error(`[SSG Packages] Stopping pagination due to error`)
         break
       }
-
-      const data = await res.json()
-      const packages = data.packages || []
-
-      if (!Array.isArray(packages)) {
-        console.error('[SSG Packages] Invalid response format - expected array')
-        break
-      }
-
-      allPackages.push(...packages)
-      hasMore = data.hasMore || false
-      offset += limit
-
-      console.log(`[SSG Packages] Page loaded: ${packages.length} packages, total so far: ${allPackages.length}, hasMore: ${hasMore}`)
     }
 
+    console.timeEnd('[SSG Packages] Total fetch time')
     console.log(`[SSG Packages] ✅ Loaded ${allPackages.length} packages from registry (${Math.ceil(allPackages.length / limit)} pages)`)
 
     // Transform package data to author/package format
+    console.time('[SSG Packages] Params transformation')
     const params = allPackages.map((pkg: any) => {
       const name = pkg.name
       if (name.startsWith('@')) {
@@ -172,45 +214,39 @@ export async function generateMetadata({ params }: { params: { author: string; p
   }
 }
 
-async function getPackage(scopedName: string, author: string, unscopedName: string): Promise<PackageInfo | null> {
+// Wrap with cache() to deduplicate fetches across generateMetadata and page component
+const getPackage = cache(async (scopedName: string, author: string, unscopedName: string): Promise<PackageInfo | null> => {
   try {
-    // First try to find in SSG data (top 500 most downloaded packages)
-    if (SSG_TOKEN) {
-      const url = `${REGISTRY_URL}/api/v1/packages/ssg-data`
-      const res = await fetch(url, {
-        headers: {
-          'X-SSG-Token': SSG_TOKEN,
-        },
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
+    // During SSG build, read from local JSON file prepared by prepare-ssg-data.sh
+    // This avoids 4000+ API calls during build and uses pre-fetched data
+    const ssgDataPath = join(process.cwd(), 'public', 'seo-data', 'packages.json')
 
-      if (res.ok) {
-        const data = await res.json()
-        const packages = data.packages || []
+    try {
+      const fileContent = await readFile(ssgDataPath, 'utf-8')
+      const packages: PackageInfo[] = JSON.parse(fileContent)
 
-        if (Array.isArray(packages)) {
-          // Find the package by name (try scoped first, then unscoped with author match)
-          // Use case-insensitive comparison for scoped names since author can vary in case
-          let pkg = packages.find((p: any) => p.name.toLowerCase() === scopedName.toLowerCase())
-
-          // If not found by scoped name, try unscoped name with case-insensitive author match
-          if (!pkg) {
-            pkg = packages.find((p: any) =>
-              p.name === unscopedName && p.author?.username?.toLowerCase() === author.toLowerCase()
-            )
-          }
-
-          if (pkg) {
-            return pkg
-          }
-        }
+      // Try to find package by scoped name first, then unscoped
+      let pkg = packages.find((p: any) => p.name === scopedName)
+      if (!pkg) {
+        pkg = packages.find((p: any) => p.name === unscopedName)
       }
+
+      if (pkg) {
+        console.log(`[Package] ✅ Found ${scopedName} in SSG data`)
+        return pkg
+      }
+
+      console.log(`[Package] ⚠️  Package ${scopedName} not in SSG data (${packages.length} packages loaded)`)
+    } catch (fileError) {
+      // SSG file doesn't exist or can't be read - fall back to fetching from registry
+      // This can happen during dev mode or if SSG prep failed
+      console.log(`[Package] SSG data file not available, falling back to registry fetch`)
     }
 
-    // Fallback: Package not in SSG data (outside top 500), fetch directly from registry
-    console.log(`[Package] Not in SSG data, fetching ${scopedName} directly from registry`)
+    // Fallback: fetch directly from registry
+    // This happens in dev mode or if package not found in SSG data
+    console.log(`[Package] Fetching ${scopedName} directly from registry`)
 
-    // Try fetching by scoped name first
     let directUrl = `${REGISTRY_URL}/api/v1/packages/${encodeURIComponent(scopedName)}`
     let directRes = await fetch(directUrl, {
       next: { revalidate: 3600 }
@@ -231,10 +267,10 @@ async function getPackage(scopedName: string, author: string, unscopedName: stri
 
     return null
   } catch (error) {
-    console.error('Error fetching package:', error)
+    console.error('[Package] Error in getPackage:', error)
     return null
   }
-}
+})
 
 export default async function PackagePage({ params }: { params: { author: string; package: string[] } }) {
   // Reconstruct full package name: author/[package, parts] -> @author/package/parts

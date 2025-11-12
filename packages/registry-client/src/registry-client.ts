@@ -76,6 +76,7 @@ export interface CollectionInstallResult {
     packageId: string;
     version: string;
     format: string;
+    subtype?: string;
     required: boolean;
   }[];
 }

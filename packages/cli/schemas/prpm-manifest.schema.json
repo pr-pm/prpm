@@ -153,6 +153,29 @@
       "description": "Whether the package is private. Private packages are only accessible to the owner/organization members. Defaults to false (public).",
       "default": false
     },
+    "scripts": {
+      "type": "object",
+      "description": "Lifecycle scripts that run during package operations. Only applies to multi-package manifests (prpm.json with packages array).",
+      "properties": {
+        "prepublishOnly": {
+          "type": "string",
+          "description": "Script to run before publishing (recommended - only runs on 'prpm publish')",
+          "examples": [
+            "npm run build",
+            "cd packages/hooks && npm run build",
+            "npm test && npm run build"
+          ]
+        },
+        "prepublish": {
+          "type": "string",
+          "description": "Script to run before publishing and on npm install (not recommended - use prepublishOnly instead)",
+          "examples": [
+            "npm run build"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "tags": {
       "type": "array",
       "description": "Package tags for categorization",

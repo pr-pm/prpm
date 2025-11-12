@@ -31,6 +31,12 @@ on:
           - registry-only
           - webapp-only
 
+# Prevent concurrent deployments to the same environment
+# Queue new deployments instead of cancelling in-progress ones
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'prod' }}
+  cancel-in-progress: false
+
 env:
   AWS_REGION: us-west-2
   NODE_VERSION: '20'
@@ -376,6 +382,15 @@ jobs:
           fi
         env:
           SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
+
+      - name: Prepare SSG data
+        run: |
+          chmod +x scripts/prepare-ssg-data.sh
+          ./scripts/prepare-ssg-data.sh
+        env:
+          SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
+          REGISTRY_URL: "https://registry.prpm.dev"
+          DEBUG: "false"
 
       - name: Build webapp
         run: |

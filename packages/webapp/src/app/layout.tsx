@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     default: 'PRPM - Largest Collection of Cursor Rules, Claude Agents & Slash Commands',
     template: '%s | PRPM'
   },
-  description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 2,100+ packages including cursor slash commands, claude slash commands, and claude plugins. Install AI coding tools with one command.',
+  description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 6,000+ packages including cursor slash commands, claude slash commands, and claude plugins. Install AI coding tools with one command.',
   keywords: [
     'cursor rules',
     'cursor slash commands',
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://prpm.dev',
     title: 'PRPM - Largest Collection of Cursor Rules, Claude Agents & Slash Commands',
-    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 2,100+ packages including cursor slash commands, claude slash commands, and claude plugins.',
+    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 6,000+ packages including cursor slash commands, claude slash commands, and claude plugins.',
     siteName: 'PRPM',
     images: [
       {
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'PRPM - Largest Collection of Cursor Rules, Claude Agents & Slash Commands',
-    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 2,100+ packages including cursor slash commands, claude slash commands, and claude plugins.',
+    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 6,000+ packages including cursor slash commands, claude slash commands, and claude plugins.',
     images: ['/og-image.png'],
     creator: '@prpmdev',
   },

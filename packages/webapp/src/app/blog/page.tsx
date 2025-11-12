@@ -24,6 +24,24 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "claude-hooks-best-practices",
+    title: "Claude Hooks Best Practices: Write Hooks That Work",
+    excerpt: "Security, reliability, and performance patterns for Claude Code hooks. Validate input, quote paths, handle failures, optimize performance. 16-point checklist for production-ready automation.",
+    date: "2025-11-12",
+    author: "PRPM Team",
+    readTime: "12 min read",
+    tags: ["Tutorial", "Claude Code", "Hooks", "Best Practices"],
+  },
+  {
+    slug: "claude-hooks-support",
+    title: "PRPM Now Supports Claude Code Hooks",
+    excerpt: "Install Claude Code hooks as packages. One command replaces manual JSON config. Auto-format code, log commands, protect files—share hooks via PRPM registry.",
+    date: "2025-11-12",
+    author: "PRPM Team",
+    readTime: "7 min read",
+    tags: ["Feature Release", "Claude Code", "Hooks", "Automation"],
+  },
+  {
     slug: "custom-prompts-for-verified-authors",
     title: "Custom Prompts for Verified Authors: Test and Iterate on Prompts Before Publishing",
     excerpt: "Test your own custom system prompts in PRPM Playground. Use --compare mode to A/B test prompts against baselines. Perfect for authors who want to iterate rapidly before publishing packages.",
@@ -31,6 +49,15 @@ const blogPosts: BlogPost[] = [
     author: "PRPM Team",
     readTime: "10 min read",
     tags: ["Feature", "Playground", "PRPM+"],
+  },
+  {
+    slug: "cursor-rules",
+    title: "Cursor Rules: The Complete Guide to AI-Powered Coding Standards",
+    excerpt: "Master cursor rules to guide AI assistants in Cursor IDE. Learn what they are, how to use them, and discover 6000+ ready-to-use cursor rules packages for React, Python, TypeScript, security, and more.",
+    date: "2025-11-12",
+    author: "PRPM Team",
+    readTime: "8 min read",
+    tags: ["Cursor", "AI Development", "Tutorial", "Best Practices"],
   },
   {
     slug: "self-improving-ai",
@@ -107,7 +134,7 @@ const blogPosts: BlogPost[] = [
   {
     slug: "top-50-cursor-rules",
     title: "Top 50 Cursor Rules to Supercharge Your Development Workflow",
-    excerpt: "We analyzed over 1,000 cursor rules to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.",
+    excerpt: "We analyzed over 6,000 cursor rules to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.",
     date: "2025-11-03",
     author: "PRPM Team",
     readTime: "12 min read",
