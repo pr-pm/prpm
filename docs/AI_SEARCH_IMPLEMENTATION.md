@@ -227,26 +227,48 @@ ai_search_usage (analytics)
 - Example search queries linked to AI search
 - Responsive design with dark mode support
 
+### ✅ Phase 5: CLI Integration (Complete)
+
+**Command Created:**
+- `packages/cli/src/commands/ai-search.ts` - New CLI command for AI search
+
+**Features:**
+- `prpm ai-search "<natural language query>"` - Semantic search from terminal
+- PRPM+ subscription gating with authentication check
+- Match score visualization (percentage + color coding)
+- AI-enriched result display (use case, best for, similar to)
+- Format/subtype filtering support
+- Formatted upgrade prompts with benefits and pricing
+- Telemetry tracking for analytics
+- Graceful error handling with fallback suggestions
+
+**Upgrade UX:**
+- Clear boxed upgrade prompt with feature list
+- 14-day free trial messaging
+- Direct link to pricing page
+- Fallback to traditional search on error
+
+**Example Usage:**
+```bash
+prpm ai-search "build a REST API with authentication"
+prpm ai-search "Python testing best practices"
+prpm ai-search "React patterns" --format claude --limit 5
+```
+
 ## Next Steps
 
-### CLI (Not Yet Implemented)
-- [ ] `prpm ai-search "natural language query"`
-- [ ] `prpm search --ai "query"`
-- [ ] Upgrade prompts in CLI output
-- [ ] Similar packages in `prpm info` command
-
-### Additional Frontend Polish
-- [ ] Navigation menu updates (add /categories and /use-cases links)
-- [ ] Homepage CTAs for discovery features
-- [ ] PRPM+ pricing page updates ($19/month with AI search)
-- [ ] Admin dashboard for AI search analytics
+### Additional Features (Not Yet Implemented)
+- [ ] Similar packages in `prpm info` command output
+- [ ] PRPM+ pricing page updates ($19/month with AI search feature highlighted)
+- [ ] Admin dashboard for AI search analytics and usage trends
 
 ### Production Deployment
-- [ ] Run migrations in production
+- [ ] Run migrations in production database
 - [ ] Generate taxonomy: `npm run script:generate-taxonomy -- --approve`
-- [ ] Generate embeddings: `npm run script:generate-embeddings`
-- [ ] Update Stripe with $19/month PRPM+ plan
-- [ ] Monitor AI search usage and costs
+- [ ] Generate embeddings for all packages: `npm run script:generate-embeddings`
+- [ ] Update Stripe with $19/month PRPM+ plan including AI search
+- [ ] Monitor AI search usage, costs, and performance
+- [ ] Set up alerts for embedding generation failures
 
 ## Testing Locally
 
@@ -298,6 +320,20 @@ npm run dev --workspace=@pr-pm/webapp
 # http://localhost:3000/use-cases - Browse use cases
 # http://localhost:3000/categories/backend-development - Category detail example
 # http://localhost:3000/use-cases/building-rest-apis - Use case detail example
+```
+
+**Test CLI:**
+```bash
+# Build CLI
+npm run build --workspace=@pr-pm/cli
+
+# Link for local testing
+cd packages/cli && npm link
+
+# Test AI search (requires PRPM+ subscription)
+prpm ai-search "Python Flask REST API with authentication"
+prpm ai-search "React testing patterns" --limit 5
+prpm ai-search "CI/CD setup" --format generic
 ```
 
 ## Performance Metrics (Expected)
@@ -370,10 +406,14 @@ npm run dev --workspace=@pr-pm/webapp
 **Frontend API Client:**
 - `packages/webapp/src/lib/api.ts` (modified - 8 new functions)
 
+**CLI Command:**
+- `packages/cli/src/commands/ai-search.ts`
+- `packages/cli/src/index.ts` (modified - command registration)
+
 **Config:**
 - `packages/registry/package.json` (modified - added script commands)
 
-**Total:** 26 files created/modified
+**Total:** 28 files created/modified
 
 ## References
 
@@ -397,6 +437,15 @@ npm run dev --workspace=@pr-pm/webapp
 - ✅ 4 reusable components (search toggle, results, upgrade modal, similar packages)
 - ✅ 5 pages (categories index + detail, use cases index + detail, search integration)
 - ✅ 8 API client functions with full error handling
+- ✅ Navigation updates (categories, use cases)
+- ✅ Homepage discovery section with CTAs
 - ✅ PRPM+ access gating throughout
 
-**Ready for:** CLI integration and production deployment.
+**CLI (Complete):**
+- ✅ `prpm ai-search` command with natural language queries
+- ✅ PRPM+ subscription gating and upgrade prompts
+- ✅ AI-enriched result display with match scores
+- ✅ Format/subtype filtering
+- ✅ Telemetry tracking
+
+**Ready for:** Production deployment and taxonomy/embedding generation.
