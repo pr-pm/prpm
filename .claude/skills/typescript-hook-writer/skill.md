@@ -603,6 +603,107 @@ main().catch(() => {
 
 **Important:** Reference `dist/hook.js` (compiled), not `src/hook.ts` (source).
 
+### Step 4.5: Advanced Hook Configuration (Optional)
+
+All hook types support optional fields for controlling execution behavior:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Edit|Write",
+      "hooks": [{
+        "type": "command",
+        "command": "node .claude/hooks/my-hook/dist/hook.js",
+        "timeout": 5000,
+        "continue": true,              // Whether Claude continues after hook (default: true)
+        "stopReason": "string",        // Message shown when continue is false
+        "suppressOutput": false,       // Hide stdout from transcript (default: false)
+        "systemMessage": "string"      // Warning message shown to user
+      }]
+    }]
+  }
+}
+```
+
+#### `continue` (boolean, default: true)
+
+Controls whether Claude continues after hook execution.
+
+**When to use `false`:**
+- Security hooks that must block operations
+- Validation hooks that found critical errors
+- Hooks that require user intervention
+
+```json
+{
+  "type": "command",
+  "command": "node .claude/hooks/security-validator/dist/hook.js",
+  "continue": false,
+  "stopReason": "Security validation failed. Please review the detected issues before proceeding."
+}
+```
+
+**Exit code interaction:**
+- If hook exits with `HookExitCode.Block` (2): `continue` is ignored, operation is blocked
+- If hook exits with `HookExitCode.Success` (0) or `HookExitCode.Error` (1): `continue` field determines behavior
+
+#### `stopReason` (string)
+
+Message displayed to user when `continue: false`. Should explain why execution stopped and what action is needed.
+
+```json
+{
+  "continue": false,
+  "stopReason": "Pre-commit checks failed. Fix linting errors and try again."
+}
+```
+
+#### `suppressOutput` (boolean, default: false)
+
+Hides hook stdout from transcript mode (Ctrl-R). Stderr is always shown.
+
+**When to use `true`:**
+- Hooks that produce verbose output
+- Debugging logs not useful to users
+- Noisy background operations
+
+```json
+{
+  "type": "command",
+  "command": "node .claude/hooks/cloud-sync/dist/hook.js",
+  "suppressOutput": true  // Don't show sync progress in transcript
+}
+```
+
+**Note:** Always show critical errors via stderr (use `logError()`), as stderr is never suppressed.
+
+#### `systemMessage` (string)
+
+Warning or info message shown to user when hook executes. Useful for non-blocking warnings.
+
+**TypeScript example:**
+
+```typescript
+// In your hook.ts
+if (outdatedDeps.length > 0) {
+  logWarning(`Found ${outdatedDeps.length} outdated dependencies`);
+  // systemMessage in hook.json will also show to user
+}
+```
+
+```json
+{
+  "type": "command",
+  "command": "node .claude/hooks/dependency-checker/dist/hook.js",
+  "systemMessage": "⚠️  Some dependencies are outdated. Consider running 'npm update'."
+}
+```
+
+**Difference from `stopReason`:**
+- `systemMessage`: Informational, Claude continues
+- `stopReason`: Critical, requires `continue: false`
+
 ### Step 5: Build the Hook
 
 ```bash
@@ -1234,6 +1335,27 @@ pnpm build:watch        # Watch mode (not yet implemented)
 pnpm test               # Run tests in watch mode
 pnpm test:run           # Run tests once
 pnpm test:coverage      # Run tests with coverage
+```
+
+### Hook Configuration Fields
+
+**Required:**
+- `type` - "command" or "prompt"
+- `command` - Path to compiled hook (e.g., "node .claude/hooks/my-hook/dist/hook.js")
+
+**Optional:**
+- `timeout` - Max execution time in ms (default: 60000)
+- `continue` - Continue after hook? (default: true)
+- `stopReason` - Message when continue=false
+- `suppressOutput` - Hide stdout from transcript (default: false)
+- `systemMessage` - Warning message to user
+
+### Exit Codes (HookExitCode enum)
+
+```typescript
+HookExitCode.Success = 0    // Continue operation
+HookExitCode.Error = 1      // Log error but continue
+HookExitCode.Block = 2      // Block operation (PreToolUse only)
 ```
 
 ### Hook Structure Checklist

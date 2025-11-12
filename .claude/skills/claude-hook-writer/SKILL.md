@@ -629,6 +629,97 @@ my-hook/
 
 **Use `${CLAUDE_PLUGIN_ROOT}`** to reference scripts—expands to hook installation directory.
 
+### Advanced Hook Configuration
+
+All hook types support optional fields for controlling execution behavior:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write",
+      "hooks": [{
+        "type": "command",
+        "command": "./my-hook.sh",
+        "timeout": 5000,
+        "continue": true,              // Whether Claude continues after hook (default: true)
+        "stopReason": "string",        // Message shown when continue is false
+        "suppressOutput": false,       // Hide stdout from transcript (default: false)
+        "systemMessage": "string"      // Warning message shown to user
+      }]
+    }]
+  }
+}
+```
+
+#### `continue` (boolean, default: true)
+
+Controls whether Claude continues after hook execution.
+
+**When to use `false`:**
+- Security hooks that must block operations
+- Validation hooks that found critical errors
+- Hooks that require user intervention
+
+```json
+{
+  "type": "command",
+  "command": "./validate-security.sh",
+  "continue": false,
+  "stopReason": "Security validation failed. Please review the detected issues before proceeding."
+}
+```
+
+**Exit code interaction:**
+- If hook exits with code 2 (block): `continue` is ignored, operation is blocked
+- If hook exits with code 0 or 1: `continue` field determines behavior
+
+#### `stopReason` (string)
+
+Message displayed to user when `continue: false`. Should explain why execution stopped and what action is needed.
+
+```json
+{
+  "continue": false,
+  "stopReason": "Pre-commit checks failed. Fix linting errors and try again."
+}
+```
+
+#### `suppressOutput` (boolean, default: false)
+
+Hides hook stdout from transcript mode (Ctrl-R). Stderr is always shown.
+
+**When to use `true`:**
+- Hooks that produce verbose output
+- Debugging logs not useful to users
+- Noisy background operations
+
+```json
+{
+  "type": "command",
+  "command": "./sync-to-cloud.sh",
+  "suppressOutput": true  // Don't show sync progress in transcript
+}
+```
+
+**Note:** Always show critical errors via stderr, as stderr is never suppressed.
+
+#### `systemMessage` (string)
+
+Warning or info message shown to user when hook executes. Useful for non-blocking warnings.
+
+```json
+{
+  "type": "command",
+  "command": "./check-dependencies.sh",
+  "systemMessage": "⚠️  Some dependencies are outdated. Consider running 'npm update'."
+}
+```
+
+**Difference from `stopReason`:**
+- `systemMessage`: Informational, Claude continues
+- `stopReason`: Critical, requires `continue: false`
+
 ### README.md
 
 ```markdown
@@ -804,6 +895,18 @@ echo "PLUGIN_ROOT: $CLAUDE_PLUGIN_ROOT" >&2
 - `0` = Success (continue)
 - `2` = Block operation (PreToolUse only)
 - `1` or other = Non-blocking error
+
+### Hook Configuration Fields
+**Required:**
+- `type` - "command" or "prompt"
+- `command` or `prompt` - Script path or prompt text
+
+**Optional:**
+- `timeout` - Max execution time in ms (default: 60000)
+- `continue` - Continue after hook? (default: true)
+- `stopReason` - Message when continue=false
+- `suppressOutput` - Hide stdout from transcript (default: false)
+- `systemMessage` - Warning message to user
 
 ### Environment Variables
 - `$CLAUDE_PROJECT_DIR` - Project root
