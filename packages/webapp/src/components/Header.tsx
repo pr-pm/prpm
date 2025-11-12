@@ -32,6 +32,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
   // Primary navigation links (shown in top bar)
   const primaryLinks: Array<{ href: string; label: string; badge?: string }> = [
     { href: '/search', label: 'Search' },
+    { href: '/categories', label: 'Categories' },
     { href: '/blog', label: 'Blog' },
     { href: '/playground', label: 'Playground', badge: 'PRPM+' },
     { href: '/pricing', label: 'Pricing' },
@@ -39,6 +40,7 @@ export default function Header({ showDashboard = false, showAccount = false }: H
 
   // Secondary navigation links (shown in hamburger menu)
   const secondaryLinks: Array<{ href: string; label: string }> = [
+    { href: '/use-cases', label: 'Use Cases' },
     { href: '/getting-started', label: 'Getting Started' },
     { href: '/authors', label: 'Authors' },
     { href: '/organizations', label: 'Organizations' },

@@ -12,6 +12,7 @@ import FeaturedResults from '@/components/FeaturedResults'
 import CollapsibleContent from '@/components/CollapsibleContent'
 import LatestVersionBadge from '@/components/LatestVersionBadge'
 import DynamicPackageContent from '@/components/DynamicPackageContent'
+import SimilarPackages from '@/components/SimilarPackages'
 import { getLicenseUrl } from '@/lib/license-utils'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
@@ -782,6 +783,11 @@ export default async function PackagePage({ params }: { params: { author: string
             </div>
           </div>
         )}
+
+        {/* AI-Powered Similar Packages */}
+        <div className="mb-8">
+          <SimilarPackages packageId={pkg.id} limit={5} />
+        </div>
 
         {/* Explore More */}
         <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6">
