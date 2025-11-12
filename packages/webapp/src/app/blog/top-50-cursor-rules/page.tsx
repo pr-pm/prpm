@@ -7,11 +7,11 @@ import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
   title: "Top 50 Cursor Rules to Supercharge Your Development Workflow - PRPM",
-  description: "Discover the top 50 Cursor rules from 4,000+ packages. Install production-ready AI assistance for React, TypeScript, Python, Go, and more. PRPM converts any package to Cursor rules.",
+  description: "Discover the top 50 Cursor rules from 6,000+ packages. Install production-ready AI assistance for React, TypeScript, Python, Go, and more. PRPM converts any package to Cursor rules.",
   keywords: ["cursor rules", "cursor IDE", "AI code assistant", "PRPM packages", "development tools", "cursor ai", "code generation"],
   openGraph: {
     title: "Top 50 Cursor Rules to Supercharge Your Development Workflow",
-    description: "Discover the top 50 Cursor rules from 4,000+ packages. Install production-ready AI assistance for React, TypeScript, Python, Go, and more.",
+    description: "Discover the top 50 Cursor rules from 6,000+ packages. Install production-ready AI assistance for React, TypeScript, Python, Go, and more.",
   },
 }
 
@@ -27,7 +27,7 @@ export default function Top50CursorRulesPost() {
         <BlogPostHeader
           tags={['Cursor', 'AI Development', 'Developer Tools', 'Best Practices']}
           title="Top 50 Cursor Rules to Supercharge Your Development Workflow"
-          subtitle="We analyzed over 1,000 cursor rules to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes."
+          subtitle="We analyzed over 6,000 cursor rules to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes."
           author="PRPM Team"
           date="November 3, 2025"
           readTime="12 min read"
@@ -59,7 +59,7 @@ export default function Top50CursorRulesPost() {
           </p>
 
           <p className="text-gray-300 leading-relaxed mb-8">
-            We analyzed over 1,000 cursor rules in the PRPM registry to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.
+            We analyzed over 6,000 cursor rules in the PRPM registry to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.
           </p>
 
           <p className="text-gray-300 leading-relaxed mb-12">
@@ -437,7 +437,7 @@ export default function Top50CursorRulesPost() {
 
             <p className="text-gray-300 leading-relaxed mb-4">That includes:</p>
             <ul className="text-gray-300 space-y-3 mb-8 list-disc ml-6">
-              <li>4,000+ packages across all formats (Claude skills, agents, prompts)</li>
+              <li>6,000+ packages across all formats (Claude skills, agents, prompts)</li>
               <li>Format-agnostic prompts</li>
               <li>Multi-agent workflows</li>
               <li>Industry-specific patterns</li>

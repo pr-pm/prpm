@@ -171,6 +171,13 @@
   </url>
 
   <url>
+    <loc>https://prpm.dev/blog/cursor-rules</loc>
+    <lastmod>2025-11-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
     <loc>https://prpm.dev/blog/self-improving-ai</loc>
     <lastmod>2025-11-08</lastmod>
     <changefreq>monthly</changefreq>

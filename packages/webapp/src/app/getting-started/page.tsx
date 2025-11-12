@@ -105,7 +105,7 @@ export default function GettingStarted() {
               <div className="space-y-3 text-gray-300">
                 <div className="flex gap-3">
                   <span className="text-prpm-accent mt-1">✓</span>
-                  <span><strong>4,000+ packages</strong> - Battle-tested prompts and rules</span>
+                  <span><strong>6,000+ packages</strong> - Battle-tested prompts and rules</span>
                 </div>
                 <div className="flex gap-3">
                   <span className="text-prpm-accent mt-1">✓</span>
@@ -369,7 +369,7 @@ export default function GettingStarted() {
                 Browse Packages
               </h3>
               <p className="text-gray-400">
-                Explore 4,000+ packages across all categories
+                Explore 6,000+ packages across all categories
               </p>
             </Link>
 
