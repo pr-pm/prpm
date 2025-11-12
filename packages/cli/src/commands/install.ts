@@ -232,6 +232,20 @@ export async function handleInstall(
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 
+    // Check if this is a Claude hook and show informational message
+    if (pkg.format === 'claude' && pkg.subtype === 'hook') {
+      // Only show detailed warning if not part of a collection (to avoid spam)
+      if (!options.fromCollection) {
+        console.log(`\n📌 Installing Claude Hook`);
+        console.log(`   ⚠️  Note: Hooks execute shell commands automatically.`);
+        console.log(`   📖 Review the hook configuration in .claude/settings.json after installation.`);
+        console.log();
+      } else {
+        // Brief message for collection installs
+        console.log(`   🪝 Hook (merges into .claude/settings.json)`);
+      }
+    }
+
     // Determine format preference with priority order:
     // 1. CLI --as flag (highest priority)
     // 2. defaultFormat from .prpmrc config
@@ -339,6 +353,9 @@ export async function handleInstall(
       // For other formats, use package name as filename
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
         destPath = `${destDir}/SKILL.md`;
+      } else if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
+        // Claude hooks are merged into settings.json
+        destPath = `${destDir}/settings.json`;
       } else if (effectiveFormat === 'agents.md') {
         destPath = `${destDir}/${packageName}/AGENTS.md`;
       } else if (effectiveFormat === 'copilot') {
@@ -376,6 +393,72 @@ export async function handleInstall(
           console.log(`   ⚙️  Applying Claude agent config...`);
           mainFile = applyClaudeConfig(mainFile, config.claude);
         }
+      }
+
+      // Special handling for Claude hooks - merge into settings.json
+      let hookMetadata: { events: string[]; hookId: string } | undefined;
+      if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
+        const { readFile } = await import('fs/promises');
+        const { fileExists } = await import('../core/filesystem.js');
+
+        // Parse the hook configuration from the downloaded file
+        let hookConfig: any;
+        try {
+          hookConfig = JSON.parse(mainFile);
+        } catch (err) {
+          throw new Error(`Invalid hook configuration: ${err}. Hook file must be valid JSON.`);
+        }
+
+        // Generate unique hook ID for this installation
+        const hookId = `${packageId}@${actualVersion || version}`;
+
+        // Read existing settings.json if it exists
+        let existingSettings: any = { hooks: {} };
+        if (await fileExists(destPath)) {
+          try {
+            const existingContent = await readFile(destPath, 'utf-8');
+            existingSettings = JSON.parse(existingContent);
+            if (!existingSettings.hooks) {
+              existingSettings.hooks = {};
+            }
+          } catch (err) {
+            console.log(`   ⚠️  Warning: Could not parse existing settings.json, creating new one.`);
+            existingSettings = { hooks: {} };
+          }
+        }
+
+        // Track which events this hook adds to
+        const events: string[] = [];
+
+        // Merge the new hook configuration
+        // Assume the downloaded file contains a hooks object
+        if (hookConfig.hooks) {
+          for (const [event, eventHooks] of Object.entries(hookConfig.hooks)) {
+            if (!existingSettings.hooks[event]) {
+              existingSettings.hooks[event] = [];
+            }
+
+            // Add hook ID to each hook config for tracking
+            const hooksWithId = (eventHooks as any[]).map(hook => ({
+              ...hook,
+              __prpm_hook_id: hookId, // Internal tracking ID
+            }));
+
+            // Add new hooks to the event
+            existingSettings.hooks[event] = [
+              ...existingSettings.hooks[event],
+              ...hooksWithId
+            ];
+
+            events.push(event);
+          }
+          console.log(`   ✓ Merged hook configuration into settings.json`);
+
+          // Store metadata for lockfile
+          hookMetadata = { events, hookId };
+        }
+
+        mainFile = JSON.stringify(existingSettings, null, 2);
       }
 
       await saveFile(destPath, mainFile);
@@ -524,6 +607,7 @@ export async function handleInstall(
       subtype: pkg.subtype, // Preserve original package subtype
       installedPath: destPath,
       fromCollection: options.fromCollection,
+      hookMetadata, // Track hook installation metadata for uninstall
     });
 
     setPackageIntegrity(updatedLockfile, packageId, tarball);

@@ -21,7 +21,7 @@ type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agent
 // Define which subtypes are available for each format
 const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'cursor': ['rule', 'agent', 'slash-command', 'tool'],
-  'claude': ['skill', 'agent', 'slash-command', 'tool'],
+  'claude': ['skill', 'agent', 'slash-command', 'tool', 'hook'],
   'continue': ['rule', 'agent', 'slash-command', 'tool'],
   'windsurf': ['rule', 'agent', 'slash-command', 'tool'],
   'copilot': ['tool', 'chatmode'],
