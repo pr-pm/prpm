@@ -309,7 +309,7 @@ prpm update`}</code>
             </pre>
             <p className="mb-0 text-center">
               <a href="/search" className="text-prpm-accent hover:text-prpm-accent-light font-semibold">
-                Browse 4,000+ packages →
+                Browse 6,000+ packages →
               </a>
             </p>
           </div>
