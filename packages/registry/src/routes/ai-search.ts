@@ -1,6 +1,6 @@
 /**
  * AI Search Routes
- * AI-powered semantic search (Free for all authenticated users)
+ * AI-powered semantic search (Free for everyone, including anonymous users)
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
@@ -13,11 +13,11 @@ export async function aiSearchRoutes(server: FastifyInstance) {
   /**
    * POST /ai-search
    * Perform AI-powered semantic search
+   * No authentication required - open to everyone!
    */
   server.post('/', {
-    preHandler: [server.authenticate],
     schema: {
-      description: 'AI-powered semantic search for packages (Free for authenticated users)',
+      description: 'AI-powered semantic search for packages (Free for everyone, no login required)',
       tags: ['ai-search'],
       body: {
         type: 'object',
@@ -84,14 +84,14 @@ export async function aiSearchRoutes(server: FastifyInstance) {
       }
     }
   }, async (request, reply) => {
-    const userId = (request.user as any).user_id;
+    const userId = (request.user as any)?.user_id || null; // Optional - works for anonymous users
     const searchQuery: AISearchQuery = request.body as AISearchQuery;
 
     try {
       const results = await aiSearchService.search(searchQuery, userId);
 
       server.log.info({
-        userId,
+        userId: userId || 'anonymous',
         query: searchQuery.query,
         results_count: results.results.length,
         execution_time: results.execution_time_ms
@@ -101,7 +101,7 @@ export async function aiSearchRoutes(server: FastifyInstance) {
     } catch (error) {
       server.log.error({
         error,
-        userId,
+        userId: userId || 'anonymous',
         query: searchQuery.query
       }, 'AI search error');
 
@@ -117,9 +117,8 @@ export async function aiSearchRoutes(server: FastifyInstance) {
    * Get similar packages using AI
    */
   server.get('/similar/:packageId', {
-    preHandler: [server.authenticate],
     schema: {
-      description: 'Get similar packages using AI embeddings (Free for authenticated users)',
+      description: 'Get similar packages using AI embeddings (Free for everyone, no login required)',
       tags: ['ai-search'],
       params: {
         type: 'object',
@@ -176,12 +175,11 @@ export async function aiSearchRoutes(server: FastifyInstance) {
   /**
    * GET /ai-search/access
    * Check if user has AI search access (for frontend)
-   * Now free for all authenticated users - always returns true
+   * Now free for everyone - always returns true
    */
   server.get('/access', {
-    preHandler: [server.authenticate],
     schema: {
-      description: 'Check if user has access to AI search (Always true for authenticated users)',
+      description: 'Check if user has access to AI search (Always true - free for everyone)',
       tags: ['ai-search'],
       response: {
         200: {
@@ -194,10 +192,10 @@ export async function aiSearchRoutes(server: FastifyInstance) {
       }
     }
   }, async (request, reply) => {
-    // AI search is now free for all authenticated users
+    // AI search is now free for everyone, even anonymous users
     return reply.code(200).send({
       has_access: true,
-      reason: 'authenticated_user'
+      reason: 'free_for_all'
     });
   });
 }

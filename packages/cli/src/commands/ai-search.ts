@@ -73,24 +73,6 @@ function displayAIResults(response: AISearchResponse): void {
   console.log('═'.repeat(80));
 }
 
-/**
- * Display login prompt for AI search
- */
-function displayLoginPrompt(): void {
-  console.log('\n' + '╔' + '═'.repeat(78) + '╗');
-  console.log('║' + ' '.repeat(78) + '║');
-  console.log('║' + '  ✨ AI-Powered Search is FREE for all users!'.padEnd(78) + '║');
-  console.log('║' + ' '.repeat(78) + '║');
-  console.log('║' + '  Just sign in to use:'.padEnd(78) + '║');
-  console.log('║' + '    • Natural language queries'.padEnd(78) + '║');
-  console.log('║' + '    • Intent-based matching'.padEnd(78) + '║');
-  console.log('║' + '    • AI-enriched package descriptions'.padEnd(78) + '║');
-  console.log('║' + '    • Similar package recommendations'.padEnd(78) + '║');
-  console.log('║' + ' '.repeat(78) + '║');
-  console.log('║' + '  Login: prpm login'.padEnd(78) + '║');
-  console.log('║' + ' '.repeat(78) + '║');
-  console.log('╚' + '═'.repeat(78) + '╝\n');
-}
 
 export async function handleAISearch(
   query: string,
@@ -117,14 +99,6 @@ export async function handleAISearch(
     const config = await getConfig();
     const client = getRegistryClient(config);
 
-    // Check if user is authenticated
-    if (!config.token) {
-      console.log('\n❌ Authentication required for AI search');
-      console.log('   Please login first: \x1b[36mprpm login\x1b[0m\n');
-      displayLoginPrompt();
-      throw new CLIError('Authentication required', 1);
-    }
-
     // Build search request
     const searchRequest: any = {
       query,
@@ -137,23 +111,15 @@ export async function handleAISearch(
       if (options.subtype) searchRequest.filters.subtype = options.subtype;
     }
 
-    // Call AI search endpoint
+    // Call AI search endpoint (no authentication required!)
     const registryUrl = config.registryUrl || 'https://registry.prpm.dev';
     const res = await fetch(`${registryUrl}/api/v1/ai-search`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.token}`,
       },
       body: JSON.stringify(searchRequest),
     });
-
-    if (res.status === 401) {
-      console.log('\n❌ Authentication failed');
-      console.log('   Please login again: \x1b[36mprpm login\x1b[0m\n');
-      displayLoginPrompt();
-      throw new CLIError('Authentication failed', 1);
-    }
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => 'Unknown error');
@@ -213,7 +179,7 @@ export function createAISearchCommand(): Command {
   const command = new Command('ai-search');
 
   command
-    .description('AI-powered semantic search (Free for authenticated users)')
+    .description('AI-powered semantic search (100% Free, no login required)')
     .argument('<query>', 'Natural language search query')
     .option('--limit <number>', 'Number of results to return (default: 10)', '10')
     .option('--format <format>', 'Filter by package format (cursor, claude, continue, etc.)')

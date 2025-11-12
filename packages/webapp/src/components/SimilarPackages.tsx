@@ -8,24 +8,18 @@ import { Sparkles, Download, Star } from 'lucide-react'
 
 interface SimilarPackagesProps {
   packageId: string
-  jwtToken?: string
   limit?: number
 }
 
-export function SimilarPackages({ packageId, jwtToken, limit = 5 }: SimilarPackagesProps) {
+export function SimilarPackages({ packageId, limit = 5 }: SimilarPackagesProps) {
   const [similarPackages, setSimilarPackages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadSimilar() {
-      if (!jwtToken) {
-        setLoading(false)
-        return
-      }
-
       try {
-        const result = await getSimilarPackages(packageId, jwtToken, limit)
+        const result = await getSimilarPackages(packageId, null, limit) // No auth needed
         setSimilarPackages(result.similar_packages || [])
         setError(null)
       } catch (err: any) {
@@ -37,7 +31,7 @@ export function SimilarPackages({ packageId, jwtToken, limit = 5 }: SimilarPacka
     }
 
     loadSimilar()
-  }, [packageId, jwtToken, limit])
+  }, [packageId, limit])
 
   if (loading) {
     return (
@@ -47,40 +41,13 @@ export function SimilarPackages({ packageId, jwtToken, limit = 5 }: SimilarPacka
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Similar Packages
           </h3>
-          <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-full">
-            AI
+          <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
+            Free
           </span>
         </div>
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
-      </div>
-    )
-  }
-
-  if (!jwtToken) {
-    return (
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-5 h-5 text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Similar Packages
-          </h3>
-          <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
-            Free
-          </span>
-        </div>
-
-        <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-          Sign in to see free AI-powered package recommendations
-        </p>
-
-        <button
-          onClick={() => window.location.href = '/login'}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          Sign In to View
-        </button>
       </div>
     )
   }
@@ -96,8 +63,8 @@ export function SimilarPackages({ packageId, jwtToken, limit = 5 }: SimilarPacka
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           Similar Packages
         </h3>
-        <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-full">
-          AI
+        <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
+          Free
         </span>
       </div>
 
@@ -150,7 +117,7 @@ export function SimilarPackages({ packageId, jwtToken, limit = 5 }: SimilarPacka
 
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-          Powered by AI semantic matching
+          Powered by AI semantic matching • 100% Free
         </p>
       </div>
     </div>
