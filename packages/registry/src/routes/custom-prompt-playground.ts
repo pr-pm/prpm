@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { validateCustomPrompt, isPromptSafe } from '../validation/custom-prompt-validator.js';
 import { PlaygroundService } from '../services/playground.js';
 import { createRateLimiter } from '../middleware/rate-limit.js';
+import { createSessionSecurityMiddleware } from '../middleware/session-security.js';
 import { sanitizeUserInput, SECURITY_LIMITS } from '../middleware/security.js';
 
 const CustomPromptRunSchema = z.object({
@@ -29,6 +30,7 @@ const ValidatePromptSchema = z.object({
 export async function customPromptPlaygroundRoutes(server: FastifyInstance) {
   const playgroundService = new PlaygroundService(server);
   const rateLimiter = createRateLimiter();
+  const sessionSecurity = createSessionSecurityMiddleware();
 
   // =====================================================
   // POST /api/v1/custom-prompt/validate
@@ -37,7 +39,7 @@ export async function customPromptPlaygroundRoutes(server: FastifyInstance) {
   server.post(
     '/validate',
     {
-      preHandler: [server.authenticate, rateLimiter],
+      preHandler: [server.authenticate, sessionSecurity, rateLimiter],
       schema: {
         description: 'Validate custom prompt for safety',
         tags: ['custom-prompt'],
@@ -111,7 +113,7 @@ export async function customPromptPlaygroundRoutes(server: FastifyInstance) {
   server.post(
     '/run',
     {
-      preHandler: [server.authenticate, rateLimiter],
+      preHandler: [server.authenticate, sessionSecurity, rateLimiter],
       schema: {
         description: 'Execute playground with custom prompt (validated)',
         tags: ['custom-prompt'],
