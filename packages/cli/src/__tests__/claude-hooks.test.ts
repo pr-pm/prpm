@@ -44,6 +44,13 @@ jest.mock('fs', () => ({
     rm: jest.fn(),
     unlink: jest.fn(),
   },
+  constants: {
+    O_CREAT: 0o100,
+    O_TRUNC: 0o1000,
+    O_WRONLY: 0o1,
+    O_RDONLY: 0o0,
+    O_RDWR: 0o2,
+  },
 }));
 
 describe('Claude Hooks', () => {

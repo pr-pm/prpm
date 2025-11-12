@@ -274,7 +274,7 @@ export async function handleInstall(
     // Special handling for Claude packages: default to CLAUDE.md if it doesn't exist
     // BUT only for packages that are generic rules (not skills, agents, or commands)
     if (!options.as && pkg.format === 'claude' && pkg.subtype === 'rule') {
-      const { fileExists } = await import('../core/filesystem.js');
+      const { fileExists } = await import('../core/filesystem');
       const claudeMdExists = await fileExists('CLAUDE.md');
 
       if (!claudeMdExists) {
@@ -402,7 +402,7 @@ export async function handleInstall(
       // Special handling for Claude hooks - merge into settings.json
       if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
         const { readFile } = await import('fs/promises');
-        const { fileExists } = await import('../core/filesystem.js');
+        const { fileExists } = await import('../core/filesystem');
 
         // Parse the hook configuration from the downloaded file
         let hookConfig: any;
