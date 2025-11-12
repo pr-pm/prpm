@@ -14,21 +14,23 @@ import { promises as fs } from 'fs';
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
 jest.mock('../core/user-config');
-jest.mock('../core/filesystem', () => ({
-  getDestinationDir: jest.fn((format, subtype) => {
-    if (format === 'claude' && subtype === 'hook') {
-      return '.claude';
-    }
-    return '.claude/skills';
-  }),
-  ensureDirectoryExists: jest.fn(),
-  saveFile: jest.fn(),
-  deleteFile: jest.fn(),
-  fileExists: jest.fn(() => Promise.resolve(false)),
-  generateId: jest.fn((name) => name),
-  stripAuthorNamespace: jest.fn((name) => name.split('/').pop() || name),
-  autoDetectFormat: jest.fn(() => Promise.resolve('claude')),
-}));
+jest.mock('../core/filesystem', () => {
+  const actualFs = jest.requireActual('../core/filesystem');
+  return {
+    ...actualFs,
+    getDestinationDir: jest.fn().mockImplementation((format, subtype, name) => {
+      if (format === 'claude' && subtype === 'hook') {
+        return '.claude';
+      }
+      return '.claude/skills';
+    }),
+    ensureDirectoryExists: jest.fn(),
+    saveFile: jest.fn(),
+    deleteFile: jest.fn(),
+    fileExists: jest.fn().mockResolvedValue(false),
+    autoDetectFormat: jest.fn().mockResolvedValue('claude'),
+  };
+});
 jest.mock('../core/lockfile');
 jest.mock('../core/telemetry', () => ({
   telemetry: {
