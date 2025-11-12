@@ -305,7 +305,7 @@ function SearchPageContent() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || selectedAuthor || query
+  const hasFilters = selectedFormat || selectedSubtype || selectedCategory || selectedTags.length > 0 || selectedAuthor || query
 
   return (
     <main className="min-h-screen bg-prpm-dark">
