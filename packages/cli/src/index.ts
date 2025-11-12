@@ -13,6 +13,7 @@ import { createIndexCommand } from './commands/index';
 import { createTelemetryCommand } from './commands/telemetry';
 import { createPopularCommand } from './commands/popular';
 import { createSearchCommand } from './commands/search';
+import { createAISearchCommand } from './commands/ai-search';
 import { createInfoCommand } from './commands/info';
 import { createInstallCommand } from './commands/install';
 import { createTrendingCommand } from './commands/trending';
@@ -58,6 +59,7 @@ program.addCommand(createCatalogCommand());
 
 // Registry commands (new)
 program.addCommand(createSearchCommand());
+program.addCommand(createAISearchCommand());
 program.addCommand(createInstallCommand());
 program.addCommand(createInfoCommand());
 program.addCommand(createTrendingCommand());
