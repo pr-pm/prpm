@@ -293,6 +293,7 @@ function SearchPageContent() {
 
   const clearFilters = () => {
     setSelectedFormat('')
+    setSelectedSubtype('')
     setSelectedCategory('')
     setSelectedTags([])
     setSelectedAuthor('')
