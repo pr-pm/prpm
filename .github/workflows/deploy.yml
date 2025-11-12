@@ -31,6 +31,12 @@ on:
           - registry-only
           - webapp-only
 
+# Prevent concurrent deployments to the same environment
+# Queue new deployments instead of cancelling in-progress ones
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'prod' }}
+  cancel-in-progress: false
+
 env:
   AWS_REGION: us-west-2
   NODE_VERSION: '20'

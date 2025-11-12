@@ -33,6 +33,15 @@ const blogPosts: BlogPost[] = [
     tags: ["Feature", "Playground", "PRPM+"],
   },
   {
+    slug: "cursor-rules",
+    title: "Cursor Rules: The Complete Guide to AI-Powered Coding Standards",
+    excerpt: "Master cursor rules to guide AI assistants in Cursor IDE. Learn what they are, how to use them, and discover 2500+ ready-to-use cursor rules packages for React, Python, TypeScript, security, and more.",
+    date: "2025-11-12",
+    author: "PRPM Team",
+    readTime: "8 min read",
+    tags: ["Cursor", "AI Development", "Tutorial", "Best Practices"],
+  },
+  {
     slug: "self-improving-ai",
     title: "Self-Improving AI: How PRPM Teaches AI Assistants to Get Better at Their Job",
     excerpt: "Watch AI assistants automatically discover and install expertise packages from PRPM when they need specialized knowledge. A new paradigm for distributable intelligence.",

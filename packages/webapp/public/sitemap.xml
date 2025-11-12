@@ -31,7 +31,7 @@
   <!-- Blog -->
   <url>
     <loc>https://prpm.dev/blog</loc>
-    <lastmod>2025-11-10</lastmod>
+    <lastmod>2025-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -166,6 +166,13 @@
   <url>
     <loc>https://prpm.dev/blog/kiro-hooks-automation</loc>
     <lastmod>2025-11-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/cursor-rules</loc>
+    <lastmod>2025-11-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
