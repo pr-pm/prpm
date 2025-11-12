@@ -3,6 +3,9 @@
   "license": "MIT",
   "repository": "https://github.com/pr-pm/prpm",
   "organization": "prpm",
+  "scripts": {
+    "prepublishOnly": "cd packages/hooks && npm run build"
+  },
   "packages": [
     {
       "name": "blog-writer",
@@ -441,6 +444,40 @@
         ".claude/hooks/sensitive-data-scanner/hook.json",
         ".claude/hooks/sensitive-data-scanner/dist/hook.js",
         ".claude/hooks/sensitive-data-scanner/README.md"
+      ]
+    },
+    {
+      "name": "development-workflow",
+      "version": "1.0.0",
+      "description": "Enforces documentation and skill updates during PRPM development - provides context-aware reminders based on branch names and work type",
+      "format": "claude",
+      "subtype": "hook",
+      "private": true,
+      "tags": ["prpm-internal", "workflow", "documentation", "development", "session-start"],
+      "files": [
+        ".claude/hooks/development-workflow/hook.json",
+        ".claude/hooks/development-workflow/dist/hook.js",
+        ".claude/hooks/development-workflow/README.md",
+        ".claude/hooks/development-workflow/src/hook.ts",
+        ".claude/hooks/development-workflow/src/hook-utils.ts",
+        ".claude/hooks/development-workflow/src/types.ts"
+      ]
+    },
+    {
+      "name": "blog-workflow",
+      "version": "1.0.0",
+      "description": "Enforces blog writing standards - requires prpm-blog-writer agent and human-writing skill, reminds about sitemap updates",
+      "format": "claude",
+      "subtype": "hook",
+      "private": true,
+      "tags": ["prpm-internal", "blog", "writing", "workflow", "sitemap", "user-prompt-submit"],
+      "files": [
+        ".claude/hooks/blog-workflow/hook.json",
+        ".claude/hooks/blog-workflow/dist/hook.js",
+        ".claude/hooks/blog-workflow/README.md",
+        ".claude/hooks/blog-workflow/src/hook.ts",
+        ".claude/hooks/blog-workflow/src/hook-utils.ts",
+        ".claude/hooks/blog-workflow/src/types.ts"
       ]
     },
     {

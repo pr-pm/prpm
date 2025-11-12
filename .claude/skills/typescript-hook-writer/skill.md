@@ -867,12 +867,15 @@ The build script (`packages/hooks/scripts/build-all-hooks.ts`) does the followin
 
 ### When to Build
 
-**Always build before:**
-- Testing hook locally
-- Publishing with `prpm publish`
-- Committing to repository (if distributing source)
+**Automatic build:**
+- Publishing with `prpm publish` - `prepublishOnly` script builds automatically (if configured)
 
-**How to build:**
+**Manual build for:**
+- Testing hook locally before committing
+- Debugging compiled output
+- Verifying build succeeds before pushing
+
+**How to build manually:**
 
 ```bash
 # Build all hooks once
@@ -1031,29 +1034,67 @@ Claude: I'll create a new component...
 - Check Prettier config in project (`.prettierrc`)
 ```
 
-### Step 3: Build Before Publishing
+### Step 3: Set Up Automatic Build Before Publishing
 
-Always build hooks before publishing:
+**Good news:** PRPM now supports `prepublishOnly` scripts! Add this to your prpm.json:
+
+```json
+{
+  "name": "prpm-packages",
+  "license": "MIT",
+  "repository": "https://github.com/username/repo",
+  "scripts": {
+    "prepublishOnly": "cd packages/hooks && npm run build"
+  },
+  "packages": [
+    // ... your packages
+  ]
+}
+```
+
+**What happens:**
+- When you run `prpm publish`, the `prepublishOnly` script runs automatically
+- Hooks are compiled from TypeScript to JavaScript
+- If the build fails, publish is aborted (prevents publishing broken code)
+- If the build succeeds, publishing continues with up-to-date dist files
+
+**Manual build (for local testing):**
 
 ```bash
 cd packages/hooks
-pnpm build
+npm run build
 ```
 
-Verify `dist/hook.js` exists and is up-to-date.
+Verify `dist/hook.js` files exist:
+
+```bash
+ls -lh .claude/hooks/*/dist/hook.js
+# Should show compiled hooks with ~2-3KB size each
+```
 
 ### Step 4: Publish
 
 ```bash
+# From project root
 prpm publish
 ```
 
-Users will receive:
+**What happens automatically:**
+1. `prepublishOnly` script runs: `cd packages/hooks && npm run build`
+2. All hooks are compiled to dist/hook.js
+3. Packages are published with up-to-date compiled files
+
+**Users will receive:**
 - `hook.json` - Configuration
 - `dist/hook.js` - Single-file executable (~2-3KB)
 - `README.md` - Documentation
 
-They do NOT get TypeScript source or build tooling.
+**Users do NOT get:**
+- TypeScript source (src/ directory)
+- Build tooling
+- Tests
+
+**Why this matters:** The prepublishOnly script prevents publishing stale dist files. If you modify a hook's TypeScript source but forget to build, the build happens automatically before publish.
 
 ## Best Practices
 
