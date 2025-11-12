@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import {
   searchPackages,
   searchCollections,
+  aiSearch,
   SearchPackagesParams,
   SearchCollectionsParams,
   Package,
@@ -13,8 +14,12 @@ import {
   Format,
   Subtype,
   SortType,
+  AISearchResult,
 } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
+import { AISearchToggle } from '@/components/AISearchToggle'
+import { AISearchResults } from '@/components/AISearchResults'
+import { useAuth } from '@/components/AuthProvider'
 
 type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
 
@@ -34,6 +39,7 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
 function SearchPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, jwtToken } = useAuth()
 
   // Track initial URL params to prevent reset on mount
   const initialParams = useState(() => ({
@@ -66,6 +72,11 @@ function SearchPageContent() {
   const [availableCategories, setAvailableCategories] = useState<string[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  // AI Search state
+  const [aiSearchEnabled, setAiSearchEnabled] = useState(false)
+  const [aiResults, setAiResults] = useState<AISearchResult[]>([])
+  const [aiExecutionTime, setAiExecutionTime] = useState(0)
 
   const limit = 20
 
@@ -235,11 +246,51 @@ function SearchPageContent() {
     }
   }
 
+  // AI Search (PRPM+ Feature)
+  const performAISearch = async () => {
+    if (!query.trim() || !jwtToken) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const result = await aiSearch({
+        query: query,
+        filters: {
+          format: selectedFormat || undefined,
+          subtype: selectedSubtype || undefined,
+          language: undefined,
+          framework: undefined,
+          min_quality: undefined
+        },
+        limit: 20
+      }, jwtToken)
+
+      setAiResults(result.results)
+      setAiExecutionTime(result.execution_time_ms)
+      setTotal(result.total_matches)
+    } catch (error: any) {
+      console.error('AI search failed:', error)
+      // If AI search fails, fall back to traditional search
+      setAiSearchEnabled(false)
+      fetchPackages()
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Load data based on active tab
   useEffect(() => {
     // Clear previous results when switching tabs to ensure fresh data loads
     setPackages([])
     setCollections([])
+    setAiResults([])
+
+    // Use AI search if enabled and on packages tab
+    if (aiSearchEnabled && activeTab === 'packages' && query.trim()) {
+      performAISearch()
+      return
+    }
 
     if (activeTab === 'packages') {
       fetchPackages()
@@ -253,7 +304,7 @@ function SearchPageContent() {
       fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page, aiSearchEnabled])
 
   // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {
@@ -328,7 +379,7 @@ function SearchPageContent() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search packages, collections, or skills..."
+              placeholder={aiSearchEnabled ? "Search with AI (natural language)..." : "Search packages, collections, or skills..."}
               className="w-full px-6 py-4 bg-prpm-dark-card border border-prpm-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-prpm-accent transition-colors pr-12"
             />
             <button
@@ -340,6 +391,17 @@ function SearchPageContent() {
               </svg>
             </button>
           </div>
+
+          {/* AI Search Toggle */}
+          {activeTab === 'packages' && (
+            <div className="mt-4 flex justify-end">
+              <AISearchToggle
+                enabled={aiSearchEnabled}
+                onChange={setAiSearchEnabled}
+                jwtToken={jwtToken}
+              />
+            </div>
+          )}
         </form>
 
         {/* Tabs */}
@@ -580,10 +642,19 @@ function SearchPageContent() {
               </div>
             ) : (
               <>
-                {/* Package Results */}
-                {(activeTab === 'packages' || activeTab === 'skills' || activeTab === 'slash-commands' || activeTab === 'agents') && (
-                  <div className="space-y-4">
-                    {packages.length === 0 ? (
+                {/* AI Search Results */}
+                {aiSearchEnabled && activeTab === 'packages' && aiResults.length > 0 ? (
+                  <AISearchResults
+                    results={aiResults}
+                    query={query}
+                    executionTime={aiExecutionTime}
+                  />
+                ) : (
+                  <>
+                    {/* Package Results */}
+                    {(activeTab === 'packages' || activeTab === 'skills' || activeTab === 'slash-commands' || activeTab === 'agents') && (
+                      <div className="space-y-4">
+                        {packages.length === 0 ? (
                       <div className="text-center py-20">
                         <p className="text-gray-400 mb-4">No packages found</p>
                         {selectedFormat && (
@@ -726,6 +797,8 @@ function SearchPageContent() {
                       </>
                     )}
                   </div>
+                )}
+                  </>
                 )}
 
                 {/* Collection Results */}
