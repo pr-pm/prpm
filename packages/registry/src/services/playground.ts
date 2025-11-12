@@ -883,6 +883,7 @@ export class PlaygroundService {
         id, user_id, org_id, package_id, package_version, package_name,
         conversation, credits_spent, estimated_tokens, model, total_tokens,
         total_duration_ms, run_count, is_public, share_token,
+        view_count, helpful_count, not_helpful_count, shared_at,
         created_at, updated_at, last_run_at
        FROM playground_sessions
        WHERE share_token = $1 AND is_public = TRUE`,
@@ -910,6 +911,10 @@ export class PlaygroundService {
       run_count: row.run_count,
       is_public: row.is_public,
       share_token: row.share_token,
+      view_count: row.view_count,
+      helpful_count: row.helpful_count,
+      not_helpful_count: row.not_helpful_count,
+      shared_at: row.shared_at,
       created_at: row.created_at,
       updated_at: row.updated_at,
       last_run_at: row.last_run_at,
