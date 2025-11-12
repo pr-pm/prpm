@@ -2,36 +2,32 @@
  * Tests for Claude hooks installation, tracking, and removal
  */
 
-import { handleInstall } from '../commands/install';
-import { handleUninstall } from '../commands/uninstall';
-import { getRegistryClient } from '@pr-pm/registry-client';
-import { getConfig } from '../core/user-config';
-import { saveFile } from '../core/filesystem';
-import { readLockfile, writeLockfile, createLockfile, addToLockfile, removePackage } from '../core/lockfile';
 import { gzipSync } from 'zlib';
 import { promises as fs } from 'fs';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
 jest.mock('../core/user-config');
-jest.mock('../core/filesystem', () => ({
-  getDestinationDir: jest.fn((format, subtype, name) => {
-    console.error(`DEBUG: getDestinationDir called with format=${format}, subtype=${subtype}, name=${name}`);
-    if (format === 'claude' && subtype === 'hook') {
-      console.error(`DEBUG: Returning .claude`);
-      return '.claude';
-    }
-    console.error(`DEBUG: Returning .claude/skills`);
-    return '.claude/skills';
-  }),
-  ensureDirectoryExists: jest.fn(),
-  saveFile: jest.fn(),
-  deleteFile: jest.fn(),
-  fileExists: jest.fn(() => Promise.resolve(false)),
-  generateId: jest.fn((name) => name),
-  stripAuthorNamespace: jest.fn((name) => name?.split('/').pop() || name),
-  autoDetectFormat: jest.fn(() => Promise.resolve('claude')),
-}));
+
+// Mock filesystem module
+jest.mock('../core/filesystem');
+
+// Import after mocks are set up
+import { handleInstall } from '../commands/install';
+import { handleUninstall } from '../commands/uninstall';
+import { getRegistryClient } from '@pr-pm/registry-client';
+import { getConfig } from '../core/user-config';
+import { readLockfile, writeLockfile, createLockfile, addToLockfile, removePackage } from '../core/lockfile';
+
+// Import mocked functions
+import { saveFile, deleteFile, fileExists, ensureDirectoryExists, getDestinationDir } from '../core/filesystem';
+
+// Cast to jest mocks
+const mockSaveFile = saveFile as jest.Mock;
+const mockDeleteFile = deleteFile as jest.Mock;
+const mockFileExists = fileExists as jest.Mock;
+const mockEnsureDirectoryExists = ensureDirectoryExists as jest.Mock;
+const mockGetDestinationDir = getDestinationDir as jest.Mock;
 jest.mock('../core/lockfile');
 jest.mock('../core/telemetry', () => ({
   telemetry: {
@@ -39,13 +35,20 @@ jest.mock('../core/telemetry', () => ({
     shutdown: jest.fn(),
   },
 }));
+// Create shared mock functions for fs.promises
+const mockFsReadFile = jest.fn();
+const mockFsWriteFile = jest.fn();
+const mockFsStat = jest.fn();
+const mockFsRm = jest.fn();
+const mockFsUnlink = jest.fn();
+
 jest.mock('fs', () => ({
   promises: {
-    readFile: jest.fn(),
-    writeFile: jest.fn(),
-    stat: jest.fn(),
-    rm: jest.fn(),
-    unlink: jest.fn(),
+    readFile: (...args: any[]) => mockFsReadFile(...args),
+    writeFile: (...args: any[]) => mockFsWriteFile(...args),
+    stat: (...args: any[]) => mockFsStat(...args),
+    rm: (...args: any[]) => mockFsRm(...args),
+    unlink: (...args: any[]) => mockFsUnlink(...args),
   },
   constants: {
     O_CREAT: 0o100,
@@ -54,6 +57,15 @@ jest.mock('fs', () => ({
     O_RDONLY: 0o0,
     O_RDWR: 0o2,
   },
+}));
+
+// Also mock fs/promises module for dynamic imports
+jest.mock('fs/promises', () => ({
+  readFile: (...args: any[]) => mockFsReadFile(...args),
+  writeFile: (...args: any[]) => mockFsWriteFile(...args),
+  stat: (...args: any[]) => mockFsStat(...args),
+  rm: (...args: any[]) => mockFsRm(...args),
+  unlink: (...args: any[]) => mockFsUnlink(...args),
 }));
 
 describe('Claude Hooks', () => {
@@ -70,11 +82,16 @@ describe('Claude Hooks', () => {
   };
 
   beforeEach(() => {
+    // Reset all mocks
+    jest.clearAllMocks();
+
+    // Set up registry and config mocks
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
     (getConfig as jest.Mock).mockResolvedValue(mockConfig);
+
+    // Set up lockfile mocks
     (readLockfile as jest.Mock).mockResolvedValue(null);
     (writeLockfile as jest.Mock).mockResolvedValue(undefined);
-    (saveFile as jest.Mock).mockResolvedValue(undefined);
     (createLockfile as jest.Mock).mockReturnValue({
       version: '1.0.0',
       lockfileVersion: 1,
@@ -82,12 +99,26 @@ describe('Claude Hooks', () => {
       generated: new Date().toISOString()
     });
     (addToLockfile as jest.Mock).mockImplementation(() => {});
+
+    // Set up filesystem mocks with implementations
+    mockGetDestinationDir.mockImplementation((format, subtype, name) => {
+      if (format === 'claude' && subtype === 'hook') {
+        return '.claude';
+      }
+      return '.claude/skills';
+    });
+    mockSaveFile.mockResolvedValue(undefined);
+    mockFileExists.mockResolvedValue(false);
+    mockEnsureDirectoryExists.mockResolvedValue(undefined);
+    mockDeleteFile.mockResolvedValue(undefined);
+
+    // Set up client mocks
     mockClient.trackDownload.mockResolvedValue(undefined);
 
-    // Mock console methods (temporarily disabled for debugging)
-    // jest.spyOn(console, 'log').mockImplementation();
-    // jest.spyOn(console, 'error').mockImplementation();
-    // jest.spyOn(console, 'warn').mockImplementation();
+    // Mock console methods
+    jest.spyOn(console, 'log').mockImplementation();
+    jest.spyOn(console, 'error').mockImplementation();
+    jest.spyOn(console, 'warn').mockImplementation();
   });
 
   afterEach(() => {
@@ -131,14 +162,13 @@ describe('Claude Hooks', () => {
       mockClient.getPackage.mockResolvedValue(mockHookPackage);
       mockClient.downloadPackage.mockResolvedValue(gzipSync(hookConfig));
 
-      // Mock empty settings.json initially
-      const { fileExists } = require('../core/filesystem');
-      (fileExists as jest.Mock).mockResolvedValue(false);
+      // Mock empty settings.json initially (no existing file)
+      mockFileExists.mockResolvedValue(false);
 
       await handleInstall('@author/test-hook', {});
 
       // Verify saveFile was called with merged settings
-      expect(saveFile).toHaveBeenCalledWith(
+      expect(mockSaveFile).toHaveBeenCalledWith(
         '.claude/settings.json',
         expect.stringContaining('"__prpm_hook_id": "@author/test-hook@1.0.0"')
       );
@@ -206,14 +236,14 @@ describe('Claude Hooks', () => {
       mockClient.getPackage.mockResolvedValue(mockHookPackage);
       mockClient.downloadPackage.mockResolvedValue(gzipSync(newHookConfig));
 
-      const { fileExists } = require('../core/filesystem');
-      (fileExists as jest.Mock).mockResolvedValue(true);
-      (fs.readFile as jest.Mock).mockResolvedValue(existingSettings);
+      // Mock existing settings.json file
+      mockFileExists.mockResolvedValue(true);
+      mockFsReadFile.mockResolvedValue(existingSettings);
 
       await handleInstall('@author/new-hook', {});
 
       // Verify both hooks are present
-      const savedContent = (saveFile as jest.Mock).mock.calls[0][1];
+      const savedContent = mockSaveFile.mock.calls[0][1];
       const savedSettings = JSON.parse(savedContent);
 
       expect(savedSettings.hooks.PreToolUse).toHaveLength(1);
@@ -333,18 +363,18 @@ describe('Claude Hooks', () => {
       };
 
       (removePackage as jest.Mock).mockResolvedValue(mockPackageInfo);
-      (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(existingSettings));
+      mockFsReadFile.mockResolvedValue(JSON.stringify(existingSettings));
 
       await handleUninstall('@author/hook1');
 
       // Verify settings were updated
-      expect(fs.writeFile).toHaveBeenCalledWith(
+      expect(mockFsWriteFile).toHaveBeenCalledWith(
         '.claude/settings.json',
         expect.any(String),
         'utf-8'
       );
 
-      const writtenContent = (fs.writeFile as jest.Mock).mock.calls[0][1];
+      const writtenContent = (mockFsWriteFile as jest.Mock).mock.calls[0][1];
       const updatedSettings = JSON.parse(writtenContent);
 
       // hook1 should be removed
@@ -370,7 +400,7 @@ describe('Claude Hooks', () => {
       };
 
       (removePackage as jest.Mock).mockResolvedValue(mockPackageInfo);
-      (fs.readFile as jest.Mock).mockRejectedValue({ code: 'ENOENT' });
+      mockFsReadFile.mockRejectedValue({ code: 'ENOENT' });
 
       await handleUninstall('@author/missing-hook');
 
@@ -413,11 +443,11 @@ describe('Claude Hooks', () => {
       };
 
       (removePackage as jest.Mock).mockResolvedValue(mockPackageInfo);
-      (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(existingSettings));
+      mockFsReadFile.mockResolvedValue(JSON.stringify(existingSettings));
 
       await handleUninstall('@author/only-hook');
 
-      const writtenContent = (fs.writeFile as jest.Mock).mock.calls[0][1];
+      const writtenContent = (mockFsWriteFile as jest.Mock).mock.calls[0][1];
       const updatedSettings = JSON.parse(writtenContent);
 
       // PreToolUse should be removed entirely (no hooks left)
@@ -470,13 +500,13 @@ describe('Claude Hooks', () => {
       mockClient.getPackage.mockResolvedValue(mockHookPackage);
       mockClient.downloadPackage.mockResolvedValue(gzipSync(newHookConfig));
 
-      const { fileExists } = require('../core/filesystem');
-      (fileExists as jest.Mock).mockResolvedValue(true);
-      (fs.readFile as jest.Mock).mockResolvedValue(existingSettings);
+      // Mock existing settings.json file from first hook
+      mockFileExists.mockResolvedValue(true);
+      mockFsReadFile.mockResolvedValue(existingSettings);
 
       await handleInstall('@author/second-hook', {});
 
-      const savedContent = (saveFile as jest.Mock).mock.calls[0][1];
+      const savedContent = mockSaveFile.mock.calls[0][1];
       const savedSettings = JSON.parse(savedContent);
 
       // Both hooks should be in PreToolUse
