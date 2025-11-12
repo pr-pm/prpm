@@ -20,6 +20,11 @@ export interface LockfilePackage {
     name_slug: string;
     version?: string;
   };
+  // For Claude hooks: track which hook events were added
+  hookMetadata?: {
+    events: string[]; // e.g., ['PreToolUse', 'PostToolUse']
+    hookId: string; // Unique identifier to find and remove this hook
+  };
 }
 
 export interface LockfileCollection {
@@ -103,6 +108,10 @@ export function addToLockfile(
       name_slug: string;
       version?: string;
     };
+    hookMetadata?: {
+      events: string[];
+      hookId: string;
+    };
   }
 ): void {
   lockfile.packages[packageId] = {
@@ -114,6 +123,7 @@ export function addToLockfile(
     subtype: packageInfo.subtype,
     installedPath: packageInfo.installedPath,
     fromCollection: packageInfo.fromCollection,
+    hookMetadata: packageInfo.hookMetadata,
   };
   lockfile.generated = new Date().toISOString();
 }

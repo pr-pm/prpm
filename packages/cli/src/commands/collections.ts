@@ -546,6 +546,7 @@ export async function handleCollectionInstall(
 
     // Install packages sequentially
     const installedPackageIds: string[] = [];
+    let hasClaudeHooks = false;
     for (let i = 0; i < packages.length; i++) {
       const pkg = packages[i];
       const progress = `${i + 1}/${packages.length}`;
@@ -569,6 +570,11 @@ export async function handleCollectionInstall(
         // Only set 'as' if user explicitly provided a format
         if (options.format) {
           installOptions.as = options.format;
+        }
+
+        // Track if this collection contains Claude hooks
+        if (pkg.format === 'claude' && pkg.subtype === 'hook') {
+          hasClaudeHooks = true;
         }
 
         await handleInstall(`${pkg.packageId}@${pkg.version}`, installOptions);
@@ -604,6 +610,12 @@ export async function handleCollectionInstall(
       console.log(`   ${packagesFailed} optional packages failed`);
     }
     console.log(`   🔒 Collection tracked in lock file`);
+
+    // Show Claude hooks warning if any were installed
+    if (hasClaudeHooks) {
+      console.log(`\n⚠️  This collection includes Claude hooks that execute automatically.`);
+      console.log(`   📖 Review hook configurations in .claude/settings.json`);
+    }
     console.log('');
 
     await telemetry.track({
