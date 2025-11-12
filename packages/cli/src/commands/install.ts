@@ -294,15 +294,18 @@ export async function handleInstall(
 
     // Determine version to install
     let tarballUrl: string;
+    let actualVersion: string;
     if (version === 'latest') {
       if (!pkg.latest_version) {
         throw new Error('No versions available for this package');
       }
       tarballUrl = pkg.latest_version.tarball_url;
+      actualVersion = pkg.latest_version.version;
       console.log(`   📦 Installing version ${pkg.latest_version.version}`);
     } else {
       const versionInfo = await client.getPackageVersion(packageId, version);
       tarballUrl = versionInfo.tarball_url;
+      actualVersion = version;
       console.log(`   📦 Installing version ${version}`);
     }
 
@@ -323,6 +326,7 @@ export async function handleInstall(
     // Track where files were saved for user feedback
     let destPath: string;
     let fileCount = 0;
+    let hookMetadata: { events: string[]; hookId: string } | undefined = undefined;
 
     // Special handling for CLAUDE.md format (goes in project root)
     if (format === 'claude-md') {
@@ -396,7 +400,6 @@ export async function handleInstall(
       }
 
       // Special handling for Claude hooks - merge into settings.json
-      let hookMetadata: { events: string[]; hookId: string } | undefined;
       if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
         const { readFile } = await import('fs/promises');
         const { fileExists } = await import('../core/filesystem.js');
@@ -598,7 +601,6 @@ export async function handleInstall(
 
     // Update or create lock file
     const updatedLockfile = lockfile || createLockfile();
-    const actualVersion = version === 'latest' ? pkg.latest_version?.version : version;
 
     addToLockfile(updatedLockfile, packageId, {
       version: actualVersion || version,
