@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getSimilarPackages } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
-import { Sparkles, Download, Star, Crown } from 'lucide-react'
-import { PRPMPlusUpgradeModal } from './PRPMPlusUpgradeModal'
+import { Sparkles, Download, Star } from 'lucide-react'
 
 interface SimilarPackagesProps {
   packageId: string
@@ -17,7 +16,6 @@ export function SimilarPackages({ packageId, jwtToken, limit = 5 }: SimilarPacka
   const [similarPackages, setSimilarPackages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   useEffect(() => {
     async function loadSimilar() {
@@ -32,11 +30,7 @@ export function SimilarPackages({ packageId, jwtToken, limit = 5 }: SimilarPacka
         setError(null)
       } catch (err: any) {
         console.error('Failed to load similar packages:', err)
-        if (err.message?.includes('prpm_plus_required') || err.message?.includes('403')) {
-          setError('prpm_plus_required')
-        } else {
-          setError('Failed to load similar packages')
-        }
+        setError('Failed to load similar packages')
       } finally {
         setLoading(false)
       }
@@ -64,41 +58,6 @@ export function SimilarPackages({ packageId, jwtToken, limit = 5 }: SimilarPacka
     )
   }
 
-  if (error === 'prpm_plus_required') {
-    return (
-      <>
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-700 p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Crown className="w-5 h-5 text-purple-600" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Similar Packages
-            </h3>
-            <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">
-              PRPM+
-            </span>
-          </div>
-
-          <p className="text-gray-700 dark:text-gray-300 mb-4">
-            Discover similar packages using AI-powered semantic matching.
-          </p>
-
-          <button
-            onClick={() => setShowUpgradeModal(true)}
-            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105"
-          >
-            Unlock with PRPM+
-          </button>
-        </div>
-
-        <PRPMPlusUpgradeModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          feature="Similar Packages"
-        />
-      </>
-    )
-  }
-
   if (!jwtToken) {
     return (
       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
@@ -107,13 +66,13 @@ export function SimilarPackages({ packageId, jwtToken, limit = 5 }: SimilarPacka
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Similar Packages
           </h3>
-          <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">
-            AI
+          <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
+            Free
           </span>
         </div>
 
         <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-          Sign in to see AI-powered package recommendations
+          Sign in to see free AI-powered package recommendations
         </p>
 
         <button

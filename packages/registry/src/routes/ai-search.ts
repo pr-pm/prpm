@@ -1,89 +1,11 @@
 /**
  * AI Search Routes
- * AI-powered semantic search (PRPM+ feature)
+ * AI-powered semantic search (Free for all authenticated users)
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { AISearchService } from '../services/ai-search.js';
 import type { AISearchQuery } from '@pr-pm/types';
-
-/**
- * Middleware to check PRPM+ access for AI search
- */
-async function checkPRPMPlusAccess(request: FastifyRequest, reply: FastifyReply) {
-  const userId = (request.user as any)?.user_id;
-
-  if (!userId) {
-    return reply.code(401).send({
-      error: 'authentication_required',
-      message: 'AI Search requires authentication',
-      upgrade_info: {
-        feature: 'AI-Powered Semantic Search',
-        plan_required: 'PRPM+',
-        price: '$19/month',
-        benefits: [
-          'Unlimited AI semantic search',
-          'Natural language package discovery',
-          'AI-powered recommendations',
-          '100 monthly playground credits',
-          'Priority support'
-        ],
-        upgrade_url: '/pricing',
-        trial_available: true,
-        trial_duration: '14 days'
-      }
-    });
-  }
-
-  // Check subscription tier
-  const userResult = await request.server.pg.query(
-    `SELECT subscription_tier, subscription_status, trial_ends_at
-     FROM users
-     WHERE id = $1`,
-    [userId]
-  );
-
-  if (userResult.rows.length === 0) {
-    return reply.code(403).send({ error: 'user_not_found' });
-  }
-
-  const user = userResult.rows[0];
-  const now = new Date();
-  const trialActive = user.trial_ends_at && new Date(user.trial_ends_at) > now;
-
-  // Allow if PRPM+ member or active trial
-  if (user.subscription_tier === 'prpm_plus' && user.subscription_status === 'active') {
-    return; // Access granted
-  }
-
-  if (trialActive) {
-    return; // Trial access granted
-  }
-
-  // No access - send upgrade prompt
-  return reply.code(403).send({
-    error: 'prpm_plus_required',
-    message: 'AI Search is a PRPM+ feature. Upgrade to unlock unlimited semantic search.',
-    upgrade_info: {
-      feature: 'AI-Powered Semantic Search',
-      plan_required: 'PRPM+',
-      price: '$19/month',
-      current_tier: user.subscription_tier || 'free',
-      benefits: [
-        'Unlimited AI semantic search',
-        'Natural language package discovery',
-        'AI-powered recommendations',
-        'Similar packages suggestions',
-        '100 monthly playground credits (rollover to 200)',
-        'Verified author badge',
-        'Priority email support'
-      ],
-      upgrade_url: '/pricing',
-      trial_available: !user.trial_ends_at,
-      trial_duration: '14 days'
-    }
-  });
-}
 
 export async function aiSearchRoutes(server: FastifyInstance) {
   const aiSearchService = new AISearchService(server);
@@ -93,10 +15,10 @@ export async function aiSearchRoutes(server: FastifyInstance) {
    * Perform AI-powered semantic search
    */
   server.post('/', {
-    preHandler: [server.authenticate, checkPRPMPlusAccess],
+    preHandler: [server.authenticate],
     schema: {
-      description: 'AI-powered semantic search for packages (PRPM+ feature)',
-      tags: ['ai-search', 'prpm-plus'],
+      description: 'AI-powered semantic search for packages (Free for authenticated users)',
+      tags: ['ai-search'],
       body: {
         type: 'object',
         required: ['query'],
@@ -195,10 +117,10 @@ export async function aiSearchRoutes(server: FastifyInstance) {
    * Get similar packages using AI
    */
   server.get('/similar/:packageId', {
-    preHandler: [server.authenticate, checkPRPMPlusAccess],
+    preHandler: [server.authenticate],
     schema: {
-      description: 'Get similar packages using AI embeddings (PRPM+ feature)',
-      tags: ['ai-search', 'prpm-plus'],
+      description: 'Get similar packages using AI embeddings (Free for authenticated users)',
+      tags: ['ai-search'],
       params: {
         type: 'object',
         required: ['packageId'],
@@ -254,78 +176,28 @@ export async function aiSearchRoutes(server: FastifyInstance) {
   /**
    * GET /ai-search/access
    * Check if user has AI search access (for frontend)
+   * Now free for all authenticated users - always returns true
    */
   server.get('/access', {
     preHandler: [server.authenticate],
     schema: {
-      description: 'Check if user has access to AI search',
-      tags: ['ai-search', 'prpm-plus'],
+      description: 'Check if user has access to AI search (Always true for authenticated users)',
+      tags: ['ai-search'],
       response: {
         200: {
           type: 'object',
           properties: {
             has_access: { type: 'boolean' },
-            reason: { type: 'string' },
-            trial_expires_at: { type: 'string', nullable: true },
-            upgrade_info: { type: 'object', nullable: true }
+            reason: { type: 'string' }
           }
         }
       }
     }
   }, async (request, reply) => {
-    const userId = (request.user as any).user_id;
-
-    const userResult = await server.pg.query(
-      `SELECT subscription_tier, subscription_status, trial_ends_at
-       FROM users
-       WHERE id = $1`,
-      [userId]
-    );
-
-    if (userResult.rows.length === 0) {
-      return reply.code(200).send({
-        has_access: false,
-        reason: 'user_not_found',
-        trial_expires_at: null,
-        upgrade_info: null
-      });
-    }
-
-    const user = userResult.rows[0];
-    const now = new Date();
-    const trialActive = user.trial_ends_at && new Date(user.trial_ends_at) > now;
-
-    if (user.subscription_tier === 'prpm_plus' && user.subscription_status === 'active') {
-      return reply.code(200).send({
-        has_access: true,
-        reason: 'prpm_plus_member',
-        trial_expires_at: null,
-        upgrade_info: null
-      });
-    }
-
-    if (trialActive) {
-      return reply.code(200).send({
-        has_access: true,
-        reason: 'trial_active',
-        trial_expires_at: user.trial_ends_at,
-        upgrade_info: null
-      });
-    }
-
+    // AI search is now free for all authenticated users
     return reply.code(200).send({
-      has_access: false,
-      reason: 'no_subscription',
-      trial_expires_at: null,
-      upgrade_info: {
-        feature: 'AI-Powered Semantic Search',
-        plan_required: 'PRPM+',
-        price: '$19/month',
-        current_tier: user.subscription_tier || 'free',
-        upgrade_url: '/pricing',
-        trial_available: !user.trial_ends_at,
-        trial_duration: '14 days'
-      }
+      has_access: true,
+      reason: 'authenticated_user'
     });
   });
 }

@@ -74,22 +74,20 @@ function displayAIResults(response: AISearchResponse): void {
 }
 
 /**
- * Display PRPM+ upgrade prompt
+ * Display login prompt for AI search
  */
-function displayUpgradePrompt(): void {
+function displayLoginPrompt(): void {
   console.log('\n' + '╔' + '═'.repeat(78) + '╗');
   console.log('║' + ' '.repeat(78) + '║');
-  console.log('║' + '  ✨ AI-Powered Search requires PRPM+'.padEnd(78) + '║');
+  console.log('║' + '  ✨ AI-Powered Search is FREE for all users!'.padEnd(78) + '║');
   console.log('║' + ' '.repeat(78) + '║');
-  console.log('║' + '  Semantic search understands what you\'re trying to build:'.padEnd(78) + '║');
+  console.log('║' + '  Just sign in to use:'.padEnd(78) + '║');
   console.log('║' + '    • Natural language queries'.padEnd(78) + '║');
   console.log('║' + '    • Intent-based matching'.padEnd(78) + '║');
   console.log('║' + '    • AI-enriched package descriptions'.padEnd(78) + '║');
   console.log('║' + '    • Similar package recommendations'.padEnd(78) + '║');
   console.log('║' + ' '.repeat(78) + '║');
-  console.log('║' + '  🎁 14-day free trial | $19/month'.padEnd(78) + '║');
-  console.log('║' + ' '.repeat(78) + '║');
-  console.log('║' + '  Upgrade: https://prpm.dev/pricing'.padEnd(78) + '║');
+  console.log('║' + '  Login: prpm login'.padEnd(78) + '║');
   console.log('║' + ' '.repeat(78) + '║');
   console.log('╚' + '═'.repeat(78) + '╝\n');
 }
@@ -123,7 +121,7 @@ export async function handleAISearch(
     if (!config.token) {
       console.log('\n❌ Authentication required for AI search');
       console.log('   Please login first: \x1b[36mprpm login\x1b[0m\n');
-      displayUpgradePrompt();
+      displayLoginPrompt();
       throw new CLIError('Authentication required', 1);
     }
 
@@ -153,21 +151,8 @@ export async function handleAISearch(
     if (res.status === 401) {
       console.log('\n❌ Authentication failed');
       console.log('   Please login again: \x1b[36mprpm login\x1b[0m\n');
-      displayUpgradePrompt();
+      displayLoginPrompt();
       throw new CLIError('Authentication failed', 1);
-    }
-
-    if (res.status === 403) {
-      // User doesn't have PRPM+ access
-      const errorData = await res.json().catch(() => ({}));
-      console.log('\n❌ AI search requires PRPM+ subscription');
-
-      if (errorData.upgrade_info?.trial_available) {
-        console.log('   🎁 Start your 14-day free trial today!');
-      }
-
-      displayUpgradePrompt();
-      throw new CLIError('PRPM+ subscription required', 1);
     }
 
     if (!res.ok) {
@@ -228,7 +213,7 @@ export function createAISearchCommand(): Command {
   const command = new Command('ai-search');
 
   command
-    .description('AI-powered semantic search (PRPM+ feature)')
+    .description('AI-powered semantic search (Free for authenticated users)')
     .argument('<query>', 'Natural language search query')
     .option('--limit <number>', 'Number of results to return (default: 10)', '10')
     .option('--format <format>', 'Filter by package format (cursor, claude, continue, etc.)')
