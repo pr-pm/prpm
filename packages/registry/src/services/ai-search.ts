@@ -12,6 +12,7 @@ import type {
   AISearchConfig,
   SearchRankingWeights
 } from '@pr-pm/types';
+import { QueryEnhancerService } from './query-enhancer.js';
 
 const DEFAULT_CONFIG: AISearchConfig = {
   embedding_model: 'text-embedding-3-small',
@@ -19,7 +20,7 @@ const DEFAULT_CONFIG: AISearchConfig = {
   max_candidates: 50,
   max_results: 10,
   ranking_weights: {
-    semantic_similarity: 0.5,
+    semantic_similarity: 0.4,  // Reduced slightly to make room for keyword boost
     quality_score: 0.3,
     popularity: 0.2
   },
@@ -30,6 +31,7 @@ export class AISearchService {
   private openai: OpenAI;
   private server: FastifyInstance;
   private config: AISearchConfig;
+  private queryEnhancer: QueryEnhancerService;
 
   constructor(server: FastifyInstance, config?: Partial<AISearchConfig>) {
     this.server = server;
@@ -42,6 +44,8 @@ export class AISearchService {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
+
+    this.queryEnhancer = new QueryEnhancerService(server);
   }
 
   /**
@@ -49,30 +53,72 @@ export class AISearchService {
    */
   async search(query: AISearchQuery, userId?: string): Promise<AISearchResponse> {
     const startTime = Date.now();
-    const metadata = {
+    const metadata: any = {
       embedding_time_ms: 0,
       vector_search_time_ms: 0,
-      reranking_time_ms: 0
+      keyword_search_time_ms: 0,
+      hybrid_merge_time_ms: 0,
+      reranking_time_ms: 0,
+      query_enhancement_time_ms: 0
     };
 
     try {
-      // Step 1: Generate embedding for user query
+      // Step 1: Enhance query with AI
+      const enhanceStart = Date.now();
+      const enhancement = await this.queryEnhancer.enhanceQuery(query.query);
+      metadata.query_enhancement_time_ms = Date.now() - enhanceStart;
+      metadata.query_enhancement = {
+        enhanced_query: enhancement.enhanced_query,
+        detected_intent: enhancement.detected_intent,
+        key_concepts: enhancement.key_concepts
+      };
+
+      // Apply AI-suggested filters if none provided
+      if (!query.filters?.format && enhancement.suggested_formats) {
+        query.filters = query.filters || {};
+        // Don't auto-apply, just track for now
+        metadata.suggested_formats = enhancement.suggested_formats;
+      }
+
+      // Step 2: Generate embedding for enhanced query
       const embeddingStart = Date.now();
-      const queryEmbedding = await this.generateQueryEmbedding(query.query);
+      const queryEmbedding = await this.generateQueryEmbedding(enhancement.enhanced_query);
       metadata.embedding_time_ms = Date.now() - embeddingStart;
 
-      // Step 2: Vector similarity search to get top candidates
+      // Step 3: Hybrid search - both vector and keyword
       const vectorSearchStart = Date.now();
-      const candidates = await this.vectorSearch(
+      const vectorCandidates = await this.vectorSearch(
         queryEmbedding,
         query.filters,
         this.config.max_candidates
       );
       metadata.vector_search_time_ms = Date.now() - vectorSearchStart;
 
-      // Step 3: Rerank candidates by combined score
+      // Step 4: Keyword search for exact/partial matches
+      const keywordSearchStart = Date.now();
+      const keywordCandidates = await this.keywordSearch(
+        query.query,
+        enhancement.key_concepts,
+        query.filters,
+        30 // Get top 30 from keyword search
+      );
+      metadata.keyword_search_time_ms = Date.now() - keywordSearchStart;
+
+      // Step 5: Merge and deduplicate results
+      const mergeStart = Date.now();
+      const mergedCandidates = this.mergeResults(vectorCandidates, keywordCandidates);
+      metadata.hybrid_merge_time_ms = Date.now() - mergeStart;
+      metadata.vector_count = vectorCandidates.length;
+      metadata.keyword_count = keywordCandidates.length;
+      metadata.merged_count = mergedCandidates.length;
+
+      // Step 6: Rerank candidates by combined score
       const rerankingStart = Date.now();
-      const rankedResults = this.rerankResults(candidates, this.config.ranking_weights);
+      const rankedResults = this.rerankResults(
+        mergedCandidates,
+        this.config.ranking_weights,
+        enhancement.key_concepts
+      );
       metadata.reranking_time_ms = Date.now() - rerankingStart;
 
       // Step 4: Take top N results
@@ -257,11 +303,148 @@ export class AISearchService {
   }
 
   /**
-   * Rerank results using weighted scoring
+   * Keyword search for exact/partial matches
+   */
+  private async keywordSearch(
+    query: string,
+    keyConcepts: string[],
+    filters?: AISearchQuery['filters'],
+    limit: number = 30
+  ): Promise<AISearchResult[]> {
+    // Build search terms
+    const searchTerms = [query, ...keyConcepts].filter(Boolean);
+    const tsQuery = searchTerms.map(t => t.replace(/[^\w\s]/g, '')).join(' | ');
+
+    // Build filter conditions
+    const conditions: string[] = [
+      "p.visibility = 'public'",
+      "p.deprecated = false",
+      `(
+        to_tsvector('english', p.name || ' ' || COALESCE(p.description, '') || ' ' || COALESCE(array_to_string(p.tags, ' '), ''))
+        @@ to_tsquery('english', $1)
+      )`
+    ];
+    const params: any[] = [tsQuery];
+    let paramCount = 1;
+
+    if (filters?.format) {
+      paramCount++;
+      conditions.push(`p.format = $${paramCount}`);
+      params.push(filters.format);
+    }
+
+    if (filters?.subtype) {
+      paramCount++;
+      conditions.push(`p.subtype = $${paramCount}`);
+      params.push(filters.subtype);
+    }
+
+    const whereClause = conditions.join(' AND ');
+    paramCount++;
+
+    const queryText = `
+      SELECT
+        p.id as package_id,
+        p.name,
+        p.description,
+        p.format,
+        p.subtype,
+        p.author_id,
+        u.username as author_username,
+        p.version,
+        p.quality_score,
+        p.total_downloads,
+        COALESCE(s.stars_count, 0) as stars_count,
+        pe.ai_use_case_description,
+        pe.ai_problem_statement,
+        pe.ai_best_for,
+        pe.ai_similar_to,
+        ts_rank(
+          to_tsvector('english', p.name || ' ' || COALESCE(p.description, '') || ' ' || COALESCE(array_to_string(p.tags, ' '), '')),
+          to_tsquery('english', $1)
+        ) as keyword_relevance
+      FROM packages p
+      LEFT JOIN package_embeddings pe ON p.id = pe.package_id
+      LEFT JOIN users u ON p.author_id = u.id
+      LEFT JOIN (
+        SELECT package_id, COUNT(*) as stars_count
+        FROM package_stars
+        GROUP BY package_id
+      ) s ON p.id = s.package_id
+      WHERE ${whereClause}
+      ORDER BY keyword_relevance DESC, p.total_downloads DESC
+      LIMIT $${paramCount}
+    `;
+
+    params.push(limit);
+
+    try {
+      const result = await this.server.pg.query(queryText, params);
+
+      return result.rows.map(row => ({
+        package_id: row.package_id,
+        name: row.name,
+        description: row.description,
+        format: row.format,
+        subtype: row.subtype,
+        author_id: row.author_id,
+        author_username: row.author_username,
+        version: row.version,
+        quality_score: row.quality_score,
+        total_downloads: row.total_downloads,
+        stars_count: row.stars_count,
+        ai_use_case_description: row.ai_use_case_description,
+        ai_problem_statement: row.ai_problem_statement,
+        ai_best_for: row.ai_best_for,
+        ai_similar_to: row.ai_similar_to || [],
+        similarity_score: parseFloat(row.keyword_relevance || '0'), // Use keyword relevance as similarity
+        quality_score_normalized: 0,
+        popularity_score_normalized: 0,
+        final_score: 0,
+        keyword_match: true as any // Flag to boost in reranking
+      }));
+    } catch (error) {
+      this.server.log.warn({ error }, 'Keyword search failed');
+      return [];
+    }
+  }
+
+  /**
+   * Merge vector and keyword search results
+   */
+  private mergeResults(
+    vectorResults: AISearchResult[],
+    keywordResults: AISearchResult[]
+  ): AISearchResult[] {
+    const merged = new Map<string, AISearchResult>();
+
+    // Add vector results
+    vectorResults.forEach(result => {
+      merged.set(result.package_id, { ...result, source: 'vector' as any });
+    });
+
+    // Merge keyword results (boost if already present)
+    keywordResults.forEach(result => {
+      if (merged.has(result.package_id)) {
+        const existing = merged.get(result.package_id)!;
+        // Boost similarity score for packages found in both
+        existing.similarity_score = Math.min(1, existing.similarity_score * 1.2);
+        existing.source = 'hybrid' as any;
+      } else {
+        merged.set(result.package_id, { ...result, source: 'keyword' as any });
+      }
+    });
+
+    return Array.from(merged.values());
+  }
+
+  /**
+   * Rerank results using weighted scoring with keyword boost
    */
   private rerankResults(
     candidates: AISearchResult[],
-    weights: SearchRankingWeights
+    weights: SearchRankingWeights,
+    keyConcepts: string[] = []
   ): AISearchResult[] {
     // Filter by minimum similarity threshold
     const filtered = candidates.filter(
@@ -284,21 +467,68 @@ export class AISearchService {
       const qualityNormalized = parseFloat(candidate.quality_score?.toString() || '0') / maxQuality;
       const popularityNormalized = Math.log10(candidate.total_downloads + 1) / logMaxDownloads;
 
+      // Keyword concept boost (10% bonus for matching key concepts)
+      let conceptBoost = 0;
+      const nameAndDesc = `${candidate.name} ${candidate.description}`.toLowerCase();
+      const matchedConcepts = keyConcepts.filter(concept =>
+        nameAndDesc.includes(concept.toLowerCase())
+      );
+      if (matchedConcepts.length > 0) {
+        conceptBoost = Math.min(0.1, matchedConcepts.length * 0.03);
+      }
+
       const finalScore =
         (candidate.similarity_score * weights.semantic_similarity) +
         (qualityNormalized * weights.quality_score) +
-        (popularityNormalized * weights.popularity);
+        (popularityNormalized * weights.popularity) +
+        conceptBoost;
 
       return {
         ...candidate,
         quality_score_normalized: qualityNormalized,
         popularity_score_normalized: popularityNormalized,
-        final_score: finalScore
+        final_score: finalScore,
+        match_explanation: this.generateMatchExplanation(
+          candidate,
+          keyConcepts,
+          matchedConcepts
+        )
       };
     });
 
     // Sort by final score descending
     return scored.sort((a, b) => b.final_score - a.final_score);
+  }
+
+  /**
+   * Generate human-readable explanation for why this result matched
+   */
+  private generateMatchExplanation(
+    result: AISearchResult,
+    keyConcepts: string[],
+    matchedConcepts: string[]
+  ): string {
+    const explanations: string[] = [];
+
+    if (result.similarity_score > 0.8) {
+      explanations.push('Highly relevant semantically');
+    } else if (result.similarity_score > 0.6) {
+      explanations.push('Semantically related');
+    }
+
+    if (matchedConcepts.length > 0) {
+      explanations.push(`Matches: ${matchedConcepts.join(', ')}`);
+    }
+
+    if (result.quality_score && parseFloat(result.quality_score.toString()) > 4) {
+      explanations.push('High quality');
+    }
+
+    if (result.total_downloads > 1000) {
+      explanations.push('Popular');
+    }
+
+    return explanations.join(' • ') || 'Relevant match';
   }
 
   /**
