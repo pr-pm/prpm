@@ -7,7 +7,8 @@
           {
             "type": "command",
             "command": "node .claude/hooks/sensitive-data-scanner/dist/hook.js",
-            "timeout": 3000
+            "timeout": 3000,
+            "systemMessage": "🔐 Scanning for AWS keys, private keys, and JWT tokens"
           }
         ]
       }

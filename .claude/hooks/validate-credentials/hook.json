@@ -7,7 +7,8 @@
           {
             "type": "command",
             "command": "node .claude/hooks/validate-credentials/dist/hook.js",
-            "timeout": 3000
+            "timeout": 3000,
+            "systemMessage": "🔍 Scanning for hardcoded credentials (passwords, API keys, tokens)"
           }
         ]
       }
