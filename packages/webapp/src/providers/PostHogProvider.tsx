@@ -14,7 +14,6 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
     capture_pageleave: true,
     // Session replay configuration for screen recordings
     session_recording: {
-      recordCanvas: true, // Record canvas elements
       recordCrossOriginIframes: false, // Don't record cross-origin iframes
       maskAllInputs: false, // Don't mask all inputs by default (selectively mask sensitive ones)
       maskTextSelector: '[data-ph-mask]', // Use data attribute for sensitive fields
