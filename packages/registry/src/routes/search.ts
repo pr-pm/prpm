@@ -362,7 +362,7 @@ export async function searchRoutes(server: FastifyInstance) {
        FROM packages p
        LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
-       ORDER BY p.quality_score DESC NULLS LAST, p.total_downloads DESC
+       ORDER BY p.quality_score DESC NULLS LAST, p.total_downloads DESC, p.id ASC
        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
       [...params, limit, offset]
     );
@@ -490,7 +490,7 @@ export async function searchRoutes(server: FastifyInstance) {
       `SELECT name, updated_at
        FROM packages
        WHERE visibility = 'public'
-       ORDER BY total_downloads DESC, name ASC
+       ORDER BY total_downloads DESC, id ASC
        LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
@@ -546,9 +546,9 @@ export async function searchRoutes(server: FastifyInstance) {
       server,
       `SELECT name_slug, updated_at
        FROM collections
-       ORDER BY downloads DESC, name_slug ASC
+       ORDER BY downloads DESC, id ASC
        LIMIT $1 OFFSET $2`,
-      [limit, offset]
+       [limit, offset]
     );
 
     const response = {
