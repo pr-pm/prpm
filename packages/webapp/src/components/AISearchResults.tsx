@@ -102,6 +102,40 @@ export function AISearchResults({ results, query, executionTime }: AISearchResul
                   </div>
                 )}
 
+                {/* Match Explanation - WHY this matched */}
+                {(result as any).match_explanation && (
+                  <div className="mb-3 px-3 py-2 bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-medium text-purple-900 dark:text-purple-200 block mb-1">
+                          Why this matched:
+                        </span>
+                        <span className="text-sm text-purple-800 dark:text-purple-300">
+                          {(result as any).match_explanation}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Search Source Badge */}
+                {(result as any).source && (
+                  <div className="mb-2">
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                      (result as any).source === 'hybrid'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : (result as any).source === 'keyword'
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}>
+                      {(result as any).source === 'hybrid' && '✓ Semantic + Keyword Match'}
+                      {(result as any).source === 'keyword' && '🔍 Keyword Match'}
+                      {(result as any).source === 'vector' && '🧠 Semantic Match'}
+                    </span>
+                  </div>
+                )}
+
                 {/* Stats */}
                 <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center gap-1">
