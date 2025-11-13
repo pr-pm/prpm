@@ -4,11 +4,54 @@
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import { AISearchService } from '../services/ai-search.js';
 import type { AISearchQuery } from '@pr-pm/types';
 
 export async function aiSearchRoutes(server: FastifyInstance) {
   const aiSearchService = new AISearchService(server);
+
+  // Generous rate limiting for anonymous AI search
+  // 300 requests per 15 minutes per IP = ~1 request every 3 seconds
+  // This prevents abuse while being very generous for legitimate use
+  await server.register(rateLimit, {
+    max: 300,
+    timeWindow: '15 minutes',
+    cache: 10000, // Cache up to 10k IP addresses
+    allowList: ['127.0.0.1', '::1'], // Allow localhost unlimited
+    skipOnError: true, // Don't block on Redis errors
+    keyGenerator: (request: FastifyRequest) => {
+      // Use X-Forwarded-For if behind proxy, otherwise use IP
+      const forwarded = request.headers['x-forwarded-for'];
+      if (typeof forwarded === 'string') {
+        return forwarded.split(',')[0].trim();
+      }
+      return request.ip;
+    },
+    errorResponseBuilder: () => {
+      return {
+        error: 'rate_limit_exceeded',
+        message: 'Too many AI search requests. Please wait a moment and try again.',
+        limit: 300,
+        window: '15 minutes',
+        hint: 'You can make up to 300 searches every 15 minutes (about 1 every 3 seconds)'
+      };
+    },
+    onExceeding: (request: FastifyRequest) => {
+      server.log.warn({
+        ip: request.ip,
+        forwarded: request.headers['x-forwarded-for'],
+        path: request.url
+      }, 'AI search rate limit being approached');
+    },
+    onExceeded: (request: FastifyRequest) => {
+      server.log.warn({
+        ip: request.ip,
+        forwarded: request.headers['x-forwarded-for'],
+        path: request.url
+      }, 'AI search rate limit exceeded');
+    }
+  });
 
   /**
    * POST /ai-search

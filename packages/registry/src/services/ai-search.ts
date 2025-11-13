@@ -65,13 +65,28 @@ export class AISearchService {
     try {
       // Step 1: Enhance query with AI
       const enhanceStart = Date.now();
-      const enhancement = await this.queryEnhancer.enhanceQuery(query.query);
-      metadata.query_enhancement_time_ms = Date.now() - enhanceStart;
-      metadata.query_enhancement = {
-        enhanced_query: enhancement.enhanced_query,
-        detected_intent: enhancement.detected_intent,
-        key_concepts: enhancement.key_concepts
-      };
+      let enhancement;
+      try {
+        enhancement = await this.queryEnhancer.enhanceQuery(query.query);
+        metadata.query_enhancement_time_ms = Date.now() - enhanceStart;
+        metadata.query_enhancement = {
+          enhanced_query: enhancement.enhanced_query,
+          detected_intent: enhancement.detected_intent,
+          key_concepts: enhancement.key_concepts
+        };
+      } catch (error) {
+        // Track but don't fail - fall back to original query
+        await this.errorMonitoring.trackQueryEnhancementError(error as Error, query.query);
+        enhancement = {
+          original_query: query.query,
+          enhanced_query: query.query,
+          detected_intent: 'general_search',
+          key_concepts: [],
+          expansion_used: false
+        };
+        metadata.query_enhancement_time_ms = Date.now() - enhanceStart;
+        metadata.query_enhancement_error = true;
+      }
 
       // Apply AI-suggested filters if none provided
       if (!query.filters?.format && enhancement.suggested_formats) {
@@ -82,17 +97,29 @@ export class AISearchService {
 
       // Step 2: Generate embedding for enhanced query
       const embeddingStart = Date.now();
-      const queryEmbedding = await this.generateQueryEmbedding(enhancement.enhanced_query);
-      metadata.embedding_time_ms = Date.now() - embeddingStart;
+      let queryEmbedding;
+      try {
+        queryEmbedding = await this.generateQueryEmbedding(enhancement.enhanced_query);
+        metadata.embedding_time_ms = Date.now() - embeddingStart;
+      } catch (error) {
+        await this.errorMonitoring.trackOpenAIError(error as Error, 'embedding', enhancement.enhanced_query);
+        throw error; // Fail the search if embedding fails
+      }
 
       // Step 3: Hybrid search - both vector and keyword
       const vectorSearchStart = Date.now();
-      const vectorCandidates = await this.vectorSearch(
-        queryEmbedding,
-        query.filters,
-        this.config.max_candidates
-      );
-      metadata.vector_search_time_ms = Date.now() - vectorSearchStart;
+      let vectorCandidates;
+      try {
+        vectorCandidates = await this.vectorSearch(
+          queryEmbedding,
+          query.filters,
+          this.config.max_candidates
+        );
+        metadata.vector_search_time_ms = Date.now() - vectorSearchStart;
+      } catch (error) {
+        await this.errorMonitoring.trackVectorSearchError(error as Error, query.query, query.filters);
+        throw error; // Fail the search if vector search fails
+      }
 
       // Step 4: Keyword search for exact/partial matches
       const keywordSearchStart = Date.now();
