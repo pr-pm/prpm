@@ -8,7 +8,7 @@ That's exactly why we built PRPM. Now you can:
 • Install curated cursor rules: prpm install @sanjeed5/react
 • Get automatic updates with version control
 • Convert rules to work across Cursor, Claude, Windsurf, and other AI IDEs
-• Browse 6,000+ community-vetted packages with quality indicators
+• Browse 7,000+ community-vetted packages with quality indicators
 
 We just published the complete guide covering everything from MDC format and best practices to the top packages across frontend, backend, testing, security, DevOps, and more.
 

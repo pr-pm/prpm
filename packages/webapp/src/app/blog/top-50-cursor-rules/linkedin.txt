@@ -13,11 +13,11 @@ The breakdown:
 • 3 DevOps packages (Kubernetes specialists)
 • 2 ML/AI packages (PyTorch, machine learning)
 
-But here's what makes PRPM powerful: you're not limited to packages originally built for Cursor. Every package in our registry—6,000+ packages, agents, and prompts—can be converted to Cursor rules with one command.
+But here's what makes PRPM powerful: you're not limited to packages originally built for Cursor. Every package in our registry—7,000+ packages, agents, and prompts—can be converted to Cursor rules with one command.
 
 Search for "testing" and you'll see every testing-related package across all AI editors. Install any of them, and PRPM converts it to Cursor's format automatically. That's 10x more options than browsing cursor-specific packages alone.
 
-Key insights from analyzing 6,000+ packages:
+Key insights from analyzing 7,000+ packages:
 1. Quality correlates with author reputation (@prpm, @voltagent, @lst97, @sanjeed5)
 2. Comprehensive rules beat narrow ones (structure + performance + security + testing)
 3. Security and testing packages are rising fast
