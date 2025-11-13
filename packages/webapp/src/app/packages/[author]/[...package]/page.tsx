@@ -62,6 +62,7 @@ export async function generateStaticParams() {
       // Transform and deduplicate in one pass
       console.time('[SSG Packages] Params transformation')
       const paramsMap = new Map<string, any>()
+      const duplicates: Array<{ key: string; name: string }> = []
 
       allPackages.forEach((pkg: any) => {
         const name = pkg.name
@@ -84,11 +85,19 @@ export async function generateStaticParams() {
         const key = `${author}/${packageParts.join('/')}`
         if (!paramsMap.has(key)) {
           paramsMap.set(key, { author, package: packageParts })
+        } else {
+          duplicates.push({ key, name })
         }
       })
 
       const params = Array.from(paramsMap.values())
       console.timeEnd('[SSG Packages] Params transformation')
+
+      if (duplicates.length > 0) {
+        console.log(`[SSG Packages] ⚠️  Found ${duplicates.length} duplicate URL paths`)
+        console.log('[SSG Packages] First 20 duplicates:', duplicates.slice(0, 20).map(d => `${d.name} → ${d.key}`))
+      }
+
       console.log(`[SSG Packages] ✅ Complete: ${params.length} unique packages for static generation`)
 
       return params

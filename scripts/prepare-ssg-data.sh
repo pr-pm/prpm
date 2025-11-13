@@ -208,14 +208,18 @@ if [ -n "$SSG_DATA_TOKEN" ]; then
     # Upload fresh data to S3 for future builds
     if command -v aws &> /dev/null; then
       echo "  Uploading fresh data to S3 cache..."
-      if aws s3 sync "$SSG_DATA_DIR/" "$S3_BUCKET/" \
+      UPLOAD_OUTPUT=$(aws s3 sync "$SSG_DATA_DIR/" "$S3_BUCKET/" \
         --exclude "*" \
         --include "packages.json" \
         --include "collections.json" \
-        --no-progress 2>/dev/null; then
+        --no-progress 2>&1)
+      UPLOAD_EXIT_CODE=$?
+
+      if [ $UPLOAD_EXIT_CODE -eq 0 ]; then
         success "Uploaded fresh data to S3 ($PKG_COUNT packages, $COLL_COUNT collections)"
       else
         warn "Could not upload to S3 (cache will be stale)"
+        debug "S3 upload error: $UPLOAD_OUTPUT"
       fi
     else
       debug "AWS CLI not available, skipping S3 upload"

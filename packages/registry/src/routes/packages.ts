@@ -1742,7 +1742,7 @@ export async function packageRoutes(server: FastifyInstance) {
             LIMIT 1
           ) pv ON true
           WHERE ${conditions.join(' AND ')}
-          ORDER BY p.total_downloads DESC
+          ORDER BY p.total_downloads DESC, p.id ASC
           LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
           params
         );
