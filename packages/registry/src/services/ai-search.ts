@@ -13,6 +13,7 @@ import type {
   SearchRankingWeights
 } from '@pr-pm/types';
 import { QueryEnhancerService } from './query-enhancer.js';
+import { ErrorMonitoringService } from './error-monitoring.js';
 
 const DEFAULT_CONFIG: AISearchConfig = {
   embedding_model: 'text-embedding-3-small',
@@ -32,6 +33,7 @@ export class AISearchService {
   private server: FastifyInstance;
   private config: AISearchConfig;
   private queryEnhancer: QueryEnhancerService;
+  private errorMonitoring: ErrorMonitoringService;
 
   constructor(server: FastifyInstance, config?: Partial<AISearchConfig>) {
     this.server = server;
@@ -46,6 +48,7 @@ export class AISearchService {
     });
 
     this.queryEnhancer = new QueryEnhancerService(server);
+    this.errorMonitoring = new ErrorMonitoringService(server);
   }
 
   /**
