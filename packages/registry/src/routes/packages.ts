@@ -1765,6 +1765,7 @@ export async function packageRoutes(server: FastifyInstance) {
           total_downloads: row.total_downloads || 0,
           weekly_downloads: row.weekly_downloads || 0,
           version_count: row.version_count || 0,
+          stars: row.stars || 0,
           rating_average: row.rating_average ? parseFloat(row.rating_average) : null,
           rating_count: row.rating_count || 0,
           verified: row.verified || false,

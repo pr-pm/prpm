@@ -14,17 +14,18 @@ DEBUG=${DEBUG:-false}
 
 # Fallback data (can be overridden by environment variables)
 # Realistic mock data for local development
+# NOTE: IDs must be UUIDs for star functionality to work
 FALLBACK_PACKAGES=${FALLBACK_PACKAGES:-'[
-  {"name":"@prpm/pulumi-troubleshooting-skill","description":"Comprehensive guide to troubleshooting Pulumi TypeScript errors","format":"claude","subtype":"skill","total_downloads":150,"weekly_downloads":25},
-  {"name":"@prpm/creating-skills-skill","description":"Expert guidance for creating effective Claude Code skills","format":"claude","subtype":"skill","total_downloads":120,"weekly_downloads":20},
-  {"name":"@prpm/typescript-type-safety","description":"Eliminate TypeScript any types and enforce strict type safety","format":"cursor","subtype":"rule","total_downloads":100,"weekly_downloads":15},
-  {"name":"@prpm/postgres-migrations","description":"PostgreSQL migrations best practices and common errors","format":"cursor","subtype":"rule","total_downloads":85,"weekly_downloads":12},
-  {"name":"@prpm/test-driven-development","description":"Write tests first to ensure they verify behavior","format":"claude","subtype":"skill","total_downloads":200,"weekly_downloads":30}
+  {"id":"11111111-1111-1111-1111-111111111111","name":"@prpm/pulumi-troubleshooting-skill","description":"Comprehensive guide to troubleshooting Pulumi TypeScript errors","format":"claude","subtype":"skill","total_downloads":150,"weekly_downloads":25,"stars":0},
+  {"id":"22222222-2222-2222-2222-222222222222","name":"@prpm/creating-skills-skill","description":"Expert guidance for creating effective Claude Code skills","format":"claude","subtype":"skill","total_downloads":120,"weekly_downloads":20,"stars":0},
+  {"id":"33333333-3333-3333-3333-333333333333","name":"@prpm/typescript-type-safety","description":"Eliminate TypeScript any types and enforce strict type safety","format":"cursor","subtype":"rule","total_downloads":100,"weekly_downloads":15,"stars":0},
+  {"id":"44444444-4444-4444-4444-444444444444","name":"@prpm/postgres-migrations","description":"PostgreSQL migrations best practices and common errors","format":"cursor","subtype":"rule","total_downloads":85,"weekly_downloads":12,"stars":0},
+  {"id":"55555555-5555-5555-5555-555555555555","name":"@prpm/test-driven-development","description":"Write tests first to ensure they verify behavior","format":"claude","subtype":"skill","total_downloads":200,"weekly_downloads":30,"stars":0}
 ]'}
 FALLBACK_COLLECTIONS=${FALLBACK_COLLECTIONS:-'[
-  {"name_slug":"claude-plugins-builder","description":"Tools and skills for building Claude Code plugins","package_count":8,"downloads":450,"stars":12},
-  {"name_slug":"accessibility-compliance","description":"WCAG compliance and accessibility testing","package_count":5,"downloads":280,"stars":8},
-  {"name_slug":"api-testing-observability","description":"API testing and observability patterns","package_count":6,"downloads":320,"stars":10}
+  {"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","name_slug":"claude-plugins-builder","description":"Tools and skills for building Claude Code plugins","package_count":8,"downloads":450,"stars":12},
+  {"id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","name_slug":"accessibility-compliance","description":"WCAG compliance and accessibility testing","package_count":5,"downloads":280,"stars":8},
+  {"id":"cccccccc-cccc-cccc-cccc-cccccccccccc","name_slug":"api-testing-observability","description":"API testing and observability patterns","package_count":6,"downloads":320,"stars":10}
 ]'}
 
 # Colors for output
@@ -74,7 +75,15 @@ if [ "$NEXT_PUBLIC_SKIP_SSG" = "true" ]; then
   API_SUCCESS=false
 # Otherwise, check if we have SSG_DATA_TOKEN for API access
 elif [ -n "$SSG_DATA_TOKEN" ]; then
-  REGISTRY_URL="${REGISTRY_URL:-https://registry.prpm.dev}"
+  # Use localhost in dev, production URL otherwise
+  if [ "$NODE_ENV" = "development" ] || [ -z "$CI" ]; then
+    REGISTRY_URL="${REGISTRY_URL:-http://localhost:3111}"
+    warn "Development mode: Using local registry at $REGISTRY_URL"
+    warn "This ensures package IDs match your local database"
+    NEEDS_FETCH=true  # Force fetch from local registry
+  else
+    REGISTRY_URL="${REGISTRY_URL:-https://registry.prpm.dev}"
+  fi
   debug "Registry URL: $REGISTRY_URL"
 
   # Get total count from registry (lightweight check)

@@ -13,6 +13,7 @@ import CollapsibleContent from '@/components/CollapsibleContent'
 import LatestVersionBadge from '@/components/LatestVersionBadge'
 import DynamicPackageContent from '@/components/DynamicPackageContent'
 import StarButtonWrapper from '@/components/StarButtonWrapper'
+import RecentlyViewedTracker from '@/components/RecentlyViewedTracker'
 import { getLicenseUrl } from '@/lib/license-utils'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
@@ -321,6 +322,18 @@ export default async function PackagePage({ params }: { params: { author: string
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+      />
+
+      {/* Track recently viewed */}
+      <RecentlyViewedTracker
+        type="package"
+        pkg={{
+          id: pkg.id,
+          name: pkg.name,
+          description: pkg.description,
+          format: pkg.format,
+          subtype: (pkg as any).subtype,
+        }}
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

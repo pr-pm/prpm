@@ -7,6 +7,7 @@ import { join } from 'path'
 import type { Collection } from '@pr-pm/types'
 import CollapsibleContent from '@/components/CollapsibleContent'
 import StarButtonWrapper from '@/components/StarButtonWrapper'
+import RecentlyViewedTracker from '@/components/RecentlyViewedTracker'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
 const SSG_TOKEN = process.env.SSG_DATA_TOKEN
@@ -234,6 +235,17 @@ export default async function CollectionPage({ params }: { params: { slug: strin
 
   return (
     <main className="min-h-screen bg-prpm-dark">
+      {/* Track recently viewed */}
+      <RecentlyViewedTracker
+        type="collection"
+        collection={{
+          scope: collection.scope,
+          name_slug: collection.name_slug,
+          description: collection.description,
+          package_count: (collection as any).package_count,
+        }}
+      />
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="mb-6 text-sm text-gray-400">

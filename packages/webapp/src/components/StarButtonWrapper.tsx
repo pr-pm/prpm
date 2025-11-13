@@ -22,6 +22,12 @@ export default function StarButtonWrapper({
   const [isStarred, setIsStarred] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // Don't render if id is missing
+  if (!id) {
+    console.warn('[StarButtonWrapper] Missing id for', type)
+    return null
+  }
+
   useEffect(() => {
     const checkStarStatus = async () => {
       const token = localStorage.getItem('prpm_token')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { starPackage, starCollection } from '../lib/api'
 
 interface StarButtonProps {
@@ -11,6 +11,29 @@ interface StarButtonProps {
   initialStarred?: boolean
   initialStars?: number
   onStarChange?: (starred: boolean, stars: number) => void
+}
+
+// LocalStorage helpers for anonymous starring
+const STORAGE_KEY_PACKAGES = 'prpm_starred_packages'
+const STORAGE_KEY_COLLECTIONS = 'prpm_starred_collections'
+
+function getLocalStars(type: 'package' | 'collection'): Set<string> {
+  try {
+    const key = type === 'package' ? STORAGE_KEY_PACKAGES : STORAGE_KEY_COLLECTIONS
+    const data = localStorage.getItem(key)
+    return new Set(data ? JSON.parse(data) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function setLocalStars(type: 'package' | 'collection', stars: Set<string>) {
+  try {
+    const key = type === 'package' ? STORAGE_KEY_PACKAGES : STORAGE_KEY_COLLECTIONS
+    localStorage.setItem(key, JSON.stringify(Array.from(stars)))
+  } catch (err) {
+    console.error('Failed to save to localStorage:', err)
+  }
 }
 
 export default function StarButton({
@@ -27,13 +50,57 @@ export default function StarButton({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleStar = async () => {
+  // Validate required props
+  if (!id) {
+    console.error('[StarButton] Missing required id')
+    return null
+  }
+
+  if (type === 'collection' && (!scope || !nameSlug)) {
+    console.error('[StarButton] Missing required scope or nameSlug for collection')
+    return null
+  }
+
+  // Check localStorage on mount for anonymous users
+  useEffect(() => {
     const token = localStorage.getItem('prpm_token')
     if (!token) {
-      setError('Please log in to star')
+      const localStars = getLocalStars(type)
+      const itemKey = type === 'package' ? id : `${scope}/${nameSlug}`
+      setStarred(localStars.has(itemKey))
+    }
+  }, [type, id, scope, nameSlug])
+
+  const handleStar = async () => {
+    const token = localStorage.getItem('prpm_token')
+
+    // Anonymous user: use localStorage
+    if (!token) {
+      const localStars = getLocalStars(type)
+      const itemKey = type === 'package' ? id : `${scope}/${nameSlug}`
+
+      const newStarred = !starred
+      if (newStarred) {
+        localStars.add(itemKey)
+      } else {
+        localStars.delete(itemKey)
+      }
+
+      setLocalStars(type, localStars)
+      setStarred(newStarred)
+
+      // Optimistic local star count update
+      const newStars = newStarred ? stars + 1 : Math.max(0, stars - 1)
+      setStars(newStars)
+
+      if (onStarChange) {
+        onStarChange(newStarred, newStars)
+      }
+
       return
     }
 
+    // Logged in user: use API
     setLoading(true)
     setError(null)
 

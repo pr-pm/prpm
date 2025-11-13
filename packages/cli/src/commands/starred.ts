@@ -4,7 +4,7 @@
 
 import { Command } from 'commander';
 import { getRegistryClient } from '@pr-pm/registry-client';
-import { config } from '../core/config';
+import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { CLIError } from '../core/errors';
 
@@ -16,26 +16,21 @@ export interface StarredOptions {
 }
 
 export async function handleStarred(options: StarredOptions): Promise<void> {
+  let success = false;
   try {
-    const token = config.get('token');
+    const config = await getConfig();
+    const token = config.token;
     if (!token) {
       throw new CLIError('You must be logged in to view starred items. Run `prpm login` first.');
     }
 
-    const registryUrl = config.get('registryUrl') || process.env.PRPM_REGISTRY_URL || 'https://registry.prpm.dev';
+    const registryUrl = config.registryUrl || process.env.PRPM_REGISTRY_URL || 'https://registry.prpm.dev';
     const client = getRegistryClient({ registryUrl, token });
 
     // Determine what to show (both by default)
     const showPackages = options.packages || (!options.packages && !options.collections);
     const showCollections = options.collections || (!options.packages && !options.collections);
     const limit = options.limit || 100;
-
-    // Track telemetry
-    await telemetry.trackCommand('starred', {
-      showPackages,
-      showCollections,
-      format: options.format,
-    });
 
     // Fetch starred packages
     let packages: any[] = [];
@@ -51,7 +46,7 @@ export async function handleStarred(options: StarredOptions): Promise<void> {
           throw new Error(`Failed to fetch starred packages: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        const data = await response.json() as { packages?: any[] };
         packages = data.packages || [];
 
         // Filter by format if specified
@@ -77,7 +72,7 @@ export async function handleStarred(options: StarredOptions): Promise<void> {
           throw new Error(`Failed to fetch starred collections: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        const data = await response.json() as { collections?: any[] };
         collections = data.collections || [];
       } catch (error) {
         console.error('Failed to fetch starred collections:', error);
@@ -142,11 +137,22 @@ export async function handleStarred(options: StarredOptions): Promise<void> {
 
     console.log(`\nTotal: ${packages.length + collections.length} starred items`);
     console.log('');
+    success = true;
   } catch (error) {
     if (error instanceof CLIError) {
       throw error;
     }
     throw new CLIError(`Failed to fetch starred items: ${error instanceof Error ? error.message : String(error)}`);
+  } finally {
+    await telemetry.track({
+      command: 'starred',
+      success,
+      data: {
+        showPackages: options.packages,
+        showCollections: options.collections,
+        format: options.format,
+      },
+    });
   }
 }
 

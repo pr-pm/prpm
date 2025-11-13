@@ -2,7 +2,7 @@
  * Collections routes tests
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
 import { collectionRoutes } from '../collections';
 
