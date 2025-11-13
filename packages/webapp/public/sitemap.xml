@@ -31,7 +31,7 @@
   <!-- Blog -->
   <url>
     <loc>https://prpm.dev/blog</loc>
-    <lastmod>2025-10-26</lastmod>
+    <lastmod>2025-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -171,8 +171,36 @@
   </url>
 
   <url>
+    <loc>https://prpm.dev/blog/cursor-rules</loc>
+    <lastmod>2025-11-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
     <loc>https://prpm.dev/blog/self-improving-ai</loc>
     <lastmod>2025-11-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/custom-prompts-for-verified-authors</loc>
+    <lastmod>2025-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/claude-hooks-support</loc>
+    <lastmod>2025-11-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prpm.dev/blog/claude-hooks-best-practices</loc>
+    <lastmod>2025-11-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

@@ -18,6 +18,7 @@ import { subscriptionRoutes } from './subscriptions.js';
 import { webhookRoutes } from './webhooks.js';
 import { playgroundRoutes } from './playground.js';
 import { playgroundCreditsRoutes } from './playground-credits.js';
+import { customPromptRoutes } from './custom-prompt.js';
 import { testCaseRoutes } from './test-cases.js';
 import { adminCostMonitoringRoutes } from './admin-cost-monitoring.js';
 import { suggestedTestInputsRoutes } from './suggested-test-inputs.js';
@@ -42,6 +43,7 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(webhookRoutes, { prefix: '/webhooks' });
       await api.register(playgroundRoutes, { prefix: '/playground' });
       await api.register(playgroundCreditsRoutes, { prefix: '/playground' });
+      await api.register(customPromptRoutes, { prefix: '/custom-prompt' });
       await api.register(testCaseRoutes, { prefix: '/' });
       await api.register(adminCostMonitoringRoutes, { prefix: '/admin/cost-analytics' });
       await api.register(suggestedTestInputsRoutes, { prefix: '/suggested-inputs' });

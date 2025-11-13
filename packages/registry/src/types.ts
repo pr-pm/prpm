@@ -4,7 +4,7 @@
 
 // Package types
 export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
-export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode';
+export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
 export type PackageVisibility = 'public' | 'private' | 'unlisted';
 export type OrgRole = 'owner' | 'admin' | 'maintainer' | 'member';

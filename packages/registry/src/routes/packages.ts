@@ -19,6 +19,25 @@ import type {
   ResolveQuery,
 } from '../types/requests.js';
 
+// Reusable enum constants for schema validation
+const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] as const;
+const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'] as const;
+
+// Columns to select for list results (excludes full_content to reduce payload size)
+const LIST_COLUMNS = `
+  p.id, p.name, p.display_name, p.description, p.author_id, p.org_id,
+  p.format, p.subtype, p.tags, p.keywords, p.category,
+  p.visibility, p.featured, p.verified, p.official,
+  p.total_downloads, p.weekly_downloads, p.monthly_downloads, p.version_count,
+  p.downloads_last_7_days, p.trending_score,
+  p.rating_average, p.rating_count, p.quality_score,
+  p.install_count, p.view_count,
+  p.license, p.license_text, p.license_url,
+  p.snippet, p.repository_url, p.homepage_url, p.documentation_url,
+  p.created_at, p.updated_at, p.last_published_at,
+  p.deprecated, p.deprecated_reason
+`.trim();
+
 export async function packageRoutes(server: FastifyInstance) {
   // List packages with pagination
   server.get('/', {
@@ -29,8 +48,8 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           search: { type: 'string' },
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
           category: { type: 'string' },
           featured: { type: 'boolean' },
           verified: { type: 'boolean' },
@@ -244,6 +263,114 @@ export async function packageRoutes(server: FastifyInstance) {
         // Replace storage URL with registry download URL
         // URL-encode package name to handle slashes in scoped packages
         const encodedPackageName = encodeURIComponent(packageName);
+        return {
+          ...version,
+          tarball_url: `${baseUrl}/api/v1/packages/${encodedPackageName}/${version.version}.tar.gz`
+        };
+      }
+      return version;
+    });
+
+    const packageInfo: PackageInfo = {
+      ...pkg,
+      versions: transformedVersions,
+      latest_version: transformedVersions[0],
+    };
+
+    // Only cache public packages (private packages should not be cached)
+    if (pkg.visibility === 'public') {
+      await cacheSet(server, cacheKey, packageInfo, 300);
+    }
+
+    return packageInfo;
+  });
+
+  // Get package by ID (for fast UUID lookups)
+  server.get('/by-id/:packageId', {
+    onRequest: [optionalAuth],
+    schema: {
+      tags: ['packages'],
+      description: 'Get package details by ID (fast UUID lookup)',
+      params: {
+        type: 'object',
+        properties: {
+          packageId: { type: 'string', format: 'uuid' },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { packageId } = request.params as { packageId: string };
+    const userId = request.user?.user_id;
+
+    // Debug logging
+    server.log.debug({
+      packageId,
+      userId: userId || 'unauthenticated',
+      hasUser: !!request.user,
+    }, 'GET package by ID request');
+
+    // Check cache (skip cache for authenticated requests to private packages)
+    const cacheKey = `package:id:${packageId}`;
+    if (!userId) {
+      const cached = await cacheGet<PackageInfo>(server, cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    // Get package - include private packages if user is authenticated and has access
+    let pkg: Package | null = null;
+
+    if (userId) {
+      // For authenticated users, check if they have access to private packages
+      server.log.debug({ packageId, userId }, 'Checking private package access');
+      pkg = await queryOne<Package>(
+        server,
+        `SELECT p.*, u.username as author_username FROM packages p
+         LEFT JOIN users u ON p.author_id = u.id
+         LEFT JOIN organization_members om ON p.org_id = om.org_id AND om.user_id = $2
+         WHERE p.id = $1
+         AND (p.visibility = 'public'
+              OR (p.visibility = 'private'
+                  AND p.org_id IS NOT NULL
+                  AND om.user_id IS NOT NULL))`,
+        [packageId, userId]
+      );
+      server.log.debug({ packageId, userId, found: !!pkg }, 'Private package query result');
+    } else {
+      // For unauthenticated users, only show public packages
+      pkg = await queryOne<Package>(
+        server,
+        `SELECT p.*, u.username as author_username FROM packages p
+         LEFT JOIN users u ON p.author_id = u.id
+         WHERE p.id = $1 AND p.visibility = 'public'`,
+        [packageId]
+      );
+    }
+
+    if (!pkg) {
+      server.log.debug({ packageId, userId: userId || 'none' }, 'Package not found');
+      return reply.status(404).send({ error: 'Package not found' });
+    }
+
+    // Get versions
+    const versionsResult = await query<PackageVersion>(
+      server,
+      `SELECT * FROM package_versions
+       WHERE package_id = $1
+       ORDER BY published_at DESC`,
+      [pkg.id]
+    );
+
+    // Transform tarball URLs to registry download URLs
+    const protocol = (request.headers['x-forwarded-proto'] as string) || request.protocol;
+    const host = request.headers.host || `localhost:${config.port}`;
+    const baseUrl = `${protocol}://${host}`;
+
+    const transformedVersions = versionsResult.rows.map(version => {
+      if (version.tarball_url) {
+        // URL-encode package name to handle slashes in scoped packages
+        const encodedPackageName = encodeURIComponent(pkg.name);
         return {
           ...version,
           tarball_url: `${baseUrl}/api/v1/packages/${encodedPackageName}/${version.version}.tar.gz`
@@ -1108,9 +1235,8 @@ export async function packageRoutes(server: FastifyInstance) {
     // Calculate trending score based on recent downloads vs historical average
     const result = await query<Package>(
       server,
-      `SELECT p.*,
-        p.downloads_last_7_days as recent_downloads,
-        p.trending_score
+      `SELECT ${LIST_COLUMNS},
+        p.downloads_last_7_days as recent_downloads
        FROM packages p
        WHERE p.visibility = 'public'
          AND p.downloads_last_7_days > 0
@@ -1138,8 +1264,8 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
         },
       },
     },
@@ -1174,10 +1300,7 @@ export async function packageRoutes(server: FastifyInstance) {
 
     const result = await query<Package>(
       server,
-      `SELECT p.*,
-        p.total_downloads,
-        p.weekly_downloads,
-        p.install_count
+      `SELECT ${LIST_COLUMNS}
        FROM packages p
        WHERE ${whereClause}
        ORDER BY p.total_downloads DESC, p.install_count DESC
@@ -1498,6 +1621,10 @@ export async function packageRoutes(server: FastifyInstance) {
    * Get all public packages with full content for static site generation
    * Used by webapp during build for generateStaticParams
    * REQUIRES: X-SSG-Token header for authentication
+   * RATE LIMITING: Exempt from global rate limits (see index.ts allowList)
+   * PAGINATION: Default 500 packages per request (max 1000 to avoid payload size issues)
+   *             With 7000+ packages: ~8-14 requests needed to fetch all
+   * PAYLOAD SIZE: ~500 packages × ~10KB avg = ~5MB response (safe for JSON parsing)
    */
   server.get(
     '/ssg-data',
@@ -1515,8 +1642,8 @@ export async function packageRoutes(server: FastifyInstance) {
           type: 'object',
           properties: {
             format: { type: 'string' },
-            limit: { type: 'number', default: 500 },
-            offset: { type: 'number', default: 0 },
+            limit: { type: 'number', default: 500, minimum: 1, maximum: 1000 },
+            offset: { type: 'number', default: 0, minimum: 0 },
           },
         },
       },
@@ -1548,7 +1675,8 @@ export async function packageRoutes(server: FastifyInstance) {
         server.log.info({ format, limit, offset }, 'Fetching SSG data');
 
         // Build WHERE clause
-        const conditions: string[] = ["visibility = 'public'", "deprecated = FALSE"];
+        // NOTE: Includes deprecated packages - they still have pages, just with deprecation warnings
+        const conditions: string[] = ["visibility = 'public'"];
         const params: unknown[] = [];
         let paramIndex = 1;
 
@@ -1616,7 +1744,7 @@ export async function packageRoutes(server: FastifyInstance) {
             LIMIT 1
           ) pv ON true
           WHERE ${conditions.join(' AND ')}
-          ORDER BY p.total_downloads DESC
+          ORDER BY p.total_downloads DESC, p.id ASC
           LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
           params
         );

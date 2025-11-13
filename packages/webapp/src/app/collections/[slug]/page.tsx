@@ -1,6 +1,9 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { cache } from 'react'
 import Link from 'next/link'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 import type { Collection } from '@pr-pm/types'
 import CollapsibleContent from '@/components/CollapsibleContent'
 import StarButtonWrapper from '@/components/StarButtonWrapper'
@@ -11,9 +14,22 @@ const SSG_TOKEN = process.env.SSG_DATA_TOKEN
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
 
+// Disable fetch caching during build to prevent "items over 2MB cannot be cached" errors
+// SSG responses are 5-22MB each, which exceeds Next.js's 2MB cache limit
+export const fetchCache = 'force-no-store'
+
 // Generate static params for all collections
 export async function generateStaticParams() {
   try {
+    // Skip SSG in CI/test builds to speed up builds and avoid hitting registry
+    if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
+      console.log('[SSG Collections] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params for fast build')
+      // Return one dummy collection to satisfy Next.js requirements
+      return [{
+        slug: 'test-collection'
+      }]
+    }
+
     console.log(`[SSG Collections] Fetching from registry API: ${REGISTRY_URL}`)
     console.log(`[SSG Collections] Environment check:`, {
       SSG_TOKEN_exists: !!SSG_TOKEN,
@@ -36,7 +52,7 @@ export async function generateStaticParams() {
 
     // Paginate through ALL collections
     const allCollections: any[] = []
-    const limit = 500
+    const limit = 1000 // Fetch 1000 per request (fetchCache disabled, so no 2MB cache limit)
     let offset = 0
     let hasMore = true
 
@@ -46,31 +62,53 @@ export async function generateStaticParams() {
       const url = `${REGISTRY_URL}/api/v1/collections/ssg-data?limit=${limit}&offset=${offset}`
       console.log(`[SSG Collections] Fetching page: offset=${offset}`)
 
-      const res = await fetch(url, {
-        headers: {
-          'X-SSG-Token': SSG_TOKEN,
-        },
-        next: { revalidate: 3600 } // Revalidate every hour
-      })
+      try {
+        const res = await fetch(url, {
+          headers: {
+            'X-SSG-Token': SSG_TOKEN,
+          },
+          // No revalidate during build - fetch everything fresh
+          cache: 'no-store',
+        })
 
-      if (!res.ok) {
-        console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections at offset ${offset}`)
+        if (!res.ok) {
+          console.error(`[SSG Collections] HTTP ${res.status}: Failed to fetch collections at offset ${offset}`)
+          const errorText = await res.text().catch(() => 'Unable to read error')
+          console.error(`[SSG Collections] Error response: ${errorText}`)
+          break
+        }
+
+        const data = await res.json()
+        const collections = data.collections || []
+
+        if (!Array.isArray(collections)) {
+          console.error('[SSG Collections] Invalid response format - expected array')
+          console.error('[SSG Collections] Response data:', JSON.stringify(data).substring(0, 200))
+          break
+        }
+
+        // Stop if we got an empty page (pagination complete)
+        if (collections.length === 0) {
+          console.log('[SSG Collections] Received empty page, pagination complete')
+          break
+        }
+
+        allCollections.push(...collections)
+        hasMore = data.hasMore || false
+        offset += limit
+
+        console.log(`[SSG Collections] Page loaded: ${collections.length} collections, total so far: ${allCollections.length}, hasMore: ${hasMore}`)
+
+        // Safety check
+        if (allCollections.length > 1000) {
+          console.warn(`[SSG Collections] Warning: Fetched ${allCollections.length} collections, stopping to prevent infinite loop`)
+          break
+        }
+      } catch (error) {
+        console.error(`[SSG Collections] Fetch error at offset ${offset}:`, error)
+        console.error(`[SSG Collections] Stopping pagination due to error`)
         break
       }
-
-      const data = await res.json()
-      const collections = data.collections || []
-
-      if (!Array.isArray(collections)) {
-        console.error('[SSG Collections] Invalid response format - expected array')
-        break
-      }
-
-      allCollections.push(...collections)
-      hasMore = data.hasMore || false
-      offset += limit
-
-      console.log(`[SSG Collections] Page loaded: ${collections.length} collections, total so far: ${allCollections.length}, hasMore: ${hasMore}`)
     }
 
     console.log(`[SSG Collections] ✅ Loaded ${allCollections.length} collections from registry (${Math.ceil(allCollections.length / limit)} pages)`)
@@ -101,27 +139,59 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     }
   }
 
+  // Use name for human-readable display, fall back to name_slug
+  const displayName = collection.name || collection.name_slug;
+
   return {
-    title: `${collection.name} - PRPM Collection`,
-    description: collection.description || `Install ${collection.name_slug} collection with PRPM - curated package collection`,
+    title: `${displayName} - PRPM Collection`,
+    description: collection.description || `Install ${displayName} collection with PRPM - curated package collection`,
     keywords: [...(collection.tags || []), collection.category, collection.framework, 'prpm', 'collection', 'ai', 'coding'].filter((k): k is string => Boolean(k)),
     openGraph: {
-      title: collection.name_slug,
+      title: displayName,
       description: collection.description || 'Curated package collection',
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: collection.name_slug,
+      site: '@prpmdev',
+      title: displayName,
       description: collection.description || 'Curated package collection',
     },
   }
 }
 
-async function getCollection(slug: string): Promise<Collection | null> {
+// Wrap with cache() to deduplicate fetches across generateMetadata and page component
+const getCollection = cache(async (slug: string): Promise<Collection | null> => {
   try {
+    // During SSG build, read from local JSON file prepared by prepare-ssg-data.sh
+    // This avoids API calls during build and uses pre-fetched data
+    const ssgDataPath = join(process.cwd(), 'public', 'seo-data', 'collections.json')
+
+    try {
+      const fileContent = await readFile(ssgDataPath, 'utf-8')
+      const collections: Collection[] = JSON.parse(fileContent)
+
+      // Find the collection by slug
+      const collection = collections.find((c: any) => c.name_slug === slug)
+
+      if (collection) {
+        console.log(`[Collection] ✅ Found ${slug} in SSG data`)
+        return collection
+      }
+
+      console.log(`[Collection] ⚠️  Collection ${slug} not in SSG data (${collections.length} collections loaded)`)
+    } catch (fileError) {
+      // SSG file doesn't exist or can't be read - fall back to fetching from registry
+      // This can happen during dev mode or if SSG prep failed
+      console.log(`[Collection] SSG data file not available, falling back to registry fetch`)
+    }
+
+    // Fallback: fetch directly from registry
+    // This happens in dev mode or if collection not found in SSG data
+    console.log(`[Collection] Fetching ${slug} directly from registry`)
+
     if (!SSG_TOKEN) {
-      console.error('SSG_DATA_TOKEN environment variable not set')
+      console.error('[Collection] SSG_DATA_TOKEN environment variable not set')
       return null
     }
 
@@ -130,11 +200,11 @@ async function getCollection(slug: string): Promise<Collection | null> {
       headers: {
         'X-SSG-Token': SSG_TOKEN,
       },
-      next: { revalidate: 3600 } // Revalidate every hour
+      next: { revalidate: 3600 }
     })
 
     if (!res.ok) {
-      console.error(`Error fetching collections from registry: ${res.status}`)
+      console.error(`[Collection] Error fetching from registry: ${res.status}`)
       return null
     }
 
@@ -142,7 +212,7 @@ async function getCollection(slug: string): Promise<Collection | null> {
     const collections = data.collections || []
 
     if (!Array.isArray(collections)) {
-      console.error('Invalid collections data format from registry')
+      console.error('[Collection] Invalid collections data format from registry')
       return null
     }
 
@@ -150,10 +220,10 @@ async function getCollection(slug: string): Promise<Collection | null> {
     const collection = collections.find((c: any) => c.name_slug === slug)
     return collection || null
   } catch (error) {
-    console.error('Error fetching collection:', error)
+    console.error('[Collection] Error in getCollection:', error)
     return null
   }
-}
+})
 
 export default async function CollectionPage({ params }: { params: { slug: string } }) {
   const collection = await getCollection(params.slug)
@@ -177,7 +247,7 @@ export default async function CollectionPage({ params }: { params: { slug: strin
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <h1 className="text-4xl font-bold text-white">{collection.name_slug}</h1>
+            <h1 className="text-4xl font-bold text-white">{collection.name || collection.name_slug}</h1>
             {collection.verified && (
               <svg className="w-8 h-8 text-prpm-accent" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -201,20 +271,31 @@ export default async function CollectionPage({ params }: { params: { slug: strin
 
           {/* Stats */}
           <div className="flex flex-wrap gap-6 text-gray-400">
+            {/* Author - positioned first to match package page */}
+            {collection.author && (
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <Link href={`/authors?username=${collection.author}`} className="hover:text-prpm-accent">
+                  @{collection.author}
+                </Link>
+              </div>
+            )}
+            {collection.downloads != null && (
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                <span>{collection.downloads.toLocaleString()} total installs</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
               <span>{collection.package_count} packages</span>
             </div>
-            {collection.downloads != null && (
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                </svg>
-                <span>{collection.downloads.toLocaleString()} installs</span>
-              </div>
-            )}
             <StarButtonWrapper
               type="collection"
               id={collection.id}
@@ -222,16 +303,6 @@ export default async function CollectionPage({ params }: { params: { slug: strin
               nameSlug={collection.name_slug}
               initialStars={collection.stars || 0}
             />
-            {collection.author && (
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <Link href={`/authors?author=${collection.author}`} className="hover:text-prpm-accent">
-                  @{collection.author}
-                </Link>
-              </div>
-            )}
           </div>
         </div>
 

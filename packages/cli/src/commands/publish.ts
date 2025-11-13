@@ -22,6 +22,7 @@ import {
 import { validateManifestSchema } from '../core/schema-validator';
 import { extractLicenseInfo, validateLicenseInfo } from '../utils/license-extractor';
 import { extractSnippet, validateSnippet } from '../utils/snippet-extractor';
+import { executePrepublishOnly } from '../utils/script-executor';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -420,6 +421,27 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     // Read and validate manifests
     console.log('🔍 Validating package manifest(s)...');
     const { manifests, collections, source } = await findAndLoadManifests();
+
+    // Execute prepublishOnly script if defined (for multi-package manifests)
+    // This runs before any packages are published
+    if (source === 'prpm.json (multi-package)' || source === 'prpm.json') {
+      try {
+        // Re-read the raw prpm.json to check for scripts
+        const prpmJsonPath = join(process.cwd(), 'prpm.json');
+        const prpmContent = await readFile(prpmJsonPath, 'utf-8');
+        const prpmManifest = JSON.parse(prpmContent);
+
+        if (prpmManifest.scripts) {
+          await executePrepublishOnly(prpmManifest.scripts);
+        }
+      } catch (error) {
+        // If script execution fails, abort publish
+        if (error instanceof Error && error.message.includes('script')) {
+          throw error;
+        }
+        // Ignore other errors (e.g., file not found - shouldn't happen at this point)
+      }
+    }
 
     if (manifests.length > 1 || collections.length > 0) {
       if (manifests.length > 0) {
