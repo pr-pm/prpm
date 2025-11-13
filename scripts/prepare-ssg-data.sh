@@ -61,44 +61,61 @@ mkdir -p "$SSG_DATA_DIR"
 success "Directory created: $SSG_DATA_DIR"
 echo ""
 
-# Try S3 first, then fetch from registry API
+# Fetch SSG data with smart caching (compare counts before full fetch)
 echo "Step 2: Fetching SSG data..."
 
-# Try downloading from S3 first (faster if available)
-S3_SUCCESS=false
-if command -v aws &> /dev/null; then
-  debug "AWS CLI found, attempting S3 download"
+API_SUCCESS=false
+NEEDS_FETCH=false
 
-  if aws s3 sync "$S3_BUCKET" "$SSG_DATA_DIR" \
-    --exclude "*" \
-    --include "packages.json" \
-    --include "collections.json" \
-    --no-progress 2>/dev/null; then
+# First, check if we have SSG_DATA_TOKEN for API access
+if [ -n "$SSG_DATA_TOKEN" ]; then
+  REGISTRY_URL="${REGISTRY_URL:-https://registry.prpm.dev}"
+  debug "Registry URL: $REGISTRY_URL"
 
-    # Verify we got real data (not empty)
-    if [ -f "$SSG_DATA_DIR/packages.json" ] && [ -s "$SSG_DATA_DIR/packages.json" ]; then
-      PKG_COUNT=$(jq '. | length' "$SSG_DATA_DIR/packages.json" 2>/dev/null || echo "0")
-      if [ "$PKG_COUNT" -gt 100 ]; then
-        success "Downloaded data from S3 ($PKG_COUNT packages)"
-        S3_SUCCESS=true
-      else
-        warn "S3 data exists but seems incomplete ($PKG_COUNT packages), will fetch from registry"
+  # Get total count from registry (lightweight check)
+  echo "  Checking registry package count..."
+  REGISTRY_COUNT=$(curl -s -H "X-SSG-Token: $SSG_DATA_TOKEN" \
+    "${REGISTRY_URL}/api/v1/packages/ssg-data?limit=1&offset=0" | jq -r '.total // 0')
+
+  if [ "$REGISTRY_COUNT" = "0" ] || [ "$REGISTRY_COUNT" = "null" ]; then
+    warn "Could not get package count from registry, will try full fetch"
+    NEEDS_FETCH=true
+  else
+    success "Registry has $REGISTRY_COUNT packages"
+
+    # Check S3 cache
+    S3_COUNT=0
+    if command -v aws &> /dev/null; then
+      debug "Checking S3 cache..."
+
+      # Download just to check count
+      if aws s3 sync "$S3_BUCKET" "$SSG_DATA_DIR" \
+        --exclude "*" \
+        --include "packages.json" \
+        --include "collections.json" \
+        --no-progress 2>/dev/null; then
+
+        if [ -f "$SSG_DATA_DIR/packages.json" ] && [ -s "$SSG_DATA_DIR/packages.json" ]; then
+          S3_COUNT=$(jq '. | length' "$SSG_DATA_DIR/packages.json" 2>/dev/null || echo "0")
+          echo "  S3 cache has $S3_COUNT packages"
+        fi
       fi
     fi
-  else
-    warn "Could not download from S3"
+
+    # Compare counts - fetch if S3 is stale or missing
+    if [ "$S3_COUNT" -lt "$REGISTRY_COUNT" ]; then
+      DIFF=$((REGISTRY_COUNT - S3_COUNT))
+      warn "S3 cache is stale ($S3_COUNT < $REGISTRY_COUNT, missing $DIFF packages)"
+      NEEDS_FETCH=true
+    else
+      success "S3 cache is up-to-date ($S3_COUNT packages)"
+      API_SUCCESS=true
+    fi
   fi
-else
-  warn "AWS CLI not found"
-fi
 
-# If S3 failed or had incomplete data, fetch from registry API
-if [ "$S3_SUCCESS" = false ]; then
-  if [ -n "$SSG_DATA_TOKEN" ]; then
-    warn "Fetching fresh data from registry API (this may take a minute)..."
-
-    REGISTRY_URL="${REGISTRY_URL:-https://registry.prpm.dev}"
-    debug "Registry URL: $REGISTRY_URL"
+  # Fetch fresh data from registry if needed
+  if [ "$NEEDS_FETCH" = true ]; then
+    echo "  Fetching fresh data from registry API (this may take a minute)..."
 
     # Fetch packages
     echo "  Fetching packages..."
@@ -186,8 +203,53 @@ if [ "$S3_SUCCESS" = false ]; then
     COLL_COUNT=$(echo "$ALL_COLLECTIONS" | jq '. | length')
     success "Fetched $COLL_COUNT collections from registry"
 
+    API_SUCCESS=true
+
+    # Upload fresh data to S3 for future builds
+    if command -v aws &> /dev/null; then
+      echo "  Uploading fresh data to S3 cache..."
+      if aws s3 sync "$SSG_DATA_DIR/" "$S3_BUCKET/" \
+        --exclude "*" \
+        --include "packages.json" \
+        --include "collections.json" \
+        --no-progress 2>/dev/null; then
+        success "Uploaded fresh data to S3 ($PKG_COUNT packages, $COLL_COUNT collections)"
+      else
+        warn "Could not upload to S3 (cache will be stale)"
+      fi
+    else
+      debug "AWS CLI not available, skipping S3 upload"
+    fi
+  fi
+
+else
+  warn "SSG_DATA_TOKEN not set, will try S3 fallback"
+fi
+
+# Fallback to S3 if API fetch failed
+if [ "$API_SUCCESS" = false ]; then
+  if command -v aws &> /dev/null; then
+    warn "Attempting S3 fallback..."
+
+    if aws s3 sync "$S3_BUCKET" "$SSG_DATA_DIR" \
+      --exclude "*" \
+      --include "packages.json" \
+      --include "collections.json" \
+      --no-progress 2>/dev/null; then
+
+      if [ -f "$SSG_DATA_DIR/packages.json" ] && [ -s "$SSG_DATA_DIR/packages.json" ]; then
+        PKG_COUNT=$(jq '. | length' "$SSG_DATA_DIR/packages.json" 2>/dev/null || echo "0")
+        if [ "$PKG_COUNT" -gt 100 ]; then
+          success "Downloaded data from S3 ($PKG_COUNT packages) - may be stale"
+        else
+          warn "S3 data exists but seems incomplete ($PKG_COUNT packages)"
+        fi
+      fi
+    else
+      warn "Could not download from S3, will use fallback mock data"
+    fi
   else
-    warn "SSG_DATA_TOKEN not set and S3 failed, using fallback data"
+    warn "AWS CLI not found, will use fallback mock data"
   fi
 fi
 echo ""

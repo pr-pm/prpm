@@ -24,6 +24,9 @@ export const dynamicParams = true
 // SSG responses are 5-22MB each, which exceeds Next.js's 2MB cache limit
 export const fetchCache = 'force-no-store'
 
+// In-memory cache for packages to avoid reading file 5523 times during build
+let packagesCache: PackageInfo[] | null = null
+
 // Helper to get package content - prefer full content, fall back to snippet
 function getPackageContent(pkg: any): string | null {
   // Try fullContent (camelCase from SSG), full_content (snake_case from direct API), then snippet
@@ -43,115 +46,61 @@ export async function generateStaticParams() {
       }]
     }
 
-    console.log(`[SSG Packages] Fetching from registry API: ${REGISTRY_URL}`)
-    console.log(`[SSG Packages] Environment check:`, {
-      SSG_TOKEN_exists: !!SSG_TOKEN,
-      SSG_TOKEN_length: SSG_TOKEN?.length || 0,
-      SSG_TOKEN_type: typeof SSG_TOKEN,
-      SSG_TOKEN_first_10: SSG_TOKEN?.substring(0, 10) || 'undefined',
-      env_keys: Object.keys(process.env).filter(k => k.includes('SSG')).join(', ') || 'none'
-    })
+    console.log(`[SSG Packages] Reading from local SSG data file`)
+    console.time('[SSG Packages] Total load time')
 
-    if (!SSG_TOKEN) {
-      console.error('[SSG Packages] ⚠️  SSG_DATA_TOKEN environment variable not set')
-      console.error('[SSG Packages] This is REQUIRED for production builds.')
-      console.error('[SSG Packages] Available env vars:', Object.keys(process.env).filter(k => k.includes('TOKEN')))
+    // Read from the pre-fetched JSON file (prepared by prepare-ssg-data.sh)
+    const ssgDataPath = join(process.cwd(), 'public', 'seo-data', 'packages.json')
 
-      // In static export mode, Next.js requires at least one path for dynamic routes
-      // Return empty array would cause: "Page is missing generateStaticParams()" error
-      // So we fail explicitly with a clear error message
-      throw new Error('SSG_DATA_TOKEN environment variable is required for static build')
+    try {
+      const fileContent = await readFile(ssgDataPath, 'utf-8')
+      const allPackages = JSON.parse(fileContent)
+
+      console.timeEnd('[SSG Packages] Total load time')
+      console.log(`[SSG Packages] ✅ Loaded ${allPackages.length} packages from local file`)
+
+      // Transform and deduplicate in one pass
+      console.time('[SSG Packages] Params transformation')
+      const paramsMap = new Map<string, any>()
+
+      allPackages.forEach((pkg: any) => {
+        const name = pkg.name
+        let author: string
+        let packageParts: string[]
+
+        if (name.startsWith('@')) {
+          // Scoped package: @author/package/sub/path -> author + [package, sub, path]
+          const withoutAt = name.substring(1)
+          const parts = withoutAt.split('/')
+          author = parts[0].toLowerCase()
+          packageParts = parts.slice(1)
+        } else {
+          // Unscoped package: use actual author from package data (lowercase for consistent URLs)
+          author = (pkg.author?.username || 'prpm').toLowerCase()
+          packageParts = [name]
+        }
+
+        // Use Map to deduplicate automatically
+        const key = `${author}/${packageParts.join('/')}`
+        if (!paramsMap.has(key)) {
+          paramsMap.set(key, { author, package: packageParts })
+        }
+      })
+
+      const params = Array.from(paramsMap.values())
+      console.timeEnd('[SSG Packages] Params transformation')
+      console.log(`[SSG Packages] ✅ Complete: ${params.length} unique packages for static generation`)
+
+      return params
+
+    } catch (fileError) {
+      console.error('[SSG Packages] ⚠️  Could not read SSG data file:', fileError)
+      console.error('[SSG Packages] Expected file at:', ssgDataPath)
+      console.error('[SSG Packages] Make sure to run prepare-ssg-data.sh before building')
+
+      // Fail explicitly with a clear error message
+      throw new Error('SSG data file not found. Run prepare-ssg-data.sh before building.')
     }
-
-    // Paginate through ALL packages
-    const allPackages: any[] = []
-    const limit = 1000 // Fetch 1000 per request (fetchCache disabled, so no 2MB cache limit)
-    let offset = 0
-    let hasMore = true
-
-    console.log(`[SSG Packages] Starting pagination with limit=${limit}`)
-    console.time('[SSG Packages] Total fetch time')
-
-    while (hasMore) {
-      const url = `${REGISTRY_URL}/api/v1/packages/ssg-data?limit=${limit}&offset=${offset}`
-      console.log(`[SSG Packages] Fetching page: offset=${offset}`)
-
-      try {
-        const res = await fetch(url, {
-          headers: {
-            'X-SSG-Token': SSG_TOKEN,
-          },
-          // No revalidate during build - fetch everything fresh
-          cache: 'no-store',
-        })
-
-        if (!res.ok) {
-          console.error(`[SSG Packages] HTTP ${res.status}: Failed to fetch packages at offset ${offset}`)
-          const errorText = await res.text().catch(() => 'Unable to read error')
-          console.error(`[SSG Packages] Error response: ${errorText}`)
-          break
-        }
-
-        const data = await res.json()
-        const packages = data.packages || []
-
-        if (!Array.isArray(packages)) {
-          console.error('[SSG Packages] Invalid response format - expected array')
-          console.error('[SSG Packages] Response data:', JSON.stringify(data).substring(0, 200))
-          break
-        }
-
-        // Stop if we got an empty page (pagination complete)
-        if (packages.length === 0) {
-          console.log('[SSG Packages] Received empty page, pagination complete')
-          break
-        }
-
-        allPackages.push(...packages)
-        hasMore = data.hasMore || false
-        offset += limit
-
-        console.log(`[SSG Packages] Page loaded: ${packages.length} packages, total so far: ${allPackages.length}, hasMore: ${hasMore}`)
-
-        // Safety check: if we've fetched more than expected, something might be wrong
-        if (allPackages.length > 10000) {
-          console.warn(`[SSG Packages] Warning: Fetched ${allPackages.length} packages, stopping to prevent infinite loop`)
-          break
-        }
-      } catch (error) {
-        console.error(`[SSG Packages] Fetch error at offset ${offset}:`, error)
-        console.error(`[SSG Packages] Stopping pagination due to error`)
-        break
-      }
-    }
-
-    console.timeEnd('[SSG Packages] Total fetch time')
-    console.log(`[SSG Packages] ✅ Loaded ${allPackages.length} packages from registry (${Math.ceil(allPackages.length / limit)} pages)`)
-
-    // Transform package data to author/package format
-    console.time('[SSG Packages] Params transformation')
-    const params = allPackages.map((pkg: any) => {
-      const name = pkg.name
-      if (name.startsWith('@')) {
-        // Scoped package: @author/package/sub/path -> author + [package, sub, path]
-        const withoutAt = name.substring(1) // Remove @
-        const [author, ...packageParts] = withoutAt.split('/')
-        return {
-          author: author.toLowerCase(), // Use lowercase for consistent URLs
-          package: packageParts, // Array for catch-all route
-        }
-      } else {
-        // Unscoped package: use actual author from package data (lowercase for consistent URLs)
-        const author = (pkg.author?.username || 'prpm').toLowerCase()
-        return {
-          author,
-          package: [name], // Array for catch-all route
-        }
-      }
-    })
-
-    console.log(`[SSG Packages] ✅ Complete: ${params.length} packages for static generation`)
-    return params
 
   } catch (error) {
     console.error('[SSG Packages] ERROR in generateStaticParams:', error)
@@ -217,30 +166,36 @@ export async function generateMetadata({ params }: { params: { author: string; p
 // Wrap with cache() to deduplicate fetches across generateMetadata and page component
 const getPackage = cache(async (scopedName: string, author: string, unscopedName: string): Promise<PackageInfo | null> => {
   try {
-    // During SSG build, read from local JSON file prepared by prepare-ssg-data.sh
-    // This avoids 4000+ API calls during build and uses pre-fetched data
-    const ssgDataPath = join(process.cwd(), 'public', 'seo-data', 'packages.json')
+    // Load packages into memory cache once (shared across all SSG page generations)
+    if (!packagesCache) {
+      const ssgDataPath = join(process.cwd(), 'public', 'seo-data', 'packages.json')
 
-    try {
-      const fileContent = await readFile(ssgDataPath, 'utf-8')
-      const packages: PackageInfo[] = JSON.parse(fileContent)
+      try {
+        const fileContent = await readFile(ssgDataPath, 'utf-8')
+        const packages = JSON.parse(fileContent)
+        packagesCache = packages
+        console.log(`[Package] ✅ Loaded ${packages.length} packages into memory cache`)
+      } catch (fileError) {
+        // SSG file doesn't exist or can't be read - fall back to fetching from registry
+        // This can happen during dev mode or if SSG prep failed
+        console.log(`[Package] SSG data file not available, will use API fallback per package`)
+        packagesCache = [] // Empty array to avoid retrying file read on every package
+      }
+    }
 
+    // Search in-memory cache (fast lookup, no file I/O)
+    if (packagesCache && packagesCache.length > 0) {
       // Try to find package by scoped name first, then unscoped
-      let pkg = packages.find((p: any) => p.name === scopedName)
+      let pkg = packagesCache.find((p: any) => p.name === scopedName)
       if (!pkg) {
-        pkg = packages.find((p: any) => p.name === unscopedName)
+        pkg = packagesCache.find((p: any) => p.name === unscopedName)
       }
 
       if (pkg) {
-        console.log(`[Package] ✅ Found ${scopedName} in SSG data`)
         return pkg
       }
 
-      console.log(`[Package] ⚠️  Package ${scopedName} not in SSG data (${packages.length} packages loaded)`)
-    } catch (fileError) {
-      // SSG file doesn't exist or can't be read - fall back to fetching from registry
-      // This can happen during dev mode or if SSG prep failed
-      console.log(`[Package] SSG data file not available, falling back to registry fetch`)
+      console.log(`[Package] ⚠️  Package ${scopedName} not in cache`)
     }
 
     // Fallback: fetch directly from registry
