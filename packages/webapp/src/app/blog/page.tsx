@@ -134,7 +134,7 @@ const blogPosts: BlogPost[] = [
   {
     slug: "top-50-cursor-rules",
     title: "Top 50 Cursor Rules to Supercharge Your Development Workflow",
-    excerpt: "We analyzed over 6,000 cursor rules to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.",
+    excerpt: "We analyzed over 7,000 cursor rules to find the 50 that actually deliver. These aren't just popular—they're comprehensive, battle-tested, and cover everything from Next.js to Kubernetes.",
     date: "2025-11-03",
     author: "PRPM Team",
     readTime: "12 min read",
