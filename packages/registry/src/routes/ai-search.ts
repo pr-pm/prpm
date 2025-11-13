@@ -216,6 +216,78 @@ export async function aiSearchRoutes(server: FastifyInstance) {
   });
 
   /**
+   * GET /ai-search/suggestions
+   * Get query suggestions for autocomplete
+   */
+  server.get('/suggestions', {
+    schema: {
+      description: 'Get query suggestions for autocomplete based on popular searches',
+      tags: ['ai-search'],
+      querystring: {
+        type: 'object',
+        required: ['q'],
+        properties: {
+          q: {
+            type: 'string',
+            minLength: 3,
+            maxLength: 100,
+            description: 'Partial query to get suggestions for'
+          },
+          limit: {
+            type: 'number',
+            minimum: 1,
+            maximum: 10,
+            default: 5
+          }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            suggestions: {
+              type: 'array',
+              items: { type: 'string' }
+            },
+            query: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { q, limit } = request.query as { q: string; limit?: number };
+
+    try {
+      // Get suggestions from popular searches
+      const result = await server.pg.query(
+        `SELECT DISTINCT query, COUNT(*) as count
+         FROM ai_search_usage
+         WHERE query ILIKE $1
+         AND created_at > NOW() - INTERVAL '30 days'
+         GROUP BY query
+         ORDER BY count DESC
+         LIMIT $2`,
+        [`%${q}%`, limit || 5]
+      );
+
+      const suggestions = result.rows.map(row => row.query);
+
+      return reply.code(200).send({
+        suggestions,
+        query: q
+      });
+    } catch (error) {
+      server.log.warn({ error, query: q }, 'Failed to get query suggestions');
+
+      // Return empty suggestions on error
+      return reply.code(200).send({
+        suggestions: [],
+        query: q
+      });
+    }
+  });
+
+  /**
    * GET /ai-search/access
    * Check if user has AI search access (for frontend)
    * Now free for everyone - always returns true

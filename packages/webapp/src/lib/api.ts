@@ -1100,11 +1100,14 @@ export async function checkAISearchAccess(jwtToken: string) {
 /**
  * Get similar packages using AI
  */
-export async function getSimilarPackages(packageId: string, jwtToken: string, limit: number = 5) {
+export async function getSimilarPackages(packageId: string, jwtToken: string | null, limit: number = 5) {
+  const headers: Record<string, string> = {};
+  if (jwtToken) {
+    headers['Authorization'] = `Bearer ${jwtToken}`;
+  }
+
   const response = await fetch(`${REGISTRY_URL}/api/v1/ai-search/similar/${packageId}?limit=${limit}`, {
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-    },
+    headers,
   })
 
   if (!response.ok) {
@@ -1113,6 +1116,31 @@ export async function getSimilarPackages(packageId: string, jwtToken: string, li
   }
 
   return response.json()
+}
+
+/**
+ * Get query suggestions for autocomplete
+ */
+export async function getQuerySuggestions(partialQuery: string, limit: number = 5): Promise<string[]> {
+  if (partialQuery.length < 3) {
+    return []
+  }
+
+  try {
+    const response = await fetch(
+      `${REGISTRY_URL}/api/v1/ai-search/suggestions?q=${encodeURIComponent(partialQuery)}&limit=${limit}`
+    )
+
+    if (!response.ok) {
+      return []
+    }
+
+    const data = await response.json()
+    return data.suggestions || []
+  } catch (error) {
+    console.warn('Failed to fetch query suggestions:', error)
+    return []
+  }
 }
 
 /**
