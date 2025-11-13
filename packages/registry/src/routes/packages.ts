@@ -1623,7 +1623,7 @@ export async function packageRoutes(server: FastifyInstance) {
    * REQUIRES: X-SSG-Token header for authentication
    * RATE LIMITING: Exempt from global rate limits (see index.ts allowList)
    * PAGINATION: Default 500 packages per request (max 1000 to avoid payload size issues)
-   *             With 4000 packages: 8 requests needed to fetch all
+   *             With 7000+ packages: ~8-14 requests needed to fetch all
    * PAYLOAD SIZE: ~500 packages × ~10KB avg = ~5MB response (safe for JSON parsing)
    */
   server.get(
@@ -1675,7 +1675,8 @@ export async function packageRoutes(server: FastifyInstance) {
         server.log.info({ format, limit, offset }, 'Fetching SSG data');
 
         // Build WHERE clause
-        const conditions: string[] = ["visibility = 'public'", "deprecated = FALSE"];
+        // NOTE: Includes deprecated packages - they still have pages, just with deprecation warnings
+        const conditions: string[] = ["visibility = 'public'"];
         const params: unknown[] = [];
         let paramIndex = 1;
 
