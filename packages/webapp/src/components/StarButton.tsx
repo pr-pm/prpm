@@ -50,6 +50,16 @@ export default function StarButton({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Check localStorage on mount for anonymous users
+  useEffect(() => {
+    const token = localStorage.getItem('prpm_token')
+    if (!token) {
+      const localStars = getLocalStars(type)
+      const itemKey = type === 'package' ? id : `${scope}/${nameSlug}`
+      setStarred(localStars.has(itemKey))
+    }
+  }, [type, id, scope, nameSlug])
+
   // Validate required props
   if (!id) {
     console.error('[StarButton] Missing required id')
@@ -60,16 +70,6 @@ export default function StarButton({
     console.error('[StarButton] Missing required scope or nameSlug for collection')
     return null
   }
-
-  // Check localStorage on mount for anonymous users
-  useEffect(() => {
-    const token = localStorage.getItem('prpm_token')
-    if (!token) {
-      const localStars = getLocalStars(type)
-      const itemKey = type === 'package' ? id : `${scope}/${nameSlug}`
-      setStarred(localStars.has(itemKey))
-    }
-  }, [type, id, scope, nameSlug])
 
   const handleStar = async () => {
     const token = localStorage.getItem('prpm_token')
