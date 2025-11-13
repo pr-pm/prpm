@@ -427,7 +427,7 @@ jobs:
           fi
 
           echo "✓ Build output verified"
-          find packages/webapp/out -type f | head -20
+          find packages/webapp/out -type f 2>/dev/null | head -20 || true
 
       - name: Deploy to S3
         run: |

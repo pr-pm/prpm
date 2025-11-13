@@ -152,10 +152,10 @@ if [ -n "$SSG_DATA_TOKEN" ]; then
         break
       fi
 
-      # Safety: stop after 10K packages
+      # Safety: stop after 15K packages (current: 7000+, growing)
       TOTAL=$(echo "$ALL_PACKAGES" | jq '. | length')
-      if [ "$TOTAL" -gt 10000 ]; then
-        warn "Reached 10K packages, stopping"
+      if [ "$TOTAL" -gt 15000 ]; then
+        warn "Reached 15K packages, stopping (safety limit)"
         break
       fi
     done

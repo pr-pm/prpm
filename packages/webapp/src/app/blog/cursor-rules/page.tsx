@@ -7,10 +7,10 @@ import BlogPostHeader from '@/components/BlogPostHeader'
 
 export const metadata: Metadata = {
   title: "Cursor Rules: The Complete Guide to AI-Powered Coding Standards - PRPM",
-  description: "Master cursor rules to guide AI assistants in Cursor IDE. Learn what they are, how to use them, and discover 6000+ ready-to-use cursor rules packages for React, Python, TypeScript, security, and more.",
+  description: "Master cursor rules to guide AI assistants in Cursor IDE. Learn what they are, how to use them, and discover 7000+ ready-to-use cursor rules packages for React, Python, TypeScript, security, and more.",
   openGraph: {
     title: "Cursor Rules: The Complete Guide to AI-Powered Coding Standards",
-    description: "Master cursor rules to guide AI assistants. Discover 6000+ ready-to-use packages for React, Python, TypeScript, security, and more.",
+    description: "Master cursor rules to guide AI assistants. Discover 7000+ ready-to-use packages for React, Python, TypeScript, security, and more.",
   },
   keywords: [
     'cursor rules',
@@ -127,7 +127,7 @@ export default function CursorRulesPost() {
           </p>
 
           <p className="text-gray-300 leading-relaxed mb-8">
-            Over 6000+ cursor rules are now available in the PRPM registry, covering everything from React best practices to OWASP security patterns. Here's how to find, use, and create your own.
+            Over 7000+ cursor rules are now available in the PRPM registry, covering everything from React best practices to OWASP security patterns. Here's how to find, use, and create your own.
           </p>
 
           <hr className="border-prpm-border my-12" />
@@ -284,7 +284,7 @@ globs: ["src/api/**/*.ts"]      # API directory only`}</code></pre>
           </div>
 
           <p className="text-gray-300 leading-relaxed mb-6">
-            PRPM's registry contains 6000+ cursor rules covering every major framework, language, and development workflow.
+            PRPM's registry contains 7000+ cursor rules covering every major framework, language, and development workflow.
           </p>
 
           <div className="not-prose my-12 p-8 bg-gradient-to-br from-prpm-accent/10 to-prpm-purple/10 border border-prpm-accent/30 rounded-2xl">
@@ -338,7 +338,7 @@ globs: ["src/api/**/*.ts"]      # API directory only`}</code></pre>
             </p>
 
             <p className="text-gray-300 leading-relaxed mt-4">
-              <a href="https://prpm.dev/search?q=cursor" className="text-prpm-accent hover:underline font-medium">Or browse all 6000+ packages in the registry →</a>
+              <a href="https://prpm.dev/search?q=cursor" className="text-prpm-accent hover:underline font-medium">Or browse all 7000+ packages in the registry →</a>
             </p>
           </div>
 
@@ -603,7 +603,7 @@ prpm install @ivangrynenko/python-security-misconfiguration`}</code></pre>
                 </tr>
                 <tr className="border-b border-prpm-border/30">
                   <td className="py-3 px-4 font-medium">Package Manager</td>
-                  <td className="py-3 px-4">PRPM (6000+ packages)</td>
+                  <td className="py-3 px-4">PRPM (7000+ packages)</td>
                   <td className="py-3 px-4">Manual copy/paste</td>
                 </tr>
                 <tr>
@@ -680,7 +680,7 @@ prpm install @ivangrynenko/python-security-misconfiguration`}</code></pre>
           </p>
 
           <p className="text-gray-300 leading-relaxed mb-8">
-            With 6000+ cursor rules in PRPM registry:
+            With 7000+ cursor rules in PRPM registry:
           </p>
 
           <ul className="list-disc ml-6 text-gray-300 space-y-3 mb-8">
@@ -707,7 +707,7 @@ prpm install @ivangrynenko/python-security-misconfiguration`}</code></pre>
 
             <p className="text-gray-300 leading-relaxed mb-4"><strong className="text-white">Registry:</strong></p>
             <ul className="list-disc ml-6 text-gray-300 space-y-2 mb-6">
-              <li><a href="https://prpm.dev/search?q=cursor" className="text-prpm-accent hover:underline">Browse 6000+ Cursor Rules</a></li>
+              <li><a href="https://prpm.dev/search?q=cursor" className="text-prpm-accent hover:underline">Browse 7000+ Cursor Rules</a></li>
               <li><a href="https://prpm.dev" className="text-prpm-accent hover:underline">PRPM Registry</a></li>
             </ul>
 
@@ -716,7 +716,7 @@ prpm install @ivangrynenko/python-security-misconfiguration`}</code></pre>
 prpm install @prpm/creating-cursor-rules`}</code></pre>
 
             <p className="text-gray-300 leading-relaxed mb-0">
-              Then browse <a href="https://prpm.dev/search?q=cursor" className="text-prpm-accent hover:underline">6000+ cursor rules packages</a> for your stack.
+              Then browse <a href="https://prpm.dev/search?q=cursor" className="text-prpm-accent hover:underline">7000+ cursor rules packages</a> for your stack.
             </p>
           </div>
 

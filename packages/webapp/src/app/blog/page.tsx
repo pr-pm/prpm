@@ -53,7 +53,7 @@ const blogPosts: BlogPost[] = [
   {
     slug: "cursor-rules",
     title: "Cursor Rules: The Complete Guide to AI-Powered Coding Standards",
-    excerpt: "Master cursor rules to guide AI assistants in Cursor IDE. Learn what they are, how to use them, and discover 6000+ ready-to-use cursor rules packages for React, Python, TypeScript, security, and more.",
+    excerpt: "Master cursor rules to guide AI assistants in Cursor IDE. Learn what they are, how to use them, and discover 7000+ ready-to-use cursor rules packages for React, Python, TypeScript, security, and more.",
     date: "2025-11-12",
     author: "PRPM Team",
     readTime: "8 min read",
