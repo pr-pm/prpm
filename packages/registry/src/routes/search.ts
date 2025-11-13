@@ -8,6 +8,24 @@ import { cacheGet, cacheSet } from '../cache/redis.js';
 import { Package, Format, Subtype } from '../types.js';
 import { getSearchProvider } from '../search/index.js';
 
+// Reusable enum constants for schema validation
+const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] as const;
+const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'] as const;
+
+// Columns to select for list results (excludes full_content to reduce payload size)
+const LIST_COLUMNS = `
+  p.id, p.name, p.display_name, p.description, p.author_id, p.org_id,
+  p.format, p.subtype, p.tags, p.keywords, p.category,
+  p.visibility, p.featured, p.verified, p.official,
+  p.total_downloads, p.weekly_downloads, p.monthly_downloads, p.version_count,
+  p.rating_average, p.rating_count, p.quality_score,
+  p.install_count, p.view_count,
+  p.license, p.license_text, p.license_url,
+  p.snippet, p.repository_url, p.homepage_url, p.documentation_url,
+  p.created_at, p.updated_at, p.last_published_at,
+  p.deprecated, p.deprecated_reason
+`.trim();
+
 export async function searchRoutes(server: FastifyInstance) {
   // Full-text search
   server.get('/', {
@@ -20,14 +38,14 @@ export async function searchRoutes(server: FastifyInstance) {
           q: { type: 'string' },
           format: {
             anyOf: [
-              { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-              { type: 'array', items: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] } }
+              { type: 'string', enum: FORMAT_ENUM },
+              { type: 'array', items: { type: 'string', enum: FORMAT_ENUM } }
             ]
           },
           subtype: {
             anyOf: [
-              { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
-              { type: 'array', items: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] } }
+              { type: 'string', enum: SUBTYPE_ENUM },
+              { type: 'array', items: { type: 'string', enum: SUBTYPE_ENUM } }
             ]
           },
           tags: { type: 'array', items: { type: 'string' } },
@@ -100,8 +118,8 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },
@@ -137,7 +155,7 @@ export async function searchRoutes(server: FastifyInstance) {
 
     const result = await query<Package>(
       server,
-      `SELECT p.*, u.username as author_username
+      `SELECT ${LIST_COLUMNS}, u.username as author_username
        FROM packages p
        LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
@@ -162,8 +180,8 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },
@@ -199,7 +217,7 @@ export async function searchRoutes(server: FastifyInstance) {
 
     const result = await query<Package>(
       server,
-      `SELECT p.*, u.username as author_username
+      `SELECT ${LIST_COLUMNS}, u.username as author_username
        FROM packages p
        LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
@@ -340,7 +358,7 @@ export async function searchRoutes(server: FastifyInstance) {
     // Get slash commands
     const result = await query<Package>(
       server,
-      `SELECT p.*, u.username as author_username
+      `SELECT ${LIST_COLUMNS}, u.username as author_username
        FROM packages p
        LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
