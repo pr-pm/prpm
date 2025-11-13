@@ -67,8 +67,13 @@ echo "Step 2: Fetching SSG data..."
 API_SUCCESS=false
 NEEDS_FETCH=false
 
-# First, check if we have SSG_DATA_TOKEN for API access
-if [ -n "$SSG_DATA_TOKEN" ]; then
+# Skip data fetch entirely in CI when SSG is disabled
+if [ "$NEXT_PUBLIC_SKIP_SSG" = "true" ]; then
+  warn "NEXT_PUBLIC_SKIP_SSG=true, skipping data fetch (CI mode)"
+  warn "Will use fallback mock data for fast CI builds"
+  API_SUCCESS=false
+# Otherwise, check if we have SSG_DATA_TOKEN for API access
+elif [ -n "$SSG_DATA_TOKEN" ]; then
   REGISTRY_URL="${REGISTRY_URL:-https://registry.prpm.dev}"
   debug "Registry URL: $REGISTRY_URL"
 
