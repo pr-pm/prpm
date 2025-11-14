@@ -23,7 +23,7 @@ This document tracks different AI IDEs, their documentation for rules/context co
 | **Cody (Sourcegraph)** | `.vscode/cody.json` | JSON | 🔄 Planned | [Cody Docs](https://sourcegraph.com/docs/cody) |
 | **Tabnine** | `.tabnine/config.json` | JSON | 🔄 Planned | [Tabnine Docs](https://www.tabnine.com/code-review-agent) |
 | **Amazon Q** | TBD | TBD | 🔄 Planned | [Amazon Q Docs](https://aws.amazon.com/q/developer/) |
-| **Replit AI** | `.replit` | TOML | 🔄 Planned | [Replit Docs](https://docs.replit.com/replitai) |
+| **Replit Agent** | `replit.md` | Plain Markdown | 🔄 Planned | [Replit Docs](https://docs.replit.com/replitai/replit-dot-md) |
 | **Pieces** | TBD | TBD | 🔄 Planned | [Pieces Docs](https://docs.pieces.app/) |
 
 ## Currently Supported IDEs
@@ -418,16 +418,63 @@ AWS's AI coding assistant integrated with Amazon Q.
 
 ---
 
-### Replit AI
+### Replit Agent
 
-**File Location**: `.replit`
-**Format**: TOML
+**File Location**: `replit.md` (project root)
+**Format**: Plain Markdown
 **PRPM Support**: 🔄 Planned
 
-Replit's AI features can be configured through the `.replit` configuration file.
+Replit Agent uses a `replit.md` file to customize AI behavior for your project. This file acts as a bridge between your project requirements and the Agent's understanding of your preferences.
+
+**Key Features**:
+- **Project-specific configuration** - Must be in project root directory
+- **Auto-generated** - Agent creates replit.md with best practices for new projects
+- **Dynamic updates** - Agent can update the file as it learns about your project
+- **Comprehensive guidance** - Supports coding standards, tech stack preferences, and communication style
+
+**What to Include**:
+- **Project Information** - Overview, purpose, and target audience
+- **Technology Stack** - Languages, frameworks, databases, and tools
+- **Coding Standards** - Patterns, style conventions, naming conventions
+- **Communication Preferences** - How you want Agent to interact
+- **Development Context** - Current priorities and recent technical decisions
+
+**Example Structure**:
+```markdown
+# Project Name
+
+## Technology Stack
+- Next.js 14 with TypeScript
+- Tailwind CSS for styling
+- PostgreSQL database with Prisma ORM
+
+## Coding Standards
+- Use TypeScript for all new JavaScript files
+- Prefer functional components with hooks over class components
+- Use Tailwind CSS for styling, avoid inline styles
+- Always include TypeScript types for function parameters and return values
+
+## Communication Preferences
+- Provide brief explanations before code changes
+- Include code comments for complex logic
+- Ask for clarification before making major architectural changes
+
+## Current Development Phase
+Priority features:
+- User registration and login
+- Password reset functionality
+- Email verification
+```
+
+**Important Notes**:
+- **Location matters** - File must be in root directory to be detected
+- **No strict size limit** - But very large files may not be fully processed
+- **Agent-specific** - Context applies to Agent conversations, not other Replit AI tools
+- **AGENTS.md support** - Replit also supports the universal AGENTS.md standard via symbolic linking
 
 **Official Documentation**:
-- [Replit AI Documentation](https://docs.replit.com/replitai)
+- [Replit.md Documentation](https://docs.replit.com/replitai/replit-dot-md)
+- [Replit Agent Guide](https://docs.replit.com/replitai/assistant)
 
 ---
 
