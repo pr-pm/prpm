@@ -143,7 +143,7 @@ describe('Publish Command - E2E Tests', () => {
           files: ['prpm.json', '.cursorrules', 'custom-file.txt'],
         })
       );
-      await writeFile(join(testDir, '.cursorrules'), '# Rules\n');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Rules"\n---\n\n# Rules\n');
       await writeFile(join(testDir, 'custom-file.txt'), 'Custom content\n');
 
       mockClient.publish.mockResolvedValue({
@@ -319,7 +319,7 @@ describe('Publish Command - E2E Tests', () => {
           files: ['prpm.json', '.cursorrules'],
         })
       );
-      await writeFile(join(testDir, '.cursorrules'), '# Rules\n');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Rules"\n---\n\n# Rules\n');
 
       mockClient.publish.mockResolvedValue({
         package_id: 'scoped-uuid',

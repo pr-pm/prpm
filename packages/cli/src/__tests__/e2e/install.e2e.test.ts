@@ -138,9 +138,9 @@ describe('Install Command - E2E Tests', () => {
 
       await handleInstall('cursor-pkg', { as: 'claude' });
 
+      // Format is not passed to downloadPackage - conversion happens client-side
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ format: 'claude' })
+        expect.any(String)
       );
     });
 

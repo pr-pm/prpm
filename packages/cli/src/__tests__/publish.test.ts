@@ -361,7 +361,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Cursor rules');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Cursor rules"\n---\n\n# Cursor rules');
       await writeFile(join(testDir, 'README.md'), '# README');
 
       const mockPublish = jest.fn().mockResolvedValue({
@@ -389,10 +389,11 @@ describe('Publish Command', () => {
           version: '1.0.0',
           description: 'Test package for testing purposes',
           format: 'cursor',
-          files: ['prpm.json', 'custom-file.txt'],
+          files: ['prpm.json', '.cursorrules', 'custom-file.txt'],
         })
       );
 
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
       await writeFile(join(testDir, 'custom-file.txt'), 'Custom content');
 
       const mockPublish = jest.fn().mockResolvedValue({
@@ -574,9 +575,18 @@ describe('Publish Command', () => {
         const typeFiles: Record<string, string> = {
           cursor: '.cursorrules',
           claude: '.clinerules',
-          continue: '.continuerc.json',
+          continue: '.continue/rules/test-rule.md',
           windsurf: '.windsurfrules',
           generic: 'README.md',
+        };
+
+        // Generate format-specific content with proper frontmatter
+        const typeContent: Record<string, string> = {
+          cursor: '---\ndescription: "Test cursor package"\n---\n\n# Test cursor',
+          claude: '---\nname: test-claude\ndescription: Test claude package\n---\n\n# Test claude',
+          continue: '---\nname: "Test continue rule"\ndescription: "Test continue package"\n---\n\n# Test continue',
+          windsurf: '# Test windsurf',
+          generic: '# Test generic',
         };
 
         await writeFile(
@@ -590,7 +600,12 @@ describe('Publish Command', () => {
           })
         );
 
-        await writeFile(join(testDir, typeFiles[type]), `# Test ${type}`);
+        // Create directory for continue format
+        if (type === 'continue') {
+          await mkdir(join(testDir, '.continue/rules'), { recursive: true });
+        }
+
+        await writeFile(join(testDir, typeFiles[type]), typeContent[type]);
 
         const mockPublish = jest.fn().mockResolvedValue({
           package_id: `test-${type}-package`,
@@ -1112,8 +1127,8 @@ describe('Publish Command', () => {
       );
 
       // Create files for both packages
-      await writeFile(join(testDir, 'package-one.cursorrules'), '# Package one rules');
-      await writeFile(join(testDir, 'SKILL.md'), '# Package two skill');
+      await writeFile(join(testDir, 'package-one.cursorrules'), '---\ndescription: "Package one rules"\n---\n\n# Package one rules');
+      await writeFile(join(testDir, 'SKILL.md'), '---\nname: package-two\ndescription: Package two skill\n---\n\n# Package two skill');
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test',

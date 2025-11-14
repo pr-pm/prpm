@@ -126,10 +126,37 @@ export async function validatePackageFiles(
   // Get file paths
   const filePaths = normalizeFilePaths(manifest.files);
 
+  // Helper to check if file should be validated for this format
+  const shouldValidateFile = (filePath: string): boolean => {
+    // Always skip these files
+    const skipFiles = ['prpm.json', 'README.md', 'LICENSE', '.gitignore', '.npmignore'];
+    if (skipFiles.includes(filePath)) {
+      return false;
+    }
+
+    // Check if file matches format-specific patterns
+    if (formatType === 'cursor') {
+      return filePath.includes('.cursorrules');
+    } else if (formatType === 'claude') {
+      return filePath.endsWith('SKILL.md') || filePath.endsWith('.clinerules');
+    } else if (formatType === 'continue') {
+      return filePath.includes('.continue/');
+    } else if (formatType === 'windsurf') {
+      return filePath.includes('.windsurfrules');
+    } else if (formatType === 'agents-md') {
+      return filePath === 'agents.md';
+    } else if (formatType === 'kiro') {
+      return filePath.endsWith('.md') || filePath.endsWith('.json');
+    }
+
+    // For other formats or if extension matches, validate
+    return filePath.endsWith('.md') || filePath.endsWith('.json') || filePath.endsWith('.yaml');
+  };
+
   // Validate each file
   for (const filePath of filePaths) {
-    // Skip non-content files
-    if (filePath === 'prpm.json' || filePath === 'README.md' || filePath === 'LICENSE') {
+    // Skip files that don't match format patterns
+    if (!shouldValidateFile(filePath)) {
       continue;
     }
 
