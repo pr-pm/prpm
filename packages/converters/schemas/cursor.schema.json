@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/cursor.schema.json",
+  "title": "Cursor Rules Format",
+  "description": "JSON Schema for Cursor .cursor/rules format with MDC (Markdown Components) frontmatter",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "description": "YAML frontmatter enclosed in --- markers",
+      "required": ["description"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what this rule does (REQUIRED by Cursor). Used by AI to determine relevance for 'Apply Intelligently' type."
+        },
+        "globs": {
+          "type": "array",
+          "description": "File patterns to apply this rule to. When specified, creates 'Apply to Specific Files' rule type.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alwaysApply": {
+          "type": "boolean",
+          "description": "Whether to apply this rule to all files. true = 'Always Apply' type, false (default) = 'Apply Intelligently' or file-specific based on globs.",
+          "default": false
+        },
+        "name": {
+          "type": "string",
+          "description": "Package identifier (PRPM extension, ignored by Cursor)"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Categorization tags (PRPM extension, ignored by Cursor)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "agentType": {
+          "type": "string",
+          "enum": ["agent"],
+          "description": "Marks as agent subtype (PRPM extension for round-trip conversion)"
+        },
+        "skillType": {
+          "type": "string",
+          "enum": ["skill"],
+          "description": "Marks as skill subtype (PRPM extension for round-trip conversion)"
+        },
+        "commandType": {
+          "type": "string",
+          "enum": ["slash-command"],
+          "description": "Marks as slash command subtype (PRPM extension for round-trip conversion)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content following the frontmatter. Standard markdown with headings, lists, code blocks, etc."
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "description": "Core coding standards that apply to all files",
+        "alwaysApply": true
+      },
+      "content": "# Core Coding Standards\n\nThese standards apply to every chat session.\n\n- Write self-documenting code\n- Keep functions under 50 lines"
+    },
+    {
+      "frontmatter": {
+        "description": "RPC Service boilerplate patterns and conventions",
+        "alwaysApply": false
+      },
+      "content": "# RPC Service Patterns\n\nAgent will include this when it detects RPC service context.\n\n- Use internal RPC pattern\n- Use snake_case for service names"
+    },
+    {
+      "frontmatter": {
+        "description": "React component development standards",
+        "globs": ["src/**/*.tsx", "src/**/*.jsx"],
+        "alwaysApply": false
+      },
+      "content": "# React Component Standards\n\nApplied only to React component files.\n\n- Use functional components with hooks"
+    }
+  ]
+}

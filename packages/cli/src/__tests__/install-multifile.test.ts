@@ -316,7 +316,7 @@ describe('install command - multi-file packages', () => {
       );
     });
 
-    it('should handle multi-file package with --as cursor conversion', async () => {
+    it('should reject multi-file package with --as conversion', async () => {
       const mockPackage = {
         id: 'complex-skill',
         name: 'complex-skill',
@@ -338,17 +338,9 @@ describe('install command - multi-file packages', () => {
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.downloadPackage.mockResolvedValue(tarGz);
 
-      await handleInstall('complex-skill', { as: 'cursor' });
-
-      // Should save to .cursor/rules directory with flat structure (Cursor uses flat structure)
-      expect(saveFile).toHaveBeenCalledTimes(2);
-      expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/rules/skill.md',
-        '# Main Skill'
-      );
-      expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/rules/helper.md',
-        '# Helper'
+      // Should reject conversion for multi-file packages
+      await expect(handleInstall('complex-skill', { as: 'cursor' })).rejects.toThrow(
+        'Format conversion is only supported for single-file packages'
       );
     });
   });

@@ -26,6 +26,23 @@ import {
 } from '../core/lockfile';
 import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-config';
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
+import {
+  fromCursor,
+  fromClaude,
+  fromContinue,
+  fromCopilot,
+  fromKiro,
+  fromWindsurf,
+  fromAgentsMd,
+  toCursor,
+  toClaude,
+  toContinue,
+  toCopilot,
+  toKiro,
+  toWindsurf,
+  toAgentsMd,
+  type CanonicalPackage,
+} from '@pr-pm/converters';
 
 /**
  * Get icon for package format and subtype
@@ -311,9 +328,9 @@ export async function handleInstall(
       console.log(`   📦 Installing version ${version}`);
     }
 
-    // Download package in requested format
+    // Download package in native format (conversion happens client-side)
     console.log(`   ⬇️  Downloading...`);
-    const tarball = await client.downloadPackage(tarballUrl, { format });
+    const tarball = await client.downloadPackage(tarballUrl);
 
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
@@ -323,12 +340,120 @@ export async function handleInstall(
     const effectiveSubtype = options.subtype || pkg.subtype;
 
     // Extract all files from tarball
-    const extractedFiles = await extractTarball(tarball, packageId);
+    let extractedFiles = await extractTarball(tarball, packageId);
 
-    const locationOverride = options.location?.trim();
+    // Client-side format conversion (if --as flag is specified)
+    if (options.as && format && format !== pkg.format) {
+      console.log(`   🔄 Converting from ${pkg.format} to ${format}...`);
 
-    if (locationOverride && effectiveFormat !== 'agents.md') {
-      console.log(`   ⚠️  --location option currently only applies to Agents.md installs. Ignoring for ${effectiveFormat}.`);
+      // Only convert single-file packages
+      if (extractedFiles.length !== 1) {
+        throw new CLIError('Format conversion is only supported for single-file packages');
+      }
+
+      const sourceContent = extractedFiles[0].content;
+      const metadata = {
+        id: packageId,
+        name: pkg.name || packageId,
+        version: actualVersion,
+        tags: pkg.tags || [],
+      };
+
+      // Parse source format to canonical
+      let canonicalPkg: CanonicalPackage;
+      const sourceFormat = pkg.format.toLowerCase();
+
+      try {
+        switch (sourceFormat) {
+          case 'cursor':
+            canonicalPkg = fromCursor(sourceContent, metadata);
+            break;
+          case 'claude':
+            canonicalPkg = fromClaude(sourceContent, metadata);
+            break;
+          case 'windsurf':
+            canonicalPkg = fromWindsurf(sourceContent, metadata);
+            break;
+          case 'kiro':
+            canonicalPkg = fromKiro(sourceContent, metadata);
+            break;
+          case 'copilot':
+            canonicalPkg = fromCopilot(sourceContent, metadata);
+            break;
+          case 'continue':
+            canonicalPkg = fromContinue(JSON.parse(sourceContent), metadata);
+            break;
+          case 'agents.md':
+            canonicalPkg = fromAgentsMd(sourceContent, metadata);
+            break;
+          default:
+            throw new CLIError(`Unsupported source format for conversion: ${pkg.format}`);
+        }
+      } catch (error: any) {
+        throw new CLIError(`Failed to parse ${pkg.format} format: ${error.message}`);
+      }
+
+      // Convert from canonical to target format
+      let convertedContent: string;
+
+      try {
+        switch (format) {
+          case 'cursor':
+            const cursorResult = toCursor(canonicalPkg);
+            convertedContent = cursorResult.content;
+            break;
+          case 'claude':
+            const claudeResult = toClaude(canonicalPkg);
+            convertedContent = claudeResult.content;
+            break;
+          case 'continue':
+            const continueResult = toContinue(canonicalPkg);
+            convertedContent = continueResult.content;
+            break;
+          case 'windsurf':
+            const windsurfResult = toWindsurf(canonicalPkg);
+            convertedContent = windsurfResult.content;
+            break;
+          case 'copilot':
+            const copilotResult = toCopilot(canonicalPkg);
+            convertedContent = copilotResult.content;
+            break;
+          case 'kiro':
+            const kiroResult = toKiro(canonicalPkg, {
+              kiroConfig: { inclusion: 'always' }
+            });
+            convertedContent = kiroResult.content;
+            break;
+          case 'agents.md':
+            const agentsResult = toAgentsMd(canonicalPkg);
+            convertedContent = agentsResult.content;
+            break;
+          default:
+            throw new CLIError(`Unsupported target format for conversion: ${format}`);
+        }
+      } catch (error: any) {
+        throw new CLIError(`Failed to convert to ${format} format: ${error.message}`);
+      }
+
+      if (!convertedContent) {
+        throw new CLIError('Conversion failed: No content generated');
+      }
+
+      // Replace extracted content with converted content
+      extractedFiles = [{
+        name: extractedFiles[0].name,
+        content: convertedContent
+      }];
+
+      console.log(`   ✓ Converted from ${pkg.format} to ${format}`);
+    }
+
+    const locationSupportedFormats: Format[] = ['agents.md', 'cursor'];
+    let locationOverride = options.location?.trim();
+
+    if (locationOverride && !locationSupportedFormats.includes(effectiveFormat)) {
+      console.log(`   ⚠️  --location option currently applies to Cursor or Agents.md installs. Ignoring provided value for ${effectiveFormat}.`);
+      locationOverride = undefined;
     }
 
     // Track where files were saved for user feedback
@@ -350,7 +475,13 @@ export async function handleInstall(
     }
     // Check if this is a multi-file package
     else if (extractedFiles.length === 1) {
-      const destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      let destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+
+      if (locationOverride && effectiveFormat === 'cursor') {
+        const relativeDestDir = destDir.startsWith('./') ? destDir.slice(2) : destDir;
+        destDir = path.join(locationOverride, relativeDestDir);
+        console.log(`   📁 Installing Cursor package to custom location: ${destDir}`);
+      }
 
       // Single file package
       let mainFile = extractedFiles[0].content;
@@ -496,7 +627,13 @@ export async function handleInstall(
       await saveFile(destPath, mainFile);
       fileCount = 1;
     } else {
-      const destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      let destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+
+      if (locationOverride && effectiveFormat === 'cursor') {
+        const relativeDestDir = destDir.startsWith('./') ? destDir.slice(2) : destDir;
+        destDir = path.join(locationOverride, relativeDestDir);
+        console.log(`   📁 Installing Cursor package to custom location: ${destDir}`);
+      }
 
       // Multi-file package - create directory for package
       // For Claude skills, destDir already includes package name, so use it directly
@@ -634,8 +771,10 @@ export async function handleInstall(
     addToLockfile(updatedLockfile, packageId, {
       version: actualVersion || version,
       tarballUrl,
-      format: pkg.format, // Preserve original package format
-      subtype: pkg.subtype, // Preserve original package subtype
+      format: effectiveFormat, // Installed format
+      subtype: effectiveSubtype, // Installed subtype
+      sourceFormat: pkg.format,
+      sourceSubtype: pkg.subtype,
       installedPath: destPath,
       fromCollection: options.fromCollection,
       hookMetadata, // Track hook installation metadata for uninstall
@@ -890,7 +1029,7 @@ export function createInstallCommand(): Command {
     .option('--version <version>', 'Specific version to install')
     .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)')
     .option('--format <format>', 'Alias for --as')
-    .option('--location <path>', 'Custom location for installed files (currently supports Agents.md)')
+    .option('--location <path>', 'Custom location for installed files (Agents.md or nested Cursor rules)')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
     .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean; location?: string }) => {

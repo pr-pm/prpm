@@ -74,6 +74,7 @@ jobs:
       - name: Build packages in dependency order
         run: |
           npm run build --workspace=@pr-pm/types
+          npm run build --workspace=@pr-pm/converters
           npm run build --workspace=@pr-pm/registry-client
           npm run build --workspace=prpm
 
@@ -83,7 +84,7 @@ jobs:
           PACKAGES="${{ github.event.inputs.packages }}"
 
           if [ "$PACKAGES" = "all" ]; then
-            PUBLISH_PACKAGES='["types", "registry-client", "cli"]'
+            PUBLISH_PACKAGES='["types", "converters", "registry-client", "cli"]'
           else
             # Convert comma-separated to JSON array
             PUBLISH_PACKAGES=$(echo "$PACKAGES" | jq -R 'split(",") | map(select(length > 0))')
@@ -135,8 +136,9 @@ jobs:
 
       - name: Build dependencies in order
         run: |
-          # Build in dependency order: types → registry-client
+          # Build in dependency order: types → converters → registry-client
           npm run build --workspace=@pr-pm/types
+          npm run build --workspace=@pr-pm/converters
           npm run build --workspace=@pr-pm/registry-client
 
       - name: Determine and update version for this package

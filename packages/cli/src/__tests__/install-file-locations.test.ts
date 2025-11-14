@@ -263,6 +263,30 @@ describe('install command - file locations', () => {
       expect(destDir).toBe('.cursor/rules');
     });
 
+    it('should install cursor package to nested .cursor directory when --location is provided', async () => {
+      const mockPackage = {
+        id: 'nested-cursor',
+        name: 'nested-cursor',
+        format: 'cursor',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Nested Cursor Rule'));
+
+      await handleInstall('nested-cursor', { as: 'cursor', location: 'backend/server' });
+
+      const nestedPath = path.join('backend/server', '.cursor/rules/nested-cursor.mdc');
+      expect(saveFile).toHaveBeenCalledWith(nestedPath, expect.any(String));
+    });
+
     it('should install continue package to .continue/rules', async () => {
       const mockPackage = {
         id: 'test-continue',
@@ -501,8 +525,8 @@ describe('install command - file locations', () => {
     });
   });
 
-  describe('Lockfile type preservation', () => {
-    it('should preserve package type in lockfile regardless of --as format', async () => {
+  describe('Lockfile metadata', () => {
+    it('should record both installed and source formats in lockfile', async () => {
       const mockPackage = {
         id: 'test-skill',
         name: 'test-skill',
@@ -522,13 +546,15 @@ describe('install command - file locations', () => {
 
       await handleInstall('test-skill', { as: 'cursor' });
 
-      // Format and subtype should be from package, installed format should be cursor from --as
+      // Format/subtype should reflect installed version, source fields preserve original metadata
       expect(addToLockfile).toHaveBeenCalledWith(
         expect.any(Object),
         'test-skill',
         expect.objectContaining({
-          format: 'claude',
+          format: 'cursor',
           subtype: 'skill',
+          sourceFormat: 'claude',
+          sourceSubtype: 'skill',
         })
       );
     });

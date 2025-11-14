@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/claude-slash-command.schema.json",
+  "title": "Claude Slash Command Format",
+  "description": "JSON Schema for Claude Code Slash Commands - quick actions triggered by /command-name",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "properties": {
+        "allowed-tools": {
+          "type": "string",
+          "description": "List of tools the command can use (inherits from conversation if not specified)"
+        },
+        "argument-hint": {
+          "type": "string",
+          "description": "The arguments expected for the slash command (e.g., 'add [tagId] | remove [tagId] | list'). Shown when auto-completing the command."
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the command (defaults to first line from the prompt if not specified)"
+        },
+        "model": {
+          "type": "string",
+          "description": "Specific model string (inherits from conversation if not specified)"
+        },
+        "disable-model-invocation": {
+          "type": "boolean",
+          "description": "Whether to prevent SlashCommand tool from calling this command"
+        },
+        "commandType": {
+          "type": "string",
+          "const": "slash-command",
+          "description": "Explicit marker for round-trip conversion (PRPM extension)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content with instructions for executing the command. Can include H1 title with emoji icon."
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "description": "Generate documentation for selected code",
+        "allowed-tools": "Read, Edit",
+        "model": "sonnet"
+      },
+      "content": "# 📝 Documentation Generator\n\nGenerate comprehensive documentation for the selected code.\n\n## Instructions\n\n- Analyze code structure and purpose\n- Generate clear, concise documentation\n- Follow JSDoc/TSDoc format for TypeScript"
+    },
+    {
+      "frontmatter": {
+        "description": "Manage tags for files",
+        "argument-hint": "add [tagId] | remove [tagId] | list",
+        "allowed-tools": "Read, Write"
+      },
+      "content": "# Tag Manager\n\nManage tags for project files.\n\n## Usage\n\n- `/tags add <tagId>` - Add a tag\n- `/tags remove <tagId>` - Remove a tag\n- `/tags list` - List all tags"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/cursor-command.schema.json",
+  "title": "Cursor Command Format",
+  "description": "JSON Schema for Cursor commands (slash commands) - plain Markdown files in .cursor/commands/",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "Plain Markdown content describing what the command should do. No frontmatter supported."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "content": "# Review Code\n\nReview the selected code for:\n- Code quality and best practices\n- Potential bugs or edge cases\n- Performance improvements\n- Security vulnerabilities\n\nProvide specific, actionable feedback."
+    },
+    {
+      "content": "# Generate Tests\n\nGenerate comprehensive unit tests for the selected code.\n\nInclude:\n- Happy path test cases\n- Edge cases and error handling\n- Mock external dependencies\n- Follow existing test patterns in the project"
+    },
+    {
+      "content": "# Explain Code\n\nProvide a clear explanation of what the selected code does.\n\nInclude:\n- High-level purpose\n- Step-by-step breakdown\n- Any non-obvious behavior\n- Dependencies and side effects"
+    }
+  ]
+}

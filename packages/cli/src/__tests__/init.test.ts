@@ -15,6 +15,11 @@ describe('prpm init command', () => {
   let exitMock: jest.SpyInstance;
   let consoleLogMock: jest.SpyInstance;
   let consoleErrorMock: jest.SpyInstance;
+  let originalCwd: string;
+
+  beforeAll(() => {
+    originalCwd = process.cwd();
+  });
 
   beforeEach(async () => {
     // Mock process.exit to prevent actual exit
@@ -37,6 +42,12 @@ describe('prpm init command', () => {
     exitMock.mockRestore();
     consoleLogMock.mockRestore();
     consoleErrorMock.mockRestore();
+
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
 
     // Clean up test directory
     if (testDir && existsSync(testDir)) {

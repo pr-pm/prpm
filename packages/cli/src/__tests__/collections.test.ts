@@ -64,6 +64,12 @@ describe('collections command', () => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
 
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
+
     // Clean up test directory
     try {
       await rm(testDir, { recursive: true, force: true });
@@ -397,6 +403,12 @@ describe('collections command', () => {
     });
 
     afterEach(async () => {
+      try {
+        process.chdir(originalCwd);
+      } catch {
+        process.chdir(tmpdir());
+      }
+
       // Clean up test directory
       try {
         await rm(testDir, { recursive: true, force: true });

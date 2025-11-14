@@ -5,7 +5,7 @@
 import { handleInstall } from '../commands/install';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { autoDetectFormat } from '../core/filesystem';
+import { autoDetectFormat, saveFile } from '../core/filesystem';
 import { gzipSync } from 'zlib';
 import * as tar from 'tar';
 import { mkdtempSync, writeFileSync } from 'fs';
@@ -100,10 +100,14 @@ describe('install command - defaultFormat config', () => {
 
     await handleInstall('test-package', { as: 'windsurf' });
 
-    // Should request windsurf format (from CLI flag), not claude (from config)
+    // Should download native format (conversion happens client-side)
     expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ format: 'windsurf' })
+      expect.any(String)
+    );
+    // Should convert and save in windsurf format
+    expect(saveFile).toHaveBeenCalledWith(
+      expect.stringContaining('.windsurf'),
+      expect.any(String)
     );
   });
 
@@ -116,14 +120,17 @@ describe('install command - defaultFormat config', () => {
 
     await handleInstall('test-package', {});
 
-    // Should use cursor from config, not auto-detected claude
-    // Config defaultFormat takes precedence over auto-detection
+    // Should download native format (conversion happens client-side)
     expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ format: 'cursor' })
+      expect.any(String)
     );
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining('Using default format from config: cursor')
+    );
+    // Should save in cursor format
+    expect(saveFile).toHaveBeenCalledWith(
+      expect.stringContaining('.cursor'),
+      expect.any(String)
     );
   });
 
@@ -136,13 +143,17 @@ describe('install command - defaultFormat config', () => {
 
     await handleInstall('test-package', {});
 
-    // Should use windsurf from config
+    // Should download native format
     expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ format: 'windsurf' })
+      expect.any(String)
     );
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining('Using default format from config: windsurf')
+    );
+    // Should save in windsurf format
+    expect(saveFile).toHaveBeenCalledWith(
+      expect.stringContaining('.windsurf'),
+      expect.any(String)
     );
   });
 
@@ -155,10 +166,14 @@ describe('install command - defaultFormat config', () => {
 
     await handleInstall('test-package', {});
 
-    // Should use package's native format (cursor)
+    // Should download native format
     expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ format: 'cursor' })
+      expect.any(String)
+    );
+    // Should save in package's native format (cursor)
+    expect(saveFile).toHaveBeenCalledWith(
+      expect.stringContaining('.cursor'),
+      expect.any(String)
     );
   });
 
@@ -191,9 +206,9 @@ describe('install command - defaultFormat config', () => {
 
       await handleInstall('test-package', {});
 
+      // Should download native format
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ format })
+        expect.any(String)
       );
     }
   });
@@ -209,9 +224,14 @@ describe('install command - defaultFormat config', () => {
 
     await handleInstall('test-package', {});
 
+    // Should download native format
     expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ format: 'windsurf' })
+      expect.any(String)
+    );
+    // Should save in windsurf format from repo config
+    expect(saveFile).toHaveBeenCalledWith(
+      expect.stringContaining('.windsurf'),
+      expect.any(String)
     );
   });
 

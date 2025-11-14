@@ -8,6 +8,7 @@ import { getConfig } from '../../core/user-config';
 import { createTestDir, cleanupTestDir, createMockPackage } from './test-helpers';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
+import { tmpdir } from 'os';
 import { CLIError } from '../../core/errors';
 
 // Mock dependencies
@@ -51,6 +52,11 @@ describe('Publish Command - E2E Tests', () => {
 
   afterEach(async () => {
     jest.restoreAllMocks();
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
     await cleanupTestDir(testDir);
   });
 
@@ -81,6 +87,11 @@ describe('Publish Command - E2E Tests', () => {
 
       for (const type of types) {
         jest.clearAllMocks();
+        try {
+          process.chdir(originalCwd);
+        } catch {
+          process.chdir(tmpdir());
+        }
         await cleanupTestDir(testDir);
         testDir = await createTestDir();
         process.chdir(testDir);
@@ -132,7 +143,7 @@ describe('Publish Command - E2E Tests', () => {
           files: ['prpm.json', '.cursorrules', 'custom-file.txt'],
         })
       );
-      await writeFile(join(testDir, '.cursorrules'), '# Rules\n');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Rules"\n---\n\n# Rules\n');
       await writeFile(join(testDir, 'custom-file.txt'), 'Custom content\n');
 
       mockClient.publish.mockResolvedValue({
@@ -308,7 +319,7 @@ describe('Publish Command - E2E Tests', () => {
           files: ['prpm.json', '.cursorrules'],
         })
       );
-      await writeFile(join(testDir, '.cursorrules'), '# Rules\n');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Rules"\n---\n\n# Rules\n');
 
       mockClient.publish.mockResolvedValue({
         package_id: 'scoped-uuid',

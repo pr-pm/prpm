@@ -7,6 +7,7 @@ import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../../core/user-config';
 import { createTestDir, cleanupTestDir } from './test-helpers';
 import { CLIError } from '../../core/errors';
+import { tmpdir } from 'os';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -48,6 +49,11 @@ describe('Search Command - E2E Tests', () => {
 
   afterEach(async () => {
     jest.restoreAllMocks();
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
     await cleanupTestDir(testDir);
   });
 

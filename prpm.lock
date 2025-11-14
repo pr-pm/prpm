@@ -197,7 +197,14 @@
       "integrity": "",
       "type": "claude-skill",
       "format": "claude-skill"
+    },
+    "@prpm/prpm-development": {
+      "version": "1.0.2",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40prpm%2Fprpm-development/1.0.2.tar.gz",
+      "integrity": "sha256-d495c72955bc09258529ec396456290b110d95ba0d4ffad2e42c7e61dc8342d7",
+      "format": "agents.md",
+      "installedPath": "AGENTS.md"
     }
   },
-  "generated": "2025-10-20T20:22:00.428Z"
+  "generated": "2025-11-14T10:12:31.592Z"
 }

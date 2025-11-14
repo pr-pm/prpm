@@ -202,10 +202,8 @@ function SearchPageContent() {
         // Sort client-side
         if (sort === 'downloads') {
           filteredPackages.sort((a, b) => ((b as any).total_downloads || 0) - ((a as any).total_downloads || 0))
-        } else if (sort === 'stars') {
-          filteredPackages.sort((a, b) => ((b as any).stars || 0) - ((a as any).stars || 0))
         } else {
-          // 'recent' - assume already sorted by creation date in SSG data
+          // 'recent' or other - assume already sorted by creation date in SSG data
         }
 
         const totalFiltered = filteredPackages.length

@@ -8,6 +8,7 @@ import { getConfig } from '../../core/user-config';
 import { createTestDir, cleanupTestDir, createMockFetch } from './test-helpers';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { tmpdir } from 'os';
 import { CLIError } from '../../core/errors';
 import { gzipSync } from 'zlib';
 
@@ -61,6 +62,11 @@ describe('Install Command - E2E Tests', () => {
 
   afterEach(async () => {
     jest.restoreAllMocks();
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
     await cleanupTestDir(testDir);
   });
 
@@ -132,9 +138,9 @@ describe('Install Command - E2E Tests', () => {
 
       await handleInstall('cursor-pkg', { as: 'claude' });
 
+      // Format is not passed to downloadPackage - conversion happens client-side
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ format: 'claude' })
+        expect.any(String)
       );
     });
 

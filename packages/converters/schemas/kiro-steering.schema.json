@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/kiro-steering.schema.json",
+  "title": "Kiro Steering Files Format",
+  "description": "JSON Schema for Kiro steering files (.kiro/steering/*.md) - context-aware instructions with optional frontmatter (defaults to 'always' inclusion)",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "description": "Optional YAML frontmatter enclosed in --- markers. If omitted, file defaults to 'always' inclusion mode.",
+      "properties": {
+        "inclusion": {
+          "type": "string",
+          "enum": ["always", "fileMatch", "manual"],
+          "default": "always",
+          "description": "When to include this steering file: always (all contexts, default), fileMatch (specific files), manual (user-triggered)"
+        },
+        "fileMatchPattern": {
+          "type": "string",
+          "description": "Glob pattern for fileMatch inclusion mode (REQUIRED if inclusion is fileMatch)"
+        },
+        "domain": {
+          "type": "string",
+          "description": "Domain or topic for organization (e.g., 'testing', 'api', 'security')"
+        },
+        "foundationalType": {
+          "type": "string",
+          "enum": ["product", "tech", "structure"],
+          "description": "Type of foundational file (product.md, tech.md, structure.md)"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "inclusion": {
+                "const": "fileMatch"
+              }
+            }
+          },
+          "then": {
+            "required": ["fileMatchPattern"]
+          }
+        }
+      ]
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content following the frontmatter (or entire file if no frontmatter). Should include H1 title, guidelines, rules, examples."
+    }
+  },
+  "examples": [
+    {
+      "content": "# Testing Guidelines\n\nAlways write tests first.\n\n## Principles\n\n- Test edge cases\n- Mock external dependencies"
+    },
+    {
+      "frontmatter": {
+        "inclusion": "always",
+        "domain": "Testing"
+      },
+      "content": "# Testing Guidelines\n\nAlways write tests first.\n\n## Principles\n\n- Test edge cases\n- Mock external dependencies"
+    },
+    {
+      "frontmatter": {
+        "inclusion": "fileMatch",
+        "fileMatchPattern": "**/*.test.ts",
+        "domain": "Testing"
+      },
+      "content": "# Test File Guidelines\n\nRules specific to test files."
+    }
+  ]
+}

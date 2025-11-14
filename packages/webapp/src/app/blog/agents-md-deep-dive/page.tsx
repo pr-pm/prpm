@@ -328,7 +328,7 @@ npm run dev
             </div>
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6">
               <h4 className="text-lg font-bold text-green-400 mb-3">✅ Specific</h4>
-              <code className="text-sm text-gray-300">"Write unit tests for all utility functions. Maintain {'>'}80% coverage. Use Vitest."</code>
+              <code className="text-sm text-gray-300">"Write unit tests for all utility functions. Maintain {'>'} 80% coverage. Use Vitest."</code>
             </div>
           </div>
 

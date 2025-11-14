@@ -51,6 +51,11 @@ describe('Auth Commands - E2E Tests', () => {
   });
 
   afterEach(async () => {
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(os.tmpdir());
+    }
     await cleanupTestDir(testDir);
   });
 

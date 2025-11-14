@@ -1,0 +1,216 @@
+---
+description: Creating agents.md files with plain markdown format (NO frontmatter) - use when creating agents.md packages for PRPM or generating project context files
+globs: []
+alwaysApply: false
+---
+
+# Creating agents.md Files
+
+Quick reference for creating agents.md files - plain markdown project context for AI coding assistants.
+
+**Schema**: https://github.com/pr-pm/prpm/blob/main/packages/converters/schemas/agents-md.schema.json
+
+## Format Rules
+
+| Requirement | Value |
+|------------|-------|
+| Format | Plain markdown only |
+| Frontmatter | **None** (forbidden) |
+| Structure | Free-form |
+| File | `agents.md` in project root |
+
+## Critical Requirements
+
+1. **No frontmatter**: Pure markdown only (no YAML)
+2. **Single file**: Typically `agents.md` in project root
+3. **Plain markdown**: Standard markdown syntax
+4. **Free-form content**: No required structure
+
+## What to Include
+
+**High Priority:**
+- Project overview and purpose
+- Architecture decisions and patterns
+- Tech stack and dependencies
+- File structure and organization
+- Coding conventions
+- Development workflow
+- Testing approach
+- Domain knowledge and business logic
+
+**Skip:**
+- General programming best practices
+- Language syntax explanations
+- Framework basics
+- Obvious code quality rules
+
+## Example: Full Stack App
+
+```markdown
+# TaskMaster Development Guide
+
+## Project Overview
+
+TaskMaster is a task management application for remote teams with real-time collaboration and offline-first architecture.
+
+## Architecture
+
+### Frontend
+- React 18 with TypeScript
+- Vite for build tooling
+- Zustand for state management
+- Tailwind CSS for styling
+
+### Backend
+- Node.js with Express
+- PostgreSQL with Prisma ORM
+- WebSocket for real-time features
+- Redis for caching and pub/sub
+
+## Coding Conventions
+
+- Use TypeScript strict mode
+- Functional components with hooks (no class components)
+- Colocate tests with source files (*.test.tsx)
+- Use Zod for runtime validation
+
+## File Structure
+
+\`\`\`
+src/
+  components/     # Reusable UI components
+  features/       # Feature-based modules
+  hooks/          # Custom React hooks
+  lib/            # Utility functions
+  pages/          # Route pages
+\`\`\`
+
+## Development Workflow
+
+1. Create feature branch from `main`
+2. Write tests first (TDD)
+3. Implement feature
+4. Run `pnpm test` and `pnpm lint`
+5. Create PR with description
+
+## Testing
+
+- Vitest for unit tests
+- Playwright for E2E tests
+- 80% coverage target
+- Mock external dependencies
+```
+
+## Example: API Project
+
+```markdown
+# Payment Gateway API
+
+RESTful API for payment processing with multiple payment providers.
+
+## Tech Stack
+
+- Node.js 20.x
+- Express
+- PostgreSQL 15
+- Stripe and PayPal integrations
+
+## API Design
+
+All endpoints follow REST:
+- `GET /api/payments` - List payments
+- `POST /api/payments` - Create payment
+- `PUT /api/payments/:id` - Update payment
+
+## Error Format
+
+\`\`\`json
+{
+  "error": {
+    "code": "PAYMENT_FAILED",
+    "message": "Payment could not be processed"
+  }
+}
+\`\`\`
+
+## Security
+
+- JWT authentication required
+- Rate limiting: 100 req/min per IP
+- Input validation with Zod
+- PCI DSS compliance
+
+## Database Conventions
+
+- snake_case for table/column names
+- UUIDs for primary keys
+- Foreign keys: `{table}_id` pattern
+```
+
+## Writing Style
+
+**Good - Concise:**
+```markdown
+## Testing
+- Vitest for unit tests
+- Playwright for E2E
+- 80% coverage target
+- Mock external dependencies
+```
+
+**Bad - Verbose:**
+```markdown
+## Testing
+When you are writing tests, it's important to understand that we use Vitest
+for our unit tests because it's fast and modern. For end-to-end testing...
+```
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Adding YAML frontmatter | No frontmatter - plain markdown only |
+| Generic best practices | Focus on project-specific patterns |
+| Verbose explanations | Be concise - AI knows general concepts |
+| Language tutorials | Skip basics, focus on conventions |
+
+## File Placement
+
+Single project:
+```
+project-root/
+  agents.md
+  src/
+  package.json
+```
+
+Monorepo (multiple files possible):
+```
+monorepo/
+  packages/
+    frontend/agents.md
+    backend/agents.md
+```
+
+## Best Practices
+
+1. **Be concise**: Focus on project-specific info (AI knows general practices)
+2. **Keep updated**: Review as project evolves
+3. **Real examples**: Show actual code patterns
+4. **Plain markdown**: No YAML frontmatter
+5. **Human-readable**: For both AI and humans
+6. **Project-specific**: Avoid generic advice
+
+## Migration from Other Formats
+
+1. **Strip frontmatter** - Remove all YAML headers
+2. **Focus content** - Keep only markdown
+3. **Combine files** - Merge multiple rules into one
+4. **Simplify** - Remove format-specific features
+5. **Plain markdown** - Standard syntax only
+
+## References
+
+- **Official Spec**: https://github.com/openai/agents.md
+- **Schema**: `/Users/khaliqgant/Projects/prpm/app/packages/converters/schemas/agents-md.schema.json`
+- **Docs**: `/Users/khaliqgant/Projects/prpm/app/packages/converters/docs/agents-md.md`

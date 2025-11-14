@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/claude-agent.schema.json",
+  "title": "Claude Agent Format",
+  "description": "JSON Schema for Claude Code Agents - long-running assistants with tool access",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 64,
+          "description": "Agent identifier (lowercase letters, numbers, hyphens only)"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Brief overview of agent's functionality and use cases"
+        },
+        "allowed-tools": {
+          "type": "string",
+          "description": "Comma-separated list of available tools (e.g., 'Read, Write, Bash, WebSearch')"
+        },
+        "model": {
+          "type": "string",
+          "enum": ["sonnet", "opus", "haiku", "inherit"],
+          "description": "Claude model to use for this agent"
+        },
+        "agentType": {
+          "type": "string",
+          "const": "agent",
+          "description": "Explicit marker for round-trip conversion"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content with H1 title (can include emoji icon), persona, instructions, and examples"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "name": "code-reviewer",
+        "description": "Reviews code for best practices and potential issues",
+        "allowed-tools": "Read, Grep, Bash",
+        "model": "sonnet"
+      },
+      "content": "# 🔍 Code Reviewer\n\nYou are an expert code reviewer with deep knowledge of software engineering principles.\n\n## Instructions\n\n- Check for code smells and anti-patterns\n- Verify test coverage"
+    }
+  ]
+}

@@ -83,7 +83,8 @@ describe('install command', () => {
         id: 'test-package',
         name: 'test-package',
         description: 'A test package',
-        type: 'cursor',
+        format: 'cursor',
+        subtype: 'rule',
         tags: ['test'],
         total_downloads: 100,
         verified: true,
@@ -132,7 +133,8 @@ describe('install command', () => {
       const mockPackage = {
         id: 'test-package',
         name: 'test-package',
-        type: 'cursor',
+        format: 'cursor',
+        subtype: 'rule',
         tags: [],
         total_downloads: 100,
         verified: true,
@@ -147,9 +149,9 @@ describe('install command', () => {
 
       await handleInstall('test-package', { as: 'claude' });
 
+      // Should download native format (conversion happens client-side)
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        expect.any(String),
-        { format: 'claude' }
+        expect.any(String)
       );
     });
   });
@@ -281,18 +283,18 @@ describe('install command', () => {
 
       await handleInstall('test-package', { as: 'claude' });
 
-      // Verify the download was requested with the conversion format
+      // Should download native format (conversion happens client-side)
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        expect.any(String),
-        { format: 'claude' }
+        expect.any(String)
       );
 
-      // Verify lockfile stores the package's original format, not the conversion format
+      // Verify lockfile stores the installed format plus original metadata
       expect(addToLockfile).toHaveBeenCalledWith(
         expect.any(Object),
         'test-package',
         expect.objectContaining({
-          format: 'cursor',  // Package's native format is stored in lockfile
+          format: 'claude',
+          sourceFormat: 'cursor',
           version: '1.0.0',
         })
       );

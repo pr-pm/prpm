@@ -157,6 +157,9 @@ prpm install @username/test-driven-development
 # Or specify the format
 prpm install @username/test-driven-development --as cursor
 prpm install @username/karen-skill --as claude
+
+# Nested Cursor rules (installs into backend/server/.cursor/rules/)
+prpm install @username/debugging --as cursor --location backend/server
 ```
 
 ### Use It
@@ -331,6 +334,7 @@ Contact [@khaliqgant](https://github.com/khaliqgant) for publishing access.
 - 🚀 [Deployment Guide](development/docs/DEPLOYMENT_SUMMARY.md) - Complete deployment guide
 - 📊 [Deployment Quickstart](development/docs/DEPLOYMENT_QUICKSTART.md) - Quick deployment
 - 🔄 [CI/CD Workflows](development/docs/GITHUB_WORKFLOWS.md) - GitHub Actions
+- 🤖 [Codex Autofix CI](https://developers.openai.com/codex/autofix-ci) - Automatically open PRs with fixes after a failing CI run (see `.github/workflows/codex-autofix.yml`)
 
 ### 🔥 Karen Code Reviews
 - 🔥 [Get Your Karen Score](GET_KAREN_SCORE.md) - Brutally honest AI code reviews
