@@ -119,8 +119,8 @@ function SearchPageContent() {
       if (token) {
         try {
           const [packagesData, collectionsData] = await Promise.all([
-            getStarredPackages(token, 1000, 0),
-            getStarredCollections(token, 1000, 0),
+            getStarredPackages(token, 100, 0),
+            getStarredCollections(token, 100, 0),
           ])
 
           packagesData.packages.forEach(pkg => ids.add(pkg.id))
