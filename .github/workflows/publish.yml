@@ -109,11 +109,160 @@ jobs:
             echo "Version strategy: bump ($VERSION_TYPE)"
           fi
 
-  publish:
-    name: Publish ${{ matrix.package }}
+  version:
+    name: Version All Packages
     needs: validate
     runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.collect_versions.outputs.versions }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build dependencies in order
+        run: |
+          npm run build --workspace=@pr-pm/types
+          npm run build --workspace=@pr-pm/converters
+          npm run build --workspace=@pr-pm/registry-client
+
+      - name: Version all packages and update dependencies
+        id: version_packages
+        run: |
+          PUBLISHED_PACKAGES='${{ needs.validate.outputs.packages_to_publish }}'
+          VERSION_STRATEGY="${{ needs.validate.outputs.version_strategy }}"
+
+          # Store new versions in a JSON object
+          declare -A NEW_VERSIONS
+
+          echo "=== Versioning packages in dependency order ==="
+
+          # Version in dependency order: types → converters → registry-client → cli
+          DEPENDENCY_ORDER=("types" "converters" "registry-client" "cli")
+
+          for pkg in "${DEPENDENCY_ORDER[@]}"; do
+            # Skip if not in publish list
+            if ! echo "$PUBLISHED_PACKAGES" | jq -e --arg pkg "$pkg" 'index($pkg) != null' > /dev/null; then
+              echo "Skipping $pkg (not in publish list)"
+              continue
+            fi
+
+            echo ""
+            echo "--- Versioning $pkg ---"
+            cd packages/$pkg
+
+            # Determine new version
+            if [ "$VERSION_STRATEGY" = "custom" ]; then
+              NEW_VERSION="${{ needs.validate.outputs.custom_version }}"
+              npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
+            else
+              VERSION_TYPE="${{ needs.validate.outputs.version_type }}"
+              CURRENT_VERSION=$(node -p "require('./package.json').version")
+              echo "Current: $CURRENT_VERSION, Bumping: $VERSION_TYPE"
+              NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version --preid=beta 2>&1 | tail -1 | sed 's/v//')
+            fi
+
+            echo "✓ $pkg versioned to $NEW_VERSION"
+            NEW_VERSIONS[$pkg]=$NEW_VERSION
+
+            # Update internal dependencies to NEW versions
+            echo "Updating internal dependencies..."
+            for dep_pkg in "${!NEW_VERSIONS[@]}"; do
+              if [ "$dep_pkg" = "$pkg" ]; then
+                continue  # Skip self
+              fi
+
+              # Determine package name
+              if [ "$dep_pkg" = "cli" ]; then
+                DEP_NAME="prpm"
+              else
+                DEP_NAME="@pr-pm/$dep_pkg"
+              fi
+
+              # Check if this package depends on it
+              if grep -q "\"$DEP_NAME\"" package.json; then
+                DEP_VERSION="${NEW_VERSIONS[$dep_pkg]}"
+                echo "  Updating $DEP_NAME to ^$DEP_VERSION"
+
+                node -e "
+                  const fs = require('fs');
+                  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+                  if (pkg.dependencies && pkg.dependencies['$DEP_NAME']) {
+                    pkg.dependencies['$DEP_NAME'] = '^$DEP_VERSION';
+                    fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+                  } else if (pkg.devDependencies && pkg.devDependencies['$DEP_NAME']) {
+                    pkg.devDependencies['$DEP_NAME'] = '^$DEP_VERSION';
+                    fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+                  }
+                "
+              fi
+            done
+
+            cd ../..
+          done
+
+          echo ""
+          echo "=== Version Summary ==="
+          for pkg in "${!NEW_VERSIONS[@]}"; do
+            echo "$pkg: ${NEW_VERSIONS[$pkg]}"
+          done
+
+      - name: Collect versions as JSON
+        id: collect_versions
+        run: |
+          VERSIONS_JSON="{"
+          PUBLISHED_PACKAGES='${{ needs.validate.outputs.packages_to_publish }}'
+
+          FIRST=true
+          echo "$PUBLISHED_PACKAGES" | jq -r '.[]' | while read pkg; do
+            VERSION=$(node -p "require('./packages/$pkg/package.json').version")
+
+            if [ "$FIRST" = true ]; then
+              FIRST=false
+            else
+              VERSIONS_JSON+=","
+            fi
+
+            VERSIONS_JSON+="\"$pkg\":\"$VERSION\""
+          done
+          VERSIONS_JSON+="}"
+
+          echo "versions=$VERSIONS_JSON" >> $GITHUB_OUTPUT
+          echo "Collected versions: $VERSIONS_JSON"
+
+      - name: Update root package-lock.json
+        run: |
+          echo "Updating root package-lock.json with new versions..."
+          npm install --package-lock-only
+          echo "✓ package-lock.json updated"
+
+      - name: Upload versioned files
+        uses: actions/upload-artifact@v4
+        with:
+          name: versioned-packages
+          path: |
+            packages/*/package.json
+            package-lock.json
+          retention-days: 1
+
+  publish:
+    name: Publish ${{ matrix.package }}
+    needs: [validate, version]
+    runs-on: ubuntu-latest
     strategy:
+      max-parallel: 1  # Publish sequentially to avoid race conditions
       matrix:
         package: ${{ fromJson(needs.validate.outputs.packages_to_publish) }}
 
@@ -131,102 +280,20 @@ jobs:
           cache-dependency-path: package-lock.json
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Download versioned packages
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-packages
+          path: .
+
       - name: Install dependencies
         run: npm ci
 
       - name: Build dependencies in order
         run: |
-          # Build in dependency order: types → converters → registry-client
           npm run build --workspace=@pr-pm/types
           npm run build --workspace=@pr-pm/converters
           npm run build --workspace=@pr-pm/registry-client
-
-      - name: Determine and update version for this package
-        id: package_version
-        run: |
-          cd packages/${{ matrix.package }}
-
-          if [ "${{ needs.validate.outputs.version_strategy }}" = "custom" ]; then
-            # Use custom version
-            NEW_VERSION="${{ needs.validate.outputs.custom_version }}"
-            npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
-          else
-            # Bump version based on current package version
-            VERSION_TYPE="${{ needs.validate.outputs.version_type }}"
-            CURRENT_VERSION=$(node -p "require('./package.json').version")
-
-            echo "Current version: $CURRENT_VERSION"
-            echo "Bumping: $VERSION_TYPE"
-
-            # Use npm version to calculate the bump
-            NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version --preid=beta 2>&1 | tail -1 | sed 's/v//')
-          fi
-
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "Package ${{ matrix.package }} will be published as: $NEW_VERSION"
-
-          # For CLI, version is now dynamically read from package.json at runtime
-          # No need to update index.ts manually - it reads from package.json
-          if [ "${{ matrix.package }}" = "cli" ]; then
-            echo "✓ CLI version will be $NEW_VERSION (read dynamically from package.json)"
-          fi
-
-      - name: Update internal dependencies
-        run: |
-          cd packages/${{ matrix.package }}
-
-          echo "Checking for internal package dependencies to update..."
-
-          # Get the list of packages being published and their new versions
-          PUBLISHED_PACKAGES='${{ needs.validate.outputs.packages_to_publish }}'
-
-          # Check each internal dependency
-          for pkg in $(echo "$PUBLISHED_PACKAGES" | jq -r '.[]'); do
-            if [ "$pkg" = "${{ matrix.package }}" ]; then
-              continue  # Skip self
-            fi
-
-            # Determine package name
-            if [ "$pkg" = "cli" ]; then
-              PKG_NAME="prpm"
-            else
-              PKG_NAME="@pr-pm/$pkg"
-            fi
-
-            # Check if this package depends on it
-            if grep -q "\"$PKG_NAME\"" package.json; then
-              # Get the version that was just published
-              PKG_VERSION=$(node -p "require('../$pkg/package.json').version")
-
-              echo "Updating dependency $PKG_NAME to ^$PKG_VERSION"
-
-              # Update package.json with the new version
-              node -e "
-                const fs = require('fs');
-                const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-                if (pkg.dependencies && pkg.dependencies['$PKG_NAME']) {
-                  pkg.dependencies['$PKG_NAME'] = '^$PKG_VERSION';
-                  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-                  console.log('✓ Updated $PKG_NAME in dependencies');
-                } else if (pkg.devDependencies && pkg.devDependencies['$PKG_NAME']) {
-                  pkg.devDependencies['$PKG_NAME'] = '^$PKG_VERSION';
-                  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-                  console.log('✓ Updated $PKG_NAME in devDependencies');
-                }
-              "
-            fi
-          done
-
-          echo "✓ Dependency updates complete"
-
-      - name: Update root package-lock.json
-        run: |
-          echo "Updating root package-lock.json..."
-
-          # Update root lockfile after dependency changes
-          npm install --package-lock-only
-
-          echo "✓ package-lock.json updated"
 
       - name: Build package
         run: |
@@ -236,11 +303,19 @@ jobs:
             npm run build --workspace=@pr-pm/${{ matrix.package }}
           fi
 
+      - name: Get package version
+        id: package_version
+        run: |
+          cd packages/${{ matrix.package }}
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Package version: $VERSION"
+
       - name: Dry run check
         if: github.event.inputs.dry_run == 'true'
         run: |
           cd packages/${{ matrix.package }}
-          echo "Package: Dry run - would publish:"
+          echo "Dry run - would publish:"
           npm pack --dry-run
           npm publish --dry-run --access public --tag ${{ github.event.inputs.tag }}
 
@@ -256,30 +331,15 @@ jobs:
         run: |
           PKG_NAME="${{ matrix.package }}"
           if [ "$PKG_NAME" = "cli" ]; then
-            echo "[OK] Published prpm@${{ steps.package_version.outputs.new_version }}"
+            echo "✅ Published prpm@${{ steps.package_version.outputs.version }}"
           else
-            echo "[OK] Published @pr-pm/${{ matrix.package }}@${{ steps.package_version.outputs.new_version }}"
+            echo "✅ Published @pr-pm/${{ matrix.package }}@${{ steps.package_version.outputs.version }}"
           fi
-          echo "Tag: ${{ github.event.inputs.tag }}"
-
-      - name: Upload version info
-        uses: actions/upload-artifact@v4
-        with:
-          name: version-${{ matrix.package }}
-          path: packages/${{ matrix.package }}/package.json
-          retention-days: 1
-
-      - name: Upload root package-lock.json (once)
-        if: matrix.package == 'cli'
-        uses: actions/upload-artifact@v4
-        with:
-          name: root-package-lock
-          path: package-lock.json
-          retention-days: 1
+          echo "NPM Tag: ${{ github.event.inputs.tag }}"
 
   create-git-tag:
     name: Create Git Tag and Release
-    needs: [validate, publish]
+    needs: [validate, version, publish]
     runs-on: ubuntu-latest
     if: github.event.inputs.dry_run != 'true'
 
@@ -300,36 +360,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Download all version artifacts
+      - name: Download versioned packages
         uses: actions/download-artifact@v4
         with:
-          path: /tmp/artifacts
-
-      - name: Restore updated files from publish job
-        run: |
-          echo "Restoring updated files from publish job..."
-
-          # Restore package.json files
-          for artifact_dir in /tmp/artifacts/version-*; do
-            if [ -d "$artifact_dir" ]; then
-              PACKAGE_NAME=$(basename "$artifact_dir" | sed 's/version-//')
-              echo "Restoring $PACKAGE_NAME package.json..."
-
-              if [ -f "$artifact_dir/package.json" ]; then
-                cp "$artifact_dir/package.json" "packages/$PACKAGE_NAME/package.json"
-                echo "  ✓ package.json"
-              fi
-            fi
-          done
-
-          # Restore root package-lock.json
-          if [ -f "/tmp/artifacts/root-package-lock/package-lock.json" ]; then
-            echo "Restoring root package-lock.json..."
-            cp "/tmp/artifacts/root-package-lock/package-lock.json" "package-lock.json"
-            echo "  ✓ package-lock.json"
-          fi
-
-          echo "✓ All files restored"
+          name: versioned-packages
+          path: .
 
       - name: Determine versions from published packages
         id: collect_versions
