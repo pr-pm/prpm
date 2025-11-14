@@ -2,39 +2,44 @@
  * Tests for starred command
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { handleStarred } from '../starred';
 import type { StarredOptions } from '../starred';
+import { getConfig } from '../../core/user-config';
 
 // Mock dependencies
-vi.mock('../../core/config', () => ({
-  default: {
-    get: vi.fn((key: string) => {
-      if (key === 'token') return 'test-token';
-      if (key === 'registryUrl') return 'https://test-registry.prpm.dev';
-      return null;
-    }),
+jest.mock('../../core/user-config', () => ({
+  getConfig: jest.fn(),
+}));
+
+jest.mock('../../core/telemetry', () => ({
+  telemetry: {
+    track: jest.fn(),
+    trackCommand: jest.fn(),
+    shutdown: jest.fn(),
   },
 }));
 
-vi.mock('../../core/telemetry', () => ({
-  default: {
-    trackCommand: vi.fn(),
-  },
+jest.mock('@pr-pm/registry-client', () => ({
+  getRegistryClient: jest.fn(() => ({})),
 }));
 
-vi.mock('../../utils/registry-client', () => ({
-  getRegistryClient: vi.fn(() => ({})),
-}));
+// Cast mocks
+const mockGetConfig = getConfig as jest.MockedFunction<typeof getConfig>;
 
 // Mock fetch globally
-global.fetch = vi.fn();
+global.fetch = jest.fn() as any;
 
 describe('starred command', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     // Mock console.log to suppress output during tests
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    // Set up default getConfig mock
+    mockGetConfig.mockResolvedValue({
+      token: 'test-token',
+      registryUrl: 'https://test-registry.prpm.dev',
+    } as any);
   });
 
   describe('handleStarred', () => {
@@ -190,17 +195,25 @@ describe('starred command', () => {
       );
     });
 
-    it('should handle API errors', async () => {
+    it('should handle API errors gracefully', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,
         status: 500,
+        statusText: 'Internal Server Error',
       });
 
       const options: StarredOptions = {
         packages: true,
       };
 
-      await expect(handleStarred(options)).rejects.toThrow();
+      // Should not throw - errors are caught and logged
+      await handleStarred(options);
+
+      // Should log the error
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
 
     it('should show only packages when --packages flag is used', async () => {

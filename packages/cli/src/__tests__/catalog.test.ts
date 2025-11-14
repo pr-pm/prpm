@@ -8,6 +8,14 @@ import { tmpdir } from 'os';
 import { handleCatalog } from '../commands/catalog';
 import { readLockfile, writeLockfile, createLockfile } from '../core/lockfile';
 
+// Mock telemetry to prevent timeouts
+jest.mock('../core/telemetry', () => ({
+  telemetry: {
+    track: jest.fn(),
+    shutdown: jest.fn(),
+  },
+}));
+
 describe('catalog command', () => {
   let testDir: string;
   let originalCwd: string;
