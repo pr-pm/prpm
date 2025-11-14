@@ -473,7 +473,7 @@ export default async function PackagePage({ params }: { params: { author: string
             <StarButtonWrapper
               type="package"
               id={pkg.id}
-              initialStars={pkg.stars || 0}
+              initialStars={(pkg as any).stars || 0}
             />
             {(pkg.organization as any)?.name && (
               <div className="flex items-center gap-2">
