@@ -9,9 +9,13 @@ export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' |
 export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
 /**
- * Detect subtype from frontmatter fields
+ * Detect subtype from frontmatter fields and content
  */
-export function detectSubtypeFromFrontmatter(frontmatter: Record<string, any>): Subtype {
+export function detectSubtypeFromFrontmatter(
+  frontmatter: Record<string, any>,
+  hasPersona: boolean = false,
+  noFrontmatter: boolean = false
+): Subtype {
   // Check for explicit type fields
   if (frontmatter.agentType === 'agent' || frontmatter.type === 'agent') {
     return 'agent';
@@ -23,9 +27,20 @@ export function detectSubtypeFromFrontmatter(frontmatter: Record<string, any>): 
     return 'slash-command';
   }
 
-  // Check for tools (indicates agent)
-  if (frontmatter.tools && frontmatter.tools.trim().length > 0) {
+  // Check for tools (indicates agent) - supports both 'allowed-tools' and legacy 'tools'
+  const toolsField = frontmatter['allowed-tools'] || frontmatter.tools;
+  if (toolsField && toolsField.trim().length > 0) {
     return 'agent';
+  }
+
+  // Check for persona (indicates agent)
+  if (hasPersona) {
+    return 'agent';
+  }
+
+  // No frontmatter indicates slash command (Claude/Cursor format)
+  if (noFrontmatter) {
+    return 'slash-command';
   }
 
   // Default to rule

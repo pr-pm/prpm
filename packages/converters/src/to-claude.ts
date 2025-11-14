@@ -24,7 +24,7 @@ export function toClaude(
   let qualityScore = 100;
 
   try {
-    const content = convertContent(pkg, warnings, options);
+    const content = convertContent(pkg, warnings, options, pkg.subtype === 'slash-command');
 
     // Check for lossy conversion
     const lossyConversion = warnings.some(w =>
@@ -60,7 +60,8 @@ export function toClaude(
 function convertContent(
   pkg: CanonicalPackage,
   warnings: string[],
-  options?: { claudeConfig?: { tools?: string; model?: string } }
+  options?: { claudeConfig?: { tools?: string; model?: string } },
+  isSlashCommand: boolean = false
 ): string {
   const lines: string[] = [];
 
@@ -69,32 +70,36 @@ function convertContent(
   const tools = pkg.content.sections.find(s => s.type === 'tools');
   const persona = pkg.content.sections.find(s => s.type === 'persona');
 
-  // Generate frontmatter
-  lines.push('---');
+  // Claude slash commands don't have frontmatter (plain markdown)
+  // Claude agents/skills have frontmatter
+  if (!isSlashCommand) {
+    // Generate frontmatter
+    lines.push('---');
 
-  // Use package name (identifier) for frontmatter, not the display title
-  // The display title will be used in the H1 heading
-  lines.push(`name: ${pkg.name}`);
+    // Use package name (identifier) for frontmatter, not the display title
+    // The display title will be used in the H1 heading
+    lines.push(`name: ${pkg.name}`);
 
-  if (metadata?.type === 'metadata') {
-    lines.push(`description: ${metadata.data.description}`);
+    if (metadata?.type === 'metadata') {
+      lines.push(`description: ${metadata.data.description}`);
+    }
+
+    // Tools field - use config override if provided, otherwise use package tools
+    const toolsValue = options?.claudeConfig?.tools || (tools?.type === 'tools' ? tools.tools.join(', ') : undefined);
+    if (toolsValue) {
+      lines.push(`allowed-tools: ${toolsValue}`);
+    }
+
+    // Model field - use config override if provided, otherwise use stored model from metadata
+    const storedModel = metadata?.type === 'metadata' ? metadata.data.claudeAgent?.model : undefined;
+    const modelValue = options?.claudeConfig?.model || storedModel;
+    if (modelValue) {
+      lines.push(`model: ${modelValue}`);
+    }
+
+    lines.push('---');
+    lines.push('');
   }
-
-  // Tools field - use config override if provided, otherwise use package tools
-  const toolsValue = options?.claudeConfig?.tools || (tools?.type === 'tools' ? tools.tools.join(', ') : undefined);
-  if (toolsValue) {
-    lines.push(`allowed-tools: ${toolsValue}`);
-  }
-
-  // Model field - use config override if provided, otherwise use stored model from metadata
-  const storedModel = metadata?.type === 'metadata' ? metadata.data.claudeAgent?.model : undefined;
-  const modelValue = options?.claudeConfig?.model || storedModel;
-  if (modelValue) {
-    lines.push(`model: ${modelValue}`);
-  }
-
-  lines.push('---');
-  lines.push('');
 
   // Main title
   if (metadata?.type === 'metadata') {

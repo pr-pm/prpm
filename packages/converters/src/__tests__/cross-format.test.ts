@@ -347,9 +347,10 @@ describe('Cross-format conversions', () => {
     it('should convert Claude to Cursor', () => {
       const result = toCursor(canonical);
 
-      // Should have MDC frontmatter
+      // Should have MDC frontmatter with Cursor-native fields only
       expect(result.content).toMatch(/^---\n/);
-      expect(result.content).toContain('name:');
+      expect(result.content).toContain('description:');
+      expect(result.content).toContain('alwaysApply:');
       expect(result.format).toBe('cursor');
     });
 
@@ -797,8 +798,8 @@ describe('Cross-format conversions', () => {
     it('should convert Cursor command to Claude slash command', () => {
       const result = toClaude(canonical);
 
-      expect(result.content).toMatch(/^---\n/);
-      expect(result.content).toContain('name: test');
+      // Claude slash commands are plain markdown (no frontmatter)
+      expect(result.content).not.toMatch(/^---\n/);
       expect(result.content).toContain('# 🧪');
       expect(result.format).toBe('claude');
     });
@@ -849,8 +850,9 @@ describe('Cross-format conversions', () => {
     it('should convert Claude skill to Cursor agent', () => {
       const result = toCursor(canonical);
 
+      // Cursor rules only have description, globs, alwaysApply (no name field)
       expect(result.content).toMatch(/^---\n/);
-      expect(result.content).toContain('name: refactor-helper');
+      expect(result.content).toContain('description:');
       expect(result.format).toBe('cursor');
     });
 
@@ -900,8 +902,8 @@ describe('Cross-format conversions', () => {
     it('should convert Claude command to Cursor slash command', () => {
       const result = toCursor(canonical);
 
-      expect(result.content).toMatch(/^---\n/);
-      expect(result.content).toContain('name: docs');
+      // Cursor slash commands are plain markdown (no frontmatter)
+      expect(result.content).not.toMatch(/^---\n/);
       expect(result.content).toContain('# 📝');
       expect(result.format).toBe('cursor');
     });
@@ -973,8 +975,10 @@ describe('Cross-format conversions', () => {
       const cursorResult = toCursor(claudeSkill);
       const backToCanonical = fromCursor(cursorResult.content, metadata);
       expect(backToCanonical.format).toBe('cursor');
-      // Cursor should preserve the skill subtype
-      expect(backToCanonical.subtype).toBe('skill');
+      // Note: Cursor doesn't support tools field and doesn't preserve skill/agent distinction
+      // Tools are Claude-specific and get lost in conversion, so the subtype becomes 'rule'
+      // This is expected lossy conversion behavior since we removed PRPM extension fields
+      expect(backToCanonical.subtype).toBe('rule');
     });
 
     it('should detect agentType in frontmatter', () => {

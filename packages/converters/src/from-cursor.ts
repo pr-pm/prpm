@@ -14,8 +14,8 @@ export function fromCursor(
   content: string,
   metadata: { id: string; name?: string; version?: string; author?: string; tags?: string[] }
 ): CanonicalPackage {
-  // Use Claude parser but override the format
-  const pkg = fromClaude(content, metadata);
+  // Use Claude parser but specify cursor format for subtype detection
+  const pkg = fromClaude(content, metadata, 'cursor');
 
   // Override format to 'cursor' (fromClaude returns 'claude')
   pkg.format = 'cursor';

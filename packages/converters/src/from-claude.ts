@@ -28,7 +28,8 @@ export function fromClaude(
     version?: string;
     author?: string;
     tags?: string[];
-  }
+  },
+  sourceFormat: 'claude' | 'cursor' | 'continue' = 'claude'
 ): CanonicalPackage {
   const { frontmatter, body } = parseFrontmatter(content);
 
@@ -47,9 +48,10 @@ export function fromClaude(
   };
   sections.push(metadataSection);
 
-  // Extract tools if present
-  if (frontmatter.tools) {
-    const tools = frontmatter.tools
+  // Extract tools if present (try both 'allowed-tools' and legacy 'tools' field)
+  const toolsField = frontmatter['allowed-tools'] || frontmatter.tools;
+  if (toolsField) {
+    const tools = toolsField
       .split(',')
       .map((t: string) => t.trim())
       .filter(Boolean);
@@ -85,8 +87,13 @@ export function fromClaude(
 
   sections.push(...bodySections);
 
-  // Detect subtype from frontmatter
-  const subtype = detectSubtypeFromFrontmatter(frontmatter);
+  // Detect subtype from frontmatter and content
+  const hasPersona = sections.some(s => s.type === 'persona');
+  const hasFrontmatter = Object.keys(frontmatter).length > 0;
+  // Only Claude/Cursor with no frontmatter indicates slash-command
+  // Continue always has frontmatter (even if minimal)
+  const isSlashCommand = !hasFrontmatter && (sourceFormat === 'claude' || sourceFormat === 'cursor');
+  const subtype = detectSubtypeFromFrontmatter(frontmatter, hasPersona, isSlashCommand);
 
   // Create package with new taxonomy
   const pkg: Partial<CanonicalPackage> = {

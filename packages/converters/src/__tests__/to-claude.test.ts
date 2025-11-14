@@ -26,8 +26,7 @@ describe('toClaude', () => {
       expect(result.content).toMatch(/^---\n/);
       expect(result.content).toContain('name: Test Package'); // Uses pkg.name, not metadata.title
       expect(result.content).toContain('description: A test agent for conversion testing');
-      expect(result.content).toContain('icon: 🧪');
-      expect(result.content).toContain('tools: Read, Write, Bash, WebSearch');
+      expect(result.content).toContain('allowed-tools: Read, Write, Bash, WebSearch');
     });
 
     it('should include main title', () => {
