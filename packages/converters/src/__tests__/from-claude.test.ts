@@ -396,11 +396,20 @@ description: Test
       expect(result.sourceFormat).toBe('claude');
     });
 
-    it('should set type to agent', () => {
-      const result = fromClaude(sampleClaudeAgent, metadata);
+    it('should set type to agent when explicitly provided', () => {
+      // Subtype should be determined from file path context by the CLI
+      const result = fromClaude(sampleClaudeAgent, metadata, 'claude', 'agent');
 
       expect(result.format).toBe('claude');
       expect(result.subtype).toBe('agent');
+    });
+
+    it('should default to rule when no explicit subtype', () => {
+      // Without explicit subtype, defaults to 'rule'
+      const result = fromClaude(sampleClaudeAgent, metadata);
+
+      expect(result.format).toBe('claude');
+      expect(result.subtype).toBe('rule');
     });
   });
 });

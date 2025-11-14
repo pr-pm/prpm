@@ -9,14 +9,30 @@ export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' |
 export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
 /**
- * Detect subtype from frontmatter fields and content
+ * Detect subtype from frontmatter fields
+ *
+ * Strategy:
+ * 1. Check for explicit PRPM extension fields (agentType, skillType, commandType)
+ *    - These exist for backwards compatibility with old packages
+ * 2. Check for explicit 'type' field
+ * 3. Default to 'rule'
+ *
+ * Note: Content-based detection (persona, tools, etc.) is unreliable and removed.
+ * The CLI should determine subtype from file path context when converting/installing.
+ *
+ * @param frontmatter - YAML frontmatter fields
+ * @param explicitSubtype - Optional explicit subtype from file path or caller context
  */
 export function detectSubtypeFromFrontmatter(
   frontmatter: Record<string, any>,
-  hasPersona: boolean = false,
-  noFrontmatter: boolean = false
+  explicitSubtype?: Subtype
 ): Subtype {
-  // Check for explicit type fields
+  // Use explicit subtype if provided (from file path context)
+  if (explicitSubtype) {
+    return explicitSubtype;
+  }
+
+  // Check for explicit PRPM extension type fields (backwards compatibility)
   if (frontmatter.agentType === 'agent' || frontmatter.type === 'agent') {
     return 'agent';
   }
@@ -27,23 +43,7 @@ export function detectSubtypeFromFrontmatter(
     return 'slash-command';
   }
 
-  // Check for tools (indicates agent) - supports both 'allowed-tools' and legacy 'tools'
-  const toolsField = frontmatter['allowed-tools'] || frontmatter.tools;
-  if (toolsField && toolsField.trim().length > 0) {
-    return 'agent';
-  }
-
-  // Check for persona (indicates agent)
-  if (hasPersona) {
-    return 'agent';
-  }
-
-  // No frontmatter indicates slash command (Claude/Cursor format)
-  if (noFrontmatter) {
-    return 'slash-command';
-  }
-
-  // Default to rule
+  // Default to rule - the CLI should provide explicit subtype from file path
   return 'rule';
 }
 

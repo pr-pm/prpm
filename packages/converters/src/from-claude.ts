@@ -16,10 +16,15 @@ import type {
   Rule,
   Example,
 } from './types/canonical.js';
-import { detectSubtypeFromFrontmatter, setTaxonomy } from './taxonomy-utils.js';
+import { detectSubtypeFromFrontmatter, setTaxonomy, type Subtype } from './taxonomy-utils.js';
 
 /**
  * Parse Claude agent format into canonical format
+ *
+ * @param content - Markdown content with YAML frontmatter
+ * @param metadata - Package metadata
+ * @param sourceFormat - Source format for proper format field setting
+ * @param explicitSubtype - Optional explicit subtype from file path (e.g., .claude/agents/ → 'agent')
  */
 export function fromClaude(
   content: string,
@@ -29,7 +34,8 @@ export function fromClaude(
     author?: string;
     tags?: string[];
   },
-  sourceFormat: 'claude' | 'cursor' | 'continue' = 'claude'
+  sourceFormat: 'claude' | 'cursor' | 'continue' = 'claude',
+  explicitSubtype?: Subtype
 ): CanonicalPackage {
   const { frontmatter, body } = parseFrontmatter(content);
 
@@ -87,13 +93,8 @@ export function fromClaude(
 
   sections.push(...bodySections);
 
-  // Detect subtype from frontmatter and content
-  const hasPersona = sections.some(s => s.type === 'persona');
-  const hasFrontmatter = Object.keys(frontmatter).length > 0;
-  // Only Claude/Cursor with no frontmatter indicates slash-command
-  // Continue always has frontmatter (even if minimal)
-  const isSlashCommand = !hasFrontmatter && (sourceFormat === 'claude' || sourceFormat === 'cursor');
-  const subtype = detectSubtypeFromFrontmatter(frontmatter, hasPersona, isSlashCommand);
+  // Detect subtype - use explicit if provided, otherwise detect from frontmatter
+  const subtype = detectSubtypeFromFrontmatter(frontmatter, explicitSubtype);
 
   // Create package with new taxonomy
   const pkg: Partial<CanonicalPackage> = {
