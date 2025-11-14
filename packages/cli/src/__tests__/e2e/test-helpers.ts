@@ -36,6 +36,30 @@ export async function createMockPackage(
   type: string = 'cursor',
   version: string = '1.0.0'
 ): Promise<string> {
+  // Determine the file name/path for this format
+  let fileName: string;
+  switch (type) {
+    case 'cursor':
+      fileName = '.cursorrules';
+      break;
+    case 'claude':
+      fileName = '.claude/skills/test-skill/SKILL.md';
+      break;
+    case 'continue':
+      fileName = '.continue/rules/test-rule.md';
+      break;
+    case 'windsurf':
+      fileName = '.windsurfrules';
+      break;
+    case 'copilot':
+      fileName = '.github/copilot-instructions.md';
+      break;
+    case 'generic':
+    default:
+      fileName = 'rules.md';
+      break;
+  }
+
   const manifest = {
     name,
     version,
@@ -44,14 +68,14 @@ export async function createMockPackage(
     subtype: 'rule',
     author: 'test-author',
     tags: ['test', type],
-    files: ['prpm.json', '.cursorrules'],
+    files: ['prpm.json', fileName],
   };
 
   const manifestPath = join(testDir, 'prpm.json');
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
 
   // Create format-specific sample files
-  const rulesPath = join(testDir, '.cursorrules');
+  const rulesPath = join(testDir, fileName);
   let content: string;
 
   switch (type) {
@@ -80,6 +104,17 @@ Always write tests.`;
       break;
 
     case 'continue':
+      // Continue uses markdown with frontmatter
+      content = `---
+name: ${name}
+description: Test Continue package
+---
+
+# Test Rules
+
+Always write tests.`;
+      break;
+
     case 'windsurf':
     case 'agents-md':
       // These formats use plain markdown without frontmatter requirements
@@ -102,6 +137,14 @@ Always write tests.`;
     default:
       // Generic/fallback
       content = `# Test Rules\n\nAlways write tests.\n`;
+  }
+
+  // Ensure parent directory exists
+  const { dirname } = await import('path');
+  const { mkdir } = await import('fs/promises');
+  const parentDir = dirname(rulesPath);
+  if (parentDir !== testDir) {
+    await mkdir(parentDir, { recursive: true });
   }
 
   await writeFile(rulesPath, content);
