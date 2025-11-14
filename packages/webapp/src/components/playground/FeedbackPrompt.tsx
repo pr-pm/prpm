@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 
+const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111';
+
 interface FeedbackPromptProps {
   sessionId: string;
+  exchangeIndex: number;
   onFeedbackSubmitted?: () => void;
 }
 
-export default function FeedbackPrompt({ sessionId, onFeedbackSubmitted }: FeedbackPromptProps) {
+export default function FeedbackPrompt({ sessionId, exchangeIndex, onFeedbackSubmitted }: FeedbackPromptProps) {
   const [answered, setAnswered] = useState(false);
   const [showComment, setShowComment] = useState(false);
   const [comment, setComment] = useState('');
@@ -20,13 +23,6 @@ export default function FeedbackPrompt({ sessionId, onFeedbackSubmitted }: Feedb
     setIsEffective(effective);
     setAnswered(true);
     setShowComment(true);
-
-    // If user doesn't want to comment, auto-submit after showing the comment box
-    setTimeout(() => {
-      if (!comment) {
-        submitFeedback(effective, null);
-      }
-    }, 3000);
   };
 
   const submitFeedback = async (isEffective: boolean, commentText: string | null) => {
@@ -36,14 +32,16 @@ export default function FeedbackPrompt({ sessionId, onFeedbackSubmitted }: Feedb
     setError(null);
 
     try {
-      const response = await fetch('/api/v1/playground/feedback', {
+      const token = localStorage.getItem('prpm_token');
+      const response = await fetch(`${REGISTRY_URL}/api/v1/playground/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
-        credentials: 'include',
         body: JSON.stringify({
           session_id: sessionId,
+          exchange_index: exchangeIndex,
           is_effective: isEffective,
           comment: commentText || undefined,
         }),
@@ -65,6 +63,14 @@ export default function FeedbackPrompt({ sessionId, onFeedbackSubmitted }: Feedb
   const handleCommentSubmit = () => {
     if (answered && isEffective !== null) {
       submitFeedback(isEffective, comment);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Submit on Ctrl+Enter or Cmd+Enter
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleCommentSubmit();
     }
   };
 
@@ -102,7 +108,8 @@ export default function FeedbackPrompt({ sessionId, onFeedbackSubmitted }: Feedb
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Share your thoughts..."
+            onKeyDown={handleKeyDown}
+            placeholder="Share your thoughts... (Ctrl+Enter or Cmd+Enter to submit)"
             maxLength={1000}
             className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded-lg text-gray-300 placeholder-gray-500 focus:outline-none focus:border-prpm-accent resize-none"
             rows={3}
@@ -111,13 +118,22 @@ export default function FeedbackPrompt({ sessionId, onFeedbackSubmitted }: Feedb
             <p className="text-gray-500 text-xs">
               {comment.length}/1000 characters
             </p>
-            <button
-              onClick={handleCommentSubmit}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-prpm-accent hover:bg-prpm-accent/80 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-all text-sm font-medium"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCommentSubmit}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-all text-sm font-medium"
+              >
+                Skip
+              </button>
+              <button
+                onClick={handleCommentSubmit}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-prpm-accent hover:bg-prpm-accent/80 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-all text-sm font-medium"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit'}
+              </button>
+            </div>
           </div>
           {error && (
             <p className="mt-2 text-red-400 text-sm">{error}</p>

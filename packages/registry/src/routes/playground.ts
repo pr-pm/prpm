@@ -49,6 +49,7 @@ const ShareSessionSchema = z.object({
 
 const FeedbackSchema = z.object({
   session_id: z.string().uuid('Invalid session ID'),
+  exchange_index: z.number().int().min(0, 'Exchange index must be 0 or greater'),
   is_effective: z.boolean(),
   comment: z.string().max(1000, 'Comment too long (max 1000 characters)').optional(),
 });
@@ -1007,7 +1008,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
   // Submit feedback for a playground session
   // =====================================================
   server.post(
-    '/api/v1/playground/feedback',
+    '/feedback',
     {
       preHandler: [rateLimiter],
       schema: {
@@ -1015,9 +1016,10 @@ export async function playgroundRoutes(server: FastifyInstance) {
         tags: ['playground'],
         body: {
           type: 'object',
-          required: ['session_id', 'is_effective'],
+          required: ['session_id', 'exchange_index', 'is_effective'],
           properties: {
             session_id: { type: 'string', format: 'uuid' },
+            exchange_index: { type: 'integer', minimum: 0 },
             is_effective: { type: 'boolean' },
             comment: { type: 'string', maxLength: 1000 },
           },
@@ -1057,27 +1059,27 @@ export async function playgroundRoutes(server: FastifyInstance) {
           });
         }
 
-        // Check if feedback already exists for this session
+        // Check if feedback already exists for this exchange
         const existingFeedback = await query(
           server,
-          'SELECT id FROM playground_session_feedback WHERE session_id = $1',
-          [body.session_id]
+          'SELECT id FROM playground_session_feedback WHERE session_id = $1 AND exchange_index = $2',
+          [body.session_id, body.exchange_index]
         );
 
         if (existingFeedback.rowCount > 0) {
           return reply.code(409).send({
             error: 'feedback_exists',
-            message: 'Feedback already submitted for this session',
+            message: 'Feedback already submitted for this exchange',
           });
         }
 
         // Insert feedback
         const result = await query<{ id: string }>(
           server,
-          `INSERT INTO playground_session_feedback (session_id, user_id, ip_hash, is_effective, comment)
-           VALUES ($1, $2, $3, $4, $5)
+          `INSERT INTO playground_session_feedback (session_id, exchange_index, user_id, ip_hash, is_effective, comment)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
-          [body.session_id, userId, ipHash, body.is_effective, body.comment || null]
+          [body.session_id, body.exchange_index, userId, ipHash, body.is_effective, body.comment || null]
         );
 
         return reply.code(200).send({

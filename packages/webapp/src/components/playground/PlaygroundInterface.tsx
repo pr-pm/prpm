@@ -970,14 +970,29 @@ export default function PlaygroundInterface({
 
                           {/* Assistant Response */}
                           {exchange.assistant && (
-                            <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
-                              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                                Assistant
+                            <>
+                              <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
+                                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                                  Assistant
+                                </div>
+                                <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
+                                </div>
                               </div>
-                              <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
-                              </div>
-                            </div>
+
+                              {/* Feedback Prompt - shown after each response */}
+                              {!loading && currentSessionId && (
+                                <div className="px-3 sm:px-4 pb-3 sm:pb-4 bg-gray-50 dark:bg-gray-700/50">
+                                  <FeedbackPrompt
+                                    sessionId={currentSessionId}
+                                    exchangeIndex={exchange.index}
+                                    onFeedbackSubmitted={() => {
+                                      console.log('Feedback submitted for exchange:', exchange.index);
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -985,17 +1000,6 @@ export default function PlaygroundInterface({
                   )
                 })}
               </div>
-
-              {/* Feedback Prompt - shown after response */}
-              {!loading && conversation.length > 0 && currentSessionId && (
-                <FeedbackPrompt
-                  sessionId={currentSessionId}
-                  onFeedbackSubmitted={() => {
-                    // Optional: Could refresh analytics or show thank you message
-                    console.log('Feedback submitted for session:', currentSessionId);
-                  }}
-                />
-              )}
             </div>
           )}
 
@@ -1067,14 +1071,29 @@ export default function PlaygroundInterface({
 
                           {/* Assistant Response */}
                           {exchange.assistant && (
-                            <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
-                              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                                Assistant
+                            <>
+                              <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
+                                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                                  Assistant
+                                </div>
+                                <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
+                                </div>
                               </div>
-                              <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
-                              </div>
-                            </div>
+
+                              {/* Feedback Prompt - shown after each response */}
+                              {!loadingB && currentSessionIdB && (
+                                <div className="px-3 sm:px-4 pb-3 sm:pb-4 bg-gray-50 dark:bg-gray-700/50">
+                                  <FeedbackPrompt
+                                    sessionId={currentSessionIdB}
+                                    exchangeIndex={exchange.index}
+                                    onFeedbackSubmitted={() => {
+                                      console.log('Feedback submitted for Package B exchange:', exchange.index);
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -1082,16 +1101,6 @@ export default function PlaygroundInterface({
                   )
                 })}
               </div>
-
-              {/* Feedback Prompt for Package B */}
-              {!loadingB && conversationB.length > 0 && currentSessionIdB && (
-                <FeedbackPrompt
-                  sessionId={currentSessionIdB}
-                  onFeedbackSubmitted={() => {
-                    console.log('Feedback submitted for Package B session:', currentSessionIdB);
-                  }}
-                />
-              )}
             </div>
           )}
         </div>
