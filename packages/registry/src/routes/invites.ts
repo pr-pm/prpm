@@ -4,6 +4,7 @@
  */
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { requireAdmin } from '../middleware/auth.js';
 
 interface InviteParams {
   token: string;
@@ -195,7 +196,7 @@ export async function inviteRoutes(server: FastifyInstance) {
           }
         }
       },
-      preHandler: server.authenticate
+      preHandler: requireAdmin()
     },
     async (request: FastifyRequest<{ Params: InviteParams; Body: ClaimInviteBody }>, reply: FastifyReply) => {
       const { token } = request.params;
@@ -398,15 +399,10 @@ export async function inviteRoutes(server: FastifyInstance) {
           }
         }
       },
-      preHandler: server.authenticate
+      preHandler: requireAdmin()
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
-      // TODO: Add admin check
-      // if (!request.user?.is_admin) {
-      //   return reply.status(403).send({ error: 'Forbidden' });
-      // }
-
-      try {
+      try{
         const result = await server.pg.query(`
           SELECT
             COUNT(*) FILTER (WHERE status = 'pending') as pending,
@@ -481,13 +477,9 @@ export async function inviteRoutes(server: FastifyInstance) {
           }
         }
       },
-      preHandler: server.authenticate
+      preHandler: requireAdmin()
     },
     async (request: FastifyRequest<{ Body: CreateInviteBody }>, reply: FastifyReply) => {
-      // TODO: Add admin check
-      // if (!request.user?.is_admin) {
-      //   return reply.status(403).send({ error: 'Forbidden' });
-      // }
 
       const { author_username, package_count, invite_message, expires_in_days = 30 } = request.body;
 
@@ -595,13 +587,9 @@ export async function inviteRoutes(server: FastifyInstance) {
           }
         }
       },
-      preHandler: server.authenticate
+      preHandler: requireAdmin()
     },
     async (request: FastifyRequest<{ Querystring: ListInvitesQuery }>, reply: FastifyReply) => {
-      // TODO: Add admin check
-      // if (!request.user?.is_admin) {
-      //   return reply.status(403).send({ error: 'Forbidden' });
-      // }
 
       const { status, limit = 50, offset = 0 } = request.query;
 
@@ -687,13 +675,9 @@ export async function inviteRoutes(server: FastifyInstance) {
           }
         }
       },
-      preHandler: server.authenticate
+      preHandler: requireAdmin()
     },
     async (request: FastifyRequest<{ Params: InviteParams }>, reply: FastifyReply) => {
-      // TODO: Add admin check
-      // if (!request.user?.is_admin) {
-      //   return reply.status(403).send({ error: 'Forbidden' });
-      // }
 
       const { token } = request.params;
 

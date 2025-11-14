@@ -40,9 +40,11 @@ export async function createMockPackage(
     name,
     version,
     description: `Test package ${name}`,
-    type,
+    format: type,
+    subtype: 'rule',
     author: 'test-author',
     tags: ['test', type],
+    files: ['prpm.json', '.cursorrules'],
   };
 
   const manifestPath = join(testDir, 'prpm.json');

@@ -55,7 +55,13 @@ describe('Publish Command', () => {
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
+    try {
+      process.chdir(originalCwd);
+    } catch (err) {
+      // Ignore errors if originalCwd no longer exists (parallel test cleanup)
+      const { tmpdir } = require('os');
+      process.chdir(tmpdir());
+    }
   });
 
   describe('Manifest Validation', () => {
@@ -225,6 +231,9 @@ describe('Publish Command', () => {
     });
 
     it('should reject Claude skills with invalid name characters', async () => {
+      await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '# Test skill');
+
       await writeFile(
         join(testDir, 'prpm.json'),
         JSON.stringify({
@@ -237,10 +246,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '# Test skill');
-
-      await expect(handlePublish({})).rejects.toThrow(/pattern|Manifest validation failed/);
+      await expect(handlePublish({})).rejects.toThrow(/invalid character|lowercase/i);
     });
 
     it('should reject Claude skills with description longer than 500 characters', async () => {

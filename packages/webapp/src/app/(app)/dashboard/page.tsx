@@ -392,7 +392,7 @@ export default function DashboardPage() {
                     {recentPackages.slice(0, 4).map((pkg) => (
                       <Link
                         key={pkg.id}
-                        href={`/packages/${pkg.name}`}
+                        href={`/packages/${pkg.name.startsWith('@') ? pkg.name.split('/')[0].substring(1) : 'prpm'}/${pkg.name.startsWith('@') ? pkg.name.split('/').slice(1).join('/') : pkg.name}`}
                         className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
                       >
                         <h3 className="text-lg font-semibold text-white mb-2">{pkg.name}</h3>
@@ -821,7 +821,7 @@ export default function DashboardPage() {
                   {recentPackages.slice(0, 4).map((pkg) => (
                     <Link
                       key={pkg.id}
-                      href={`/packages/${pkg.name}`}
+                      href={`/packages/${pkg.name.startsWith('@') ? pkg.name.split('/')[0].substring(1) : 'prpm'}/${pkg.name.startsWith('@') ? pkg.name.split('/').slice(1).join('/') : pkg.name}`}
                       className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
                     >
                       <h3 className="text-lg font-semibold text-white mb-2">{pkg.name}</h3>
