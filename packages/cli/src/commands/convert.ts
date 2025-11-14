@@ -58,13 +58,19 @@ function getDefaultPath(format: string, filename: string, subtype?: string): str
       return join(process.cwd(), '.windsurf', 'rules', `${baseName}.md`);
     case 'kiro':
       // Kiro has two types: steering files (.kiro/steering/*.md) and hooks (.kiro/hooks/*.kiro.hook)
+      if (subtype === 'hook') {
+        return join(process.cwd(), '.kiro', 'hooks', `${baseName}.kiro.hook`);
+      }
       // Default to steering files for conversion
       return join(process.cwd(), '.kiro', 'steering', `${baseName}.md`);
     case 'copilot':
       // Copilot uses NAME.instructions.md format in .github/instructions/ directory
       return join(process.cwd(), '.github', 'instructions', `${baseName}.instructions.md`);
     case 'continue':
-      // Continue uses .continue/rules/*.md for rules (default) or .continue/prompts/*.md for slash commands
+      // Continue uses .continue/rules/*.md for rules (default) or .continue/prompts/*.md for slash commands/prompts
+      if (subtype === 'slash-command' || subtype === 'prompt') {
+        return join(process.cwd(), '.continue', 'prompts', `${baseName}.md`);
+      }
       return join(process.cwd(), '.continue', 'rules', `${baseName}.md`);
     case 'agents.md':
       return join(process.cwd(), 'agents.md');
@@ -95,7 +101,7 @@ function detectFormat(content: string, filepath: string): string | null {
   if (filepath.includes('.kiro/steering') || filepath.includes('.kiro/hooks')) {
     return 'kiro';
   }
-  if (filepath.includes('copilot-instructions')) {
+  if (filepath.includes('copilot-instructions') || filepath.includes('.github/instructions')) {
     return 'copilot';
   }
   if (filepath.includes('.continue/rules') || filepath.includes('.continue/prompts') || filepath.includes('.continuerules')) {
