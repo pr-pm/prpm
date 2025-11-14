@@ -23,6 +23,7 @@ import { createAnonymousRestrictionMiddleware, recordAnonymousUsageHook } from '
 import { optionalAuth } from '../middleware/auth.js';
 import { sanitizeUserInput, SECURITY_LIMITS } from '../middleware/security.js';
 import { getModelId } from '../config/models.js';
+import { query } from '../db/index.js';
 
 // Request validation schemas
 const PlaygroundRunSchema = z.object({
@@ -1043,7 +1044,8 @@ export async function playgroundRoutes(server: FastifyInstance) {
         const ipHash = crypto.createHash('sha256').update(String(ipAddress)).digest('hex');
 
         // Verify session exists
-        const sessionCheck = await server.db.query(
+        const sessionCheck = await query(
+          server,
           'SELECT id FROM playground_sessions WHERE id = $1',
           [body.session_id]
         );
@@ -1056,7 +1058,8 @@ export async function playgroundRoutes(server: FastifyInstance) {
         }
 
         // Check if feedback already exists for this session
-        const existingFeedback = await server.db.query(
+        const existingFeedback = await query(
+          server,
           'SELECT id FROM playground_session_feedback WHERE session_id = $1',
           [body.session_id]
         );
@@ -1069,7 +1072,8 @@ export async function playgroundRoutes(server: FastifyInstance) {
         }
 
         // Insert feedback
-        const result = await server.db.query(
+        const result = await query<{ id: string }>(
+          server,
           `INSERT INTO playground_session_feedback (session_id, user_id, ip_hash, is_effective, comment)
            VALUES ($1, $2, $3, $4, $5)
            RETURNING id`,
