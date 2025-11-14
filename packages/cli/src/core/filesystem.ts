@@ -57,7 +57,7 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.kiro/steering';
 
     case 'agents.md':
-      return '.agents';
+      return '.';
 
     case 'generic':
       return '.prompts';
@@ -142,6 +142,11 @@ export async function directoryExists(dirPath: string): Promise<boolean> {
  * Returns the format if a matching directory is found, or null if none found
  */
 export async function autoDetectFormat(): Promise<Format | null> {
+  // Agents.md installs live at project root
+  if (await fileExists('AGENTS.md')) {
+    return 'agents.md';
+  }
+
   const formatDirs: Array<{ format: Format; dir: string }> = [
     { format: 'cursor', dir: '.cursor' },
     { format: 'claude', dir: '.claude' },

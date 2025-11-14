@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat } from '../core/filesystem';
+import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { Package, Format, Subtype } from '../types';
@@ -14,6 +14,8 @@ import { pipeline } from 'stream/promises';
 import { createGunzip } from 'zlib';
 import * as tar from 'tar';
 import { CLIError } from '../core/errors';
+import { promptYesNo } from '../core/prompts';
+import path from 'path';
 import {
   readLockfile,
   writeLockfile,
@@ -104,6 +106,7 @@ export async function handleInstall(
     subtype?: Subtype;
     frozenLockfile?: boolean;
     force?: boolean;
+    location?: string;
     fromCollection?: {
       scope: string;
       name_slug: string;
@@ -274,7 +277,6 @@ export async function handleInstall(
     // Special handling for Claude packages: default to CLAUDE.md if it doesn't exist
     // BUT only for packages that are generic rules (not skills, agents, or commands)
     if (!options.as && pkg.format === 'claude' && pkg.subtype === 'rule') {
-      const { fileExists } = await import('../core/filesystem');
       const claudeMdExists = await fileExists('CLAUDE.md');
 
       if (!claudeMdExists) {
@@ -323,6 +325,12 @@ export async function handleInstall(
     // Extract all files from tarball
     const extractedFiles = await extractTarball(tarball, packageId);
 
+    const locationOverride = options.location?.trim();
+
+    if (locationOverride && effectiveFormat !== 'agents.md') {
+      console.log(`   ⚠️  --location option currently only applies to Agents.md installs. Ignoring for ${effectiveFormat}.`);
+    }
+
     // Track where files were saved for user feedback
     let destPath: string;
     let fileCount = 0;
@@ -352,7 +360,7 @@ export async function handleInstall(
       const packageName = stripAuthorNamespace(packageId);
 
       // For Claude skills, use SKILL.md filename in the package directory
-      // For agents.md, use package-name/AGENTS.md directory structure
+      // For agents.md, always install as AGENTS.md in the project root
       // For Copilot, use official naming conventions
       // For other formats, use package name as filename
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
@@ -361,7 +369,29 @@ export async function handleInstall(
         // Claude hooks are merged into settings.json
         destPath = `${destDir}/settings.json`;
       } else if (effectiveFormat === 'agents.md') {
-        destPath = `${destDir}/${packageName}/AGENTS.md`;
+        let targetPath = 'AGENTS.md';
+        if (locationOverride) {
+          targetPath = path.join(locationOverride, 'AGENTS.override.md');
+          console.log(`   📁 Installing Agents.md package to custom location: ${targetPath}`);
+        }
+        destPath = targetPath;
+
+        if (await fileExists(destPath)) {
+          if (options.force) {
+            console.log(`   ⚠️  ${destPath} already exists - overwriting (forced).`);
+          } else {
+            console.log(`   ⚠️  ${destPath} already exists.`);
+            const overwrite = await promptYesNo(
+              `   Overwrite existing ${destPath}? (y/N): `,
+              `   ⚠️  Non-interactive terminal detected. Remove or rename ${destPath} to continue.`
+            );
+            if (!overwrite) {
+              console.log(`   🚫 Skipping install to avoid overwriting ${destPath}`);
+              success = true;
+              return;
+            }
+          }
+        }
       } else if (effectiveFormat === 'copilot') {
         // Official GitHub Copilot naming conventions
         if (effectiveSubtype === 'chatmode') {
@@ -402,7 +432,6 @@ export async function handleInstall(
       // Special handling for Claude hooks - merge into settings.json
       if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
         const { readFile } = await import('fs/promises');
-        const { fileExists } = await import('../core/filesystem');
 
         // Parse the hook configuration from the downloaded file
         let hookConfig: any;
@@ -667,7 +696,6 @@ async function extractTarball(tarball: Buffer, packageId: string): Promise<Extra
   const zlib = await import('zlib');
   const fs = await import('fs');
   const os = await import('os');
-  const path = await import('path');
 
   return new Promise((resolve, reject) => {
     // Decompress gzip first
@@ -768,6 +796,7 @@ export async function installFromLockfile(options: {
   as?: string;
   subtype?: Subtype;
   frozenLockfile?: boolean;
+  location?: string;
 }): Promise<void> {
   try {
     // Read lockfile
@@ -801,12 +830,24 @@ export async function installFromLockfile(options: {
 
         console.log(`  Installing ${packageId}...`);
 
+        let locationOverride = options.location;
+        if (!locationOverride && lockEntry.format === 'agents.md' && lockEntry.installedPath) {
+          const baseName = path.basename(lockEntry.installedPath);
+          if (baseName === 'AGENTS.override.md') {
+            locationOverride = path.dirname(lockEntry.installedPath);
+          } else if (baseName !== 'AGENTS.md') {
+            // If the lockfile contains a non-standard filename, honor its directory
+            locationOverride = path.dirname(lockEntry.installedPath);
+          }
+        }
+
         await handleInstall(packageSpec, {
           version: lockEntry.version,
           as: options.as || lockEntry.format,
           subtype: options.subtype || lockEntry.subtype as Subtype | undefined,
           frozenLockfile: options.frozenLockfile,
           force: true, // Force reinstall when installing from lockfile
+          location: locationOverride,
         });
 
         successCount++;
@@ -849,9 +890,10 @@ export function createInstallCommand(): Command {
     .option('--version <version>', 'Specific version to install')
     .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)')
     .option('--format <format>', 'Alias for --as')
+    .option('--location <path>', 'Custom location for installed files (currently supports Agents.md)')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean }) => {
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean; location?: string }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = options.format || options.as;
 
@@ -864,7 +906,8 @@ export function createInstallCommand(): Command {
         await installFromLockfile({
           as: convertTo,
           subtype: options.subtype as Subtype | undefined,
-          frozenLockfile: options.frozenLockfile
+          frozenLockfile: options.frozenLockfile,
+          location: options.location,
         });
         return;
       }
@@ -873,7 +916,8 @@ export function createInstallCommand(): Command {
         version: options.version,
         as: convertTo,
         subtype: options.subtype as Subtype | undefined,
-        frozenLockfile: options.frozenLockfile
+        frozenLockfile: options.frozenLockfile,
+        location: options.location,
       });
     });
 
