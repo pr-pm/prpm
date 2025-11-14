@@ -15,6 +15,8 @@ This document tracks different AI IDEs, their documentation for rules/context co
 | **Windsurf** | `.windsurfrules` | Plain Markdown | ✅ Full | [Windsurf Docs](https://codeium.com/windsurf) |
 | **Claude Code** | `.claude/` | Various (agents, skills, commands) | ✅ Full | [Claude Code Docs](https://docs.claude.com/en/docs/claude-code) |
 | **Continue** | `.continue/` | JSON + Markdown | ✅ Full | [Continue Docs](https://docs.continue.dev/) |
+| **Kiro** | `.kiro/steering/` | Markdown with YAML frontmatter | ✅ Full | [Kiro Docs](https://kiro.dev/docs/steering/) |
+| **OpenAI Codex** | `AGENTS.md`<br/>`AGENTS.override.md` | Plain Markdown | ✅ Full | [AGENTS.md Spec](https://agents.md/) |
 | **Aider** | `CONVENTIONS.md` (configurable) | Plain Markdown | 🔄 Planned | [Aider Conventions](https://aider.chat/docs/usage/conventions.html) |
 | **Trae.ai** | `.trae/rules/project_rules.md`<br/>`user_rules.md` (settings) | Plain Markdown | 🔄 Planned | [Trae Rules](https://docs.trae.ai/ide/rules-for-ai) |
 | **Zencoder** | TBD | TBD | 🔄 Planned | [Zencoder Rules](https://docs.zencoder.ai/rules-context/zen-rules) |
@@ -132,6 +134,142 @@ Continue uses a JSON configuration file with references to markdown prompt files
 **Official Documentation**:
 - [Continue Documentation](https://docs.continue.dev/)
 - [Continue Customization](https://docs.continue.dev/customization/overview)
+
+---
+
+### Kiro
+
+**File Location**: `.kiro/steering/` directory
+**Format**: Markdown with YAML frontmatter
+**PRPM Support**: ✅ Full
+
+Kiro uses steering files to guide AI behavior with a domain-based organization system. Each file represents one domain (testing, security, architecture, etc.) with flexible inclusion modes.
+
+**PRPM Documentation**: [KIRO.md](./KIRO.md)
+
+**Official Documentation**:
+- [Kiro Steering Documentation](https://kiro.dev/docs/steering/)
+
+**Key Features**:
+- **Three inclusion modes**:
+  - `always` - Applied to all AI interactions
+  - `fileMatch` - Applied based on glob patterns (e.g., `**/*.test.ts`)
+  - `manual` - Applied only when explicitly requested
+- **Domain-based organization** - One domain per file (testing.md, security.md, etc.)
+- **Context-aware rules** - Rules activate based on file patterns
+
+**Example Structure**:
+```markdown
+---
+inclusion: fileMatch
+fileMatchPattern: "**/*.test.ts"
+domain: testing
+---
+
+# Testing Standards
+
+## Test Structure
+- Use describe blocks for test suites
+- One test per behavior
+- Clear, descriptive test names
+
+## Best Practices
+- Test behavior, not implementation
+- Mock external dependencies
+- Keep tests fast and isolated
+```
+
+**Installation Example**:
+```bash
+# Install as Kiro format
+prpm install @prpm/testing-standards --as kiro
+
+# Installs to: .kiro/steering/testing.md
+```
+
+---
+
+### OpenAI Codex (AGENTS.md)
+
+**File Location**:
+- Global: `~/.codex/AGENTS.md` or `~/.codex/AGENTS.override.md`
+- Project: `AGENTS.md` or `AGENTS.override.md` (repository root to working directory)
+
+**Format**: Plain Markdown (no frontmatter required)
+**PRPM Support**: ✅ Full
+
+AGENTS.md is an open standard for guiding AI coding agents, created through collaboration between OpenAI, Google, Cursor, and others. It's a simple README-like file that tells AI tools how to work with your codebase.
+
+**Official Documentation**:
+- [AGENTS.md Specification](https://agents.md/)
+- [OpenAI Codex Documentation](https://github.com/openai/codex/blob/main/docs/agents_md.md)
+
+**Key Features**:
+- **Simple format** - Just standard Markdown, no special syntax
+- **Hierarchical precedence** - Files in deeper directories override parent guidance
+- **Size limits** - Combined project documentation limited to 32 KiB by default
+- **Fallback filenames** - Configurable alternatives (e.g., `TEAM_GUIDE.md`, `.agents.md`)
+- **Universal standard** - Supported by multiple AI coding tools
+
+**What to Include**:
+- **Project structure** - Directory organization, architecture decisions
+- **Coding standards** - Style guidelines, naming conventions, best practices
+- **Testing instructions** - How to run tests, frameworks used, coverage requirements
+- **Development workflow** - Build commands, deployment procedures, conventions
+
+**Example Structure**:
+```markdown
+# Project Name
+
+## Architecture
+
+This project uses a monorepo structure with:
+- `/src` - Source code organized by feature
+- `/tests` - Integration and unit tests
+- `/docs` - Project documentation
+
+## Coding Standards
+
+- Use TypeScript with strict mode enabled
+- Follow ESLint configuration in `.eslintrc.js`
+- Components use PascalCase, utilities use camelCase
+- All functions must have JSDoc comments
+
+## Testing
+
+Run tests with:
+```bash
+npm test              # Unit tests
+npm run test:e2e      # End-to-end tests
+npm run test:coverage # Coverage report
+```
+
+## Pull Requests
+
+- Link to related issue
+- Include test coverage
+- Keep changes focused and atomic
+```
+
+**Precedence Order**:
+1. Global `~/.codex/AGENTS.override.md` (or `AGENTS.md`)
+2. Repository root `AGENTS.md`
+3. Subdirectory `AGENTS.md` files (override parent guidance)
+
+**Installation Example**:
+```bash
+# Install as AGENTS.md format
+prpm install typescript-best-practices --format agents.md
+
+# Installs to: AGENTS.md
+```
+
+**Cross-Tool Compatibility**:
+AGENTS.md is designed to work with multiple AI coding tools:
+- OpenAI Codex
+- GitHub Copilot (can reference AGENTS.md)
+- Cursor (has AGENTS.md support)
+- And other tools adopting the standard
 
 ---
 
@@ -299,6 +437,12 @@ prpm install react-best-practices --as copilot
 # Install for Windsurf
 prpm install react-best-practices --as windsurf
 
+# Install for Kiro
+prpm install react-best-practices --as kiro
+
+# Install for OpenAI Codex (AGENTS.md)
+prpm install react-best-practices --format agents.md
+
 # Install for Aider (when supported)
 prpm install react-best-practices --as aider
 ```
@@ -307,13 +451,15 @@ prpm install react-best-practices --as aider
 
 Current conversion matrix:
 
-| Source → Target | Cursor | Copilot | Windsurf | Claude | Continue |
-|----------------|--------|---------|----------|--------|----------|
-| **Cursor**     | ✅     | ✅      | ✅       | ✅     | ✅       |
-| **Copilot**    | ✅     | ✅      | ✅       | ✅     | ✅       |
-| **Windsurf**   | ✅     | ✅      | ✅       | ✅     | ✅       |
-| **Claude**     | ✅     | ✅      | ✅       | ✅     | ✅       |
-| **Continue**   | ✅     | ✅      | ✅       | ✅     | ✅       |
+| Source → Target | Cursor | Copilot | Windsurf | Claude | Continue | Kiro | AGENTS.md |
+|----------------|--------|---------|----------|--------|----------|------|-----------|
+| **Cursor**     | ✅     | ✅      | ✅       | ✅     | ✅       | ✅   | ✅        |
+| **Copilot**    | ✅     | ✅      | ✅       | ✅     | ✅       | ✅   | ✅        |
+| **Windsurf**   | ✅     | ✅      | ✅       | ✅     | ✅       | ✅   | ✅        |
+| **Claude**     | ✅     | ✅      | ✅       | ✅     | ✅       | ✅   | ✅        |
+| **Continue**   | ✅     | ✅      | ✅       | ✅     | ✅       | ✅   | ✅        |
+| **Kiro**       | ✅     | ✅      | ✅       | ✅     | ✅       | ✅   | ✅        |
+| **AGENTS.md**  | ✅     | ✅      | ✅       | ✅     | ✅       | ✅   | ✅        |
 
 See [FORMAT_CONVERSION.md](./FORMAT_CONVERSION.md) for technical details.
 
