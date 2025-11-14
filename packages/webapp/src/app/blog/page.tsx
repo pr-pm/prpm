@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "format-specifications-guide",
+    title: "Complete Guide to AI IDE Prompt Formats: Schemas, Specifications, and Conversions",
+    excerpt: "Master all 8 AI IDE formats with JSON schemas and comprehensive specifications. From Cursor to Claude Code, Windsurf to Kiro—learn frontmatter requirements, validation, and format conversion.",
+    date: "2025-11-14",
+    author: "PRPM Team",
+    readTime: "18 min read",
+    tags: ["Technical", "Specifications", "Format Conversion"],
+  },
+  {
     slug: "claude-hooks-best-practices",
     title: "Claude Hooks Best Practices: Write Hooks That Work",
     excerpt: "Security, reliability, and performance patterns for Claude Code hooks. Validate input, quote paths, handle failures, optimize performance. 16-point checklist for production-ready automation.",

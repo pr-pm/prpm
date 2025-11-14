@@ -33,112 +33,178 @@ With meta packages:
 
 ## PRPM's Meta Packages
 
-PRPM uses meta packages to maintain consistency across its own repository:
+PRPM uses meta packages to maintain consistency across its own repository. These packages teach AI assistants how to create high-quality packages for each IDE format.
 
-### 1. Creating Skills (`@prpm/creating-skills-skill`)
+### Format-Specific Creation Packages
 
-Teaches AI how to create Claude Code skills:
+PRPM provides specialized packages for creating packages in each supported format. Each format has both a **Claude skill** (for explicit invocation) and a **Cursor rule** (for intelligent context application).
 
+**Quick Reference:**
+
+| Format | Subtype | Claude Skill | Cursor Rule |
+|--------|---------|--------------|-------------|
+| **Cursor** | Rules | `@prpm/creating-cursor-rules-skill` | `@prpm/creating-cursor-rules` |
+| **Cursor** | Commands | `@prpm/creating-cursor-commands-skill` | `@prpm/creating-cursor-commands` |
+| **Claude** | Skills | `@prpm/creating-skills-skill` | `@prpm/creating-skills` |
+| **Claude** | Agents | `@prpm/creating-claude-agents-skill` | `@prpm/creating-claude-agents` |
+| **Claude** | Commands | `@prpm/creating-claude-commands-skill` | `@prpm/creating-claude-commands` |
+| **Claude** | Hooks | `@prpm/creating-claude-hooks-skill` | `@prpm/creating-claude-hooks` |
+| **Continue** | Rules | `@prpm/creating-continue-packages-skill` | `@prpm/creating-continue-packages` |
+| **Windsurf** | Rules | `@prpm/creating-windsurf-packages-skill` | `@prpm/creating-windsurf-packages` |
+| **Copilot** | Instructions/Chatmodes | `@prpm/creating-copilot-packages-skill` | `@prpm/creating-copilot-packages` |
+| **Kiro** | Steering/Hooks | `@prpm/creating-kiro-packages-skill` | `@prpm/creating-kiro-packages` |
+| **Agents.md** | - | `@prpm/creating-agents-md-skill` | `@prpm/creating-agents-md` |
+
+#### Cursor Format
+
+**Creating Cursor Rules:**
 ```bash
-prpm install @prpm/creating-skills-skill
-```
-
-<Note>
-This package exists in PRPM's own repo at `.claude/skills/creating-skills/SKILL.md` and is used to generate all Claude skills in the project.
-</Note>
-
-**What it teaches:**
-- Proper frontmatter structure
-- CSO (Context Search Optimization) keywords
-- When to trigger the skill
-- Real-world examples
-- File organization
-
-**Example output:**
-```markdown
----
-name: postgres-migrations
-description: Use when working with PostgreSQL migrations or encountering migration errors
----
-
-# PostgreSQL Migrations Expert
-
-## When to Use
-
-- Writing new migration files
-- Debugging migration errors
-- Adding indexes or generated columns
-- Working with full-text search
-
-## Common Patterns
-
-[Real, tested examples...]
-```
-
-### 2. Creating Cursor Rules (`@prpm/creating-cursor-rules-skill`)
-
-Teaches AI how to create Cursor IDE rules:
-
-```bash
-# For Claude Code
+# Claude skill version
 prpm install @prpm/creating-cursor-rules-skill
 
-# For Cursor IDE
+# Cursor rule version
 prpm install @prpm/creating-cursor-rules
 ```
 
 <Note>
-Claude version: `.claude/skills/creating-cursor-rules-skill/SKILL.md`
-Cursor version: `.cursor/rules/creating-cursor-rules.mdc`
+Teaches AI how to create Cursor rules with MDC format, frontmatter fields, rule types (Always Apply, Apply Intelligently, Apply to Specific Files, Apply Manually), and glob patterns.
 </Note>
 
-**What it teaches:**
-- `.mdc` format structure
-- Frontmatter with `ruleType` and `alwaysApply`
-- Conditional vs always-applied rules
-- Best practices for rule scoping
+**Creating Cursor Commands:**
+```bash
+# Claude skill version
+prpm install @prpm/creating-cursor-commands-skill
 
-### 3. Slash Command Builder (`@prpm/slash-command-builder-skill`)
+# Cursor rule version
+prpm install @prpm/creating-cursor-commands
+```
 
-Teaches AI how to create Claude Code slash commands:
+<Note>
+Teaches AI how to create Cursor slash commands using plain markdown (NO frontmatter), descriptive filenames, and clear actionable instructions.
+</Note>
 
+#### Claude Code Format
+
+**Creating Claude Skills:**
+```bash
+# Claude skill version
+prpm install @prpm/creating-skills-skill
+
+# Cursor rule version
+prpm install @prpm/creating-skills
+```
+
+<Note>
+Teaches AI how to create Claude Code skills with proper frontmatter, CSO optimization, when to trigger, and real examples.
+</Note>
+
+**Creating Claude Agents:**
+```bash
+# Claude skill version
+prpm install @prpm/creating-claude-agents-skill
+
+# Cursor rule version
+prpm install @prpm/creating-claude-agents
+```
+
+<Note>
+Teaches AI how to create Claude Code agents with persona definition, allowed-tools, model selection, and long-running assistant patterns.
+</Note>
+
+**Creating Claude Commands:**
+```bash
+# Claude skill version
+prpm install @prpm/creating-claude-commands-skill
+
+# Cursor rule version
+prpm install @prpm/creating-claude-commands
+```
+
+<Note>
+Teaches AI how to create Claude Code slash commands with optional frontmatter (allowed-tools, argument-hint, description, model, disable-model-invocation).
+</Note>
+
+**Creating Claude Hooks:**
+```bash
+# Claude skill version
+prpm install @prpm/creating-claude-hooks-skill
+
+# Cursor rule version
+prpm install @prpm/creating-claude-hooks
+```
+
+<Note>
+Teaches AI how to create Claude Code hooks as executable files (shell scripts, TypeScript) with event handling (session-start, user-prompt-submit, tool-call, assistant-response), JSON I/O, and security best practices.
+</Note>
+
+#### Other Formats
+
+**Continue Rules:**
+```bash
+prpm install @prpm/creating-continue-packages-skill
+```
+
+<Note>
+Teaches AI how to create Continue rules with required frontmatter (name field is required), globs, regex, and alwaysApply behavior.
+</Note>
+
+**Windsurf Rules:**
+```bash
+prpm install @prpm/creating-windsurf-packages-skill
+```
+
+<Note>
+Teaches AI how to create Windsurf rules using plain markdown with 12K character limit, hierarchical structure, and minimalist approach.
+</Note>
+
+**GitHub Copilot:**
+```bash
+prpm install @prpm/creating-copilot-packages-skill
+```
+
+<Note>
+Teaches AI how to create GitHub Copilot instructions and chatmodes in `.github/` directory with markdown format.
+</Note>
+
+**Kiro Steering:**
+```bash
+prpm install @prpm/creating-kiro-packages-skill
+```
+
+<Note>
+Teaches AI how to create Kiro steering files with inclusion modes (always, fileMatch, manual), foundational files (product.md, tech.md, structure.md), and domain organization.
+</Note>
+
+**Agents.md:**
+```bash
+prpm install @prpm/creating-agents-md-skill
+```
+
+<Note>
+Teaches AI how to create agents.md files using plain markdown (NO frontmatter) with comprehensive project context documentation.
+</Note>
+
+### Legacy Meta Packages
+
+These meta packages provide broader guidance:
+
+**Slash Command Builder (`@prpm/slash-command-builder-skill`):**
 ```bash
 prpm install @prpm/slash-command-builder-skill
 ```
 
 <Note>
-This package includes multiple reference files:
-- `SKILL.md` - Main guidance
-- `EXAMPLES.md` - Real command examples
-- `FRONTMATTER.md` - Frontmatter specifications
-- `PATTERNS.md` - Common patterns
+Comprehensive guidance for Claude Code slash commands with multiple reference files (SKILL.md, EXAMPLES.md, FRONTMATTER.md, PATTERNS.md).
 </Note>
 
-**What it teaches:**
-- Command frontmatter structure
-- Argument and option definitions
-- Tool permissions and model selection
-- Error handling patterns
-- Testing strategies
-
-### 4. Agent Builder (`@prpm/agent-builder-skill`)
-
-Teaches AI how to create Claude Code subagents:
-
+**Agent Builder (`@prpm/agent-builder-skill`):**
 ```bash
 prpm install @prpm/agent-builder-skill
 ```
 
 <Note>
-Package location: `.claude/skills/agent-builder/` with SKILL.md and EXAMPLES.md
+Comprehensive guidance for Claude Code subagents with system prompt design, tool access, model selection, and delegation patterns.
 </Note>
-
-**What it teaches:**
-- Agent system prompt design
-- Tool access configuration
-- Model selection (Sonnet vs Haiku)
-- Delegation patterns
-- Agent lifecycle management
 
 ## Creating Your Own Meta Package
 

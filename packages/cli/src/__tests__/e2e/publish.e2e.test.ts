@@ -8,6 +8,7 @@ import { getConfig } from '../../core/user-config';
 import { createTestDir, cleanupTestDir, createMockPackage } from './test-helpers';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
+import { tmpdir } from 'os';
 import { CLIError } from '../../core/errors';
 
 // Mock dependencies
@@ -51,6 +52,11 @@ describe('Publish Command - E2E Tests', () => {
 
   afterEach(async () => {
     jest.restoreAllMocks();
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
     await cleanupTestDir(testDir);
   });
 
@@ -81,6 +87,11 @@ describe('Publish Command - E2E Tests', () => {
 
       for (const type of types) {
         jest.clearAllMocks();
+        try {
+          process.chdir(originalCwd);
+        } catch {
+          process.chdir(tmpdir());
+        }
         await cleanupTestDir(testDir);
         testDir = await createTestDir();
         process.chdir(testDir);

@@ -13,7 +13,10 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1', // Strip .js extensions for TS files
     '^@pr-pm/registry-client$': '<rootDir>/../registry-client/src',
+    '^@pr-pm/converters$': '<rootDir>/../converters/src',
+    '^@pr-pm/types$': '<rootDir>/../types/src',
   },
   transform: {
     '^.+\\.ts$': ['ts-jest', {

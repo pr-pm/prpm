@@ -287,12 +287,13 @@ describe('install command', () => {
         { format: 'claude' }
       );
 
-      // Verify lockfile stores the package's original format, not the conversion format
+      // Verify lockfile stores the installed format plus original metadata
       expect(addToLockfile).toHaveBeenCalledWith(
         expect.any(Object),
         'test-package',
         expect.objectContaining({
-          format: 'cursor',  // Package's native format is stored in lockfile
+          format: 'claude',
+          sourceFormat: 'cursor',
           version: '1.0.0',
         })
       );

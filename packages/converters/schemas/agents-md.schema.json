@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/agents-md.schema.json",
+  "title": "agents.md Format",
+  "description": "JSON Schema for agents.md format - plain markdown project-specific AI instructions (NO frontmatter)",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "Plain markdown content with project-specific instructions, architecture notes, conventions, etc. No frontmatter allowed."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "content": "# Backend Guidelines\n\n## Architecture\n\nWe use a clean architecture pattern.\n\n## Database\n\nPostgreSQL with Prisma ORM.\n\n## Coding Standards\n\n- Use TypeScript strict mode\n- Write unit tests for all services"
+    },
+    {
+      "content": "# Project Context\n\nThis is a React + TypeScript web application.\n\n## Stack\n\n- React 18\n- TypeScript 5\n- Vite\n- Tailwind CSS"
+    }
+  ]
+}

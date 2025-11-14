@@ -17,6 +17,7 @@ const CLI_VERSION = packageJson.version;
 
 export interface RegistryPackage {
   id: string;
+  author?: string;
   description?: string;
   format: Format;
   subtype: Subtype;

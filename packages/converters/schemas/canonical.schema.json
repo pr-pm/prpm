@@ -1,0 +1,435 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/canonical.schema.json",
+  "title": "PRPM Canonical Package Format",
+  "description": "Universal intermediate format for AI prompt packages that can be converted to any editor-specific format",
+  "type": "object",
+  "required": ["id", "version", "name", "description", "author", "tags", "format", "subtype", "content"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the package"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (e.g., '1.0.0')"
+    },
+    "name": {
+      "type": "string",
+      "description": "Package identifier/slug (used in frontmatter)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description"
+    },
+    "author": {
+      "type": "string",
+      "description": "Package author"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Categorization tags"
+    },
+    "format": {
+      "type": "string",
+      "enum": ["cursor", "claude", "continue", "windsurf", "copilot", "kiro", "agents.md", "generic", "mcp"],
+      "description": "Source format this was parsed from"
+    },
+    "subtype": {
+      "type": "string",
+      "enum": ["rule", "agent", "skill", "slash-command", "prompt", "workflow", "tool", "template", "collection", "chatmode", "hook"],
+      "description": "Subtype classification"
+    },
+    "content": {
+      "type": "object",
+      "required": ["format", "version", "sections"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "canonical"
+        },
+        "version": {
+          "type": "string",
+          "const": "1.0"
+        },
+        "sections": {
+          "type": "array",
+          "description": "Content sections in semantic format",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/MetadataSection"
+              },
+              {
+                "$ref": "#/definitions/InstructionsSection"
+              },
+              {
+                "$ref": "#/definitions/RulesSection"
+              },
+              {
+                "$ref": "#/definitions/ExamplesSection"
+              },
+              {
+                "$ref": "#/definitions/ToolsSection"
+              },
+              {
+                "$ref": "#/definitions/PersonaSection"
+              },
+              {
+                "$ref": "#/definitions/ContextSection"
+              },
+              {
+                "$ref": "#/definitions/CustomSection"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Extracted metadata for easier access",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Display title (from H1 or frontmatter)"
+        },
+        "description": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Emoji icon"
+        },
+        "version": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "globs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alwaysApply": {
+          "type": "boolean"
+        },
+        "claudeAgent": {
+          "type": "object",
+          "properties": {
+            "model": {
+              "type": "string",
+              "enum": ["sonnet", "opus", "haiku", "inherit"]
+            }
+          }
+        },
+        "copilotConfig": {
+          "type": "object",
+          "properties": {
+            "instructionName": {
+              "type": "string"
+            },
+            "applyTo": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "kiroConfig": {
+          "type": "object",
+          "properties": {
+            "filename": {
+              "type": "string"
+            },
+            "inclusion": {
+              "type": "string",
+              "enum": ["always", "fileMatch", "manual"]
+            },
+            "fileMatchPattern": {
+              "type": "string"
+            },
+            "domain": {
+              "type": "string"
+            },
+            "foundationalType": {
+              "type": "string",
+              "enum": ["product", "tech", "structure"]
+            }
+          }
+        },
+        "agentsMdConfig": {
+          "type": "object",
+          "properties": {
+            "project": {
+              "type": "string"
+            },
+            "scope": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "sourceFormat": {
+      "type": "string",
+      "enum": ["cursor", "claude", "continue", "windsurf", "copilot", "kiro", "agents.md", "generic"],
+      "description": "Original format this was parsed from"
+    },
+    "sourceUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Source URL if imported"
+    },
+    "official": {
+      "type": "boolean",
+      "description": "Official package from cursor.directory, claude.ai, etc."
+    },
+    "verified": {
+      "type": "boolean",
+      "description": "Verified by PRPM team"
+    },
+    "karenScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Quality score from Karen"
+    }
+  },
+  "definitions": {
+    "MetadataSection": {
+      "type": "object",
+      "required": ["type", "data"],
+      "properties": {
+        "type": {
+          "const": "metadata"
+        },
+        "data": {
+          "type": "object",
+          "required": ["title", "description"],
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "icon": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "author": {
+              "type": "string"
+            },
+            "claudeAgent": {
+              "type": "object",
+              "properties": {
+                "model": {
+                  "type": "string",
+                  "enum": ["sonnet", "opus", "haiku", "inherit"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "InstructionsSection": {
+      "type": "object",
+      "required": ["type", "title", "content"],
+      "properties": {
+        "type": {
+          "const": "instructions"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["high", "medium", "low"]
+        }
+      }
+    },
+    "RulesSection": {
+      "type": "object",
+      "required": ["type", "title", "items"],
+      "properties": {
+        "type": {
+          "const": "rules"
+        },
+        "title": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["content"],
+            "properties": {
+              "content": {
+                "type": "string"
+              },
+              "rationale": {
+                "type": "string"
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "ordered": {
+          "type": "boolean",
+          "description": "Whether rules should be numbered"
+        }
+      }
+    },
+    "ExamplesSection": {
+      "type": "object",
+      "required": ["type", "title", "examples"],
+      "properties": {
+        "type": {
+          "const": "examples"
+        },
+        "title": {
+          "type": "string"
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["description", "code"],
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "language": {
+                "type": "string"
+              },
+              "good": {
+                "type": "boolean",
+                "description": "Is this a good or bad example?"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ToolsSection": {
+      "type": "object",
+      "required": ["type", "tools"],
+      "properties": {
+        "type": {
+          "const": "tools"
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "PersonaSection": {
+      "type": "object",
+      "required": ["type", "data"],
+      "properties": {
+        "type": {
+          "const": "persona"
+        },
+        "data": {
+          "type": "object",
+          "required": ["role"],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            },
+            "icon": {
+              "type": "string"
+            },
+            "style": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "expertise": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ContextSection": {
+      "type": "object",
+      "required": ["type", "title", "content"],
+      "properties": {
+        "type": {
+          "const": "context"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      }
+    },
+    "CustomSection": {
+      "type": "object",
+      "required": ["type", "content"],
+      "properties": {
+        "type": {
+          "const": "custom"
+        },
+        "editorType": {
+          "type": "string",
+          "enum": ["cursor", "claude", "continue", "windsurf", "copilot", "kiro"]
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

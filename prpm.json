@@ -223,6 +223,105 @@
       ]
     },
     {
+      "name": "creating-cursor-commands-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Cursor slash commands - covers plain markdown format, no frontmatter, descriptive filenames, and validation",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "cursor", "slash-commands", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-cursor-commands/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-claude-agents-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Claude Code agents - covers frontmatter, allowed-tools, persona definition, model selection, and validation",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "claude-code", "agents", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-claude-agents/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-claude-commands-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Claude Code slash commands - covers optional frontmatter, argument-hint, allowed-tools, and validation",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "claude-code", "slash-commands", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-claude-commands/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-claude-hooks-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Claude Code hooks - covers executable files, events, JSON I/O, exit codes, security, and best practices",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "claude-code", "hooks", "documentation", "best-practices", "security"],
+      "files": [
+        ".claude/skills/creating-claude-hooks/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-continue-packages-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Continue rules - covers required frontmatter, name field, globs, regex, alwaysApply, and validation against schemas",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "continue", "package-creation", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-continue-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-windsurf-packages-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Windsurf rules - covers plain markdown format, 12K character limit, hierarchical structure, and simplicity best practices",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "windsurf", "package-creation", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-windsurf-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-copilot-packages-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating GitHub Copilot instructions and chatmodes - covers .github location, markdown format, and context integration",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "copilot", "github", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".claude/skills/creating-copilot-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-kiro-packages-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Kiro steering files and hooks - covers inclusion modes, foundational files, fileMatch patterns, and domain organization",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "kiro", "package-creation", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-kiro-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-agents-md-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating agents.md files - covers plain markdown format, no frontmatter, project context, and comprehensive documentation",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "agents-md", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".claude/skills/creating-agents-md/SKILL.md"
+      ]
+    },
+    {
       "name": "elastic-beanstalk-deployment-skill",
       "version": "1.0.2",
       "description": "Use when deploying Node.js applications to AWS Elastic Beanstalk or troubleshooting deployment issues - provides dependency installation strategies, monorepo handling, and deployment best practices",
@@ -577,6 +676,105 @@
       "tags": ["typescript", "type-safety", "strict-mode", "code-quality", "enforcement"],
       "files": [
         ".cursor/rules/typescript-type-specialist.mdc"
+      ]
+    },
+    {
+      "name": "creating-cursor-commands",
+      "version": "1.0.0",
+      "description": "Apply when creating Cursor slash commands - guides plain markdown format, no frontmatter, descriptive filenames, and command structure",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "cursor", "slash-commands", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-cursor-commands.md"
+      ]
+    },
+    {
+      "name": "creating-claude-agents",
+      "version": "1.0.0",
+      "description": "Apply when creating Claude Code agents - guides frontmatter, allowed-tools, persona definition, and model selection",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "claude-code", "agents", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-claude-agents.md"
+      ]
+    },
+    {
+      "name": "creating-claude-commands",
+      "version": "1.0.0",
+      "description": "Apply when creating Claude Code slash commands - guides optional frontmatter, argument-hint, and command structure",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "claude-code", "slash-commands", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-claude-commands.md"
+      ]
+    },
+    {
+      "name": "creating-claude-hooks",
+      "version": "1.0.0",
+      "description": "Apply when creating Claude Code hooks - guides executable files, events, JSON I/O, exit codes, and security",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "claude-code", "hooks", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-claude-hooks.md"
+      ]
+    },
+    {
+      "name": "creating-continue-packages",
+      "version": "1.0.0",
+      "description": "Apply when creating Continue rules - guides required frontmatter, name field, globs, regex patterns, and alwaysApply behavior",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "continue", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-continue-packages.md"
+      ]
+    },
+    {
+      "name": "creating-windsurf-packages",
+      "version": "1.0.0",
+      "description": "Apply when creating Windsurf rules - guides plain markdown format, 12K character limit, hierarchical structure, and minimalist approach",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "windsurf", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-windsurf-packages.md"
+      ]
+    },
+    {
+      "name": "creating-copilot-packages",
+      "version": "1.0.0",
+      "description": "Apply when creating GitHub Copilot instructions or chatmodes - guides .github file structure, markdown format, and context integration",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "copilot", "github", "package-creation", "documentation"],
+      "files": [
+        ".cursor/rules/creating-copilot-packages.md"
+      ]
+    },
+    {
+      "name": "creating-kiro-packages",
+      "version": "1.0.0",
+      "description": "Apply when creating Kiro steering files or hooks - guides inclusion modes, foundational files, fileMatch patterns, and domain organization",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "kiro", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-kiro-packages.md"
+      ]
+    },
+    {
+      "name": "creating-agents-md",
+      "version": "1.0.0",
+      "description": "Apply when creating agents.md files - guides plain markdown format without frontmatter, project context documentation, and best practices",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "agents-md", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-agents-md.md"
       ]
     }
   ],

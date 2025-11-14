@@ -8,6 +8,7 @@ import { getConfig } from '../../core/user-config';
 import { createTestDir, cleanupTestDir, createMockFetch } from './test-helpers';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { tmpdir } from 'os';
 import { CLIError } from '../../core/errors';
 import { gzipSync } from 'zlib';
 
@@ -61,6 +62,11 @@ describe('Install Command - E2E Tests', () => {
 
   afterEach(async () => {
     jest.restoreAllMocks();
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
     await cleanupTestDir(testDir);
   });
 

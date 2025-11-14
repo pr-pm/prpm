@@ -433,6 +433,39 @@ describe('install', () => {
 
 ## Development Workflow
 
+### Package Manager: npm (NOT pnpm)
+
+**⚠️ CRITICAL: PRPM uses npm, not pnpm ⚠️**
+
+- **Lock file**: `package-lock.json` (npm)
+- **Install dependencies**: `npm install`
+- **Run scripts**: `npm run <script>`
+- **Workspace commands**: `npm run <script> --workspace=<package>`
+
+**DO NOT use pnpm:**
+- The repository has `package-lock.json`, not `pnpm-lock.yaml`
+- Using pnpm will create conflicts and inconsistencies
+- CI/CD uses npm for builds and deployments
+- All documentation assumes npm
+
+**Common commands:**
+```bash
+# Install all dependencies
+npm install
+
+# Install in specific workspace
+npm install --workspace=@pr-pm/cli
+
+# Run tests
+npm test
+
+# Build all packages
+npm run build
+
+# Run CLI locally
+npm run dev --workspace=prpm
+```
+
 ### When Adding Features
 1. **Check Existing Patterns**: Look at similar commands/routes
 2. **Update Types First**: TypeScript interfaces drive implementation

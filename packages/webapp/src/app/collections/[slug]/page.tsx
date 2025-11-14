@@ -9,7 +9,7 @@ import CollapsibleContent from '@/components/CollapsibleContent'
 import StarButtonWrapper from '@/components/StarButtonWrapper'
 import RecentlyViewedTracker from '@/components/RecentlyViewedTracker'
 
-const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
+const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'
 const SSG_TOKEN = process.env.SSG_DATA_TOKEN
 
 // Allow dynamic rendering for params not in generateStaticParams
