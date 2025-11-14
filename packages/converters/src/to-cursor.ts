@@ -38,11 +38,17 @@ export function toCursor(
       warnings.push('Copilot path-specific configuration (applyTo) is not supported by Cursor');
     }
 
-    const mdcHeader = generateMDCHeader(pkg, options.cursorConfig);
     const content = convertContent(pkg.content, warnings);
 
-    // Combine MDC header with content
-    const fullContent = `${mdcHeader}\n\n${content}`;
+    // Cursor slash commands use plain markdown (no frontmatter)
+    // Cursor rules use MDC format (with frontmatter)
+    let fullContent: string;
+    if (pkg.subtype === 'slash-command') {
+      fullContent = content;
+    } else {
+      const mdcHeader = generateMDCHeader(pkg, options.cursorConfig);
+      fullContent = `${mdcHeader}\n\n${content}`;
+    }
 
     // Validate the generated content against Cursor schema
     const validation = validateMarkdown('cursor', fullContent);

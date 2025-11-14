@@ -269,6 +269,52 @@ describe('toCursor', () => {
       expect(result.warnings![0]).toContain('Conversion error');
     });
   });
+
+  describe('slash commands', () => {
+    it('should generate plain markdown without frontmatter for slash commands', () => {
+      const slashCommandPkg = {
+        ...minimalCanonicalPackage,
+        subtype: 'slash-command' as const,
+        content: {
+          ...minimalCanonicalPackage.content,
+          sections: [
+            {
+              type: 'metadata' as const,
+              data: {
+                title: 'Review Code',
+                description: 'Review code for best practices',
+              },
+            },
+            {
+              type: 'instructions' as const,
+              title: 'Instructions',
+              content: 'Review the selected code for:\n- Code quality\n- Potential bugs',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(slashCommandPkg);
+
+      // Should not have frontmatter
+      expect(result.content).not.toContain('---');
+      expect(result.content).not.toContain('description:');
+      expect(result.content).not.toContain('alwaysApply:');
+
+      // Should have the content
+      expect(result.content).toContain('# Review Code');
+      expect(result.content).toContain('Review the selected code for:');
+    });
+
+    it('should include frontmatter for non-slash-command rules', () => {
+      const result = toCursor(minimalCanonicalPackage);
+
+      // Should have frontmatter
+      expect(result.content).toContain('---');
+      expect(result.content).toContain('description:');
+      expect(result.content).toContain('alwaysApply:');
+    });
+  });
 });
 
 describe('isCursorFormat', () => {

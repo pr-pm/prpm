@@ -43,6 +43,11 @@ function getDefaultPath(format: string, filename: string, subtype?: string): str
 
   switch (format) {
     case 'cursor':
+      // Cursor has two types: slash commands (.cursor/commands/*.md) and rules (.cursor/rules/*.mdc)
+      if (subtype === 'slash-command') {
+        return join(process.cwd(), '.cursor', 'commands', `${baseName}.md`);
+      }
+      // Default to rules
       return join(process.cwd(), '.cursor', 'rules', `${baseName}.mdc`);
     case 'claude':
       // Use subtype to determine the directory
@@ -86,7 +91,7 @@ function detectFormat(content: string, filepath: string): string | null {
   const ext = extname(filepath).toLowerCase();
 
   // Try to detect from extension
-  if (ext === '.mdc' || filepath.includes('.cursor/rules')) {
+  if (ext === '.mdc' || filepath.includes('.cursor/rules') || filepath.includes('.cursor/commands')) {
     return 'cursor';
   }
   if (filepath.includes('.claude/')) {
