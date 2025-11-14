@@ -11,6 +11,7 @@ import { mkdir } from 'fs/promises';
 import { join } from 'path';
 import os from 'os';
 import { CLIError } from '../../core/errors';
+import * as jwt from 'jsonwebtoken';
 
 // Mock dependencies
 jest.mock('../../core/user-config');
@@ -19,6 +20,7 @@ jest.mock('../../core/telemetry', () => ({
   telemetry: {
     track: jest.fn(),
     shutdown: jest.fn(),
+    identifyUser: jest.fn(),
   },
 }));
 
@@ -104,6 +106,18 @@ describe('Auth Commands - E2E Tests', () => {
     });
 
     it('should handle manual token input', async () => {
+      // Create a valid JWT token
+      const validToken = jwt.sign(
+        {
+          user_id: 'test-user-123',
+          username: 'testuser',
+          email: 'test@example.com',
+          is_admin: false,
+        },
+        'test-secret',
+        { expiresIn: '1h' }
+      );
+
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
       });
@@ -123,16 +137,16 @@ describe('Auth Commands - E2E Tests', () => {
       // Mock readline for token input
       const readline = require('readline');
       const mockRl = {
-        question: jest.fn((query, callback) => callback('manual-token-123')),
+        question: jest.fn((query, callback) => callback(validToken)),
         close: jest.fn(),
       };
       jest.spyOn(readline, 'createInterface').mockReturnValue(mockRl as any);
 
-      await handleLogin({ token: 'manual-token-123' });
+      await handleLogin({ token: validToken });
 
       expect(saveConfig).toHaveBeenCalledWith(
         expect.objectContaining({
-          token: 'manual-token-123',
+          token: validToken,
         })
       );
     });
