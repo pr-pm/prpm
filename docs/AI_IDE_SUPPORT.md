@@ -210,6 +210,7 @@ AGENTS.md is an open standard for guiding AI coding agents, created through coll
 - **Size limits** - Combined project documentation limited to 32 KiB by default
 - **Fallback filenames** - Configurable alternatives (e.g., `TEAM_GUIDE.md`, `.agents.md`)
 - **Universal standard** - Supported by multiple AI coding tools
+- **Project-level only** - AGENTS.md is for project guidance; slash commands are global only
 
 **What to Include**:
 - **Project structure** - Directory organization, architecture decisions
@@ -270,6 +271,26 @@ AGENTS.md is designed to work with multiple AI coding tools:
 - GitHub Copilot (can reference AGENTS.md)
 - Cursor (has AGENTS.md support)
 - And other tools adopting the standard
+
+**Important: Slash Commands vs AGENTS.md**:
+
+Codex distinguishes between project guidance and reusable commands:
+
+| Feature | AGENTS.md | Slash Commands |
+|---------|-----------|----------------|
+| **Scope** | Project-specific | Global only |
+| **Location** | Project directory | `~/.codex/prompts/` |
+| **Purpose** | Project conventions, standards, architecture | Reusable commands across all projects |
+| **Activation** | Automatic (based on context) | Manual invocation with `/prompts:<name>` |
+
+**Example Use Cases**:
+- **AGENTS.md**: "This project uses React with TypeScript. All components should use functional style."
+- **Slash Commands**: Global commands like `/prompts:code-review` or `/prompts:write-tests` that work across all projects
+
+For project-specific guidance, use AGENTS.md files. For global reusable commands, create custom prompts in `~/.codex/prompts/`.
+
+**Official Documentation**:
+- [Codex Slash Commands Guide](https://developers.openai.com/codex/guides/slash-commands)
 
 ---
 
