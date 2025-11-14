@@ -774,7 +774,7 @@
       "subtype": "rule",
       "tags": ["meta", "agents-md", "package-creation", "documentation", "best-practices"],
       "files": [
-        ".cursor/rules/creating-agents-md.md"
+        ".cursor/rules/creating-agents-md.mdc"
       ]
     }
   ],
