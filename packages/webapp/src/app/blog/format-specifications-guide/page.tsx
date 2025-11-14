@@ -26,13 +26,13 @@ export default function FormatSpecificationsGuidePage() {
                 </span>
               </Link>
               <div className="hidden md:flex items-center gap-6">
-                <Link href="/search" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/search" className="text-gray-400 hover:text-white transition-colors flex items-center">
                   Search
                 </Link>
-                <Link href="/authors" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/authors" className="text-gray-400 hover:text-white transition-colors flex items-center">
                   Authors
                 </Link>
-                <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/blog" className="text-gray-400 hover:text-white transition-colors flex items-center">
                   Blog
                 </Link>
               </div>
