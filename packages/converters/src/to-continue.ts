@@ -44,36 +44,38 @@ export function toContinue(pkg: CanonicalPackage): ConversionResult {
       lines.push('invokable: true');
       lines.push('---');
       lines.push('');
-    } else if (isRule) {
-      // Rules need: name, globs, alwaysApply, description
-      lines.push('---');
-      lines.push(`name: ${title}`);
-
-      // Get globs from metadata or use defaults
-      const globs = pkg.metadata?.globs || ['**/*'];
-      lines.push(`globs:`);
-      globs.forEach(glob => {
-        lines.push(`  - "${glob}"`);
-      });
-
-      // Get alwaysApply from metadata (default false)
-      const alwaysApply = pkg.metadata?.alwaysApply ?? false;
-      lines.push(`alwaysApply: ${alwaysApply}`);
-
-      if (description) {
-        lines.push(`description: ${description}`);
-      }
-      lines.push('---');
-      lines.push('');
     } else {
-      // For other subtypes, create a basic prompt
-      warnings.push(`Subtype '${pkg.subtype}' not directly supported - converting as prompt`);
+      // Rules (default for most conversions) need: name, description, globs, regex, alwaysApply
       lines.push('---');
       lines.push(`name: ${title}`);
+
+      // Description (optional)
       if (description) {
-        lines.push(`description: ${description}`);
+        lines.push(`description: "${description}"`);
       }
-      lines.push('invokable: true');
+
+      // Globs (optional) - only include if they exist
+      const globs = pkg.metadata?.globs;
+      if (globs && Array.isArray(globs) && globs.length > 0) {
+        if (globs.length === 1) {
+          lines.push(`globs: "${globs[0]}"`);
+        } else {
+          lines.push(`globs:`);
+          globs.forEach(glob => {
+            lines.push(`  - "${glob}"`);
+          });
+        }
+      }
+
+      // Note: regex field is not preserved in canonical format
+      // This is a known limitation - regex patterns won't round-trip
+
+      // AlwaysApply (optional) - only include if explicitly set
+      const alwaysApply = pkg.metadata?.alwaysApply;
+      if (alwaysApply !== undefined) {
+        lines.push(`alwaysApply: ${alwaysApply}`);
+      }
+
       lines.push('---');
       lines.push('');
     }

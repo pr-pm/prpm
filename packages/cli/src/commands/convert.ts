@@ -57,11 +57,14 @@ function getDefaultPath(format: string, filename: string, subtype?: string): str
     case 'windsurf':
       return join(process.cwd(), '.windsurf', 'rules', `${baseName}.md`);
     case 'kiro':
-      return join(process.cwd(), '.kiro', 'rules', `${baseName}.md`);
+      // Kiro has two types: steering files (.kiro/steering/*.md) and hooks (.kiro/hooks/*.kiro.hook)
+      // Default to steering files for conversion
+      return join(process.cwd(), '.kiro', 'steering', `${baseName}.md`);
     case 'copilot':
       return join(process.cwd(), '.github', 'copilot-instructions.md');
     case 'continue':
-      return join(process.cwd(), '.continuerc.json');
+      // Continue uses .continue/rules/*.md for rules (default) or .continue/prompts/*.md for slash commands
+      return join(process.cwd(), '.continue', 'rules', `${baseName}.md`);
     case 'agents.md':
       return join(process.cwd(), 'agents.md');
     default:
@@ -88,13 +91,13 @@ function detectFormat(content: string, filepath: string): string | null {
   if (filepath.includes('.windsurf/rules')) {
     return 'windsurf';
   }
-  if (filepath.includes('.kiro/rules')) {
+  if (filepath.includes('.kiro/steering') || filepath.includes('.kiro/hooks')) {
     return 'kiro';
   }
   if (filepath.includes('copilot-instructions')) {
     return 'copilot';
   }
-  if (ext === '.json' && filepath.includes('.continue')) {
+  if (filepath.includes('.continue/rules') || filepath.includes('.continue/prompts') || filepath.includes('.continuerules')) {
     return 'continue';
   }
   if (basename(filepath) === 'agents.md') {
@@ -164,9 +167,9 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
       console.log(chalk.dim('  - Cursor rules (.cursor/rules/*.mdc)'));
       console.log(chalk.dim('  - Claude agents/skills/commands (.claude/*/*)'));
       console.log(chalk.dim('  - Windsurf rules (.windsurf/rules/*.md)'));
-      console.log(chalk.dim('  - Kiro rules (.kiro/rules/*.md)'));
+      console.log(chalk.dim('  - Kiro steering files (.kiro/steering/*.md)'));
       console.log(chalk.dim('  - GitHub Copilot instructions'));
-      console.log(chalk.dim('  - Continue config (.continuerc.json)'));
+      console.log(chalk.dim('  - Continue rules (.continue/rules/*.md)'));
       console.log(chalk.dim('  - agents.md format'));
       throw new CLIError('Unsupported source format');
     }
@@ -287,7 +290,7 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
     } else if (options.to === 'windsurf') {
       console.log(chalk.dim('💡 Windsurf will automatically load rules from .windsurf/rules/'));
     } else if (options.to === 'kiro') {
-      console.log(chalk.dim('💡 Kiro will automatically load rules from .kiro/rules/'));
+      console.log(chalk.dim('💡 Kiro will automatically load steering files from .kiro/steering/'));
     }
 
   } catch (error: any) {
