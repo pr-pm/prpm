@@ -94,29 +94,22 @@ export function toCursor(
  *
  * According to official Cursor docs (https://cursor.com/docs/context/rules),
  * only these fields are officially supported:
- * - description (optional but recommended)
- * - globs (array of file patterns)
- * - alwaysApply (boolean)
+ * - description (required)
+ * - globs (array of file patterns, optional)
+ * - alwaysApply (boolean, optional, defaults to false)
  *
- * PRPM extension fields (title, tags, version) are included as comments
- * for round-trip conversion support but are ignored by Cursor.
+ * This function only outputs Cursor-native fields. PRPM extension fields
+ * are not included to ensure clean output for actual Cursor usage.
  */
 function generateMDCHeader(pkg: CanonicalPackage, config?: CursorMDCConfig): string {
   const lines: string[] = ['---'];
 
-  // Name (for round-trip conversion and clarity)
-  // Use package name (identifier) for frontmatter, not the display title
-  const name = pkg.name || pkg.id;
-  if (name) {
-    lines.push(`name: ${name}`);
-  }
-
-  // Description (officially supported - should always be provided)
+  // Description (required by Cursor)
   if (pkg.metadata?.description) {
     lines.push(`description: "${pkg.metadata.description}"`);
   }
 
-  // Globs (officially supported - file patterns to match)
+  // Globs (optional - file patterns to match)
   const globs = config?.globs || (pkg.metadata?.globs as string[] | undefined);
   if (globs && globs.length > 0) {
     lines.push('globs:');
@@ -125,43 +118,9 @@ function generateMDCHeader(pkg: CanonicalPackage, config?: CursorMDCConfig): str
     });
   }
 
-  // Always apply flag (officially supported)
+  // Always apply flag (optional, defaults to false)
   const alwaysApply = config?.alwaysApply ?? pkg.metadata?.alwaysApply ?? false;
   lines.push(`alwaysApply: ${alwaysApply}`);
-
-  // Add explicit type field for subtype preservation (round-trip conversion)
-  if (pkg.subtype === 'agent') {
-    lines.push('agentType: agent');
-  } else if (pkg.subtype === 'skill') {
-    lines.push('skillType: skill');
-  } else if (pkg.subtype === 'slash-command') {
-    lines.push('commandType: slash-command');
-  }
-
-  // PRPM extension fields (not used by Cursor, but included for round-trip conversion)
-  // These are commented out to avoid confusion
-  const title = pkg.metadata?.title || pkg.id;
-  if (title) {
-    lines.push(`# title: "${title}"`);
-  }
-
-  const version = config?.version || pkg.metadata?.version;
-  if (version) {
-    lines.push(`# version: "${version}"`);
-  }
-
-  const tags = config?.tags;
-  if (tags && tags.length > 0) {
-    lines.push('# tags:');
-    tags.forEach(tag => {
-      lines.push(`#   - "${tag}"`);
-    });
-  }
-
-  const author = config?.author;
-  if (author) {
-    lines.push(`# author: "${author}"`);
-  }
 
   lines.push('---');
 

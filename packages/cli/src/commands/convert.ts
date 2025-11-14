@@ -9,6 +9,7 @@ import { existsSync } from 'fs';
 import { createInterface } from 'readline';
 import chalk from 'chalk';
 import { CLIError } from '../core/errors.js';
+import { Subtype } from '@pr-pm/types';
 import {
   fromCursor,
   fromClaude,
@@ -29,6 +30,7 @@ import {
 
 export interface ConvertOptions {
   to: 'cursor' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md';
+  subtype?: Subtype;
   output?: string;
   yes?: boolean; // Skip confirmation prompts
 }
@@ -36,16 +38,22 @@ export interface ConvertOptions {
 /**
  * Get the default installation path for a format
  */
-function getDefaultPath(format: string, filename: string): string {
+function getDefaultPath(format: string, filename: string, subtype?: string): string {
   const baseName = basename(filename, extname(filename));
 
   switch (format) {
     case 'cursor':
       return join(process.cwd(), '.cursor', 'rules', `${baseName}.mdc`);
     case 'claude':
-      // Detect if it's a skill, agent, or command based on content
-      // Default to agents for now
-      return join(process.cwd(), '.claude', 'agents', `${baseName}.md`);
+      // Use subtype to determine the directory
+      if (subtype === 'skill') {
+        return join(process.cwd(), '.claude', 'skills', baseName, 'SKILL.md');
+      } else if (subtype === 'slash-command') {
+        return join(process.cwd(), '.claude', 'commands', `${baseName}.md`);
+      } else {
+        // Default to agents (for 'agent' subtype or unspecified)
+        return join(process.cwd(), '.claude', 'agents', `${baseName}.md`);
+      }
     case 'windsurf':
       return join(process.cwd(), '.windsurf', 'rules', `${baseName}.md`);
     case 'kiro':
@@ -207,6 +215,11 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         throw new CLIError(`Unsupported source format: ${sourceFormat}`);
     }
 
+    // Override subtype if specified
+    if (options.subtype) {
+      canonicalPkg.subtype = options.subtype;
+    }
+
     // Convert from canonical to target format
     let result;
     switch (options.to) {
@@ -244,7 +257,7 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
     console.log(chalk.green(`✓ Converted from ${sourceFormat} to ${options.to}`));
 
     // Determine output path
-    const outputPath = options.output || getDefaultPath(options.to, sourcePath);
+    const outputPath = options.output || getDefaultPath(options.to, sourcePath, options.subtype);
 
     // Check if file exists
     if (existsSync(outputPath) && !options.yes) {
@@ -291,6 +304,7 @@ export function createConvertCommand() {
     .description('Convert AI prompt files between formats')
     .argument('<source>', 'Source file path to convert')
     .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md)')
+    .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, prompt, etc.)')
     .option('-o, --output <path>', 'Output path (defaults to format-specific location)')
     .option('-y, --yes', 'Skip confirmation prompts')
     .action(async (source: string, options: any) => {
@@ -306,8 +320,16 @@ export function createConvertCommand() {
           );
         }
 
+        const validSubtypes = ['agent', 'skill', 'slash-command', 'rule', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'];
+        if (options.subtype && !validSubtypes.includes(options.subtype)) {
+          throw new CLIError(
+            `Invalid subtype: ${options.subtype}\n\nValid subtypes: ${validSubtypes.join(', ')}`
+          );
+        }
+
         await handleConvert(source, {
           to: options.to,
+          subtype: options.subtype,
           output: options.output,
           yes: options.yes,
         });
