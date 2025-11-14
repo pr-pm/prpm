@@ -149,9 +149,9 @@ describe('install command', () => {
 
       await handleInstall('test-package', { as: 'claude' });
 
+      // Should download native format (conversion happens client-side)
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        expect.any(String),
-        { format: 'claude' }
+        expect.any(String)
       );
     });
   });
@@ -283,10 +283,9 @@ describe('install command', () => {
 
       await handleInstall('test-package', { as: 'claude' });
 
-      // Verify the download was requested with the conversion format
+      // Should download native format (conversion happens client-side)
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        expect.any(String),
-        { format: 'claude' }
+        expect.any(String)
       );
 
       // Verify lockfile stores the installed format plus original metadata
