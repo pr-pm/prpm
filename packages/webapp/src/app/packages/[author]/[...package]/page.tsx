@@ -434,6 +434,7 @@ export default async function PackagePage({ params }: { params: { author: string
               Compare vs No Prompt
             </Link>
           </div>
+          )}
 
           {/* Stats */}
           <div className="flex flex-wrap gap-6 text-gray-400 mb-8">
