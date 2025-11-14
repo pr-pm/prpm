@@ -766,10 +766,10 @@ Built with React 18, TypeScript, Node.js, and PostgreSQL.
             <h3 className="text-2xl font-bold text-white mb-6">How It Works</h3>
 
             <ol className="text-gray-300 space-y-6 mb-8 list-decimal list-inside">
-              <li><strong className="text-white">Canonical Format:</strong> Packages are stored in PRPM's canonical format (see <a href="https://github.com/pr-pm/prpm/blob/main/packages/converters/schemas/canonical.schema.json" className="text-prpm-accent hover:underline font-medium" target="_blank" rel="noopener noreferrer">canonical.schema.json</a>), which preserves all metadata and content from all formats.</li>
+              <li><strong className="text-white">Canonical Format:</strong> Packages are stored in PRPM's canonical format (see <a href="https://github.com/pr-pm/prpm/blob/main/packages/converters/schemas/canonical.schema.json" className="text-prpm-accent hover:underline font-medium" target="_blank" rel="noopener noreferrer">canonical.schema.json</a>), which preserves core instructional content and common metadata. Format-specific features (like tools, regex patterns, or path-specific rules) may be lost during conversion.</li>
               <li><strong className="text-white">Schema-Driven Validation:</strong> Each format's schema defines required fields, optional fields, field types, and constraints (like max character limits).</li>
-              <li><strong className="text-white">Lossless Conversion:</strong> PRPM maps canonical format to target format using schema definitions, preserving as much information as possible.</li>
-              <li><strong className="text-white">Format-Specific Rules:</strong> Converters handle special cases like Copilot's comma-separated patterns, Claude's emoji icons, and Windsurf's 12k character limit.</li>
+              <li><strong className="text-white">Best-Effort Conversion:</strong> PRPM maps canonical format to target format using schema definitions, preserving as much information as possible while flagging lossy conversions with quality scores and warnings.</li>
+              <li><strong className="text-white">Format-Specific Rules:</strong> Converters handle special cases like Copilot's comma-separated patterns, Windsurf's 12k character limit, and format-specific features that don't translate across formats.</li>
             </ol>
 
             <h4 className="text-xl font-bold text-white mb-4">Example: Installing a Cursor Rule in Claude Code</h4>
