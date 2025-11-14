@@ -6,8 +6,9 @@ import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 
 // Get the directory where this file is located
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Use underscore prefix to avoid conflicts with CommonJS globals
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = dirname(_filename);
 
 // Initialize Ajv with strict mode disabled for better compatibility
 const ajv = new Ajv({
@@ -101,7 +102,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
   }
 
   // Load schema from file
-  const schemaPath = join(__dirname, '..', 'schemas', schemaFilename);
+  const schemaPath = join(_dirname, '..', 'schemas', schemaFilename);
   const schemaContent = readFileSync(schemaPath, 'utf-8');
   const schema = JSON.parse(schemaContent);
 
