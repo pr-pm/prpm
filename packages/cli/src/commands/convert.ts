@@ -61,7 +61,8 @@ function getDefaultPath(format: string, filename: string, subtype?: string): str
       // Default to steering files for conversion
       return join(process.cwd(), '.kiro', 'steering', `${baseName}.md`);
     case 'copilot':
-      return join(process.cwd(), '.github', 'copilot-instructions.md');
+      // Copilot uses NAME.instructions.md format in .github/instructions/ directory
+      return join(process.cwd(), '.github', 'instructions', `${baseName}.instructions.md`);
     case 'continue':
       // Continue uses .continue/rules/*.md for rules (default) or .continue/prompts/*.md for slash commands
       return join(process.cwd(), '.continue', 'rules', `${baseName}.md`);
