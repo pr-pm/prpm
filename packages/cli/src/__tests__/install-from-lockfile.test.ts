@@ -170,6 +170,54 @@ describe('install from lockfile', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 1/1'));
     });
 
+    it('should honor agents.md location stored in lockfile', async () => {
+      const lockfile: Lockfile = {
+        version: '1.0.0',
+        lockfileVersion: 1,
+        packages: {
+          '@test/agents': {
+            version: '1.0.0',
+            resolved: 'https://registry.prpm.dev/packages/@test/agents/1.0.0/download',
+            integrity: 'sha256-abc123',
+            format: 'agents.md',
+            subtype: 'rule',
+            installedPath: 'custom/dir/AGENTS.override.md',
+          },
+        },
+        generated: new Date().toISOString(),
+      };
+      mockReadLockfile.mockResolvedValue(lockfile);
+
+      const mockPackage = {
+        id: '@test/agents',
+        name: '@test/agents',
+        author: 'test',
+        version: '1.0.0',
+        format: 'agents.md',
+        subtype: 'rule',
+        files: ['AGENTS.md'],
+        description: 'Test agents file',
+        total_downloads: 0,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://registry.prpm.dev/packages/@test/agents/1.0.0/download'
+        }
+      };
+      mockClient.getPackage.mockResolvedValue(mockPackage as any);
+      mockClient.getPackageVersion.mockResolvedValue({
+        version: '1.0.0',
+        tarball_url: 'https://registry.prpm.dev/packages/@test/agents/1.0.0/download'
+      } as any);
+
+      const fileContent = '# Agents\nTest content';
+      const tarballContent = gzipSync(fileContent);
+      mockClient.downloadPackage.mockResolvedValue(tarballContent);
+
+      await installFromLockfile({});
+
+      expect(mockSaveFile).toHaveBeenCalledWith('custom/dir/AGENTS.override.md', expect.any(String));
+    });
+
     it('should preserve format from lockfile', async () => {
       // Arrange
       const lockfile: Lockfile = {
