@@ -1,6 +1,6 @@
 {
   "name": "@pr-pm/registry-client",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Registry client library for PRPM",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
