@@ -330,7 +330,7 @@ export async function handleInstall(
 
     // Download package in native format (conversion happens client-side)
     console.log(`   ⬇️  Downloading...`);
-    const tarball = await client.downloadPackage(tarballUrl, { format });
+    const tarball = await client.downloadPackage(tarballUrl);
 
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);

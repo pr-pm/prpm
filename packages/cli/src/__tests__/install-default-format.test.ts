@@ -100,10 +100,14 @@ describe('install command - defaultFormat config', () => {
 
     await handleInstall('test-package', { as: 'windsurf' });
 
-    // Should request windsurf format (from CLI flag), not claude (from config)
+    // Should download native format (conversion happens client-side)
     expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ format: 'windsurf' })
+      expect.any(String)
+    );
+    // Should convert and save in windsurf format
+    expect(saveFile).toHaveBeenCalledWith(
+      expect.stringContaining('.windsurfrules'),
+      expect.any(String)
     );
   });
 
