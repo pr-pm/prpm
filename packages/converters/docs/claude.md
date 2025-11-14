@@ -30,13 +30,6 @@ Claude Code uses markdown files with YAML frontmatter for agents, skills, and sl
   - Values: `sonnet`, `opus`, `haiku`, `inherit` (inherits from parent)
   - Default: `inherit`
 
-### Subtype Preservation Fields
-
-- **`agentType`** (string: "agent"): Explicitly marks as agent
-- **`skillType`** (string: "skill"): Explicitly marks as skill
-- **`commandType`** (string: "slash-command"): Explicitly marks as slash command
-- **`hookType`** (string: "hook"): Explicitly marks as hook
-
 ## Content Format
 
 Plain markdown content following the frontmatter:
@@ -100,7 +93,6 @@ Skills are reusable patterns that can be invoked during a conversation. They don
 ---
 name: refactor-helper
 description: Assists with code refactoring
-skillType: skill
 allowed-tools: Read, Edit, Grep
 ---
 
@@ -326,7 +318,7 @@ echo "✅ Session initialized"
 
 - Parses H1 for display title and icon
 - Extracts tools from `allowed-tools` into array
-- Detects subtype from agentType/skillType/commandType/hookType
+- Detects subtype from file path (.claude/agents/, .claude/skills/, .claude/commands/)
 - Persona extracted if "You are..." pattern found
 - Hook executable code preserved in code blocks
 

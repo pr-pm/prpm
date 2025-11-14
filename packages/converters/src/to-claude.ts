@@ -78,15 +78,12 @@ function convertContent(
 
   if (metadata?.type === 'metadata') {
     lines.push(`description: ${metadata.data.description}`);
-    if (metadata.data.icon) {
-      lines.push(`icon: ${metadata.data.icon}`);
-    }
   }
 
   // Tools field - use config override if provided, otherwise use package tools
   const toolsValue = options?.claudeConfig?.tools || (tools?.type === 'tools' ? tools.tools.join(', ') : undefined);
   if (toolsValue) {
-    lines.push(`tools: ${toolsValue}`);
+    lines.push(`allowed-tools: ${toolsValue}`);
   }
 
   // Model field - use config override if provided, otherwise use stored model from metadata
@@ -94,15 +91,6 @@ function convertContent(
   const modelValue = options?.claudeConfig?.model || storedModel;
   if (modelValue) {
     lines.push(`model: ${modelValue}`);
-  }
-
-  // Add explicit type field for subtype preservation
-  if (pkg.subtype === 'agent') {
-    lines.push('agentType: agent');
-  } else if (pkg.subtype === 'skill') {
-    lines.push('skillType: skill');
-  } else if (pkg.subtype === 'slash-command') {
-    lines.push('commandType: slash-command');
   }
 
   lines.push('---');

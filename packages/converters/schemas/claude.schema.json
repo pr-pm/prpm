@@ -28,23 +28,9 @@
           "type": "string",
           "enum": ["sonnet", "opus", "haiku", "inherit"],
           "description": "Claude model to use for this agent"
-        },
-        "agentType": {
-          "type": "string",
-          "enum": ["agent"],
-          "description": "Explicitly marks this as an agent (for subtype preservation)"
-        },
-        "skillType": {
-          "type": "string",
-          "enum": ["skill"],
-          "description": "Explicitly marks this as a skill (for subtype preservation)"
-        },
-        "commandType": {
-          "type": "string",
-          "enum": ["slash-command"],
-          "description": "Explicitly marks this as a slash command (for subtype preservation)"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "content": {
       "type": "string",
