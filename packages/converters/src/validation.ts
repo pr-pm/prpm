@@ -6,9 +6,12 @@ import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 
 // Get the directory where this file is located
-// Use underscore prefix to avoid conflicts with CommonJS globals
-const _filename = fileURLToPath(import.meta.url);
-const _dirname = dirname(_filename);
+// In Jest/CommonJS, __dirname is provided automatically
+// In ESM builds, we need to polyfill it using import.meta.url
+// Since we can't use import.meta in Jest (syntax error), we declare __dirname
+// and trust that it will be provided by the environment (Jest, Node with --require, etc.)
+declare const __dirname: string;
+const currentDirname = __dirname;
 
 // Initialize Ajv with strict mode disabled for better compatibility
 const ajv = new Ajv({
@@ -102,7 +105,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
   }
 
   // Load schema from file
-  const schemaPath = join(_dirname, '..', 'schemas', schemaFilename);
+  const schemaPath = join(currentDirname, '..', 'schemas', schemaFilename);
   const schemaContent = readFileSync(schemaPath, 'utf-8');
   const schema = JSON.parse(schemaContent);
 

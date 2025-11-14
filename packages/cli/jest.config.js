@@ -23,7 +23,9 @@ module.exports = {
       tsconfig: {
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
-      }
+        module: 'commonjs', // Force CommonJS for Jest
+      },
+      useESM: false, // Explicitly disable ESM
     }],
   },
   clearMocks: true,

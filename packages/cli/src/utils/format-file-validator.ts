@@ -87,9 +87,13 @@ async function validateMarkdownFile(
       warnings: result.warnings.map(w => `${filePath}: ${w.message}`),
     };
   } catch (error) {
+    // Include stack trace for better debugging
+    const errorMsg = error instanceof Error
+      ? `${error.message}\nStack: ${error.stack}`
+      : String(error);
     return {
       valid: false,
-      errors: [`${filePath}: Failed to validate - ${error instanceof Error ? error.message : 'Unknown error'}`],
+      errors: [`${filePath}: Failed to validate - ${errorMsg}`],
       warnings: [],
     };
   }

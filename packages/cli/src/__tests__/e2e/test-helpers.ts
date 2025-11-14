@@ -50,9 +50,61 @@ export async function createMockPackage(
   const manifestPath = join(testDir, 'prpm.json');
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
 
-  // Create a sample .cursorrules file
+  // Create format-specific sample files
   const rulesPath = join(testDir, '.cursorrules');
-  await writeFile(rulesPath, '# Test cursor rules\n\nAlways write tests.\n');
+  let content: string;
+
+  switch (type) {
+    case 'cursor':
+      // Cursor requires frontmatter with description
+      content = `---
+description: "Test cursor rules for ${name}"
+alwaysApply: false
+---
+
+# Test Cursor Rules
+
+Always write tests.`;
+      break;
+
+    case 'claude':
+      // Claude uses frontmatter with specific fields
+      content = `---
+name: ${name}
+description: Test Claude package
+---
+
+# Claude Instructions
+
+Always write tests.`;
+      break;
+
+    case 'continue':
+    case 'windsurf':
+    case 'agents-md':
+      // These formats use plain markdown without frontmatter requirements
+      content = `# Test Rules
+
+Always write tests.`;
+      break;
+
+    case 'copilot':
+      // Copilot uses frontmatter
+      content = `---
+description: Test Copilot package
+---
+
+# Copilot Instructions
+
+Always write tests.`;
+      break;
+
+    default:
+      // Generic/fallback
+      content = `# Test Rules\n\nAlways write tests.\n`;
+  }
+
+  await writeFile(rulesPath, content);
 
   return manifestPath;
 }
