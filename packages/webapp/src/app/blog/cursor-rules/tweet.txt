@@ -1,5 +1,5 @@
 Teams using cursor rules report 40-60% fewer revision cycles on AI-generated code.
 
-We just published the complete guide: what they are, how to use them, and 6,000+ ready-to-use packages for React, Python, TypeScript, security, and more.
+We just published the complete guide: what they are, how to use them, and 7,000+ ready-to-use packages for React, Python, TypeScript, security, and more.
 
 https://prpm.dev/blog/cursor-rules

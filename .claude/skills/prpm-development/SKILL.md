@@ -33,6 +33,57 @@ Build the npm/cargo/pip equivalent for AI development artifacts. Enable develope
 - **Telemetry Opt-Out**: Privacy-first with easy opt-out
 - **Beautiful CLI**: Clear progress indicators and colored output
 
+### Git Workflow - CRITICAL RULES
+
+**⚠️ NEVER PUSH DIRECTLY TO MAIN ⚠️**
+
+PRPM uses a **branch-based workflow** with CI/CD automation. Direct pushes to main bypass all safety checks and can break production.
+
+**ALWAYS follow this workflow:**
+
+1. **Create a branch** for your changes:
+   ```bash
+   git checkout -b feature/your-feature-name
+   # or
+   git checkout -b fix/bug-description
+   ```
+
+2. **Make commits** on your branch:
+   ```bash
+   git add [files]
+   git commit -m "feat: description"
+   ```
+
+3. **Push your branch**:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+4. **Create a Pull Request** on GitHub:
+   - Automated CI tests run
+   - Code review happens
+   - Deployments are controlled
+
+5. **After PR approval**, merge through GitHub UI:
+   - Triggers automated deployment
+   - Ensures CI passes first
+   - Maintains deployment history
+
+**Why this matters:**
+- Main branch is protected and deploys to production
+- Direct pushes skip CI tests, linting, type checks
+- Can deploy broken code to 7500+ package registry
+- Breaks audit trail and rollback capability
+- GitHub Actions workflows expect PRs, not direct pushes
+
+**If you accidentally pushed to main:**
+1. **DO NOT** force push to revert - breaks CI/CD
+2. Create a revert commit on a branch
+3. Open PR to fix the issue properly
+4. Let CI/CD handle the corrective deployment
+
+**Exception:** Only repository admins can push to main for emergency hotfixes (with explicit approval).
+
 ## Package Types
 
 ### 🎓 Skill

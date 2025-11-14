@@ -31,6 +31,7 @@ import { createPlaygroundCommand } from './commands/playground';
 import { createCreditsCommand } from './commands/credits';
 import { createSubscribeCommand } from './commands/subscribe';
 import { createBuyCreditsCommand } from './commands/buy-credits';
+import { createStarredCommand } from './commands/starred';
 import { telemetry } from './core/telemetry';
 import { CLIError } from './core/errors';
 
@@ -66,6 +67,7 @@ program.addCommand(createPublishCommand());
 program.addCommand(createLoginCommand());
 program.addCommand(createWhoamiCommand());
 program.addCommand(createCollectionsCommand());
+program.addCommand(createStarredCommand());
 program.addCommand(createOutdatedCommand());
 program.addCommand(createUpdateCommand());
 program.addCommand(createUpgradeCommand());

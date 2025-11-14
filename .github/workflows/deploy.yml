@@ -8,8 +8,9 @@ on:
       - 'packages/types/**'
       - 'packages/webapp/**'
   schedule:
-    # Rebuild webapp every 6 hours to regenerate static pages with latest data from registry API
-    - cron: '0 */6 * * *'
+    # Rebuild webapp every hour to regenerate static pages with latest data from registry API
+    # With smart caching, builds are fast (~5s) when no new packages added
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       environment:
@@ -383,6 +384,13 @@ jobs:
         env:
           SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Prepare SSG data
         run: |
           chmod +x scripts/prepare-ssg-data.sh
@@ -402,6 +410,8 @@ jobs:
           NEXT_PUBLIC_REGISTRY_URL: "https://registry.prpm.dev"
           REGISTRY_URL: "https://registry.prpm.dev"
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: "https://app.posthog.com"
           SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
 
       - name: Verify build output
@@ -417,14 +427,7 @@ jobs:
           fi
 
           echo "✓ Build output verified"
-          find packages/webapp/out -type f | head -20
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          find packages/webapp/out -type f 2>/dev/null | head -20 || true
 
       - name: Deploy to S3
         run: |
