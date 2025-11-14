@@ -12,6 +12,8 @@ import FeaturedResults from '@/components/FeaturedResults'
 import CollapsibleContent from '@/components/CollapsibleContent'
 import LatestVersionBadge from '@/components/LatestVersionBadge'
 import DynamicPackageContent from '@/components/DynamicPackageContent'
+import StarButtonWrapper from '@/components/StarButtonWrapper'
+import RecentlyViewedTracker from '@/components/RecentlyViewedTracker'
 import { getLicenseUrl } from '@/lib/license-utils'
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || process.env.REGISTRY_URL || 'https://registry.prpm.dev'
@@ -322,6 +324,18 @@ export default async function PackagePage({ params }: { params: { author: string
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
       />
 
+      {/* Track recently viewed */}
+      <RecentlyViewedTracker
+        type="package"
+        pkg={{
+          id: pkg.id,
+          name: pkg.name,
+          description: pkg.description,
+          format: pkg.format,
+          subtype: (pkg as any).subtype,
+        }}
+      />
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="mb-6 text-sm text-gray-400">
@@ -435,6 +449,11 @@ export default async function PackagePage({ params }: { params: { author: string
                 <span>{pkg.weekly_downloads.toLocaleString()} this week</span>
               </div>
             )}
+            <StarButtonWrapper
+              type="package"
+              id={pkg.id}
+              initialStars={pkg.stars || 0}
+            />
             {(pkg.organization as any)?.name && (
               <div className="flex items-center gap-2">
                 {(pkg.organization as any)?.avatar_url ? (
