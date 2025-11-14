@@ -1,4 +1,4 @@
-We analyzed 1,000+ cursor rules to find the 50 that actually work.
+We analyzed 7,000+ cursor rules to find the 50 that actually work.
 
 React, TypeScript, Python, Go, security, testing—comprehensive packages from trusted authors.
 

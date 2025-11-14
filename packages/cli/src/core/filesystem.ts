@@ -28,6 +28,8 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       if (subtype === 'skill') return '.claude/skills';
       if (subtype === 'slash-command') return '.claude/commands';
       if (subtype === 'agent') return '.claude/agents';
+      // Hooks are configured in settings.json, return .claude directory
+      if (subtype === 'hook') return '.claude';
       return '.claude/agents'; // Default for claude
 
     case 'continue':
@@ -39,9 +41,19 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.windsurf/rules';
 
     case 'copilot':
+      // Copilot has different locations based on subtype:
+      // - Repository-wide instructions: .github/copilot-instructions.md
+      // - Path-specific instructions: .github/instructions/*.instructions.md
+      // - Chat modes: .github/chatmodes/*.chatmode.md
+      if (subtype === 'chatmode') return '.github/chatmodes';
+      // Default to path-specific instructions directory
       return '.github/instructions';
 
     case 'kiro':
+      // Kiro has different locations based on subtype:
+      // - Steering files: .kiro/steering/*.md
+      // - Hooks: .kiro/hooks/*.kiro.hook (JSON files)
+      if (subtype === 'hook') return '.kiro/hooks';
       return '.kiro/steering';
 
     case 'agents.md':

@@ -2,39 +2,11 @@
  * Core types for the Prompt Package Manager
  */
 
-export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
-export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'collection' | 'chatmode' | 'tool';
+import type { Format, Subtype } from '@pr-pm/types';
 
-/**
- * Available formats as a constant array
- * Useful for CLI prompts, validation, etc.
- */
-export const FORMATS: readonly Format[] = [
-  'cursor',
-  'claude',
-  'continue',
-  'windsurf',
-  'copilot',
-  'kiro',
-  'agents.md',
-  'generic',
-  'mcp',
-] as const;
-
-/**
- * Available subtypes as a constant array
- * Useful for CLI prompts, validation, etc.
- */
-export const SUBTYPES: readonly Subtype[] = [
-  'rule',
-  'agent',
-  'skill',
-  'slash-command',
-  'prompt',
-  'collection',
-  'chatmode',
-  'tool',
-] as const;
+// Re-export types and constants from @pr-pm/types for backwards compatibility
+export type { Format, Subtype } from '@pr-pm/types';
+export { FORMATS, SUBTYPES } from '@pr-pm/types';
 
 export interface Package {
   id: string;

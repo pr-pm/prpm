@@ -15,6 +15,8 @@ import { CostMonitoringService } from './cost-monitoring.js';
 import { getTarballContent } from '../storage/s3.js';
 import { nanoid } from 'nanoid';
 import { getModelId, isAnthropicModel, isOpenAIModel } from '../config/models.js';
+import { getAllowedTools, TASK_TOOL_CONFIG } from '../config/security-domains.js';
+import { createWebFetchValidationHook } from '../middleware/webfetch-validator.js';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -136,50 +138,85 @@ export class PlaygroundService {
     subtype: string;
     name: string;
   }> {
-    const query = version
-      ? `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format, p.subtype
+    // If a specific version is requested, fetch from package_versions
+    if (version) {
+      const query = `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format, p.subtype
          FROM packages p
          JOIN package_versions pv ON p.id = pv.package_id
-         WHERE p.id = $1 AND pv.version = $2`
-      : `SELECT pv.tarball_url, pv.version, p.snippet, p.name, p.format, p.subtype
-         FROM packages p
-         JOIN package_versions pv ON p.id = pv.package_id
-         WHERE p.id = $1
-         ORDER BY pv.published_at DESC
-         LIMIT 1`;
+         WHERE p.id = $1 AND pv.version = $2 AND p.visibility = 'public'`;
 
-    const params = version ? [packageId, version] : [packageId];
-    const result = await this.server.pg.query(query, params);
+      const result = await this.server.pg.query(query, [packageId, version]);
+
+      if (result.rows.length === 0) {
+        throw new Error('Package version not found or not public');
+      }
+
+      const row = result.rows[0];
+      let prompt: string;
+
+      // Priority order: 1) snippet field, 2) extract from S3 tarball
+      if (row.snippet) {
+        this.server.log.info({ packageName: row.name, version }, 'Using cached snippet for playground');
+        prompt = row.snippet;
+      } else {
+        this.server.log.info({ packageName: row.name, version }, 'Fetching package content from S3 tarball');
+        try {
+          prompt = await getTarballContent(this.server, packageId, version, row.name);
+        } catch (error) {
+          throw new Error(
+            `Package content not available for ${row.name}. ` +
+            `Failed to extract from storage: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
+
+      return {
+        prompt,
+        format: row.format,
+        subtype: row.subtype,
+        name: row.name,
+      };
+    }
+
+    // No version specified - use latest content from packages table
+    const query = `SELECT p.full_content, p.snippet, p.name, p.format, p.subtype
+         FROM packages p
+         WHERE p.id = $1 AND p.visibility = 'public'`;
+
+    const result = await this.server.pg.query(query, [packageId]);
 
     if (result.rows.length === 0) {
-      throw new Error('Package not found');
+      throw new Error('Package not found or not public');
     }
 
     const row = result.rows[0];
 
+    // Priority order: 1) full_content, 2) snippet, 3) fetch from latest version tarball
     let prompt: string;
 
-    // Priority order: 1) snippet field, 2) extract from S3 tarball
-    if (row.snippet) {
+    if (row.full_content) {
+      this.server.log.info({ packageName: row.name }, 'Using full_content for playground');
+      prompt = row.full_content;
+    } else if (row.snippet) {
       this.server.log.info({ packageName: row.name }, 'Using cached snippet for playground');
       prompt = row.snippet;
     } else {
-      // No snippet, try to fetch and extract from S3
-      this.server.log.info({ packageName: row.name, version: row.version }, 'Fetching package content from S3 tarball');
+      // Fallback: fetch from latest version
+      const versionQuery = `SELECT pv.version FROM package_versions pv
+                           WHERE pv.package_id = $1
+                           ORDER BY pv.published_at DESC LIMIT 1`;
+      const versionResult = await this.server.pg.query(versionQuery, [packageId]);
+
+      if (versionResult.rows.length === 0) {
+        throw new Error(`Package ${row.name} has no published versions`);
+      }
+
+      const latestVersion = versionResult.rows[0].version;
+      this.server.log.info({ packageName: row.name, version: latestVersion }, 'Fetching package content from S3 tarball');
 
       try {
-        prompt = await getTarballContent(
-          this.server,
-          packageId,
-          row.version,
-          row.name
-        );
+        prompt = await getTarballContent(this.server, packageId, latestVersion, row.name);
       } catch (error) {
-        this.server.log.error({
-          error: error instanceof Error ? error.message : String(error),
-          packageName: row.name
-        }, 'Failed to fetch content from S3');
-
         throw new Error(
           `Package content not available for ${row.name}. ` +
           `Failed to extract from storage: ${error instanceof Error ? error.message : String(error)}`
@@ -392,13 +429,15 @@ export class PlaygroundService {
         // Get model ID from centralized config
         modelName = getModelId(model);
 
-        // Determine if we need filesystem mounting for Skills/Agents
+        // Determine if we need filesystem mounting for Agents only
         // IMPORTANT: Don't mount skills/agents in baseline mode (use_no_prompt=true)
         // Baseline should be a clean Anthropic environment with no extra capabilities
-        // Even if the package being tested is a skill/agent, baseline mode should not use filesystem mounting
-        const needsSkillMount = !request.use_no_prompt && this.shouldMountAsSkill(packageData.subtype);
+        //
+        // SKILLS IN PLAYGROUND: Skills should NOT be mounted as files that require explicit invocation.
+        // Instead, their content should be applied directly in the system prompt (handled in else branch).
+        // This provides immediate answers rather than Claude announcing "Let me invoke the skill..."
         const needsAgentMount = !request.use_no_prompt && this.shouldMountAsAgent(packageData.subtype);
-        const needsFilesystemMount = !request.use_no_prompt && (needsSkillMount || needsAgentMount);
+        const needsFilesystemMount = !request.use_no_prompt && needsAgentMount;
 
         let tempDir: string | null = null;
 
@@ -422,38 +461,53 @@ export class PlaygroundService {
 
           let totalTokens = 0;
 
-          // If package is a skill/agent, mount it on filesystem and use SDK
+          // If package is an agent, mount it on filesystem and use SDK
+          // Skills are handled as regular prompts (content in system message)
           if (needsFilesystemMount) {
-            // Create temp directory and write skill/agent
+            // Create temp directory and write agent
             tempDir = await this.createTempClaudeDirectory();
-
-            if (needsSkillMount) {
-              await this.writeSkillToFilesystem(tempDir, packageData.name, packageData.prompt);
-            } else if (needsAgentMount) {
-              await this.writeAgentToFilesystem(tempDir, packageData.name, packageData.prompt);
-            }
+            await this.writeAgentToFilesystem(tempDir, packageData.name, packageData.prompt);
 
             // Use Claude Agent SDK with proper filesystem mounting
             const queryOptions: any = {
               cwd: tempDir,
               settingSources: ['project'] as const,
               model: modelName,
-              maxTurns: 10,
-              allowDangerouslySkipPermissions: true, // For playground, bypass permission prompts
+              maxTurns: TASK_TOOL_CONFIG.MAX_RECURSION_DEPTH + 1,
+              // SECURITY: Removed allowDangerouslySkipPermissions
+              // Tools now require explicit approval or run in restricted mode
             };
 
-            // Configure allowed tools for playground
-            // Web tools - for fetching and searching external content
-            queryOptions.allowedTools = ['WebFetch', 'WebSearch'];
+            // SECURITY: Configure allowed tools based on package subtype
+            // Uses allowlist from security-domains.ts to prevent tool abuse
+            queryOptions.allowedTools = getAllowedTools(packageData.subtype);
 
-            // Task tool - for spawning subagents (useful for complex multi-agent patterns)
-            // Note: Subagents inherit the same tool restrictions and credit limits
-            queryOptions.allowedTools.push('Task');
+            // SECURITY: Add WebFetch domain validation hook
+            // This intercepts WebFetch calls and blocks non-allowlisted domains
+            const sessionId = request.session_id || 'new-session';
+            queryOptions.hooks = {
+              PreToolUse: [
+                {
+                  hooks: [
+                    createWebFetchValidationHook(
+                      this.server,
+                      userId,
+                      request.package_id,
+                      sessionId
+                    ),
+                  ],
+                },
+              ],
+            };
 
-            // For skills, also enable Skill tool
-            if (needsSkillMount) {
-              queryOptions.allowedTools.push('Skill');
-            }
+            // Log tool configuration for security audit
+            this.server.log.info({
+              packageId: request.package_id,
+              subtype: packageData.subtype,
+              allowedTools: queryOptions.allowedTools,
+              maxTurns: queryOptions.maxTurns,
+              securityHooks: ['WebFetchValidation'],
+            }, 'Playground execution with security restrictions');
 
             // Build conversation context from history
             let promptText = request.input;
@@ -473,8 +527,18 @@ export class PlaygroundService {
             // Collect all messages
             let assistantText = '';
             let tokens = 0;
+            let messageCount = 0;
 
             for await (const message of queryResult) {
+              messageCount++;
+
+              // Log all message types for debugging
+              this.server.log.debug({
+                messageType: message.type,
+                messageSubtype: (message as any).subtype,
+                messageCount,
+              }, 'Claude SDK message received');
+
               if (message.type === 'assistant') {
                 // Extract text from assistant message
                 for (const content of message.message.content) {
@@ -485,17 +549,39 @@ export class PlaygroundService {
               } else if (message.type === 'result') {
                 // Get final result and usage
                 if (message.subtype === 'success') {
+                  // Prefer message.result but fall back to accumulated assistant text
+                  // message.result contains the final textual output
+                  // assistantText contains all intermediate text from turns
                   assistantText = message.result || assistantText;
+
+                  this.server.log.debug({
+                    hasResult: !!message.result,
+                    resultLength: message.result?.length || 0,
+                    accumulatedLength: assistantText.length,
+                  }, 'Final result captured');
                 } else {
-                  // Handle error result types
-                  assistantText = assistantText || `Error: ${message.errors?.join(', ')}`;
+                  // Handle error result types (error_during_execution, error_max_turns, error_max_budget_usd)
+                  const errorMessage = message.subtype.startsWith('error_')
+                    ? `Error: ${message.subtype.replace('error_', '').replace(/_/g, ' ')}`
+                    : 'Agent execution failed';
+                  assistantText = assistantText || errorMessage;
                 }
                 tokens = message.usage.input_tokens + message.usage.output_tokens;
                 break;
               }
             }
 
-            responseText = assistantText || 'No response generated';
+            // Log if no response was captured
+            if (!assistantText) {
+              this.server.log.warn({
+                packageId: request.package_id,
+                sessionId,
+                messageCount,
+                tokens,
+              }, 'Agent completed but produced no text output');
+            }
+
+            responseText = assistantText || 'Agent completed execution but did not produce a text response. This may occur when the agent only performs tool calls without generating output text.';
             tokensUsed = tokens;
           } else {
             // Regular prompt execution without tools (regular prompts, rules, etc.)
@@ -599,7 +685,7 @@ export class PlaygroundService {
         packageVersion: request.package_version,
         inputLength: request.input.length,
         outputLength: responseText.length,
-        comparisonMode: false, // Will be updated when comparison mode is implemented
+        comparisonMode: !!request.use_no_prompt, // Track when running in baseline/comparison mode
         estimatedApiCost: actualCost.estimatedCost,
         actualInputTokens: actualCost.inputTokens,
         actualOutputTokens: actualCost.outputTokens,
@@ -797,6 +883,7 @@ export class PlaygroundService {
         id, user_id, org_id, package_id, package_version, package_name,
         conversation, credits_spent, estimated_tokens, model, total_tokens,
         total_duration_ms, run_count, is_public, share_token,
+        view_count, helpful_count, not_helpful_count, shared_at,
         created_at, updated_at, last_run_at
        FROM playground_sessions
        WHERE share_token = $1 AND is_public = TRUE`,
@@ -824,6 +911,10 @@ export class PlaygroundService {
       run_count: row.run_count,
       is_public: row.is_public,
       share_token: row.share_token,
+      view_count: row.view_count,
+      helpful_count: row.helpful_count,
+      not_helpful_count: row.not_helpful_count,
+      shared_at: row.shared_at,
       created_at: row.created_at,
       updated_at: row.updated_at,
       last_run_at: row.last_run_at,
@@ -904,13 +995,13 @@ export class PlaygroundService {
    */
   private async logUsage(data: {
     userId: string;
-    packageId: string;
+    packageId: string | null;
     sessionId: string;
     model: string;
     tokensUsed: number;
     durationMs: number;
     creditsSpent: number;
-    packageVersion?: string;
+    packageVersion?: string | null;
     inputLength?: number;
     outputLength?: number;
     comparisonMode?: boolean;
@@ -1065,5 +1156,322 @@ export class PlaygroundService {
       results: result.rows,
       total: parseInt(countResult.rows[0].count),
     };
+  }
+
+  /**
+   * Execute custom prompt in isolated sandbox
+   * SECURITY: Simplified approach - no complex validation, just isolation
+   * - Custom prompt IS the system (no other context)
+   * - NO tools enabled (text-only)
+   * - Lower token limits
+   * - 2x credit cost
+   * - Verified authors only
+   */
+  async executeCustomPrompt(
+    userId: string,
+    request: {
+      custom_prompt: string;
+      input: string;
+      session_id?: string;
+      model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
+      sandbox_mode?: 'strict' | 'moderate' | 'permissive';
+    }
+  ): Promise<PlaygroundRunResponse> {
+    const startTime = Date.now();
+
+    try {
+      const model = request.model || 'sonnet';
+
+      // 1. Get or create session (track custom prompt sessions separately)
+      let session: any;
+      if (request.session_id) {
+        // For custom prompts, only allow continuing same custom prompt sessions
+        const sessionCheck = await this.server.pg.query(
+          `SELECT id, conversation, package_id FROM playground_sessions
+           WHERE id = $1 AND user_id = $2 AND package_id IS NULL`,
+          [request.session_id, userId]
+        );
+
+        if (sessionCheck.rows.length > 0) {
+          session = sessionCheck.rows[0];
+        }
+      }
+
+      const conversationHistory = session?.conversation || [];
+
+      // 2. Estimate credits (2x multiplier for custom prompts)
+      const baseCredits = this.estimateCredits(
+        request.custom_prompt.length,
+        request.input.length,
+        model,
+        conversationHistory
+      );
+      const estimatedCredits = baseCredits * 2; // 2x cost for custom prompts
+
+      this.server.log.info({
+        userId,
+        customPromptLength: request.custom_prompt.length,
+        baseCredits,
+        estimatedCredits,
+        model,
+      }, 'Custom prompt execution - 2x credit cost');
+
+      // 3. Calculate estimated API cost
+      const totalChars = request.custom_prompt.length + request.input.length +
+        (conversationHistory.reduce((sum: number, msg: PlaygroundMessage) => sum + msg.content.length, 0));
+      const estimatedTokens = (totalChars / 4) * 1.3;
+      const costEstimate = this.costMonitoring.calculateCost(estimatedTokens, model);
+
+      // 4. Check cost throttling
+      const costCheck = await this.costMonitoring.canAffordRequest(userId, costEstimate.estimatedCost);
+      if (!costCheck.allowed) {
+        throw new Error(costCheck.reason || 'Request not allowed due to cost limits');
+      }
+
+      // 5. Check credits
+      const canAfford = await this.creditsService.canAfford(userId, estimatedCredits);
+      if (!canAfford) {
+        const balance = await this.creditsService.getBalance(userId);
+        throw new Error(
+          `Insufficient credits. Need ${estimatedCredits} but have ${balance.balance}`
+        );
+      }
+
+      // 6. Execute in STRICT SANDBOX MODE
+      const isOpenAI = model.startsWith('gpt');
+      let responseText: string;
+      let tokensUsed: number;
+      let modelName: string;
+
+      if (isOpenAI) {
+        if (!this.openai) {
+          throw new Error('OpenAI API not configured');
+        }
+
+        modelName = getModelId(model);
+
+        // Build messages - CUSTOM PROMPT IS THE SYSTEM
+        const openaiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+          {
+            role: 'system',
+            content: request.custom_prompt, // User's prompt, nothing else
+          },
+        ];
+
+        // Add conversation history
+        for (const msg of conversationHistory) {
+          openaiMessages.push({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+          });
+        }
+
+        // Add current input
+        openaiMessages.push({
+          role: 'user',
+          content: request.input,
+        });
+
+        // SECURITY: Strict limits for custom prompts
+        const response = await this.openai.chat.completions.create({
+          model: modelName,
+          messages: openaiMessages,
+          max_tokens: 1024,  // Lower than normal (vs 4096)
+          temperature: 0.7,
+          // NO tools, NO functions, NO extra capabilities
+        });
+
+        responseText = response.choices[0]?.message?.content || 'No response generated';
+        tokensUsed = response.usage?.total_tokens || 0;
+      } else {
+        if (!this.anthropic) {
+          throw new Error('Anthropic API not configured');
+        }
+
+        modelName = getModelId(model);
+
+        // Build messages for Anthropic
+        let anthropicMessages: Anthropic.MessageParam[] = [];
+
+        // Add conversation history
+        for (const msg of conversationHistory) {
+          anthropicMessages.push({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+          });
+        }
+
+        // Add current user input
+        anthropicMessages.push({
+          role: 'user',
+          content: request.input,
+        });
+
+        // SECURITY: Execute with NO tools, custom prompt as system
+        const response = await this.anthropic.messages.create({
+          model: modelName,
+          max_tokens: 1024,  // Lower than normal (vs 4096)
+          temperature: 0.7,
+          system: request.custom_prompt,  // User's prompt IS the system
+          messages: anthropicMessages,
+          // NO tools at all - pure text generation
+        });
+
+        responseText =
+          response.content[0].type === 'text'
+            ? response.content[0].text
+            : 'No response generated';
+
+        tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
+      }
+
+      const durationMs = Date.now() - startTime;
+
+      // 7. Create or update session
+      const newMessage: PlaygroundMessage = {
+        role: 'assistant',
+        content: responseText,
+        timestamp: new Date().toISOString(),
+        tokens: tokensUsed,
+      };
+
+      const userMessage: PlaygroundMessage = {
+        role: 'user',
+        content: request.input,
+        timestamp: new Date().toISOString(),
+      };
+
+      let sessionId: string;
+      if (session) {
+        sessionId = session.id;
+        await this.updateSession(sessionId, [userMessage, newMessage], estimatedCredits);
+      } else {
+        // Create new custom prompt session (package_id is NULL)
+        sessionId = await this.createCustomPromptSession({
+          userId,
+          customPrompt: request.custom_prompt,
+          conversation: [userMessage, newMessage],
+          model: modelName,
+          tokensUsed,
+          durationMs,
+          creditsSpent: estimatedCredits,
+        });
+      }
+
+      // 8. Deduct credits
+      await this.creditsService.spendCredits(
+        userId,
+        estimatedCredits,
+        sessionId,
+        `Custom prompt run: ${model} model (2x cost)`,
+        {
+          custom_prompt: true,
+          model: modelName,
+          tokensUsed,
+          durationMs,
+        }
+      );
+
+      // 9. Record cost
+      const orgResult = await this.server.pg.query(
+        `SELECT org_id FROM organization_members WHERE user_id = $1 LIMIT 1`,
+        [userId]
+      );
+      const orgId = orgResult.rows[0]?.org_id || null;
+
+      const actualCost = this.costMonitoring.calculateCost(tokensUsed, model);
+      await this.costMonitoring.recordCost(userId, actualCost.estimatedCost, {
+        sessionId,
+        model: modelName,
+        tokens: tokensUsed,
+      });
+
+      // 10. Log usage
+      await this.logUsage({
+        userId,
+        orgId,
+        packageId: null, // Custom prompts don't have package ID
+        sessionId,
+        model: modelName,
+        tokensUsed,
+        durationMs,
+        creditsSpent: estimatedCredits,
+        packageVersion: null,
+        inputLength: request.input.length,
+        outputLength: responseText.length,
+        comparisonMode: false,
+        estimatedApiCost: actualCost.estimatedCost,
+        actualInputTokens: actualCost.inputTokens,
+        actualOutputTokens: actualCost.outputTokens,
+      });
+
+      // 11. Get balance
+      const balance = await this.creditsService.getBalance(userId);
+
+      this.server.log.info({
+        userId,
+        sessionId,
+        creditsSpent: estimatedCredits,
+        creditsRemaining: balance.balance,
+        tokensUsed,
+        durationMs,
+        customPrompt: true,
+      }, 'Custom prompt run completed');
+
+      // Get conversation
+      const updatedSession = await this.getSession(sessionId, userId);
+      const conversation = updatedSession?.conversation || [];
+
+      return {
+        session_id: sessionId,
+        response: responseText,
+        credits_spent: estimatedCredits,
+        credits_remaining: balance.balance,
+        tokens_used: tokensUsed,
+        duration_ms: durationMs,
+        model: modelName,
+        conversation,
+      };
+    } catch (error) {
+      const durationMs = Date.now() - startTime;
+      this.server.log.error(
+        { error, userId, durationMs, customPrompt: true },
+        'Custom prompt run failed'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Create new custom prompt session
+   */
+  private async createCustomPromptSession(data: {
+    userId: string;
+    customPrompt: string;
+    conversation: PlaygroundMessage[];
+    model: string;
+    tokensUsed: number;
+    durationMs: number;
+    creditsSpent: number;
+  }): Promise<string> {
+    const result = await this.server.pg.query(
+      `INSERT INTO playground_sessions
+       (user_id, package_id, package_version, package_name, conversation,
+        model, total_tokens, total_duration_ms, credits_spent, estimated_tokens)
+       VALUES ($1, NULL, NULL, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
+      [
+        data.userId,
+        'Custom Prompt', // Special marker for custom prompts
+        JSON.stringify(data.conversation),
+        data.model,
+        data.tokensUsed,
+        data.durationMs,
+        data.creditsSpent,
+        data.tokensUsed,
+      ]
+    );
+
+    return result.rows[0].id;
   }
 }

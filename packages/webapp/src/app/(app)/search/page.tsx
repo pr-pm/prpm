@@ -13,23 +13,26 @@ import {
   Format,
   Subtype,
   SortType,
+  getStarredPackages,
+  getStarredCollections,
+  starPackage,
+  starCollection,
 } from '@/lib/api'
-import PackageModal from '@/components/PackageModal'
-import CollectionModal from '@/components/CollectionModal'
+import { getPackageUrl } from '@/lib/package-url'
 
 type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
 
 // Define which subtypes are available for each format
 const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'cursor': ['rule', 'agent', 'slash-command', 'tool'],
-  'claude': ['skill', 'agent', 'slash-command', 'tool'],
+  'claude': ['skill', 'agent', 'slash-command', 'tool', 'hook'],
   'continue': ['rule', 'agent', 'slash-command', 'tool'],
   'windsurf': ['rule', 'agent', 'slash-command', 'tool'],
   'copilot': ['tool', 'chatmode'],
-  'kiro': ['rule', 'agent', 'tool'],
+  'kiro': ['rule', 'agent', 'tool', 'hook'],
   'mcp': ['tool'],
   'agents.md': ['agent', 'tool'],
-  'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode'],
+  'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],
 }
 
 function SearchPageContent() {
@@ -47,6 +50,7 @@ function SearchPageContent() {
     tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
     sort: searchParams.get('sort') as SortType || 'downloads',
     page: Number(searchParams.get('page')) || 1,
+    starredOnly: searchParams.get('starred') === 'true',
   }))[0]
 
   // Initialize state from URL params
@@ -58,6 +62,7 @@ function SearchPageContent() {
   const [selectedAuthor, setSelectedAuthor] = useState(initialParams.author)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialParams.tags)
   const [sort, setSort] = useState<SortType>(initialParams.sort)
+  const [starredOnly, setStarredOnly] = useState(initialParams.starredOnly)
   const [packages, setPackages] = useState<Package[]>([])
   const [collections, setCollections] = useState<Collection[]>([])
   const [loading, setLoading] = useState(false)
@@ -66,19 +71,16 @@ function SearchPageContent() {
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [availableCategories, setAvailableCategories] = useState<string[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
-  const [showPackageModal, setShowPackageModal] = useState(false)
-  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [showCollectionModal, setShowCollectionModal] = useState(false)
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set())
 
   const limit = 20
 
   // Get available subtypes for the selected format
-  const availableSubtypes = useMemo(() =>
+  const availableSubtypes = useMemo<Subtype[]>(() =>
     selectedFormat
       ? FORMAT_SUBTYPES[selectedFormat] || []
-      : ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode'],
+      : ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],
     [selectedFormat]
   )
 
@@ -88,6 +90,51 @@ function SearchPageContent() {
       setSelectedSubtype('')
     }
   }, [selectedFormat, selectedSubtype, availableSubtypes])
+
+  // Fetch starred IDs from localStorage + API on mount
+  useEffect(() => {
+    const fetchStarredIds = async () => {
+      const ids = new Set<string>()
+
+      // Get from localStorage (anonymous + logged-in users)
+      try {
+        const localPackages = localStorage.getItem('prpm_starred_packages')
+        const localCollections = localStorage.getItem('prpm_starred_collections')
+
+        if (localPackages) {
+          const packageIds: string[] = JSON.parse(localPackages)
+          packageIds.forEach(id => ids.add(id))
+        }
+
+        if (localCollections) {
+          const collectionIds: string[] = JSON.parse(localCollections)
+          collectionIds.forEach(id => ids.add(id))
+        }
+      } catch (err) {
+        console.error('Failed to load localStorage stars:', err)
+      }
+
+      // Get from API (logged-in users only)
+      const token = localStorage.getItem('prpm_token')
+      if (token) {
+        try {
+          const [packagesData, collectionsData] = await Promise.all([
+            getStarredPackages(token, 100, 0),
+            getStarredCollections(token, 100, 0),
+          ])
+
+          packagesData.packages.forEach(pkg => ids.add(pkg.id))
+          collectionsData.collections.forEach(coll => ids.add(`${coll.scope}/${coll.name_slug}`))
+        } catch (err) {
+          console.error('Failed to fetch starred from API:', err)
+        }
+      }
+
+      setStarredIds(ids)
+    }
+
+    fetchStarredIds()
+  }, [])
 
   // Update URL when state changes
   useEffect(() => {
@@ -107,31 +154,88 @@ function SearchPageContent() {
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','))
     if (sort !== 'downloads') params.set('sort', sort)
     if (page !== 1) params.set('page', String(page))
+    if (starredOnly) params.set('starred', 'true')
 
     const newUrl = params.toString() ? `/search?${params.toString()}` : '/search'
     router.replace(newUrl, { scroll: false })
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedAuthor, selectedTags, sort, page, router, isInitialized])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedAuthor, selectedTags, sort, page, starredOnly, router, isInitialized])
 
   // Fetch packages
   const fetchPackages = async () => {
     setLoading(true)
     try {
-      const params: SearchPackagesParams = {
-        limit,
-        offset: (page - 1) * limit,
-        sort,
+      // When filtering by starred, load from SSG data to avoid API limits
+      if (starredOnly) {
+        const response = await fetch('/seo-data/packages.json')
+        const allPackages: Package[] = await response.json()
+
+        // Filter by starred IDs
+        let filteredPackages = allPackages.filter(pkg => starredIds.has(pkg.id))
+
+        // Apply other filters client-side
+        if (query.trim()) {
+          const searchLower = query.toLowerCase()
+          filteredPackages = filteredPackages.filter(
+            pkg =>
+              pkg.name.toLowerCase().includes(searchLower) ||
+              pkg.description?.toLowerCase().includes(searchLower)
+          )
+        }
+        if (selectedFormat) {
+          filteredPackages = filteredPackages.filter(pkg => pkg.format === selectedFormat)
+        }
+        if (selectedSubtype) {
+          filteredPackages = filteredPackages.filter(pkg => (pkg as any).subtype === selectedSubtype)
+        }
+        if (selectedCategory) {
+          filteredPackages = filteredPackages.filter(pkg => (pkg as any).category === selectedCategory)
+        }
+        if (selectedTags.length > 0) {
+          filteredPackages = filteredPackages.filter(pkg =>
+            selectedTags.every(tag => (pkg as any).tags?.includes(tag))
+          )
+        }
+        if (selectedAuthor) {
+          filteredPackages = filteredPackages.filter(pkg => pkg.name.startsWith(`@${selectedAuthor}/`))
+        }
+
+        // Sort client-side
+        if (sort === 'downloads') {
+          filteredPackages.sort((a, b) => ((b as any).total_downloads || 0) - ((a as any).total_downloads || 0))
+        } else if (sort === 'stars') {
+          filteredPackages.sort((a, b) => ((b as any).stars || 0) - ((a as any).stars || 0))
+        } else {
+          // 'recent' - assume already sorted by creation date in SSG data
+        }
+
+        const totalFiltered = filteredPackages.length
+
+        // Paginate client-side
+        const startIndex = (page - 1) * limit
+        const endIndex = startIndex + limit
+        filteredPackages = filteredPackages.slice(startIndex, endIndex)
+
+        setPackages(filteredPackages)
+        setTotal(totalFiltered)
+      } else {
+        // Normal API fetch when not filtering by starred
+        const params: SearchPackagesParams = {
+          limit,
+          offset: (page - 1) * limit,
+          sort,
+        }
+
+        if (query.trim()) params.q = query
+        if (selectedFormat) params.format = selectedFormat
+        if (selectedSubtype) params.subtype = selectedSubtype
+        if (selectedCategory) params.category = selectedCategory
+        if (selectedTags.length > 0) params.tags = selectedTags
+        if (selectedAuthor) params.author = selectedAuthor
+
+        const result = await searchPackages(params)
+        setPackages(result.packages)
+        setTotal(result.total)
       }
-
-      if (query.trim()) params.q = query
-      if (selectedFormat) params.format = selectedFormat
-      if (selectedSubtype) params.subtype = selectedSubtype
-      if (selectedCategory) params.category = selectedCategory
-      if (selectedTags.length > 0) params.tags = selectedTags
-      if (selectedAuthor) params.author = selectedAuthor
-
-      const result = await searchPackages(params)
-      setPackages(result.packages)
-      setTotal(result.total)
     } catch (error) {
       console.error('Failed to fetch packages:', error)
     } finally {
@@ -143,20 +247,67 @@ function SearchPageContent() {
   const fetchCollections = async () => {
     setLoading(true)
     try {
-      const params: SearchCollectionsParams = {
-        limit,
-        offset: (page - 1) * limit,
-        sortBy: sort === 'downloads' ? 'downloads' : 'created',
-        sortOrder: 'desc',
+      // When filtering by starred, load from SSG data to avoid API limits
+      if (starredOnly) {
+        const response = await fetch('/seo-data/collections.json')
+        const allCollections: Collection[] = await response.json()
+
+        // Filter by starred IDs
+        let filteredCollections = allCollections.filter(coll =>
+          starredIds.has(`${coll.scope}/${coll.name_slug}`)
+        )
+
+        // Apply other filters client-side
+        if (query.trim()) {
+          const searchLower = query.toLowerCase()
+          filteredCollections = filteredCollections.filter(
+            coll =>
+              coll.name_slug.toLowerCase().includes(searchLower) ||
+              coll.description?.toLowerCase().includes(searchLower)
+          )
+        }
+        if (selectedCategory) {
+          filteredCollections = filteredCollections.filter(coll => (coll as any).category === selectedCategory)
+        }
+        if (selectedTags.length > 0 && selectedTags[0]) {
+          filteredCollections = filteredCollections.filter(coll =>
+            (coll as any).tags?.includes(selectedTags[0])
+          )
+        }
+
+        // Sort client-side
+        if (sort === 'downloads') {
+          filteredCollections.sort((a, b) => ((b as any).total_downloads || 0) - ((a as any).total_downloads || 0))
+        } else {
+          // 'recent' - assume already sorted by creation date in SSG data
+        }
+
+        const totalFiltered = filteredCollections.length
+
+        // Paginate client-side
+        const startIndex = (page - 1) * limit
+        const endIndex = startIndex + limit
+        filteredCollections = filteredCollections.slice(startIndex, endIndex)
+
+        setCollections(filteredCollections)
+        setTotal(totalFiltered)
+      } else {
+        // Normal API fetch when not filtering by starred
+        const params: SearchCollectionsParams = {
+          limit,
+          offset: (page - 1) * limit,
+          sortBy: sort === 'downloads' ? 'downloads' : 'created',
+          sortOrder: 'desc',
+        }
+
+        if (query.trim()) params.query = query
+        if (selectedCategory) params.category = selectedCategory
+        if (selectedTags.length > 0 && selectedTags[0]) params.tag = selectedTags[0]
+
+        const result = await searchCollections(params)
+        setCollections(result.collections)
+        setTotal(result.total)
       }
-
-      if (query.trim()) params.query = query
-      if (selectedCategory) params.category = selectedCategory
-      if (selectedTags.length > 0 && selectedTags[0]) params.tag = selectedTags[0]
-
-      const result = await searchCollections(params)
-      setCollections(result.collections)
-      setTotal(result.total)
     } catch (error) {
       console.error('Failed to fetch collections:', error)
     } finally {
@@ -258,7 +409,7 @@ function SearchPageContent() {
       fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page])
+  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page, starredOnly])
 
   // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {
@@ -274,14 +425,15 @@ function SearchPageContent() {
       JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
       selectedAuthor !== initialParams.author ||
       sort !== initialParams.sort ||
-      activeTab !== initialParams.tab
+      activeTab !== initialParams.tab ||
+      starredOnly !== initialParams.starredOnly
 
     // Only reset page if filters changed AND we're not on the initial page
     if (filtersChanged) {
       setPage(1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, activeTab, isInitialized])
+  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, activeTab, starredOnly, isInitialized])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -298,10 +450,12 @@ function SearchPageContent() {
 
   const clearFilters = () => {
     setSelectedFormat('')
+    setSelectedSubtype('')
     setSelectedCategory('')
     setSelectedTags([])
     setSelectedAuthor('')
     setQuery('')
+    setStarredOnly(false)
   }
 
   const copyToClipboard = (text: string, id: string) => {
@@ -310,7 +464,62 @@ function SearchPageContent() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const hasFilters = selectedFormat || selectedCategory || selectedTags.length > 0 || selectedAuthor || query
+  // Handle starring packages and collections
+  const handleStar = async (type: 'package' | 'collection', id: string, scope?: string, nameSlug?: string) => {
+    const token = localStorage.getItem('prpm_token')
+    const itemKey = type === 'package' ? id : `${scope}/${nameSlug}`
+    const isCurrentlyStarred = starredIds.has(itemKey)
+    const newStarred = !isCurrentlyStarred
+
+    // Update local state immediately (optimistic update)
+    const newStarredIds = new Set(starredIds)
+    if (newStarred) {
+      newStarredIds.add(itemKey)
+    } else {
+      newStarredIds.delete(itemKey)
+    }
+    setStarredIds(newStarredIds)
+
+    // Anonymous user: use localStorage
+    if (!token) {
+      const storageKey = type === 'package' ? 'prpm_starred_packages' : 'prpm_starred_collections'
+      try {
+        const data = localStorage.getItem(storageKey)
+        const items: string[] = data ? JSON.parse(data) : []
+
+        if (newStarred) {
+          if (!items.includes(itemKey)) {
+            items.push(itemKey)
+          }
+        } else {
+          const index = items.indexOf(itemKey)
+          if (index > -1) {
+            items.splice(index, 1)
+          }
+        }
+
+        localStorage.setItem(storageKey, JSON.stringify(items))
+      } catch (err) {
+        console.error('Failed to update localStorage:', err)
+      }
+      return
+    }
+
+    // Logged in user: use API
+    try {
+      if (type === 'package') {
+        await starPackage(token, id, newStarred)
+      } else if (scope && nameSlug) {
+        await starCollection(token, scope, nameSlug, newStarred)
+      }
+    } catch (err) {
+      console.error('Failed to star item:', err)
+      // Revert optimistic update on error
+      setStarredIds(starredIds)
+    }
+  }
+
+  const hasFilters = selectedFormat || selectedSubtype || selectedCategory || selectedTags.length > 0 || selectedAuthor || query || starredOnly
 
   return (
     <main className="min-h-screen bg-prpm-dark">
@@ -393,6 +602,35 @@ function SearchPageContent() {
                 )}
               </div>
 
+              {/* Starred Only Filter */}
+              <div className="mb-6 pb-6 border-b border-prpm-border">
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={starredOnly}
+                      onChange={(e) => setStarredOnly(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-600 bg-prpm-dark-card text-yellow-400 focus:ring-yellow-400 focus:ring-offset-0 focus:ring-offset-prpm-dark"
+                    />
+                    <div className="flex items-center gap-1.5">
+                      <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                      <span className={`text-sm font-medium transition-colors ${
+                        starredOnly ? 'text-yellow-400' : 'text-gray-300 group-hover:text-white'
+                      }`}>
+                        Starred
+                      </span>
+                    </div>
+                  </div>
+                  {starredIds.size > 0 && (
+                    <span className="text-xs text-gray-500 bg-prpm-dark-card px-2 py-0.5 rounded">
+                      {starredIds.size}
+                    </span>
+                  )}
+                </label>
+              </div>
+
               {/* Format and Subtype Filters (packages only) */}
               {activeTab === 'packages' && (
                 <>
@@ -469,12 +707,24 @@ function SearchPageContent() {
                       className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
                     >
                       <option value="">All Subtypes</option>
-                      {availableSubtypes.includes('rule') && <option value="rule">Rule</option>}
-                      {availableSubtypes.includes('agent') && <option value="agent">Agent</option>}
-                      {availableSubtypes.includes('skill') && <option value="skill">Skill</option>}
-                      {availableSubtypes.includes('slash-command') && <option value="slash-command">Slash Command</option>}
-                      {availableSubtypes.includes('tool') && <option value="tool">Tool</option>}
-                      {availableSubtypes.includes('chatmode') && <option value="chatmode">Chat Mode</option>}
+                      {availableSubtypes.map((subtype) => {
+                        const labels: Record<Subtype, string> = {
+                          'rule': 'Rule',
+                          'agent': 'Agent',
+                          'skill': 'Skill',
+                          'slash-command': 'Slash Command',
+                          'prompt': 'Prompt',
+                          'collection': 'Collection',
+                          'chatmode': 'Chat Mode',
+                          'tool': 'Tool',
+                          'hook': 'Hook',
+                        }
+                        return (
+                          <option key={subtype} value={subtype}>
+                            {labels[subtype]}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
                 </>
@@ -592,7 +842,7 @@ function SearchPageContent() {
                               prpm install @org/cursor-rules --as {selectedFormat}
                             </div>
                             <p className="text-gray-400 text-sm mt-3">
-                              This means you have access to <strong>2,100+ packages</strong> across all formats, not just {selectedFormat}-specific ones!
+                              This means you have access to <strong>7,000+ packages</strong> across all formats, not just {selectedFormat}-specific ones!
                             </p>
                           </div>
                         )}
@@ -603,7 +853,7 @@ function SearchPageContent() {
                           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
                             <h4 className="text-sm font-bold text-blue-400 mb-2">💡 Cross-Platform Tip</h4>
                             <p className="text-gray-300 text-sm mb-2">
-                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>2,100+ packages</strong> by installing packages from other formats:
+                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>7,000+ packages</strong> by installing packages from other formats:
                             </p>
                             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 font-mono text-xs text-gray-300">
                               prpm install @org/any-package --as {selectedFormat}
@@ -611,31 +861,31 @@ function SearchPageContent() {
                           </div>
                         )}
                         {packages.map((pkg) => (
-                        <button
+                        <div
                           key={pkg.id}
-                          onClick={() => {
-                            setSelectedPackage(pkg)
-                            setShowPackageModal(true)
-                          }}
-                          className="block w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
+                          className="relative block w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors group"
                         >
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h3 className="text-xl font-semibold text-white">
-                                  {pkg.name}
-                                </h3>
-                                {pkg.verified && (
-                                  <svg className="w-5 h-5 text-prpm-accent" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                  </svg>
-                                )}
-                                {pkg.featured && (
-                                  <span className="px-2 py-1 bg-prpm-green/20 text-prpm-green text-xs rounded-full">
-                                    Featured
-                                  </span>
-                                )}
-                              </div>
+                          <Link
+                            href={getPackageUrl(pkg.name, pkg.author_username)}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="text-xl font-semibold text-white">
+                                    {pkg.name}
+                                  </h3>
+                                  {pkg.verified && (
+                                    <svg className="w-5 h-5 text-prpm-accent" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                  )}
+                                  {pkg.featured && (
+                                    <span className="px-2 py-1 bg-prpm-green/20 text-prpm-green text-xs rounded-full">
+                                      Featured
+                                    </span>
+                                  )}
+                                </div>
                               <p className="text-gray-400 mb-3">{pkg.description || 'No description'}</p>
                               <div className="flex items-center gap-4 text-sm text-gray-500">
                                 <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-gray-400">
@@ -717,7 +967,33 @@ function SearchPageContent() {
                               </Link>
                             </div>
                           </div>
-                        </button>
+                          </Link>
+
+                          {/* Star Button */}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleStar('package', pkg.id)
+                            }}
+                            className="absolute top-4 right-4 p-2 rounded-full hover:bg-prpm-dark transition-colors"
+                            title={starredIds.has(pkg.id) ? 'Unstar' : 'Star'}
+                          >
+                            <svg
+                              className={`w-5 h-5 transition-colors ${
+                                starredIds.has(pkg.id)
+                                  ? 'text-yellow-400 fill-current'
+                                  : 'text-gray-400 group-hover:text-yellow-400'
+                              }`}
+                              fill={starredIds.has(pkg.id) ? 'currentColor' : 'none'}
+                              stroke="currentColor"
+                              strokeWidth={starredIds.has(pkg.id) ? 0 : 2}
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                            </svg>
+                          </button>
+                        </div>
                       ))}
                       </>
                     )}
@@ -761,13 +1037,13 @@ function SearchPageContent() {
                       </div>
                     ) : (
                       collections.map((collection) => (
-                        <button
+                        <div
                           key={collection.id}
-                          onClick={() => {
-                            setSelectedCollection(collection)
-                            setShowCollectionModal(true)
-                          }}
-                          className="w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors cursor-pointer"
+                          className="relative block w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-colors group"
+                        >
+                        <Link
+                          href={`/collections/${collection.name_slug}`}
+                          className="cursor-pointer"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -838,7 +1114,33 @@ function SearchPageContent() {
                               )}
                             </button>
                           </div>
+                        </Link>
+
+                        {/* Star Button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleStar('collection', collection.id, collection.scope, collection.name_slug)
+                          }}
+                          className="absolute top-4 right-4 p-2 rounded-full hover:bg-prpm-dark transition-colors"
+                          title={starredIds.has(`${collection.scope}/${collection.name_slug}`) ? 'Unstar' : 'Star'}
+                        >
+                          <svg
+                            className={`w-5 h-5 transition-colors ${
+                              starredIds.has(`${collection.scope}/${collection.name_slug}`)
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-gray-400 group-hover:text-yellow-400'
+                            }`}
+                            fill={starredIds.has(`${collection.scope}/${collection.name_slug}`) ? 'currentColor' : 'none'}
+                            stroke="currentColor"
+                            strokeWidth={starredIds.has(`${collection.scope}/${collection.name_slug}`) ? 0 : 2}
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                          </svg>
                         </button>
+                        </div>
                       ))
                     )}
                   </div>
@@ -871,23 +1173,6 @@ function SearchPageContent() {
           </div>
         </div>
 
-        {/* Package Modal */}
-        {selectedPackage && (
-          <PackageModal
-            package={selectedPackage}
-            isOpen={showPackageModal}
-            onClose={() => setShowPackageModal(false)}
-          />
-        )}
-
-        {/* Collection Modal */}
-        {selectedCollection && (
-          <CollectionModal
-            collection={selectedCollection}
-            isOpen={showCollectionModal}
-            onClose={() => setShowCollectionModal(false)}
-          />
-        )}
       </div>
     </main>
   )

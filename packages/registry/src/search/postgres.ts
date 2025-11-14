@@ -7,6 +7,20 @@ import { SearchFilters, SearchResult, Package } from '../types.js';
 import { SearchProvider } from './index.js';
 import { query, queryOne } from '../db/index.js';
 
+// Columns to select for list/search results (excludes full_content to reduce payload size)
+const LIST_COLUMNS = `
+  p.id, p.name, p.display_name, p.description, p.author_id, p.org_id,
+  p.format, p.subtype, p.tags, p.keywords, p.category,
+  p.visibility, p.featured, p.verified, p.official,
+  p.total_downloads, p.weekly_downloads, p.monthly_downloads, p.version_count,
+  p.rating_average, p.rating_count, p.quality_score,
+  p.install_count, p.view_count,
+  p.license, p.license_text, p.license_url,
+  p.snippet, p.repository_url, p.homepage_url, p.documentation_url,
+  p.created_at, p.updated_at, p.last_published_at,
+  p.deprecated, p.deprecated_reason
+`.trim();
+
 export function postgresSearch(server: FastifyInstance): SearchProvider {
   return {
     async search(searchQuery: string, filters: SearchFilters): Promise<SearchResult> {
@@ -76,10 +90,10 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       }
 
       if (author) {
-        // Search by both author username and organization name
+        // Search by both author username and organization name (case-insensitive)
         conditions.push(`(
-          p.author_id = (SELECT id FROM users WHERE username = $${paramIndex}) OR
-          p.org_id = (SELECT id FROM organizations WHERE name = $${paramIndex})
+          p.author_id = (SELECT id FROM users WHERE LOWER(username) = LOWER($${paramIndex})) OR
+          p.org_id = (SELECT id FROM organizations WHERE LOWER(name) = LOWER($${paramIndex}))
         )`);
         params.push(author);
         paramIndex++;
@@ -155,7 +169,7 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
 
       const result = await query<Package & { relevance: number }>(
         server,
-        `SELECT p.*, u.username as author_username, o.name as org_name, ${rankColumn}
+        `SELECT ${LIST_COLUMNS}, u.username as author_username, o.name as org_name, ${rankColumn}
          FROM packages p
          LEFT JOIN users u ON p.author_id = u.id
          LEFT JOIN organizations o ON p.org_id = o.id

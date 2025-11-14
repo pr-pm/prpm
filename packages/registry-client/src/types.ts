@@ -2,8 +2,10 @@
  * Core types for the Prompt Package Manager
  */
 
-export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
-export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'collection' | 'chatmode' | 'tool';
+import type { Format, Subtype } from '@pr-pm/types';
+
+// Re-export for backwards compatibility
+export type { Format, Subtype } from '@pr-pm/types';
 
 export interface Package {
   id: string;

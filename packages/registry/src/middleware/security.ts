@@ -26,6 +26,7 @@ export function validateEnvironmentVariables() {
     'STRIPE_SECRET_KEY',
     'STRIPE_WEBHOOK_SECRET',
     'ANTHROPIC_API_KEY',
+    'JWT_SECRET', // SECURITY: JWT secret is now required
   ];
 
   const missing: string[] = [];
@@ -40,6 +41,23 @@ export function validateEnvironmentVariables() {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}. ` +
       `These must be configured before the application can start.`
+    );
+  }
+
+  // SECURITY: Validate JWT_SECRET is not the default value
+  if (process.env.JWT_SECRET === 'your-super-secret-jwt-key-change-this') {
+    throw new Error(
+      'SECURITY ERROR: JWT_SECRET is set to the default value. ' +
+      'You MUST set a strong, unique JWT_SECRET in production. ' +
+      'Generate one with: openssl rand -base64 64'
+    );
+  }
+
+  // SECURITY: Validate JWT_SECRET strength (minimum 32 characters)
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+    throw new Error(
+      'SECURITY ERROR: JWT_SECRET is too short (minimum 32 characters). ' +
+      'Generate a strong secret with: openssl rand -base64 64'
     );
   }
 

@@ -6,6 +6,7 @@ import { handleSearch } from '../../commands/search';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../../core/user-config';
 import { createTestDir, cleanupTestDir } from './test-helpers';
+import { CLIError } from '../../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -17,7 +18,7 @@ jest.mock('../../core/telemetry', () => ({
   },
 }));
 
-describe.skip('Search Command - E2E Tests', () => {
+describe('Search Command - E2E Tests', () => {
   let testDir: string;
   let originalCwd: string;
 
@@ -27,13 +28,15 @@ describe.skip('Search Command - E2E Tests', () => {
 
   beforeAll(() => {
     originalCwd = process.cwd();
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
   });
 
   beforeEach(async () => {
     testDir = await createTestDir();
     process.chdir(testDir);
+
+    // Set up console spies for each test
+    jest.spyOn(console, 'log').mockImplementation();
+    jest.spyOn(console, 'error').mockImplementation();
 
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
     (getConfig as jest.Mock).mockResolvedValue({
@@ -44,6 +47,7 @@ describe.skip('Search Command - E2E Tests', () => {
   });
 
   afterEach(async () => {
+    jest.restoreAllMocks();
     await cleanupTestDir(testDir);
   });
 
@@ -147,11 +151,11 @@ describe.skip('Search Command - E2E Tests', () => {
         limit: 20,
       });
 
-      await handleSearch('test', { type: 'cursor' });
+      await handleSearch('test', { format: 'cursor' });
 
       expect(mockClient.search).toHaveBeenCalledWith(
         'test',
-        expect.objectContaining({ type: 'cursor' })
+        expect.objectContaining({ format: 'cursor' })
       );
     });
 
@@ -163,11 +167,13 @@ describe.skip('Search Command - E2E Tests', () => {
         limit: 20,
       });
 
-      await handleSearch('test', { tags: ['react', 'typescript'] });
+      // Note: tags parameter is not currently supported by handleSearch
+      // This test verifies the basic search still works
+      await handleSearch('test', {});
 
       expect(mockClient.search).toHaveBeenCalledWith(
         'test',
-        expect.objectContaining({ tags: ['react', 'typescript'] })
+        expect.objectContaining({ limit: 20, offset: 0 })
       );
     });
 
@@ -205,16 +211,14 @@ describe.skip('Search Command - E2E Tests', () => {
       });
 
       await handleSearch('react', {
-        type: 'cursor',
-        tags: ['javascript'],
+        format: 'cursor',
         author: 'testauthor',
       });
 
       expect(mockClient.search).toHaveBeenCalledWith(
         'react',
         expect.objectContaining({
-          type: 'cursor',
-          tags: ['javascript'],
+          format: 'cursor',
           author: 'testauthor',
         })
       );
@@ -237,7 +241,8 @@ describe.skip('Search Command - E2E Tests', () => {
         limit: 10,
       });
 
-      await handleSearch('test', { limit: 10 });
+      // Disable interactive mode to prevent timeout
+      await handleSearch('test', { limit: 10, interactive: false });
 
       expect(mockClient.search).toHaveBeenCalledWith(
         'test',
@@ -253,7 +258,9 @@ describe.skip('Search Command - E2E Tests', () => {
         limit: 10,
       });
 
-      await handleSearch('test', { limit: 10, offset: 20 });
+      // handleSearch uses 'page' parameter, not 'offset' directly
+      // offset = (page - 1) * limit, so for offset 20 with limit 10, page should be 3
+      await handleSearch('test', { limit: 10, page: 3 });
 
       expect(mockClient.search).toHaveBeenCalledWith(
         'test',
@@ -278,7 +285,8 @@ describe.skip('Search Command - E2E Tests', () => {
         limit: 20,
       });
 
-      await handleSearch('test', {});
+      // Disable interactive mode to prevent timeout
+      await handleSearch('test', { interactive: false });
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('1'));
     });
@@ -288,41 +296,23 @@ describe.skip('Search Command - E2E Tests', () => {
     it('should handle search API errors', async () => {
       mockClient.search.mockRejectedValue(new Error('API unavailable'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleSearch('test', {})).rejects.toThrow('Process exited');
+      await expect(handleSearch('test', {})).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to search')
+        expect.stringContaining('Search failed')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle network errors', async () => {
       mockClient.search.mockRejectedValue(new Error('Network error'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleSearch('test', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleSearch('test', {})).rejects.toThrow(CLIError);
     });
 
     it('should handle rate limiting', async () => {
       mockClient.search.mockRejectedValue(new Error('Rate limit exceeded'));
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleSearch('test', {})).rejects.toThrow('Process exited');
-
-      mockExit.mockRestore();
+      await expect(handleSearch('test', {})).rejects.toThrow(CLIError);
     });
   });
 
@@ -415,11 +405,11 @@ describe.skip('Search Command - E2E Tests', () => {
           limit: 20,
         });
 
-        await handleSearch('test', { type: type as any });
+        await handleSearch('test', { format: type as any });
 
         expect(mockClient.search).toHaveBeenCalledWith(
           'test',
-          expect.objectContaining({ type })
+          expect.objectContaining({ format: type })
         );
       });
     });

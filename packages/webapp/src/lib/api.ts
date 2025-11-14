@@ -204,6 +204,20 @@ export async function login(email: string, password: string) {
 // ============================================
 
 /**
+ * Get package by ID (fast UUID lookup)
+ */
+export async function getPackageById(packageId: string): Promise<Package> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/packages/by-id/${packageId}`)
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Package not found' }))
+    throw new Error(error.error || error.message || 'Package not found')
+  }
+
+  return response.json()
+}
+
+/**
  * Search for packages
  */
 export async function searchPackages(params: SearchPackagesParams): Promise<SearchPackagesResponse> {
@@ -868,6 +882,35 @@ export async function runPlayground(jwtToken: string, request: PlaygroundRunRequ
 }
 
 /**
+ * Run custom prompt in playground (verified authors only)
+ */
+export async function runCustomPrompt(
+  jwtToken: string,
+  request: {
+    custom_prompt: string
+    input: string
+    session_id?: string
+    model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo'
+  }
+): Promise<PlaygroundRunResponse> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/custom-prompt/run`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to run custom prompt' }))
+    throw new Error(error.error || error.message || 'Failed to run custom prompt')
+  }
+
+  return response.json()
+}
+
+/**
  * Run anonymous playground (one free run for non-logged-in users)
  */
 export async function runAnonymousPlayground(request: { package_id: string; input: string }): Promise<{
@@ -996,6 +1039,84 @@ export async function getSharedPlaygroundSession(shareToken: string): Promise<Pl
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Failed to fetch shared session' }))
     throw new Error(error.error || error.message || 'Failed to fetch shared session')
+  }
+
+  return response.json()
+}
+
+/**
+ * Star/unstar a package
+ */
+export async function starPackage(token: string, packageId: string, starred: boolean): Promise<{ starred: boolean; stars: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/packages/${packageId}/star`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ starred }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to star package' }))
+    throw new Error(error.error || error.message || 'Failed to star package')
+  }
+
+  return response.json()
+}
+
+/**
+ * Star/unstar a collection
+ */
+export async function starCollection(token: string, scope: string, nameSlug: string, starred: boolean): Promise<{ starred: boolean; stars: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/collections/${scope}/${nameSlug}/star`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ starred }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to star collection' }))
+    throw new Error(error.error || error.message || 'Failed to star collection')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get user's starred packages
+ */
+export async function getStarredPackages(token: string, limit = 20, offset = 0): Promise<{ packages: Package[]; total: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/packages/starred?limit=${limit}&offset=${offset}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch starred packages' }))
+    throw new Error(error.error || error.message || 'Failed to fetch starred packages')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get user's starred collections
+ */
+export async function getStarredCollections(token: string, limit = 20, offset = 0): Promise<{ collections: Collection[]; total: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/collections/starred?limit=${limit}&offset=${offset}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch starred collections' }))
+    throw new Error(error.error || error.message || 'Failed to fetch starred collections')
   }
 
   return response.json()

@@ -40,9 +40,11 @@ export async function createMockPackage(
     name,
     version,
     description: `Test package ${name}`,
-    type,
+    format: type,
+    subtype: 'rule',
     author: 'test-author',
     tags: ['test', type],
+    files: ['prpm.json', '.cursorrules'],
   };
 
   const manifestPath = join(testDir, 'prpm.json');
@@ -166,6 +168,7 @@ export function setupGlobalMocks() {
 
 /**
  * Mock process.exit to throw instead of exiting
+ * @deprecated No longer needed - commands now throw CLIError instead of calling process.exit
  */
 export function mockProcessExit() {
   const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null) => {

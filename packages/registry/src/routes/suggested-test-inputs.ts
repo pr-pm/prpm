@@ -147,9 +147,9 @@ export async function suggestedTestInputsRoutes(server: FastifyInstance) {
           });
         }
 
-        // Verify user is the package author
+        // Verify user has permission to create suggested inputs
         const packageCheck = await server.pg.query(
-          'SELECT author_id FROM packages WHERE id = $1',
+          'SELECT author_id, org_id FROM packages WHERE id = $1',
           [body.package_id]
         );
 
@@ -160,14 +160,40 @@ export async function suggestedTestInputsRoutes(server: FastifyInstance) {
           });
         }
 
-        if (packageCheck.rows[0].author_id !== userId) {
+        const pkg = packageCheck.rows[0];
+        let hasPermission = false;
+
+        // Check if user is the author
+        if (pkg.author_id === userId) {
+          hasPermission = true;
+        }
+
+        // Check if package belongs to org and user is a member with appropriate role
+        if (!hasPermission && pkg.org_id) {
+          const orgMembership = await server.pg.query(
+            `SELECT role FROM organization_members WHERE org_id = $1 AND user_id = $2`,
+            [pkg.org_id, userId]
+          );
+
+          if (orgMembership.rows.length > 0) {
+            const role = orgMembership.rows[0].role;
+            if (['owner', 'admin', 'maintainer'].includes(role)) {
+              hasPermission = true;
+            }
+          }
+        }
+
+        if (!hasPermission) {
           return reply.code(403).send({
             error: 'forbidden',
-            message: 'Only package author can create suggested inputs',
+            message: 'Only package author or organization members with appropriate permissions can create suggested inputs',
           });
         }
 
         // Create suggested input
+        // Use userId as author_id if user is the package author, otherwise null for org packages
+        const authorId = pkg.author_id === userId ? userId : null;
+
         const result = await server.pg.query(
           `INSERT INTO suggested_test_inputs
            (package_id, author_id, title, description, suggested_input, category,
@@ -176,7 +202,7 @@ export async function suggestedTestInputsRoutes(server: FastifyInstance) {
            RETURNING *`,
           [
             body.package_id,
-            userId,
+            authorId,
             body.title,
             body.description || null,
             body.suggested_input,
@@ -238,9 +264,12 @@ export async function suggestedTestInputsRoutes(server: FastifyInstance) {
           });
         }
 
-        // Verify ownership
+        // Verify ownership - check both author and org membership
         const ownerCheck = await server.pg.query(
-          'SELECT author_id FROM suggested_test_inputs WHERE id = $1',
+          `SELECT sti.author_id, sti.package_id, p.org_id
+           FROM suggested_test_inputs sti
+           LEFT JOIN packages p ON sti.package_id = p.id
+           WHERE sti.id = $1`,
           [id]
         );
 
@@ -251,10 +280,33 @@ export async function suggestedTestInputsRoutes(server: FastifyInstance) {
           });
         }
 
-        if (ownerCheck.rows[0].author_id !== userId) {
+        const input = ownerCheck.rows[0];
+        let hasPermission = false;
+
+        // Check if user is the author
+        if (input.author_id === userId) {
+          hasPermission = true;
+        }
+
+        // Check if package belongs to org and user is a member with appropriate role
+        if (!hasPermission && input.org_id) {
+          const orgMembership = await server.pg.query(
+            `SELECT role FROM organization_members WHERE org_id = $1 AND user_id = $2`,
+            [input.org_id, userId]
+          );
+
+          if (orgMembership.rows.length > 0) {
+            const role = orgMembership.rows[0].role;
+            if (['owner', 'admin', 'maintainer'].includes(role)) {
+              hasPermission = true;
+            }
+          }
+        }
+
+        if (!hasPermission) {
           return reply.code(403).send({
             error: 'forbidden',
-            message: 'Only the author can update this suggested input',
+            message: 'Only the author or organization members with appropriate permissions can update this suggested input',
           });
         }
 
@@ -332,9 +384,12 @@ export async function suggestedTestInputsRoutes(server: FastifyInstance) {
           });
         }
 
-        // Verify ownership
+        // Verify ownership - check both author and org membership
         const ownerCheck = await server.pg.query(
-          'SELECT author_id FROM suggested_test_inputs WHERE id = $1',
+          `SELECT sti.author_id, sti.package_id, p.org_id
+           FROM suggested_test_inputs sti
+           LEFT JOIN packages p ON sti.package_id = p.id
+           WHERE sti.id = $1`,
           [id]
         );
 
@@ -345,10 +400,33 @@ export async function suggestedTestInputsRoutes(server: FastifyInstance) {
           });
         }
 
-        if (ownerCheck.rows[0].author_id !== userId) {
+        const input = ownerCheck.rows[0];
+        let hasPermission = false;
+
+        // Check if user is the author
+        if (input.author_id === userId) {
+          hasPermission = true;
+        }
+
+        // Check if package belongs to org and user is a member with appropriate role
+        if (!hasPermission && input.org_id) {
+          const orgMembership = await server.pg.query(
+            `SELECT role FROM organization_members WHERE org_id = $1 AND user_id = $2`,
+            [input.org_id, userId]
+          );
+
+          if (orgMembership.rows.length > 0) {
+            const role = orgMembership.rows[0].role;
+            if (['owner', 'admin', 'maintainer'].includes(role)) {
+              hasPermission = true;
+            }
+          }
+        }
+
+        if (!hasPermission) {
           return reply.code(403).send({
             error: 'forbidden',
-            message: 'Only the author can delete this suggested input',
+            message: 'Only the author or organization members with appropriate permissions can delete this suggested input',
           });
         }
 

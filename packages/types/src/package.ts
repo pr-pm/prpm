@@ -43,7 +43,8 @@ export type Subtype =
   | 'prompt'
   | 'collection'
   | 'chatmode'
-  | 'tool';
+  | 'tool'
+  | 'hook';
 
 /**
  * Available subtypes as a constant array
@@ -58,6 +59,7 @@ export const SUBTYPES: readonly Subtype[] = [
   'collection',
   'chatmode',
   'tool',
+  'hook',
 ] as const;
 
 
@@ -69,6 +71,7 @@ export type PackageVisibility = 'public' | 'private' | 'unlisted';
 export interface Package {
   id: string;
   name: string;
+  display_name?: string;
   description?: string;
   author_id?: string;
   author_username?: string;
@@ -94,6 +97,7 @@ export interface Package {
   weekly_downloads: number;
   monthly_downloads: number;
   version_count: number;
+  stars?: number; // Number of users who starred this package
   quality_score?: number | string;
   quality_explanation?: string;
   rating_average?: number;

@@ -1,0 +1,21 @@
+Want to add a code review skill to Claude? You've got options: ctx.directory for browsing creators, SkillsMP for marketplace search, GitHub for raw files, or Discord communities for recommendations.
+
+Each platform has its own discovery mechanism, format, and installation process. No unified search. No version control. No way to test before installing. You're manually copying markdown files into .claude/skills/ and hoping they work.
+
+It's 2025, and we're installing AI packages like it's 1995.
+
+PRPM brings package management to AI coding tools. Install Claude skills with a single CLI command, test them in a playground before installing, get automatic format conversion if you switch editors, and receive updates just like npm packages.
+
+Real example: Setting up code review skills takes 10-15 minutes with manual copy-paste from marketplaces. With PRPM, it's one command (prpm install @code-and-craft/code-reviewer) and takes 30 seconds.
+
+The difference:
+• ctx.directory: Great for browsing creators, but manual installation
+• SkillsMP: Searchable marketplace, but still manual downloads
+• PRPM: CLI installation, version control, testing playground, format conversion
+
+We compared all three platforms in detail, including feature tables and real workflow examples. If you're using Claude Desktop or Claude Code, this guide will save you hours.
+
+Read the full comparison:
+https://prpm.dev/blog/discovering-claude-skills-prpm-vs-competition
+
+#AI #ClaudeAI #DeveloperTools #ProductivityTools #SoftwareEngineering

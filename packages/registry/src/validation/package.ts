@@ -32,7 +32,7 @@ export const packageManifestSchema = z.object({
   homepage: z.string().url().optional(),
   documentation: z.string().url().optional(),
   format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp']),
-  subtype: z.enum(['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode']).optional(),
+  subtype: z.enum(['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode', 'hook', 'tool']).optional(),
   organization: z.string().optional(), // Organization name to publish under
   private: z.boolean().optional(), // Whether the package is private (defaults to false/public)
   // Legacy field support for backwards compatibility

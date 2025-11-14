@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { createHash } from 'crypto';
 import { optionalAuth } from '../middleware/auth.js';
 import { AnalyticsQuery } from '../types/analytics.js';
+import { telemetry } from '../telemetry/index.js';
 
 const TrackDownloadSchema = z.object({
   packageId: z.string(),
@@ -145,6 +146,14 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           format,
           client,
           totalDownloads,
+        });
+
+        // Send to PostHog for analytics
+        await telemetry.trackPackageDownload({
+          packageId,
+          version,
+          userId: request.user?.user_id,
+          type: format,
         });
 
         return reply.send({
