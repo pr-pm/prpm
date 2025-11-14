@@ -23,6 +23,7 @@ import { createAnonymousRestrictionMiddleware, recordAnonymousUsageHook } from '
 import { optionalAuth } from '../middleware/auth.js';
 import { sanitizeUserInput, SECURITY_LIMITS } from '../middleware/security.js';
 import { getModelId } from '../config/models.js';
+import { query } from '../db/index.js';
 
 // Request validation schemas
 const PlaygroundRunSchema = z.object({
@@ -44,6 +45,13 @@ const EstimateCreditSchema = z.object({
 
 const ShareSessionSchema = z.object({
   session_id: z.string().uuid('Invalid session ID'),
+});
+
+const FeedbackSchema = z.object({
+  session_id: z.string().uuid('Invalid session ID'),
+  exchange_index: z.number().int().min(0, 'Exchange index must be 0 or greater'),
+  is_effective: z.boolean(),
+  comment: z.string().max(1000, 'Comment too long (max 1000 characters)').optional(),
 });
 
 export async function playgroundRoutes(server: FastifyInstance) {
@@ -989,6 +997,106 @@ export async function playgroundRoutes(server: FastifyInstance) {
         server.log.error({ error }, 'Failed to get featured results');
         return reply.code(500).send({
           error: 'get_featured_results_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/feedback
+  // Submit feedback for a playground session
+  // =====================================================
+  server.post(
+    '/feedback',
+    {
+      preHandler: [rateLimiter],
+      schema: {
+        description: 'Submit feedback on playground session effectiveness',
+        tags: ['playground'],
+        body: {
+          type: 'object',
+          required: ['session_id', 'exchange_index', 'is_effective'],
+          properties: {
+            session_id: { type: 'string', format: 'uuid' },
+            exchange_index: { type: 'integer', minimum: 0 },
+            is_effective: { type: 'boolean' },
+            comment: { type: 'string', maxLength: 1000 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              feedback_id: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const body = FeedbackSchema.parse(request.body);
+        const userId = request.user?.user_id || null;
+
+        // Hash IP for anonymous tracking
+        const crypto = await import('crypto');
+        const ipAddress = request.ip || request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || 'unknown';
+        const ipHash = crypto.createHash('sha256').update(String(ipAddress)).digest('hex');
+
+        // Verify session exists
+        const sessionCheck = await query(
+          server,
+          'SELECT id FROM playground_sessions WHERE id = $1',
+          [body.session_id]
+        );
+
+        if (sessionCheck.rowCount === 0) {
+          return reply.code(404).send({
+            error: 'session_not_found',
+            message: 'Playground session not found',
+          });
+        }
+
+        // Check if feedback already exists for this exchange
+        const existingFeedback = await query(
+          server,
+          'SELECT id FROM playground_session_feedback WHERE session_id = $1 AND exchange_index = $2',
+          [body.session_id, body.exchange_index]
+        );
+
+        if (existingFeedback.rowCount > 0) {
+          return reply.code(409).send({
+            error: 'feedback_exists',
+            message: 'Feedback already submitted for this exchange',
+          });
+        }
+
+        // Insert feedback
+        const result = await query<{ id: string }>(
+          server,
+          `INSERT INTO playground_session_feedback (session_id, exchange_index, user_id, ip_hash, is_effective, comment)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id`,
+          [body.session_id, body.exchange_index, userId, ipHash, body.is_effective, body.comment || null]
+        );
+
+        return reply.code(200).send({
+          success: true,
+          feedback_id: result.rows[0].id,
+        });
+      } catch (error: any) {
+        if (error.name === 'ZodError') {
+          return reply.code(400).send({
+            error: 'validation_error',
+            message: error.errors[0]?.message || 'Invalid request data',
+          });
+        }
+
+        server.log.error({ error }, 'Failed to submit feedback');
+        return reply.code(500).send({
+          error: 'feedback_submission_failed',
           message: error.message,
         });
       }
