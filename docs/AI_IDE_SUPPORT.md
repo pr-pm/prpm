@@ -1,0 +1,437 @@
+# AI IDE Rules & Context Support
+
+A comprehensive reference for AI-powered IDEs and their rules/context systems, including which formats PRPM currently supports and plans to support.
+
+## Overview
+
+This document tracks different AI IDEs, their documentation for rules/context configuration, and PRPM's support status for each format. The goal is to make PRPM the universal package manager for AI prompts across all major AI development tools.
+
+## Quick Reference Table
+
+| IDE | File Location | Format | PRPM Support | Documentation |
+|-----|--------------|--------|--------------|---------------|
+| **Cursor** | `.cursor/rules/` | Markdown with MDC frontmatter | ✅ Full | [Cursor Rules](https://docs.cursor.com/context/rules-for-ai) |
+| **GitHub Copilot** | `.github/copilot-instructions.md`<br/>`.github/instructions/*.instructions.md` | Markdown with YAML frontmatter | ✅ Full | [Copilot Instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) |
+| **Windsurf** | `.windsurfrules` | Plain Markdown | ✅ Full | [Windsurf Docs](https://codeium.com/windsurf) |
+| **Claude Code** | `.claude/` | Various (agents, skills, commands) | ✅ Full | [Claude Code Docs](https://docs.claude.com/en/docs/claude-code) |
+| **Continue** | `.continue/` | JSON + Markdown | ✅ Full | [Continue Docs](https://docs.continue.dev/) |
+| **Aider** | `CONVENTIONS.md` (configurable) | Plain Markdown | 🔄 Planned | [Aider Conventions](https://aider.chat/docs/usage/conventions.html) |
+| **Trae.ai** | `.trae/rules/project_rules.md`<br/>`user_rules.md` (settings) | Plain Markdown | 🔄 Planned | [Trae Rules](https://docs.trae.ai/ide/rules-for-ai) |
+| **Zencoder** | TBD | TBD | 🔄 Planned | [Zencoder Rules](https://docs.zencoder.ai/rules-context/zen-rules) |
+| **Cody (Sourcegraph)** | `.vscode/cody.json` | JSON | 🔄 Planned | [Cody Docs](https://sourcegraph.com/docs/cody) |
+| **Tabnine** | `.tabnine/config.json` | JSON | 🔄 Planned | [Tabnine Docs](https://www.tabnine.com/code-review-agent) |
+| **Amazon Q** | TBD | TBD | 🔄 Planned | [Amazon Q Docs](https://aws.amazon.com/q/developer/) |
+| **Replit AI** | `.replit` | TOML | 🔄 Planned | [Replit Docs](https://docs.replit.com/replitai) |
+| **Pieces** | TBD | TBD | 🔄 Planned | [Pieces Docs](https://docs.pieces.app/) |
+
+## Currently Supported IDEs
+
+### Cursor
+
+**File Location**: `.cursor/rules/`
+**Format**: Markdown with optional MDC frontmatter
+**PRPM Support**: ✅ Full
+
+Cursor uses markdown files with optional frontmatter for metadata like emoji and name. Rules can include instructions, examples, and references.
+
+**PRPM Documentation**: [CURSOR.md](./CURSOR.md) (if exists)
+
+**Official Documentation**:
+- [Cursor Rules Documentation](https://docs.cursor.com/context/rules-for-ai)
+- [Cursor Rules Repository](https://github.com/PatrickJS/awesome-cursorrules)
+
+**Example Structure**:
+```markdown
+---
+name: React Best Practices
+emoji: ⚛️
+---
+
+# React Development Guidelines
+
+## Component Structure
+- Use functional components
+- Implement proper TypeScript types
+```
+
+---
+
+### GitHub Copilot
+
+**File Location**:
+- Repository-wide: `.github/copilot-instructions.md`
+- Path-specific: `.github/instructions/*.instructions.md`
+
+**Format**: Markdown with YAML frontmatter for path-specific rules
+**PRPM Support**: ✅ Full
+
+**PRPM Documentation**: [GITHUB_COPILOT.md](./GITHUB_COPILOT.md)
+
+**Official Documentation**:
+- [Adding Custom Instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot)
+
+**Example Structure**:
+```markdown
+---
+applyTo:
+  - src/**/*.test.ts
+---
+
+# Testing Guidelines
+Follow these rules for test files.
+```
+
+---
+
+### Windsurf
+
+**File Location**: `.windsurfrules`
+**Format**: Plain Markdown (no frontmatter)
+**PRPM Support**: ✅ Full
+
+**PRPM Documentation**: [WINDSURF.md](./WINDSURF.md)
+
+**Official Documentation**:
+- [Windsurf Documentation](https://codeium.com/windsurf)
+
+**Example Structure**:
+```markdown
+# Project Coding Standards
+
+## TypeScript Guidelines
+- Use strict mode
+- Avoid any types
+```
+
+---
+
+### Claude Code
+
+**File Location**: `.claude/` directory
+**Format**: Multiple formats (agents, skills, commands)
+**PRPM Support**: ✅ Full
+
+Claude Code supports multiple types of prompts:
+- **Agents**: Specialized AI assistants (`.claude/agents/`)
+- **Skills**: Reusable capabilities (`.claude/skills/`)
+- **Commands**: Slash commands (`.claude/commands/`)
+
+**Official Documentation**:
+- [Claude Code Documentation](https://docs.claude.com/en/docs/claude-code)
+
+---
+
+### Continue
+
+**File Location**: `.continue/` directory
+**Format**: JSON configuration + Markdown prompts
+**PRPM Support**: ✅ Full
+
+Continue uses a JSON configuration file with references to markdown prompt files.
+
+**Official Documentation**:
+- [Continue Documentation](https://docs.continue.dev/)
+- [Continue Customization](https://docs.continue.dev/customization/overview)
+
+---
+
+## Planned Support
+
+### Aider
+
+**File Location**: `CONVENTIONS.md` (configurable via `.aider.conf.yml`)
+**Format**: Plain Markdown (bullet-point format)
+**PRPM Support**: 🔄 Planned
+
+**Key Features**:
+- Simple markdown file with coding preferences
+- Can be loaded per-session or configured persistently
+- Supports prompt caching when marked read-only
+- Community repository for sharing conventions
+
+**Official Documentation**:
+- [Aider Conventions Guide](https://aider.chat/docs/usage/conventions.html)
+- [Aider Conventions Repository](https://github.com/Aider-AI/conventions)
+
+**Example Structure**:
+```markdown
+# Coding Conventions
+
+- Prefer httpx over requests
+- Use types everywhere possible
+- Follow PEP 8 style guide
+- Write docstrings for all functions
+```
+
+**Loading Methods**:
+```bash
+# Per-session
+aider --read CONVENTIONS.md
+
+# Persistent (in .aider.conf.yml)
+read: CONVENTIONS.md
+```
+
+---
+
+### Trae.ai
+
+**File Location**:
+- Project rules: `.trae/rules/project_rules.md`
+- User rules: `user_rules.md` (in settings)
+
+**Format**: Plain Markdown
+**PRPM Support**: 🔄 Planned
+
+**Key Features**:
+- Two-level rules system (user-level and project-level)
+- User rules apply across all projects
+- Project rules are project-specific
+- Automatic creation through IDE interface
+- Immediate effect without restart
+
+**Official Documentation**:
+- [Trae.ai Rules Documentation](https://docs.trae.ai/ide/rules-for-ai)
+
+**Example Structure**:
+```markdown
+# Project Rules
+
+## Code Style
+- Use 2-space indentation
+- Prefer const over let
+
+## Framework Preferences
+- Use React with TypeScript
+- Use Tailwind CSS for styling
+```
+
+---
+
+### Zencoder
+
+**File Location**: TBD
+**Format**: TBD
+**PRPM Support**: 🔄 Planned
+
+**Official Documentation**:
+- [Zencoder Rules Documentation](https://docs.zencoder.ai/rules-context/zen-rules)
+
+*Note: Documentation currently inaccessible (403). Needs further research.*
+
+---
+
+### Cody (Sourcegraph)
+
+**File Location**: `.vscode/cody.json`
+**Format**: JSON
+**PRPM Support**: 🔄 Planned
+
+Sourcegraph's Cody AI assistant uses JSON configuration for custom commands and context.
+
+**Official Documentation**:
+- [Cody Documentation](https://sourcegraph.com/docs/cody)
+- [Custom Commands](https://sourcegraph.com/docs/cody/capabilities/commands#custom-commands)
+
+---
+
+### Tabnine
+
+**File Location**: `.tabnine/config.json`
+**Format**: JSON
+**PRPM Support**: 🔄 Planned
+
+**Official Documentation**:
+- [Tabnine Documentation](https://www.tabnine.com/code-review-agent)
+
+---
+
+### Amazon Q Developer
+
+**File Location**: TBD
+**Format**: TBD
+**PRPM Support**: 🔄 Planned
+
+AWS's AI coding assistant integrated with Amazon Q.
+
+**Official Documentation**:
+- [Amazon Q Developer Documentation](https://aws.amazon.com/q/developer/)
+
+---
+
+### Replit AI
+
+**File Location**: `.replit`
+**Format**: TOML
+**PRPM Support**: 🔄 Planned
+
+Replit's AI features can be configured through the `.replit` configuration file.
+
+**Official Documentation**:
+- [Replit AI Documentation](https://docs.replit.com/replitai)
+
+---
+
+### Pieces
+
+**File Location**: TBD
+**Format**: TBD
+**PRPM Support**: 🔄 Planned
+
+**Official Documentation**:
+- [Pieces Documentation](https://docs.pieces.app/)
+
+---
+
+## PRPM Format Conversion
+
+PRPM's key differentiator is **universal format conversion** - publish once, install for any AI IDE.
+
+### How It Works
+
+```bash
+# Install for Cursor
+prpm install react-best-practices --as cursor
+
+# Install for GitHub Copilot
+prpm install react-best-practices --as copilot
+
+# Install for Windsurf
+prpm install react-best-practices --as windsurf
+
+# Install for Aider (when supported)
+prpm install react-best-practices --as aider
+```
+
+### Supported Conversions
+
+Current conversion matrix:
+
+| Source → Target | Cursor | Copilot | Windsurf | Claude | Continue |
+|----------------|--------|---------|----------|--------|----------|
+| **Cursor**     | ✅     | ✅      | ✅       | ✅     | ✅       |
+| **Copilot**    | ✅     | ✅      | ✅       | ✅     | ✅       |
+| **Windsurf**   | ✅     | ✅      | ✅       | ✅     | ✅       |
+| **Claude**     | ✅     | ✅      | ✅       | ✅     | ✅       |
+| **Continue**   | ✅     | ✅      | ✅       | ✅     | ✅       |
+
+See [FORMAT_CONVERSION.md](./FORMAT_CONVERSION.md) for technical details.
+
+---
+
+## Implementation Roadmap
+
+### Phase 1: Research (Current)
+- ✅ Document all major AI IDE formats
+- ✅ Identify rule file locations and formats
+- 🔄 Research Zencoder, Cody, Tabnine formats
+- 🔄 Test format compatibility
+
+### Phase 2: Aider Support
+- [ ] Implement Aider format parser
+- [ ] Add Aider format converter
+- [ ] Support `.aider.conf.yml` configuration
+- [ ] Test with Aider conventions repository
+- [ ] Document Aider usage in PRPM
+
+### Phase 3: Trae.ai Support
+- [ ] Implement Trae.ai format parser
+- [ ] Support both project and user rules
+- [ ] Add Trae.ai format converter
+- [ ] Document Trae.ai usage in PRPM
+
+### Phase 4: Additional IDEs
+- [ ] Zencoder support (pending format research)
+- [ ] Cody (Sourcegraph) support
+- [ ] Tabnine support
+- [ ] Amazon Q support
+- [ ] Replit AI support
+- [ ] Pieces support
+
+### Phase 5: Advanced Features
+- [ ] Smart format detection
+- [ ] Format-specific optimizations
+- [ ] Quality scoring per format
+- [ ] Community format contributions
+
+---
+
+## Contributing
+
+Help us expand AI IDE support!
+
+### Adding New IDE Support
+
+1. **Research the IDE's format**:
+   - File location(s)
+   - File format (Markdown, JSON, TOML, etc.)
+   - Frontmatter/metadata structure
+   - Special features or syntax
+
+2. **Document the format**:
+   - Add to this document
+   - Create dedicated docs (e.g., `AIDER.md`)
+   - Include examples and best practices
+
+3. **Implement support**:
+   - Create format parser
+   - Add format converter
+   - Update CLI commands
+   - Add tests
+
+4. **Submit PR**:
+   - Include documentation
+   - Add tests
+   - Update conversion matrix
+
+### Format Research Template
+
+When researching a new AI IDE, document:
+
+```markdown
+## IDE Name
+
+**File Location**:
+**Format**:
+**PRPM Support**:
+
+**Key Features**:
+-
+-
+
+**Official Documentation**:
+-
+
+**Example Structure**:
+```
+
+---
+
+## Resources
+
+### PRPM Documentation
+- [Format Conversion System](./FORMAT_CONVERSION.md)
+- [Format Compatibility](./FORMAT_COMPATIBILITY.md)
+- [GitHub Copilot Support](./GITHUB_COPILOT.md)
+- [Windsurf Support](./WINDSURF.md)
+
+### External Resources
+- [Cursor Rules Awesome List](https://github.com/PatrickJS/awesome-cursorrules)
+- [Aider Conventions Repository](https://github.com/Aider-AI/conventions)
+- [Continue Documentation](https://docs.continue.dev/)
+- [Claude Code Documentation](https://docs.claude.com/en/docs/claude-code)
+
+---
+
+## Feedback & Suggestions
+
+Have suggestions for AI IDEs we should support? Open an issue or PR!
+
+- Missing an IDE? Let us know which ones you use.
+- Found better documentation? Share the links.
+- Want to help implement support? Check our contributing guide.
+
+---
+
+**Last Updated**: 2024-11-14
+**Status**: Living document - continuously updated as new AI IDEs emerge
