@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getUnclaimedPackages, claimPackages, getAuthorDashboard, getAuthorPackages } from '@/lib/api'
+import { getUnclaimedPackages, claimPackages, getAuthorDashboard, getAuthorPackages, getStarredPackages, getStarredCollections } from '@/lib/api'
 import PackageAnalyticsModal from '@/components/PackageAnalyticsModal'
 import PlaygroundAnalyticsDashboard from '@/components/PlaygroundAnalyticsDashboard'
+import { getRecentPackages, getRecentCollections, type RecentPackage, type RecentCollection } from '@/lib/recentlyViewed'
 
 interface User {
   id: string
@@ -38,19 +39,23 @@ export default function DashboardPage() {
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
   const [selectedPackage, setSelectedPackage] = useState<any>(null)
+  const [starredPackages, setStarredPackages] = useState<any[]>([])
+  const [starredCollections, setStarredCollections] = useState<any[]>([])
+  const [recentPackages, setRecentPackages] = useState<RecentPackage[]>([])
+  const [recentCollections, setRecentCollections] = useState<RecentCollection[]>([])
 
   useEffect(() => {
     // Check if user is logged in
     const token = localStorage.getItem('prpm_token')
     const username = localStorage.getItem('prpm_username')
 
+    // If not logged in, just finish loading and show anonymous view
     if (!token || !username) {
-      // Not logged in, redirect to login
-      router.push('/login')
+      setLoading(false)
       return
     }
 
-    // Fetch user info
+    // Fetch user info for logged-in users
     const fetchUserInfo = async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'}/api/v1/auth/me`, {
@@ -88,10 +93,10 @@ export default function DashboardPage() {
         loadAnalytics(token)
       } catch (error) {
         console.error('Error fetching user:', error)
-        // Token might be invalid, redirect to login
+        // Token might be invalid, clear and show anonymous view
         localStorage.removeItem('prpm_token')
         localStorage.removeItem('prpm_username')
-        router.push('/login')
+        setUser(null)
       } finally {
         setLoading(false)
       }
@@ -115,6 +120,91 @@ export default function DashboardPage() {
       setAnalyticsLoading(false)
     }
   }
+
+  // Load starred and recently viewed items for all users
+  useEffect(() => {
+    const loadStarredAndRecent = async () => {
+      const token = localStorage.getItem('prpm_token')
+      const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'
+
+      // Load recently viewed from localStorage (for all users)
+      try {
+        const recentPkgs = getRecentPackages()
+        const recentColls = getRecentCollections()
+        setRecentPackages(recentPkgs)
+        setRecentCollections(recentColls)
+      } catch (err) {
+        console.error('Failed to load recently viewed:', err)
+      }
+
+      // Load starred items
+      if (token) {
+        // Logged in: fetch from API
+        try {
+          const [pkgsData, collsData] = await Promise.all([
+            getStarredPackages(token, 100, 0),
+            getStarredCollections(token, 100, 0),
+          ])
+          setStarredPackages(pkgsData.packages || [])
+          setStarredCollections(collsData.collections || [])
+        } catch (error) {
+          console.error('Error loading starred items:', error)
+        }
+      } else {
+        // Anonymous users: Load starred items from localStorage
+        try {
+          const localPackageIds = localStorage.getItem('prpm_starred_packages')
+          const localCollectionIds = localStorage.getItem('prpm_starred_collections')
+
+          const packageIds: string[] = localPackageIds ? JSON.parse(localPackageIds) : []
+          const collectionIds: string[] = localCollectionIds ? JSON.parse(localCollectionIds) : []
+
+          // Fetch package details for starred IDs
+          const packagePromises = packageIds.slice(0, 6).map(async (id) => {
+            try {
+              const response = await fetch(`${registryUrl}/api/v1/packages/${id}`)
+              if (response.ok) {
+                return await response.json()
+              }
+              return null
+            } catch (err) {
+              console.error(`Failed to fetch package ${id}:`, err)
+              return null
+            }
+          })
+
+          // Fetch collection details for starred IDs
+          const collectionPromises = collectionIds.slice(0, 6).map(async (id) => {
+            const [scope, nameSlug] = id.split('/')
+            try {
+              const response = await fetch(`${registryUrl}/api/v1/collections/${scope}/${nameSlug}`)
+              if (response.ok) {
+                return await response.json()
+              }
+              return null
+            } catch (err) {
+              console.error(`Failed to fetch collection ${id}:`, err)
+              return null
+            }
+          })
+
+          const [packages, collections] = await Promise.all([
+            Promise.all(packagePromises),
+            Promise.all(collectionPromises),
+          ])
+
+          setStarredPackages(packages.filter(p => p !== null))
+          setStarredCollections(collections.filter(c => c !== null))
+        } catch (error) {
+          console.error('Error loading anonymous starred items:', error)
+          setStarredPackages([])
+          setStarredCollections([])
+        }
+      }
+    }
+
+    loadStarredAndRecent()
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('prpm_token')
@@ -195,8 +285,167 @@ export default function DashboardPage() {
     )
   }
 
+  // Anonymous user view
   if (!user) {
-    return null // Will redirect
+    const hasStarredItems = starredPackages.length > 0 || starredCollections.length > 0
+    const hasRecentItems = recentPackages.length > 0 || recentCollections.length > 0
+    const hasAnyItems = hasStarredItems || hasRecentItems
+
+    return (
+      <main className="min-h-screen bg-prpm-dark">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="mb-12">
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Your Dashboard
+            </h1>
+            <p className="text-gray-400 text-lg">
+              {hasAnyItems ? 'Track your starred and recently viewed items' : 'Start exploring packages and collections'}
+            </p>
+          </div>
+
+          {!hasAnyItems && (
+            <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-12 text-center mb-8">
+              <div className="text-6xl mb-4">🔍</div>
+              <h2 className="text-2xl font-bold text-white mb-3">
+                Start Your PRPM Journey
+              </h2>
+              <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
+                Discover AI prompts, skills, and agents from the community. Star your favorites and they'll appear here!
+              </p>
+              <div className="flex gap-4 justify-center flex-wrap">
+                <Link
+                  href="/search"
+                  className="px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold transition-all"
+                >
+                  Browse Packages
+                </Link>
+                <Link
+                  href="/search?tab=collections"
+                  className="px-6 py-3 bg-prpm-dark border border-prpm-border hover:border-prpm-accent text-white rounded-lg font-semibold transition-all"
+                >
+                  View Collections
+                </Link>
+                <Link
+                  href="/login"
+                  className="px-6 py-3 bg-prpm-dark border border-prpm-border hover:border-prpm-green-light text-white rounded-lg font-semibold transition-all"
+                >
+                  Sign In
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Starred & Recently Viewed Section for Anonymous Users */}
+          {hasAnyItems && (
+            <div className="space-y-8">
+              {/* Starred Items */}
+              {hasStarredItems && (
+                <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-8">
+                  <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                    <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    Starred Items ({starredPackages.length + starredCollections.length})
+                  </h2>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {starredPackages.slice(0, 4).map((pkg: any) => (
+                      <Link
+                        key={pkg.id}
+                        href={`/packages/${pkg.name.startsWith('@') ? pkg.name.split('/')[0].substring(1) : 'prpm'}/${pkg.name.startsWith('@') ? pkg.name.split('/').slice(1).join('/') : pkg.name}`}
+                        className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
+                      >
+                        <h3 className="text-lg font-semibold text-white mb-2">{pkg.display_name || pkg.name}</h3>
+                        <p className="text-gray-400 text-sm line-clamp-2">{pkg.description}</p>
+                      </Link>
+                    ))}
+                    {starredCollections.slice(0, 2).map((coll: any) => (
+                      <Link
+                        key={coll.id}
+                        href={`/collections/${coll.name_slug}`}
+                        className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
+                      >
+                        <h3 className="text-lg font-semibold text-white mb-2">📚 {coll.scope}/{coll.name_slug}</h3>
+                        <p className="text-gray-400 text-sm line-clamp-2">{coll.description}</p>
+                      </Link>
+                    ))}
+                  </div>
+                  {(starredPackages.length + starredCollections.length) > 6 && (
+                    <div className="mt-4 text-center">
+                      <span className="text-gray-400 text-sm">
+                        +{starredPackages.length + starredCollections.length - 6} more starred items
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Recently Viewed */}
+              {hasRecentItems && (
+                <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-8">
+                  <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Recently Viewed ({recentPackages.length + recentCollections.length})
+                  </h2>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {recentPackages.slice(0, 4).map((pkg) => (
+                      <Link
+                        key={pkg.id}
+                        href={`/packages/${pkg.name.startsWith('@') ? pkg.name.split('/')[0].substring(1) : 'prpm'}/${pkg.name.startsWith('@') ? pkg.name.split('/').slice(1).join('/') : pkg.name}`}
+                        className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
+                      >
+                        <h3 className="text-lg font-semibold text-white mb-2">{pkg.name}</h3>
+                        <p className="text-gray-400 text-sm line-clamp-2">{pkg.description}</p>
+                        <span className="text-xs text-gray-500 mt-2 block">
+                          Viewed {new Date(pkg.viewedAt).toLocaleDateString()}
+                        </span>
+                      </Link>
+                    ))}
+                    {recentCollections.slice(0, 2).map((coll) => (
+                      <Link
+                        key={`${coll.scope}/${coll.name_slug}`}
+                        href={`/collections/${coll.name_slug}`}
+                        className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
+                      >
+                        <h3 className="text-lg font-semibold text-white mb-2">📚 {coll.scope}/{coll.name_slug}</h3>
+                        <p className="text-gray-400 text-sm line-clamp-2">{coll.description}</p>
+                        <span className="text-xs text-gray-500 mt-2 block">
+                          Viewed {new Date(coll.viewedAt).toLocaleDateString()}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                  {(recentPackages.length + recentCollections.length) > 6 && (
+                    <div className="mt-4 text-center">
+                      <span className="text-gray-400 text-sm">
+                        +{recentPackages.length + recentCollections.length - 6} more recently viewed
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Login CTA */}
+              <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-green/20 border border-prpm-accent/30 rounded-xl p-8 text-center">
+                <h3 className="text-2xl font-bold text-white mb-3">
+                  Get More with a PRPM Account
+                </h3>
+                <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+                  Sign in to sync your starred items across devices, publish your own packages, and track analytics.
+                </p>
+                <Link
+                  href="/login"
+                  className="inline-block px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold transition-all"
+                >
+                  Sign In with GitHub
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -423,8 +672,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Analytics Section */}
-        {dashboardData && dashboardData.summary && (
+        {/* Analytics Section - Only show if user has packages */}
+        {dashboardData && dashboardData.summary && packages.length > 0 && (
           <div className="mb-12">
             <h2 className="text-2xl font-bold text-white mb-6">📊 Your Analytics</h2>
 
@@ -515,30 +764,98 @@ export default function DashboardPage() {
           <PlaygroundAnalyticsDashboard />
         </div>
 
-        {/* Getting Started */}
-        <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Getting Started with PRPM</h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">1. Install the CLI</h3>
-              <code className="block bg-prpm-dark border border-prpm-border rounded-lg p-4 text-prpm-accent-light font-mono text-sm">
-                npm install -g prpm
-              </code>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">2. Search for packages</h3>
-              <code className="block bg-prpm-dark border border-prpm-border rounded-lg p-4 text-prpm-accent-light font-mono text-sm">
-                prpm search react
-              </code>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">3. Install a package</h3>
-              <code className="block bg-prpm-dark border border-prpm-border rounded-lg p-4 text-prpm-accent-light font-mono text-sm">
-                prpm install @pr-pm/pulumi-troubleshooting-skill
-              </code>
-            </div>
+        {/* Starred & Recently Viewed Section */}
+        {(starredPackages.length > 0 || starredCollections.length > 0 || recentPackages.length > 0 || recentCollections.length > 0) && (
+          <div className="mt-8 space-y-8">
+            {/* Starred Items */}
+            {(starredPackages.length > 0 || starredCollections.length > 0) && (
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-8">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                  Starred Items ({starredPackages.length + starredCollections.length})
+                </h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {starredPackages.slice(0, 4).map((pkg: any) => (
+                    <Link
+                      key={pkg.id}
+                      href={`/packages/${pkg.name.startsWith('@') ? pkg.name.split('/')[0].substring(1) : 'prpm'}/${pkg.name.startsWith('@') ? pkg.name.split('/').slice(1).join('/') : pkg.name}`}
+                      className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
+                    >
+                      <h3 className="text-lg font-semibold text-white mb-2">{pkg.display_name || pkg.name}</h3>
+                      <p className="text-gray-400 text-sm line-clamp-2">{pkg.description}</p>
+                    </Link>
+                  ))}
+                  {starredCollections.slice(0, 2).map((coll: any) => (
+                    <Link
+                      key={coll.id}
+                      href={`/collections/${coll.name_slug}`}
+                      className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
+                    >
+                      <h3 className="text-lg font-semibold text-white mb-2">📚 {coll.scope}/{coll.name_slug}</h3>
+                      <p className="text-gray-400 text-sm line-clamp-2">{coll.description}</p>
+                    </Link>
+                  ))}
+                </div>
+                {(starredPackages.length + starredCollections.length) > 6 && (
+                  <div className="mt-4 text-center">
+                    <span className="text-gray-400 text-sm">
+                      +{starredPackages.length + starredCollections.length - 6} more starred items
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Recently Viewed */}
+            {(recentPackages.length > 0 || recentCollections.length > 0) && (
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-8">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Recently Viewed ({recentPackages.length + recentCollections.length})
+                </h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {recentPackages.slice(0, 4).map((pkg) => (
+                    <Link
+                      key={pkg.id}
+                      href={`/packages/${pkg.name.startsWith('@') ? pkg.name.split('/')[0].substring(1) : 'prpm'}/${pkg.name.startsWith('@') ? pkg.name.split('/').slice(1).join('/') : pkg.name}`}
+                      className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
+                    >
+                      <h3 className="text-lg font-semibold text-white mb-2">{pkg.name}</h3>
+                      <p className="text-gray-400 text-sm line-clamp-2">{pkg.description}</p>
+                      <span className="text-xs text-gray-500 mt-2 block">
+                        Viewed {new Date(pkg.viewedAt).toLocaleDateString()}
+                      </span>
+                    </Link>
+                  ))}
+                  {recentCollections.slice(0, 2).map((coll) => (
+                    <Link
+                      key={`${coll.scope}/${coll.name_slug}`}
+                      href={`/collections/${coll.name_slug}`}
+                      className="bg-prpm-dark border border-prpm-border hover:border-prpm-accent rounded-lg p-4 transition-colors"
+                    >
+                      <h3 className="text-lg font-semibold text-white mb-2">📚 {coll.scope}/{coll.name_slug}</h3>
+                      <p className="text-gray-400 text-sm line-clamp-2">{coll.description}</p>
+                      <span className="text-xs text-gray-500 mt-2 block">
+                        Viewed {new Date(coll.viewedAt).toLocaleDateString()}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+                {(recentPackages.length + recentCollections.length) > 6 && (
+                  <div className="mt-4 text-center">
+                    <span className="text-gray-400 text-sm">
+                      +{recentPackages.length + recentCollections.length - 6} more recently viewed
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Tweet Encouragement Modal */}

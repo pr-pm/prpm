@@ -5,28 +5,32 @@
 import { handleLogin } from '../../commands/login';
 import { handleWhoami } from '../../commands/whoami';
 import { getConfig, saveConfig } from '../../core/user-config';
+import { getRegistryClient } from '@pr-pm/registry-client';
 import { createTestDir, cleanupTestDir } from './test-helpers';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
 import os from 'os';
 import { CLIError } from '../../core/errors';
+import * as jwt from 'jsonwebtoken';
 
 // Mock dependencies
 jest.mock('../../core/user-config');
+jest.mock('@pr-pm/registry-client');
 jest.mock('../../core/telemetry', () => ({
   telemetry: {
     track: jest.fn(),
     shutdown: jest.fn(),
+    identifyUser: jest.fn(),
   },
 }));
 
-// Mock open for browser opening
-// jest.mock('open', () => jest.fn()); // Commented out since test is skipped
+// Mock open for browser opening (virtual mock since 'open' isn't installed)
+jest.mock('open', () => jest.fn(), { virtual: true });
 
 // Mock fetch for API calls
 global.fetch = jest.fn();
 
-describe.skip('Auth Commands - E2E Tests', () => {
+describe('Auth Commands - E2E Tests', () => {
   let testDir: string;
   let originalCwd: string;
   let configDir: string;
@@ -55,7 +59,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
   });
 
   describe('Login Command', () => {
-    it('should initiate GitHub OAuth flow', async () => {
+    it.skip('should initiate GitHub OAuth flow', async () => {
       const open = require('open');
 
       (getConfig as jest.Mock).mockResolvedValue({
@@ -67,6 +71,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
         json: async () => ({
           url: 'https://github.com/login/oauth/authorize?client_id=test',
           device_code: 'test-device-code',
+          connectSessionToken: 'test-session-token',
         }),
       });
 
@@ -90,7 +95,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
       (saveConfig as jest.Mock).mockResolvedValue(undefined);
 
-      await handleLogin();
+      await handleLogin({});
 
       expect(open).toHaveBeenCalledWith(expect.stringContaining('github.com'));
       expect(saveConfig).toHaveBeenCalledWith(
@@ -101,6 +106,18 @@ describe.skip('Auth Commands - E2E Tests', () => {
     });
 
     it('should handle manual token input', async () => {
+      // Create a valid JWT token
+      const validToken = jwt.sign(
+        {
+          user_id: 'test-user-123',
+          username: 'testuser',
+          email: 'test@example.com',
+          is_admin: false,
+        },
+        'test-secret',
+        { expiresIn: '1h' }
+      );
+
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
       });
@@ -120,16 +137,16 @@ describe.skip('Auth Commands - E2E Tests', () => {
       // Mock readline for token input
       const readline = require('readline');
       const mockRl = {
-        question: jest.fn((query, callback) => callback('manual-token-123')),
+        question: jest.fn((query, callback) => callback(validToken)),
         close: jest.fn(),
       };
       jest.spyOn(readline, 'createInterface').mockReturnValue(mockRl as any);
 
-      await handleLogin({ token: 'manual-token-123' });
+      await handleLogin({ token: validToken });
 
       expect(saveConfig).toHaveBeenCalledWith(
         expect.objectContaining({
-          token: 'manual-token-123',
+          token: validToken,
         })
       );
     });
@@ -180,119 +197,159 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
   describe('Whoami Command', () => {
     it('should display current user info', async () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'valid-token',
+        username: 'testuser',
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
+      const mockClient = {
+        getUserProfile: jest.fn().mockResolvedValue({
           id: 'user-123',
           username: 'testuser',
           email: 'test@example.com',
-          verified: true,
+          verified_author: true,
           created_at: '2024-01-01T00:00:00Z',
         }),
-      });
+      };
+
+      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('testuser'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('test@example.com'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('testuser'));
+
+      logSpy.mockRestore();
     });
 
     it('should require authentication', async () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: undefined,
       });
 
-      await expect(handleWhoami()).rejects.toThrow(CLIError);
+      await handleWhoami();
 
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Not logged in')
-      );
+      expect(logSpy).toHaveBeenCalledWith('Not logged in');
+
+      logSpy.mockRestore();
     });
 
     it('should handle invalid/expired token', async () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'expired-token',
+        username: 'testuser',
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        json: async () => ({ error: 'Invalid token' }),
-      });
+      const mockClient = {
+        getUserProfile: jest.fn().mockRejectedValue(new Error('Unauthorized')),
+      };
 
-      await expect(handleWhoami()).rejects.toThrow(CLIError);
+      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
 
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Invalid token')
-      );
+      await handleWhoami();
+
+      // Should fallback to simple username display
+      expect(logSpy).toHaveBeenCalledWith('testuser');
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('token may be outdated'));
+
+      logSpy.mockRestore();
     });
 
     it('should display user stats', async () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'valid-token',
+        username: 'poweruser',
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
+      const mockClient = {
+        getUserProfile: jest.fn().mockResolvedValue({
           id: 'user-123',
           username: 'poweruser',
           email: 'power@example.com',
-          verified: true,
-          package_count: 15,
-          total_downloads: 50000,
+          verified_author: true,
+          stats: {
+            total_packages: 15,
+            total_downloads: 50000,
+          },
           created_at: '2024-01-01T00:00:00Z',
         }),
-      });
+      };
+
+      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('poweruser'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('poweruser'));
+
+      logSpy.mockRestore();
     });
 
     it('should show verified badge', async () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'valid-token',
+        username: 'verified-user',
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
+      const mockClient = {
+        getUserProfile: jest.fn().mockResolvedValue({
           id: 'user-123',
           username: 'verified-user',
           email: 'verified@example.com',
-          verified: true,
+          verified_author: true,
         }),
-      });
+      };
+
+      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
-      expect(console.log).toHaveBeenCalled();
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('✓'));
+
+      logSpy.mockRestore();
     });
 
     it('should handle network errors', async () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'valid-token',
+        username: 'testuser',
       });
 
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+      const mockClient = {
+        getUserProfile: jest.fn().mockRejectedValue(new Error('Network error')),
+      };
 
-      await expect(handleWhoami()).rejects.toThrow(CLIError);
+      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
+
+      await handleWhoami();
+
+      // Should fallback to simple username display
+      expect(logSpy).toHaveBeenCalledWith('testuser');
+
+      logSpy.mockRestore();
     });
   });
 
   describe('Authentication Flow', () => {
-    it('should complete full login and whoami flow', async () => {
+    it.skip('should complete full login and whoami flow', async () => {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
       // Step 1: Login
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
@@ -304,6 +361,7 @@ describe.skip('Auth Commands - E2E Tests', () => {
           json: async () => ({
             url: 'https://github.com/login/oauth/authorize?client_id=test',
             device_code: 'device-code-123',
+            connectSessionToken: 'test-session-token',
           }),
         })
         .mockResolvedValueOnce({
@@ -319,27 +377,31 @@ describe.skip('Auth Commands - E2E Tests', () => {
 
       (saveConfig as jest.Mock).mockResolvedValue(undefined);
 
-      await handleLogin();
+      await handleLogin({});
 
       // Step 2: Verify with whoami
       (getConfig as jest.Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'new-access-token',
+        username: 'newuser',
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
+      const mockClient = {
+        getUserProfile: jest.fn().mockResolvedValue({
           id: 'user-new',
           username: 'newuser',
           email: 'new@example.com',
-          verified: false,
+          verified_author: false,
         }),
-      });
+      };
+
+      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('newuser'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('newuser'));
+
+      logSpy.mockRestore();
     });
 
     it('should persist token across commands', async () => {

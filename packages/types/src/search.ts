@@ -7,7 +7,7 @@ import { Package } from './package';
 import { Collection } from './collection';
 import { CollectionCategory } from './collection';
 
-export type SortType = 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
+export type SortType = 'downloads' | 'created' | 'updated' | 'quality' | 'rating' | 'stars';
 
 /**
  * Package search filters
