@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import type { Collection } from '@pr-pm/types'
+import Header from '@/components/Header'
 import CollapsibleContent from '@/components/CollapsibleContent'
 import StarButtonWrapper from '@/components/StarButtonWrapper'
 import RecentlyViewedTracker from '@/components/RecentlyViewedTracker'
@@ -234,17 +235,19 @@ export default async function CollectionPage({ params }: { params: { slug: strin
   }
 
   return (
-    <main className="min-h-screen bg-prpm-dark">
-      {/* Track recently viewed */}
-      <RecentlyViewedTracker
-        type="collection"
-        collection={{
-          scope: collection.scope,
-          name_slug: collection.name_slug,
-          description: collection.description,
-          package_count: (collection as any).package_count,
-        }}
-      />
+    <>
+      <Header />
+      <main className="min-h-screen bg-prpm-dark">
+        {/* Track recently viewed */}
+        <RecentlyViewedTracker
+          type="collection"
+          collection={{
+            scope: collection.scope,
+            name_slug: collection.name_slug,
+            description: collection.description,
+            package_count: (collection as any).package_count,
+          }}
+        />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
@@ -513,6 +516,7 @@ export default async function CollectionPage({ params }: { params: { slug: strin
           </div>
         </div>
       </div>
-    </main>
+      </main>
+    </>
   )
 }

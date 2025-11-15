@@ -258,6 +258,15 @@ describe('Package Routes', () => {
       // Update mock to handle star queries
       const originalMockQuery = (server as any).pg.query;
       (server as any).pg.query = async (sql: string, params?: unknown[]) => {
+        // Package existence check
+        if (sql.includes('SELECT id, visibility FROM packages WHERE id = $1')) {
+          const packageId = params?.[0] as string;
+          if (packageId === 'test-package-uuid') {
+            return { rows: [{ id: packageId, visibility: 'public' }], command: 'SELECT', rowCount: 1, oid: 0, fields: [] };
+          }
+          return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] };
+        }
+
         // Star insert
         if (sql.includes('INSERT INTO package_stars')) {
           const packageId = params?.[0] as string;
@@ -325,6 +334,23 @@ describe('Package Routes', () => {
       const body = JSON.parse(response.body);
       expect(body.starred).toBe(false);
       expect(body.stars).toBe(10);
+    });
+
+    it('should return 404 when starring non-existent package', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/api/v1/packages/non-existent-uuid/star',
+        headers: {
+          authorization: 'Bearer test-token'
+        },
+        payload: {
+          starred: true
+        }
+      });
+
+      expect(response.statusCode).toBe(404);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('Package not found');
     });
   });
 
