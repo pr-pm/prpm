@@ -1,147 +1,115 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import { getPackagesByUseCase } from '@/lib/api'
+import { getPackagesByUseCase, getUseCases } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
+import type { Package } from '@/lib/api'
 import { Lightbulb, Package as PackageIcon, Download, Star, ArrowLeft, Sparkles } from 'lucide-react'
 
-export default function UseCasePage() {
-  const params = useParams()
-  const slug = params?.slug as string
+// Allow dynamic rendering for params not in generateStaticParams
+export const dynamicParams = true
 
-  const [useCase, setUseCase] = useState<any | null>(null)
-  const [packages, setPackages] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
-  const limit = 20
-
-  useEffect(() => {
-    async function loadData() {
-      if (!slug) return
-
-      setLoading(true)
-      try {
-        const result = await getPackagesByUseCase(slug, {
-          limit,
-          offset: (page - 1) * limit
-        })
-
-        setUseCase(result.use_case)
-        setPackages(result.packages)
-        setTotal(result.total)
-      } catch (error) {
-        console.error('Failed to load use case:', error)
-      } finally {
-        setLoading(false)
-      }
+// Generate static params for all use cases
+export async function generateStaticParams() {
+  try {
+    // Skip SSG in CI/test builds
+    if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
+      console.log('[SSG UseCases] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params')
+      return [{ slug: 'api-development' }]
     }
 
-    loadData()
-  }, [slug, page])
+    const result = await getUseCases(false)
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-prpm-dark">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-prpm-accent"></div>
-          </div>
-        </div>
-      </main>
-    )
+    console.log(`[SSG UseCases] ✅ Generating ${result.use_cases.length} use case pages`)
+
+    return result.use_cases.map(useCase => ({ slug: useCase.slug }))
+  } catch (error) {
+    console.error('[SSG UseCases] ERROR in generateStaticParams:', error)
+    return []
   }
+}
 
-  if (!useCase) {
+export default async function UseCasePage({
+  params,
+}: {
+  params: { slug: string }
+}) {
+  try {
+    const result = await getPackagesByUseCase(params.slug, {
+      limit: 100, // Show first 100 packages
+      offset: 0
+    })
+
+    const useCase = result.use_case
+    const packages = result.packages
+    const total = result.total
+
     return (
       <main className="min-h-screen bg-prpm-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-20">
-            <Lightbulb className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Use Case Not Found</h2>
-            <p className="text-gray-400 mb-6">The use case you're looking for doesn't exist</p>
-            <Link
-              href="/use-cases"
-              className="inline-block bg-prpm-accent hover:bg-prpm-accent-light text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Browse All Use Cases
+          {/* Header */}
+          <div className="mb-8">
+            <Link href="/use-cases" className="text-prpm-accent hover:text-prpm-accent-light mb-4 inline-flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Use Cases
             </Link>
-          </div>
-        </div>
-      </main>
-    )
-  }
 
-  return (
-    <main className="min-h-screen bg-prpm-dark">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/use-cases" className="text-prpm-accent hover:text-prpm-accent-light mb-4 inline-flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Use Cases
-          </Link>
-
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-3 bg-prpm-accent/10 rounded-lg">
-              <Lightbulb className="w-8 h-8 text-prpm-accent" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold text-white">{useCase.name}</h1>
-              <p className="text-gray-400 mt-1">
-                {total} {total === 1 ? 'package' : 'packages'} for this use case
-              </p>
-            </div>
-          </div>
-
-          {useCase.description && (
-            <p className="text-gray-300 text-lg mt-4">
-              {useCase.description}
-            </p>
-          )}
-
-          {useCase.example_query && (
-            <div className="mt-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span className="text-sm font-medium text-purple-300">AI Search Example</span>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-3 bg-prpm-accent/10 rounded-lg">
+                <Lightbulb className="w-8 h-8 text-prpm-accent" />
               </div>
-              <p className="text-gray-300 italic">
-                "{useCase.example_query}"
+              <div>
+                <h1 className="text-4xl font-bold text-white">{useCase.name}</h1>
+                <p className="text-gray-400 mt-1">
+                  {total} {total === 1 ? 'package' : 'packages'} for this use case
+                  {total > 100 ? ' (showing first 100)' : ''}
+                </p>
+              </div>
+            </div>
+
+            {useCase.description && (
+              <p className="text-gray-300 text-lg mt-4">
+                {useCase.description}
               </p>
-              <Link
-                href={`/search?q=${encodeURIComponent(useCase.example_query)}`}
-                className="inline-block mt-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
-              >
-                Try this search →
-              </Link>
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* Packages */}
-        <div>
-          <h2 className="text-xl font-semibold text-white mb-4">
-            Recommended Packages
-          </h2>
+            {useCase.example_query && (
+              <div className="mt-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm font-medium text-purple-300">AI Search Example</span>
+                </div>
+                <p className="text-gray-300 italic">
+                  "{useCase.example_query}"
+                </p>
+                <Link
+                  href={`/search?q=${encodeURIComponent(useCase.example_query)}`}
+                  className="inline-block mt-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Try this search →
+                </Link>
+              </div>
+            )}
+          </div>
 
-          {packages.length === 0 ? (
-            <div className="text-center py-20 bg-prpm-dark-card border border-prpm-border rounded-lg">
-              <PackageIcon className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 mb-4">No packages found for this use case</p>
-              <Link
-                href="/search"
-                className="inline-block text-prpm-accent hover:text-prpm-accent-light"
-              >
-                Browse all packages →
-              </Link>
-            </div>
-          ) : (
-            <>
+          {/* Packages */}
+          <div>
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Recommended Packages
+            </h2>
+
+            {packages.length === 0 ? (
+              <div className="text-center py-20 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <PackageIcon className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 mb-4">No packages found for this use case</p>
+                <Link
+                  href="/search"
+                  className="inline-block text-prpm-accent hover:text-prpm-accent-light"
+                >
+                  Browse all packages →
+                </Link>
+              </div>
+            ) : (
               <div className="space-y-4">
-                {packages.map((pkg) => (
+                {packages.map((pkg: Package) => (
                   <Link
                     key={pkg.id}
                     href={getPackageUrl(pkg.name, pkg.author_username || '')}
@@ -188,51 +156,47 @@ export default function UseCasePage() {
                   </Link>
                 ))}
               </div>
+            )}
+          </div>
 
-              {/* Pagination */}
-              {total > limit && (
-                <div className="flex items-center justify-center gap-2 mt-8">
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="px-4 py-2 bg-prpm-dark-card border border-prpm-border rounded text-white disabled:opacity-50 disabled:cursor-not-allowed hover:border-prpm-accent transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-gray-400">
-                    Page {page} of {Math.ceil(total / limit)}
-                  </span>
-                  <button
-                    onClick={() => setPage(p => p + 1)}
-                    disabled={page >= Math.ceil(total / limit)}
-                    className="px-4 py-2 bg-prpm-dark-card border border-prpm-border rounded text-white disabled:opacity-50 disabled:cursor-not-allowed hover:border-prpm-accent transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+          {/* AI Search CTA */}
+          <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/30 rounded-lg p-8 text-center">
+            <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Want more personalized results?
+            </h2>
+            <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+              Use AI Search to describe your specific needs in natural language.
+              Get semantic matches ranked by relevance to your use case.
+            </p>
+            <Link
+              href="/search"
+              className="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
+            >
+              Try AI Search
+            </Link>
+          </div>
         </div>
-
-        {/* AI Search CTA */}
-        <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/30 rounded-lg p-8 text-center">
-          <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Want more personalized results?
-          </h2>
-          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-            Use AI Search to describe your specific needs in natural language.
-            Get semantic matches ranked by relevance to your use case.
-          </p>
-          <Link
-            href="/search"
-            className="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
-          >
-            Try AI Search
-          </Link>
+      </main>
+    )
+  } catch (error) {
+    console.error('Failed to load use case:', error)
+    return (
+      <main className="min-h-screen bg-prpm-dark">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-20">
+            <Lightbulb className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Use Case Not Found</h2>
+            <p className="text-gray-400 mb-6">The use case you're looking for doesn't exist</p>
+            <Link
+              href="/use-cases"
+              className="inline-block bg-prpm-accent hover:bg-prpm-accent-light text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Browse All Use Cases
+            </Link>
+          </div>
         </div>
-      </div>
-    </main>
-  )
+      </main>
+    )
+  }
 }
