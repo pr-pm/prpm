@@ -108,22 +108,24 @@ export default function UseCasesPage() {
         )}
 
         {/* CTA Section */}
-        <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/30 rounded-lg p-8 text-center">
-          <Lightbulb className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Can't find what you're looking for?
-          </h2>
-          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-            Try our AI-powered search to find packages using natural language.
-            Describe what you want to build, and we'll find the perfect packages for you.
-          </p>
-          <Link
-            href="/search"
-            className="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
-          >
-            Try AI Search
-          </Link>
-        </div>
+        {process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH === 'true' && (
+          <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/30 rounded-lg p-8 text-center">
+            <Lightbulb className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Can't find what you're looking for?
+            </h2>
+            <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+              Try our AI-powered search to find packages using natural language.
+              Describe what you want to build, and we'll find the perfect packages for you.
+            </p>
+            <Link
+              href="/search"
+              className="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
+            >
+              Try AI Search
+            </Link>
+          </div>
+        )}
       </div>
     </main>
   )

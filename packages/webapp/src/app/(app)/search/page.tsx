@@ -744,7 +744,7 @@ function SearchPageContent() {
           </div>
 
           {/* AI Search Toggle */}
-          {activeTab === 'packages' && (
+          {activeTab === 'packages' && process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH === 'true' && (
             <div className="mt-4 flex justify-end">
               <AISearchToggle
                 enabled={aiSearchEnabled}
