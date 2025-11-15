@@ -3,10 +3,45 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { getCategory, getPackagesByCategory } from '@/lib/api'
+import { getCategory, getPackagesByCategory, getCategories } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
 import type { CategoryWithChildren } from '@/lib/api'
 import { Folder, Package as PackageIcon, Download, Star, ArrowLeft } from 'lucide-react'
+
+// Allow dynamic rendering for params not in generateStaticParams
+export const dynamicParams = true
+
+// Generate static params for all categories
+export async function generateStaticParams() {
+  try {
+    // Skip SSG in CI/test builds
+    if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
+      console.log('[SSG Categories] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params')
+      return [{ slug: 'development' }]
+    }
+
+    const result = await getCategories(false)
+
+    // Flatten all categories and subcategories to get all slugs
+    const slugs: string[] = []
+
+    function collectSlugs(category: CategoryWithChildren) {
+      slugs.push(category.slug)
+      if (category.children) {
+        category.children.forEach(collectSlugs)
+      }
+    }
+
+    result.categories.forEach(collectSlugs)
+
+    console.log(`[SSG Categories] ✅ Generating ${slugs.length} category pages`)
+
+    return slugs.map(slug => ({ slug }))
+  } catch (error) {
+    console.error('[SSG Categories] ERROR in generateStaticParams:', error)
+    return []
+  }
+}
 
 export default function CategoryPage() {
   const params = useParams()

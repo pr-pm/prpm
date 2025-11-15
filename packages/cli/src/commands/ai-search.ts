@@ -97,6 +97,14 @@ export async function handleAISearch(
     console.log(`✨ AI searching for "${query}"...`);
 
     const config = await getConfig();
+
+    // AI search requires authentication
+    if (!config.token) {
+      console.log('\n❌ Authentication required for AI search');
+      console.log('Please login first: \x1b[36mprpm login\x1b[0m\n');
+      throw new Error('Authentication required');
+    }
+
     const client = getRegistryClient(config);
 
     // Build search request
@@ -111,17 +119,31 @@ export async function handleAISearch(
       if (options.subtype) searchRequest.filters.subtype = options.subtype;
     }
 
-    // Call AI search endpoint (no authentication required!)
+    // Call AI search endpoint
     const registryUrl = config.registryUrl || 'https://registry.prpm.dev';
     const res = await fetch(`${registryUrl}/api/v1/ai-search`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.token}`,
       },
       body: JSON.stringify(searchRequest),
     });
 
     if (!res.ok) {
+      if (res.status === 401) {
+        console.log('\n❌ Authentication failed');
+        console.log('Please login again: \x1b[36mprpm login\x1b[0m\n');
+        throw new Error('Authentication failed');
+      }
+
+      if (res.status === 403) {
+        const errorData = await res.json().catch(() => ({})) as { upgrade_info?: { feature: string; trial_available: boolean } };
+        console.log('\n❌ PRPM+ subscription required for AI Search');
+        console.log('Upgrade to PRPM+: \x1b[36mprpm subscribe\x1b[0m\n');
+        throw new Error('PRPM+ subscription required');
+      }
+
       const errorText = await res.text().catch(() => 'Unknown error');
       throw new Error(`API error ${res.status}: ${errorText}`);
     }
