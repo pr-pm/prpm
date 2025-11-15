@@ -48,10 +48,10 @@ jobs:
         id: codex
         uses: openai/codex-action@main
         with:
-          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           prompt: |
             You are contributing to the PRPM monorepo. Read the repository contents, rerun the Jest and workspace tests that fail in CI, and implement the smallest possible change to fix the failure. Do not refactor unrelated code. Only modify files when necessary to get CI passing again.
-          codex_args: '["--config","sandbox_mode=\"workspace-write\""]'
+          codex-args: '["--config","sandbox_mode=\"workspace-write\""]'
       - name: Verify tests
         run: npm test --silent
       - name: Create pull request with fixes
