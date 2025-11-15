@@ -1,0 +1,23 @@
+Each AI IDE has its own format for prompts and rules. Cursor requires YAML frontmatter with a description field. Windsurf forbids frontmatter entirely and limits content to 12k characters. Claude Code needs name + description and supports tool restrictions. Continue uses regex matching with tri-state inclusion logic.
+
+It's a mess.
+
+We've reverse-engineered and documented all 8 major AI IDE formats with complete JSON schemas that power PRPM's conversion system:
+
+• Cursor (.cursor/rules) - 4 rule types, MDC format, intelligent selection
+• Claude Code (.claude/{agents,skills,commands}/) - allowed-tools, model selection, executable hooks
+• Continue (.continue/rules/*.md) - globs, regex, complex alwaysApply logic
+• Windsurf (.windsurf/rules) - plain markdown, zero config, 12k hard limit
+• GitHub Copilot (.github/copilot-instructions.md) - two-tier system, comma-separated patterns
+• Kiro Steering (.kiro/steering/*.md) - inclusion modes, foundational types, domain organization
+• Kiro Hooks (.kiro/hooks/*.json) - event-driven file automations
+• agents.md (project root) - OpenAI's standard, maximum simplicity
+
+Every schema is published on GitHub. You can validate your prompts programmatically, understand exactly what each format supports, and convert between formats without losing metadata.
+
+This is the infrastructure that makes PRPM's format-agnostic registry possible. Install a Cursor rule as a Claude skill, a Windsurf rule as a Copilot instruction, or any format to any other format.
+
+Read the complete guide with schema links, frontmatter requirements, validation examples, and "when to use which format" guidance:
+https://prpm.dev/blog/format-specifications-guide
+
+#AI #DeveloperTools #OpenSource #SoftwareEngineering #Schemas

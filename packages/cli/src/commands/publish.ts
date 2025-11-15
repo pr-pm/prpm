@@ -22,6 +22,8 @@ import {
 import { validateManifestSchema } from '../core/schema-validator';
 import { extractLicenseInfo, validateLicenseInfo } from '../utils/license-extractor';
 import { extractSnippet, validateSnippet } from '../utils/snippet-extractor';
+import { executePrepublishOnly } from '../utils/script-executor';
+import { validatePackageFiles } from '../utils/format-file-validator';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -421,6 +423,27 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     console.log('🔍 Validating package manifest(s)...');
     const { manifests, collections, source } = await findAndLoadManifests();
 
+    // Execute prepublishOnly script if defined (for multi-package manifests)
+    // This runs before any packages are published
+    if (source === 'prpm.json (multi-package)' || source === 'prpm.json') {
+      try {
+        // Re-read the raw prpm.json to check for scripts
+        const prpmJsonPath = join(process.cwd(), 'prpm.json');
+        const prpmContent = await readFile(prpmJsonPath, 'utf-8');
+        const prpmManifest = JSON.parse(prpmContent);
+
+        if (prpmManifest.scripts) {
+          await executePrepublishOnly(prpmManifest.scripts);
+        }
+      } catch (error) {
+        // If script execution fails, abort publish
+        if (error instanceof Error && error.message.includes('script')) {
+          throw error;
+        }
+        // Ignore other errors (e.g., file not found - shouldn't happen at this point)
+      }
+    }
+
     if (manifests.length > 1 || collections.length > 0) {
       if (manifests.length > 0) {
         console.log(`   Found ${manifests.length} package(s) in ${source}`);
@@ -582,6 +605,30 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           console.log(`   Publishing to: ${selectedOrg?.name || 'organization'}`);
         }
         console.log('');
+
+        // Validate package files against format schema
+        console.log('🔍 Validating package files...');
+        const fileValidation = await validatePackageFiles(manifest);
+
+        if (fileValidation.errors.length > 0) {
+          console.log('   ❌ Format validation errors:');
+          fileValidation.errors.forEach(err => {
+            console.log(`      - ${err}`);
+          });
+          console.log('');
+          throw new Error('Package files do not match the specified format. Please fix the errors above.');
+        }
+
+        if (fileValidation.warnings.length > 0) {
+          console.log('   ⚠️  Format validation warnings:');
+          fileValidation.warnings.forEach(warn => {
+            console.log(`      - ${warn}`);
+          });
+          console.log('');
+        } else {
+          console.log('   ✓ All files valid');
+          console.log('');
+        }
 
         // Extract license information
         console.log('📄 Extracting license information...');

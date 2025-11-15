@@ -12,13 +12,20 @@ export interface LockfilePackage {
   resolved: string; // Tarball URL
   integrity: string; // SHA-256 hash
   dependencies?: Record<string, string>;
-  format?: string;
-  subtype?: string;
+  format?: string; // Installed format
+  subtype?: string; // Installed subtype
+  sourceFormat?: string; // Original package format from registry
+  sourceSubtype?: string; // Original subtype from registry
   installedPath?: string; // Path where the package was installed
   fromCollection?: {
     scope: string;
     name_slug: string;
     version?: string;
+  };
+  // For Claude hooks: track which hook events were added
+  hookMetadata?: {
+    events: string[]; // e.g., ['PreToolUse', 'PostToolUse']
+    hookId: string; // Unique identifier to find and remove this hook
   };
 }
 
@@ -97,11 +104,17 @@ export function addToLockfile(
     dependencies?: Record<string, string>;
     format?: string;
     subtype?: string;
+    sourceFormat?: string;
+    sourceSubtype?: string;
     installedPath?: string;
     fromCollection?: {
       scope: string;
       name_slug: string;
       version?: string;
+    };
+    hookMetadata?: {
+      events: string[];
+      hookId: string;
     };
   }
 ): void {
@@ -112,8 +125,11 @@ export function addToLockfile(
     dependencies: packageInfo.dependencies,
     format: packageInfo.format,
     subtype: packageInfo.subtype,
+    sourceFormat: packageInfo.sourceFormat,
+    sourceSubtype: packageInfo.sourceSubtype,
     installedPath: packageInfo.installedPath,
     fromCollection: packageInfo.fromCollection,
+    hookMetadata: packageInfo.hookMetadata,
   };
   lockfile.generated = new Date().toISOString();
 }
@@ -273,6 +289,8 @@ export async function addPackage(packageInfo: {
   dependencies?: Record<string, string>;
   format?: string;
   subtype?: string;
+  sourceFormat?: string;
+  sourceSubtype?: string;
   installedPath?: string;
 }): Promise<void> {
   const lockfile = (await readLockfile()) || createLockfile();
@@ -282,6 +300,8 @@ export async function addPackage(packageInfo: {
     dependencies: packageInfo.dependencies,
     format: packageInfo.format,
     subtype: packageInfo.subtype,
+    sourceFormat: packageInfo.sourceFormat,
+    sourceSubtype: packageInfo.sourceSubtype,
     installedPath: packageInfo.installedPath,
   });
   await writeLockfile(lockfile);

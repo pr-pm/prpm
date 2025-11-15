@@ -438,7 +438,7 @@ export function createSearchCommand(): Command {
       const page = options.page ? parseInt(options.page, 10) : 1;
 
       const validFormats: Format[] = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'];
-      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode'];
+      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode', 'tool', 'hook'];
 
       if (options.format && !validFormats.includes(format!)) {
         console.error(`❌ Format must be one of: ${validFormats.join(', ')}`);

@@ -1055,6 +1055,84 @@ export async function getSharedPlaygroundSession(shareToken: string): Promise<Pl
 }
 
 /**
+ * Star/unstar a package
+ */
+export async function starPackage(token: string, packageId: string, starred: boolean): Promise<{ starred: boolean; stars: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/packages/${packageId}/star`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ starred }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to star package' }))
+    throw new Error(error.error || error.message || 'Failed to star package')
+  }
+
+  return response.json()
+}
+
+/**
+ * Star/unstar a collection
+ */
+export async function starCollection(token: string, scope: string, nameSlug: string, starred: boolean): Promise<{ starred: boolean; stars: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/collections/${scope}/${nameSlug}/star`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ starred }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to star collection' }))
+    throw new Error(error.error || error.message || 'Failed to star collection')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get user's starred packages
+ */
+export async function getStarredPackages(token: string, limit = 20, offset = 0): Promise<{ packages: Package[]; total: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/packages/starred?limit=${limit}&offset=${offset}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch starred packages' }))
+    throw new Error(error.error || error.message || 'Failed to fetch starred packages')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get user's starred collections
+ */
+export async function getStarredCollections(token: string, limit = 20, offset = 0): Promise<{ collections: Collection[]; total: number }> {
+  const response = await fetch(`${REGISTRY_URL}/api/v1/collections/starred?limit=${limit}&offset=${offset}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch starred collections' }))
+    throw new Error(error.error || error.message || 'Failed to fetch starred collections')
+  }
+
+  return response.json()
+}
+
+/**
  * AI Search (PRPM+ Feature)
  */
 

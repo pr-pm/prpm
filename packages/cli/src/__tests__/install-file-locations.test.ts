@@ -11,6 +11,13 @@ import { readLockfile, writeLockfile, addToLockfile, createLockfile, setPackageI
 import { gzipSync } from 'zlib';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { promptYesNo } from '../core/prompts';
+
+jest.mock('../core/prompts', () => ({
+  promptYesNo: jest.fn(),
+}));
+
+const promptYesNoMock = promptYesNo as jest.MockedFunction<typeof promptYesNo>;
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -62,10 +69,12 @@ describe('install command - file locations', () => {
 
   beforeEach(async () => {
     // Clean up any existing directories
-    const dirs = ['.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents'];
+    const dirs = ['.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents', 'AGENTS.md', 'custom'];
     for (const dir of dirs) {
       await fs.rm(path.join(testDir, dir), { recursive: true, force: true }).catch(() => {});
     }
+
+    promptYesNoMock.mockReset();
 
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
     (getConfig as jest.Mock).mockResolvedValue(mockConfig);
@@ -254,6 +263,30 @@ describe('install command - file locations', () => {
       expect(destDir).toBe('.cursor/rules');
     });
 
+    it('should install cursor package to nested .cursor directory when --location is provided', async () => {
+      const mockPackage = {
+        id: 'nested-cursor',
+        name: 'nested-cursor',
+        format: 'cursor',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Nested Cursor Rule'));
+
+      await handleInstall('nested-cursor', { as: 'cursor', location: 'backend/server' });
+
+      const nestedPath = path.join('backend/server', '.cursor/rules/nested-cursor.mdc');
+      expect(saveFile).toHaveBeenCalledWith(nestedPath, expect.any(String));
+    });
+
     it('should install continue package to .continue/rules', async () => {
       const mockPackage = {
         id: 'test-continue',
@@ -308,7 +341,7 @@ describe('install command - file locations', () => {
       expect(destDir).toBe('.windsurf/rules');
     });
 
-    it('should install agents.md package to .agents/package-name/AGENTS.md', async () => {
+    it('should install agents.md package to project root AGENTS.md', async () => {
       const mockPackage = {
         id: 'test-agents',
         name: 'test-agents',
@@ -328,14 +361,14 @@ describe('install command - file locations', () => {
 
       await handleInstall('test-agents', {});
 
-      const expectedPath = '.agents/test-agents/AGENTS.md';
+      const expectedPath = 'AGENTS.md';
       expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
 
       const destDir = getDestinationDir('agents.md', 'rule');
-      expect(destDir).toBe('.agents');
+      expect(destDir).toBe('.');
     });
 
-    it('should install package with --as agents.md to .agents/package-name/AGENTS.md', async () => {
+    it('should install package with --as agents.md to project root AGENTS.md', async () => {
       const mockPackage = {
         id: 'test-cursor-to-agents',
         name: 'test-cursor-to-agents',
@@ -355,13 +388,145 @@ describe('install command - file locations', () => {
 
       await handleInstall('test-cursor-to-agents', { as: 'agents.md' });
 
-      const expectedPath = '.agents/test-cursor-to-agents/AGENTS.md';
+      const expectedPath = 'AGENTS.md';
       expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
+    });
+
+    it('should install agents.md package to custom location when --location is provided', async () => {
+      const mockPackage = {
+        id: 'test-cursor-to-agents',
+        name: 'test-cursor-to-agents',
+        format: 'cursor',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Cursor Rule\n\nThis is a test rule.'));
+
+      await handleInstall('test-cursor-to-agents', { as: 'agents.md', location: 'custom/dir' });
+
+      const expectedPath = path.join('custom/dir', 'AGENTS.override.md');
+      expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
+    });
+
+    it('should prompt before overwriting existing AGENTS.md', async () => {
+      const mockPackage = {
+        id: 'test-cursor-to-agents',
+        name: 'test-cursor-to-agents',
+        format: 'cursor',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Cursor Rule\n\nThis is a test rule.'));
+
+      await fs.writeFile(path.join(testDir, 'AGENTS.md'), '# Existing file');
+      promptYesNoMock.mockResolvedValueOnce(false);
+
+      await handleInstall('test-cursor-to-agents', { as: 'agents.md' });
+
+      expect(promptYesNoMock).toHaveBeenCalled();
+      expect(saveFile).not.toHaveBeenCalled();
+    });
+
+    it('should overwrite AGENTS.md when user confirms prompt', async () => {
+      const mockPackage = {
+        id: 'test-cursor-to-agents',
+        name: 'test-cursor-to-agents',
+        format: 'cursor',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Cursor Rule\n\nThis is a test rule.'));
+
+      await fs.writeFile(path.join(testDir, 'AGENTS.md'), '# Existing file');
+      promptYesNoMock.mockResolvedValueOnce(true);
+
+      await handleInstall('test-cursor-to-agents', { as: 'agents.md' });
+
+      expect(promptYesNoMock).toHaveBeenCalled();
+      expect(saveFile).toHaveBeenCalledWith('AGENTS.md', expect.any(String));
+    });
+
+    it('should prompt before overwriting custom location AGENTS.override.md', async () => {
+      const mockPackage = {
+        id: 'test-cursor-to-agents',
+        name: 'test-cursor-to-agents',
+        format: 'cursor',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Cursor Rule\n\nThis is a test rule.'));
+
+      await fs.mkdir(path.join(testDir, 'custom/dir'), { recursive: true });
+      await fs.writeFile(path.join(testDir, 'custom/dir/AGENTS.override.md'), '# Existing file');
+      promptYesNoMock.mockResolvedValueOnce(false);
+
+      await handleInstall('test-cursor-to-agents', { as: 'agents.md', location: 'custom/dir' });
+
+      expect(promptYesNoMock).toHaveBeenCalled();
+      expect(saveFile).not.toHaveBeenCalled();
+    });
+
+    it('should skip prompt when force option is provided', async () => {
+      const mockPackage = {
+        id: 'test-cursor-to-agents',
+        name: 'test-cursor-to-agents',
+        format: 'cursor',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Cursor Rule\n\nThis is a test rule.'));
+
+      await fs.writeFile(path.join(testDir, 'AGENTS.md'), '# Existing file');
+
+      await handleInstall('test-cursor-to-agents', { as: 'agents.md', force: true });
+
+      expect(promptYesNoMock).not.toHaveBeenCalled();
+      expect(saveFile).toHaveBeenCalledWith('AGENTS.md', expect.any(String));
     });
   });
 
-  describe('Lockfile type preservation', () => {
-    it('should preserve package type in lockfile regardless of --as format', async () => {
+  describe('Lockfile metadata', () => {
+    it('should record both installed and source formats in lockfile', async () => {
       const mockPackage = {
         id: 'test-skill',
         name: 'test-skill',
@@ -381,13 +546,15 @@ describe('install command - file locations', () => {
 
       await handleInstall('test-skill', { as: 'cursor' });
 
-      // Format and subtype should be from package, installed format should be cursor from --as
+      // Format/subtype should reflect installed version, source fields preserve original metadata
       expect(addToLockfile).toHaveBeenCalledWith(
         expect.any(Object),
         'test-skill',
         expect.objectContaining({
-          format: 'claude',
+          format: 'cursor',
           subtype: 'skill',
+          sourceFormat: 'claude',
+          sourceSubtype: 'skill',
         })
       );
     });

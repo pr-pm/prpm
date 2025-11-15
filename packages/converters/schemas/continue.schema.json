@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/continue.schema.json",
+  "title": "Continue Rules Format",
+  "description": "JSON Schema for Continue rules format - markdown with optional YAML frontmatter or YAML configuration",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "description": "YAML frontmatter for metadata and file matching",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name/title for the rule (required)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of when the rule should be used (agents may read this)"
+        },
+        "globs": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Single glob pattern to match files (e.g., '**/*.{ts,tsx}')"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of glob patterns to match files"
+            }
+          ]
+        },
+        "regex": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Single regex pattern to match file content"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of regex patterns to match file content"
+            }
+          ]
+        },
+        "alwaysApply": {
+          "type": "boolean",
+          "description": "Inclusion behavior: true = Always included. false = Included if globs match OR agent decides. undefined/omitted = Included if no globs specified OR globs match."
+        },
+        "version": {
+          "type": "string",
+          "description": "Rule version (for YAML format)"
+        },
+        "schema": {
+          "type": "string",
+          "description": "Schema version (for YAML format)"
+        }
+      }
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content with rules and guidelines"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "name": "General Guidelines"
+      },
+      "content": "# General Guidelines\n\n- Write clean code\n- Add tests"
+    },
+    {
+      "frontmatter": {
+        "name": "Documentation Standards",
+        "globs": "docs/**/*.{md,mdx}",
+        "alwaysApply": false,
+        "description": "Standards for writing and maintaining documentation"
+      },
+      "content": "# Documentation Standards\n\n## Structure\n\n- Follow consistent heading hierarchy"
+    },
+    {
+      "frontmatter": {
+        "name": "React Component Standards",
+        "regex": "^import React",
+        "globs": ["**/*.tsx", "**/*.jsx"],
+        "alwaysApply": false
+      },
+      "content": "# React Component Standards\n\n## Component Structure\n\n- Use functional components with hooks"
+    }
+  ]
+}

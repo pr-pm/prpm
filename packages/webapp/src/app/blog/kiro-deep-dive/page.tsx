@@ -168,12 +168,12 @@ export default function KiroDeepDivePost() {
             <h3 className="text-xl font-bold text-white mb-4">PRPM Documentation</h3>
             <ul className="space-y-2 text-gray-300">
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/KIRO.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/docs/KIRO.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   PRPM Kiro Guide
                 </a>
               </li>
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/IMPORT_FORMAT_SPECS.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/docs/IMPORT_FORMAT_SPECS.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   PRPM Import Format Specifications
                 </a>
               </li>
@@ -184,12 +184,12 @@ export default function KiroDeepDivePost() {
             <h3 className="text-xl font-bold text-white mb-4">Source Code</h3>
             <ul className="space-y-2 text-gray-300">
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/packages/registry/src/converters/from-kiro.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/packages/converters/src/from-kiro.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   from-kiro.ts Converter
                 </a>
               </li>
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/packages/registry/src/converters/to-kiro.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/packages/converters/src/to-kiro.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   to-kiro.ts Converter
                 </a>
               </li>

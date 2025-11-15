@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat } from '../core/filesystem';
+import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { Package, Format, Subtype } from '../types';
@@ -14,6 +14,8 @@ import { pipeline } from 'stream/promises';
 import { createGunzip } from 'zlib';
 import * as tar from 'tar';
 import { CLIError } from '../core/errors';
+import { promptYesNo } from '../core/prompts';
+import path from 'path';
 import {
   readLockfile,
   writeLockfile,
@@ -24,6 +26,23 @@ import {
 } from '../core/lockfile';
 import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-config';
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
+import {
+  fromCursor,
+  fromClaude,
+  fromContinue,
+  fromCopilot,
+  fromKiro,
+  fromWindsurf,
+  fromAgentsMd,
+  toCursor,
+  toClaude,
+  toContinue,
+  toCopilot,
+  toKiro,
+  toWindsurf,
+  toAgentsMd,
+  type CanonicalPackage,
+} from '@pr-pm/converters';
 
 /**
  * Get icon for package format and subtype
@@ -104,6 +123,7 @@ export async function handleInstall(
     subtype?: Subtype;
     frozenLockfile?: boolean;
     force?: boolean;
+    location?: string;
     fromCollection?: {
       scope: string;
       name_slug: string;
@@ -232,6 +252,20 @@ export async function handleInstall(
     console.log(`   ${pkg.description || 'No description'}`);
     console.log(`   ${typeIcon} Type: ${typeLabel}`);
 
+    // Check if this is a Claude hook and show informational message
+    if (pkg.format === 'claude' && pkg.subtype === 'hook') {
+      // Only show detailed warning if not part of a collection (to avoid spam)
+      if (!options.fromCollection) {
+        console.log(`\n📌 Installing Claude Hook`);
+        console.log(`   ⚠️  Note: Hooks execute shell commands automatically.`);
+        console.log(`   📖 Review the hook configuration in .claude/settings.json after installation.`);
+        console.log();
+      } else {
+        // Brief message for collection installs
+        console.log(`   🪝 Hook (merges into .claude/settings.json)`);
+      }
+    }
+
     // Determine format preference with priority order:
     // 1. CLI --as flag (highest priority)
     // 2. defaultFormat from .prpmrc config
@@ -260,7 +294,6 @@ export async function handleInstall(
     // Special handling for Claude packages: default to CLAUDE.md if it doesn't exist
     // BUT only for packages that are generic rules (not skills, agents, or commands)
     if (!options.as && pkg.format === 'claude' && pkg.subtype === 'rule') {
-      const { fileExists } = await import('../core/filesystem.js');
       const claudeMdExists = await fileExists('CLAUDE.md');
 
       if (!claudeMdExists) {
@@ -280,21 +313,24 @@ export async function handleInstall(
 
     // Determine version to install
     let tarballUrl: string;
+    let actualVersion: string;
     if (version === 'latest') {
       if (!pkg.latest_version) {
         throw new Error('No versions available for this package');
       }
       tarballUrl = pkg.latest_version.tarball_url;
+      actualVersion = pkg.latest_version.version;
       console.log(`   📦 Installing version ${pkg.latest_version.version}`);
     } else {
       const versionInfo = await client.getPackageVersion(packageId, version);
       tarballUrl = versionInfo.tarball_url;
+      actualVersion = version;
       console.log(`   📦 Installing version ${version}`);
     }
 
-    // Download package in requested format
+    // Download package in native format (conversion happens client-side)
     console.log(`   ⬇️  Downloading...`);
-    const tarball = await client.downloadPackage(tarballUrl, { format });
+    const tarball = await client.downloadPackage(tarballUrl);
 
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
@@ -304,11 +340,126 @@ export async function handleInstall(
     const effectiveSubtype = options.subtype || pkg.subtype;
 
     // Extract all files from tarball
-    const extractedFiles = await extractTarball(tarball, packageId);
+    let extractedFiles = await extractTarball(tarball, packageId);
+
+    // Client-side format conversion (if --as flag is specified)
+    if (options.as && format && format !== pkg.format) {
+      console.log(`   🔄 Converting from ${pkg.format} to ${format}...`);
+
+      // Only convert single-file packages
+      if (extractedFiles.length !== 1) {
+        throw new CLIError('Format conversion is only supported for single-file packages');
+      }
+
+      const sourceContent = extractedFiles[0].content;
+      const metadata = {
+        id: packageId,
+        name: pkg.name || packageId,
+        version: actualVersion,
+        tags: pkg.tags || [],
+      };
+
+      // Parse source format to canonical
+      let canonicalPkg: CanonicalPackage;
+      const sourceFormat = pkg.format.toLowerCase();
+
+      try {
+        switch (sourceFormat) {
+          case 'cursor':
+            canonicalPkg = fromCursor(sourceContent, metadata);
+            break;
+          case 'claude':
+            canonicalPkg = fromClaude(sourceContent, metadata);
+            break;
+          case 'windsurf':
+            canonicalPkg = fromWindsurf(sourceContent, metadata);
+            break;
+          case 'kiro':
+            canonicalPkg = fromKiro(sourceContent, metadata);
+            break;
+          case 'copilot':
+            canonicalPkg = fromCopilot(sourceContent, metadata);
+            break;
+          case 'continue':
+            canonicalPkg = fromContinue(JSON.parse(sourceContent), metadata);
+            break;
+          case 'agents.md':
+            canonicalPkg = fromAgentsMd(sourceContent, metadata);
+            break;
+          default:
+            throw new CLIError(`Unsupported source format for conversion: ${pkg.format}`);
+        }
+      } catch (error: any) {
+        throw new CLIError(`Failed to parse ${pkg.format} format: ${error.message}`);
+      }
+
+      // Convert from canonical to target format
+      let convertedContent: string;
+
+      try {
+        switch (format) {
+          case 'cursor':
+            const cursorResult = toCursor(canonicalPkg);
+            convertedContent = cursorResult.content;
+            break;
+          case 'claude':
+            const claudeResult = toClaude(canonicalPkg);
+            convertedContent = claudeResult.content;
+            break;
+          case 'continue':
+            const continueResult = toContinue(canonicalPkg);
+            convertedContent = continueResult.content;
+            break;
+          case 'windsurf':
+            const windsurfResult = toWindsurf(canonicalPkg);
+            convertedContent = windsurfResult.content;
+            break;
+          case 'copilot':
+            const copilotResult = toCopilot(canonicalPkg);
+            convertedContent = copilotResult.content;
+            break;
+          case 'kiro':
+            const kiroResult = toKiro(canonicalPkg, {
+              kiroConfig: { inclusion: 'always' }
+            });
+            convertedContent = kiroResult.content;
+            break;
+          case 'agents.md':
+            const agentsResult = toAgentsMd(canonicalPkg);
+            convertedContent = agentsResult.content;
+            break;
+          default:
+            throw new CLIError(`Unsupported target format for conversion: ${format}`);
+        }
+      } catch (error: any) {
+        throw new CLIError(`Failed to convert to ${format} format: ${error.message}`);
+      }
+
+      if (!convertedContent) {
+        throw new CLIError('Conversion failed: No content generated');
+      }
+
+      // Replace extracted content with converted content
+      extractedFiles = [{
+        name: extractedFiles[0].name,
+        content: convertedContent
+      }];
+
+      console.log(`   ✓ Converted from ${pkg.format} to ${format}`);
+    }
+
+    const locationSupportedFormats: Format[] = ['agents.md', 'cursor'];
+    let locationOverride = options.location?.trim();
+
+    if (locationOverride && !locationSupportedFormats.includes(effectiveFormat)) {
+      console.log(`   ⚠️  --location option currently applies to Cursor or Agents.md installs. Ignoring provided value for ${effectiveFormat}.`);
+      locationOverride = undefined;
+    }
 
     // Track where files were saved for user feedback
     let destPath: string;
     let fileCount = 0;
+    let hookMetadata: { events: string[]; hookId: string } | undefined = undefined;
 
     // Special handling for CLAUDE.md format (goes in project root)
     if (format === 'claude-md') {
@@ -324,7 +475,13 @@ export async function handleInstall(
     }
     // Check if this is a multi-file package
     else if (extractedFiles.length === 1) {
-      const destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      let destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+
+      if (locationOverride && effectiveFormat === 'cursor') {
+        const relativeDestDir = destDir.startsWith('./') ? destDir.slice(2) : destDir;
+        destDir = path.join(locationOverride, relativeDestDir);
+        console.log(`   📁 Installing Cursor package to custom location: ${destDir}`);
+      }
 
       // Single file package
       let mainFile = extractedFiles[0].content;
@@ -334,13 +491,38 @@ export async function handleInstall(
       const packageName = stripAuthorNamespace(packageId);
 
       // For Claude skills, use SKILL.md filename in the package directory
-      // For agents.md, use package-name/AGENTS.md directory structure
+      // For agents.md, always install as AGENTS.md in the project root
       // For Copilot, use official naming conventions
       // For other formats, use package name as filename
       if (effectiveFormat === 'claude' && effectiveSubtype === 'skill') {
         destPath = `${destDir}/SKILL.md`;
+      } else if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
+        // Claude hooks are merged into settings.json
+        destPath = `${destDir}/settings.json`;
       } else if (effectiveFormat === 'agents.md') {
-        destPath = `${destDir}/${packageName}/AGENTS.md`;
+        let targetPath = 'AGENTS.md';
+        if (locationOverride) {
+          targetPath = path.join(locationOverride, 'AGENTS.override.md');
+          console.log(`   📁 Installing Agents.md package to custom location: ${targetPath}`);
+        }
+        destPath = targetPath;
+
+        if (await fileExists(destPath)) {
+          if (options.force) {
+            console.log(`   ⚠️  ${destPath} already exists - overwriting (forced).`);
+          } else {
+            console.log(`   ⚠️  ${destPath} already exists.`);
+            const overwrite = await promptYesNo(
+              `   Overwrite existing ${destPath}? (y/N): `,
+              `   ⚠️  Non-interactive terminal detected. Remove or rename ${destPath} to continue.`
+            );
+            if (!overwrite) {
+              console.log(`   🚫 Skipping install to avoid overwriting ${destPath}`);
+              success = true;
+              return;
+            }
+          }
+        }
       } else if (effectiveFormat === 'copilot') {
         // Official GitHub Copilot naming conventions
         if (effectiveSubtype === 'chatmode') {
@@ -378,10 +560,80 @@ export async function handleInstall(
         }
       }
 
+      // Special handling for Claude hooks - merge into settings.json
+      if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
+        const { readFile } = await import('fs/promises');
+
+        // Parse the hook configuration from the downloaded file
+        let hookConfig: any;
+        try {
+          hookConfig = JSON.parse(mainFile);
+        } catch (err) {
+          throw new Error(`Invalid hook configuration: ${err}. Hook file must be valid JSON.`);
+        }
+
+        // Generate unique hook ID for this installation
+        const hookId = `${packageId}@${actualVersion || version}`;
+
+        // Read existing settings.json if it exists
+        let existingSettings: any = { hooks: {} };
+        if (await fileExists(destPath)) {
+          try {
+            const existingContent = await readFile(destPath, 'utf-8');
+            existingSettings = JSON.parse(existingContent);
+            if (!existingSettings.hooks) {
+              existingSettings.hooks = {};
+            }
+          } catch (err) {
+            console.log(`   ⚠️  Warning: Could not parse existing settings.json, creating new one.`);
+            existingSettings = { hooks: {} };
+          }
+        }
+
+        // Track which events this hook adds to
+        const events: string[] = [];
+
+        // Merge the new hook configuration
+        // Assume the downloaded file contains a hooks object
+        if (hookConfig.hooks) {
+          for (const [event, eventHooks] of Object.entries(hookConfig.hooks)) {
+            if (!existingSettings.hooks[event]) {
+              existingSettings.hooks[event] = [];
+            }
+
+            // Add hook ID to each hook config for tracking
+            const hooksWithId = (eventHooks as any[]).map(hook => ({
+              ...hook,
+              __prpm_hook_id: hookId, // Internal tracking ID
+            }));
+
+            // Add new hooks to the event
+            existingSettings.hooks[event] = [
+              ...existingSettings.hooks[event],
+              ...hooksWithId
+            ];
+
+            events.push(event);
+          }
+          console.log(`   ✓ Merged hook configuration into settings.json`);
+
+          // Store metadata for lockfile
+          hookMetadata = { events, hookId };
+        }
+
+        mainFile = JSON.stringify(existingSettings, null, 2);
+      }
+
       await saveFile(destPath, mainFile);
       fileCount = 1;
     } else {
-      const destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      let destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+
+      if (locationOverride && effectiveFormat === 'cursor') {
+        const relativeDestDir = destDir.startsWith('./') ? destDir.slice(2) : destDir;
+        destDir = path.join(locationOverride, relativeDestDir);
+        console.log(`   📁 Installing Cursor package to custom location: ${destDir}`);
+      }
 
       // Multi-file package - create directory for package
       // For Claude skills, destDir already includes package name, so use it directly
@@ -515,15 +767,17 @@ export async function handleInstall(
 
     // Update or create lock file
     const updatedLockfile = lockfile || createLockfile();
-    const actualVersion = version === 'latest' ? pkg.latest_version?.version : version;
 
     addToLockfile(updatedLockfile, packageId, {
       version: actualVersion || version,
       tarballUrl,
-      format: pkg.format, // Preserve original package format
-      subtype: pkg.subtype, // Preserve original package subtype
+      format: effectiveFormat, // Installed format
+      subtype: effectiveSubtype, // Installed subtype
+      sourceFormat: pkg.format,
+      sourceSubtype: pkg.subtype,
       installedPath: destPath,
       fromCollection: options.fromCollection,
+      hookMetadata, // Track hook installation metadata for uninstall
     });
 
     setPackageIntegrity(updatedLockfile, packageId, tarball);
@@ -581,7 +835,6 @@ async function extractTarball(tarball: Buffer, packageId: string): Promise<Extra
   const zlib = await import('zlib');
   const fs = await import('fs');
   const os = await import('os');
-  const path = await import('path');
 
   return new Promise((resolve, reject) => {
     // Decompress gzip first
@@ -682,6 +935,7 @@ export async function installFromLockfile(options: {
   as?: string;
   subtype?: Subtype;
   frozenLockfile?: boolean;
+  location?: string;
 }): Promise<void> {
   try {
     // Read lockfile
@@ -715,12 +969,24 @@ export async function installFromLockfile(options: {
 
         console.log(`  Installing ${packageId}...`);
 
+        let locationOverride = options.location;
+        if (!locationOverride && lockEntry.format === 'agents.md' && lockEntry.installedPath) {
+          const baseName = path.basename(lockEntry.installedPath);
+          if (baseName === 'AGENTS.override.md') {
+            locationOverride = path.dirname(lockEntry.installedPath);
+          } else if (baseName !== 'AGENTS.md') {
+            // If the lockfile contains a non-standard filename, honor its directory
+            locationOverride = path.dirname(lockEntry.installedPath);
+          }
+        }
+
         await handleInstall(packageSpec, {
           version: lockEntry.version,
           as: options.as || lockEntry.format,
           subtype: options.subtype || lockEntry.subtype as Subtype | undefined,
           frozenLockfile: options.frozenLockfile,
           force: true, // Force reinstall when installing from lockfile
+          location: locationOverride,
         });
 
         successCount++;
@@ -763,9 +1029,10 @@ export function createInstallCommand(): Command {
     .option('--version <version>', 'Specific version to install')
     .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)')
     .option('--format <format>', 'Alias for --as')
+    .option('--location <path>', 'Custom location for installed files (Agents.md or nested Cursor rules)')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean }) => {
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean; location?: string }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = options.format || options.as;
 
@@ -778,7 +1045,8 @@ export function createInstallCommand(): Command {
         await installFromLockfile({
           as: convertTo,
           subtype: options.subtype as Subtype | undefined,
-          frozenLockfile: options.frozenLockfile
+          frozenLockfile: options.frozenLockfile,
+          location: options.location,
         });
         return;
       }
@@ -787,7 +1055,8 @@ export function createInstallCommand(): Command {
         version: options.version,
         as: convertTo,
         subtype: options.subtype as Subtype | undefined,
-        frozenLockfile: options.frozenLockfile
+        frozenLockfile: options.frozenLockfile,
+        location: options.location,
       });
     });
 

@@ -185,6 +185,7 @@ prpm install <package-name> [additional-packages...] [options]
 - `--as <format>` - Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)
 - `--format <format>` - Alias for `--as`
 - `--subtype <subtype>` - Specify subtype when converting (skill, agent, rule, etc.)
+- `--location <path>` - Custom installation location (Cursor and agents.md only)
 - `--frozen-lockfile` - Fail if lock file needs to be updated (for CI)
 
 **Examples:**
@@ -205,6 +206,12 @@ prpm install @username/typescript-rules --as cursor
 # Install and convert to Claude format
 prpm install @username/typescript-rules --format claude
 
+# Install to custom location (Cursor rules in monorepo)
+prpm install @username/react-rules --as cursor --location packages/frontend
+
+# Install agents.md to custom directory
+prpm install @username/project-context --as agents.md --location docs
+
 # Frozen lockfile (for CI)
 prpm install @username/typescript-rules --frozen-lockfile
 ```
@@ -214,6 +221,30 @@ prpm install @username/typescript-rules --frozen-lockfile
 2. Files are extracted to the appropriate directory (`.cursor/`, `.claude/`, etc.)
 3. Package is registered in `prpm.lock`
 4. Format-specific configuration is applied (MDC headers for Cursor, etc.)
+
+**Custom Locations (`--location`):**
+
+The `--location` flag allows you to install packages to custom directories. This is useful for:
+- **Monorepos**: Install Cursor rules in specific packages (e.g., `--location packages/backend` creates `packages/backend/.cursor/rules/`)
+- **Nested projects**: Keep different contexts in subdirectories
+- **Agents.md**: Create `AGENTS.override.md` in custom locations (e.g., `--location docs` creates `docs/AGENTS.override.md`)
+
+**Supported formats:**
+- `cursor` - Installs to nested `.cursor/` directory within the specified path
+- `agents.md` - Creates `AGENTS.override.md` in the specified path
+
+**Example directory structure:**
+```bash
+# Install to packages/frontend
+prpm install @user/react-rules --as cursor --location packages/frontend
+
+# Result:
+packages/
+  frontend/
+    .cursor/
+      rules/
+        react-rules.mdc
+```
 
 ---
 

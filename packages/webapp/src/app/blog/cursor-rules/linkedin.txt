@@ -1,0 +1,20 @@
+Cursor rules are persistent instructions that guide AI assistants in Cursor IDE. They're injected at the prompt level for every AI interaction to maintain consistent coding patterns—no more repeating yourself in every chat.
+
+According to teams using cursor rules, they report 40-60% fewer revision cycles on AI-generated code because the AI gets it right the first time.
+
+But here's the challenge: most developers treat cursor rules like .eslintrc files—copy-paste between projects, manually check for updates, and hope they're using the right patterns. There's been no proper package management or version control.
+
+That's exactly why we built PRPM. Now you can:
+• Install curated cursor rules: prpm install @sanjeed5/react
+• Get automatic updates with version control
+• Convert rules to work across Cursor, Claude, Windsurf, and other AI IDEs
+• Browse 7,000+ community-vetted packages with quality indicators
+
+We just published the complete guide covering everything from MDC format and best practices to the top packages across frontend, backend, testing, security, DevOps, and more.
+
+Whether you're just getting started with cursor rules or looking to level up your AI-assisted development workflow, this guide has what you need.
+
+Read the full guide:
+https://prpm.dev/blog/cursor-rules
+
+#AI #DeveloperTools #CursorIDE #SoftwareEngineering #DevEx #AIAssistedDevelopment

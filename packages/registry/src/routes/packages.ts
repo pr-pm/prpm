@@ -19,6 +19,25 @@ import type {
   ResolveQuery,
 } from '../types/requests.js';
 
+// Reusable enum constants for schema validation
+const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] as const;
+const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'] as const;
+
+// Columns to select for list results (excludes full_content to reduce payload size)
+const LIST_COLUMNS = `
+  p.id, p.name, p.display_name, p.description, p.author_id, p.org_id,
+  p.format, p.subtype, p.tags, p.keywords, p.category,
+  p.visibility, p.featured, p.verified, p.official,
+  p.total_downloads, p.weekly_downloads, p.monthly_downloads, p.version_count,
+  p.downloads_last_7_days, p.trending_score,
+  p.rating_average, p.rating_count, p.quality_score,
+  p.install_count, p.view_count,
+  p.license, p.license_text, p.license_url,
+  p.snippet, p.repository_url, p.homepage_url, p.documentation_url,
+  p.created_at, p.updated_at, p.last_published_at,
+  p.deprecated, p.deprecated_reason
+`.trim();
+
 export async function packageRoutes(server: FastifyInstance) {
   // List packages with pagination
   server.get('/', {
@@ -29,8 +48,8 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           search: { type: 'string' },
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
           category: { type: 'string' },
           featured: { type: 'boolean' },
           verified: { type: 'boolean' },
@@ -1216,9 +1235,8 @@ export async function packageRoutes(server: FastifyInstance) {
     // Calculate trending score based on recent downloads vs historical average
     const result = await query<Package>(
       server,
-      `SELECT p.*,
-        p.downloads_last_7_days as recent_downloads,
-        p.trending_score
+      `SELECT ${LIST_COLUMNS},
+        p.downloads_last_7_days as recent_downloads
        FROM packages p
        WHERE p.visibility = 'public'
          AND p.downloads_last_7_days > 0
@@ -1246,8 +1264,8 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
         },
       },
     },
@@ -1282,10 +1300,7 @@ export async function packageRoutes(server: FastifyInstance) {
 
     const result = await query<Package>(
       server,
-      `SELECT p.*,
-        p.total_downloads,
-        p.weekly_downloads,
-        p.install_count
+      `SELECT ${LIST_COLUMNS}
        FROM packages p
        WHERE ${whereClause}
        ORDER BY p.total_downloads DESC, p.install_count DESC
@@ -1608,7 +1623,7 @@ export async function packageRoutes(server: FastifyInstance) {
    * REQUIRES: X-SSG-Token header for authentication
    * RATE LIMITING: Exempt from global rate limits (see index.ts allowList)
    * PAGINATION: Default 500 packages per request (max 1000 to avoid payload size issues)
-   *             With 4000 packages: 8 requests needed to fetch all
+   *             With 7000+ packages: ~8-14 requests needed to fetch all
    * PAYLOAD SIZE: ~500 packages × ~10KB avg = ~5MB response (safe for JSON parsing)
    */
   server.get(
@@ -1660,7 +1675,8 @@ export async function packageRoutes(server: FastifyInstance) {
         server.log.info({ format, limit, offset }, 'Fetching SSG data');
 
         // Build WHERE clause
-        const conditions: string[] = ["visibility = 'public'", "deprecated = FALSE"];
+        // NOTE: Includes deprecated packages - they still have pages, just with deprecation warnings
+        const conditions: string[] = ["visibility = 'public'"];
         const params: unknown[] = [];
         let paramIndex = 1;
 
@@ -1703,6 +1719,7 @@ export async function packageRoutes(server: FastifyInstance) {
             p.total_downloads,
             p.weekly_downloads,
             p.version_count,
+            p.stars,
             p.rating_average,
             p.rating_count,
             p.verified,
@@ -1727,7 +1744,7 @@ export async function packageRoutes(server: FastifyInstance) {
             LIMIT 1
           ) pv ON true
           WHERE ${conditions.join(' AND ')}
-          ORDER BY p.total_downloads DESC
+          ORDER BY p.total_downloads DESC, p.id ASC
           LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
           params
         );
@@ -1748,6 +1765,7 @@ export async function packageRoutes(server: FastifyInstance) {
           total_downloads: row.total_downloads || 0,
           weekly_downloads: row.weekly_downloads || 0,
           version_count: row.version_count || 0,
+          stars: row.stars || 0,
           rating_average: row.rating_average ? parseFloat(row.rating_average) : null,
           rating_count: row.rating_count || 0,
           verified: row.verified || false,
@@ -1880,6 +1898,155 @@ export async function packageRoutes(server: FastifyInstance) {
         return reply.code(201).send({
           success: false,
           message: 'Installation tracking skipped',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/v1/packages/:packageId/star
+   * Star/unstar a package
+   */
+  server.post(
+    '/:packageId/star',
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: 'Star or unstar a package',
+        tags: ['packages', 'stars'],
+        params: {
+          type: 'object',
+          required: ['packageId'],
+          properties: {
+            packageId: { type: 'string', description: 'Package ID (UUID)' },
+          },
+        },
+        body: {
+          type: 'object',
+          required: ['starred'],
+          properties: {
+            starred: { type: 'boolean' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { packageId } = request.params as { packageId: string };
+      const { starred } = request.body as { starred: boolean };
+      const user = request.user;
+
+      try {
+        if (starred) {
+          // Add star
+          await server.pg.query(
+            `
+            INSERT INTO package_stars (package_id, user_id)
+            VALUES ($1, $2)
+            ON CONFLICT DO NOTHING
+          `,
+            [packageId, user.user_id]
+          );
+        } else {
+          // Remove star
+          await server.pg.query(
+            `
+            DELETE FROM package_stars
+            WHERE package_id = $1 AND user_id = $2
+          `,
+            [packageId, user.user_id]
+          );
+        }
+
+        // Get updated star count
+        const result = await server.pg.query(
+          `SELECT stars FROM packages WHERE id = $1`,
+          [packageId]
+        );
+
+        return reply.send({
+          starred,
+          stars: result.rows[0]?.stars || 0,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Failed to star package',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/v1/packages/starred
+   * Get user's starred packages
+   */
+  server.get(
+    '/starred',
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: 'Get packages starred by the current user',
+        tags: ['packages', 'stars'],
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
+            offset: { type: 'number', default: 0, minimum: 0 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { limit = 20, offset = 0 } = request.query as { limit?: number; offset?: number };
+      const user = request.user;
+
+      try {
+        const result = await server.pg.query(
+          `
+          SELECT
+            p.*,
+            ps.starred_at,
+            u.username as author_username,
+            u.verified_author,
+            u.avatar_url as author_avatar_url,
+            o.name as org_name,
+            o.is_verified as org_verified,
+            o.avatar_url as org_avatar_url
+          FROM package_stars ps
+          JOIN packages p ON ps.package_id = p.id
+          LEFT JOIN users u ON p.author_id = u.id
+          LEFT JOIN organizations o ON p.org_id = o.id
+          WHERE ps.user_id = $1
+          ORDER BY ps.starred_at DESC
+          LIMIT $2 OFFSET $3
+        `,
+          [user.user_id, limit, offset]
+        );
+
+        const packages = result.rows.map((row) => ({
+          ...row,
+          author: row.author_username ? {
+            username: row.author_username,
+            verified_author: row.verified_author,
+            avatar_url: row.author_avatar_url,
+          } : null,
+          organization: row.org_name ? {
+            name: row.org_name,
+            is_verified: row.org_verified,
+            avatar_url: row.org_avatar_url,
+          } : null,
+        }));
+
+        return reply.send({
+          packages,
+          total: packages.length,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Failed to get starred packages',
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     }

@@ -1,0 +1,493 @@
+---
+title: 'Claude Code Hooks'
+description: 'Learn how to install and use Claude Code hooks in your projects'
+---
+
+# Claude Code Hooks
+
+Claude Code hooks allow you to execute custom TypeScript logic in response to lifecycle events like session start, tool usage, and user prompts. Hooks are powerful automation tools that can enforce workflows, add context, or modify behavior.
+
+<Tip>
+**New to hooks?** Install the hook writer skill to help you create hooks:
+
+```bash
+prpm install @prpm/typescript-hook-writer-skill
+```
+
+This skill teaches AI how to write TypeScript hooks with proper structure, best practices, and error handling.
+</Tip>
+
+## What are Hooks?
+
+Hooks are TypeScript functions that run automatically when specific events occur in Claude Code:
+
+- **SessionStart**: Run code when a new conversation begins
+- **UserPromptSubmit**: Intercept and modify user prompts
+- **ToolUse**: Monitor or block tool usage
+- **Custom Events**: Create your own hook types
+
+## Installation
+
+### From PRPM Registry
+
+The easiest way to install hooks is from the PRPM registry:
+
+```bash
+# Install a specific hook package
+prpm install @prpm/my-hook
+
+# Install multiple hooks at once
+prpm install @prpm/hook-one @prpm/hook-two
+
+# Install a collection of related hooks
+prpm install @prpm/workspace-hooks-collection
+```
+
+### Manual Installation
+
+You can also create hooks manually:
+
+1. Create a TypeScript file in `.claude/hooks/`
+2. Add a `hook.json` manifest file
+3. Register the hook in `prpm.json`
+
+Example structure:
+```
+.claude/hooks/my-hook/
+├── hook.ts          # TypeScript implementation
+├── hook.json        # Hook metadata
+└── dist/            # Compiled JavaScript (generated)
+```
+
+## Hook Structure
+
+### hook.json
+
+Every hook needs a `hook.json` manifest:
+
+```json
+{
+  "name": "my-hook",
+  "version": "1.0.0",
+  "description": "My custom hook",
+  "type": "SessionStart",
+  "enabled": true,
+  "config": {
+    "timeout": 5000
+  }
+}
+```
+
+**Fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Hook name (kebab-case) |
+| `version` | string | Yes | Semver version |
+| `description` | string | Yes | What the hook does |
+| `type` | string | Yes | Hook event type |
+| `enabled` | boolean | Yes | Whether hook is active |
+| `config` | object | No | Hook-specific configuration |
+
+### hook.ts
+
+Your TypeScript implementation:
+
+```typescript
+import { SessionStartHook } from '@claude/hooks';
+
+export default async function myHook(context: SessionStartHook['context']): Promise<SessionStartHook['result']> {
+  // Your hook logic here
+
+  return {
+    additionalContext: 'Extra context for Claude',
+    systemReminders: ['Important reminder for this session']
+  };
+}
+```
+
+## Hook Types
+
+### SessionStart
+
+Runs when a new Claude Code session begins. Perfect for adding project-specific context or reminders.
+
+**Use Cases:**
+- Load project configuration
+- Add coding standards reminders
+- Check git status
+- Load environment-specific context
+
+**Example:**
+
+```typescript
+import { SessionStartHook } from '@claude/hooks';
+
+export default async function sessionStart(
+  context: SessionStartHook['context']
+): Promise<SessionStartHook['result']> {
+  const projectInfo = `
+    Project: ${context.workingDirectory}
+    Git Branch: ${context.gitBranch || 'none'}
+  `;
+
+  return {
+    additionalContext: projectInfo,
+    systemReminders: [
+      'Follow TypeScript strict mode',
+      'Write tests for all new features'
+    ]
+  };
+}
+```
+
+### UserPromptSubmit
+
+Intercepts user prompts before they reach Claude. Can modify, block, or add context to prompts.
+
+**Use Cases:**
+- Add context automatically
+- Enforce prompt patterns
+- Block certain requests
+- Log user interactions
+
+**Example:**
+
+```typescript
+import { UserPromptSubmitHook } from '@claude/hooks';
+
+export default async function promptSubmit(
+  context: UserPromptSubmitHook['context']
+): Promise<UserPromptSubmitHook['result']> {
+  const { userPrompt } = context;
+
+  // Add context to bug-related prompts
+  if (userPrompt.includes('bug') || userPrompt.includes('fix')) {
+    return {
+      additionalContext: 'Check the error logs in /logs for details',
+      modifiedPrompt: `${userPrompt}\n\nReminder: Follow systematic debugging workflow`
+    };
+  }
+
+  return { status: 'continue' };
+}
+```
+
+### ToolUse
+
+Monitors tool usage and can block dangerous operations.
+
+**Use Cases:**
+- Prevent accidental deletions
+- Log tool usage
+- Require confirmation for dangerous operations
+- Enforce tool usage patterns
+
+**Example:**
+
+```typescript
+import { ToolUseHook } from '@claude/hooks';
+
+export default async function toolUse(
+  context: ToolUseHook['context']
+): Promise<ToolUseHook['result']> {
+  const { toolName, toolInput } = context;
+
+  // Block deletion of important files
+  if (toolName === 'Edit' && toolInput.file_path?.includes('/config/')) {
+    return {
+      status: 'blocked',
+      message: 'Editing config files requires manual review'
+    };
+  }
+
+  return { status: 'continue' };
+}
+```
+
+## Registering Hooks
+
+After creating a hook, register it in your `prpm.json`:
+
+```json
+{
+  "name": "my-project",
+  "packages": [
+    {
+      "name": "my-hook",
+      "version": "1.0.0",
+      "description": "My custom hook",
+      "format": "claude",
+      "subtype": "hook",
+      "files": [
+        ".claude/hooks/my-hook/hook.ts",
+        ".claude/hooks/my-hook/hook.json",
+        ".claude/hooks/my-hook/dist/hook.js"
+      ]
+    }
+  ]
+}
+```
+
+## Building Hooks
+
+Hooks must be compiled from TypeScript to JavaScript before Claude Code can use them.
+
+### Automatic Building
+
+Use the `scripts` field in your root `prpm.json` to automatically build hooks before publishing:
+
+```json
+{
+  "name": "my-project",
+  "scripts": {
+    "prepublishOnly": "cd .claude/hooks/my-hook && npm run build"
+  },
+  "packages": [...]
+}
+```
+
+When you run `prpm publish`, the `prepublishOnly` script runs automatically, ensuring hooks are always built before publishing.
+
+### Manual Building
+
+```bash
+cd .claude/hooks/my-hook
+npm run build  # or: esbuild hook.ts --outfile=dist/hook.js --bundle --platform=node
+```
+
+## Best Practices
+
+### 1. Use prepublishOnly Scripts
+
+Always use `prepublishOnly` to build hooks automatically:
+
+```json
+{
+  "scripts": {
+    "prepublishOnly": "cd packages/hooks && npm run build"
+  }
+}
+```
+
+This prevents publishing stale JavaScript and keeps your dist files in sync.
+
+### 2. Keep Hooks Fast
+
+Hooks run on every event - keep them performant:
+
+```typescript
+// ✅ Good: Fast and simple
+export default async function myHook(context) {
+  return { additionalContext: 'Quick context' };
+}
+
+// ❌ Bad: Slow and blocking
+export default async function myHook(context) {
+  await fetchFromAPI();  // Blocks session start!
+  await processLargeFile();  // Too slow!
+  return { additionalContext: 'Slow context' };
+}
+```
+
+### 3. Handle Errors Gracefully
+
+Don't let hook errors crash sessions:
+
+```typescript
+export default async function myHook(context) {
+  try {
+    // Your hook logic
+    return { status: 'continue' };
+  } catch (error) {
+    console.error('Hook error:', error);
+    // Continue anyway - don't block the session
+    return { status: 'continue' };
+  }
+}
+```
+
+### 4. Use TypeScript Strictly
+
+Enable strict mode for type safety:
+
+```typescript
+import { SessionStartHook } from '@claude/hooks';
+
+// Fully typed hook
+export default async function myHook(
+  context: SessionStartHook['context']
+): Promise<SessionStartHook['result']> {
+  // TypeScript catches errors before runtime
+  return {
+    additionalContext: context.workingDirectory  // Type-safe!
+  };
+}
+```
+
+### 5. Document Your Hooks
+
+Add comments explaining what your hooks do:
+
+```typescript
+/**
+ * SessionStart hook that loads project-specific coding standards.
+ *
+ * Reads .standards.json and adds rules to Claude's context.
+ * Falls back to defaults if file doesn't exist.
+ */
+export default async function loadStandards(context) {
+  // Implementation
+}
+```
+
+## Advanced Configuration
+
+### Conditional Hooks
+
+Enable hooks only in certain conditions:
+
+```json
+{
+  "name": "production-hook",
+  "type": "SessionStart",
+  "enabled": true,
+  "config": {
+    "enabledEnvironments": ["production"],
+    "enabledBranches": ["main", "release/*"]
+  }
+}
+```
+
+### Hook Priorities
+
+Control hook execution order with priorities:
+
+```json
+{
+  "name": "early-hook",
+  "type": "SessionStart",
+  "priority": 100
+}
+```
+
+Higher priority = runs first.
+
+### Shared Configuration
+
+Use `config` to share settings between hook code and Claude:
+
+```json
+{
+  "name": "my-hook",
+  "config": {
+    "apiEndpoint": "https://api.example.com",
+    "maxRetries": 3
+  }
+}
+```
+
+Access in your hook:
+
+```typescript
+export default async function myHook(context) {
+  const { apiEndpoint, maxRetries } = context.hookConfig;
+  // Use config values
+}
+```
+
+## Troubleshooting
+
+### Hook Not Running
+
+**Check:**
+1. Is `enabled: true` in hook.json?
+2. Is the hook registered in prpm.json?
+3. Is dist/hook.js compiled and up to date?
+4. Does Claude Code have permission to read the file?
+
+### Build Errors
+
+**Common issues:**
+- Missing dependencies: Run `npm install` in the hook directory
+- TypeScript errors: Check your type definitions
+- Import errors: Verify @claude/hooks is installed
+
+### Performance Issues
+
+**Solutions:**
+- Move slow operations outside hooks
+- Cache expensive computations
+- Use async operations carefully
+- Set timeout in hook.json config
+
+## Examples
+
+### Workspace Standards Hook
+
+```typescript
+import { SessionStartHook } from '@claude/hooks';
+import { readFile } from 'fs/promises';
+
+export default async function workspaceStandards(
+  context: SessionStartHook['context']
+): Promise<SessionStartHook['result']> {
+  try {
+    const standards = await readFile('.standards.json', 'utf-8');
+    const parsed = JSON.parse(standards);
+
+    return {
+      systemReminders: parsed.reminders || [],
+      additionalContext: `Workspace standards loaded: ${parsed.name}`
+    };
+  } catch {
+    return {
+      systemReminders: ['Follow project best practices']
+    };
+  }
+}
+```
+
+### Git Branch Reminder
+
+```typescript
+import { SessionStartHook } from '@claude/hooks';
+
+export default async function gitBranchReminder(
+  context: SessionStartHook['context']
+): Promise<SessionStartHook['result']> {
+  const { gitBranch } = context;
+
+  if (gitBranch === 'main' || gitBranch === 'master') {
+    return {
+      systemReminders: [
+        '⚠️ You are on the main branch!',
+        'Consider creating a feature branch for changes'
+      ]
+    };
+  }
+
+  return { status: 'continue' };
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Publishing Hooks"
+    icon="upload"
+    href="/publishing/getting-started"
+  >
+    Share your hooks with others
+  </Card>
+  <Card
+    title="Hook Writer Skill"
+    icon="code"
+  >
+    Install the hook writer skill to help create hooks
+    ```bash
+    prpm install @prpm/typescript-hook-writer-skill
+    ```
+  </Card>
+</CardGroup>

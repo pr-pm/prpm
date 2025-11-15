@@ -97,6 +97,7 @@ export interface Package {
   weekly_downloads: number;
   monthly_downloads: number;
   version_count: number;
+  stars?: number; // Number of users who starred this package
   quality_score?: number | string;
   quality_explanation?: string;
   rating_average?: number;

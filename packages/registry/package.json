@@ -49,7 +49,7 @@
     "@fastify/swagger-ui": "^3.1.0",
     "@nangohq/node": "^0.69.5",
     "@opensearch-project/opensearch": "^2.5.0",
-    "@pr-pm/types": "^0.2.6",
+    "@pr-pm/types": "^1.0.0",
     "bcrypt": "^5.1.1",
     "dotenv": "^17.2.3",
     "fastify": "^4.26.2",

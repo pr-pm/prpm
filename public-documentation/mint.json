@@ -52,6 +52,7 @@
       "group": "Guides",
       "pages": [
         "guides/playground",
+        "guides/claude-hooks",
         "guides/format-conversion",
         "guides/mcp-servers"
       ]

@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/claude-hook.schema.json",
+  "title": "Claude Hook Format",
+  "description": "JSON Schema for Claude Code Hooks - executable code triggered by events",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 64,
+          "description": "Hook identifier (lowercase letters, numbers, hyphens only)"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Brief overview of what the hook does"
+        },
+        "event": {
+          "type": "string",
+          "enum": [
+            "PreToolUse",
+            "PostToolUse",
+            "UserPromptSubmit",
+            "Notification",
+            "Stop",
+            "SubagentStop",
+            "PreCompact",
+            "SessionStart",
+            "SessionEnd"
+          ],
+          "description": "Event that triggers this hook"
+        },
+        "language": {
+          "type": "string",
+          "enum": ["bash", "typescript", "javascript", "python", "binary"],
+          "description": "Programming language of the hook"
+        },
+        "hookType": {
+          "type": "string",
+          "const": "hook",
+          "description": "Explicit marker for round-trip conversion"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown documentation with hook source code in code blocks"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "name": "session-logger",
+        "description": "Logs session start/end times for tracking",
+        "event": "SessionStart",
+        "language": "bash"
+      },
+      "content": "# Session Logger Hook\n\nLogs Claude Code session activity for tracking and debugging.\n\n## Source Code\n\n```bash\n#!/bin/bash\necho \"Session started at $(date)\" >> ~/.claude/session.log\n```"
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages, getPackageById, runCustomPrompt, getCurrentUser } from '../../lib/api'
 import type { PlaygroundMessage, Package } from '../../lib/api'
+import FeedbackPrompt from './FeedbackPrompt'
 import CustomPromptInput from './CustomPromptInput'
 
 interface PlaygroundInterfaceProps {
@@ -969,14 +970,29 @@ export default function PlaygroundInterface({
 
                           {/* Assistant Response */}
                           {exchange.assistant && (
-                            <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
-                              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                                Assistant
+                            <>
+                              <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
+                                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                                  Assistant
+                                </div>
+                                <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
+                                </div>
                               </div>
-                              <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
-                              </div>
-                            </div>
+
+                              {/* Feedback Prompt - shown after each response */}
+                              {!loading && currentSessionId && (
+                                <div className="px-3 sm:px-4 pb-3 sm:pb-4 bg-gray-50 dark:bg-gray-700/50">
+                                  <FeedbackPrompt
+                                    sessionId={currentSessionId}
+                                    exchangeIndex={exchange.index}
+                                    onFeedbackSubmitted={() => {
+                                      console.log('Feedback submitted for exchange:', exchange.index);
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -1055,14 +1071,29 @@ export default function PlaygroundInterface({
 
                           {/* Assistant Response */}
                           {exchange.assistant && (
-                            <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
-                              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                                Assistant
+                            <>
+                              <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
+                                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                                  Assistant
+                                </div>
+                                <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
+                                </div>
                               </div>
-                              <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
-                              </div>
-                            </div>
+
+                              {/* Feedback Prompt - shown after each response */}
+                              {!loadingB && currentSessionIdB && (
+                                <div className="px-3 sm:px-4 pb-3 sm:pb-4 bg-gray-50 dark:bg-gray-700/50">
+                                  <FeedbackPrompt
+                                    sessionId={currentSessionIdB}
+                                    exchangeIndex={exchange.index}
+                                    onFeedbackSubmitted={() => {
+                                      console.log('Feedback submitted for Package B exchange:', exchange.index);
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}

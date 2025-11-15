@@ -62,7 +62,7 @@ describe('Install command - format conversion', () => {
     jest.restoreAllMocks();
   });
 
-  describe('--as flag', () => {
+  describe('--as flag (client-side conversion)', () => {
     it('should convert Claude package to Cursor format using --as', async () => {
       const mockPackage = {
         id: 'claude-skill',
@@ -78,15 +78,29 @@ describe('Install command - format conversion', () => {
         },
       };
 
+      // Sample Claude skill content
+      const claudeContent = `---
+name: test-skill
+description: A test skill
+tools: Read, Write
+---
+
+# Test Skill
+
+This is a test skill.
+
+## Principles
+- Write clean code
+- Test thoroughly`;
+
       mockClient.getPackage.mockResolvedValue(mockPackage);
-      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Claude Skill\n\nContent'));
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(claudeContent));
 
       await handleInstall('claude-skill', { as: 'cursor' });
 
-      // Should request conversion to cursor format
+      // Should download native format (no format parameter)
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        'https://example.com/package.tar.gz',
-        { format: 'cursor' }
+        'https://example.com/package.tar.gz'
       );
 
       // Should save to cursor directory
@@ -94,6 +108,10 @@ describe('Install command - format conversion', () => {
         expect.stringContaining('.cursor/rules'),
         expect.any(String)
       );
+
+      // Verify conversion happened - saved content should be in Cursor format
+      const savedContent = (saveFile as jest.Mock).mock.calls[0][1];
+      expect(savedContent).toContain('alwaysApply'); // Cursor frontmatter
     });
 
     it('should convert Cursor package to Claude format using --as', async () => {
@@ -111,28 +129,43 @@ describe('Install command - format conversion', () => {
         },
       };
 
+      // Sample Cursor rule content
+      const cursorContent = `---
+alwaysApply: true
+description: A test rule
+---
+
+# Test Rule
+
+This is a test cursor rule.`;
+
       mockClient.getPackage.mockResolvedValue(mockPackage);
-      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Cursor Rule\n\nContent'));
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(cursorContent));
 
       await handleInstall('cursor-rule', { as: 'claude' });
 
+      // Should download native format
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        'https://example.com/package.tar.gz',
-        { format: 'claude' }
+        'https://example.com/package.tar.gz'
       );
 
       expect(saveFile).toHaveBeenCalledWith(
         expect.stringContaining('.claude/'),
         expect.any(String)
       );
+
+      // Verify conversion - should have Claude frontmatter
+      const savedContent = (saveFile as jest.Mock).mock.calls[0][1];
+      expect(savedContent).toContain('name:'); // Claude frontmatter
+      expect(savedContent).toContain('description:');
     });
 
-    it('should convert to Windsurf format using --as', async () => {
+    it('should convert Claude to Windsurf format using --as', async () => {
       const mockPackage = {
-        id: 'generic-prompt',
-        name: 'generic-prompt',
-        format: 'generic',
-        subtype: 'prompt',
+        id: 'claude-skill',
+        name: 'claude-skill',
+        format: 'claude',
+        subtype: 'skill',
         tags: [],
         total_downloads: 25,
         verified: true,
@@ -142,14 +175,20 @@ describe('Install command - format conversion', () => {
         },
       };
 
-      mockClient.getPackage.mockResolvedValue(mockPackage);
-      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Generic Prompt\n\nContent'));
+      const claudeContent = `---
+name: windsurf-test
+description: Test for windsurf conversion
+---
 
-      await handleInstall('generic-prompt', { as: 'windsurf' });
+# Test Skill`;
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(claudeContent));
+
+      await handleInstall('claude-skill', { as: 'windsurf' });
 
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        'https://example.com/package.tar.gz',
-        { format: 'windsurf' }
+        'https://example.com/package.tar.gz'
       );
 
       expect(saveFile).toHaveBeenCalledWith(
@@ -173,24 +212,103 @@ describe('Install command - format conversion', () => {
         },
       };
 
+      const claudeContent = `---
+name: test-agent
+description: Test agent
+---
+
+# Test Agent`;
+
       mockClient.getPackage.mockResolvedValue(mockPackage);
-      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Claude Agent\n\nContent'));
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(claudeContent));
 
       await handleInstall('claude-agent', { as: 'continue' });
 
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        'https://example.com/package.tar.gz',
-        { format: 'continue' }
+        'https://example.com/package.tar.gz'
       );
 
       expect(saveFile).toHaveBeenCalledWith(
-        expect.stringContaining('.continue/'),
+        expect.stringContaining('.continue'),
+        expect.any(String)
+      );
+    });
+
+    it('should convert Claude to Kiro format', async () => {
+      const mockPackage = {
+        id: 'claude-skill',
+        name: 'test-kiro',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 30,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      const claudeContent = `---
+name: kiro-test
+description: Test for kiro
+---
+
+# Kiro Test`;
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(claudeContent));
+
+      await handleInstall('claude-skill', { as: 'kiro' });
+
+      expect(mockClient.downloadPackage).toHaveBeenCalledWith(
+        'https://example.com/package.tar.gz'
+      );
+
+      const savedContent = (saveFile as jest.Mock).mock.calls[0][1];
+      expect(savedContent).toContain('inclusion:'); // Kiro frontmatter
+    });
+
+    it('should convert Claude to Copilot format', async () => {
+      const mockPackage = {
+        id: 'claude-skill',
+        name: 'copilot-test',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 20,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      const claudeContent = `---
+name: copilot-test
+description: Test for copilot
+---
+
+# Copilot Test`;
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(claudeContent));
+
+      await handleInstall('claude-skill', { as: 'copilot' });
+
+      expect(mockClient.downloadPackage).toHaveBeenCalledWith(
+        'https://example.com/package.tar.gz'
+      );
+
+      // Copilot uses official GitHub naming: .github/instructions/NAME.instructions.md
+      expect(saveFile).toHaveBeenCalledWith(
+        expect.stringContaining('.github/instructions/'),
         expect.any(String)
       );
     });
   });
 
-  describe('Install in native format', () => {
+  describe('Install in native format (no conversion)', () => {
     it('should install Claude skill in native format without conversion', async () => {
       const mockPackage = {
         id: 'claude-skill',
@@ -211,10 +329,9 @@ describe('Install command - format conversion', () => {
 
       await handleInstall('claude-skill', {});
 
-      // Should request native format (claude)
+      // Should download without format parameter (native format)
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        'https://example.com/package.tar.gz',
-        { format: 'claude' }
+        'https://example.com/package.tar.gz'
       );
 
       // Should save to claude directory with skill subtype
@@ -244,10 +361,9 @@ describe('Install command - format conversion', () => {
 
       await handleInstall('cursor-rule', {});
 
-      // Should request native format (cursor)
+      // Should download without format parameter
       expect(mockClient.downloadPackage).toHaveBeenCalledWith(
-        'https://example.com/package.tar.gz',
-        { format: 'cursor' }
+        'https://example.com/package.tar.gz'
       );
 
       expect(saveFile).toHaveBeenCalledWith(

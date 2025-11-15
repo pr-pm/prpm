@@ -328,7 +328,7 @@ npm run dev
             </div>
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6">
               <h4 className="text-lg font-bold text-green-400 mb-3">✅ Specific</h4>
-              <code className="text-sm text-gray-300">"Write unit tests for all utility functions. Maintain {'>'}80% coverage. Use Vitest."</code>
+              <code className="text-sm text-gray-300">"Write unit tests for all utility functions. Maintain {'>'} 80% coverage. Use Vitest."</code>
             </div>
           </div>
 
@@ -349,7 +349,7 @@ npm run dev
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">Using agents.md with PRPM</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
-            PRPM (Prompt Package Manager) makes it easy to discover, install, and share agents.md packages. With <strong>4,000+ packages</strong> across multiple formats, PRPM is the largest cross-platform repository for AI coding guidance.
+            PRPM (Prompt Package Manager) makes it easy to discover, install, and share agents.md packages. With <strong>7,000+ packages</strong> across multiple formats, PRPM is the largest cross-platform repository for AI coding guidance.
           </p>
 
           <h3 className="text-2xl font-bold text-white mt-8 mb-4">Installing agents.md Packages</h3>
