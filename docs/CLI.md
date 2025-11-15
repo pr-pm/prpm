@@ -7,7 +7,9 @@ Complete command-line reference for PRPM (Prompt Package Manager).
 - [Installation Commands](#installation-commands)
 - [Discovery Commands](#discovery-commands)
 - [Collection Commands](#collection-commands)
+- [Playground Commands](#playground-commands)
 - [Management Commands](#management-commands)
+- [Utility Commands](#utility-commands)
 - [Configuration Commands](#configuration-commands)
 - [Global Options](#global-options)
 
@@ -179,6 +181,65 @@ prpm popular
 prpm popular --category backend
 ```
 
+### `prpm ai-search`
+
+AI-powered semantic search for packages (free for all users).
+
+```bash
+# AI semantic search
+prpm ai-search "Python REST API framework"
+
+# Filter by format
+prpm ai-search "React hooks" --format cursor
+
+# Filter by subtype
+prpm ai-search "testing" --subtype skill
+
+# Limit results
+prpm ai-search "database" --limit 5
+```
+
+**Options:**
+- `--format <format>` - Filter by format (cursor, claude, continue, windsurf)
+- `--subtype <type>` - Filter by package subtype (skill, agent, rule, etc.)
+- `--limit <n>` - Limit number of results (default: 10, max: 50)
+
+**Features:**
+- Semantic understanding of queries
+- AI-enhanced results with use case descriptions
+- Match percentage scoring
+- "Similar to" suggestions
+- Best for recommendations
+
+### `prpm starred`
+
+View your starred packages and collections.
+
+```bash
+# View all starred items
+prpm starred
+
+# View only starred packages
+prpm starred --packages
+
+# View only starred collections
+prpm starred --collections
+
+# Filter by format
+prpm starred --format cursor
+
+# Limit results
+prpm starred --limit 50
+```
+
+**Options:**
+- `--packages` - Show only starred packages
+- `--collections` - Show only starred collections
+- `--format <format>` - Filter packages by format
+- `--limit <n>` - Limit number of results (default: 100)
+
+**Note:** Requires authentication (`prpm login`)
+
 ### `prpm info`
 
 Get detailed information about a package.
@@ -245,6 +306,112 @@ prpm collection info nextjs-pro@1.0.0
 - Installation instructions
 - MCP server configs (if applicable)
 
+## Playground Commands
+
+### `prpm playground`
+
+Test packages with AI models in an interactive playground.
+
+```bash
+# Interactive mode with default model
+prpm playground
+
+# Test specific package
+prpm playground --package <package-id>
+
+# Use specific model
+prpm playground --model sonnet
+prpm playground --model opus
+prpm playground --model gpt-4o
+
+# Load custom prompt from file
+prpm playground --prompt-file prompt.md
+
+# Single test (non-interactive)
+prpm playground --input "your test input" --package <package-id>
+```
+
+**Options:**
+- `--model <model>` - AI model (sonnet, opus, gpt-4o, gpt-4o-mini, gpt-4-turbo)
+- `--package <id>` - Package to test
+- `--prompt-file <path>` - Custom prompt file
+- `--input <text>` - Single test input (non-interactive)
+- `--compare` - Compare results across multiple models
+
+**Features:**
+- Interactive conversation mode
+- Multi-model testing
+- Credits-based usage
+- Session history
+- Feedback collection
+
+### `prpm credits`
+
+Check and manage playground credits balance.
+
+```bash
+# View credits balance
+prpm credits
+
+# View transaction history
+prpm credits history
+
+# View detailed breakdown
+prpm credits history --limit 50
+```
+
+**Options:**
+- `history` - Show credit transaction history
+- `--limit <n>` - Limit transaction history (default: 20)
+
+**Output includes:**
+- Total balance
+- Monthly credits (PRPM+ subscribers)
+- Rollover credits
+- Purchased credits
+- Usage statistics
+
+### `prpm subscribe`
+
+Manage PRPM+ subscription for monthly playground credits.
+
+```bash
+# View subscription status
+prpm subscribe
+
+# Subscribe to PRPM+
+prpm subscribe --plan plus
+
+# Manage subscription (opens web browser)
+prpm subscribe --manage
+```
+
+**Options:**
+- `--plan <plan>` - Subscribe to plan (plus)
+- `--manage` - Open subscription management page
+
+**PRPM+ Benefits:**
+- Monthly playground credits
+- Priority support
+- Early access to features
+
+### `prpm buy-credits`
+
+Purchase one-time playground credits.
+
+```bash
+# Buy credits (opens web browser to payment)
+prpm buy-credits
+
+# View available credit packages
+prpm buy-credits --plans
+```
+
+**Options:**
+- `--plans` - Show available credit packages
+
+**Note:** Opens browser for secure payment via Stripe
+
 ## Management Commands
 
 ### `prpm list`
@@ -303,6 +470,100 @@ prpm whoami
 Logged in as: khaliqgant
 Registry: https://registry.prpm.dev
 ```
+
+## Utility Commands
+
+### `prpm convert`
+
+Convert AI prompt files between different editor formats.
+
+```bash
+# Convert to Cursor format
+prpm convert prompt.md --to cursor
+
+# Convert to Claude format
+prpm convert prompt.md --to claude --subtype skill
+
+# Specify output location
+prpm convert prompt.md --to windsurf --output ./custom/path.md
+
+# Skip confirmation prompts
+prpm convert prompt.md --to continue --yes
+```
+
+**Options:**
+- `--to <format>` - Target format (cursor, claude, windsurf, continue, copilot, kiro, agents.md)
+- `--subtype <type>` - Package subtype (skill, agent, rule, slash-command)
+- `--output <path>` - Custom output path (default: auto-detected)
+- `--yes` - Skip confirmation prompts
+
+**Supported Formats:**
+- Cursor (.cursor/rules/*.mdc, .cursor/commands/*.md)
+- Claude (.claude/agents/*.md, .claude/skills/*/SKILL.md)
+- Windsurf (.windsurf/rules/*.md)
+- Continue (.continue/prompts/*.md)
+- GitHub Copilot (.github/copilot-instructions.md)
+- Kiro (.kiro/steering/*.md)
+- Agents.md (.agents/*/agent.md)
+
+**Features:**
+- Auto-detection of source format
+- Smart path resolution
+- Metadata preservation
+- Overwrite confirmation
+
+### `prpm init`
+
+Initialize a new package in the current directory.
+
+```bash
+# Interactive package creation
+prpm init
+
+# Create specific package type
+prpm init --type skill
+prpm init --type agent
+```
+
+**Creates:**
+- `prpm.json` - Package manifest
+- Template files for the package type
+- README with publishing instructions
+
+### `prpm schema`
+
+Validate or display package schema.
+
+```bash
+# Validate current prpm.json
+prpm schema validate
+
+# Show schema documentation
+prpm schema show
+```
+
+**Features:**
+- JSON schema validation
+- Helpful error messages
+- Format-specific validation
+
+### `prpm catalog`
+
+Generate a catalog of installed packages.
+
+```bash
+# Generate package catalog
+prpm catalog
+
+# Export to file
+prpm catalog --output catalog.json
+```
+
+**Output:**
+- List of all installed packages
+- Installation locations
+- Package metadata
+- JSON format for automation
 
 ## Configuration Commands
 

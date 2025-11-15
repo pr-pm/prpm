@@ -43,12 +43,27 @@ These files are maintained for reference but may be outdated. **Use [docs.prpm.d
 ### Package Management
 - **[CLI.md](./CLI.md)** - Complete CLI command reference
   - `prpm search` - Find packages
+  - `prpm ai-search` - AI-powered semantic search
   - `prpm install` - Install packages/collections
   - `prpm update` - Update installed packages
   - `prpm list` - View installed packages
+  - `prpm starred` - View starred packages
+  - `prpm playground` - Test packages with AI models
   - And more...
 
 ### Advanced Features
+- **[AI_SEARCH_USER_GUIDE.md](./AI_SEARCH_USER_GUIDE.md)** - AI-powered semantic search
+  - Understanding semantic search
+  - Using natural language queries
+  - Match scoring and explanations
+  - Web and CLI usage
+
+- **[PLAYGROUND_USER_GUIDE.md](./PLAYGROUND_USER_GUIDE.md)** - Testing packages with AI models
+  - Testing packages before installation
+  - Multi-model comparison
+  - Credits system
+  - Custom prompt testing
+
 - **[FORMAT_CONVERSION.md](./FORMAT_CONVERSION.md)** - How universal packages work
   - Server-side conversion to any editor format
   - Format detection and auto-install
@@ -127,6 +142,8 @@ For PRPM contributors and maintainers:
 - [PACKAGES.md](./PACKAGES.md) - About packages
 - [COLLECTIONS.md](./COLLECTIONS.md) - About collections
 - [COLLECTIONS_USAGE.md](./COLLECTIONS_USAGE.md) - Using collections
+- [AI_SEARCH_USER_GUIDE.md](./AI_SEARCH_USER_GUIDE.md) - AI search guide
+- [PLAYGROUND_USER_GUIDE.md](./PLAYGROUND_USER_GUIDE.md) - Playground testing
 
 **Advanced**
 - [FORMAT_CONVERSION.md](./FORMAT_CONVERSION.md) - Universal packages
