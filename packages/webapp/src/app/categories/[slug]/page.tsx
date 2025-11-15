@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getCategory, getPackagesByCategory, getCategories } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
-import type { CategoryWithChildren } from '@/lib/api'
+import type { CategoryWithChildren, Package } from '@/lib/api'
 import { Folder, Package as PackageIcon, Download, Star, ArrowLeft } from 'lucide-react'
 
 // Allow dynamic rendering for params not in generateStaticParams
@@ -131,7 +131,7 @@ export default async function CategoryPage({
               </div>
             ) : (
               <div className="space-y-4">
-                {packages.map((pkg) => (
+                {packages.map((pkg: Package) => (
                   <Link
                     key={pkg.id}
                     href={getPackageUrl(pkg.name, pkg.author_username || '')}
