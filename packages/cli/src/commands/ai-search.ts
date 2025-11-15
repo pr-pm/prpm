@@ -99,6 +99,17 @@ export async function handleAISearch(
     const config = await getConfig();
     const client = getRegistryClient(config);
 
+    if (!config.token) {
+      console.log('\n❌ Authentication required for AI search');
+      console.log('   Run `prpm login` to authenticate and unlock PRPM+ features.\n');
+      throw new Error('Authentication required');
+    }
+
+    const authHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.token}`,
+    };
+
     // Build search request
     const searchRequest: any = {
       query,
@@ -111,18 +122,50 @@ export async function handleAISearch(
       if (options.subtype) searchRequest.filters.subtype = options.subtype;
     }
 
-    // Call AI search endpoint (no authentication required!)
+    // Call AI search endpoint
     const registryUrl = config.registryUrl || 'https://registry.prpm.dev';
     const res = await fetch(`${registryUrl}/api/v1/ai-search`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        ...authHeaders,
       },
       body: JSON.stringify(searchRequest),
     });
 
+    if (res.status === 401) {
+      console.log('\n❌ Authentication failed. Please run `prpm login` and try again.\n');
+      throw new Error('Authentication failed');
+    }
+
+    if (res.status === 403) {
+      let upgradeInfo: any;
+      if (typeof (res as any).json === 'function') {
+        try {
+          upgradeInfo = await res.json();
+        } catch (parseError) {
+          // Ignore JSON parse errors for error responses
+        }
+      }
+
+      console.log('\n🚀 PRPM+ subscription required to access AI Search.');
+      if (upgradeInfo?.upgrade_info?.trial_available) {
+        console.log('   Good news: A PRPM+ trial is available at https://prpm.dev/plus\n');
+      } else {
+        console.log('   Upgrade at https://prpm.dev/plus to continue.\n');
+      }
+
+      throw new Error('PRPM+ subscription required');
+    }
+
     if (!res.ok) {
-      const errorText = await res.text().catch(() => 'Unknown error');
+      let errorText = 'Unknown error';
+      if (typeof (res as any).text === 'function') {
+        try {
+          errorText = await res.text();
+        } catch (readError) {
+          // Ignore body read errors
+        }
+      }
       throw new Error(`API error ${res.status}: ${errorText}`);
     }
 
