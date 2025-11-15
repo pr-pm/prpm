@@ -63,6 +63,7 @@ function SearchPageContent() {
   // Initialize state from URL params
   const [activeTab, setActiveTab] = useState<TabType>(initialParams.tab)
   const [query, setQuery] = useState(initialParams.query)
+  const [debouncedQuery, setDebouncedQuery] = useState(initialParams.query)
   const [selectedFormat, setSelectedFormat] = useState<Format | ''>(initialParams.format)
   const [selectedSubtype, setSelectedSubtype] = useState<Subtype | ''>(initialParams.subtype)
   const [selectedCategory, setSelectedCategory] = useState(initialParams.category)
@@ -81,8 +82,13 @@ function SearchPageContent() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set())
 
-  // AI Search state
-  const [aiSearchEnabled, setAiSearchEnabled] = useState(false)
+  // AI Search state - load from localStorage
+  const [aiSearchEnabled, setAiSearchEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('aiSearchEnabled') === 'true'
+    }
+    return false
+  })
   const [aiResults, setAiResults] = useState<AISearchResult[]>([])
   const [aiExecutionTime, setAiExecutionTime] = useState(0)
 
@@ -93,8 +99,33 @@ function SearchPageContent() {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
   const suggestionsTimeoutRef = useRef<NodeJS.Timeout>()
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const searchTimeoutRef = useRef<NodeJS.Timeout>()
 
   const limit = 20
+
+  // Save AI search toggle to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aiSearchEnabled', String(aiSearchEnabled))
+    }
+  }, [aiSearchEnabled])
+
+  // Debounce search query
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedQuery(query)
+    }, 500) // 500ms debounce for search
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [query])
 
   // Debounced function to fetch suggestions
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
@@ -279,8 +310,8 @@ function SearchPageContent() {
         let filteredPackages = allPackages.filter(pkg => starredIds.has(pkg.id))
 
         // Apply other filters client-side
-        if (query.trim()) {
-          const searchLower = query.toLowerCase()
+        if (debouncedQuery.trim()) {
+          const searchLower = debouncedQuery.toLowerCase()
           filteredPackages = filteredPackages.filter(
             pkg =>
               pkg.name.toLowerCase().includes(searchLower) ||
@@ -329,7 +360,7 @@ function SearchPageContent() {
           sort,
         }
 
-        if (query.trim()) params.q = query
+        if (debouncedQuery.trim()) params.q = debouncedQuery
         if (selectedFormat) params.format = selectedFormat
         if (selectedSubtype) params.subtype = selectedSubtype
         if (selectedCategory) params.category = selectedCategory
@@ -497,14 +528,14 @@ function SearchPageContent() {
 
   // AI Search (PRPM+ Feature)
   const performAISearch = async () => {
-    if (!query.trim() || !jwtToken) {
+    if (!debouncedQuery.trim() || !jwtToken) {
       return
     }
 
     setLoading(true)
     try {
       const result = await aiSearch({
-        query: query,
+        query: debouncedQuery,
         filters: {
           format: selectedFormat || undefined,
           subtype: selectedSubtype || undefined,
@@ -535,10 +566,13 @@ function SearchPageContent() {
     setCollections([])
     setAiResults([])
 
-    // Use AI search if enabled and on packages tab
-    if (aiSearchEnabled && activeTab === 'packages' && query.trim()) {
-      performAISearch()
-      return
+    // Use AI search if enabled and on packages tab (always, not just when query exists)
+    if (aiSearchEnabled && activeTab === 'packages') {
+      // Only perform AI search if there's a query, otherwise show empty state
+      if (debouncedQuery.trim()) {
+        performAISearch()
+      }
+      return // Don't fall back to regular search
     }
 
     if (activeTab === 'packages') {
@@ -553,7 +587,7 @@ function SearchPageContent() {
       fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page, aiSearchEnabled, starredOnly])
+  }, [activeTab, debouncedQuery, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page, aiSearchEnabled, starredOnly])
 
   // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {

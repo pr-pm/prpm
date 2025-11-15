@@ -42,7 +42,7 @@ export interface AISearchResult {
   subtype: string;
   author_id: string;
   author_username?: string;
-  version: string;
+  version?: string; // Optional - not in packages table directly
 
   // Quality metrics
   quality_score: number | string | null;

@@ -9,6 +9,15 @@
  *   npm run script:generate-embeddings -- --package-id abc-123  # Single package
  */
 
+import { config } from 'dotenv';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Load .env from app root (../../.env)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+config({ path: resolve(__dirname, '../../../.env') });
+
 import pg from 'pg';
 import Fastify from 'fastify';
 import fastifyPostgres from '@fastify/postgres';
@@ -71,13 +80,18 @@ async function main() {
     }
   });
 
-  await server.register(fastifyPostgres, {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5434'),
-    database: process.env.DB_NAME || 'prpm',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-  });
+  // Use DATABASE_URL if available, otherwise individual params
+  const dbConfig = process.env.DATABASE_URL
+    ? { connectionString: process.env.DATABASE_URL }
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5434'),
+        database: process.env.DB_NAME || 'prpm',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+      };
+
+  await server.register(fastifyPostgres, dbConfig);
 
   try {
     // Test connection

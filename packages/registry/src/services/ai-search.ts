@@ -18,14 +18,14 @@ import { ErrorMonitoringService } from './error-monitoring.js';
 const DEFAULT_CONFIG: AISearchConfig = {
   embedding_model: 'text-embedding-3-small',
   embedding_dimensions: 1536,
-  max_candidates: 50,
-  max_results: 10,
+  max_candidates: 100,  // More candidates for better coverage
+  max_results: 20,      // More results shown
   ranking_weights: {
-    semantic_similarity: 0.4,  // Reduced slightly to make room for keyword boost
-    quality_score: 0.3,
-    popularity: 0.2
+    semantic_similarity: 0.7,  // HEAVILY prioritize semantic match
+    quality_score: 0.2,        // Reduce quality impact
+    popularity: 0.1            // Reduce popularity impact
   },
-  min_similarity_threshold: 0.3
+  min_similarity_threshold: 0.35  // Keep threshold reasonable (35%+ similarity)
 };
 
 export class AISearchService {
@@ -283,7 +283,6 @@ export class AISearchService {
         p.subtype,
         p.author_id,
         u.username as author_username,
-        p.version,
         p.quality_score,
         p.total_downloads,
         COALESCE(s.stars_count, 0) as stars_count,
@@ -317,7 +316,6 @@ export class AISearchService {
       subtype: row.subtype,
       author_id: row.author_id,
       author_username: row.author_username,
-      version: row.version,
       quality_score: row.quality_score,
       total_downloads: row.total_downloads,
       stars_count: row.stars_count,
