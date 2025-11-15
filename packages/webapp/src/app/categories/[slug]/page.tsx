@@ -1,8 +1,4 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import { getCategory, getPackagesByCategory, getCategories } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
 import type { CategoryWithChildren } from '@/lib/api'
@@ -43,151 +39,97 @@ export async function generateStaticParams() {
   }
 }
 
-export default function CategoryPage() {
-  const params = useParams()
-  const slug = params?.slug as string
+export default async function CategoryPage({
+  params,
+}: {
+  params: { slug: string }
+}) {
+  try {
+    const [category, packagesResult] = await Promise.all([
+      getCategory(params.slug, true),
+      getPackagesByCategory(params.slug, {
+        limit: 100, // Show first 100 packages
+        offset: 0,
+        includeChildren: true
+      })
+    ])
 
-  const [category, setCategory] = useState<CategoryWithChildren | null>(null)
-  const [packages, setPackages] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
-  const limit = 20
+    const packages = packagesResult.packages
+    const total = packagesResult.total
 
-  useEffect(() => {
-    async function loadData() {
-      if (!slug) return
-
-      setLoading(true)
-      try {
-        const [categoryResult, packagesResult] = await Promise.all([
-          getCategory(slug, true),
-          getPackagesByCategory(slug, {
-            limit,
-            offset: (page - 1) * limit,
-            includeChildren: true
-          })
-        ])
-
-        setCategory(categoryResult)
-        setPackages(packagesResult.packages)
-        setTotal(packagesResult.total)
-      } catch (error) {
-        console.error('Failed to load category:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadData()
-  }, [slug, page])
-
-  if (loading) {
     return (
       <main className="min-h-screen bg-prpm-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-prpm-accent"></div>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
-  if (!category) {
-    return (
-      <main className="min-h-screen bg-prpm-dark">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-20">
-            <Folder className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Category Not Found</h2>
-            <p className="text-gray-400 mb-6">The category you're looking for doesn't exist</p>
-            <Link
-              href="/categories"
-              className="inline-block bg-prpm-accent hover:bg-prpm-accent-light text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Browse All Categories
-            </Link>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
-  return (
-    <main className="min-h-screen bg-prpm-dark">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/categories" className="text-prpm-accent hover:text-prpm-accent-light mb-4 inline-flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Categories
-          </Link>
-
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-3 bg-prpm-accent/10 rounded-lg">
-              <Folder className="w-8 h-8 text-prpm-accent" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold text-white">{category.name}</h1>
-              {category.package_count !== undefined && (
-                <p className="text-gray-400 mt-1">
-                  {category.package_count} packages in this category
-                </p>
-              )}
-            </div>
-          </div>
-
-          {category.description && (
-            <p className="text-gray-300 text-lg mt-4">
-              {category.description}
-            </p>
-          )}
-        </div>
-
-        {/* Subcategories */}
-        {category.children && category.children.length > 0 && (
+          {/* Header */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4">Subcategories</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {category.children.map((subcategory: CategoryWithChildren) => (
-                <Link
-                  key={subcategory.id}
-                  href={`/categories/${subcategory.slug}`}
-                  className="bg-prpm-dark-card border border-prpm-border rounded-lg p-4 hover:border-prpm-accent transition-colors group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-white group-hover:text-prpm-accent transition-colors">
-                        {subcategory.name}
-                      </h3>
-                      {subcategory.package_count !== undefined && (
-                        <p className="text-sm text-gray-400 mt-1">
-                          {subcategory.package_count} packages
-                        </p>
-                      )}
-                    </div>
-                    <PackageIcon className="w-5 h-5 text-gray-400 group-hover:text-prpm-accent transition-colors" />
-                  </div>
-                </Link>
-              ))}
+            <Link href="/categories" className="text-prpm-accent hover:text-prpm-accent-light mb-4 inline-flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Categories
+            </Link>
+
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-3 bg-prpm-accent/10 rounded-lg">
+                <Folder className="w-8 h-8 text-prpm-accent" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold text-white">{category.name}</h1>
+                {category.package_count !== undefined && (
+                  <p className="text-gray-400 mt-1">
+                    {category.package_count} packages in this category
+                  </p>
+                )}
+              </div>
             </div>
+
+            {category.description && (
+              <p className="text-gray-300 text-lg mt-4">
+                {category.description}
+              </p>
+            )}
           </div>
-        )}
 
-        {/* Packages */}
-        <div>
-          <h2 className="text-xl font-semibold text-white mb-4">
-            {total > 0 ? `${total} Packages` : 'Packages'}
-          </h2>
-
-          {packages.length === 0 ? (
-            <div className="text-center py-20 bg-prpm-dark-card border border-prpm-border rounded-lg">
-              <PackageIcon className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400">No packages found in this category</p>
+          {/* Subcategories */}
+          {category.children && category.children.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-white mb-4">Subcategories</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {category.children.map((subcategory: CategoryWithChildren) => (
+                  <Link
+                    key={subcategory.id}
+                    href={`/categories/${subcategory.slug}`}
+                    className="bg-prpm-dark-card border border-prpm-border rounded-lg p-4 hover:border-prpm-accent transition-colors group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-white group-hover:text-prpm-accent transition-colors">
+                          {subcategory.name}
+                        </h3>
+                        {subcategory.package_count !== undefined && (
+                          <p className="text-sm text-gray-400 mt-1">
+                            {subcategory.package_count} packages
+                          </p>
+                        )}
+                      </div>
+                      <PackageIcon className="w-5 h-5 text-gray-400 group-hover:text-prpm-accent transition-colors" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-          ) : (
-            <>
+          )}
+
+          {/* Packages */}
+          <div>
+            <h2 className="text-xl font-semibold text-white mb-4">
+              {total > 0 ? `${total} Packages${total > 100 ? ' (showing first 100)' : ''}` : 'Packages'}
+            </h2>
+
+            {packages.length === 0 ? (
+              <div className="text-center py-20 bg-prpm-dark-card border border-prpm-border rounded-lg">
+                <PackageIcon className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400">No packages found in this category</p>
+              </div>
+            ) : (
               <div className="space-y-4">
                 {packages.map((pkg) => (
                   <Link
@@ -236,33 +178,29 @@ export default function CategoryPage() {
                   </Link>
                 ))}
               </div>
-
-              {/* Pagination */}
-              {total > limit && (
-                <div className="flex items-center justify-center gap-2 mt-8">
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="px-4 py-2 bg-prpm-dark-card border border-prpm-border rounded text-white disabled:opacity-50 disabled:cursor-not-allowed hover:border-prpm-accent transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-gray-400">
-                    Page {page} of {Math.ceil(total / limit)}
-                  </span>
-                  <button
-                    onClick={() => setPage(p => p + 1)}
-                    disabled={page >= Math.ceil(total / limit)}
-                    className="px-4 py-2 bg-prpm-dark-card border border-prpm-border rounded text-white disabled:opacity-50 disabled:cursor-not-allowed hover:border-prpm-accent transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </main>
-  )
+      </main>
+    )
+  } catch (error) {
+    console.error('Failed to load category:', error)
+    return (
+      <main className="min-h-screen bg-prpm-dark">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-20">
+            <Folder className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Category Not Found</h2>
+            <p className="text-gray-400 mb-6">The category you're looking for doesn't exist</p>
+            <Link
+              href="/categories"
+              className="inline-block bg-prpm-accent hover:bg-prpm-accent-light text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Browse All Categories
+            </Link>
+          </div>
+        </div>
+      </main>
+    )
+  }
 }
