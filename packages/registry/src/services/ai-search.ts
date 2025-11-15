@@ -173,7 +173,7 @@ export class AISearchService {
       return {
         results: finalResults,
         query: query.query,
-        total_matches: candidates.length,
+        total_matches: mergedCandidates.length,
         execution_time_ms: executionTime,
         search_metadata: metadata
       };
@@ -450,7 +450,7 @@ export class AISearchService {
 
     // Add vector results
     vectorResults.forEach(result => {
-      merged.set(result.package_id, { ...result, source: 'vector' as any });
+      merged.set(result.package_id, { ...result, source: 'vector' });
     });
 
     // Merge keyword results (boost if already present)
@@ -459,9 +459,9 @@ export class AISearchService {
         const existing = merged.get(result.package_id)!;
         // Boost similarity score for packages found in both
         existing.similarity_score = Math.min(1, existing.similarity_score * 1.2);
-        existing.source = 'hybrid' as any;
+        existing.source = 'hybrid';
       } else {
-        merged.set(result.package_id, { ...result, source: 'keyword' as any });
+        merged.set(result.package_id, { ...result, source: 'keyword' });
       }
     });
 

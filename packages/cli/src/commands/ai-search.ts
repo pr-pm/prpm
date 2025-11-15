@@ -126,7 +126,7 @@ export async function handleAISearch(
       throw new Error(`API error ${res.status}: ${errorText}`);
     }
 
-    response = await res.json();
+    response = await res.json() as AISearchResponse;
 
     if (!response || response.results.length === 0) {
       console.log('\n❌ No packages found for your query');

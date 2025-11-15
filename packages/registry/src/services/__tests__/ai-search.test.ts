@@ -222,9 +222,9 @@ describe('AISearchService', () => {
 
       const result = await service.getSimilarPackages('pkg-1', 5);
 
-      expect(result.similar_packages).toHaveLength(1);
-      expect(result.similar_packages[0].name).toBe('@test/similar-package');
-      expect(result.similar_packages[0].similarity_score).toBeCloseTo(0.75);
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('@test/similar-package');
+      expect(result[0].similarity_score).toBeCloseTo(0.75);
     });
 
     it('should throw error when package has no embedding', async () => {

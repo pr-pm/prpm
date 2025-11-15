@@ -299,8 +299,8 @@ describe('ErrorMonitoringService', () => {
       }
 
       // Should have inserted alert
-      const alertCalls = mockPg.query.mock.calls.filter(call =>
-        call[0].includes('INSERT INTO error_alerts')
+      const alertCalls = mockPg.query.mock.calls.filter((call: unknown[]) =>
+        typeof call[0] === 'string' && call[0].includes('INSERT INTO error_alerts')
       );
 
       expect(alertCalls.length).toBeGreaterThan(0);
@@ -317,8 +317,8 @@ describe('ErrorMonitoringService', () => {
       }
 
       // Should not have inserted alert
-      const alertCalls = mockPg.query.mock.calls.filter(call =>
-        call[0].includes('INSERT INTO error_alerts')
+      const alertCalls = mockPg.query.mock.calls.filter((call: unknown[]) =>
+        typeof call[0] === 'string' && call[0].includes('INSERT INTO error_alerts')
       );
 
       expect(alertCalls.length).toBe(0);

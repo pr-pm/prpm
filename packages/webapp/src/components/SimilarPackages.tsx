@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { getSimilarPackages } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
 import { Sparkles, Download, Star } from 'lucide-react'
+import type { AISearchResult } from '@/lib/api'
 
 interface SimilarPackagesProps {
   packageId: string
@@ -12,7 +13,7 @@ interface SimilarPackagesProps {
 }
 
 export function SimilarPackages({ packageId, limit = 5 }: SimilarPackagesProps) {
-  const [similarPackages, setSimilarPackages] = useState<any[]>([])
+  const [similarPackages, setSimilarPackages] = useState<AISearchResult[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -22,8 +23,9 @@ export function SimilarPackages({ packageId, limit = 5 }: SimilarPackagesProps) 
         const result = await getSimilarPackages(packageId, null, limit) // No auth needed
         setSimilarPackages(result.similar_packages || [])
         setError(null)
-      } catch (err: any) {
-        console.error('Failed to load similar packages:', err)
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err))
+        console.error('Failed to load similar packages:', error)
         setError('Failed to load similar packages')
       } finally {
         setLoading(false)

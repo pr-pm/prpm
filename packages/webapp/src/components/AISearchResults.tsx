@@ -148,7 +148,7 @@ export function AISearchResults({ results, query, executionTime }: AISearchResul
                       <span>{Number(result.quality_score).toFixed(1)}/5</span>
                     </div>
                   )}
-                  {result.stars_count > 0 && (
+                  {result.stars_count !== undefined && result.stars_count > 0 && (
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                       <span>{result.stars_count}</span>

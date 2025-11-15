@@ -286,7 +286,7 @@ describe('Taxonomy Routes', () => {
     // Mock pg client
     server.decorate('pg', {
       query: mockQuery,
-    });
+    } as any);
 
     // Register routes
     await server.register(taxonomyRoutes, { prefix: '/api/v1/taxonomy' });

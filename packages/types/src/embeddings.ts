@@ -63,6 +63,7 @@ export interface AISearchResult {
 
   // Match metadata
   match_explanation?: string;
+  source?: 'vector' | 'keyword' | 'hybrid'; // Search result source
 }
 
 export interface AISearchResponse {

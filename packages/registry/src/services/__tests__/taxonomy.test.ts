@@ -128,9 +128,10 @@ describe('TaxonomyService', () => {
 
       const result = await service.getCategoryBySlug('backend-development', true);
 
-      expect(result.name).toBe('Backend Development');
-      expect(result.children).toHaveLength(1);
-      expect(result.children![0].name).toBe('API Development');
+      expect(result).not.toBeNull();
+      expect(result!.name).toBe('Backend Development');
+      expect(result!.children).toHaveLength(1);
+      expect(result!.children![0].name).toBe('API Development');
     });
 
     it('should throw error when category not found', async () => {

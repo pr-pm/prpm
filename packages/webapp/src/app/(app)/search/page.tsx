@@ -749,7 +749,6 @@ function SearchPageContent() {
               <AISearchToggle
                 enabled={aiSearchEnabled}
                 onChange={setAiSearchEnabled}
-                jwtToken={jwtToken}
               />
             </div>
           )}

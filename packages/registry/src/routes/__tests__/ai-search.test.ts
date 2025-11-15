@@ -2,7 +2,7 @@
  * AI Search routes integration tests
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
 import { aiSearchRoutes } from '../ai-search';
 
@@ -189,10 +189,10 @@ describe('AI Search Routes', () => {
     // Mock pg client
     server.decorate('pg', {
       query: mockQuery,
-    });
+    } as any);
 
     // Mock OpenAI
-    server.decorate('openai', mockOpenAI);
+    server.decorate('openai', mockOpenAI as any);
 
     // Register routes
     await server.register(aiSearchRoutes, { prefix: '/api/v1/ai-search' });

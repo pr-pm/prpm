@@ -89,7 +89,7 @@ export default function CategoriesPage() {
               {/* Subcategories */}
               {category.children && category.children.length > 0 && (
                 <div className="space-y-2 mt-4 pt-4 border-t border-prpm-border">
-                  {category.children.slice(0, 4).map((subcategory) => (
+                  {category.children.slice(0, 4).map((subcategory: CategoryWithChildren) => (
                     <Link
                       key={subcategory.id}
                       href={`/categories/${subcategory.slug}`}

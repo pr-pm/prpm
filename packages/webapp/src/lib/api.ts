@@ -29,7 +29,9 @@ import type {
   AISearchResponse,
   AISearchResult,
   CategoryListResponse,
-  UseCaseListResponse
+  UseCaseListResponse,
+  CategoryWithChildren,
+  UseCaseWithPackages
 } from '@pr-pm/types'
 
 // Re-export types for convenience
@@ -60,7 +62,9 @@ export type {
   AISearchResponse,
   AISearchResult,
   CategoryListResponse,
-  UseCaseListResponse
+  UseCaseListResponse,
+  CategoryWithChildren,
+  UseCaseWithPackages
 }
 
 const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'
@@ -345,20 +349,6 @@ export async function getTags() {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Failed to fetch tags' }))
     throw new Error(error.error || error.message || 'Failed to fetch tags')
-  }
-
-  return response.json()
-}
-
-/**
- * Get all available categories
- */
-export async function getCategories() {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/search/categories`)
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch categories' }))
-    throw new Error(error.error || error.message || 'Failed to fetch categories')
   }
 
   return response.json()

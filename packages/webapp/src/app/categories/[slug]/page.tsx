@@ -115,7 +115,7 @@ export default function CategoryPage() {
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-white mb-4">Subcategories</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {category.children.map((subcategory) => (
+              {category.children.map((subcategory: CategoryWithChildren) => (
                 <Link
                   key={subcategory.id}
                   href={`/categories/${subcategory.slug}`}
