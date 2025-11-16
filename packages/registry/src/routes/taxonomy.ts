@@ -20,7 +20,8 @@ export async function taxonomyRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          include_counts: { type: 'boolean', default: false }
+          include_counts: { type: 'boolean', default: false },
+          top: { type: 'number', minimum: 1, maximum: 100, description: 'Limit to top N categories by package count (level 1 only)' }
         }
       },
       response: {
@@ -35,9 +36,9 @@ export async function taxonomyRoutes(server: FastifyInstance) {
       }
     }
   }, async (request, reply) => {
-    const { include_counts } = request.query as { include_counts?: boolean };
+    const { include_counts, top } = request.query as { include_counts?: boolean; top?: number };
 
-    const tree = await taxonomyService.getCategoryTree(include_counts || false);
+    const tree = await taxonomyService.getCategoryTree(include_counts || false, top);
     return reply.code(200).send(tree);
   });
 

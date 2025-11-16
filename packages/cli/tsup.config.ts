@@ -1,4 +1,6 @@
 import { defineConfig } from 'tsup';
+import { copyFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
 export default defineConfig({
   entry: ['src/index.ts'],
@@ -20,4 +22,17 @@ export default defineConfig({
   ],
   platform: 'node',
   target: 'node16',
+  onSuccess: async () => {
+    // Copy schema files to dist
+    try {
+      mkdirSync('dist/schemas', { recursive: true });
+      copyFileSync(
+        join('schemas', 'prpm-manifest.schema.json'),
+        join('dist', 'schemas', 'prpm-manifest.schema.json')
+      );
+      console.log('✓ Copied schema files to dist/');
+    } catch (err) {
+      console.warn('Warning: Could not copy schema files:', err);
+    }
+  },
 });

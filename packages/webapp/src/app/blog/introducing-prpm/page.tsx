@@ -41,7 +41,7 @@ export default function IntroducingPRPMPost() {
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">The Problem We're Solving</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
-            As AI coding assistants have exploded in popularity, developers are creating incredible prompts, custom skills, and specialized agents. But there's a problem: these tools are scattered across GitHub repos, Discord servers, Twitter threads, and personal notes. There's no central place to discover, share, or manage them.
+            As AI coding assistants have exploded in popularity, developers are creating incredible prompts, custom skills, and specialized agents. But there's a problem: these tools are scattered across GitHub repos, Twitter threads, and personal notes. There's no central place to discover, share, or manage them.
           </p>
 
           <p className="text-gray-300 leading-relaxed mb-6">

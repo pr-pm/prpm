@@ -686,14 +686,14 @@ This will run migrations 031 and 032, creating all necessary tables and views.
 
 - **Documentation**: https://docs.prpm.dev
 - **GitHub Issues**: https://github.com/pr-pm/prpm/issues
-- **Discord**: https://discord.gg/prpm
+- **Twitter**: [@prpmdev](https://twitter.com/prpmdev)
 - **Email**: team@prpm.dev
 
 ### Feature Requests
 
 Submit feature requests via:
 - GitHub Issues with `enhancement` label
-- Discord #feature-requests channel
+- Twitter DM to [@prpmdev](https://twitter.com/prpmdev)
 - Email with subject "Feature Request: ..."
 
 ### Reporting Bugs

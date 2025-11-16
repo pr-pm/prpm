@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "prpm-complete-feature-guide",
+    title: "The Complete Guide to PRPM: Every Feature You Need to Know",
+    excerpt: "PRPM is more than a package manager—it's a complete platform for discovering, testing, publishing, and managing AI coding tools. From universal package management to AI search, playground testing to author analytics.",
+    date: "2025-11-16",
+    author: "PRPM Team",
+    readTime: "10 min read",
+    tags: ["Guide", "Features", "Platform Overview"],
+  },
+  {
     slug: "format-specifications-guide",
     title: "Complete Guide to AI IDE Prompt Formats: Schemas, Specifications, and Conversions",
     excerpt: "Master all 8 AI IDE formats with JSON schemas and comprehensive specifications. From Cursor to Claude Code, Windsurf to Kiro—learn frontmatter requirements, validation, and format conversion.",

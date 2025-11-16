@@ -26,17 +26,6 @@ Installs 20 packages: backend-architect, cloud-architect, database-architect, an
 Give your IDE the ability to self improve by installing packages that it finds useful:
 ![self-improve-demo](./packages/webapp/public/self-improve.gif)
 
-## Collections - Complete Setups in One Command
-
-Skip installing packages one-by-one. Get curated bundles for your entire workflow:
-
-```bash
-# Install 5+ packages at once
-prpm install collection/nextjs-pro
-# → Installs react-best-practices, typescript-strict, tailwind-helper,
-#    nextjs-patterns, component-architect
-```
-
 ---
 
 ## Universal Packages - Install Once, Use Anywhere
@@ -45,12 +34,12 @@ Every package works in **any** AI editor. No conversion tools, no separate downl
 
 ```bash
 # Same package, different editors
-prpm install @username/react-best-practices --as cursor    # → .cursor/rules/
-prpm install @username/react-best-practices --as claude    # → .claude/agents/
-prpm install @username/react-best-practices --as continue  # → .continue/prompts/
-prpm install @username/react-best-practices --as windsurf  # → .windsurf/rules/
-prpm install @username/react-best-practices --as copilot   # → .github/instructions/
-prpm install @username/react-best-practices --as kiro      # → .kiro/steering/
+prpm install @sanjeed5/react --as cursor                    # → .cursor/rules/
+prpm install @sanjeed5/react --as claude --subtype agent    # → .claude/agents/
+prpm install @sanjeed5/react --as continue                  # → .continue/prompts/
+prpm install @sanjeed5/react --as windsurf                  # → .windsurf/rules/
+prpm install @sanjeed5/react --as copilot                   # → .github/instructions/
+prpm install @sanjeed5/react --as kiro                      # → .kiro/steering/
 ```
 
 ## Discovery - Find What You Need

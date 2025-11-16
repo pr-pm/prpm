@@ -121,7 +121,7 @@ export default function ClaudeHooksSupportPost() {
 
           <div className="not-prose mb-10">
             <ol className="text-gray-300 space-y-6 mb-8 list-decimal list-inside">
-              <li>Find the hook code (GitHub, Discord, docs)</li>
+              <li>Find the hook code (GitHub, docs, Twitter)</li>
               <li>Open <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-sm font-mono border border-prpm-border/30">~/.claude/settings.json</code> or <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-sm font-mono border border-prpm-border/30">.claude/settings.json</code></li>
               <li>Understand the JSON structure</li>
               <li>Copy-paste the hook config</li>

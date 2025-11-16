@@ -55,7 +55,7 @@ export default function DiscoveringCursorRulesPost() {
               <li><a href="https://cursor.directory" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">cursor.directory</a> - The main marketplace, browse and copy files</li>
               <li><a href="https://dotcursorrules.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">dotcursorrules.com</a> - Community collection, manual download</li>
               <li><a href="https://www.cursorhow.com/en/agent-skills-hub" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">CursorHow</a> - Mixed with Claude skills</li>
-              <li>GitHub repos, Discord, Reddit</li>
+              <li>GitHub repos, Twitter, Reddit</li>
             </ul>
           </div>
 

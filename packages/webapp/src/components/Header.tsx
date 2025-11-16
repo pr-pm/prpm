@@ -4,6 +4,14 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import { getCategories } from '@/lib/api'
+
+interface Category {
+  id: string
+  name: string
+  slug: string
+  icon?: string
+}
 
 interface HeaderProps {
   showDashboard?: boolean
@@ -13,16 +21,35 @@ interface HeaderProps {
 export default function Header({ showDashboard = false, showAccount = false }: HeaderProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [hamburgerMenuOpen, setHamburgerMenuOpen] = useState(false)
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
   const hamburgerRef = useRef<HTMLDivElement>(null)
+  const searchDropdownRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname?.() || ''
 
   const isActive = (path: string) => pathname === path
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories(false)
+        setCategories(data.categories || [])
+      } catch (error) {
+        console.error('Failed to fetch categories:', error)
+      }
+    }
+    fetchCategories()
+  }, [])
 
   // Close hamburger menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (hamburgerRef.current && !hamburgerRef.current.contains(event.target as Node)) {
         setHamburgerMenuOpen(false)
+      }
+      if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target as Node)) {
+        setSearchDropdownOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -32,7 +59,6 @@ export default function Header({ showDashboard = false, showAccount = false }: H
   // Primary navigation links (shown in top bar)
   const primaryLinks: Array<{ href: string; label: string; badge?: string }> = [
     { href: '/search', label: 'Search' },
-    { href: '/categories', label: 'Categories' },
     { href: '/blog', label: 'Blog' },
     { href: '/playground', label: 'Playground', badge: 'PRPM+' },
     { href: '/pricing', label: 'Pricing' },
@@ -58,24 +84,104 @@ export default function Header({ showDashboard = false, showAccount = false }: H
               </span>
             </Link>
             <div className="hidden md:flex items-center gap-6">
-              {primaryLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`transition-colors flex items-center gap-2 ${
-                    isActive(link.href)
-                      ? 'text-prpm-green-light'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {link.label}
-                  {link.badge && (
-                    <span className="text-xs font-semibold px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded border border-green-500/30">
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
+              {primaryLinks.map((link) => {
+                // Special handling for Search link with dropdown
+                if (link.label === 'Search') {
+                  return (
+                    <div
+                      key={link.href}
+                      className="relative"
+                      ref={searchDropdownRef}
+                    >
+                      <Link
+                        href={link.href}
+                        onMouseEnter={() => setSearchDropdownOpen(true)}
+                        className={`transition-colors flex items-center gap-1.5 py-2 ${
+                          isActive(link.href)
+                            ? 'text-prpm-green-light'
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        {link.label}
+                        <svg className={`w-3 h-3 transition-transform ${searchDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </Link>
+
+                      {/* Search Types Dropdown */}
+                      {searchDropdownOpen && (
+                        <div
+                          className="absolute left-0 top-full pt-2"
+                          onMouseEnter={() => setSearchDropdownOpen(true)}
+                          onMouseLeave={() => setSearchDropdownOpen(false)}
+                        >
+                          <div className="w-56 bg-prpm-dark-card border border-prpm-border rounded-lg shadow-2xl overflow-hidden">
+                            <Link
+                              href="/search?tab=packages"
+                              className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-prpm-border/50 transition-all group"
+                              onClick={() => setSearchDropdownOpen(false)}
+                            >
+                              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                              </svg>
+                              <span className="flex-1">Packages</span>
+                              <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </Link>
+                            <Link
+                              href="/search?tab=collections"
+                              className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-prpm-border/50 transition-all group"
+                              onClick={() => setSearchDropdownOpen(false)}
+                            >
+                              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                              </svg>
+                              <span className="flex-1">Collections</span>
+                              <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </Link>
+                            <Link
+                              href="/categories"
+                              className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-prpm-border/50 transition-all group"
+                              onClick={() => setSearchDropdownOpen(false)}
+                            >
+                              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                              </svg>
+                              <span className="flex-1">Categories</span>
+                              <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+
+                // Regular link
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`transition-colors flex items-center gap-2 ${
+                      isActive(link.href)
+                        ? 'text-prpm-green-light'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {link.label}
+                    {link.badge && (
+                      <span className="text-xs font-semibold px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded border border-green-500/30">
+                        {link.badge}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
             </div>
           </div>
           <div className="flex items-center gap-4">

@@ -252,7 +252,7 @@ Top contributors get:
 
 - **GitHub Issues** - Bug reports, feature requests
 - **Discussions** - Questions, ideas, community chat
-- **Discord** - Real-time help (coming soon)
+- **Twitter** - [@prpmdev](https://twitter.com/prpmdev) for updates and support
 - **Email** - support@prpm.dev
 
 ## 📄 License

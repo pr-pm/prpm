@@ -301,10 +301,6 @@ export default function HowToGetStartedPost() {
               <Link href="https://github.com/pr-pm/prpm/issues" className="text-prpm-accent hover:underline font-medium">Open an issue on GitHub</Link>
             </p>
 
-            <p className="text-gray-300 leading-relaxed text-lg mb-6">
-              <strong className="text-white">Want to share what worked?</strong> Tweet with #prpm or post in our <Link href="https://discord.gg/prpm" className="text-prpm-accent hover:underline font-medium">Discord</Link>
-            </p>
-
             <p className="text-gray-300 leading-relaxed text-lg mb-0">
               <strong className="text-white">Found a package that changed your workflow?</strong> <Link href="https://github.com/pr-pm/prpm/blob/main/CONTRIBUTING.md" className="text-prpm-accent hover:underline font-medium">Write about it</Link> - help the next person get unstuck.
             </p>

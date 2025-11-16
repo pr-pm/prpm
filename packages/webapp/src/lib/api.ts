@@ -1218,8 +1218,11 @@ export async function getQuerySuggestions(partialQuery: string, limit: number = 
 /**
  * Get all categories as hierarchical tree
  */
-export async function getCategories(includeCounts: boolean = false): Promise<CategoryListResponse> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/taxonomy/categories?include_counts=${includeCounts}`)
+export async function getCategories(includeCounts: boolean = false, top?: number): Promise<CategoryListResponse> {
+  const params = new URLSearchParams({ include_counts: String(includeCounts) })
+  if (top) params.set('top', String(top))
+
+  const response = await fetch(`${REGISTRY_URL}/api/v1/taxonomy/categories?${params}`)
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Failed to fetch categories' }))

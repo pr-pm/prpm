@@ -23,30 +23,31 @@ export class TaxonomyService {
   /**
    * Get all categories as a hierarchical tree
    */
-  async getCategoryTree(includePackageCounts = false): Promise<CategoryListResponse> {
-    // Get all categories
-    const categoriesResult = await this.server.pg.query<Category>(`
+  async getCategoryTree(includePackageCounts = false, topN?: number): Promise<CategoryListResponse> {
+    // Query from materialized view for fast counts
+    const categoriesResult = await this.server.pg.query<any>(`
       SELECT
         id, name, slug, parent_id, level,
         description, icon, display_order,
-        created_at, updated_at
-      FROM categories
-      ORDER BY level ASC, display_order ASC, name ASC
-    `);
+        package_count
+      FROM category_aggregation
+      ${topN ? 'WHERE level = 1' : ''}
+      ORDER BY
+        CASE WHEN level = 1 THEN package_count ELSE 0 END DESC,
+        level ASC,
+        display_order ASC,
+        package_count DESC,
+        name ASC
+      ${topN ? 'LIMIT $1' : ''}
+    `, topN ? [topN] : []);
 
     const categories = categoriesResult.rows;
 
-    // Build package counts if requested
+    // Package counts are already included from materialized view
     const packageCounts: Record<string, number> = {};
     if (includePackageCounts) {
-      const countsResult = await this.server.pg.query(`
-        SELECT category_id, COUNT(DISTINCT package_id) as count
-        FROM package_categories
-        GROUP BY category_id
-      `);
-
-      countsResult.rows.forEach(row => {
-        packageCounts[row.category_id] = parseInt(row.count);
+      categories.forEach((cat: any) => {
+        packageCounts[cat.id] = cat.package_count || 0;
       });
     }
 

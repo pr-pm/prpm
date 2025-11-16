@@ -151,7 +151,7 @@ This suite provides automated guardrails, but security requires vigilance:
 
 ## Support
 
-Questions or issues? [Open an issue](https://github.com/pr-pm/prpm/issues) or join our [Discord](https://discord.gg/prpm).
+Questions or issues? [Open an issue](https://github.com/pr-pm/prpm/issues) or follow [@prpmdev](https://twitter.com/prpmdev).
 
 ## License
 

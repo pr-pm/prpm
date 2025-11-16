@@ -242,12 +242,16 @@ Focus on developer intent and practical use cases, not just technology names.`;
 
   console.log(`\n  Total: ${totalSubcategories} subcategories, ${totalUseCases} use cases`);
 
-  // Step 6: If --approve flag, insert into database
+  // Step 6: If --approve flag, generate migration file
   if (approveMode) {
-    console.log('\n\n✅ Approval mode enabled - inserting taxonomy into database...\n');
-    await insertTaxonomyIntoDatabase(db, output);
+    console.log('\n\n✅ Approval mode enabled - generating migration file...\n');
+    const migrationPath = await generateMigrationFile(output);
+    console.log(`📄 Migration file created: ${migrationPath}`);
+    console.log('\nTo apply this migration:');
+    console.log('  1. Review the migration file');
+    console.log('  2. Run: npm run migrate');
   } else {
-    console.log('\n\n📝 Review the output file and run with --approve flag to insert into database');
+    console.log('\n\n📝 Review the output file and run with --approve flag to generate migration');
     console.log('   Command: npm run script:generate-taxonomy -- --approve');
   }
 
@@ -255,93 +259,152 @@ Focus on developer intent and practical use cases, not just technology names.`;
   console.log('\n✅ Done!');
 }
 
-async function insertTaxonomyIntoDatabase(db: pg.Pool, proposal: TaxonomyProposal) {
-  const client = await db.connect();
+async function generateMigrationFile(proposal: TaxonomyProposal): Promise<string> {
+  // Get the next migration number
+  const migrationsDir = path.join(__dirname, '../migrations');
+  const existingMigrations = fs.readdirSync(migrationsDir)
+    .filter(f => f.endsWith('.sql'))
+    .map(f => parseInt(f.split('_')[0]))
+    .filter(n => !isNaN(n));
 
-  try {
-    await client.query('BEGIN');
+  const nextNumber = Math.max(...existingMigrations, 0) + 1;
+  const migrationNumber = String(nextNumber).padStart(3, '0');
+  const migrationFilename = `${migrationNumber}_generated_taxonomy.sql`;
+  const migrationPath = path.join(migrationsDir, migrationFilename);
 
-    let categoryInsertCount = 0;
-    let useCaseInsertCount = 0;
+  // Build SQL migration content
+  let sql = `-- Migration ${migrationNumber}: Generated Taxonomy
+-- Auto-generated from package analysis
+-- Generated at: ${proposal.generated_at}
+-- Total packages analyzed: ${proposal.total_packages}
 
-    // Insert categories (3 levels)
-    for (let i = 0; i < proposal.seed_categories.length; i++) {
-      const seed = proposal.seed_categories[i];
-      const slug = slugify(seed.name);
+-- Create categories table if it doesn't exist
+CREATE TABLE IF NOT EXISTS categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) UNIQUE NOT NULL,
+  parent_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+  level INTEGER NOT NULL CHECK (level IN (1, 2, 3)),
+  description TEXT,
+  icon VARCHAR(100),
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-      // Level 1: Top-level category
-      const level1Result = await client.query(
-        `INSERT INTO categories (name, slug, parent_id, level, icon, display_order)
-         VALUES ($1, $2, NULL, 1, $3, $4)
-         ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
-         RETURNING id`,
-        [seed.name, slug, seed.icon, i]
-      );
-      const level1Id = level1Result.rows[0].id;
-      categoryInsertCount++;
+CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON categories(parent_id);
+CREATE INDEX IF NOT EXISTS idx_categories_level ON categories(level);
+CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
 
-      const taxonomy = proposal.proposed_taxonomy[seed.name];
-      if (!taxonomy) continue;
+-- Create use_cases table if it doesn't exist
+CREATE TABLE IF NOT EXISTS use_cases (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) UNIQUE NOT NULL,
+  description TEXT,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-      // Level 2: Subcategories
-      let subIndex = 0;
-      for (const [subName, subData] of Object.entries(taxonomy.subcategories)) {
-        const subSlug = slugify(subName);
-        const level2Result = await client.query(
-          `INSERT INTO categories (name, slug, parent_id, level, description, display_order)
-           VALUES ($1, $2, $3, 2, $4, $5)
-           ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description
-           RETURNING id`,
-          [subName, subSlug, level1Id, subData.description, subIndex]
-        );
-        const level2Id = level2Result.rows[0].id;
-        categoryInsertCount++;
-        subIndex++;
+CREATE INDEX IF NOT EXISTS idx_use_cases_slug ON use_cases(slug);
 
-        // Level 3: Specific categories (if any)
-        if (subData.specific_categories && subData.specific_categories.length > 0) {
-          for (let specIndex = 0; specIndex < subData.specific_categories.length; specIndex++) {
-            const specName = subData.specific_categories[specIndex];
-            const specSlug = slugify(specName);
-            await client.query(
-              `INSERT INTO categories (name, slug, parent_id, level, display_order)
-               VALUES ($1, $2, $3, 3, $4)
-               ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name`,
-              [specName, specSlug, level2Id, specIndex]
-            );
-            categoryInsertCount++;
-          }
+-- Insert categories and use cases
+-- Note: This uses a temporary function to handle hierarchical inserts
+
+DO $$
+DECLARE
+  v_level1_id UUID;
+  v_level2_id UUID;
+BEGIN
+  -- Insert Level 1 Categories
+`;
+
+  // Generate inserts for each category level
+  for (let i = 0; i < proposal.seed_categories.length; i++) {
+    const seed = proposal.seed_categories[i];
+    const slug = slugify(seed.name);
+    const name = seed.name.replace(/'/g, "''"); // Escape single quotes
+    const icon = seed.icon.replace(/'/g, "''");
+
+    sql += `
+  -- Level 1: ${name}
+  INSERT INTO categories (name, slug, parent_id, level, icon, display_order)
+  VALUES ('${name}', '${slug}', NULL, 1, '${icon}', ${i})
+  ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, icon = EXCLUDED.icon
+  RETURNING id INTO v_level1_id;
+`;
+
+    const taxonomy = proposal.proposed_taxonomy[seed.name];
+    if (!taxonomy) continue;
+
+    // Level 2: Subcategories
+    let subIndex = 0;
+    for (const [subName, subData] of Object.entries(taxonomy.subcategories)) {
+      const subSlug = slugify(subName);
+      const escapedSubName = subName.replace(/'/g, "''");
+      const escapedDesc = (subData.description || '').replace(/'/g, "''");
+
+      sql += `
+  -- Level 2: ${escapedSubName}
+  INSERT INTO categories (name, slug, parent_id, level, description, display_order)
+  VALUES ('${escapedSubName}', '${subSlug}', v_level1_id, 2, '${escapedDesc}', ${subIndex})
+  ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description
+  RETURNING id INTO v_level2_id;
+`;
+
+      // Level 3: Specific categories (if any)
+      if (subData.specific_categories && subData.specific_categories.length > 0) {
+        for (let specIndex = 0; specIndex < subData.specific_categories.length; specIndex++) {
+          const specName = subData.specific_categories[specIndex];
+          const specSlug = slugify(specName);
+          const escapedSpecName = specName.replace(/'/g, "''");
+
+          sql += `
+  INSERT INTO categories (name, slug, parent_id, level, display_order)
+  VALUES ('${escapedSpecName}', '${specSlug}', v_level2_id, 3, ${specIndex})
+  ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name;
+`;
         }
       }
+
+      subIndex++;
     }
-
-    // Insert use cases
-    let useCaseIndex = 0;
-    for (const [categoryName, taxonomy] of Object.entries(proposal.proposed_taxonomy)) {
-      for (const useCase of taxonomy.use_cases) {
-        const slug = slugify(useCase);
-        await client.query(
-          `INSERT INTO use_cases (name, slug, description, display_order)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name`,
-          [useCase, slug, `Use case for ${categoryName}`, useCaseIndex]
-        );
-        useCaseInsertCount++;
-        useCaseIndex++;
-      }
-    }
-
-    await client.query('COMMIT');
-
-    console.log(`✅ Inserted ${categoryInsertCount} categories`);
-    console.log(`✅ Inserted ${useCaseInsertCount} use cases`);
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('❌ Error inserting taxonomy:', error);
-    throw error;
-  } finally {
-    client.release();
   }
+
+  // Insert use cases
+  sql += `
+  -- Insert Use Cases
+`;
+
+  let useCaseIndex = 0;
+  for (const [categoryName, taxonomy] of Object.entries(proposal.proposed_taxonomy)) {
+    for (const useCase of taxonomy.use_cases) {
+      const slug = slugify(useCase);
+      const escapedUseCase = useCase.replace(/'/g, "''");
+      const escapedCategoryName = categoryName.replace(/'/g, "''");
+
+      sql += `
+  INSERT INTO use_cases (name, slug, description, display_order)
+  VALUES ('${escapedUseCase}', '${slug}', 'Use case for ${escapedCategoryName}', ${useCaseIndex})
+  ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name;
+`;
+      useCaseIndex++;
+    }
+  }
+
+  sql += `
+END $$;
+
+-- Update timestamps
+UPDATE categories SET updated_at = NOW();
+UPDATE use_cases SET updated_at = NOW();
+`;
+
+  // Write migration file
+  fs.writeFileSync(migrationPath, sql, 'utf-8');
+
+  return migrationPath;
 }
 
 main().catch((error) => {

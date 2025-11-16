@@ -168,6 +168,9 @@ export async function handleInstall(
       specVersion = parts[1];
     }
 
+    // Load config early (will be needed for format detection and later)
+    const config = await getConfig();
+
     // Read existing lock file
     const lockfile = await readLockfile();
     const lockedVersion = getLockedVersion(lockfile, packageId);
@@ -185,21 +188,35 @@ export async function handleInstall(
       version = options.version || specVersion || lockedVersion || 'latest';
     }
 
-    // Check if package is already installed (skip if --force option is set)
+    // Determine target format for installation check
+    // Priority: 1. --as flag, 2. config default, 3. auto-detect, 4. package native format
+    let targetFormat = options.as;
+    if (!targetFormat) {
+      targetFormat = config.defaultFormat || (await autoDetectFormat()) || undefined;
+    }
+
+    // Check if package is already installed in the same format (skip if --force option is set)
     if (!options.force && lockfile && lockfile.packages[packageId]) {
       const installedPkg = lockfile.packages[packageId];
       const requestedVersion = options.version || specVersion;
 
-      // If no specific version requested, or same version requested
-      if (!requestedVersion || requestedVersion === 'latest' || requestedVersion === installedPkg.version) {
+      // Check if installing in the same format
+      const sameFormat = !targetFormat || installedPkg.format === targetFormat;
+
+      // If no specific version requested, or same version requested, AND same format
+      if (sameFormat && (!requestedVersion || requestedVersion === 'latest' || requestedVersion === installedPkg.version)) {
         console.log(`\n✨ Package already installed!`);
         console.log(`   📦 ${packageId}@${installedPkg.version}`);
         console.log(`   🔄 Format: ${installedPkg.format || 'unknown'} | Subtype: ${installedPkg.subtype || 'unknown'}`);
         console.log(`\n💡 To reinstall or upgrade:`);
         console.log(`   prpm upgrade ${packageId}     # Upgrade to latest version`);
         console.log(`   prpm uninstall ${packageId}   # Uninstall first, then install`);
+        console.log(`   prpm install ${packageId} --as <format>  # Install in different format`);
         success = true;
         return;
+      } else if (!sameFormat) {
+        // Different format requested - allow installation
+        console.log(`📦 Installing ${packageId} in ${targetFormat} format (already have ${installedPkg.format} version)`);
       } else if (requestedVersion !== installedPkg.version) {
         // Different version requested - allow upgrade/downgrade
         console.log(`📦 Upgrading ${packageId}: ${installedPkg.version} → ${requestedVersion}`);
@@ -208,7 +225,6 @@ export async function handleInstall(
 
     console.log(`📥 Installing ${packageId}@${version}...`);
 
-    const config = await getConfig();
     const client = getRegistryClient(config);
 
     // Check if this is a collection first (by trying to fetch it)
