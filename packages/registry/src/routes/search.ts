@@ -78,10 +78,25 @@ export async function searchRoutes(server: FastifyInstance) {
       sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
     };
 
-    // Build cache key
-    const cacheKey = `search:${JSON.stringify(request.query)}`;
+    // Build deterministic cache key (sorted params for consistency)
+    const sortedParams = {
+      q: q || '',
+      format: Array.isArray(format) ? format.sort().join(',') : format,
+      subtype: Array.isArray(subtype) ? subtype.sort().join(',') : subtype,
+      tags: tags ? tags.sort().join(',') : undefined,
+      category,
+      author,
+      language,
+      framework,
+      verified,
+      featured,
+      sort,
+      limit,
+      offset,
+    };
+    const cacheKey = `search:v2:${JSON.stringify(sortedParams)}`;
 
-    // Check cache
+    // Check cache first
     const cached = await cacheGet<any>(server, cacheKey);
     if (cached) {
       return cached;
@@ -104,8 +119,9 @@ export async function searchRoutes(server: FastifyInstance) {
       offset,
     });
 
-    // Cache for 5 minutes
-    await cacheSet(server, cacheKey, response, 300);
+    // Cache for 15 minutes (longer for better performance, search results stable)
+    const cacheTTL = offset === 0 ? 900 : 300; // First page: 15min, others: 5min
+    await cacheSet(server, cacheKey, response, cacheTTL);
 
     return response;
   });
@@ -563,5 +579,112 @@ export async function searchRoutes(server: FastifyInstance) {
     await cacheSet(server, cacheKey, response, 3600);
 
     return response;
+  });
+
+  // Enhanced autocomplete endpoint
+  server.get('/autocomplete', {
+    schema: {
+      tags: ['search'],
+      description: 'Get autocomplete suggestions for search (package names, tags, categories)',
+      querystring: {
+        type: 'object',
+        required: ['q'],
+        properties: {
+          q: { type: 'string', minLength: 2, description: 'Search query' },
+          limit: { type: 'number', default: 10, minimum: 1, maximum: 20 },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { q, limit = 10 } = request.query as {
+      q: string;
+      limit?: number;
+    };
+
+    const cacheKey = `search:autocomplete:${q.toLowerCase()}:${limit}`;
+    const cached = await cacheGet<any>(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const lowerQ = q.toLowerCase();
+
+      // Get package name suggestions using prefix + trigram (optimized with indexes)
+      const packageResults = await query<{ name: string; similarity: number; downloads: number }>(
+        server,
+        `SELECT name, similarity(name, $1) as sim, total_downloads
+         FROM packages
+         WHERE visibility = 'public'
+           AND (name ILIKE $2 OR name % $1)
+         ORDER BY
+           CASE WHEN name ILIKE $3 THEN 0 ELSE 1 END,
+           sim DESC,
+           total_downloads DESC
+         LIMIT $4`,
+        [lowerQ, `${lowerQ}%`, `${lowerQ}%`, Math.ceil(limit / 2)]
+      );
+
+      // Get tag suggestions
+      const tagResults = await query<{ tag: string; count: number }>(
+        server,
+        `SELECT unnest(tags) as tag, COUNT(*) as count
+         FROM packages
+         WHERE visibility = 'public'
+           AND EXISTS (
+             SELECT 1 FROM unnest(tags) t WHERE t ILIKE $1
+           )
+         GROUP BY tag
+         ORDER BY count DESC
+         LIMIT $2`,
+        [`%${q}%`, Math.ceil(limit / 4)]
+      );
+
+      // Get category suggestions
+      const categoryResults = await query<{ category: string; count: number }>(
+        server,
+        `SELECT category, COUNT(*) as count
+         FROM packages
+         WHERE visibility = 'public'
+           AND category IS NOT NULL
+           AND category ILIKE $1
+         GROUP BY category
+         ORDER BY count DESC
+         LIMIT $2`,
+        [`%${q}%`, Math.ceil(limit / 4)]
+      );
+
+      const response = {
+        query: q,
+        suggestions: [
+          ...packageResults.rows.map(r => ({
+            type: 'package',
+            value: r.name,
+            label: r.name,
+            meta: `${r.downloads.toLocaleString()} downloads`,
+          })),
+          ...tagResults.rows.map(r => ({
+            type: 'tag',
+            value: r.tag,
+            label: `#${r.tag}`,
+            meta: `${r.count} packages`,
+          })),
+          ...categoryResults.rows.map(r => ({
+            type: 'category',
+            value: r.category,
+            label: r.category,
+            meta: `${r.count} packages`,
+          })),
+        ].slice(0, limit),
+      };
+
+      // Cache for 1 hour (autocomplete results don't change frequently)
+      await cacheSet(server, cacheKey, response, 3600);
+
+      return response;
+    } catch (error) {
+      server.log.error({ error, query: q }, 'Autocomplete failed');
+      return { query: q, suggestions: [] };
+    }
   });
 }

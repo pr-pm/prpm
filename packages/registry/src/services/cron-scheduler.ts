@@ -233,6 +233,78 @@ export class CronScheduler {
           }
         },
       },
+
+      // =====================================================
+      // SEARCH RANKINGS REFRESH
+      // Every 6 hours (keeps search results fresh)
+      // =====================================================
+      {
+        name: 'Search Rankings Refresh',
+        schedule: '0 */6 * * *', // Every 6 hours at :00
+        task: async () => {
+          try {
+            this.server.log.info('🔄 Refreshing search rankings materialized view...');
+
+            await this.server.pg.query('REFRESH MATERIALIZED VIEW CONCURRENTLY package_search_rankings');
+
+            this.server.log.info('✅ Search rankings refresh completed');
+          } catch (error) {
+            this.server.log.error(
+              { error },
+              '❌ Search rankings refresh failed'
+            );
+          }
+        },
+      },
+
+      // =====================================================
+      // SEARCH CACHE WARMING
+      // Every 30 minutes (pre-warms popular searches)
+      // =====================================================
+      {
+        name: 'Search Cache Warming',
+        schedule: '*/30 * * * *', // Every 30 minutes
+        task: async () => {
+          try {
+            this.server.log.info('🔄 Warming search cache with popular queries...');
+
+            // Popular search terms to pre-cache
+            const popularSearches = [
+              'react', 'cursor', 'frontend', 'backend', 'api',
+              'testing', 'documentation', 'ui', 'component', 'agent'
+            ];
+
+            let warmedCount = 0;
+            for (const searchTerm of popularSearches) {
+              try {
+                // Execute search to warm cache
+                await this.server.pg.query(
+                  `SELECT name, total_downloads
+                   FROM packages
+                   WHERE visibility = 'public'
+                     AND search_vector @@ websearch_to_tsquery('english', $1)
+                   ORDER BY total_downloads DESC
+                   LIMIT 20`,
+                  [searchTerm]
+                );
+                warmedCount++;
+              } catch (err) {
+                this.server.log.warn({ error: err, term: searchTerm }, 'Failed to warm cache for search term');
+              }
+            }
+
+            this.server.log.info(
+              { warmedCount, total: popularSearches.length },
+              '✅ Search cache warming completed'
+            );
+          } catch (error) {
+            this.server.log.error(
+              { error },
+              '❌ Search cache warming failed'
+            );
+          }
+        },
+      },
     ];
 
     // =====================================================

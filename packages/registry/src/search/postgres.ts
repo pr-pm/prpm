@@ -46,8 +46,9 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
 
       // Only add text search if query is provided
       if (searchQuery && searchQuery.trim()) {
+        // Use optimized search_vector column with weighted fields (name, description, tags, keywords)
         conditions.push(`(
-          to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')) @@ plainto_tsquery('english', $${paramIndex}) OR
+          p.search_vector @@ websearch_to_tsquery('english', $${paramIndex}) OR
           p.name ILIKE $${paramIndex + 1} OR
           p.name % $${paramIndex} OR
           p.description % $${paramIndex} OR
@@ -156,20 +157,30 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
           break;
       }
 
-      // Search with combined ranking (trigram similarity + full-text search)
+      // Search with combined ranking (trigram similarity + optimized full-text search with field weights)
       const rankColumn = hasSearchQuery
         ? `(
+            -- Trigram similarity for fuzzy matching (boosted for name matches)
             GREATEST(
-              similarity(p.name, $1),
+              similarity(p.name, $1) * 10,  -- 10x weight for name matches
               similarity(COALESCE(p.description, ''), $1)
-            ) * 2 +
-            ts_rank(to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')), plainto_tsquery('english', $1))
+            ) +
+            -- Full-text search rank using weighted search_vector (A=name, B=description, C=tags, D=keywords)
+            ts_rank_cd(p.search_vector, websearch_to_tsquery('english', $1), 32) * 5 +
+            -- Exact tag match bonus
+            (CASE WHEN $1 = ANY(p.tags) THEN 5 ELSE 0 END) +
+            -- Quality score multiplier (0-5 scale)
+            COALESCE(p.quality_score, 0) * 0.5 +
+            -- Featured/Verified boost
+            (CASE WHEN p.featured THEN 2 ELSE 0 END) +
+            (CASE WHEN p.verified THEN 1 ELSE 0 END)
           ) as relevance`
         : '0 as relevance';
 
       const result = await query<Package & { relevance: number }>(
         server,
-        `SELECT ${LIST_COLUMNS}, u.username as author_username, o.name as org_name, ${rankColumn}
+        `/*+ IndexScan(p idx_packages_search_vector) */
+         SELECT ${LIST_COLUMNS}, u.username as author_username, o.name as org_name, ${rankColumn}
          FROM packages p
          LEFT JOIN users u ON p.author_id = u.id
          LEFT JOIN organizations o ON p.org_id = o.id
@@ -187,11 +198,36 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       );
       const total = parseInt(countResult?.count || '0', 10);
 
+      // If search query exists but no results, suggest corrections (optimized)
+      let didYouMean: string | undefined;
+      if (searchQuery && searchQuery.trim() && total === 0 && !filters.format && !filters.subtype) {
+        try {
+          // Find similar package names using optimized trigram + prefix index
+          const suggestionResult = await queryOne<{ suggestion: string; sim: number }>(
+            server,
+            `SELECT name as suggestion, similarity(name, $1) as sim
+             FROM packages
+             WHERE visibility = 'public'
+               AND (name % $1 OR name ILIKE $2)
+             ORDER BY sim DESC, total_downloads DESC
+             LIMIT 1`,
+            [searchQuery, `%${searchQuery}%`]
+          );
+
+          if (suggestionResult && suggestionResult.sim > 0.3) {
+            didYouMean = suggestionResult.suggestion;
+          }
+        } catch (error) {
+          server.log.warn({ error, query: searchQuery }, 'Failed to generate did-you-mean suggestion');
+        }
+      }
+
       return {
         packages: result.rows.map(({ relevance, ...pkg }) => pkg),
         total,
         offset,
         limit,
+        didYouMean,
       };
     },
 
@@ -208,9 +244,10 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
     },
 
     async reindexAll(): Promise<void> {
-      // For PostgreSQL, we can refresh the GIN index
-      await query(server, 'REINDEX INDEX CONCURRENTLY idx_packages_search');
-      server.log.info('Reindexed all packages (PostgreSQL FTS)');
+      // Refresh the search_vector GIN index and materialized view
+      await query(server, 'REINDEX INDEX CONCURRENTLY idx_packages_search_vector');
+      await query(server, 'REFRESH MATERIALIZED VIEW CONCURRENTLY package_search_rankings');
+      server.log.info('Reindexed all packages and refreshed search rankings (PostgreSQL FTS)');
     },
   };
 }
