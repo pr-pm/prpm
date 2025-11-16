@@ -338,7 +338,7 @@ export class CronScheduler {
     if (this.embeddingService) {
       this.jobs.push({
         name: 'Batch Embedding Generation',
-        schedule: '*/30 * * * *', // Every 30 minutes
+        schedule: '*/15 * * * *', // Every 15 minutes
         task: async () => {
           try {
             this.server.log.info('🔄 Starting batch embedding generation...');
@@ -429,7 +429,7 @@ export class CronScheduler {
     if (process.env.OPENAI_API_KEY) {
       this.jobs.push({
         name: 'Package Auto-Categorization',
-        schedule: '*/30 * * * *', // Every 30 minutes
+        schedule: '*/15 * * * *', // Every 30 minutes
         task: async () => {
           try {
             this.server.log.info('🔄 Starting auto-categorization of packages...');

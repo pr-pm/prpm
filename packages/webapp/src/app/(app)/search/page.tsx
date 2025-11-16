@@ -49,18 +49,25 @@ function SearchPageContent() {
   const { user, jwtToken } = useAuth()
 
   // Track initial URL params to prevent reset on mount
-  const initialParams = useState(() => ({
-    tab: searchParams.get('tab') as TabType || 'packages',
-    query: searchParams.get('q') || '',
-    format: searchParams.get('format') as Format || '',
-    subtype: searchParams.get('subtype') as Subtype || '',
-    category: searchParams.get('category') || '',
-    author: searchParams.get('author') || '',
-    tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
-    sort: searchParams.get('sort') as SortType || 'downloads',
-    page: Number(searchParams.get('page')) || 1,
-    starredOnly: searchParams.get('starred') === 'true',
-  }))[0]
+  const initialParams = useState(() => {
+    const query = searchParams.get('q') || '';
+    // Default sort: relevance when searching, downloads when browsing
+    const defaultSort: SortType = query ? 'relevance' : 'downloads';
+    const sort = (searchParams.get('sort') as SortType) || defaultSort;
+
+    return {
+      tab: searchParams.get('tab') as TabType || 'packages',
+      query,
+      format: searchParams.get('format') as Format || '',
+      subtype: searchParams.get('subtype') as Subtype || '',
+      category: searchParams.get('category') || '',
+      author: searchParams.get('author') || '',
+      tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
+      sort,
+      page: Number(searchParams.get('page')) || 1,
+      starredOnly: searchParams.get('starred') === 'true',
+    };
+  })[0]
 
   // Initialize state from URL params
   const [activeTab, setActiveTab] = useState<TabType>(initialParams.tab)
@@ -86,8 +93,11 @@ function SearchPageContent() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set())
 
-  // AI Search state - load from localStorage
+  // AI Search state - load from localStorage, but only if feature is enabled
   const [aiSearchEnabled, setAiSearchEnabled] = useState(() => {
+    if (process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH !== 'true') {
+      return false
+    }
     if (typeof window !== 'undefined') {
       return localStorage.getItem('aiSearchEnabled') === 'true'
     }
@@ -128,6 +138,7 @@ function SearchPageContent() {
     const starred = searchParams.get('starred') === 'true'
     const language = searchParams.get('language')
     const framework = searchParams.get('framework')
+    const aiParam = searchParams.get('ai') === 'true'
 
     if (tab && tab !== activeTab) setActiveTab(tab)
     if (urlQuery !== null && urlQuery !== query) setQuery(urlQuery)
@@ -141,6 +152,8 @@ function SearchPageContent() {
     if (starred !== starredOnly) setStarredOnly(starred)
     if (language !== null && language !== selectedLanguage) setSelectedLanguage(language || '')
     if (framework !== null && framework !== selectedFramework) setSelectedFramework(framework || '')
+    // Enable AI search if coming from homepage AI search
+    if (aiParam && !aiSearchEnabled) setAiSearchEnabled(true)
   }, [searchParams])
 
   // Debounce search query
@@ -159,6 +172,18 @@ function SearchPageContent() {
       }
     }
   }, [query])
+
+  // Auto-update sort based on query presence (unless user explicitly set a different sort)
+  useEffect(() => {
+    const urlSort = searchParams.get('sort')
+    // Only auto-switch if user hasn't explicitly set a sort in the URL
+    if (!urlSort) {
+      const newSort: SortType = debouncedQuery.trim() ? 'relevance' : 'downloads'
+      if (sort !== newSort) {
+        setSort(newSort)
+      }
+    }
+  }, [debouncedQuery, searchParams, sort])
 
   // Debounced function to fetch suggestions
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
@@ -1055,6 +1080,7 @@ function SearchPageContent() {
                   onChange={(e) => setSort(e.target.value as SortType)}
                   className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
                 >
+                  <option value="relevance">Relevance</option>
                   <option value="downloads">Downloads</option>
                   <option value="quality">Quality Score</option>
                   <option value="rating">Highest Rated</option>

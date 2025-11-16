@@ -2,22 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getCategories, CategoryListResponse } from '@/lib/api'
+import { getCategories, CategoryListResponse, CategoryWithChildren } from '@/lib/api'
 import * as LucideIcons from 'lucide-react'
 
-interface Category {
-  id: string
-  name: string
-  slug: string
-  description?: string
-  icon?: string
-  level: number
-  package_count?: number
-  children?: Category[]
-}
+type Category = CategoryWithChildren
 
 // Map icon names to Lucide React components
-const getIconComponent = (iconName?: string) => {
+const getIconComponent = (iconName?: string | null) => {
   if (!iconName) return null
 
   // Convert kebab-case to PascalCase (e.g., 'check-circle' -> 'CheckCircle')

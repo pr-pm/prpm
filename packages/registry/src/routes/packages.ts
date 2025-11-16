@@ -54,7 +54,7 @@ export async function packageRoutes(server: FastifyInstance) {
           category: { type: 'string' },
           featured: { type: 'boolean' },
           verified: { type: 'boolean' },
-          sort: { type: 'string', enum: ['downloads', 'created', 'updated', 'quality', 'rating'], default: 'downloads' },
+          sort: { type: 'string', enum: ['relevance', 'downloads', 'created', 'updated', 'quality', 'rating'], default: 'downloads' },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
           offset: { type: 'number', default: 0, minimum: 0 },
         },

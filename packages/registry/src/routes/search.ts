@@ -57,12 +57,12 @@ export async function searchRoutes(server: FastifyInstance) {
           featured: { type: 'boolean' },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
           offset: { type: 'number', default: 0, minimum: 0 },
-          sort: { type: 'string', enum: ['downloads', 'created', 'updated', 'quality', 'rating'], default: 'downloads' },
+          sort: { type: 'string', enum: ['relevance', 'downloads', 'created', 'updated', 'quality', 'rating'] },
         },
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { q, format, subtype, tags, category, author, language, framework, verified, featured, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
+    const queryParams = request.query as {
       q?: string;
       format?: Format | Format[];
       subtype?: Subtype | Subtype[];
@@ -75,8 +75,13 @@ export async function searchRoutes(server: FastifyInstance) {
       featured?: boolean;
       limit?: number;
       offset?: number;
-      sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
+      sort?: 'relevance' | 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
     };
+
+    // Default sort: relevance when searching, downloads when browsing
+    const defaultSort = queryParams.q ? 'relevance' : 'downloads';
+
+    const { q, format, subtype, tags, category, author, language, framework, verified, featured, limit = 20, offset = 0, sort = defaultSort } = queryParams;
 
     // Build deterministic cache key (sorted params for consistency)
     const sortedParams = {

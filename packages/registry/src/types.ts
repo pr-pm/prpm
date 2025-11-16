@@ -184,7 +184,7 @@ export interface SearchFilters {
   framework?: string;  // Filter by framework
   verified?: boolean;
   featured?: boolean;
-  sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
+  sort?: 'relevance' | 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
   limit?: number;
   offset?: number;
 }

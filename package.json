@@ -43,7 +43,7 @@
     "taxonomy:approve": "npm run script:generate-taxonomy --workspace=@pr-pm/registry -- --approve",
     "clean": "rm -rf packages/*/dist packages/*/.next registry/dist node_modules packages/*/node_modules registry/node_modules",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "typecheck:watch": "concurrently --kill-others --names \"CLI,CLIENT,REGISTRY\" \"npm run typecheck -- --watch --workspace=prpm\" \"npm run typecheck -- --watch --workspace=@pr-pm/registry-client\" \"npm run typecheck -- --watch --workspace=@pr-pm/registry\""
+    "typecheck:watch": "concurrently --kill-others --names \"CLI,CLIENT,REGISTRY,WEBAPP\" \"npm run typecheck -- --watch --workspace=prpm\" \"npm run typecheck -- --watch --workspace=@pr-pm/registry-client\" \"npm run typecheck -- --watch --workspace=@pr-pm/registry\" \"npm run typecheck -- --watch --workspace=@pr-pm/webapp\""
   },
   "keywords": [
     "cursor",

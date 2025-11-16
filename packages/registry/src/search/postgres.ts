@@ -132,6 +132,15 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       const hasSearchQuery = searchQuery && searchQuery.trim();
 
       switch (sort) {
+        case 'relevance':
+          // Relevance: only works with search queries
+          if (hasSearchQuery) {
+            orderBy = 'relevance DESC, p.quality_score DESC NULLS LAST, p.total_downloads DESC';
+          } else {
+            // No query = fallback to quality + downloads
+            orderBy = 'p.quality_score DESC NULLS LAST, p.total_downloads DESC';
+          }
+          break;
         case 'created':
           orderBy = 'p.created_at DESC';
           break;

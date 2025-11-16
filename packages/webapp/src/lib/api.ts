@@ -1128,14 +1128,21 @@ export async function getStarredCollections(token: string, limit = 20, offset = 
 
 /**
  * Perform AI-powered semantic search
+ * Token is optional - AI search is free for everyone
  */
-export async function aiSearch(query: AISearchQuery, jwtToken: string): Promise<AISearchResponse> {
+export async function aiSearch(query: AISearchQuery, jwtToken?: string): Promise<AISearchResponse> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  // Only add Authorization header if token is provided
+  if (jwtToken) {
+    headers['Authorization'] = `Bearer ${jwtToken}`
+  }
+
   const response = await fetch(`${REGISTRY_URL}/api/v1/ai-search`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(query),
   })
 

@@ -4,14 +4,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { getCategories } from '@/lib/api'
+import { getCategories, CategoryWithChildren } from '@/lib/api'
 
-interface Category {
-  id: string
-  name: string
-  slug: string
-  icon?: string
-}
+type Category = CategoryWithChildren
 
 interface HeaderProps {
   showDashboard?: boolean
