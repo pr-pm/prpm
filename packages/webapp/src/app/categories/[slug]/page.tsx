@@ -10,7 +10,7 @@ export const dynamicParams = true
 // Generate static params for all categories
 export async function generateStaticParams() {
   try {
-    // Skip SSG in CI/test builds
+    // Skip SSG in CI/test builds or for static export builds
     if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
       console.log('[SSG Categories] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params')
       return [{ slug: 'development' }]
@@ -35,7 +35,10 @@ export async function generateStaticParams() {
     return slugs.map(slug => ({ slug }))
   } catch (error) {
     console.error('[SSG Categories] ERROR in generateStaticParams:', error)
-    return []
+    console.error('[SSG Categories] ⚠️  Falling back to minimal params for static export')
+    // Return at least one slug to satisfy Next.js static export requirements
+    // dynamicParams=true allows runtime rendering of other slugs
+    return [{ slug: 'development' }]
   }
 }
 

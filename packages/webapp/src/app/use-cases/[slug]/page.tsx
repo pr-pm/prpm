@@ -10,7 +10,7 @@ export const dynamicParams = true
 // Generate static params for all use cases
 export async function generateStaticParams() {
   try {
-    // Skip SSG in CI/test builds
+    // Skip SSG in CI/test builds or for static export builds
     if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
       console.log('[SSG UseCases] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params')
       return [{ slug: 'api-development' }]
@@ -23,7 +23,10 @@ export async function generateStaticParams() {
     return result.use_cases.map(useCase => ({ slug: useCase.slug }))
   } catch (error) {
     console.error('[SSG UseCases] ERROR in generateStaticParams:', error)
-    return []
+    console.error('[SSG UseCases] ⚠️  Falling back to minimal params for static export')
+    // Return at least one slug to satisfy Next.js static export requirements
+    // dynamicParams=true allows runtime rendering of other slugs
+    return [{ slug: 'api-development' }]
   }
 }
 
