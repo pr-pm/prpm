@@ -7,23 +7,23 @@
 
 -- Increase work_mem for complex search queries (per connection)
 -- This helps with sorting and hash operations in search
-ALTER DATABASE prpm SET work_mem = '64MB';
+ALTER DATABASE prpm_registry SET work_mem = '64MB';
 
 -- Increase shared_buffers hint for search-heavy workload
 -- (This is a hint; actual setting requires postgresql.conf change)
 -- Recommended: shared_buffers = 25% of RAM
 
 -- Enable JIT compilation for complex queries (PostgreSQL 11+)
-ALTER DATABASE prpm SET jit = on;
-ALTER DATABASE prpm SET jit_above_cost = 100000;
-ALTER DATABASE prpm SET jit_optimize_above_cost = 500000;
+ALTER DATABASE prpm_registry SET jit = on;
+ALTER DATABASE prpm_registry SET jit_above_cost = 100000;
+ALTER DATABASE prpm_registry SET jit_optimize_above_cost = 500000;
 
 -- ============================================
 -- FULL-TEXT SEARCH SETTINGS
 -- ============================================
 
 -- Increase ts_rank calculation precision
-ALTER DATABASE prpm SET default_text_search_config = 'pg_catalog.english';
+ALTER DATABASE prpm_registry SET default_text_search_config = 'pg_catalog.english';
 
 -- ============================================
 -- STATISTICS FOR BETTER QUERY PLANS
@@ -85,9 +85,9 @@ ALTER TABLE packages ALTER COLUMN full_content SET STORAGE EXTENDED;
 -- ============================================
 
 -- Enable parallel queries for large result sets
-ALTER DATABASE prpm SET max_parallel_workers_per_gather = 4;
-ALTER DATABASE prpm SET parallel_tuple_cost = 0.05;
-ALTER DATABASE prpm SET parallel_setup_cost = 500;
+ALTER DATABASE prpm_registry SET max_parallel_workers_per_gather = 4;
+ALTER DATABASE prpm_registry SET parallel_tuple_cost = 0.05;
+ALTER DATABASE prpm_registry SET parallel_setup_cost = 500;
 
 -- ============================================
 -- FINAL CLEANUP AND ANALYSIS
@@ -104,4 +104,4 @@ ALTER DATABASE prpm SET parallel_setup_cost = 500;
 -- COMMENTS
 -- ============================================
 
-COMMENT ON DATABASE prpm IS 'Optimized for search-heavy workload with FTS and complex ranking';
+COMMENT ON DATABASE prpm_registry IS 'Optimized for search-heavy workload with FTS and complex ranking';

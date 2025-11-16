@@ -217,6 +217,19 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
     COLL_COUNT=$(echo "$ALL_COLLECTIONS" | jq '. | length')
     success "Fetched $COLL_COUNT collections from registry"
 
+    # Fetch use cases
+    echo "  Fetching use cases..."
+    RESPONSE=$(curl -s "${REGISTRY_URL}/api/v1/taxonomy/use-cases?include_counts=false")
+
+    if [ $? -ne 0 ]; then
+      error "Failed to fetch use cases from registry"
+    else
+      USE_CASES=$(echo "$RESPONSE" | jq -r '.use_cases // []')
+      echo "$USE_CASES" > "$SSG_DATA_DIR/use-cases.json"
+      UC_COUNT=$(echo "$USE_CASES" | jq '. | length')
+      success "Fetched $UC_COUNT use cases from registry"
+    fi
+
     API_SUCCESS=true
 
     # Upload fresh data to S3 for future builds
@@ -226,11 +239,12 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
         --exclude "*" \
         --include "packages.json" \
         --include "collections.json" \
+        --include "use-cases.json" \
         --no-progress 2>&1)
       UPLOAD_EXIT_CODE=$?
 
       if [ $UPLOAD_EXIT_CODE -eq 0 ]; then
-        success "Uploaded fresh data to S3 ($PKG_COUNT packages, $COLL_COUNT collections)"
+        success "Uploaded fresh data to S3 ($PKG_COUNT packages, $COLL_COUNT collections, $UC_COUNT use cases)"
       else
         warn "Could not upload to S3 (cache will be stale)"
         debug "S3 upload error: $UPLOAD_OUTPUT"
@@ -253,6 +267,7 @@ if [ "$API_SUCCESS" = false ]; then
       --exclude "*" \
       --include "packages.json" \
       --include "collections.json" \
+      --include "use-cases.json" \
       --no-progress 2>/dev/null; then
 
       if [ -f "$SSG_DATA_DIR/packages.json" ] && [ -s "$SSG_DATA_DIR/packages.json" ]; then
@@ -322,8 +337,33 @@ else
 fi
 echo ""
 
+# Validate use-cases.json
+echo "Step 5a: Validating use-cases.json..."
+if [ -f "$SSG_DATA_DIR/use-cases.json" ]; then
+  debug "Found use-cases.json at $SSG_DATA_DIR/use-cases.json"
+
+  # Check if valid JSON and not empty
+  if jq -e '. | length > 0' "$SSG_DATA_DIR/use-cases.json" > /dev/null 2>&1; then
+    UC_COUNT=$(jq '. | length' "$SSG_DATA_DIR/use-cases.json")
+    success "use-cases.json is valid with $UC_COUNT use cases"
+
+    if [ "$DEBUG" = "true" ]; then
+      echo ""
+      debug "Sample use case entry:"
+      jq '.[0] | {name, slug, description: .description[:50]}' "$SSG_DATA_DIR/use-cases.json" || true
+    fi
+  else
+    warn "use-cases.json is empty or invalid, creating empty array fallback"
+    echo "[]" > "$SSG_DATA_DIR/use-cases.json"
+  fi
+else
+  warn "use-cases.json not found, creating empty array fallback"
+  echo "[]" > "$SSG_DATA_DIR/use-cases.json"
+fi
+echo ""
+
 # Final verification
-echo "Step 5: Final verification..."
+echo "Step 6: Final verification..."
 echo ""
 echo "SSG Data Directory Contents:"
 ls -lh "$SSG_DATA_DIR"
@@ -346,6 +386,14 @@ else
   exit 1
 fi
 
+if [ -f "$SSG_DATA_DIR/use-cases.json" ] && [ -r "$SSG_DATA_DIR/use-cases.json" ]; then
+  FILE_SIZE=$(wc -c < "$SSG_DATA_DIR/use-cases.json")
+  success "use-cases.json exists and is readable (${FILE_SIZE} bytes)"
+else
+  error "use-cases.json is missing or not readable!"
+  exit 1
+fi
+
 echo ""
 echo "=================================================="
 echo "SSG Data Preparation Complete!"
@@ -354,8 +402,10 @@ echo ""
 echo "Summary:"
 PKG_COUNT=$(jq '. | length' "$SSG_DATA_DIR/packages.json" 2>/dev/null || echo "0")
 COLL_COUNT=$(jq '. | length' "$SSG_DATA_DIR/collections.json" 2>/dev/null || echo "0")
+UC_COUNT=$(jq '. | length' "$SSG_DATA_DIR/use-cases.json" 2>/dev/null || echo "0")
 echo "  📦 Packages: $PKG_COUNT"
 echo "  📚 Collections: $COLL_COUNT"
+echo "  💡 Use Cases: $UC_COUNT"
 echo ""
 
 if [ "$DEBUG" = "true" ]; then

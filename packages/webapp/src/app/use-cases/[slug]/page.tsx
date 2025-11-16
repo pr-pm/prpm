@@ -1,8 +1,18 @@
 import Link from 'next/link'
-import { getPackagesByUseCase, getUseCases } from '@/lib/api'
+import { getPackagesByUseCase } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
 import type { Package } from '@/lib/api'
 import { Lightbulb, Package as PackageIcon, Download, Star, ArrowLeft, Sparkles } from 'lucide-react'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
+
+interface UseCase {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  example_query: string | null
+}
 
 // Allow dynamic rendering for params not in generateStaticParams
 export const dynamicParams = true
@@ -16,14 +26,24 @@ export async function generateStaticParams() {
       return [{ slug: 'api-development' }]
     }
 
-    const result = await getUseCases(false)
+    // During SSG build, read from local JSON file prepared by prepare-ssg-data.sh
+    const ssgDataPath = join(process.cwd(), 'public', 'seo-data', 'use-cases.json')
 
-    console.log(`[SSG UseCases] ✅ Generating ${result.use_cases.length} use case pages`)
+    try {
+      const fileContent = await readFile(ssgDataPath, 'utf-8')
+      const useCases: UseCase[] = JSON.parse(fileContent)
 
-    return result.use_cases.map(useCase => ({ slug: useCase.slug }))
+      console.log(`[SSG UseCases] ✅ Generating ${useCases.length} use case pages from SSG data`)
+
+      return useCases.map(useCase => ({ slug: useCase.slug }))
+    } catch (fileError) {
+      console.error('[SSG UseCases] ERROR reading SSG data file:', fileError)
+      console.error('[SSG UseCases] ⚠️  Falling back to minimal params')
+      return [{ slug: 'api-development' }]
+    }
   } catch (error) {
     console.error('[SSG UseCases] ERROR in generateStaticParams:', error)
-    return []
+    return [{ slug: 'api-development' }]
   }
 }
 
@@ -109,7 +129,7 @@ export default async function UseCasePage({
               </div>
             ) : (
               <div className="space-y-4">
-                {packages.map((pkg: Package) => (
+                {packages.map((pkg: any) => (
                   <Link
                     key={pkg.id}
                     href={getPackageUrl(pkg.name, pkg.author_username || '')}
@@ -121,7 +141,17 @@ export default async function UseCasePage({
                           {pkg.name}
                         </h3>
 
-                        {pkg.description && (
+                        {/* AI-curated recommendation reason */}
+                        {pkg.recommendation_reason && (
+                          <div className="mt-3 p-3 bg-purple-900/10 border border-purple-500/20 rounded-lg">
+                            <p className="text-sm text-purple-200 leading-relaxed">
+                              <span className="font-semibold text-purple-300">Why this fits: </span>
+                              {pkg.recommendation_reason}
+                            </p>
+                          </div>
+                        )}
+
+                        {pkg.description && !pkg.recommendation_reason && (
                           <p className="text-gray-400 mt-2 line-clamp-2">
                             {pkg.description}
                           </p>
