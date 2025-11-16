@@ -194,6 +194,7 @@ export interface SearchResult {
   total: number;
   offset: number;
   limit: number;
+  didYouMean?: string;
 }
 
 export interface PackageInfo extends Package {
