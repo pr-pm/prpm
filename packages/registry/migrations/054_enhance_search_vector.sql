@@ -5,9 +5,12 @@
 -- DROP OLD SEARCH_VECTOR COLUMN
 -- ============================================
 
--- Drop the existing search_vector column and its index
+-- Drop dependent objects first (materialized view depends on search_vector column)
+DROP MATERIALIZED VIEW IF EXISTS package_search_rankings CASCADE;
+
+-- Now drop the index and column (CASCADE will drop any remaining dependencies)
 DROP INDEX IF EXISTS idx_packages_search_vector;
-ALTER TABLE packages DROP COLUMN IF EXISTS search_vector;
+ALTER TABLE packages DROP COLUMN IF EXISTS search_vector CASCADE;
 
 -- ============================================
 -- CREATE ENHANCED SEARCH_VECTOR
@@ -37,9 +40,7 @@ CREATE INDEX idx_packages_search_vector ON packages USING gin(search_vector);
 -- UPDATE MATERIALIZED VIEW
 -- ============================================
 
--- Drop and recreate materialized view to use the new search_vector
-DROP MATERIALIZED VIEW IF EXISTS package_search_rankings CASCADE;
-
+-- Recreate materialized view to use the new enhanced search_vector
 CREATE MATERIALIZED VIEW package_search_rankings AS
 SELECT
   p.id,
@@ -100,7 +101,10 @@ CREATE INDEX idx_search_rankings_quality ON package_search_rankings(quality_scor
 -- UPDATE SEARCH FUNCTION
 -- ============================================
 
--- Update the search_packages function to use enhanced fields
+-- Drop old function first (signature changed: package_type -> package_format/subtype)
+DROP FUNCTION IF EXISTS search_packages(TEXT, TEXT, TEXT, TEXT[], DECIMAL, BOOLEAN, INTEGER, INTEGER);
+
+-- Create updated search_packages function with enhanced fields
 CREATE OR REPLACE FUNCTION search_packages(
   search_query TEXT,
   package_format TEXT DEFAULT NULL,

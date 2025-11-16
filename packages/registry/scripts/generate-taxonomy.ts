@@ -13,16 +13,20 @@
  * 5. With --approve flag, insert into database
  */
 
+import { config } from 'dotenv';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Load .env from app root (../../.env)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+config({ path: resolve(__dirname, '../../../.env') });
+
 import pg from 'pg';
 import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import type { ProposedSubcategory, ProposedTaxonomy, TaxonomyProposal } from '@pr-pm/types';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const { Pool } = pg;
 
@@ -78,13 +82,18 @@ async function main() {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   // Step 2: Connect to database
-  const db = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5434'),
-    database: process.env.DB_NAME || 'prpm',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-  });
+  // Use DATABASE_URL if available, otherwise individual params
+  const dbConfig = process.env.DATABASE_URL
+    ? { connectionString: process.env.DATABASE_URL }
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5434'),
+        database: process.env.DB_NAME || 'prpm',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+      };
+
+  const db = new Pool(dbConfig);
 
   try {
     // Test connection

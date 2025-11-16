@@ -31,7 +31,7 @@ export function AISearchResults({ results, query, executionTime }: AISearchResul
       {/* Search Meta */}
       <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 pb-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-purple-600" />
+          <Sparkles className="w-4 h-4 text-yellow-600" />
           <span>
             Found <strong>{results.length}</strong> semantic matches
           </span>
@@ -44,12 +44,12 @@ export function AISearchResults({ results, query, executionTime }: AISearchResul
         {results.map((result, index) => (
           <div
             key={result.package_id}
-            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-yellow-300 dark:hover:border-yellow-600 transition-colors"
           >
             <div className="flex items-start gap-3">
               {/* Rank Badge */}
-              <div className="flex-shrink-0 w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-purple-700 dark:text-purple-400">
+              <div className="flex-shrink-0 w-8 h-8 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                <span className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
                   {index + 1}
                 </span>
               </div>
@@ -59,13 +59,13 @@ export function AISearchResults({ results, query, executionTime }: AISearchResul
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <Link
                     href={getPackageUrl(result.name, result.author_username || '')}
-                    className="font-semibold text-lg text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                    className="font-semibold text-lg text-gray-900 dark:text-white hover:text-yellow-600 dark:hover:text-yellow-400 transition-colors"
                   >
                     {result.name}
                   </Link>
 
                   {/* Match Score */}
-                  <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 dark:bg-purple-900/20 rounded text-xs font-medium text-purple-700 dark:text-purple-400">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 rounded text-xs font-medium text-yellow-700 dark:text-yellow-400">
                     <Sparkles className="w-3 h-3" />
                     {Math.round(result.similarity_score * 100)}%
                   </div>
@@ -104,14 +104,14 @@ export function AISearchResults({ results, query, executionTime }: AISearchResul
 
                 {/* Match Explanation - WHY this matched */}
                 {(result as any).match_explanation && (
-                  <div className="mb-3 px-3 py-2 bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-lg">
+                  <div className="mb-3 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                     <div className="flex items-start gap-2">
-                      <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+                      <Sparkles className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium text-purple-900 dark:text-purple-200 block mb-1">
+                        <span className="text-xs font-medium text-yellow-900 dark:text-yellow-200 block mb-1">
                           Why this matched:
                         </span>
-                        <span className="text-sm text-purple-800 dark:text-purple-300">
+                        <span className="text-sm text-yellow-800 dark:text-yellow-300">
                           {(result as any).match_explanation}
                         </span>
                       </div>

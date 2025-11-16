@@ -16,7 +16,7 @@ Installs 20 packages: backend-architect, cloud-architect, database-architect, an
 
 7,5000+ cross platform packages
 
-📚 **[Official Documentation](https://docs.prpm.dev)** | 🌐 **[Browse Packages](https://prpm.dev)**
+[Docs](https://docs.prpm.dev) | [Search Packages](https://prpm.dev/search) | [Search Collections](https://prpm.dev/search?tab=collections)
 
 ---
 
@@ -36,8 +36,6 @@ prpm install collection/nextjs-pro
 # → Installs react-best-practices, typescript-strict, tailwind-helper,
 #    nextjs-patterns, component-architect
 ```
-
-**[Browse Collections →](https://prpm.dev/search?tab=collections)** | **[View Examples →](docs/EXAMPLES.md)**
 
 ---
 
@@ -77,7 +75,7 @@ prpm collections search frontend
 prpm collections info collection/nextjs-pro
 ```
 
-📚 **[Full Documentation](https://docs.prpm.dev)** | **[CLI Reference](https://docs.prpm.dev/cli/overview)**
+[CLI Reference](https://docs.prpm.dev/cli/overview)
 
 ---
 
@@ -97,11 +95,11 @@ prpm playground --package @username/react-best-practices
 ```
 
 **Features:**
-- 🤖 **Multi-Model Testing** - Try packages with Claude, GPT-4, and more
-- 💳 **Free Credits** - 1,000 monthly credits for all logged in users
-- 📊 **Live Results** - See how prompts perform in real-time
-- 💾 **Save Sessions** - Resume testing later
-- 📈 **Compare Models** - Test same prompt across different AI models
+-  **Multi-Model Testing** - Try packages with Claude, GPT-4, and more
+-  **Free Credits** - 1,000 monthly credits for all logged in users
+-  **Live Results** - See how prompts perform in real-time
+-  **Save Sessions** - Resume testing later
+-  **Compare Models** - Test same prompt across different AI models
 
 **[Try Playground →](https://prpm.dev/playground)**
 
@@ -154,11 +152,11 @@ Package authors can publish to PRPM and reach users across all editors.
 
 We welcome contributions!
 
-- 📦 **Add packages** - Submit your prompts (they'll work in all editors!)
-- 🎁 **Create collections** - Curate helpful package bundles
-- 🐛 **Report bugs** - Open issues
-- 💡 **Suggest features** - Start discussions
-- 🧪 **Write tests** - Improve coverage
+-  **Add packages** - Submit your prompts (they'll work in all editors!)
+-  **Create collections** - Curate helpful package bundles
+-  **Report bugs** - Open issues
+-  **Suggest features** - Start discussions
+-  **Write tests** - Improve coverage
 
 **[Contributing Guide →](CONTRIBUTING.md)**
 

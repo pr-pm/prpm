@@ -50,11 +50,9 @@ ANALYZE packages;
 -- INDEX BLOAT PREVENTION
 -- ============================================
 
--- Set fillfactor for frequently updated indexes
+-- Note: fillfactor not supported on GIN indexes
+-- For B-tree indexes, set during index creation instead
 -- (Leaves space for HOT updates, reducing bloat)
-ALTER INDEX idx_packages_search_vector SET (fillfactor = 90);
-ALTER INDEX idx_packages_downloads SET (fillfactor = 85);
-ALTER INDEX idx_packages_quality SET (fillfactor = 85);
 
 -- ============================================
 -- AUTOVACUUM TUNING FOR SEARCH TABLES
@@ -95,13 +93,12 @@ ALTER DATABASE prpm SET parallel_setup_cost = 500;
 -- FINAL CLEANUP AND ANALYSIS
 -- ============================================
 
--- Full vacuum to reclaim space and update visibility map
-VACUUM FULL ANALYZE packages;
-VACUUM FULL ANALYZE package_search_rankings;
-
--- Reindex to remove bloat
-REINDEX TABLE CONCURRENTLY packages;
-REINDEX TABLE CONCURRENTLY package_search_rankings;
+-- Note: VACUUM FULL and REINDEX CONCURRENTLY cannot run inside transactions
+-- Run these manually when needed:
+--   VACUUM FULL ANALYZE packages;
+--   VACUUM FULL ANALYZE package_search_rankings;
+--   REINDEX TABLE CONCURRENTLY packages;
+--   REINDEX TABLE CONCURRENTLY package_search_rankings;
 
 -- ============================================
 -- COMMENTS
