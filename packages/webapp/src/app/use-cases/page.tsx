@@ -103,17 +103,18 @@ export default function UseCasesPage() {
                     </p>
                   )}
 
-                  {/* Example Packages */}
-                  {useCase.packages && useCase.packages.length > 0 && (
+                  {/* Package Count */}
+                  {useCase.package_count && useCase.package_count > 0 && (
                     <div className="mt-6 pt-6 border-t border-prpm-border/30">
                       <div className="mb-4 flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
-                        Example Packages
+                        {useCase.package_count} {useCase.package_count === 1 ? 'Package' : 'Packages'} Available
                       </div>
+                      {/* Commented out package listing code since packages property doesn't exist
                       <div className="space-y-2">
-                        {useCase.packages.slice(0, 3).map((pkg) => (
+                        {useCase.packages.slice(0, 3).map((pkg: any) => (
                           <Link
                             key={pkg.id}
                             href={`/packages/${pkg.name}`}
@@ -157,6 +158,7 @@ export default function UseCasesPage() {
                           View all {useCase.packages.length} packages →
                         </Link>
                       )}
+                      */}
                     </div>
                   )}
 

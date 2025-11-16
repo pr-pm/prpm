@@ -26,7 +26,7 @@ function aiResultToPackage(result: AISearchResult): Package {
     weekly_downloads: 0,
     monthly_downloads: 0,
     version_count: 0,
-    quality_score: result.quality_score,
+    quality_score: result.quality_score || undefined,
     rating_count: 0,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -132,7 +132,7 @@ export default function Home() {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-prpm-dark-card border border-prpm-border rounded-full text-sm text-gray-400">
               <span className="w-2 h-2 bg-prpm-accent rounded-full animate-pulse"></span>
-              Alpha · 7,000+ packages · 100+ collections
+              Alpha · 7,500+ packages · 100+ collections
             </div>
 
             <div className="flex justify-center mb-8">
@@ -152,81 +152,10 @@ export default function Home() {
             <p className="text-base sm:text-lg lg:text-xl mb-12 text-gray-400 max-w-3xl mx-auto leading-relaxed px-4">
               Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, GitHub Copilot, OpenAI Codex, Google Gemini, Kiro, and more — all from one file.
             </p>
-
-            <div className="flex flex-col gap-4 items-center mb-8">
-              <Link
-                href="/search"
-                className="px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                Browse Packages
-              </Link>
-              <div className="flex gap-4 justify-center flex-wrap">
-                <Link
-                  href="/getting-started"
-                  className="px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift"
-                >
-                  Get Started
-                </Link>
-                <a
-                  href="https://github.com/pr-pm/prpm"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group px-8 py-4 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-lg hover-lift flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                  </svg>
-                  GitHub
-                </a>
-              </div>
-            </div>
-
-            <div className="flex justify-center mb-12">
-              <a href="https://startupfa.me/s/prpm.dev?utm_source=prpm.dev" target="_blank" rel="noopener noreferrer">
-                <img src="https://startupfa.me/badges/featured-badge.webp" alt="PRPM - Featured on Startup Fame" width={171} height={54} />
-              </a>
-            </div>
-
-            {/* Quick install commands */}
-            <div className="max-w-3xl mx-auto space-y-4">
-              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Install CLI</span>
-                  <button
-                    onClick={() => copyToClipboard('npm install -g prpm', 'cli')}
-                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
-                  >
-                    {copiedCli ? 'Copied!' : 'Copy'}
-                  </button>
-                </div>
-                <code className="block font-mono text-prpm-accent-light text-left">
-                  <span className="text-gray-600">$</span> npm install -g prpm
-                </code>
-              </div>
-
-              <div className="bg-prpm-dark-card border border-prpm-accent/30 rounded-xl p-6 backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Try Collections</span>
-                  <button
-                    onClick={() => copyToClipboard('prpm install collections/essential-dev-agents', 'collection')}
-                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
-                  >
-                    {copiedCollection ? 'Copied!' : 'Copy'}
-                  </button>
-                </div>
-                <code className="block font-mono text-prpm-accent-light text-left space-y-1">
-                  <div><span className="text-gray-600">$</span> prpm install collections/essential-dev-agents</div>
-                  <div className="text-xs text-gray-500 mt-2"># Installs 20 packages: backend-architect, cloud-architect, database-architect, and more</div>
-                </code>
-              </div>
-            </div>
           </div>
 
           {/* Live Search Section */}
-          <div className="mb-20">
+          <div className="mb-12">
             <div className="max-w-4xl mx-auto">
               <div className="bg-gradient-to-br from-prpm-accent/10 via-prpm-green/10 to-prpm-accent/10 border-2 border-prpm-accent/30 rounded-2xl p-6 sm:p-8 relative overflow-hidden">
                 {/* Background decoration */}
@@ -355,7 +284,7 @@ export default function Home() {
                                           {[...Array(5)].map((_, i) => (
                                             <svg
                                               key={i}
-                                              className={`w-3 h-3 ${i < Math.round(pkg.quality_score!) ? 'text-yellow-400' : 'text-gray-700'}`}
+                                              className={`w-3 h-3 ${i < Math.round(Number(pkg.quality_score) || 0) ? 'text-yellow-400' : 'text-gray-700'}`}
                                               fill="currentColor"
                                               viewBox="0 0 20 20"
                                             >
@@ -370,9 +299,9 @@ export default function Home() {
                                     </p>
                                   </div>
                                   <div className="flex items-center gap-2 flex-shrink-0">
-                                    {pkg.downloads !== undefined && (
+                                    {pkg.total_downloads !== undefined && (
                                       <span className="text-xs text-gray-500">
-                                        {pkg.downloads.toLocaleString()} ↓
+                                        {pkg.total_downloads.toLocaleString()} ↓
                                       </span>
                                     )}
                                     <svg className="w-4 h-4 text-gray-600 group-hover:text-prpm-accent group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -441,6 +370,95 @@ export default function Home() {
             </div>
           </div>
 
+          <div className="text-center mb-20">
+            {/* Quick install commands */}
+            <div className="max-w-3xl mx-auto space-y-4 mb-8">
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Install CLI</span>
+                  <button
+                    onClick={() => copyToClipboard('npm install -g prpm', 'cli')}
+                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                  >
+                    {copiedCli ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <code className="block font-mono text-prpm-accent-light text-left">
+                  <span className="text-gray-600">$</span> npm install -g prpm
+                </code>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Search for a package</span>
+                  <button
+                    onClick={() => copyToClipboard('prpm search typescript', 'cli')}
+                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                  >
+                    {copiedCli ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <code className="block font-mono text-prpm-accent-light text-left">
+                  <span className="text-gray-600">$</span> prpm search typescript
+                </code>
+              </div>
+
+              <div className="bg-prpm-dark-card border border-prpm-accent/30 rounded-xl p-6 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">Try Collections</span>
+                  <button
+                    onClick={() => copyToClipboard('prpm install collections/essential-dev-agents', 'collection')}
+                    className="text-xs text-gray-500 hover:text-prpm-accent transition-colors"
+                  >
+                    {copiedCollection ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <code className="block font-mono text-prpm-accent-light text-left space-y-1">
+                  <div><span className="text-gray-600">$</span> prpm install collections/essential-dev-agents</div>
+                  <div className="text-xs text-gray-500 mt-2"># Installs 20 packages: backend-architect, cloud-architect, database-architect, and more</div>
+                </code>
+              </div>
+            </div>
+
+            {/* Buttons and Badge Row */}
+            <div className="flex gap-3 justify-center flex-wrap items-center mb-8 px-4">
+              <Link
+                href="/search"
+                className="px-6 py-3 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-base hover-lift flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Browse Packages
+              </Link>
+              <Link
+                href="/getting-started"
+                className="px-6 py-3 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-base hover-lift"
+              >
+                Get Started
+              </Link>
+              <a
+                href="https://github.com/pr-pm/prpm"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group px-6 py-3 bg-prpm-dark-card border border-prpm-border text-white rounded-lg hover:border-prpm-accent transition-all font-semibold text-base hover-lift flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                </svg>
+                GitHub
+              </a>
+              <a
+                href="https://startupfa.me/s/prpm.dev?utm_source=prpm.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover-lift"
+              >
+                <img src="https://startupfa.me/badges/featured-badge.webp" alt="PRPM - Featured on Startup Fame" width={171} height={54} />
+              </a>
+            </div>
+          </div>
+
           {/* Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-20">
             <div className="group bg-prpm-dark-card border border-prpm-border rounded-xl p-6 hover-lift hover:border-prpm-accent/50 transition-all">
@@ -449,7 +467,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">7,000+ Packages</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">7,500+ Packages</h3>
               <p className="text-gray-400 leading-relaxed">
                 Battle-tested prompts, agents, skills, and slash commands from verified contributors
               </p>

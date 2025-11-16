@@ -2,16 +2,9 @@
 
 **PRPM is more than a package manager—it's a complete platform for discovering, testing, publishing, and managing AI coding tools.** This guide walks through every major feature, explaining not just what each does, but why it matters and how it helps you build better software with AI.
 
-## Table of Contents
-- [For Users: Discovery & Installation](#for-users-discovery--installation)
-- [Testing Tools: The Playground](#testing-tools-the-playground)
-- [For Authors: Publishing & Analytics](#for-authors-publishing--analytics)
-- [Platform Features: Search, Quality, & More](#platform-features-search-quality--more)
-- [Advanced Features](#advanced-features)
-
 ---
 
-## For Users: Discovery & Installation
+## Core Features
 
 ### Universal Package Management
 
@@ -36,7 +29,9 @@ PRPM detects which AI editor you're using (or you can specify with `--as cursor`
 
 **Why this matters:** If you work with a team where some use Copilot, others Claude, and sometimes Cursor, PRPM is the only way to keep everyone's rules consistent across the codebase.
 
-### 7,500+ Cross-Platform Packages
+---
+
+### 7,500+ Packages Across All Platforms
 
 Browse packages for:
 - **Cursor rules** - Coding guidelines and patterns
@@ -49,27 +44,7 @@ Browse packages for:
 
 Every package works in every editor. No "Cursor-only" or "Claude-only" limitations.
 
-### Collections: Complete Setups in One Command
-
-Collections bundle related packages for complete workflow setups:
-
-```bash
-prpm install collections/nextjs-pro
-# Installs 20 packages:
-# - Backend architect
-# - Database architect
-# - Cloud architect
-# - API design patterns
-# - Testing best practices
-# - And 15 more...
-```
-
-Instead of manually finding and installing a dozen packages for a new Next.js project, install one collection and get everything configured.
-
-**Use cases:**
-- **Framework stacks** (`collections/react-fullstack`, `collections/python-ml`)
-- **Company standards** (your team's internal best practices)
-- **Learning paths** (curated packages for learning a new framework)
+---
 
 ### Smart Search with AI
 
@@ -95,6 +70,8 @@ The AI search understands **intent**, not just keywords. It analyzes:
 - What problems each package solves
 
 Search results show **why** each package matched your query, not just a relevance score.
+
+---
 
 ### Quality Scores: Find the Best Packages
 
@@ -123,6 +100,8 @@ Every package has a quality score (0-5) based on:
 
 This isn't arbitrary—packages are scored using AI evaluation of actual prompt quality. A package with 1,000 downloads but poor content won't rank above a new package with excellent, well-documented prompts.
 
+---
+
 ### Package Stars & Bookmarks
 
 Star packages to:
@@ -134,11 +113,116 @@ Your starred packages appear in your dashboard for quick access.
 
 ---
 
+### Collections: Complete Setups in One Command
+
+Collections bundle related packages for complete workflow setups:
+
+```bash
+prpm install collections/nextjs-pro
+# Installs 20 packages:
+# - Backend architect
+# - Database architect
+# - Cloud architect
+# - API design patterns
+# - Testing best practices
+# - And 15 more...
+```
+
+Instead of manually finding and installing a dozen packages for a new Next.js project, install one collection and get everything configured.
+
+**Use cases:**
+- **Framework stacks** (`collections/react-fullstack`, `collections/python-ml`)
+- **Company standards** (your team's internal best practices)
+- **Learning paths** (curated packages for learning a new framework)
+
+---
+
+### Format Conversion Tool
+
+Convert packages between different AI tool formats:
+
+```bash
+# Convert a Cursor rule to Claude format
+prpm convert .cursorrules --to claude --subtype skill
+
+# Convert to Windsurf
+prpm convert my-prompt.md --to windsurf --subtype rule
+
+# Convert with custom output path
+prpm convert prompt.md --to cursor --output .cursor/rules/my-rule.md
+```
+
+**Supported conversions:**
+- Cursor ↔ Claude ↔ Continue ↔ Windsurf ↔ Copilot ↔ Kiro ↔ Agents.md
+
+**Why this matters:** Migrate your existing prompts between tools without manual rewriting. Test the same prompt across multiple AI editors.
+
+---
+
+### Starred Packages Management
+
+Track and manage your favorite packages:
+
+```bash
+# List all starred packages
+prpm starred
+
+# List only starred packages (not collections)
+prpm starred --packages
+
+# List only starred collections
+prpm starred --collections
+
+# Filter by format
+prpm starred --format cursor
+```
+
+Your starred packages sync across devices when logged in. Quick access to packages you trust and use frequently.
+
+---
+
+### Credits & Billing
+
+Monitor your playground usage:
+
+```bash
+# Check current credit balance
+prpm credits
+
+# View transaction history
+prpm credits --history
+
+# See last 20 transactions
+prpm credits --history --limit 20
+```
+
+Transparent pricing with no hidden fees. Credits only cover API costs to OpenAI and Anthropic.
+
+---
+
+### Lock File Management
+
+PRPM automatically maintains a `prpm.lock` file tracking:
+- Exact versions of installed packages
+- Installation timestamps
+- Dependency resolution
+- Format conversions applied
+
+**Why lock files matter:**
+- Ensures consistent installations across team members
+- Enables exact reproducibility in CI/CD
+- Tracks what's installed where
+- Simplifies package updates and rollbacks
+
+---
+
 ## Testing Tools: The Playground
 
 **The Problem:** You find a package that looks promising. But will it actually work for your use case? You don't want to install it, test it, uninstall it if it doesn't fit.
 
 **The Playground** lets you test any package before installing—no commitment required.
+
+---
 
 ### Try Packages with Real AI Models
 
@@ -154,6 +238,8 @@ prpm playground --package @username/react-best-practices
 4. See the AI's response using that package's prompt
 5. Decide if it's worth installing
 
+---
+
 ### Model Comparison Mode
 
 Test the same prompt with different packages side-by-side:
@@ -168,6 +254,8 @@ Or compare **with vs without** a package (baseline comparison):
 - **Package B:** (empty - no package)
 
 See how much the package actually improves the AI's output.
+
+---
 
 ### Free Credits System
 
@@ -185,6 +273,8 @@ See how much the package actually improves the AI's output.
 
 Costs scale with actual API usage. We don't profit from credits—they cover our OpenAI/Anthropic costs.
 
+---
+
 ### Playground Analytics (for Package Authors)
 
 If you're a verified author, see how people use your packages in the playground:
@@ -196,6 +286,8 @@ If you're a verified author, see how people use your packages in the playground:
 - **Comparison tracking:** How often your package was compared to others
 
 This helps you understand if your package is useful in practice, not just in theory.
+
+---
 
 ### Custom Prompt Testing (Verified Authors Only)
 
@@ -230,6 +322,8 @@ You write once. PRPM handles conversion to all 7+ formats automatically.
 
 **At least 4x reach** (Cursor + Claude + Continue + Windsurf users) compared to format-specific sharing.
 
+---
+
 ### Author Verification & Invitations
 
 **Verified authors** get:
@@ -245,6 +339,8 @@ You write once. PRPM handles conversion to all 7+ formats automatically.
 - Publish high-quality, well-documented packages
 
 **Author invitations:** Invite collaborators to help maintain your packages. Add team members with different permission levels.
+
+---
 
 ### Package Analytics Dashboard
 
@@ -271,6 +367,8 @@ Track how your packages perform:
 - Session data
 - User feedback
 
+---
+
 ### Author Rankings & Stats
 
 Your author profile shows:
@@ -287,6 +385,8 @@ Authors are ranked by:
 4. Community engagement
 
 High-ranking authors get featured on the homepage and search results.
+
+---
 
 ### Organizations Support
 
@@ -337,6 +437,8 @@ PRPM uses **both** traditional keyword search and AI-powered semantic search:
 - Merges results with intelligent ranking
 - Shows both exact matches and conceptually similar packages
 
+---
+
 ### AI-Enhanced Package Metadata
 
 Every package gets AI-generated enrichment:
@@ -359,6 +461,8 @@ security vulnerabilities in authentication, and poor database query organization
 ```
 
 This metadata improves search and helps users understand what each package does at a glance.
+
+---
 
 ### Package Quality Scoring Algorithm
 
@@ -419,6 +523,8 @@ Maintenance: 0.2/0.5
 
 Scores update automatically when packages are downloaded, rated, or updated.
 
+---
+
 ### Format Conversion Engine
 
 PRPM supports bidirectional conversion between all formats:
@@ -448,6 +554,8 @@ PRPM supports bidirectional conversion between all formats:
 - Workflows (multi-step processes)
 - Hooks (event-driven automation)
 - Chat modes (conversation styles)
+
+---
 
 ### Categories & Taxonomy
 
@@ -498,6 +606,8 @@ prpm install @my-company/internal-standards
 
 Private packages don't appear in public search. Only org members can see/install them.
 
+---
+
 ### Package Deprecation
 
 Mark packages as deprecated with a reason:
@@ -511,6 +621,8 @@ Deprecated packages:
 - Link to replacement package
 - Don't appear in top search results
 - Still installable (for backwards compatibility)
+
+---
 
 ### Version Management
 
@@ -542,6 +654,8 @@ Subscribe to get:
 - Tips for using PRPM effectively
 
 No spam. Unsubscribe anytime.
+
+---
 
 ### CLI-First Design
 
@@ -576,12 +690,16 @@ prpm analytics @username/package
 
 The CLI is the primary interface. The web app (prpm.dev) is for discovery and playground testing.
 
+---
+
 ### GitHub Integration
 
 - **OAuth login:** Link your GitHub account
 - **Package claiming:** Prove ownership via GitHub repos
 - **Auto-sync:** Import packages from your repos (coming soon)
 - **README parsing:** Automatically generate descriptions from README files
+
+---
 
 ### Download Analytics
 
@@ -592,6 +710,8 @@ Track package usage over time:
 - Trending packages dashboard
 
 Authors see detailed analytics. Users see aggregate stats on package pages.
+
+---
 
 ### Self-Improvement (Experimental)
 
