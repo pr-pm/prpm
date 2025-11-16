@@ -1,49 +1,87 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getPackagesByUseCase, getUseCases } from '@/lib/api'
+import { getPackagesByUseCase } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
 import type { Package } from '@/lib/api'
 import { Lightbulb, Package as PackageIcon, Download, Star, ArrowLeft, Sparkles } from 'lucide-react'
 
-// Allow dynamic rendering for params not in generateStaticParams
-export const dynamicParams = true
-
-// Generate static params for all use cases
-export async function generateStaticParams() {
-  try {
-    // Skip SSG in CI/test builds or for static export builds
-    if (process.env.NEXT_PUBLIC_SKIP_SSG === 'true') {
-      console.log('[SSG UseCases] ⚡ NEXT_PUBLIC_SKIP_SSG=true, returning minimal params')
-      return [{ slug: 'api-development' }]
-    }
-
-    const result = await getUseCases(false)
-
-    console.log(`[SSG UseCases] ✅ Generating ${result.use_cases.length} use case pages`)
-
-    return result.use_cases.map(useCase => ({ slug: useCase.slug }))
-  } catch (error) {
-    console.error('[SSG UseCases] ERROR in generateStaticParams:', error)
-    console.error('[SSG UseCases] ⚠️  Falling back to minimal params for static export')
-    // Return at least one slug to satisfy Next.js static export requirements
-    // dynamicParams=true allows runtime rendering of other slugs
-    return [{ slug: 'api-development' }]
-  }
+interface UseCase {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  example_query: string | null
 }
 
-export default async function UseCasePage({
+interface UseCaseData {
+  use_case: UseCase
+  packages: Package[]
+  total: number
+}
+
+export default function UseCasePage({
   params,
 }: {
   params: { slug: string }
 }) {
-  try {
-    const result = await getPackagesByUseCase(params.slug, {
-      limit: 100, // Show first 100 packages
-      offset: 0
-    })
+  const [data, setData] = useState<UseCaseData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-    const useCase = result.use_case
-    const packages = result.packages
-    const total = result.total
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        const result = await getPackagesByUseCase(params.slug, {
+          limit: 100,
+          offset: 0
+        })
+        setData(result)
+      } catch (err) {
+        console.error('Failed to load use case:', err)
+        setError('Failed to load use case')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [params.slug])
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-prpm-dark">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-prpm-accent"></div>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <main className="min-h-screen bg-prpm-dark">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-20">
+            <Lightbulb className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Use Case Not Found</h2>
+            <p className="text-gray-400 mb-6">The use case you're looking for doesn't exist</p>
+            <Link
+              href="/use-cases"
+              className="inline-block bg-prpm-accent hover:bg-prpm-accent-light text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Browse All Use Cases
+            </Link>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  const { use_case: useCase, packages, total } = data
 
     return (
       <main className="min-h-screen bg-prpm-dark">
@@ -184,24 +222,4 @@ export default async function UseCasePage({
         </div>
       </main>
     )
-  } catch (error) {
-    console.error('Failed to load use case:', error)
-    return (
-      <main className="min-h-screen bg-prpm-dark">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-20">
-            <Lightbulb className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Use Case Not Found</h2>
-            <p className="text-gray-400 mb-6">The use case you're looking for doesn't exist</p>
-            <Link
-              href="/use-cases"
-              className="inline-block bg-prpm-accent hover:bg-prpm-accent-light text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Browse All Use Cases
-            </Link>
-          </div>
-        </div>
-      </main>
-    )
-  }
 }
