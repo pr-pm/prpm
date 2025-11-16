@@ -1,0 +1,25 @@
+Your team sees you shipping features in hours that used to take days. They ask: "How do I get started with AI assistants?"
+
+You send them documentation. Setup guides. Tutorial videos. A week later, nothing's changed. They're still stuck at the starting line.
+
+Here's the problem: Most guides teach you ABOUT AI assistants. You spend hours learning concepts before seeing any value. That's backwards.
+
+The fastest way to learn is to see immediate results, then understand why they work. So here's a different approach—get value in the next 5 minutes:
+
+1. Install @sanjeed5/react → Get production-ready React components with TypeScript types, accessibility, and error handling built in. 30 seconds vs 30 minutes of manual work.
+
+2. Install @prpm/thoroughness → Make your AI actually think through bugs systematically instead of guessing random fixes. First suggestion usually works.
+
+3. Install @prpm/typescript-type-safety → Stop your AI from writing 'any' types and lazy shortcuts. Catch bugs before code review.
+
+Total time: 5 minutes to install 3 packages and try 3 examples.
+Total value: Your AI assistant just got 5 years of experience.
+
+This is how onboarding should work. No ecosystem overviews. No theory. Just: install, try, see the difference.
+
+Once you see the value, you'll naturally want to dig deeper. But first, get one win.
+
+Read the full guide:
+https://prpm.dev/blog/how-to-get-started-ai-assistants
+
+#AI #DeveloperProductivity #SoftwareEngineering #AIAssistants #DevEx

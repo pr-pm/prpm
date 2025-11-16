@@ -33,6 +33,15 @@ const blogPosts: BlogPost[] = [
     tags: ["Technical", "Specifications", "Format Conversion"],
   },
   {
+    slug: "how-to-get-started-ai-assistants",
+    title: "How to Actually Get Started with AI Coding Assistants (5 Minutes)",
+    excerpt: "Most guides teach you about AI assistants for hours. This one gets you using them in 5 minutes. Install 3 packages, try 3 examples, see immediate value.",
+    date: "2025-11-12",
+    author: "PRPM Team",
+    readTime: "3 min read",
+    tags: ["Tutorial", "Getting Started", "Developer Experience"],
+  },
+  {
     slug: "claude-hooks-best-practices",
     title: "Claude Hooks Best Practices: Write Hooks That Work",
     excerpt: "Security, reliability, and performance patterns for Claude Code hooks. Validate input, quote paths, handle failures, optimize performance. 16-point checklist for production-ready automation.",
