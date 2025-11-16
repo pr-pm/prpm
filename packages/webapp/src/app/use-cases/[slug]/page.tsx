@@ -160,24 +160,22 @@ export default async function UseCasePage({
           </div>
 
           {/* AI Search CTA */}
-          {process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH === 'true' && (
-            <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/30 rounded-lg p-8 text-center">
-              <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">
-                Want more personalized results?
-              </h2>
-              <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-                Use AI Search to describe your specific needs in natural language.
-                Get semantic matches ranked by relevance to your use case.
-              </p>
-              <Link
-                href="/search"
-                className="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
-              >
-                Try AI Search
-              </Link>
-            </div>
-          )}
+          <div className="mt-12 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/30 rounded-lg p-8 text-center">
+            <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Want more personalized results?
+            </h2>
+            <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+              Use AI Search to describe your specific needs in natural language.
+              Get semantic matches ranked by relevance to your use case.
+            </p>
+            <Link
+              href="/search"
+              className="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
+            >
+              Try AI Search
+            </Link>
+          </div>
         </div>
       </main>
     )

@@ -93,11 +93,8 @@ function SearchPageContent() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set())
 
-  // AI Search state - load from localStorage, but only if feature is enabled
+  // AI Search state - load from localStorage
   const [aiSearchEnabled, setAiSearchEnabled] = useState(() => {
-    if (process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH !== 'true') {
-      return false
-    }
     if (typeof window !== 'undefined') {
       return localStorage.getItem('aiSearchEnabled') === 'true'
     }
@@ -886,7 +883,7 @@ function SearchPageContent() {
           </div>
 
           {/* AI Search Toggle */}
-          {activeTab === 'packages' && process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH === 'true' && (
+          {activeTab === 'packages' && (
             <div className="mt-4 flex justify-end">
               <AISearchToggle
                 enabled={aiSearchEnabled}
