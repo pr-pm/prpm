@@ -1961,6 +1961,18 @@ export async function packageRoutes(server: FastifyInstance) {
       const user = request.user;
 
       try {
+        // Check if package exists first to avoid foreign key constraint violation
+        const pkgCheck = await server.pg.query(
+          `SELECT id, visibility FROM packages WHERE id = $1`,
+          [packageId]
+        );
+
+        if (pkgCheck.rows.length === 0) {
+          return reply.status(404).send({
+            error: 'Package not found',
+          });
+        }
+
         if (starred) {
           // Add star
           await server.pg.query(

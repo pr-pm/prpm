@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import type { PackageInfo } from '@pr-pm/types'
+import Header from '@/components/Header'
 import CopyInstallCommand from '@/components/CopyInstallCommand'
 import SharedResults from '@/components/SharedResults'
 import SuggestedTestInputs from '@/components/SuggestedTestInputs'
@@ -332,17 +333,19 @@ export default async function PackagePage({ params }: { params: { author: string
   }
 
   return (
-    <main className="min-h-screen bg-prpm-dark">
-      {/* Structured Data for SEO - Software Package */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareData) }}
-      />
-      {/* Structured Data for SEO - Breadcrumbs */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
-      />
+    <>
+      <Header />
+      <main className="min-h-screen bg-prpm-dark">
+        {/* Structured Data for SEO - Software Package */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareData) }}
+        />
+        {/* Structured Data for SEO - Breadcrumbs */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        />
 
       {/* Track recently viewed */}
       <RecentlyViewedTracker
@@ -847,6 +850,7 @@ export default async function PackagePage({ params }: { params: { author: string
           }}
         />
       </div>
-    </main>
+      </main>
+    </>
   )
 }
