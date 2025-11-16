@@ -24,14 +24,35 @@ PRPM makes it easy to:
     icon="grid"
     href="/concepts/formats"
   >
-    Works with Claude Code, Cursor, Continue, Windsurf, and more
+    Works with Claude Code, Cursor, Continue, Windsurf, Copilot, Kiro, and more
   </Card>
+  <!-- <Card
+    title="AI-Powered Search"
+    icon="sparkles"
+    href="/cli/commands#ai-search"
+  >
+    Find packages using natural language (100% free, no login required)
+  </Card> -->
   <Card
     title="Package Collections"
     icon="boxes-stacked"
     href="/concepts/collections"
   >
     Bundle multiple packages together for easier setup
+  </Card>
+  <Card
+    title="Playground Testing"
+    icon="flask"
+    href="/guides/playground"
+  >
+    Test packages with real AI models before installing
+  </Card>
+  <Card
+    title="Format Conversion"
+    icon="arrows-rotate"
+    href="/cli/commands#convert"
+  >
+    Convert prompt files between different formats
   </Card>
   <Card
     title="Easy Publishing"
@@ -46,6 +67,13 @@ PRPM makes it easy to:
     href="/cli"
   >
     Powerful command-line interface for managing packages
+  </Card>
+  <Card
+    title="Web Interface"
+    icon="browser"
+    href="https://prpm.dev"
+  >
+    Browse and search packages on the web
   </Card>
 </CardGroup>
 
@@ -79,16 +107,18 @@ PRPM manages AI prompt files across different formats and tools:
 
 PRPM supports a wide range of AI development tools:
 
-- **Cursor** - Rules, agents, and slash commands
-- **Claude Code** - Skills, agents, and slash commands
-- **Continue** - Coding rules
-- **Windsurf** - Coding rules
-- **GitHub Copilot** - Instructions
+- **Cursor** - Rules, agents, slash commands, and tools
+- **Claude Code** - Skills, agents, slash commands, hooks, and tools
+- **Continue** - Coding rules and prompts
+- **Windsurf** - Coding rules, agents, slash commands, and tools
+- **GitHub Copilot** - Instructions and chat modes
+- **Kiro** - Steering files and hooks
+- **Agents.md** - Project context agents
 - **MCP** - Model Context Protocol servers
 - **Generic** - Universal AI prompts
 
 <Info>
-  Each format has its own directory structure and file format. PRPM handles all the details automatically.
+  Each format has its own directory structure and file format. PRPM handles all the details automatically, including format conversion between tools.
 </Info>
 
 ## Next Steps

@@ -1,6 +1,6 @@
 Kiro's domain-organized steering system is elegant—separate concerns for frontend, backend, and testing. But finding quality steering files is a mess.
 
-No centralized marketplace exists. You search GitHub repos for ".kiro" files, ask around in Discord, or manually share files with teammates. Good steering files don't get discovered, tested setups aren't shared, and everyone reinvents the wheel.
+No centralized marketplace exists. You search GitHub repos for ".kiro" files, ask around on Twitter, or manually share files with teammates. Good steering files don't get discovered, tested setups aren't shared, and everyone reinvents the wheel.
 
 PRPM changes this. We built the first centralized marketplace for Kiro steering files with real package management: CLI installation, semantic versioning, testing playground, quality metrics, and format conversion.
 

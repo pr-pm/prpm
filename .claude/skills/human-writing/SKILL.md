@@ -304,7 +304,7 @@ Done in 90 seconds."
 prpm install @popular/package-name
 ```
 
-Have questions? [Join the Discord](https://discord.gg/prpm) or [open an issue](https://github.com/pr-pm/prpm/issues)."
+Have questions? Follow [@prpmdev](https://twitter.com/prpmdev) or [open an issue](https://github.com/pr-pm/prpm/issues)."
 ```
 
 ## Voice Examples from PRPM

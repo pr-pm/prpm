@@ -7,7 +7,7 @@ description: 'Complete reference for all PRPM CLI commands'
 
 ### search
 
-Search for packages in the PRPM registry.
+Search for packages in the PRPM registry (keyword-based).
 
 ```bash
 prpm search <query> [options]
@@ -47,6 +47,50 @@ prpm search typescript --format cursor --no-interactive | head -n 1
 Displays matching packages with their name, description, format, downloads, and installation command.
 
 ---
+
+<!-- ### ai-search
+
+AI-powered semantic search for finding packages using natural language (100% Free, no login required).
+
+```bash
+prpm ai-search "<natural-language-query>" [options]
+```
+
+**Arguments:**
+- `query` - Natural language description of what you need
+
+**Options:**
+- `--limit <number>` - Number of results to return (default: 10)
+- `--format <format>` - Filter by format (cursor, claude, windsurf, continue, etc.)
+- `--subtype <subtype>` - Filter by subtype (rule, agent, skill, slash-command, etc.)
+
+**Examples:**
+
+```bash
+# Find packages using natural language
+prpm ai-search "I need help with React state management best practices"
+
+# Limit results
+prpm ai-search "Python type safety" --limit 5
+
+# Filter by format
+prpm ai-search "code review assistant" --format claude
+
+# Filter by subtype
+prpm ai-search "API documentation generator" --subtype agent
+```
+
+**How it works:**
+- Uses AI embeddings to understand semantic meaning
+- Matches your intent rather than just keywords
+- Ranks results by relevance, quality, and popularity
+- 100% free with no authentication required
+- Faster and more accurate than keyword search for complex queries
+
+**Output:**
+Displays matching packages with similarity scores, descriptions, match quality, and installation commands.
+
+--- -->
 
 ### info
 
@@ -136,6 +180,50 @@ prpm popular --format cursor
 # Popular Claude skills
 prpm popular --format claude --subtype skill
 ```
+
+---
+
+### starred
+
+List your starred packages and collections.
+
+```bash
+prpm starred [options]
+```
+
+**Options:**
+- `--packages` - Show only starred packages
+- `--collections` - Show only starred collections
+- `--format <format>` - Filter packages by format (cursor, claude, continue, windsurf, etc.)
+- `--limit <number>` - Maximum number of items to fetch (default: 100)
+
+**Prerequisites:**
+- Must be logged in (`prpm login`)
+
+**Examples:**
+
+```bash
+# List all starred items (packages and collections)
+prpm starred
+
+# Show only starred packages
+prpm starred --packages
+
+# Show only starred collections
+prpm starred --collections
+
+# Filter by format
+prpm starred --packages --format cursor
+
+# Limit results
+prpm starred --limit 20
+```
+
+**Output:**
+Displays starred items with their name, description, format/category, downloads/stars, and last update time.
+
+**Tip:**
+Star packages and collections on the web interface at https://prpm.dev to save your favorites for easy access later.
 
 ---
 
@@ -548,33 +636,41 @@ prpm publish --access private
 Test packages with real AI models before installing.
 
 ```bash
-prpm playground <package> [input] [options]
+prpm playground [options]
 ```
 
-**Arguments:**
-- `package` - Package identifier (e.g., `@user/package-name`)
-- `input` - Test input text (optional if using `--interactive`)
-
 **Options:**
-- `-m, --model <model>` - AI model to use (sonnet, opus, gpt-4o, gpt-4o-mini) (default: sonnet)
+- `-p, --package <name>` - Package name to test (e.g., `@user/package-name`)
+- `--input <text>` - Input text to send to the model (omit for interactive mode)
+- `-m, --model <model>` - AI model to use (sonnet, opus, gpt-4o, gpt-4o-mini, gpt-4-turbo) (default: sonnet)
 - `-c, --compare` - Compare with and without package prompt (baseline test)
 - `-i, --interactive` - Start interactive multi-turn conversation mode
+- `-v, --version <version>` - Specific package version to test
+- `--custom <prompt>` - Use a custom prompt string (verified authors only)
+- `--prompt-file <file>` - Load custom prompt from a file (verified authors only)
 
 **Examples:**
 
 ```bash
 # Basic test
-prpm playground @user/code-reviewer "Review this: console.log('hello')"
+prpm playground --package @user/code-reviewer --input "Review this: console.log('hello')"
 
 # Interactive conversation
-prpm playground @user/brainstorm-assistant --interactive
+prpm playground --package @user/brainstorm-assistant --interactive
 
 # Compare mode (with and without prompt)
-prpm playground @user/optimizer "Optimize this function" --compare
+prpm playground --package @user/optimizer --input "Optimize this function" --compare
 
 # Use a specific model
-prpm playground @user/complex-task "Analyze this" --model opus
-prpm playground @user/simple-task "Format this" --model gpt-4o-mini
+prpm playground --package @user/complex-task --input "Analyze this" --model opus
+prpm playground --package @user/simple-task --input "Format this" --model gpt-4o-mini
+
+# Test specific version
+prpm playground --package @user/my-package --version 2.1.0 --input "Test this"
+
+# Custom prompt (verified authors only)
+prpm playground --custom "You are a helpful assistant" --input "Hello"
+prpm playground --prompt-file my-prompt.txt --input "Test"
 ```
 
 **Supported Models:**
@@ -625,6 +721,37 @@ prpm subscribe cancel
 - Credits roll over (max 200 balance)
 - $6/month (or $3/month for organization members)
 - Priority support
+
+---
+
+### credits
+
+Check your playground credits balance and transaction history.
+
+```bash
+prpm credits [options]
+```
+
+**Options:**
+- `-h, --history` - Show transaction history instead of balance
+- `-l, --limit <number>` - Number of transactions to show in history (default: 10)
+
+**Examples:**
+
+```bash
+# Check credit balance
+prpm credits
+
+# View transaction history
+prpm credits --history
+
+# View last 20 transactions
+prpm credits --history --limit 20
+```
+
+**Output:**
+- Without `--history`: Displays current credit balance, monthly allotment (if PRPM+ subscriber), and next renewal date
+- With `--history`: Shows recent credit transactions including purchases, usage, monthly credits, and rollover
 
 ---
 
@@ -720,6 +847,63 @@ prpm index --verbose
 
 **Output:**
 Shows how many files were found and registered in each directory, and updates `prpm.lock`.
+
+---
+
+### convert
+
+Convert AI prompt files between different formats (e.g., Cursor to Claude, Claude to Windsurf).
+
+```bash
+prpm convert <source-file> [options]
+```
+
+**Arguments:**
+- `source-file` - Path to the file you want to convert
+
+**Options:**
+- `-t, --to <format>` - Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md)
+- `-s, --subtype <subtype>` - Target subtype (agent, skill, slash-command, rule, prompt, etc.)
+- `-o, --output <path>` - Custom output path (defaults to format-specific location)
+- `-y, --yes` - Skip confirmation prompts
+
+**Examples:**
+
+```bash
+# Convert Cursor rule to Claude skill
+prpm convert .cursor/rules/my-rule.mdc --to claude --subtype skill
+
+# Convert Claude agent to Windsurf rule
+prpm convert .claude/agents/my-agent.md --to windsurf
+
+# Convert to Copilot with custom output
+prpm convert my-prompt.md --to copilot --output .github/instructions/custom.instructions.md
+
+# Auto-detect source format and convert to Continue
+prpm convert some-file.md --to continue --subtype rule
+
+# Skip confirmation prompts
+prpm convert .claude/skills/helper/SKILL.md --to cursor --yes
+```
+
+**How it works:**
+1. Auto-detects the source format from file content and location
+2. Parses the source file to extract content and metadata
+3. Converts to canonical intermediate format
+4. Transforms to target format with appropriate structure
+5. Writes to format-specific default location or custom output path
+
+**Default Output Locations:**
+- **Cursor**: `.cursor/rules/*.mdc` (rules) or `.cursor/commands/*.md` (commands)
+- **Claude**: `.claude/skills/*/SKILL.md` (skills), `.claude/agents/*.md` (agents), `.claude/commands/*.md` (commands)
+- **Windsurf**: `.windsurf/rules/*.md`
+- **Continue**: `.continue/rules/*.md` (rules) or `.continue/prompts/*.md` (prompts)
+- **Copilot**: `.github/instructions/*.instructions.md`
+- **Kiro**: `.kiro/steering/*.md` (steering) or `.kiro/hooks/*.kiro.hook` (hooks)
+- **Agents.md**: `agents.md` (root file)
+
+**Supported Conversions:**
+All formats can be converted to all other formats with intelligent content preservation and format-specific adaptations.
 
 ---
 

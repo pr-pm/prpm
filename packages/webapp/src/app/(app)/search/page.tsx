@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useEffect, useMemo, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import {
   searchPackages,
   searchCollections,
+  aiSearch,
+  getQuerySuggestions,
+  getCategories,
   SearchPackagesParams,
   SearchCollectionsParams,
   Package,
@@ -13,12 +16,17 @@ import {
   Format,
   Subtype,
   SortType,
+  AISearchResult,
+  CategoryListResponse,
   getStarredPackages,
   getStarredCollections,
   starPackage,
   starCollection,
 } from '@/lib/api'
 import { getPackageUrl } from '@/lib/package-url'
+import { AISearchToggle } from '@/components/AISearchToggle'
+import { AISearchResults } from '@/components/AISearchResults'
+import { useAuth } from '@/components/AuthProvider'
 
 type TabType = 'packages' | 'collections' | 'skills' | 'slash-commands' | 'agents'
 
@@ -38,27 +46,38 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
 function SearchPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, jwtToken } = useAuth()
 
   // Track initial URL params to prevent reset on mount
-  const initialParams = useState(() => ({
-    tab: searchParams.get('tab') as TabType || 'packages',
-    query: searchParams.get('q') || '',
-    format: searchParams.get('format') as Format || '',
-    subtype: searchParams.get('subtype') as Subtype || '',
-    category: searchParams.get('category') || '',
-    author: searchParams.get('author') || '',
-    tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
-    sort: searchParams.get('sort') as SortType || 'downloads',
-    page: Number(searchParams.get('page')) || 1,
-    starredOnly: searchParams.get('starred') === 'true',
-  }))[0]
+  const initialParams = useState(() => {
+    const query = searchParams.get('q') || '';
+    // Default sort: relevance when searching, downloads when browsing
+    const defaultSort: SortType = query ? 'relevance' : 'downloads';
+    const sort = (searchParams.get('sort') as SortType) || defaultSort;
+
+    return {
+      tab: searchParams.get('tab') as TabType || 'packages',
+      query,
+      format: searchParams.get('format') as Format || '',
+      subtype: searchParams.get('subtype') as Subtype || '',
+      category: searchParams.get('category') || '',
+      author: searchParams.get('author') || '',
+      tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
+      sort,
+      page: Number(searchParams.get('page')) || 1,
+      starredOnly: searchParams.get('starred') === 'true',
+    };
+  })[0]
 
   // Initialize state from URL params
   const [activeTab, setActiveTab] = useState<TabType>(initialParams.tab)
   const [query, setQuery] = useState(initialParams.query)
+  const [debouncedQuery, setDebouncedQuery] = useState(initialParams.query)
   const [selectedFormat, setSelectedFormat] = useState<Format | ''>(initialParams.format)
   const [selectedSubtype, setSelectedSubtype] = useState<Subtype | ''>(initialParams.subtype)
   const [selectedCategory, setSelectedCategory] = useState(initialParams.category)
+  const [selectedLanguage, setSelectedLanguage] = useState(searchParams.get('language') || '')
+  const [selectedFramework, setSelectedFramework] = useState(searchParams.get('framework') || '')
   const [selectedAuthor, setSelectedAuthor] = useState(initialParams.author)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialParams.tags)
   const [sort, setSort] = useState<SortType>(initialParams.sort)
@@ -69,12 +88,188 @@ function SearchPageContent() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(initialParams.page)
   const [availableTags, setAvailableTags] = useState<string[]>([])
-  const [availableCategories, setAvailableCategories] = useState<string[]>([])
+  const [availableCategories, setAvailableCategories] = useState<Array<{ slug: string; name: string }>>([])
   const [isInitialized, setIsInitialized] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set())
 
+  // AI Search state - load from localStorage, but only if feature is enabled
+  const [aiSearchEnabled, setAiSearchEnabled] = useState(() => {
+    if (process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH !== 'true') {
+      return false
+    }
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('aiSearchEnabled') === 'true'
+    }
+    return false
+  })
+  const [aiResults, setAiResults] = useState<AISearchResult[]>([])
+  const [aiExecutionTime, setAiExecutionTime] = useState(0)
+
+  // Query suggestions state
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
+  const suggestionsTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+
   const limit = 20
+
+  // Save AI search toggle to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aiSearchEnabled', String(aiSearchEnabled))
+    }
+  }, [aiSearchEnabled])
+
+  // Sync URL parameters to state when URL changes (e.g., from navigation)
+  useEffect(() => {
+    const tab = searchParams.get('tab') as TabType
+    const urlQuery = searchParams.get('q')
+    const format = searchParams.get('format') as Format
+    const subtype = searchParams.get('subtype') as Subtype
+    const category = searchParams.get('category')
+    const author = searchParams.get('author')
+    const tags = searchParams.get('tags')?.split(',').filter(Boolean)
+    const sortParam = searchParams.get('sort') as SortType
+    const pageParam = Number(searchParams.get('page'))
+    const starred = searchParams.get('starred') === 'true'
+    const language = searchParams.get('language')
+    const framework = searchParams.get('framework')
+    const aiParam = searchParams.get('ai') === 'true'
+
+    if (tab && tab !== activeTab) setActiveTab(tab)
+    if (urlQuery !== null && urlQuery !== query) setQuery(urlQuery)
+    if (format !== null && format !== selectedFormat) setSelectedFormat(format || '')
+    if (subtype !== null && subtype !== selectedSubtype) setSelectedSubtype(subtype || '')
+    if (category !== null && category !== selectedCategory) setSelectedCategory(category || '')
+    if (author !== null && author !== selectedAuthor) setSelectedAuthor(author || '')
+    if (tags && JSON.stringify(tags) !== JSON.stringify(selectedTags)) setSelectedTags(tags)
+    if (sortParam && sortParam !== sort) setSort(sortParam)
+    if (pageParam && pageParam !== page) setPage(pageParam || 1)
+    if (starred !== starredOnly) setStarredOnly(starred)
+    if (language !== null && language !== selectedLanguage) setSelectedLanguage(language || '')
+    if (framework !== null && framework !== selectedFramework) setSelectedFramework(framework || '')
+    // Enable AI search if coming from homepage AI search
+    if (aiParam && !aiSearchEnabled) setAiSearchEnabled(true)
+  }, [searchParams])
+
+  // Debounce search query
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedQuery(query)
+    }, 500) // 500ms debounce for search
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [query])
+
+  // Auto-update sort based on query presence (unless user explicitly set a different sort)
+  useEffect(() => {
+    const urlSort = searchParams.get('sort')
+    // Only auto-switch if user hasn't explicitly set a sort in the URL
+    if (!urlSort) {
+      const newSort: SortType = debouncedQuery.trim() ? 'relevance' : 'downloads'
+      if (sort !== newSort) {
+        setSort(newSort)
+      }
+    }
+  }, [debouncedQuery, searchParams, sort])
+
+  // Debounced function to fetch suggestions
+  const fetchSuggestions = useCallback(async (searchQuery: string) => {
+    if (searchQuery.length < 3) {
+      setSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+
+    setLoadingSuggestions(true)
+    try {
+      const results = await getQuerySuggestions(searchQuery, 5)
+      setSuggestions(results)
+      setShowSuggestions(results.length > 0)
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error)
+      setSuggestions([])
+    } finally {
+      setLoadingSuggestions(false)
+    }
+  }, [])
+
+  // Handle query input with debouncing
+  const handleQueryChange = (value: string) => {
+    setQuery(value)
+    setSelectedSuggestionIndex(-1)
+
+    // Clear existing timeout
+    if (suggestionsTimeoutRef.current) {
+      clearTimeout(suggestionsTimeoutRef.current)
+    }
+
+    // Debounce suggestions fetch
+    if (value.length >= 3) {
+      suggestionsTimeoutRef.current = setTimeout(() => {
+        fetchSuggestions(value)
+      }, 300) // 300ms debounce
+    } else {
+      setSuggestions([])
+      setShowSuggestions(false)
+    }
+  }
+
+  // Handle keyboard navigation in suggestions
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedSuggestionIndex(prev =>
+        prev < suggestions.length - 1 ? prev + 1 : prev
+      )
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedSuggestionIndex(prev => (prev > 0 ? prev - 1 : -1))
+    } else if (e.key === 'Enter' && selectedSuggestionIndex >= 0) {
+      e.preventDefault()
+      const selectedSuggestion = suggestions[selectedSuggestionIndex]
+      setQuery(selectedSuggestion)
+      setShowSuggestions(false)
+      setPage(1)
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false)
+      setSelectedSuggestionIndex(-1)
+    }
+  }
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion)
+    setShowSuggestions(false)
+    setSelectedSuggestionIndex(-1)
+    setPage(1)
+  }
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Get available subtypes for the selected format
   const availableSubtypes = useMemo<Subtype[]>(() =>
@@ -90,6 +285,39 @@ function SearchPageContent() {
       setSelectedSubtype('')
     }
   }, [selectedFormat, selectedSubtype, availableSubtypes])
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        // Fetch top 10 categories for dropdown
+        const data = await getCategories(true, 10)
+        console.log('Categories API response:', data)
+
+        // Categories are already top-level when using top=10
+        const topLevelCategories: Array<{ slug: string; name: string }> = []
+
+        if (data.categories) {
+          console.log('Processing categories:', data.categories.length)
+          data.categories.forEach((cat: any) => {
+            topLevelCategories.push({
+              slug: cat.slug,
+              name: cat.name
+            })
+          })
+        }
+
+        console.log('Setting available categories:', topLevelCategories)
+        setAvailableCategories(topLevelCategories)
+      } catch (error) {
+        console.error('Failed to fetch categories:', error)
+        // Fall back to empty array on error
+        setAvailableCategories([])
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   // Fetch starred IDs from localStorage + API on mount
   useEffect(() => {
@@ -150,6 +378,8 @@ function SearchPageContent() {
     if (selectedFormat) params.set('format', selectedFormat)
     if (selectedSubtype) params.set('subtype', selectedSubtype)
     if (selectedCategory) params.set('category', selectedCategory)
+    if (selectedLanguage) params.set('language', selectedLanguage)
+    if (selectedFramework) params.set('framework', selectedFramework)
     if (selectedAuthor) params.set('author', selectedAuthor)
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','))
     if (sort !== 'downloads') params.set('sort', sort)
@@ -173,8 +403,8 @@ function SearchPageContent() {
         let filteredPackages = allPackages.filter(pkg => starredIds.has(pkg.id))
 
         // Apply other filters client-side
-        if (query.trim()) {
-          const searchLower = query.toLowerCase()
+        if (debouncedQuery.trim()) {
+          const searchLower = debouncedQuery.toLowerCase()
           filteredPackages = filteredPackages.filter(
             pkg =>
               pkg.name.toLowerCase().includes(searchLower) ||
@@ -189,6 +419,12 @@ function SearchPageContent() {
         }
         if (selectedCategory) {
           filteredPackages = filteredPackages.filter(pkg => (pkg as any).category === selectedCategory)
+        }
+        if (selectedLanguage) {
+          filteredPackages = filteredPackages.filter(pkg => (pkg as any).language === selectedLanguage)
+        }
+        if (selectedFramework) {
+          filteredPackages = filteredPackages.filter(pkg => (pkg as any).framework === selectedFramework)
         }
         if (selectedTags.length > 0) {
           filteredPackages = filteredPackages.filter(pkg =>
@@ -223,10 +459,12 @@ function SearchPageContent() {
           sort,
         }
 
-        if (query.trim()) params.q = query
+        if (debouncedQuery.trim()) params.q = debouncedQuery
         if (selectedFormat) params.format = selectedFormat
         if (selectedSubtype) params.subtype = selectedSubtype
         if (selectedCategory) params.category = selectedCategory
+        if (selectedLanguage) params.language = selectedLanguage
+        if (selectedFramework) params.framework = selectedFramework
         if (selectedTags.length > 0) params.tags = selectedTags
         if (selectedAuthor) params.author = selectedAuthor
 
@@ -327,6 +565,8 @@ function SearchPageContent() {
 
       if (query.trim()) params.q = query
       if (selectedCategory) params.category = selectedCategory
+      if (selectedLanguage) params.language = selectedLanguage
+      if (selectedFramework) params.framework = selectedFramework
       if (selectedTags.length > 0) params.tags = selectedTags
 
       const result = await searchPackages(params)
@@ -352,6 +592,8 @@ function SearchPageContent() {
 
       if (query.trim()) params.q = query
       if (selectedCategory) params.category = selectedCategory
+      if (selectedLanguage) params.language = selectedLanguage
+      if (selectedFramework) params.framework = selectedFramework
       if (selectedTags.length > 0) params.tags = selectedTags
 
       const result = await searchPackages(params)
@@ -377,6 +619,8 @@ function SearchPageContent() {
 
       if (query.trim()) params.q = query
       if (selectedCategory) params.category = selectedCategory
+      if (selectedLanguage) params.language = selectedLanguage
+      if (selectedFramework) params.framework = selectedFramework
       if (selectedTags.length > 0) params.tags = selectedTags
 
       const result = await searchPackages(params)
@@ -389,11 +633,54 @@ function SearchPageContent() {
     }
   }
 
+  // AI Search (PRPM+ Feature)
+  const performAISearch = async () => {
+    if (!debouncedQuery.trim() || !jwtToken) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const result = await aiSearch({
+        query: debouncedQuery,
+        filters: {
+          format: selectedFormat || undefined,
+          subtype: selectedSubtype || undefined,
+          language: selectedLanguage || undefined,
+          framework: selectedFramework || undefined,
+          min_quality: undefined
+        },
+        limit: 20
+      }, jwtToken)
+
+      setAiResults(result.results)
+      setAiExecutionTime(result.execution_time_ms)
+      setTotal(result.total_matches)
+    } catch (error: any) {
+      console.error('AI search failed:', error)
+      // If AI search fails, fall back to traditional search
+      setAiSearchEnabled(false)
+      fetchPackages()
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Load data based on active tab
   useEffect(() => {
     // Clear previous results when switching tabs to ensure fresh data loads
     setPackages([])
     setCollections([])
+    setAiResults([])
+
+    // Use AI search if enabled and on packages tab (always, not just when query exists)
+    if (aiSearchEnabled && activeTab === 'packages') {
+      // Only perform AI search if there's a query, otherwise show empty state
+      if (debouncedQuery.trim()) {
+        performAISearch()
+      }
+      return // Don't fall back to regular search
+    }
 
     if (activeTab === 'packages') {
       fetchPackages()
@@ -407,7 +694,7 @@ function SearchPageContent() {
       fetchAgents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, page, starredOnly])
+  }, [activeTab, debouncedQuery, selectedFormat, selectedSubtype, selectedCategory, selectedLanguage, selectedFramework, selectedTags, selectedAuthor, sort, page, aiSearchEnabled, starredOnly])
 
   // Reset page when filters change (but not on initial load from URL)
   useEffect(() => {
@@ -420,6 +707,8 @@ function SearchPageContent() {
       selectedFormat !== initialParams.format ||
       selectedSubtype !== initialParams.subtype ||
       selectedCategory !== initialParams.category ||
+      selectedLanguage !== (searchParams.get('language') || '') ||
+      selectedFramework !== (searchParams.get('framework') || '') ||
       JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
       selectedAuthor !== initialParams.author ||
       sort !== initialParams.sort ||
@@ -431,7 +720,7 @@ function SearchPageContent() {
       setPage(1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedTags, selectedAuthor, sort, activeTab, starredOnly, isInitialized])
+  }, [query, selectedFormat, selectedSubtype, selectedCategory, selectedLanguage, selectedFramework, selectedTags, selectedAuthor, sort, activeTab, starredOnly, isInitialized])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -450,6 +739,8 @@ function SearchPageContent() {
     setSelectedFormat('')
     setSelectedSubtype('')
     setSelectedCategory('')
+    setSelectedLanguage('')
+    setSelectedFramework('')
     setSelectedTags([])
     setSelectedAuthor('')
     setQuery('')
@@ -517,16 +808,13 @@ function SearchPageContent() {
     }
   }
 
-  const hasFilters = selectedFormat || selectedSubtype || selectedCategory || selectedTags.length > 0 || selectedAuthor || query || starredOnly
+  const hasFilters = selectedFormat || selectedSubtype || selectedCategory || selectedLanguage || selectedFramework || selectedTags.length > 0 || selectedAuthor || query || starredOnly
 
   return (
     <main className="min-h-screen bg-prpm-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/" className="text-prpm-accent hover:text-prpm-accent-light mb-4 inline-block">
-            ← Back to Home
-          </Link>
           <h1 className="text-4xl font-bold text-white mb-2">Search & Discover</h1>
           <p className="text-gray-400">
             Find packages, collections, and skills for your AI coding workflow
@@ -537,11 +825,17 @@ function SearchPageContent() {
         <form onSubmit={handleSearch} className="mb-8">
           <div className="relative">
             <input
+              ref={searchInputRef}
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search packages, collections, or skills..."
+              onChange={(e) => handleQueryChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => {
+                if (suggestions.length > 0) setShowSuggestions(true)
+              }}
+              placeholder={aiSearchEnabled ? "Search with AI (natural language)..." : "Search packages, collections, or skills..."}
               className="w-full px-6 py-4 bg-prpm-dark-card border border-prpm-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-prpm-accent transition-colors pr-12"
+              autoComplete="off"
             />
             <button
               type="submit"
@@ -551,7 +845,55 @@ function SearchPageContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </button>
+
+            {/* Suggestions Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-prpm-dark-card border border-prpm-border rounded-lg shadow-xl z-50 overflow-hidden">
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className={`w-full text-left px-6 py-3 hover:bg-prpm-dark transition-colors border-b border-prpm-border last:border-b-0 ${
+                      index === selectedSuggestionIndex ? 'bg-prpm-dark' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <span className="text-white text-sm">{suggestion}</span>
+                    </div>
+                  </button>
+                ))}
+                <div className="px-6 py-2 bg-prpm-dark border-t border-prpm-border">
+                  <p className="text-xs text-gray-500 flex items-center gap-2">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Based on popular searches
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Loading indicator */}
+            {loadingSuggestions && query.length >= 3 && (
+              <div className="absolute right-14 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-prpm-accent border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
           </div>
+
+          {/* AI Search Toggle */}
+          {activeTab === 'packages' && process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH === 'true' && (
+            <div className="mt-4 flex justify-end">
+              <AISearchToggle
+                enabled={aiSearchEnabled}
+                onChange={setAiSearchEnabled}
+              />
+            </div>
+          )}
         </form>
 
         {/* Tabs */}
@@ -738,6 +1080,7 @@ function SearchPageContent() {
                   onChange={(e) => setSort(e.target.value as SortType)}
                   className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
                 >
+                  <option value="relevance">Relevance</option>
                   <option value="downloads">Downloads</option>
                   <option value="quality">Quality Score</option>
                   <option value="rating">Highest Rated</option>
@@ -757,13 +1100,74 @@ function SearchPageContent() {
                   className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
                 >
                   <option value="">All Categories</option>
-                  <option value="frontend">Frontend</option>
-                  <option value="backend">Backend</option>
-                  <option value="testing">Testing</option>
-                  <option value="documentation">Documentation</option>
-                  <option value="devops">DevOps</option>
-                  <option value="security">Security</option>
-                  <option value="best-practices">Best Practices</option>
+                  {availableCategories.map(cat => (
+                    <option key={cat.slug} value={cat.slug}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                <Link
+                  href="/categories"
+                  className="mt-2 text-xs text-prpm-accent hover:text-prpm-accent-light transition-colors inline-flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                  View all categories
+                </Link>
+              </div>
+
+              {/* Language Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Language
+                </label>
+                <select
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
+                >
+                  <option value="">All Languages</option>
+                  <option value="typescript">TypeScript</option>
+                  <option value="javascript">JavaScript</option>
+                  <option value="python">Python</option>
+                  <option value="java">Java</option>
+                  <option value="go">Go</option>
+                  <option value="rust">Rust</option>
+                  <option value="ruby">Ruby</option>
+                  <option value="php">PHP</option>
+                  <option value="csharp">C#</option>
+                  <option value="cpp">C++</option>
+                  <option value="swift">Swift</option>
+                  <option value="kotlin">Kotlin</option>
+                </select>
+              </div>
+
+              {/* Framework Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Framework
+                </label>
+                <select
+                  value={selectedFramework}
+                  onChange={(e) => setSelectedFramework(e.target.value)}
+                  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
+                >
+                  <option value="">All Frameworks</option>
+                  <option value="react">React</option>
+                  <option value="nextjs">Next.js</option>
+                  <option value="vue">Vue</option>
+                  <option value="angular">Angular</option>
+                  <option value="svelte">Svelte</option>
+                  <option value="express">Express</option>
+                  <option value="fastify">Fastify</option>
+                  <option value="django">Django</option>
+                  <option value="flask">Flask</option>
+                  <option value="rails">Rails</option>
+                  <option value="laravel">Laravel</option>
+                  <option value="spring">Spring</option>
+                  <option value="nestjs">NestJS</option>
+                  <option value="fastapi">FastAPI</option>
                 </select>
               </div>
 
@@ -821,10 +1225,19 @@ function SearchPageContent() {
               </div>
             ) : (
               <>
-                {/* Package Results */}
-                {(activeTab === 'packages' || activeTab === 'skills' || activeTab === 'slash-commands' || activeTab === 'agents') && (
-                  <div className="space-y-4">
-                    {packages.length === 0 ? (
+                {/* AI Search Results */}
+                {aiSearchEnabled && activeTab === 'packages' && aiResults.length > 0 ? (
+                  <AISearchResults
+                    results={aiResults}
+                    query={query}
+                    executionTime={aiExecutionTime}
+                  />
+                ) : (
+                  <>
+                    {/* Package Results */}
+                    {(activeTab === 'packages' || activeTab === 'skills' || activeTab === 'slash-commands' || activeTab === 'agents') && (
+                      <div className="space-y-4">
+                        {packages.length === 0 ? (
                       <div className="text-center py-20">
                         <p className="text-gray-400 mb-4">No packages found</p>
                         {selectedFormat && (
@@ -996,6 +1409,8 @@ function SearchPageContent() {
                       </>
                     )}
                   </div>
+                )}
+                  </>
                 )}
 
                 {/* Collection Results */}
