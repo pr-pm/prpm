@@ -1,6 +1,6 @@
 {
   "name": "@pr-pm/converters",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Format converters for AI prompts - shared between CLI and registry",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,7 +22,7 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
-    "@pr-pm/types": "^1.0.3",
+    "@pr-pm/types": "^1.0.4",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "js-yaml": "^4.1.0",
