@@ -9,9 +9,8 @@ import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fi
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { Package, Format, Subtype } from '../types';
-import { createWriteStream } from 'fs';
+import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
-import { createGunzip } from 'zlib';
 import * as tar from 'tar';
 import { CLIError } from '../core/errors';
 import { promptYesNo } from '../core/prompts';
@@ -847,87 +846,116 @@ interface ExtractedFile {
 }
 
 async function extractTarball(tarball: Buffer, packageId: string): Promise<ExtractedFile[]> {
-  const files: ExtractedFile[] = [];
   const zlib = await import('zlib');
-  const fs = await import('fs');
+  const fs = await import('fs/promises');
   const os = await import('os');
 
-  return new Promise((resolve, reject) => {
-    // Decompress gzip first
-    zlib.gunzip(tarball, async (err, result) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+  const fallback = (buffer: Buffer): ExtractedFile[] => [
+    {
+      name: `${packageId}.md`,
+      content: buffer.toString('utf-8'),
+    },
+  ];
 
-      // Check if this is a tar archive by looking for tar header
-      const isTar = result.length > 257 && result.toString('utf-8', 257, 262) === 'ustar';
-
-      if (!isTar) {
-        // Not a tar archive, treat as single gzipped file
-        files.push({
-          name: `${packageId}.md`,
-          content: result.toString('utf-8')
-        });
-        resolve(files);
-        return;
-      }
-
-      // Create temp directory for extraction
-      const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'prpm-'));
-
-      try {
-        // Write tar data to temp file
-        const tarPath = path.join(tmpDir, 'package.tar');
-        await fs.promises.writeFile(tarPath, result);
-
-        // Extract using tar library
-        await tar.extract({
-          file: tarPath,
-          cwd: tmpDir,
-        });
-
-        // Read all extracted files
-        const extractedFiles = await fs.promises.readdir(tmpDir, { withFileTypes: true, recursive: true });
-
-        // Files to exclude from package content (metadata files)
-        const excludeFiles = ['package.tar', 'prpm.json', 'README.md', 'LICENSE', 'LICENSE.txt', 'LICENSE.md'];
-
-        for (const entry of extractedFiles) {
-          if (entry.isFile() && !excludeFiles.includes(entry.name)) {
-            const filePath = path.join(entry.path || tmpDir, entry.name);
-            const content = await fs.promises.readFile(filePath, 'utf-8');
-            const relativePath = path.relative(tmpDir, filePath);
-            files.push({
-              name: relativePath,
-              content
-            });
-          }
+  let decompressed: Buffer;
+  try {
+    decompressed = await new Promise<Buffer>((resolve, reject) => {
+      zlib.gunzip(tarball, (err, result) => {
+        if (err) {
+          reject(err);
+          return;
         }
-
-        if (files.length === 0) {
-          // No files found, fall back to single file
-          files.push({
-            name: `${packageId}.md`,
-            content: result.toString('utf-8')
-          });
-        }
-
-        // Cleanup
-        await fs.promises.rm(tmpDir, { recursive: true, force: true });
-        resolve(files);
-
-      } catch (tarErr) {
-        // Cleanup and fall back to single file
-        await fs.promises.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-        files.push({
-          name: `${packageId}.md`,
-          content: result.toString('utf-8')
-        });
-        resolve(files);
-      }
+        resolve(result);
+      });
     });
-  });
+  } catch (error) {
+    throw error;
+  }
+
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'prpm-'));
+  const cleanup = async () => {
+    try {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup errors
+    }
+  };
+
+  const excludedNames = new Set([
+    'prpm.json',
+    'README',
+    'README.md',
+    'README.txt',
+    'LICENSE',
+    'LICENSE.txt',
+    'LICENSE.md',
+  ]);
+
+  try {
+    const extract = tar.extract({
+      cwd: tmpDir,
+      strict: false,
+    });
+
+    await pipeline(Readable.from(decompressed), extract);
+
+    const extractedFiles = await collectExtractedFiles(tmpDir, excludedNames, fs);
+
+    if (extractedFiles.length === 0) {
+      return fallback(decompressed);
+    }
+
+    return extractedFiles;
+  } catch {
+    return fallback(decompressed);
+  } finally {
+    await cleanup();
+  }
+}
+
+type FsPromises = typeof import('fs/promises');
+
+async function collectExtractedFiles(
+  rootDir: string,
+  excludedNames: Set<string>,
+  fs: FsPromises
+): Promise<ExtractedFile[]> {
+  const files: ExtractedFile[] = [];
+  const dirs = [rootDir];
+
+  while (dirs.length > 0) {
+    const currentDir = dirs.pop();
+    if (!currentDir) continue;
+
+    const entries = await fs.readdir(currentDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name);
+
+      if (entry.isDirectory()) {
+        dirs.push(fullPath);
+        continue;
+      }
+
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      if (excludedNames.has(entry.name)) {
+        continue;
+      }
+
+      const content = await fs.readFile(fullPath, 'utf-8');
+      const relativePath = path.relative(rootDir, fullPath).split(path.sep).join('/');
+
+      files.push({
+        name: relativePath,
+        content,
+      });
+    }
+  }
+
+  return files;
 }
 
 /**

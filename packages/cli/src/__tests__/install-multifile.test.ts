@@ -7,7 +7,7 @@ import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
 import { readLockfile, writeLockfile, addToLockfile, createLockfile, setPackageIntegrity } from '../core/lockfile';
-import { gzipSync } from 'zlib';
+import { gzipSync, gunzipSync } from 'zlib';
 import * as tar from 'tar';
 import { Readable } from 'stream';
 import * as path from 'path';
@@ -180,6 +180,53 @@ describe('install command - multi-file packages', () => {
       await handleInstall('complex-skill', {});
 
       // Should save to directory with multiple files, preserving subdirectories
+      expect(saveFile).toHaveBeenCalledTimes(3);
+      expect(saveFile).toHaveBeenCalledWith(
+        '.claude/skills/complex-skill/SKILL.md',
+        '# Main Skill File'
+      );
+      expect(saveFile).toHaveBeenCalledWith(
+        '.claude/skills/complex-skill/helpers/utils.md',
+        '# Utility Functions'
+      );
+      expect(saveFile).toHaveBeenCalledWith(
+        '.claude/skills/complex-skill/examples/demo.md',
+        '# Demo Examples'
+      );
+    });
+
+    it('should extract multi-file tarballs even without ustar headers', async () => {
+      const mockPackage = {
+        id: 'complex-skill',
+        name: 'complex-skill',
+        format: 'claude', subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      const tarGz = await createTarGz({
+        'SKILL.md': '# Main Skill File',
+        'helpers/utils.md': '# Utility Functions',
+        'examples/demo.md': '# Demo Examples',
+      }, { format: 'claude', subtype: 'skill', packageName: 'complex-skill' });
+
+      const tamperedTar = (() => {
+        const decompressed = gunzipSync(tarGz);
+        // Wipe out the POSIX magic header so detection cannot rely on it
+        decompressed.fill(0, 257, 263);
+        return gzipSync(decompressed);
+      })();
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(tamperedTar);
+
+      await handleInstall('complex-skill', {});
+
       expect(saveFile).toHaveBeenCalledTimes(3);
       expect(saveFile).toHaveBeenCalledWith(
         '.claude/skills/complex-skill/SKILL.md',

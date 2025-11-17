@@ -270,7 +270,7 @@ export default function Home() {
                             {searchResults.map((pkg) => (
                               <Link
                                 key={pkg.id}
-                                href={`/packages/${pkg.name}`}
+                                href={`/packages/${pkg.name.startsWith('@') ? pkg.name.split('/')[0].substring(1) : 'prpm'}/${pkg.name.startsWith('@') ? pkg.name.split('/').slice(1).join('/') : pkg.name}`}
                                 className="block p-4 hover:bg-prpm-dark-card/50 transition-colors group"
                               >
                                 <div className="flex items-start justify-between gap-3">
