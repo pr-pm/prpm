@@ -205,6 +205,43 @@ export async function getDownloadUrl(
   }
 }
 
+interface UploadJsonOptions {
+  bucket?: string;
+  prefix?: string;
+  cacheControl?: string;
+}
+
+export async function uploadJsonObject(
+  server: FastifyInstance,
+  filename: string,
+  data: unknown,
+  options?: UploadJsonOptions
+) {
+  const bucket = options?.bucket || config.s3.bucket;
+  const keyPrefix = options?.prefix ?? '';
+  const key = keyPrefix ? `${keyPrefix.replace(/\/?$/, '/')}${filename}` : filename;
+  const body = Buffer.from(JSON.stringify(data, null, 2), 'utf-8');
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: 'application/json',
+      CacheControl: options?.cacheControl,
+    })
+  );
+
+  server.log.info(
+    {
+      bucket,
+      key,
+      size: body.length,
+    },
+    'Uploaded JSON object to S3'
+  );
+}
+
 /**
  * Delete package from S3
  * Supports both UUID-based and author-based paths
