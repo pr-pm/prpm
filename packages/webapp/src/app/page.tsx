@@ -452,9 +452,15 @@ export default function Home() {
                 href="https://startupfa.me/s/prpm.dev?utm_source=prpm.dev"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover-lift"
+                className="hover-lift inline-flex"
               >
-                <img src="https://startupfa.me/badges/featured-badge.webp" alt="PRPM - Featured on Startup Fame" width={171} height={54} />
+                <Image
+                  src="https://startupfa.me/badges/featured-badge.webp"
+                  alt="PRPM - Featured on Startup Fame"
+                  width={171}
+                  height={54}
+                  className="h-auto w-auto"
+                />
               </a>
             </div>
           </div>

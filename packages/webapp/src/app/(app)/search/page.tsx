@@ -154,7 +154,22 @@ function SearchPageContent() {
     if (framework !== null && framework !== selectedFramework) setSelectedFramework(framework || '')
     // Enable AI search if coming from homepage AI search
     if (aiParam && !aiSearchEnabled) setAiSearchEnabled(true)
-  }, [searchParams])
+  }, [
+    searchParams,
+    activeTab,
+    query,
+    selectedFormat,
+    selectedSubtype,
+    selectedCategory,
+    selectedAuthor,
+    selectedTags,
+    sort,
+    page,
+    starredOnly,
+    selectedLanguage,
+    selectedFramework,
+    aiSearchEnabled,
+  ])
 
   // Debounce search query
   useEffect(() => {
@@ -388,7 +403,22 @@ function SearchPageContent() {
 
     const newUrl = params.toString() ? `/search?${params.toString()}` : '/search'
     router.replace(newUrl, { scroll: false })
-  }, [activeTab, query, selectedFormat, selectedSubtype, selectedCategory, selectedAuthor, selectedTags, sort, page, starredOnly, router, isInitialized])
+  }, [
+    activeTab,
+    query,
+    selectedFormat,
+    selectedSubtype,
+    selectedCategory,
+    selectedAuthor,
+    selectedTags,
+    sort,
+    page,
+    starredOnly,
+    router,
+    isInitialized,
+    selectedLanguage,
+    selectedFramework,
+  ])
 
   // Fetch packages
   const fetchPackages = async () => {
@@ -1054,9 +1084,11 @@ function SearchPageContent() {
                           'skill': 'Skill',
                           'slash-command': 'Slash Command',
                           'prompt': 'Prompt',
+                          'workflow': 'Workflow',
+                          'tool': 'Tool',
+                          'template': 'Template',
                           'collection': 'Collection',
                           'chatmode': 'Chat Mode',
-                          'tool': 'Tool',
                           'hook': 'Hook',
                         }
                         return (

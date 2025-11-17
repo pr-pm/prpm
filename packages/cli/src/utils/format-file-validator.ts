@@ -204,14 +204,6 @@ export async function validatePackageFiles(
     }
   }
 
-  if (manifest.format === 'cursor') {
-    // Cursor files typically named .cursorrules
-    const hasCursorRules = filePaths.some(path => path.includes('.cursorrules'));
-    if (!hasCursorRules) {
-      warnings.push('Cursor packages typically use .cursorrules filename');
-    }
-  }
-
   if (manifest.format === 'windsurf') {
     // Windsurf uses .windsurf/rules
     const hasWindsurfRules = filePaths.some(path => path.includes('.windsurf/rules'));

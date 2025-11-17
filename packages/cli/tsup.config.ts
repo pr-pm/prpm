@@ -1,5 +1,5 @@
 import { defineConfig } from 'tsup';
-import { copyFileSync, mkdirSync } from 'fs';
+import { copyFileSync, mkdirSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 export default defineConfig({
@@ -25,11 +25,25 @@ export default defineConfig({
   onSuccess: async () => {
     // Copy schema files to dist
     try {
-      mkdirSync('dist/schemas', { recursive: true });
+      const distSchemasDir = join('dist', 'schemas');
+      mkdirSync(distSchemasDir, { recursive: true });
       copyFileSync(
         join('schemas', 'prpm-manifest.schema.json'),
-        join('dist', 'schemas', 'prpm-manifest.schema.json')
+        join(distSchemasDir, 'prpm-manifest.schema.json')
       );
+
+      // Copy converter format schemas
+      const converterSchemasDir = join('..', 'converters', 'schemas');
+      const schemaFiles = readdirSync(converterSchemasDir);
+      schemaFiles.forEach(file => {
+        if (!file.endsWith('.schema.json')) {
+          return;
+        }
+        copyFileSync(
+          join(converterSchemasDir, file),
+          join(distSchemasDir, file)
+        );
+      });
       console.log('✓ Copied schema files to dist/');
     } catch (err) {
       console.warn('Warning: Could not copy schema files:', err);

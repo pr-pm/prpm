@@ -149,6 +149,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -198,6 +199,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-skill',
+        name: 'test-skill',
         version: '1.0.0',
       });
 
@@ -288,6 +290,7 @@ describe('Publish Command', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-skill',
+        name: 'test-skill',
         version: '1.0.0',
       });
 
@@ -331,6 +334,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -366,6 +370,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -398,6 +403,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -500,6 +506,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
         message: 'Package published successfully',
       });
@@ -609,6 +616,7 @@ describe('Publish Command', () => {
 
         const mockPublish = jest.fn().mockResolvedValue({
           package_id: `test-${type}-package`,
+          name: `test-${type}-package`,
           version: '1.0.0',
         });
 
@@ -646,6 +654,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: '@myorg/test-package',
+        name: '@myorg/test-package',
         version: '1.0.0',
       });
 
@@ -691,6 +700,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: '@company/team-package',
+        name: '@company/team-package',
         version: '1.0.0',
       });
 
@@ -736,6 +746,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'org-package',
+        name: 'org-package',
         version: '1.0.0',
       });
 
@@ -837,6 +848,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'owner-package',
+        name: 'owner-package',
         version: '1.0.0',
       });
 
@@ -874,6 +886,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'admin-package',
+        name: 'admin-package',
         version: '1.0.0',
       });
 
@@ -911,6 +924,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'maintainer-package',
+        name: 'maintainer-package',
         version: '1.0.0',
       });
 
@@ -947,6 +961,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'personal-package',
+        name: 'personal-package',
         version: '1.0.0',
       });
 
@@ -1007,6 +1022,7 @@ describe('Publish Command', () => {
       const mockWhoami = jest.fn().mockRejectedValue(new Error('Network error'));
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -1042,6 +1058,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -1130,10 +1147,17 @@ describe('Publish Command', () => {
       await writeFile(join(testDir, 'package-one.cursorrules'), '---\ndescription: "Package one rules"\n---\n\n# Package one rules');
       await writeFile(join(testDir, 'SKILL.md'), '---\nname: package-two\ndescription: Package two skill\n---\n\n# Package two skill');
 
-      const mockPublish = jest.fn().mockResolvedValue({
-        package_id: 'test',
-        version: '1.0.0',
-      });
+      const mockPublish = jest.fn()
+        .mockResolvedValueOnce({
+          package_id: 'package-one',
+          name: 'package-one',
+          version: '1.0.0',
+        })
+        .mockResolvedValueOnce({
+          package_id: 'package-two',
+          name: 'package-two',
+          version: '1.0.0',
+        });
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -1202,7 +1226,8 @@ describe('Publish Command', () => {
       await writeFile(join(testDir, 'test.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockPublish = jest.fn().mockResolvedValue({
-        package_id: 'test',
+        package_id: 'package-override',
+        name: 'package-override',
         version: '2.0.0',
       });
 

@@ -715,7 +715,12 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         }
 
         // Use the name returned from the API (which includes auto-prefixed scope)
-        const packageUrl = `${webappUrl}/packages/${encodeURIComponent(result.name)}`;
+        const packageSlug = result.name.startsWith('@') ? result.name.slice(1) : result.name;
+        const packagePath = packageSlug
+          .split('/')
+          .map(segment => encodeURIComponent(segment))
+          .join('/');
+        const packageUrl = `${webappUrl}/packages/${packagePath}`;
 
         console.log('');
         console.log('✅ Package published successfully!');
