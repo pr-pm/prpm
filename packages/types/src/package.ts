@@ -41,9 +41,11 @@ export type Subtype =
   | 'skill'
   | 'slash-command'
   | 'prompt'
+  | 'workflow'
+  | 'tool'
+  | 'template'
   | 'collection'
   | 'chatmode'
-  | 'tool'
   | 'hook';
 
 /**
@@ -56,9 +58,11 @@ export const SUBTYPES: readonly Subtype[] = [
   'skill',
   'slash-command',
   'prompt',
+  'workflow',
+  'tool',
+  'template',
   'collection',
   'chatmode',
-  'tool',
   'hook',
 ] as const;
 

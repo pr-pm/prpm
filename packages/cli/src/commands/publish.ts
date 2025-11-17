@@ -102,7 +102,8 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
           engines: pkg.engines,
           main: pkg.main,
         };
-        return validateManifest(packageWithDefaults);
+        const label = pkg.name || `package #${idx + 1}`;
+        return validateManifest(packageWithDefaults, label);
       });
 
       return { manifests: validatedManifests, collections, source: 'prpm.json (multi-package)' };
@@ -114,7 +115,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
     }
 
     // Single package manifest
-    const validated = validateManifest(manifest as PackageManifest);
+    const validated = validateManifest(manifest as PackageManifest, (manifest as PackageManifest).name);
     return { manifests: [validated], collections, source: 'prpm.json' };
   } catch (error) {
     // Store error for later
@@ -146,7 +147,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
     const manifests: PackageManifest[] = [];
     for (let i = 0; i < marketplaceData.plugins.length; i++) {
       const manifest = marketplaceToManifest(marketplaceData, i);
-      const validated = validateManifest(manifest);
+      const validated = validateManifest(manifest, manifest.name);
       manifests.push(validated);
     }
 
@@ -169,7 +170,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
     const manifests: PackageManifest[] = [];
     for (let i = 0; i < marketplaceData.plugins.length; i++) {
       const manifest = marketplaceToManifest(marketplaceData, i);
-      const validated = validateManifest(manifest);
+      const validated = validateManifest(manifest, manifest.name);
       manifests.push(validated);
     }
 
@@ -190,7 +191,10 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
 /**
  * Validate package manifest
  */
-function validateManifest(manifest: PackageManifest): PackageManifest {
+function validateManifest(manifest: PackageManifest, contextLabel?: string): PackageManifest {
+  const context = contextLabel || manifest.name || 'manifest';
+  const prefix = `[${context}] `;
+
   // Set default subtype to 'rule' if not provided
   if (!manifest.subtype) {
     manifest.subtype = 'rule';
@@ -200,7 +204,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
   const schemaValidation = validateManifestSchema(manifest);
   if (!schemaValidation.valid) {
     const errorMessages = schemaValidation.errors?.join('\n  - ') || 'Unknown validation error';
-    throw new Error(`Manifest validation failed:\n  - ${errorMessages}`);
+    throw new Error(`${prefix}Manifest validation failed:\n  - ${errorMessages}`);
   }
 
   // Additional custom validations (beyond what JSON schema can express)
@@ -218,7 +222,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
 
     // Only suggest "collection" if there are multiple distinct formats
     if (fileFormats.size > 1 && manifest.subtype !== 'collection') {
-      console.warn('⚠️  Package contains multiple file formats. Consider setting subtype to "collection" for clarity.');
+      console.warn(`${prefix}⚠️  Package contains multiple file formats. Consider setting subtype to "collection" for clarity.`);
     }
   }
 
@@ -229,7 +233,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
 
     if (!hasSkillMd) {
       throw new Error(
-        'Claude skills must contain a SKILL.md file.\n' +
+        `${prefix}Claude skills must contain a SKILL.md file.\n` +
         'According to Claude documentation at https://docs.claude.com/en/docs/claude-code/skills,\n' +
         'skills must have a file named SKILL.md in their directory.\n' +
         'Please rename your skill file to SKILL.md (all caps) and update your prpm.json files array.'
@@ -239,7 +243,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Validate skill name length (max 64 characters)
     if (manifest.name.length > 64) {
       throw new Error(
-        `Claude skill name "${manifest.name}" exceeds 64 character limit (${manifest.name.length} characters).\n` +
+        `${prefix}Claude skill name "${manifest.name}" exceeds 64 character limit (${manifest.name.length} characters).\n` +
         'According to Claude documentation, skill names must be max 64 characters.\n' +
         'Please shorten your package name.'
       );
@@ -248,7 +252,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Validate skill name format (lowercase, numbers, hyphens only)
     if (!/^[a-z0-9-]+$/.test(manifest.name)) {
       throw new Error(
-        `Claude skill name "${manifest.name}" contains invalid characters.\n` +
+        `${prefix}Claude skill name "${manifest.name}" contains invalid characters.\n` +
         'According to Claude documentation, skill names must use lowercase letters, numbers, and hyphens only.\n' +
         'Please update your package name.'
       );
@@ -257,7 +261,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Validate description length (max 1024 characters)
     if (manifest.description.length > 1024) {
       throw new Error(
-        `Claude skill description exceeds 1024 character limit (${manifest.description.length} characters).\n` +
+        `${prefix}Claude skill description exceeds 1024 character limit (${manifest.description.length} characters).\n` +
         'According to Claude documentation, skill descriptions must be max 1024 characters.\n' +
         'Please shorten your description.'
       );
@@ -266,7 +270,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Warn if description is approaching the limit (80% = 819 chars)
     if (manifest.description.length > 819) {
       console.warn(
-        `⚠️  Warning: Skill description is ${manifest.description.length}/1024 characters (${Math.round(manifest.description.length / 1024 * 100)}% of limit).\n` +
+        `${prefix}⚠️  Warning: Skill description is ${manifest.description.length}/1024 characters (${Math.round(manifest.description.length / 1024 * 100)}% of limit).\n` +
         '   Consider keeping it concise for better discoverability.'
       );
     }
@@ -274,7 +278,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Warn if description is too short (less than 100 chars)
     if (manifest.description.length < 100) {
       console.warn(
-        `⚠️  Warning: Skill description is only ${manifest.description.length} characters.\n` +
+        `${prefix}⚠️  Warning: Skill description is only ${manifest.description.length} characters.\n` +
         '   Claude uses descriptions for skill discovery - consider adding more detail about:\n' +
         '   - What the skill does\n' +
         '   - When Claude should use it\n' +

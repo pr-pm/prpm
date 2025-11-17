@@ -407,7 +407,7 @@
       "subtype": "skill",
       "tags": ["typescript", "hooks", "claude-code", "esbuild", "vitest", "testing", "prpm-internal"],
       "files": [
-        ".claude/skills/typescript-hook-writer/skill.md"
+        ".claude/skills/typescript-hook-writer/SKILL.md"
       ]
     },
     {
