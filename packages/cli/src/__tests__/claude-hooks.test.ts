@@ -36,11 +36,13 @@ jest.mock('../core/telemetry', () => ({
   },
 }));
 // Create shared mock functions for fs.promises
+const actualFsPromises = jest.requireActual('fs/promises');
 const mockFsReadFile = jest.fn();
 const mockFsWriteFile = jest.fn();
 const mockFsStat = jest.fn();
-const mockFsRm = jest.fn();
+const mockFsRm = jest.fn((...args: any[]) => actualFsPromises.rm(...args));
 const mockFsUnlink = jest.fn();
+const mockFsMkdtemp = jest.fn((...args: any[]) => actualFsPromises.mkdtemp(...args));
 
 jest.mock('fs', () => ({
   promises: {
@@ -49,6 +51,7 @@ jest.mock('fs', () => ({
     stat: (...args: any[]) => mockFsStat(...args),
     rm: (...args: any[]) => mockFsRm(...args),
     unlink: (...args: any[]) => mockFsUnlink(...args),
+    mkdtemp: (...args: any[]) => mockFsMkdtemp(...args),
   },
   constants: {
     O_CREAT: 0o100,
@@ -66,6 +69,7 @@ jest.mock('fs/promises', () => ({
   stat: (...args: any[]) => mockFsStat(...args),
   rm: (...args: any[]) => mockFsRm(...args),
   unlink: (...args: any[]) => mockFsUnlink(...args),
+  mkdtemp: (...args: any[]) => mockFsMkdtemp(...args),
 }));
 
 describe('Claude Hooks', () => {
