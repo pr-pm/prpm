@@ -70,6 +70,7 @@ describe('Publish Command - E2E Tests', () => {
 
       mockClient.publish.mockResolvedValue({
         package_id: 'test-package-uuid',
+        name: 'test-package',
         version: '1.0.0',
         message: 'Package published successfully',
       });
@@ -100,6 +101,7 @@ describe('Publish Command - E2E Tests', () => {
 
         mockClient.publish.mockResolvedValue({
           package_id: `${type}-package-uuid`,
+          name: `${type}-package`,
           version: '1.0.0',
         });
 
@@ -119,6 +121,7 @@ describe('Publish Command - E2E Tests', () => {
 
       mockClient.publish.mockResolvedValue({
         package_id: 'test-uuid',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -148,6 +151,7 @@ describe('Publish Command - E2E Tests', () => {
 
       mockClient.publish.mockResolvedValue({
         package_id: 'custom-uuid',
+        name: 'custom-files-pkg',
         version: '1.0.0',
       });
 
@@ -323,6 +327,7 @@ describe('Publish Command - E2E Tests', () => {
 
       mockClient.publish.mockResolvedValue({
         package_id: 'scoped-uuid',
+        name: '@myorg/test-package',
         version: '1.0.0',
       });
 
