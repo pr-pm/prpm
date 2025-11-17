@@ -48,6 +48,8 @@ jobs:
   validate:
     name: Validate and Test
     runs-on: ubuntu-latest
+    env:
+      NPM_CONFIG_FUND: false
     outputs:
       packages_to_publish: ${{ steps.determine.outputs.packages }}
       version_strategy: ${{ steps.version.outputs.version_strategy }}
@@ -113,6 +115,8 @@ jobs:
     name: Version All Packages
     needs: validate
     runs-on: ubuntu-latest
+    env:
+      NPM_CONFIG_FUND: false
     outputs:
       versions: ${{ steps.collect_versions.outputs.versions }}
 
@@ -165,14 +169,17 @@ jobs:
 
             # Determine new version
             if [ "$VERSION_STRATEGY" = "custom" ]; then
-              NEW_VERSION="${{ needs.validate.outputs.custom_version }}"
-              npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
+              TARGET_VERSION="${{ needs.validate.outputs.custom_version }}"
+              echo "Setting version to custom value: $TARGET_VERSION"
+              npm version "$TARGET_VERSION" --no-git-tag-version --allow-same-version
             else
               VERSION_TYPE="${{ needs.validate.outputs.version_type }}"
               CURRENT_VERSION=$(node -p "require('./package.json').version")
               echo "Current: $CURRENT_VERSION, Bumping: $VERSION_TYPE"
-              NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version --preid=beta 2>&1 | tail -1 | sed 's/v//')
+              npm version "$VERSION_TYPE" --no-git-tag-version --preid=beta
             fi
+
+            NEW_VERSION=$(node -p "require('./package.json').version")
 
             echo "✓ $pkg versioned to $NEW_VERSION"
             NEW_VERSIONS[$pkg]=$NEW_VERSION
@@ -261,6 +268,8 @@ jobs:
     name: Publish ${{ matrix.package }}
     needs: [validate, version]
     runs-on: ubuntu-latest
+    env:
+      NPM_CONFIG_FUND: false
     strategy:
       max-parallel: 1  # Publish sequentially to avoid race conditions
       matrix:
@@ -341,6 +350,8 @@ jobs:
     name: Create Git Tag and Release
     needs: [validate, version, publish]
     runs-on: ubuntu-latest
+    env:
+      NPM_CONFIG_FUND: false
     if: github.event.inputs.dry_run != 'true'
 
     steps:
