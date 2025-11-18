@@ -35,6 +35,12 @@ export async function generateStaticParams() {
 
       console.log(`[SSG UseCases] ✅ Generating ${useCases.length} use case pages from SSG data`)
 
+      // If SSG data is empty, return fallback to satisfy Next.js static export requirements
+      if (useCases.length === 0) {
+        console.log('[SSG UseCases] ⚠️  SSG data file is empty, using fallback')
+        return [{ slug: 'api-development' }]
+      }
+
       return useCases.map(useCase => ({ slug: useCase.slug }))
     } catch (fileError) {
       console.error('[SSG UseCases] ERROR reading SSG data file:', fileError)
