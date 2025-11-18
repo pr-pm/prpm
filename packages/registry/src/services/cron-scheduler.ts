@@ -13,6 +13,7 @@ import type { FastifyInstance } from 'fastify';
 import { PlaygroundCreditsService } from './playground-credits.js';
 import { CostMonitoringService } from './cost-monitoring.js';
 import { EmbeddingGenerationService } from './embedding-generation.js';
+import { TaxonomyService } from './taxonomy.js';
 
 interface CronJob {
   name: string;
@@ -692,6 +693,31 @@ Respond ONLY with valid JSON in this exact format:
         },
       });
     }
+
+    // =====================================================
+    // TAXONOMY CATEGORY BACKFILL
+    // Sync legacy packages into package_categories
+    // =====================================================
+    this.jobs.push({
+      name: 'Taxonomy Category Backfill',
+      schedule: '*/30 * * * *', // Every 30 minutes
+      task: async () => {
+        try {
+          this.server.log.info('🔄 Starting taxonomy category backfill...');
+          const taxonomyService = new TaxonomyService(this.server);
+          const processed = await taxonomyService.backfillPackageCategories();
+          this.server.log.info(
+            { processed },
+            '✅ Taxonomy category backfill completed'
+          );
+        } catch (error) {
+          this.server.log.error(
+            { error },
+            '❌ Taxonomy category backfill failed'
+          );
+        }
+      },
+    });
 
     // =====================================================
     // AI USE-CASE PACKAGE CURATION
