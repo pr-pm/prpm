@@ -114,6 +114,7 @@ function SearchPageContent() {
   const suggestionsTimeoutRef = useRef<NodeJS.Timeout>()
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const lastSyncedParamsRef = useRef<string>('')
 
   const limit = 20
 
@@ -126,6 +127,12 @@ function SearchPageContent() {
 
   // Sync URL parameters to state when URL changes (e.g., from navigation)
   useEffect(() => {
+    const paramsString = searchParams.toString()
+    if (paramsString === lastSyncedParamsRef.current) {
+      return
+    }
+    lastSyncedParamsRef.current = paramsString
+
     const tab = searchParams.get('tab') as TabType
     const urlQuery = searchParams.get('q')
     const format = searchParams.get('format') as Format
