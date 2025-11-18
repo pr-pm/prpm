@@ -367,7 +367,7 @@ export class TaxonomyService {
 
     // Find use case
     const useCaseResult = await this.server.pg.query(`
-      SELECT id, name, description, example_query
+      SELECT id, name, description, example_query, slug
       FROM use_cases
       WHERE slug = $1
     `, [useCaseSlug]);
@@ -378,14 +378,56 @@ export class TaxonomyService {
 
     const useCase = useCaseResult.rows[0];
 
-    // Get packages
+    // Get curated packages first (AI-selected with reasons)
+    const curatedResult = await this.server.pg.query(`
+      SELECT
+        p.id, p.name, p.description, p.version,
+        p.format, p.subtype, p.author_id,
+        u.username as author_username,
+        p.total_downloads, p.quality_score,
+        p.created_at, p.updated_at,
+        ucp.recommendation_reason,
+        ucp.sort_order
+      FROM use_case_packages ucp
+      JOIN packages p ON ucp.package_id = p.id
+      LEFT JOIN users u ON p.author_id = u.id
+      WHERE ucp.use_case_id = $1
+        AND p.visibility = 'public'
+        AND p.deprecated = false
+      ORDER BY ucp.sort_order ASC
+      LIMIT $2 OFFSET $3
+    `, [useCase.id, limit, offset]);
+
+    // If we have curated packages, return those
+    if (curatedResult.rows.length > 0) {
+      // Get total count of curated packages
+      const countResult = await this.server.pg.query(`
+        SELECT COUNT(*) as total
+        FROM use_case_packages ucp
+        JOIN packages p ON ucp.package_id = p.id
+        WHERE ucp.use_case_id = $1
+          AND p.visibility = 'public'
+          AND p.deprecated = false
+      `, [useCase.id]);
+
+      return {
+        packages: curatedResult.rows,
+        total: parseInt(countResult.rows[0]?.total || '0'),
+        use_case_slug: useCaseSlug,
+        use_case: useCase
+      };
+    }
+
+    // Fallback to auto-tagged packages if no curated packages exist
     const packagesResult = await this.server.pg.query(`
       SELECT DISTINCT
         p.id, p.name, p.description, p.version,
         p.format, p.subtype, p.author_id,
         u.username as author_username,
         p.total_downloads, p.quality_score,
-        p.created_at, p.updated_at
+        p.created_at, p.updated_at,
+        NULL as recommendation_reason,
+        NULL as sort_order
       FROM packages p
       JOIN package_use_cases puc ON p.id = puc.package_id
       LEFT JOIN users u ON p.author_id = u.id

@@ -718,6 +718,178 @@ Respond ONLY with valid JSON in this exact format:
         }
       },
     });
+
+    // =====================================================
+    // AI USE-CASE PACKAGE CURATION
+    // Weekly on Sunday at 2:00 AM UTC
+    // Curates best packages for each use case with AI explanations
+    // Only added if Anthropic API key is configured
+    // =====================================================
+    if (process.env.ANTHROPIC_API_KEY) {
+      this.jobs.push({
+        name: 'AI Use-Case Curation',
+        schedule: '0 2 * * 0', // Weekly on Sunday at 2 AM UTC
+        task: async () => {
+          try {
+            this.server.log.info('🤖 Starting weekly AI use-case package curation...');
+
+            // Import Anthropic dynamically
+            const { default: Anthropic } = await import('@anthropic-ai/sdk');
+            const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+            // Get all use cases
+            const useCasesResult = await this.server.pg.query(`
+              SELECT id, name, slug, description, example_query
+              FROM use_cases
+              ORDER BY name
+            `);
+
+            this.server.log.info(
+              { useCaseCount: useCasesResult.rows.length },
+              'Found use cases to curate'
+            );
+
+            for (const useCase of useCasesResult.rows) {
+              this.server.log.info({ useCaseSlug: useCase.slug }, `Curating: ${useCase.name}`);
+
+              try {
+                // Get candidate packages
+                const packagesResult = await this.server.pg.query(`
+                  SELECT
+                    id, name, description, format, subtype, tags,
+                    total_downloads, quality_score
+                  FROM packages
+                  WHERE
+                    visibility = 'public'
+                    AND quality_score >= 3.0
+                  ORDER BY
+                    (total_downloads * COALESCE(quality_score, 3.0)) DESC
+                  LIMIT 50
+                `);
+
+                this.server.log.info(
+                  { candidateCount: packagesResult.rows.length },
+                  'Evaluating candidates'
+                );
+
+                // Use Claude to select and explain best packages
+                const prompt = `You are a package recommendation expert. Given a use case and a list of packages, select the 5-8 BEST packages that would help someone accomplish this use case.
+
+Use Case: ${useCase.name}
+Description: ${useCase.description || 'No description provided'}
+${useCase.example_query ? `Example Query: ${useCase.example_query}` : ''}
+
+Available Packages:
+${packagesResult.rows.map((pkg: any, idx: number) => `
+${idx + 1}. ${pkg.name} (${pkg.format}/${pkg.subtype})
+   Description: ${pkg.description || 'No description'}
+   Tags: ${pkg.tags?.join(', ') || 'none'}
+   Downloads: ${pkg.total_downloads}
+   Quality: ${pkg.quality_score || 'N/A'}/5
+`).join('\n')}
+
+Please respond with ONLY a JSON array of recommendations. Each recommendation should have:
+- package_name: exact name from the list above
+- reason: 1-2 sentence explanation of WHY this package is perfect for this use case
+- sort_order: number 1-8 indicating priority (1 = most important)
+
+Example format:
+[
+  {
+    "package_name": "@prpm/example-skill",
+    "reason": "Provides essential debugging workflows that help identify root causes before attempting fixes, which is critical for API development troubleshooting.",
+    "sort_order": 1
+  }
+]
+
+Select 5-8 packages that provide the most value for this use case. Focus on diversity (don't pick all the same type) and practical utility.`;
+
+                const response = await anthropic.messages.create({
+                  model: 'claude-3-5-sonnet-20241022',
+                  max_tokens: 2000,
+                  messages: [{
+                    role: 'user',
+                    content: prompt
+                  }]
+                });
+
+                const content = response.content[0];
+                if (content.type !== 'text') {
+                  throw new Error('Unexpected response type from Claude');
+                }
+
+                // Parse Claude's response
+                const jsonMatch = content.text.match(/\[[\s\S]*\]/);
+                if (!jsonMatch) {
+                  this.server.log.error({ useCaseSlug: useCase.slug }, 'Could not parse AI response');
+                  continue;
+                }
+
+                interface Recommendation {
+                  package_name: string;
+                  reason: string;
+                  sort_order: number;
+                }
+
+                const recommendations: Recommendation[] = JSON.parse(jsonMatch[0]);
+                this.server.log.info(
+                  { recommendationCount: recommendations.length },
+                  `AI selected ${recommendations.length} packages`
+                );
+
+                // Clear existing AI-curated packages for this use case
+                await this.server.pg.query(
+                  'DELETE FROM use_case_packages WHERE use_case_id = $1 AND curated_by = $2',
+                  [useCase.id, 'ai']
+                );
+
+                // Insert new curated packages
+                let insertedCount = 0;
+                for (const rec of recommendations) {
+                  const pkg = packagesResult.rows.find((p: any) => p.name === rec.package_name);
+                  if (!pkg) {
+                    this.server.log.warn({ packageName: rec.package_name }, 'Package not found');
+                    continue;
+                  }
+
+                  await this.server.pg.query(`
+                    INSERT INTO use_case_packages (use_case_id, package_id, recommendation_reason, sort_order, curated_by)
+                    VALUES ($1, $2, $3, $4, $5)
+                    ON CONFLICT (use_case_id, package_id) DO UPDATE
+                    SET
+                      recommendation_reason = EXCLUDED.recommendation_reason,
+                      sort_order = EXCLUDED.sort_order,
+                      updated_at = NOW()
+                  `, [useCase.id, pkg.id, rec.reason, rec.sort_order, 'ai']);
+
+                  insertedCount++;
+                }
+
+                this.server.log.info(
+                  { savedCount: insertedCount },
+                  `Saved curated packages for ${useCase.name}`
+                );
+
+              } catch (error) {
+                this.server.log.error(
+                  { error, useCaseSlug: useCase.slug },
+                  `Error curating ${useCase.name}`
+                );
+                continue;
+              }
+
+              // Rate limit: wait 1 second between requests
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            this.server.log.info('✅ AI use-case curation completed');
+
+          } catch (error) {
+            this.server.log.error({ error }, '❌ AI use-case curation failed');
+          }
+        },
+      });
+    }
   }
 
   /**
