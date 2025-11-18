@@ -457,9 +457,9 @@ export default function Home() {
                 <Image
                   src="https://startupfa.me/badges/featured-badge.webp"
                   alt="PRPM - Featured on Startup Fame"
-                  width={171}
-                  height={54}
-                  className="h-auto w-auto"
+                  width={120}
+                  height={38}
+                  className="h-auto w-28"
                 />
               </a>
             </div>
