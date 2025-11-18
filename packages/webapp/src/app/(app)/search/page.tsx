@@ -79,6 +79,7 @@ function SearchPageContent() {
   const [selectedLanguage, setSelectedLanguage] = useState(searchParams.get('language') || '')
   const [selectedFramework, setSelectedFramework] = useState(searchParams.get('framework') || '')
   const [selectedAuthor, setSelectedAuthor] = useState(initialParams.author)
+  const [authorInput, setAuthorInput] = useState(initialParams.author)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialParams.tags)
   const [sort, setSort] = useState<SortType>(initialParams.sort)
   const [starredOnly, setStarredOnly] = useState(initialParams.starredOnly)
@@ -114,6 +115,7 @@ function SearchPageContent() {
   const suggestionsTimeoutRef = useRef<NodeJS.Timeout>()
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const authorTimeoutRef = useRef<NodeJS.Timeout>()
   const lastSyncedParamsRef = useRef<string>('')
 
   const limit = 20
@@ -152,7 +154,11 @@ function SearchPageContent() {
     if (format !== null && format !== selectedFormat) setSelectedFormat(format || '')
     if (subtype !== null && subtype !== selectedSubtype) setSelectedSubtype(subtype || '')
     if (category !== null && category !== selectedCategory) setSelectedCategory(category || '')
-    if (author !== null && author !== selectedAuthor) setSelectedAuthor(author || '')
+    if (author !== null && author !== selectedAuthor) {
+      const authorValue = author || ''
+      setSelectedAuthor(authorValue)
+      setAuthorInput(authorValue)
+    }
     if (tags && JSON.stringify(tags) !== JSON.stringify(selectedTags)) setSelectedTags(tags)
     if (sortParam && sortParam !== sort) setSort(sortParam)
     if (pageParam && pageParam !== page) setPage(pageParam || 1)
@@ -194,6 +200,27 @@ function SearchPageContent() {
       }
     }
   }, [query])
+
+  // Debounce author input before applying filter/search
+  useEffect(() => {
+    if (authorInput === selectedAuthor) {
+      return
+    }
+
+    if (authorTimeoutRef.current) {
+      clearTimeout(authorTimeoutRef.current)
+    }
+
+    authorTimeoutRef.current = setTimeout(() => {
+      setSelectedAuthor(authorInput)
+    }, 300)
+
+    return () => {
+      if (authorTimeoutRef.current) {
+        clearTimeout(authorTimeoutRef.current)
+      }
+    }
+  }, [authorInput, selectedAuthor])
 
   // Auto-update sort based on query presence (unless user explicitly set a different sort)
   useEffect(() => {
@@ -780,6 +807,7 @@ function SearchPageContent() {
     setSelectedFramework('')
     setSelectedTags([])
     setSelectedAuthor('')
+    setAuthorInput('')
     setQuery('')
     setStarredOnly(false)
   }
@@ -1217,8 +1245,8 @@ function SearchPageContent() {
                 </label>
                 <input
                   type="text"
-                  value={selectedAuthor}
-                  onChange={(e) => setSelectedAuthor(e.target.value)}
+                  value={authorInput}
+                  onChange={(e) => setAuthorInput(e.target.value)}
                   placeholder="e.g., prpm, voltagent"
                   className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent placeholder-gray-500"
                 />
