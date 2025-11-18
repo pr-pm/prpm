@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense, useMemo } from 'react'
-import Head from 'next/head'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import CreditsWidget from '../../../components/playground/CreditsWidget'
 import PlaygroundInterface from '../../../components/playground/PlaygroundInterface'
@@ -10,8 +9,6 @@ import BuyCreditsModal from '../../../components/playground/BuyCreditsModal'
 import SubscribePRPMPlusModal from '../../../components/SubscribePRPMPlusModal'
 import { getPlaygroundCredits, listPlaygroundSessions } from '../../../lib/api'
 import type { CreditBalance, PlaygroundSession } from '../../../lib/api'
-
-const PLAYGROUND_CANONICAL_BASE = 'https://prpm.dev/playground'
 
 function PlaygroundContent() {
   const router = useRouter()
@@ -31,18 +28,6 @@ function PlaygroundContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null)
-
-  const canonicalUrl = useMemo(() => {
-    const params = new URLSearchParams()
-    if (packageId) {
-      params.set('package', packageId)
-    }
-    if (compareMode) {
-      params.set('compare', 'true')
-    }
-    const query = params.toString()
-    return query ? `${PLAYGROUND_CANONICAL_BASE}?${query}` : PLAYGROUND_CANONICAL_BASE
-  }, [packageId, compareMode])
 
   // Check authentication (allow anonymous users)
   useEffect(() => {
@@ -191,11 +176,7 @@ function PlaygroundContent() {
   }
 
   return (
-    <>
-      <Head>
-        <link rel="canonical" href={canonicalUrl} key="playground-canonical" />
-      </Head>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Success Message Banner */}
       {showSuccessMessage && (
         <div className="bg-green-500 text-white px-4 py-3 text-center font-semibold">
@@ -318,7 +299,6 @@ function PlaygroundContent() {
         />
       )}
     </div>
-    </>
   )
 }
 

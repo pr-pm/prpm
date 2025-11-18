@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, Suspense, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import Head from 'next/head'
 import { useSearchParams, useRouter } from 'next/navigation'
 import {
   searchPackages,
@@ -42,92 +41,6 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'mcp': ['tool'],
   'agents.md': ['agent', 'tool'],
   'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],
-}
-
-const SEARCH_CANONICAL_BASE = 'https://prpm.dev/search'
-const SEARCH_CANONICAL_PARAMS = [
-  'q',
-  'tab',
-  'format',
-  'subtype',
-  'category',
-  'language',
-  'framework',
-  'author',
-  'tags',
-  'sort',
-  'page',
-  'starred',
-  'ai',
-] as const
-
-type CanonicalState = {
-  query: string
-  activeTab: TabType
-  selectedFormat: Format | ''
-  selectedSubtype: Subtype | ''
-  selectedCategory: string
-  selectedLanguage: string
-  selectedFramework: string
-  selectedAuthor: string
-  selectedTags: string[]
-  sort: SortType
-  page: number
-  starredOnly: boolean
-  aiSearchEnabled: boolean
-}
-
-function buildCanonicalUrlFromState(state: CanonicalState): string {
-  const params = new URLSearchParams()
-
-  SEARCH_CANONICAL_PARAMS.forEach(param => {
-    switch (param) {
-      case 'q':
-        if (state.query) params.set('q', state.query)
-        break
-      case 'tab':
-        if (state.activeTab !== 'packages') params.set('tab', state.activeTab)
-        break
-      case 'format':
-        if (state.selectedFormat) params.set('format', state.selectedFormat)
-        break
-      case 'subtype':
-        if (state.selectedSubtype) params.set('subtype', state.selectedSubtype)
-        break
-      case 'category':
-        if (state.selectedCategory) params.set('category', state.selectedCategory)
-        break
-      case 'language':
-        if (state.selectedLanguage) params.set('language', state.selectedLanguage)
-        break
-      case 'framework':
-        if (state.selectedFramework) params.set('framework', state.selectedFramework)
-        break
-      case 'author':
-        if (state.selectedAuthor) params.set('author', state.selectedAuthor)
-        break
-      case 'tags':
-        if (state.selectedTags.length > 0) params.set('tags', state.selectedTags.join(','))
-        break
-      case 'sort':
-        if (state.sort !== 'downloads') params.set('sort', state.sort)
-        break
-      case 'page':
-        if (state.page !== 1) params.set('page', String(state.page))
-        break
-      case 'starred':
-        if (state.starredOnly) params.set('starred', 'true')
-        break
-      case 'ai':
-        if (state.aiSearchEnabled) params.set('ai', 'true')
-        break
-      default:
-        break
-    }
-  })
-
-  const query = params.toString()
-  return query ? `${SEARCH_CANONICAL_BASE}?${query}` : SEARCH_CANONICAL_BASE
 }
 
 function SearchPageContent() {
@@ -206,40 +119,6 @@ function SearchPageContent() {
   const lastSyncedParamsRef = useRef<string>('')
 
   const limit = 20
-
-  const canonicalUrl = useMemo(
-    () =>
-      buildCanonicalUrlFromState({
-        query,
-        activeTab,
-        selectedFormat,
-        selectedSubtype,
-        selectedCategory,
-        selectedLanguage,
-        selectedFramework,
-        selectedAuthor,
-        selectedTags,
-        sort,
-        page,
-        starredOnly,
-        aiSearchEnabled,
-      }),
-    [
-      query,
-      activeTab,
-      selectedFormat,
-      selectedSubtype,
-      selectedCategory,
-      selectedLanguage,
-      selectedFramework,
-      selectedAuthor,
-      selectedTags,
-      sort,
-      page,
-      starredOnly,
-      aiSearchEnabled,
-    ]
-  )
 
   // Save AI search toggle to localStorage
   useEffect(() => {
@@ -997,11 +876,7 @@ function SearchPageContent() {
   const hasFilters = selectedFormat || selectedSubtype || selectedCategory || selectedLanguage || selectedFramework || selectedTags.length > 0 || selectedAuthor || query || starredOnly
 
   return (
-    <>
-      <Head>
-        <link rel="canonical" href={canonicalUrl} key="search-canonical" />
-      </Head>
-      <main className="min-h-screen bg-prpm-dark">
+    <main className="min-h-screen bg-prpm-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -1780,7 +1655,6 @@ function SearchPageContent() {
 
       </div>
     </main>
-    </>
   )
 }
 
