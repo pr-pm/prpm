@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getCategories, CategoryListResponse, CategoryWithChildren } from '@/lib/api'
+import { getCategories, CategoryWithChildren } from '@/lib/api'
 import * as LucideIcons from 'lucide-react'
 
-type Category = CategoryWithChildren
+type CategoryWithCount = CategoryWithChildren & { package_count?: number; children?: CategoryWithCount[] }
 
 // Map icon names to Lucide React components
 const getIconComponent = (iconName?: string | null) => {
@@ -23,7 +23,7 @@ const getIconComponent = (iconName?: string | null) => {
 }
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([])
+  const [categories, setCategories] = useState<CategoryWithCount[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
