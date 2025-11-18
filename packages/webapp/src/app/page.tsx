@@ -268,7 +268,7 @@ export default function Home() {
                             {searchResults.map((pkg) => (
                               <Link
                                 key={pkg.id}
-                                href={`/packages/${pkg.name}`}
+                                href={`/packages/${pkg.name.startsWith('@') ? pkg.name.split('/')[0].substring(1) : 'prpm'}/${pkg.name.startsWith('@') ? pkg.name.split('/').slice(1).join('/') : pkg.name}`}
                                 className="block p-4 hover:bg-prpm-dark-card/50 transition-colors group"
                               >
                                 <div className="flex items-start justify-between gap-3">
@@ -450,9 +450,15 @@ export default function Home() {
                 href="https://startupfa.me/s/prpm.dev?utm_source=prpm.dev"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover-lift"
+                className="hover-lift inline-flex"
               >
-                <img src="https://startupfa.me/badges/featured-badge.webp" alt="PRPM - Featured on Startup Fame" width={171} height={54} />
+                <Image
+                  src="https://startupfa.me/badges/featured-badge.webp"
+                  alt="PRPM - Featured on Startup Fame"
+                  width={120}
+                  height={38}
+                  className="h-auto w-28"
+                />
               </a>
             </div>
           </div>

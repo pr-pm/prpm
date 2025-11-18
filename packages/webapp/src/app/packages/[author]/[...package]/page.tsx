@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import type { PackageInfo } from '@pr-pm/types'
@@ -445,10 +446,12 @@ export default async function PackagePage({ params }: { params: { author: string
             {(pkg.author as any)?.username && (
               <div className="flex items-center gap-2">
                 {(pkg.author as any)?.avatar_url ? (
-                  <img
+                  <Image
                     src={(pkg.author as any).avatar_url}
                     alt={`${(pkg.author as any).username}'s avatar`}
-                    className="w-5 h-5 rounded-full"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5 rounded-full object-cover"
                   />
                 ) : (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -482,10 +485,12 @@ export default async function PackagePage({ params }: { params: { author: string
             {(pkg.organization as any)?.name && (
               <div className="flex items-center gap-2">
                 {(pkg.organization as any)?.avatar_url ? (
-                  <img
+                  <Image
                     src={(pkg.organization as any).avatar_url}
                     alt={`${(pkg.organization as any).name}'s avatar`}
-                    className="w-5 h-5 rounded-full"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5 rounded-full object-cover"
                   />
                 ) : (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

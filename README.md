@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./packages/webapp/public/logo.svg" alt="PRPM Logo" width="200" />
+  <img src="https://raw.githubusercontent.com/pr-pm/prpm/main/packages/webapp/public/logo.svg" alt="PRPM Logo" width="200" />
 </p>
 
 # PRPM - The Package Manager for AI Prompts
@@ -20,11 +20,11 @@ Installs 20 packages: backend-architect, cloud-architect, database-architect, an
 
 ---
 
-![demo](./packages/webapp/public/demo.gif)
+![demo](https://raw.githubusercontent.com/pr-pm/prpm/main/packages/webapp/public/demo.gif)
 
 ## Self Improve
 Give your IDE the ability to self improve by installing packages that it finds useful:
-![self-improve-demo](./packages/webapp/public/self-improve.gif)
+![self-improve-demo](https://raw.githubusercontent.com/pr-pm/prpm/main/packages/webapp/public/self-improve.gif)
 
 ---
 

@@ -1,8 +1,7 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import yaml from 'js-yaml';
 
 // Get the directory where this file is located
@@ -105,8 +104,31 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
   }
 
   // Load schema from file
-  const schemaPath = join(currentDirname, '..', 'schemas', schemaFilename);
-  const schemaContent = readFileSync(schemaPath, 'utf-8');
+  const schemaDirectories = [
+    join(currentDirname, '..', 'schemas'),
+    join(currentDirname, 'schemas'),
+  ];
+
+  let schemaContent: string | null = null;
+  let schemaPath: string | null = null;
+
+  for (const dir of schemaDirectories) {
+    const candidate = join(dir, schemaFilename);
+    try {
+      schemaContent = readFileSync(candidate, 'utf-8');
+      schemaPath = candidate;
+      break;
+    } catch (error: any) {
+      if (error?.code !== 'ENOENT') {
+        throw error;
+      }
+      continue;
+    }
+  }
+
+  if (!schemaContent || !schemaPath) {
+    throw new Error(`Schema file "${schemaFilename}" not found. Looked in: ${schemaDirectories.join(', ')}`);
+  }
   const schema = JSON.parse(schemaContent);
 
   // Compile and cache

@@ -25,6 +25,8 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'chatmode': '💬',
     'tool': '🔧',
     'hook': '🪝',
+    'workflow': '🔄',
+    'template': '📄',
   };
 
   // Format-specific icons for rules/defaults
@@ -69,6 +71,8 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'chatmode': 'Chat Mode',
     'tool': 'Tool',
     'hook': 'Hook',
+    'workflow': 'Workflow',
+    'template': 'Template',
   };
 
   const formatLabel = formatLabels[format];
@@ -438,7 +442,7 @@ export function createSearchCommand(): Command {
       const page = options.page ? parseInt(options.page, 10) : 1;
 
       const validFormats: Format[] = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'];
-      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode', 'tool', 'hook'];
+      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'];
 
       if (options.format && !validFormats.includes(format!)) {
         console.error(`❌ Format must be one of: ${validFormats.join(', ')}`);
