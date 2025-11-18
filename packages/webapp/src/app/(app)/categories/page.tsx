@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getCategories, CategoryWithChildren } from '@/lib/api'
+import { getCategories, Category, CategoryWithChildren } from '@/lib/api'
 import * as LucideIcons from 'lucide-react'
 
 type CategoryWithCount = CategoryWithChildren & { package_count?: number; children?: CategoryWithCount[] }
@@ -37,7 +37,7 @@ export default function CategoriesPage() {
         setCategories(data.categories || [])
 
         // Auto-expand all top-level categories by default
-        const topLevelSlugs = (data.categories || []).map((cat: Category) => cat.slug)
+        const topLevelSlugs = (data.categories || []).map((cat: CategoryWithChildren) => cat.slug)
         setExpandedCategories(new Set(topLevelSlugs))
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load categories')
@@ -61,7 +61,7 @@ export default function CategoriesPage() {
     })
   }
 
-  const renderCategory = (category: Category, level: number = 0) => {
+  const renderCategory = (category: CategoryWithCount, level: number = 0) => {
     const isExpanded = expandedCategories.has(category.slug)
     const hasChildren = category.children && category.children.length > 0
 
@@ -150,7 +150,7 @@ export default function CategoriesPage() {
                   Related Tags
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {category.children!.map(child => (
+                  {category.children!.map((child: CategoryWithCount) => (
                     <Link
                       key={child.slug}
                       href={`/search?tags=${child.slug}`}

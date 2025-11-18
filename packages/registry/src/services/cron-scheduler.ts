@@ -13,6 +13,7 @@ import type { FastifyInstance } from 'fastify';
 import { PlaygroundCreditsService } from './playground-credits.js';
 import { CostMonitoringService } from './cost-monitoring.js';
 import { EmbeddingGenerationService } from './embedding-generation.js';
+import { TaxonomyService } from './taxonomy.js';
 
 interface CronJob {
   name: string;
