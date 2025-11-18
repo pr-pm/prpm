@@ -106,6 +106,8 @@ export interface Package {
   quality_explanation?: string;
   rating_average?: number;
   rating_count: number;
+  ai_use_cases?: string[]; // AI-generated practical use cases (3-5 scenarios)
+  ai_use_cases_generated_at?: Date | string; // When use cases were last generated
   created_at: Date | string;
   updated_at: Date | string;
   last_published_at?: Date | string;

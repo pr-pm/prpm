@@ -697,9 +697,9 @@ function SearchPageContent() {
     }
   }
 
-  // AI Search (PRPM+ Feature)
+  // AI Search
   const performAISearch = async () => {
-    if (!debouncedQuery.trim() || !jwtToken) {
+    if (!debouncedQuery.trim()) {
       return
     }
 
@@ -715,7 +715,7 @@ function SearchPageContent() {
           min_quality: undefined
         },
         limit: 20
-      }, jwtToken)
+      }, jwtToken || undefined)
 
       setAiResults(result.results)
       setAiExecutionTime(result.execution_time_ms)
@@ -1252,25 +1252,70 @@ function SearchPageContent() {
                 />
               </div>
 
-              {/* Popular Tags */}
+              {/* Tags Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Popular Tags
+                  Tags
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {['react', 'typescript', 'nextjs', 'nodejs', 'python', 'testing'].map(tag => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                        selectedTags.includes(tag)
-                          ? 'bg-prpm-accent text-white'
-                          : 'bg-prpm-dark border border-prpm-border text-gray-400 hover:border-prpm-accent hover:text-white'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
+
+                {/* Custom Tag Input */}
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    placeholder="Add custom tag..."
+                    className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent placeholder-gray-500 text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const input = e.currentTarget
+                        const tag = input.value.trim().toLowerCase()
+                        if (tag && !selectedTags.includes(tag)) {
+                          setSelectedTags([...selectedTags, tag])
+                          input.value = ''
+                        }
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Press Enter to add</p>
+                </div>
+
+                {/* Selected Tags */}
+                {selectedTags.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {selectedTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className="px-3 py-1 bg-prpm-accent text-white rounded-full text-sm transition-colors hover:bg-prpm-accent/80 flex items-center gap-1"
+                      >
+                        {tag}
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Popular Tags */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-2">
+                    Popular Tags
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {['react', 'typescript', 'nextjs', 'nodejs', 'python', 'testing'].map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                          selectedTags.includes(tag)
+                            ? 'bg-prpm-accent text-white'
+                            : 'bg-prpm-dark border border-prpm-border text-gray-400 hover:border-prpm-accent hover:text-white'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1365,6 +1410,14 @@ function SearchPageContent() {
                                   )}
                                 </div>
                               <p className="text-gray-400 mb-3">{pkg.description || 'No description'}</p>
+
+                              {/* AI-Generated Use Cases - Subtle styling */}
+                              {pkg.ai_use_cases && pkg.ai_use_cases.length > 0 && (
+                                <div className="mb-3 text-xs text-gray-500 italic">
+                                  <span className="font-medium text-gray-400">Use cases:</span> {pkg.ai_use_cases.slice(0, 3).join(' • ')}
+                                </div>
+                              )}
+
                               <div className="flex items-center gap-4 text-sm text-gray-500">
                                 <span className="px-2 py-1 bg-prpm-dark border border-prpm-border rounded text-gray-400">
                                   {`${pkg.format}-${pkg.subtype}`}

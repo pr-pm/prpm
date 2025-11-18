@@ -11,19 +11,17 @@ interface PRPMPlusUpgradeModalProps {
 }
 
 const DEFAULT_BENEFITS = [
-  'Unlimited AI semantic search',
-  'Natural language package discovery',
-  'AI-powered recommendations',
-  'Similar packages suggestions',
   '100 monthly playground credits (rollover to 200)',
   'Verified author badge',
-  'Priority email support'
+  'Priority email support',
+  'Early access to new features',
+  'Support PRPM development'
 ]
 
 export function PRPMPlusUpgradeModal({
   isOpen,
   onClose,
-  feature = 'AI-Powered Search',
+  feature = 'Premium Features',
   benefits = DEFAULT_BENEFITS,
   trialAvailable = true
 }: PRPMPlusUpgradeModalProps) {
