@@ -18,10 +18,10 @@ WHERE ai_enrichment_needed = TRUE
   AND deprecated = FALSE;
 
 -- Create index for finding stale enrichments (older than 90 days)
+-- Note: Date filtering happens at query time to allow flexible thresholds
 CREATE INDEX IF NOT EXISTS idx_packages_stale_enrichment
 ON packages (ai_enrichment_completed_at)
-WHERE ai_enrichment_completed_at IS NOT NULL
-  AND ai_enrichment_completed_at < NOW() - INTERVAL '90 days';
+WHERE ai_enrichment_completed_at IS NOT NULL;
 
 -- Add comments
 COMMENT ON COLUMN packages.ai_enrichment_completed_at IS 'Timestamp when AI enrichment (category, tags, use cases) was last completed';
