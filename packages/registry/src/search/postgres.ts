@@ -17,6 +17,7 @@ const LIST_COLUMNS = `
   p.install_count, p.view_count,
   p.license, p.license_text, p.license_url,
   p.snippet, p.repository_url, p.homepage_url, p.documentation_url,
+  p.ai_use_cases, p.ai_use_cases_generated_at,
   p.created_at, p.updated_at, p.last_published_at,
   p.deprecated, p.deprecated_reason
 `.trim();

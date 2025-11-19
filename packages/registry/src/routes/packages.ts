@@ -864,9 +864,10 @@ export async function packageRoutes(server: FastifyInstance) {
           server,
           `INSERT INTO packages (
             name, display_name, description, author_id, org_id, format, subtype,
-            license, tags, keywords, language, framework, visibility, last_published_at
+            license, tags, keywords, language, framework, visibility, last_published_at,
+            ai_enrichment_needed
           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), TRUE)
            RETURNING *`,
           [
             packageName,
@@ -978,7 +979,7 @@ export async function packageRoutes(server: FastifyInstance) {
       // Update package updated_at, last_published_at, and full_content (always use latest version content)
       await query(
         server,
-        'UPDATE packages SET last_published_at = NOW(), updated_at = NOW(), full_content = $2 WHERE id = $1',
+        'UPDATE packages SET last_published_at = NOW(), updated_at = NOW(), full_content = $2, ai_enrichment_needed = TRUE WHERE id = $1',
         [pkg.id, fullContent || null]
       );
 

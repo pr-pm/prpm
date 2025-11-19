@@ -6,6 +6,7 @@
  * - Playground credits reset
  * - Cost monitoring and analytics refresh
  * - Batch embedding generation for AI search
+ * - AI use case generation for packages
  */
 
 import cron, { ScheduledTask } from 'node-cron';
@@ -13,6 +14,7 @@ import type { FastifyInstance } from 'fastify';
 import { PlaygroundCreditsService } from './playground-credits.js';
 import { CostMonitoringService } from './cost-monitoring.js';
 import { EmbeddingGenerationService } from './embedding-generation.js';
+import { AIPackageEnrichmentService } from './ai-package-enrichment.js';
 import { TaxonomyService } from './taxonomy.js';
 
 interface CronJob {
@@ -28,18 +30,25 @@ export class CronScheduler {
   private creditsService: PlaygroundCreditsService;
   private costMonitoring: CostMonitoringService;
   private embeddingService?: EmbeddingGenerationService;
+  private enrichmentService?: AIPackageEnrichmentService;
 
   constructor(server: FastifyInstance) {
     this.server = server;
     this.creditsService = new PlaygroundCreditsService(server);
     this.costMonitoring = new CostMonitoringService(server);
 
-    // Only initialize embedding service if OpenAI API key is configured
+    // Only initialize AI services if OpenAI API key is configured
     if (process.env.OPENAI_API_KEY) {
       try {
         this.embeddingService = new EmbeddingGenerationService(server);
       } catch (error) {
         this.server.log.warn({ error }, 'Failed to initialize EmbeddingGenerationService - embeddings cron will be disabled');
+      }
+
+      try {
+        this.enrichmentService = new AIPackageEnrichmentService(server);
+      } catch (error) {
+        this.server.log.warn({ error }, 'Failed to initialize AIPackageEnrichmentService - enrichment cron will be disabled');
       }
     }
   }
@@ -423,271 +432,73 @@ export class CronScheduler {
     }
 
     // =====================================================
-    // PACKAGE AUTO-CATEGORIZATION
-    // Every 30 minutes (categorizes uncategorized packages)
+    // AI PACKAGE ENRICHMENT (Unified)
+    // Every 2 hours (generates category, tags, and use cases)
+    // Combines what used to be 3 separate API calls into 1
     // Only added if OpenAI API key is configured
     // =====================================================
-    if (process.env.OPENAI_API_KEY && process.env.DISABLE_AI_CRON_JOBS !== 'true') {
+    if (this.enrichmentService) {
       this.jobs.push({
-        name: 'Package Auto-Categorization',
-        schedule: '*/15 * * * *', // Every 30 minutes
+        name: 'AI Package Enrichment',
+        schedule: '0 */2 * * *', // Every 2 hours at :00
         task: async () => {
           try {
-            this.server.log.info('🔄 Starting auto-categorization of packages...');
+            this.server.log.info('🔄 Starting AI package enrichment...');
 
-            // Import OpenAI dynamically to avoid issues if not installed
-            const { default: OpenAI } = await import('openai');
-            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+            // Enrich packages (category, tags, use cases) in one API call
+            const enrichedCount = await this.enrichmentService!.enrichPendingPackages();
 
-            // Fetch category taxonomy
-            const categoriesResult = await this.server.pg.query(`
-              SELECT slug, name, level
-              FROM categories
-              ORDER BY level, display_order
-            `);
-
-            const topLevelCategories = categoriesResult.rows
-              .filter((cat: any) => cat.level === 1)
-              .map((cat: any) => cat.slug);
-
-            const allCategories = categoriesResult.rows.map((cat: any) => ({
-              slug: cat.slug,
-              name: cat.name,
-              level: cat.level,
-            }));
-
-            // Find packages without categories or AI-suggested tags (limit to 50 per run)
-            // Note: We check ai_tags, not user tags - user tags are preserved
-            // We process ALL packages to migrate from old taxonomy to new taxonomy
-            const packagesResult = await this.server.pg.query(`
-              SELECT id, name, display_name, description, category, tags, ai_tags, subtype, format
-              FROM packages
-              WHERE (
-                category IS NULL
-                OR category = ''
-                OR ai_tags IS NULL
-                OR ai_tags = '{}'
-                OR array_length(ai_tags, 1) IS NULL
-                OR array_length(ai_tags, 1) = 0
-              )
-              AND visibility = 'public'
-              AND deprecated = FALSE
-              ORDER BY total_downloads DESC
-              LIMIT 50
-            `);
-
-            const packages = packagesResult.rows;
-
-            if (packages.length === 0) {
-              this.server.log.info('No packages need categorization');
-              return;
+            if (enrichedCount > 0) {
+              this.server.log.info(
+                { enrichedCount },
+                '✅ AI package enrichment completed'
+              );
+            } else {
+              this.server.log.info('No packages need enrichment');
             }
 
-            // Log breakdown of what needs categorization
-            const missingCategory = packages.filter((p: any) => !p.category || p.category === '');
-            const missingAiTags = packages.filter((p: any) => !p.ai_tags || p.ai_tags.length === 0);
-
+            // Get and log statistics
+            const stats = await this.enrichmentService!.getStatistics();
             this.server.log.info(
               {
-                packageCount: packages.length,
-                missingCategory: missingCategory.length,
-                missingAiTags: missingAiTags.length,
-                missingBoth: packages.filter((p: any) => (!p.category || p.category === '') && (!p.ai_tags || p.ai_tags.length === 0)).length,
-                withUserTags: packages.filter((p: any) => p.tags && p.tags.length > 0).length
+                totalPackages: stats.totalPackages,
+                enrichedPackages: stats.enrichedPackages,
+                pendingPackages: stats.pendingPackages,
+                coverage: `${stats.enrichmentPercentage.toFixed(1)}%`
               },
-              'Found packages needing categorization (user tags preserved)'
-            );
-
-            let updatedCount = 0;
-            let skippedCount = 0;
-
-            for (const pkg of packages) {
-              try {
-                // Prepare package context for AI
-                const packageContext = {
-                  name: pkg.name,
-                  displayName: pkg.display_name || pkg.name,
-                  description: pkg.description || 'No description',
-                  currentCategory: pkg.category,
-                  userTags: pkg.tags || [], // User-specified tags (preserved)
-                  currentAiTags: pkg.ai_tags || [], // AI-suggested tags (we'll update these)
-                  subtype: pkg.subtype,
-                  format: pkg.format,
-                };
-
-                // Call OpenAI to suggest categorization
-                const prompt = `You are a package categorization expert. Analyze this package and suggest the best category and tags.
-
-Package Information:
-- Name: ${packageContext.name}
-- Display Name: ${packageContext.displayName}
-- Description: ${packageContext.description}
-- Type: ${packageContext.format} ${packageContext.subtype}
-- Current Category: ${packageContext.currentCategory || 'None'}
-- User-Specified Tags: ${packageContext.userTags.join(', ') || 'None'}
-- Current AI Tags: ${packageContext.currentAiTags.join(', ') || 'None'}
-
-Available Top-Level Categories:
-${topLevelCategories.map(cat => `- ${cat}`).join('\n')}
-
-All Available Categories (including subcategories):
-${allCategories.slice(0, 50).map((cat: any) => `- ${cat.slug} (level ${cat.level})`).join('\n')}
-
-Instructions:
-1. Choose ONE top-level category that best fits this package
-2. Suggest 3-5 relevant tags from the available categories/subcategories
-3. **BE STRICT**: Only suggest tags that are DIRECTLY relevant to the package's actual functionality
-4. **REVIEW EXISTING TAGS**: If current AI tags are wrong/overused (e.g., "react" or "tailwind" on unrelated packages), remove them
-5. Common mistakes to avoid:
-   - Don't tag with "react" unless the package specifically helps with React development
-   - Don't tag with "tailwind" unless the package specifically helps with Tailwind CSS
-   - Don't tag with framework names unless the package is framework-specific
-6. Provide a confidence score (0.0 to 1.0)
-7. Explain your reasoning, especially if removing existing tags
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "category": "category-slug",
-  "tags": ["tag1", "tag2", "tag3"],
-  "confidence": 0.95,
-  "reasoning": "Brief explanation of why these were chosen"
-}`;
-
-                const response = await openai.chat.completions.create({
-                  model: 'gpt-4o-mini',
-                  messages: [
-                    {
-                      role: 'system',
-                      content: 'You are a helpful assistant that categorizes packages. Always respond with valid JSON only, no additional text.',
-                    },
-                    {
-                      role: 'user',
-                      content: prompt,
-                    },
-                  ],
-                  temperature: 0.3,
-                  max_tokens: 500,
-                });
-
-                const content = response.choices[0]?.message?.content;
-                if (!content) {
-                  skippedCount++;
-                  continue;
-                }
-
-                // Parse JSON response
-                const parsed = JSON.parse(content.trim());
-
-                // Validate the response
-                if (!parsed.category || !Array.isArray(parsed.tags)) {
-                  this.server.log.warn({ packageId: pkg.id }, 'Invalid AI response format');
-                  skippedCount++;
-                  continue;
-                }
-
-                const suggestion = {
-                  category: parsed.category,
-                  tags: parsed.tags.slice(0, 5), // Limit to 5 tags
-                  confidence: parsed.confidence || 0.5,
-                  reasoning: parsed.reasoning || 'No reasoning provided',
-                };
-
-                // Only update if confidence is high enough
-                if (suggestion.confidence < 0.7) {
-                  this.server.log.info(
-                    { packageId: pkg.id, confidence: suggestion.confidence },
-                    'Low confidence, skipping'
-                  );
-                  skippedCount++;
-                  continue;
-                }
-
-                // Update package in database
-                const updates: string[] = [];
-                const values: any[] = [];
-                let paramIndex = 1;
-
-                // Always update category with AI suggestion (overwrites old taxonomy)
-                if (suggestion.category) {
-                  updates.push(`category = $${paramIndex++}`);
-                  values.push(suggestion.category);
-                }
-
-                // Update tags if:
-                // 1. AI tags are empty/wrong (always fix)
-                // 2. User tags need correction (high confidence required)
-                const shouldUpdateTags = suggestion.tags.length > 0 && (
-                  !pkg.ai_tags ||
-                  pkg.ai_tags.length === 0 ||
-                  JSON.stringify(pkg.ai_tags.sort()) !== JSON.stringify(suggestion.tags.sort())
-                );
-
-                if (shouldUpdateTags) {
-                  // Update AI tags
-                  updates.push(`ai_tags = $${paramIndex++}`);
-                  values.push(suggestion.tags);
-
-                  // Also fix user tags if confidence is very high (0.85+) and current tags are wrong
-                  // This removes improperly tagged packages (e.g., "react" on non-React packages)
-                  if (suggestion.confidence >= 0.85 && pkg.tags && pkg.tags.length > 0) {
-                    const hasWrongTags = pkg.tags.some((tag: string) =>
-                      !suggestion.tags.includes(tag) &&
-                      (tag === 'react' || tag === 'tailwind' || tag === 'vue' || tag === 'angular')
-                    );
-
-                    if (hasWrongTags) {
-                      updates.push(`tags = $${paramIndex++}`);
-                      values.push(suggestion.tags);
-                      this.server.log.info(
-                        { packageId: pkg.id, oldTags: pkg.tags, newTags: suggestion.tags },
-                        'Correcting improperly tagged package'
-                      );
-                    }
-                  }
-                }
-
-                if (updates.length > 0) {
-                  values.push(pkg.id);
-                  await this.server.pg.query(`
-                    UPDATE packages
-                    SET ${updates.join(', ')}, updated_at = NOW()
-                    WHERE id = $${paramIndex}
-                  `, values);
-
-                  this.server.log.info(
-                    {
-                      packageId: pkg.id,
-                      category: suggestion.category,
-                      aiTags: suggestion.tags,
-                      userTags: pkg.tags || [],
-                      mergedTags: [...new Set([...(pkg.tags || []), ...suggestion.tags])]
-                    },
-                    'Updated package categorization'
-                  );
-                  updatedCount++;
-                } else {
-                  skippedCount++;
-                }
-
-                // Rate limiting - wait 100ms between requests
-                await new Promise(resolve => setTimeout(resolve, 100));
-              } catch (error) {
-                this.server.log.error(
-                  { packageId: pkg.id, error },
-                  'Failed to categorize package'
-                );
-                skippedCount++;
-              }
-            }
-
-            this.server.log.info(
-              { total: packages.length, updated: updatedCount, skipped: skippedCount },
-              '✅ Package auto-categorization completed'
+              'Enrichment coverage statistics'
             );
           } catch (error) {
             this.server.log.error(
               { error },
-              '❌ Package auto-categorization failed'
+              '❌ AI package enrichment failed'
+            );
+          }
+        },
+      });
+
+      // Also add a job to regenerate stale enrichments (once per week)
+      this.jobs.push({
+        name: 'Stale Enrichment Regeneration',
+        schedule: '0 3 * * 0', // Every Sunday at 3 AM UTC
+        task: async () => {
+          try {
+            this.server.log.info('🔄 Starting stale enrichment regeneration...');
+
+            const regeneratedCount = await this.enrichmentService!.regenerateStaleEnrichments();
+
+            if (regeneratedCount > 0) {
+              this.server.log.info(
+                { regeneratedCount },
+                '✅ Stale enrichment regeneration completed'
+              );
+            } else {
+              this.server.log.info('No stale enrichments to regenerate');
+            }
+          } catch (error) {
+            this.server.log.error(
+              { error },
+              '❌ Stale enrichment regeneration failed'
             );
           }
         },
