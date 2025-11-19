@@ -15,6 +15,10 @@ import * as tar from 'tar';
 import { CLIError } from '../core/errors';
 import { promptYesNo } from '../core/prompts';
 import path from 'path';
+import zlib from 'zlib';
+import fs from 'fs/promises';
+import os from 'os';
+import { handleCollectionInstall } from './collections.js';
 import {
   readLockfile,
   writeLockfile,
@@ -40,6 +44,7 @@ import {
   toKiro,
   toWindsurf,
   toAgentsMd,
+  validateFormat,
   type CanonicalPackage,
 } from '@pr-pm/converters';
 
@@ -145,7 +150,6 @@ export async function handleInstall(
     if (packageSpec.startsWith('collections/')) {
       const collectionId = packageSpec.replace('collections/', '');
       console.log(`📥 Installing ${collectionId}@latest...`);
-      const { handleCollectionInstall } = await import('./collections.js');
       return await handleCollectionInstall(collectionId, {
         format: options.as,
         skipOptional: false,
@@ -254,7 +258,6 @@ export async function handleInstall(
       isCollection = true;
 
       // If successful, delegate to collection install handler
-      const { handleCollectionInstall } = await import('./collections.js');
       return await handleCollectionInstall(packageId, {
         format: options.as,
         skipOptional: false,
@@ -583,7 +586,6 @@ export async function handleInstall(
 
       // Special handling for Claude hooks - merge into settings.json
       if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
-        const { readFile } = await import('fs/promises');
 
         // Parse the hook configuration from the downloaded file
         let hookConfig: any;
@@ -591,6 +593,12 @@ export async function handleInstall(
           hookConfig = JSON.parse(mainFile);
         } catch (err) {
           throw new Error(`Invalid hook configuration: ${err}. Hook file must be valid JSON.`);
+        }
+
+        // Validate hook configuration against schema
+        const validation = validateFormat('claude', hookConfig, 'hook');
+        if (!validation.valid) {
+          console.log(chalk.yellow(`   ⚠️  Hook validation warning: ${validation.errors[0].message}`));
         }
 
         // Generate unique hook ID for this installation
@@ -766,8 +774,7 @@ export async function handleInstall(
       // Add @references to .mdc file for JSON files
       if (isCursorConversion && jsonFiles.length > 0) {
         const mdcFile = `${packageDir}/${packageName}.mdc`;
-        const { readFile } = await import('fs/promises');
-        let mdcContent = await readFile(mdcFile, 'utf-8');
+        let mdcContent = await fs.readFile(mdcFile, 'utf-8');
 
         // Find the end of frontmatter (if exists)
         const frontmatterMatch = mdcContent.match(/^---\n[\s\S]*?\n---\n/);
@@ -844,7 +851,6 @@ export async function handleInstall(
 
 /**
  * Extract main file from tarball
- * TODO: Implement proper tar extraction with tar library
  */
 interface ExtractedFile {
   name: string;
@@ -852,30 +858,23 @@ interface ExtractedFile {
 }
 
 async function extractTarball(tarball: Buffer, packageId: string): Promise<ExtractedFile[]> {
-  const zlib = await import('zlib');
-  const fs = await import('fs/promises');
-  const os = await import('os');
-
-  const fallback = (buffer: Buffer): ExtractedFile[] => [
-    {
-      name: `${packageId}.md`,
-      content: buffer.toString('utf-8'),
-    },
-  ];
-
+  // Attempt to decompress
   let decompressed: Buffer;
   try {
     decompressed = await new Promise<Buffer>((resolve, reject) => {
       zlib.gunzip(tarball, (err, result) => {
         if (err) {
-          reject(err);
+          // If gunzip fails, it might be a raw file already (not gzipped)
+          // But standard packages should be gzipped tarballs.
+          // We'll reject to be safe, or we could try to treat as raw if we supported that.
+          reject(new Error(`Failed to decompress tarball: ${err.message}`));
           return;
         }
         resolve(result);
       });
     });
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+     throw new CLIError(`Package decompression failed: ${error.message}`);
   }
 
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'prpm-'));
@@ -908,23 +907,21 @@ async function extractTarball(tarball: Buffer, packageId: string): Promise<Extra
     const extractedFiles = await collectExtractedFiles(tmpDir, excludedNames, fs);
 
     if (extractedFiles.length === 0) {
-      return fallback(decompressed);
+      throw new CLIError('Package archive contains no valid files');
     }
 
     return extractedFiles;
-  } catch {
-    return fallback(decompressed);
+  } catch (error: any) {
+    throw new CLIError(`Failed to extract package files: ${error.message}`);
   } finally {
     await cleanup();
   }
 }
 
-type FsPromises = typeof import('fs/promises');
-
 async function collectExtractedFiles(
   rootDir: string,
   excludedNames: Set<string>,
-  fs: FsPromises
+  fs: typeof import('fs/promises')
 ): Promise<ExtractedFile[]> {
   const files: ExtractedFile[] = [];
   const dirs = [rootDir];
