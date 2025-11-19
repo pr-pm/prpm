@@ -109,7 +109,7 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // Use search provider (PostgreSQL or OpenSearch)
     const searchProvider = getSearchProvider(server);
-    const response = await searchProvider.search(q || '', {
+    let response = await searchProvider.search(q || '', {
       format,
       subtype,
       tags,
@@ -123,6 +123,27 @@ export async function searchRoutes(server: FastifyInstance) {
       limit,
       offset,
     });
+
+    // If no results and there was a query, show top 10 popular packages with filters
+    if (response.packages.length === 0 && q) {
+      const fallbackOptions: Record<string, unknown> = {
+        sort: 'downloads' as const,
+        limit: 10,
+        offset: 0,
+      };
+
+      // Preserve format and subtype filters
+      if (format) fallbackOptions.format = format;
+      if (subtype) fallbackOptions.subtype = subtype;
+
+      response = await searchProvider.search('', fallbackOptions);
+
+      // Add metadata to indicate this is a fallback result
+      if (response.packages.length > 0) {
+        response.fallback = true;
+        response.original_query = q;
+      }
+    }
 
     // Cache for 15 minutes (longer for better performance, search results stable)
     const cacheTTL = offset === 0 ? 900 : 300; // First page: 15min, others: 5min
