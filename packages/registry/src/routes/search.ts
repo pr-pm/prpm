@@ -139,11 +139,9 @@ export async function searchRoutes(server: FastifyInstance) {
 
       response = await searchProvider.search('', fallbackOptions);
 
-      // Add metadata to indicate this is a fallback result
-      if (response.packages.length > 0) {
-        response.fallback = true;
-        response.original_query = q;
-      }
+      // Always mark as fallback (even if 0 results) so UI shows cross-platform conversion notice
+      response.fallback = true;
+      response.original_query = q;
     }
 
     // Cache for 15 minutes (longer for better performance, search results stable)
