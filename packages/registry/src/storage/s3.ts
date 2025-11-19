@@ -8,7 +8,7 @@ import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { createHash } from 'crypto';
 
-const s3Client = new S3Client({
+export const s3Client = new S3Client({
   region: config.s3.region,
   endpoint: config.s3.endpoint !== 'https://s3.amazonaws.com' ? config.s3.endpoint : undefined,
   credentials: config.s3.accessKeyId

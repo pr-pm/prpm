@@ -209,7 +209,7 @@ export class SeoDataService {
 
       this.server.log.info({ packageName, htmlKey }, '✅ Static HTML page uploaded (from template)');
 
-      // Optionally invalidate CloudFront cache
+      // Invalidate CloudFront cache for immediate availability
       await this.invalidateCloudFrontCache(htmlKey);
     } catch (error) {
       this.server.log.error(
