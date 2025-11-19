@@ -124,7 +124,7 @@ export async function searchRoutes(server: FastifyInstance) {
       offset,
     });
 
-    // If no results, show top 10 popular packages in that format/subtype
+    // If no results, show top 10 popular packages
     // BUT only if format or subtype filters are applied
     if (response.packages.length === 0 && (format || subtype)) {
       const fallbackOptions: Record<string, unknown> = {
@@ -133,8 +133,8 @@ export async function searchRoutes(server: FastifyInstance) {
         offset: 0,
       };
 
-      // Preserve the format/subtype filters for fallback
-      if (format) fallbackOptions.format = format;
+      // Don't preserve format filter (all formats can be converted with --as)
+      // But DO preserve subtype filter (e.g., show top agents if filtering by agent subtype)
       if (subtype) fallbackOptions.subtype = subtype;
 
       response = await searchProvider.search('', fallbackOptions);
@@ -142,6 +142,8 @@ export async function searchRoutes(server: FastifyInstance) {
       // Always mark as fallback (even if 0 results) so UI shows cross-platform conversion notice
       response.fallback = true;
       response.original_query = q;
+      // Override total to show actual fallback count, not all packages
+      response.total = response.packages.length;
     }
 
     // Cache for 15 minutes (longer for better performance, search results stable)
