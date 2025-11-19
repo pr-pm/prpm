@@ -8,6 +8,10 @@ yarn-error.log*
 dist/
 *.tsbuildinfo
 
+# Exception: Keep hook dist files (hooks are distributed as compiled JS)
+!.claude/hooks/*/dist/
+!.claude/hooks/*/dist/*.js
+
 # Exclude binaries from npm package
 dist/prpm-*
 

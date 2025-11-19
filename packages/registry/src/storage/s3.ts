@@ -8,7 +8,7 @@ import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { createHash } from 'crypto';
 
-const s3Client = new S3Client({
+export const s3Client = new S3Client({
   region: config.s3.region,
   endpoint: config.s3.endpoint !== 'https://s3.amazonaws.com' ? config.s3.endpoint : undefined,
   credentials: config.s3.accessKeyId
@@ -203,6 +203,43 @@ export async function getDownloadUrl(
     }, 'Failed to generate download URL');
     throw new Error('Failed to generate download URL');
   }
+}
+
+interface UploadJsonOptions {
+  bucket?: string;
+  prefix?: string;
+  cacheControl?: string;
+}
+
+export async function uploadJsonObject(
+  server: FastifyInstance,
+  filename: string,
+  data: unknown,
+  options?: UploadJsonOptions
+) {
+  const bucket = options?.bucket || config.s3.bucket;
+  const keyPrefix = options?.prefix ?? '';
+  const key = keyPrefix ? `${keyPrefix.replace(/\/?$/, '/')}${filename}` : filename;
+  const body = Buffer.from(JSON.stringify(data, null, 2), 'utf-8');
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: 'application/json',
+      CacheControl: options?.cacheControl,
+    })
+  );
+
+  server.log.info(
+    {
+      bucket,
+      key,
+      size: body.length,
+    },
+    'Uploaded JSON object to S3'
+  );
 }
 
 /**
