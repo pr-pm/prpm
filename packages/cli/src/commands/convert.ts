@@ -25,6 +25,13 @@ import {
   toKiro,
   toWindsurf,
   toAgentsMd,
+  isCursorFormat,
+  isClaudeFormat,
+  isContinueFormat,
+  isCopilotFormat,
+  isKiroFormat,
+  isWindsurfFormat,
+  isAgentsMdFormat,
   type CanonicalPackage,
 } from '@pr-pm/converters';
 
@@ -90,7 +97,7 @@ function getDefaultPath(format: string, filename: string, subtype?: string): str
 function detectFormat(content: string, filepath: string): string | null {
   const ext = extname(filepath).toLowerCase();
 
-  // Try to detect from extension
+  // Try to detect from file path first (strongest signal)
   if (ext === '.mdc' || filepath.includes('.cursor/rules') || filepath.includes('.cursor/commands')) {
     return 'cursor';
   }
@@ -100,7 +107,7 @@ function detectFormat(content: string, filepath: string): string | null {
     if (filepath.includes('/commands/')) return 'claude-command';
     return 'claude';
   }
-  if (filepath.includes('.windsurf/rules')) {
+  if (filepath.includes('.windsurf/rules') || filepath.includes('.windsurfrules')) {
     return 'windsurf';
   }
   if (filepath.includes('.kiro/steering') || filepath.includes('.kiro/hooks')) {
@@ -116,25 +123,21 @@ function detectFormat(content: string, filepath: string): string | null {
     return 'agents.md';
   }
 
-  // Try to detect from content patterns
-  if (content.includes('---') && content.includes('name:') && content.includes('description:')) {
+  // Use robust content detection from converters
+  if (isClaudeFormat(content)) {
+    // Further refine claude subtype if possible
     if (content.includes('type: skill')) return 'claude-skill';
     if (content.includes('type: agent')) return 'claude-agent';
     if (content.includes('type: command')) return 'claude-command';
     return 'claude';
   }
-
-  if (content.match(/^\s*<agent>/) || content.match(/^\s*<agents>/)) {
-    return 'agents.md';
-  }
-
-  if (content.includes('# Cursor Rules') || content.includes('<!-- Cursor Rules -->')) {
-    return 'cursor';
-  }
-
-  if (content.includes('# Kiro Rules') || content.includes('rules:')) {
-    return 'kiro';
-  }
+  
+  if (isCursorFormat(content)) return 'cursor';
+  if (isWindsurfFormat(content)) return 'windsurf';
+  if (isKiroFormat(content)) return 'kiro';
+  if (isCopilotFormat(content)) return 'copilot';
+  if (isContinueFormat(content)) return 'continue';
+  if (isAgentsMdFormat(content)) return 'agents.md';
 
   return null;
 }
