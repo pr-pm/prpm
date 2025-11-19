@@ -339,8 +339,7 @@ describe('Collection Routes', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    // TODO: Fix version parameter test - needs proper mock handling
-    it.skip('should support version parameter', async () => {
+    it('should support version parameter', async () => {
       const response = await server.inject({
         method: 'GET',
         url: '/api/v1/collections/collection/test-collection?version=1.0.0'
