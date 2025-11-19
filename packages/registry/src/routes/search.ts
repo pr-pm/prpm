@@ -124,17 +124,14 @@ export async function searchRoutes(server: FastifyInstance) {
       offset,
     });
 
-    // If no results and there was a query, show top 10 popular packages with filters
-    if (response.packages.length === 0 && q) {
+    // If no results and there was a query, show top 10 popular packages
+    // BUT only if no format/subtype filters are applied (user wants empty results otherwise)
+    if (response.packages.length === 0 && q && !format && !subtype) {
       const fallbackOptions: Record<string, unknown> = {
         sort: 'downloads' as const,
         limit: 10,
         offset: 0,
       };
-
-      // Preserve format and subtype filters
-      if (format) fallbackOptions.format = format;
-      if (subtype) fallbackOptions.subtype = subtype;
 
       response = await searchProvider.search('', fallbackOptions);
 
