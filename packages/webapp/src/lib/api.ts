@@ -1125,7 +1125,7 @@ export async function getStarredCollections(token: string, limit = 20, offset = 
 }
 
 /**
- * AI Search (PRPM+ Feature)
+ * AI Search
  */
 
 /**

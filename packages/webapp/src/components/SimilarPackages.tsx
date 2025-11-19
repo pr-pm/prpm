@@ -119,7 +119,7 @@ export function SimilarPackages({ packageId, limit = 5 }: SimilarPackagesProps) 
 
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-          Powered by AI semantic matching • 100% Free
+          Powered by AI semantic matching
         </p>
       </div>
     </div>

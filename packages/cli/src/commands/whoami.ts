@@ -39,7 +39,7 @@ export async function handleWhoami(): Promise<void> {
         console.log(`   ⬇️  Downloads: ${userProfile.stats.total_downloads.toLocaleString()}`);
       }
 
-      // TODO: Add organizations when implemented in the database
+      // Show organizations
       if (userProfile.organizations && userProfile.organizations.length > 0) {
         console.log(`\n🏢 Organizations:`);
         userProfile.organizations.forEach((org: { id: string; name: string; role: string }) => {

@@ -1114,6 +1114,7 @@ function SearchPageContent() {
                       <option value="windsurf">Windsurf</option>
                       <option value="copilot">GitHub Copilot</option>
                       <option value="kiro">Kiro</option>
+                      <option value="gemini">Gemini CLI</option>
                       <option value="mcp">MCP</option>
                       <option value="agents.md">Agents.md</option>
                       <option value="generic">Generic</option>
@@ -1138,6 +1139,14 @@ function SearchPageContent() {
                         </p>
                         <p className="text-xs text-gray-400">
                           GitHub Copilot • OpenAI Codex
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedFormat === 'gemini' && (
+                      <div className="mt-3 p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg">
+                        <p className="text-xs text-gray-400">
+                          Tool-specific format for <strong>Gemini CLI</strong> custom commands (.toml files)
                         </p>
                       </div>
                     )}
