@@ -3,6 +3,7 @@
  */
 
 import { Command } from 'commander';
+import chalk from 'chalk';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists } from '../core/filesystem';
@@ -617,7 +618,7 @@ export async function handleInstall(
         let existingSettings: any = { hooks: {} };
         if (await fileExists(destPath)) {
           try {
-            const existingContent = await readFile(destPath, 'utf-8');
+            const existingContent = await fs.readFile(destPath, 'utf-8');
             existingSettings = JSON.parse(existingContent);
             if (!existingSettings.hooks) {
               existingSettings.hooks = {};
