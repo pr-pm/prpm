@@ -437,11 +437,7 @@ export class CronScheduler {
     // Combines what used to be 3 separate API calls into 1
     // Only added if OpenAI API key is configured
     // =====================================================
-<<<<<<< HEAD
     if (this.enrichmentService) {
-=======
-    if (process.env.OPENAI_API_KEY && process.env.DISABLE_AI_CRON_JOBS !== 'true') {
->>>>>>> 373bbcf952c024c2f7cefa14c299ad6222eb729e
       this.jobs.push({
         name: 'AI Package Enrichment',
         schedule: '0 */2 * * *', // Every 2 hours at :00
