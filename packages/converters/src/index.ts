@@ -15,6 +15,7 @@ export { fromCopilot } from './from-copilot.js';
 export { fromKiro } from './from-kiro.js';
 export { fromWindsurf } from './from-windsurf.js';
 export { fromAgentsMd } from './from-agents-md.js';
+export { fromGemini } from './from-gemini.js';
 
 // To converters (canonical → target format)
 export { toCursor } from './to-cursor.js';
@@ -24,6 +25,7 @@ export { toCopilot } from './to-copilot.js';
 export { toKiro } from './to-kiro.js';
 export { toWindsurf } from './to-windsurf.js';
 export { toAgentsMd } from './to-agents-md.js';
+export { toGemini } from './to-gemini.js';
 
 // Utilities
 export * from './taxonomy-utils.js';

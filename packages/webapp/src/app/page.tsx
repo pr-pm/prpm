@@ -41,7 +41,7 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<Package[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
-  const [useAISearch, setUseAISearch] = useState(process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH === 'true')
+  const [useAISearch, setUseAISearch] = useState(true)
 
   const copyToClipboard = async (text: string, type: 'cli' | 'collection') => {
     try {
@@ -172,40 +172,38 @@ export default function Home() {
                     </p>
 
                     {/* AI Search Toggle */}
-                    {process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH === 'true' && (
-                      <div className="flex items-center justify-center gap-2 mb-6">
-                        <button
-                          onClick={() => setUseAISearch(false)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            !useAISearch
-                              ? 'bg-prpm-accent text-white'
-                              : 'bg-prpm-dark/50 text-gray-400 hover:text-white border border-prpm-border/30'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                            Keyword
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setUseAISearch(true)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            useAISearch
-                              ? 'bg-gradient-to-r from-yellow-600 to-amber-600 text-white shadow-lg shadow-yellow-500/30'
-                              : 'bg-prpm-dark/50 text-gray-400 hover:text-white border border-prpm-border/30'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            AI Search
-                          </div>
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex items-center justify-center gap-2 mb-6">
+                      <button
+                        onClick={() => setUseAISearch(false)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          !useAISearch
+                            ? 'bg-prpm-accent text-white'
+                            : 'bg-prpm-dark/50 text-gray-400 hover:text-white border border-prpm-border/30'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          Keyword
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => setUseAISearch(true)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          useAISearch
+                            ? 'bg-gradient-to-r from-yellow-600 to-amber-600 text-white shadow-lg shadow-yellow-500/30'
+                            : 'bg-prpm-dark/50 text-gray-400 hover:text-white border border-prpm-border/30'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          AI Search
+                        </div>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Search Input */}
@@ -228,7 +226,7 @@ export default function Home() {
                         onClick={() => handleSearch(searchQuery, useAISearch)}
                         disabled={isSearching || !searchQuery.trim()}
                         className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all flex items-center gap-2 ${
-                          useAISearch && process.env.NEXT_PUBLIC_ENABLE_AI_SEARCH === 'true'
+                          useAISearch
                             ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white shadow-lg shadow-yellow-500/30'
                             : 'bg-prpm-accent hover:bg-prpm-accent-light text-white'
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -457,9 +455,9 @@ export default function Home() {
                 <Image
                   src="https://startupfa.me/badges/featured-badge.webp"
                   alt="PRPM - Featured on Startup Fame"
-                  width={171}
-                  height={54}
-                  className="h-auto w-auto"
+                  width={120}
+                  height={38}
+                  className="h-auto w-28"
                 />
               </a>
             </div>

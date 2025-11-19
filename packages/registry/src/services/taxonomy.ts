@@ -278,6 +278,82 @@ export class TaxonomyService {
   }
 
   /**
+   * Backfill package_categories from legacy fields
+   * Returns number of packages processed
+   */
+  async backfillPackageCategories(limit: number = 1000): Promise<number> {
+    const startTime = Date.now();
+    let processed = 0;
+
+    const result = await this.server.pg.query<{
+      package_id: string;
+      category_slug: string | null;
+      tags: string[] | null;
+    }>(`
+      SELECT
+        p.id as package_id,
+        p.category as category_slug,
+        p.tags
+      FROM packages p
+      WHERE p.visibility = 'public'
+        AND p.deprecated = false
+        AND (
+          p.category IS NOT NULL OR
+          (p.tags IS NOT NULL AND array_length(p.tags, 1) > 0)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM package_categories pc WHERE pc.package_id = p.id
+        )
+      LIMIT $1
+    `, [limit]);
+
+    if (result.rows.length === 0) {
+      this.server.log.info('Taxonomy backfill: no packages pending');
+      return 0;
+    }
+
+    const categoryMapResult = await this.server.pg.query<{ slug: string; id: string }>(
+      'SELECT slug, id FROM categories'
+    );
+    const slugToId = new Map(categoryMapResult.rows.map(row => [row.slug, row.id]));
+
+    for (const pkg of result.rows) {
+      const categoryIds: Set<string> = new Set();
+
+      if (pkg.category_slug && slugToId.has(pkg.category_slug)) {
+        categoryIds.add(slugToId.get(pkg.category_slug)!);
+      }
+
+      if (pkg.tags) {
+        for (const tag of pkg.tags) {
+          if (slugToId.has(tag)) {
+            categoryIds.add(slugToId.get(tag)!);
+          }
+        }
+      }
+
+      if (categoryIds.size === 0) {
+        continue;
+      }
+
+      const values = [...categoryIds].map(id => `('${pkg.package_id}', '${id}')`).join(',');
+      await this.server.pg.query(`
+        INSERT INTO package_categories (package_id, category_id)
+        VALUES ${values}
+        ON CONFLICT DO NOTHING
+      `);
+      processed++;
+    }
+
+    this.server.log.info(
+      { processed, durationMs: Date.now() - startTime },
+      'Taxonomy backfill processed packages'
+    );
+
+    return processed;
+  }
+
+  /**
    * Get packages for a specific use case
    */
   async getPackagesByUseCase(
@@ -291,7 +367,7 @@ export class TaxonomyService {
 
     // Find use case
     const useCaseResult = await this.server.pg.query(`
-      SELECT id, name, description, example_query
+      SELECT id, name, description, example_query, slug
       FROM use_cases
       WHERE slug = $1
     `, [useCaseSlug]);
@@ -302,14 +378,56 @@ export class TaxonomyService {
 
     const useCase = useCaseResult.rows[0];
 
-    // Get packages
+    // Get curated packages first (AI-selected with reasons)
+    const curatedResult = await this.server.pg.query(`
+      SELECT
+        p.id, p.name, p.description, p.version,
+        p.format, p.subtype, p.author_id,
+        u.username as author_username,
+        p.total_downloads, p.quality_score,
+        p.created_at, p.updated_at,
+        ucp.recommendation_reason,
+        ucp.sort_order
+      FROM use_case_packages ucp
+      JOIN packages p ON ucp.package_id = p.id
+      LEFT JOIN users u ON p.author_id = u.id
+      WHERE ucp.use_case_id = $1
+        AND p.visibility = 'public'
+        AND p.deprecated = false
+      ORDER BY ucp.sort_order ASC
+      LIMIT $2 OFFSET $3
+    `, [useCase.id, limit, offset]);
+
+    // If we have curated packages, return those
+    if (curatedResult.rows.length > 0) {
+      // Get total count of curated packages
+      const countResult = await this.server.pg.query(`
+        SELECT COUNT(*) as total
+        FROM use_case_packages ucp
+        JOIN packages p ON ucp.package_id = p.id
+        WHERE ucp.use_case_id = $1
+          AND p.visibility = 'public'
+          AND p.deprecated = false
+      `, [useCase.id]);
+
+      return {
+        packages: curatedResult.rows,
+        total: parseInt(countResult.rows[0]?.total || '0'),
+        use_case_slug: useCaseSlug,
+        use_case: useCase
+      };
+    }
+
+    // Fallback to auto-tagged packages if no curated packages exist
     const packagesResult = await this.server.pg.query(`
       SELECT DISTINCT
         p.id, p.name, p.description, p.version,
         p.format, p.subtype, p.author_id,
         u.username as author_username,
         p.total_downloads, p.quality_score,
-        p.created_at, p.updated_at
+        p.created_at, p.updated_at,
+        NULL as recommendation_reason,
+        NULL as sort_order
       FROM packages p
       JOIN package_use_cases puc ON p.id = puc.package_id
       LEFT JOIN users u ON p.author_id = u.id
