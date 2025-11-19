@@ -336,7 +336,7 @@ export class CronScheduler {
     // Every 30 minutes (catches packages without embeddings)
     // Only added if OpenAI API key is configured
     // =====================================================
-    if (this.embeddingService) {
+    if (this.embeddingService && process.env.DISABLE_AI_CRON_JOBS !== 'true') {
       this.jobs.push({
         name: 'Batch Embedding Generation',
         schedule: '*/15 * * * *', // Every 15 minutes
@@ -427,7 +427,7 @@ export class CronScheduler {
     // Every 30 minutes (categorizes uncategorized packages)
     // Only added if OpenAI API key is configured
     // =====================================================
-    if (process.env.OPENAI_API_KEY) {
+    if (process.env.OPENAI_API_KEY && process.env.DISABLE_AI_CRON_JOBS !== 'true') {
       this.jobs.push({
         name: 'Package Auto-Categorization',
         schedule: '*/15 * * * *', // Every 30 minutes
@@ -725,7 +725,7 @@ Respond ONLY with valid JSON in this exact format:
     // Curates best packages for each use case with AI explanations
     // Only added if Anthropic API key is configured
     // =====================================================
-    if (process.env.ANTHROPIC_API_KEY) {
+    if (process.env.ANTHROPIC_API_KEY && process.env.DISABLE_AI_CRON_JOBS !== 'true') {
       this.jobs.push({
         name: 'AI Use-Case Curation',
         schedule: '0 2 * * 0', // Weekly on Sunday at 2 AM UTC

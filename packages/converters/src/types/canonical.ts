@@ -15,7 +15,7 @@ export interface CanonicalPackage {
   tags: string[];
 
   // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
+  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'generic' | 'mcp';
   subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
 
@@ -76,10 +76,11 @@ export interface CanonicalPackage {
     copilot?: number;
     kiro?: number;
     'agents.md'?: number;
+    gemini?: number;
   };
 
   // Source information
-  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic';
+  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'generic';
   sourceUrl?: string;
 
   // Quality & verification flags
@@ -221,7 +222,7 @@ export interface HookSection {
  */
 export interface CustomSection {
   type: 'custom';
-  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro';
+  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini';
   title?: string;
   content: string;
   metadata?: Record<string, any>;
@@ -231,7 +232,7 @@ export interface CustomSection {
  * Format conversion options
  */
 export interface ConversionOptions {
-  targetFormat: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'canonical';
+  targetFormat: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini' | 'canonical';
   preserveComments?: boolean;
   optimizeForEditor?: boolean; // Use editor-specific features
   includeMetadata?: boolean;

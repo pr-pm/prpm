@@ -38,6 +38,7 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'windsurf': ['rule', 'agent', 'slash-command', 'tool'],
   'copilot': ['tool', 'chatmode'],
   'kiro': ['rule', 'agent', 'tool', 'hook'],
+  'gemini': ['slash-command'],
   'mcp': ['tool'],
   'agents.md': ['agent', 'tool'],
   'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],
@@ -497,10 +498,31 @@ function SearchPageContent() {
         }
 
         // Sort client-side
-        if (sort === 'downloads') {
-          filteredPackages.sort((a, b) => ((b as any).total_downloads || 0) - ((a as any).total_downloads || 0))
-        } else {
-          // 'recent' or other - assume already sorted by creation date in SSG data
+        switch (sort) {
+          case 'downloads':
+            filteredPackages.sort((a, b) => ((b as any).total_downloads || 0) - ((a as any).total_downloads || 0))
+            break
+          case 'created':
+            filteredPackages.sort((a, b) => new Date((b as any).created_at || 0).getTime() - new Date((a as any).created_at || 0).getTime())
+            break
+          case 'updated':
+            filteredPackages.sort((a, b) => new Date((b as any).updated_at || 0).getTime() - new Date((a as any).updated_at || 0).getTime())
+            break
+          case 'quality':
+            filteredPackages.sort((a, b) => ((b as any).quality_score || 0) - ((a as any).quality_score || 0))
+            break
+          case 'rating':
+            filteredPackages.sort((a, b) => ((b as any).rating_average || 0) - ((a as any).rating_average || 0))
+            break
+          case 'relevance':
+          default:
+            // For relevance without query, fall back to quality + downloads
+            filteredPackages.sort((a, b) => {
+              const qualityDiff = ((b as any).quality_score || 0) - ((a as any).quality_score || 0)
+              if (qualityDiff !== 0) return qualityDiff
+              return ((b as any).total_downloads || 0) - ((a as any).total_downloads || 0)
+            })
+            break
         }
 
         const totalFiltered = filteredPackages.length
@@ -573,10 +595,26 @@ function SearchPageContent() {
         }
 
         // Sort client-side
-        if (sort === 'downloads') {
-          filteredCollections.sort((a, b) => ((b as any).total_downloads || 0) - ((a as any).total_downloads || 0))
-        } else {
-          // 'recent' - assume already sorted by creation date in SSG data
+        switch (sort) {
+          case 'downloads':
+            filteredCollections.sort((a, b) => ((b as any).downloads || 0) - ((a as any).downloads || 0))
+            break
+          case 'created':
+            filteredCollections.sort((a, b) => new Date((b as any).created_at || 0).getTime() - new Date((a as any).created_at || 0).getTime())
+            break
+          case 'updated':
+            filteredCollections.sort((a, b) => new Date((b as any).updated_at || 0).getTime() - new Date((a as any).updated_at || 0).getTime())
+            break
+          case 'rating':
+          case 'quality':
+            // Collections don't have rating/quality, use stars
+            filteredCollections.sort((a, b) => ((b as any).stars || 0) - ((a as any).stars || 0))
+            break
+          case 'relevance':
+          default:
+            // Default to downloads for relevance
+            filteredCollections.sort((a, b) => ((b as any).downloads || 0) - ((a as any).downloads || 0))
+            break
         }
 
         const totalFiltered = filteredCollections.length
@@ -590,10 +628,34 @@ function SearchPageContent() {
         setTotal(totalFiltered)
       } else {
         // Normal API fetch when not filtering by starred
+        // Map sort types to collection-compatible values
+        let sortBy: 'downloads' | 'stars' | 'created' | 'updated' | 'name'
+        switch (sort) {
+          case 'downloads':
+            sortBy = 'downloads'
+            break
+          case 'created':
+            sortBy = 'created'
+            break
+          case 'updated':
+            sortBy = 'updated'
+            break
+          case 'rating':
+          case 'quality':
+            // Collections don't have rating/quality, use stars as fallback
+            sortBy = 'stars'
+            break
+          case 'relevance':
+          default:
+            // Collections don't have relevance scoring, use downloads
+            sortBy = 'downloads'
+            break
+        }
+
         const params: SearchCollectionsParams = {
           limit,
           offset: (page - 1) * limit,
-          sortBy: sort === 'downloads' ? 'downloads' : 'created',
+          sortBy,
           sortOrder: 'desc',
         }
 
