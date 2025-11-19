@@ -472,9 +472,7 @@ function SearchPageContent() {
               pkg.description?.toLowerCase().includes(searchLower)
           )
         }
-        if (selectedFormat) {
-          filteredPackages = filteredPackages.filter(pkg => pkg.format === selectedFormat)
-        }
+        // Don't filter by format - show all packages with --as flag conversion
         if (selectedSubtype) {
           filteredPackages = filteredPackages.filter(pkg => (pkg as any).subtype === selectedSubtype)
         }
@@ -521,7 +519,7 @@ function SearchPageContent() {
         }
 
         if (debouncedQuery.trim()) params.q = debouncedQuery
-        if (selectedFormat) params.format = selectedFormat
+        // Note: We don't filter by format - PRPM shows all packages with --as flag conversion
         if (selectedSubtype) params.subtype = selectedSubtype
         if (selectedCategory) params.category = selectedCategory
         if (selectedLanguage) params.language = selectedLanguage
@@ -1038,7 +1036,10 @@ function SearchPageContent() {
                 <>
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Format
+                      Preferred Format
+                      <span className="block text-xs font-normal text-gray-500 mt-1">
+                        Show install commands for this format
+                      </span>
                     </label>
                     <select
                       value={selectedFormat}
@@ -1057,44 +1058,11 @@ function SearchPageContent() {
                       <option value="generic">Generic</option>
                     </select>
 
-                    {/* Format compatibility info */}
-                    {selectedFormat === 'agents.md' && (
-                      <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                        <p className="text-xs text-gray-300 mb-2">
-                          <strong className="text-blue-400">Compatible with:</strong>
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          OpenAI Codex • GitHub Copilot • Google Gemini • Any tool supporting the open standard
-                        </p>
-                      </div>
-                    )}
-
-                    {selectedFormat === 'copilot' && (
-                      <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                        <p className="text-xs text-gray-300 mb-2">
-                          <strong className="text-purple-400">Compatible with:</strong>
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          GitHub Copilot • OpenAI Codex
-                        </p>
-                      </div>
-                    )}
-
-                    {(selectedFormat === 'cursor' || selectedFormat === 'claude' || selectedFormat === 'continue' || selectedFormat === 'windsurf' || selectedFormat === 'kiro') && (
-                      <div className="mt-3 p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg">
-                        <p className="text-xs text-gray-400">
-                          Tool-specific format for <strong>{selectedFormat === 'cursor' ? 'Cursor IDE' : selectedFormat === 'claude' ? 'Claude Desktop/Code' : selectedFormat === 'continue' ? 'Continue (VS Code/JetBrains)' : selectedFormat === 'windsurf' ? 'Windsurf IDE' : 'Kiro AI'}</strong>
-                        </p>
-                      </div>
-                    )}
-
-                    {selectedFormat === 'mcp' && (
-                      <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                        <p className="text-xs text-gray-300 mb-2">
-                          <strong className="text-green-400">Protocol-based:</strong>
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Any tool implementing Model Context Protocol
+                    {/* Format info */}
+                    {selectedFormat && (
+                      <div className="mt-3 p-3 bg-prpm-accent/10 border border-prpm-accent/30 rounded-lg">
+                        <p className="text-xs text-gray-300">
+                          <strong className="text-prpm-accent">Install commands shown for {selectedFormat}</strong> — PRPM converts all packages to work with your preferred format
                         </p>
                       </div>
                     )}
@@ -1304,37 +1272,9 @@ function SearchPageContent() {
                         {packages.length === 0 ? (
                       <div className="text-center py-20">
                         <p className="text-gray-400 mb-4">No packages found</p>
-                        {selectedFormat && (
-                          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 max-w-2xl mx-auto text-left">
-                            <h4 className="text-lg font-bold text-blue-400 mb-3">💡 Cross-Platform Tip</h4>
-                            <p className="text-gray-300 mb-3">
-                              PRPM is cross-platform! Even if there are no native <strong>{selectedFormat}</strong> packages, you can install packages from other formats using the <code className="bg-prpm-dark border border-prpm-border px-2 py-1 rounded text-sm">--as</code> flag.
-                            </p>
-                            <p className="text-gray-300 mb-3">
-                              For example, install any Cursor rule as {selectedFormat}:
-                            </p>
-                            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 font-mono text-sm text-gray-300">
-                              prpm install @org/cursor-rules --as {selectedFormat}
-                            </div>
-                            <p className="text-gray-400 text-sm mt-3">
-                              This means you have access to <strong>7,000+ packages</strong> across all formats, not just {selectedFormat}-specific ones!
-                            </p>
-                          </div>
-                        )}
                       </div>
                     ) : (
                       <>
-                        {selectedFormat && total < 50 && (
-                          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
-                            <h4 className="text-sm font-bold text-blue-400 mb-2">💡 Cross-Platform Tip</h4>
-                            <p className="text-gray-300 text-sm mb-2">
-                              Only {total} native <strong>{selectedFormat}</strong> {total === 1 ? 'package' : 'packages'} found. You can access <strong>7,000+ packages</strong> by installing packages from other formats:
-                            </p>
-                            <div className="bg-prpm-dark border border-prpm-border rounded-lg p-3 font-mono text-xs text-gray-300">
-                              prpm install @org/any-package --as {selectedFormat}
-                            </div>
-                          </div>
-                        )}
                         {packages.map((pkg) => (
                         <div
                           key={pkg.id}
@@ -1392,28 +1332,38 @@ function SearchPageContent() {
                           </div>
                           <div className="mt-4 pt-4 border-t border-prpm-border space-y-3">
                             {/* Install Command */}
-                            <div className="flex items-center justify-between gap-2">
-                              <code className="text-sm text-prpm-accent-light">
-                                prpm install {pkg.name}
-                              </code>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  copyToClipboard(`prpm install ${pkg.name}`, pkg.id)
-                                }}
-                                className="p-2 hover:bg-prpm-dark rounded transition-colors flex-shrink-0"
-                                title="Copy install command"
-                              >
-                                {copiedId === pkg.id ? (
-                                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                ) : (
-                                  <svg className="w-4 h-4 text-gray-400 hover:text-prpm-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                  </svg>
-                                )}
-                              </button>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <code className="text-sm text-prpm-accent-light">
+                                  prpm install {pkg.name}{selectedFormat && pkg.format !== selectedFormat ? ` --as ${selectedFormat}` : ''}
+                                </code>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    const command = selectedFormat && pkg.format !== selectedFormat
+                                      ? `prpm install ${pkg.name} --as ${selectedFormat}`
+                                      : `prpm install ${pkg.name}`
+                                    copyToClipboard(command, pkg.id)
+                                  }}
+                                  className="p-2 hover:bg-prpm-dark rounded transition-colors flex-shrink-0"
+                                  title="Copy install command"
+                                >
+                                  {copiedId === pkg.id ? (
+                                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  ) : (
+                                    <svg className="w-4 h-4 text-gray-400 hover:text-prpm-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                  )}
+                                </button>
+                              </div>
+                              {selectedFormat && pkg.format !== selectedFormat && (
+                                <p className="text-xs text-gray-400">
+                                  💡 PRPM converts all formats for you — this {pkg.format} package will work with {selectedFormat}
+                                </p>
+                              )}
                             </div>
 
                             {/* Playground CTAs */}
