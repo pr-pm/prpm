@@ -24,6 +24,7 @@ module.exports = {
       isolatedModules: true,
     },
   },
+  maxWorkers: 1,
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
