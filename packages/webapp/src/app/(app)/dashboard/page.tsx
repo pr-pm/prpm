@@ -647,7 +647,8 @@ export default function DashboardPage() {
             </Link>
 
             <Link
-              href="/docs/cli/publishing"
+              href="https://docs.prpm.dev/cli/commands#publish"
+              target="_blank"
               className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 hover:border-prpm-accent transition-all group"
             >
               <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📦</div>
