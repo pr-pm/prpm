@@ -34,6 +34,8 @@ export interface SearchResult {
   total: number;
   offset: number;
   limit: number;
+  fallback?: boolean;
+  original_query?: string;
 }
 
 export interface CollectionPackage {
