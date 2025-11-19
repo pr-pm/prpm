@@ -1221,6 +1221,39 @@ export async function getQuerySuggestions(partialQuery: string, limit: number = 
 }
 
 /**
+ * Tag suggestion type
+ */
+export interface TagSuggestion {
+  name: string
+  count: number
+}
+
+/**
+ * Get tag autocomplete suggestions
+ */
+export async function getTagSuggestions(partialTag: string, limit: number = 10): Promise<TagSuggestion[]> {
+  if (partialTag.length < 1) {
+    return []
+  }
+
+  try {
+    const response = await fetch(
+      `${REGISTRY_URL}/api/v1/search/tags/autocomplete?q=${encodeURIComponent(partialTag)}&limit=${limit}`
+    )
+
+    if (!response.ok) {
+      return []
+    }
+
+    const data = await response.json()
+    return data.suggestions || []
+  } catch (error) {
+    console.warn('Failed to fetch tag suggestions:', error)
+    return []
+  }
+}
+
+/**
  * Taxonomy & Categories
  */
 

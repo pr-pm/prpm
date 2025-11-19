@@ -8,6 +8,7 @@ import {
   searchCollections,
   aiSearch,
   getQuerySuggestions,
+  getTagSuggestions,
   getCategories,
   SearchPackagesParams,
   SearchCollectionsParams,
@@ -18,6 +19,7 @@ import {
   SortType,
   AISearchResult,
   CategoryListResponse,
+  TagSuggestion,
   getStarredPackages,
   getStarredCollections,
   starPackage,
@@ -39,6 +41,7 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'copilot': ['tool', 'chatmode'],
   'kiro': ['rule', 'agent', 'tool', 'hook'],
   'gemini': ['slash-command'],
+  'ruler': ['rule', 'agent', 'tool'],
   'mcp': ['tool'],
   'agents.md': ['agent', 'tool'],
   'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],
@@ -115,6 +118,14 @@ function SearchPageContent() {
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
   const authorTimeoutRef = useRef<NodeJS.Timeout>()
   const lastSyncedParamsRef = useRef<string>('')
+
+  // Tag autocomplete state
+  const [tagInput, setTagInput] = useState('')
+  const [tagSuggestions, setTagSuggestions] = useState<TagSuggestion[]>([])
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false)
+  const [selectedTagIndex, setSelectedTagIndex] = useState(-1)
+  const tagInputRef = useRef<HTMLInputElement>(null)
+  const tagTimeoutRef = useRef<NodeJS.Timeout>()
 
   const limit = 20
 
@@ -854,6 +865,60 @@ function SearchPageContent() {
     } else {
       setSelectedTags([...selectedTags, tag])
     }
+    setTagInput('')
+    setShowTagSuggestions(false)
+  }
+
+  const addTagFromInput = () => {
+    const tag = tagInput.trim().toLowerCase()
+    if (tag && !selectedTags.includes(tag)) {
+      setSelectedTags([...selectedTags, tag])
+      setTagInput('')
+      setShowTagSuggestions(false)
+    }
+  }
+
+  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setTagInput(value)
+
+    if (tagTimeoutRef.current) {
+      clearTimeout(tagTimeoutRef.current)
+    }
+
+    if (value.trim().length > 0) {
+      tagTimeoutRef.current = setTimeout(async () => {
+        const suggestions = await getTagSuggestions(value.trim(), 10)
+        setTagSuggestions(suggestions)
+        setShowTagSuggestions(suggestions.length > 0)
+        setSelectedTagIndex(-1)
+      }, 200)
+    } else {
+      setTagSuggestions([])
+      setShowTagSuggestions(false)
+    }
+  }
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (selectedTagIndex >= 0 && selectedTagIndex < tagSuggestions.length) {
+        toggleTag(tagSuggestions[selectedTagIndex].name)
+      } else {
+        addTagFromInput()
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedTagIndex(prev =>
+        prev < tagSuggestions.length - 1 ? prev + 1 : prev
+      )
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedTagIndex(prev => prev > 0 ? prev - 1 : -1)
+    } else if (e.key === 'Escape') {
+      setShowTagSuggestions(false)
+      setSelectedTagIndex(-1)
+    }
   }
 
   const clearFilters = () => {
@@ -867,6 +932,8 @@ function SearchPageContent() {
     setAuthorInput('')
     setQuery('')
     setStarredOnly(false)
+    setTagInput('')
+    setShowTagSuggestions(false)
   }
 
   const copyToClipboard = (text: string, id: string) => {
@@ -1321,25 +1388,89 @@ function SearchPageContent() {
                 />
               </div>
 
-              {/* Popular Tags */}
+              {/* Tag Search with Autocomplete */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Popular Tags
+                  Tags
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {['react', 'typescript', 'nextjs', 'nodejs', 'python', 'testing'].map(tag => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                        selectedTags.includes(tag)
-                          ? 'bg-prpm-accent text-white'
-                          : 'bg-prpm-dark border border-prpm-border text-gray-400 hover:border-prpm-accent hover:text-white'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
+
+                {/* Selected Tags */}
+                {selectedTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedTags.map(tag => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-prpm-accent text-white"
+                      >
+                        {tag}
+                        <button
+                          onClick={() => toggleTag(tag)}
+                          className="hover:bg-white/20 rounded-full p-0.5"
+                          aria-label={`Remove ${tag}`}
+                        >
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tag Input with Autocomplete */}
+                <div className="relative">
+                  <input
+                    ref={tagInputRef}
+                    type="text"
+                    value={tagInput}
+                    onChange={handleTagInputChange}
+                    onKeyDown={handleTagKeyDown}
+                    onFocus={() => tagInput.trim() && setShowTagSuggestions(tagSuggestions.length > 0)}
+                    onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+                    placeholder="Search tags... (e.g., react, python)"
+                    className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent placeholder-gray-500"
+                  />
+
+                  {/* Autocomplete Dropdown */}
+                  {showTagSuggestions && tagSuggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-prpm-dark-card border border-prpm-border rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                      {tagSuggestions.map((suggestion, index) => (
+                        <button
+                          key={suggestion.name}
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            toggleTag(suggestion.name)
+                          }}
+                          className={`w-full text-left px-4 py-2 hover:bg-prpm-accent/20 transition-colors flex items-center justify-between ${
+                            index === selectedTagIndex ? 'bg-prpm-accent/30' : ''
+                          }`}
+                        >
+                          <span className="text-white">{suggestion.name}</span>
+                          <span className="text-gray-400 text-sm">{suggestion.count} packages</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Popular Tags */}
+                <div className="mt-3">
+                  <p className="text-xs text-gray-400 mb-2">Popular:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['react', 'typescript', 'nextjs', 'nodejs', 'python', 'testing'].map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                          selectedTags.includes(tag)
+                            ? 'bg-prpm-accent text-white'
+                            : 'bg-prpm-dark border border-prpm-border text-gray-400 hover:border-prpm-accent hover:text-white'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

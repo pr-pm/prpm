@@ -9,7 +9,7 @@ import { Package, Format, Subtype } from '../types.js';
 import { getSearchProvider } from '../search/index.js';
 
 // Reusable enum constants for schema validation
-const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] as const;
+const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'generic', 'mcp'] as const;
 const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'] as const;
 
 // Columns to select for list results (excludes full_content to reduce payload size)
@@ -286,6 +286,83 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // Cache for 1 hour
     await cacheSet(server, cacheKey, response, 3600);
+
+    return response;
+  });
+
+  // Autocomplete tags by prefix
+  server.get('/tags/autocomplete', {
+    schema: {
+      tags: ['search'],
+      description: 'Autocomplete tags by prefix with counts',
+      querystring: {
+        type: 'object',
+        required: ['q'],
+        properties: {
+          q: { type: 'string', minLength: 1, description: 'Tag prefix to search for' },
+          limit: { type: 'number', default: 10, minimum: 1, maximum: 50 },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            suggestions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  count: { type: 'number' },
+                },
+              },
+            },
+            query: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { q, limit = 10 } = request.query as {
+      q: string;
+      limit?: number;
+    };
+
+    const searchTerm = q.toLowerCase().trim();
+
+    // Short cache to allow frequent updates
+    const cacheKey = `search:tags:autocomplete:${searchTerm}:${limit}`;
+    const cached = await cacheGet<any>(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = await query<{ tag: string; count: string }>(
+      server,
+      `SELECT unnest(tags) as tag, COUNT(*) as count
+       FROM packages
+       WHERE visibility = 'public'
+         AND EXISTS (
+           SELECT 1 FROM unnest(tags) t
+           WHERE LOWER(t) LIKE $1
+         )
+       GROUP BY tag
+       HAVING LOWER(unnest(tags)) LIKE $1
+       ORDER BY count DESC, tag ASC
+       LIMIT $2`,
+      [`${searchTerm}%`, limit]
+    );
+
+    const response = {
+      suggestions: result.rows.map(r => ({
+        name: r.tag,
+        count: parseInt(r.count, 10),
+      })),
+      query: q,
+    };
+
+    // Cache for 5 minutes
+    await cacheSet(server, cacheKey, response, 300);
 
     return response;
   });

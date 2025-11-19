@@ -14,6 +14,7 @@ export type Format =
   | 'kiro'
   | 'agents.md'
   | 'gemini'
+  | 'ruler'
   | 'generic'
   | 'mcp';
 
@@ -30,6 +31,7 @@ export const FORMATS: readonly Format[] = [
   'kiro',
   'agents.md',
   'gemini',
+  'ruler',
   'generic',
   'mcp',
 ] as const;

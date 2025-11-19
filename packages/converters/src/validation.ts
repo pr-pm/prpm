@@ -31,6 +31,7 @@ export type FormatType =
   | 'kiro'
   | 'agents-md'
   | 'gemini'
+  | 'ruler'
   | 'canonical';
 
 export type SubtypeType =
@@ -100,6 +101,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'kiro': 'kiro-steering.schema.json',
       'agents-md': 'agents-md.schema.json',
       'gemini': 'gemini.schema.json',
+      'ruler': 'ruler.schema.json',
       'canonical': 'canonical.schema.json',
     };
     schemaFilename = schemaMap[format] || `${format}.schema.json`;
@@ -270,8 +272,8 @@ export function validateMarkdown(
 ): ValidationResult {
   const { frontmatter, content } = parseMarkdownWithFrontmatter(markdown);
 
-  // Windsurf and agents-md don't have frontmatter, so validate differently
-  if (format === 'windsurf' || format === 'agents-md') {
+  // Windsurf, agents-md, and ruler don't have frontmatter, so validate differently
+  if (format === 'windsurf' || format === 'agents-md' || format === 'ruler') {
     return validateFormat(format, { content: markdown }, subtype);
   }
 
