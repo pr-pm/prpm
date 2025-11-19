@@ -26,6 +26,7 @@ import {
   toKiro,
   toWindsurf,
   toAgentsMd,
+  toGemini,
   type CanonicalPackage,
 } from '@pr-pm/converters';
 
