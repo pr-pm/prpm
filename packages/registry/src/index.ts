@@ -18,6 +18,7 @@ import { setupAuth } from './auth/index.js';
 import { registerRoutes } from './routes/index.js';
 import { registerTelemetryPlugin, telemetry } from './telemetry/index.js';
 import { startCronScheduler } from './services/cron-scheduler.js';
+import { SeoDataService } from './services/seo-data.js';
 
 async function buildServer() {
   // Configure logger with pino-pretty for colored output
@@ -263,6 +264,15 @@ async function buildServer() {
   server.log.info('🛣️  Registering API routes...');
   await registerRoutes(server);
   server.log.info('✅ Routes registered');
+
+  // SEO data service (async rebuilds for SSG data)
+  const seoDataService = new SeoDataService(server);
+  if (seoDataService.isEnabled()) {
+    server.log.info('🗂️  SEO data service enabled');
+  } else {
+    server.log.info('🗂️  SEO data service disabled');
+  }
+  server.decorate('seoData', seoDataService);
 
   // Start centralized cron scheduler
   server.log.info('⏰ Starting cron scheduler...');

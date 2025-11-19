@@ -1118,6 +1118,13 @@ export async function packageRoutes(server: FastifyInstance) {
         server.log.debug({ packageId: pkg.id }, 'Skipping embedding generation - OPENAI_API_KEY not configured');
       }
 
+      // 8. Update SEO data for this package only (non-blocking)
+      if (server.seoData?.isEnabled()) {
+        server.seoData.updateSinglePackage(packageName).catch((error: unknown) => {
+          server.log.warn({ packageName, error: String(error) }, 'Failed to update SEO data for package');
+        });
+      }
+
       return reply.send({
         success: true,
         package_id: pkg.id,
@@ -1667,13 +1674,14 @@ export async function packageRoutes(server: FastifyInstance) {
           type: 'object',
           properties: {
             format: { type: 'string' },
+            packageName: { type: 'string' },
             limit: { type: 'number', default: 500, minimum: 1, maximum: 1000 },
             offset: { type: 'number', default: 0, minimum: 0 },
           },
         },
       },
     },
-    async (request: FastifyRequest<{ Querystring: { format?: string; limit?: number; offset?: number } }>, reply: FastifyReply) => {
+    async (request: FastifyRequest<{ Querystring: { format?: string; packageName?: string; limit?: number; offset?: number } }>, reply: FastifyReply) => {
       try {
         // Authenticate SSG token
         const ssgToken = request.headers['x-ssg-token'];
@@ -1695,9 +1703,9 @@ export async function packageRoutes(server: FastifyInstance) {
           });
         }
 
-        const { format, limit = 500, offset = 0 } = request.query;
+        const { format, packageName, limit = 500, offset = 0 } = request.query;
 
-        server.log.info({ format, limit, offset }, 'Fetching SSG data');
+        server.log.info({ format, packageName, limit, offset }, 'Fetching SSG data');
 
         // Build WHERE clause
         // NOTE: Includes deprecated packages - they still have pages, just with deprecation warnings
@@ -1708,6 +1716,11 @@ export async function packageRoutes(server: FastifyInstance) {
         if (format) {
           conditions.push(`format = $${paramIndex++}`);
           params.push(format);
+        }
+
+        if (packageName) {
+          conditions.push(`name = $${paramIndex++}`);
+          params.push(packageName);
         }
 
         // Get total count for pagination

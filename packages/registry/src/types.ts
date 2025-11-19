@@ -298,4 +298,10 @@ export interface RegistryConfig {
   frontend: {
     url: string;
   };
+  seoData?: {
+    enabled: boolean;
+    bucket: string;
+    prefix: string;
+    cacheControl: string;
+  };
 }
