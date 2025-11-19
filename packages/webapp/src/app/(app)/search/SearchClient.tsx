@@ -475,7 +475,9 @@ function SearchPageContent() {
               pkg.description?.toLowerCase().includes(searchLower)
           )
         }
-        // Don't filter by format - show all packages with --as flag conversion
+        if (selectedFormat) {
+          filteredPackages = filteredPackages.filter(pkg => pkg.format === selectedFormat)
+        }
         if (selectedSubtype) {
           filteredPackages = filteredPackages.filter(pkg => (pkg as any).subtype === selectedSubtype)
         }
@@ -543,7 +545,7 @@ function SearchPageContent() {
         }
 
         if (debouncedQuery.trim()) params.q = debouncedQuery
-        // Note: We don't filter by format - PRPM shows all packages with --as flag conversion
+        if (selectedFormat) params.format = selectedFormat
         if (selectedSubtype) params.subtype = selectedSubtype
         if (selectedCategory) params.category = selectedCategory
         if (selectedLanguage) params.language = selectedLanguage
