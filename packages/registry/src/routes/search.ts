@@ -142,6 +142,8 @@ export async function searchRoutes(server: FastifyInstance) {
       // Always mark as fallback (even if 0 results) so UI shows cross-platform conversion notice
       response.fallback = true;
       response.original_query = q;
+      // Override total to show actual fallback count, not all packages
+      response.total = response.packages.length;
     }
 
     // Cache for 15 minutes (longer for better performance, search results stable)
