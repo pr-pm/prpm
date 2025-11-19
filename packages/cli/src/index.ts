@@ -34,6 +34,7 @@ import { createSubscribeCommand } from './commands/subscribe';
 import { createBuyCreditsCommand } from './commands/buy-credits';
 import { createStarredCommand } from './commands/starred';
 import { createConvertCommand } from './commands/convert';
+import { createExportCommand } from './commands/export';
 import { telemetry } from './core/telemetry';
 import { CLIError } from './core/errors';
 
@@ -91,6 +92,7 @@ program.addCommand(createBuyCreditsCommand());
 program.addCommand(createSchemaCommand());
 program.addCommand(createConfigCommand());
 program.addCommand(createConvertCommand());
+program.addCommand(createExportCommand());
 
 // Parse command line arguments with error handling
 (async () => {
