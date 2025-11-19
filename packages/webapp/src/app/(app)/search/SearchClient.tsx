@@ -558,9 +558,9 @@ function SearchPageContent() {
         setTotal(result.total)
 
         // Show fallback message if applicable
-        if (result.fallback && result.original_query) {
+        if (result.fallback) {
           setIsFallbackResult(true)
-          setFallbackOriginalQuery(result.original_query)
+          setFallbackOriginalQuery(result.original_query || '')
         } else {
           setIsFallbackResult(false)
           setFallbackOriginalQuery('')
