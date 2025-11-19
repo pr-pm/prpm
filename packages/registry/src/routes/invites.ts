@@ -4,7 +4,7 @@
  */
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { requireAdmin } from '../middleware/auth.js';
+import { requireAdmin, requireAuth } from '../middleware/auth.js';
 
 interface InviteParams {
   token: string;
@@ -196,7 +196,7 @@ export async function inviteRoutes(server: FastifyInstance) {
           }
         }
       },
-      preHandler: requireAdmin()
+      preHandler: requireAuth
     },
     async (request: FastifyRequest<{ Params: InviteParams; Body: ClaimInviteBody }>, reply: FastifyReply) => {
       const { token } = request.params;

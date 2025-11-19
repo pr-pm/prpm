@@ -646,11 +646,14 @@ export default function DashboardPage() {
               <p className="text-gray-400 text-sm">Discover new prompts and skills</p>
             </Link>
 
-            <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 opacity-50 cursor-not-allowed">
-              <div className="text-4xl mb-3">📦</div>
+            <Link
+              href="/docs/cli/publishing"
+              className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 hover:border-prpm-accent transition-all group"
+            >
+              <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📦</div>
               <h3 className="text-lg font-semibold text-white mb-2">Publish Package</h3>
-              <p className="text-gray-400 text-sm">Use the prpm cli</p>
-            </div>
+              <p className="text-gray-400 text-sm">Learn how to publish via CLI</p>
+            </Link>
 
             <Link
               href="/authors"
