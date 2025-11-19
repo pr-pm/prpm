@@ -1779,7 +1779,7 @@ export async function packageRoutes(server: FastifyInstance) {
             SELECT version, metadata, file_size, downloads, changelog, published_at
             FROM package_versions
             WHERE package_id = p.id
-            ORDER BY published_at DESC
+            ORDER BY published_at DESC, created_at DESC, id DESC
             LIMIT 1
           ) pv ON true
           WHERE ${conditions.join(' AND ')}
