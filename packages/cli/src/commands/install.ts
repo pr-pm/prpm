@@ -922,6 +922,14 @@ async function extractTarball(tarball: Buffer, packageId: string): Promise<Extra
 
     return extractedFiles;
   } catch (error: any) {
+    // Fallback for raw file downloads (backward compatibility)
+    // If tar extraction failed, it might be a single file download
+    if (error.message.includes('TAR_BAD_ARCHIVE') || error.message.includes('unexpected end of file')) {
+      return [{
+        name: `${packageId}.md`, // Default name
+        content: decompressed.toString('utf-8')
+      }];
+    }
     throw new CLIError(`Failed to extract package files: ${error.message}`);
   } finally {
     await cleanup();
