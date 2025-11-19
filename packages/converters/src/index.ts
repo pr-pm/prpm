@@ -18,13 +18,13 @@ export { fromAgentsMd } from './from-agents-md.js';
 export { fromGemini } from './from-gemini.js';
 
 // To converters (canonical → target format)
-export { toCursor } from './to-cursor.js';
-export { toClaude, toClaudeMd } from './to-claude.js';
-export { toContinue } from './to-continue.js';
-export { toCopilot } from './to-copilot.js';
-export { toKiro } from './to-kiro.js';
-export { toWindsurf } from './to-windsurf.js';
-export { toAgentsMd } from './to-agents-md.js';
+export { toCursor, isCursorFormat } from './to-cursor.js';
+export { toClaude, toClaudeMd, isClaudeFormat } from './to-claude.js';
+export { toContinue, isContinueFormat } from './to-continue.js';
+export { toCopilot, isCopilotFormat } from './to-copilot.js';
+export { toKiro, isKiroFormat } from './to-kiro.js';
+export { toWindsurf, isWindsurfFormat } from './to-windsurf.js';
+export { toAgentsMd, isAgentsMdFormat } from './to-agents-md.js';
 export { toGemini } from './to-gemini.js';
 
 // Utilities

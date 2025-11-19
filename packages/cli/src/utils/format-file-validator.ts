@@ -4,6 +4,7 @@
 
 import { readFile } from 'fs/promises';
 import type { PackageManifest, PackageFileMetadata } from '../types/registry';
+import { validateMarkdown, validateFormat } from '@pr-pm/converters';
 
 // Import validation functions from converters package
 // These will be available once we export them from @pr-pm/converters
@@ -16,6 +17,19 @@ type FormatType =
   | 'kiro'
   | 'agents-md'
   | 'canonical';
+
+type SubtypeType =
+  | 'rule'
+  | 'agent'
+  | 'skill'
+  | 'slash-command'
+  | 'prompt'
+  | 'workflow'
+  | 'tool'
+  | 'template'
+  | 'collection'
+  | 'chatmode'
+  | 'hook';
 
 interface ValidationResult {
   valid: boolean;
@@ -44,18 +58,11 @@ function normalizeFilePaths(files: string[] | PackageFileMetadata[]): string[] {
 /**
  * Determine which format schema to use based on format and subtype
  */
-function getFormatType(format: string, subtype?: string): FormatType | null {
-  // Map format + subtype to FormatType
-  if (format === 'claude') {
-    // Claude has subtypes: agent, skill, slash-command, hook
-    // For now, use base 'claude' schema
-    // TODO: Use specific schemas when available (claude-skill, claude-agent, etc.)
-    return 'claude';
-  }
-
-  // Direct mapping for other formats
+function getFormatType(format: string): FormatType | null {
+  // Direct mapping for formats
   const formatMap: Record<string, FormatType> = {
     'cursor': 'cursor',
+    'claude': 'claude',
     'continue': 'continue',
     'windsurf': 'windsurf',
     'copilot': 'copilot',
@@ -72,14 +79,13 @@ function getFormatType(format: string, subtype?: string): FormatType | null {
  */
 async function validateMarkdownFile(
   filePath: string,
-  formatType: FormatType
+  formatType: FormatType,
+  subtype?: string
 ): Promise<ValidationResult> {
   try {
-    // Dynamic import of validation function
-    const { validateMarkdown } = await import('@pr-pm/converters');
-
     const content = await readFile(filePath, 'utf-8');
-    const result = validateMarkdown(formatType, content);
+    // Cast subtype to compatible type for converters
+    const result = validateMarkdown(formatType, content, subtype as any);
 
     return {
       valid: result.valid,
@@ -88,6 +94,47 @@ async function validateMarkdownFile(
     };
   } catch (error) {
     // Include stack trace for better debugging
+    const errorMsg = error instanceof Error
+      ? `${error.message}\nStack: ${error.stack}`
+      : String(error);
+    return {
+      valid: false,
+      errors: [`${filePath}: Failed to validate - ${errorMsg}`],
+      warnings: [],
+    };
+  }
+}
+
+/**
+ * Validate a structured file (JSON)
+ */
+async function validateStructuredFile(
+  filePath: string,
+  formatType: FormatType,
+  subtype?: string
+): Promise<ValidationResult> {
+  try {
+    const content = await readFile(filePath, 'utf-8');
+    let data: any;
+    try {
+      data = JSON.parse(content);
+    } catch (e) {
+      return {
+        valid: false,
+        errors: [`${filePath}: Invalid JSON content`],
+        warnings: [],
+      };
+    }
+
+    // Validate against format schema
+    const result = validateFormat(formatType, data, subtype as any);
+
+    return {
+      valid: result.valid,
+      errors: result.errors.map(e => `${filePath}: ${e.message}`),
+      warnings: result.warnings.map(w => `${filePath}: ${w.message}`),
+    };
+  } catch (error) {
     const errorMsg = error instanceof Error
       ? `${error.message}\nStack: ${error.stack}`
       : String(error);
@@ -109,7 +156,7 @@ export async function validatePackageFiles(
   const warnings: string[] = [];
 
   // Get format type for validation
-  const formatType = getFormatType(manifest.format, manifest.subtype);
+  const formatType = getFormatType(manifest.format);
 
   if (!formatType) {
     // Unknown format - just warn
@@ -136,13 +183,13 @@ export async function validatePackageFiles(
 
     // Check if file matches format-specific patterns
     if (formatType === 'cursor') {
-      return filePath.includes('.cursorrules');
+      return filePath.includes('.cursorrules') || filePath.endsWith('.mdc');
     } else if (formatType === 'claude') {
-      return filePath.endsWith('SKILL.md') || filePath.endsWith('.clinerules');
+      return filePath.endsWith('SKILL.md') || filePath.endsWith('.clinerules') || filePath.includes('.claude/');
     } else if (formatType === 'continue') {
       return filePath.includes('.continue/');
     } else if (formatType === 'windsurf') {
-      return filePath.includes('.windsurfrules');
+      return filePath.includes('.windsurf/rules');
     } else if (formatType === 'agents-md') {
       return filePath === 'agents.md';
     } else if (formatType === 'kiro') {
@@ -175,8 +222,10 @@ export async function validatePackageFiles(
       } else if (formatType === 'kiro') {
         // Kiro can be steering files (.md) or hooks (.json)
         if (filePath.endsWith('.json')) {
-          // TODO: Validate Kiro hooks when we have the schema integrated
-          warnings.push(`${filePath}: Kiro hooks validation not yet implemented`);
+          // Validate Kiro hooks using validateFormat with 'hook' subtype
+          const result = await validateStructuredFile(filePath, formatType, 'hook');
+          errors.push(...result.errors);
+          warnings.push(...result.warnings);
         } else {
           // Steering file - validate as markdown with frontmatter
           const result = await validateMarkdownFile(filePath, formatType);
@@ -185,7 +234,8 @@ export async function validatePackageFiles(
         }
       } else {
         // All other formats use markdown with frontmatter
-        const result = await validateMarkdownFile(filePath, formatType);
+        // Pass subtype (e.g. 'agent', 'skill', 'hook') for more specific validation
+        const result = await validateMarkdownFile(filePath, formatType, manifest.subtype);
         errors.push(...result.errors);
         warnings.push(...result.warnings);
       }
