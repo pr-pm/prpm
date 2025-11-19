@@ -123,9 +123,6 @@ function detectFormat(content: string, filepath: string): string | null {
     return 'gemini';
   }
 
-  // Use robust content detection from converters
-  if (isClaudeFormat(content)) {
-
   // Try to detect from content patterns
   if (content.includes('---') && content.includes('name:') && content.includes('description:')) {
     if (content.includes('type: skill')) return 'claude-skill';
