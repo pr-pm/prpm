@@ -56,6 +56,10 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       if (subtype === 'hook') return '.kiro/hooks';
       return '.kiro/steering';
 
+    case 'gemini':
+      // Gemini custom commands: .gemini/commands/*.toml
+      return '.gemini/commands';
+
     case 'agents.md':
       return '.';
 
@@ -154,6 +158,7 @@ export async function autoDetectFormat(): Promise<Format | null> {
     { format: 'windsurf', dir: '.windsurf' },
     { format: 'copilot', dir: '.github/instructions' },
     { format: 'kiro', dir: '.kiro' },
+    { format: 'gemini', dir: '.gemini' },
     { format: 'agents.md', dir: '.agents' },
   ];
 
@@ -232,7 +237,14 @@ export function getInstalledFilePath(
   }
 
   // Determine file extension
-  const fileExtension = format === 'cursor' ? 'mdc' : 'md';
+  let fileExtension: string;
+  if (format === 'cursor') {
+    fileExtension = 'mdc';
+  } else if (format === 'gemini') {
+    fileExtension = 'toml';
+  } else {
+    fileExtension = 'md';
+  }
 
   // For other formats, use package name as filename
   return path.join(destDir, `${packageBaseName}.${fileExtension}`);

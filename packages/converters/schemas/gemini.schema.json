@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/gemini.schema.json",
+  "title": "Gemini Custom Commands Format",
+  "description": "JSON Schema for Gemini CLI custom commands (.toml format)",
+  "type": "object",
+  "required": ["prompt"],
+  "properties": {
+    "prompt": {
+      "type": "string",
+      "description": "The instruction text sent to the Gemini model. Can span multiple lines and supports placeholders like {{args}}, !{...} for shell commands, and @{...} for file injection."
+    },
+    "description": {
+      "type": "string",
+      "description": "A brief, single-line explanation of the command's purpose. Appears in /help menu. If omitted, system generates a generic description from filename."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "prompt": "Review the code for potential bugs and suggest improvements.",
+      "description": "Code review assistant"
+    },
+    {
+      "prompt": "Generate unit tests for {{args}}",
+      "description": "Generate unit tests for the specified file"
+    }
+  ]
+}
