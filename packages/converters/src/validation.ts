@@ -30,6 +30,7 @@ export type FormatType =
   | 'copilot'
   | 'kiro'
   | 'agents-md'
+  | 'gemini'
   | 'canonical';
 
 export type SubtypeType =
@@ -98,6 +99,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'copilot': 'copilot.schema.json',
       'kiro': 'kiro-steering.schema.json',
       'agents-md': 'agents-md.schema.json',
+      'gemini': 'gemini.schema.json',
       'canonical': 'canonical.schema.json',
     };
     schemaFilename = schemaMap[format] || `${format}.schema.json`;

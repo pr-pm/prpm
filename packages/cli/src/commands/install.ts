@@ -33,6 +33,7 @@ import {
   fromKiro,
   fromWindsurf,
   fromAgentsMd,
+  fromGemini,
   toCursor,
   toClaude,
   toContinue,
@@ -40,6 +41,7 @@ import {
   toKiro,
   toWindsurf,
   toAgentsMd,
+  toGemini,
   type CanonicalPackage,
 } from '@pr-pm/converters';
 
@@ -70,6 +72,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'continue': '➡️',
     'copilot': '✈️',
     'kiro': '🎯',
+    'gemini': '✨',
     'mcp': '🔗',
     'agents.md': '📝',
     'generic': '📦',
@@ -89,6 +92,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'continue': 'Continue',
     'copilot': 'GitHub Copilot',
     'kiro': 'Kiro',
+    'gemini': 'Gemini',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
     'generic': '',
@@ -405,6 +409,9 @@ export async function handleInstall(
           case 'agents.md':
             canonicalPkg = fromAgentsMd(sourceContent, metadata);
             break;
+          case 'gemini':
+            canonicalPkg = fromGemini(sourceContent, metadata);
+            break;
           default:
             throw new CLIError(`Unsupported source format for conversion: ${pkg.format}`);
         }
@@ -446,6 +453,10 @@ export async function handleInstall(
           case 'agents.md':
             const agentsResult = toAgentsMd(canonicalPkg);
             convertedContent = agentsResult.content;
+            break;
+          case 'gemini':
+            const geminiResult = toGemini(canonicalPkg);
+            convertedContent = geminiResult.content;
             break;
           default:
             throw new CLIError(`Unsupported target format for conversion: ${format}`);
@@ -1084,8 +1095,8 @@ export function createInstallCommand(): Command {
       // Support both --as and --format (format is alias for as)
       const convertTo = options.format || options.as;
 
-      if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical'].includes(convertTo)) {
-        throw new CLIError('❌ Format must be one of: cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package                   # Install in native format', 1);
+      if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical', 'gemini'].includes(convertTo)) {
+        throw new CLIError('❌ Format must be one of: cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical, gemini\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package                   # Install in native format', 1);
       }
 
       // If no package specified, install from lockfile

@@ -7,6 +7,7 @@ import { PostgresDb } from '@fastify/postgres';
 import { Redis } from 'ioredis';
 import OpenAI from 'openai';
 import { RegistryConfig } from '../types.js';
+import { SeoDataService } from '../services/seo-data.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -19,6 +20,7 @@ declare module 'fastify' {
     redis: Redis;
     config: RegistryConfig;
     openai: OpenAI;
+    seoData: SeoDataService;
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     optionalAuth: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }

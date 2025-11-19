@@ -18,6 +18,7 @@ import {
   fromKiro,
   fromWindsurf,
   fromAgentsMd,
+  fromGemini,
   toCursor,
   toClaude,
   toContinue,
@@ -25,11 +26,12 @@ import {
   toKiro,
   toWindsurf,
   toAgentsMd,
+  toGemini,
   type CanonicalPackage,
 } from '@pr-pm/converters';
 
 export interface ConvertOptions {
-  to: 'cursor' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md';
+  to: 'cursor' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md' | 'gemini';
   subtype?: Subtype;
   output?: string;
   yes?: boolean; // Skip confirmation prompts
@@ -79,6 +81,9 @@ function getDefaultPath(format: string, filename: string, subtype?: string): str
       return join(process.cwd(), '.continue', 'rules', `${baseName}.md`);
     case 'agents.md':
       return join(process.cwd(), 'agents.md');
+    case 'gemini':
+      // Gemini uses .gemini/commands/*.toml
+      return join(process.cwd(), '.gemini', 'commands', `${baseName}.toml`);
     default:
       throw new CLIError(`Unknown format: ${format}`);
   }
@@ -114,6 +119,9 @@ function detectFormat(content: string, filepath: string): string | null {
   }
   if (basename(filepath) === 'agents.md') {
     return 'agents.md';
+  }
+  if (ext === '.toml' || filepath.includes('.gemini/commands')) {
+    return 'gemini';
   }
 
   // Try to detect from content patterns
@@ -226,6 +234,9 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
       case 'agents.md':
         canonicalPkg = fromAgentsMd(content, metadata);
         break;
+      case 'gemini':
+        canonicalPkg = fromGemini(content, metadata);
+        break;
       default:
         throw new CLIError(`Unsupported source format: ${sourceFormat}`);
     }
@@ -260,6 +271,9 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         break;
       case 'agents.md':
         result = toAgentsMd(canonicalPkg);
+        break;
+      case 'gemini':
+        result = toGemini(canonicalPkg);
         break;
       default:
         throw new CLIError(`Unsupported target format: ${options.to}`);
@@ -303,6 +317,8 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
       console.log(chalk.dim('💡 Windsurf will automatically load rules from .windsurf/rules/'));
     } else if (options.to === 'kiro') {
       console.log(chalk.dim('💡 Kiro will automatically load steering files from .kiro/steering/'));
+    } else if (options.to === 'gemini') {
+      console.log(chalk.dim('💡 Gemini will automatically load commands from .gemini/commands/'));
     }
 
   } catch (error: any) {
@@ -318,7 +334,7 @@ export function createConvertCommand() {
   const command = new Command('convert')
     .description('Convert AI prompt files between formats')
     .argument('<source>', 'Source file path to convert')
-    .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md)')
+    .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md, gemini)')
     .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, prompt, etc.)')
     .option('-o, --output <path>', 'Output path (defaults to format-specific location)')
     .option('-y, --yes', 'Skip confirmation prompts')
@@ -328,7 +344,7 @@ export function createConvertCommand() {
           throw new CLIError('Target format is required. Use --to <format>');
         }
 
-        const validFormats = ['cursor', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md'];
+        const validFormats = ['cursor', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md', 'gemini'];
         if (!validFormats.includes(options.to)) {
           throw new CLIError(
             `Invalid format: ${options.to}\n\nValid formats: ${validFormats.join(', ')}`

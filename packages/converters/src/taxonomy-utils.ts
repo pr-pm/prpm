@@ -5,7 +5,7 @@
 
 import type { CanonicalPackage } from './types/canonical.js';
 
-export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
+export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'generic' | 'mcp';
 export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
 /**
@@ -72,6 +72,7 @@ export function normalizeFormat(sourceFormat: string): Format {
   if (normalized.includes('copilot')) return 'copilot';
   if (normalized.includes('kiro')) return 'kiro';
   if (normalized.includes('agents.md') || normalized.includes('agentsmd')) return 'agents.md';
+  if (normalized.includes('gemini')) return 'gemini';
   if (normalized.includes('mcp')) return 'mcp';
 
   return 'generic';

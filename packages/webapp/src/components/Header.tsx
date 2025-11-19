@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Fragment } from 'react'
 import { usePathname } from 'next/navigation'
 import { getCategories, CategoryWithChildren } from '@/lib/api'
 
@@ -273,23 +273,40 @@ export default function Header({ showDashboard = false, showAccount = false }: H
             <div className="flex flex-col gap-3 pt-4">
               {/* Primary links */}
               {primaryLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`transition-colors py-2 flex items-center gap-2 ${
-                    isActive(link.href)
-                      ? 'text-prpm-green-light'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {link.label}
-                  {link.badge && (
-                    <span className="text-xs font-semibold px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded border border-green-500/30">
-                      {link.badge}
-                    </span>
+                <Fragment key={link.href}>
+                  <Link
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`transition-colors py-2 flex items-center gap-2 ${
+                      isActive(link.href)
+                        ? 'text-prpm-green-light'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {link.label}
+                    {link.badge && (
+                      <span className="text-xs font-semibold px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded border border-green-500/30">
+                        {link.badge}
+                      </span>
+                    )}
+                  </Link>
+                  {link.label === 'Search' && (
+                    <Link
+                      href="/categories"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`ml-4 text-sm transition-colors py-1 flex items-center gap-1.5 ${
+                        isActive('/categories')
+                          ? 'text-prpm-green-light'
+                          : 'text-gray-500 hover:text-white'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                      Categories
+                    </Link>
                   )}
-                </Link>
+                </Fragment>
               ))}
 
               {/* Secondary links */}

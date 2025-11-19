@@ -22,6 +22,25 @@ const LIST_COLUMNS = `
   p.deprecated, p.deprecated_reason
 `.trim();
 
+async function getCategoryAndDescendantIds(server: FastifyInstance, slug: string): Promise<string[]> {
+  const result = await query<{ id: string }>(
+    server,
+    `
+      WITH RECURSIVE category_tree AS (
+        SELECT id FROM categories WHERE slug = $1
+        UNION ALL
+        SELECT c.id
+        FROM categories c
+        JOIN category_tree ct ON c.parent_id = ct.id
+      )
+      SELECT id FROM category_tree
+    `,
+    [slug]
+  );
+
+  return result.rows.map(row => row.id);
+}
+
 export function postgresSearch(server: FastifyInstance): SearchProvider {
   return {
     async search(searchQuery: string, filters: SearchFilters): Promise<SearchResult> {
@@ -87,8 +106,22 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       }
 
       if (category) {
-        conditions.push(`p.category = $${paramIndex++}`);
-        params.push(category);
+        const categoryIds = await getCategoryAndDescendantIds(server, category);
+        if (categoryIds.length === 0) {
+          return {
+            packages: [],
+            total: 0,
+            offset,
+            limit,
+          };
+        }
+
+        conditions.push(`EXISTS (
+          SELECT 1 FROM package_categories pc
+          WHERE pc.package_id = p.id
+            AND pc.category_id = ANY($${paramIndex++})
+        )`);
+        params.push(categoryIds);
       }
 
       if (author) {

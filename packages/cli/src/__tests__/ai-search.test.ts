@@ -38,28 +38,46 @@ describe('AI Search Command', () => {
   });
 
   describe('Authentication and Authorization', () => {
-    it('should require authentication', async () => {
+    it('should work without authentication (free for all)', async () => {
       const unauthConfig = { ...mockConfig, token: undefined };
       (getConfig as jest.Mock).mockResolvedValue(unauthConfig);
 
-      await expect(
-        handleAISearch('test query', {})
-      ).rejects.toThrow('Authentication required');
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [],
+          total_matches: 0,
+          execution_time_ms: 100,
+          query: 'test query',
+        }),
+      });
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Authentication required')
+      await handleAISearch('test query', {});
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://test-registry.com/api/v1/ai-search',
+        expect.objectContaining({
+          headers: expect.not.objectContaining({
+            Authorization: expect.anything(),
+          }),
+        })
       );
     });
 
-    it('should handle 401 authentication failure', async () => {
+    it('should include auth token when available for personalization', async () => {
       (global.fetch as jest.Mock).mockResolvedValue({
-        status: 401,
-        ok: false,
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [],
+          total_matches: 0,
+          execution_time_ms: 100,
+          query: 'test query',
+        }),
       });
 
-      await expect(
-        handleAISearch('test query', {})
-      ).rejects.toThrow('Authentication failed');
+      await handleAISearch('test query', {});
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://test-registry.com/api/v1/ai-search',
@@ -71,24 +89,19 @@ describe('AI Search Command', () => {
       );
     });
 
-    it('should handle 403 PRPM+ subscription required', async () => {
+    it('should handle API errors gracefully', async () => {
       (global.fetch as jest.Mock).mockResolvedValue({
-        status: 403,
+        status: 500,
         ok: false,
-        json: async () => ({
-          upgrade_info: {
-            feature: 'AI Search',
-            trial_available: true,
-          },
-        }),
+        text: async () => 'Internal server error',
       });
 
       await expect(
         handleAISearch('test query', {})
-      ).rejects.toThrow('subscription required');
+      ).rejects.toThrow('API error 500');
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('PRPM+ subscription')
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('AI search failed')
       );
     });
   });
