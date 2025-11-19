@@ -195,6 +195,8 @@ export interface SearchResult {
   offset: number;
   limit: number;
   didYouMean?: string;
+  fallback?: boolean;
+  original_query?: string;
 }
 
 export interface PackageInfo extends Package {
