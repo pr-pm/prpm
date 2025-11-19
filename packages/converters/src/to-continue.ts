@@ -247,3 +247,14 @@ function convertContext(section: {
   lines.push(section.content);
   return lines.join('\n');
 }
+
+/**
+ * Detect if content is in Continue format
+ */
+export function isContinueFormat(content: string): boolean {
+  // Continue files are markdown with YAML frontmatter
+  // Key indicators are globs, regex, or alwaysApply fields
+  // Note: Cursor also uses globs/alwaysApply, so there is overlap
+  return content.startsWith('---\n') &&
+    (content.includes('globs:') || content.includes('regex:') || content.includes('alwaysApply:'));
+}
