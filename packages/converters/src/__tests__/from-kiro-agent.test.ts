@@ -36,7 +36,7 @@ describe('fromKiroAgent', () => {
     const result = fromKiroAgent(agentJson);
     const pkg: CanonicalPackage = JSON.parse(result.content);
 
-    expect(pkg.metadata?.tools).toEqual(['fs_read', 'fs_write', 'execute_bash']);
+    expect(pkg.metadata?.kiroAgent?.tools).toEqual(['fs_read', 'fs_write', 'execute_bash']);
   });
 
   it('should extract MCP servers', () => {
@@ -54,8 +54,8 @@ describe('fromKiroAgent', () => {
     const result = fromKiroAgent(agentJson);
     const pkg: CanonicalPackage = JSON.parse(result.content);
 
-    expect(pkg.metadata?.mcpServers).toBeDefined();
-    expect(pkg.metadata?.mcpServers.fetch).toBeDefined();
+    expect(pkg.metadata?.kiroAgent?.mcpServers).toBeDefined();
+    expect(pkg.metadata?.kiroAgent?.mcpServers?.fetch).toBeDefined();
   });
 
   it('should handle file:// prompt references', () => {
@@ -97,7 +97,7 @@ describe('fromKiroAgent', () => {
     const result = fromKiroAgent(agentJson);
     const pkg: CanonicalPackage = JSON.parse(result.content);
 
-    expect(pkg.metadata?.sourceFormat).toBe('kiro');
+    expect(pkg.sourceFormat).toBe('kiro');
   });
 
   it('should handle hooks', () => {
@@ -113,8 +113,8 @@ describe('fromKiroAgent', () => {
     const result = fromKiroAgent(agentJson);
     const pkg: CanonicalPackage = JSON.parse(result.content);
 
-    expect(pkg.metadata?.hooks).toBeDefined();
-    expect(pkg.metadata?.hooks.agentSpawn).toEqual(['echo "Starting"']);
+    expect(pkg.metadata?.kiroAgent?.hooks).toBeDefined();
+    expect(pkg.metadata?.kiroAgent?.hooks?.agentSpawn).toEqual(['echo "Starting"']);
   });
 
   it('should handle toolsSettings', () => {
@@ -131,8 +131,8 @@ describe('fromKiroAgent', () => {
     const result = fromKiroAgent(agentJson);
     const pkg: CanonicalPackage = JSON.parse(result.content);
 
-    expect(pkg.metadata?.toolsSettings).toBeDefined();
-    expect(pkg.metadata?.toolsSettings.fs_write.allowedPaths).toEqual(['src/**', 'tests/**']);
+    expect(pkg.metadata?.kiroAgent?.toolsSettings).toBeDefined();
+    expect(pkg.metadata?.kiroAgent?.toolsSettings?.fs_write.allowedPaths).toEqual(['src/**', 'tests/**']);
   });
 
   it('should handle invalid JSON gracefully', () => {

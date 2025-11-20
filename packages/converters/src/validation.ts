@@ -7,9 +7,9 @@ import yaml from 'js-yaml';
 
 // Get the directory where this file is located
 // In ES modules, use import.meta.url to get __dirname equivalent
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const currentDirname = __dirname;
+const moduleFilename = fileURLToPath(import.meta.url);
+const moduleDirname = dirname(moduleFilename);
+const currentDirname = moduleDirname;
 
 // Initialize Ajv with strict mode disabled for better compatibility
 const ajv = new Ajv({

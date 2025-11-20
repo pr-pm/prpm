@@ -44,7 +44,7 @@ export interface CanonicalPackage {
   tags: string[];
 
   // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'generic' | 'mcp';
+  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler' | 'generic' | 'mcp';
   subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
   // Additional metadata from prpm.json
@@ -138,10 +138,11 @@ export interface CanonicalPackage {
     kiro?: number;
     'agents.md'?: number;
     gemini?: number;
+    ruler?: number;
   };
 
   // Source information
-  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'generic';
+  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler' | 'generic';
   sourceUrl?: string;
 
   // Quality & verification flags

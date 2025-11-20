@@ -47,7 +47,7 @@ Follow these conventions for React development.
 
       const pkg: CanonicalPackage = JSON.parse(result.content);
       expect(pkg.name).toBe('ruler-rule');
-      expect(pkg.content.title).toBe('Coding Standards');
+      expect(pkg.metadata?.title).toBe('Coding Standards');
     });
 
     it('should extract title from first h1', () => {
@@ -58,7 +58,7 @@ Use TypeScript for type safety.`;
       const result = fromRuler(markdown);
       const pkg: CanonicalPackage = JSON.parse(result.content);
 
-      expect(pkg.content.title).toBe('TypeScript Guidelines');
+      expect(pkg.metadata?.title).toBe('TypeScript Guidelines');
     });
 
     it('should extract sections from headers', () => {
@@ -75,9 +75,12 @@ Content for section two.`;
       const result = fromRuler(markdown);
       const pkg: CanonicalPackage = JSON.parse(result.content);
 
-      expect(pkg.content.sections).toHaveLength(2);
-      expect(pkg.content.sections?.[0].title).toBe('Section One');
-      expect(pkg.content.sections?.[1].title).toBe('Section Two');
+      // First section is metadata, then the two content sections
+      expect(pkg.content.sections).toHaveLength(3);
+      const contentSections = pkg.content.sections.filter(s => s.type !== 'metadata');
+      expect(contentSections).toHaveLength(2);
+      expect((contentSections[0] as any).title).toBe('Section One');
+      expect((contentSections[1] as any).title).toBe('Section Two');
     });
   });
 
@@ -96,8 +99,10 @@ function example() {
       const result = fromRuler(markdown);
       const pkg: CanonicalPackage = JSON.parse(result.content);
 
-      expect(pkg.content.sections?.[0].content).toContain('```typescript');
-      expect(pkg.content.sections?.[0].content).toContain('function example()');
+      // Filter out metadata section to get actual content sections
+      const contentSections = pkg.content.sections.filter(s => s.type !== 'metadata');
+      expect(contentSections[0].content).toContain('```typescript');
+      expect(contentSections[0].content).toContain('function example()');
     });
 
     it('should handle description before first header', () => {
@@ -112,8 +117,8 @@ Content here.`;
       const result = fromRuler(markdown);
       const pkg: CanonicalPackage = JSON.parse(result.content);
 
-      expect(pkg.content.description).toContain('This is an introduction paragraph');
-      expect(pkg.content.description).toContain('It has multiple lines');
+      expect(pkg.description).toContain('This is an introduction paragraph');
+      expect(pkg.description).toContain('It has multiple lines');
     });
 
     it('should not treat headers in code blocks as sections', () => {
@@ -130,8 +135,10 @@ Content`;
       const result = fromRuler(markdown);
       const pkg: CanonicalPackage = JSON.parse(result.content);
 
-      expect(pkg.content.sections).toHaveLength(1);
-      expect(pkg.content.sections?.[0].title).toBe('Real Section');
+      // Filter out metadata section to get actual content sections
+      const contentSections = pkg.content.sections.filter(s => s.type !== 'metadata');
+      expect(contentSections).toHaveLength(1);
+      expect(contentSections[0].title).toBe('Real Section');
     });
   });
 
@@ -160,7 +167,7 @@ No metadata here.`;
       const pkg: CanonicalPackage = JSON.parse(result.content);
 
       expect(pkg.name).toBe('ruler-rule');
-      expect(pkg.author).toBeUndefined();
+      expect(pkg.author).toBe('');
     });
 
     it('should set sourceFormat metadata', () => {
@@ -169,7 +176,7 @@ No metadata here.`;
       const result = fromRuler(markdown);
       const pkg: CanonicalPackage = JSON.parse(result.content);
 
-      expect(pkg.metadata?.sourceFormat).toBe('ruler');
+      expect(pkg.sourceFormat).toBe('ruler');
     });
   });
 

@@ -60,7 +60,9 @@ describe('toKiroAgent', () => {
     const pkgWithTools: CanonicalPackage = {
       ...minimalPackage,
       metadata: {
-        tools: ['fs_read', 'fs_write', 'execute_bash'],
+        kiroAgent: {
+          tools: ['fs_read', 'fs_write', 'execute_bash'],
+        },
       },
     };
 
@@ -87,10 +89,12 @@ describe('toKiroAgent', () => {
     const pkgWithMcp: CanonicalPackage = {
       ...minimalPackage,
       metadata: {
-        mcpServers: {
-          fetch: {
-            command: 'mcp-server-fetch',
-            args: [],
+        kiroAgent: {
+          mcpServers: {
+            fetch: {
+              command: 'mcp-server-fetch',
+              args: [],
+            },
           },
         },
       },

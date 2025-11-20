@@ -33,9 +33,10 @@ export function fromRuler(
     // Extract metadata from HTML comments if present
     const metadata = extractMetadata(markdown);
 
-    // Get description from metadata section
+    // Get description and title from metadata section
     const metadataSection = content.sections.find((s) => s.type === 'metadata') as MetadataSection | undefined;
     const description = metadata.description || metadataSection?.data.description || '';
+    const title = metadataSection?.data.title || 'Ruler Rule';
 
     // Build canonical package
     const pkg: CanonicalPackage = {
@@ -48,7 +49,11 @@ export function fromRuler(
       subtype: 'rule',
       description,
       content,
-      sourceFormat: 'generic',
+      sourceFormat: 'ruler',
+      metadata: {
+        title,
+        description,
+      },
     };
 
     return {

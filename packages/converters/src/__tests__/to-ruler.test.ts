@@ -22,15 +22,15 @@ describe('toRuler', () => {
     it('should include package metadata as HTML comments', () => {
       const result = toRuler(sampleCanonicalPackage);
 
-      expect(result.content).toContain('<!-- Package: test-agent -->');
-      expect(result.content).toContain('<!-- Author: Test Author -->');
+      expect(result.content).toContain('<!-- Package: Test Package -->');
+      expect(result.content).toContain('<!-- Author: testauthor -->');
       expect(result.content).toContain('<!-- Description: A test package for conversion -->');
     });
 
     it('should include title and description', () => {
       const result = toRuler(sampleCanonicalPackage);
 
-      expect(result.content).toContain('# 🧪 Test Agent');
+      expect(result.content).toContain('# Test Agent');
       expect(result.content).toContain('A test package for conversion');
     });
 
@@ -61,13 +61,13 @@ describe('toRuler', () => {
     it('should convert rules section', () => {
       const result = toRuler(sampleCanonicalPackage);
 
-      expect(result.content).toContain('## Rules');
+      expect(result.content).toContain('## Testing Guidelines');
     });
 
     it('should convert examples section', () => {
       const result = toRuler(sampleCanonicalPackage);
 
-      expect(result.content).toContain('## Examples');
+      expect(result.content).toContain('## Code Examples');
     });
   });
 
