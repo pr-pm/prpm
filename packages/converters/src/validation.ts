@@ -85,6 +85,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'claude:hook': 'claude-hook.schema.json',
       'cursor:slash-command': 'cursor-command.schema.json',
       'kiro:hook': 'kiro-hooks.schema.json',
+      'kiro:agent': 'kiro-agent.schema.json',
     };
 
     schemaFilename = subtypeSchemaMap[cacheKey];

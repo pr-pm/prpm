@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/kiro-agent.schema.json",
+  "title": "Kiro Agent Configuration Format",
+  "description": "JSON Schema for Kiro custom agent configurations (.kiro/agents/*.json) - specialized AI assistants with specific tools and context",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Agent's identifier (optional, defaults to filename)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable explanation of agent's purpose"
+    },
+    "prompt": {
+      "type": "string",
+      "description": "High-level context for the agent. Can be inline text or reference external markdown files via file:// URI"
+    },
+    "mcpServers": {
+      "type": "object",
+      "description": "Model Context Protocol (MCP) servers configuration",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Command to start the MCP server"
+          },
+          "args": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Command-line arguments for the server"
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "Environment variables for the server"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Server timeout in milliseconds"
+          }
+        },
+        "required": ["command"]
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of available tools (built-in or from MCP servers). Supports wildcards."
+    },
+    "toolAliases": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Rename tools to avoid naming conflicts"
+    },
+    "allowedTools": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Tools that can be used without user permission. Supports wildcards."
+    },
+    "toolsSettings": {
+      "type": "object",
+      "description": "Configure specific tool behaviors",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "allowedPaths": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Allowed file paths for file system tools"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Local file resources accessible to the agent (file:// URIs)"
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Commands triggered at specific lifecycle points",
+      "properties": {
+        "agentSpawn": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "userPromptSubmit": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "preToolUse": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "postToolUse": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "stop": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "useLegacyMcpJson": {
+      "type": "boolean",
+      "description": "Include legacy MCP configurations"
+    },
+    "model": {
+      "type": "string",
+      "description": "Specific AI model for the agent"
+    }
+  },
+  "examples": [
+    {
+      "name": "backend-specialist",
+      "description": "Expert in building Express.js APIs with MongoDB",
+      "prompt": "You are a backend developer specializing in Node.js and Express. Focus on API design, database optimization, and security best practices.",
+      "tools": ["fs_read", "fs_write", "execute_bash"],
+      "toolsSettings": {
+        "fs_write": {
+          "allowedPaths": ["src/api/**", "tests/api/**", "server.js", "package.json"]
+        }
+      },
+      "resources": [
+        "file://.kiro/steering/backend-standards.md"
+      ]
+    },
+    {
+      "name": "aws-rust-agent",
+      "description": "Specialized agent for AWS and Rust development",
+      "prompt": "file://./prompts/aws-rust-expert.md",
+      "mcpServers": {
+        "fetch": { "command": "fetch-server", "args": [] },
+        "git": { "command": "git-mcp", "args": [] }
+      },
+      "tools": ["fetch", "git_status", "fs_read", "fs_write"],
+      "allowedTools": ["fetch", "git_status"]
+    }
+  ]
+}

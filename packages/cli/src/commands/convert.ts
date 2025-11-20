@@ -16,6 +16,7 @@ import {
   fromContinue,
   fromCopilot,
   fromKiro,
+  fromKiroAgent,
   fromWindsurf,
   fromAgentsMd,
   fromGemini,
@@ -24,6 +25,7 @@ import {
   toContinue,
   toCopilot,
   toKiro,
+  toKiroAgent,
   toWindsurf,
   toAgentsMd,
   toGemini,
@@ -32,6 +34,7 @@ import {
   isContinueFormat,
   isCopilotFormat,
   isKiroFormat,
+  isKiroAgentFormat,
   isWindsurfFormat,
   isAgentsMdFormat,
   type CanonicalPackage,
@@ -71,9 +74,15 @@ function getDefaultPath(format: string, filename: string, subtype?: string): str
     case 'windsurf':
       return join(process.cwd(), '.windsurf', 'rules', `${baseName}.md`);
     case 'kiro':
-      // Kiro has two types: steering files (.kiro/steering/*.md) and hooks (.kiro/hooks/*.kiro.hook)
+      // Kiro has three types:
+      // - Steering files: .kiro/steering/*.md
+      // - Hooks: .kiro/hooks/*.kiro.hook (JSON files)
+      // - Agents: .kiro/agents/*.json (custom AI agent configurations)
       if (subtype === 'hook') {
         return join(process.cwd(), '.kiro', 'hooks', `${baseName}.kiro.hook`);
+      }
+      if (subtype === 'agent') {
+        return join(process.cwd(), '.kiro', 'agents', `${baseName}.json`);
       }
       // Default to steering files for conversion
       return join(process.cwd(), '.kiro', 'steering', `${baseName}.md`);
@@ -226,7 +235,12 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         canonicalPkg = fromWindsurf(content, metadata);
         break;
       case 'kiro':
-        canonicalPkg = fromKiro(content, metadata);
+        // Check if content is agent format (JSON) vs steering file (markdown)
+        if (isKiroAgentFormat(content)) {
+          canonicalPkg = fromKiroAgent(content, metadata);
+        } else {
+          canonicalPkg = fromKiro(content, metadata);
+        }
         break;
       case 'copilot':
         canonicalPkg = fromCopilot(content, metadata);
@@ -268,9 +282,14 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         result = toCopilot(canonicalPkg);
         break;
       case 'kiro':
-        result = toKiro(canonicalPkg, {
-          kiroConfig: { inclusion: 'always' } // Default to always include
-        });
+        // Check if agent subtype to use toKiroAgent instead
+        if (options.subtype === 'agent') {
+          result = toKiroAgent(canonicalPkg);
+        } else {
+          result = toKiro(canonicalPkg, {
+            kiroConfig: { inclusion: 'always' } // Default to always include
+          });
+        }
         break;
       case 'agents.md':
         result = toAgentsMd(canonicalPkg);
