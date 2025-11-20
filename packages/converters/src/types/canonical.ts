@@ -5,6 +5,34 @@
  * (Cursor, Claude, Continue, Windsurf, etc.)
  */
 
+/**
+ * Package metadata provided to converters
+ * Shared interface for all from* converter functions
+ */
+export interface PackageMetadata {
+  // Required fields
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+
+  // Optional core fields
+  description?: string;
+  organization?: string;
+  tags?: string[];
+
+  // Optional prpm.json fields
+  license?: string;
+  repository?: string;
+  homepage?: string;
+  documentation?: string;
+  keywords?: string[];
+  category?: string;
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  engines?: Record<string, string>;
+}
+
 export interface CanonicalPackage {
   // Package metadata
   id: string;
