@@ -1,0 +1,24 @@
+We just published the complete guide to PRPM—every feature explained.
+
+Most people know PRPM as "npm for AI prompts." Install packages that work across Cursor, Claude, Continue, Windsurf, Copilot, and more. One command, any editor.
+
+But there's way more under the hood:
+
+**The Playground** lets you test packages before installing. Pick a package from 7,500+ options, choose your AI model (Claude, GPT-4, etc.), enter test input, and see results—all without installing anything. Free credits included.
+
+**Quality scoring** uses AI to evaluate actual prompt effectiveness, not just popularity. Every package gets a 0-5 score based on content quality (40%), author credibility (30%), engagement (20%), and maintenance (10%). The algorithm analyzes prompt depth, examples, documentation, and runs Claude evaluations on actual prompt content.
+
+**Hybrid search** combines keyword matching with semantic understanding. Search "help me write better React components" and get packages ranked by how well they solve that problem, not just keyword matches. AI-powered with explanations of why each package matched.
+
+**For authors:** Publish once in any format, reach users across all 7+ editors automatically. Get detailed analytics on downloads, playground usage, model preferences, and user feedback. Verified authors access custom prompt testing and advanced features.
+
+**Organizations** can publish private packages for internal teams, manage members with different roles, and keep company standards consistent across all AI editors.
+
+The format conversion engine handles Cursor rules, Claude skills/agents, Continue prompts, Windsurf rules, Copilot instructions, Kiro steering, and more—all bidirectionally with 100+ test cases ensuring quality.
+
+If you're using AI coding tools (and you probably are), this guide is worth 10 minutes. It covers features you didn't know existed and shows how to get more value from the tools you already use.
+
+Read the full guide:
+https://prpm.dev/blog/prpm-complete-feature-guide
+
+#AI #DeveloperTools #Productivity #SoftwareEngineering #OpenSource

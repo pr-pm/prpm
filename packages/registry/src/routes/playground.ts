@@ -1,0 +1,1105 @@
+/**
+ * Playground API Routes
+ *
+ * Handles playground execution, session management, and sharing.
+ */
+
+import { FastifyInstance, FastifyRequest, FastifyReply, RouteGenericInterface } from 'fastify';
+
+interface ToggleFeaturedInterface extends RouteGenericInterface {
+  Params: { sessionId: string };
+  Body: {
+    is_featured?: boolean;
+    feature_description?: string;
+    feature_display_order?: number;
+  };
+}
+import { z } from 'zod';
+import { PlaygroundService } from '../services/playground.js';
+import { PlaygroundCreditsService } from '../services/playground-credits.js';
+import { createRateLimiter } from '../middleware/rate-limit.js';
+import { createSessionSecurityMiddleware } from '../middleware/session-security.js';
+import { createAnonymousRestrictionMiddleware, recordAnonymousUsageHook } from '../middleware/anonymous-restriction.js';
+import { optionalAuth } from '../middleware/auth.js';
+import { sanitizeUserInput, SECURITY_LIMITS } from '../middleware/security.js';
+import { getModelId } from '../config/models.js';
+import { query } from '../db/index.js';
+
+// Request validation schemas
+const PlaygroundRunSchema = z.object({
+  package_id: z.string().uuid('Invalid package ID'),
+  package_version: z.string().optional(),
+  input: z.string()
+    .min(1, 'User input is required')
+    .max(SECURITY_LIMITS.MAX_USER_INPUT_LENGTH, `Input too long (max ${SECURITY_LIMITS.MAX_USER_INPUT_LENGTH} characters)`),
+  session_id: z.string().uuid().optional(),
+  model: z.enum(['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo']).optional().default('sonnet'),
+  use_no_prompt: z.boolean().optional().default(false),
+});
+
+const EstimateCreditSchema = z.object({
+  package_id: z.string().uuid('Invalid package ID'),
+  input: z.string().min(1).max(10000),
+  model: z.enum(['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo']).optional().default('sonnet'),
+});
+
+const ShareSessionSchema = z.object({
+  session_id: z.string().uuid('Invalid session ID'),
+});
+
+const FeedbackSchema = z.object({
+  session_id: z.string().uuid('Invalid session ID'),
+  exchange_index: z.number().int().min(0, 'Exchange index must be 0 or greater'),
+  is_effective: z.boolean(),
+  comment: z.string().max(1000, 'Comment too long (max 1000 characters)').optional(),
+});
+
+export async function playgroundRoutes(server: FastifyInstance) {
+  const playgroundService = new PlaygroundService(server);
+  const creditsService = new PlaygroundCreditsService(server);
+  const rateLimiter = createRateLimiter();
+  const sessionSecurity = createSessionSecurityMiddleware();
+  const anonymousRestriction = createAnonymousRestrictionMiddleware();
+
+  // =====================================================
+  // POST /api/v1/playground/run
+  // Execute a playground run
+  // =====================================================
+  server.post(
+    '/run',
+    {
+      preHandler: [optionalAuth, anonymousRestriction, sessionSecurity, rateLimiter],
+      onResponse: recordAnonymousUsageHook,
+      schema: {
+        description: 'Execute a playground run with a package prompt (or compare against no prompt)',
+        tags: ['playground'],
+        security: [{ bearerAuth: [] }],
+        body: {
+          type: 'object',
+          required: ['package_id', 'input'],
+          properties: {
+            package_id: { type: 'string', format: 'uuid' },
+            package_version: { type: 'string' },
+            input: { type: 'string', minLength: 1, maxLength: 10000 },
+            session_id: { type: 'string', format: 'uuid' },
+            model: { type: 'string', enum: ['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'], default: 'sonnet' },
+            use_no_prompt: { type: 'boolean', default: false, description: 'Compare against raw model with no system prompt' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              session_id: { type: 'string' },
+              response: { type: 'string' },
+              credits_spent: { type: 'number' },
+              credits_remaining: { type: 'number' },
+              tokens_used: { type: 'number' },
+              duration_ms: { type: 'number' },
+              model: { type: 'string' },
+              conversation: { type: 'array' },
+            },
+          },
+          400: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+          402: {
+            type: 'object',
+            properties: {
+              error: { type: 'string', enum: ['insufficient_credits'] },
+              message: { type: 'string' },
+              required_credits: { type: 'number' },
+              available_credits: { type: 'number' },
+              purchase_url: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const body = PlaygroundRunSchema.parse(request.body);
+        const userId = request.user?.user_id;
+
+        // For anonymous users, use a special anonymous ID
+        const effectiveUserId = userId || 'anonymous';
+
+        // Sanitize user input for security
+        const input = sanitizeUserInput(body.input);
+
+        server.log.info(
+          {
+            userId: effectiveUserId,
+            isAnonymous: !userId,
+            package_id: body.package_id,
+            session_id: body.session_id,
+          },
+          'Starting playground run'
+        );
+
+        const result = await playgroundService.executePrompt(effectiveUserId, {
+          package_id: body.package_id,
+          package_version: body.package_version,
+          input,
+          session_id: body.session_id,
+          model: body.model,
+          use_no_prompt: body.use_no_prompt,
+        });
+
+        return reply.code(200).send(result);
+      } catch (error: any) {
+        server.log.error({ error }, 'Playground run failed');
+
+        // Handle insufficient credits
+        if (error.message?.includes('Insufficient credits')) {
+          const match = error.message.match(/Need (\d+) but have (\d+)/);
+          if (match) {
+            return reply.code(402).send({
+              error: 'insufficient_credits',
+              message: error.message,
+              required_credits: parseInt(match[1]),
+              available_credits: parseInt(match[2]),
+              purchase_url: '/playground/credits/buy',
+            });
+          }
+        }
+
+        return reply.code(400).send({
+          error: 'playground_run_failed',
+          message: error.message || 'Failed to execute playground run',
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/anonymous-run
+  // Execute ONE free playground run for anonymous users
+  // =====================================================
+  server.post(
+    '/anonymous-run',
+    {
+      preHandler: [rateLimiter],
+      schema: {
+        description: 'Execute one free playground run for anonymous users (gpt-4o-mini only)',
+        tags: ['playground'],
+        body: {
+          type: 'object',
+          required: ['package_id', 'input'],
+          properties: {
+            package_id: { type: 'string', format: 'uuid' },
+            input: { type: 'string', minLength: 1, maxLength: 10000 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              response: { type: 'string' },
+              tokens_used: { type: 'number' },
+              duration_ms: { type: 'number' },
+              model: { type: 'string' },
+              login_required: { type: 'boolean' },
+              message: { type: 'string' },
+            },
+          },
+          429: {
+            type: 'object',
+            properties: {
+              error: { type: 'string', enum: ['limit_exceeded'] },
+              message: { type: 'string' },
+              login_url: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { package_id, input } = request.body as { package_id: string; input: string };
+
+        // Get IP address for rate limiting
+        const ipAddress = request.ip;
+
+        // Check if this IP has already used their free run (store in Redis with 24h expiry)
+        const anonymousKey = `anonymous_playground:${ipAddress}`;
+        const hasUsedFreeRun = await server.redis.get(anonymousKey);
+
+        if (hasUsedFreeRun) {
+          return reply.code(429).send({
+            error: 'limit_exceeded',
+            message: 'You have already used your free playground run. Please sign up to get 5 free credits and continue testing packages.',
+            login_url: '/login',
+          });
+        }
+
+        // Sanitize user input
+        const sanitizedInput = sanitizeUserInput(input);
+
+        server.log.info(
+          { ip: ipAddress, package_id },
+          'Anonymous playground run'
+        );
+
+        // Load package data
+        const packageData = await playgroundService.loadPackagePrompt(package_id);
+
+        // Force gpt-4o-mini for anonymous users (1 credit)
+        const model = 'gpt-4o-mini';
+
+        // Execute with OpenAI (gpt-4o-mini)
+        if (!process.env.OPENAI_API_KEY) {
+          throw new Error('OpenAI API is not configured');
+        }
+
+        const openai = new (await import('openai')).default({
+          apiKey: process.env.OPENAI_API_KEY,
+        });
+
+        const startTime = Date.now();
+
+        const openaiMessages: any[] = [
+          {
+            role: 'system',
+            content: packageData.prompt,
+          },
+          {
+            role: 'user',
+            content: sanitizedInput,
+          },
+        ];
+
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: openaiMessages,
+          max_tokens: 4096,
+          temperature: 0.7,
+        });
+
+        const responseText = response.choices[0]?.message?.content || 'No response generated';
+        const tokensUsed = response.usage?.total_tokens || 0;
+        const duration = Date.now() - startTime;
+
+        // Mark this IP as having used their free run (expires in 24 hours)
+        await server.redis.setex(anonymousKey, 86400, '1');
+
+        return reply.code(200).send({
+          response: responseText,
+          tokens_used: tokensUsed,
+          duration_ms: duration,
+          model: 'gpt-4o-mini',
+          login_required: true,
+          message: 'Sign up to get 5 free credits and continue testing packages!',
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Anonymous playground run failed');
+        return reply.code(400).send({
+          error: 'playground_run_failed',
+          message: error.message || 'Failed to execute playground run',
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/estimate
+  // Estimate credit cost before running
+  // =====================================================
+  server.post(
+    '/estimate',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'Estimate credit cost for a playground run',
+        tags: ['playground'],
+        security: [{ bearerAuth: [] }],
+        body: {
+          type: 'object',
+          required: ['package_id', 'input'],
+          properties: {
+            package_id: { type: 'string', format: 'uuid' },
+            input: { type: 'string', minLength: 1, maxLength: 10000 },
+            model: { type: 'string', enum: ['sonnet', 'opus', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'], default: 'sonnet' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              estimatedCredits: { type: 'number' },
+              estimatedTokens: { type: 'number' },
+              model: { type: 'string' },
+              canAfford: { type: 'boolean' },
+              currentBalance: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const body = EstimateCreditSchema.parse(request.body);
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        // Load package prompt to estimate
+        const packageData = await playgroundService.loadPackagePrompt(body.package_id);
+
+        // Estimate credits
+        const estimatedCredits = playgroundService.estimateCredits(
+          packageData.prompt.length,
+          body.input.length,
+          body.model
+        );
+
+        const estimatedTokens = Math.floor(
+          ((packageData.prompt.length + body.input.length) / 4) * 1.3
+        );
+
+        // Check if user can afford
+        const canAfford = await creditsService.canAfford(userId, estimatedCredits);
+        const balance = await creditsService.getBalance(userId);
+
+        return reply.code(200).send({
+          estimated_credits: estimatedCredits,
+          estimated_tokens: estimatedTokens,
+          model: getModelId(body.model),
+          can_afford: canAfford,
+          current_balance: balance.balance,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Credit estimation failed');
+        return reply.code(400).send({
+          error: 'estimation_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // GET /api/v1/playground/sessions
+  // List user's playground sessions
+  // =====================================================
+  server.get(
+    '/sessions',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'List user playground sessions',
+        tags: ['playground'],
+        security: [{ bearerAuth: [] }],
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', default: 20, maximum: 100 },
+            offset: { type: 'number', default: 0 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              sessions: { type: 'array' },
+              total: { type: 'number' },
+              pagination: {
+                type: 'object',
+                properties: {
+                  limit: { type: 'number' },
+                  offset: { type: 'number' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+        const { limit = 20, offset = 0 } = request.query as any;
+
+        const result = await playgroundService.listSessions(userId, {
+          limit: Math.min(limit, 100),
+          offset,
+        });
+
+        return reply.code(200).send({
+          sessions: result.sessions,
+          total: result.total,
+          pagination: {
+            limit,
+            offset,
+          },
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to list sessions');
+        return reply.code(500).send({
+          error: 'list_sessions_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // GET /api/v1/playground/sessions/:id
+  // Get specific session
+  // =====================================================
+  server.get(
+    '/sessions/:id',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'Get a specific playground session',
+        tags: ['playground'],
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+          },
+          required: ['id'],
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { id } = request.params as { id: string };
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        const session = await playgroundService.getSession(id, userId);
+
+        if (!session) {
+          return reply.code(404).send({
+            error: 'session_not_found',
+            message: 'Session not found or unauthorized',
+          });
+        }
+
+        return reply.code(200).send(session);
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to get session');
+        return reply.code(500).send({
+          error: 'get_session_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // DELETE /api/v1/playground/sessions/:id
+  // Delete a session
+  // =====================================================
+  server.delete(
+    '/sessions/:id',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'Delete a playground session',
+        tags: ['playground'],
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+          },
+          required: ['id'],
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { id } = request.params as { id: string };
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        await playgroundService.deleteSession(id, userId);
+
+        return reply.code(200).send({
+          message: 'Session deleted successfully',
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to delete session');
+        return reply.code(400).send({
+          error: 'delete_session_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/sessions/:id/share
+  // Share a session publicly
+  // =====================================================
+  server.post(
+    '/sessions/:id/share',
+    {
+      preHandler: server.authenticate,
+      schema: {
+        description: 'Share a playground session publicly',
+        tags: ['playground'],
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+          },
+          required: ['id'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              share_token: { type: 'string' },
+              share_url: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { id } = request.params as { id: string };
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        const shareToken = await playgroundService.shareSession(id, userId);
+
+        // Build share URL using config (using query string format for static export compatibility)
+        const shareUrl = `${server.config.frontend.url}/playground/shared?token=${shareToken}`;
+
+        return reply.code(200).send({
+          share_token: shareToken,
+          share_url: shareUrl,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to share session');
+        return reply.code(400).send({
+          error: 'share_session_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // GET /api/v1/playground/shared/:token
+  // Get shared session (public access)
+  // =====================================================
+  server.get(
+    '/shared/:token',
+    {
+      schema: {
+        description: 'Get a publicly shared playground session',
+        tags: ['playground'],
+        params: {
+          type: 'object',
+          properties: {
+            token: { type: 'string' },
+          },
+          required: ['token'],
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { token } = request.params as { token: string };
+
+        const session = await playgroundService.getSessionByShareToken(token);
+
+        if (!session) {
+          return reply.code(404).send({
+            error: 'session_not_found',
+            message: 'Shared session not found',
+          });
+        }
+
+        // Record view (get viewer user ID if authenticated, IP hash for anonymous)
+        const viewerUserId = request.user?.user_id || null;
+        const ipHash = await playgroundService.recordView(
+          session.id,
+          viewerUserId,
+          request.ip
+        );
+
+        return reply.code(200).send(session);
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to get shared session');
+        return reply.code(500).send({
+          error: 'get_shared_session_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/shared/:token/feedback
+  // Record helpful/not-helpful feedback on shared result
+  // =====================================================
+  server.post(
+    '/shared/:token/feedback',
+    {
+      schema: {
+        description: 'Record helpful/not-helpful feedback on shared result',
+        tags: ['playground'],
+        params: {
+          type: 'object',
+          properties: {
+            token: { type: 'string' },
+          },
+          required: ['token'],
+        },
+        body: {
+          type: 'object',
+          required: ['is_helpful'],
+          properties: {
+            is_helpful: { type: 'boolean' },
+            feedback_text: { type: 'string', maxLength: 1000 },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { token } = request.params as { token: string };
+        const { is_helpful, feedback_text } = request.body as {
+          is_helpful: boolean;
+          feedback_text?: string;
+        };
+
+        // Get session to verify it exists
+        const session = await playgroundService.getSessionByShareToken(token);
+        if (!session) {
+          return reply.code(404).send({
+            error: 'session_not_found',
+            message: 'Shared session not found',
+          });
+        }
+
+        // Record feedback (requires view_id from a previous view)
+        await playgroundService.recordFeedback(
+          session.id,
+          request.user?.user_id || null,
+          request.ip,
+          is_helpful,
+          feedback_text
+        );
+
+        return reply.code(200).send({
+          message: 'Feedback recorded successfully',
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to record feedback');
+        return reply.code(400).send({
+          error: 'record_feedback_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // GET /api/v1/playground/packages/:packageId/top-results
+  // Get top shared results for a package
+  // =====================================================
+  server.get(
+    '/packages/:packageId/top-results',
+    {
+      schema: {
+        description: 'Get top shared playground results for a package',
+        tags: ['playground'],
+        params: {
+          type: 'object',
+          properties: {
+            packageId: { type: 'string', format: 'uuid' },
+          },
+          required: ['packageId'],
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', default: 10, maximum: 50 },
+            sort: { type: 'string', enum: ['popular', 'recent', 'helpful'], default: 'popular' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              results: { type: 'array' },
+              total: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { packageId } = request.params as { packageId: string };
+        const { limit = 10, sort = 'popular' } = request.query as any;
+
+        const results = await playgroundService.getTopResultsForPackage(
+          packageId,
+          Math.min(limit, 50),
+          sort
+        );
+
+        return reply.code(200).send({
+          results: results.results,
+          total: results.total,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to get top results');
+        return reply.code(500).send({
+          error: 'get_top_results_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // PATCH /api/v1/playground/sessions/:sessionId/feature
+  // Toggle featured status of a playground session
+  // =====================================================
+  server.patch(
+    '/sessions/:sessionId/feature',
+    {
+      preHandler: [server.authenticate],
+      schema: {
+        description: 'Toggle featured status of a playground session (author only)',
+        tags: ['playground'],
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: 'object',
+          required: ['sessionId'],
+          properties: {
+            sessionId: { type: 'string', format: 'uuid' },
+          },
+        },
+        body: {
+          type: 'object',
+          properties: {
+            is_featured: { type: 'boolean' },
+            feature_description: { type: 'string', maxLength: 500 },
+            feature_display_order: { type: 'number', minimum: 0 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              session_id: { type: 'string' },
+              is_featured: { type: 'boolean' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<ToggleFeaturedInterface>, reply: FastifyReply) => {
+      try {
+        const { sessionId } = request.params;
+        const { is_featured, feature_description, feature_display_order } = request.body;
+        const userId = request.user?.user_id;
+
+        if (!userId) {
+          return reply.code(401).send({
+            error: 'unauthorized',
+            message: 'User not authenticated',
+          });
+        }
+
+        // Get the session to verify ownership
+        const sessionResult = await server.pg.query(
+          `SELECT ps.*, p.author_id
+           FROM playground_sessions ps
+           JOIN packages p ON ps.package_id = p.id
+           WHERE ps.id = $1`,
+          [sessionId]
+        );
+
+        if (sessionResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: 'session_not_found',
+            message: 'Playground session not found',
+          });
+        }
+
+        const session = sessionResult.rows[0];
+
+        // Verify the user is the package author
+        if (session.author_id !== userId) {
+          return reply.code(403).send({
+            error: 'forbidden',
+            message: 'Only the package author can feature playground results',
+          });
+        }
+
+        // Update featured status
+        const updateFields = [];
+        const values = [];
+        let paramCount = 1;
+
+        if (is_featured !== undefined) {
+          updateFields.push(`is_featured_by_author = $${paramCount++}`);
+          values.push(is_featured);
+
+          if (is_featured) {
+            updateFields.push(`featured_at = NOW()`);
+            updateFields.push(`featured_by_user_id = $${paramCount++}`);
+            values.push(userId);
+          } else {
+            updateFields.push(`featured_at = NULL`);
+            updateFields.push(`featured_by_user_id = NULL`);
+            updateFields.push(`feature_description = NULL`);
+          }
+        }
+
+        if (feature_description !== undefined && is_featured !== false) {
+          updateFields.push(`feature_description = $${paramCount++}`);
+          values.push(feature_description);
+        }
+
+        if (feature_display_order !== undefined) {
+          updateFields.push(`feature_display_order = $${paramCount++}`);
+          values.push(feature_display_order);
+        }
+
+        values.push(sessionId);
+
+        await server.pg.query(
+          `UPDATE playground_sessions
+           SET ${updateFields.join(', ')}
+           WHERE id = $${paramCount}`,
+          values
+        );
+
+        return reply.code(200).send({
+          success: true,
+          session_id: sessionId,
+          is_featured: is_featured ?? session.is_featured_by_author,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to update featured status');
+        return reply.code(500).send({
+          error: 'update_featured_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // GET /api/v1/playground/packages/:packageId/featured
+  // Get featured results for a package
+  // =====================================================
+  server.get(
+    '/packages/:packageId/featured',
+    {
+      schema: {
+        description: 'Get featured playground results for a package',
+        tags: ['playground'],
+        params: {
+          type: 'object',
+          required: ['packageId'],
+          properties: {
+            packageId: { type: 'string', format: 'uuid' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              results: { type: 'array' },
+              total: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{
+      Params: { packageId: string };
+    }>, reply: FastifyReply) => {
+      try {
+        const { packageId } = request.params;
+
+        const result = await server.pg.query(
+          `SELECT
+            ps.id as session_id,
+            ps.share_token,
+            p.name as package_name,
+            ps.package_version,
+            ps.model,
+            ps.feature_description,
+            ps.feature_display_order,
+            ps.conversation->0->>'content' as user_input,
+            ps.conversation->1->>'content' as assistant_response,
+            ps.credits_spent,
+            ps.total_tokens,
+            ps.featured_at,
+            ps.created_at
+           FROM playground_sessions ps
+           JOIN packages p ON ps.package_id = p.id
+           WHERE ps.package_id = $1
+             AND ps.is_featured_by_author = TRUE
+             AND ps.is_public = TRUE
+           ORDER BY ps.feature_display_order ASC, ps.featured_at DESC
+           LIMIT 10`,
+          [packageId]
+        );
+
+        return reply.code(200).send({
+          results: result.rows,
+          total: result.rows.length,
+        });
+      } catch (error: any) {
+        server.log.error({ error }, 'Failed to get featured results');
+        return reply.code(500).send({
+          error: 'get_featured_results_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+
+  // =====================================================
+  // POST /api/v1/playground/feedback
+  // Submit feedback for a playground session
+  // =====================================================
+  server.post(
+    '/feedback',
+    {
+      preHandler: [rateLimiter],
+      schema: {
+        description: 'Submit feedback on playground session effectiveness',
+        tags: ['playground'],
+        body: {
+          type: 'object',
+          required: ['session_id', 'exchange_index', 'is_effective'],
+          properties: {
+            session_id: { type: 'string', format: 'uuid' },
+            exchange_index: { type: 'integer', minimum: 0 },
+            is_effective: { type: 'boolean' },
+            comment: { type: 'string', maxLength: 1000 },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              feedback_id: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const body = FeedbackSchema.parse(request.body);
+        const userId = request.user?.user_id || null;
+
+        // Hash IP for anonymous tracking
+        const crypto = await import('crypto');
+        const ipAddress = request.ip || request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || 'unknown';
+        const ipHash = crypto.createHash('sha256').update(String(ipAddress)).digest('hex');
+
+        // Verify session exists
+        const sessionCheck = await query(
+          server,
+          'SELECT id FROM playground_sessions WHERE id = $1',
+          [body.session_id]
+        );
+
+        if (sessionCheck.rowCount === 0) {
+          return reply.code(404).send({
+            error: 'session_not_found',
+            message: 'Playground session not found',
+          });
+        }
+
+        // Check if feedback already exists for this exchange
+        const existingFeedback = await query(
+          server,
+          'SELECT id FROM playground_session_feedback WHERE session_id = $1 AND exchange_index = $2',
+          [body.session_id, body.exchange_index]
+        );
+
+        if (existingFeedback.rowCount > 0) {
+          return reply.code(409).send({
+            error: 'feedback_exists',
+            message: 'Feedback already submitted for this exchange',
+          });
+        }
+
+        // Insert feedback
+        const result = await query<{ id: string }>(
+          server,
+          `INSERT INTO playground_session_feedback (session_id, exchange_index, user_id, ip_hash, is_effective, comment)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id`,
+          [body.session_id, body.exchange_index, userId, ipHash, body.is_effective, body.comment || null]
+        );
+
+        return reply.code(200).send({
+          success: true,
+          feedback_id: result.rows[0].id,
+        });
+      } catch (error: any) {
+        if (error.name === 'ZodError') {
+          return reply.code(400).send({
+            error: 'validation_error',
+            message: error.errors[0]?.message || 'Invalid request data',
+          });
+        }
+
+        server.log.error({ error }, 'Failed to submit feedback');
+        return reply.code(500).send({
+          error: 'feedback_submission_failed',
+          message: error.message,
+        });
+      }
+    }
+  );
+}

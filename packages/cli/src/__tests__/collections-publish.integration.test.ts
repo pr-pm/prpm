@@ -8,6 +8,7 @@ import { getConfig } from '../core/user-config';
 import { readFile, mkdir, writeFile, rm, copyFile } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { CLIError } from '../core/errors';
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -37,10 +38,6 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
     originalCwd = process.cwd();
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
-    // Mock process.exit to prevent it from terminating the test process
-    jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined): never => {
-      throw new Error(`process.exit called with code ${code}`);
-    });
   });
 
   beforeEach(async () => {
@@ -218,17 +215,11 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
       const testPath = join(testDir, 'collection.json');
       await copyFile(fixturePath, testPath);
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Missing required fields')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should reject invalid-id-format.json fixture', async () => {
@@ -236,17 +227,11 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
       const testPath = join(testDir, 'collection.json');
       await copyFile(fixturePath, testPath);
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection id must be lowercase alphanumeric')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should reject invalid-short-name.json fixture', async () => {
@@ -254,17 +239,11 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
       const testPath = join(testDir, 'collection.json');
       await copyFile(fixturePath, testPath);
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection name must be at least 3 characters')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should reject invalid-short-description.json fixture', async () => {
@@ -272,17 +251,11 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
       const testPath = join(testDir, 'collection.json');
       await copyFile(fixturePath, testPath);
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection description must be at least 10 characters')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should reject invalid-empty-packages.json fixture', async () => {
@@ -290,17 +263,11 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
       const testPath = join(testDir, 'collection.json');
       await copyFile(fixturePath, testPath);
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection must include at least one package')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should reject invalid-package-missing-id.json fixture', async () => {
@@ -308,17 +275,11 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
       const testPath = join(testDir, 'collection.json');
       await copyFile(fixturePath, testPath);
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Package at index 0 is missing packageId')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should reject invalid-json.json fixture', async () => {
@@ -326,21 +287,15 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
       const testPath = join(testDir, 'collection.json');
       await copyFile(fixturePath, testPath);
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Failed to publish collection')
       );
-
-      mockExit.mockRestore();
     });
   });
 
-  describe.skip('Fixture Content Validation', () => {
+  describe('Fixture Content Validation', () => {
     it('should verify all valid fixtures have required fields', async () => {
       const validFixtures = [
         'valid-collection.json',
@@ -376,13 +331,7 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
         const testPath = join(testDir, fixture);
         await copyFile(fixturePath, testPath);
 
-        const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-          throw new Error(`Process exited with code ${code}`);
-        });
-
-        await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
-
-        mockExit.mockRestore();
+        await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
       }
     });
 
@@ -601,17 +550,11 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
         new Error('Collection already exists with this name')
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Collection already exists')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle network errors', async () => {
@@ -623,17 +566,11 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
         new Error('Network request failed')
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Network request failed')
       );
-
-      mockExit.mockRestore();
     });
 
     it('should handle package not found errors', async () => {
@@ -645,17 +582,11 @@ describe('Collection Publishing - Integration Tests with Fixtures', () => {
         new Error('Package not found: react-cursor-rules')
       );
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-        throw new Error(`Process exited with code ${code}`);
-      });
-
-      await expect(handleCollectionPublish(testPath)).rejects.toThrow('Process exited');
+      await expect(handleCollectionPublish(testPath)).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Package not found')
       );
-
-      mockExit.mockRestore();
     });
   });
 });

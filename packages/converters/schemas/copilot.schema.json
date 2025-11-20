@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/copilot.schema.json",
+  "title": "GitHub Copilot Instructions Format",
+  "description": "JSON Schema for GitHub Copilot instructions (.github/copilot-instructions.md or .github/instructions/*.instructions.md)",
+  "type": "object",
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "description": "Optional YAML frontmatter for path-specific instructions (required for path-specific files)",
+      "properties": {
+        "applyTo": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Single glob pattern or comma-separated patterns (e.g., 'app/models/**/*.rb' or '**/*.ts,**/*.tsx'). Use '**', '*', or '**/*' for all files."
+            },
+            {
+              "type": "array",
+              "description": "Multiple glob patterns as array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "excludeAgent": {
+          "type": "string",
+          "enum": ["code-review", "coding-agent"],
+          "description": "Prevent file from being used by specific agent. 'code-review': only used by coding agent. 'coding-agent': only used by code review."
+        },
+        "subtype": {
+          "type": "string",
+          "enum": ["rule", "tool", "chatmode"],
+          "description": "Type of Copilot instruction (PRPM extension)"
+        }
+      }
+    },
+    "content": {
+      "type": "string",
+      "description": "Natural language markdown instructions. Whitespace between instructions is ignored. Simple, clear, and actionable."
+    }
+  },
+  "required": ["content"],
+  "examples": [
+    {
+      "content": "# API Development Guidelines\n\nFollow REST best practices.\n\n## Principles\n\n- Use semantic HTTP methods\n- Return appropriate status codes"
+    },
+    {
+      "frontmatter": {
+        "applyTo": "app/models/**/*.rb"
+      },
+      "content": "# Model Guidelines\n\nThese rules apply only to Ruby model files."
+    },
+    {
+      "frontmatter": {
+        "applyTo": "**/*.ts,**/*.tsx"
+      },
+      "content": "# TypeScript Guidelines\n\nThese rules apply to all TypeScript files using comma-separated patterns."
+    },
+    {
+      "frontmatter": {
+        "applyTo": ["src/api/**/*.ts", "src/services/**/*.ts"]
+      },
+      "content": "# API Guidelines\n\nThese rules apply to API files using array of patterns."
+    },
+    {
+      "frontmatter": {
+        "applyTo": "**",
+        "excludeAgent": "code-review"
+      },
+      "content": "# Coding Agent Only\n\nThese instructions are only used by the Copilot coding agent, not code review."
+    }
+  ]
+}

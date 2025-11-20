@@ -50,6 +50,7 @@ async function authenticateWithNango(server: FastifyInstance, connectionId: stri
     username: user.username,
     email: user.email,
     is_admin: user.is_admin,
+    verified_author: user.verified_author || false,
     scopes: ['read:packages', 'write:packages'],
   } as JWTPayload);
 
@@ -402,6 +403,7 @@ export async function authRoutes(server: FastifyInstance) {
         username: user.username,
         email: user.email,
         is_admin: user.is_admin,
+        verified_author: user.verified_author || false,
         scopes: ['read:packages', 'write:packages'],
       } as JWTPayload);
 
@@ -560,6 +562,7 @@ export async function authRoutes(server: FastifyInstance) {
         username: user.username,
         email: user.email,
         is_admin: user.is_admin,
+        verified_author: user.verified_author || false,
         scopes: ['read:packages', 'write:packages'],
       } as JWTPayload);
 
@@ -660,6 +663,7 @@ export async function authRoutes(server: FastifyInstance) {
         username: user.username,
         email: user.email,
         is_admin: user.is_admin,
+        verified_author: user.verified_author || false,
         scopes: ['read:packages', 'write:packages'],
       } as JWTPayload);
 
@@ -703,6 +707,9 @@ export async function authRoutes(server: FastifyInstance) {
             is_admin: { type: 'boolean' },
             package_count: { type: 'number' },
             total_downloads: { type: 'number' },
+            prpm_plus_status: { type: 'string', nullable: true },
+            prpm_plus_current_period_end: { type: 'string', nullable: true },
+            prpm_plus_cancel_at_period_end: { type: 'boolean', nullable: true },
             organizations: {
               type: 'array',
               items: {
@@ -724,7 +731,9 @@ export async function authRoutes(server: FastifyInstance) {
 
     const user = await queryOne<User>(
       server,
-      'SELECT id, username, email, avatar_url, website, verified_author, is_admin FROM users WHERE id = $1',
+      `SELECT id, username, email, avatar_url, website, verified_author, is_admin,
+              prpm_plus_status, prpm_plus_current_period_end, prpm_plus_cancel_at_period_end
+       FROM users WHERE id = $1`,
       [userId]
     );
 

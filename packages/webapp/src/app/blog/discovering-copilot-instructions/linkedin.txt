@@ -1,0 +1,22 @@
+GitHub Copilot's custom instructions let you shape AI behavior for your codebase. But finding quality instructions is a scattered mess.
+
+You search Gists for "copilot instructions react." Browse GitHub repos hoping they have .github/copilot-instructions.md files you can copy. Check Reddit threads. Read blog posts with examples buried in prose. Copy-paste text, fix formatting issues, hope it works.
+
+No unified search. No quality vetting. No versioning. No way to test before using. It's like package management before npm existed.
+
+PRPM changes this. We built a centralized marketplace for Copilot instructions with full package management: CLI installation, semantic versioning, testing playground, quality metrics, and format conversion.
+
+Real example: Setting up Copilot for a React + TypeScript project used to take 20-30 minutes of searching and manual copying. With PRPM: prpm install @prpm/copilot-react-ts. Takes 30 seconds, includes tested instructions for React hooks, TypeScript strict mode, and testing best practices.
+
+The difference:
+• Before: Search Gists/GitHub/Reddit, copy-paste, manually merge, hope for the best
+• After: prpm search --format copilot, test in playground, install with one command, get automatic updates
+
+PRPM also converts formats. Found great Copilot instructions but your team uses Cursor? Add --format cursor. Same package, different editor. Cross-editor compatibility means you're never locked in.
+
+We wrote a detailed comparison with real workflows, feature tables, and quick start guides. If you use GitHub Copilot or manage AI instructions for your team, this will save you significant time.
+
+Read the full post:
+https://prpm.dev/blog/discovering-copilot-instructions
+
+#GitHubCopilot #AI #DeveloperTools #PackageManagement #Productivity

@@ -1,8 +1,18 @@
 {
   "name": "prpm-packages",
+  "version": "1.0.0",
+  "description": "Official PRPM packages including skills, agents, rules, commands, hooks, and collections for AI-assisted development",
+  "author": "PRPM Team",
   "license": "MIT",
+  "license_url": "https://github.com/pr-pm/prpm/blob/main/LICENSE",
   "repository": "https://github.com/pr-pm/prpm",
+  "homepage": "https://prpm.dev",
+  "documentation": "https://docs.prpm.dev",
   "organization": "prpm",
+  "tags": ["prpm", "ai-tools", "prompts", "package-manager", "development"],
+  "scripts": {
+    "prepublishOnly": "cd packages/hooks && npm run build"
+  },
   "packages": [
     {
       "name": "blog-writer",
@@ -90,18 +100,24 @@
     },
     {
       "name": "prpm-json-best-practices-skill",
-      "version": "1.0.8",
-      "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
+      "version": "1.1.0",
+      "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, multi-package management, enhanced file format, and conversion hints",
       "format": "claude",
       "subtype": "skill",
-      "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal"],
+      "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal", "meta"],
       "files": [
         ".claude/skills/prpm-json-best-practices/SKILL.md",
         ".claude/skills/prpm-json-best-practices/examples/single-package.json",
         ".claude/skills/prpm-json-best-practices/examples/multi-package.json",
         ".claude/skills/prpm-json-best-practices/examples/collections-repository.json",
         ".claude/skills/prpm-json-best-practices/examples/packages-with-collections.json"
-      ]
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/prpm.json", "**/.prpm/*.json"]
+        }
+      }
     },
     {
       "name": "core-principles",
@@ -136,7 +152,13 @@
       "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal"],
       "files": [
         ".cursor/rules/prpm-json-best-practices.mdc"
-      ]
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        }
+      }
     },
     {
       "name": "agent-builder-skill",
@@ -164,7 +186,7 @@
     {
       "name": "beanstalk-deploy-skill",
       "version": "1.0.2",
-      "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
+      "description": "Robust deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
       "format": "claude",
       "subtype": "skill",
       "tags": ["aws", "elastic-beanstalk", "deployment", "pulumi", "github-actions", "ci-cd", "automation"],
@@ -217,7 +239,141 @@
       "tags": ["meta", "claude-code", "skills", "documentation", "best-practices", "cso"],
       "files": [
         ".claude/skills/creating-skills/SKILL.md"
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/.claude/skills/**/*.md", "**/SKILL.md"]
+        }
+      }
+    },
+    {
+      "name": "creating-cursor-commands-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Cursor slash commands - covers plain markdown format, no frontmatter, descriptive filenames, and validation",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "cursor", "slash-commands", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-cursor-commands/SKILL.md"
       ]
+    },
+    {
+      "name": "creating-claude-agents-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Claude Code agents - covers frontmatter, allowed-tools, persona definition, model selection, and validation",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "claude-code", "agents", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-claude-agents/SKILL.md"
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/.claude/agents/**/*.md"]
+        }
+      }
+    },
+    {
+      "name": "creating-claude-commands-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Claude Code slash commands - covers optional frontmatter, argument-hint, allowed-tools, and validation",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "claude-code", "slash-commands", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-claude-commands/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-claude-hooks-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Claude Code hooks - covers executable files, events, JSON I/O, exit codes, security, and best practices",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "claude-code", "hooks", "documentation", "best-practices", "security"],
+      "files": [
+        ".claude/skills/creating-claude-hooks/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-continue-packages-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Continue rules - covers required frontmatter, name field, globs, regex, alwaysApply, and validation against schemas",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "continue", "package-creation", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-continue-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-windsurf-packages-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Windsurf rules - covers plain markdown format, 12K character limit, hierarchical structure, and simplicity best practices",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "windsurf", "package-creation", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-windsurf-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-copilot-packages-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating GitHub Copilot instructions and chatmodes - covers .github location, markdown format, and context integration",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "copilot", "github", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".claude/skills/creating-copilot-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-kiro-packages-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating Kiro steering files and hooks - covers inclusion modes, foundational files, fileMatch patterns, and domain organization",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "kiro", "package-creation", "documentation", "best-practices", "validation"],
+      "files": [
+        ".claude/skills/creating-kiro-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-agents-md-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for creating agents.md files - covers plain markdown format, no frontmatter, project context, and comprehensive documentation",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "agents-md", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".claude/skills/creating-agents-md/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-kiro-agents",
+      "version": "1.0.0",
+      "description": "Use when building custom Kiro AI agents or when user asks for agent configurations - provides JSON structure, tool configuration, prompt patterns, and security best practices for specialized development assistants",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "kiro", "agents", "json", "configuration", "best-practices", "security"],
+      "files": [
+        ".claude/skills/creating-kiro-agents/SKILL.md"
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/.kiro/agents/**/*.json", "**/kiro-agent*.json"]
+        },
+        "kiro": {
+          "inclusion": "fileMatch",
+          "fileMatchPattern": "**/.kiro/agents/**/*.json",
+          "domain": "agent-configuration",
+          "tools": ["fs_read", "fs_write"]
+        }
+      }
     },
     {
       "name": "elastic-beanstalk-deployment-skill",
@@ -294,6 +450,24 @@
       "tags": ["typescript", "type-safety", "code-quality", "best-practices", "static-analysis"],
       "files": [
         ".claude/skills/typescript-type-safety/SKILL.md"
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/*.ts", "**/*.tsx", "**/tsconfig*.json"]
+        }
+      }
+    },
+    {
+      "name": "typescript-hook-writer",
+      "version": "1.0.0",
+      "description": "Expert guidance for developing Claude Code hooks in TypeScript with shared utilities, esbuild compilation, and Vitest testing - distributes compiled JS while maintaining TypeScript development experience",
+      "private": true,
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["typescript", "hooks", "claude-code", "esbuild", "vitest", "testing", "prpm-internal"],
+      "files": [
+        ".claude/skills/typescript-hook-writer/SKILL.md"
       ]
     },
     {
@@ -341,9 +515,134 @@
       ]
     },
     {
+      "name": "prettier-on-save",
+      "version": "1.0.0",
+      "description": "Automatically formats code files with Prettier after Claude edits or creates them",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["formatting", "prettier", "automation", "code-quality", "post-tool-use"],
+      "files": [
+        ".claude/hooks/prettier-on-save/hook.json",
+        ".claude/hooks/prettier-on-save/dist/hook.js",
+        ".claude/hooks/prettier-on-save/README.md"
+      ]
+    },
+    {
+      "name": "command-logger",
+      "version": "1.0.0",
+      "description": "Logs all bash commands Claude executes to a file for audit and debugging",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["logging", "audit", "bash", "commands", "security", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/command-logger/hook.json",
+        ".claude/hooks/command-logger/dist/hook.js",
+        ".claude/hooks/command-logger/README.md"
+      ]
+    },
+    {
+      "name": "block-env-writes",
+      "version": "1.0.0",
+      "description": "Prevents Claude from writing to or editing sensitive files that may contain credentials or secrets",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["security", "credentials", "env-files", "protection", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/block-env-writes/hook.json",
+        ".claude/hooks/block-env-writes/dist/hook.js",
+        ".claude/hooks/block-env-writes/README.md"
+      ]
+    },
+    {
+      "name": "desktop-alerts",
+      "version": "1.0.0",
+      "description": "Sends desktop notifications when Claude Code shows alerts or needs input",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["notifications", "desktop", "alerts", "ux", "productivity"],
+      "files": [
+        ".claude/hooks/desktop-alerts/hook.json",
+        ".claude/hooks/desktop-alerts/dist/hook.js",
+        ".claude/hooks/desktop-alerts/README.md"
+      ]
+    },
+    {
+      "name": "validate-credentials",
+      "version": "1.0.0",
+      "description": "Warns when Claude attempts to write code that may contain hardcoded credentials or secrets",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["security", "credentials", "validation", "secrets", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/validate-credentials/hook.json",
+        ".claude/hooks/validate-credentials/dist/hook.js",
+        ".claude/hooks/validate-credentials/README.md"
+      ]
+    },
+    {
+      "name": "audit-file-deletes",
+      "version": "1.0.0",
+      "description": "Logs all file deletion operations Claude performs for security auditing and recovery",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["audit", "logging", "security", "file-operations", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/audit-file-deletes/hook.json",
+        ".claude/hooks/audit-file-deletes/dist/hook.js",
+        ".claude/hooks/audit-file-deletes/README.md"
+      ]
+    },
+    {
+      "name": "sensitive-data-scanner",
+      "version": "1.0.0",
+      "description": "Scans code for sensitive data patterns like API keys, private keys, and tokens before files are written",
+      "format": "claude",
+      "subtype": "hook",
+      "tags": ["security", "scanning", "secrets", "api-keys", "pre-tool-use"],
+      "files": [
+        ".claude/hooks/sensitive-data-scanner/hook.json",
+        ".claude/hooks/sensitive-data-scanner/dist/hook.js",
+        ".claude/hooks/sensitive-data-scanner/README.md"
+      ]
+    },
+    {
+      "name": "development-workflow",
+      "version": "1.0.0",
+      "description": "Enforces documentation and skill updates during PRPM development - provides context-aware reminders based on branch names and work type",
+      "format": "claude",
+      "subtype": "hook",
+      "private": true,
+      "tags": ["prpm-internal", "workflow", "documentation", "development", "session-start"],
+      "files": [
+        ".claude/hooks/development-workflow/hook.json",
+        ".claude/hooks/development-workflow/dist/hook.js",
+        ".claude/hooks/development-workflow/README.md",
+        ".claude/hooks/development-workflow/src/hook.ts",
+        ".claude/hooks/development-workflow/src/hook-utils.ts",
+        ".claude/hooks/development-workflow/src/types.ts"
+      ]
+    },
+    {
+      "name": "blog-workflow",
+      "version": "1.0.0",
+      "description": "Enforces blog writing standards - requires prpm-blog-writer agent and human-writing skill, reminds about sitemap updates",
+      "format": "claude",
+      "subtype": "hook",
+      "private": true,
+      "tags": ["prpm-internal", "blog", "writing", "workflow", "sitemap", "user-prompt-submit"],
+      "files": [
+        ".claude/hooks/blog-workflow/hook.json",
+        ".claude/hooks/blog-workflow/dist/hook.js",
+        ".claude/hooks/blog-workflow/README.md",
+        ".claude/hooks/blog-workflow/src/hook.ts",
+        ".claude/hooks/blog-workflow/src/hook-utils.ts",
+        ".claude/hooks/blog-workflow/src/types.ts"
+      ]
+    },
+    {
       "name": "beanstalk-deploy",
       "version": "1.0.2",
-      "description": "Production-ready deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
+      "description": "Robust deployment patterns for Elastic Beanstalk with GitHub Actions, Pulumi, and edge case handling",
       "format": "cursor",
       "subtype": "rule",
       "tags": ["aws", "elastic-beanstalk", "deployment", "infrastructure", "devops", "pulumi", "ci-cd", "github-actions"],
@@ -371,7 +670,13 @@
       "tags": ["meta", "claude-code", "skills", "documentation", "best-practices"],
       "files": [
         ".cursor/rules/creating-skills.mdc"
-      ]
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        }
+      }
     },
     {
       "name": "elastic-beanstalk-deployment",
@@ -426,7 +731,13 @@
       "tags": ["typescript", "type-safety", "code-quality", "best-practices"],
       "files": [
         ".cursor/rules/typescript-type-safety.mdc"
-      ]
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        }
+      }
     },
     {
       "name": "typescript-type-specialist",
@@ -437,6 +748,171 @@
       "tags": ["typescript", "type-safety", "strict-mode", "code-quality", "enforcement"],
       "files": [
         ".cursor/rules/typescript-type-specialist.mdc"
+      ]
+    },
+    {
+      "name": "creating-cursor-commands",
+      "version": "1.0.0",
+      "description": "Apply when creating Cursor slash commands - guides plain markdown format, no frontmatter, descriptive filenames, and command structure",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "cursor", "slash-commands", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-cursor-commands.md"
+      ]
+    },
+    {
+      "name": "creating-claude-agents",
+      "version": "1.0.0",
+      "description": "Apply when creating Claude Code agents - guides frontmatter, allowed-tools, persona definition, and model selection",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "claude-code", "agents", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-claude-agents.md"
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        }
+      }
+    },
+    {
+      "name": "creating-claude-commands",
+      "version": "1.0.0",
+      "description": "Apply when creating Claude Code slash commands - guides optional frontmatter, argument-hint, and command structure",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "claude-code", "slash-commands", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-claude-commands.md"
+      ]
+    },
+    {
+      "name": "creating-claude-hooks",
+      "version": "1.0.0",
+      "description": "Apply when creating Claude Code hooks - guides executable files, events, JSON I/O, exit codes, and security",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "claude-code", "hooks", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-claude-hooks.md"
+      ]
+    },
+    {
+      "name": "creating-continue-packages",
+      "version": "1.0.0",
+      "description": "Apply when creating Continue rules - guides required frontmatter, name field, globs, regex patterns, and alwaysApply behavior",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "continue", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-continue-packages.md"
+      ]
+    },
+    {
+      "name": "creating-windsurf-packages",
+      "version": "1.0.0",
+      "description": "Apply when creating Windsurf rules - guides plain markdown format, 12K character limit, hierarchical structure, and minimalist approach",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "windsurf", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-windsurf-packages.md"
+      ]
+    },
+    {
+      "name": "creating-copilot-packages",
+      "version": "1.0.0",
+      "description": "Apply when creating GitHub Copilot instructions or chatmodes - guides .github file structure, markdown format, and context integration",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "copilot", "github", "package-creation", "documentation"],
+      "files": [
+        ".cursor/rules/creating-copilot-packages.md"
+      ]
+    },
+    {
+      "name": "creating-kiro-packages",
+      "version": "1.0.0",
+      "description": "Apply when creating Kiro steering files or hooks - guides inclusion modes, foundational files, fileMatch patterns, and domain organization",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "kiro", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-kiro-packages.md"
+      ]
+    },
+    {
+      "name": "creating-agents-md",
+      "version": "1.0.0",
+      "description": "Apply when creating agents.md files - guides plain markdown format without frontmatter, project context documentation, and best practices",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "agents-md", "package-creation", "documentation", "best-practices"],
+      "files": [
+        ".cursor/rules/creating-agents-md.mdc"
+      ]
+    },
+    {
+      "name": "creating-kiro-agents",
+      "version": "1.0.0",
+      "description": "Kiro agent configuration patterns, JSON structure, tool permissions, and security best practices for creating specialized AI development assistants",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "kiro", "agents", "json", "configuration", "best-practices", "security"],
+      "files": [
+        ".cursor/rules/creating-kiro-agents.mdc"
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        },
+        "kiro": {
+          "inclusion": "fileMatch",
+          "fileMatchPattern": "**/.kiro/agents/**/*.json",
+          "domain": "agent-configuration",
+          "tools": ["fs_read", "fs_write"]
+        }
+      }
+    }
+  ],
+  "collections": [
+    {
+      "id": "secure-coding",
+      "name": "Secure Coding Suite",
+      "description": "Complete security policy with environment protection, credential validation, audit logging, and data scanning for Claude Code",
+      "version": "1.0.0",
+      "category": "security",
+      "tags": ["security", "credentials", "audit", "compliance", "best-practices"],
+      "icon": "🔒",
+      "packages": [
+        {
+          "packageId": "@prpm/block-env-writes",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Blocks writes to sensitive files (.env, .pem, .key) to prevent credential exposure"
+        },
+        {
+          "packageId": "@prpm/validate-credentials",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Warns when hardcoded credentials detected in code (passwords, API keys, tokens)"
+        },
+        {
+          "packageId": "@prpm/audit-file-deletes",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Logs all file deletion operations for audit trail and compliance"
+        },
+        {
+          "packageId": "@prpm/sensitive-data-scanner",
+          "version": "^1.0.0",
+          "required": true,
+          "reason": "Scans for AWS keys, private keys, JWT tokens, and other sensitive data patterns"
+        }
       ]
     }
   ]

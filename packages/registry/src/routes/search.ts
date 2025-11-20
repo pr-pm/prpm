@@ -8,6 +8,24 @@ import { cacheGet, cacheSet } from '../cache/redis.js';
 import { Package, Format, Subtype } from '../types.js';
 import { getSearchProvider } from '../search/index.js';
 
+// Reusable enum constants for schema validation
+const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'generic', 'mcp'] as const;
+const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'] as const;
+
+// Columns to select for list results (excludes full_content to reduce payload size)
+const LIST_COLUMNS = `
+  p.id, p.name, p.display_name, p.description, p.author_id, p.org_id,
+  p.format, p.subtype, p.tags, p.keywords, p.category,
+  p.visibility, p.featured, p.verified, p.official,
+  p.total_downloads, p.weekly_downloads, p.monthly_downloads, p.version_count,
+  p.rating_average, p.rating_count, p.quality_score,
+  p.install_count, p.view_count,
+  p.license, p.license_text, p.license_url,
+  p.snippet, p.repository_url, p.homepage_url, p.documentation_url,
+  p.created_at, p.updated_at, p.last_published_at,
+  p.deprecated, p.deprecated_reason
+`.trim();
+
 export async function searchRoutes(server: FastifyInstance) {
   // Full-text search
   server.get('/', {
@@ -20,46 +38,70 @@ export async function searchRoutes(server: FastifyInstance) {
           q: { type: 'string' },
           format: {
             anyOf: [
-              { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-              { type: 'array', items: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] } }
+              { type: 'string', enum: FORMAT_ENUM },
+              { type: 'array', items: { type: 'string', enum: FORMAT_ENUM } }
             ]
           },
           subtype: {
             anyOf: [
-              { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
-              { type: 'array', items: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] } }
+              { type: 'string', enum: SUBTYPE_ENUM },
+              { type: 'array', items: { type: 'string', enum: SUBTYPE_ENUM } }
             ]
           },
           tags: { type: 'array', items: { type: 'string' } },
           category: { type: 'string' },
           author: { type: 'string' },
+          language: { type: 'string', description: 'Filter by programming language (javascript, python, typescript, etc.)' },
+          framework: { type: 'string', description: 'Filter by framework (react, nextjs, django, etc.)' },
           verified: { type: 'boolean' },
           featured: { type: 'boolean' },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
           offset: { type: 'number', default: 0, minimum: 0 },
-          sort: { type: 'string', enum: ['downloads', 'created', 'updated', 'quality', 'rating'], default: 'downloads' },
+          sort: { type: 'string', enum: ['relevance', 'downloads', 'created', 'updated', 'quality', 'rating'] },
         },
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { q, format, subtype, tags, category, author, verified, featured, limit = 20, offset = 0, sort = 'downloads' } = request.query as {
+    const queryParams = request.query as {
       q?: string;
       format?: Format | Format[];
       subtype?: Subtype | Subtype[];
       tags?: string[];
       category?: string;
       author?: string;
+      language?: string;
+      framework?: string;
       verified?: boolean;
       featured?: boolean;
       limit?: number;
       offset?: number;
-      sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
+      sort?: 'relevance' | 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
     };
 
-    // Build cache key
-    const cacheKey = `search:${JSON.stringify(request.query)}`;
+    // Default sort: relevance when searching, downloads when browsing
+    const defaultSort = queryParams.q ? 'relevance' : 'downloads';
 
-    // Check cache
+    const { q, format, subtype, tags, category, author, language, framework, verified, featured, limit = 20, offset = 0, sort = defaultSort } = queryParams;
+
+    // Build deterministic cache key (sorted params for consistency)
+    const sortedParams = {
+      q: q || '',
+      format: Array.isArray(format) ? format.sort().join(',') : format,
+      subtype: Array.isArray(subtype) ? subtype.sort().join(',') : subtype,
+      tags: tags ? tags.sort().join(',') : undefined,
+      category,
+      author,
+      language,
+      framework,
+      verified,
+      featured,
+      sort,
+      limit,
+      offset,
+    };
+    const cacheKey = `search:v2:${JSON.stringify(sortedParams)}`;
+
+    // Check cache first
     const cached = await cacheGet<any>(server, cacheKey);
     if (cached) {
       return cached;
@@ -67,12 +109,14 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // Use search provider (PostgreSQL or OpenSearch)
     const searchProvider = getSearchProvider(server);
-    const response = await searchProvider.search(q || '', {
+    let response = await searchProvider.search(q || '', {
       format,
       subtype,
       tags,
       category,
       author,
+      language,
+      framework,
       verified,
       featured,
       sort,
@@ -80,8 +124,31 @@ export async function searchRoutes(server: FastifyInstance) {
       offset,
     });
 
-    // Cache for 5 minutes
-    await cacheSet(server, cacheKey, response, 300);
+    // If no results, show top 10 popular packages
+    // BUT only if format or subtype filters are applied
+    if (response.packages.length === 0 && (format || subtype)) {
+      const fallbackOptions: Record<string, unknown> = {
+        sort: 'downloads' as const,
+        limit: 10,
+        offset: 0,
+      };
+
+      // Don't preserve format filter (all formats can be converted with --as)
+      // But DO preserve subtype filter (e.g., show top agents if filtering by agent subtype)
+      if (subtype) fallbackOptions.subtype = subtype;
+
+      response = await searchProvider.search('', fallbackOptions);
+
+      // Always mark as fallback (even if 0 results) so UI shows cross-platform conversion notice
+      response.fallback = true;
+      response.original_query = q;
+      // Override total to show actual fallback count, not all packages
+      response.total = response.packages.length;
+    }
+
+    // Cache for 15 minutes (longer for better performance, search results stable)
+    const cacheTTL = offset === 0 ? 900 : 300; // First page: 15min, others: 5min
+    await cacheSet(server, cacheKey, response, cacheTTL);
 
     return response;
   });
@@ -94,8 +161,8 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },
@@ -131,7 +198,7 @@ export async function searchRoutes(server: FastifyInstance) {
 
     const result = await query<Package>(
       server,
-      `SELECT p.*, u.username as author_username
+      `SELECT ${LIST_COLUMNS}, u.username as author_username
        FROM packages p
        LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
@@ -156,8 +223,8 @@ export async function searchRoutes(server: FastifyInstance) {
       querystring: {
         type: 'object',
         properties: {
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
         },
       },
@@ -193,7 +260,7 @@ export async function searchRoutes(server: FastifyInstance) {
 
     const result = await query<Package>(
       server,
-      `SELECT p.*, u.username as author_username
+      `SELECT ${LIST_COLUMNS}, u.username as author_username
        FROM packages p
        LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
@@ -241,6 +308,82 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // Cache for 1 hour
     await cacheSet(server, cacheKey, response, 3600);
+
+    return response;
+  });
+
+  // Autocomplete tags by prefix
+  server.get('/tags/autocomplete', {
+    schema: {
+      tags: ['search'],
+      description: 'Autocomplete tags by prefix with counts',
+      querystring: {
+        type: 'object',
+        required: ['q'],
+        properties: {
+          q: { type: 'string', minLength: 1, description: 'Tag prefix to search for' },
+          limit: { type: 'number', default: 10, minimum: 1, maximum: 50 },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            suggestions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  count: { type: 'number' },
+                },
+              },
+            },
+            query: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { q, limit = 10 } = request.query as {
+      q: string;
+      limit?: number;
+    };
+
+    const searchTerm = q.toLowerCase().trim();
+
+    // Short cache to allow frequent updates
+    const cacheKey = `search:tags:autocomplete:${searchTerm}:${limit}`;
+    const cached = await cacheGet<any>(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = await query<{ tag: string; count: string }>(
+      server,
+      `SELECT tag, COUNT(*) as count
+       FROM (
+         SELECT unnest(tags) as tag
+         FROM packages
+         WHERE visibility = 'public'
+       ) subquery
+       WHERE LOWER(tag) LIKE $1
+       GROUP BY tag
+       ORDER BY count DESC, tag ASC
+       LIMIT $2`,
+      [`${searchTerm}%`, limit]
+    );
+
+    const response = {
+      suggestions: result.rows.map(r => ({
+        name: r.tag,
+        count: parseInt(r.count, 10),
+      })),
+      query: q,
+    };
+
+    // Cache for 5 minutes
+    await cacheSet(server, cacheKey, response, 300);
 
     return response;
   });
@@ -334,11 +477,11 @@ export async function searchRoutes(server: FastifyInstance) {
     // Get slash commands
     const result = await query<Package>(
       server,
-      `SELECT p.*, u.username as author_username
+      `SELECT ${LIST_COLUMNS}, u.username as author_username
        FROM packages p
        LEFT JOIN users u ON p.author_id = u.id
        WHERE ${whereClause}
-       ORDER BY p.quality_score DESC NULLS LAST, p.total_downloads DESC
+       ORDER BY p.quality_score DESC NULLS LAST, p.total_downloads DESC, p.id ASC
        LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
       [...params, limit, offset]
     );
@@ -365,17 +508,23 @@ export async function searchRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number', default: 50, minimum: 1, maximum: 500 },
+          sort: { type: 'string', enum: ['downloads', 'count'], default: 'downloads' },
         },
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { limit = 50 } = request.query as { limit?: number };
+    const { limit = 50, sort = 'downloads' } = request.query as { limit?: number; sort?: 'downloads' | 'count' };
 
-    const cacheKey = `search:authors:${limit}`;
+    const cacheKey = `search:authors:${limit}:${sort}`;
     const cached = await cacheGet<any>(server, cacheKey);
     if (cached) {
       return cached;
     }
+
+    // Determine sort order
+    const orderBy = sort === 'count'
+      ? 'COUNT(p.id) DESC, SUM(p.total_downloads) DESC'
+      : 'SUM(p.total_downloads) DESC, COUNT(p.id) DESC';
 
     // Get author stats by aggregating packages
     const result = await query<{
@@ -400,7 +549,7 @@ export async function searchRoutes(server: FastifyInstance) {
        WHERE p.visibility = 'public'
        GROUP BY u.id, u.username, u.verified_author
        HAVING COUNT(p.id) > 0
-       ORDER BY COUNT(p.id) DESC, SUM(p.total_downloads) DESC
+       ORDER BY ${orderBy}
        LIMIT $1`,
       [limit]
     );
@@ -460,7 +609,7 @@ export async function searchRoutes(server: FastifyInstance) {
       `SELECT name, updated_at
        FROM packages
        WHERE visibility = 'public'
-       ORDER BY total_downloads DESC, name ASC
+       ORDER BY total_downloads DESC, id ASC
        LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
@@ -516,9 +665,9 @@ export async function searchRoutes(server: FastifyInstance) {
       server,
       `SELECT name_slug, updated_at
        FROM collections
-       ORDER BY downloads DESC, name_slug ASC
+       ORDER BY downloads DESC, id ASC
        LIMIT $1 OFFSET $2`,
-      [limit, offset]
+       [limit, offset]
     );
 
     const response = {
@@ -533,5 +682,112 @@ export async function searchRoutes(server: FastifyInstance) {
     await cacheSet(server, cacheKey, response, 3600);
 
     return response;
+  });
+
+  // Enhanced autocomplete endpoint
+  server.get('/autocomplete', {
+    schema: {
+      tags: ['search'],
+      description: 'Get autocomplete suggestions for search (package names, tags, categories)',
+      querystring: {
+        type: 'object',
+        required: ['q'],
+        properties: {
+          q: { type: 'string', minLength: 2, description: 'Search query' },
+          limit: { type: 'number', default: 10, minimum: 1, maximum: 20 },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { q, limit = 10 } = request.query as {
+      q: string;
+      limit?: number;
+    };
+
+    const cacheKey = `search:autocomplete:${q.toLowerCase()}:${limit}`;
+    const cached = await cacheGet<any>(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const lowerQ = q.toLowerCase();
+
+      // Get package name suggestions using prefix + trigram (optimized with indexes)
+      const packageResults = await query<{ name: string; similarity: number; downloads: number }>(
+        server,
+        `SELECT name, similarity(name, $1) as sim, total_downloads
+         FROM packages
+         WHERE visibility = 'public'
+           AND (name ILIKE $2 OR name % $1)
+         ORDER BY
+           CASE WHEN name ILIKE $3 THEN 0 ELSE 1 END,
+           sim DESC,
+           total_downloads DESC
+         LIMIT $4`,
+        [lowerQ, `${lowerQ}%`, `${lowerQ}%`, Math.ceil(limit / 2)]
+      );
+
+      // Get tag suggestions
+      const tagResults = await query<{ tag: string; count: number }>(
+        server,
+        `SELECT unnest(tags) as tag, COUNT(*) as count
+         FROM packages
+         WHERE visibility = 'public'
+           AND EXISTS (
+             SELECT 1 FROM unnest(tags) t WHERE t ILIKE $1
+           )
+         GROUP BY tag
+         ORDER BY count DESC
+         LIMIT $2`,
+        [`%${q}%`, Math.ceil(limit / 4)]
+      );
+
+      // Get category suggestions
+      const categoryResults = await query<{ category: string; count: number }>(
+        server,
+        `SELECT category, COUNT(*) as count
+         FROM packages
+         WHERE visibility = 'public'
+           AND category IS NOT NULL
+           AND category ILIKE $1
+         GROUP BY category
+         ORDER BY count DESC
+         LIMIT $2`,
+        [`%${q}%`, Math.ceil(limit / 4)]
+      );
+
+      const response = {
+        query: q,
+        suggestions: [
+          ...packageResults.rows.map(r => ({
+            type: 'package',
+            value: r.name,
+            label: r.name,
+            meta: `${r.downloads.toLocaleString()} downloads`,
+          })),
+          ...tagResults.rows.map(r => ({
+            type: 'tag',
+            value: r.tag,
+            label: `#${r.tag}`,
+            meta: `${r.count} packages`,
+          })),
+          ...categoryResults.rows.map(r => ({
+            type: 'category',
+            value: r.category,
+            label: r.category,
+            meta: `${r.count} packages`,
+          })),
+        ].slice(0, limit),
+      };
+
+      // Cache for 1 hour (autocomplete results don't change frequently)
+      await cacheSet(server, cacheKey, response, 3600);
+
+      return response;
+    } catch (error) {
+      server.log.error({ error, query: q }, 'Autocomplete failed');
+      return { query: q, suggestions: [] };
+    }
   });
 }

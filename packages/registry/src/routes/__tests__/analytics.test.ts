@@ -169,7 +169,7 @@ describe('Analytics Routes', () => {
             rows: [
               {
                 id: 'popular-1',
-                
+
                 description: 'Most downloaded',
                 type: 'cursor',
                 category: 'development',
@@ -472,4 +472,5 @@ describe('Analytics Routes', () => {
       }
     });
   });
+
 });

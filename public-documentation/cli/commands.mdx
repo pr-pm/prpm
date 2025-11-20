@@ -7,7 +7,7 @@ description: 'Complete reference for all PRPM CLI commands'
 
 ### search
 
-Search for packages in the PRPM registry.
+Search for packages in the PRPM registry (keyword-based).
 
 ```bash
 prpm search <query> [options]
@@ -45,6 +45,50 @@ prpm search typescript --format cursor --no-interactive | head -n 1
 
 **Output:**
 Displays matching packages with their name, description, format, downloads, and installation command.
+
+---
+
+### ai-search
+
+AI-powered semantic search for finding packages using natural language (no login required).
+
+```bash
+prpm ai-search "<natural-language-query>" [options]
+```
+
+**Arguments:**
+- `query` - Natural language description of what you need
+
+**Options:**
+- `--limit <number>` - Number of results to return (default: 10)
+- `--format <format>` - Filter by format (cursor, claude, windsurf, continue, etc.)
+- `--subtype <subtype>` - Filter by subtype (rule, agent, skill, slash-command, etc.)
+
+**Examples:**
+
+```bash
+# Find packages using natural language
+prpm ai-search "I need help with React state management best practices"
+
+# Limit results
+prpm ai-search "Python type safety" --limit 5
+
+# Filter by format
+prpm ai-search "code review assistant" --format claude
+
+# Filter by subtype
+prpm ai-search "API documentation generator" --subtype agent
+```
+
+**How it works:**
+- Uses AI embeddings to understand semantic meaning
+- Matches your intent rather than just keywords
+- Ranks results by relevance, quality, and popularity
+- 100% free with no authentication required
+- Faster and more accurate than keyword search for complex queries
+
+**Output:**
+Displays matching packages with similarity scores, descriptions, match quality, and installation commands.
 
 ---
 
@@ -139,6 +183,50 @@ prpm popular --format claude --subtype skill
 
 ---
 
+### starred
+
+List your starred packages and collections.
+
+```bash
+prpm starred [options]
+```
+
+**Options:**
+- `--packages` - Show only starred packages
+- `--collections` - Show only starred collections
+- `--format <format>` - Filter packages by format (cursor, claude, continue, windsurf, etc.)
+- `--limit <number>` - Maximum number of items to fetch (default: 100)
+
+**Prerequisites:**
+- Must be logged in (`prpm login`)
+
+**Examples:**
+
+```bash
+# List all starred items (packages and collections)
+prpm starred
+
+# Show only starred packages
+prpm starred --packages
+
+# Show only starred collections
+prpm starred --collections
+
+# Filter by format
+prpm starred --packages --format cursor
+
+# Limit results
+prpm starred --limit 20
+```
+
+**Output:**
+Displays starred items with their name, description, format/category, downloads/stars, and last update time.
+
+**Tip:**
+Star packages and collections on the web interface at https://prpm.dev to save your favorites for easy access later.
+
+---
+
 ### collections
 
 Browse and view curated collections of packages.
@@ -185,6 +273,7 @@ prpm install <package-name> [additional-packages...] [options]
 - `--as <format>` - Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)
 - `--format <format>` - Alias for `--as`
 - `--subtype <subtype>` - Specify subtype when converting (skill, agent, rule, etc.)
+- `--location <path>` - Custom installation location (Cursor and agents.md only)
 - `--frozen-lockfile` - Fail if lock file needs to be updated (for CI)
 
 **Examples:**
@@ -205,6 +294,12 @@ prpm install @username/typescript-rules --as cursor
 # Install and convert to Claude format
 prpm install @username/typescript-rules --format claude
 
+# Install to custom location (Cursor rules in monorepo)
+prpm install @username/react-rules --as cursor --location packages/frontend
+
+# Install agents.md to custom directory
+prpm install @username/project-context --as agents.md --location docs
+
 # Frozen lockfile (for CI)
 prpm install @username/typescript-rules --frozen-lockfile
 ```
@@ -214,6 +309,30 @@ prpm install @username/typescript-rules --frozen-lockfile
 2. Files are extracted to the appropriate directory (`.cursor/`, `.claude/`, etc.)
 3. Package is registered in `prpm.lock`
 4. Format-specific configuration is applied (MDC headers for Cursor, etc.)
+
+**Custom Locations (`--location`):**
+
+The `--location` flag allows you to install packages to custom directories. This is useful for:
+- **Monorepos**: Install Cursor rules in specific packages (e.g., `--location packages/backend` creates `packages/backend/.cursor/rules/`)
+- **Nested projects**: Keep different contexts in subdirectories
+- **Agents.md**: Create `AGENTS.override.md` in custom locations (e.g., `--location docs` creates `docs/AGENTS.override.md`)
+
+**Supported formats:**
+- `cursor` - Installs to nested `.cursor/` directory within the specified path
+- `agents.md` - Creates `AGENTS.override.md` in the specified path
+
+**Example directory structure:**
+```bash
+# Install to packages/frontend
+prpm install @user/react-rules --as cursor --location packages/frontend
+
+# Result:
+packages/
+  frontend/
+    .cursor/
+      rules/
+        react-rules.mdc
+```
 
 ---
 
@@ -510,6 +629,187 @@ prpm publish --access private
 
 ---
 
+## Playground Commands
+
+### playground
+
+Test packages with real AI models before installing.
+
+```bash
+prpm playground [options]
+```
+
+**Options:**
+- `-p, --package <name>` - Package name to test (e.g., `@user/package-name`)
+- `--input <text>` - Input text to send to the model (omit for interactive mode)
+- `-m, --model <model>` - AI model to use (sonnet, opus, gpt-4o, gpt-4o-mini, gpt-4-turbo) (default: sonnet)
+- `-c, --compare` - Compare with and without package prompt (baseline test)
+- `-i, --interactive` - Start interactive multi-turn conversation mode
+- `-v, --version <version>` - Specific package version to test
+- `--custom <prompt>` - Use a custom prompt string (verified authors only)
+- `--prompt-file <file>` - Load custom prompt from a file (verified authors only)
+
+**Examples:**
+
+```bash
+# Basic test
+prpm playground --package @user/code-reviewer --input "Review this: console.log('hello')"
+
+# Interactive conversation
+prpm playground --package @user/brainstorm-assistant --interactive
+
+# Compare mode (with and without prompt)
+prpm playground --package @user/optimizer --input "Optimize this function" --compare
+
+# Use a specific model
+prpm playground --package @user/complex-task --input "Analyze this" --model opus
+prpm playground --package @user/simple-task --input "Format this" --model gpt-4o-mini
+
+# Test specific version
+prpm playground --package @user/my-package --version 2.1.0 --input "Test this"
+
+# Custom prompt (verified authors only)
+prpm playground --custom "You are a helpful assistant" --input "Hello"
+prpm playground --prompt-file my-prompt.txt --input "Test"
+```
+
+**Supported Models:**
+- `sonnet` (Claude Sonnet 3.5) - Balanced performance, 2 credits (default)
+- `gpt-4o-mini` - Fast and economical, 1 credit
+- `gpt-4o` - Advanced reasoning, 3 credits
+- `gpt-4-turbo` - Complex tasks, 4 credits
+- `opus` (Claude Opus) - Most capable, 7 credits
+
+**Credits:**
+- 1 credit = 5,000 tokens (input + output combined)
+- Free tier: 5 trial credits
+- PRPM+: 100 monthly credits ($6/month)
+- Credit packs: Buy additional credits that never expire
+
+See the [Playground Guide](/guides/playground) for detailed information.
+
+---
+
+### subscribe
+
+Manage your PRPM+ subscription.
+
+```bash
+prpm subscribe [command]
+```
+
+**Commands:**
+- (no command) - Subscribe to PRPM+
+- `status` - View subscription status and credit balance
+- `cancel` - Cancel your PRPM+ subscription
+
+**Examples:**
+
+```bash
+# Subscribe to PRPM+
+prpm subscribe
+
+# Check subscription status and credits
+prpm subscribe status
+
+# Cancel subscription
+prpm subscribe cancel
+```
+
+**PRPM+ Benefits:**
+- 100 monthly playground credits
+- Credits roll over (max 200 balance)
+- $6/month (or $3/month for organization members)
+- Priority support
+
+---
+
+### credits
+
+Check your playground credits balance and transaction history.
+
+```bash
+prpm credits [options]
+```
+
+**Options:**
+- `-h, --history` - Show transaction history instead of balance
+- `-l, --limit <number>` - Number of transactions to show in history (default: 10)
+
+**Examples:**
+
+```bash
+# Check credit balance
+prpm credits
+
+# View transaction history
+prpm credits --history
+
+# View last 20 transactions
+prpm credits --history --limit 20
+```
+
+**Output:**
+- Without `--history`: Displays current credit balance, monthly allotment (if PRPM+ subscriber), and next renewal date
+- With `--history`: Shows recent credit transactions including purchases, usage, monthly credits, and rollover
+
+---
+
+### buy-credits
+
+Purchase additional playground credits.
+
+```bash
+prpm buy-credits
+```
+
+Opens an interactive prompt to select and purchase credit packs.
+
+**Credit Packs:**
+- 100 credits = $5.00
+- Credits never expire
+- Stack with monthly PRPM+ credits
+
+**Examples:**
+
+```bash
+# Open credit purchase flow
+prpm buy-credits
+```
+
+---
+
+### suggested-inputs
+
+Manage suggested test inputs for your packages (authors only).
+
+```bash
+prpm suggested-inputs <command> <package> [input]
+```
+
+**Commands:**
+- `add <package> <input>` - Add a suggested test input
+- `list <package>` - List all suggested inputs for a package
+- `remove <package> <id>` - Remove a suggested input
+
+**Examples:**
+
+```bash
+# Add suggested input
+prpm suggested-inputs add @user/my-package "Review this authentication code"
+
+# List all inputs
+prpm suggested-inputs list @user/my-package
+
+# Remove an input
+prpm suggested-inputs remove @user/my-package abc123
+```
+
+**What it does:**
+Suggested inputs appear automatically in the playground web interface, making it easier for users to test your package with relevant examples.
+
+---
+
 ## Local File Management Commands
 
 ### index
@@ -547,6 +847,63 @@ prpm index --verbose
 
 **Output:**
 Shows how many files were found and registered in each directory, and updates `prpm.lock`.
+
+---
+
+### convert
+
+Convert AI prompt files between different formats (e.g., Cursor to Claude, Claude to Windsurf).
+
+```bash
+prpm convert <source-file> [options]
+```
+
+**Arguments:**
+- `source-file` - Path to the file you want to convert
+
+**Options:**
+- `-t, --to <format>` - Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md)
+- `-s, --subtype <subtype>` - Target subtype (agent, skill, slash-command, rule, prompt, etc.)
+- `-o, --output <path>` - Custom output path (defaults to format-specific location)
+- `-y, --yes` - Skip confirmation prompts
+
+**Examples:**
+
+```bash
+# Convert Cursor rule to Claude skill
+prpm convert .cursor/rules/my-rule.mdc --to claude --subtype skill
+
+# Convert Claude agent to Windsurf rule
+prpm convert .claude/agents/my-agent.md --to windsurf
+
+# Convert to Copilot with custom output
+prpm convert my-prompt.md --to copilot --output .github/instructions/custom.instructions.md
+
+# Auto-detect source format and convert to Continue
+prpm convert some-file.md --to continue --subtype rule
+
+# Skip confirmation prompts
+prpm convert .claude/skills/helper/SKILL.md --to cursor --yes
+```
+
+**How it works:**
+1. Auto-detects the source format from file content and location
+2. Parses the source file to extract content and metadata
+3. Converts to canonical intermediate format
+4. Transforms to target format with appropriate structure
+5. Writes to format-specific default location or custom output path
+
+**Default Output Locations:**
+- **Cursor**: `.cursor/rules/*.mdc` (rules) or `.cursor/commands/*.md` (commands)
+- **Claude**: `.claude/skills/*/SKILL.md` (skills), `.claude/agents/*.md` (agents), `.claude/commands/*.md` (commands)
+- **Windsurf**: `.windsurf/rules/*.md`
+- **Continue**: `.continue/rules/*.md` (rules) or `.continue/prompts/*.md` (prompts)
+- **Copilot**: `.github/instructions/*.instructions.md`
+- **Kiro**: `.kiro/steering/*.md` (steering) or `.kiro/hooks/*.kiro.hook` (hooks)
+- **Agents.md**: `agents.md` (root file)
+
+**Supported Conversions:**
+All formats can be converted to all other formats with intelligent content preservation and format-specific adaptations.
 
 ---
 

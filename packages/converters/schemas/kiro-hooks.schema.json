@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/kiro-hooks.schema.json",
+  "title": "Kiro Hooks Format",
+  "description": "JSON Schema for Kiro hook configuration files (.kiro/hooks/*.json) - event-driven automations",
+  "type": "object",
+  "required": ["name", "description", "version", "when", "then"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable name for the hook",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "description": "Explanation of what this hook does",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "description": "Hook version (typically '1')",
+      "pattern": "^[0-9]+$"
+    },
+    "when": {
+      "type": "object",
+      "description": "Event trigger configuration",
+      "required": ["type", "patterns"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["fileCreated", "fileModified", "fileDeleted"],
+          "description": "Type of file system event to trigger on"
+        },
+        "patterns": {
+          "type": "array",
+          "description": "Glob patterns to match files",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "then": {
+      "type": "object",
+      "description": "Action to take when event occurs",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["askAgent", "runCommand"],
+          "description": "Type of action to perform"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "Prompt for askAgent action type"
+        },
+        "command": {
+          "type": "string",
+          "description": "Shell command for runCommand action type"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "askAgent"
+              }
+            }
+          },
+          "then": {
+            "required": ["prompt"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "runCommand"
+              }
+            }
+          },
+          "then": {
+            "required": ["command"]
+          }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "name": "Auto Test Files",
+      "description": "Creates test files for new components",
+      "version": "1",
+      "when": {
+        "type": "fileCreated",
+        "patterns": ["src/components/**/*.tsx"]
+      },
+      "then": {
+        "type": "askAgent",
+        "prompt": "A new component was created. Create a corresponding test file."
+      }
+    },
+    {
+      "name": "Lint on Save",
+      "description": "Runs linter when files are modified",
+      "version": "1",
+      "when": {
+        "type": "fileModified",
+        "patterns": ["src/**/*.ts", "src/**/*.tsx"]
+      },
+      "then": {
+        "type": "runCommand",
+        "command": "npm run lint"
+      }
+    }
+  ]
+}

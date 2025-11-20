@@ -1,0 +1,5 @@
+Finding GitHub Copilot instructions = searching Gists, GitHub repos, Reddit threads. Copy-paste into .github/copilot-instructions.md. Manually check for updates.
+
+PRPM brings centralized discovery with CLI install, version control, testing playground, and format conversion.
+
+https://prpm.dev/blog/discovering-copilot-instructions

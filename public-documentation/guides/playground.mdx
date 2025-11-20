@@ -1,0 +1,566 @@
+---
+title: 'Playground'
+description: 'Test packages with real AI models before installing'
+---
+
+## Overview
+
+PRPM Playground lets you test any package with leading AI models (Claude, GPT-4o, and more) directly in your browser or CLI. No installation required—just instant, interactive testing with real models.
+
+## Why Use Playground?
+
+Before Playground, you had to:
+1. Install the package
+2. Set up your AI environment
+3. Create test scenarios
+4. Try it with your model
+5. Uninstall if it doesn't work
+
+Playground eliminates this friction entirely. Test instantly, compare results, and make informed decisions before installing anything.
+
+## Getting Started
+
+### Web Interface
+
+1. Browse packages at [prpm.dev/search](https://prpm.dev/search)
+2. Click **"Test in Playground"** on any package page
+3. Enter your test input
+4. Get instant results from your chosen AI model
+
+### CLI Interface
+
+```bash
+# Single test
+prpm playground @user/package-name "your test input"
+
+# Interactive mode (multi-turn conversation)
+prpm playground @user/package-name --interactive
+
+# Compare with baseline (test with and without the package)
+prpm playground @user/package-name "test input" --compare
+
+# Use a specific model
+prpm playground @user/package-name "test input" --model opus
+prpm playground @user/package-name "test input" --model gpt-4o
+```
+
+## Supported Models
+
+| Model | Best For | Credit Cost |
+|-------|----------|-------------|
+| **Claude Sonnet 3.5** | Balanced performance (default) | 2 credits |
+| **GPT-4o Mini** | Fast, simple tasks | 1 credit |
+| **GPT-4o** | Advanced reasoning | 3 credits |
+| **GPT-4 Turbo** | Complex tasks | 4 credits |
+| **Claude Opus** | Most capable, complex tasks | 7 credits |
+
+<Note>
+1 credit = 5,000 tokens (input + output combined)
+</Note>
+
+## Credit System
+
+### Free Trial
+- **5 free credits** to get started
+- No credit card required
+- Test immediately after signup
+
+### PRPM+ Subscription
+- **100 monthly credits** for $6/month
+- Credits roll over (max 200 balance)
+- Unused credits expire after 1 month
+- Organization members get PRPM+ for $3/month
+
+### Credit Packs
+- Buy additional credits that never expire
+- **100 credits = $5.00**
+- Stack with monthly credits
+- Perfect for heavy users
+
+## Advanced Features
+
+### Compare Mode
+
+Compare the same input with and without the package prompt to see the actual value added:
+
+```bash
+prpm playground @user/code-reviewer "Review this code" --compare
+```
+
+This runs two tests:
+1. **With package**: Uses the package's prompt
+2. **Without package**: Baseline model with no prompt
+
+Perfect for evaluating if a package actually improves results or is just prompt fluff.
+
+### Interactive Mode
+
+Have multi-turn conversations to stress test packages:
+
+```bash
+prpm playground @user/brainstorm-assistant --interactive
+```
+
+- Multiple conversation turns
+- Context maintained across messages
+- Type `exit` or press Ctrl+C to quit
+- Great for testing conversational packages
+
+### Model Selection
+
+Choose the right model for your test:
+
+```bash
+# Use Claude Opus for complex analysis
+prpm playground @user/complex-analyzer "analyze this" --model opus
+
+# Use GPT-4o Mini for simple tests
+prpm playground @user/simple-formatter "format this" --model gpt-4o-mini
+
+# Use GPT-4o for advanced reasoning
+prpm playground @user/problem-solver "solve this" --model gpt-4o
+```
+
+## Custom Prompts (Verified Authors Only)
+
+Custom prompts let verified authors test their own system prompts before publishing as packages. This is the fastest way to iterate on prompts.
+
+### Requirements
+
+To use custom prompts, you must be a verified author:
+
+1. Run `prpm login` and link your GitHub account
+2. Complete GitHub OAuth flow
+3. You're now verified and can use custom prompts
+
+Check your status: `prpm whoami`
+
+### Why 2x Cost?
+
+Custom prompts cost **2x normal credits** because they don't benefit from prompt caching:
+- Published packages cache the system prompt (cheaper follow-ups)
+- Custom prompts can change between requests (no caching possible)
+- Still cheaper than running your own API keys
+
+### Web UI Usage
+
+1. Go to [prpm.dev/playground](https://prpm.dev/playground)
+2. Toggle **"Use Custom Prompt"** (verified authors only)
+3. Enter your system prompt (10-50,000 characters)
+4. Enter your test input
+5. Click **"Run Playground"**
+
+<Tip>
+The web UI is great for quick experiments. The CLI is better for rapid iteration on prompt files.
+</Tip>
+
+### CLI Usage
+
+#### Option 1: Inline String
+
+```bash
+prpm playground --custom "You are a helpful coding assistant" --input "Explain async/await"
+```
+
+#### Option 2: From File (Recommended)
+
+```bash
+# Create prompt file
+cat > my-prompt.txt <<'EOF'
+You are a helpful coding assistant that specializes in TypeScript and React.
+
+When answering questions:
+1. Be concise and practical
+2. Provide code examples when relevant
+3. Explain trade-offs and best practices
+
+Always prioritize type safety and clean code.
+EOF
+
+# Test it
+prpm playground --prompt-file ./my-prompt.txt --input "Explain async/await"
+```
+
+#### Interactive Mode
+
+```bash
+prpm playground --prompt-file ./my-prompt.txt --interactive
+```
+
+### A/B Testing with --compare
+
+The most powerful feature for custom prompts is `--compare` mode. It runs your custom prompt and a baseline (no prompt) side-by-side:
+
+```bash
+prpm playground --custom "You are concise. Use 2 sentences max." --input "Explain recursion" --compare
+```
+
+**Output:**
+
+```
+⏳ Processing comparison (2 requests)...
+
+═══════════════════════════════════════════════════════════
+✨ WITH CUSTOM PROMPT
+═══════════════════════════════════════════════════════════
+🤖 Assistant:
+Recursion is when a function calls itself until a base condition is met.
+Each call breaks the problem into smaller pieces until it's simple enough
+to solve directly.
+
+═══════════════════════════════════════════════════════════
+🔵 WITHOUT PROMPT (BASELINE)
+═══════════════════════════════════════════════════════════
+🤖 Assistant:
+Recursion is a programming technique where a function calls itself to solve
+a problem. It works by breaking down a complex problem into smaller, more
+manageable sub-problems of the same type. Each recursive call works on a
+smaller portion of the problem until a base case is reached... [continues]
+
+📊 Combined Stats:
+   Total tokens: 423
+   Total credits: 8
+   Credits remaining: 492
+
+💡 Compare the responses to evaluate your custom prompt's effectiveness!
+```
+
+You can instantly see your prompt made the response 60% shorter.
+
+### File-Based Workflow (Best for Iteration)
+
+This workflow enables 10 iterations in 10 minutes instead of 10 days:
+
+```bash
+# 1. Create prompt file
+vim security-reviewer.txt
+
+# 2. Test it with compare mode
+prpm playground --prompt-file ./security-reviewer.txt \
+  --input "const query = 'SELECT * FROM users WHERE id = ' + userId" \
+  --compare
+
+# 3. See results, tweak prompt
+
+# 4. Test again (up-arrow to repeat command)
+# ...iterate until perfect
+
+# 5. Publish as package
+prpm publish
+```
+
+### Workflow Comparison
+
+<AccordionGroup>
+  <Accordion title="Without PRPM (Editor Reload Cycle)">
+    1. Write prompt in `.cursor/rules` or `.claude/skills/`
+    2. Reload/restart your editor
+    3. Ask AI a test question in your editor
+    4. Realize it needs work
+    5. Edit the prompt file
+    6. Reload/restart editor again
+    7. Test again
+    8. **Repeat 10x** (lots of reloading, no comparison mode)
+  </Accordion>
+
+  <Accordion title="With PRPM but Without Custom Prompts">
+    1. Write prompt locally
+    2. Create `prpm.json` manifest
+    3. Publish package (version 0.0.1)
+    4. Test in Playground
+    5. Realize it needs work
+    6. Edit prompt locally
+    7. Bump version (0.0.2) and publish again
+    8. Test new version
+    9. **Repeat 10x** (versions 0.0.3 through 0.0.12)
+  </Accordion>
+
+  <Accordion title="With PRPM + Custom Prompts">
+    1. Write prompt in file
+    2. `prpm playground --prompt-file ./prompt.txt --input "test" --compare`
+    3. Edit prompt
+    4. ↑ (up arrow to repeat command)
+    5. **Repeat until perfect** (seconds per iteration)
+    6. Publish once
+  </Accordion>
+</AccordionGroup>
+
+### Example: Security Code Reviewer
+
+You're building a security-focused code reviewer that catches SQL injection, XSS, and auth bugs without false positives:
+
+```bash
+# Test with real vulnerable code
+prpm playground --prompt-file ./security-reviewer.txt \
+  --input "const query = 'SELECT * FROM users WHERE id = ' + userId" \
+  --compare
+```
+
+The baseline might give generic advice. Your prompt should catch the specific SQL injection vulnerability and suggest parameterized queries.
+
+Iterate until your prompt consistently catches real vulnerabilities without false positives, then publish it.
+
+### Custom Prompt Limits
+
+| Limit | Value | Why |
+|-------|-------|-----|
+| Min length | 10 chars | Sanity check |
+| Max length | 50,000 chars | Avoids token limits |
+| Recommended | 500-5,000 chars | Best results, manageable cost |
+| Max output | 1,024 tokens | ~750 words |
+| Timeout | 30 seconds | Prevents runaway requests |
+| Cost | 2x normal | No caching |
+
+<Warning>
+Custom prompts run in isolated sandboxes (text-only, no tools). This is by design for safe experimentation.
+</Warning>
+
+### Best Practices for Custom Prompts
+
+1. **Start simple** - Write 2-3 sentences, test, iterate
+2. **Use files** - Version control your prompts
+3. **Compare early** - Use `--compare` to ensure you're adding value
+4. **Test multiple inputs** - Don't optimize for one example
+5. **Check token usage** - Long prompts = high costs
+6. **Be specific** - "Review for security issues" beats "Review code"
+7. **Iterate rapidly** - Edit file → ↑ (repeat command) → see results
+
+## Sharing Results
+
+### Web Interface
+1. Complete a test in the playground
+2. Click the **"Share"** button
+3. Get a shareable link
+4. Share with your team or the community
+
+Shared results include:
+- The input you tested
+- The model's complete response
+- Token usage and credit cost
+- Package information
+
+### Community Results
+
+Every package page shows recent community test results. See:
+- What inputs others tested
+- Which models they chose
+- Whether they found it helpful
+- Token usage and costs
+
+This creates living documentation showing real-world usage.
+
+## For Package Authors
+
+### Analytics Dashboard
+
+Package authors get detailed analytics showing:
+- Total test sessions
+- Popular AI models used
+- Credit usage patterns
+- Session duration averages
+- Test input trends
+
+Access your analytics at [prpm.dev/dashboard](https://prpm.dev/dashboard)
+
+### Suggested Test Inputs
+
+Help users test your package effectively:
+
+```bash
+# Add suggested inputs to your package
+prpm suggested-inputs add @user/package-name "Review this authentication code"
+prpm suggested-inputs add @user/package-name "Find security vulnerabilities"
+
+# List current inputs
+prpm suggested-inputs list @user/package-name
+
+# Remove an input
+prpm suggested-inputs remove @user/package-name <input-id>
+```
+
+Suggested inputs appear automatically in the playground, making it easier for users to test your package with relevant examples.
+
+## CLI Commands Reference
+
+### `prpm playground`
+
+Test a package or custom prompt with AI models.
+
+```bash
+prpm playground [options]
+```
+
+**Options:**
+- `-p, --package <name>` - Package name to test
+- `--input <text>` - Input text (omit for interactive mode)
+- `-m, --model <model>` - AI model (sonnet, opus, gpt-4o, gpt-4o-mini, gpt-4-turbo)
+- `-c, --compare` - Compare with and without prompt (baseline)
+- `-i, --interactive` - Start interactive conversation mode
+- `-v, --version <version>` - Specific package version to test
+- `--custom <prompt>` - Use custom prompt string (verified authors only)
+- `--prompt-file <file>` - Load custom prompt from file (verified authors only)
+
+**Examples:**
+
+```bash
+# Package testing
+prpm playground --package @anthropic/code-reviewer --input "Review this: console.log('hi')"
+prpm playground -p @user/brainstorm -i
+prpm playground -p @user/optimizer --input "Optimize this" --compare
+
+# Custom prompts (verified authors only)
+prpm playground --custom "You are a concise assistant" --input "Explain async"
+prpm playground --prompt-file ./my-prompt.txt --input "Test"
+prpm playground --prompt-file ./my-prompt.txt --input "Test" --compare
+
+# Interactive mode
+prpm playground -p @user/prompt -i
+prpm playground --prompt-file ./my-prompt.txt --interactive
+```
+
+### `prpm subscribe`
+
+Manage your PRPM+ subscription.
+
+```bash
+prpm subscribe [command]
+```
+
+**Commands:**
+- (no command) - Subscribe to PRPM+
+- `status` - View subscription status and credits
+- `cancel` - Cancel your subscription
+
+**Examples:**
+
+```bash
+# Subscribe to PRPM+
+prpm subscribe
+
+# Check your credits and status
+prpm subscribe status
+
+# Cancel subscription
+prpm subscribe cancel
+```
+
+### `prpm buy-credits`
+
+Purchase additional playground credits.
+
+```bash
+prpm buy-credits
+```
+
+Opens an interactive prompt to select and purchase credit packs.
+
+### `prpm suggested-inputs`
+
+Manage suggested test inputs for your packages.
+
+```bash
+prpm suggested-inputs <command> <package> [input]
+```
+
+**Commands:**
+- `add` - Add a suggested input
+- `list` - List all suggested inputs
+- `remove` - Remove a suggested input
+
+**Examples:**
+
+```bash
+# Add a suggested input
+prpm suggested-inputs add @user/my-package "Test with this input"
+
+# List all inputs
+prpm suggested-inputs list @user/my-package
+
+# Remove an input
+prpm suggested-inputs remove @user/my-package abc123
+```
+
+## Best Practices
+
+### For Testing
+
+1. **Use realistic inputs** - Test with inputs you'd actually use in your workflow
+2. **Try multiple models** - Different models excel at different tasks
+3. **Use compare mode** - Verify the package actually adds value
+4. **Test edge cases** - Don't just test the happy path
+5. **Share useful results** - Help the community learn from your tests
+
+### For Package Authors
+
+1. **Add suggested inputs** - Make it easy for users to test effectively
+2. **Monitor analytics** - See how users actually test your package
+3. **Respond to feedback** - Address issues users discover through testing
+4. **Test your own packages** - Verify they work as expected with different models
+5. **Share best results** - Feature great test results in your package README
+
+## Pricing & Limits
+
+### Credit Costs
+
+Credits are spent based on token usage:
+- 1 credit = 5,000 tokens
+- Tokens = input tokens + output tokens
+- Cost shown after each test
+
+### Rate Limits
+
+- **Free tier**: 5 credits total
+- **PRPM+**: 100 credits/month + rollover (max 200)
+- **Credit packs**: No limits, never expire
+
+### Fair Use
+
+Playground is for testing packages, not production AI usage:
+- ✅ Testing packages before installing
+- ✅ Comparing multiple packages
+- ✅ Sharing test results with team
+- ❌ Using as primary AI interface
+- ❌ Automating bulk requests
+- ❌ Sharing account credentials
+
+## Troubleshooting
+
+### "Insufficient credits"
+
+**Solution:** Subscribe to PRPM+ or buy a credit pack:
+```bash
+prpm subscribe
+# or
+prpm buy-credits
+```
+
+### "Package not found"
+
+**Solution:** Verify the package name is correct:
+```bash
+prpm search "package name"
+```
+
+### CLI playground not working
+
+**Solution:** Ensure you're logged in:
+```bash
+prpm login
+prpm playground @user/package "test"
+```
+
+### Test taking too long
+
+**Solution:**
+- Try a faster model (GPT-4o Mini)
+- Reduce input length
+- Check your internet connection
+
+## Support
+
+Need help with Playground?
+
+- **Documentation**: [docs.prpm.dev](https://docs.prpm.dev)
+- **Email**: hello@prpm.dev
+- **Twitter**: [@prpmdev](https://twitter.com/prpmdev)
+- **GitHub**: [github.com/pr-pm/prpm](https://github.com/pr-pm/prpm)

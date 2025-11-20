@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import Header from '@/components/Header'
-import BlogFooter from '@/components/BlogFooter'
 import BackLink from '@/components/BackLink'
 import BlogPostHeader from '@/components/BlogPostHeader'
 
@@ -319,7 +318,7 @@ prpm install @user/openskills-package --as claude`}</code>
             </p>
 
             <ul className="space-y-3 text-gray-300 mb-8 list-disc ml-6">
-              <li><strong className="text-white">Adding new formats is fast</strong> - OpenSkills took <1 day, new formats can be added in hours</li>
+              <li><strong className="text-white">Adding new formats is fast</strong> - OpenSkills took &lt;1 day, new formats can be added in hours</li>
               <li><strong className="text-white">Quality is consistent</strong> - All converters use the same patterns, same tools, same testing approach</li>
               <li><strong className="text-white">Users get choice</strong> - Publish once, install anywhere, no vendor lock-in</li>
               <li><strong className="text-white">Ecosystem grows together</strong> - OpenSkills community + PRPM community = stronger ecosystem for everyone</li>
@@ -469,17 +468,6 @@ prpm publish --format openskills`}</code>
           </div>
         </div>
       </article>
-
-      <BlogFooter
-        previousPost={{
-          title: "Top 50 Cursor Rules",
-          href: "/blog/top-50-cursor-rules"
-        }}
-        nextPost={{
-          title: "agents.md: The Complete Guide",
-          href: "/blog/agents-md-deep-dive"
-        }}
-      />
     </main>
   )
 }

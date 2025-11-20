@@ -34,12 +34,15 @@ export interface SearchResult {
   total: number;
   offset: number;
   limit: number;
+  fallback?: boolean;
+  original_query?: string;
 }
 
 export interface CollectionPackage {
   packageId: string;
   version?: string;
   required: boolean;
+  subtype?: string;
   reason?: string;
   package?: RegistryPackage;
 }
@@ -77,6 +80,7 @@ export interface CollectionInstallResult {
     version: string;
     format: string;
     required: boolean;
+    subtype?: string;
   }[];
 }
 

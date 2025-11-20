@@ -34,7 +34,6 @@ vi.mock('../../db/index.js', () => ({
           verified: true,
           official: false,
           total_downloads: 150,
-          stars: 25,
           rating_average: 4.5,
           rating_count: 10,
           version_count: 5,
@@ -47,8 +46,6 @@ vi.mock('../../db/index.js', () => ({
               { type: 'examples', examples: [{ code: 'test' }] }
             ]
           },
-          readme: 'Test README content',
-          file_size: 5000
         }]
       });
     }
@@ -97,7 +94,6 @@ describe('Quality Scorer', () => {
         verified: true,
         official: false,
         total_downloads: 100,
-        stars: 20,
         rating_average: 4.5,
         rating_count: 10,
         version_count: 3,
@@ -109,9 +105,7 @@ describe('Quality Scorer', () => {
             { type: 'rules', rules: ['Rule 1', 'Rule 2'] },
             { type: 'examples', examples: [{ code: 'example' }] }
           ]
-        },
-        readme: 'Comprehensive README',
-        file_size: 5000
+        } as any,
       };
 
       const score = calculateQualityScore(pkg);
@@ -128,7 +122,6 @@ describe('Quality Scorer', () => {
         verified: false,
         official: false,
         total_downloads: 0,
-        stars: 0,
         rating_count: 0,
         version_count: 1,
         created_at: new Date(),
@@ -155,7 +148,6 @@ describe('Quality Scorer', () => {
         verified: false,
         official: false,
         total_downloads: 0,
-        stars: 0,
         rating_count: 0,
         version_count: 1,
         created_at: new Date(),
@@ -182,7 +174,6 @@ describe('Quality Scorer', () => {
         verified: false,
         official: false,
         total_downloads: 5,
-        stars: 0,
         rating_count: 0,
         version_count: 1,
         created_at: new Date(),
@@ -208,13 +199,12 @@ describe('Quality Scorer', () => {
         verified: false,
         official: false,
         total_downloads: 0,
-        stars: 0,
         rating_count: 0,
         version_count: 1,
         created_at: new Date(),
         tags: [],
         keywords: [],
-        content: null
+        content: undefined
       };
 
       const comprehensive: PackageQualityData = {
@@ -227,8 +217,7 @@ describe('Quality Scorer', () => {
             { type: 'guidelines', content: 'Guidelines' },
             { type: 'metadata', content: 'Metadata' }
           ]
-        },
-        readme: 'Comprehensive README',
+        } as any,
         description: 'Detailed description',
         documentation_url: 'https://docs.example.com'
       };
@@ -253,7 +242,6 @@ describe('Quality Scorer', () => {
         verified: true,
         official: true,
         total_downloads: 10000,
-        stars: 1000,
         rating_average: 5.0,
         rating_count: 100,
         version_count: 20,
@@ -264,9 +252,7 @@ describe('Quality Scorer', () => {
             type: 'instructions',
             content: 'A'.repeat(500)
           })
-        },
-        readme: 'A'.repeat(5000),
-        file_size: 100000
+        } as any,
       };
 
       const score = calculateQualityScore(perfect);
@@ -283,7 +269,6 @@ describe('Quality Scorer', () => {
         verified: false,
         official: false,
         total_downloads: 0,
-        stars: 0,
         rating_count: 0,
         version_count: 1,
         created_at: new Date(),
@@ -291,7 +276,7 @@ describe('Quality Scorer', () => {
         keywords: [],
         content: {
           sections: [{ type: 'instructions', content: 'Test' }]
-        }
+        } as any
       };
 
       const score = await calculateQualityScoreWithAI(pkg, mockServer);
@@ -311,7 +296,6 @@ describe('Quality Scorer', () => {
         verified: false,
         official: false,
         total_downloads: 0,
-        stars: 0,
         rating_count: 0,
         version_count: 1,
         created_at: new Date(),
@@ -319,7 +303,7 @@ describe('Quality Scorer', () => {
         keywords: [],
         content: {
           sections: [{ type: 'instructions', content: 'High quality content' }]
-        }
+        } as any
       };
 
       const score = await calculateQualityScoreWithAI(pkg, mockServer);
@@ -409,7 +393,6 @@ describe('Quality Scorer', () => {
           verified: false,
           official: false,
           total_downloads: downloads,
-          stars: 0,
           rating_count: 0,
           version_count: 1,
           created_at: new Date(),
@@ -430,7 +413,6 @@ describe('Quality Scorer', () => {
         verified: false,
         official: false,
         total_downloads: 0,
-        stars: 0,
         rating_average: 2.5,
         rating_count: 5,
         version_count: 1,
@@ -458,7 +440,6 @@ describe('Quality Scorer', () => {
         verified: false,
         official: false,
         total_downloads: 0,
-        stars: 0,
         rating_average: 5.0,
         rating_count: 1, // Too few
         version_count: 1,
@@ -485,7 +466,6 @@ describe('Quality Scorer', () => {
         verified: false,
         official: false,
         total_downloads: 0,
-        stars: 0,
         rating_count: 0,
         version_count: 1,
         created_at: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000), // 200 days ago

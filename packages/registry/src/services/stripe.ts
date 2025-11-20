@@ -328,6 +328,12 @@ export async function handleWebhookEvent(
         break;
       }
 
+      case 'payment_intent.succeeded': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        await handlePaymentIntentSucceeded(server, paymentIntent);
+        break;
+      }
+
       default:
         server.log.info({ eventType }, 'ℹ️  Unhandled webhook event type');
     }
@@ -344,16 +350,93 @@ export async function handleWebhookEvent(
 }
 
 /**
+ * Handle PRPM+ subscription update/creation for individual users
+ */
+async function handlePRPMPlusSubscription(
+  server: FastifyInstance,
+  subscription: Stripe.Subscription
+): Promise<void> {
+  const userId = subscription.metadata.userId;
+
+  if (!userId) {
+    server.log.warn({ subscriptionId: subscription.id }, 'PRPM+ subscription missing userId in metadata');
+    return;
+  }
+
+  server.log.info(
+    { userId, subscriptionId: subscription.id, status: subscription.status },
+    'Processing PRPM+ subscription update'
+  );
+
+  // Update user subscription status
+  await query(
+    server,
+    `UPDATE users
+     SET
+       prpm_plus_subscription_id = $1,
+       prpm_plus_status = $2,
+       prpm_plus_cancel_at_period_end = $3,
+       prpm_plus_current_period_end = to_timestamp($4)
+     WHERE id = $5`,
+    [
+      subscription.id,
+      subscription.status,
+      subscription.cancel_at_period_end,
+      subscription.current_period_end,
+      userId,
+    ]
+  );
+
+  // If subscription becomes active, grant 100 monthly credits
+  if (subscription.status === 'active') {
+    const periodEnd = new Date(subscription.current_period_end * 1000);
+
+    await query(
+      server,
+      `INSERT INTO playground_credits (user_id, monthly_credits, monthly_reset_at, balance, lifetime_earned)
+       VALUES ($1, 100, $2, 100, 100)
+       ON CONFLICT (user_id)
+       DO UPDATE SET
+         monthly_credits = 100,
+         monthly_reset_at = $2,
+         balance = playground_credits.balance + (100 - playground_credits.monthly_credits + playground_credits.monthly_credits_used),
+         monthly_credits_used = 0,
+         lifetime_earned = playground_credits.lifetime_earned + 100,
+         updated_at = NOW()`,
+      [userId, periodEnd]
+    );
+
+    // Log transaction
+    await query(
+      server,
+      `INSERT INTO playground_credit_transactions (user_id, amount, balance_after, transaction_type, description, metadata)
+       SELECT $1, 100, balance, 'monthly', 'PRPM+ monthly credits', $2
+       FROM playground_credits WHERE user_id = $1`,
+      [userId, JSON.stringify({ subscriptionId: subscription.id })]
+    );
+
+    server.log.info({ userId }, 'PRPM+ monthly credits granted');
+  }
+}
+
+/**
  * Handle subscription update/creation
  */
 async function handleSubscriptionUpdate(
   server: FastifyInstance,
   subscription: Stripe.Subscription
 ): Promise<void> {
+  // Check if this is a PRPM+ subscription (individual user)
+  if (subscription.metadata.type === 'prpm_plus') {
+    await handlePRPMPlusSubscription(server, subscription);
+    return;
+  }
+
+  // Otherwise handle as organization subscription
   const orgId = subscription.metadata.org_id;
 
   if (!orgId) {
-    server.log.warn({ subscriptionId: subscription.id }, 'Subscription missing org_id metadata');
+    server.log.warn({ subscriptionId: subscription.id }, 'Subscription missing org_id or type metadata');
     return;
   }
 
@@ -429,10 +512,44 @@ async function handleSubscriptionDeleted(
   server: FastifyInstance,
   subscription: Stripe.Subscription
 ): Promise<void> {
+  // Check if this is a PRPM+ subscription
+  if (subscription.metadata.type === 'prpm_plus') {
+    const userId = subscription.metadata.userId;
+
+    if (!userId) {
+      server.log.warn({ subscriptionId: subscription.id }, 'PRPM+ subscription missing userId in metadata');
+      return;
+    }
+
+    server.log.info({ userId, subscriptionId: subscription.id }, 'PRPM+ subscription cancelled');
+
+    // Update user status
+    await query(
+      server,
+      `UPDATE users
+       SET prpm_plus_status = 'canceled', prpm_plus_cancel_at_period_end = FALSE
+       WHERE id = $1`,
+      [userId]
+    );
+
+    // Remove monthly credits allocation (but don't touch purchased/rollover credits)
+    await query(
+      server,
+      `UPDATE playground_credits
+       SET monthly_credits = 0, monthly_reset_at = NULL, updated_at = NOW()
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    server.log.info({ userId }, '✅ PRPM+ subscription deleted');
+    return;
+  }
+
+  // Otherwise handle organization subscription
   const orgId = subscription.metadata.org_id;
 
   if (!orgId) {
-    server.log.warn({ subscriptionId: subscription.id }, 'Subscription missing org_id metadata');
+    server.log.warn({ subscriptionId: subscription.id }, 'Subscription missing org_id or type metadata');
     return;
   }
 
@@ -447,7 +564,7 @@ async function handleSubscriptionDeleted(
     [new Date(subscription.ended_at ? subscription.ended_at * 1000 : Date.now()), orgId]
   );
 
-  server.log.info({ orgId, subscriptionId: subscription.id }, '✅ Subscription deleted');
+  server.log.info({ orgId, subscriptionId: subscription.id }, '✅ Organization subscription deleted');
 }
 
 /**
@@ -631,6 +748,58 @@ async function getOrgIdFromEvent(
   }
 
   return null;
+}
+
+/**
+ * Handle successful payment intent (for one-time credit purchases)
+ */
+async function handlePaymentIntentSucceeded(
+  server: FastifyInstance,
+  paymentIntent: Stripe.PaymentIntent
+): Promise<void> {
+  server.log.info({ paymentIntentId: paymentIntent.id, metadata: paymentIntent.metadata }, '💳 Processing successful payment intent');
+
+  // Check if this is a playground credit purchase
+  if (paymentIntent.metadata?.type === 'playground_credits') {
+    const userId = paymentIntent.metadata.userId;
+    const credits = parseInt(paymentIntent.metadata.credits || '0');
+
+    if (!userId || !credits) {
+      server.log.error({ paymentIntentId: paymentIntent.id }, 'Missing userId or credits in payment intent metadata');
+      return;
+    }
+
+    server.log.info({ userId, credits, paymentIntentId: paymentIntent.id }, 'Adding playground credits for successful purchase');
+
+    // Import PlaygroundCreditsService
+    const { PlaygroundCreditsService } = await import('./playground-credits.js');
+    const creditsService = new PlaygroundCreditsService(server);
+
+    try {
+      // Add credits to user balance
+      await creditsService.addCredits(
+        userId,
+        credits,
+        'purchase',
+        `Purchased ${credits} playground credits`,
+        { stripePaymentIntentId: paymentIntent.id }
+      );
+
+      // Update purchase record status
+      await query(
+        server,
+        `UPDATE playground_credit_purchases
+         SET stripe_status = 'succeeded', completed_at = NOW()
+         WHERE stripe_payment_intent_id = $1`,
+        [paymentIntent.id]
+      );
+
+      server.log.info({ userId, credits }, '✅ Successfully added playground credits');
+    } catch (error) {
+      server.log.error({ error, userId, paymentIntentId: paymentIntent.id }, '❌ Failed to add playground credits');
+      throw error;
+    }
+  }
 }
 
 /**

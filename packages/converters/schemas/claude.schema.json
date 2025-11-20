@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/claude.schema.json",
+  "title": "Claude Code Format",
+  "description": "JSON Schema for Claude Code agents, skills, and slash commands format",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "description": "YAML frontmatter enclosed in --- markers",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Identifier/slug for the agent/skill/command (e.g., 'code-reviewer', 'refactor-helper')"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what this does"
+        },
+        "allowed-tools": {
+          "type": "string",
+          "description": "Comma-separated list of available tools (e.g., 'Read, Write, Bash, WebSearch')",
+          "pattern": "^[A-Za-z]+(,\\s*[A-Za-z]+)*$"
+        },
+        "model": {
+          "type": "string",
+          "enum": ["sonnet", "opus", "haiku", "inherit"],
+          "description": "Claude model to use for this agent"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content following the frontmatter. Should include H1 title (can include emoji icon), persona instructions, guidelines, examples, etc."
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "name": "code-reviewer",
+        "description": "Reviews code for best practices",
+        "allowed-tools": "Read, Grep, Bash",
+        "model": "sonnet"
+      },
+      "content": "# 🔍 Code Reviewer\n\nYou are an expert code reviewer.\n\n## Instructions\n\n- Check for code smells\n- Verify test coverage"
+    }
+  ]
+}

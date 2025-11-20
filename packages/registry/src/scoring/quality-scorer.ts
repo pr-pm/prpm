@@ -14,6 +14,7 @@
 import { FastifyInstance } from 'fastify';
 import { query } from '../db/index.js';
 import { evaluatePromptWithAI } from './ai-evaluator.js';
+import type { CanonicalContent } from '../types/canonical.js';
 
 export interface QualityScoreFactors {
   // Content quality (0-2.0 points) - PROMPT FIRST
@@ -53,15 +54,16 @@ export interface PackageQualityData {
   verified: boolean;
   official?: boolean;
   total_downloads: number;
-  stars: number;
   rating_average?: number;
   rating_count: number;
   version_count: number;
   last_published_at?: Date;
   created_at: Date;
+  format?: string; // Package format (cursor, claude, etc.)
+  subtype?: string; // Package subtype (rule, skill, agent, etc.)
 
   // Prompt content fields
-  content?: any; // Canonical format content
+  content?: CanonicalContent | string; // Canonical format content or raw string
   readme?: string; // README content
   file_size?: number; // Tarball size as proxy for content
 }
@@ -88,7 +90,7 @@ export function calculateQualityScore(pkg: PackageQualityData): number {
 
     // Engagement (20% = 1.0 points)
     downloadScore: scoreDownloads(pkg.total_downloads),
-    starScore: scoreStars(pkg.stars),
+    starScore: scoreStars(0), // Stars not yet implemented
     ratingScore: scoreRating(pkg.rating_average, pkg.rating_count),
 
     // Maintenance (10% = 0.5 points)
@@ -112,7 +114,10 @@ export async function calculateQualityScoreWithAI(
   server: FastifyInstance
 ): Promise<number> {
   // Get AI evaluation score for prompt content (0.0 - 1.0, maps to max 1.0 points)
-  const aiScore = await evaluatePromptWithAI(pkg.content, server);
+  const aiScore = await evaluatePromptWithAI(pkg.content, server, {
+    format: pkg.format || 'unknown',
+    subtype: pkg.subtype || 'unknown'
+  });
 
   const factors: QualityScoreFactors = {
     // Content Quality (40% = 2.0 points) - AI-POWERED PROMPT EVALUATION
@@ -132,7 +137,7 @@ export async function calculateQualityScoreWithAI(
 
     // Engagement (20% = 1.0 points)
     downloadScore: scoreDownloads(pkg.total_downloads),
-    starScore: scoreStars(pkg.stars),
+    starScore: scoreStars(0), // Stars not yet implemented
     ratingScore: scoreRating(pkg.rating_average, pkg.rating_count),
 
     // Maintenance (10% = 0.5 points)
@@ -151,12 +156,30 @@ export async function calculateQualityScoreWithAI(
  * Score prompt content quality (0-1.0 points) - THE MOST IMPORTANT FACTOR
  * Analyzes the actual prompt/rule/skill content for depth and usefulness
  */
-function scorePromptContent(content?: any): number {
+function scorePromptContent(content?: CanonicalContent | string | any): number {
   if (!content) return 0;
 
   let score = 0;
 
   try {
+    // Handle string content
+    if (typeof content === 'string') {
+      const length = content.length;
+      // Length-based scoring for raw content
+      if (length >= 2000) score += 0.5;
+      else if (length >= 1000) score += 0.4;
+      else if (length >= 500) score += 0.3;
+      else if (length >= 200) score += 0.2;
+
+      // Check for examples (code blocks)
+      if (content.includes('```') || content.includes('Example:')) score += 0.1;
+
+      // Check for structure (headings)
+      if ((content.match(/^#+\s/gm) || []).length >= 3) score += 0.1;
+
+      return Math.min(score, 1.0);
+    }
+
     // For canonical format
     if (content.sections && Array.isArray(content.sections)) {
       const sections = content.sections;
@@ -212,7 +235,7 @@ function scorePromptContent(content?: any): number {
  * Score prompt length and substance (0-0.3 points)
  * Checks both structured content and README
  */
-function scorePromptLength(content?: any, readme?: string): number {
+function scorePromptLength(content?: CanonicalContent | string | any, readme?: string): number {
   let totalLength = 0;
 
   // Content length
@@ -243,8 +266,20 @@ function scorePromptLength(content?: any, readme?: string): number {
  * Score examples in content (0-0.2 points)
  * Code examples and demonstrations are crucial for understanding
  */
-function scoreExamples(content?: any): number {
-  if (!content || !content.sections) return 0;
+function scoreExamples(content?: CanonicalContent | string | any): number {
+  if (!content) return 0;
+
+  // Handle string content
+  if (typeof content === 'string') {
+    const codeBlockCount = (content.match(/```/g) || []).length / 2; // Each code block has 2 backtick sets
+    if (codeBlockCount >= 5) return 0.2;
+    if (codeBlockCount >= 3) return 0.15;
+    if (codeBlockCount >= 1) return 0.1;
+    return 0;
+  }
+
+  // Handle canonical format
+  if (!content.sections) return 0;
 
   try {
     const sections = content.sections;
@@ -390,22 +425,23 @@ async function getAuthorPackageCount(server: FastifyInstance, authorId: string):
 
 /**
  * Update quality score for a single package
+ * @param content - Optional package content. If not provided, will be fetched from package_versions.metadata
  */
 export async function updatePackageQualityScore(
   server: FastifyInstance,
-  packageId: string
+  packageId: string,
+  content?: string
 ): Promise<number> {
   server.log.info({ packageId }, '🎯 Starting quality score calculation');
 
-  // Fetch package data with content fields for prompt analysis
+  // Fetch package data
   const pkgResult = await query<PackageQualityData>(
     server,
     `SELECT
       id, description, documentation_url, repository_url,
       homepage_url, keywords, tags, author_id, verified, official,
-      total_downloads, stars, rating_average, rating_count, version_count,
-      last_published_at, created_at,
-      content, readme, file_size
+      total_downloads, rating_average, rating_count, version_count,
+      last_published_at, created_at, format, subtype
      FROM packages
      WHERE id = $1`,
     [packageId]
@@ -423,9 +459,11 @@ export async function updatePackageQualityScore(
     verified: pkg.verified,
     official: pkg.official,
     downloads: pkg.total_downloads,
-    stars: pkg.stars,
     versions: pkg.version_count
   }, '📋 Package metadata retrieved');
+
+  // Add content to package data
+  pkg.content = content;
 
   // Calculate base score with AI evaluation
   const startTime = Date.now();
@@ -544,9 +582,8 @@ export async function getQualityScoreBreakdown(
     `SELECT
       id, description, documentation_url, repository_url,
       homepage_url, keywords, tags, author_id, verified, official,
-      total_downloads, stars, rating_average, rating_count, version_count,
-      last_published_at, created_at,
-      content, readme, file_size
+      total_downloads, rating_average, rating_count, version_count,
+      last_published_at, created_at, format, subtype
      FROM packages
      WHERE id = $1`,
     [packageId]
@@ -559,7 +596,10 @@ export async function getQualityScoreBreakdown(
   const pkg = pkgResult.rows[0];
 
   // Get AI evaluation score
-  const aiScore = await evaluatePromptWithAI(pkg.content, server);
+  const aiScore = await evaluatePromptWithAI(pkg.content, server, {
+    format: pkg.format || 'unknown',
+    subtype: pkg.subtype || 'unknown'
+  });
 
   // Calculate factors using AI-powered approach
   const authorBonus = await getAuthorPackageCount(server, pkg.author_id);
@@ -582,7 +622,7 @@ export async function getQualityScoreBreakdown(
 
     // Engagement (20% = 1.0 points)
     downloadScore: scoreDownloads(pkg.total_downloads),
-    starScore: scoreStars(pkg.stars),
+    starScore: scoreStars(0), // Stars not yet implemented
     ratingScore: scoreRating(pkg.rating_average, pkg.rating_count),
 
     // Maintenance (10% = 0.5 points)

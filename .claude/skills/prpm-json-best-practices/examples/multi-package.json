@@ -1,9 +1,9 @@
 {
   "name": "prpm-packages",
   "version": "1.0.0",
-  "author": "Your Name",
+  "author": "yourgithubusername",
   "license": "MIT",
-  "repository": "https://github.com/username/repo",
+  "repository": "https://github.com/yourgithubusername/repo",
   "organization": "your-org",
   "packages": [
     {

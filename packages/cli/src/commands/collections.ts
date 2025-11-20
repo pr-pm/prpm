@@ -14,6 +14,7 @@ import {
   addCollectionToLockfile,
   getCollectionFromLockfile,
 } from '../core/lockfile';
+import { CLIError } from '../core/errors';
 
 /**
  * Search collections by query
@@ -68,7 +69,9 @@ export async function handleCollectionsSearch(
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
-        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        if (c.author) {
+          console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        }
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -83,7 +86,9 @@ export async function handleCollectionsSearch(
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
-        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        if (c.author) {
+          console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        }
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -114,7 +119,7 @@ export async function handleCollectionsSearch(
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to search collections: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -163,7 +168,9 @@ export async function handleCollectionsList(options: {
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
-        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        if (c.author) {
+          console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        }
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -178,7 +185,9 @@ export async function handleCollectionsList(options: {
         if (c.description) {
           console.log(`      ${c.description.substring(0, 70)}${c.description.length > 70 ? '...' : ''}`);
         }
-        console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        if (c.author) {
+          console.log(`      👤 by @${c.author}${c.verified ? ' ✓' : ''}`);
+        }
         console.log(`      ⬇️  ${c.downloads.toLocaleString()} installs · ⭐ ${c.stars.toLocaleString()} stars`);
         console.log('');
       });
@@ -216,7 +225,7 @@ export async function handleCollectionsList(options: {
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to list collections: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -268,7 +277,9 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
     console.log(`   Stars: ${collection.stars.toLocaleString()}`);
     console.log(`   Version: ${collection.version}`);
     console.log(`   Packages: ${collection.packages.length}`);
-    console.log(`   Author: ${collection.author}${collection.verified ? ' ✓' : ''}`);
+    if (collection.author) {
+      console.log(`   Author: ${collection.author}${collection.verified ? ' ✓' : ''}`);
+    }
     if (collection.category) {
       console.log(`   Category: ${collection.category}`);
     }
@@ -346,7 +357,7 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to get collection info: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -367,7 +378,7 @@ export async function handleCollectionPublish(
     // Check authentication
     if (!config.token) {
       console.error('\n❌ Authentication required. Run `prpm login` first.\n');
-      process.exit(1);
+      throw new CLIError('\n❌ Authentication required. Run `prpm login` first.', 1);
     }
 
     console.log('📦 Publishing collection...\n');
@@ -462,7 +473,7 @@ export async function handleCollectionPublish(
       error: errorMessage,
       duration: Date.now() - startTime,
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to publish collection: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }
@@ -535,6 +546,7 @@ export async function handleCollectionInstall(
 
     // Install packages sequentially
     const installedPackageIds: string[] = [];
+    let hasClaudeHooks = false;
     for (let i = 0; i < packages.length; i++) {
       const pkg = packages[i];
       const progress = `${i + 1}/${packages.length}`;
@@ -542,14 +554,30 @@ export async function handleCollectionInstall(
       try {
         console.log(`\n  ${progress} Installing ${pkg.packageId}@${pkg.version}...`);
 
-        await handleInstall(`${pkg.packageId}@${pkg.version}`, {
-          as: pkg.format,
+        // Only pass 'as' format if user explicitly requested it via --as flag
+        // Otherwise, handleInstall will use this priority order:
+        // 1. defaultFormat from .prpmrc config
+        // 2. Auto-detection based on existing directories
+        // 3. Package native format
+        const installOptions: any = {
           fromCollection: {
             scope,
             name_slug,
             version: collection.version || version || '1.0.0',
           },
-        });
+        };
+
+        // Only set 'as' if user explicitly provided a format
+        if (options.format) {
+          installOptions.as = options.format;
+        }
+
+        // Track if this collection contains Claude hooks
+        if (pkg.format === 'claude' && pkg.subtype === 'hook') {
+          hasClaudeHooks = true;
+        }
+
+        await handleInstall(`${pkg.packageId}@${pkg.version}`, installOptions);
 
         console.log(`  ${progress} ✓ ${pkg.packageId}`);
         installedPackageIds.push(pkg.packageId);
@@ -582,6 +610,12 @@ export async function handleCollectionInstall(
       console.log(`   ${packagesFailed} optional packages failed`);
     }
     console.log(`   🔒 Collection tracked in lock file`);
+
+    // Show Claude hooks warning if any were installed
+    if (hasClaudeHooks) {
+      console.log(`\n⚠️  This collection includes Claude hooks that execute automatically.`);
+      console.log(`   📖 Review hook configurations in .claude/settings.json`);
+    }
     console.log('');
 
     await telemetry.track({
@@ -610,7 +644,7 @@ export async function handleCollectionInstall(
         failed: packagesFailed,
       },
     });
-    process.exit(1);
+    throw new CLIError(`\n❌ Failed to install collection: ${errorMessage}`, 1);
   } finally {
     await telemetry.shutdown();
   }

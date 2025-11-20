@@ -46,6 +46,8 @@ export interface UserConfig {
   registryUrl?: string;
   token?: string;
   username?: string;
+  userId?: string;
+  email?: string;
   telemetryEnabled?: boolean;
   defaultFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'canonical';
   /** Cursor MDC header configuration */
@@ -186,6 +188,8 @@ export async function clearAuth(): Promise<void> {
   const config = await getConfig();
   delete config.token;
   delete config.username;
+  delete config.userId;
+  delete config.email;
   await saveConfig(config);
 }
 

@@ -17,7 +17,9 @@ import { setupRedis } from './cache/redis.js';
 import { setupAuth } from './auth/index.js';
 import { registerRoutes } from './routes/index.js';
 import { registerTelemetryPlugin, telemetry } from './telemetry/index.js';
-import { startAnalyticsCron } from './services/analytics-cron.js';
+import { startCronScheduler } from './services/cron-scheduler.js';
+import { SeoDataService } from './services/seo-data.js';
+import { setupMigrationCron } from './services/migration-cron.js';
 
 async function buildServer() {
   // Configure logger with pino-pretty for colored output
@@ -65,7 +67,11 @@ async function buildServer() {
     requestIdLogLabel: 'reqId',
     requestIdHeader: 'x-request-id',
     genReqId: (req) => (req.headers?.['x-request-id'] as string) || crypto.randomUUID(),
+    bodyLimit: 100 * 1024 * 1024, // 100MB max request body (for large package uploads)
   });
+
+  // Attach config to server for access in routes
+  server.decorate('config', config);
 
   // Security headers
   await server.register(helmet, {
@@ -79,15 +85,89 @@ async function buildServer() {
     },
   });
 
-  // Rate limiting
+  // Setup Redis first (required for rate limiting)
+  // NOTE: Redis must be set up before rate limiting because we use it as the store
+  // for distributed, per-IP and per-user rate limiting across multiple server instances
+  server.log.info('🔌 Connecting to Redis...');
+  try {
+    await setupRedis(server);
+    server.log.info('✅ Redis connected');
+  } catch (error) {
+    server.log.error({ error }, '❌ Redis connection failed');
+    throw new Error(`Redis connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  // Rate limiting with Redis store (per-IP or per-user)
+  // Uses Redis to track limits across distributed server instances
+  // Authenticated users: limited per user ID
+  // Anonymous users: limited per IP address
   await server.register(rateLimit, {
     max: 100, // 100 requests
     timeWindow: '1 minute',
+    skipOnError: true,
+    redis: server.redis, // Use Redis for distributed rate limiting
+    // Generate unique key per IP address or authenticated user
+    keyGenerator: (request) => {
+      // For authenticated users, use user ID
+      const userId = (request.user as any)?.user_id;
+      if (userId) {
+        return `ratelimit:user:${userId}`;
+      }
+
+      // For anonymous users, use IP address
+      // Support both direct connections and proxied connections
+      const ip = request.headers['x-forwarded-for'] ||
+                 request.headers['x-real-ip'] ||
+                 request.ip;
+
+      return `ratelimit:ip:${ip}`;
+    },
     errorResponseBuilder: () => ({
       error: 'Too Many Requests',
       message: 'Rate limit exceeded. Please try again later.',
       statusCode: 429,
     }),
+    // Exempt requests from official webapp, CLI, and specific endpoints
+    allowList: (request) => {
+      const path = request.url || '';
+      const origin = request.headers.origin || '';
+      const referer = request.headers.referer || '';
+      const userAgent = request.headers['user-agent'] || '';
+
+      // NEVER rate limit requests from official webapp domains
+      const webappDomains = [
+        'prpm.dev',
+        'www.prpm.dev',
+        'localhost:3000',
+        'localhost:5173',
+      ];
+
+      const isWebappRequest = webappDomains.some(domain =>
+        origin.includes(domain) || referer.includes(domain)
+      );
+
+      if (isWebappRequest) {
+        return true; // Exempt all webapp requests
+      }
+
+      // NEVER rate limit requests from official CLI
+      // CLI identifies itself with User-Agent: prpm-cli/version
+      const isCliRequest = userAgent.startsWith('prpm-cli/');
+
+      if (isCliRequest) {
+        return true; // Exempt all CLI requests
+      }
+
+      // Also exempt build-time and SEO endpoints
+      // These endpoints are authenticated via tokens and used for:
+      // - /ssg-data: Fetching all packages for static site generation (X-SSG-Token)
+      // - /seo/: Generating sitemap data for search engines
+      // NO RATE LIMITS on these endpoints to allow fast builds
+      return (
+        path.includes('/ssg-data') ||    // Build-time data fetching (unlimited)
+        path.includes('/seo/')            // SEO sitemap generation (unlimited)
+      );
+    },
   });
 
   // CORS
@@ -161,16 +241,6 @@ async function buildServer() {
     throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
-  // Redis cache with retry logic
-  server.log.info('🔌 Connecting to Redis...');
-  try {
-    await setupRedis(server);
-    server.log.info('✅ Redis connected');
-  } catch (error) {
-    server.log.error({ error }, '❌ Redis connection failed');
-    throw new Error(`Redis connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-
   // Authentication
   server.log.info('🔐 Setting up authentication...');
   try {
@@ -196,9 +266,25 @@ async function buildServer() {
   await registerRoutes(server);
   server.log.info('✅ Routes registered');
 
-  // Analytics cron jobs
-  server.log.info('⏰ Starting analytics cron...');
-  startAnalyticsCron(server);
+  // SEO data service (async rebuilds for SSG data)
+  const seoDataService = new SeoDataService(server);
+  if (seoDataService.isEnabled()) {
+    server.log.info('🗂️  SEO data service enabled');
+  } else {
+    server.log.info('🗂️  SEO data service disabled');
+  }
+  server.decorate('seoData', seoDataService);
+
+  // Start centralized cron scheduler
+  server.log.info('⏰ Starting cron scheduler...');
+  startCronScheduler(server);
+
+  // Setup migration cron job (enabled by default, opt-out with DISABLE_MIGRATION_CRON=true)
+  setupMigrationCron(server, {
+    enabled: process.env.DISABLE_MIGRATION_CRON !== 'true',
+    schedule: process.env.MIGRATION_CRON_SCHEDULE || '*/20 * * * *', // Every 20 minutes by default
+    batchSize: parseInt(process.env.MIGRATION_CRON_BATCH_SIZE || '100', 10),
+  });
 
   // Request logging hook
   server.addHook('onRequest', async (request, reply) => {
@@ -216,8 +302,8 @@ async function buildServer() {
       method: request.method,
       url: request.url,
       statusCode: reply.statusCode,
-      responseTime: reply.getResponseTime()
-    }, `⬅️  ${request.method} ${request.url} - ${reply.statusCode} (${Math.round(reply.getResponseTime())}ms)`);
+      responseTime: reply.elapsedTime
+    }, `⬅️  ${request.method} ${request.url} - ${reply.statusCode} (${Math.round(reply.elapsedTime)}ms)`);
   });
 
   // Enhanced health check with dependency status
@@ -360,3 +446,6 @@ process.on('SIGTERM', async () => {
     process.exit(1);
   }
 })();
+
+// Export server instance for use in jobs
+export { serverInstance as server, buildServer };

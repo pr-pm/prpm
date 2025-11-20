@@ -1,0 +1,31 @@
+Installing Claude Code hooks used to mean opening settings.json, understanding the structure, copy-pasting JSON config, and fixing syntax errors. Every. Single. Time.
+
+Today, we're excited to announce that PRPM now supports Claude Code hooks as packages.
+
+One command replaces the entire manual setup:
+
+$ prpm install @prpm/prettier-on-save
+✓ Installed to .claude/settings.json
+
+PRPM handles the JSON merging, tracks which packages installed which hooks, and enables clean uninstalls without touching your custom config. Multiple hooks in the same event? They run in parallel automatically.
+
+Real use cases you can install right now:
+• Auto-format code after Claude edits files
+• Log all bash commands Claude executes
+• Block writes to sensitive files like .env
+• Send desktop notifications when input needed
+• Validate code before it gets written
+
+Want a complete workflow? Install a collection:
+
+$ prpm install @prpm/secure-coding
+✓ Installed 4 hooks (env protection, credential validation, audit logging, data scanning)
+
+For hook authors, publishing is just as simple. Create your hook config, run `prpm publish`, and anyone can install it from the registry.
+
+The goal: make automation scripts as shareable and manageable as npm packages.
+
+Browse available hooks and get started:
+https://prpm.dev/blog/claude-hooks-support
+
+#AI #DeveloperTools #Automation #ClaudeCode #DevEx

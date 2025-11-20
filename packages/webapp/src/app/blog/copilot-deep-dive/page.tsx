@@ -257,17 +257,17 @@ This is a TypeScript monorepo using pnpm workspaces.
             <h3 className="text-xl font-bold text-white mb-4">PRPM Documentation</h3>
             <ul className="space-y-2 text-gray-300">
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/GITHUB_COPILOT.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/docs/GITHUB_COPILOT.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   PRPM GitHub Copilot Guide
                 </a>
               </li>
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/FORMAT_CONVERSION.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/docs/FORMAT_CONVERSION.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   PRPM Canonical Format Specification
                 </a>
               </li>
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/IMPORT_FORMAT_SPECS.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/docs/IMPORT_FORMAT_SPECS.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   PRPM Import Format Specifications
                 </a>
               </li>
@@ -278,19 +278,19 @@ This is a TypeScript monorepo using pnpm workspaces.
             <h3 className="text-xl font-bold text-white mb-4">Source Code</h3>
             <ul className="space-y-2 text-gray-300">
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/packages/registry/src/converters/from-copilot.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/packages/converters/src/from-copilot.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   from-copilot.ts Converter
                 </a>
               </li>
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/packages/registry/src/converters/to-copilot.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/packages/converters/src/to-copilot.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   to-copilot.ts Converter
                 </a>
               </li>
             </ul>
           </div>
 
-          <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-purple/20 border border-prpm-accent/30 rounded-2xl p-8 text-center">
+          <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-green/20 border border-prpm-accent/30 rounded-2xl p-8 text-center">
             <h3 className="text-2xl font-bold text-white mb-4">Continue Exploring</h3>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/blog/agents-md-deep-dive" className="px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold transition-all">

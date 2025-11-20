@@ -1,8 +1,8 @@
 ---
 name: PRPM JSON Best Practices
-description: Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management
+description: Best practices for structuring prpm.json package manifests with required fields, tags, organization, multi-package management, enhanced file format, and conversion hints
 author: PRPM Team
-version: 1.0.0
+version: 1.1.0
 tags:
   - prpm
   - package-management
@@ -98,11 +98,14 @@ See `examples/packages-with-collections.json` for complete structure.
 | `organization` | string | Organization name (for scoped packages) |
 | `homepage` | string | Package homepage URL |
 | `documentation` | string | Documentation URL |
+| `license_text` | string | Full text of the license file for proper attribution |
+| `license_url` | string | URL to the license file in the repository |
 | `tags` | string[] | Searchable tags (kebab-case) |
 | `keywords` | string[] | Additional keywords for search |
 | `category` | string | Package category |
 | `private` | boolean | If `true`, won't be published to public registry |
 | `dependencies` | object | Package dependencies (name: semver) |
+| `scripts` | object | Lifecycle scripts (multi-package only) |
 
 ### Multi-Package Fields
 
@@ -375,6 +378,53 @@ Slash command:
 }
 ```
 
+### Enhanced File Format
+
+**Advanced:** Files can be objects with metadata instead of simple strings. Useful for packages with multiple files targeting different formats or needing per-file metadata.
+
+**Enhanced file object structure:**
+```json
+{
+  "files": [
+    {
+      "path": ".cursor/rules/typescript.mdc",
+      "format": "cursor",
+      "subtype": "rule",
+      "name": "TypeScript Rules",
+      "description": "TypeScript coding standards and best practices",
+      "tags": ["typescript", "frontend"]
+    },
+    {
+      "path": ".cursor/rules/python.mdc",
+      "format": "cursor",
+      "subtype": "rule",
+      "name": "Python Rules",
+      "description": "Python best practices for backend development",
+      "tags": ["python", "backend"]
+    }
+  ]
+}
+```
+
+**When to use enhanced format:**
+- Multi-file packages with different formats/subtypes per file
+- Need per-file descriptions or tags
+- Want to provide display names for individual files
+- Building collection packages with mixed content types
+
+**Enhanced file fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `path` | **Yes** | Relative path to file from project root |
+| `format` | **Yes** | File's target format (`cursor`, `claude`, etc.) |
+| `subtype` | No | File's subtype (`rule`, `skill`, `agent`, etc.) |
+| `name` | No | Display name for this file |
+| `description` | No | Description of what this file does |
+| `tags` | No | File-specific tags (array of strings) |
+
+**Note:** Cannot mix simple strings and objects in the same `files` array. Use all strings OR all objects, not both.
+
 **Common Mistake:**
 ```json
 {
@@ -432,6 +482,151 @@ If output is empty, no duplicates exist. If names appear, you have duplicates to
   ]
 }
 ```
+
+## Conversion Hints (Advanced)
+
+**Purpose:** Help improve quality when converting packages to other formats. The `conversion` field provides format-specific hints for cross-format transformations.
+
+**Note:** This is an advanced feature primarily used by format conversion tools. Most packages don't need this.
+
+**Structure:**
+
+```json
+{
+  "name": "my-package",
+  "version": "1.0.0",
+  "format": "claude",
+  "conversion": {
+    "cursor": {
+      "alwaysApply": false,
+      "priority": "high",
+      "globs": ["**/*.ts", "**/*.tsx"]
+    },
+    "kiro": {
+      "inclusion": "fileMatch",
+      "fileMatchPattern": "**/*.ts",
+      "domain": "typescript",
+      "tools": ["fs_read", "fs_write"],
+      "mcpServers": {
+        "database": {
+          "command": "mcp-server-postgres",
+          "args": [],
+          "env": {
+            "DATABASE_URL": "${DATABASE_URL}"
+          }
+        }
+      }
+    },
+    "copilot": {
+      "applyTo": ["src/**", "lib/**"],
+      "excludeAgent": "code-review"
+    }
+  }
+}
+```
+
+**Supported conversion hints:**
+
+### Cursor Hints
+```json
+{
+  "conversion": {
+    "cursor": {
+      "alwaysApply": boolean,      // Whether rule should always apply
+      "priority": "high|medium|low", // Rule priority level
+      "globs": ["**/*.ts"]         // File patterns to auto-attach
+    }
+  }
+}
+```
+
+### Claude Hints
+```json
+{
+  "conversion": {
+    "claude": {
+      "model": "sonnet|opus|haiku|inherit", // Preferred model
+      "tools": ["Read", "Write"],          // Allowed tools
+      "subagentType": "format-conversion"  // Subagent type if agent
+    }
+  }
+}
+```
+
+### Kiro Hints
+```json
+{
+  "conversion": {
+    "kiro": {
+      "inclusion": "always|fileMatch|manual", // When to include
+      "fileMatchPattern": "**/*.ts",         // Pattern for fileMatch mode
+      "domain": "typescript",                // Domain category
+      "tools": ["fs_read", "fs_write"],     // Available tools
+      "mcpServers": {                        // MCP server configs
+        "database": {
+          "command": "mcp-server-postgres",
+          "args": [],
+          "env": { "DATABASE_URL": "${DATABASE_URL}" }
+        }
+      }
+    }
+  }
+}
+```
+
+### Copilot Hints
+```json
+{
+  "conversion": {
+    "copilot": {
+      "applyTo": "src/**",                         // Path patterns
+      "excludeAgent": "code-review|coding-agent"  // Agent to exclude
+    }
+  }
+}
+```
+
+### Continue Hints
+```json
+{
+  "conversion": {
+    "continue": {
+      "alwaysApply": boolean,           // Always apply rule
+      "globs": ["**/*.ts"],             // File patterns
+      "regex": ["import.*from"]         // Regex patterns
+    }
+  }
+}
+```
+
+### Windsurf Hints
+```json
+{
+  "conversion": {
+    "windsurf": {
+      "characterLimit": 12000  // Warn if exceeding limit
+    }
+  }
+}
+```
+
+### Agents.md Hints
+```json
+{
+  "conversion": {
+    "agentsMd": {
+      "project": "my-project",  // Project name
+      "scope": "backend"        // Scope/domain
+    }
+  }
+}
+```
+
+**When to use conversion hints:**
+- Publishing cross-format packages that need specific settings per format
+- Format conversion tools need guidance on how to transform content
+- Package behavior should change based on target format
+- Want to preserve format-specific metadata during conversions
 
 ## Common Patterns
 
@@ -540,6 +735,172 @@ Collections CAN be defined in prpm.json alongside packages using the `collection
 For more details on creating collections, see the PRPM documentation at https://docs.prpm.dev or run `prpm help collections`.
 
 **Summary:** `prpm.json` can contain both packages (skills, agents, rules, slash-commands, etc.) and collections.
+
+## Lifecycle Scripts
+
+**IMPORTANT:** The `scripts` field only applies to **multi-package manifests** (prpm.json with a `packages` array). It does NOT work in single-package manifests.
+
+Use the `scripts` field to run commands automatically during package operations, particularly for building TypeScript hooks before publishing.
+
+### When to Use Scripts
+
+**Primary use case: Building TypeScript Hooks**
+
+If your packages include Claude Code hooks written in TypeScript, you MUST build them to JavaScript before publishing:
+
+```json
+{
+  "name": "my-packages",
+  "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "cd packages/hooks && npm run build"
+  },
+  "packages": [
+    {
+      "name": "my-hook",
+      "version": "1.0.0",
+      "format": "claude",
+      "subtype": "hook",
+      "files": [
+        ".claude/hooks/my-hook/hook.ts",
+        ".claude/hooks/my-hook/hook.json",
+        ".claude/hooks/my-hook/dist/hook.js"
+      ]
+    }
+  ]
+}
+```
+
+### Available Script Types
+
+| Script | When it Runs | Use Case |
+|--------|--------------|----------|
+| `prepublishOnly` | Before `prpm publish` only | **Recommended** - Build hooks, compile assets |
+| `prepublish` | Before publish AND on npm install | **Not recommended** - causes unexpected builds |
+
+**Always use `prepublishOnly` instead of `prepublish`** to avoid running builds when users install your packages.
+
+### prepublishOnly Examples
+
+**Single hook:**
+```json
+{
+  "scripts": {
+    "prepublishOnly": "cd .claude/hooks/my-hook && npm run build"
+  }
+}
+```
+
+**Multiple hooks:**
+```json
+{
+  "scripts": {
+    "prepublishOnly": "cd .claude/hooks/hook-one && npm run build && cd ../hook-two && npm run build"
+  }
+}
+```
+
+**With tests:**
+```json
+{
+  "scripts": {
+    "prepublishOnly": "npm test && cd packages/hooks && npm run build"
+  }
+}
+```
+
+### What Happens During Publishing
+
+When you run `prpm publish`:
+
+1. PRPM checks for `scripts.prepublishOnly` in your prpm.json
+2. If found, runs the script from the directory containing prpm.json
+3. If script succeeds (exit code 0), publishing continues
+4. If script fails (non-zero exit code), publishing is aborted
+
+**Script execution details:**
+- Working directory: Same directory as prpm.json
+- Timeout: 5 minutes (300,000ms) default
+- Environment: Inherits your shell's environment variables
+- Output: Shown in real-time
+
+### Best Practices for Scripts
+
+**DO:**
+- ✅ Use `prepublishOnly` for building hooks
+- ✅ Chain commands with `&&` for dependencies: `npm test && npm run build`
+- ✅ Keep scripts fast (under 1 minute if possible)
+- ✅ Test scripts locally before publishing
+
+**DON'T:**
+- ❌ Use `prepublish` (runs on install too)
+- ❌ Forget to build hooks before publishing
+- ❌ Use scripts in single-package manifests (not supported)
+- ❌ Put long-running operations in scripts
+
+### Common Patterns
+
+**Hooks in packages/ directory:**
+```json
+{
+  "scripts": {
+    "prepublishOnly": "cd packages/hooks && npm run build"
+  }
+}
+```
+
+**Hooks in .claude/ directory:**
+```json
+{
+  "scripts": {
+    "prepublishOnly": "cd .claude/hooks/my-hook && npm run build"
+  }
+}
+```
+
+**Build multiple components:**
+```json
+{
+  "scripts": {
+    "prepublishOnly": "npm run build:hooks && npm run build:assets"
+  }
+}
+```
+
+### Debugging Script Failures
+
+If your prepublishOnly script fails:
+
+1. **Check the output** - Error messages show what went wrong
+2. **Run manually** - Test the exact command in your terminal
+3. **Verify working directory** - Scripts run from prpm.json location
+4. **Check dependencies** - Ensure npm packages are installed
+
+**Example debugging:**
+```bash
+# Test your prepublishOnly script manually
+cd /path/to/prpm.json/directory
+cd packages/hooks && npm run build
+
+# If it works manually but fails in PRPM, check:
+# - Working directory assumptions
+# - Environment variables
+# - Installed dependencies
+```
+
+### Why This Matters
+
+**Without prepublishOnly:**
+- You might forget to build hooks before publishing
+- Published packages contain stale/outdated JavaScript
+- Users install broken hooks
+- Manual builds are error-prone
+
+**With prepublishOnly:**
+- Hooks automatically build before every publish
+- JavaScript always matches TypeScript source
+- Prevents publishing broken code
+- Consistent, reliable publishing workflow
 
 ## Validation Checklist
 

@@ -15,6 +15,9 @@ PRPM supports multiple AI tool formats, allowing you to install packages for dif
 | `cursor` | Cursor IDE | Rules and configurations for Cursor |
 | `continue` | Continue.dev | Prompts for Continue extension |
 | `windsurf` | Windsurf IDE | Rules for Windsurf |
+| `kiro` | Kiro AI | Agents and steering files for Kiro |
+| `gemini` | Gemini CLI | Custom commands for Gemini CLI |
+| `ruler` | Ruler | Coding rules for Ruler |
 | `agents.md` | Agents.md | Agent definitions in agents.md format |
 | `copilot` | GitHub Copilot | Copilot configurations |
 | `generic` | Multiple | Works across multiple tools |
@@ -41,7 +44,9 @@ PRPM auto-detects the format based on your project structure:
 - `.cursor/` directory → `cursor`
 - `.continue/` directory → `continue`
 - `.windsurf/` directory → `windsurf`
+- `.kiro/` directory → `kiro`
 - `.agents/` directory → `agents.md`
+- `.ruler/` directory → `ruler`
 
 ## File Installation Paths
 
@@ -53,6 +58,9 @@ Each format has a standard installation path:
 | `cursor` | `.cursor/rules/` | `.cursor/rules/typescript.mdc` |
 | `continue` | `.continue/prompts/` | `.continue/prompts/refactor.md` |
 | `windsurf` | `.windsurf/rules/` | `.windsurf/rules/python.md` |
+| `kiro` | `.kiro/agents/` or `.kiro/steering/` | `.kiro/agents/code-reviewer.json` |
+| `gemini` | Custom commands directory | `commands/refactor.toml` |
+| `ruler` | `.ruler/rules/` | `.ruler/rules/typescript.md` |
 | `agents.md` | `.agents/` | `.agents/code-reviewer.md` |
 
 ## Multi-Format Packages

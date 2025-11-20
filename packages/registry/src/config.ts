@@ -28,7 +28,8 @@ export function loadConfig(): RegistryConfig {
     },
 
     jwt: {
-      secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this',
+      // SECURITY: No default - must be explicitly set
+      secret: process.env.JWT_SECRET || '',
       expiresIn: process.env.JWT_EXPIRES_IN || '7d',
     },
 
@@ -60,6 +61,23 @@ export function loadConfig(): RegistryConfig {
     ai: {
       anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
       evaluationEnabled: process.env.AI_EVALUATION_ENABLED !== 'false',
+    },
+
+    stripe: {
+      secretKey: process.env.STRIPE_SECRET_KEY || '',
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    },
+
+    frontend: {
+      url: process.env.FRONTEND_URL || 'https://prpm.dev',
+    },
+
+    seoData: {
+      enabled: process.env.SEO_DATA_ENABLED !== 'false',
+      bucket: process.env.SEO_DATA_BUCKET || process.env.S3_BUCKET || 'prpm-packages',
+      prefix: process.env.SEO_DATA_PREFIX || 'seo-data',
+      cacheControl: process.env.SEO_DATA_CACHE_CONTROL || 'public, max-age=300',
     },
   };
 }

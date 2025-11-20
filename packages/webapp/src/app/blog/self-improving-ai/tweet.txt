@@ -1,0 +1,5 @@
+AI that knows when it needs help and installs the expertise it needs.
+
+Watch Claude detect a Pulumi task, search PRPM for infrastructure packages, and install them automatically. Self-improving AI is shipping today.
+
+https://prpm.dev/blog/self-improving-ai

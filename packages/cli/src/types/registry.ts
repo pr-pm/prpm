@@ -64,7 +64,9 @@ export interface ResolveResponse {
 export interface PublishResponse {
   success: boolean;
   package_id: string;
+  name: string;
   version: string;
+  tarball_url: string;
   message: string;
 }
 
@@ -98,6 +100,14 @@ export interface User {
 }
 
 /**
+ * Scripts that can be run during package lifecycle
+ */
+export interface PackageScripts {
+  prepublishOnly?: string; // Run before publishing (recommended - only runs on publish)
+  prepublish?: string; // Run before publishing and on npm install (not recommended)
+}
+
+/**
  * Multi-package manifest (from prpm.json with packages array)
  * Supports publishing multiple packages from a single manifest
  */
@@ -114,6 +124,7 @@ export interface MultiPackageManifest {
   private?: boolean; // Default private setting for all packages (can be overridden per package)
   tags?: string[];
   keywords?: string[];
+  scripts?: PackageScripts; // Lifecycle scripts (prepublishOnly, etc.)
   packages: PackageManifest[];
 }
 

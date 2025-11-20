@@ -8,6 +8,7 @@ import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 import { Format, Subtype } from '../types';
 import * as readline from 'readline';
+import { CLIError } from '../core/errors';
 
 /**
  * Get icon for package format and subtype
@@ -23,6 +24,9 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'collection': '📦',
     'chatmode': '💬',
     'tool': '🔧',
+    'hook': '🪝',
+    'workflow': '🔄',
+    'template': '📄',
   };
 
   // Format-specific icons for rules/defaults
@@ -33,9 +37,11 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'continue': '➡️',
     'copilot': '✈️',
     'kiro': '🎯',
+    'gemini': '✨',
     'mcp': '🔗',
     'agents.md': '📝',
     'openskills': '🎓',
+    'ruler': '📏',
     'generic': '📦',
   };
 
@@ -53,9 +59,11 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'continue': 'Continue',
     'copilot': 'GitHub Copilot',
     'kiro': 'Kiro',
+    'gemini': 'Gemini',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
     'openskills': 'OpenSkills',
+    'ruler': 'Ruler',
     'generic': '',
   };
 
@@ -68,6 +76,9 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'collection': 'Collection',
     'chatmode': 'Chat Mode',
     'tool': 'Tool',
+    'hook': 'Hook',
+    'workflow': 'Workflow',
+    'template': 'Template',
   };
 
   const formatLabel = formatLabels[format];
@@ -104,7 +115,7 @@ function buildSearchFilters(options: { format?: Format; subtype?: Subtype; autho
 /**
  * Build webapp URL for search results
  */
-function buildWebappUrl(query: string, options: { format?: Format; subtype?: Subtype; author?: string }, page: number = 1): string {
+function buildWebappUrl(query: string, options: { format?: Format; subtype?: Subtype; author?: string; language?: string; framework?: string }, page: number = 1): string {
   const baseUrl = process.env.PRPM_WEBAPP_URL || 'https://prpm.dev';
   const params = new URLSearchParams();
 
@@ -112,6 +123,8 @@ function buildWebappUrl(query: string, options: { format?: Format; subtype?: Sub
   if (options.format) params.append('format', options.format);
   if (options.subtype) params.append('subtype', options.subtype);
   if (options.author) params.append('author', options.author);
+  if (options.language) params.append('language', options.language);
+  if (options.framework) params.append('framework', options.framework);
   if (page > 1) params.append('page', page.toString());
 
   return `${baseUrl}/search?${params.toString()}`;
@@ -268,7 +281,7 @@ async function handlePagination(
 
 export async function handleSearch(
   query: string,
-  options: { format?: Format; subtype?: Subtype; author?: string; limit?: number; page?: number; interactive?: boolean }
+  options: { format?: Format; subtype?: Subtype; author?: string; language?: string; framework?: string; limit?: number; page?: number; interactive?: boolean }
 ): Promise<void> {
   const startTime = Date.now();
   let success = false;
@@ -320,6 +333,12 @@ export async function handleSearch(
     if (options.author) {
       searchOptions.author = options.author;
     }
+    if (options.language) {
+      searchOptions.language = options.language;
+    }
+    if (options.framework) {
+      searchOptions.framework = options.framework;
+    }
 
     result = await client.search(query || '', searchOptions);
 
@@ -334,6 +353,25 @@ export async function handleSearch(
       const webappUrl = buildWebappUrl(query, options);
       console.log(`\n🌐 View in browser: ${webappUrl}`);
       return;
+    }
+
+    // Show fallback message if this is a fallback result
+    if (result.fallback) {
+      console.log('\n❌ No packages found for your search');
+
+      // Build filter description
+      let filterMsg = '';
+      if (options.subtype) {
+        filterMsg = ` (${options.subtype}`;
+        if (options.format) {
+          filterMsg += ` for ${options.format}`;
+        }
+        filterMsg += ')';
+      } else if (options.format) {
+        filterMsg = ` (${options.format} format)`;
+      }
+
+      console.log(`\n💡 Showing top 10 most popular packages${filterMsg} instead:\n`);
     }
 
     // If interactive mode is disabled or only one page, show simple results
@@ -382,7 +420,7 @@ export async function handleSearch(
       console.log(`   To use the production registry, remove the registryUrl from ~/.prpmrc`);
     }
 
-    process.exit(1);
+    throw new CLIError(`\n❌ Search failed: ${error}`, 1);
   } finally {
     await telemetry.track({
       command: 'search',
@@ -393,6 +431,8 @@ export async function handleSearch(
         query: query.substring(0, 100),
         format: options.format,
         subtype: options.subtype,
+        language: options.language,
+        framework: options.framework,
         resultCount: success && result ? result.packages.length : 0,
         page: options.page,
         interactive: options.interactive,
@@ -411,13 +451,15 @@ export function createSearchCommand(): Command {
     .description('Search for packages in the registry')
     .argument('[query]', 'Search query (optional when using --format/--subtype or --author)')
     .option('--format <format>', 'Filter by package format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, generic, mcp)')
-    .option('--subtype <subtype>', 'Filter by package subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection)')
+    .option('--subtype <subtype>', 'Filter by package subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection, chatmode, hook)')
     .option('--author <username>', 'Filter by author username')
+    .option('--language <language>', 'Filter by programming language (javascript, typescript, python, etc.)')
+    .option('--framework <framework>', 'Filter by framework (react, nextjs, django, etc.)')
     .option('--limit <number>', 'Number of results per page', '20')
     .option('--page <number>', 'Page number (default: 1)', '1')
     .option('--interactive', 'Enable interactive pagination (default: true for multiple pages)', true)
     .option('--no-interactive', 'Disable interactive pagination')
-    .action(async (query: string | undefined, options: { format?: string; subtype?: string; author?: string; limit?: string; page?: string; interactive?: boolean }) => {
+    .action(async (query: string | undefined, options: { format?: string; subtype?: string; author?: string; language?: string; framework?: string; limit?: string; page?: string; interactive?: boolean }) => {
       const format = options.format as Format | undefined;
       const subtype = options.subtype as Subtype | undefined;
       const author = options.author;
@@ -425,11 +467,11 @@ export function createSearchCommand(): Command {
       const page = options.page ? parseInt(options.page, 10) : 1;
 
       const validFormats: Format[] = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'];
-      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode'];
+      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'];
 
       if (options.format && !validFormats.includes(format!)) {
         console.error(`❌ Format must be one of: ${validFormats.join(', ')}`);
-        process.exit(1);
+        throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}`, 1);
       }
 
       if (options.subtype && !validSubtypes.includes(subtype!)) {
@@ -443,11 +485,10 @@ export function createSearchCommand(): Command {
         console.log(`   prpm search --subtype skill  # List all skills`);
         console.log(`   prpm search --format claude  # List all Claude packages`);
         console.log(`   prpm search --author prpm  # List packages by @prpm`);
-        process.exit(1);
+        throw new CLIError(`❌ Subtype must be one of: ${validSubtypes.join(', ')}`, 1);
       }
 
-      await handleSearch(query || '', { format, subtype, author, limit, page, interactive: options.interactive });
-      process.exit(0);
+      await handleSearch(query || '', { format, subtype, author, language: options.language, framework: options.framework, limit, page, interactive: options.interactive });
     });
 
   return command;

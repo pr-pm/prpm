@@ -23,21 +23,24 @@ export async function setupAuth(server: FastifyInstance) {
   // JWT verification decorator
   server.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
     try {
-      // Dev mode bypass for mock token
       const authHeader = request.headers.authorization;
       const isDev = config.env === 'development' || process.env.NODE_ENV === 'development';
 
       server.log.debug({ isDev, configEnv: config.env, nodeEnv: process.env.NODE_ENV, authHeader }, 'Auth check');
 
-      if (isDev && authHeader === 'Bearer dev-mock-token-khaliqgant') {
-        server.log.info('Dev mode: Using mock token for khaliqgant');
-        // Mock user for khaliqgant in dev mode
+      // Dev mode auto-authentication via environment variable
+      // Set DEV_AUTO_AUTH_USER=username to automatically authenticate as that user in development
+      // Example: DEV_AUTO_AUTH_USER=khaliqgant
+      if (isDev && process.env.DEV_AUTO_AUTH_USER) {
+        const devUsername = process.env.DEV_AUTO_AUTH_USER;
+        server.log.info({ username: devUsername }, 'Dev mode: Auto-authenticating user');
+
         const { queryOne } = await import('../db/index.js');
         type User = { id: string; username: string; email: string; is_admin: boolean };
         const user = await queryOne<User>(
           server,
           'SELECT id, username, email, is_admin FROM users WHERE username = $1',
-          ['khaliqgant']
+          [devUsername]
         );
 
         if (user) {
@@ -51,6 +54,8 @@ export async function setupAuth(server: FastifyInstance) {
           };
           request.user = authUser;
           return;
+        } else {
+          server.log.warn({ username: devUsername }, 'Dev mode: User not found for auto-auth');
         }
       }
 

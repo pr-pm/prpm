@@ -10,9 +10,14 @@ import type {
   PackageManifest,
   PublishResponse
 } from '../types/registry.js';
+import packageJson from '../../package.json';
+
+// CLI version for User-Agent header (exempts from rate limiting)
+const CLI_VERSION = packageJson.version;
 
 export interface RegistryPackage {
   id: string;
+  author?: string;
   description?: string;
   format: Format;
   subtype: Subtype;
@@ -75,6 +80,7 @@ export interface CollectionInstallResult {
     version: string;
     format: string;
     required: boolean;
+    subtype?: string;
   }[];
 }
 
@@ -356,6 +362,7 @@ export class RegistryClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'User-Agent': `prpm-cli/${CLI_VERSION}`,
       ...options.headers as Record<string, string>,
     };
 

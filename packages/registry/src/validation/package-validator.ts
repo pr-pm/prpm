@@ -380,6 +380,7 @@ function validateYAML(content: string): ValidationResult {
 
 /**
  * Security validation
+ * SECURITY: Enhanced scanning for malicious patterns, jailbreaks, and data exfiltration
  */
 function validateSecurity(content: string): ValidationResult {
   const errors: ValidationError[] = [];
@@ -403,11 +404,52 @@ function validateSecurity(content: string): ValidationResult {
     }
   }
 
+  // SECURITY: Check for prompt injection and jailbreak patterns
+  const jailbreakPatterns = [
+    { pattern: /ignore\s+(previous|all|above)\s+(instructions|prompts|rules)/i, message: 'Potential jailbreak: Ignore instructions pattern' },
+    { pattern: /disregard\s+(previous|all|above)/i, message: 'Potential jailbreak: Disregard pattern' },
+    { pattern: /new\s+instructions:/i, message: 'Potential jailbreak: New instructions pattern' },
+    { pattern: /system\s*:\s*you\s+are\s+now/i, message: 'Potential jailbreak: Role redefinition' },
+    { pattern: /forget\s+(everything|all|previous)/i, message: 'Potential jailbreak: Forget pattern' },
+    { pattern: /developer\s+mode|dan\s+mode|god\s+mode/i, message: 'Potential jailbreak: Mode switching' },
+  ];
+
+  for (const { pattern, message } of jailbreakPatterns) {
+    if (pattern.test(content)) {
+      warnings.push({
+        field: 'content',
+        message,
+        suggestion: 'This pattern resembles prompt injection techniques. Manual review may be required.',
+      });
+    }
+  }
+
+  // SECURITY: Check for data exfiltration patterns
+  const exfiltrationPatterns = [
+    { pattern: /send\s+.*\s+to\s+https?:\/\//i, message: 'Potential data exfiltration: Send to URL' },
+    { pattern: /POST\s+.*\s+to\s+https?:\/\//i, message: 'Potential data exfiltration: POST to URL' },
+    { pattern: /fetch\(['"]https?:\/\/[^'"]+\?.*data/i, message: 'Potential data exfiltration: Fetch with data parameter' },
+    { pattern: /secretly|silently|without\s+telling|hide\s+this/i, message: 'Suspicious secrecy language' },
+  ];
+
+  for (const { pattern, message } of exfiltrationPatterns) {
+    if (pattern.test(content)) {
+      warnings.push({
+        field: 'content',
+        message,
+        suggestion: 'This pattern may indicate data exfiltration attempts. Manual review required.',
+      });
+    }
+  }
+
   // Check for secrets (basic patterns)
   const secretPatterns = [
     { pattern: /(?:api[_-]?key|apikey)\s*[:=]\s*['"][a-zA-Z0-9_-]{20,}['"]/i, message: 'Potential API key found' },
     { pattern: /(?:password|passwd|pwd)\s*[:=]\s*['"][^'"]{8,}['"]/i, message: 'Potential password found' },
     { pattern: /(?:token|auth)\s*[:=]\s*['"][a-zA-Z0-9_-]{20,}['"]/i, message: 'Potential auth token found' },
+    { pattern: /-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----/i, message: 'Private key detected' },
+    { pattern: /ghp_[a-zA-Z0-9]{36}/i, message: 'GitHub personal access token detected' },
+    { pattern: /sk-[a-zA-Z0-9]{48}/i, message: 'OpenAI API key detected' },
   ];
 
   for (const { pattern, message } of secretPatterns) {

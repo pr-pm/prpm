@@ -6,10 +6,12 @@ on:
     paths:
       - 'packages/registry/**'
       - 'packages/types/**'
+      - 'packages/converters/**'
       - 'packages/webapp/**'
   schedule:
-    # Rebuild webapp every 6 hours to pick up new packages/collections
-    - cron: '0 */6 * * *'
+    # Rebuild webapp every hour to regenerate static pages with latest data from registry API
+    # With smart caching, builds are fast (~5s) when no new packages added
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       environment:
@@ -30,6 +32,12 @@ on:
           - all
           - registry-only
           - webapp-only
+
+# Prevent concurrent deployments to the same environment
+# Queue new deployments instead of cancelling in-progress ones
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'prod' }}
+  cancel-in-progress: false
 
 env:
   AWS_REGION: us-west-2
@@ -53,6 +61,7 @@ jobs:
             registry:
               - 'packages/registry/**'
               - 'packages/types/**'
+              - 'packages/converters/**'
             webapp:
               - 'packages/webapp/**'
 
@@ -99,8 +108,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build types
+      - name: Build types package
         run: npm run build --workspace=@pr-pm/types
+
+      - name: Build converters package
+        run: npm run build --workspace=@pr-pm/converters
 
       - name: Build registry
         run: npm run build --workspace=@pr-pm/registry
@@ -131,8 +143,27 @@ jobs:
           cd packages/registry
           VERSION_LABEL="v-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:7}"
           echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
-          zip -r ${VERSION_LABEL}.zip . -x "*.git*" "node_modules/*" "src/*" "*.test.ts" "*.spec.ts"
+
+          # Create zip with necessary files for deployment
+          # Exclude node_modules - EB will run npm ci to install from package-lock.json
+          # This includes @pr-pm/types which is published to NPM
+          zip -r ${VERSION_LABEL}.zip \
+            dist/ \
+            package.json \
+            package-lock.json \
+            migrations/ \
+            config/ \
+            .platform/ \
+            .ebextensions/ \
+            Procfile \
+            -x "*.test.ts" \
+            -x "*.spec.ts" \
+            -x "*__tests__/*" \
+            -x "node_modules/*"
+
           echo "✅ Created deployment package: ${VERSION_LABEL}.zip"
+          echo "Package contents (verification):"
+          unzip -l ${VERSION_LABEL}.zip | grep -E "(dist/|package\.json|migrations/)" | head -20
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -345,7 +376,20 @@ jobs:
       - name: Build types package
         run: npm run build --workspace=@pr-pm/types
 
-      - name: Configure AWS credentials for S3 data
+      - name: Verify SSG token is set
+        run: |
+          if [ -z "$SSG_DATA_TOKEN" ]; then
+            echo "❌ ERROR: SSG_DATA_TOKEN secret is not set in GitHub repository"
+            echo "Please add SSG_DATA_TOKEN to repository secrets:"
+            echo "https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          else
+            echo "✅ SSG_DATA_TOKEN is set (length: ${#SSG_DATA_TOKEN} chars)"
+          fi
+        env:
+          SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
+
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -354,11 +398,14 @@ jobs:
 
       - name: Prepare SSG data
         run: |
-          # Use centralized script for SSG data preparation
           chmod +x scripts/prepare-ssg-data.sh
-          DEBUG=true ./scripts/prepare-ssg-data.sh
+          ./scripts/prepare-ssg-data.sh
+        env:
+          SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
+          REGISTRY_URL: "https://registry.prpm.dev"
+          DEBUG: "false"
 
-      - name: Build webapp with SSG
+      - name: Build webapp
         run: |
           cd packages/webapp
           npm ci
@@ -367,7 +414,10 @@ jobs:
           CI: false
           NEXT_PUBLIC_REGISTRY_URL: "https://registry.prpm.dev"
           REGISTRY_URL: "https://registry.prpm.dev"
-          # Don't set NEXT_PUBLIC_S3_SEO_DATA_URL - we want to use local files only during build
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: "https://app.posthog.com"
+          SSG_DATA_TOKEN: ${{ secrets.SSG_DATA_TOKEN }}
 
       - name: Verify build output
         run: |
@@ -382,14 +432,7 @@ jobs:
           fi
 
           echo "✓ Build output verified"
-          find packages/webapp/out -type f | head -20
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          find packages/webapp/out -type f 2>/dev/null | head -20 || true
 
       - name: Deploy to S3
         run: |

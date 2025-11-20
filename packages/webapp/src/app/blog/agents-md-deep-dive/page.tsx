@@ -144,19 +144,19 @@ export default function AgentsMdDeepDivePost() {
           <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 mb-6">
             <ul className="space-y-3 text-gray-300">
               <li className="flex items-start gap-3">
-                <span className="text-prpm-purple mt-1">1.</span>
+                <span className="text-prpm-green mt-1">1.</span>
                 <span><strong>Optional Frontmatter:</strong> Respects simplicity - frontmatter is entirely optional</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="text-prpm-purple mt-1">2.</span>
+                <span className="text-prpm-green mt-1">2.</span>
                 <span><strong>Auto-Description Extraction:</strong> Extracts from first paragraph if not provided</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="text-prpm-purple mt-1">3.</span>
+                <span className="text-prpm-green mt-1">3.</span>
                 <span><strong>Section Type Inference:</strong> Infers semantic types from content structure</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="text-prpm-purple mt-1">4.</span>
+                <span className="text-prpm-green mt-1">4.</span>
                 <span><strong>Auto-Tag Inference:</strong> Automatically detects technology tags from content</span>
               </li>
             </ul>
@@ -328,7 +328,7 @@ npm run dev
             </div>
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6">
               <h4 className="text-lg font-bold text-green-400 mb-3">✅ Specific</h4>
-              <code className="text-sm text-gray-300">"Write unit tests for all utility functions. Maintain {'>'}80% coverage. Use Vitest."</code>
+              <code className="text-sm text-gray-300">"Write unit tests for all utility functions. Maintain {'>'} 80% coverage. Use Vitest."</code>
             </div>
           </div>
 
@@ -349,7 +349,7 @@ npm run dev
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">Using agents.md with PRPM</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
-            PRPM (Prompt Package Manager) makes it easy to discover, install, and share agents.md packages. With <strong>2,100+ packages</strong> across multiple formats, PRPM is the largest cross-platform repository for AI coding guidance.
+            PRPM (Prompt Package Manager) makes it easy to discover, install, and share agents.md packages. With <strong>7,000+ packages</strong> across multiple formats, PRPM is the largest cross-platform repository for AI coding guidance.
           </p>
 
           <h3 className="text-2xl font-bold text-white mt-8 mb-4">Installing agents.md Packages</h3>
@@ -661,7 +661,7 @@ project-root/
             </p>
           </div>
 
-          <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-purple/20 border border-prpm-accent/30 rounded-2xl p-8 text-center">
+          <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-green/20 border border-prpm-accent/30 rounded-2xl p-8 text-center">
             <h3 className="text-2xl font-bold text-white mb-4">Explore More Formats</h3>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/blog/continue-deep-dive" className="px-6 py-3 bg-prpm-accent hover:bg-prpm-accent-light text-white rounded-lg font-semibold transition-all">

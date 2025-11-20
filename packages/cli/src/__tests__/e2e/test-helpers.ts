@@ -36,21 +36,118 @@ export async function createMockPackage(
   type: string = 'cursor',
   version: string = '1.0.0'
 ): Promise<string> {
+  // Determine the file name/path for this format
+  let fileName: string;
+  switch (type) {
+    case 'cursor':
+      fileName = '.cursorrules';
+      break;
+    case 'claude':
+      fileName = '.claude/skills/test-skill/SKILL.md';
+      break;
+    case 'continue':
+      fileName = '.continue/rules/test-rule.md';
+      break;
+    case 'windsurf':
+      fileName = '.windsurfrules';
+      break;
+    case 'copilot':
+      fileName = '.github/copilot-instructions.md';
+      break;
+    case 'generic':
+    default:
+      fileName = 'rules.md';
+      break;
+  }
+
   const manifest = {
     name,
     version,
     description: `Test package ${name}`,
-    type,
+    format: type,
+    subtype: 'rule',
     author: 'test-author',
     tags: ['test', type],
+    files: ['prpm.json', fileName],
   };
 
   const manifestPath = join(testDir, 'prpm.json');
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
 
-  // Create a sample .cursorrules file
-  const rulesPath = join(testDir, '.cursorrules');
-  await writeFile(rulesPath, '# Test cursor rules\n\nAlways write tests.\n');
+  // Create format-specific sample files
+  const rulesPath = join(testDir, fileName);
+  let content: string;
+
+  switch (type) {
+    case 'cursor':
+      // Cursor requires frontmatter with description
+      content = `---
+description: "Test cursor rules for ${name}"
+alwaysApply: false
+---
+
+# Test Cursor Rules
+
+Always write tests.`;
+      break;
+
+    case 'claude':
+      // Claude uses frontmatter with specific fields
+      content = `---
+name: ${name}
+description: Test Claude package
+---
+
+# Claude Instructions
+
+Always write tests.`;
+      break;
+
+    case 'continue':
+      // Continue uses markdown with frontmatter
+      content = `---
+name: ${name}
+description: Test Continue package
+---
+
+# Test Rules
+
+Always write tests.`;
+      break;
+
+    case 'windsurf':
+    case 'agents-md':
+      // These formats use plain markdown without frontmatter requirements
+      content = `# Test Rules
+
+Always write tests.`;
+      break;
+
+    case 'copilot':
+      // Copilot uses frontmatter
+      content = `---
+description: Test Copilot package
+---
+
+# Copilot Instructions
+
+Always write tests.`;
+      break;
+
+    default:
+      // Generic/fallback
+      content = `# Test Rules\n\nAlways write tests.\n`;
+  }
+
+  // Ensure parent directory exists
+  const { dirname } = await import('path');
+  const { mkdir } = await import('fs/promises');
+  const parentDir = dirname(rulesPath);
+  if (parentDir !== testDir) {
+    await mkdir(parentDir, { recursive: true });
+  }
+
+  await writeFile(rulesPath, content);
 
   return manifestPath;
 }
@@ -166,6 +263,7 @@ export function setupGlobalMocks() {
 
 /**
  * Mock process.exit to throw instead of exiting
+ * @deprecated No longer needed - commands now throw CLIError instead of calling process.exit
  */
 export function mockProcessExit() {
   const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null) => {

@@ -1,0 +1,5 @@
+Finding Claude skills means bouncing between ctx.directory, SkillsMP, GitHub repos—then manually copying files into .claude/skills/.
+
+PRPM gives you CLI installation, version control, format conversion, and a testing playground. One command vs 10 minutes of copy-paste.
+
+https://prpm.dev/blog/discovering-claude-skills-prpm-vs-competition

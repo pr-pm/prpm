@@ -13,6 +13,7 @@ import { createIndexCommand } from './commands/index';
 import { createTelemetryCommand } from './commands/telemetry';
 import { createPopularCommand } from './commands/popular';
 import { createSearchCommand } from './commands/search';
+import { createAISearchCommand } from './commands/ai-search';
 import { createInfoCommand } from './commands/info';
 import { createInstallCommand } from './commands/install';
 import { createTrendingCommand } from './commands/trending';
@@ -27,7 +28,15 @@ import { createSchemaCommand } from './commands/schema';
 import { createInitCommand } from './commands/init';
 import { createConfigCommand } from './commands/config';
 import { createCatalogCommand } from './commands/catalog';
+import { createPlaygroundCommand } from './commands/playground';
+import { createCreditsCommand } from './commands/credits';
+import { createSubscribeCommand } from './commands/subscribe';
+import { createBuyCreditsCommand } from './commands/buy-credits';
+import { createStarredCommand } from './commands/starred';
+import { createConvertCommand } from './commands/convert';
+import { createExportCommand } from './commands/export';
 import { telemetry } from './core/telemetry';
+import { CLIError } from './core/errors';
 
 // Read version from package.json
 function getVersion(): string {
@@ -53,6 +62,7 @@ program.addCommand(createCatalogCommand());
 
 // Registry commands (new)
 program.addCommand(createSearchCommand());
+program.addCommand(createAISearchCommand());
 program.addCommand(createInstallCommand());
 program.addCommand(createInfoCommand());
 program.addCommand(createTrendingCommand());
@@ -61,6 +71,7 @@ program.addCommand(createPublishCommand());
 program.addCommand(createLoginCommand());
 program.addCommand(createWhoamiCommand());
 program.addCommand(createCollectionsCommand());
+program.addCommand(createStarredCommand());
 program.addCommand(createOutdatedCommand());
 program.addCommand(createUpdateCommand());
 program.addCommand(createUpgradeCommand());
@@ -71,12 +82,38 @@ program.addCommand(createUninstallCommand());
 program.addCommand(createIndexCommand());
 program.addCommand(createTelemetryCommand());
 
+// Playground commands
+program.addCommand(createPlaygroundCommand());
+program.addCommand(createCreditsCommand());
+program.addCommand(createSubscribeCommand());
+program.addCommand(createBuyCreditsCommand());
+
 // Utility commands
 program.addCommand(createSchemaCommand());
 program.addCommand(createConfigCommand());
+program.addCommand(createConvertCommand());
+program.addCommand(createExportCommand());
 
-// Parse command line arguments
-program.parse();
+// Parse command line arguments with error handling
+(async () => {
+  try {
+    await program.parseAsync();
+    // Command completed successfully - let Node.js exit naturally
+  } catch (error) {
+    if (error instanceof CLIError) {
+      // Print error message if present
+      if (error.message) {
+        console.error(error.message);
+      }
+      // Exit with the error's exit code
+      process.exit(error.exitCode);
+    } else {
+      // Unexpected error - print and exit with code 1
+      console.error('Unexpected error:', error);
+      process.exit(1);
+    }
+  }
+})();
 
 // Cleanup telemetry on exit
 process.on('exit', () => {

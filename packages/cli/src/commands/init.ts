@@ -10,6 +10,7 @@ import { existsSync } from 'fs';
 import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
 import { FORMATS, SUBTYPES } from '../types';
+import { CLIError } from '../core/errors';
 
 interface InitOptions {
   yes?: boolean; // Skip prompts and use defaults
@@ -48,12 +49,12 @@ const FORMAT_EXAMPLES: Record<string, { files: string[]; description: string }> 
     files: ['.windsurf/rules', 'README.md'],
   },
   copilot: {
-    description: 'GitHub Copilot instructions',
-    files: ['.github/copilot-instructions.md', 'README.md'],
+    description: 'GitHub Copilot (repository-wide, path-specific, and chat modes)',
+    files: ['.github/copilot-instructions.md', '.github/instructions/typescript.instructions.md', '.github/chatmodes/code-reviewer.chatmode.md', 'README.md'],
   },
   kiro: {
-    description: 'Kiro steering files',
-    files: ['.kiro/steering/example.md', 'README.md'],
+    description: 'Kiro steering files and hooks',
+    files: ['.kiro/steering/example.md', '.kiro/hooks/example-hook.kiro.hook', 'README.md'],
   },
   'agents.md': {
     description: 'OpenAI agents.md project instructions',
@@ -131,31 +132,49 @@ Add your Windsurf AI coding rules here.
 `,
   },
   copilot: {
-    '.github/copilot-instructions.md': `---
-applyTo:
-  - "**/*.ts"
-  - "**/*.tsx"
----
+    '.github/copilot-instructions.md': `# GitHub Copilot Repository-Wide Instructions
 
-# GitHub Copilot Instructions
-
-Add your GitHub Copilot instructions here.
+These instructions apply to all files in this repository.
 
 ## Code Standards
 
 - Use TypeScript strict mode
 - Follow ESLint rules
-- Write JSDoc comments
+- Write JSDoc comments for public APIs
 
 ## Patterns to Follow
 
 - Use async/await for asynchronous operations
 - Implement error handling with try/catch
 - Export named functions instead of default exports
+- Write unit tests for all new features
 `,
-    '.github/chatmodes/example.chatmode.md': `---
-name: Example Chat Mode
-description: Example custom chat mode for GitHub Copilot
+    '.github/instructions/typescript.instructions.md': `---
+applyTo:
+  - "**/*.ts"
+  - "**/*.tsx"
+---
+
+# TypeScript-Specific Instructions
+
+These instructions apply only to TypeScript files.
+
+## Type Safety
+
+- Use strict null checks
+- Avoid 'any' type - use 'unknown' or specific types
+- Define interfaces for all object shapes
+- Use type guards for runtime type checking
+
+## Patterns
+
+- Prefer const over let
+- Use template literals for string concatenation
+- Destructure objects and arrays when appropriate
+`,
+    '.github/chatmodes/code-reviewer.chatmode.md': `---
+name: Code Reviewer
+description: Expert code reviewer focusing on best practices, security, and maintainability
 ---
 
 # Example Chat Mode
@@ -207,6 +226,23 @@ Describe the context where this steering file applies.
 
 Provide examples of correct patterns.
 `,
+    '.kiro/hooks/example-hook.kiro.hook': `{
+  "enabled": false,
+  "name": "Example Hook",
+  "description": "Example Kiro hook - disabled by default. Replace with your actual hook logic.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.ts",
+      "**/*.tsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A file has been modified. Please review it for best practices:\\n1. Check for code quality issues\\n2. Verify error handling\\n3. Suggest improvements\\n4. Ensure tests are updated"
+  }
+}`,
   },
   'agents.md': {
     'agents.md': `# Project Coding Guidelines
@@ -711,7 +747,9 @@ async function initPackage(options: InitOptions): Promise<void> {
   // Create example files
   if (config.files && config.format && config.name) {
     console.log('Creating example files...\n');
-    await createExampleFiles(config.format, config.files, config.name);
+    // Filter out README.md since createReadme will handle it with proper content
+    const filesToCreate = config.files.filter(f => f !== 'README.md');
+    await createExampleFiles(config.format, filesToCreate, config.name);
 
     // Create README
     await createReadme(config as PackageConfig);
@@ -738,10 +776,9 @@ export function createInitCommand(): Command {
     .action(async (options: InitOptions) => {
       try {
         await initPackage(options);
-        process.exit(0);
       } catch (error) {
         console.error('\n❌ Error:', error instanceof Error ? error.message : error);
-        process.exit(1);
+        throw new CLIError('\n❌ Error: ' + (error instanceof Error ? error.message : error), 1);
       }
     });
 

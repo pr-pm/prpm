@@ -33,6 +33,57 @@ Build the npm/cargo/pip equivalent for AI development artifacts. Enable develope
 - **Telemetry Opt-Out**: Privacy-first with easy opt-out
 - **Beautiful CLI**: Clear progress indicators and colored output
 
+### Git Workflow - CRITICAL RULES
+
+**⚠️ NEVER PUSH DIRECTLY TO MAIN ⚠️**
+
+PRPM uses a **branch-based workflow** with CI/CD automation. Direct pushes to main bypass all safety checks and can break production.
+
+**ALWAYS follow this workflow:**
+
+1. **Create a branch** for your changes:
+   ```bash
+   git checkout -b feature/your-feature-name
+   # or
+   git checkout -b fix/bug-description
+   ```
+
+2. **Make commits** on your branch:
+   ```bash
+   git add [files]
+   git commit -m "feat: description"
+   ```
+
+3. **Push your branch**:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+4. **Create a Pull Request** on GitHub:
+   - Automated CI tests run
+   - Code review happens
+   - Deployments are controlled
+
+5. **After PR approval**, merge through GitHub UI:
+   - Triggers automated deployment
+   - Ensures CI passes first
+   - Maintains deployment history
+
+**Why this matters:**
+- Main branch is protected and deploys to production
+- Direct pushes skip CI tests, linting, type checks
+- Can deploy broken code to 7500+ package registry
+- Breaks audit trail and rollback capability
+- GitHub Actions workflows expect PRs, not direct pushes
+
+**If you accidentally pushed to main:**
+1. **DO NOT** force push to revert - breaks CI/CD
+2. Create a revert commit on a branch
+3. Open PR to fix the issue properly
+4. Let CI/CD handle the corrective deployment
+
+**Exception:** Only repository admins can push to main for emergency hotfixes (with explicit approval).
+
 ## Package Types
 
 ### 🎓 Skill
@@ -145,11 +196,154 @@ Collections are curated bundles of packages that solve specific use cases.
 }
 ```
 
+### Collection Installation Behavior
+
+Collections can be installed using multiple identifier formats. The system intelligently resolves collections based on the format provided.
+
+#### Installation Formats (Priority Order)
+
+**1. Recommended Format: `collections/{slug}`**
+```bash
+prpm install collections/nextjs-pro
+prpm install collections/nextjs-pro@2.0.0
+```
+- **Behavior**: Searches across ALL scopes for `name_slug = "nextjs-pro"`
+- **Resolution**: Prioritizes by official → verified → downloads → created_at
+- **Use Case**: User-friendly format for discovering popular collections
+- **Example**: Finds `khaliqgant/nextjs-pro` even when searching `collections/nextjs-pro`
+
+**2. Explicit Scope: `{scope}/{slug}` or `@{scope}/{slug}`**
+```bash
+prpm install khaliqgant/nextjs-pro
+prpm install @khaliqgant/nextjs-pro
+prpm install khaliqgant/nextjs-pro@2.0.0
+```
+- **Behavior**: Searches for specific `scope` and `name_slug` combination
+- **Resolution**: Exact match only within that scope
+- **Use Case**: Installing a specific author's version when multiple exist
+- **Example**: Gets specifically the collection published by `khaliqgant`
+
+**3. Name-Only Format: `{slug}`** (Legacy/Fallback)
+```bash
+prpm install nextjs-pro
+prpm install nextjs-pro@1.0.0
+```
+- **Behavior**: Defaults to `scope = "collection"`, then falls back to cross-scope search
+- **Resolution**: First tries scope="collection", then searches all scopes
+- **Use Case**: Quick installs when collection origin doesn't matter
+- **Recommendation**: Prefer `collections/{slug}` for clarity
+
+#### Registry Resolution Logic
+
+**Implementation Location**: `app/packages/registry/src/routes/collections.ts:485-519`
+
+```typescript
+// When scope is 'collection' (default from CLI for collections/* prefix):
+if (scope === 'collection') {
+  // Search across ALL scopes, prioritize by:
+  // 1. Official collections (official = true)
+  // 2. Verified authors (verified = true)
+  // 3. Most downloads
+  // 4. Most recent
+  SELECT * FROM collections
+  WHERE name_slug = $1
+  ORDER BY official DESC, verified DESC, downloads DESC, created_at DESC
+  LIMIT 1
+} else {
+  // Explicit scope: exact match only
+  SELECT * FROM collections
+  WHERE scope = $1 AND name_slug = $2
+  ORDER BY created_at DESC
+  LIMIT 1
+}
+```
+
+#### CLI Resolution Logic
+
+**Implementation Location**: `app/packages/cli/src/commands/collections.ts:487-504`
+
+```typescript
+// Parse collection spec:
+// - collections/nextjs-pro → scope='collection', name_slug='nextjs-pro'
+// - khaliqgant/nextjs-pro → scope='khaliqgant', name_slug='nextjs-pro'
+// - @khaliqgant/nextjs-pro → scope='khaliqgant', name_slug='nextjs-pro'
+// - nextjs-pro → scope='collection', name_slug='nextjs-pro'
+
+const matchWithScope = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
+if (matchWithScope) {
+  [, scope, name_slug, version] = matchWithScope;
+} else {
+  // No scope: default to 'collection'
+  [, name_slug, version] = collectionSpec.match(/^([^/@]+)(?:@(.+))?$/);
+  scope = 'collection';
+}
+```
+
+#### Version Resolution
+
+Collections support semantic versioning:
+
+```bash
+# Latest version (default)
+prpm install collections/nextjs-pro
+
+# Specific version
+prpm install collections/nextjs-pro@2.0.4
+
+# With scope and version
+prpm install khaliqgant/nextjs-pro@2.0.4
+```
+
+**Registry Behavior**:
+- Without version: Returns latest (most recent `created_at`)
+- With version: Exact match required
+
+#### Discovery Prioritization
+
+When searching across all scopes (`collections/*` format), the system prioritizes:
+
+1. **Official Collections** (official = true)
+   - Curated by PRPM maintainers
+   - Highest trust level
+
+2. **Verified Authors** (verified = true)
+   - Known community contributors
+   - GitHub verified
+
+3. **Download Count** (downloads DESC)
+   - Most popular collections
+   - Community validation
+
+4. **Recency** (created_at DESC)
+   - Latest versions
+   - Actively maintained
+
+#### Error Handling
+
+**Collection Not Found**:
+```bash
+prpm install collections/nonexistent
+# ❌ Failed to install collection: Collection not found
+```
+
+**Scope-Specific Not Found**:
+```bash
+prpm install wrongscope/nextjs-pro
+# ❌ Failed to install collection: Collection not found
+# Suggestion: Try 'collections/nextjs-pro' to search all scopes
+```
+
 ### Collection Best Practices
+
 1. **Required vs Optional**: Clearly mark essential vs nice-to-have packages
 2. **Reason Documentation**: Every package explains why it's included
 3. **IDE-Specific Variants**: Different packages per editor when needed
 4. **Installation Order**: Consider dependencies
+5. **Scope Naming**:
+   - Use your username/org as scope for personal collections
+   - Reserve "collection" scope for official PRPM collections
+6. **User-Friendly IDs**: Use descriptive slugs (e.g., "nextjs-pro" not "np-setup")
+7. **Version Incrementing**: Bump versions on meaningful changes (follow semver)
 
 ## Quality & Ranking System
 
@@ -239,18 +433,122 @@ describe('install', () => {
 
 ## Development Workflow
 
+### Package Manager: npm (NOT pnpm)
+
+**⚠️ CRITICAL: PRPM uses npm, not pnpm ⚠️**
+
+- **Lock file**: `package-lock.json` (npm)
+- **Install dependencies**: `npm install`
+- **Run scripts**: `npm run <script>`
+- **Workspace commands**: `npm run <script> --workspace=<package>`
+
+**DO NOT use pnpm:**
+- The repository has `package-lock.json`, not `pnpm-lock.yaml`
+- Using pnpm will create conflicts and inconsistencies
+- CI/CD uses npm for builds and deployments
+- All documentation assumes npm
+
+**Common commands:**
+```bash
+# Install all dependencies
+npm install
+
+# Install in specific workspace
+npm install --workspace=@pr-pm/cli
+
+# Run tests
+npm test
+
+# Build all packages
+npm run build
+
+# Run CLI locally
+npm run dev --workspace=prpm
+```
+
 ### When Adding Features
 1. **Check Existing Patterns**: Look at similar commands/routes
 2. **Update Types First**: TypeScript interfaces drive implementation
 3. **Write Tests**: Create test fixtures and cases
 4. **Document**: Update README and relevant docs
-5. **Telemetry**: Add tracking for new commands (with privacy)
+5. **Environment Variables**: If adding new env vars, update `.env.example` immediately
+6. **Telemetry**: Add tracking for new commands (with privacy)
 
 ### When Fixing Bugs
 1. **Write Failing Test**: Reproduce the bug in a test
 2. **Fix Minimally**: Smallest change that fixes the issue
 3. **Check Round-Trip**: Ensure conversions still work
 4. **Update Fixtures**: Add bug case to test fixtures
+
+### Dependency Management Best Practices
+
+**AVOID Runtime Dependencies (Dynamic Imports)**
+
+❌ **Bad**: Using dynamic imports for runtime dependencies
+```typescript
+// BAD - tar-stream is imported dynamically at runtime
+const tarStream = await import('tar-stream');
+```
+
+**Problems with Dynamic Imports:**
+1. **Module Resolution Failures**: In production (Elastic Beanstalk, Docker), dynamic imports can fail to resolve even if the package is installed as a transitive dependency
+2. **Build Complexity**: TypeScript compilation doesn't validate dynamic imports
+3. **Deployment Issues**: Package may not be in the module resolution path in production
+4. **Harder to Debug**: Failures happen at runtime, not at build time
+
+✅ **Good**: Declare all dependencies explicitly
+```typescript
+// GOOD - Import normally at the top
+import * as tarStream from 'tar-stream';
+```
+
+**Dependency Guidelines:**
+1. **Explicit Dependencies**: Always declare dependencies in package.json, never rely on transitive dependencies
+2. **Static Imports**: Use static imports whenever possible for compile-time validation
+3. **Production Dependencies**: If you import it, it should be in `dependencies`, not `devDependencies`
+4. **Build-Time Validation**: Let TypeScript catch missing dependencies at build time, not runtime
+
+### Environment Variable Management
+
+**ALWAYS Update .env.example When Adding New Environment Variables**
+
+Environment variables are configuration points. When adding new ones, follow this checklist:
+
+1. **Add to `.env.example` immediately** - Don't wait until later
+2. **Group logically** - Place in appropriate section (DATABASE, AUTH, etc.)
+3. **Add clear comments** - Explain what it does and where to get values
+4. **Include examples** - Show format (e.g., `sk-ant-api03-...` for API keys)
+5. **Mark optional vs required** - Comment out optional variables with `#`
+6. **Update production notes** - Add to deployment checklist if needed
+
+**Example:**
+```bash
+# ==============================================================================
+# NEW FEATURE SECTION
+# ==============================================================================
+
+# Description of what this variable does
+# Get from: https://where-to-get-it.com
+NEW_FEATURE_API_KEY=your-key-here
+
+# Optional feature flag (default: false)
+# ENABLE_NEW_FEATURE=true
+```
+
+**Why this matters:**
+- New developers need to know what env vars to set
+- `.env.example` is the source of truth for configuration
+- Missing env vars cause runtime errors that are hard to debug
+- Production deployments fail without proper env var documentation
+
+**Finding missing env vars:**
+```bash
+# Search for all process.env usage
+grep -rh "process.env\." packages/ --include="*.ts" --include="*.tsx" | \
+  grep -o "process\.env\.[A-Z_][A-Z0-9_]*" | sort -u
+
+# Compare with .env.example to find gaps
+```
 
 ### When Designing APIs
 - **REST Best Practices**: Proper HTTP methods and status codes
@@ -276,7 +574,9 @@ describe('install', () => {
 
 ## Deployment
 
-### AWS Infrastructure (Elastic Beanstalk)
+### AWS Infrastructure
+
+#### Registry Backend (Elastic Beanstalk)
 - **Environment**: Node.js 20 on 64bit Amazon Linux 2023
 - **Instance**: t3.micro (cost-optimized)
 - **Database**: RDS PostgreSQL
@@ -284,10 +584,69 @@ describe('install', () => {
 - **DNS**: Route 53
 - **SSL**: ACM certificates
 
+#### Webapp (S3 Static Export) ⚠️ CRITICAL
+**The webapp MUST be deployable as a static site via S3/CloudFront.**
+
+**Requirements:**
+- Next.js with `output: 'export'` configuration
+- **NO server-side rendering (SSR)** - all pages must be static or client-side rendered
+- **NO API routes** - all API calls go to the registry backend
+- **Dynamic routes require `generateStaticParams()`** - return empty array `[]` for client-side only routes
+- All data fetching must be client-side (useEffect, fetch, etc.)
+
+**Common Issues:**
+1. **Dynamic routes in client components** ⚠️ CANNOT USE BOTH
+   - Error: `Page "page" cannot use both "use client" and export function "generateStaticParams()"`
+   - **Solution**: Use query strings instead of path parameters
+   - ❌ Wrong: `/playground/shared/[token]/page.tsx` with `'use client'`
+   - ✅ Correct: `/playground/shared/page.tsx` with `?token=xxx` query param
+   - Implementation: Use `useSearchParams()` instead of `useParams()`
+   - **IMPORTANT**: Must wrap `useSearchParams()` in `<Suspense>` boundary
+   - Example:
+     ```typescript
+     // ❌ Dynamic route (doesn't work with 'use client')
+     // /app/shared/[token]/page.tsx
+     const params = useParams();
+     const token = params.token;
+
+     // ✅ Query string with Suspense (works with 'use client')
+     // /app/shared/page.tsx
+     import { Suspense } from 'react';
+
+     function Content() {
+       const searchParams = useSearchParams();
+       const token = searchParams.get('token');
+       // ... component logic
+     }
+
+     export default function Page() {
+       return (
+         <Suspense fallback={<div>Loading...</div>}>
+           <Content />
+         </Suspense>
+       );
+     }
+     ```
+
+2. **Server components in static export**
+   - All pages with dynamic content must use `'use client'` directive
+   - Shared session pages, playground interfaces, etc. are client-rendered
+
+3. **Environment variables**
+   - Build-time: Embedded in static bundle (public/exposed)
+   - Runtime: Fetched via API from registry backend
+
+**Why S3 Static Export?**
+- Cost: $0.023/GB vs $30+/month for server hosting
+- Scale: CloudFront CDN handles traffic spikes
+- Reliability: No server maintenance or downtime
+- Performance: Pre-rendered static pages are instant
+
 ### GitHub Actions Workflows
 - **Test & Deploy**: Runs on push to main
 - **NPM Publish**: Manual trigger for releases
 - **Homebrew Publish**: Updates tap formula
+- **Webapp Deploy**: Builds static export and deploys to S3
 
 ### Publishing PRPM to NPM
 
@@ -367,6 +726,11 @@ export function toFormat(pkg: CanonicalPackage): ConversionResult {
 - **Functions**: camelCase (`getPackage`, `convertToFormat`)
 - **Constants**: UPPER_SNAKE_CASE (`DEFAULT_REGISTRY_URL`)
 - **Database**: snake_case (`package_id`, `created_at`)
+- **API Requests/Responses**: snake_case (`package_id`, `session_id`, `created_at`)
+  - **Important**: All API request and response fields use snake_case to match PostgreSQL database conventions
+  - Internal service methods may use camelCase, but must convert to snake_case at API boundaries
+  - TypeScript interfaces for API types should use snake_case fields
+  - Examples: `PlaygroundRunRequest.package_id`, `CreditBalance.reset_at`
 
 ## Documentation Standards
 

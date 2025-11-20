@@ -46,7 +46,32 @@ cd packages/registry
 npm run migrate:up
 ```
 
-### 2. Start Full Development Environment
+### 2. Optional: Enable Auto-Authentication (Skip Login)
+
+For faster development, you can automatically authenticate as any user without logging in:
+
+```bash
+# Add to your .env file:
+DEV_AUTO_AUTH_USER=khaliqgant
+
+# For the webapp (Next.js):
+NEXT_PUBLIC_DEV_AUTO_AUTH_USER=khaliqgant
+```
+
+**How it works:**
+- **Backend**: All authenticated API requests automatically use the specified user (no JWT needed)
+- **Frontend**: Automatically sets a mock token and username in localStorage on page load
+- **Security**: Only works when `NODE_ENV=development`
+- **User must exist**: The username must exist in your local database
+
+**Benefits:**
+- Skip GitHub OAuth login flow during development
+- Test different user scenarios by changing the username
+- Faster iteration when testing authenticated features
+
+**To disable:** Simply remove or comment out these environment variables.
+
+### 3. Start Full Development Environment
 ```bash
 # Automatically starts Docker services, then runs CLI, registry and webapp with watch mode
 npm run dev

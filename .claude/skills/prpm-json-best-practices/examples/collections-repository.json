@@ -10,7 +10,7 @@
     {
       "id": "nextjs-pro",
       "name": "Next.js Professional Setup",
-      "description": "Production-ready Next.js development environment with TypeScript, React best practices, and modern tooling",
+      "description": "Complete Next.js development environment with TypeScript, React best practices, and modern tooling",
       "version": "1.0.0",
       "category": "development",
       "tags": ["nextjs", "react", "typescript", "frontend"],

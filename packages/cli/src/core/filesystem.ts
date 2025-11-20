@@ -28,6 +28,8 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       if (subtype === 'skill') return '.claude/skills';
       if (subtype === 'slash-command') return '.claude/commands';
       if (subtype === 'agent') return '.claude/agents';
+      // Hooks are configured in settings.json, return .claude directory
+      if (subtype === 'hook') return '.claude';
       return '.claude/agents'; // Default for claude
 
     case 'continue':
@@ -39,13 +41,29 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.windsurf/rules';
 
     case 'copilot':
+      // Copilot has different locations based on subtype:
+      // - Repository-wide instructions: .github/copilot-instructions.md
+      // - Path-specific instructions: .github/instructions/*.instructions.md
+      // - Chat modes: .github/chatmodes/*.chatmode.md
+      if (subtype === 'chatmode') return '.github/chatmodes';
+      // Default to path-specific instructions directory
       return '.github/instructions';
 
     case 'kiro':
+      // Kiro has different locations based on subtype:
+      // - Steering files: .kiro/steering/*.md
+      // - Hooks: .kiro/hooks/*.kiro.hook (JSON files)
+      // - Agents: .kiro/agents/*.json (custom AI agent configurations)
+      if (subtype === 'hook') return '.kiro/hooks';
+      if (subtype === 'agent') return '.kiro/agents';
       return '.kiro/steering';
 
+    case 'gemini':
+      // Gemini custom commands: .gemini/commands/*.toml
+      return '.gemini/commands';
+
     case 'agents.md':
-      return '.agents';
+      return '.';
 
     case 'openskills':
       // OpenSkills creates subdirectories for each skill
@@ -119,6 +137,48 @@ export async function fileExists(filePath: string): Promise<boolean> {
 }
 
 /**
+ * Check if a directory exists
+ */
+export async function directoryExists(dirPath: string): Promise<boolean> {
+  try {
+    const stats = await fs.stat(dirPath);
+    return stats.isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Auto-detect the format based on existing directories in the current project
+ * Returns the format if a matching directory is found, or null if none found
+ */
+export async function autoDetectFormat(): Promise<Format | null> {
+  // Agents.md installs live at project root
+  if (await fileExists('AGENTS.md')) {
+    return 'agents.md';
+  }
+
+  const formatDirs: Array<{ format: Format; dir: string }> = [
+    { format: 'cursor', dir: '.cursor' },
+    { format: 'claude', dir: '.claude' },
+    { format: 'continue', dir: '.continue' },
+    { format: 'windsurf', dir: '.windsurf' },
+    { format: 'copilot', dir: '.github/instructions' },
+    { format: 'kiro', dir: '.kiro' },
+    { format: 'gemini', dir: '.gemini' },
+    { format: 'agents.md', dir: '.agents' },
+  ];
+
+  for (const { format, dir } of formatDirs) {
+    if (await directoryExists(dir)) {
+      return format;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Generate a unique ID from filename
  */
 export function generateId(filename: string): string {
@@ -189,7 +249,14 @@ export function getInstalledFilePath(
   }
 
   // Determine file extension
-  const fileExtension = format === 'cursor' ? 'mdc' : 'md';
+  let fileExtension: string;
+  if (format === 'cursor') {
+    fileExtension = 'mdc';
+  } else if (format === 'gemini') {
+    fileExtension = 'toml';
+  } else {
+    fileExtension = 'md';
+  }
 
   // For other formats, use package name as filename
   return path.join(destDir, `${packageBaseName}.${fileExtension}`);

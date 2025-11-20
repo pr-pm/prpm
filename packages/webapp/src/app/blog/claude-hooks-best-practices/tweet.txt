@@ -1,0 +1,11 @@
+Writing Claude hooks? Don't skip these steps:
+
+✓ Validate all input from stdin
+✓ Quote file paths (spaces break things)
+✓ Block sensitive files (.env, *.key)
+✓ Handle missing tools gracefully
+✓ Keep hooks fast (run in background)
+
+16-point checklist inside.
+
+https://prpm.dev/blog/claude-hooks-best-practices

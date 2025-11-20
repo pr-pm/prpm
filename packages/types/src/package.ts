@@ -14,6 +14,8 @@ export type Format =
   | 'kiro'
   | 'agents.md'
   | 'openskills'
+  | 'gemini'
+  | 'ruler'
   | 'generic'
   | 'mcp';
 
@@ -30,6 +32,8 @@ export const FORMATS: readonly Format[] = [
   'kiro',
   'agents.md',
   'openskills',
+  'gemini',
+  'ruler',
   'generic',
   'mcp',
 ] as const;
@@ -43,9 +47,12 @@ export type Subtype =
   | 'skill'
   | 'slash-command'
   | 'prompt'
+  | 'workflow'
+  | 'tool'
+  | 'template'
   | 'collection'
   | 'chatmode'
-  | 'tool';
+  | 'hook';
 
 /**
  * Available subtypes as a constant array
@@ -57,9 +64,12 @@ export const SUBTYPES: readonly Subtype[] = [
   'skill',
   'slash-command',
   'prompt',
+  'workflow',
+  'tool',
+  'template',
   'collection',
   'chatmode',
-  'tool',
+  'hook',
 ] as const;
 
 
@@ -71,9 +81,12 @@ export type PackageVisibility = 'public' | 'private' | 'unlisted';
 export interface Package {
   id: string;
   name: string;
+  display_name?: string;
   description?: string;
   author_id?: string;
+  author_username?: string;
   org_id?: string;
+  org_name?: string;
   format: Format;
   subtype: Subtype; // Required, defaults to 'rule'
   license?: string;
@@ -83,6 +96,8 @@ export interface Package {
   tags: string[];
   keywords: string[];
   category?: string;
+  language?: string; // Primary programming language (javascript, python, typescript, etc.)
+  framework?: string; // Primary framework (react, nextjs, django, etc.)
   visibility: PackageVisibility;
   deprecated: boolean;
   deprecated_reason?: string;
@@ -92,10 +107,13 @@ export interface Package {
   weekly_downloads: number;
   monthly_downloads: number;
   version_count: number;
+  stars?: number; // Number of users who starred this package
   quality_score?: number | string;
   quality_explanation?: string;
   rating_average?: number;
   rating_count: number;
+  ai_use_cases?: string[]; // AI-generated practical use cases (3-5 scenarios)
+  ai_use_cases_generated_at?: Date | string; // When use cases were last generated
   created_at: Date | string;
   updated_at: Date | string;
   last_published_at?: Date | string;
@@ -125,6 +143,63 @@ export interface PackageVersion {
 }
 
 /**
+ * Conversion hints for cross-format transformations
+ * Helps improve quality when converting to other formats
+ */
+export interface ConversionHints {
+  /** Hints for Cursor format conversion */
+  cursor?: {
+    alwaysApply?: boolean;
+    priority?: 'high' | 'medium' | 'low';
+    globs?: string[];
+  };
+
+  /** Hints for Claude format conversion */
+  claude?: {
+    model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
+    tools?: string[];
+    subagentType?: string;
+  };
+
+  /** Hints for Kiro format conversion */
+  kiro?: {
+    inclusion?: 'always' | 'fileMatch' | 'manual';
+    fileMatchPattern?: string;
+    domain?: string;
+    tools?: string[];
+    mcpServers?: Record<string, {
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+    }>;
+  };
+
+  /** Hints for GitHub Copilot format conversion */
+  copilot?: {
+    applyTo?: string | string[];
+    excludeAgent?: 'code-review' | 'coding-agent';
+  };
+
+  /** Hints for Continue format conversion */
+  continue?: {
+    alwaysApply?: boolean;
+    globs?: string | string[];
+    regex?: string | string[];
+  };
+
+  /** Hints for Windsurf format conversion */
+  windsurf?: {
+    characterLimit?: number; // Warn if exceeding 12K limit
+  };
+
+  /** Hints for agents.md format conversion */
+  agentsMd?: {
+    project?: string;
+    scope?: string;
+  };
+}
+
+/**
  * Package manifest (from prpm.json)
  */
 export interface PackageManifest {
@@ -147,6 +222,12 @@ export interface PackageManifest {
   engines?: Record<string, string>;
   files: string[];
   main?: string;
+
+  /**
+   * Optional conversion hints for cross-format transformations
+   * Used to improve quality when converting to other formats
+   */
+  conversion?: ConversionHints;
 }
 
 /**

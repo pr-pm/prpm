@@ -190,7 +190,7 @@ export default function PRPMvsPluginsPage() {
             <div className="bg-prpm-accent/10 border border-prpm-accent/30 rounded-lg p-6">
               <h3 className="text-prpm-accent text-xl font-bold mb-4 mt-0">🚀 Centralized Discovery</h3>
               <p className="text-gray-300 mb-0">
-                One registry with <strong>1,500+ community packages</strong>. Search by tech stack, filter by ratings, browse curated collections — no hunting across scattered marketplaces.
+                One registry with <strong>4,000+ community packages</strong>. Search by tech stack, filter by ratings, browse curated collections — no hunting across scattered marketplaces.
               </p>
             </div>
           </div>
@@ -309,7 +309,7 @@ prpm update`}</code>
             </pre>
             <p className="mb-0 text-center">
               <a href="/search" className="text-prpm-accent hover:text-prpm-accent-light font-semibold">
-                Browse 2,100+ packages →
+                Browse 7,000+ packages →
               </a>
             </p>
           </div>

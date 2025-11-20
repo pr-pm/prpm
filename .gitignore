@@ -8,6 +8,10 @@ yarn-error.log*
 dist/
 *.tsbuildinfo
 
+# Exception: Keep hook dist files (hooks are distributed as compiled JS)
+!.claude/hooks/*/dist/
+!.claude/hooks/*/dist/*.js
+
 # Exclude binaries from npm package
 dist/prpm-*
 
@@ -44,10 +48,20 @@ logs/
 
 # Data files (scraped packages, checkpoints, etc.)
 data/
+.claude/settings.local.json
 
-# subtree directories
-.dev
+# Git worktrees
+.dev/
 .worktrees
 
 .claude/settings.local.json
 .claude/settings.json
+
+# START Ruler Generated Files
+/.codex/config.toml
+/.codex/config.toml.bak
+/AGENTS.md
+/AGENTS.md.bak
+/CLAUDE.md
+/CLAUDE.md.bak
+# END Ruler Generated Files

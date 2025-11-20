@@ -6,6 +6,7 @@
 import { Command } from 'commander';
 import { handleTrending } from './trending';
 import { Format, Subtype } from '../types';
+import { CLIError } from '../core/errors';
 
 /**
  * Show popular packages (wrapper around trending)
@@ -26,9 +27,8 @@ export function createPopularCommand(): Command {
   return new Command('popular')
     .description('Show popular packages (all time)')
     .option('--format <format>', 'Filter by format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, generic)')
-    .option('--subtype <subtype>', 'Filter by subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection)')
+    .option('--subtype <subtype>', 'Filter by subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection, chatmode, hook)')
     .action(async (options: { format?: string; subtype?: string }) => {
       await handlePopular(options);
-      process.exit(0);
     });
 }

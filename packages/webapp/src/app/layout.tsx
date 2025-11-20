@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/components/AuthProvider'
+import { PostHogProvider } from '@/providers/PostHogProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
     default: 'PRPM - Largest Collection of Cursor Rules, Claude Agents & Slash Commands',
     template: '%s | PRPM'
   },
-  description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 2,100+ packages including cursor slash commands, claude slash commands, and claude plugins. Install AI coding tools with one command.',
+  description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 7,000+ packages including cursor slash commands, claude slash commands, and claude plugins. Install AI coding tools with one command.',
   keywords: [
     'cursor rules',
     'cursor slash commands',
@@ -53,7 +54,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://prpm.dev',
     title: 'PRPM - Largest Collection of Cursor Rules, Claude Agents & Slash Commands',
-    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 2,100+ packages including cursor slash commands, claude slash commands, and claude plugins.',
+    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 7,000+ packages including cursor slash commands, claude slash commands, and claude plugins.',
     siteName: 'PRPM',
     images: [
       {
@@ -67,7 +68,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'PRPM - Largest Collection of Cursor Rules, Claude Agents & Slash Commands',
-    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 2,100+ packages including cursor slash commands, claude slash commands, and claude plugins.',
+    description: 'The largest collection of Cursor rules, Claude agents, and slash commands. 7,000+ packages including cursor slash commands, claude slash commands, and claude plugins.',
     images: ['/og-image.png'],
     creator: '@prpmdev',
   },
@@ -96,8 +97,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* eslint-disable-next-line @next/next/next-script-for-ga */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-RH5GKLVYK2"></script>
+        {/* eslint-disable-next-line @next/next/next-script-for-ga */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-RH5GKLVYK2');
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <PostHogProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </PostHogProvider>
       </body>
     </html>
   )
