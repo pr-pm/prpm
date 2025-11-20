@@ -47,14 +47,15 @@ export interface ConvertOptions {
   to: 'cursor' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler';
   subtype?: Subtype;
   output?: string;
+  name?: string; // Custom output filename (without extension)
   yes?: boolean; // Skip confirmation prompts
 }
 
 /**
  * Get the default installation path for a format
  */
-function getDefaultPath(format: string, filename: string, subtype?: string): string {
-  const baseName = basename(filename, extname(filename));
+function getDefaultPath(format: string, filename: string, subtype?: string, customName?: string): string {
+  const baseName = customName || basename(filename, extname(filename));
 
   switch (format) {
     case 'cursor':
@@ -327,7 +328,7 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
     console.log(chalk.green(`✓ Converted from ${sourceFormat} to ${options.to}`));
 
     // Determine output path
-    const outputPath = options.output || getDefaultPath(options.to, sourcePath, options.subtype);
+    const outputPath = options.output || getDefaultPath(options.to, sourcePath, options.subtype, options.name);
 
     // Check if file exists
     if (existsSync(outputPath) && !options.yes) {
@@ -380,6 +381,7 @@ export function createConvertCommand() {
     .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md, gemini, ruler)')
     .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, prompt, etc.)')
     .option('-o, --output <path>', 'Output path (defaults to format-specific location)')
+    .option('-n, --name <name>', 'Custom output filename (without extension, e.g., "my-rule")')
     .option('-y, --yes', 'Skip confirmation prompts')
     .action(async (source: string, options: any) => {
       try {
@@ -405,6 +407,7 @@ export function createConvertCommand() {
           to: options.to,
           subtype: options.subtype,
           output: options.output,
+          name: options.name,
           yes: options.yes,
         });
       } catch (error: any) {

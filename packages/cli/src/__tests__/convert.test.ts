@@ -367,4 +367,132 @@ This tests that metadata is preserved as HTML comments.
       expect(rulerContent).toContain('Testing metadata preservation in ruler format');
     });
   });
+
+  describe('Custom output name', () => {
+    it('should use custom name when provided', async () => {
+      const claudeContent = `---
+name: original-name
+description: Test custom naming
+---
+
+# Test Skill
+
+This tests custom output naming.
+`;
+
+      const sourcePath = join(testDir, 'SKILL.md');
+      await writeFile(sourcePath, claudeContent);
+
+      // Change working directory to testDir for this test
+      const originalCwd = process.cwd();
+      process.chdir(testDir);
+
+      try {
+        const options: ConvertOptions = {
+          to: 'ruler',
+          name: 'custom-name',
+          yes: true,
+        };
+
+        await handleConvert(sourcePath, options);
+
+        // Verify file was created with custom name
+        const expectedPath = join(testDir, '.ruler', 'custom-name.md');
+        const content = await readFile(expectedPath, 'utf-8');
+        expect(content).toContain('# Test Skill');
+        expect(content).toContain('This tests custom output naming.');
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
+
+    it('should use custom name for different formats', async () => {
+      const claudeContent = `---
+name: test-agent
+description: Test agent
+allowed-tools: Read, Write
+---
+
+# Test Agent
+
+Test content.
+`;
+
+      const sourcePath = join(testDir, 'test-agent.md');
+      await writeFile(sourcePath, claudeContent);
+
+      const outputPath = join(testDir, 'my-custom-agent.md');
+      const options: ConvertOptions = {
+        to: 'ruler',
+        name: 'my-custom-agent',
+        output: outputPath,
+        yes: true,
+      };
+
+      await handleConvert(sourcePath, options);
+
+      const content = await readFile(outputPath, 'utf-8');
+      expect(content).toContain('# Test Agent');
+    });
+
+    it('should prefer custom name over source filename', async () => {
+      const claudeContent = `---
+name: original-name
+description: Test cursor rule
+---
+
+# Original Rule
+
+This has a generic filename like SKILL.md.
+`;
+
+      const sourcePath = join(testDir, 'SKILL.md');
+      await writeFile(sourcePath, claudeContent);
+
+      // Change working directory to testDir
+      const originalCwd = process.cwd();
+      process.chdir(testDir);
+
+      try {
+        await handleConvert(sourcePath, {
+          to: 'ruler',
+          name: 'descriptive-name',
+          yes: true,
+        });
+
+        // Should use custom name, not SKILL.md
+        const expectedPath = join(testDir, '.ruler', 'descriptive-name.md');
+        const content = await readFile(expectedPath, 'utf-8');
+        expect(content).toContain('# Original Rule');
+        expect(content).toContain('This has a generic filename like SKILL.md.');
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
+
+    it('should work with explicit output path and ignore name option', async () => {
+      const claudeContent = `---
+name: test
+description: Test
+---
+
+# Test
+`;
+
+      const sourcePath = join(testDir, 'test.md');
+      await writeFile(sourcePath, claudeContent);
+
+      // When output path is explicit, name option should be ignored
+      const explicitOutput = join(testDir, 'explicit-path.md');
+      await handleConvert(sourcePath, {
+        to: 'ruler',
+        name: 'should-be-ignored',
+        output: explicitOutput,
+        yes: true,
+      });
+
+      const content = await readFile(explicitOutput, 'utf-8');
+      expect(content).toContain('# Test');
+    });
+  });
 });
