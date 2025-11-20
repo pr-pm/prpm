@@ -8,10 +8,16 @@ import yaml from 'js-yaml';
 // Get the directory where this file is located
 // When compiled with ts-jest to CommonJS, __dirname will be available
 // When run as ES module (Vitest), use import.meta.url
-// @ts-ignore - __dirname exists in CommonJS, import.meta exists in ES modules
-const currentDirname: string = typeof __dirname !== 'undefined'
-  ? __dirname
-  : dirname(fileURLToPath(import.meta.url));
+// Use eval to prevent ts-jest from seeing import.meta during parsing
+let currentDirname: string;
+try {
+  // @ts-ignore - __dirname exists when transpiled to CommonJS
+  currentDirname = __dirname;
+} catch {
+  // ES module environment - use eval to avoid parse-time import.meta error
+  // @ts-ignore
+  currentDirname = dirname(fileURLToPath(eval('import.meta.url')));
+}
 
 // Initialize Ajv with strict mode disabled for better compatibility
 const ajv = new Ajv({
