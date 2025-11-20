@@ -300,42 +300,103 @@ export async function getTarballContent(
   version: string,
   packageName: string
 ): Promise<string> {
-  const key = `packages/${packageName}/${version}/package.tar.gz`;
+  // Try multiple filename variations (package.tar.gz is standard, package.tgz is legacy)
+  const possibleKeys = [
+    `packages/${packageName}/${version}/package.tar.gz`,
+    `packages/${packageName}/${version}/package.tgz`,
+  ];
 
-  try {
-    server.log.info({ packageName, version, key }, 'Fetching tarball from S3');
+  let key = possibleKeys[0];
+  let usingDeprecatedPath = false;
 
-    const command = new GetObjectCommand({
-      Bucket: config.s3.bucket,
-      Key: key,
-    });
+  // Try each possible key
+  for (const tryKey of possibleKeys) {
+    try {
+      server.log.info({ packageName, version, key: tryKey }, 'Trying to fetch tarball from S3');
 
-    const response = await s3Client.send(command);
+      const command = new GetObjectCommand({
+        Bucket: config.s3.bucket,
+        Key: tryKey,
+      });
 
-    if (!response.Body) {
-      throw new Error('Empty response from S3');
+      const response = await s3Client.send(command);
+
+      if (response.Body) {
+        key = tryKey;
+        if (tryKey.endsWith('.tgz')) {
+          server.log.warn({ packageName, version, key }, 'Using legacy .tgz extension');
+        }
+
+        // Convert stream to buffer
+        const chunks: Uint8Array[] = [];
+        for await (const chunk of response.Body as any) {
+          chunks.push(chunk);
+        }
+        const tarballBuffer = Buffer.concat(chunks);
+
+        server.log.info({ packageName, version, size: tarballBuffer.length }, 'Downloaded tarball from S3');
+
+        // Extract and return the content
+        return await extractPromptContent(tarballBuffer, packageName);
+      }
+    } catch (err) {
+      // Try next key
+      continue;
     }
-
-    // Convert stream to buffer
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of response.Body as any) {
-      chunks.push(chunk);
-    }
-    const tarballBuffer = Buffer.concat(chunks);
-
-    server.log.info({ packageName, version, size: tarballBuffer.length }, 'Downloaded tarball from S3');
-
-    // Extract and return the content
-    return await extractPromptContent(tarballBuffer, packageName);
-  } catch (error: unknown) {
-    server.log.error({
-      error: String(error),
-      packageName,
-      version,
-      key
-    }, 'Failed to fetch tarball from S3');
-    throw new Error(`Failed to fetch package content from storage: ${error instanceof Error ? error.message : String(error)}`);
   }
+
+  // If none of the author-based paths worked, try UUID-based paths
+  const uuidKeys = [
+    `packages/${packageId}/${version}/package.tar.gz`,
+    `packages/${packageId}/${version}/package.tgz`,
+  ];
+
+  for (const uuidKey of uuidKeys) {
+    try {
+      server.log.info({ packageName, packageId, version, uuidKey }, 'Trying UUID-based path (legacy)');
+
+      const command = new GetObjectCommand({
+        Bucket: config.s3.bucket,
+        Key: uuidKey,
+      });
+
+      const response = await s3Client.send(command);
+
+      if (!response.Body) {
+        continue;
+      }
+
+      // Convert stream to buffer
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of response.Body as any) {
+        chunks.push(chunk);
+      }
+      const tarballBuffer = Buffer.concat(chunks);
+
+      server.log.warn(
+        { packageName, packageId, version, uuidKey },
+        'Successfully fetched tarball using deprecated UUID-based path'
+      );
+
+      // Extract and return the content
+      return await extractPromptContent(tarballBuffer, packageName);
+    } catch (err) {
+      // Try next UUID key
+      continue;
+    }
+  }
+
+  // None of the paths worked
+  server.log.error(
+    {
+      packageName,
+      packageId,
+      version,
+      triedKeys: [...possibleKeys, ...uuidKeys],
+    },
+    'Failed to fetch tarball from S3 - tried all possible paths'
+  );
+  throw new Error('Failed to fetch package content from storage: The specified key does not exist.');
 }
 
 /**

@@ -12,12 +12,23 @@ export interface CanonicalPackage {
   name: string;
   description: string;
   author: string;
+  organization?: string; // Organization name if published under org
   tags: string[];
 
   // New taxonomy: format + subtype
   format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'generic' | 'mcp';
   subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
+  // Additional metadata from prpm.json
+  license?: string;
+  repository?: string;
+  homepage?: string;
+  documentation?: string;
+  keywords?: string[];
+  category?: string;
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  engines?: Record<string, string>;
 
   // Content in canonical format
   content: CanonicalContent;
@@ -50,6 +61,28 @@ export interface CanonicalPackage {
       fileMatchPattern?: string; // Required if inclusion is 'fileMatch'
       domain?: string; // Domain/topic for organization
       foundationalType?: 'product' | 'tech' | 'structure'; // Foundational file type (product.md, tech.md, structure.md)
+    };
+    kiroAgent?: {
+      tools?: string[]; // Available tools for the agent
+      mcpServers?: Record<string, {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+        timeout?: number;
+      }>;
+      toolAliases?: Record<string, string>;
+      allowedTools?: string[];
+      toolsSettings?: Record<string, any>;
+      resources?: string[];
+      hooks?: {
+        agentSpawn?: string[];
+        userPromptSubmit?: string[];
+        preToolUse?: string[];
+        postToolUse?: string[];
+        stop?: string[];
+      };
+      useLegacyMcpJson?: boolean;
+      model?: string;
     };
     agentsMdConfig?: {
       project?: string; // Project name

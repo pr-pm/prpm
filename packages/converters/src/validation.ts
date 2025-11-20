@@ -1,15 +1,14 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 
 // Get the directory where this file is located
-// In Jest/CommonJS, __dirname is provided automatically
-// In ESM builds, we need to polyfill it using import.meta.url
-// Since we can't use import.meta in Jest (syntax error), we declare __dirname
-// and trust that it will be provided by the environment (Jest, Node with --require, etc.)
-declare const __dirname: string;
+// In ES modules, use import.meta.url to get __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const currentDirname = __dirname;
 
 // Initialize Ajv with strict mode disabled for better compatibility

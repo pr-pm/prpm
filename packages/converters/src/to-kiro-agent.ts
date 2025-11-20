@@ -8,6 +8,12 @@ import type {
   CanonicalContent,
   ConversionOptions,
   ConversionResult,
+  MetadataSection,
+  PersonaSection,
+  InstructionsSection,
+  RulesSection,
+  ExamplesSection,
+  CustomSection,
 } from './types/canonical.js';
 
 export interface KiroAgentConfig {
@@ -59,36 +65,45 @@ export function toKiroAgent(
       agentConfig.prompt = prompt;
     }
 
-    // Extract tools from metadata
-    if (pkg.metadata?.tools && Array.isArray(pkg.metadata.tools)) {
-      agentConfig.tools = pkg.metadata.tools.map((tool: any) =>
-        typeof tool === 'string' ? tool : tool.name
-      );
-    }
+    // Extract Kiro-specific agent properties from metadata
+    if (pkg.metadata?.kiroAgent) {
+      const kiroAgent = pkg.metadata.kiroAgent;
 
-    // Extract MCP servers if present
-    if (pkg.metadata?.mcpServers) {
-      agentConfig.mcpServers = pkg.metadata.mcpServers;
-    }
+      if (kiroAgent.tools) {
+        agentConfig.tools = kiroAgent.tools;
+      }
 
-    // Extract tool settings
-    if (pkg.metadata?.toolsSettings) {
-      agentConfig.toolsSettings = pkg.metadata.toolsSettings;
-    }
+      if (kiroAgent.mcpServers) {
+        agentConfig.mcpServers = kiroAgent.mcpServers;
+      }
 
-    // Extract resources
-    if (pkg.metadata?.resources && Array.isArray(pkg.metadata.resources)) {
-      agentConfig.resources = pkg.metadata.resources;
-    }
+      if (kiroAgent.toolAliases) {
+        agentConfig.toolAliases = kiroAgent.toolAliases;
+      }
 
-    // Extract hooks
-    if (pkg.metadata?.hooks) {
-      agentConfig.hooks = pkg.metadata.hooks;
-    }
+      if (kiroAgent.allowedTools) {
+        agentConfig.allowedTools = kiroAgent.allowedTools;
+      }
 
-    // Extract model
-    if (pkg.metadata?.model) {
-      agentConfig.model = pkg.metadata.model;
+      if (kiroAgent.toolsSettings) {
+        agentConfig.toolsSettings = kiroAgent.toolsSettings;
+      }
+
+      if (kiroAgent.resources) {
+        agentConfig.resources = kiroAgent.resources;
+      }
+
+      if (kiroAgent.hooks) {
+        agentConfig.hooks = kiroAgent.hooks;
+      }
+
+      if (kiroAgent.useLegacyMcpJson !== undefined) {
+        agentConfig.useLegacyMcpJson = kiroAgent.useLegacyMcpJson;
+      }
+
+      if (kiroAgent.model) {
+        agentConfig.model = kiroAgent.model;
+      }
     }
 
     // Warn about slash commands (not supported by Kiro agents)
@@ -134,14 +149,16 @@ export function toKiroAgent(
 function convertToPrompt(content: CanonicalContent, warnings: string[]): string {
   const parts: string[] = [];
 
-  // Add description as context
-  if (content.description) {
-    parts.push(content.description);
+  // Extract metadata section for description
+  const metadataSection = content.sections.find(s => s.type === 'metadata') as MetadataSection | undefined;
+  if (metadataSection?.data.description) {
+    parts.push(metadataSection.data.description);
   }
 
-  // Add persona information
-  if (content.persona) {
-    const persona = content.persona;
+  // Extract persona section
+  const personaSection = content.sections.find(s => s.type === 'persona') as PersonaSection | undefined;
+  if (personaSection) {
+    const persona = personaSection.data;
     let personaText = '';
 
     if (persona.name) {
@@ -152,8 +169,8 @@ function convertToPrompt(content: CanonicalContent, warnings: string[]): string 
       personaText += '. ';
     }
 
-    if (persona.style) {
-      personaText += `Your communication style is ${persona.style}. `;
+    if (persona.style && persona.style.length > 0) {
+      personaText += `Your communication style is ${persona.style.join(', ')}. `;
     }
 
     if (persona.expertise && persona.expertise.length > 0) {
@@ -165,53 +182,39 @@ function convertToPrompt(content: CanonicalContent, warnings: string[]): string 
     }
   }
 
-  // Add instructions
-  if (content.instructions) {
-    parts.push('\n## Instructions\n');
-    parts.push(content.instructions);
-  }
-
-  // Add sections
-  if (content.sections && content.sections.length > 0) {
-    for (const section of content.sections) {
-      if (section.title) {
-        parts.push(`\n## ${section.title}\n`);
+  // Process all sections
+  for (const section of content.sections) {
+    if (section.type === 'instructions') {
+      const instructionsSection = section as InstructionsSection;
+      parts.push(`\n## ${instructionsSection.title}\n`);
+      parts.push(instructionsSection.content);
+    } else if (section.type === 'rules') {
+      const rulesSection = section as RulesSection;
+      parts.push(`\n## ${rulesSection.title}\n`);
+      for (const rule of rulesSection.items) {
+        parts.push(`- ${rule.content}`);
+        if (rule.rationale) {
+          parts.push(`  *Rationale:* ${rule.rationale}`);
+        }
       }
-      if (section.content) {
-        parts.push(section.content);
+    } else if (section.type === 'examples') {
+      const examplesSection = section as ExamplesSection;
+      parts.push(`\n## ${examplesSection.title}\n`);
+      for (const example of examplesSection.examples) {
+        if (example.description) {
+          parts.push(`\n### ${example.description}\n`);
+        }
+        if (example.code) {
+          const lang = example.language || '';
+          parts.push(`\`\`\`${lang}\n${example.code}\n\`\`\``);
+        }
       }
-    }
-  }
-
-  // Add rules
-  if (content.rules && content.rules.length > 0) {
-    parts.push('\n## Rules\n');
-    for (const rule of content.rules) {
-      if (rule.title) {
-        parts.push(`\n### ${rule.title}\n`);
+    } else if (section.type === 'custom') {
+      const customSection = section as CustomSection;
+      if (customSection.title) {
+        parts.push(`\n## ${customSection.title}\n`);
       }
-      if (rule.description) {
-        parts.push(rule.description);
-      }
-    }
-  }
-
-  // Add examples
-  if (content.examples && content.examples.length > 0) {
-    parts.push('\n## Examples\n');
-    for (const example of content.examples) {
-      if (example.title) {
-        parts.push(`\n### ${example.title}\n`);
-      }
-      if (example.description) {
-        parts.push(example.description + '\n');
-      }
-      if (example.input) {
-        parts.push(`Input:\n\`\`\`\n${example.input}\n\`\`\`\n`);
-      }
-      if (example.output) {
-        parts.push(`Output:\n\`\`\`\n${example.output}\n\`\`\`\n`);
-      }
+      parts.push(customSection.content);
     }
   }
 

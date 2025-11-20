@@ -8,6 +8,12 @@ import type {
   CanonicalContent,
   ConversionOptions,
   ConversionResult,
+  InstructionsSection,
+  RulesSection,
+  ExamplesSection,
+  CustomSection,
+  Rule,
+  Example,
 } from './types/canonical.js';
 import type { KiroAgentConfig } from './to-kiro-agent.js';
 
@@ -26,8 +32,17 @@ export function fromKiroAgent(
 
     // Build canonical content from agent prompt
     const content: CanonicalContent = {
-      title: agentConfig.name || 'Kiro Agent',
-      description: agentConfig.description || '',
+      format: 'canonical',
+      version: '1.0',
+      sections: [
+        {
+          type: 'metadata',
+          data: {
+            title: agentConfig.name || 'Kiro Agent',
+            description: agentConfig.description || '',
+          },
+        },
+      ],
     };
 
     // Parse prompt into content structure
@@ -37,19 +52,31 @@ export function fromKiroAgent(
 
     // Build canonical package
     const pkg: CanonicalPackage = {
+      id: agentConfig.name || 'kiro-agent',
       name: agentConfig.name || 'kiro-agent',
       version: '1.0.0',
       description: agentConfig.description || '',
-      content,
+      author: '',
+      tags: [],
+      format: 'kiro',
       subtype: 'agent',
+      content,
+      sourceFormat: 'kiro',
       metadata: {
-        sourceFormat: 'kiro',
-        tools: agentConfig.tools,
-        mcpServers: agentConfig.mcpServers,
-        toolsSettings: agentConfig.toolsSettings,
-        resources: agentConfig.resources,
-        hooks: agentConfig.hooks,
-        model: agentConfig.model,
+        kiroConfig: {
+          inclusion: 'always',
+        },
+        kiroAgent: {
+          tools: agentConfig.tools,
+          mcpServers: agentConfig.mcpServers,
+          toolAliases: agentConfig.toolAliases,
+          allowedTools: agentConfig.allowedTools,
+          toolsSettings: agentConfig.toolsSettings,
+          resources: agentConfig.resources,
+          hooks: agentConfig.hooks,
+          useLegacyMcpJson: agentConfig.useLegacyMcpJson,
+          model: agentConfig.model,
+        },
       },
     };
 
@@ -78,23 +105,31 @@ export function fromKiroAgent(
 function parsePromptIntoContent(prompt: string, content: CanonicalContent): void {
   // If prompt is a file:// reference, note it
   if (prompt.startsWith('file://')) {
-    content.instructions = `Loads instructions from: ${prompt}`;
+    content.sections.push({
+      type: 'instructions',
+      title: 'Instructions',
+      content: `Loads instructions from: ${prompt}`,
+    });
     return;
   }
 
   // Split by ## headers to extract sections
   const sections = prompt.split(/\n## /);
 
-  // First section is the intro/description
+  // First section is the intro/description - update the metadata section
   if (sections[0]) {
     const intro = sections[0].trim();
-    if (intro && !content.description) {
-      content.description = intro;
+    if (intro) {
+      const metadataSection = content.sections[0];
+      if (metadataSection && metadataSection.type === 'metadata') {
+        if (!metadataSection.data.description) {
+          metadataSection.data.description = intro;
+        }
+      }
     }
   }
 
   // Process remaining sections
-  content.sections = [];
   for (let i = 1; i < sections.length; i++) {
     const sectionText = sections[i];
     const lines = sectionText.split('\n');
@@ -102,16 +137,32 @@ function parsePromptIntoContent(prompt: string, content: CanonicalContent): void
     const sectionContent = lines.slice(1).join('\n').trim();
 
     if (title.toLowerCase() === 'instructions') {
-      content.instructions = sectionContent;
+      content.sections.push({
+        type: 'instructions',
+        title,
+        content: sectionContent,
+      });
     } else if (title.toLowerCase() === 'rules') {
       // Parse rules
-      content.rules = parseRules(sectionContent);
+      const rules = parseRules(sectionContent);
+      content.sections.push({
+        type: 'rules',
+        title,
+        items: rules,
+      });
     } else if (title.toLowerCase() === 'examples') {
       // Parse examples
-      content.examples = parseExamples(sectionContent);
+      const examples = parseExamples(sectionContent);
+      content.sections.push({
+        type: 'examples',
+        title,
+        examples,
+      });
     } else {
       // Generic section
       content.sections.push({
+        type: 'custom',
+        editorType: 'kiro',
         title,
         content: sectionContent,
       });
@@ -122,8 +173,8 @@ function parsePromptIntoContent(prompt: string, content: CanonicalContent): void
 /**
  * Parse rules from markdown text
  */
-function parseRules(text: string): any[] {
-  const rules = [];
+function parseRules(text: string): Rule[] {
+  const rules: Rule[] = [];
   const ruleSections = text.split(/\n### /);
 
   for (const ruleText of ruleSections) {
@@ -134,8 +185,7 @@ function parseRules(text: string): any[] {
     const description = lines.slice(1).join('\n').trim();
 
     rules.push({
-      title,
-      description,
+      content: `${title}: ${description}`,
     });
   }
 
@@ -145,8 +195,8 @@ function parseRules(text: string): any[] {
 /**
  * Parse examples from markdown text
  */
-function parseExamples(text: string): any[] {
-  const examples = [];
+function parseExamples(text: string): Example[] {
+  const examples: Example[] = [];
   const exampleSections = text.split(/\n### /);
 
   for (const exampleText of exampleSections) {
@@ -156,27 +206,18 @@ function parseExamples(text: string): any[] {
     const title = lines[0].trim();
     const content = lines.slice(1).join('\n');
 
-    const example: any = { title };
-
-    // Extract input/output from code blocks
-    const inputMatch = /Input:\s*```[\s\S]*?\n([\s\S]*?)```/i.exec(content);
-    const outputMatch = /Output:\s*```[\s\S]*?\n([\s\S]*?)```/i.exec(content);
-
-    if (inputMatch) {
-      example.input = inputMatch[1].trim();
-    }
-
-    if (outputMatch) {
-      example.output = outputMatch[1].trim();
-    }
+    // Extract code from code blocks
+    const codeMatch = /```[\w]*\n([\s\S]*?)```/.exec(content);
+    const code = codeMatch ? codeMatch[1].trim() : content;
 
     // Get description (text before first code block)
-    const descMatch = /^([\s\S]*?)(?:Input:|Output:|$)/.exec(content);
-    if (descMatch && descMatch[1].trim()) {
-      example.description = descMatch[1].trim();
-    }
+    const descMatch = /^([\s\S]*?)(?:```|$)/.exec(content);
+    const description = descMatch && descMatch[1].trim() ? descMatch[1].trim() : title;
 
-    examples.push(example);
+    examples.push({
+      description,
+      code,
+    });
   }
 
   return examples;

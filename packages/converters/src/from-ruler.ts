@@ -8,6 +8,8 @@ import type {
   CanonicalContent,
   ConversionOptions,
   ConversionResult,
+  CustomSection,
+  MetadataSection,
 } from './types/canonical.js';
 
 /**
@@ -31,16 +33,22 @@ export function fromRuler(
     // Extract metadata from HTML comments if present
     const metadata = extractMetadata(markdown);
 
+    // Get description from metadata section
+    const metadataSection = content.sections.find((s) => s.type === 'metadata') as MetadataSection | undefined;
+    const description = metadata.description || metadataSection?.data.description || '';
+
     // Build canonical package
     const pkg: CanonicalPackage = {
+      id: metadata.name || 'ruler-rule',
       name: metadata.name || 'ruler-rule',
       version: '1.0.0',
-      author: metadata.author,
-      description: metadata.description || content.description || '',
+      author: metadata.author || '',
+      tags: [],
+      format: 'generic',
+      subtype: 'rule',
+      description,
       content,
-      metadata: {
-        sourceFormat: 'ruler',
-      },
+      sourceFormat: 'generic',
     };
 
     return {
@@ -103,11 +111,13 @@ function parseMarkdownContent(
 ): CanonicalContent {
   const lines = markdown.split('\n');
   const content: CanonicalContent = {
-    title: '',
-    description: '',
+    format: 'canonical',
+    version: '1.0',
     sections: [],
   };
 
+  let title = '';
+  let description = '';
   let currentSection: { title: string; content: string } | null = null;
   let inCodeBlock = false;
   let buffer: string[] = [];
@@ -124,7 +134,8 @@ function parseMarkdownContent(
     if (!inCodeBlock && line.match(/^#+\s/)) {
       // Save previous section if exists
       if (currentSection) {
-        content.sections?.push({
+        content.sections.push({
+          type: 'custom',
           title: currentSection.title,
           content: buffer.join('\n').trim(),
         });
@@ -135,33 +146,43 @@ function parseMarkdownContent(
       const match = line.match(/^(#+)\s+(.+)$/);
       if (match) {
         const level = match[1].length;
-        const title = match[2].trim();
+        const sectionTitle = match[2].trim();
 
         // First h1 is the title
-        if (level === 1 && !content.title) {
-          content.title = title;
+        if (level === 1 && !title) {
+          title = sectionTitle;
           currentSection = null;
         } else {
-          currentSection = { title, content: '' };
+          currentSection = { title: sectionTitle, content: '' };
         }
       }
     } else if (currentSection) {
       buffer.push(line);
-    } else if (!content.title) {
+    } else if (!title) {
       // Content before first header becomes description
       if (line.trim()) {
-        content.description += (content.description ? '\n' : '') + line;
+        description += (description ? '\n' : '') + line;
       }
     }
   }
 
   // Save final section
   if (currentSection && buffer.length > 0) {
-    content.sections?.push({
+    content.sections.push({
+      type: 'custom',
       title: currentSection.title,
       content: buffer.join('\n').trim(),
     });
   }
+
+  // Add metadata section at the beginning
+  content.sections.unshift({
+    type: 'metadata',
+    data: {
+      title: title || 'Ruler Rule',
+      description: description || '',
+    },
+  });
 
   return content;
 }

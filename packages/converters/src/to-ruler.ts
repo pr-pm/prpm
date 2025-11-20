@@ -11,6 +11,11 @@ import type {
   Section,
   Rule,
   Example,
+  MetadataSection,
+  InstructionsSection,
+  RulesSection,
+  ExamplesSection,
+  CustomSection,
 } from './types/canonical.js';
 import { validateMarkdown } from './validation.js';
 
@@ -100,75 +105,48 @@ export function toRuler(
 function convertContent(content: CanonicalContent, warnings: string[]): string {
   const parts: string[] = [];
 
-  // Add title if present
-  if (content.title) {
-    parts.push(`# ${content.title}\n`);
-  }
-
-  // Add description
-  if (content.description) {
-    parts.push(`${content.description}\n`);
-  }
-
-  // Add sections
-  if (content.sections && content.sections.length > 0) {
-    for (const section of content.sections) {
-      parts.push(convertSection(section));
+  // Extract metadata section for title and description
+  const metadataSection = content.sections.find(s => s.type === 'metadata') as MetadataSection | undefined;
+  if (metadataSection) {
+    if (metadataSection.data.title) {
+      parts.push(`# ${metadataSection.data.title}\n`);
+    }
+    if (metadataSection.data.description) {
+      parts.push(`${metadataSection.data.description}\n`);
     }
   }
 
-  // Add rules
-  if (content.rules && content.rules.length > 0) {
-    parts.push('## Rules\n');
-    for (const rule of content.rules) {
-      parts.push(convertRule(rule));
+  // Process all sections
+  for (const section of content.sections) {
+    if (section.type === 'metadata') {
+      // Skip metadata section - already handled above
+      continue;
+    } else if (section.type === 'instructions') {
+      const instructionsSection = section as InstructionsSection;
+      parts.push(`## ${instructionsSection.title}\n`);
+      parts.push(`${instructionsSection.content}\n`);
+    } else if (section.type === 'rules') {
+      const rulesSection = section as RulesSection;
+      parts.push(`## ${rulesSection.title}\n`);
+      for (const rule of rulesSection.items) {
+        parts.push(convertRule(rule));
+      }
+    } else if (section.type === 'examples') {
+      const examplesSection = section as ExamplesSection;
+      parts.push(`## ${examplesSection.title}\n`);
+      for (const example of examplesSection.examples) {
+        parts.push(convertExample(example));
+      }
+    } else if (section.type === 'custom') {
+      const customSection = section as CustomSection;
+      if (customSection.title) {
+        parts.push(`## ${customSection.title}\n`);
+      }
+      parts.push(`${customSection.content}\n`);
     }
-  }
-
-  // Add examples
-  if (content.examples && content.examples.length > 0) {
-    parts.push('## Examples\n');
-    for (const example of content.examples) {
-      parts.push(convertExample(example));
-    }
-  }
-
-  // Add context if present
-  if (content.context) {
-    parts.push('## Context\n');
-    parts.push(`${content.context}\n`);
-  }
-
-  // Add instructions
-  if (content.instructions) {
-    parts.push('## Instructions\n');
-    parts.push(`${content.instructions}\n`);
   }
 
   return parts.join('\n').trim();
-}
-
-/**
- * Convert a section to markdown
- */
-function convertSection(section: Section): string {
-  const parts: string[] = [];
-
-  if (section.title) {
-    parts.push(`## ${section.title}\n`);
-  }
-
-  if (section.content) {
-    parts.push(`${section.content}\n`);
-  }
-
-  if (section.subsections && section.subsections.length > 0) {
-    for (const subsection of section.subsections) {
-      parts.push(convertSection(subsection));
-    }
-  }
-
-  return parts.join('\n');
 }
 
 /**
@@ -177,23 +155,23 @@ function convertSection(section: Section): string {
 function convertRule(rule: Rule): string {
   const parts: string[] = [];
 
-  if (rule.title) {
-    parts.push(`### ${rule.title}\n`);
+  // Rule type only has: content, rationale, examples
+  parts.push(`- ${rule.content}`);
+
+  if (rule.rationale) {
+    parts.push(`\n  *Rationale:* ${rule.rationale}`);
   }
 
-  if (rule.description) {
-    parts.push(`${rule.description}\n`);
+  if (rule.examples && rule.examples.length > 0) {
+    parts.push(`\n  *Examples:*`);
+    for (const example of rule.examples) {
+      parts.push(`\n  \`\`\`\n  ${example}\n  \`\`\``);
+    }
   }
 
-  if (rule.pattern) {
-    parts.push(`**Pattern:** \`${rule.pattern}\`\n`);
-  }
+  parts.push('\n');
 
-  if (rule.severity) {
-    parts.push(`**Severity:** ${rule.severity}\n`);
-  }
-
-  return parts.join('\n');
+  return parts.join('');
 }
 
 /**
@@ -202,25 +180,19 @@ function convertRule(rule: Rule): string {
 function convertExample(example: Example): string {
   const parts: string[] = [];
 
-  if (example.title) {
-    parts.push(`### ${example.title}\n`);
-  }
-
+  // Example type only has: description, code, language, good
   if (example.description) {
-    parts.push(`${example.description}\n`);
+    parts.push(`### ${example.description}\n`);
   }
 
-  if (example.input) {
-    parts.push('**Input:**\n');
-    parts.push('```');
-    parts.push(example.input);
-    parts.push('```\n');
+  if (example.good !== undefined) {
+    parts.push(`*${example.good ? 'Good' : 'Bad'} example*\n`);
   }
 
-  if (example.output) {
-    parts.push('**Output:**\n');
-    parts.push('```');
-    parts.push(example.output);
+  if (example.code) {
+    const lang = example.language || '';
+    parts.push('```' + lang);
+    parts.push(example.code);
     parts.push('```\n');
   }
 
