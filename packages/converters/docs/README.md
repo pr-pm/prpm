@@ -2,6 +2,31 @@
 
 Comprehensive documentation for all supported AI prompt formats in PRPM.
 
+## Format Matrix
+
+Complete overview of all supported formats, their subtypes, and official documentation links.
+
+| Format | Subtype | Description | Official Docs |
+|--------|---------|-------------|---------------|
+| **Cursor** | `rule` | MDC format with YAML frontmatter for context rules | [cursor.com](https://cursor.com/docs/context/rules) |
+| | `agent` | Custom agent configurations | [cursor.com](https://cursor.com/docs/context/rules) |
+| | `slash-command` | Executable slash commands | [cursor.com](https://cursor.com/docs/context/rules) |
+| **Claude Code** | `agent` | AI agents with specific roles and capabilities | [code.claude.com](https://code.claude.com/docs/en/sub-agents) |
+| | `skill` | Specialized skills for Claude agents | [code.claude.com](https://code.claude.com/docs/en/skills) |
+| | `slash-command` | Custom slash commands for workflows | [code.claude.com](https://code.claude.com/docs/en/slash-commands) |
+| | `hook` | Event-driven automations | [code.claude.com](https://code.claude.com/docs/en/hooks) |
+| **Continue** | `rule` | Context rules with globs and regex matching | [docs.continue.dev](https://docs.continue.dev/customize/deep-dives/rules) |
+| **Windsurf** | `rule` | Plain markdown rules (12k character limit) | [docs.windsurf.com](https://docs.windsurf.com/windsurf/cascade/memories#rules) |
+| **GitHub Copilot** | `repository` | Repository-level instructions | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) |
+| | `path` | Path-specific instructions with excludeAgent | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) |
+| **Kiro** | `steering` | Steering files with inclusion modes (always/fileMatch/manual) | [kiro.dev](https://kiro.dev/docs/steering/) |
+| | `hook` | Event-driven shell commands (JSON) | [kiro.dev](https://kiro.dev/docs/hooks/) |
+| | `agent` | Custom AI agent configurations with MCP servers and tools | [kiro.dev](https://kiro.dev/docs/cli/custom-agents/) |
+| **Ruler** | `rule` | Plain markdown rules for centralized management | [okigu.com/ruler](https://okigu.com/ruler) |
+| | `agent` | Agent instructions in plain markdown | [okigu.com/ruler](https://okigu.com/ruler) |
+| | `tool` | Tool usage guidelines in plain markdown | [okigu.com/ruler](https://okigu.com/ruler) |
+| **agents.md** | `agent` | OpenAI format, single file plain markdown | [github.com/openai](https://github.com/openai/agents.md) |
+
 ## Format Specifications
 
 This directory contains detailed specifications for each AI IDE/tool format that PRPM supports. Each document includes:
@@ -27,6 +52,8 @@ This directory contains detailed specifications for each AI IDE/tool format that
 | **GitHub Copilot** | [copilot.md](./copilot.md) | Path-specific instructions with excludeAgent | [docs.github.com](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions) |
 | **Kiro** | [kiro.md](./kiro.md) | Steering files with optional frontmatter | [kiro.dev/docs](https://kiro.dev/docs/steering/) |
 | **Kiro Hooks** | [kiro-hooks.md](./kiro-hooks.md) | Event-driven automations (JSON) | [kiro.dev/docs](https://kiro.dev/docs/hooks/) |
+| **Kiro Agents** | [kiro-agents.md](./kiro-agents.md) | Custom AI agent configurations (JSON) | [kiro.dev/docs](https://kiro.dev/docs/cli/custom-agents/) |
+| **Ruler** | [ruler.md](./ruler.md) | Plain markdown rules, centralized management | [okigu.com/ruler](https://okigu.com/ruler) |
 | **agents.md** | [agents-md.md](./agents-md.md) | OpenAI format, plain markdown | [github.com/openai/agents.md](https://github.com/openai/agents.md) |
 
 ## Schema Validation

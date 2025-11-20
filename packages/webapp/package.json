@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@nangohq/frontend": "^0.69.5",
-    "@pr-pm/types": "^1.0.0",
+    "@pr-pm/types": "workspace:*",
     "@stripe/react-stripe-js": "^5.3.0",
     "@stripe/stripe-js": "^8.3.0",
     "@tailwindcss/typography": "^0.5.19",
