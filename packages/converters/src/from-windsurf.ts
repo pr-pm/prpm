@@ -9,6 +9,7 @@
 
 import type {
   CanonicalPackage,
+  PackageMetadata,
   Section,
   InstructionsSection,
 } from './types/canonical.js';
@@ -21,12 +22,7 @@ const MAX_WINDSURF_CHARS = 12000;
  */
 export function fromWindsurf(
   content: string,
-  metadata: {
-    id: string;
-    version?: string;
-    author?: string;
-    tags?: string[];
-  }
+  metadata: Partial<PackageMetadata> & Pick<PackageMetadata, 'id' | 'name' | 'version' | 'author'>
 ): CanonicalPackage {
   const sections: Section[] = [];
   const trimmedContent = content.trim();

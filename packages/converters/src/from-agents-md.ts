@@ -9,6 +9,7 @@
 import yaml from 'js-yaml';
 import type {
   CanonicalPackage,
+  PackageMetadata,
   CanonicalContent,
   Section,
   InstructionsSection,
@@ -19,21 +20,12 @@ import type {
 } from './types/canonical.js';
 import { setTaxonomy } from './taxonomy-utils.js';
 
-export interface PackageMetadata {
-  id: string;
-  name: string;
-  description?: string;
-  author?: string;
-  tags?: string[];
-  version?: string;
-}
-
 /**
  * Parse agents.md file to canonical format
  */
 export function fromAgentsMd(
   content: string,
-  metadata: PackageMetadata
+  metadata: Partial<PackageMetadata> & Pick<PackageMetadata, 'id' | 'name' | 'version' | 'author'>
 ): CanonicalPackage {
   // Parse frontmatter if exists (optional for agents.md)
   const { frontmatter, body } = parseFrontmatter(content);

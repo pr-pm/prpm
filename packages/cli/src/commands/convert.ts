@@ -237,7 +237,8 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
       case 'kiro':
         // Check if content is agent format (JSON) vs steering file (markdown)
         if (isKiroAgentFormat(content)) {
-          canonicalPkg = fromKiroAgent(content, metadata);
+          const result = fromKiroAgent(content);
+          canonicalPkg = JSON.parse(result.content) as CanonicalPackage;
         } else {
           canonicalPkg = fromKiro(content, metadata);
         }
