@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
-import { uploadJsonObject } from '../storage/s3.js';
+import { uploadJsonObject, s3Client } from '../storage/s3.js';
+import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
 interface SeoPackageResponse {
   packages: any[];
@@ -132,9 +133,6 @@ export class SeoDataService {
    * Download JSON file from S3
    */
   private async downloadJsonFromS3(filename: string): Promise<any> {
-    const { GetObjectCommand } = await import('@aws-sdk/client-s3');
-    const { s3Client } = await import('../storage/s3.js');
-
     const key = this.prefix ? `${this.prefix.replace(/\/?$/, '/')}${filename}` : filename;
 
     const response = await s3Client.send(
@@ -192,9 +190,6 @@ export class SeoDataService {
       html = this.replacePackageDataInHtml(html, packageData, author, packagePath);
 
       // Upload HTML to S3
-      const { PutObjectCommand } = await import('@aws-sdk/client-s3');
-      const { s3Client } = await import('../storage/s3.js');
-
       const htmlKey = `packages/${author}/${packagePath}/index.html`;
 
       await s3Client.send(
@@ -267,9 +262,6 @@ export class SeoDataService {
 
     const [, author, packagePath] = match;
     const html = this.generatePackageHtml(packageData, author, packagePath);
-
-    const { PutObjectCommand } = await import('@aws-sdk/client-s3');
-    const { s3Client } = await import('../storage/s3.js');
 
     const htmlKey = `packages/${author}/${packagePath}/index.html`;
 

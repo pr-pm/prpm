@@ -351,6 +351,25 @@ export async function handleSearch(
       return;
     }
 
+    // Show fallback message if this is a fallback result
+    if (result.fallback) {
+      console.log('\n❌ No packages found for your search');
+
+      // Build filter description
+      let filterMsg = '';
+      if (options.subtype) {
+        filterMsg = ` (${options.subtype}`;
+        if (options.format) {
+          filterMsg += ` for ${options.format}`;
+        }
+        filterMsg += ')';
+      } else if (options.format) {
+        filterMsg = ` (${options.format} format)`;
+      }
+
+      console.log(`\n💡 Showing top 10 most popular packages${filterMsg} instead:\n`);
+    }
+
     // If interactive mode is disabled or only one page, show simple results
     const totalPages = Math.ceil(result.total / limit);
     const shouldPaginate = options.interactive !== false && totalPages > 1;

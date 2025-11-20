@@ -113,6 +113,8 @@ function SearchPageContent() {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
+  const [isFallbackResult, setIsFallbackResult] = useState(false)
+  const [fallbackOriginalQuery, setFallbackOriginalQuery] = useState('')
   const suggestionsTimeoutRef = useRef<NodeJS.Timeout>()
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
@@ -484,7 +486,9 @@ function SearchPageContent() {
               pkg.description?.toLowerCase().includes(searchLower)
           )
         }
-        // Don't filter by format - show all packages with --as flag conversion
+        if (selectedFormat) {
+          filteredPackages = filteredPackages.filter(pkg => pkg.format === selectedFormat)
+        }
         if (selectedSubtype) {
           filteredPackages = filteredPackages.filter(pkg => (pkg as any).subtype === selectedSubtype)
         }
@@ -552,7 +556,7 @@ function SearchPageContent() {
         }
 
         if (debouncedQuery.trim()) params.q = debouncedQuery
-        // Note: We don't filter by format - PRPM shows all packages with --as flag conversion
+        if (selectedFormat) params.format = selectedFormat
         if (selectedSubtype) params.subtype = selectedSubtype
         if (selectedCategory) params.category = selectedCategory
         if (selectedLanguage) params.language = selectedLanguage
@@ -563,6 +567,15 @@ function SearchPageContent() {
         const result = await searchPackages(params)
         setPackages(result.packages)
         setTotal(result.total)
+
+        // Show fallback message if applicable
+        if (result.fallback) {
+          setIsFallbackResult(true)
+          setFallbackOriginalQuery(result.original_query || '')
+        } else {
+          setIsFallbackResult(false)
+          setFallbackOriginalQuery('')
+        }
       }
     } catch (error) {
       console.error('Failed to fetch packages:', error)
@@ -1478,6 +1491,35 @@ function SearchPageContent() {
 
           {/* Results */}
           <div className="lg:col-span-3">
+            {/* Fallback message */}
+            {isFallbackResult && (
+              <div className="mb-4 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm text-blue-200 font-medium mb-1">
+                      No exact matches found{fallbackOriginalQuery && ` for "${fallbackOriginalQuery}"`}
+                    </p>
+                    <p className="text-sm text-blue-300/80 mb-2">
+                      Showing top 10 popular packages
+                      {selectedSubtype && ` (${selectedSubtype}`}
+                      {selectedSubtype && selectedFormat && ` for ${selectedFormat}`}
+                      {selectedSubtype && ')'}
+                      {!selectedSubtype && selectedFormat && ` in ${selectedFormat} format`}
+                    </p>
+                    <p className="text-xs text-blue-300/60 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      PRPM converts all formats for you — install any package with <code className="px-1 py-0.5 bg-blue-500/20 rounded">--as {selectedFormat || 'any-format'}</code>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {!loading && (packages.length > 0 || collections.length > 0) && (
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-gray-400">

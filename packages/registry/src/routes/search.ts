@@ -109,7 +109,7 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // Use search provider (PostgreSQL or OpenSearch)
     const searchProvider = getSearchProvider(server);
-    const response = await searchProvider.search(q || '', {
+    let response = await searchProvider.search(q || '', {
       format,
       subtype,
       tags,
@@ -123,6 +123,28 @@ export async function searchRoutes(server: FastifyInstance) {
       limit,
       offset,
     });
+
+    // If no results, show top 10 popular packages
+    // BUT only if format or subtype filters are applied
+    if (response.packages.length === 0 && (format || subtype)) {
+      const fallbackOptions: Record<string, unknown> = {
+        sort: 'downloads' as const,
+        limit: 10,
+        offset: 0,
+      };
+
+      // Don't preserve format filter (all formats can be converted with --as)
+      // But DO preserve subtype filter (e.g., show top agents if filtering by agent subtype)
+      if (subtype) fallbackOptions.subtype = subtype;
+
+      response = await searchProvider.search('', fallbackOptions);
+
+      // Always mark as fallback (even if 0 results) so UI shows cross-platform conversion notice
+      response.fallback = true;
+      response.original_query = q;
+      // Override total to show actual fallback count, not all packages
+      response.total = response.packages.length;
+    }
 
     // Cache for 15 minutes (longer for better performance, search results stable)
     const cacheTTL = offset === 0 ? 900 : 300; // First page: 15min, others: 5min
