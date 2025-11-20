@@ -25,7 +25,7 @@ export { toClaude, toClaudeMd, isClaudeFormat } from './to-claude.js';
 export { toContinue, isContinueFormat } from './to-continue.js';
 export { toCopilot, isCopilotFormat } from './to-copilot.js';
 export { toKiro, isKiroFormat } from './to-kiro.js';
-export { toKiroAgent, isKiroAgentFormat } from './to-kiro-agent.js';
+export { toKiroAgent, isKiroAgentFormat, type KiroAgentConfig } from './to-kiro-agent.js';
 export { toWindsurf, isWindsurfFormat } from './to-windsurf.js';
 export { toAgentsMd, isAgentsMdFormat } from './to-agents-md.js';
 export { toGemini } from './to-gemini.js';
