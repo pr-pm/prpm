@@ -1,0 +1,336 @@
+---
+description: Kiro agent configuration patterns, JSON structure, tool permissions, and security best practices for creating specialized AI development assistants
+globs: ["**/.kiro/agents/**/*.json", "**/kiro-agent*.json"]
+alwaysApply: false
+---
+
+# Kiro Agent Development
+
+Patterns for creating specialized Kiro AI agents with proper configuration, tools, and security.
+
+## Agent File Structure
+
+```json
+{
+  "name": "agent-name",
+  "description": "One-line purpose",
+  "prompt": "System instructions",
+  "tools": ["fs_read", "fs_write"],
+  "toolsSettings": {},
+  "resources": [],
+  "mcpServers": {},
+  "hooks": {}
+}
+```
+
+**Location:**
+- Project: `.kiro/agents/<name>.json`
+- Global: `~/.kiro/agents/<name>.json`
+
+## Core Principles
+
+### 1. Specialization
+✅ Create focused agents: `backend-api-specialist`
+❌ Avoid generic agents: `general-helper`
+
+### 2. Least Privilege
+Only grant necessary tools and paths.
+
+```json
+{
+  "toolsSettings": {
+    "fs_write": {
+      "allowedPaths": ["src/api/**", "tests/api/**"]
+    },
+    "execute_bash": {
+      "allowedCommands": ["npm test", "npm run build"]
+    }
+  }
+}
+```
+
+### 3. Clear Prompts
+Be specific about domain, focus areas, and standards.
+
+```json
+{
+  "prompt": "Backend API expert specializing in Express.js and MongoDB.\n\n## Focus\n- RESTful API design\n- Security (input validation, auth)\n- Error handling\n- Query optimization\n\n## Standards\n- Always use async/await\n- Implement proper logging\n- Validate all inputs"
+}
+```
+
+## Common Patterns
+
+### Backend Specialist
+```json
+{
+  "name": "backend-dev",
+  "description": "Node.js/Express API development with MongoDB",
+  "prompt": "Backend development expert. Focus on API design, database optimization, and security.\n\n## Core Principles\n- RESTful conventions\n- Input validation\n- Error handling\n- Query optimization",
+  "tools": ["fs_read", "fs_write", "execute_bash"],
+  "toolsSettings": {
+    "fs_write": {
+      "allowedPaths": ["src/api/**", "src/routes/**", "src/models/**"]
+    }
+  }
+}
+```
+
+### Code Reviewer
+```json
+{
+  "name": "code-reviewer",
+  "description": "Reviews code against team standards",
+  "prompt": "You review code for:\n- Quality and readability\n- Security issues\n- Performance problems\n- Standard compliance\n\nProvide constructive feedback with examples.",
+  "tools": ["fs_read"],
+  "resources": ["file://.kiro/steering/review-checklist.md"]
+}
+```
+
+### Test Writer
+```json
+{
+  "name": "test-writer",
+  "description": "Writes comprehensive Vitest test suites",
+  "prompt": "Testing expert using Vitest.\n\n## Requirements\n- Unit tests for all functions\n- Edge case coverage\n- Proper mocking\n- AAA pattern (Arrange, Act, Assert)",
+  "tools": ["fs_read", "fs_write"],
+  "toolsSettings": {
+    "fs_write": {
+      "allowedPaths": ["**/*.test.ts", "**/*.spec.ts", "tests/**"]
+    }
+  }
+}
+```
+
+### Frontend Specialist
+```json
+{
+  "name": "frontend-dev",
+  "description": "React/Next.js development with TypeScript",
+  "prompt": "Frontend expert in React, Next.js, and TypeScript.\n\n## Focus\n- Component architecture\n- Performance optimization\n- Accessibility (WCAG)\n- Responsive design",
+  "tools": ["fs_read", "fs_write"],
+  "toolsSettings": {
+    "fs_write": {
+      "allowedPaths": ["src/components/**", "src/app/**", "src/styles/**"]
+    }
+  }
+}
+```
+
+### DevOps Engineer
+```json
+{
+  "name": "devops",
+  "description": "Infrastructure and deployment automation",
+  "prompt": "DevOps expert specializing in Docker, Kubernetes, and CI/CD.\n\nFocus on automation, reliability, and security.",
+  "tools": ["fs_read", "fs_write", "execute_bash"],
+  "toolsSettings": {
+    "fs_write": {
+      "allowedPaths": [".github/**", "docker/**", "k8s/**", "terraform/**"]
+    },
+    "execute_bash": {
+      "allowedCommands": ["docker*", "kubectl*", "terraform*"]
+    }
+  }
+}
+```
+
+## Tool Configuration
+
+### Common Tools
+- `fs_read` - Read files
+- `fs_write` - Write files (requires `allowedPaths`)
+- `execute_bash` - Run commands (requires `allowedCommands`)
+- MCP server tools - Varies by server
+
+### File System Tools
+```json
+{
+  "toolsSettings": {
+    "fs_read": {
+      "allowedPaths": ["src/**", "docs/**"]
+    },
+    "fs_write": {
+      "allowedPaths": ["src/generated/**"],
+      "excludePaths": ["src/generated/migrations/**"]
+    }
+  }
+}
+```
+
+### Bash Execution
+```json
+{
+  "toolsSettings": {
+    "execute_bash": {
+      "allowedCommands": ["npm test", "npm run build"],
+      "timeout": 30000
+    }
+  }
+}
+```
+
+### MCP Servers
+```json
+{
+  "mcpServers": {
+    "database": {
+      "command": "mcp-server-postgres",
+      "args": ["--host", "localhost"],
+      "env": {
+        "DB_URL": "${DATABASE_URL}"
+      }
+    },
+    "fetch": {
+      "command": "mcp-server-fetch",
+      "args": []
+    }
+  },
+  "tools": ["fs_read", "db_query", "fetch"],
+  "allowedTools": ["fetch"]
+}
+```
+
+## Advanced Features
+
+### Lifecycle Hooks
+```json
+{
+  "hooks": {
+    "agentSpawn": ["git fetch origin", "npm run db:check"],
+    "userPromptSubmit": ["git status --short"]
+  }
+}
+```
+
+### Resource Loading
+```json
+{
+  "resources": [
+    "file://.kiro/steering/api-standards.md",
+    "file://.kiro/steering/security-policy.md"
+  ]
+}
+```
+
+## Best Practices
+
+### Naming
+- Use **kebab-case**: `backend-specialist`
+- Be **specific**: `react-testing-expert`, not `helper`
+- Indicate **domain**: `aws-infrastructure`
+
+### Security
+1. Grant minimum necessary tools
+2. Restrict file paths with `allowedPaths`
+3. Whitelist commands with `allowedCommands`
+4. Use `allowedTools` for safe operations
+
+### Prompts
+1. Define expertise area clearly
+2. List specific focus areas
+3. Specify standards/conventions
+4. Provide pattern examples
+5. Set clear expectations
+
+## Anti-Patterns
+
+### ❌ Don't: Grant All Tools
+```json
+{
+  "tools": ["*"]  // Security risk
+}
+```
+
+### ❌ Don't: Vague Prompts
+```json
+{
+  "prompt": "You are a helpful assistant."  // Too generic
+}
+```
+
+### ❌ Don't: No Path Restrictions
+```json
+{
+  "tools": ["fs_write"]  // Can modify any file
+}
+```
+
+### ✅ Do: Be Specific
+```json
+{
+  "prompt": "Backend API expert in Express.js.\n\nFocus:\n- REST design\n- Security\n- Error handling",
+  "tools": ["fs_read", "fs_write"],
+  "toolsSettings": {
+    "fs_write": {
+      "allowedPaths": ["src/api/**"]
+    }
+  }
+}
+```
+
+## Common Tasks
+
+### Creating an Agent
+
+1. **Clarify Requirements**
+   - What domain/task?
+   - What tools needed?
+   - What file paths?
+
+2. **Create JSON File**
+   ```bash
+   touch .kiro/agents/my-agent.json
+   ```
+
+3. **Design Configuration**
+   - Choose pattern (backend, frontend, etc.)
+   - Set tool restrictions
+   - Write clear prompt
+
+4. **Test Agent**
+   ```bash
+   kiro agent use my-agent
+   kiro "What can you help me with?"
+   ```
+
+## Troubleshooting
+
+### Agent Not Found
+- File must be in `.kiro/agents/`
+- Extension must be `.json`
+- Validate JSON syntax
+
+### Tools Not Working
+- Check tool name spelling
+- Verify `allowedPaths` restrictions
+- Ensure MCP servers installed
+- Review `allowedTools` list
+
+### Prompt Ineffective
+- Be more specific about tasks
+- Add concrete examples
+- Reference team standards
+- Structure with markdown headers
+
+## Integration with PRPM
+
+```bash
+# Install Kiro agent from PRPM
+prpm install @username/agent-name --as kiro --subtype agent
+
+# Publish your agent
+prpm init my-agent --subtype agent
+prpm publish
+```
+
+## Summary
+
+**Key Points:**
+1. Specialize agents for specific domains
+2. Restrict tools to minimum necessary
+3. Write clear, structured prompts
+4. Use kebab-case naming
+5. Reference steering files for standards
+6. Test agents before deployment
+
+**Goal:** Create secure, focused agents that enforce team standards and improve development workflows.

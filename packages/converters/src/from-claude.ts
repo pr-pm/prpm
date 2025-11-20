@@ -5,6 +5,7 @@
 
 import type {
   CanonicalPackage,
+  PackageMetadata,
   CanonicalContent,
   Section,
   MetadataSection,
@@ -28,12 +29,7 @@ import { detectSubtypeFromFrontmatter, setTaxonomy, type Subtype } from './taxon
  */
 export function fromClaude(
   content: string,
-  metadata: {
-    id: string;
-    version?: string;
-    author?: string;
-    tags?: string[];
-  },
+  metadata: Partial<PackageMetadata> & Pick<PackageMetadata, 'id' | 'name' | 'version' | 'author'>,
   sourceFormat: 'claude' | 'cursor' | 'continue' = 'claude',
   explicitSubtype?: Subtype
 ): CanonicalPackage {

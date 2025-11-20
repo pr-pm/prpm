@@ -1,16 +1,23 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 
 // Get the directory where this file is located
-// In Jest/CommonJS, __dirname is provided automatically
-// In ESM builds, we need to polyfill it using import.meta.url
-// Since we can't use import.meta in Jest (syntax error), we declare __dirname
-// and trust that it will be provided by the environment (Jest, Node with --require, etc.)
-declare const __dirname: string;
-const currentDirname = __dirname;
+// When compiled with ts-jest to CommonJS, __dirname will be available
+// When run as ES module (Vitest), get url from import.meta
+let currentDirname: string;
+if (typeof __dirname !== 'undefined') {
+  // CommonJS environment
+  currentDirname = __dirname;
+} else {
+  // ES module environment
+  // Use a function to avoid Jest parse errors with import.meta
+  const getModuleUrl = new Function('return import.meta.url');
+  currentDirname = dirname(fileURLToPath(getModuleUrl()));
+}
 
 // Initialize Ajv with strict mode disabled for better compatibility
 const ajv = new Ajv({
@@ -31,6 +38,7 @@ export type FormatType =
   | 'kiro'
   | 'agents-md'
   | 'gemini'
+  | 'ruler'
   | 'canonical';
 
 export type SubtypeType =
@@ -84,6 +92,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'claude:hook': 'claude-hook.schema.json',
       'cursor:slash-command': 'cursor-command.schema.json',
       'kiro:hook': 'kiro-hooks.schema.json',
+      'kiro:agent': 'kiro-agent.schema.json',
     };
 
     schemaFilename = subtypeSchemaMap[cacheKey];
@@ -100,6 +109,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'kiro': 'kiro-steering.schema.json',
       'agents-md': 'agents-md.schema.json',
       'gemini': 'gemini.schema.json',
+      'ruler': 'ruler.schema.json',
       'canonical': 'canonical.schema.json',
     };
     schemaFilename = schemaMap[format] || `${format}.schema.json`;
@@ -270,8 +280,8 @@ export function validateMarkdown(
 ): ValidationResult {
   const { frontmatter, content } = parseMarkdownWithFrontmatter(markdown);
 
-  // Windsurf and agents-md don't have frontmatter, so validate differently
-  if (format === 'windsurf' || format === 'agents-md') {
+  // Windsurf, agents-md, and ruler don't have frontmatter, so validate differently
+  if (format === 'windsurf' || format === 'agents-md' || format === 'ruler') {
     return validateFormat(format, { content: markdown }, subtype);
   }
 

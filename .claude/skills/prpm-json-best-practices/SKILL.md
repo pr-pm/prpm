@@ -1,8 +1,8 @@
 ---
 name: PRPM JSON Best Practices
-description: Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management
+description: Best practices for structuring prpm.json package manifests with required fields, tags, organization, multi-package management, enhanced file format, and conversion hints
 author: PRPM Team
-version: 1.0.0
+version: 1.1.0
 tags:
   - prpm
   - package-management
@@ -98,6 +98,8 @@ See `examples/packages-with-collections.json` for complete structure.
 | `organization` | string | Organization name (for scoped packages) |
 | `homepage` | string | Package homepage URL |
 | `documentation` | string | Documentation URL |
+| `license_text` | string | Full text of the license file for proper attribution |
+| `license_url` | string | URL to the license file in the repository |
 | `tags` | string[] | Searchable tags (kebab-case) |
 | `keywords` | string[] | Additional keywords for search |
 | `category` | string | Package category |
@@ -376,6 +378,53 @@ Slash command:
 }
 ```
 
+### Enhanced File Format
+
+**Advanced:** Files can be objects with metadata instead of simple strings. Useful for packages with multiple files targeting different formats or needing per-file metadata.
+
+**Enhanced file object structure:**
+```json
+{
+  "files": [
+    {
+      "path": ".cursor/rules/typescript.mdc",
+      "format": "cursor",
+      "subtype": "rule",
+      "name": "TypeScript Rules",
+      "description": "TypeScript coding standards and best practices",
+      "tags": ["typescript", "frontend"]
+    },
+    {
+      "path": ".cursor/rules/python.mdc",
+      "format": "cursor",
+      "subtype": "rule",
+      "name": "Python Rules",
+      "description": "Python best practices for backend development",
+      "tags": ["python", "backend"]
+    }
+  ]
+}
+```
+
+**When to use enhanced format:**
+- Multi-file packages with different formats/subtypes per file
+- Need per-file descriptions or tags
+- Want to provide display names for individual files
+- Building collection packages with mixed content types
+
+**Enhanced file fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `path` | **Yes** | Relative path to file from project root |
+| `format` | **Yes** | File's target format (`cursor`, `claude`, etc.) |
+| `subtype` | No | File's subtype (`rule`, `skill`, `agent`, etc.) |
+| `name` | No | Display name for this file |
+| `description` | No | Description of what this file does |
+| `tags` | No | File-specific tags (array of strings) |
+
+**Note:** Cannot mix simple strings and objects in the same `files` array. Use all strings OR all objects, not both.
+
 **Common Mistake:**
 ```json
 {
@@ -433,6 +482,151 @@ If output is empty, no duplicates exist. If names appear, you have duplicates to
   ]
 }
 ```
+
+## Conversion Hints (Advanced)
+
+**Purpose:** Help improve quality when converting packages to other formats. The `conversion` field provides format-specific hints for cross-format transformations.
+
+**Note:** This is an advanced feature primarily used by format conversion tools. Most packages don't need this.
+
+**Structure:**
+
+```json
+{
+  "name": "my-package",
+  "version": "1.0.0",
+  "format": "claude",
+  "conversion": {
+    "cursor": {
+      "alwaysApply": false,
+      "priority": "high",
+      "globs": ["**/*.ts", "**/*.tsx"]
+    },
+    "kiro": {
+      "inclusion": "fileMatch",
+      "fileMatchPattern": "**/*.ts",
+      "domain": "typescript",
+      "tools": ["fs_read", "fs_write"],
+      "mcpServers": {
+        "database": {
+          "command": "mcp-server-postgres",
+          "args": [],
+          "env": {
+            "DATABASE_URL": "${DATABASE_URL}"
+          }
+        }
+      }
+    },
+    "copilot": {
+      "applyTo": ["src/**", "lib/**"],
+      "excludeAgent": "code-review"
+    }
+  }
+}
+```
+
+**Supported conversion hints:**
+
+### Cursor Hints
+```json
+{
+  "conversion": {
+    "cursor": {
+      "alwaysApply": boolean,      // Whether rule should always apply
+      "priority": "high|medium|low", // Rule priority level
+      "globs": ["**/*.ts"]         // File patterns to auto-attach
+    }
+  }
+}
+```
+
+### Claude Hints
+```json
+{
+  "conversion": {
+    "claude": {
+      "model": "sonnet|opus|haiku|inherit", // Preferred model
+      "tools": ["Read", "Write"],          // Allowed tools
+      "subagentType": "format-conversion"  // Subagent type if agent
+    }
+  }
+}
+```
+
+### Kiro Hints
+```json
+{
+  "conversion": {
+    "kiro": {
+      "inclusion": "always|fileMatch|manual", // When to include
+      "fileMatchPattern": "**/*.ts",         // Pattern for fileMatch mode
+      "domain": "typescript",                // Domain category
+      "tools": ["fs_read", "fs_write"],     // Available tools
+      "mcpServers": {                        // MCP server configs
+        "database": {
+          "command": "mcp-server-postgres",
+          "args": [],
+          "env": { "DATABASE_URL": "${DATABASE_URL}" }
+        }
+      }
+    }
+  }
+}
+```
+
+### Copilot Hints
+```json
+{
+  "conversion": {
+    "copilot": {
+      "applyTo": "src/**",                         // Path patterns
+      "excludeAgent": "code-review|coding-agent"  // Agent to exclude
+    }
+  }
+}
+```
+
+### Continue Hints
+```json
+{
+  "conversion": {
+    "continue": {
+      "alwaysApply": boolean,           // Always apply rule
+      "globs": ["**/*.ts"],             // File patterns
+      "regex": ["import.*from"]         // Regex patterns
+    }
+  }
+}
+```
+
+### Windsurf Hints
+```json
+{
+  "conversion": {
+    "windsurf": {
+      "characterLimit": 12000  // Warn if exceeding limit
+    }
+  }
+}
+```
+
+### Agents.md Hints
+```json
+{
+  "conversion": {
+    "agentsMd": {
+      "project": "my-project",  // Project name
+      "scope": "backend"        // Scope/domain
+    }
+  }
+}
+```
+
+**When to use conversion hints:**
+- Publishing cross-format packages that need specific settings per format
+- Format conversion tools need guidance on how to transform content
+- Package behavior should change based on target format
+- Want to preserve format-specific metadata during conversions
 
 ## Common Patterns
 

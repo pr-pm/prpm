@@ -4,7 +4,7 @@
  */
 
 import * as TOML from '@iarna/toml';
-import type { CanonicalPackage, CanonicalContent, Section } from './types/canonical.js';
+import type { CanonicalPackage, PackageMetadata, CanonicalContent, Section } from './types/canonical.js';
 import type { Subtype } from './taxonomy-utils.js';
 
 export interface GeminiCommand {
@@ -21,7 +21,7 @@ export interface GeminiCommand {
  */
 export function fromGemini(
   content: string,
-  metadata: { id: string; name?: string; version?: string; author?: string; tags?: string[] },
+  metadata: Partial<PackageMetadata> & Pick<PackageMetadata, 'id' | 'name' | 'version' | 'author'>,
   explicitSubtype?: Subtype
 ): CanonicalPackage {
   // Parse TOML

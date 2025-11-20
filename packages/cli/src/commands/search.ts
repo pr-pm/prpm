@@ -40,6 +40,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'gemini': '✨',
     'mcp': '🔗',
     'agents.md': '📝',
+    'ruler': '📏',
     'generic': '📦',
   };
 
@@ -60,6 +61,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'gemini': 'Gemini',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
+    'ruler': 'Ruler',
     'generic': '',
   };
 

@@ -120,6 +120,24 @@ npm run dev:cli     # CLI development
 npm run dev:registry # Registry server
 ```
 
+#### Working with Ruler
+
+If you're testing or developing Ruler format support, sync rules after converting or installing:
+
+```bash
+# After converting to Ruler format
+prpm convert .claude/skills/my-skill.md --to ruler --name my-skill
+
+# Sync rules to AI tools
+npx ruler apply
+
+# Or install Ruler globally for easier access
+npm install -g ruler
+ruler apply
+```
+
+**Note:** `ruler apply` reads rules from `.ruler/` and distributes them to your configured AI tools (Claude, Cursor, Copilot, etc.) according to your `ruler.toml` configuration. This populates IDE-specific rule files (`.cursor/rules/`, `.claude/skills/`, etc.) across different tools, ensuring consistent AI coding assistance regardless of which IDE you're using. Running `ruler apply` after adding or updating rules is recommended to keep your development environment synchronized.
+
 #### Project Structure
 
 ```

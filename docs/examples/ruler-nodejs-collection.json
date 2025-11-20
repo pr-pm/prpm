@@ -1,0 +1,62 @@
+{
+  "id": "ruler-nodejs",
+  "name": "Ruler Node.js Backend",
+  "description": "Node.js backend development rules for Ruler - Express/Fastify patterns, API design, security, and database best practices",
+  "version": "1.0.0",
+  "category": "development",
+  "tags": ["ruler", "nodejs", "backend", "api", "javascript"],
+  "packages": [
+    {
+      "packageId": "@prpm/nodejs-express-patterns",
+      "version": "^2.0.0",
+      "required": true,
+      "reason": "Express.js best practices, middleware, routing patterns"
+    },
+    {
+      "packageId": "@prpm/rest-api-design",
+      "version": "^1.5.0",
+      "required": true,
+      "reason": "RESTful API design principles and conventions"
+    },
+    {
+      "packageId": "@prpm/nodejs-security",
+      "version": "^2.1.0",
+      "required": true,
+      "reason": "Security best practices: validation, sanitization, authentication"
+    },
+    {
+      "packageId": "@prpm/error-handling",
+      "version": "^1.2.0",
+      "required": true,
+      "reason": "Centralized error handling and logging patterns"
+    },
+    {
+      "packageId": "@prpm/database-patterns",
+      "version": "^1.0.0",
+      "required": false,
+      "reason": "PostgreSQL, MongoDB, Prisma ORM patterns"
+    },
+    {
+      "packageId": "@prpm/nodejs-testing",
+      "version": "^1.3.0",
+      "required": false,
+      "reason": "API testing with supertest and integration tests"
+    },
+    {
+      "packageId": "@prpm/graphql-nodejs",
+      "version": "^1.1.0",
+      "required": false,
+      "reason": "GraphQL server development with Apollo"
+    },
+    {
+      "packageId": "@prpm/docker-nodejs",
+      "version": "^1.0.0",
+      "required": false,
+      "reason": "Docker best practices for Node.js apps"
+    }
+  ],
+  "icon": "🚀",
+  "author": "PRPM Team",
+  "repository": "https://github.com/pr-pm/prpm",
+  "readme": "# Ruler Node.js Backend\n\nProduction-ready Node.js backend development setup configured for Ruler.\n\n## What's Included\n\n### Required\n- **Express Patterns**: Middleware, routing, controllers\n- **API Design**: RESTful conventions, versioning, pagination\n- **Security**: Input validation, CORS, rate limiting, helmet\n- **Error Handling**: Centralized errors, logging, monitoring\n\n### Optional\n- **Database Patterns**: SQL/NoSQL, ORMs, migrations\n- **API Testing**: Integration and E2E testing\n- **GraphQL**: Apollo Server patterns\n- **Docker**: Containerization best practices\n\n## Installation\n\n```bash\nprpm install collections/ruler-nodejs --as ruler\n```\n\n## Best For\n\n- REST API development\n- Microservices architecture\n- Express.js or Fastify projects\n- Production Node.js backends\n"
+}
