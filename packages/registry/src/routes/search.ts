@@ -361,15 +361,14 @@ export async function searchRoutes(server: FastifyInstance) {
 
     const result = await query<{ tag: string; count: string }>(
       server,
-      `SELECT unnest(tags) as tag, COUNT(*) as count
-       FROM packages
-       WHERE visibility = 'public'
-         AND EXISTS (
-           SELECT 1 FROM unnest(tags) t
-           WHERE LOWER(t) LIKE $1
-         )
+      `SELECT tag, COUNT(*) as count
+       FROM (
+         SELECT unnest(tags) as tag
+         FROM packages
+         WHERE visibility = 'public'
+       ) subquery
+       WHERE LOWER(tag) LIKE $1
        GROUP BY tag
-       HAVING LOWER(unnest(tags)) LIKE $1
        ORDER BY count DESC, tag ASC
        LIMIT $2`,
       [`${searchTerm}%`, limit]
