@@ -9,7 +9,7 @@ Complete overview of all supported formats, their subtypes, and official documen
 | Format | Subtype | Description | Official Docs |
 |--------|---------|-------------|---------------|
 | **Cursor** | `rule` | MDC format with YAML frontmatter for context rules | [cursor.com](https://cursor.com/docs/context/rules) |
-| | `agent` | Custom agent configurations | [cursor.com](https://cursor.com/docs/context/rules) |
+| | `agent` | Custom agent configurations | [cursor.com](https://cursor.com/docs/context/rules#agentsmd) |
 | | `slash-command` | Executable slash commands | [cursor.com](https://cursor.com/docs/context/rules) |
 | **Claude Code** | `agent` | AI agents with specific roles and capabilities | [code.claude.com](https://code.claude.com/docs/en/sub-agents) |
 | | `skill` | Specialized skills for Claude agents | [code.claude.com](https://code.claude.com/docs/en/skills) |
