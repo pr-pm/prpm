@@ -19,6 +19,17 @@ import type {
   ResolveQuery,
 } from '../types/requests.js';
 import { EmbeddingGenerationService } from '../services/embedding-generation.js';
+import {
+  fromCursor,
+  fromClaude,
+  fromContinue,
+  fromWindsurf,
+  fromCopilot,
+  fromKiro,
+  fromRuler,
+  fromAgentsMd,
+} from '@pr-pm/converters';
+import { uploadCanonicalPackage } from '../storage/canonical.js';
 
 // Reusable enum constants for schema validation
 const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] as const;
@@ -963,9 +974,6 @@ export async function packageRoutes(server: FastifyInstance) {
         if (fullContent) {
           server.log.info({ packageName, version }, 'Converting package to canonical format');
 
-          const { uploadCanonicalPackage } = await import('../storage/canonical.js');
-          const converters = await import('@pr-pm/converters');
-
           // Extract scope from package name (@scope/package-name)
           const scopeMatch = packageName.match(/^@([^/]+)\//);
           const scope = scopeMatch ? scopeMatch[1] : 'unknown';
@@ -998,32 +1006,28 @@ export async function packageRoutes(server: FastifyInstance) {
           try {
             switch (format) {
               case 'cursor':
-                canonicalPkg = converters.fromCursor(fullContent, metadata);
+                canonicalPkg = fromCursor(fullContent, metadata);
                 break;
               case 'claude':
-                canonicalPkg = converters.fromClaude(fullContent, metadata);
+                canonicalPkg = fromClaude(fullContent, metadata);
                 break;
               case 'continue':
-                canonicalPkg = converters.fromContinue(fullContent, metadata);
+                canonicalPkg = fromContinue(fullContent, metadata);
                 break;
               case 'windsurf':
-                canonicalPkg = converters.fromWindsurf(fullContent, metadata);
+                canonicalPkg = fromWindsurf(fullContent, metadata);
                 break;
               case 'copilot':
-                canonicalPkg = converters.fromCopilot(fullContent, metadata);
+                canonicalPkg = fromCopilot(fullContent, metadata);
                 break;
               case 'kiro':
-                {
-                  const result = converters.fromKiroAgent(fullContent);
-                  if (!result.content) {
-                    throw new Error('Kiro conversion produced empty content');
-                  }
-                  canonicalPkg = JSON.parse(result.content);
-                }
+                // Kiro returns CanonicalPackage directly
+                canonicalPkg = fromKiro(fullContent, metadata);
                 break;
               case 'ruler':
                 {
-                  const result = converters.fromRuler(fullContent);
+                  // Ruler returns ConversionResult with JSON content
+                  const result = fromRuler(fullContent);
                   if (!result.content) {
                     throw new Error('Ruler conversion produced empty content');
                   }
@@ -1032,7 +1036,7 @@ export async function packageRoutes(server: FastifyInstance) {
                 break;
               default:
                 // Generic/unknown format - try cursor as fallback
-                canonicalPkg = converters.fromCursor(fullContent, metadata);
+                canonicalPkg = fromCursor(fullContent, metadata);
             }
 
             // Upload canonical to S3

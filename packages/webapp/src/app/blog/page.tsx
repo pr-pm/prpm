@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "openskills-cross-ide-compatibility",
+    title: "Tool Composition is Your AI Superpower",
+    excerpt: "AI tooling moves too fast to support everything natively. Instead: OpenSkills generates content, Ruler splices it into AGENTS.md, and boom—universal compatibility.",
+    date: "2025-11-20",
+    author: "PRPM Team",
+    readTime: "8 min read",
+    tags: ["Technical", "Tool Composition", "OpenSkills", "Ruler"],
+  },
+  {
     slug: "prpm-complete-feature-guide",
     title: "The Complete Guide to PRPM: Every Feature You Need to Know",
     excerpt: "PRPM is more than a package manager—it's a complete platform for discovering, testing, publishing, and managing AI coding tools. From universal package management to AI search, playground testing to author analytics.",

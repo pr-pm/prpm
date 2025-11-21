@@ -5,6 +5,11 @@
  */
 
 import { FastifyInstance, FastifyRequest, FastifyReply, RouteGenericInterface } from 'fastify';
+import { z } from 'zod';
+import OpenAI from 'openai';
+import { PlaygroundService } from '../services/playground.js';
+import { PlaygroundCreditsService } from '../services/playground-credits.js';
+import { createRateLimiter } from '../middleware/rate-limit.js';
 
 interface ToggleFeaturedInterface extends RouteGenericInterface {
   Params: { sessionId: string };
@@ -14,10 +19,6 @@ interface ToggleFeaturedInterface extends RouteGenericInterface {
     feature_display_order?: number;
   };
 }
-import { z } from 'zod';
-import { PlaygroundService } from '../services/playground.js';
-import { PlaygroundCreditsService } from '../services/playground-credits.js';
-import { createRateLimiter } from '../middleware/rate-limit.js';
 import { createSessionSecurityMiddleware } from '../middleware/session-security.js';
 import { createAnonymousRestrictionMiddleware, recordAnonymousUsageHook } from '../middleware/anonymous-restriction.js';
 import { optionalAuth } from '../middleware/auth.js';
@@ -256,7 +257,7 @@ export async function playgroundRoutes(server: FastifyInstance) {
           throw new Error('OpenAI API is not configured');
         }
 
-        const openai = new (await import('openai')).default({
+        const openai = new OpenAI({
           apiKey: process.env.OPENAI_API_KEY,
         });
 
