@@ -62,6 +62,13 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       // Gemini custom commands: .gemini/commands/*.toml
       return '.gemini/commands';
 
+    case 'opencode':
+      // OpenCode supports agents, slash commands, and custom tools
+      if (subtype === 'agent') return '.opencode/agent';
+      if (subtype === 'slash-command') return '.opencode/command';
+      if (subtype === 'tool') return '.opencode/tool';
+      return '.opencode/agent';
+
     case 'agents.md':
       return '.';
 
@@ -161,6 +168,7 @@ export async function autoDetectFormat(): Promise<Format | null> {
     { format: 'copilot', dir: '.github/instructions' },
     { format: 'kiro', dir: '.kiro' },
     { format: 'gemini', dir: '.gemini' },
+    { format: 'opencode', dir: '.opencode' },
     { format: 'agents.md', dir: '.agents' },
   ];
 

@@ -145,8 +145,8 @@ jobs:
           echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
 
           # Create zip with necessary files for deployment
-          # Exclude node_modules - EB will run npm ci to install from package-lock.json
-          # This includes @pr-pm/types which is published to NPM
+          # Include workspace dependencies (converters, types) since they're not on NPM
+          # EB's npm ci will look for these via the workspace: protocol
           zip -r ${VERSION_LABEL}.zip \
             dist/ \
             package.json \
@@ -161,9 +161,21 @@ jobs:
             -x "*__tests__/*" \
             -x "node_modules/*"
 
+          # Add workspace dependencies to the zip
+          cd ../..
+          zip -r packages/registry/${VERSION_LABEL}.zip \
+            packages/converters/dist/ \
+            packages/converters/package.json \
+            packages/types/dist/ \
+            packages/types/package.json \
+            -x "*.test.ts" \
+            -x "*.spec.ts" \
+            -x "*__tests__/*"
+
+          cd packages/registry
           echo "✅ Created deployment package: ${VERSION_LABEL}.zip"
           echo "Package contents (verification):"
-          unzip -l ${VERSION_LABEL}.zip | grep -E "(dist/|package\.json|migrations/)" | head -20
+          unzip -l ${VERSION_LABEL}.zip | grep -E "(dist/|package\.json|migrations/)" | head -30
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
