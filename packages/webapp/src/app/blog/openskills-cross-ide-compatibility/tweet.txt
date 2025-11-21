@@ -1,0 +1,7 @@
+AI tooling moves too fast to support every format natively. New editors weekly. Formats evolving daily.
+
+Found a better way: npx openskills sync → extract to .ruler/openskills.md → Ruler splices into AGENTS.md → works everywhere (Cursor, Windsurf, Continue, etc.)
+
+Composition > Native integration.
+
+https://prpm.dev/blog/openskills-cross-ide-compatibility

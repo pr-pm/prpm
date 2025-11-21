@@ -4,7 +4,7 @@
  */
 
 import { fromClaude } from './from-claude.js';
-import type { CanonicalPackage } from './types/canonical.js';
+import type { CanonicalPackage, PackageMetadata } from './types/canonical.js';
 import type { Subtype } from './taxonomy-utils.js';
 
 /**
@@ -17,7 +17,7 @@ import type { Subtype } from './taxonomy-utils.js';
  */
 export function fromContinue(
   content: string,
-  metadata: { id: string; name?: string; version?: string; author?: string; tags?: string[] },
+  metadata: Partial<PackageMetadata> & Pick<PackageMetadata, 'id' | 'name' | 'version' | 'author'>,
   explicitSubtype?: Subtype
 ): CanonicalPackage {
   // Use Claude parser but specify continue format

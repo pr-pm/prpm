@@ -53,7 +53,9 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       // Kiro has different locations based on subtype:
       // - Steering files: .kiro/steering/*.md
       // - Hooks: .kiro/hooks/*.kiro.hook (JSON files)
+      // - Agents: .kiro/agents/*.json (custom AI agent configurations)
       if (subtype === 'hook') return '.kiro/hooks';
+      if (subtype === 'agent') return '.kiro/agents';
       return '.kiro/steering';
 
     case 'gemini':

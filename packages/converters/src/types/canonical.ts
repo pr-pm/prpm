@@ -5,6 +5,34 @@
  * (Cursor, Claude, Continue, Windsurf, etc.)
  */
 
+/**
+ * Package metadata provided to converters
+ * Shared interface for all from* converter functions
+ */
+export interface PackageMetadata {
+  // Required fields
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+
+  // Optional core fields
+  description?: string;
+  organization?: string;
+  tags?: string[];
+
+  // Optional prpm.json fields
+  license?: string;
+  repository?: string;
+  homepage?: string;
+  documentation?: string;
+  keywords?: string[];
+  category?: string;
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  engines?: Record<string, string>;
+}
+
 export interface CanonicalPackage {
   // Package metadata
   id: string;
@@ -12,12 +40,23 @@ export interface CanonicalPackage {
   name: string;
   description: string;
   author: string;
+  organization?: string; // Organization name if published under org
   tags: string[];
 
   // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'generic' | 'mcp';
+  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler' | 'generic' | 'mcp';
   subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
+  // Additional metadata from prpm.json
+  license?: string;
+  repository?: string;
+  homepage?: string;
+  documentation?: string;
+  keywords?: string[];
+  category?: string;
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  engines?: Record<string, string>;
 
   // Content in canonical format
   content: CanonicalContent;
@@ -51,6 +90,28 @@ export interface CanonicalPackage {
       domain?: string; // Domain/topic for organization
       foundationalType?: 'product' | 'tech' | 'structure'; // Foundational file type (product.md, tech.md, structure.md)
     };
+    kiroAgent?: {
+      tools?: string[]; // Available tools for the agent
+      mcpServers?: Record<string, {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+        timeout?: number;
+      }>;
+      toolAliases?: Record<string, string>;
+      allowedTools?: string[];
+      toolsSettings?: Record<string, any>;
+      resources?: string[];
+      hooks?: {
+        agentSpawn?: string[];
+        userPromptSubmit?: string[];
+        preToolUse?: string[];
+        postToolUse?: string[];
+        stop?: string[];
+      };
+      useLegacyMcpJson?: boolean;
+      model?: string;
+    };
     agentsMdConfig?: {
       project?: string; // Project name
       scope?: string; // Scope of the instructions (e.g., "testing", "api")
@@ -77,10 +138,11 @@ export interface CanonicalPackage {
     kiro?: number;
     'agents.md'?: number;
     gemini?: number;
+    ruler?: number;
   };
 
   // Source information
-  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'generic';
+  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler' | 'generic';
   sourceUrl?: string;
 
   // Quality & verification flags

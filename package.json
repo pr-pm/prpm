@@ -43,7 +43,28 @@
     "taxonomy:approve": "npm run script:generate-taxonomy --workspace=@pr-pm/registry -- --approve",
     "clean": "rm -rf packages/*/dist packages/*/.next registry/dist node_modules packages/*/node_modules registry/node_modules",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "typecheck:watch": "concurrently --kill-others --names \"CLI,CLIENT,REGISTRY,WEBAPP\" \"npm run typecheck -- --watch --workspace=prpm\" \"npm run typecheck -- --watch --workspace=@pr-pm/registry-client\" \"npm run typecheck -- --watch --workspace=@pr-pm/registry\" \"npm run typecheck -- --watch --workspace=@pr-pm/webapp\""
+    "typecheck:watch": "concurrently --kill-others --names \"CLI,CLIENT,REGISTRY,WEBAPP\" \"npm run typecheck -- --watch --workspace=prpm\" \"npm run typecheck -- --watch --workspace=@pr-pm/registry-client\" \"npm run typecheck -- --watch --workspace=@pr-pm/registry\" \"npm run typecheck -- --watch --workspace=@pr-pm/webapp\"",
+    "prepare": "husky || true"
+  },
+  "lint-staged": {
+    "packages/cli/src/**/*.ts": [
+      "bash -c 'cd packages/cli && npx tsc --noEmit'"
+    ],
+    "packages/registry/src/**/*.ts": [
+      "bash -c 'cd packages/registry && npx tsc --noEmit'"
+    ],
+    "packages/registry-client/src/**/*.ts": [
+      "bash -c 'cd packages/registry-client && npx tsc --noEmit'"
+    ],
+    "packages/converters/src/**/*.ts": [
+      "bash -c 'cd packages/converters && npx tsc --noEmit'"
+    ],
+    "packages/types/src/**/*.ts": [
+      "bash -c 'cd packages/types && npx tsc --noEmit'"
+    ],
+    "packages/webapp/src/**/*.{ts,tsx}": [
+      "bash -c 'cd packages/webapp && npx tsc --noEmit'"
+    ]
   },
   "keywords": [
     "cursor",
@@ -67,7 +88,11 @@
     "@types/jest": "^29.5.8",
     "@types/node": "^20.10.0",
     "concurrently": "^8.2.2",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^16.2.7",
+    "openskills": "^1.2.1",
+    "ruler": "^1.0.0",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
     "tsx": "^4.20.6",

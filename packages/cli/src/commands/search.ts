@@ -40,6 +40,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'gemini': '✨',
     'mcp': '🔗',
     'agents.md': '📝',
+    'ruler': '📏',
     'generic': '📦',
   };
 
@@ -60,6 +61,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'gemini': 'Gemini',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
+    'ruler': 'Ruler',
     'generic': '',
   };
 
@@ -349,6 +351,25 @@ export async function handleSearch(
       const webappUrl = buildWebappUrl(query, options);
       console.log(`\n🌐 View in browser: ${webappUrl}`);
       return;
+    }
+
+    // Show fallback message if this is a fallback result
+    if (result.fallback) {
+      console.log('\n❌ No packages found for your search');
+
+      // Build filter description
+      let filterMsg = '';
+      if (options.subtype) {
+        filterMsg = ` (${options.subtype}`;
+        if (options.format) {
+          filterMsg += ` for ${options.format}`;
+        }
+        filterMsg += ')';
+      } else if (options.format) {
+        filterMsg = ` (${options.format} format)`;
+      }
+
+      console.log(`\n💡 Showing top 10 most popular packages${filterMsg} instead:\n`);
     }
 
     // If interactive mode is disabled or only one page, show simple results

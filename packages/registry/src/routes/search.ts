@@ -9,7 +9,7 @@ import { Package, Format, Subtype } from '../types.js';
 import { getSearchProvider } from '../search/index.js';
 
 // Reusable enum constants for schema validation
-const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] as const;
+const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'generic', 'mcp'] as const;
 const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'] as const;
 
 // Columns to select for list results (excludes full_content to reduce payload size)
@@ -109,7 +109,7 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // Use search provider (PostgreSQL or OpenSearch)
     const searchProvider = getSearchProvider(server);
-    const response = await searchProvider.search(q || '', {
+    let response = await searchProvider.search(q || '', {
       format,
       subtype,
       tags,
@@ -123,6 +123,28 @@ export async function searchRoutes(server: FastifyInstance) {
       limit,
       offset,
     });
+
+    // If no results, show top 10 popular packages
+    // BUT only if format or subtype filters are applied
+    if (response.packages.length === 0 && (format || subtype)) {
+      const fallbackOptions: Record<string, unknown> = {
+        sort: 'downloads' as const,
+        limit: 10,
+        offset: 0,
+      };
+
+      // Don't preserve format filter (all formats can be converted with --as)
+      // But DO preserve subtype filter (e.g., show top agents if filtering by agent subtype)
+      if (subtype) fallbackOptions.subtype = subtype;
+
+      response = await searchProvider.search('', fallbackOptions);
+
+      // Always mark as fallback (even if 0 results) so UI shows cross-platform conversion notice
+      response.fallback = true;
+      response.original_query = q;
+      // Override total to show actual fallback count, not all packages
+      response.total = response.packages.length;
+    }
 
     // Cache for 15 minutes (longer for better performance, search results stable)
     const cacheTTL = offset === 0 ? 900 : 300; // First page: 15min, others: 5min
@@ -286,6 +308,82 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // Cache for 1 hour
     await cacheSet(server, cacheKey, response, 3600);
+
+    return response;
+  });
+
+  // Autocomplete tags by prefix
+  server.get('/tags/autocomplete', {
+    schema: {
+      tags: ['search'],
+      description: 'Autocomplete tags by prefix with counts',
+      querystring: {
+        type: 'object',
+        required: ['q'],
+        properties: {
+          q: { type: 'string', minLength: 1, description: 'Tag prefix to search for' },
+          limit: { type: 'number', default: 10, minimum: 1, maximum: 50 },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            suggestions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  count: { type: 'number' },
+                },
+              },
+            },
+            query: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { q, limit = 10 } = request.query as {
+      q: string;
+      limit?: number;
+    };
+
+    const searchTerm = q.toLowerCase().trim();
+
+    // Short cache to allow frequent updates
+    const cacheKey = `search:tags:autocomplete:${searchTerm}:${limit}`;
+    const cached = await cacheGet<any>(server, cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = await query<{ tag: string; count: string }>(
+      server,
+      `SELECT tag, COUNT(*) as count
+       FROM (
+         SELECT unnest(tags) as tag
+         FROM packages
+         WHERE visibility = 'public'
+       ) subquery
+       WHERE LOWER(tag) LIKE $1
+       GROUP BY tag
+       ORDER BY count DESC, tag ASC
+       LIMIT $2`,
+      [`${searchTerm}%`, limit]
+    );
+
+    const response = {
+      suggestions: result.rows.map(r => ({
+        name: r.tag,
+        count: parseInt(r.count, 10),
+      })),
+      query: q,
+    };
+
+    // Cache for 5 minutes
+    await cacheSet(server, cacheKey, response, 300);
 
     return response;
   });

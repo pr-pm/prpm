@@ -19,6 +19,17 @@ import type {
   ResolveQuery,
 } from '../types/requests.js';
 import { EmbeddingGenerationService } from '../services/embedding-generation.js';
+import {
+  fromCursor,
+  fromClaude,
+  fromContinue,
+  fromWindsurf,
+  fromCopilot,
+  fromKiro,
+  fromRuler,
+  fromAgentsMd,
+} from '@pr-pm/converters';
+import { uploadCanonicalPackage } from '../storage/canonical.js';
 
 // Reusable enum constants for schema validation
 const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] as const;
@@ -956,6 +967,107 @@ export async function packageRoutes(server: FastifyInstance) {
         tarballBuffer,
         { packageId: pkg.id }  // Pass UUID for metadata
       );
+
+      // 4b. Convert and upload canonical format (for new packages)
+      // This enables lossless format conversions without migration overhead
+      try {
+        if (fullContent) {
+          server.log.info({ packageName, version }, 'Converting package to canonical format');
+
+          // Extract scope from package name (@scope/package-name)
+          const scopeMatch = packageName.match(/^@([^/]+)\//);
+          const scope = scopeMatch ? scopeMatch[1] : 'unknown';
+
+          // Determine if scope is organization or author
+          // If orgId exists, the scope is an organization
+          const isOrgPackage = !!orgId;
+
+          // Prepare metadata for conversion (includes prpm.json fields)
+          const metadata = {
+            id: pkg.id,
+            name: packageName,
+            version,
+            author: isOrgPackage ? user.username : scope, // Publisher if org, scope if personal
+            organization: isOrgPackage ? scope : undefined, // Scope name if org package
+            tags,
+            license,
+            repository: manifest.repository as string | undefined,
+            homepage: manifest.homepage as string | undefined,
+            documentation: manifest.documentation as string | undefined,
+            keywords,
+            category: manifest.category as string | undefined,
+            dependencies: manifest.dependencies as Record<string, string> | undefined,
+            peerDependencies: manifest.peerDependencies as Record<string, string> | undefined,
+            engines: manifest.engines as Record<string, string> | undefined,
+          };
+
+          // Convert to canonical based on format
+          let canonicalPkg;
+          try {
+            switch (format) {
+              case 'cursor':
+                canonicalPkg = fromCursor(fullContent, metadata);
+                break;
+              case 'claude':
+                canonicalPkg = fromClaude(fullContent, metadata);
+                break;
+              case 'continue':
+                canonicalPkg = fromContinue(fullContent, metadata);
+                break;
+              case 'windsurf':
+                canonicalPkg = fromWindsurf(fullContent, metadata);
+                break;
+              case 'copilot':
+                canonicalPkg = fromCopilot(fullContent, metadata);
+                break;
+              case 'kiro':
+                // Kiro returns CanonicalPackage directly
+                canonicalPkg = fromKiro(fullContent, metadata);
+                break;
+              case 'ruler':
+                {
+                  // Ruler returns ConversionResult with JSON content
+                  const result = fromRuler(fullContent);
+                  if (!result.content) {
+                    throw new Error('Ruler conversion produced empty content');
+                  }
+                  canonicalPkg = JSON.parse(result.content);
+                }
+                break;
+              default:
+                // Generic/unknown format - try cursor as fallback
+                canonicalPkg = fromCursor(fullContent, metadata);
+            }
+
+            // Upload canonical to S3
+            await uploadCanonicalPackage(server, packageName, version, canonicalPkg);
+            server.log.info({ packageName, version }, 'Successfully uploaded canonical format');
+          } catch (conversionError) {
+            // Log but don't fail publish if canonical conversion fails
+            server.log.warn(
+              {
+                error: String(conversionError),
+                packageName,
+                version,
+                format,
+              },
+              'Failed to convert to canonical format (non-blocking)'
+            );
+          }
+        } else {
+          server.log.debug({ packageName, version }, 'No content extracted, skipping canonical conversion');
+        }
+      } catch (error) {
+        // Canonical storage is non-blocking - log but continue
+        server.log.warn(
+          {
+            error: String(error),
+            packageName,
+            version,
+          },
+          'Failed to store canonical format (non-blocking)'
+        );
+      }
 
       // 5. Create package version record with file metadata
       const packageVersion = await queryOne(

@@ -120,6 +120,42 @@ npm run dev:cli     # CLI development
 npm run dev:registry # Registry server
 ```
 
+#### Working with OpenSkills + Ruler
+
+We use [OpenSkills](https://github.com/codeium/openskills) and [Ruler](https://okigu.com/ruler) in tandem to make skills available across a wider range of AI IDEs and tools.
+
+**The Composition Pattern:**
+1. **OpenSkills** generates minimal, portable skill content (markdown with lightweight frontmatter)
+2. Save OpenSkills content to `.ruler/` directory (e.g., `.ruler/openskills.md`)
+3. **Ruler** automatically splices all `.ruler/*.md` files into `AGENTS.md`
+4. Now your skills work in ANY tool that reads `agents.md` (Cursor, Windsurf, Continue, etc.)
+
+**Workflow:**
+
+```bash
+# 1. Get OpenSkills content (from Claude Code or PRPM)
+prpm install some-skill --format claude
+
+# 2. Copy to Ruler directory to make it universally available
+cp .claude/skills/some-skill/SKILL.md .ruler/some-skill.md
+
+# 3. Ruler automatically splices into AGENTS.md
+# Install Ruler globally if you haven't already
+npm install -g ruler
+
+# Apply rules to sync across AI tools
+ruler apply
+```
+
+**Why This Works:**
+
+This composition pattern gives you the best of both worlds:
+- **OpenSkills**: Clean, minimal format that's easy to author
+- **Ruler**: Universal distribution to any agents.md-compatible tool
+- **No format wars**: Tools compose instead of competing
+
+**Note:** `ruler apply` reads rules from `.ruler/` and distributes them to your configured AI tools (Claude, Cursor, Copilot, etc.) according to your `ruler.toml` configuration. This populates IDE-specific rule files (`.cursor/rules/`, `.claude/skills/`, etc.) across different tools, ensuring consistent AI coding assistance regardless of which IDE you're using. Running `ruler apply` after adding or updating rules is recommended to keep your development environment synchronized.
+
 #### Project Structure
 
 ```

@@ -14,6 +14,7 @@ export type Format =
   | 'kiro'
   | 'agents.md'
   | 'gemini'
+  | 'ruler'
   | 'generic'
   | 'mcp';
 
@@ -30,6 +31,7 @@ export const FORMATS: readonly Format[] = [
   'kiro',
   'agents.md',
   'gemini',
+  'ruler',
   'generic',
   'mcp',
 ] as const;
@@ -139,6 +141,63 @@ export interface PackageVersion {
 }
 
 /**
+ * Conversion hints for cross-format transformations
+ * Helps improve quality when converting to other formats
+ */
+export interface ConversionHints {
+  /** Hints for Cursor format conversion */
+  cursor?: {
+    alwaysApply?: boolean;
+    priority?: 'high' | 'medium' | 'low';
+    globs?: string[];
+  };
+
+  /** Hints for Claude format conversion */
+  claude?: {
+    model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
+    tools?: string[];
+    subagentType?: string;
+  };
+
+  /** Hints for Kiro format conversion */
+  kiro?: {
+    inclusion?: 'always' | 'fileMatch' | 'manual';
+    fileMatchPattern?: string;
+    domain?: string;
+    tools?: string[];
+    mcpServers?: Record<string, {
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+    }>;
+  };
+
+  /** Hints for GitHub Copilot format conversion */
+  copilot?: {
+    applyTo?: string | string[];
+    excludeAgent?: 'code-review' | 'coding-agent';
+  };
+
+  /** Hints for Continue format conversion */
+  continue?: {
+    alwaysApply?: boolean;
+    globs?: string | string[];
+    regex?: string | string[];
+  };
+
+  /** Hints for Windsurf format conversion */
+  windsurf?: {
+    characterLimit?: number; // Warn if exceeding 12K limit
+  };
+
+  /** Hints for agents.md format conversion */
+  agentsMd?: {
+    project?: string;
+    scope?: string;
+  };
+}
+
+/**
  * Package manifest (from prpm.json)
  */
 export interface PackageManifest {
@@ -161,6 +220,12 @@ export interface PackageManifest {
   engines?: Record<string, string>;
   files: string[];
   main?: string;
+
+  /**
+   * Optional conversion hints for cross-format transformations
+   * Used to improve quality when converting to other formats
+   */
+  conversion?: ConversionHints;
 }
 
 /**

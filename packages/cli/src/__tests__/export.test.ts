@@ -2,18 +2,17 @@
  * Tests for export command
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { handleExport, ExportOptions } from '../commands/export';
 import * as lockfile from '../core/lockfile';
 
 // Mock dependencies
-vi.mock('../core/lockfile');
-vi.mock('../core/telemetry', () => ({
+jest.mock('../core/lockfile');
+jest.mock('../core/telemetry', () => ({
   telemetry: {
-    track: vi.fn(),
-    shutdown: vi.fn(),
+    track: jest.fn(),
+    shutdown: jest.fn(),
   },
 }));
 
@@ -21,7 +20,7 @@ describe('export command', () => {
   const mockTmpDir = '/tmp/prpm-test-export';
 
   beforeEach(async () => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     // Create test directory
     await fs.mkdir(mockTmpDir, { recursive: true });
   });
@@ -37,7 +36,7 @@ describe('export command', () => {
       await fs.writeFile(testPackagePath, '# Test Rule\n\nThis is a test rule.', 'utf-8');
 
       // Mock listPackages to return test data
-      vi.spyOn(lockfile, 'listPackages').mockResolvedValue([
+      jest.spyOn(lockfile, 'listPackages').mockResolvedValue([
         {
           id: '@test/test-rule',
           version: '1.0.0',
@@ -97,7 +96,7 @@ describe('export command', () => {
       await fs.writeFile(package1Path, '# Rule 1', 'utf-8');
       await fs.writeFile(package2Path, '# Rule 2', 'utf-8');
 
-      vi.spyOn(lockfile, 'listPackages').mockResolvedValue([
+      jest.spyOn(lockfile, 'listPackages').mockResolvedValue([
         {
           id: '@test/rule1',
           version: '1.0.0',
@@ -150,7 +149,7 @@ describe('export command', () => {
     });
 
     it('should handle no installed packages gracefully', async () => {
-      vi.spyOn(lockfile, 'listPackages').mockResolvedValue([]);
+      jest.spyOn(lockfile, 'listPackages').mockResolvedValue([]);
 
       const options: ExportOptions = {
         to: 'ruler',
@@ -178,7 +177,7 @@ describe('export command', () => {
       const testPackagePath = join(mockTmpDir, 'test-rule.md');
       await fs.writeFile(testPackagePath, '# Test Rule', 'utf-8');
 
-      vi.spyOn(lockfile, 'listPackages').mockResolvedValue([
+      jest.spyOn(lockfile, 'listPackages').mockResolvedValue([
         {
           id: '@test/good-package',
           version: '1.0.0',
@@ -230,7 +229,7 @@ describe('export command', () => {
       const existingConfig = '# Existing config\n[agents.cursor]\nenabled = true\n';
       await fs.writeFile(join(mockTmpDir, 'ruler.toml'), existingConfig, 'utf-8');
 
-      vi.spyOn(lockfile, 'listPackages').mockResolvedValue([
+      jest.spyOn(lockfile, 'listPackages').mockResolvedValue([
         {
           id: '@test/test-rule',
           version: '1.0.0',

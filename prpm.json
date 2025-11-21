@@ -1,8 +1,15 @@
 {
   "name": "prpm-packages",
+  "version": "1.0.0",
+  "description": "Official PRPM packages including skills, agents, rules, commands, hooks, and collections for AI-assisted development",
+  "author": "PRPM Team",
   "license": "MIT",
+  "license_url": "https://github.com/pr-pm/prpm/blob/main/LICENSE",
   "repository": "https://github.com/pr-pm/prpm",
+  "homepage": "https://prpm.dev",
+  "documentation": "https://docs.prpm.dev",
   "organization": "prpm",
+  "tags": ["prpm", "ai-tools", "prompts", "package-manager", "development"],
   "scripts": {
     "prepublishOnly": "cd packages/hooks && npm run build"
   },
@@ -93,8 +100,8 @@
     },
     {
       "name": "prpm-json-best-practices-skill",
-      "version": "1.0.9",
-      "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, and multi-package management",
+      "version": "1.1.0",
+      "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, multi-package management, enhanced file format, and conversion hints",
       "format": "claude",
       "subtype": "skill",
       "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal", "meta"],
@@ -104,7 +111,13 @@
         ".claude/skills/prpm-json-best-practices/examples/multi-package.json",
         ".claude/skills/prpm-json-best-practices/examples/collections-repository.json",
         ".claude/skills/prpm-json-best-practices/examples/packages-with-collections.json"
-      ]
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/prpm.json", "**/.prpm/*.json"]
+        }
+      }
     },
     {
       "name": "core-principles",
@@ -139,7 +152,13 @@
       "tags": ["prpm", "package-management", "json", "manifest", "best-practices", "prpm-internal"],
       "files": [
         ".cursor/rules/prpm-json-best-practices.mdc"
-      ]
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        }
+      }
     },
     {
       "name": "agent-builder-skill",
@@ -220,7 +239,13 @@
       "tags": ["meta", "claude-code", "skills", "documentation", "best-practices", "cso"],
       "files": [
         ".claude/skills/creating-skills/SKILL.md"
-      ]
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/.claude/skills/**/*.md", "**/SKILL.md"]
+        }
+      }
     },
     {
       "name": "creating-cursor-commands-skill",
@@ -242,7 +267,13 @@
       "tags": ["meta", "claude-code", "agents", "documentation", "best-practices", "validation"],
       "files": [
         ".claude/skills/creating-claude-agents/SKILL.md"
-      ]
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/.claude/agents/**/*.md"]
+        }
+      }
     },
     {
       "name": "creating-claude-commands-skill",
@@ -322,6 +353,29 @@
       ]
     },
     {
+      "name": "creating-kiro-agents",
+      "version": "1.0.0",
+      "description": "Use when building custom Kiro AI agents or when user asks for agent configurations - provides JSON structure, tool configuration, prompt patterns, and security best practices for specialized development assistants",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": ["meta", "kiro", "agents", "json", "configuration", "best-practices", "security"],
+      "files": [
+        ".claude/skills/creating-kiro-agents/SKILL.md"
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/.kiro/agents/**/*.json", "**/kiro-agent*.json"]
+        },
+        "kiro": {
+          "inclusion": "fileMatch",
+          "fileMatchPattern": "**/.kiro/agents/**/*.json",
+          "domain": "agent-configuration",
+          "tools": ["fs_read", "fs_write"]
+        }
+      }
+    },
+    {
       "name": "elastic-beanstalk-deployment-skill",
       "version": "1.0.2",
       "description": "Use when deploying Node.js applications to AWS Elastic Beanstalk or troubleshooting deployment issues - provides dependency installation strategies, monorepo handling, and deployment best practices",
@@ -396,7 +450,13 @@
       "tags": ["typescript", "type-safety", "code-quality", "best-practices", "static-analysis"],
       "files": [
         ".claude/skills/typescript-type-safety/SKILL.md"
-      ]
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": ["**/*.ts", "**/*.tsx", "**/tsconfig*.json"]
+        }
+      }
     },
     {
       "name": "typescript-hook-writer",
@@ -610,7 +670,13 @@
       "tags": ["meta", "claude-code", "skills", "documentation", "best-practices"],
       "files": [
         ".cursor/rules/creating-skills.mdc"
-      ]
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        }
+      }
     },
     {
       "name": "elastic-beanstalk-deployment",
@@ -665,7 +731,13 @@
       "tags": ["typescript", "type-safety", "code-quality", "best-practices"],
       "files": [
         ".cursor/rules/typescript-type-safety.mdc"
-      ]
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        }
+      }
     },
     {
       "name": "typescript-type-specialist",
@@ -698,7 +770,13 @@
       "tags": ["meta", "claude-code", "agents", "documentation", "best-practices"],
       "files": [
         ".cursor/rules/creating-claude-agents.md"
-      ]
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        }
+      }
     },
     {
       "name": "creating-claude-commands",
@@ -776,6 +854,29 @@
       "files": [
         ".cursor/rules/creating-agents-md.mdc"
       ]
+    },
+    {
+      "name": "creating-kiro-agents",
+      "version": "1.0.0",
+      "description": "Kiro agent configuration patterns, JSON structure, tool permissions, and security best practices for creating specialized AI development assistants",
+      "format": "cursor",
+      "subtype": "rule",
+      "tags": ["meta", "kiro", "agents", "json", "configuration", "best-practices", "security"],
+      "files": [
+        ".cursor/rules/creating-kiro-agents.mdc"
+      ],
+      "conversion": {
+        "claude": {
+          "model": "sonnet",
+          "tools": ["Read", "Write", "Edit", "Grep", "Glob"]
+        },
+        "kiro": {
+          "inclusion": "fileMatch",
+          "fileMatchPattern": "**/.kiro/agents/**/*.json",
+          "domain": "agent-configuration",
+          "tools": ["fs_read", "fs_write"]
+        }
+      }
     }
   ],
   "collections": [

@@ -82,6 +82,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'gemini': '✨',
     'mcp': '🔗',
     'agents.md': '📝',
+    'ruler': '📏',
     'generic': '📦',
   };
 
@@ -102,6 +103,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'gemini': 'Gemini',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
+    'ruler': 'Ruler',
     'generic': '',
   };
 
@@ -382,10 +384,16 @@ export async function handleInstall(
       }
 
       const sourceContent = extractedFiles[0].content;
+
+      // Extract author from package name scope (@author/package-name)
+      const scopeMatch = packageId.match(/^@([^/]+)\//);
+      const author = scopeMatch ? scopeMatch[1] : 'unknown';
+
       const metadata = {
         id: packageId,
         name: pkg.name || packageId,
         version: actualVersion,
+        author,
         tags: pkg.tags || [],
       };
 

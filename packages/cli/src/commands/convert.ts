@@ -16,39 +16,46 @@ import {
   fromContinue,
   fromCopilot,
   fromKiro,
+  fromKiroAgent,
   fromWindsurf,
   fromAgentsMd,
   fromGemini,
+  fromRuler,
   toCursor,
   toClaude,
   toContinue,
   toCopilot,
   toKiro,
+  toKiroAgent,
   toWindsurf,
   toAgentsMd,
   toGemini,
+  toRuler,
   isCursorFormat,
   isClaudeFormat,
   isContinueFormat,
   isCopilotFormat,
   isKiroFormat,
+  isKiroAgentFormat,
   isWindsurfFormat,
   isAgentsMdFormat,
+  isRulerFormat,
   type CanonicalPackage,
 } from '@pr-pm/converters';
 
 export interface ConvertOptions {
-  to: 'cursor' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md' | 'gemini';
+  to: 'cursor' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler';
   subtype?: Subtype;
   output?: string;
+  name?: string; // Custom output filename (without extension)
   yes?: boolean; // Skip confirmation prompts
 }
 
 /**
  * Get the default installation path for a format
  */
-function getDefaultPath(format: string, filename: string, subtype?: string): string {
-  const baseName = basename(filename, extname(filename));
+function getDefaultPath(format: string, filename: string, subtype?: string, customName?: string): string {
+  const baseName = customName || basename(filename, extname(filename));
 
   switch (format) {
     case 'cursor':
@@ -71,9 +78,15 @@ function getDefaultPath(format: string, filename: string, subtype?: string): str
     case 'windsurf':
       return join(process.cwd(), '.windsurf', 'rules', `${baseName}.md`);
     case 'kiro':
-      // Kiro has two types: steering files (.kiro/steering/*.md) and hooks (.kiro/hooks/*.kiro.hook)
+      // Kiro has three types:
+      // - Steering files: .kiro/steering/*.md
+      // - Hooks: .kiro/hooks/*.kiro.hook (JSON files)
+      // - Agents: .kiro/agents/*.json (custom AI agent configurations)
       if (subtype === 'hook') {
         return join(process.cwd(), '.kiro', 'hooks', `${baseName}.kiro.hook`);
+      }
+      if (subtype === 'agent') {
+        return join(process.cwd(), '.kiro', 'agents', `${baseName}.json`);
       }
       // Default to steering files for conversion
       return join(process.cwd(), '.kiro', 'steering', `${baseName}.md`);
@@ -91,6 +104,9 @@ function getDefaultPath(format: string, filename: string, subtype?: string): str
     case 'gemini':
       // Gemini uses .gemini/commands/*.toml
       return join(process.cwd(), '.gemini', 'commands', `${baseName}.toml`);
+    case 'ruler':
+      // Ruler uses .ruler/*.md (plain markdown files)
+      return join(process.cwd(), '.ruler', `${baseName}.md`);
     default:
       throw new CLIError(`Unknown format: ${format}`);
   }
@@ -130,6 +146,9 @@ function detectFormat(content: string, filepath: string): string | null {
   if (ext === '.toml' || filepath.includes('.gemini/commands')) {
     return 'gemini';
   }
+  if (filepath.includes('.ruler/')) {
+    return 'ruler';
+  }
 
   // Use robust content detection from converters
   if (isClaudeFormat(content)) {
@@ -146,6 +165,7 @@ function detectFormat(content: string, filepath: string): string | null {
   if (isCopilotFormat(content)) return 'copilot';
   if (isContinueFormat(content)) return 'continue';
   if (isAgentsMdFormat(content)) return 'agents.md';
+  if (isRulerFormat(content)) return 'ruler';
 
   return null;
 }
@@ -226,7 +246,13 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         canonicalPkg = fromWindsurf(content, metadata);
         break;
       case 'kiro':
-        canonicalPkg = fromKiro(content, metadata);
+        // Check if content is agent format (JSON) vs steering file (markdown)
+        if (isKiroAgentFormat(content)) {
+          const result = fromKiroAgent(content);
+          canonicalPkg = JSON.parse(result.content) as CanonicalPackage;
+        } else {
+          canonicalPkg = fromKiro(content, metadata);
+        }
         break;
       case 'copilot':
         canonicalPkg = fromCopilot(content, metadata);
@@ -239,6 +265,11 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         break;
       case 'gemini':
         canonicalPkg = fromGemini(content, metadata);
+        break;
+      case 'ruler':
+        // fromRuler returns ConversionResult, need to parse the JSON content
+        const rulerResult = fromRuler(content);
+        canonicalPkg = JSON.parse(rulerResult.content) as CanonicalPackage;
         break;
       default:
         throw new CLIError(`Unsupported source format: ${sourceFormat}`);
@@ -268,15 +299,23 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         result = toCopilot(canonicalPkg);
         break;
       case 'kiro':
-        result = toKiro(canonicalPkg, {
-          kiroConfig: { inclusion: 'always' } // Default to always include
-        });
+        // Check if agent subtype to use toKiroAgent instead
+        if (options.subtype === 'agent') {
+          result = toKiroAgent(canonicalPkg);
+        } else {
+          result = toKiro(canonicalPkg, {
+            kiroConfig: { inclusion: 'always' } // Default to always include
+          });
+        }
         break;
       case 'agents.md':
         result = toAgentsMd(canonicalPkg);
         break;
       case 'gemini':
         result = toGemini(canonicalPkg);
+        break;
+      case 'ruler':
+        result = toRuler(canonicalPkg);
         break;
       default:
         throw new CLIError(`Unsupported target format: ${options.to}`);
@@ -289,7 +328,7 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
     console.log(chalk.green(`✓ Converted from ${sourceFormat} to ${options.to}`));
 
     // Determine output path
-    const outputPath = options.output || getDefaultPath(options.to, sourcePath, options.subtype);
+    const outputPath = options.output || getDefaultPath(options.to, sourcePath, options.subtype, options.name);
 
     // Check if file exists
     if (existsSync(outputPath) && !options.yes) {
@@ -322,6 +361,8 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
       console.log(chalk.dim('💡 Kiro will automatically load steering files from .kiro/steering/'));
     } else if (options.to === 'gemini') {
       console.log(chalk.dim('💡 Gemini will automatically load commands from .gemini/commands/'));
+    } else if (options.to === 'ruler') {
+      console.log(chalk.dim('💡 Ruler will automatically load and distribute rules from .ruler/'));
     }
 
   } catch (error: any) {
@@ -337,9 +378,10 @@ export function createConvertCommand() {
   const command = new Command('convert')
     .description('Convert AI prompt files between formats')
     .argument('<source>', 'Source file path to convert')
-    .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md, gemini)')
+    .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md, gemini, ruler)')
     .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, prompt, etc.)')
     .option('-o, --output <path>', 'Output path (defaults to format-specific location)')
+    .option('-n, --name <name>', 'Custom output filename (without extension, e.g., "my-rule")')
     .option('-y, --yes', 'Skip confirmation prompts')
     .action(async (source: string, options: any) => {
       try {
@@ -347,7 +389,7 @@ export function createConvertCommand() {
           throw new CLIError('Target format is required. Use --to <format>');
         }
 
-        const validFormats = ['cursor', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md', 'gemini'];
+        const validFormats = ['cursor', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md', 'gemini', 'ruler'];
         if (!validFormats.includes(options.to)) {
           throw new CLIError(
             `Invalid format: ${options.to}\n\nValid formats: ${validFormats.join(', ')}`
@@ -365,6 +407,7 @@ export function createConvertCommand() {
           to: options.to,
           subtype: options.subtype,
           output: options.output,
+          name: options.name,
           yes: options.yes,
         });
       } catch (error: any) {
