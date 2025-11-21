@@ -43,6 +43,7 @@ export type FormatType =
   | 'kiro'
   | 'agents-md'
   | 'gemini'
+  | 'opencode'
   | 'ruler'
   | 'canonical';
 
@@ -114,6 +115,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'kiro': 'kiro-steering.schema.json',
       'agents-md': 'agents-md.schema.json',
       'gemini': 'gemini.schema.json',
+      'opencode': 'opencode.schema.json',
       'ruler': 'ruler.schema.json',
       'canonical': 'canonical.schema.json',
     };

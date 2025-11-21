@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/opencode.schema.json",
+  "title": "OpenCode Agent Format",
+  "description": "JSON Schema for OpenCode Agents - markdown files with YAML frontmatter stored in .opencode/agent/",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Brief description of the agent's purpose (required)"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["subagent", "primary", "all"],
+          "description": "Determines usage context - subagent (spawned), primary (main), or all (both)"
+        },
+        "model": {
+          "type": "string",
+          "description": "Override default LLM (e.g., 'anthropic/claude-sonnet-4-20250514')"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Control response creativity (0.0-1.0 range)"
+        },
+        "tools": {
+          "type": "object",
+          "description": "Enable/disable specific tool access",
+          "properties": {
+            "write": { "type": "boolean" },
+            "edit": { "type": "boolean" },
+            "bash": { "type": "boolean" },
+            "read": { "type": "boolean" },
+            "grep": { "type": "boolean" },
+            "glob": { "type": "boolean" },
+            "webfetch": { "type": "boolean" },
+            "websearch": { "type": "boolean" }
+          },
+          "additionalProperties": { "type": "boolean" }
+        },
+        "permission": {
+          "type": "object",
+          "description": "Granular control over tool usage (ask/allow/deny)",
+          "properties": {
+            "edit": {
+              "type": "string",
+              "enum": ["ask", "allow", "deny"]
+            },
+            "bash": {
+              "oneOf": [
+                { "type": "string", "enum": ["ask", "allow", "deny"] },
+                { "type": "object", "description": "Specific commands allowed" }
+              ]
+            },
+            "webfetch": {
+              "type": "string",
+              "enum": ["ask", "allow", "deny"]
+            }
+          },
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string", "enum": ["ask", "allow", "deny"] },
+              { "type": "object" }
+            ]
+          }
+        },
+        "disable": {
+          "type": "boolean",
+          "description": "Boolean to deactivate the agent"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "System prompt content as markdown text"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "description": "Reviews code for best practices",
+        "mode": "subagent",
+        "model": "anthropic/claude-sonnet-4-20250514",
+        "temperature": 0.7,
+        "tools": {
+          "write": false,
+          "edit": true,
+          "bash": false
+        },
+        "permission": {
+          "edit": "ask",
+          "bash": "deny"
+        }
+      },
+      "content": "You are an expert code reviewer.\n\n## Instructions\n\n- Check for code smells\n- Verify test coverage\n- Suggest improvements"
+    }
+  ]
+}

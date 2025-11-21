@@ -201,7 +201,7 @@ export class TaxonomyService {
     // Get packages
     const packagesResult = await this.server.pg.query(`
       SELECT DISTINCT
-        p.id, p.name, p.description, p.version,
+        p.id, p.name, p.description,
         p.format, p.subtype, p.author_id,
         u.username as author_username,
         p.total_downloads, p.quality_score,

@@ -44,7 +44,7 @@ export interface CanonicalPackage {
   tags: string[];
 
   // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler' | 'generic' | 'mcp';
+  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'generic' | 'mcp';
   subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
   // Additional metadata from prpm.json
@@ -126,6 +126,13 @@ export interface CanonicalPackage {
       version?: string; // Rule version (YAML format)
       schema?: string; // Schema version (YAML format)
     };
+    opencode?: {
+      mode?: 'subagent' | 'primary' | 'all';
+      model?: string;
+      temperature?: number;
+      permission?: Record<string, any>;
+      disable?: boolean;
+    };
   };
 
   // Format compatibility scores
@@ -138,11 +145,12 @@ export interface CanonicalPackage {
     kiro?: number;
     'agents.md'?: number;
     gemini?: number;
+    opencode?: number;
     ruler?: number;
   };
 
   // Source information
-  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler' | 'generic';
+  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'generic';
   sourceUrl?: string;
 
   // Quality & verification flags
@@ -182,6 +190,13 @@ export interface MetadataSection {
     author?: string;
     claudeAgent?: {
       model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
+    };
+    opencode?: {
+      mode?: 'subagent' | 'primary' | 'all';
+      model?: string;
+      temperature?: number;
+      permission?: Record<string, any>;
+      disable?: boolean;
     };
   };
 }
