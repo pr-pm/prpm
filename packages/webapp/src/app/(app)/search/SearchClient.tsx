@@ -45,6 +45,7 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'gemini.md': ['slash-command'],
   'opencode': ['agent', 'slash-command', 'tool'],
   'ruler': ['rule', 'agent', 'tool'],
+  'droid': ['skill', 'slash-command', 'hook'],
   'mcp': ['tool'],
   'agents.md': ['agent', 'tool'],
   'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],

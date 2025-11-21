@@ -45,6 +45,7 @@ export type FormatType =
   | 'gemini'
   | 'opencode'
   | 'ruler'
+  | 'droid'
   | 'canonical';
 
 export type SubtypeType =
@@ -117,6 +118,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'gemini': 'gemini.schema.json',
       'opencode': 'opencode.schema.json',
       'ruler': 'ruler.schema.json',
+      'droid': 'droid.schema.json',
       'canonical': 'canonical.schema.json',
     };
     schemaFilename = schemaMap[format] || `${format}.schema.json`;

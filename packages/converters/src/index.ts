@@ -19,6 +19,7 @@ export { fromAgentsMd } from './from-agents-md.js';
 export { fromGemini } from './from-gemini.js';
 export { fromOpencode } from './from-opencode.js';
 export { fromRuler } from './from-ruler.js';
+export { fromDroid } from './from-droid.js';
 
 // To converters (canonical → target format)
 export { toCursor, isCursorFormat } from './to-cursor.js';
@@ -32,6 +33,7 @@ export { toAgentsMd, isAgentsMdFormat } from './to-agents-md.js';
 export { toGemini } from './to-gemini.js';
 export { toOpencode } from './to-opencode.js';
 export { toRuler, isRulerFormat } from './to-ruler.js';
+export { toDroid } from './to-droid.js';
 
 // Utilities
 export * from './taxonomy-utils.js';

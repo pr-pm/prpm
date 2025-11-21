@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prpm.dev/schemas/droid.schema.json",
+  "title": "Factory Droid Format",
+  "description": "JSON Schema for Factory Droid Skills, Hooks, and Slash Commands",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique identifier for the skill/command"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief explanation of the skill's purpose"
+        },
+        "argument-hint": {
+          "type": "string",
+          "description": "Optional usage hint for slash commands"
+        },
+        "allowed-tools": {
+          "type": "array",
+          "description": "Reserved for future use",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "content": {
+      "type": "string",
+      "description": "Body content as markdown"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["skill", "slash-command", "hook"],
+      "description": "The type of Factory Droid artifact"
+    }
+  }
+}
