@@ -63,9 +63,10 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.gemini/commands';
 
     case 'opencode':
-      // OpenCode agents: .opencode/agent/*.md
+      // OpenCode supports agents, slash commands, and custom tools
       if (subtype === 'agent') return '.opencode/agent';
-      // Future: .opencode/command/ for slash commands, .opencode/tool/ for custom tools
+      if (subtype === 'slash-command') return '.opencode/command';
+      if (subtype === 'tool') return '.opencode/tool';
       return '.opencode/agent';
 
     case 'agents.md':

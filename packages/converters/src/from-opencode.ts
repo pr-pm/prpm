@@ -14,7 +14,9 @@ import type {
   ToolsSection,
 } from './types/canonical.js';
 import { setTaxonomy } from './taxonomy-utils.js';
-import yaml from 'js-yaml';
+
+// Use require for js-yaml to avoid Jest/ts-jest ESM transpilation issues
+const yaml = require('js-yaml');
 
 interface OpencodeTools {
   write?: boolean;

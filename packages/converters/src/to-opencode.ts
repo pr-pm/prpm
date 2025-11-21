@@ -10,7 +10,9 @@ import type {
   CanonicalPackage,
   ConversionResult,
 } from './types/canonical.js';
-import yaml from 'js-yaml';
+
+// Use require for js-yaml to avoid Jest/ts-jest ESM transpilation issues
+const yaml = require('js-yaml');
 
 /**
  * Convert canonical package to OpenCode agent format

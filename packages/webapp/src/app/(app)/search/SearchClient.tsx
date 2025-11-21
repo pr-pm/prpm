@@ -43,7 +43,7 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'kiro': ['rule', 'agent', 'tool', 'hook'],
   'gemini': ['slash-command'],
   'gemini.md': ['slash-command'],
-  'opencode': ['agent'],
+  'opencode': ['agent', 'slash-command', 'tool'],
   'ruler': ['rule', 'agent', 'tool'],
   'mcp': ['tool'],
   'agents.md': ['agent', 'tool'],
