@@ -1,6 +1,22 @@
 /**
  * Progressive disclosure support for manifest files (AGENTS.md, GEMINI.md, etc.)
- * Implements OpenSkills-style skill loading with XML manifests
+ *
+ * Based on the OpenSkills specification by @numman-ali
+ * @see https://github.com/numman-ali/openskills
+ *
+ * OpenSkills pioneered the progressive disclosure pattern for AI development:
+ * - Skills/agents listed in manifest but not loaded into context by default
+ * - XML-based manifest format with <skill> and <agent> tags
+ * - Path-based loading via cat or Task tool
+ * - Keeps context window clean and efficient
+ *
+ * This implementation extends OpenSkills to support:
+ * - Multiple manifest formats (AGENTS.md, GEMINI.md, CLAUDE.md)
+ * - Separate skills and agents systems
+ * - PRPM package management integration
+ *
+ * Credit: Huge thanks to @numman-ali for creating OpenSkills and demonstrating
+ * how progressive disclosure dramatically improves AI coding workflows.
  */
 
 import { promises as fs } from 'fs';
@@ -19,7 +35,9 @@ export interface SkillManifestEntry {
 
 /**
  * Generate XML manifest entry for a skill or agent
- * Format matches OpenSkills/Claude progressive disclosure pattern
+ *
+ * Format inspired by OpenSkills (@numman-ali)
+ * @see https://github.com/numman-ali/openskills
  */
 export function generateSkillXML(entry: SkillManifestEntry): string {
   const resourceType = entry.resourceType || 'skill';
@@ -36,6 +54,9 @@ export function generateSkillXML(entry: SkillManifestEntry): string {
 
 /**
  * Generate skills system header
+ *
+ * Uses OpenSkills progressive disclosure pattern (@numman-ali)
+ * Skills are listed but not loaded until explicitly requested via Bash("cat <path>")
  */
 function generateSkillsSystemHeader(): string {
   return `<!-- PRPM_MANIFEST_START -->
