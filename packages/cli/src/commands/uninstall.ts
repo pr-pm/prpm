@@ -23,16 +23,20 @@ export async function handleUninstall(name: string): Promise<void> {
       throw new CLIError(`❌ Package "${name}" not found`, 1);
     }
 
-    // Special handling for progressive disclosure skills
+    // Special handling for progressive disclosure skills and agents
     if (pkg.progressiveDisclosure) {
-      const { manifestPath, skillName } = pkg.progressiveDisclosure;
+      const { manifestPath, resourceName, skillName } = pkg.progressiveDisclosure;
+      // Use resourceName (new) or fall back to skillName (legacy)
+      const name = resourceName || skillName;
 
-      try {
-        // Remove skill from AGENTS.md manifest
-        await removeSkillFromManifest(skillName, manifestPath);
-        console.log(`   📝 Removed skill from ${manifestPath} manifest`);
-      } catch (error) {
-        console.warn(`   ⚠️  Failed to remove skill from manifest: ${error}`);
+      if (name) {
+        try {
+          // Remove skill or agent from AGENTS.md manifest
+          await removeSkillFromManifest(name, manifestPath);
+          console.log(`   📝 Removed from ${manifestPath} manifest`);
+        } catch (error) {
+          console.warn(`   ⚠️  Failed to remove from manifest: ${error}`);
+        }
       }
     }
 

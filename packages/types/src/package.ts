@@ -13,6 +13,8 @@ export type Format =
   | 'copilot'
   | 'kiro'
   | 'agents.md'
+  | 'gemini.md'
+  | 'claude.md'
   | 'gemini'
   | 'ruler'
   | 'generic'
@@ -30,6 +32,8 @@ export const FORMATS: readonly Format[] = [
   'copilot',
   'kiro',
   'agents.md',
+  'gemini.md',
+  'claude.md',
   'gemini',
   'ruler',
   'generic',
