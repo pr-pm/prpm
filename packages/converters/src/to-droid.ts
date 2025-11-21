@@ -69,7 +69,7 @@ function convertContent(pkg: CanonicalPackage, warnings: string[], qualityScore:
     frontmatter.name = metadata.data.title || pkg.name;
     frontmatter.description = metadata.data.description || pkg.description;
 
-    // Restore Factory Droid-specific metadata (for roundtrip)
+    // Restore Factory Droid-specific metadata from section (for roundtrip)
     const droidData = metadata.data.droid;
     if (droidData) {
       if (droidData.argumentHint) {
@@ -84,7 +84,7 @@ function convertContent(pkg: CanonicalPackage, warnings: string[], qualityScore:
     frontmatter.description = pkg.description;
   }
 
-  // Check for package-level droid metadata
+  // Check for package-level droid metadata (applies to both branches)
   if (pkg.metadata?.droid) {
     if (pkg.metadata.droid.argumentHint && !frontmatter['argument-hint']) {
       frontmatter['argument-hint'] = pkg.metadata.droid.argumentHint;

@@ -283,6 +283,6 @@ describe('toDroid', () => {
 
     expect(result.content).toContain('name: test-skill');
     expect(result.content).toContain('description: A test skill description');
-    expect(result.content).toContain('argument-hint: --verbose');
+    expect(result.content).toContain("argument-hint: '--verbose'");
   });
 });
