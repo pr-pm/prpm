@@ -8,17 +8,20 @@ import yaml from 'js-yaml';
 // Get the directory where this file is located
 // Handle both CommonJS (Jest) and ES modules (Vitest/production)
 const currentDirname = (() => {
-  try {
-    // Try CommonJS first (for Jest)
-    if (typeof __dirname !== 'undefined') {
-      return __dirname;
-    }
-  } catch {
-    // Ignore and fall through to ES modules
+  // Try CommonJS first (for Jest)
+  if (typeof __dirname !== 'undefined') {
+    return __dirname;
   }
 
   // ES modules (Vitest/production)
-  return dirname(fileURLToPath(import.meta.url));
+  // Use indirect eval to hide import.meta from Jest's parser
+  try {
+    const importMeta = (0, eval)('import.meta');
+    return dirname(fileURLToPath(importMeta.url));
+  } catch (e) {
+    // Fallback: assume we're in the dist directory
+    return join(process.cwd(), 'packages', 'converters', 'dist');
+  }
 })();
 
 // Initialize Ajv with strict mode disabled for better compatibility
