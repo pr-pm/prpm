@@ -3,13 +3,25 @@
  * Handles dual storage: canonical JSON + legacy tarball fallback
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { FastifyInstance } from 'fastify';
 import { createHash } from 'crypto';
 import { config } from '../config.js';
 import { s3Client } from './s3.js';
 import { getTarballContent } from './s3.js';
-import type { CanonicalPackage } from '@pr-pm/converters';
+import {
+  type CanonicalPackage,
+  fromCursor,
+  fromClaude,
+  fromContinue,
+  fromWindsurf,
+  fromCopilot,
+  fromKiro,
+  fromKiroAgent,
+  fromRuler,
+  fromAgentsMd,
+  fromGemini,
+} from '@pr-pm/converters';
 
 /**
  * Check if canonical package exists in S3
@@ -19,7 +31,6 @@ async function canonicalExists(
   version: string
 ): Promise<boolean> {
   try {
-    const { HeadObjectCommand } = await import('@aws-sdk/client-s3');
     const key = `packages/${packageName}/${version}/canonical.json`;
     await s3Client.send(
       new HeadObjectCommand({
@@ -227,9 +238,6 @@ async function convertToCanonical(
   packageName: string,
   version: string
 ): Promise<CanonicalPackage> {
-  // Import converters dynamically
-  const converters = await import('@pr-pm/converters');
-
   // Detect format from content
   const format = detectFormat(content);
 
@@ -258,41 +266,37 @@ async function convertToCanonical(
   try {
     switch (format) {
       case 'cursor':
-        canonicalPkg = converters.fromCursor(content, metadata);
+        canonicalPkg = fromCursor(content, metadata);
         break;
       case 'claude':
-        canonicalPkg = converters.fromClaude(content, metadata);
+        canonicalPkg = fromClaude(content, metadata);
         break;
       case 'continue':
-        canonicalPkg = converters.fromContinue(content, metadata);
+        canonicalPkg = fromContinue(content, metadata);
         break;
       case 'windsurf':
-        canonicalPkg = converters.fromWindsurf(content, metadata);
+        canonicalPkg = fromWindsurf(content, metadata);
         break;
       case 'copilot':
-        canonicalPkg = converters.fromCopilot(content, metadata);
+        canonicalPkg = fromCopilot(content, metadata);
         break;
       case 'kiro':
-        {
-          const result = converters.fromKiroAgent(content);
-          if (!result.content) {
-            throw new Error('Conversion produced empty content');
-          }
-          canonicalPkg = JSON.parse(result.content) as CanonicalPackage;
-        }
+        // Kiro returns CanonicalPackage directly
+        canonicalPkg = fromKiro(content, metadata);
         break;
       case 'ruler':
         {
-          const result = converters.fromRuler(content);
+          // Ruler returns ConversionResult with JSON content
+          const result = fromRuler(content);
           if (!result.content) {
-            throw new Error('Conversion produced empty content');
+            throw new Error('Ruler conversion produced empty content');
           }
           canonicalPkg = JSON.parse(result.content) as CanonicalPackage;
         }
         break;
       default:
         // Generic markdown fallback
-        canonicalPkg = converters.fromCursor(content, metadata);
+        canonicalPkg = fromCursor(content, metadata);
     }
 
     return canonicalPkg;

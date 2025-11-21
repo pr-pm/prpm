@@ -11,6 +11,7 @@
 
 import cron, { ScheduledTask } from 'node-cron';
 import type { FastifyInstance } from 'fastify';
+import Anthropic from '@anthropic-ai/sdk';
 import { PlaygroundCreditsService } from './playground-credits.js';
 import { CostMonitoringService } from './cost-monitoring.js';
 import { EmbeddingGenerationService } from './embedding-generation.js';
@@ -544,8 +545,6 @@ export class CronScheduler {
           try {
             this.server.log.info('🤖 Starting weekly AI use-case package curation...');
 
-            // Import Anthropic dynamically
-            const { default: Anthropic } = await import('@anthropic-ai/sdk');
             const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
             // Get all use cases

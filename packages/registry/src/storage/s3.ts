@@ -2,7 +2,7 @@
  * S3 Storage Helper
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
@@ -97,7 +97,6 @@ export async function uploadPackage(
  */
 async function objectExists(bucket: string, key: string): Promise<boolean> {
   try {
-    const { HeadObjectCommand } = await import('@aws-sdk/client-s3');
     await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
     return true;
   } catch {

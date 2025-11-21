@@ -4,7 +4,18 @@
  */
 
 import { FastifyInstance } from 'fastify';
-import type { CanonicalPackage } from '@pr-pm/converters';
+import {
+  type CanonicalPackage,
+  toCursor,
+  toClaude,
+  toContinue,
+  toWindsurf,
+  toCopilot,
+  toKiro,
+  toRuler,
+  toAgentsMd,
+  toGemini,
+} from '@pr-pm/converters';
 import type { Format } from '@pr-pm/types';
 
 export interface ConversionResult {
@@ -26,9 +37,6 @@ export async function convertToFormat(
     applyConversionHints?: boolean;
   }
 ): Promise<ConversionResult> {
-  // Import converters dynamically
-  const converters = await import('@pr-pm/converters');
-
   server.log.debug(
     {
       packageName: canonicalPkg.name,
@@ -43,40 +51,40 @@ export async function convertToFormat(
   try {
     switch (targetFormat) {
       case 'cursor':
-        result = converters.toCursor(canonicalPkg);
+        result = toCursor(canonicalPkg);
         break;
 
       case 'claude':
-        result = converters.toClaude(canonicalPkg);
+        result = toClaude(canonicalPkg);
         break;
 
       case 'continue':
-        result = converters.toContinue(canonicalPkg);
+        result = toContinue(canonicalPkg);
         break;
 
       case 'windsurf':
-        result = converters.toWindsurf(canonicalPkg);
+        result = toWindsurf(canonicalPkg);
         break;
 
       case 'copilot':
-        result = converters.toCopilot(canonicalPkg);
+        result = toCopilot(canonicalPkg);
         break;
 
       case 'kiro':
-        result = converters.toKiroAgent(canonicalPkg);
+        result = toKiro(canonicalPkg);
         break;
 
       case 'ruler':
-        result = converters.toRuler(canonicalPkg);
+        result = toRuler(canonicalPkg);
         break;
 
       case 'agents.md':
-        result = converters.toAgentsMd(canonicalPkg);
+        result = toAgentsMd(canonicalPkg);
         break;
 
       case 'generic':
         // Generic markdown - use the most compatible format
-        result = converters.toCursor(canonicalPkg);
+        result = toCursor(canonicalPkg);
         break;
 
       default:
