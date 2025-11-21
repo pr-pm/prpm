@@ -42,6 +42,27 @@ prpm install @sanjeed5/react --as copilot                   # → .github/instru
 prpm install @sanjeed5/react --as kiro                      # → .kiro/steering/
 ```
 
+### Supported Formats
+
+PRPM supports all major AI coding assistants:
+
+| Format | Tool | Subtypes | Install Path | Documentation |
+|--------|------|----------|--------------|---------------|
+| `cursor` | [Cursor](https://cursor.sh) | rule, agent, slash-command, tool | `.cursor/rules/`, `.cursor/agents/` | [Cursor Docs](https://cursor.sh/docs) |
+| `claude` | [Claude Code](https://claude.ai/code) | skill, agent, slash-command, tool, hook | `.claude/skills/`, `.claude/agents/`, `.claude/commands/`, `.claude/hooks/` | [Claude Docs](https://docs.claude.com) |
+| `continue` | [Continue](https://continue.dev) | rule, agent, slash-command, tool | `.continue/rules/`, `.continue/prompts/` | [Continue Docs](https://docs.continue.dev) |
+| `windsurf` | [Windsurf](https://codeium.com/windsurf) | rule, agent, slash-command, tool | `.windsurf/rules/` | [Windsurf Docs](https://docs.codeium.com/windsurf) |
+| `copilot` | [GitHub Copilot](https://github.com/features/copilot) | tool, chatmode | `.github/instructions/`, `.github/chatmodes/` | [Copilot Docs](https://docs.github.com/copilot) |
+| `kiro` | [Kiro](https://kiro.ai) | rule, agent, tool, hook | `.kiro/steering/`, `.kiro/agents/`, `.kiro/hooks/` | [Kiro Docs](https://docs.kiro.ai) |
+| `gemini` | [Gemini CLI](https://ai.google.dev/gemini-api/docs) | slash-command | `.gemini/commands/` | [Gemini Docs](https://ai.google.dev/gemini-api/docs) |
+| `opencode` | [OpenCode](https://opencode.dev) | agent, slash-command, tool | `.opencode/agent/`, `.opencode/command/`, `.opencode/tool/` | [OpenCode Docs](https://opencode.dev/docs) |
+| `ruler` | [Ruler](https://ruler.sh) | rule, agent, tool | `.ruler/rules/` | [Ruler Docs](https://ruler.sh/docs) |
+| `droid` | [Factory Droid](https://factory.ai) | skill, slash-command, hook | `.factory/skills/`, `.factory/commands/`, `.factory/hooks/` | [Factory Droid Docs](https://docs.factory.ai) |
+| `agents.md` | [Agents.md](https://github.com/agentsmd) | agent, tool | `.agents/`, `AGENTS.md` | [Agents.md Docs](https://github.com/agentsmd) |
+| `generic` | Cross-platform | all | `.prompts/` | - |
+
+**Note:** Each package is automatically converted to your preferred format during installation.
+
 ## Discovery - Find What You Need
 
 Browse packages with powerful discovery:
