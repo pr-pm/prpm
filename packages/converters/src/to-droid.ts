@@ -96,7 +96,7 @@ function convertContent(pkg: CanonicalPackage, warnings: string[], qualityScore:
 
   // Generate YAML frontmatter
   lines.push('---');
-  lines.push(yaml.dump(frontmatter, { indent: 2, lineWidth: -1 }).trim());
+  lines.push(formatFrontmatter(frontmatter));
   lines.push('---');
   lines.push('');
 
@@ -161,4 +161,24 @@ function convertContent(pkg: CanonicalPackage, warnings: string[], qualityScore:
     content: lines.join('\n').trim() + '\n',
     qualityScore,
   };
+}
+
+function formatFrontmatter(frontmatter: Record<string, unknown>): string {
+  const raw = yaml.dump(frontmatter, { indent: 2, lineWidth: -1 }).trim();
+  const argumentHint = typeof frontmatter['argument-hint'] === 'string' ? frontmatter['argument-hint'] : undefined;
+  return sanitizeArgumentHint(raw, argumentHint);
+}
+
+function sanitizeArgumentHint(yamlFrontmatter: string, hint?: string): string {
+  if (!hint || !/^-{1,2}[A-Za-z0-9][A-Za-z0-9-]*$/.test(hint)) {
+    return yamlFrontmatter;
+  }
+
+  const escapedHint = escapeRegExp(hint);
+  const pattern = new RegExp(`^argument-hint:\\s*['"]${escapedHint}['"]$`, 'm');
+  return yamlFrontmatter.replace(pattern, `argument-hint: ${hint}`);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
