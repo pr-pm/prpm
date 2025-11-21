@@ -61,6 +61,10 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.gemini/commands';
 
     case 'agents.md':
+      // For skills in progressive disclosure mode, use .openskills directory
+      if (subtype === 'skill' && packageName) {
+        return `.openskills/${packageName}`;
+      }
       return '.';
 
     case 'generic':

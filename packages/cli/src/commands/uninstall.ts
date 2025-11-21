@@ -7,6 +7,7 @@ import { removePackage } from '../core/lockfile';
 import { stripAuthorNamespace } from '../core/filesystem';
 import { promises as fs } from 'fs';
 import { CLIError } from '../core/errors';
+import { removeSkillFromManifest } from '../core/agents-md-progressive.js';
 
 /**
  * Handle the uninstall command
@@ -20,6 +21,19 @@ export async function handleUninstall(name: string): Promise<void> {
 
     if (!pkg) {
       throw new CLIError(`❌ Package "${name}" not found`, 1);
+    }
+
+    // Special handling for progressive disclosure skills
+    if (pkg.progressiveDisclosure) {
+      const { manifestPath, skillName } = pkg.progressiveDisclosure;
+
+      try {
+        // Remove skill from AGENTS.md manifest
+        await removeSkillFromManifest(skillName, manifestPath);
+        console.log(`   📝 Removed skill from ${manifestPath} manifest`);
+      } catch (error) {
+        console.warn(`   ⚠️  Failed to remove skill from manifest: ${error}`);
+      }
     }
 
     // Special handling for Claude hooks
