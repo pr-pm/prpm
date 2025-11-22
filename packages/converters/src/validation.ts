@@ -46,6 +46,10 @@ export type FormatType =
   | 'opencode'
   | 'ruler'
   | 'droid'
+  | 'trae'
+  | 'aider'
+  | 'zencoder'
+  | 'replit'
   | 'canonical';
 
 export type SubtypeType =
@@ -119,6 +123,10 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'opencode': 'opencode.schema.json',
       'ruler': 'ruler.schema.json',
       'droid': 'droid.schema.json',
+      'trae': 'trae.schema.json',
+      'aider': 'aider.schema.json',
+      'zencoder': 'zencoder.schema.json',
+      'replit': 'replit.schema.json',
       'canonical': 'canonical.schema.json',
     };
     schemaFilename = schemaMap[format] || `${format}.schema.json`;

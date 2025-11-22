@@ -44,7 +44,7 @@ export interface CanonicalPackage {
   tags: string[];
 
   // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'generic' | 'mcp';
+  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
   subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
   // Additional metadata from prpm.json
@@ -137,6 +137,10 @@ export interface CanonicalPackage {
       argumentHint?: string; // Usage hint for slash commands
       allowedTools?: string[]; // Reserved for future use
     };
+    zencoderConfig?: {
+      globs?: string[]; // File patterns where the rule applies
+      alwaysApply?: boolean; // Whether rule should always be active
+    };
   };
 
   // Format compatibility scores
@@ -152,10 +156,14 @@ export interface CanonicalPackage {
     opencode?: number;
     ruler?: number;
     droid?: number;
+    trae?: number;
+    aider?: number;
+    zencoder?: number;
+    replit?: number;
   };
 
   // Source information
-  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'generic';
+  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic';
   sourceUrl?: string;
 
   // Quality & verification flags
@@ -206,6 +214,10 @@ export interface MetadataSection {
     droid?: {
       argumentHint?: string; // Usage hint for slash commands
       allowedTools?: string[]; // Reserved for future use
+    };
+    zencoderConfig?: {
+      globs?: string[]; // File patterns where the rule applies
+      alwaysApply?: boolean; // Whether rule should always be active
     };
   };
 }
