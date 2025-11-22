@@ -1,6 +1,6 @@
 {
   "name": "prpm",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Prompt Package Manager CLI - Install and manage prompt-based files",
   "main": "dist/index.js",
   "bin": {
@@ -45,9 +45,9 @@
   "license": "MIT",
   "dependencies": {
     "@octokit/rest": "^22.0.0",
-    "@pr-pm/converters": "^1.1.3",
-    "@pr-pm/registry-client": "^2.1.3",
-    "@pr-pm/types": "^1.1.3",
+    "@pr-pm/converters": "^1.1.4",
+    "@pr-pm/registry-client": "^2.1.4",
+    "@pr-pm/types": "^1.1.4",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "commander": "^11.1.0",
