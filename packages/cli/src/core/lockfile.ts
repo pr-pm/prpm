@@ -27,6 +27,17 @@ export interface LockfilePackage {
     events: string[]; // e.g., ['PreToolUse', 'PostToolUse']
     hookId: string; // Unique identifier to find and remove this hook
   };
+  // For progressive disclosure (agents.md skills in .openskills/ or agents in .openagents/)
+  progressiveDisclosure?: {
+    mode: 'progressive'; // Progressive disclosure mode
+    resourceDir: string; // Path to resource directory (e.g., '.openskills/package-name' or '.openagents/agent-name')
+    manifestPath: string; // Path to AGENTS.md manifest file
+    resourceName: string; // Resource name as referenced in XML
+    resourceType: 'skill' | 'agent'; // Type of resource
+    // Legacy fields for backward compatibility
+    skillsDir?: string; // Deprecated: use resourceDir
+    skillName?: string; // Deprecated: use resourceName
+  };
 }
 
 export interface LockfileCollection {
@@ -116,6 +127,16 @@ export function addToLockfile(
       events: string[];
       hookId: string;
     };
+    progressiveDisclosure?: {
+      mode: 'progressive';
+      resourceDir: string;
+      manifestPath: string;
+      resourceName: string;
+      resourceType: 'skill' | 'agent';
+      // Legacy support
+      skillsDir?: string;
+      skillName?: string;
+    };
   }
 ): void {
   lockfile.packages[packageId] = {
@@ -130,6 +151,7 @@ export function addToLockfile(
     installedPath: packageInfo.installedPath,
     fromCollection: packageInfo.fromCollection,
     hookMetadata: packageInfo.hookMetadata,
+    progressiveDisclosure: packageInfo.progressiveDisclosure,
   };
   lockfile.generated = new Date().toISOString();
 }

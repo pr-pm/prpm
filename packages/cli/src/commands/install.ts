@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists } from '../core/filesystem';
+import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists, getManifestFilename } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { Package, Format, Subtype } from '../types';
@@ -30,6 +30,7 @@ import {
 } from '../core/lockfile';
 import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-config';
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
+import { addSkillToManifest, type SkillManifestEntry } from '../core/agents-md-progressive.js';
 import {
   fromCursor,
   fromClaude,
@@ -85,6 +86,8 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'droid': '🏭',
     'mcp': '🔗',
     'agents.md': '📝',
+    'gemini.md': '✨',
+    'claude.md': '🤖',
     'ruler': '📏',
     'generic': '📦',
   };
@@ -110,6 +113,8 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'droid': 'Factory Droid',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
+    'gemini.md': 'Gemini.md',
+    'claude.md': 'Claude.md',
     'ruler': 'Ruler',
     'generic': '',
   };
@@ -147,6 +152,8 @@ export async function handleInstall(
     frozenLockfile?: boolean;
     force?: boolean;
     location?: string;
+    noAppend?: boolean; // Skip manifest file update for skills
+    manifestFile?: string; // Custom manifest filename (default: AGENTS.md)
     fromCollection?: {
       scope: string;
       name_slug: string;
@@ -508,6 +515,7 @@ export async function handleInstall(
 
     // Track where files were saved for user feedback
     let destPath: string;
+    let destDir = ''; // Destination directory (needed for progressive disclosure)
     let fileCount = 0;
     let hookMetadata: { events: string[]; hookId: string } | undefined = undefined;
 
@@ -525,7 +533,7 @@ export async function handleInstall(
     }
     // Check if this is a multi-file package
     else if (extractedFiles.length === 1) {
-      let destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
 
       if (locationOverride && effectiveFormat === 'cursor') {
         const relativeDestDir = destDir.startsWith('./') ? destDir.slice(2) : destDir;
@@ -549,27 +557,40 @@ export async function handleInstall(
       } else if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
         // Claude hooks are merged into settings.json
         destPath = `${destDir}/settings.json`;
-      } else if (effectiveFormat === 'agents.md') {
-        let targetPath = 'AGENTS.md';
-        if (locationOverride) {
-          targetPath = path.join(locationOverride, 'AGENTS.override.md');
-          console.log(`   📁 Installing Agents.md package to custom location: ${targetPath}`);
-        }
-        destPath = targetPath;
+      } else if (effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md') {
+        // For manifest formats, use progressive disclosure (install to .openskills/ or .openagents/)
+        if (effectiveSubtype === 'skill') {
+          // Skills go to .openskills/package-name/ directory
+          destPath = `${destDir}/SKILL.md`;
+          console.log(`   📦 Installing skill to ${destDir}/ for progressive disclosure`);
+        } else if (effectiveSubtype === 'agent') {
+          // Agents go to .openagents/package-name/ directory
+          destPath = `${destDir}/AGENT.md`;
+          console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+        } else {
+          // Non-skill/agent packages go to root manifest file
+          const manifestFilename = getManifestFilename(effectiveFormat);
+          let targetPath = manifestFilename;
+          if (locationOverride) {
+            targetPath = path.join(locationOverride, `${manifestFilename.replace('.md', '.override.md')}`);
+            console.log(`   📁 Installing to custom location: ${targetPath}`);
+          }
+          destPath = targetPath;
 
-        if (await fileExists(destPath)) {
-          if (options.force) {
-            console.log(`   ⚠️  ${destPath} already exists - overwriting (forced).`);
-          } else {
-            console.log(`   ⚠️  ${destPath} already exists.`);
-            const overwrite = await promptYesNo(
-              `   Overwrite existing ${destPath}? (y/N): `,
-              `   ⚠️  Non-interactive terminal detected. Remove or rename ${destPath} to continue.`
-            );
-            if (!overwrite) {
-              console.log(`   🚫 Skipping install to avoid overwriting ${destPath}`);
-              success = true;
-              return;
+          if (await fileExists(destPath)) {
+            if (options.force) {
+              console.log(`   ⚠️  ${destPath} already exists - overwriting (forced).`);
+            } else {
+              console.log(`   ⚠️  ${destPath} already exists.`);
+              const overwrite = await promptYesNo(
+                `   Overwrite existing ${destPath}? (y/N): `,
+                `   ⚠️  Non-interactive terminal detected. Remove or rename ${destPath} to continue.`
+              );
+              if (!overwrite) {
+                console.log(`   🚫 Skipping install to avoid overwriting ${destPath}`);
+                success = true;
+                return;
+              }
             }
           }
         }
@@ -682,7 +703,7 @@ export async function handleInstall(
       await saveFile(destPath, mainFile);
       fileCount = 1;
     } else {
-      let destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
 
       if (locationOverride && effectiveFormat === 'cursor') {
         const relativeDestDir = destDir.startsWith('./') ? destDir.slice(2) : destDir;
@@ -819,6 +840,52 @@ export async function handleInstall(
       }
     }
 
+    // Handle AGENTS.md manifest update for progressive disclosure skills
+    let progressiveDisclosureMetadata: {
+      mode: 'progressive';
+      resourceDir: string;
+      manifestPath: string;
+      resourceName: string;
+      resourceType: 'skill' | 'agent';
+      skillsDir?: string;
+      skillName?: string;
+    } | undefined;
+
+    if ((effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md') && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent') && !options.noAppend) {
+      // Ensure destDir is defined (should always be set by this point for skill/agent installations)
+      if (!destDir) {
+        throw new Error('Internal error: destDir not set for progressive disclosure installation');
+      }
+
+      const manifestPath = options.manifestFile || getManifestFilename(effectiveFormat);
+      const resourceName = stripAuthorNamespace(packageId);
+      const resourceType = effectiveSubtype as 'skill' | 'agent';
+      const mainFile = resourceType === 'agent' ? 'AGENT.md' : 'SKILL.md';
+
+      // Add skill or agent to manifest file (AGENTS.md, GEMINI.md, CLAUDE.md, etc.)
+      const manifestEntry: SkillManifestEntry = {
+        name: resourceName,
+        description: pkg.description || `${pkg.name} ${resourceType}`,
+        skillPath: destDir,
+        mainFile,
+        resourceType,
+      };
+
+      await addSkillToManifest(manifestEntry, manifestPath);
+      console.log(`   ✓ Added ${resourceType} to ${manifestPath} manifest`);
+
+      progressiveDisclosureMetadata = {
+        mode: 'progressive',
+        resourceDir: destDir,
+        manifestPath,
+        resourceName,
+        resourceType,
+        // Legacy fields for backward compatibility
+        skillsDir: destDir,
+        skillName: resourceName,
+      };
+    }
+
     // Update or create lock file
     const updatedLockfile = lockfile || createLockfile();
 
@@ -832,6 +899,7 @@ export async function handleInstall(
       installedPath: destPath,
       fromCollection: options.fromCollection,
       hookMetadata, // Track hook installation metadata for uninstall
+      progressiveDisclosure: progressiveDisclosureMetadata,
     });
 
     setPackageIntegrity(updatedLockfile, packageId, tarball);
@@ -853,6 +921,16 @@ export async function handleInstall(
     console.log(`\n✅ Successfully installed ${packageId}`);
     console.log(`   📁 Saved to: ${destPath}`);
     console.log(`   🔒 Lock file updated`);
+
+    // Show progressive disclosure hint for skills
+    if (progressiveDisclosureMetadata && !options.noAppend) {
+      const manifestFile = progressiveDisclosureMetadata.manifestPath;
+      console.log(`\n🎓 Skill installed with progressive disclosure`);
+      console.log(`   📝 Skill added to ${manifestFile} manifest`);
+      console.log(`   💡 The skill is available but not loaded into context by default`);
+      console.log(`   ⚡ To activate: Add skill usage to your code or let the agent discover it`);
+    }
+
     console.log(`\n💡 This package has been downloaded ${newDownloadCount.toLocaleString()} times`);
 
     success = true;
@@ -1061,6 +1139,9 @@ export async function installFromLockfile(options: {
           }
         }
 
+        // Preserve manifest file from lockfile for progressive disclosure
+        const manifestFile = lockEntry.progressiveDisclosure?.manifestPath;
+
         await handleInstall(packageSpec, {
           version: lockEntry.version,
           as: options.as || lockEntry.format,
@@ -1068,6 +1149,7 @@ export async function installFromLockfile(options: {
           frozenLockfile: options.frozenLockfile,
           force: true, // Force reinstall when installing from lockfile
           location: locationOverride,
+          manifestFile,
         });
 
         successCount++;
@@ -1108,16 +1190,18 @@ export function createInstallCommand(): Command {
     .description('Install a package from the registry, or install all packages from prpm.lock if no package specified')
     .argument('[package]', 'Package to install (e.g., react-rules or react-rules@1.2.0). If omitted, installs all packages from prpm.lock')
     .option('--version <version>', 'Specific version to install')
-    .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)')
+    .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, gemini.md, claude.md, canonical)')
     .option('--format <format>', 'Alias for --as')
     .option('--location <path>', 'Custom location for installed files (Agents.md or nested Cursor rules)')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
-    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean; location?: string }) => {
+    .option('--no-append', 'Skip adding skill to manifest file (skill files only)')
+    .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure (default: AGENTS.md)', 'AGENTS.md')
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean; location?: string; noAppend?: boolean; manifestFile?: string }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = options.format || options.as;
 
-      if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'canonical', 'gemini'].includes(convertTo)) {
+      if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini.md', 'claude.md', 'canonical', 'gemini'].includes(convertTo)) {
         throw new CLIError('❌ Format must be one of: cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical, gemini\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package                   # Install in native format', 1);
       }
 
@@ -1138,6 +1222,8 @@ export function createInstallCommand(): Command {
         subtype: options.subtype as Subtype | undefined,
         frozenLockfile: options.frozenLockfile,
         location: options.location,
+        noAppend: options.noAppend,
+        manifestFile: options.manifestFile,
       });
     });
 

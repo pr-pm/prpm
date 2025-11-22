@@ -6,7 +6,7 @@ import { installFromLockfile } from '../commands/install';
 import { readLockfile, writeLockfile, addToLockfile } from '../core/lockfile';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile } from '../core/filesystem';
+import { saveFile, getManifestFilename } from '../core/filesystem';
 import { gzipSync } from 'zlib';
 import type { Lockfile } from '../core/lockfile';
 import { CLIError } from '../core/errors';
@@ -27,7 +27,15 @@ jest.mock('../core/lockfile', () => ({
   getLockedVersion: jest.fn(() => null),
 }));
 jest.mock('../core/filesystem', () => ({
-  getDestinationDir: jest.fn(() => '.cursor/rules'),
+  getDestinationDir: jest.fn((format: string, subtype: string) => {
+    // Return appropriate directory based on format
+    if (format === 'agents.md' || format === 'gemini.md' || format === 'claude.md') {
+      if (subtype === 'skill') return '.openskills/test-skill';
+      if (subtype === 'agent') return '.openagents/test-agent';
+      return '.'; // For non-skill/agent subtypes, return project root
+    }
+    return '.cursor/rules'; // Default for other formats
+  }),
   ensureDirectoryExists: jest.fn(),
   saveFile: jest.fn(),
   deleteFile: jest.fn(),
@@ -38,6 +46,12 @@ jest.mock('../core/filesystem', () => ({
     return packageId.replace(/^@[^/]+\//, '');
   }),
   autoDetectFormat: jest.fn(() => Promise.resolve(null)),
+  getManifestFilename: jest.fn((format: string) => {
+    // Map format to manifest filename
+    if (format === 'gemini.md') return 'GEMINI.md';
+    if (format === 'claude.md') return 'CLAUDE.md';
+    return 'AGENTS.md';
+  }),
 }));
 jest.mock('../core/telemetry', () => ({
   telemetry: {
@@ -52,6 +66,7 @@ const mockAddToLockfile = addToLockfile as jest.MockedFunction<typeof addToLockf
 const mockGetRegistryClient = getRegistryClient as jest.MockedFunction<typeof getRegistryClient>;
 const mockGetConfig = getConfig as jest.MockedFunction<typeof getConfig>;
 const mockSaveFile = saveFile as jest.MockedFunction<typeof saveFile>;
+const mockGetManifestFilename = getManifestFilename as jest.MockedFunction<typeof getManifestFilename>;
 
 describe('install from lockfile', () => {
   const mockClient = {
@@ -75,6 +90,13 @@ describe('install from lockfile', () => {
     mockWriteLockfile.mockResolvedValue(undefined);
     mockAddToLockfile.mockResolvedValue(undefined);
     mockSaveFile.mockResolvedValue(undefined);
+
+    // Ensure getManifestFilename is properly mocked
+    mockGetManifestFilename.mockImplementation((format: string) => {
+      if (format === 'gemini.md') return 'GEMINI.md';
+      if (format === 'claude.md') return 'CLAUDE.md';
+      return 'AGENTS.md';
+    });
 
     // Mock console methods
     jest.spyOn(console, 'log').mockImplementation();

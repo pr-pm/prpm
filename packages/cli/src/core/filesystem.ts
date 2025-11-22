@@ -81,6 +81,16 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       return '.factory/skills'; // Default to skills
 
     case 'agents.md':
+    case 'gemini.md':
+    case 'claude.md':
+      // For skills in progressive disclosure mode, use .openskills directory
+      if (subtype === 'skill' && packageName) {
+        return `.openskills/${packageName}`;
+      }
+      // For agents in progressive disclosure mode, use .openagents directory
+      if (subtype === 'agent' && packageName) {
+        return `.openagents/${packageName}`;
+      }
       return '.';
 
     case 'generic':
@@ -162,11 +172,33 @@ export async function directoryExists(dirPath: string): Promise<boolean> {
 }
 
 /**
+ * Map manifest format to filename
+ */
+export function getManifestFilename(format: Format): string {
+  switch (format) {
+    case 'agents.md':
+      return 'AGENTS.md';
+    case 'gemini.md':
+      return 'GEMINI.md';
+    case 'claude.md':
+      return 'CLAUDE.md';
+    default:
+      return 'AGENTS.md';
+  }
+}
+
+/**
  * Auto-detect the format based on existing directories in the current project
  * Returns the format if a matching directory is found, or null if none found
  */
 export async function autoDetectFormat(): Promise<Format | null> {
-  // Agents.md installs live at project root
+  // Check for manifest files
+  if (await fileExists('GEMINI.md')) {
+    return 'gemini.md';
+  }
+  if (await fileExists('CLAUDE.md')) {
+    return 'claude.md';
+  }
   if (await fileExists('AGENTS.md')) {
     return 'agents.md';
   }
