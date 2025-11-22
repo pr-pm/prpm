@@ -924,7 +924,7 @@ export async function handleInstall(
       console.log(`\n🎓 Skill installed with progressive disclosure`);
       console.log(`   📝 Skill added to ${manifestFile} manifest`);
       console.log(`   💡 The skill is available but not loaded into context by default`);
-      console.log(`   ⚡ To activate: Add skill usage to your code or let the agent discover it`);
+      console.log(`   ⚡ Your AI agent will activate this skill automatically when relevant based on its description`);
     }
 
     console.log(`\n💡 This package has been downloaded ${newDownloadCount.toLocaleString()} times`);
