@@ -19,7 +19,6 @@ import { registerRoutes } from './routes/index.js';
 import { registerTelemetryPlugin, telemetry } from './telemetry/index.js';
 import { startCronScheduler } from './services/cron-scheduler.js';
 import { SeoDataService } from './services/seo-data.js';
-import { setupMigrationCron } from './services/migration-cron.js';
 
 async function buildServer() {
   // Configure logger with pino-pretty for colored output
@@ -275,20 +274,13 @@ async function buildServer() {
   }
   server.decorate('seoData', seoDataService);
 
-  // Start centralized cron scheduler
+  // Start centralized cron scheduler (includes migration cron)
   server.log.info('⏰ Starting cron scheduler...');
   startCronScheduler(server);
 
-  // Setup migration cron job (enabled by default, opt-out with DISABLE_MIGRATION_CRON=true)
-  setupMigrationCron(server, {
-    enabled: process.env.DISABLE_MIGRATION_CRON !== 'true',
-    schedule: process.env.MIGRATION_CRON_SCHEDULE || '*/20 * * * *', // Every 20 minutes by default
-    batchSize: parseInt(process.env.MIGRATION_CRON_BATCH_SIZE || '100', 10),
-  });
-
   // Request logging hook
   server.addHook('onRequest', async (request, reply) => {
-    request.log.info({
+    request.log.debug({
       method: request.method,
       url: request.url,
       ip: request.ip,
@@ -298,7 +290,7 @@ async function buildServer() {
 
   // Response logging hook
   server.addHook('onResponse', async (request, reply) => {
-    request.log.info({
+    request.log.debug({
       method: request.method,
       url: request.url,
       statusCode: reply.statusCode,

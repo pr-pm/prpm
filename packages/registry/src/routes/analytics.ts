@@ -12,7 +12,7 @@ import { telemetry } from '../telemetry/index.js';
 const TrackDownloadSchema = z.object({
   packageId: z.string(),
   version: z.string().optional(),
-  format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp']).optional(),
+  format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'generic', 'mcp']).optional(),
   client: z.enum(['cli', 'web', 'api']).optional(),
 });
 
@@ -42,7 +42,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
             version: { type: 'string', description: 'Package version' },
             format: {
               type: 'string',
-              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'],
+              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'generic', 'mcp'],
               description: 'Download format'
             },
             client: { 

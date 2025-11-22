@@ -7,6 +7,8 @@
  * - Cost monitoring and analytics refresh
  * - Batch embedding generation for AI search
  * - AI use case generation for packages
+ * - Canonical format migration
+ * - Taxonomy category backfill
  */
 
 import cron, { ScheduledTask } from 'node-cron';
@@ -17,6 +19,7 @@ import { CostMonitoringService } from './cost-monitoring.js';
 import { EmbeddingGenerationService } from './embedding-generation.js';
 import { AIPackageEnrichmentService } from './ai-package-enrichment.js';
 import { TaxonomyService } from './taxonomy.js';
+import { batchMigratePackages } from './migration.js';
 
 interface CronJob {
   name: string;
@@ -530,6 +533,98 @@ export class CronScheduler {
         }
       },
     });
+
+    // =====================================================
+    // CANONICAL FORMAT MIGRATION
+    // Gradually migrates packages to canonical format
+    // Configurable via environment variables
+    // =====================================================
+    if (process.env.DISABLE_MIGRATION_CRON !== 'true') {
+      const batchSize = parseInt(process.env.MIGRATION_CRON_BATCH_SIZE || '100', 10);
+      const schedule = process.env.MIGRATION_CRON_SCHEDULE || '*/20 * * * *'; // Every 20 minutes by default
+
+      // Track state across runs
+      let currentOffset = 0;
+      let completedCycleWithZeroMigrations = false;
+
+      this.jobs.push({
+        name: 'Canonical Format Migration',
+        schedule,
+        task: async () => {
+          // Stop if we've already completed a full cycle with zero migrations
+          if (completedCycleWithZeroMigrations) {
+            this.server.log.info('All packages migrated - migration cron inactive');
+            return;
+          }
+
+          try {
+            this.server.log.info(
+              { offset: currentOffset, batchSize },
+              '🔄 Starting scheduled migration batch'
+            );
+
+            const startTime = Date.now();
+
+            const result = await batchMigratePackages(this.server, {
+              limit: batchSize,
+              offset: currentOffset,
+              dryRun: false,
+            });
+
+            const duration = Date.now() - startTime;
+
+            this.server.log.info(
+              {
+                total: result.total,
+                migrated: result.migrated,
+                failed: result.failed,
+                skipped: result.skipped,
+                offset: currentOffset,
+                durationMs: duration,
+              },
+              '✅ Completed scheduled migration batch'
+            );
+
+            // If we processed a full batch, increment offset for next run
+            // Otherwise, we've reached the end - reset to start
+            if (result.total === batchSize && result.migrated > 0) {
+              currentOffset += batchSize;
+              this.server.log.debug(
+                { newOffset: currentOffset },
+                'Incremented offset for next run'
+              );
+            } else {
+              // Reached end of packages
+              if (currentOffset > 0) {
+                this.server.log.info(
+                  { totalProcessed: currentOffset + result.total },
+                  'Migration cycle complete'
+                );
+              }
+
+              // If we completed a cycle and migrated nothing, we're done
+              if (result.migrated === 0 && currentOffset === 0) {
+                completedCycleWithZeroMigrations = true;
+                this.server.log.info('No packages to migrate - migration cron will be inactive');
+              }
+
+              currentOffset = 0;
+            }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.server.log.error(
+              {
+                error: errorMessage,
+                errorStack: error instanceof Error ? error.stack : undefined,
+                offset: currentOffset,
+              },
+              '❌ Migration cron job failed'
+            );
+            // Don't reset offset on error - will retry from same position
+          }
+        },
+      });
+    }
 
     // =====================================================
     // AI USE-CASE PACKAGE CURATION

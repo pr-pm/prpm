@@ -43,7 +43,7 @@ export async function downloadRoutes(server: FastifyInstance) {
           },
           format: {
             type: 'string',
-            enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'ruler', 'agents.md', 'gemini', 'generic'],
+            enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'ruler', 'agents.md', 'gemini', 'droid', 'opencode', 'generic'],
             description: 'Target format for conversion (optional)',
           },
         },
@@ -198,11 +198,11 @@ export async function downloadRoutes(server: FastifyInstance) {
         properties: {
           from: {
             type: 'string',
-            enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'ruler', 'agents.md', 'gemini', 'generic'],
+            enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'ruler', 'agents.md', 'gemini', 'droid', 'opencode', 'generic'],
           },
           to: {
             type: 'string',
-            enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'ruler', 'agents.md', 'gemini', 'generic'],
+            enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'ruler', 'agents.md', 'gemini', 'droid', 'opencode', 'generic'],
           },
         },
       },

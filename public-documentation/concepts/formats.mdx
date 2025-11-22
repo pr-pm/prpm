@@ -18,6 +18,7 @@ PRPM supports multiple AI tool formats, allowing you to install packages for dif
 | `kiro` | Kiro AI | Agents and steering files for Kiro |
 | `gemini` | Gemini CLI | Custom commands for Gemini CLI |
 | `ruler` | Ruler | Coding rules for Ruler |
+| `droid` | Factory Droid | Skills, commands, and hooks for Factory Droid |
 | `agents.md` | Agents.md | Agent definitions in agents.md format |
 | `copilot` | GitHub Copilot | Copilot configurations |
 | `generic` | Multiple | Works across multiple tools |
@@ -47,6 +48,7 @@ PRPM auto-detects the format based on your project structure:
 - `.kiro/` directory → `kiro`
 - `.agents/` directory → `agents.md`
 - `.ruler/` directory → `ruler`
+- `.factory/` directory → `droid`
 
 ## File Installation Paths
 
@@ -61,6 +63,7 @@ Each format has a standard installation path:
 | `kiro` | `.kiro/agents/` or `.kiro/steering/` | `.kiro/agents/code-reviewer.json` |
 | `gemini` | Custom commands directory | `commands/refactor.toml` |
 | `ruler` | `.ruler/rules/` | `.ruler/rules/typescript.md` |
+| `droid` | `.factory/skills/` or `.factory/commands/` | `.factory/skills/code-review/SKILL.md` |
 | `agents.md` | `.agents/` | `.agents/code-reviewer.md` |
 
 ## Multi-Format Packages

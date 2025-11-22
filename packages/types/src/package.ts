@@ -18,6 +18,7 @@ export type Format =
   | 'gemini'
   | 'opencode'
   | 'ruler'
+  | 'droid'
   | 'generic'
   | 'mcp';
 
@@ -38,6 +39,7 @@ export const FORMATS: readonly Format[] = [
   'gemini',
   'opencode',
   'ruler',
+  'droid',
   'generic',
   'mcp',
 ] as const;

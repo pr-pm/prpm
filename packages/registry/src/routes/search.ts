@@ -9,7 +9,7 @@ import { Package, Format, Subtype } from '../types.js';
 import { getSearchProvider } from '../search/index.js';
 
 // Reusable enum constants for schema validation
-const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'generic', 'mcp'] as const;
+const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'generic', 'mcp'] as const;
 const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'] as const;
 
 // Columns to select for list results (excludes full_content to reduce payload size)

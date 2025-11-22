@@ -69,6 +69,17 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       if (subtype === 'tool') return '.opencode/tool';
       return '.opencode/agent';
 
+    case 'droid':
+      // Factory Droid supports skills, slash commands, and hooks
+      // Skills: .factory/skills/<skill-name>/ (creates subdirectory)
+      // Slash Commands: .factory/commands/
+      // Hooks: .factory/hooks/ (executable scripts or hooks.json config)
+      if (subtype === 'skill' && packageName) return `.factory/skills/${packageName}`;
+      if (subtype === 'skill') return '.factory/skills';
+      if (subtype === 'slash-command') return '.factory/commands';
+      if (subtype === 'hook') return '.factory/hooks';
+      return '.factory/skills'; // Default to skills
+
     case 'agents.md':
       return '.';
 
@@ -169,6 +180,7 @@ export async function autoDetectFormat(): Promise<Format | null> {
     { format: 'kiro', dir: '.kiro' },
     { format: 'gemini', dir: '.gemini' },
     { format: 'opencode', dir: '.opencode' },
+    { format: 'droid', dir: '.factory' },
     { format: 'agents.md', dir: '.agents' },
   ];
 
