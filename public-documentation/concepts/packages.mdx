@@ -18,6 +18,12 @@ PRPM supports different package subtypes:
 | `rule` | IDE rules and guidelines | Coding standards, conventions |
 | `slash-command` | Executable commands | Quick actions, shortcuts |
 | `prompt` | Reusable prompt templates | Common tasks, queries |
+| `workflow` | Multi-step automation workflows | CI/CD pipelines, build processes |
+| `tool` | Executable utilities and scripts | MCP tools, helper scripts |
+| `template` | File and project templates | Boilerplates, scaffolds |
+| `collection` | Curated package collections | Stack bundles, thematic sets |
+| `chatmode` | Chat interface modes | Specialized AI modes |
+| `hook` | Event-triggered executable hooks | Pre/post actions, validations |
 
 ## Package Formats
 
@@ -27,8 +33,17 @@ Packages target different AI tools:
 - **cursor**: Cursor IDE rules
 - **continue**: Continue.dev extension
 - **windsurf**: Windsurf IDE
-- **agents.md**: Agents.md format
+- **copilot**: GitHub Copilot instructions
+- **kiro**: Kiro AI agents and steering files
+- **gemini**: Gemini CLI custom commands
+- **opencode**: OpenCode AI agents and commands
+- **ruler**: Ruler coding rules and agents
+- **droid**: Factory Droid skills and hooks
+- **agents.md**: Universal agent format (OpenAI, Gemini, etc.)
+- **mcp**: Model Context Protocol servers
 - **generic**: Works across multiple tools
+
+See the [Formats documentation](/concepts/formats) for complete details on each format.
 
 ## Package Structure
 

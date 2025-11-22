@@ -15,13 +15,22 @@ PRPM supports multiple AI tool formats, allowing you to install packages for dif
 | `cursor` | Cursor IDE | Rules and configurations for Cursor |
 | `continue` | Continue.dev | Prompts for Continue extension |
 | `windsurf` | Windsurf IDE | Rules for Windsurf |
+| `copilot` | GitHub Copilot | Copilot configurations |
 | `kiro` | Kiro AI | Agents and steering files for Kiro |
 | `gemini` | Gemini CLI | Custom commands for Gemini CLI |
-| `ruler` | Ruler | Coding rules for Ruler |
+| `opencode` | OpenCode AI | Agents, commands, and tools for OpenCode |
+| `ruler` | Ruler | Coding rules and agents for Ruler |
 | `droid` | Factory Droid | Skills, commands, and hooks for Factory Droid |
-| `agents.md` | Agents.md | Agent definitions in agents.md format |
-| `copilot` | GitHub Copilot | Copilot configurations |
+| `agents.md` | Agents.md | Universal agent format (works with OpenAI, Gemini, etc.) |
+| `mcp` | Model Context Protocol | MCP server configurations |
 | `generic` | Multiple | Works across multiple tools |
+
+### Format Aliases
+
+Some formats have aliases for compatibility:
+
+- `claude.md` → `claude`
+- `gemini.md` → `gemini`
 
 ## Installing for Specific Formats
 
@@ -48,7 +57,9 @@ PRPM auto-detects the format based on your project structure:
 - `.kiro/` directory → `kiro`
 - `.agents/` directory → `agents.md`
 - `.ruler/` directory → `ruler`
+- `.opencode/` directory → `opencode`
 - `.factory/` directory → `droid`
+- `.mcp/` directory → `mcp`
 
 ## File Installation Paths
 
@@ -60,11 +71,14 @@ Each format has a standard installation path:
 | `cursor` | `.cursor/rules/` | `.cursor/rules/typescript.mdc` |
 | `continue` | `.continue/prompts/` | `.continue/prompts/refactor.md` |
 | `windsurf` | `.windsurf/rules/` | `.windsurf/rules/python.md` |
+| `copilot` | `.github/.copilot-instructions.md` | `.github/.copilot-instructions.md` |
 | `kiro` | `.kiro/agents/` or `.kiro/steering/` | `.kiro/agents/code-reviewer.json` |
 | `gemini` | Custom commands directory | `commands/refactor.toml` |
-| `ruler` | `.ruler/rules/` | `.ruler/rules/typescript.md` |
+| `opencode` | `.opencode/agent/` or `.opencode/command/` | `.opencode/agent/code-reviewer.md` |
+| `ruler` | `.ruler/rules/` or `.ruler/agents/` | `.ruler/rules/typescript.md` |
 | `droid` | `.factory/skills/` or `.factory/commands/` | `.factory/skills/code-review/SKILL.md` |
 | `agents.md` | `.agents/` | `.agents/code-reviewer.md` |
+| `mcp` | `.mcp/servers/` | `.mcp/servers/filesystem.json` |
 
 ## Multi-Format Packages
 

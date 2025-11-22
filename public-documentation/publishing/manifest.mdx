@@ -100,21 +100,51 @@ Each package in the `packages` array requires the same fields, except top-level 
 | `cursor` | Cursor IDE |
 | `continue` | Continue.dev |
 | `windsurf` | Windsurf IDE |
-| `agents.md` | Agents.md format |
 | `copilot` | GitHub Copilot |
+| `kiro` | Kiro AI |
+| `gemini` | Gemini CLI |
+| `opencode` | OpenCode AI |
+| `ruler` | Ruler |
+| `droid` | Factory Droid |
+| `agents.md` | Agents.md universal format |
+| `mcp` | Model Context Protocol |
 | `generic` | Multi-tool |
+
+### Format Aliases
+
+Some formats have aliases for compatibility:
+- `claude.md` → `claude`
+- `gemini.md` → `gemini`
 
 ## Subtype Values
 
 | Subtype | Description |
 |---------|-------------|
-| `agent` | Autonomous agents |
-| `skill` | Specialized capabilities |
-| `rule` | IDE rules |
-| `slash-command` | Executable commands |
-| `prompt` | Prompt templates |
-| `chatmode` | Chat modes |
-| `tool` | MCP tools |
+| `agent` | Autonomous agents that execute multi-step tasks |
+| `skill` | Specialized capabilities and knowledge domains |
+| `rule` | IDE rules and coding standards |
+| `slash-command` | Executable commands for quick actions |
+| `prompt` | Reusable prompt templates |
+| `workflow` | Multi-step automation workflows |
+| `tool` | Executable utilities and scripts |
+| `template` | File and project templates |
+| `collection` | Curated package collections |
+| `chatmode` | Chat interface modes and configurations |
+| `hook` | Event-triggered executable hooks |
+
+### Subtype by Format
+
+Different formats support different subtypes:
+
+- **claude**: skill, agent, slash-command, tool, hook
+- **cursor**: rule, agent, slash-command, tool
+- **continue**: rule, agent, prompt
+- **windsurf**: rule, agent, slash-command
+- **kiro**: rule, agent, tool, hook
+- **opencode**: agent, slash-command, tool
+- **ruler**: rule, agent, tool
+- **droid**: skill, slash-command, hook
+- **generic**: all subtypes
 
 ## File Paths
 
