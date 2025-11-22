@@ -48,8 +48,6 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'droid': ['skill', 'slash-command', 'hook'],
   'mcp': ['tool'],
   'agents.md': ['skill', 'agent'],
-  'gemini.md': ['skill', 'agent'],
-  'claude.md': ['skill', 'agent'],
   'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],
 }
 

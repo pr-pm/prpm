@@ -44,8 +44,6 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'droid': '🏭',
     'mcp': '🔗',
     'agents.md': '📝',
-    'gemini.md': '✨',
-    'claude.md': '🤖',
     'ruler': '📏',
     'generic': '📦',
   };
@@ -71,8 +69,6 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'droid': 'Factory Droid',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
-    'gemini.md': 'Gemini.md',
-    'claude.md': 'Claude.md',
     'ruler': 'Ruler',
     'generic': '',
   };

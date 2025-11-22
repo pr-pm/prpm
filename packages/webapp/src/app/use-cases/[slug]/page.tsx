@@ -68,6 +68,11 @@ export default async function UseCasePage({
     const packages = result.packages
     const total = result.total
 
+    // Handle case where use case doesn't exist
+    if (!useCase) {
+      throw new Error(`Use case not found: ${params.slug}`)
+    }
+
     return (
       <main className="min-h-screen bg-prpm-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
