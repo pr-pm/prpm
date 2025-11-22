@@ -5,7 +5,7 @@
 
 import type { CanonicalPackage } from './types/canonical.js';
 
-export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'generic' | 'mcp';
+export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
 export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
 /**
@@ -76,6 +76,10 @@ export function normalizeFormat(sourceFormat: string): Format {
   if (normalized.includes('opencode')) return 'opencode';
   if (normalized.includes('ruler')) return 'ruler';
   if (normalized.includes('droid') || normalized.includes('factory')) return 'droid';
+  if (normalized.includes('trae')) return 'trae';
+  if (normalized.includes('aider')) return 'aider';
+  if (normalized.includes('zencoder')) return 'zencoder';
+  if (normalized.includes('replit')) return 'replit';
   if (normalized.includes('mcp')) return 'mcp';
 
   return 'generic';

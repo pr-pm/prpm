@@ -46,6 +46,10 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
   'opencode': ['agent', 'slash-command', 'tool'],
   'ruler': ['rule', 'agent', 'tool'],
   'droid': ['skill', 'slash-command', 'hook'],
+  'trae': ['rule'],
+  'aider': ['rule'],
+  'zencoder': ['rule'],
+  'replit': ['rule'],
   'mcp': ['tool'],
   'agents.md': ['skill', 'agent'],
   'generic': ['rule', 'agent', 'skill', 'slash-command', 'tool', 'chatmode', 'hook'],
@@ -1201,6 +1205,10 @@ function SearchPageContent() {
                       <option value="kiro">Kiro</option>
                       <option value="gemini">Gemini CLI</option>
                       <option value="droid">Droid</option>
+                      <option value="trae">Trae</option>
+                      <option value="aider">Aider</option>
+                      <option value="zencoder">Zencoder</option>
+                      <option value="replit">Replit</option>
                       <option value="mcp">MCP</option>
                       <option value="agents.md">Agents.md</option>
                       <option value="generic">Generic</option>
