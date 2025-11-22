@@ -495,11 +495,11 @@ const formatLabels: Record<Format, string> = {
 };
 ```
 
-## Step 9: Webapp - Format Subtypes
+## Step 9: Webapp - Format Subtypes and Filter Dropdown
 
 **File**: `packages/webapp/src/app/(app)/search/SearchClient.tsx`
 
-Add to FORMAT_SUBTYPES:
+### 9a. Add to FORMAT_SUBTYPES:
 
 ```typescript
 const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
@@ -514,9 +514,116 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
 };
 ```
 
-## Step 10: Testing and Validation
+### 9b. Add to format filter dropdown (around line 1195):
 
-### 10a. Run typecheck:
+```typescript
+<select
+  value={selectedFormat}
+  onChange={(e) => setSelectedFormat(e.target.value as Format | '')}
+  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
+>
+  <option value="">All Formats</option>
+  <option value="cursor">Cursor</option>
+  <option value="claude">Claude</option>
+  <option value="continue">Continue</option>
+  <option value="windsurf">Windsurf</option>
+  <option value="copilot">GitHub Copilot</option>
+  <option value="kiro">Kiro</option>
+  <option value="gemini">Gemini CLI</option>
+  <option value="droid">Droid</option>
+  <option value="opencode">OpenCode</option>  {/* Add your format here */}
+  <option value="mcp">MCP</option>
+  <option value="agents.md">Agents.md</option>
+  <option value="generic">Generic</option>
+</select>
+```
+
+### 9c. Add compatibility info section (after the dropdown):
+
+```typescript
+{selectedFormat === 'opencode' && (
+  <div className="mt-3 p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg">
+    <p className="text-xs text-gray-400">
+      Tool-specific format for <strong>OpenCode AI</strong>
+    </p>
+  </div>
+)}
+```
+
+## Step 10: Registry - Fastify Route Schemas
+
+**CRITICAL**: Add the format to all Fastify route validation schemas to prevent 400 errors.
+
+### 10a. **File**: `packages/registry/src/routes/download.ts`
+
+Add to format enum in schema (2-3 places):
+
+```typescript
+// Download route schema (line ~46)
+format: {
+  type: 'string',
+  enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'ruler', 'agents.md', 'gemini', 'droid', 'opencode', 'generic'],
+  description: 'Target format for conversion (optional)',
+},
+
+// Compatibility check route schema (lines ~201, 205)
+from: {
+  type: 'string',
+  enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'ruler', 'agents.md', 'gemini', 'droid', 'opencode', 'generic'],
+},
+to: {
+  type: 'string',
+  enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'ruler', 'agents.md', 'gemini', 'droid', 'opencode', 'generic'],
+},
+```
+
+### 10b. **File**: `packages/registry/src/routes/search.ts`
+
+Add to FORMAT_ENUM constant (line ~12):
+
+```typescript
+const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'generic', 'mcp'] as const;
+```
+
+### 10c. **File**: `packages/registry/src/routes/analytics.ts`
+
+Add to both Zod schema and Fastify schema:
+
+```typescript
+// Zod schema (line ~15)
+const TrackDownloadSchema = z.object({
+  packageId: z.string(),
+  version: z.string().optional(),
+  format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'generic', 'mcp']).optional(),
+  client: z.enum(['cli', 'web', 'api']).optional(),
+});
+
+// Fastify schema (line ~45)
+format: {
+  type: 'string',
+  enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'generic', 'mcp'],
+  description: 'Download format'
+},
+```
+
+**Why this matters**: Without these additions, the registry will reject API requests with 400 validation errors when users try to download or filter by the new format.
+
+## Step 11: Testing and Validation
+
+### 11a. Build types package first:
+```bash
+npm run build --workspace=@pr-pm/types
+```
+
+This is critical because other packages depend on the updated Format type.
+
+### 11b. Build registry and webapp:
+```bash
+npm run build --workspace=@pr-pm/registry
+npm run build --workspace=@pr-pm/webapp
+```
+
+### 11c. Run typecheck:
 ```bash
 npm run typecheck
 ```
@@ -526,17 +633,17 @@ Fix any TypeScript errors:
 - Format aliases ('gemini.md', 'claude.md')
 - Section structure (use correct field names)
 
-### 10b. Build all packages:
+### 11d. Build all packages:
 ```bash
 npm run build
 ```
 
-### 10c. Run converter tests:
+### 11e. Run converter tests:
 ```bash
 npm test --workspace=@pr-pm/converters
 ```
 
-### 10d. Create test fixtures (recommended):
+### 11f. Create test fixtures (recommended):
 ```typescript
 // packages/converters/src/__tests__/opencode.test.ts
 describe('OpenCode Format', () => {
@@ -570,7 +677,7 @@ Test instructions`;
 });
 ```
 
-## Step 11: Documentation
+## Step 12: Documentation
 
 Create documentation at appropriate location:
 - User-facing: Add to Mintlify docs or README
@@ -621,7 +728,11 @@ import yaml from 'js-yaml';  // Top-level import
 
 Before submitting:
 
+**Types Package:**
 - [ ] Added format to types/src/package.ts (Format type and FORMATS array)
+- [ ] Built types package
+
+**Converters Package:**
 - [ ] Created schema file in converters/schemas/
 - [ ] Updated converters/src/types/canonical.ts (all 4 places: format union, metadata, MetadataSection.data, formatScores, sourceFormat)
 - [ ] Created from-{format}.ts converter
@@ -629,10 +740,24 @@ Before submitting:
 - [ ] Updated converters/src/index.ts exports
 - [ ] Updated converters/src/validation.ts (FormatType and schemaMap)
 - [ ] Updated converters/src/taxonomy-utils.ts (Format type and normalizeFormat)
+
+**CLI Package:**
 - [ ] Updated cli/src/core/filesystem.ts (getDestinationDir and autoDetectFormat)
 - [ ] Updated cli/src/commands/search.ts (formatIcons and formatLabels, including aliases)
 - [ ] Updated cli/src/commands/install.ts (formatIcons and formatLabels, including aliases)
+
+**Webapp Package:**
 - [ ] Updated webapp SearchClient.tsx (FORMAT_SUBTYPES, including aliases)
+- [ ] Added to format filter dropdown
+- [ ] Added compatibility info section
+
+**Registry Package:**
+- [ ] Updated registry/src/routes/download.ts (format enum in 2-3 places)
+- [ ] Updated registry/src/routes/search.ts (FORMAT_ENUM constant)
+- [ ] Updated registry/src/routes/analytics.ts (Zod schema and Fastify schema)
+- [ ] Built registry package
+
+**Testing:**
 - [ ] Ran typecheck successfully
 - [ ] Built all packages successfully
 - [ ] Wrote tests for converters
@@ -648,11 +773,14 @@ See the following files for reference:
 
 ## Summary
 
-Adding a new format requires changes across 5 packages:
-1. **types** - Add to Format type
+Adding a new format requires changes across 6 packages:
+1. **types** - Add to Format type (build first!)
 2. **converters** - Schema, from/to converters, canonical types, validation, taxonomy
 3. **cli** - Filesystem and format mappings
-4. **webapp** - Format subtypes
-5. **tests** - Verify everything works
+4. **webapp** - Format subtypes, filter dropdown, compatibility info
+5. **registry** - Fastify route schemas (download, search, analytics)
+6. **tests** - Verify everything works
+
+**Build order matters**: types → converters → cli → webapp → registry
 
 Follow the steps systematically, use existing format implementations as reference, and always run typecheck and tests before submitting.
