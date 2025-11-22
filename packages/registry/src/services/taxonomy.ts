@@ -381,7 +381,7 @@ export class TaxonomyService {
     // Get curated packages first (AI-selected with reasons)
     const curatedResult = await this.server.pg.query(`
       SELECT
-        p.id, p.name, p.description, p.version,
+        p.id, p.name, p.description,
         p.format, p.subtype, p.author_id,
         u.username as author_username,
         p.total_downloads, p.quality_score,
@@ -421,7 +421,7 @@ export class TaxonomyService {
     // Fallback to auto-tagged packages if no curated packages exist
     const packagesResult = await this.server.pg.query(`
       SELECT DISTINCT
-        p.id, p.name, p.description, p.version,
+        p.id, p.name, p.description,
         p.format, p.subtype, p.author_id,
         u.username as author_username,
         p.total_downloads, p.quality_score,
