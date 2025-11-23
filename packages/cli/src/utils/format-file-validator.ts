@@ -196,6 +196,12 @@ export async function validatePackageFiles(
         return filePath.endsWith('SKILL.md');
       }
 
+      // For Claude hooks: DON'T validate any markdown files
+      // Hooks are TypeScript/JavaScript code, not markdown with frontmatter
+      if (manifest.subtype === 'hook') {
+        return false;
+      }
+
       // For other Claude subtypes (agents, commands):
       // Skip JSON files (they're examples or data files)
       if (filePath.endsWith('.json')) {
