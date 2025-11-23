@@ -14,12 +14,12 @@
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
           "maxLength": 64,
-          "description": "Agent identifier (lowercase letters, numbers, hyphens only)"
+          "description": "Unique identifier using lowercase letters and hyphens"
         },
         "description": {
           "type": "string",
           "maxLength": 1024,
-          "description": "Brief overview of agent's functionality and use cases"
+          "description": "Natural language description of the subagent’s purpose"
         },
         "tools": {
           "type": "string",
@@ -37,12 +37,7 @@
         },
         "skills": {
           "type": "string",
-          "description": "Comma-separated list of skills to load for this agent"
-        },
-        "agentType": {
-          "type": "string",
-          "const": "agent",
-          "description": "Explicit marker for round-trip conversion"
+          "description": "Comma-separated list of skill names to auto-load when the subagent starts. Skills are loaded into the subagent’s context automatically"
         }
       },
       "additionalProperties": false
