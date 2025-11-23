@@ -1,7 +1,6 @@
 ---
 name: creating-kiro-agents
 description: Use when building custom Kiro AI agents or when user asks for agent configurations - provides JSON structure, tool configuration, prompt patterns, and security best practices for specialized development assistants
-tags: kiro, agents, ai-configuration, json
 ---
 
 # Creating Kiro Agents

@@ -731,21 +731,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log(`   Size: ${sizeDisplay}`);
         console.log('');
 
-        if (options.dryRun) {
-          console.log('✅ Dry run successful! Package is ready to publish.');
-          publishedPackages.push({
-            name: scopedPackageName,
-            version: manifest.version,
-            url: ''
-          });
-          publishSuccess = true;
-          break;
-        }
-
-        // Publish to registry
-        console.log('🚀 Publishing to registry...');
-
-        // Check if admin should override author
+        // Check if admin should override author (before dry run so it shows in dry run)
         let publishAsAuthor: string | undefined;
         if (userInfo?.is_admin && manifest.author) {
           // Author can be string or object { name, email }
@@ -759,6 +745,20 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           console.log(`   Publishing as organization: ${userInfo.organizations.find((org: any) => org.id === selectedOrgId)?.name}`);
           console.log(`   Organization ID: ${selectedOrgId}`);
         }
+
+        if (options.dryRun) {
+          console.log('✅ Dry run successful! Package is ready to publish.');
+          publishedPackages.push({
+            name: scopedPackageName,
+            version: manifest.version,
+            url: ''
+          });
+          publishSuccess = true;
+          break;
+        }
+
+        // Publish to registry
+        console.log('🚀 Publishing to registry...');
 
         // Build publish options
         const publishOptions: { orgId?: string; publishAsAuthor?: string } = {};

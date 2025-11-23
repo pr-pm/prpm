@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/droid.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/droid.json",
+  "$comment": "Official documentation: https://docs.factory.ai/cli/configuration",
   "title": "Factory Droid Format",
   "description": "JSON Schema for Factory Droid Skills, Hooks, and Slash Commands",
   "type": "object",

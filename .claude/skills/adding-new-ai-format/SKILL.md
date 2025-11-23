@@ -64,7 +64,7 @@ Example structure:
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/opencode.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/opencode.json",
   "title": "OpenCode Agent Format",
   "description": "JSON Schema for OpenCode Agents",
   "type": "object",
@@ -76,7 +76,8 @@ Example structure:
       "properties": {
         "description": { "type": "string" },
         // Format-specific fields
-      }
+      },
+      "additionalProperties": false
     },
     "content": {
       "type": "string",
@@ -86,7 +87,108 @@ Example structure:
 }
 ```
 
-## Step 3: Converters Package - Canonical Types
+**CRITICAL Schema Requirements:**
+- `$id` must use new URL pattern: `https://registry.prpm.dev/api/v1/schemas/{format}.json` for base schemas
+- For subtypes: `https://registry.prpm.dev/api/v1/schemas/{format}/{subtype}.json`
+- Add `"additionalProperties": false` to frontmatter object to catch invalid fields
+- String fields requiring slugs (like `name`) should use pattern: `"pattern": "^[a-z0-9-]+$"`
+
+If the format has subtypes (like Claude with agents/skills/commands), create separate schema files:
+- `{format}-agent.schema.json`
+- `{format}-skill.schema.json`
+- `{format}-slash-command.schema.json`
+- etc.
+
+**IMPORTANT**: When creating subtype schemas, you MUST update the validation logic to map them.
+
+## Step 3: Converters Package - Format Documentation (`packages/converters/docs/`)
+
+**CRITICAL**: Create comprehensive format documentation file: `{format}.md`
+
+This documentation serves as the source of truth for:
+- Package authors creating packages in this format
+- PRPM contributors implementing converters
+- Users understanding format capabilities and limitations
+
+**Required sections**:
+
+```markdown
+# {Format Name} Format Specification
+
+**File Locations:**
+- {Type 1}: `{path}`
+- {Type 2}: `{path}`
+
+**Format:** {Markdown/JSON/etc.} with {YAML frontmatter/etc.}
+**Official Docs:** {link to official documentation}
+
+## Overview
+
+Brief description of the format and its purpose.
+
+## Frontmatter Fields
+
+### Required Fields
+
+- **`field-name`** (type): Description
+
+### Optional Fields
+
+- **`field-name`** (type): Description
+
+## Content Format
+
+Describe the body/content structure.
+
+## Best Practices
+
+1. Practice 1
+2. Practice 2
+
+## Conversion Notes
+
+### From {Format} to Canonical
+
+How the converter parses this format.
+
+### From Canonical to {Format}
+
+How the converter generates this format.
+
+## Limitations
+
+- Limitation 1
+- Limitation 2
+
+## Examples
+
+### Example 1
+
+```markdown
+{example content}
+```
+
+## Related Documentation
+
+- [Official Docs]({url})
+- [PRPM Format Guide](../../docs/formats.mdx)
+
+## Changelog
+
+- **{Date}**: Initial format support
+```
+
+**Add to README.md**:
+
+1. **Format Matrix table**: Add row(s) with subtypes, official docs, and OpenCode docs links
+2. **Available Formats table**: Add row with link to your new `.md` file
+3. **Schema Validation section**: Add schema filename(s) to appropriate list
+4. **Frontmatter Support table**: Add row with frontmatter requirements
+5. **File Organization table**: Add row with file paths and structure
+
+See `packages/converters/docs/README.md` for examples of how other formats are documented.
+
+## Step 4: Converters Package - Canonical Types
 
 **File**: `packages/converters/src/types/canonical.ts`
 
@@ -140,7 +242,7 @@ formatScores?: {
 sourceFormat?: 'cursor' | 'claude' | ... | 'opencode' | ... | 'generic';
 ```
 
-## Step 4: Converters Package - From Converter
+## Step 5: Converters Package - From Converter
 
 **File**: `packages/converters/src/from-{format}.ts`
 
@@ -266,7 +368,7 @@ export function fromFormat(
 - InstructionsSection requires `title` field
 - Call `setTaxonomy()` before returning
 
-## Step 5: Converters Package - To Converter
+## Step 6: Converters Package - To Converter
 
 **File**: `packages/converters/src/to-{format}.ts`
 
@@ -360,7 +462,7 @@ function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
 - **InstructionsSection**: `section.content` and `section.title`
 - **ExamplesSection**: `section.examples` array with `description` and `code`
 
-## Step 6: Converters Package - Exports and Validation
+## Step 7: Converters Package - Exports and Validation
 
 **File**: `packages/converters/src/index.ts`
 
@@ -375,7 +477,7 @@ export { toFormat } from './to-format.js';
 
 **File**: `packages/converters/src/validation.ts`
 
-Add to FormatType:
+### 7a. Add to FormatType:
 ```typescript
 export type FormatType =
   | 'cursor'
@@ -385,7 +487,7 @@ export type FormatType =
   | 'canonical';
 ```
 
-Add to schema map:
+### 7b. Add to base schema map:
 ```typescript
 const schemaMap: Record<FormatType, string> = {
   'cursor': 'cursor.schema.json',
@@ -394,6 +496,25 @@ const schemaMap: Record<FormatType, string> = {
   'canonical': 'canonical.schema.json',
 };
 ```
+
+### 7c. **CRITICAL**: Add subtype schemas to subtypeSchemaMap:
+```typescript
+const subtypeSchemaMap: Record<string, string> = {
+  'claude:agent': 'claude-agent.schema.json',
+  'claude:skill': 'claude-skill.schema.json',
+  'claude:slash-command': 'claude-slash-command.schema.json',
+  'claude:hook': 'claude-hook.schema.json',
+  'cursor:slash-command': 'cursor-command.schema.json',
+  'kiro:hook': 'kiro-hooks.schema.json',
+  'kiro:agent': 'kiro-agent.schema.json',
+  'droid:skill': 'droid-skill.schema.json',
+  'droid:slash-command': 'droid-slash-command.schema.json',
+  'droid:hook': 'droid-hook.schema.json',
+  'opencode:slash-command': 'opencode-slash-command.schema.json',  // Add your subtypes here
+};
+```
+
+**Why this matters**: Without adding subtypes to `subtypeSchemaMap`, validation will fall back to the base format schema and won't validate subtype-specific fields. This causes validation to fail or pass incorrectly.
 
 **File**: `packages/converters/src/taxonomy-utils.ts`
 
@@ -420,7 +541,7 @@ export function normalizeFormat(sourceFormat: string): Format {
 npm run build --workspace=@pr-pm/converters
 ```
 
-## Step 7: CLI Package - Filesystem
+## Step 8: CLI Package - Filesystem
 
 **File**: `packages/cli/src/core/filesystem.ts`
 
@@ -459,7 +580,7 @@ const formatDirs: Array<{ format: Format; dir: string }> = [
 ];
 ```
 
-## Step 8: CLI Package - Format Mappings
+## Step 9: CLI Package - Format Mappings
 
 **Files**: `packages/cli/src/commands/search.ts` and `packages/cli/src/commands/install.ts`
 
@@ -495,7 +616,7 @@ const formatLabels: Record<Format, string> = {
 };
 ```
 
-## Step 9: Webapp - Format Subtypes and Filter Dropdown
+## Step 10: Webapp - Format Subtypes and Filter Dropdown
 
 **File**: `packages/webapp/src/app/(app)/search/SearchClient.tsx`
 
@@ -550,7 +671,7 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
 )}
 ```
 
-## Step 10: Registry - Fastify Route Schemas
+## Step 11: Registry - Fastify Route Schemas
 
 **CRITICAL**: Add the format to all Fastify route validation schemas to prevent 400 errors.
 
@@ -608,7 +729,7 @@ format: {
 
 **Why this matters**: Without these additions, the registry will reject API requests with 400 validation errors when users try to download or filter by the new format.
 
-## Step 11: Testing and Validation
+## Step 12: Testing and Validation
 
 ### 11a. Build types package first:
 ```bash
@@ -645,7 +766,12 @@ npm test --workspace=@pr-pm/converters
 
 ### 11f. Create test fixtures (recommended):
 ```typescript
-// packages/converters/src/__tests__/opencode.test.ts
+// packages/converters/src/__tests__/to-opencode.test.ts
+import { describe, it, expect } from 'vitest';
+import { toOpencode } from '../to-opencode.js';
+import { validateMarkdown } from '../validation.js';
+import type { CanonicalPackage } from '../types/canonical.js';
+
 describe('OpenCode Format', () => {
   it('should convert from OpenCode to canonical', () => {
     const opencodeContent = `---
@@ -674,15 +800,40 @@ Test instructions`;
     expect(result.format).toBe('opencode');
     expect(result.content).toContain('---');
   });
+
+  // CRITICAL: Add schema validation tests!
+  describe('JSON Schema Validation', () => {
+    it('should generate schema-compliant agent output', () => {
+      const agentPackage: CanonicalPackage = {
+        // ... build agent test package with subtype: 'agent'
+      };
+
+      const result = toOpencode(agentPackage);
+      const validation = validateMarkdown('opencode', result.content, 'agent');
+
+      if (!validation.valid) {
+        console.error('Validation errors:', validation.errors);
+      }
+
+      expect(validation.valid).toBe(true);
+      expect(validation.errors).toHaveLength(0);
+    });
+  });
 });
 ```
 
-## Step 12: Documentation
+**Why Schema Validation Tests Matter:**
+- Catch mismatches between converter implementation and schema
+- Ensure converters generate compliant output
+- Reveal missing required fields or incorrect field names
+- Example: We discovered Claude agent schema was missing required `mode` field via validation tests
 
-Create documentation at appropriate location:
-- User-facing: Add to Mintlify docs or README
-- Internal: Add notes to `docs/development/` if needed
-- Decision logs: Document any architectural decisions in `docs/decisions/`
+## Step 13: Additional Documentation
+
+Beyond the format documentation created in Step 3:
+- **User-facing**: Add to Mintlify docs if the format needs special installation instructions
+- **Internal**: Add notes to `docs/development/` if there are special considerations
+- **Decision logs**: Document any architectural decisions in `docs/decisions/`
 
 ## Common Pitfalls
 
@@ -733,13 +884,17 @@ Before submitting:
 - [ ] Built types package
 
 **Converters Package:**
-- [ ] Created schema file in converters/schemas/
+- [ ] Created schema file(s) in converters/schemas/
+- [ ] If format has subtypes, created separate schema files for each subtype (e.g., {format}-agent.schema.json, {format}-slash-command.schema.json)
+- [ ] Created format documentation in converters/docs/{format}.md
+- [ ] Updated converters/docs/README.md (Format Matrix, Available Formats, Schema Validation, Frontmatter Support, File Organization tables)
 - [ ] Updated converters/src/types/canonical.ts (all 4 places: format union, metadata, MetadataSection.data, formatScores, sourceFormat)
 - [ ] Created from-{format}.ts converter
 - [ ] Created to-{format}.ts converter
 - [ ] Updated converters/src/index.ts exports
-- [ ] Updated converters/src/validation.ts (FormatType and schemaMap)
+- [ ] Updated converters/src/validation.ts (FormatType, schemaMap, and **CRITICAL**: subtypeSchemaMap for each subtype)
 - [ ] Updated converters/src/taxonomy-utils.ts (Format type and normalizeFormat)
+- [ ] Copied all schemas to packages/cli/dist/schemas/ for runtime use
 
 **CLI Package:**
 - [ ] Updated cli/src/core/filesystem.ts (getDestinationDir and autoDetectFormat)

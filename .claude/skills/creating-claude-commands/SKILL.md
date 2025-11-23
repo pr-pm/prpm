@@ -1,8 +1,6 @@
 ---
 name: creating-claude-commands
 description: Expert guidance for creating Claude Code slash commands with correct frontmatter, structure, and best practices
-skillType: skill
-allowed-tools: Read, Write, Edit, Grep, Glob
 ---
 
 # Creating Claude Code Slash Commands

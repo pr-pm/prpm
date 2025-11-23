@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/canonical.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/canonical.json",
   "title": "PRPM Canonical Package Format",
   "description": "Universal intermediate format for AI prompt packages that can be converted to any editor-specific format",
   "type": "object",

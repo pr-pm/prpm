@@ -15,20 +15,41 @@ Claude Code uses markdown files with YAML frontmatter for agents, skills, and sl
 
 ## Frontmatter Fields
 
-### Required Fields
+### Agents
 
-- **`name`** (string): Identifier/slug (e.g., `code-reviewer`, `refactor-helper`)
+**Required:**
+- **`name`** (string): Identifier/slug (e.g., `code-reviewer`)
 - **`description`** (string): Human-readable description
+- **`mode`** (string): Agent mode - `"subagent"`, `"primary"`, or `"all"`
 
-### Optional Fields
-
-- **`allowed-tools`** (string): Comma-separated list of available tools
+**Optional:**
+- **`tools`** (string): Comma-separated list of specific tools (inherits all tools if omitted)
   - Valid tools: `Read`, `Write`, `Edit`, `Grep`, `Glob`, `Bash`, `WebSearch`, `WebFetch`, `Task`, `Skill`, `SlashCommand`, `TodoWrite`, `AskUserQuestion`
-  - Example: `"Read, Write, Bash"`
+  - Example: `"Read, Grep, Bash"`
+- **`model`** (string): Model alias - `"sonnet"`, `"opus"`, `"haiku"`, or `"inherit"`
+- **`temperature`** (number): Temperature for model (0.0-1.0)
+- **`prompt`** (string): System prompt override
+- **`permission`** (object): Permission configuration
+- **`disable`** (boolean): Whether to disable this agent
+- **`permissionMode`** (string): Permission mode - `"default"`, `"acceptEdits"`, `"bypassPermissions"`, `"plan"`, or `"ignore"`
+- **`skills`** (string): Comma-separated list of skills to auto-load
 
-- **`model`** (string): Claude model to use
-  - Values: `sonnet`, `opus`, `haiku`, `inherit` (inherits from parent)
-  - Default: `inherit`
+### Skills
+
+**Required:**
+- **`name`** (string): Skill identifier (lowercase letters, numbers, hyphens only, max 64 chars)
+- **`description`** (string): Brief overview of functionality (max 1024 chars)
+
+**No other fields allowed** - skills are intentionally minimal
+
+### Slash Commands
+
+**Optional (all fields):**
+- **`allowed-tools`** (string): List of tools the command can use (inherits from conversation if not specified)
+- **`argument-hint`** (string): Arguments expected (e.g., `"add [tagId] | remove [tagId] | list"`)
+- **`description`** (string): Brief description (defaults to first line from the prompt if not specified)
+- **`model`** (string): Specific model string (inherits from conversation if not specified)
+- **`disable-model-invocation`** (boolean): Whether to prevent SlashCommand tool from calling this command
 
 ## Content Format
 
@@ -52,7 +73,8 @@ Agents are long-running assistants with access to tools. They can perform comple
 ---
 name: code-reviewer
 description: Reviews code for best practices
-allowed-tools: Read, Grep, Bash
+mode: subagent
+tools: Read, Grep, Bash
 model: sonnet
 ---
 
@@ -92,8 +114,7 @@ Skills are reusable patterns that can be invoked during a conversation. They don
 ```markdown
 ---
 name: refactor-helper
-description: Assists with code refactoring
-allowed-tools: Read, Edit, Grep
+description: Assists with code refactoring while maintaining functionality
 ---
 
 # Refactor Helper Skill

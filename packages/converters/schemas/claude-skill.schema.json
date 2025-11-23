@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/claude-skill.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/skill.json",
+  "$comment": "Official documentation: https://code.claude.com/docs/en/skills",
   "title": "Claude Skill Format",
   "description": "JSON Schema for Claude Code Skills - reusable patterns invoked during conversation",
   "type": "object",
@@ -20,15 +21,6 @@
           "type": "string",
           "maxLength": 1024,
           "description": "Brief overview of functionality and when to use it"
-        },
-        "allowed-tools": {
-          "type": "string",
-          "description": "Comma-separated list of allowed tools (e.g., 'Read, Grep, Glob')"
-        },
-        "skillType": {
-          "type": "string",
-          "const": "skill",
-          "description": "Explicit marker for round-trip conversion"
         }
       },
       "additionalProperties": false
@@ -42,8 +34,7 @@
     {
       "frontmatter": {
         "name": "refactor-helper",
-        "description": "Assists with code refactoring while maintaining functionality",
-        "allowed-tools": "Read, Edit, Grep"
+        "description": "Assists with code refactoring while maintaining functionality"
       },
       "content": "# Refactor Helper Skill\n\nHelps refactor code while maintaining functionality.\n\n## Guidelines\n\n- Preserve existing behavior\n- Improve code structure and readability"
     }

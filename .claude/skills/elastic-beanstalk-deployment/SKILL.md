@@ -1,7 +1,6 @@
 ---
 name: elastic-beanstalk-deployment
 description: Use when deploying Node.js applications to AWS Elastic Beanstalk or troubleshooting deployment issues - provides dependency installation strategies, monorepo handling, and deployment best practices
-tags: aws, elastic-beanstalk, deployment, node.js, monorepo
 ---
 
 # Elastic Beanstalk Node.js Deployment

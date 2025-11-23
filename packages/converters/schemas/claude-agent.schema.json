@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/claude-agent.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/agent.json",
+  "$comment": "Official documentation: https://code.claude.com/docs/en/sub-agents",
   "title": "Claude Agent Format",
   "description": "JSON Schema for Claude Code Agents - long-running assistants with tool access",
   "type": "object",
@@ -14,26 +15,30 @@
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
           "maxLength": 64,
-          "description": "Agent identifier (lowercase letters, numbers, hyphens only)"
+          "description": "Unique identifier using lowercase letters and hyphens"
         },
         "description": {
           "type": "string",
           "maxLength": 1024,
-          "description": "Brief overview of agent's functionality and use cases"
+          "description": "Natural language description of the subagent's purpose"
         },
-        "allowed-tools": {
+        "tools": {
           "type": "string",
-          "description": "Comma-separated list of available tools (e.g., 'Read, Write, Bash, WebSearch')"
+          "description": "Comma-separated list of specific tools. If omitted, inherits all tools from the main thread"
         },
         "model": {
           "type": "string",
           "enum": ["sonnet", "opus", "haiku", "inherit"],
-          "description": "Claude model to use for this agent"
+          "description": "Model to use for this subagent. Can be a model alias (sonnet, opus, haiku) or 'inherit' to use the main conversation's model. If omitted, defaults to the configured subagent model"
         },
-        "agentType": {
+        "permissionMode": {
           "type": "string",
-          "const": "agent",
-          "description": "Explicit marker for round-trip conversion"
+          "enum": ["default", "acceptEdits", "bypassPermissions", "plan", "ignore"],
+          "description": "Permission mode for the subagent. Controls how the subagent handles permission requests"
+        },
+        "skills": {
+          "type": "string",
+          "description": "Comma-separated list of skill names to auto-load when the subagent starts. Skills are loaded into the subagent's context automatically"
         }
       },
       "additionalProperties": false
@@ -48,7 +53,7 @@
       "frontmatter": {
         "name": "code-reviewer",
         "description": "Reviews code for best practices and potential issues",
-        "allowed-tools": "Read, Grep, Bash",
+        "tools": "Read, Grep, Bash",
         "model": "sonnet"
       },
       "content": "# 🔍 Code Reviewer\n\nYou are an expert code reviewer with deep knowledge of software engineering principles.\n\n## Instructions\n\n- Check for code smells and anti-patterns\n- Verify test coverage"

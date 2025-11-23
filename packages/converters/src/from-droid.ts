@@ -15,7 +15,8 @@ interface DroidFrontmatter {
   name: string;
   description: string;
   'argument-hint'?: string;
-  'allowed-tools'?: string[];
+  'tools'?: string[];
+  'allowed-tools'?: string[]; // Legacy field for backward compatibility
   [key: string]: any; // Allow additional fields
 }
 
@@ -107,10 +108,12 @@ export function fromDroid(
   };
 
   // Store Factory Droid-specific data for roundtrip conversion
-  if (fm['argument-hint'] || fm['allowed-tools']) {
+  // Prefer 'tools' over legacy 'allowed-tools' field
+  const toolsField = fm['tools'] || fm['allowed-tools'];
+  if (fm['argument-hint'] || toolsField) {
     metadataSection.data.droid = {
       argumentHint: fm['argument-hint'],
-      allowedTools: fm['allowed-tools'],
+      allowedTools: toolsField,
     };
   }
 
@@ -146,13 +149,13 @@ export function fromDroid(
   };
 
   // Store droid metadata for easier access
-  if (fm['argument-hint'] || fm['allowed-tools']) {
+  if (fm['argument-hint'] || toolsField) {
     pkg.metadata = {
       title: fm.name,
       description: fm.description,
       droid: {
         argumentHint: fm['argument-hint'],
-        allowedTools: fm['allowed-tools'],
+        allowedTools: toolsField,
       },
     };
   }

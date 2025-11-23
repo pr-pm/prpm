@@ -1,14 +1,6 @@
 ---
 name: creating-claude-agents
 description: Use when creating or improving Claude Code agents. Expert guidance on agent file structure, frontmatter, persona definition, tool access, model selection, and validation against schema.
-skillType: skill
-allowed-tools: Read, Write, Edit, Grep, Glob
-globs:
-  - "**/.claude/agents/*.md"
-  - "**/.claude/agents/*.markdown"
-  - "**/claude-agents.md"
-  - "**/creating-claude-agents.md"
-alwaysApply: false
 ---
 
 # Creating Claude Code Agents - Expert Skill

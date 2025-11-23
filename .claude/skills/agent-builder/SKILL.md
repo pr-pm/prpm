@@ -1,11 +1,6 @@
 ---
 name: agent-builder
 description: Use when creating, improving, or troubleshooting Claude Code subagents. Expert guidance on agent design, system prompts, tool access, model selection, and best practices for building specialized AI assistants.
-tags: meta
-globs:
-  - "**/.claude/agents/**/*.md"
-  - "**/.claude/agents/**/*.markdown"
-alwaysApply: false
 ---
 
 # Agent Builder - Claude Code Subagent Expert

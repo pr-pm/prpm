@@ -1,10 +1,6 @@
 ---
 name: slash-command-builder
 description: Use when creating, improving, or troubleshooting Claude Code slash commands. Expert guidance on command structure, arguments, frontmatter, tool permissions, and best practices for building effective custom commands.
-globs:
-  - "**/.claude/commands/**/*.md"
-  - "**/.claude/commands/**/*.markdown"
-alwaysApply: false
 ---
 
 # Slash Command Builder - Claude Code Command Expert

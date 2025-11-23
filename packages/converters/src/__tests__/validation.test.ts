@@ -57,7 +57,7 @@ This is a simple test rule for Windsurf.
       const validClaude = `---
 name: test-agent
 description: "Test agent"
-allowed-tools: Read, Write, Bash
+tools: Read, Write, Bash
 model: sonnet
 ---
 
@@ -66,7 +66,7 @@ model: sonnet
 You are a test agent.
 `;
 
-      const result = validateMarkdown('claude', validClaude);
+      const result = validateMarkdown('claude', validClaude, 'agent');
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });

@@ -1,8 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/gemini.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/gemini.json",
+  "$comment": "Official documentation: https://geminicli.com/docs/cli/custom-commands/",
   "title": "Gemini Custom Commands Format",
-  "description": "JSON Schema for Gemini CLI custom commands (.toml format)",
+  "description": "JSON Schema for Gemini CLI custom commands - TOML files stored in .gemini/commands/",
   "type": "object",
   "required": ["prompt"],
   "properties": {

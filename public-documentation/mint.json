@@ -45,7 +45,8 @@
       "pages": [
         "concepts/packages",
         "concepts/collections",
-        "concepts/formats"
+        "concepts/formats",
+        "concepts/schemas"
       ]
     },
     {

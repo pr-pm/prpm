@@ -76,11 +76,11 @@ Review the specified file for:
     expect(result.metadata?.droid?.argumentHint).toBe('<file-path>');
   });
 
-  it('should preserve allowed-tools metadata for roundtrip conversion', () => {
+  it('should preserve tools metadata for roundtrip conversion', () => {
     const droidContent = `---
 name: file-analyzer
 description: Analyze file structure and dependencies
-allowed-tools:
+tools:
   - Read
   - Grep
   - Bash

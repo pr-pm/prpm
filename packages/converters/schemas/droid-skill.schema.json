@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/droid/skill.json",
+  "$comment": "Official documentation: https://docs.factory.ai/cli/configuration/skills",
+  "title": "Factory Droid Skill Format",
+  "description": "JSON Schema for Factory Droid Skills - SKILL.md files stored in .factory/skills/<skill-name>/",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique identifier for the skill (kebab-case recommended)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief explanation of what the skill does and when to use it"
+        },
+        "allowed-tools": {
+          "type": "array",
+          "description": "Reserved for future use. Safe to omit.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "content": {
+      "type": "string",
+      "description": "Skill workflow and instructions as markdown"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "name": "api-integration",
+        "description": "Integrate a new API endpoint with proper error handling"
+      },
+      "content": "# API Integration Skill\n\n## Steps\n\n1. Define the API endpoint specification\n2. Create the service layer function\n3. Add error handling and validation\n4. Write unit tests\n5. Update API documentation\n\n## Success Criteria\n\n- All tests pass\n- Error handling covers edge cases\n- Documentation is updated"
+    }
+  ]
+}

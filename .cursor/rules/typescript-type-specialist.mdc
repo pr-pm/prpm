@@ -1,5 +1,4 @@
 ---
-ruleType: always
 alwaysApply: true
 description: Enforce strict TypeScript type safety - eliminate all 'any' types, use proper type guards, and maintain zero tolerance for type safety violations
 ---

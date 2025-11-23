@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/windsurf.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/windsurf.json",
+  "$comment": "Official documentation: https://docs.windsurf.com/windsurf/cascade/memories#rules",
   "title": "Windsurf Rules Format",
   "description": "JSON Schema for Windsurf .windsurf/rules format - plain markdown without frontmatter",
   "type": "object",

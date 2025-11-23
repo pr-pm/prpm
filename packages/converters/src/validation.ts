@@ -100,6 +100,10 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'cursor:slash-command': 'cursor-command.schema.json',
       'kiro:hook': 'kiro-hooks.schema.json',
       'kiro:agent': 'kiro-agent.schema.json',
+      'droid:skill': 'droid-skill.schema.json',
+      'droid:slash-command': 'droid-slash-command.schema.json',
+      'droid:hook': 'droid-hook.schema.json',
+      'opencode:slash-command': 'opencode-slash-command.schema.json',
     };
 
     schemaFilename = subtypeSchemaMap[cacheKey];

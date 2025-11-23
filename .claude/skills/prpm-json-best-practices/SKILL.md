@@ -1,15 +1,6 @@
 ---
-name: PRPM JSON Best Practices
+name: prpm-json-best-practices
 description: Best practices for structuring prpm.json package manifests with required fields, tags, organization, multi-package management, enhanced file format, and conversion hints
-author: PRPM Team
-version: 1.1.0
-tags:
-  - prpm
-  - package-management
-  - json
-  - manifest
-  - best-practices
-  - publishing
 ---
 
 # PRPM JSON Best Practices

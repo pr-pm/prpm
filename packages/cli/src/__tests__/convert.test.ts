@@ -26,7 +26,7 @@ describe('convert command', () => {
       const claudeContent = `---
 name: test-agent
 description: Test agent for conversion
-allowed-tools: Read, Write
+tools: Read, Write
 model: sonnet
 ---
 
@@ -410,7 +410,7 @@ This tests custom output naming.
       const claudeContent = `---
 name: test-agent
 description: Test agent
-allowed-tools: Read, Write
+tools: Read, Write
 ---
 
 # Test Agent
