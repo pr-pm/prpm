@@ -11,7 +11,9 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js"
     },
-    "./schemas/*": "./schemas/*"
+    "./package.json": "./package.json",
+    "./schemas/*": "./schemas/*",
+    "./schemas/*.json": "./schemas/*.json"
   },
   "scripts": {
     "build": "tsc",

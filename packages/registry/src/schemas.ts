@@ -1,43 +1,60 @@
 /**
  * Schema imports
- * Directly imports all JSON schemas from the converters package
+ * Loads JSON schemas from the converters package using fs.readFileSync
+ * This avoids ES module import assertion complexity
  */
 
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+
+// Helper to load a schema JSON file
+function loadSchema(filename: string): object {
+  // Resolve the converters package path
+  const convertersPackagePath = require.resolve('@pr-pm/converters/package.json');
+  const convertersDir = dirname(convertersPackagePath);
+  const schemaPath = join(convertersDir, 'schemas', filename);
+  return JSON.parse(readFileSync(schemaPath, 'utf-8'));
+}
+
 // Base schemas
-import cursorSchema from '@pr-pm/converters/schemas/cursor.schema.json';
-import claudeSchema from '@pr-pm/converters/schemas/claude.schema.json';
-import continueSchema from '@pr-pm/converters/schemas/continue.schema.json';
-import windsurfSchema from '@pr-pm/converters/schemas/windsurf.schema.json';
-import copilotSchema from '@pr-pm/converters/schemas/copilot.schema.json';
-import kiroSteeringSchema from '@pr-pm/converters/schemas/kiro-steering.schema.json';
-import droidSchema from '@pr-pm/converters/schemas/droid.schema.json';
-import opencodeSchema from '@pr-pm/converters/schemas/opencode.schema.json';
-import geminiSchema from '@pr-pm/converters/schemas/gemini.schema.json';
-import rulerSchema from '@pr-pm/converters/schemas/ruler.schema.json';
-import agentsMdSchema from '@pr-pm/converters/schemas/agents-md.schema.json';
-import geminiMdSchema from '@pr-pm/converters/schemas/gemini-md.schema.json';
-import canonicalSchema from '@pr-pm/converters/schemas/canonical.schema.json';
+const cursorSchema = loadSchema('cursor.schema.json');
+const claudeSchema = loadSchema('claude.schema.json');
+const continueSchema = loadSchema('continue.schema.json');
+const windsurfSchema = loadSchema('windsurf.schema.json');
+const copilotSchema = loadSchema('copilot.schema.json');
+const kiroSteeringSchema = loadSchema('kiro-steering.schema.json');
+const droidSchema = loadSchema('droid.schema.json');
+const opencodeSchema = loadSchema('opencode.schema.json');
+const geminiSchema = loadSchema('gemini.schema.json');
+const rulerSchema = loadSchema('ruler.schema.json');
+const agentsMdSchema = loadSchema('agents-md.schema.json');
+const geminiMdSchema = loadSchema('gemini-md.schema.json');
+const canonicalSchema = loadSchema('canonical.schema.json');
 
 // Claude subtypes
-import claudeAgentSchema from '@pr-pm/converters/schemas/claude-agent.schema.json';
-import claudeSkillSchema from '@pr-pm/converters/schemas/claude-skill.schema.json';
-import claudeSlashCommandSchema from '@pr-pm/converters/schemas/claude-slash-command.schema.json';
-import claudeHookSchema from '@pr-pm/converters/schemas/claude-hook.schema.json';
+const claudeAgentSchema = loadSchema('claude-agent.schema.json');
+const claudeSkillSchema = loadSchema('claude-skill.schema.json');
+const claudeSlashCommandSchema = loadSchema('claude-slash-command.schema.json');
+const claudeHookSchema = loadSchema('claude-hook.schema.json');
 
 // Cursor subtypes
-import cursorCommandSchema from '@pr-pm/converters/schemas/cursor-command.schema.json';
+const cursorCommandSchema = loadSchema('cursor-command.schema.json');
 
 // Kiro subtypes
-import kiroAgentSchema from '@pr-pm/converters/schemas/kiro-agent.schema.json';
-import kiroHookSchema from '@pr-pm/converters/schemas/kiro-hook.schema.json';
+const kiroAgentSchema = loadSchema('kiro-agent.schema.json');
+const kiroHookSchema = loadSchema('kiro-hook.schema.json');
 
 // Droid subtypes
-import droidSkillSchema from '@pr-pm/converters/schemas/droid-skill.schema.json';
-import droidSlashCommandSchema from '@pr-pm/converters/schemas/droid-slash-command.schema.json';
-import droidHookSchema from '@pr-pm/converters/schemas/droid-hook.schema.json';
+const droidSkillSchema = loadSchema('droid-skill.schema.json');
+const droidSlashCommandSchema = loadSchema('droid-slash-command.schema.json');
+const droidHookSchema = loadSchema('droid-hook.schema.json');
 
 // OpenCode subtypes
-import opencodeSlashCommandSchema from '@pr-pm/converters/schemas/opencode-slash-command.schema.json';
+const opencodeSlashCommandSchema = loadSchema('opencode-slash-command.schema.json');
 
 /**
  * Map of schema filename to schema object
