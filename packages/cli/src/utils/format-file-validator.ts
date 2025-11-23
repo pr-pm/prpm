@@ -181,18 +181,44 @@ export async function validatePackageFiles(
       return false;
     }
 
+    // Skip files in examples/, tests/, __tests__/, docs/ directories
+    const skipDirs = ['examples/', 'example/', 'tests/', '__tests__/', 'docs/', 'doc/'];
+    if (skipDirs.some(dir => filePath.includes(dir))) {
+      return false;
+    }
+
     // Check if file matches format-specific patterns
     if (formatType === 'cursor') {
       return filePath.includes('.cursorrules') || filePath.endsWith('.mdc');
     } else if (formatType === 'claude') {
-      return filePath.endsWith('SKILL.md') || filePath.endsWith('.clinerules') || filePath.includes('.claude/');
+      // For Claude skills: ONLY validate SKILL.md
+      if (manifest.subtype === 'skill') {
+        return filePath.endsWith('SKILL.md');
+      }
+
+      // For other Claude subtypes (agents, commands):
+      // Skip JSON files (they're examples or data files)
+      if (filePath.endsWith('.json')) {
+        return false;
+      }
+
+      // Validate based on subtype
+      if (manifest.subtype === 'agent') {
+        return filePath.includes('.claude/agents/') && filePath.endsWith('.md');
+      } else if (manifest.subtype === 'slash-command') {
+        return filePath.includes('.claude/commands/') && filePath.endsWith('.md');
+      }
+
+      // For other subtypes or no subtype, validate .md files
+      return filePath.endsWith('.md') && !filePath.endsWith('.json');
     } else if (formatType === 'continue') {
-      return filePath.includes('.continue/');
+      return filePath.includes('.continue/') && filePath.endsWith('.json');
     } else if (formatType === 'windsurf') {
       return filePath.includes('.windsurf/rules');
     } else if (formatType === 'agents-md') {
       return filePath === 'agents.md';
     } else if (formatType === 'kiro') {
+      // Kiro: validate .md (steering files) and .json (hooks), but skip examples
       return filePath.endsWith('.md') || filePath.endsWith('.json');
     }
 

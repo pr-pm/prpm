@@ -850,7 +850,12 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     }
 
     // Publish collections if present
-    if (collections.length > 0) {
+    // Only publish collections if:
+    // 1. No --package flag (publish all), OR
+    // 2. --collection flag explicitly specified
+    const shouldPublishCollections = !options.package || options.collection;
+
+    if (collections.length > 0 && shouldPublishCollections) {
       // Filter to specific collection if requested
       let filteredCollections = collections;
       if (options.collection) {
