@@ -92,6 +92,8 @@ If the format has subtypes (like Claude with agents/skills/commands), create sep
 - `{format}-slash-command.schema.json`
 - etc.
 
+**IMPORTANT**: When creating subtype schemas, you MUST update the validation logic to map them.
+
 ## Step 3: Converters Package - Format Documentation (`packages/converters/docs/`)
 
 **CRITICAL**: Create comprehensive format documentation file: `{format}.md`
@@ -468,7 +470,7 @@ export { toFormat } from './to-format.js';
 
 **File**: `packages/converters/src/validation.ts`
 
-Add to FormatType:
+### 7a. Add to FormatType:
 ```typescript
 export type FormatType =
   | 'cursor'
@@ -478,7 +480,7 @@ export type FormatType =
   | 'canonical';
 ```
 
-Add to schema map:
+### 7b. Add to base schema map:
 ```typescript
 const schemaMap: Record<FormatType, string> = {
   'cursor': 'cursor.schema.json',
@@ -487,6 +489,25 @@ const schemaMap: Record<FormatType, string> = {
   'canonical': 'canonical.schema.json',
 };
 ```
+
+### 7c. **CRITICAL**: Add subtype schemas to subtypeSchemaMap:
+```typescript
+const subtypeSchemaMap: Record<string, string> = {
+  'claude:agent': 'claude-agent.schema.json',
+  'claude:skill': 'claude-skill.schema.json',
+  'claude:slash-command': 'claude-slash-command.schema.json',
+  'claude:hook': 'claude-hook.schema.json',
+  'cursor:slash-command': 'cursor-command.schema.json',
+  'kiro:hook': 'kiro-hooks.schema.json',
+  'kiro:agent': 'kiro-agent.schema.json',
+  'droid:skill': 'droid-skill.schema.json',
+  'droid:slash-command': 'droid-slash-command.schema.json',
+  'droid:hook': 'droid-hook.schema.json',
+  'opencode:slash-command': 'opencode-slash-command.schema.json',  // Add your subtypes here
+};
+```
+
+**Why this matters**: Without adding subtypes to `subtypeSchemaMap`, validation will fall back to the base format schema and won't validate subtype-specific fields. This causes validation to fail or pass incorrectly.
 
 **File**: `packages/converters/src/taxonomy-utils.ts`
 
@@ -827,14 +848,16 @@ Before submitting:
 
 **Converters Package:**
 - [ ] Created schema file(s) in converters/schemas/
+- [ ] If format has subtypes, created separate schema files for each subtype (e.g., {format}-agent.schema.json, {format}-slash-command.schema.json)
 - [ ] Created format documentation in converters/docs/{format}.md
 - [ ] Updated converters/docs/README.md (Format Matrix, Available Formats, Schema Validation, Frontmatter Support, File Organization tables)
 - [ ] Updated converters/src/types/canonical.ts (all 4 places: format union, metadata, MetadataSection.data, formatScores, sourceFormat)
 - [ ] Created from-{format}.ts converter
 - [ ] Created to-{format}.ts converter
 - [ ] Updated converters/src/index.ts exports
-- [ ] Updated converters/src/validation.ts (FormatType and schemaMap)
+- [ ] Updated converters/src/validation.ts (FormatType, schemaMap, and **CRITICAL**: subtypeSchemaMap for each subtype)
 - [ ] Updated converters/src/taxonomy-utils.ts (Format type and normalizeFormat)
+- [ ] Copied all schemas to packages/cli/dist/schemas/ for runtime use
 
 **CLI Package:**
 - [ ] Updated cli/src/core/filesystem.ts (getDestinationDir and autoDetectFormat)
