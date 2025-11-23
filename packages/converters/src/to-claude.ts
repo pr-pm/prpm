@@ -86,13 +86,6 @@ function convertContent(
       lines.push(`description: ${metadata.data.description}`);
     }
 
-    // Mode field - REQUIRED for agents (not for skills or slash commands)
-    if (pkg.subtype === 'agent') {
-      const storedMode = metadata?.type === 'metadata' ? metadata.data.claudeAgent?.mode : undefined;
-      const modeValue = storedMode || 'all'; // Default to 'all' if not specified
-      lines.push(`mode: ${modeValue}`);
-    }
-
     // Tools field - use config override if provided, otherwise use package tools
     const toolsValue = options?.claudeConfig?.tools || (tools?.type === 'tools' ? tools.tools.join(', ') : undefined);
     if (toolsValue) {

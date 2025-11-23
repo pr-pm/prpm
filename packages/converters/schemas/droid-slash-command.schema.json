@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/droid/slash-command.json",
+  "$comment": "Official documentation: https://docs.factory.ai/cli/configuration/custom-slash-commands",
   "title": "Factory Droid Slash Command Format",
   "description": "JSON Schema for Factory Droid Slash Commands - markdown files stored in .factory/commands/",
   "type": "object",
@@ -8,12 +9,7 @@
   "properties": {
     "frontmatter": {
       "type": "object",
-      "required": ["name", "description"],
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "Unique identifier for the slash command"
-        },
         "description": {
           "type": "string",
           "description": "Overrides the generated summary shown in slash suggestions"
@@ -40,7 +36,6 @@
   "examples": [
     {
       "frontmatter": {
-        "name": "code-review",
         "description": "Review code for a specific branch",
         "argument-hint": "<branch-name>"
       },
@@ -48,7 +43,6 @@
     },
     {
       "frontmatter": {
-        "name": "test",
         "description": "Run tests for a specific file",
         "argument-hint": "<file-path>",
         "allowed-tools": ["bash", "read"]

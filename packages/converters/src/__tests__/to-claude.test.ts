@@ -379,7 +379,6 @@ describe('JSON Schema Validation', () => {
       // Verify required fields are present
       expect(result.content).toContain('name:');
       expect(result.content).toContain('description:');
-      expect(result.content).toContain('mode:');
 
       const validation = validateMarkdown('claude', result.content, 'agent');
       expect(validation.valid).toBe(true);

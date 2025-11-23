@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/claude.json",
+  "$comment": "Official documentation: https://code.claude.com/docs/en",
   "title": "Claude Code Format",
   "description": "JSON Schema for Claude Code agents, skills, and slash commands format",
   "type": "object",

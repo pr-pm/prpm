@@ -57,7 +57,6 @@ This is a simple test rule for Windsurf.
       const validClaude = `---
 name: test-agent
 description: "Test agent"
-mode: subagent
 tools: Read, Write, Bash
 model: sonnet
 ---

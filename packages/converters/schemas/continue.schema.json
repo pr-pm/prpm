@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/continue.json",
+  "$comment": "Official documentation: https://docs.continue.dev/customize/deep-dives/rules",
   "title": "Continue Rules Format",
   "description": "JSON Schema for Continue rules format - markdown with optional YAML frontmatter or YAML configuration",
   "type": "object",

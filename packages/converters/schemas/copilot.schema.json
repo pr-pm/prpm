@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/copilot.json",
+  "$comment": "Official documentation: https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot",
   "title": "GitHub Copilot Instructions Format",
   "description": "JSON Schema for GitHub Copilot instructions (.github/copilot-instructions.md or .github/instructions/*.instructions.md)",
   "type": "object",

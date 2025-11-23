@@ -65,6 +65,7 @@ const BASE_SCHEMAS = [
   'gemini.schema.json',
   'ruler.schema.json',
   'agents-md.schema.json',
+  'gemini-md.schema.json',
   'canonical.schema.json',
 ];
 
