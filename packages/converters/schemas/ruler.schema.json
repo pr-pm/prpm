@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/ruler.json",
-  "$comment": "Official documentation: https://okigu.com/ruler",
+  "$comment": "https://okigu.com/ruler",
   "title": "Ruler Rules Format",
   "description": "JSON Schema for Ruler .ruler/ format - plain markdown without frontmatter, used for AI coding assistant instructions",
   "type": "object",
