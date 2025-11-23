@@ -744,11 +744,36 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
         // Publish to registry
         console.log('🚀 Publishing to registry...');
+
+        // Check if admin should override author
+        let publishAsAuthor: string | undefined;
+        if (userInfo?.is_admin && manifest.author) {
+          // Author can be string or object { name, email }
+          publishAsAuthor = typeof manifest.author === 'string'
+            ? manifest.author
+            : manifest.author.name;
+          console.log(`   🔐 Admin override: Publishing as author "${publishAsAuthor}"`);
+        }
+
         if (selectedOrgId) {
           console.log(`   Publishing as organization: ${userInfo.organizations.find((org: any) => org.id === selectedOrgId)?.name}`);
           console.log(`   Organization ID: ${selectedOrgId}`);
         }
-        const result = await client.publish(manifest, tarball, selectedOrgId ? { orgId: selectedOrgId } : undefined);
+
+        // Build publish options
+        const publishOptions: { orgId?: string; publishAsAuthor?: string } = {};
+        if (selectedOrgId) {
+          publishOptions.orgId = selectedOrgId;
+        }
+        if (publishAsAuthor) {
+          publishOptions.publishAsAuthor = publishAsAuthor;
+        }
+
+        const result = await client.publish(
+          manifest,
+          tarball,
+          Object.keys(publishOptions).length > 0 ? publishOptions : undefined
+        );
 
         // Determine the webapp URL based on registry URL
         let webappUrl: string;
