@@ -738,7 +738,8 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
             version: manifest.version,
             url: ''
           });
-          continue;
+          publishSuccess = true;
+          break;
         }
 
         // Publish to registry
