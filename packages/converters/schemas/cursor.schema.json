@@ -37,21 +37,6 @@
           "items": {
             "type": "string"
           }
-        },
-        "agentType": {
-          "type": "string",
-          "enum": ["agent"],
-          "description": "Marks as agent subtype (PRPM extension for round-trip conversion)"
-        },
-        "skillType": {
-          "type": "string",
-          "enum": ["skill"],
-          "description": "Marks as skill subtype (PRPM extension for round-trip conversion)"
-        },
-        "commandType": {
-          "type": "string",
-          "enum": ["slash-command"],
-          "description": "Marks as slash command subtype (PRPM extension for round-trip conversion)"
         }
       },
       "additionalProperties": false

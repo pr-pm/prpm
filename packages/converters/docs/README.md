@@ -6,26 +6,31 @@ Comprehensive documentation for all supported AI prompt formats in PRPM.
 
 Complete overview of all supported formats, their subtypes, and official documentation links.
 
-| Format | Subtype | Description | Official Docs |
-|--------|---------|-------------|---------------|
-| **Cursor** | `rule` | MDC format with YAML frontmatter for context rules | [cursor.com](https://cursor.com/docs/context/rules) |
-| | `agent` | Custom agent configurations | [cursor.com](https://cursor.com/docs/context/rules#agentsmd) |
-| | `slash-command` | Executable slash commands | [cursor.com](https://cursor.com/docs/context/rules) |
-| **Claude Code** | `agent` | AI agents with specific roles and capabilities | [code.claude.com](https://code.claude.com/docs/en/sub-agents) |
-| | `skill` | Specialized skills for Claude agents | [code.claude.com](https://code.claude.com/docs/en/skills) |
-| | `slash-command` | Custom slash commands for workflows | [code.claude.com](https://code.claude.com/docs/en/slash-commands) |
-| | `hook` | Event-driven automations | [code.claude.com](https://code.claude.com/docs/en/hooks) |
-| **Continue** | `rule` | Context rules with globs and regex matching | [docs.continue.dev](https://docs.continue.dev/customize/deep-dives/rules) |
-| **Windsurf** | `rule` | Plain markdown rules (12k character limit) | [docs.windsurf.com](https://docs.windsurf.com/windsurf/cascade/memories#rules) |
-| **GitHub Copilot** | `repository` | Repository-level instructions | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) |
-| | `path` | Path-specific instructions with excludeAgent | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) |
-| **Kiro** | `steering` | Steering files with inclusion modes (always/fileMatch/manual) | [kiro.dev](https://kiro.dev/docs/steering/) |
-| | `hook` | Event-driven shell commands (JSON) | [kiro.dev](https://kiro.dev/docs/hooks/) |
-| | `agent` | Custom AI agent configurations with MCP servers and tools | [kiro.dev](https://kiro.dev/docs/cli/custom-agents/) |
-| **Ruler** | `rule` | Plain markdown rules for centralized management | [okigu.com/ruler](https://okigu.com/ruler) |
-| | `agent` | Agent instructions in plain markdown | [okigu.com/ruler](https://okigu.com/ruler) |
-| | `tool` | Tool usage guidelines in plain markdown | [okigu.com/ruler](https://okigu.com/ruler) |
-| **agents.md** | `agent` | OpenAI format, single file plain markdown | [github.com/openai](https://github.com/openai/agents.md) |
+| Format | Subtype | Description | Official Docs | OpenCode Docs |
+|--------|---------|-------------|---------------|---------------|
+| **Cursor** | `rule` | MDC format with YAML frontmatter for context rules | [cursor.com](https://cursor.com/docs/context/rules) | [opencode.ai](https://opencode.ai/docs/cursor) |
+| | `agent` | Custom agent configurations | [cursor.com](https://cursor.com/docs/context/rules#agentsmd) | [opencode.ai](https://opencode.ai/docs/cursor) |
+| | `slash-command` | Executable slash commands | [cursor.com](https://cursor.com/docs/context/rules) | [opencode.ai](https://opencode.ai/docs/cursor) |
+| **Claude Code** | `agent` | AI agents with specific roles and capabilities | [code.claude.com](https://code.claude.com/docs/en/sub-agents) | [opencode.ai](https://opencode.ai/docs/claude) |
+| | `skill` | Specialized skills for Claude agents | [code.claude.com](https://code.claude.com/docs/en/skills) | [opencode.ai](https://opencode.ai/docs/claude) |
+| | `slash-command` | Custom slash commands for workflows | [code.claude.com](https://code.claude.com/docs/en/slash-commands) | [opencode.ai](https://opencode.ai/docs/claude) |
+| | `hook` | Event-driven automations | [code.claude.com](https://code.claude.com/docs/en/hooks) | [opencode.ai](https://opencode.ai/docs/claude) |
+| **Continue** | `rule` | Context rules with globs and regex matching | [docs.continue.dev](https://docs.continue.dev/customize/deep-dives/rules) | [opencode.ai](https://opencode.ai/docs/continue) |
+| **Windsurf** | `rule` | Plain markdown rules (12k character limit) | [docs.windsurf.com](https://docs.windsurf.com/windsurf/cascade/memories#rules) | [opencode.ai](https://opencode.ai/docs/windsurf) |
+| **GitHub Copilot** | `repository` | Repository-level instructions | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | [opencode.ai](https://opencode.ai/docs/copilot) |
+| | `path` | Path-specific instructions with excludeAgent | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | [opencode.ai](https://opencode.ai/docs/copilot) |
+| **Kiro** | `steering` | Steering files with inclusion modes (always/fileMatch/manual) | [kiro.dev](https://kiro.dev/docs/steering/) | [opencode.ai](https://opencode.ai/docs/kiro) |
+| | `hook` | Event-driven shell commands (JSON) | [kiro.dev](https://kiro.dev/docs/hooks/) | [opencode.ai](https://opencode.ai/docs/kiro) |
+| | `agent` | Custom AI agent configurations with MCP servers and tools | [kiro.dev](https://kiro.dev/docs/cli/custom-agents/) | [opencode.ai](https://opencode.ai/docs/kiro) |
+| **Ruler** | `rule` | Plain markdown rules for centralized management | [okigu.com/ruler](https://okigu.com/ruler) | [opencode.ai](https://opencode.ai/docs/rules/) |
+| | `agent` | Agent instructions in plain markdown | [okigu.com/ruler](https://okigu.com/ruler) | [opencode.ai](https://opencode.ai/docs/rules/) |
+| | `tool` | Tool usage guidelines in plain markdown | [okigu.com/ruler](https://okigu.com/ruler) | [opencode.ai](https://opencode.ai/docs/rules/) |
+| **Factory Droid** | `skill` | Reusable workflows with YAML frontmatter | [docs.factory.ai](https://docs.factory.ai/cli/configuration/skills) | N/A |
+| | `slash-command` | Custom slash commands with argument hints | [docs.factory.ai](https://docs.factory.ai/cli/configuration/custom-slash-commands) | N/A |
+| | `agents-md` | Agent configurations in markdown | [docs.factory.ai](https://docs.factory.ai/cli/configuration/agents-md) | N/A |
+| **OpenCode** | `agent` | AI agents with mode, tools, and permissions | [opencode.ai](https://opencode.ai/docs/agents/) | N/A |
+| | `slash-command` | User-triggered prompts with templates and placeholders | [opencode.ai](https://opencode.ai/docs/commands/) | N/A |
+| **agents.md** | `agent` | OpenAI format, single file plain markdown | [github.com/openai](https://github.com/openai/agents.md) | N/A |
 
 ## Format Specifications
 
@@ -54,6 +59,8 @@ This directory contains detailed specifications for each AI IDE/tool format that
 | **Kiro Hooks** | [kiro-hooks.md](./kiro-hooks.md) | Event-driven automations (JSON) | [kiro.dev/docs](https://kiro.dev/docs/hooks/) |
 | **Kiro Agents** | [kiro-agents.md](./kiro-agents.md) | Custom AI agent configurations (JSON) | [kiro.dev/docs](https://kiro.dev/docs/cli/custom-agents/) |
 | **Ruler** | [ruler.md](./ruler.md) | Plain markdown rules, centralized management | [okigu.com/ruler](https://okigu.com/ruler) |
+| **Factory Droid** | [factory-droid.md](./factory-droid.md) | Skills, slash commands, and hooks | [docs.factory.ai](https://docs.factory.ai/) |
+| **OpenCode** | [opencode.md](./opencode.md) | Agents and slash commands with YAML frontmatter | [opencode.ai/docs](https://opencode.ai/docs/) |
 | **agents.md** | [agents-md.md](./agents-md.md) | OpenAI format, plain markdown | [github.com/openai/agents.md](https://github.com/openai/agents.md) |
 
 ## Schema Validation
@@ -68,6 +75,8 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 - `copilot.schema.json`
 - `kiro-steering.schema.json`
 - `kiro-hooks.schema.json`
+- `droid.schema.json`
+- `opencode.schema.json`
 - `agents-md.schema.json`
 - `canonical.schema.json` (PRPM universal format)
 
@@ -76,6 +85,14 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 - `claude-agent.schema.json`
 - `claude-slash-command.schema.json`
 - `claude-hook.schema.json`
+
+**Factory Droid Subtypes:**
+- `droid-skill.schema.json`
+- `droid-slash-command.schema.json`
+- `droid-hook.schema.json`
+
+**OpenCode Subtypes:**
+- `opencode-slash-command.schema.json`
 
 ## Using This Documentation
 
@@ -113,6 +130,9 @@ These specifications serve as the source of truth for:
 | Windsurf | None | none | none |
 | Copilot | Markdown headers | none | `applyTo`, `excludeAgent` |
 | Kiro | YAML (optional) | none | `inclusion`, `fileMatchPattern`, `domain` |
+| Factory Droid | YAML (required) | `name`, `description` | `argument-hint`, `allowed-tools` |
+| OpenCode Agents | YAML (required) | `description`, `mode` | `model`, `temperature`, `prompt`, `tools`, `permission`, `disable` |
+| OpenCode Commands | YAML (required) | `template` | `description`, `agent`, `model`, `subtask` |
 | agents.md | None | none | none |
 
 ### File Organization
@@ -126,6 +146,8 @@ These specifications serve as the source of truth for:
 | Copilot | `.github/**/*.instructions.md` | Path-specific |
 | Kiro | `.kiro/steering/*.md` | Multiple files |
 | Kiro Hooks | `.kiro/hooks/*.json` | Multiple JSON files |
+| Factory Droid | `.factory/skills/*/SKILL.md`, `.factory/commands/*.md` | Skills in subdirs, commands as files |
+| OpenCode | `.opencode/agent/*.md`, `.opencode/command/*.md` | Agents and commands as separate files |
 | agents.md | `agents.md` | Single file |
 
 ## Conversion Notes

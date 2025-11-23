@@ -86,7 +86,100 @@ Example structure:
 }
 ```
 
-## Step 3: Converters Package - Canonical Types
+If the format has subtypes (like Claude with agents/skills/commands), create separate schema files:
+- `{format}-agent.schema.json`
+- `{format}-skill.schema.json`
+- `{format}-slash-command.schema.json`
+- etc.
+
+## Step 3: Converters Package - Format Documentation (`packages/converters/docs/`)
+
+**CRITICAL**: Create comprehensive format documentation file: `{format}.md`
+
+This documentation serves as the source of truth for:
+- Package authors creating packages in this format
+- PRPM contributors implementing converters
+- Users understanding format capabilities and limitations
+
+**Required sections**:
+
+```markdown
+# {Format Name} Format Specification
+
+**File Locations:**
+- {Type 1}: `{path}`
+- {Type 2}: `{path}`
+
+**Format:** {Markdown/JSON/etc.} with {YAML frontmatter/etc.}
+**Official Docs:** {link to official documentation}
+
+## Overview
+
+Brief description of the format and its purpose.
+
+## Frontmatter Fields
+
+### Required Fields
+
+- **`field-name`** (type): Description
+
+### Optional Fields
+
+- **`field-name`** (type): Description
+
+## Content Format
+
+Describe the body/content structure.
+
+## Best Practices
+
+1. Practice 1
+2. Practice 2
+
+## Conversion Notes
+
+### From {Format} to Canonical
+
+How the converter parses this format.
+
+### From Canonical to {Format}
+
+How the converter generates this format.
+
+## Limitations
+
+- Limitation 1
+- Limitation 2
+
+## Examples
+
+### Example 1
+
+```markdown
+{example content}
+```
+
+## Related Documentation
+
+- [Official Docs]({url})
+- [PRPM Format Guide](../../docs/formats.mdx)
+
+## Changelog
+
+- **{Date}**: Initial format support
+```
+
+**Add to README.md**:
+
+1. **Format Matrix table**: Add row(s) with subtypes, official docs, and OpenCode docs links
+2. **Available Formats table**: Add row with link to your new `.md` file
+3. **Schema Validation section**: Add schema filename(s) to appropriate list
+4. **Frontmatter Support table**: Add row with frontmatter requirements
+5. **File Organization table**: Add row with file paths and structure
+
+See `packages/converters/docs/README.md` for examples of how other formats are documented.
+
+## Step 4: Converters Package - Canonical Types
 
 **File**: `packages/converters/src/types/canonical.ts`
 
@@ -140,7 +233,7 @@ formatScores?: {
 sourceFormat?: 'cursor' | 'claude' | ... | 'opencode' | ... | 'generic';
 ```
 
-## Step 4: Converters Package - From Converter
+## Step 5: Converters Package - From Converter
 
 **File**: `packages/converters/src/from-{format}.ts`
 
@@ -266,7 +359,7 @@ export function fromFormat(
 - InstructionsSection requires `title` field
 - Call `setTaxonomy()` before returning
 
-## Step 5: Converters Package - To Converter
+## Step 6: Converters Package - To Converter
 
 **File**: `packages/converters/src/to-{format}.ts`
 
@@ -360,7 +453,7 @@ function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
 - **InstructionsSection**: `section.content` and `section.title`
 - **ExamplesSection**: `section.examples` array with `description` and `code`
 
-## Step 6: Converters Package - Exports and Validation
+## Step 7: Converters Package - Exports and Validation
 
 **File**: `packages/converters/src/index.ts`
 
@@ -420,7 +513,7 @@ export function normalizeFormat(sourceFormat: string): Format {
 npm run build --workspace=@pr-pm/converters
 ```
 
-## Step 7: CLI Package - Filesystem
+## Step 8: CLI Package - Filesystem
 
 **File**: `packages/cli/src/core/filesystem.ts`
 
@@ -459,7 +552,7 @@ const formatDirs: Array<{ format: Format; dir: string }> = [
 ];
 ```
 
-## Step 8: CLI Package - Format Mappings
+## Step 9: CLI Package - Format Mappings
 
 **Files**: `packages/cli/src/commands/search.ts` and `packages/cli/src/commands/install.ts`
 
@@ -495,7 +588,7 @@ const formatLabels: Record<Format, string> = {
 };
 ```
 
-## Step 9: Webapp - Format Subtypes and Filter Dropdown
+## Step 10: Webapp - Format Subtypes and Filter Dropdown
 
 **File**: `packages/webapp/src/app/(app)/search/SearchClient.tsx`
 
@@ -550,7 +643,7 @@ const FORMAT_SUBTYPES: Record<Format, Subtype[]> = {
 )}
 ```
 
-## Step 10: Registry - Fastify Route Schemas
+## Step 11: Registry - Fastify Route Schemas
 
 **CRITICAL**: Add the format to all Fastify route validation schemas to prevent 400 errors.
 
@@ -608,7 +701,7 @@ format: {
 
 **Why this matters**: Without these additions, the registry will reject API requests with 400 validation errors when users try to download or filter by the new format.
 
-## Step 11: Testing and Validation
+## Step 12: Testing and Validation
 
 ### 11a. Build types package first:
 ```bash
@@ -677,12 +770,12 @@ Test instructions`;
 });
 ```
 
-## Step 12: Documentation
+## Step 13: Additional Documentation
 
-Create documentation at appropriate location:
-- User-facing: Add to Mintlify docs or README
-- Internal: Add notes to `docs/development/` if needed
-- Decision logs: Document any architectural decisions in `docs/decisions/`
+Beyond the format documentation created in Step 3:
+- **User-facing**: Add to Mintlify docs if the format needs special installation instructions
+- **Internal**: Add notes to `docs/development/` if there are special considerations
+- **Decision logs**: Document any architectural decisions in `docs/decisions/`
 
 ## Common Pitfalls
 
@@ -733,7 +826,9 @@ Before submitting:
 - [ ] Built types package
 
 **Converters Package:**
-- [ ] Created schema file in converters/schemas/
+- [ ] Created schema file(s) in converters/schemas/
+- [ ] Created format documentation in converters/docs/{format}.md
+- [ ] Updated converters/docs/README.md (Format Matrix, Available Formats, Schema Validation, Frontmatter Support, File Organization tables)
 - [ ] Updated converters/src/types/canonical.ts (all 4 places: format union, metadata, MetadataSection.data, formatScores, sourceFormat)
 - [ ] Created from-{format}.ts converter
 - [ ] Created to-{format}.ts converter
