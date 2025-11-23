@@ -64,7 +64,7 @@ Example structure:
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/opencode.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/opencode.json",
   "title": "OpenCode Agent Format",
   "description": "JSON Schema for OpenCode Agents",
   "type": "object",
@@ -76,7 +76,8 @@ Example structure:
       "properties": {
         "description": { "type": "string" },
         // Format-specific fields
-      }
+      },
+      "additionalProperties": false
     },
     "content": {
       "type": "string",
@@ -85,6 +86,12 @@ Example structure:
   }
 }
 ```
+
+**CRITICAL Schema Requirements:**
+- `$id` must use new URL pattern: `https://registry.prpm.dev/api/v1/schemas/{format}.json` for base schemas
+- For subtypes: `https://registry.prpm.dev/api/v1/schemas/{format}/{subtype}.json`
+- Add `"additionalProperties": false` to frontmatter object to catch invalid fields
+- String fields requiring slugs (like `name`) should use pattern: `"pattern": "^[a-z0-9-]+$"`
 
 If the format has subtypes (like Claude with agents/skills/commands), create separate schema files:
 - `{format}-agent.schema.json`
@@ -759,7 +766,12 @@ npm test --workspace=@pr-pm/converters
 
 ### 11f. Create test fixtures (recommended):
 ```typescript
-// packages/converters/src/__tests__/opencode.test.ts
+// packages/converters/src/__tests__/to-opencode.test.ts
+import { describe, it, expect } from 'vitest';
+import { toOpencode } from '../to-opencode.js';
+import { validateMarkdown } from '../validation.js';
+import type { CanonicalPackage } from '../types/canonical.js';
+
 describe('OpenCode Format', () => {
   it('should convert from OpenCode to canonical', () => {
     const opencodeContent = `---
@@ -788,8 +800,33 @@ Test instructions`;
     expect(result.format).toBe('opencode');
     expect(result.content).toContain('---');
   });
+
+  // CRITICAL: Add schema validation tests!
+  describe('JSON Schema Validation', () => {
+    it('should generate schema-compliant agent output', () => {
+      const agentPackage: CanonicalPackage = {
+        // ... build agent test package with subtype: 'agent'
+      };
+
+      const result = toOpencode(agentPackage);
+      const validation = validateMarkdown('opencode', result.content, 'agent');
+
+      if (!validation.valid) {
+        console.error('Validation errors:', validation.errors);
+      }
+
+      expect(validation.valid).toBe(true);
+      expect(validation.errors).toHaveLength(0);
+    });
+  });
 });
 ```
+
+**Why Schema Validation Tests Matter:**
+- Catch mismatches between converter implementation and schema
+- Ensure converters generate compliant output
+- Reveal missing required fields or incorrect field names
+- Example: We discovered Claude agent schema was missing required `mode` field via validation tests
 
 ## Step 13: Additional Documentation
 

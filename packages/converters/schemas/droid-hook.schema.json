@@ -2,17 +2,17 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/droid/hook.json",
   "title": "Factory Droid Hook Format",
-  "description": "JSON Schema for Factory Droid Hooks - defined in settings.json files",
+  "description": "JSON Schema for Factory Droid Hooks - defined in settings.json files. Valid hook events: PreToolUse (runs before tool calls, can block them), PostToolUse (runs after tool calls complete), UserPromptSubmit (runs when user submits a prompt, before Droid processes it), Notification (runs when Droid sends notifications), Stop (runs when Droid finishes responding), SubagentStop (runs when sub-droid tasks complete), PreCompact (runs before Droid runs a compact operation), SessionStart (runs when Droid starts a new session or resumes an existing session), SessionEnd (runs when Droid session ends)",
   "type": "object",
   "required": ["hooks"],
   "properties": {
     "hooks": {
       "type": "object",
-      "description": "Hook configurations organized by event type",
+      "description": "Hook configurations organized by event type. Each key must be a valid hook event name.",
       "patternProperties": {
         "^(PreToolUse|PostToolUse|Notification|UserPromptSubmit|Stop|SubagentStop|PreCompact|SessionStart|SessionEnd)$": {
           "type": "array",
-          "description": "Array of hook configurations for this event",
+          "description": "Array of hook configurations for this event. PreToolUse: runs before tool calls (can block them). PostToolUse: runs after tool calls complete. UserPromptSubmit: runs when user submits a prompt, before Droid processes it. Notification: runs when Droid sends notifications. Stop: runs when Droid finishes responding. SubagentStop: runs when sub-droid tasks complete. PreCompact: runs before Droid runs a compact operation. SessionStart: runs when Droid starts a new session or resumes an existing session. SessionEnd: runs when Droid session ends.",
           "items": {
             "type": "object",
             "required": ["hooks"],

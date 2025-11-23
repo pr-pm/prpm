@@ -4,7 +4,7 @@
  */
 
 import { FastifyInstance } from 'fastify';
-import { readFileSync } from 'fs';
+import { readFileSync, accessSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -21,8 +21,36 @@ const currentDirname = (() => {
   }
 })();
 
-// Path to converters schemas directory
-const schemasDir = join(currentDirname, '..', '..', '..', 'converters', 'schemas');
+// Try multiple possible schema directory locations
+// This handles different execution contexts (dev, prod, tests)
+const schemaDirCandidates = [
+  join(currentDirname, '..', '..', '..', 'converters', 'schemas'), // from dist/routes/ (production)
+  join(currentDirname, '..', '..', 'converters', 'schemas'), // from dist/ (if dist is flatter)
+  join(process.cwd(), '..', 'converters', 'schemas'), // when cwd is packages/registry (dev with tsx)
+  join(process.cwd(), 'packages', 'converters', 'schemas'), // when cwd is project root
+];
+
+// Default to first candidate, then try to find one that actually exists
+let schemasDir: string = schemaDirCandidates[0];
+for (const candidate of schemaDirCandidates) {
+  try {
+    accessSync(candidate);
+    schemasDir = candidate;
+    break;
+  } catch {
+    continue;
+  }
+}
+
+// Log if we couldn't find an existing directory
+if (schemasDir === schemaDirCandidates[0]) {
+  try {
+    accessSync(schemasDir);
+  } catch {
+    console.error('Could not find schemas directory. Tried:', schemaDirCandidates);
+    console.error('Falling back to:', schemasDir);
+  }
+}
 
 // Base format schemas (format-only, no subtype)
 const BASE_SCHEMAS = [
@@ -53,7 +81,7 @@ const SUBTYPE_SCHEMAS: Record<string, { format: string; subtype: string }> = {
 
   // Kiro subtypes
   'kiro-agent.schema.json': { format: 'kiro', subtype: 'agent' },
-  'kiro-hooks.schema.json': { format: 'kiro', subtype: 'hooks' },
+  'kiro-hook.schema.json': { format: 'kiro', subtype: 'hook' },
 
   // Factory Droid subtypes
   'droid-skill.schema.json': { format: 'droid', subtype: 'skill' },
