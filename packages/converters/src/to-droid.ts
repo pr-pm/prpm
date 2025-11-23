@@ -76,7 +76,7 @@ function convertContent(pkg: CanonicalPackage, warnings: string[], qualityScore:
         frontmatter['argument-hint'] = droidData.argumentHint;
       }
       if (droidData.allowedTools && droidData.allowedTools.length > 0) {
-        frontmatter['tools'] = droidData.allowedTools;
+        frontmatter['allowed-tools'] = droidData.allowedTools;
       }
     }
   } else {
@@ -89,8 +89,8 @@ function convertContent(pkg: CanonicalPackage, warnings: string[], qualityScore:
     if (pkg.metadata.droid.argumentHint && !frontmatter['argument-hint']) {
       frontmatter['argument-hint'] = pkg.metadata.droid.argumentHint;
     }
-    if (pkg.metadata.droid.allowedTools && pkg.metadata.droid.allowedTools.length > 0 && !frontmatter['tools']) {
-      frontmatter['tools'] = pkg.metadata.droid.allowedTools;
+    if (pkg.metadata.droid.allowedTools && pkg.metadata.droid.allowedTools.length > 0 && !frontmatter['allowed-tools']) {
+      frontmatter['allowed-tools'] = pkg.metadata.droid.allowedTools;
     }
   }
 

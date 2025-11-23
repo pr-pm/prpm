@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/claude-agent.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/agent.json",
   "title": "Claude Agent Format",
   "description": "JSON Schema for Claude Code Agents - long-running assistants with tool access",
   "type": "object",
@@ -8,7 +8,7 @@
   "properties": {
     "frontmatter": {
       "type": "object",
-      "required": ["name", "description"],
+      "required": ["name", "description", "mode"],
       "properties": {
         "name": {
           "type": "string",
@@ -19,7 +19,12 @@
         "description": {
           "type": "string",
           "maxLength": 1024,
-          "description": "Natural language description of the subagent’s purpose"
+          "description": "Natural language description of the subagent's purpose"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["subagent", "primary", "all"],
+          "description": "Agent mode - determines how the agent operates. 'subagent' for task-specific agents, 'primary' for main conversation agents, 'all' for agents that can operate in both modes"
         },
         "tools": {
           "type": "string",
@@ -37,7 +42,7 @@
         },
         "skills": {
           "type": "string",
-          "description": "Comma-separated list of skill names to auto-load when the subagent starts. Skills are loaded into the subagent’s context automatically"
+          "description": "Comma-separated list of skill names to auto-load when the subagent starts. Skills are loaded into the subagent's context automatically"
         }
       },
       "additionalProperties": false
@@ -52,6 +57,7 @@
       "frontmatter": {
         "name": "code-reviewer",
         "description": "Reviews code for best practices and potential issues",
+        "mode": "subagent",
         "tools": "Read, Grep, Bash",
         "model": "sonnet"
       },

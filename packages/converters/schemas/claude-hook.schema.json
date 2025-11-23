@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/claude-hook.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/hook.json",
   "title": "Claude Hook Format",
   "description": "JSON Schema for Claude Code Hooks - executable code triggered by events",
   "type": "object",

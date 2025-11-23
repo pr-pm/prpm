@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/cursor.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/cursor.json",
   "title": "Cursor Rules Format",
   "description": "JSON Schema for Cursor .cursor/rules format with MDC (Markdown Components) frontmatter",
   "type": "object",

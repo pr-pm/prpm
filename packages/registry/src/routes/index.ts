@@ -27,6 +27,7 @@ import { taxonomyRoutes } from './taxonomy.js';
 import { aiSearchRoutes } from './ai-search.js';
 import { downloadRoutes } from './download.js';
 import { adminMigrationRoutes } from './admin-migration.js';
+import { schemaRoutes } from './schemas.js';
 
 export async function registerRoutes(server: FastifyInstance) {
   // API v1 routes
@@ -56,6 +57,7 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(playgroundAnalyticsRoutes, { prefix: '/analytics' });
       await api.register(taxonomyRoutes, { prefix: '/taxonomy' });
       await api.register(aiSearchRoutes, { prefix: '/ai-search' });
+      await api.register(schemaRoutes, { prefix: '/schemas' });
     },
     { prefix: '/api/v1' }
   );

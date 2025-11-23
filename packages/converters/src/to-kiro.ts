@@ -40,11 +40,13 @@ export function toKiro(
   let qualityScore = 100;
 
   try {
-    const config = options.kiroConfig;
+    // Config is optional - default to 'always' inclusion per schema
+    const config = options.kiroConfig || { inclusion: 'always' };
 
-    // Validate REQUIRED inclusion mode
-    if (!config || !config.inclusion) {
-      throw new Error('Kiro format requires inclusion mode (always|fileMatch|manual)');
+    // Ensure inclusion mode is set (default to 'always' per schema)
+    if (!config.inclusion) {
+      config.inclusion = 'always';
+      warnings.push('No inclusion mode specified, defaulting to "always" per schema');
     }
 
     // Validate fileMatchPattern for fileMatch mode
@@ -52,7 +54,7 @@ export function toKiro(
       throw new Error('fileMatch inclusion mode requires fileMatchPattern');
     }
 
-    // Generate frontmatter (required for Kiro)
+    // Generate frontmatter (optional per schema, but we include it for clarity)
     const frontmatter = generateFrontmatter(config);
 
     // Generate content
@@ -91,13 +93,14 @@ export function toKiro(
 
 /**
  * Generate YAML frontmatter for Kiro steering file
- * Frontmatter is REQUIRED for Kiro
+ * Frontmatter is optional per schema (defaults to 'always' if omitted)
+ * We include it for clarity and to explicitly set inclusion mode
  */
 function generateFrontmatter(config: KiroConfig): string {
   const lines: string[] = ['---'];
 
-  // inclusion is REQUIRED
-  lines.push(`inclusion: ${config.inclusion}`);
+  // inclusion defaults to 'always' if not specified
+  lines.push(`inclusion: ${config.inclusion || 'always'}`);
 
   // fileMatchPattern is required for fileMatch mode
   if (config.inclusion === 'fileMatch' && config.fileMatchPattern) {

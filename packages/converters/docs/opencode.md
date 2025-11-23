@@ -48,9 +48,11 @@ OpenCode is an AI coding assistant that uses specialized agents and slash comman
 
 #### Provider-Specific Fields
 
-Additional fields pass through to the model provider:
+The schema allows additional properties to pass through to the model provider. Examples include:
 - **`reasoningEffort`** (OpenAI): Controls reasoning depth
 - **`textVerbosity`** (OpenAI): Controls response length
+
+Note: Any additional fields not listed above will be passed to the model provider as-is.
 
 ### Agent Example
 

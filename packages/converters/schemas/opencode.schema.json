@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/opencode.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/opencode.json",
   "title": "OpenCode Agent Format",
   "description": "JSON Schema for OpenCode Agents - markdown files with YAML frontmatter stored in .opencode/agent/",
   "type": "object",

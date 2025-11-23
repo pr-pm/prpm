@@ -22,9 +22,7 @@ Complete overview of all supported formats, their subtypes, and official documen
 | **Kiro** | `steering` | Steering files with inclusion modes (always/fileMatch/manual) | [kiro.dev](https://kiro.dev/docs/steering/) | [opencode.ai](https://opencode.ai/docs/kiro) |
 | | `hook` | Event-driven shell commands (JSON) | [kiro.dev](https://kiro.dev/docs/hooks/) | [opencode.ai](https://opencode.ai/docs/kiro) |
 | | `agent` | Custom AI agent configurations with MCP servers and tools | [kiro.dev](https://kiro.dev/docs/cli/custom-agents/) | [opencode.ai](https://opencode.ai/docs/kiro) |
-| **Ruler** | `rule` | Plain markdown rules for centralized management | [okigu.com/ruler](https://okigu.com/ruler) | [opencode.ai](https://opencode.ai/docs/rules/) |
-| | `agent` | Agent instructions in plain markdown | [okigu.com/ruler](https://okigu.com/ruler) | [opencode.ai](https://opencode.ai/docs/rules/) |
-| | `tool` | Tool usage guidelines in plain markdown | [okigu.com/ruler](https://okigu.com/ruler) | [opencode.ai](https://opencode.ai/docs/rules/) |
+| **Ruler** | `rule` | Plain markdown for centralized management (no frontmatter) | [okigu.com/ruler](https://okigu.com/ruler) | [opencode.ai](https://opencode.ai/docs/rules/) |
 | **Factory Droid** | `skill` | Reusable workflows with YAML frontmatter | [docs.factory.ai](https://docs.factory.ai/cli/configuration/skills) | N/A |
 | | `slash-command` | Custom slash commands with argument hints | [docs.factory.ai](https://docs.factory.ai/cli/configuration/custom-slash-commands) | N/A |
 | | `agents-md` | Agent configurations in markdown | [docs.factory.ai](https://docs.factory.ai/cli/configuration/agents-md) | N/A |
@@ -65,34 +63,76 @@ This directory contains detailed specifications for each AI IDE/tool format that
 
 ## Schema Validation
 
-Each format has a corresponding JSON Schema in `../schemas/` that defines the structure and validates packages.
+Each format has a corresponding JSON Schema in `../schemas/` that defines the structure and validates packages. These schemas ensure package integrity, validate required fields, and provide helpful error messages during publishing and conversion.
 
-**Base Schemas:**
-- `cursor.schema.json`
-- `claude.schema.json`
-- `continue.schema.json`
-- `windsurf.schema.json`
-- `copilot.schema.json`
-- `kiro-steering.schema.json`
-- `kiro-hooks.schema.json`
-- `droid.schema.json`
-- `opencode.schema.json`
-- `agents-md.schema.json`
-- `canonical.schema.json` (PRPM universal format)
+### How Validation Works
 
-**Claude Subtypes:**
-- `claude-skill.schema.json`
-- `claude-agent.schema.json`
-- `claude-slash-command.schema.json`
-- `claude-hook.schema.json`
+1. **During Publishing**: When you run `prpm publish`, the CLI validates your package against the appropriate schema
+2. **During Conversion**: When converting between formats, PRPM validates both input and output
+3. **Subtype-Specific**: Formats with subtypes (agent, skill, slash-command, hook) use specialized schemas for stricter validation
+
+### Schema Organization
+
+**Base Format Schemas:**
+- `cursor.schema.json` - Cursor rules
+- `claude.schema.json` - Claude Code (base)
+- `continue.schema.json` - Continue rules
+- `windsurf.schema.json` - Windsurf rules
+- `copilot.schema.json` - GitHub Copilot instructions
+- `kiro-steering.schema.json` - Kiro steering files
+- `droid.schema.json` - Factory Droid (base)
+- `opencode.schema.json` - OpenCode agents
+- `gemini.schema.json` - Gemini CLI
+- `ruler.schema.json` - Ruler rules
+- `agents-md.schema.json` - OpenAI agents.md format
+- `canonical.schema.json` - PRPM universal format
+
+**Claude Code Subtypes:**
+- `claude-agent.schema.json` - AI agents with tools and permissions
+- `claude-skill.schema.json` - Specialized skills
+- `claude-slash-command.schema.json` - Custom slash commands
+- `claude-hook.schema.json` - Event-driven hooks
+
+**Cursor Subtypes:**
+- `cursor-command.schema.json` - Cursor slash commands
+
+**Kiro Subtypes:**
+- `kiro-agent.schema.json` - Custom AI agents
+- `kiro-hooks.schema.json` - Event hooks (JSON)
 
 **Factory Droid Subtypes:**
-- `droid-skill.schema.json`
-- `droid-slash-command.schema.json`
-- `droid-hook.schema.json`
+- `droid-skill.schema.json` - Reusable workflows
+- `droid-slash-command.schema.json` - Custom slash commands
+- `droid-hook.schema.json` - Event-driven automations (JSON)
 
 **OpenCode Subtypes:**
-- `opencode-slash-command.schema.json`
+- `opencode-slash-command.schema.json` - Template-based commands
+
+### Accessing Schemas
+
+All schemas are available in three locations:
+
+1. **Source**: `packages/converters/schemas/` (development)
+2. **Runtime**: `packages/cli/dist/schemas/` (bundled with CLI)
+3. **Registry API**:
+   - Base format schemas: `https://registry.prpm.dev/api/v1/schemas/{format}.json`
+   - Subtype schemas: `https://registry.prpm.dev/api/v1/schemas/{format}/{subtype}.json`
+
+### Using Schemas in Your Code
+
+```typescript
+import { validateMarkdown, validateFormat } from '@pr-pm/converters';
+
+// Validate markdown with frontmatter
+const result = validateMarkdown('claude', content, 'agent');
+if (!result.valid) {
+  console.error('Validation errors:', result.errors);
+}
+
+// Validate structured data
+const data = { frontmatter: {...}, content: '...' };
+const result2 = validateFormat('claude', data, 'agent');
+```
 
 ## Using This Documentation
 

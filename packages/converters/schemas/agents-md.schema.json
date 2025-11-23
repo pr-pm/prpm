@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/agents-md.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/agents-md.json",
   "title": "agents.md Format",
   "description": "JSON Schema for agents.md format - plain markdown project-specific AI instructions (NO frontmatter)",
   "type": "object",

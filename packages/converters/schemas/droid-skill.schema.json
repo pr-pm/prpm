@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/droid-skill.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/droid/skill.json",
   "title": "Factory Droid Skill Format",
   "description": "JSON Schema for Factory Droid Skills - SKILL.md files stored in .factory/skills/<skill-name>/",
   "type": "object",

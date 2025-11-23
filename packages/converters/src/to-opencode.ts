@@ -51,7 +51,7 @@ export function toOpencode(pkg: CanonicalPackage): ConversionResult {
 }
 
 /**
- * Convert canonical content to OpenCode agent format
+ * Convert canonical content to OpenCode agent or slash command format
  */
 function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
   const lines: string[] = [];
@@ -64,43 +64,82 @@ function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
   // Build frontmatter
   const frontmatter: Record<string, any> = {};
 
-  // Required: description
-  if (metadata?.type === 'metadata') {
-    frontmatter.description = metadata.data.description;
-  }
+  // Handle slash commands differently from agents
+  if (pkg.subtype === 'slash-command') {
+    // OpenCode Slash Command format requires 'template' field
+    const opencodeSlashCommand = metadata?.type === 'metadata' ? metadata.data.opencodeSlashCommand : undefined;
 
-  // Restore OpenCode-specific metadata if present (for roundtrip)
-  const opencodeData = metadata?.type === 'metadata' ? metadata.data.opencode : undefined;
-  if (opencodeData) {
-    if (opencodeData.mode) frontmatter.mode = opencodeData.mode;
-    if (opencodeData.model) frontmatter.model = opencodeData.model;
-    if (opencodeData.temperature !== undefined) frontmatter.temperature = opencodeData.temperature;
-    if (opencodeData.permission) frontmatter.permission = opencodeData.permission;
-    if (opencodeData.disable !== undefined) frontmatter.disable = opencodeData.disable;
-  }
-
-  // Convert tools to OpenCode format (object with boolean values)
-  if (tools?.type === 'tools' && tools.tools.length > 0) {
-    const toolsObj: Record<string, boolean> = {};
-
-    // Map canonical tool names to OpenCode lowercase format
-    const toolMap: Record<string, string> = {
-      'Write': 'write',
-      'Edit': 'edit',
-      'Bash': 'bash',
-      'Read': 'read',
-      'Grep': 'grep',
-      'Glob': 'glob',
-      'WebFetch': 'webfetch',
-      'WebSearch': 'websearch',
-    };
-
-    for (const tool of tools.tools) {
-      const opencodeToolName = toolMap[tool] || tool.toLowerCase();
-      toolsObj[opencodeToolName] = true;
+    if (opencodeSlashCommand?.template) {
+      frontmatter.template = opencodeSlashCommand.template;
+    } else if (instructions?.type === 'instructions') {
+      // Fallback: use first instruction as template
+      frontmatter.template = instructions.content;
+      warnings.push('No template field found, using instructions content as template');
+    } else {
+      // Required field missing
+      frontmatter.template = 'Execute the following task: {{args}}';
+      warnings.push('REQUIRED template field missing for slash command, using default placeholder');
     }
 
-    frontmatter.tools = toolsObj;
+    // Optional slash command fields
+    if (opencodeSlashCommand) {
+      if (opencodeSlashCommand.description) frontmatter.description = opencodeSlashCommand.description;
+      if (opencodeSlashCommand.agent) frontmatter.agent = opencodeSlashCommand.agent;
+      if (opencodeSlashCommand.model) frontmatter.model = opencodeSlashCommand.model;
+      if (opencodeSlashCommand.subtask !== undefined) frontmatter.subtask = opencodeSlashCommand.subtask;
+    } else if (metadata?.type === 'metadata' && metadata.data.description) {
+      frontmatter.description = metadata.data.description;
+    }
+  } else {
+    // OpenCode Agent format
+    // Required: description and mode
+    if (metadata?.type === 'metadata') {
+      frontmatter.description = metadata.data.description;
+    }
+
+    // Restore OpenCode-specific metadata if present (for roundtrip)
+    const opencodeData = metadata?.type === 'metadata' ? metadata.data.opencode : undefined;
+    if (opencodeData) {
+      if (opencodeData.mode) {
+        frontmatter.mode = opencodeData.mode;
+      } else {
+        // REQUIRED field: default to 'all' if not specified
+        frontmatter.mode = 'all';
+        warnings.push('REQUIRED mode field missing, defaulting to "all"');
+      }
+      if (opencodeData.model) frontmatter.model = opencodeData.model;
+      if (opencodeData.temperature !== undefined) frontmatter.temperature = opencodeData.temperature;
+      if (opencodeData.permission) frontmatter.permission = opencodeData.permission;
+      if (opencodeData.disable !== undefined) frontmatter.disable = opencodeData.disable;
+    } else {
+      // No OpenCode metadata: default mode to 'all'
+      frontmatter.mode = 'all';
+      warnings.push('REQUIRED mode field missing, defaulting to "all"');
+    }
+
+    // Convert tools to OpenCode format (object with boolean values)
+    if (tools?.type === 'tools' && tools.tools.length > 0) {
+      const toolsObj: Record<string, boolean> = {};
+
+      // Map canonical tool names to OpenCode lowercase format
+      const toolMap: Record<string, string> = {
+        'Write': 'write',
+        'Edit': 'edit',
+        'Bash': 'bash',
+        'Read': 'read',
+        'Grep': 'grep',
+        'Glob': 'glob',
+        'WebFetch': 'webfetch',
+        'WebSearch': 'websearch',
+      };
+
+      for (const tool of tools.tools) {
+        const opencodeToolName = toolMap[tool] || tool.toLowerCase();
+        toolsObj[opencodeToolName] = true;
+      }
+
+      frontmatter.tools = toolsObj;
+    }
   }
 
   // Generate YAML frontmatter

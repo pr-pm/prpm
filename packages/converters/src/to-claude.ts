@@ -70,18 +70,27 @@ function convertContent(
   const tools = pkg.content.sections.find(s => s.type === 'tools');
   const persona = pkg.content.sections.find(s => s.type === 'persona');
 
-  // Claude slash commands don't have frontmatter (plain markdown)
-  // Claude agents/skills have frontmatter
-  if (!isSlashCommand) {
-    // Generate frontmatter
-    lines.push('---');
+  // Generate frontmatter for all Claude formats (agents, skills, and slash commands)
+  // All three formats require frontmatter according to their schemas
+  lines.push('---');
 
-    // Use package name (identifier) for frontmatter, not the display title
+  // For agents and skills: name is required
+  // For slash commands: all fields are optional, but frontmatter structure is required
+  if (!isSlashCommand) {
+    // Use package ID (slug) for frontmatter name, not the display name
     // The display title will be used in the H1 heading
-    lines.push(`name: ${pkg.name}`);
+    // Schema requires: ^[a-z0-9-]+$ (lowercase letters, numbers, hyphens only)
+    lines.push(`name: ${pkg.id}`);
 
     if (metadata?.type === 'metadata') {
       lines.push(`description: ${metadata.data.description}`);
+    }
+
+    // Mode field - REQUIRED for agents (not for skills or slash commands)
+    if (pkg.subtype === 'agent') {
+      const storedMode = metadata?.type === 'metadata' ? metadata.data.claudeAgent?.mode : undefined;
+      const modeValue = storedMode || 'all'; // Default to 'all' if not specified
+      lines.push(`mode: ${modeValue}`);
     }
 
     // Tools field - use config override if provided, otherwise use package tools
@@ -96,10 +105,35 @@ function convertContent(
     if (modelValue) {
       lines.push(`model: ${modelValue}`);
     }
+  } else {
+    // Slash command frontmatter - all fields are optional per schema
+    // Add fields if they exist in metadata
+    const claudeSlashCommand = metadata?.type === 'metadata' ? metadata.data.claudeSlashCommand : undefined;
 
-    lines.push('---');
-    lines.push('');
+    if (claudeSlashCommand) {
+      if (claudeSlashCommand.allowedTools) {
+        lines.push(`allowed-tools: ${claudeSlashCommand.allowedTools}`);
+      }
+      if (claudeSlashCommand.argumentHint) {
+        lines.push(`argument-hint: ${claudeSlashCommand.argumentHint}`);
+      }
+      if (claudeSlashCommand.description) {
+        lines.push(`description: ${claudeSlashCommand.description}`);
+      }
+      if (claudeSlashCommand.model) {
+        lines.push(`model: ${claudeSlashCommand.model}`);
+      }
+      if (claudeSlashCommand.disableModelInvocation !== undefined) {
+        lines.push(`disable-model-invocation: ${claudeSlashCommand.disableModelInvocation}`);
+      }
+    } else if (metadata?.type === 'metadata' && metadata.data.description) {
+      // Fallback: use general description if no specific slash command metadata
+      lines.push(`description: ${metadata.data.description}`);
+    }
   }
+
+  lines.push('---');
+  lines.push('');
 
   // Main title
   if (metadata?.type === 'metadata') {

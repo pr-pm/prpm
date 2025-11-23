@@ -10,9 +10,11 @@ Kiro agents are custom AI agent configurations stored as JSON files in `.kiro/ag
 
 ## Configuration Structure
 
+**Note:** All fields are optional in Kiro agent configurations. The agent can be configured with any combination of these fields.
+
 ### Core Fields
 
-- **`name`** (string, optional): Agent name/identifier
+- **`name`** (string, optional): Agent name/identifier (defaults to filename if not specified)
   - Used for display and selection
   - Example: `"analyst"`, `"code-reviewer"`
 

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/claude-skill.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/skill.json",
   "title": "Claude Skill Format",
   "description": "JSON Schema for Claude Code Skills - reusable patterns invoked during conversation",
   "type": "object",

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/droid-hook.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/droid/hook.json",
   "title": "Factory Droid Hook Format",
   "description": "JSON Schema for Factory Droid Hooks - defined in settings.json files",
   "type": "object",

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/claude-slash-command.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/slash-command.json",
   "title": "Claude Slash Command Format",
   "description": "JSON Schema for Claude Code Slash Commands - quick actions triggered by /command-name",
   "type": "object",

@@ -23,10 +23,12 @@ describe('toKiro', () => {
       expect(result.qualityScore).toBeGreaterThan(0);
     });
 
-    it('should require inclusion mode', () => {
+    it('should use default inclusion mode when config not provided', () => {
+      // Per schema, config is optional and defaults to 'always' inclusion
       const result = toKiro(sampleCanonicalPackage);
-      expect(result.qualityScore).toBe(0);
-      expect(result.warnings).toContain('Conversion error: Kiro format requires inclusion mode (always|fileMatch|manual)');
+      expect(result.qualityScore).toBeGreaterThan(0);
+      expect(result.content).toContain('inclusion: always');
+      expect(result.warnings).not.toContain('Conversion error');
     });
 
     it('should include title and description', () => {

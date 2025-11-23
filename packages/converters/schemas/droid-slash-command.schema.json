@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/droid-slash-command.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/droid/slash-command.json",
   "title": "Factory Droid Slash Command Format",
   "description": "JSON Schema for Factory Droid Slash Commands - markdown files stored in .factory/commands/",
   "type": "object",

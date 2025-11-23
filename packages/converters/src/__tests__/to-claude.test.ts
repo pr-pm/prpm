@@ -4,6 +4,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { toClaude, isClaudeFormat, parseFrontmatter } from '../to-claude.js';
+import { validateMarkdown } from '../validation.js';
+import type { CanonicalPackage } from '../types/canonical.js';
 import {
   sampleCanonicalPackage,
   minimalCanonicalPackage,
@@ -24,7 +26,7 @@ describe('toClaude', () => {
       const result = toClaude(sampleCanonicalPackage);
 
       expect(result.content).toMatch(/^---\n/);
-      expect(result.content).toContain('name: Test Package'); // Uses pkg.name, not metadata.title
+      expect(result.content).toContain('name: test-package'); // Uses pkg.id (slug), not pkg.name
       expect(result.content).toContain('description: A test agent for conversion testing');
       expect(result.content).toContain('tools: Read, Write, Bash, WebSearch');
     });
@@ -39,7 +41,7 @@ describe('toClaude', () => {
       const result = toClaude(minimalCanonicalPackage);
 
       expect(result.content).toContain('---');
-      expect(result.content).toContain('name: Minimal Package'); // Uses pkg.name, not metadata.title
+      expect(result.content).toContain('name: minimal-package'); // Uses pkg.id (slug), not pkg.name
       expect(result.qualityScore).toBe(100);
     });
   });
@@ -354,5 +356,127 @@ describe('parseFrontmatter', () => {
     expect(result.frontmatter.name).toBe('test');
     expect(result.frontmatter.description).toBe('desc');
     expect(result.frontmatter.invalid).toBeUndefined();
+  });
+});
+
+describe('JSON Schema Validation', () => {
+  describe('Agent schema compliance', () => {
+    it('should generate schema-compliant agent output', () => {
+      const result = toClaude(sampleCanonicalPackage);
+      const validation = validateMarkdown('claude', result.content, 'agent');
+
+      if (!validation.valid) {
+        console.error('Validation errors:', validation.errors);
+      }
+
+      expect(validation.valid).toBe(true);
+      expect(validation.errors).toHaveLength(0);
+    });
+
+    it('should include required agent fields', () => {
+      const result = toClaude(sampleCanonicalPackage);
+
+      // Verify required fields are present
+      expect(result.content).toContain('name:');
+      expect(result.content).toContain('description:');
+      expect(result.content).toContain('mode:');
+
+      const validation = validateMarkdown('claude', result.content, 'agent');
+      expect(validation.valid).toBe(true);
+    });
+  });
+
+  describe('Skill schema compliance', () => {
+    it('should generate schema-compliant skill output', () => {
+      const skillPackage: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        format: 'claude',
+        subtype: 'skill',
+      };
+
+      const result = toClaude(skillPackage);
+      const validation = validateMarkdown('claude', result.content, 'skill');
+
+      if (!validation.valid) {
+        console.error('Validation errors:', validation.errors);
+      }
+
+      expect(validation.valid).toBe(true);
+      expect(validation.errors).toHaveLength(0);
+    });
+
+    it('should only include name and description for skills', () => {
+      const skillPackage: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        format: 'claude',
+        subtype: 'skill',
+      };
+
+      const result = toClaude(skillPackage);
+
+      // Skills should have minimal frontmatter
+      expect(result.content).toContain('name:');
+      expect(result.content).toContain('description:');
+
+      // Skills should NOT have agent-specific fields like mode
+      expect(result.content).not.toContain('mode:');
+
+      const validation = validateMarkdown('claude', result.content, 'skill');
+      expect(validation.valid).toBe(true);
+    });
+  });
+
+  describe('Slash Command schema compliance', () => {
+    it('should generate schema-compliant slash command output', () => {
+      const commandPackage: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        format: 'claude',
+        subtype: 'slash-command',
+      };
+
+      const result = toClaude(commandPackage);
+      const validation = validateMarkdown('claude', result.content, 'slash-command');
+
+      if (!validation.valid) {
+        console.error('Validation errors:', validation.errors);
+      }
+
+      expect(validation.valid).toBe(true);
+      expect(validation.errors).toHaveLength(0);
+    });
+
+    it('should include optional slash command fields when provided', () => {
+      const commandPackage: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        format: 'claude',
+        subtype: 'slash-command',
+        content: {
+          ...minimalCanonicalPackage.content,
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Test Command',
+                description: 'A test slash command',
+                claudeSlashCommand: {
+                  description: 'Test command description',
+                  argumentHint: 'arg1 arg2',
+                  allowedTools: 'Read, Write',
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toClaude(commandPackage);
+
+      expect(result.content).toContain('description:');
+      expect(result.content).toContain('argument-hint:');
+      expect(result.content).toContain('allowed-tools:');
+
+      const validation = validateMarkdown('claude', result.content, 'slash-command');
+      expect(validation.valid).toBe(true);
+    });
   });
 });

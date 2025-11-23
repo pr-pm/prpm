@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/cursor-command.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/cursor/command.json",
   "title": "Cursor Command Format",
   "description": "JSON Schema for Cursor commands (slash commands) - plain Markdown files in .cursor/commands/",
   "type": "object",

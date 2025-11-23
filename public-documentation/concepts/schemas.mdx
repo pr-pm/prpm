@@ -1,0 +1,360 @@
+---
+title: 'Schemas & Validation'
+description: 'JSON Schema validation for all supported AI prompt formats'
+---
+
+## Overview
+
+PRPM uses JSON Schema to validate every package before publishing and during format conversion. This ensures package integrity, catches errors early, and provides helpful feedback when creating packages.
+
+## What Are Schemas?
+
+JSON Schemas are specifications that define:
+- **Required fields** - What must be present (e.g., `name`, `description`)
+- **Optional fields** - What can be included (e.g., `tools`, `model`)
+- **Field types** - String, number, boolean, array, object
+- **Field constraints** - Min/max values, patterns, enums
+- **Examples** - Sample valid packages
+
+## When Validation Happens
+
+### 1. During Publishing
+
+When you run `prpm publish`, the CLI:
+1. Detects your package format and subtype
+2. Loads the appropriate JSON Schema
+3. Validates all frontmatter fields
+4. Checks required fields are present
+5. Verifies field types and constraints
+6. Reports any errors before publishing
+
+```bash
+prpm publish
+
+# ❌ Validation error: Missing required field 'description'
+# ❌ Field 'temperature' must be between 0.0 and 1.0
+```
+
+### 2. During Format Conversion
+
+When converting packages with `prpm convert`:
+1. Validates source format before conversion
+2. Converts to target format
+3. Validates output against target schema
+4. Reports any data loss or incompatibilities
+
+```bash
+prpm convert agent.md --from claude --to opencode
+
+# ✅ Source validation passed
+# ⚠️  Warning: 'permissionMode' field not supported in OpenCode
+# ✅ Output validation passed
+```
+
+### 3. During Package Installation
+
+When installing packages, PRPM:
+1. Validates package structure from registry
+2. Ensures format compatibility with your IDE
+3. Checks for required dependencies
+
+## Supported Formats & Schemas
+
+### Base Format Schemas
+
+Every supported AI IDE has a base schema:
+
+| Format | Schema | Description |
+|--------|--------|-------------|
+| **Claude Code** | `claude.schema.json` | Base schema for Claude packages |
+| **Cursor** | `cursor.schema.json` | MDC format with YAML frontmatter |
+| **Continue** | `continue.schema.json` | Rules with glob/regex matching |
+| **Windsurf** | `windsurf.schema.json` | Plain markdown (12k char limit) |
+| **GitHub Copilot** | `copilot.schema.json` | Path-specific instructions |
+| **Kiro** | `kiro-steering.schema.json` | Steering files with frontmatter |
+| **Factory Droid** | `droid.schema.json` | Base schema for Droid packages |
+| **OpenCode** | `opencode.schema.json` | Agent configuration with tools |
+| **Gemini CLI** | `gemini.schema.json` | Google Gemini format |
+| **Ruler** | `ruler.schema.json` | Centralized rule management |
+| **agents.md** | `agents-md.schema.json` | OpenAI single-file format |
+
+### Subtype Schemas
+
+Formats with multiple package types have specialized schemas:
+
+#### Claude Code
+- `claude-agent.schema.json` - AI agents with tools and permissions
+- `claude-skill.schema.json` - Specialized skills (name + description only)
+- `claude-slash-command.schema.json` - Custom slash commands
+- `claude-hook.schema.json` - Event-driven hooks
+
+#### Factory Droid
+- `droid-skill.schema.json` - Reusable workflows
+- `droid-slash-command.schema.json` - Commands with argument hints
+- `droid-hook.schema.json` - Event automations (JSON format)
+
+#### OpenCode
+- `opencode-slash-command.schema.json` - Template-based commands with placeholders
+
+#### Kiro
+- `kiro-agent.schema.json` - Custom AI agents (JSON)
+- `kiro-hooks.schema.json` - Event hooks (JSON)
+
+#### Cursor
+- `cursor-command.schema.json` - Cursor slash commands
+
+## Accessing Schemas
+
+### Public Registry API
+
+All schemas are publicly accessible via the PRPM registry:
+
+**List all schemas:**
+```bash
+curl https://registry.prpm.dev/api/v1/schemas
+```
+
+**Get a base format schema:**
+```bash
+curl https://registry.prpm.dev/api/v1/schemas/cursor.json
+```
+
+**Get a subtype schema:**
+```bash
+curl https://registry.prpm.dev/api/v1/schemas/claude/agent.json
+```
+
+**Response:**
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/agent.json",
+  "title": "Claude Code Agent Format",
+  "description": "JSON Schema for Claude Code Agents",
+  ...
+}
+```
+
+### Other Access Methods
+
+**1. View in Repository**
+```bash
+https://github.com/pr-pm/prpm/tree/main/packages/converters/schemas
+```
+
+**2. Local Development**
+```bash
+# Source schemas
+packages/converters/schemas/*.schema.json
+
+# Bundled with CLI
+node_modules/prpm/dist/schemas/*.schema.json
+```
+
+**3. Direct URLs**
+
+Schemas are available at:
+
+**Base format schemas:**
+```
+https://registry.prpm.dev/api/v1/schemas/{format}.json
+```
+
+**Subtype schemas:**
+```
+https://registry.prpm.dev/api/v1/schemas/{format}/{subtype}.json
+```
+
+Examples:
+- `https://registry.prpm.dev/api/v1/schemas/cursor.json` (base format)
+- `https://registry.prpm.dev/api/v1/schemas/claude/agent.json` (subtype)
+- `https://registry.prpm.dev/api/v1/schemas/droid/slash-command.json` (multi-word subtype)
+- `https://registry.prpm.dev/api/v1/schemas/opencode/slash-command.json` (subtype)
+
+**3. Programmatic Access**
+```typescript
+import { validateMarkdown, validateFormat } from '@pr-pm/converters';
+
+// Validate markdown with frontmatter
+const result = validateMarkdown('claude', markdownContent, 'agent');
+
+if (!result.valid) {
+  console.error('Validation errors:', result.errors);
+  result.errors.forEach(error => {
+    console.log(`${error.path}: ${error.message}`);
+  });
+}
+
+// Validate structured data
+const packageData = {
+  frontmatter: {
+    name: 'my-agent',
+    description: 'AI agent that reviews code',
+    mode: 'subagent',
+    tools: 'Read, Grep, Bash'
+  },
+  content: '# Code Reviewer\n\nYou are an expert code reviewer.'
+};
+
+const result2 = validateFormat('opencode', packageData, 'agent');
+```
+
+## Common Validation Errors
+
+### Missing Required Fields
+
+```yaml
+---
+# ❌ Missing 'description' field
+name: my-agent
+---
+```
+
+**Fix:**
+```yaml
+---
+name: my-agent
+description: Brief explanation of what this agent does  # ✅ Added
+---
+```
+
+### Invalid Field Types
+
+```yaml
+---
+description: Test agent
+temperature: "0.5"  # ❌ String instead of number
+---
+```
+
+**Fix:**
+```yaml
+---
+description: Test agent
+temperature: 0.5  # ✅ Number type
+---
+```
+
+### Invalid Enum Values
+
+```yaml
+---
+description: Test agent
+mode: "standalone"  # ❌ Invalid mode
+---
+```
+
+**Fix:**
+```yaml
+---
+description: Test agent
+mode: "subagent"  # ✅ Valid: "primary", "subagent", or "all"
+---
+```
+
+### Out of Range Values
+
+```yaml
+---
+description: Test agent
+temperature: 1.5  # ❌ Must be 0.0-1.0
+---
+```
+
+**Fix:**
+```yaml
+---
+description: Test agent
+temperature: 0.7  # ✅ Within valid range
+---
+```
+
+## Validation in CI/CD
+
+### GitHub Actions Example
+
+```yaml
+name: Validate PRPM Package
+
+on:
+  pull_request:
+    paths:
+      - '.claude/**'
+      - '.cursor/**'
+      - 'prpm.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install PRPM
+        run: npm install -g prpm
+
+      - name: Validate Package
+        run: prpm publish --dry-run
+
+      - name: Report Validation Results
+        if: failure()
+        run: echo "❌ Package validation failed. Check the logs above for details."
+```
+
+## Schema Development
+
+### Creating Custom Schemas
+
+If you're adding support for a new AI IDE:
+
+1. **Study the format** - Understand frontmatter fields, file structure, and constraints
+2. **Create base schema** - Define required and optional fields
+3. **Add subtype schemas** - If format has multiple types (agent, skill, command)
+4. **Update validation** - Map schema in `validation.ts`
+5. **Test thoroughly** - Create fixtures and run validation tests
+
+See the [adding-new-ai-format skill](/concepts/packages#extending-prpm) for complete instructions.
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Validate Before Publishing" icon="check-circle">
+    Run `prpm publish --dry-run` to catch errors before publishing
+  </Card>
+
+  <Card title="Use Strict Mode" icon="shield-check">
+    Enable strict validation in your IDE to catch issues during development
+  </Card>
+
+  <Card title="Follow Schema Examples" icon="book-open">
+    Reference example packages in each schema for correct structure
+  </Card>
+
+  <Card title="Check Conversion Warnings" icon="triangle-exclamation">
+    Review warnings when converting between formats for potential data loss
+  </Card>
+</CardGroup>
+
+## Further Reading
+
+<CardGroup cols={2}>
+  <Card title="Format Specifications" icon="file-code" href="/concepts/formats">
+    Detailed specs for each AI IDE format
+  </Card>
+
+  <Card title="Publishing Guide" icon="upload" href="/publishing/getting-started">
+    Step-by-step publishing workflow
+  </Card>
+
+  <Card title="Format Conversion" icon="arrows-rotate" href="/guides/format-conversion">
+    Convert packages between different AI IDEs
+  </Card>
+
+  <Card title="Package Structure" icon="box" href="/concepts/packages">
+    Understanding PRPM package anatomy
+  </Card>
+</CardGroup>

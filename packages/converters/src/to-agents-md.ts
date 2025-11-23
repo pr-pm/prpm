@@ -22,13 +22,14 @@ import type {
 } from './types/canonical.js';
 
 export interface AgentsMdConfig {
-  project?: string; // Project name
+  project?: string; // Project name for title customization
   scope?: string; // Scope of the instructions (e.g., "testing", "api")
-  includeFrontmatter?: boolean; // Whether to include YAML frontmatter (default: false)
+  // Note: agents.md schema explicitly forbids frontmatter - plain markdown only
 }
 
 /**
  * Convert canonical package to agents.md format
+ * Per schema: NO frontmatter allowed - plain markdown only
  */
 export function toAgentsMd(
   pkg: CanonicalPackage,
@@ -40,17 +41,8 @@ export function toAgentsMd(
   try {
     const config = options.agentsMdConfig || {};
 
-    // Generate content
-    const content = convertContent(pkg, warnings, config);
-
-    // Add frontmatter if requested
-    let fullContent: string;
-    if (config.includeFrontmatter && (config.project || config.scope)) {
-      const frontmatter = generateFrontmatter(config);
-      fullContent = `${frontmatter}\n\n${content}`;
-    } else {
-      fullContent = content;
-    }
+    // Generate content - plain markdown only per schema
+    const fullContent = convertContent(pkg, warnings, config);
 
     // Check for lossy conversion
     const lossyConversion = warnings.some(w =>
@@ -81,25 +73,8 @@ export function toAgentsMd(
 }
 
 /**
- * Generate YAML frontmatter
- */
-function generateFrontmatter(config: AgentsMdConfig): string {
-  const lines: string[] = ['---'];
-
-  if (config.project) {
-    lines.push(`project: ${config.project}`);
-  }
-
-  if (config.scope) {
-    lines.push(`scope: ${config.scope}`);
-  }
-
-  lines.push('---');
-  return lines.join('\n');
-}
-
-/**
  * Convert canonical content to agents.md markdown
+ * Plain markdown only - NO frontmatter per schema
  */
 function convertContent(
   pkg: CanonicalPackage,
