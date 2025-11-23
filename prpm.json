@@ -100,7 +100,7 @@
     },
     {
       "name": "prpm-json-best-practices-skill",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "description": "Best practices for structuring prpm.json package manifests with required fields, tags, organization, multi-package management, enhanced file format, and conversion hints",
       "format": "claude",
       "subtype": "skill",
@@ -110,7 +110,8 @@
         ".claude/skills/prpm-json-best-practices/examples/single-package.json",
         ".claude/skills/prpm-json-best-practices/examples/multi-package.json",
         ".claude/skills/prpm-json-best-practices/examples/collections-repository.json",
-        ".claude/skills/prpm-json-best-practices/examples/packages-with-collections.json"
+        ".claude/skills/prpm-json-best-practices/examples/packages-with-collections.json",
+        "packages/cli/schemas/prpm-manifest.schema.json"
       ],
       "conversion": {
         "cursor": {
