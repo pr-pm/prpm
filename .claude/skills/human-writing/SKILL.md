@@ -1,5 +1,5 @@
 ---
-name: Human-Style Writing
+name: human-writing
 description: Write content that sounds natural, conversational, and authentically human - avoiding AI-generated patterns, corporate speak, and generic phrasing
 ---
 

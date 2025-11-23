@@ -1,16 +1,6 @@
 ---
 name: creating-cursor-commands
 description: Expert guidance for creating effective Cursor slash commands with best practices, format requirements, and schema validation
-skillType: skill
-allowed-tools: Read, Write, Edit, Grep, Glob
-author: PRPM Team
-version: 1.0.0
-tags:
-  - meta
-  - cursor
-  - slash-commands
-  - documentation
-  - best-practices
 ---
 
 # Creating Cursor Slash Commands

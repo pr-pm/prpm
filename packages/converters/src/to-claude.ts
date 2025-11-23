@@ -87,7 +87,7 @@ function convertContent(
     // Tools field - use config override if provided, otherwise use package tools
     const toolsValue = options?.claudeConfig?.tools || (tools?.type === 'tools' ? tools.tools.join(', ') : undefined);
     if (toolsValue) {
-      lines.push(`allowed-tools: ${toolsValue}`);
+      lines.push(`tools: ${toolsValue}`);
     }
 
     // Model field - use config override if provided, otherwise use stored model from metadata

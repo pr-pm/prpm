@@ -50,8 +50,8 @@ export function fromClaude(
   };
   sections.push(metadataSection);
 
-  // Extract tools if present (try both 'allowed-tools' and legacy 'tools' field)
-  const toolsField = frontmatter['allowed-tools'] || frontmatter.tools;
+  // Extract tools if present (try both 'tools' and legacy 'allowed-tools' field for backward compatibility)
+  const toolsField = frontmatter.tools || frontmatter['allowed-tools'];
   if (toolsField) {
     const tools = toolsField
       .split(',')

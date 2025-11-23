@@ -1,7 +1,6 @@
 ---
 name: creating-skills
 description: Use when creating new Claude Code skills or improving existing ones - ensures skills are discoverable, scannable, and effective through proper structure, CSO optimization, and real examples
-tags: meta
 ---
 
 # Creating Skills

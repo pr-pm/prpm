@@ -81,7 +81,7 @@ describe('toDroid', () => {
     const result = toDroid(canonical);
 
     expect(result.content).toContain('argument-hint: <file-path>');
-    expect(result.content).toContain('allowed-tools:');
+    expect(result.content).toContain('tools:');
     expect(result.content).toContain('- Read');
     expect(result.content).toContain('- Grep');
   });

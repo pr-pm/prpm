@@ -1,8 +1,6 @@
 ---
 name: creating-claude-hooks
 description: Use when creating or publishing Claude Code hooks - covers executable format, event types, JSON I/O, exit codes, security requirements, and PRPM package structure
-skillType: skill
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
 # Creating Claude Code Hooks

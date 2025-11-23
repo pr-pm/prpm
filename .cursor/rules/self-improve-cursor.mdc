@@ -1,5 +1,4 @@
 ---
-ruleType: conditional
 alwaysApply: true
 description: Automatically search and install PRPM packages when working on infrastructure, testing, deployment, or framework-specific tasks
 ---

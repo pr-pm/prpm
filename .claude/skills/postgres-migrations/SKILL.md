@@ -1,5 +1,5 @@
 ---
-name: PostgreSQL Migrations Expert
+name: postgres-migrations
 description: Comprehensive guide to PostgreSQL migrations - common errors, generated columns, full-text search, indexes, idempotent migrations, and best practices for database schema changes
 ---
 

@@ -1,16 +1,6 @@
 ---
-name: AWS Elastic Beanstalk Expert
+name: aws-beanstalk-expert
 description: Expert knowledge for deploying, managing, and troubleshooting AWS Elastic Beanstalk applications with production best practices
-author: PRPM Team
-version: 1.0.0
-tags:
-  - aws
-  - elastic-beanstalk
-  - deployment
-  - infrastructure
-  - devops
-  - pulumi
-  - ci-cd
 ---
 
 # AWS Elastic Beanstalk Expert

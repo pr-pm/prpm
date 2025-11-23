@@ -1,5 +1,4 @@
 ---
-ruleType: always
 alwaysApply: true
 description: Testing patterns and best practices for PRPM codebase with Vitest
 ---

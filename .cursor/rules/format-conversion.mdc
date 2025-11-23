@@ -1,5 +1,4 @@
 ---
-ruleType: always
 alwaysApply: true
 description: Expert guidance for converting between AI prompt formats (Cursor, Claude, Continue, Windsurf) while preserving semantic meaning
 ---

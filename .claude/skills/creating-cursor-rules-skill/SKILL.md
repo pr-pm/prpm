@@ -1,14 +1,6 @@
 ---
-name: Creating Cursor Rules
+name: creating-cursor-rules-skill
 description: Expert guidance for creating effective Cursor IDE rules with best practices, patterns, and examples
-author: PRPM Team
-version: 1.0.0
-tags:
-  - meta
-  - cursor
-  - documentation
-  - best-practices
-  - project-setup
 ---
 
 # Creating Cursor Rules
