@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/droid/slash-command.json",
-  "$comment": "Official documentation: https://docs.factory.ai/cli/configuration/custom-slash-commands",
+  "$comment": "https://docs.factory.ai/cli/configuration/custom-slash-commands",
   "title": "Factory Droid Slash Command Format",
   "description": "JSON Schema for Factory Droid Slash Commands - markdown files stored in .factory/commands/",
   "type": "object",

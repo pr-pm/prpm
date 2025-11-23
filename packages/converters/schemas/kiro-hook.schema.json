@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/kiro/hook.json",
-  "$comment": "Official documentation: https://kiro.dev/docs/hooks/",
+  "$comment": "https://kiro.dev/docs/hooks/",
   "title": "Kiro Hook Format",
   "description": "JSON Schema for Kiro hook configuration files (.kiro/hooks/*.json) - event-driven automations",
   "type": "object",

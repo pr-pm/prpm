@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/droid/hook.json",
-  "$comment": "Official documentation: https://docs.factory.ai/cli/configuration/hooks",
+  "$comment": "https://docs.factory.ai/cli/configuration/hooks",
   "title": "Factory Droid Hook Format",
   "description": "JSON Schema for Factory Droid Hooks - defined in settings.json files. Valid hook events: PreToolUse (runs before tool calls, can block them), PostToolUse (runs after tool calls complete), UserPromptSubmit (runs when user submits a prompt, before Droid processes it), Notification (runs when Droid sends notifications), Stop (runs when Droid finishes responding), SubagentStop (runs when sub-droid tasks complete), PreCompact (runs before Droid runs a compact operation), SessionStart (runs when Droid starts a new session or resumes an existing session), SessionEnd (runs when Droid session ends)",
   "type": "object",

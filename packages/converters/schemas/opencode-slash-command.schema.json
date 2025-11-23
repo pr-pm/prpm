@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/opencode/slash-command.json",
-  "$comment": "Official documentation: https://opencode.ai/docs/slash-commands/",
+  "$comment": "https://opencode.ai/docs/slash-commands/",
   "title": "OpenCode Slash Command Format",
   "description": "JSON Schema for OpenCode Slash Commands - markdown files with YAML frontmatter stored in .opencode/command/",
   "type": "object",
