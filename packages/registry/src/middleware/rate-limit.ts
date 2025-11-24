@@ -150,6 +150,144 @@ export function createRateLimiter() {
 }
 
 /**
+ * Rate limiter for package publishing with token bucket algorithm
+ * SECURITY: Uses Redis for persistent rate limiting with queuing for bulk publishes
+ *
+ * Token Bucket Algorithm:
+ * - Burst capacity: 20 tokens (allows bulk publishing up to 20 packages immediately)
+ * - Refill rate: 10 tokens per minute (sustainable rate)
+ * - Max queue wait: 30 seconds (prevents infinite hangs)
+ *
+ * This allows bulk publishing to proceed smoothly while preventing abuse
+ */
+export function createPublishRateLimiter() {
+  return async function publishRateLimitMiddleware(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const userId = (request.user as any)?.user_id;
+
+    if (!userId) {
+      return; // Auth middleware will handle this
+    }
+
+    const key = `ratelimit:publish:tokens:${userId}`;
+    const now = Date.now();
+
+    // Token bucket parameters
+    const maxTokens = 20;           // Burst capacity (can publish 20 immediately)
+    const refillRate = 10 / 60;     // 10 tokens per minute = 0.1667 tokens/sec
+    const maxWaitMs = 30000;        // Max 30 seconds wait time
+
+    try {
+      const redis = request.server.redis;
+
+      // Get current token count and last refill time
+      const data = await redis.get(key);
+      let tokens: number;
+      let lastRefill: number;
+
+      if (!data) {
+        // First request - start with full bucket
+        tokens = maxTokens;
+        lastRefill = now;
+      } else {
+        const [storedTokens, storedTime] = data.split(':').map(Number);
+
+        // Calculate tokens added since last refill
+        const timePassed = (now - storedTime) / 1000; // in seconds
+        const tokensToAdd = timePassed * refillRate;
+        tokens = Math.min(maxTokens, storedTokens + tokensToAdd);
+        lastRefill = now;
+      }
+
+      // Check if we have tokens available
+      if (tokens >= 1) {
+        // Consume 1 token
+        tokens -= 1;
+
+        // Store updated token count (expire after 2 minutes of inactivity)
+        await redis.setex(key, 120, `${tokens}:${lastRefill}`);
+
+        // Add rate limit headers
+        reply.header('X-RateLimit-Limit', maxTokens);
+        reply.header('X-RateLimit-Remaining', Math.floor(tokens));
+        reply.header('X-RateLimit-Bucket', 'token-bucket');
+
+        return; // Proceed with request
+      }
+
+      // No tokens available - calculate wait time
+      const tokensNeeded = 1 - tokens; // How many tokens we need
+      const waitTimeMs = Math.ceil((tokensNeeded / refillRate) * 1000);
+
+      if (waitTimeMs > maxWaitMs) {
+        // Wait time too long - reject with 429
+        reply.header('X-RateLimit-Limit', maxTokens);
+        reply.header('X-RateLimit-Remaining', 0);
+        reply.header('Retry-After', Math.ceil(waitTimeMs / 1000));
+
+        request.server.log.warn({
+          userId,
+          waitTimeMs,
+          tokens,
+        }, 'Publish rate limit exceeded - wait time too long');
+
+        return reply.code(429).send({
+          error: 'rate_limit_exceeded',
+          message: `Publishing rate limit exceeded. Please wait ${Math.ceil(waitTimeMs / 1000)} seconds before trying again.`,
+          retryAfter: Math.ceil(waitTimeMs / 1000),
+        });
+      }
+
+      // Wait for tokens to refill, then proceed
+      request.server.log.info({
+        userId,
+        waitTimeMs,
+        tokensAvailable: tokens,
+      }, 'Publish request queued - waiting for rate limit tokens');
+
+      await new Promise(resolve => setTimeout(resolve, waitTimeMs));
+
+      // After waiting, recalculate tokens
+      const dataAfterWait = await redis.get(key);
+      if (dataAfterWait) {
+        const [storedTokens, storedTime] = dataAfterWait.split(':').map(Number);
+        const timePassed = (Date.now() - storedTime) / 1000;
+        const tokensToAdd = timePassed * refillRate;
+        tokens = Math.min(maxTokens, storedTokens + tokensToAdd);
+      } else {
+        tokens = maxTokens;
+      }
+
+      // Consume 1 token
+      tokens = Math.max(0, tokens - 1);
+
+      // Store updated token count
+      await redis.setex(key, 120, `${tokens}:${Date.now()}`);
+
+      // Add rate limit headers
+      reply.header('X-RateLimit-Limit', maxTokens);
+      reply.header('X-RateLimit-Remaining', Math.floor(tokens));
+      reply.header('X-RateLimit-Waited', waitTimeMs);
+
+      request.server.log.info({
+        userId,
+        waitedMs: waitTimeMs,
+        tokensRemaining: Math.floor(tokens),
+      }, 'Publish request proceeded after queue wait');
+
+      return; // Proceed with request
+
+    } catch (error) {
+      // FALLBACK: If Redis fails, log error but allow request (fail open)
+      request.server.log.error({ error, userId }, 'Publish rate limiting Redis error - allowing request');
+      return;
+    }
+  };
+}
+
+/**
  * Stricter rate limit for credit purchases to prevent abuse
  * SECURITY: Uses Redis for persistent rate limiting
  */
