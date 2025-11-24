@@ -6,7 +6,16 @@ import { createRequire } from 'module';
 
 type JsonSchema = Record<string, unknown>;
 
-const schemaRequire = createRequire(import.meta.url);
+// Works in both ESM (runtime) and Jest's CJS transform by falling back to global require
+const getRequire = (): NodeRequire => {
+  try {
+    return createRequire(import.meta.url);
+  } catch (error) {
+    return (0, eval)('require');
+  }
+};
+
+const schemaRequire = getRequire();
 const loadSchema = (filename: string): JsonSchema => schemaRequire(`../schemas/${filename}`) as JsonSchema;
 
 // Base schemas
