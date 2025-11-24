@@ -19,6 +19,7 @@ import path from 'path';
 import zlib from 'zlib';
 import fs from 'fs/promises';
 import os from 'os';
+import semver from 'semver';
 import { handleCollectionInstall } from './collections.js';
 import {
   readLockfile,
@@ -253,24 +254,11 @@ export async function handleInstall(
     const client = getRegistryClient(config);
 
     // Check if this is a collection first (by trying to fetch it)
-    // Collections can be: name, scope/name, or @scope/name
+    // Collections can be: name or name@version
     let isCollection = false;
     try {
-      // Try to parse as collection
-      let scope: string;
-      let name_slug: string;
-
-      const matchWithScope = packageId.match(/^@?([^/]+)\/([^/@]+)$/);
-      if (matchWithScope) {
-        [, scope, name_slug] = matchWithScope;
-      } else {
-        // No scope, assume 'collection' scope
-        scope = 'collection';
-        name_slug = packageId;
-      }
-
       // Try to fetch as collection
-      await client.getCollection(scope, name_slug, version === 'latest' ? undefined : version);
+      await client.getCollection(packageId, version === 'latest' ? undefined : version);
       isCollection = true;
 
       // If successful, delegate to collection install handler
@@ -362,10 +350,32 @@ export async function handleInstall(
       actualVersion = pkg.latest_version.version;
       console.log(`   📦 Installing version ${pkg.latest_version.version}`);
     } else {
-      const versionInfo = await client.getPackageVersion(packageId, version);
+      // Check if version is a semver range (e.g., ^1.0.0, ~1.2.3)
+      let resolvedVersion = version;
+
+      if (semver.validRange(version) && !semver.valid(version)) {
+        // It's a semver range, not an exact version - need to resolve it
+        console.log(`   🔍 Resolving semver range: ${version}`);
+
+        // Get all available versions
+        const versionsData = await client.getPackageVersions(packageId);
+        const availableVersions = versionsData.versions.map(v => v.version);
+
+        // Find the best matching version
+        const maxSatisfying = semver.maxSatisfying(availableVersions, version);
+
+        if (!maxSatisfying) {
+          throw new Error(`No version found matching range "${version}". Available versions: ${availableVersions.join(', ')}`);
+        }
+
+        resolvedVersion = maxSatisfying;
+        console.log(`   ✓ Resolved to version ${resolvedVersion}`);
+      }
+
+      const versionInfo = await client.getPackageVersion(packageId, resolvedVersion);
       tarballUrl = versionInfo.tarball_url;
-      actualVersion = version;
-      console.log(`   📦 Installing version ${version}`);
+      actualVersion = resolvedVersion;
+      console.log(`   📦 Installing version ${resolvedVersion}`);
     }
 
     // Download package in native format (conversion happens client-side)

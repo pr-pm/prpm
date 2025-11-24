@@ -220,7 +220,6 @@ describe('Claude Hooks in Collections', () => {
         '@author/collection-hook@1.0.0',
         expect.objectContaining({
           fromCollection: {
-            scope: 'collection',
             name_slug: 'hook-collection',
             version: '1.0.0',
           },

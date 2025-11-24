@@ -122,7 +122,7 @@ export async function handleStarred(options: StarredOptions): Promise<void> {
         const stars = `⭐ ${collection.stars || 0}`.padEnd(8);
         const packages = `📦 ${collection.package_count || 0} packages`;
 
-        console.log(`  ${collection.scope}/${collection.name_slug}`);
+        console.log(`  ${collection.name_slug}`);
         console.log(`      ${stars} ${packages}`);
 
         if (collection.description) {
