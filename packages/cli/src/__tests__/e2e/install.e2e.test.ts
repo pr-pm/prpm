@@ -181,7 +181,6 @@ describe('Install Command - E2E Tests', () => {
     it('should install a collection', async () => {
       const mockCollection = {
         id: 'test-collection',
-        scope: 'official',
         name: 'Test Collection',
         name_slug: 'test-collection',
         description: 'Test collection',
@@ -207,15 +206,14 @@ describe('Install Command - E2E Tests', () => {
       });
       mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test package content'));
 
-      await handleInstall('@official/test-collection', {});
+      await handleInstall('test-collection', {});
 
-      expect(mockClient.getCollection).toHaveBeenCalledWith('official', 'test-collection', undefined);
+      expect(mockClient.getCollection).toHaveBeenCalledWith('test-collection', undefined);
     });
 
     it('should skip optional packages with flag', async () => {
       const mockCollection = {
         id: 'test-collection',
-        scope: 'official',
         name: 'Test Collection',
         name_slug: 'test-collection',
         version: '1.0.0',
@@ -241,9 +239,9 @@ describe('Install Command - E2E Tests', () => {
 
       // Note: skipOptional is passed through handleCollectionInstall but isn't tested here
       // since we're delegating to that function
-      await handleInstall('@official/test-collection', { skipOptional: true } as any);
+      await handleInstall('test-collection', { skipOptional: true } as any);
 
-      expect(mockClient.getCollection).toHaveBeenCalledWith('official', 'test-collection', undefined);
+      expect(mockClient.getCollection).toHaveBeenCalledWith('test-collection', undefined);
     });
   });
 
