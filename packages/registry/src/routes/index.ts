@@ -27,8 +27,7 @@ import { taxonomyRoutes } from './taxonomy.js';
 import { aiSearchRoutes } from './ai-search.js';
 import { downloadRoutes } from './download.js';
 import { adminMigrationRoutes } from './admin-migration.js';
-// TEMPORARY HOTFIX: Disabled schema routes due to deployment issues
-// import { schemaRoutes } from './schemas.js';
+import { schemaRoutes } from './schemas.js';
 
 export async function registerRoutes(server: FastifyInstance) {
   // API v1 routes
@@ -58,8 +57,7 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(playgroundAnalyticsRoutes, { prefix: '/analytics' });
       await api.register(taxonomyRoutes, { prefix: '/taxonomy' });
       await api.register(aiSearchRoutes, { prefix: '/ai-search' });
-      // TEMPORARY HOTFIX: Disabled schema routes due to deployment issues
-      // await api.register(schemaRoutes, { prefix: '/schemas' });
+      await api.register(schemaRoutes, { prefix: '/schemas' });
     },
     { prefix: '/api/v1' }
   );

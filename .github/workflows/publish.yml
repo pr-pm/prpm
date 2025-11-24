@@ -249,6 +249,46 @@ jobs:
           echo "versions=$VERSIONS_JSON" >> $GITHUB_OUTPUT
           echo "Collected versions: $VERSIONS_JSON"
 
+      - name: Update registry package dependencies
+        run: |
+          echo "=== Updating registry package dependencies ==="
+          cd packages/registry
+
+          PUBLISHED_PACKAGES='${{ needs.validate.outputs.packages_to_publish }}'
+
+          # Check if types was published
+          if echo "$PUBLISHED_PACKAGES" | jq -e 'index("types") != null' > /dev/null; then
+            TYPES_VERSION=$(node -p "require('../types/package.json').version")
+            echo "Updating @pr-pm/types to ^$TYPES_VERSION"
+            node -e "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              if (pkg.dependencies && pkg.dependencies['@pr-pm/types']) {
+                pkg.dependencies['@pr-pm/types'] = '^$TYPES_VERSION';
+                fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+                console.log('✓ Updated @pr-pm/types to ^$TYPES_VERSION');
+              }
+            "
+          fi
+
+          # Check if converters was published
+          if echo "$PUBLISHED_PACKAGES" | jq -e 'index("converters") != null' > /dev/null; then
+            CONVERTERS_VERSION=$(node -p "require('../converters/package.json').version")
+            echo "Updating @pr-pm/converters to ^$CONVERTERS_VERSION"
+            node -e "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              if (pkg.dependencies && pkg.dependencies['@pr-pm/converters']) {
+                pkg.dependencies['@pr-pm/converters'] = '^$CONVERTERS_VERSION';
+                fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+                console.log('✓ Updated @pr-pm/converters to ^$CONVERTERS_VERSION');
+              }
+            "
+          fi
+
+          cd ../..
+          echo "✓ Registry dependencies updated"
+
       - name: Update root package-lock.json
         run: |
           echo "Updating root package-lock.json with new versions..."
