@@ -3,31 +3,18 @@
  * Using createRequire keeps runtime compatibility without JSON import assertions.
  */
 import { createRequire } from 'module';
+import { dirname, join } from 'path';
 
 type JsonSchema = Record<string, unknown>;
 
-// Works in both ESM (runtime) and Jest's CJS transform by avoiding direct import.meta usage
-const getRequire = (): NodeRequire => {
-  if (typeof require !== 'undefined') {
-    return require;
-  }
+// Resolve from the installed converters package root to avoid relative path issues in dev/prod/tests
+const schemaRequire: NodeRequire =
+  typeof require !== 'undefined' ? require : createRequire(process.cwd() + '/');
+const convertersPackagePath = schemaRequire.resolve('@pr-pm/converters/package.json');
+const convertersDir = dirname(convertersPackagePath);
 
-  try {
-    // Access import.meta lazily so CJS parsers don't choke
-    const importMeta = (0, eval)('import.meta');
-    if (importMeta?.url) {
-      return createRequire(importMeta.url);
-    }
-  } catch (error) {
-    // Ignore and fall back
-  }
-
-  // Fallback: current working directory
-  return createRequire(process.cwd() + '/');
-};
-
-const schemaRequire = getRequire();
-const loadSchema = (filename: string): JsonSchema => schemaRequire(`../schemas/${filename}`) as JsonSchema;
+const loadSchema = (filename: string): JsonSchema =>
+  schemaRequire(join(convertersDir, 'schemas', filename)) as JsonSchema;
 
 // Base schemas
 export const agentsMdSchema = loadSchema('agents-md.schema.json');
