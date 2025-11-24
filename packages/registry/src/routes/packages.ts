@@ -10,6 +10,8 @@ import { Package, PackageVersion, PackageInfo } from '../types.js';
 import { toError } from '../types/errors.js';
 import { config } from '../config.js';
 import { optionalAuth } from '../middleware/auth.js';
+import { createPublishRateLimiter } from '../middleware/rate-limit.js';
+import { createConcurrencyController } from '../middleware/concurrency-control.js';
 import type { AIMetadataResult } from '../scoring/ai-evaluator.js';
 import type {
   ListPackagesQuery,
@@ -617,8 +619,12 @@ export async function packageRoutes(server: FastifyInstance) {
   });
 
   // Publish package (authenticated)
+  // Protected by rate limiting (10 req/min) and concurrency control (5 concurrent)
+  const publishRateLimiter = createPublishRateLimiter();
+  const publishConcurrencyControl = createConcurrencyController();
+
   server.post('/', {
-    onRequest: [server.authenticate],
+    preHandler: [server.authenticate, publishRateLimiter, publishConcurrencyControl],
     // No schema - multipart doesn't set request.body for validation
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
@@ -628,6 +634,7 @@ export async function packageRoutes(server: FastifyInstance) {
 
     let manifest: Record<string, unknown>;
     let tarballBuffer: Buffer;
+    let publishAsAuthor: string | undefined;
 
     if (isMultipart) {
       // Handle multipart upload (from CLI)
@@ -636,6 +643,8 @@ export async function packageRoutes(server: FastifyInstance) {
       for await (const part of parts) {
         if (part.type === 'field' && part.fieldname === 'manifest') {
           manifestStr = part.value as string;
+        } else if (part.type === 'field' && part.fieldname === 'publish_as_author') {
+          publishAsAuthor = part.value as string;
         } else if (part.type === 'file' && part.fieldname === 'tarball') {
           const chunks: Buffer[] = [];
           for await (const chunk of part.file) {
@@ -700,9 +709,9 @@ export async function packageRoutes(server: FastifyInstance) {
       }
 
       // Fetch user info for scoping and validation
-      const user = await queryOne<{ username: string }>(
+      const user = await queryOne<{ username: string; is_admin: boolean }>(
         server,
-        'SELECT username FROM users WHERE id = $1',
+        'SELECT username, is_admin FROM users WHERE id = $1',
         [userId]
       );
 
@@ -713,7 +722,16 @@ export async function packageRoutes(server: FastifyInstance) {
         });
       }
 
-      const usernameLowercase = user.username.toLowerCase();
+      // Admin override: if user is admin and publishAsAuthor is specified, use that for scoping
+      let usernameLowercase = user.username.toLowerCase();
+      if (user.is_admin && publishAsAuthor) {
+        usernameLowercase = publishAsAuthor.toLowerCase();
+        server.log.info({
+          admin: user.username,
+          publishAsAuthor,
+          packageName: manifest.name
+        }, 'Admin override: Publishing as different author');
+      }
 
       // Auto-prefix package name with scope and validate ownership
       // If organization is specified, use @org-name/, otherwise use @username/

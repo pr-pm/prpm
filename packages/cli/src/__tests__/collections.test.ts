@@ -157,23 +157,6 @@ describe('collections command', () => {
       );
     });
 
-    it('should filter by scope', async () => {
-      const mockCollections = {
-        collections: [],
-        total: 0,
-        offset: 0,
-        limit: 50,
-      };
-
-      mockClient.getCollections.mockResolvedValue(mockCollections);
-
-      await handleCollectionsList({ scope: 'official' });
-
-      expect(mockClient.getCollections).toHaveBeenCalledWith(
-        expect.objectContaining({ scope: 'official' })
-      );
-    });
-
     it('should handle empty results', async () => {
       const mockCollections = {
         collections: [],
@@ -259,7 +242,7 @@ describe('collections command', () => {
     it('should show collection details', async () => {
       const mockCollection = {
         id: 'react-essentials',
-        scope: 'official',
+        name_slug: 'react-essentials',
         name: 'React Essentials',
         description: 'Essential React packages for development',
         version: '1.0.0',
@@ -283,10 +266,9 @@ describe('collections command', () => {
 
       mockClient.getCollection.mockResolvedValue(mockCollection);
 
-      await handleCollectionInfo('@official/react-essentials');
+      await handleCollectionInfo('react-essentials');
 
       expect(mockClient.getCollection).toHaveBeenCalledWith(
-        'official',
         'react-essentials',
         undefined
       );
@@ -295,10 +277,10 @@ describe('collections command', () => {
       );
     });
 
-    it('should handle collection without @ prefix', async () => {
+    it('should handle collection by name', async () => {
       const mockCollection = {
         id: 'test',
-        scope: 'user',
+        name_slug: 'test',
         name: 'Test Collection',
         description: 'Test',
         version: '1.0.0',
@@ -314,15 +296,15 @@ describe('collections command', () => {
 
       mockClient.getCollection.mockResolvedValue(mockCollection);
 
-      await handleCollectionInfo('user/test');
+      await handleCollectionInfo('test');
 
-      expect(mockClient.getCollection).toHaveBeenCalledWith('user', 'test', undefined);
+      expect(mockClient.getCollection).toHaveBeenCalledWith('test', undefined);
     });
 
     it('should handle specific version', async () => {
       const mockCollection = {
         id: 'test',
-        scope: 'official',
+        name_slug: 'test',
         name: 'Test Collection',
         description: 'Test',
         version: '2.0.0',
@@ -338,15 +320,15 @@ describe('collections command', () => {
 
       mockClient.getCollection.mockResolvedValue(mockCollection);
 
-      await handleCollectionInfo('@official/test@2.0.0');
+      await handleCollectionInfo('test@2.0.0');
 
-      expect(mockClient.getCollection).toHaveBeenCalledWith('official', 'test', '2.0.0');
+      expect(mockClient.getCollection).toHaveBeenCalledWith('test', '2.0.0');
     });
 
     it('should display required and optional packages separately', async () => {
       const mockCollection = {
         id: 'test',
-        scope: 'official',
+        name_slug: 'test',
         name: 'Test Collection',
         description: 'Test',
         version: '1.0.0',
@@ -373,7 +355,7 @@ describe('collections command', () => {
 
       mockClient.getCollection.mockResolvedValue(mockCollection);
 
-      await handleCollectionInfo('@official/test');
+      await handleCollectionInfo('test');
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Required:'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Optional:'));
@@ -799,23 +781,10 @@ describe('collections command', () => {
       );
     });
 
-    it('should handle scoped collection names', async () => {
-      await handleCollectionInstall('@official/test-collection', {});
-
-      expect(mockClient.installCollection).toHaveBeenCalledWith({
-        scope: 'official',
-        id: 'test-collection',
-        version: undefined,
-        format: undefined,
-        skipOptional: undefined,
-      });
-    });
-
-    it('should handle collection names without scope', async () => {
+    it('should handle collection names', async () => {
       await handleCollectionInstall('test-collection', {});
 
       expect(mockClient.installCollection).toHaveBeenCalledWith({
-        scope: 'collection',
         id: 'test-collection',
         version: undefined,
         format: undefined,
@@ -827,7 +796,6 @@ describe('collections command', () => {
       await handleCollectionInstall('test-collection@2.0.0', {});
 
       expect(mockClient.installCollection).toHaveBeenCalledWith({
-        scope: 'collection',
         id: 'test-collection',
         version: '2.0.0',
         format: undefined,

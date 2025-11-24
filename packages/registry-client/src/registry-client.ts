@@ -49,7 +49,6 @@ export interface CollectionPackage {
 
 export interface Collection {
   id: string;                 // UUID
-  scope: string;
   name_slug: string;          // URL-friendly slug
   name: string;
   description: string;
@@ -152,9 +151,9 @@ export class RegistryClient {
   /**
    * Get all versions for a package
    */
-  async getPackageVersions(packageId: string): Promise<{ versions: string[] }> {
+  async getPackageVersions(packageId: string): Promise<{ versions: Array<{ version: string; published_at: string; is_prerelease: boolean }> }> {
     const response = await this.fetch(`/api/v1/packages/${encodeURIComponent(packageId)}/versions`);
-    return response.json() as Promise<{ versions: string[] }>;
+    return response.json() as Promise<{ versions: Array<{ version: string; published_at: string; is_prerelease: boolean }> }>;
   }
 
   /**
@@ -299,7 +298,7 @@ export class RegistryClient {
   /**
    * Publish a package (requires authentication)
    */
-  async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string }): Promise<PublishResponse> {
+  async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string; publishAsAuthor?: string }): Promise<PublishResponse> {
     if (!this.token) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
@@ -328,6 +327,11 @@ export class RegistryClient {
     // Add organization ID if specified
     if (options?.orgId) {
       formData.append('org_id', options.orgId);
+    }
+
+    // Add publishAsAuthor if specified (admin override)
+    if (options?.publishAsAuthor) {
+      formData.append('publish_as_author', options.publishAsAuthor);
     }
 
     // Add tarball as blob
@@ -378,7 +382,6 @@ export class RegistryClient {
     category?: string;
     tag?: string;
     official?: boolean;
-    scope?: string;
     limit?: number;
     offset?: number;
   }): Promise<CollectionsResult> {
@@ -387,7 +390,6 @@ export class RegistryClient {
     if (options?.category) params.append('category', options.category);
     if (options?.tag) params.append('tag', options.tag);
     if (options?.official) params.append('official', 'true');
-    if (options?.scope) params.append('scope', options.scope);
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.offset) params.append('offset', options.offset.toString());
 
@@ -398,9 +400,9 @@ export class RegistryClient {
   /**
    * Get collection details
    */
-  async getCollection(scope: string, id: string, version?: string): Promise<Collection> {
-    const versionPath = version ? `/${version}` : '/1.0.0';
-    const response = await this.fetch(`/api/v1/collections/${scope}/${id}${versionPath}`);
+  async getCollection(id: string, version?: string): Promise<Collection> {
+    const versionPath = version ? `?version=${version}` : '';
+    const response = await this.fetch(`/api/v1/collections/${id}${versionPath}`);
     return response.json() as Promise<Collection>;
   }
 
@@ -408,14 +410,13 @@ export class RegistryClient {
    * Install collection (get installation plan)
    */
   async installCollection(options: {
-    scope: string;
     id: string;
     version?: string;
     format?: string;
     skipOptional?: boolean;
   }): Promise<CollectionInstallResult> {
     const response = await this.fetch(
-      `/api/v1/collections/${options.scope}/${options.id}/install`,
+      `/api/v1/collections/${options.id}/install`,
       {
         method: 'POST',
         body: JSON.stringify({

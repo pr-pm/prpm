@@ -46,3 +46,6 @@ export { toReplit, isReplitFormat } from './to-replit.js';
 // Utilities
 export * from './taxonomy-utils.js';
 export * from './validation.js';
+
+// JSON Schemas
+export * from './schema-files.js';

@@ -24,6 +24,7 @@ import { extractLicenseInfo, validateLicenseInfo } from '../utils/license-extrac
 import { extractSnippet, validateSnippet } from '../utils/snippet-extractor';
 import { executePrepublishOnly } from '../utils/script-executor';
 import { validatePackageFiles } from '../utils/format-file-validator';
+import { publishInParallel, calculateStats, formatDuration, withRetry, type PublishTask } from '../utils/parallel-publisher';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -465,8 +466,13 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     }
 
     // Filter to specific package if requested
+    // Skip all packages if --collection flag is used (publish only collection)
     let filteredManifests = manifests;
-    if (options.package) {
+    if (options.collection) {
+      // When --collection is specified, skip all packages
+      filteredManifests = [];
+      console.log(`   Skipping packages (publishing collection only)\n`);
+    } else if (options.package) {
       filteredManifests = manifests.filter(m => m.name === options.package);
       if (filteredManifests.length === 0) {
         throw new Error(`Package "${options.package}" not found in manifest. Available packages: ${manifests.map(m => m.name).join(', ')}`);
@@ -534,7 +540,9 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     // Helper to check if error is retriable
     const isRetriableError = (error: string): boolean => {
       return error.includes('Service Unavailable') ||
+             error.includes('Bad Gateway') ||
              error.includes('at capacity') ||
+             error.includes('502') ||
              error.includes('503') ||
              error.includes('ECONNRESET') ||
              error.includes('ETIMEDOUT');
@@ -851,8 +859,9 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
     // Publish collections if present
     // Only publish collections if:
-    // 1. No --package flag (publish all), OR
-    // 2. --collection flag explicitly specified
+    // 1. No --package flag (publish all collections), OR
+    // 2. --collection flag explicitly specified (publish specific collection)
+    // Note: --package flag skips collections, --collection flag skips packages
     const shouldPublishCollections = !options.package || options.collection;
 
     if (collections.length > 0 && shouldPublishCollections) {
@@ -912,7 +921,6 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           const result = await client.createCollection(collectionData);
 
           console.log(`✅ Collection published successfully!`);
-          console.log(`   Scope: ${result.scope}`);
           console.log(`   Name: ${result.name_slug}`);
           console.log(`   Version: ${result.version || '1.0.0'}`);
           console.log('');

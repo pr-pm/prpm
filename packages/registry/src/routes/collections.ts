@@ -30,7 +30,6 @@ export async function collectionRoutes(server: FastifyInstance) {
             framework: { type: 'string' },
             official: { type: 'boolean' },
             verified: { type: 'boolean' },
-            scope: { type: 'string' },
             author: { type: 'string' },
             query: { type: 'string' },
             limit: { type: 'number', default: 20 },
@@ -52,7 +51,6 @@ export async function collectionRoutes(server: FastifyInstance) {
         // Build SQL query - use subquery to get latest version per collection
         let sql = `
           SELECT
-            c.scope,
             c.id,
             c.name_slug,
             c.version,
@@ -108,11 +106,6 @@ export async function collectionRoutes(server: FastifyInstance) {
         if (query.verified !== undefined) {
           sql += ` AND c.verified = $${paramIndex++}`;
           params.push(query.verified);
-        }
-
-        if (query.scope) {
-          sql += ` AND c.scope = $${paramIndex++}`;
-          params.push(query.scope);
         }
 
         if (query.author) {
@@ -189,18 +182,17 @@ export async function collectionRoutes(server: FastifyInstance) {
   );
 
   /**
-   * GET /api/v1/collections/:scope/:name_slug
+   * GET /api/v1/collections/:name_slug
    * Get collection details with packages
    */
   server.get(
-    '/:scope/:name_slug',
+    '/:name_slug',
     {
       schema: {
         params: {
           type: 'object',
-          required: ['scope', 'name_slug'],
+          required: ['name_slug'],
           properties: {
-            scope: { type: 'string' },
             name_slug: { type: 'string' },
           },
         },
@@ -213,7 +205,7 @@ export async function collectionRoutes(server: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { scope, name_slug } = request.params as { scope: string; name_slug: string };
+      const { name_slug } = request.params as { name_slug: string };
       const { version } = request.query as { version?: string };
 
       try {
@@ -223,13 +215,13 @@ export async function collectionRoutes(server: FastifyInstance) {
           FROM collections c
           LEFT JOIN users u ON c.author_id = u.id
           LEFT JOIN organizations o ON c.org_id = o.id
-          WHERE c.scope = $1 AND c.name_slug = $2
+          WHERE c.name_slug = $1
         `;
 
-        const params: unknown[] = [scope, name_slug];
+        const params: unknown[] = [name_slug];
 
         if (version) {
-          sql += ` AND c.version = $3`;
+          sql += ` AND c.version = $2`;
           params.push(version);
         } else {
           sql += ` ORDER BY c.created_at DESC LIMIT 1`;
@@ -240,7 +232,6 @@ export async function collectionRoutes(server: FastifyInstance) {
         if (result.rows.length === 0) {
           return reply.code(404).send({
             error: 'Collection not found',
-            scope,
             name_slug,
             version,
           });
@@ -349,8 +340,8 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         // Check if this specific version already exists
         const existing = await server.pg.query(
-          `SELECT id FROM collections WHERE scope = $1 AND name_slug = $2 AND version = $3`,
-          [user.username, input.id, version]
+          `SELECT id FROM collections WHERE name_slug = $1 AND version = $2`,
+          [input.id, version]
         );
 
         if (existing.rows.length > 0) {
@@ -384,14 +375,13 @@ export async function collectionRoutes(server: FastifyInstance) {
         const collectionResult = await server.pg.query(
           `
           INSERT INTO collections (
-            scope, name_slug, version, name, description,
+            name_slug, version, name, description,
             author_id, category, tags, framework,
             icon, banner, readme, config
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
           RETURNING *
         `,
           [
-            user.username,
             input.id,
             version,
             input.name,
@@ -437,7 +427,7 @@ export async function collectionRoutes(server: FastifyInstance) {
         }
 
         // Invalidate cache
-        await server.redis.del(`collections:${user.username}:${input.id}`);
+        await server.redis.del(`collections:${input.id}`);
 
         return reply.code(201).send({
           ...collection,
@@ -454,18 +444,17 @@ export async function collectionRoutes(server: FastifyInstance) {
   );
 
   /**
-   * POST /api/v1/collections/:scope/:name_slug/install
+   * POST /api/v1/collections/:name_slug/install
    * Track collection installation
    */
   server.post(
-    '/:scope/:name_slug/install',
+    '/:name_slug/install',
     {
       schema: {
         params: {
           type: 'object',
-          required: ['scope', 'name_slug'],
+          required: ['name_slug'],
           properties: {
-            scope: { type: 'string' },
             name_slug: { type: 'string' },
           },
         },
@@ -480,45 +469,26 @@ export async function collectionRoutes(server: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { scope, name_slug } = request.params as { scope: string; name_slug: string };
+      const { name_slug } = request.params as { name_slug: string };
       const input = request.body as CollectionInstallInput;
       const user = request.user;
 
       try {
-        // Get collection
-        // If scope is 'collection' (default), search across all scopes
-        // to find the most popular collection with that name_slug
-        let collectionResult;
-
-        if (scope === 'collection') {
-          // Search across all scopes, prefer official/verified, then by downloads
-          collectionResult = await server.pg.query(
-            `
-            SELECT * FROM collections
-            WHERE name_slug = $1
-            ${input.version ? 'AND version = $2' : ''}
-            ORDER BY
-              official DESC,
-              verified DESC,
-              downloads DESC,
-              created_at DESC
-            LIMIT 1
-          `,
-            input.version ? [name_slug, input.version] : [name_slug]
-          );
-        } else {
-          // Specific scope requested
-          collectionResult = await server.pg.query(
-            `
-            SELECT * FROM collections
-            WHERE scope = $1 AND name_slug = $2
-            ${input.version ? 'AND version = $3' : ''}
-            ORDER BY created_at DESC
-            LIMIT 1
-          `,
-            input.version ? [scope, name_slug, input.version] : [scope, name_slug]
-          );
-        }
+        // Get collection - prefer official/verified, then by downloads
+        const collectionResult = await server.pg.query(
+          `
+          SELECT * FROM collections
+          WHERE name_slug = $1
+          ${input.version ? 'AND version = $2' : ''}
+          ORDER BY
+            official DESC,
+            verified DESC,
+            downloads DESC,
+            created_at DESC
+          LIMIT 1
+        `,
+          input.version ? [name_slug, input.version] : [name_slug]
+        );
 
         if (collectionResult.rows.length === 0) {
           return reply.code(404).send({
@@ -583,19 +553,18 @@ export async function collectionRoutes(server: FastifyInstance) {
   );
 
   /**
-   * POST /api/v1/collections/:scope/:name_slug/star
+   * POST /api/v1/collections/:name_slug/star
    * Star/unstar a collection
    */
   server.post(
-    '/:scope/:name_slug/star',
+    '/:name_slug/star',
     {
       onRequest: [server.authenticate],
       schema: {
         params: {
           type: 'object',
-          required: ['scope', 'name_slug'],
+          required: ['name_slug'],
           properties: {
-            scope: { type: 'string' },
             name_slug: { type: 'string' },
           },
         },
@@ -608,15 +577,15 @@ export async function collectionRoutes(server: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { scope, name_slug } = request.params as { scope: string; name_slug: string };
+      const { name_slug } = request.params as { name_slug: string };
       const { starred } = request.body as { starred: boolean };
       const user = request.user;
 
       try {
         // Get collection ID first
         const collectionResult = await server.pg.query(
-          `SELECT id FROM collections WHERE scope = $1 AND name_slug = $2 LIMIT 1`,
-          [scope, name_slug]
+          `SELECT id FROM collections WHERE name_slug = $1 ORDER BY created_at DESC LIMIT 1`,
+          [name_slug]
         );
 
         if (collectionResult.rows.length === 0) {
@@ -677,7 +646,6 @@ export async function collectionRoutes(server: FastifyInstance) {
     try {
       const result = await server.pg.query(`
         SELECT
-          c.scope,
           c.id,
           c.name_slug,
           c.version,
@@ -722,13 +690,12 @@ export async function collectionRoutes(server: FastifyInstance) {
   });
 
   /**
-   * GET /api/v1/collections/:scope/:name_slug/:version
+   * GET /api/v1/collections/:name_slug/:version
    * Get collection details by name_slug and version
    */
-  server.get('/:scope/:name_slug/:version', async (request: FastifyRequest, reply: FastifyReply) => {
+  server.get('/:name_slug/:version', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { scope, name_slug, version } = request.params as {
-        scope: string;
+      const { name_slug, version } = request.params as {
         name_slug: string;
         version: string;
       };
@@ -736,7 +703,6 @@ export async function collectionRoutes(server: FastifyInstance) {
       // Get collection details
       const collectionResult = await server.pg.query(
         `SELECT
-          c.scope,
           c.id,
           c.name_slug,
           c.version,
@@ -756,8 +722,8 @@ export async function collectionRoutes(server: FastifyInstance) {
         FROM collections c
         LEFT JOIN users u ON c.author_id = u.id
         LEFT JOIN organizations o ON c.org_id = o.id
-        WHERE c.scope = $1 AND c.name_slug = $2 AND c.version = $3`,
-        [scope, name_slug, version]
+        WHERE c.name_slug = $1 AND c.version = $2`,
+        [name_slug, version]
       );
 
       if (collectionResult.rows.length === 0) {
@@ -879,7 +845,6 @@ export async function collectionRoutes(server: FastifyInstance) {
         const result = await server.pg.query(
           `SELECT
             c.id,
-            c.scope,
             c.name,
             c.name_slug,
             c.description,
@@ -945,7 +910,6 @@ export async function collectionRoutes(server: FastifyInstance) {
 
             return {
               id: row.id,
-              scope: row.scope,
               name: row.name,
               name_slug: row.name_slug,
               description: row.description,

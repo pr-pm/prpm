@@ -140,42 +140,89 @@ jobs:
 
       - name: Create deployment package
         run: |
-          cd packages/registry
           VERSION_LABEL="v-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:7}"
           echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
 
-          # Create zip with necessary files for deployment
-          # Include workspace dependencies (converters, types) since they're not on NPM
-          # EB's npm ci will look for these via the workspace: protocol
-          zip -r ${VERSION_LABEL}.zip \
-            dist/ \
-            package.json \
-            package-lock.json \
-            migrations/ \
-            config/ \
-            .platform/ \
-            .ebextensions/ \
-            Procfile \
+          # Create deployment structure with npm workspaces support
+          # Structure:
+          #   /package.json (workspace root)
+          #   /package-lock.json
+          #   /dist/ (registry dist)
+          #   /migrations/ (registry migrations)
+          #   /Procfile
+          #   /packages/converters/
+          #   /packages/types/
+
+          cd packages/registry
+          DEPLOY_DIR="/tmp/prpm-deploy-$$"
+          mkdir -p "$DEPLOY_DIR"
+
+          # Create minimal root package.json for workspace resolution
+          cat > "$DEPLOY_DIR/package.json" << 'EOF'
+          {
+            "name": "prpm-registry-deployment",
+            "private": true,
+            "workspaces": ["packages/*"],
+            "scripts": {
+              "start": "node dist/index.js",
+              "migrate": "node dist/migrations/run.js"
+            },
+            "engines": {
+              "node": "20.x"
+            }
+          }
+          EOF
+
+          # Copy root package-lock.json
+          cp ../../package-lock.json "$DEPLOY_DIR/"
+
+          # Copy registry app files to root (where Beanstalk expects them)
+          cp -r dist "$DEPLOY_DIR/"
+          cp -r migrations "$DEPLOY_DIR/"
+          cp package.json "$DEPLOY_DIR/registry-package.json"
+          cp Procfile "$DEPLOY_DIR/" 2>/dev/null || echo "web: npm start" > "$DEPLOY_DIR/Procfile"
+
+          # Copy config and platform files if they exist
+          [ -d config ] && cp -r config "$DEPLOY_DIR/"
+          [ -d .platform ] && cp -r .platform "$DEPLOY_DIR/"
+          [ -d .ebextensions ] && cp -r .ebextensions "$DEPLOY_DIR/"
+
+          # Copy workspace packages
+          mkdir -p "$DEPLOY_DIR/packages/converters"
+          mkdir -p "$DEPLOY_DIR/packages/types"
+          mkdir -p "$DEPLOY_DIR/packages/registry"
+
+          cp -r ../converters/dist "$DEPLOY_DIR/packages/converters/"
+          cp -r ../converters/schemas "$DEPLOY_DIR/packages/converters/"
+          cp ../converters/package.json "$DEPLOY_DIR/packages/converters/"
+
+          cp -r ../types/dist "$DEPLOY_DIR/packages/types/"
+          cp ../types/package.json "$DEPLOY_DIR/packages/types/"
+
+          # Create packages/registry with symlinks to root files
+          ln -s ../../dist "$DEPLOY_DIR/packages/registry/dist"
+          ln -s ../../migrations "$DEPLOY_DIR/packages/registry/migrations"
+          cp package.json "$DEPLOY_DIR/packages/registry/"
+
+          # Create the deployment zip
+          cd "$DEPLOY_DIR"
+          zip -r ${VERSION_LABEL}.zip . \
             -x "*.test.ts" \
             -x "*.spec.ts" \
             -x "*__tests__/*" \
             -x "node_modules/*"
 
-          # Add workspace dependencies to the zip
-          cd ../..
-          zip -r packages/registry/${VERSION_LABEL}.zip \
-            packages/converters/dist/ \
-            packages/converters/package.json \
-            packages/types/dist/ \
-            packages/types/package.json \
-            -x "*.test.ts" \
-            -x "*.spec.ts" \
-            -x "*__tests__/*"
+          # Move zip to registry directory
+          mv ${VERSION_LABEL}.zip "${GITHUB_WORKSPACE}/packages/registry/"
 
-          cd packages/registry
+          # Cleanup
+          cd "${GITHUB_WORKSPACE}/packages/registry"
+          rm -rf "$DEPLOY_DIR"
+
           echo "✅ Created deployment package: ${VERSION_LABEL}.zip"
-          echo "Package contents (verification):"
-          unzip -l ${VERSION_LABEL}.zip | grep -E "(dist/|package\.json|migrations/)" | head -30
+          echo ""
+          echo "Package structure:"
+          unzip -l ${VERSION_LABEL}.zip | head -60
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
