@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/gemini-md.json",
+  "$comment": "https://geminicli.com/docs/cli/gemini-md/#_top",
+  "title": "GEMINI.md Format",
+  "description": "JSON Schema for GEMINI.md format - plain markdown project-specific AI instructions (NO frontmatter)",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "Plain markdown content with project-specific instructions, persona definitions, coding style guides, and best practices. No frontmatter allowed. Supports @file.md syntax for importing other files."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "content": "# General Instructions\n\nYou are a helpful coding assistant.\n\n## Coding Style\n\n- Use TypeScript strict mode\n- Follow functional programming patterns\n- Write comprehensive tests"
+    },
+    {
+      "content": "# Project Context\n\nThis is a Next.js application with TypeScript.\n\n## Architecture\n\n- App Router (not Pages Router)\n- Server Components by default\n- Client Components only when needed\n\n## Database\n\nPostgreSQL with Prisma ORM"
+    }
+  ]
+}

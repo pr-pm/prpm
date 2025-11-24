@@ -1,10 +1,12 @@
 {
-  "name": "blog-workflow",
-  "version": "1.0.0",
-  "description": "Enforces blog writing standards and sitemap updates",
-  "type": "UserPromptSubmit",
-  "enabled": true,
-  "config": {
-    "strictMode": true
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "node .claude/hooks/blog-workflow/dist/hook.js",
+        "timeout": 10000,
+        "suppressOutput": false
+      }
+    ]
   }
 }

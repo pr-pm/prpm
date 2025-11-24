@@ -202,7 +202,15 @@ export interface MetadataSection {
     version?: string;
     author?: string;
     claudeAgent?: {
+      mode?: 'subagent' | 'primary' | 'all';
       model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
+    };
+    claudeSlashCommand?: {
+      description?: string; // Description of the slash command
+      argumentHint?: string; // Arguments expected for the slash command
+      allowedTools?: string; // Comma-separated list of tools
+      model?: string; // Model to use for the command
+      disableModelInvocation?: boolean; // Whether to prevent SlashCommand tool from calling this
     };
     opencode?: {
       mode?: 'subagent' | 'primary' | 'all';
@@ -210,6 +218,14 @@ export interface MetadataSection {
       temperature?: number;
       permission?: Record<string, any>;
       disable?: boolean;
+    };
+    opencodeSlashCommand?: {
+      description?: string; // Description of the slash command
+      agent?: string; // Agent identifier
+      model?: string; // Model to use
+      subtask?: boolean; // Whether this is a subtask command
+      template?: string; // Template string with placeholders
+      argumentHint?: string; // Arguments expected for the slash command
     };
     droid?: {
       argumentHint?: string; // Usage hint for slash commands

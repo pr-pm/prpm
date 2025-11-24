@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/opencode.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/opencode.json",
+  "$comment": "https://opencode.ai/docs/agents/",
   "title": "OpenCode Agent Format",
   "description": "JSON Schema for OpenCode Agents - markdown files with YAML frontmatter stored in .opencode/agent/",
   "type": "object",
@@ -8,30 +9,35 @@
   "properties": {
     "frontmatter": {
       "type": "object",
-      "required": ["description"],
+      "required": ["description", "mode"],
       "properties": {
         "description": {
           "type": "string",
-          "description": "Brief description of the agent's purpose (required)"
+          "description": "Brief explanation of the agent's purpose and use cases (required)"
         },
         "mode": {
           "type": "string",
           "enum": ["subagent", "primary", "all"],
-          "description": "Determines usage context - subagent (spawned), primary (main), or all (both)"
+          "description": "Determines how the agent can be used: 'primary' (main assistant), 'subagent' (spawned by primary), or 'all' (both contexts). Required field.",
+          "default": "all"
         },
         "model": {
           "type": "string",
-          "description": "Override default LLM (e.g., 'anthropic/claude-sonnet-4-20250514')"
+          "description": "Override default model (e.g., 'anthropic/claude-sonnet-4-20250514')"
         },
         "temperature": {
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "description": "Control response creativity (0.0-1.0 range)"
+          "description": "Controls response randomness (0.0-1.0). Defaults to model-specific values (typically 0, or 0.55 for Qwen models)"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "Path to custom system prompt file using {file:./path} syntax"
         },
         "tools": {
           "type": "object",
-          "description": "Enable/disable specific tool access",
+          "description": "Enable/disable specific tools. Supports wildcards (e.g., 'mymcp_*')",
           "properties": {
             "write": { "type": "boolean" },
             "edit": { "type": "boolean" },
@@ -46,7 +52,7 @@
         },
         "permission": {
           "type": "object",
-          "description": "Granular control over tool usage (ask/allow/deny)",
+          "description": "Manages tool access with values: 'ask', 'allow', or 'deny'",
           "properties": {
             "edit": {
               "type": "string",
@@ -72,10 +78,10 @@
         },
         "disable": {
           "type": "boolean",
-          "description": "Boolean to deactivate the agent"
+          "description": "When true, disables the agent"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "content": {
       "type": "string",

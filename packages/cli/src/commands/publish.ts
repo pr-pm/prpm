@@ -517,23 +517,72 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     const publishedCollections: Array<{ id: string; name: string; version: string }> = [];
     const failedCollections: Array<{ id: string; error: string }> = [];
 
-    // Publish each manifest (filtered set)
+    // Batch configuration
+    const BATCH_SIZE = parseInt(process.env.PRPM_BATCH_SIZE || '5');
+    // Use 0ms delay in tests or dry run mode
+    const BATCH_DELAY_MS = options.dryRun || process.env.NODE_ENV === 'test'
+      ? 0
+      : parseInt(process.env.PRPM_BATCH_DELAY_MS || '2000');
+    const MAX_RETRIES = parseInt(process.env.PRPM_MAX_RETRIES || '3');
+    const RETRY_DELAY_MS = options.dryRun || process.env.NODE_ENV === 'test'
+      ? 0
+      : parseInt(process.env.PRPM_RETRY_DELAY_MS || '5000');
+
+    // Helper to delay between batches
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Helper to check if error is retriable
+    const isRetriableError = (error: string): boolean => {
+      return error.includes('Service Unavailable') ||
+             error.includes('at capacity') ||
+             error.includes('503') ||
+             error.includes('ECONNRESET') ||
+             error.includes('ETIMEDOUT');
+    };
+
+    // Show batch info if publishing multiple packages (only if delays are enabled)
+    if (filteredManifests.length > 1 && BATCH_DELAY_MS > 0) {
+      console.log(`📦 Publishing ${filteredManifests.length} packages in batches of ${BATCH_SIZE}`);
+      console.log(`⏱️  ${BATCH_DELAY_MS}ms delay between batches, ${RETRY_DELAY_MS}ms retry delay`);
+      console.log('');
+    }
+
+    // Publish each manifest (filtered set) in batches
     for (let i = 0; i < filteredManifests.length; i++) {
       const manifest = filteredManifests[i];
       packageName = manifest.name;
       version = manifest.version;
 
+      // Add batch delay between packages (but not before first package or in dry run/test mode)
+      if (i > 0 && i % BATCH_SIZE === 0 && BATCH_DELAY_MS > 0) {
+        console.log(`⏸️  Batch delay (${BATCH_DELAY_MS}ms) before next ${Math.min(BATCH_SIZE, filteredManifests.length - i)} packages...`);
+        await delay(BATCH_DELAY_MS);
+      }
+
       if (filteredManifests.length > 1) {
         console.log(`\n${'='.repeat(60)}`);
-        console.log(`📦 Publishing plugin ${i + 1} of ${filteredManifests.length}`);
+        console.log(`📦 Publishing package ${i + 1} of ${filteredManifests.length}`);
         console.log(`${'='.repeat(60)}\n`);
       }
 
-      try {
-        // Debug: Log access override logic only if DEBUG env var is set
-        if (process.env.DEBUG) {
-          console.log(`\n🔍 Before access override:`);
-          console.log(`   - manifest.private: ${manifest.private}`);
+      // Retry logic wrapper
+      let lastError: Error | null = null;
+      let retryCount = 0;
+      let publishSuccess = false;
+
+      while (retryCount <= MAX_RETRIES && !publishSuccess) {
+        try {
+          if (retryCount > 0 && RETRY_DELAY_MS > 0) {
+            console.log(`   🔄 Retry ${retryCount}/${MAX_RETRIES} after ${RETRY_DELAY_MS}ms...`);
+            await delay(RETRY_DELAY_MS);
+          } else if (retryCount > 0) {
+            console.log(`   🔄 Retry ${retryCount}/${MAX_RETRIES}...`);
+          }
+
+          // Debug: Log access override logic only if DEBUG env var is set
+          if (process.env.DEBUG) {
+            console.log(`\n🔍 Before access override:`);
+            console.log(`   - manifest.private: ${manifest.private}`);
           console.log(`   - options.access: ${options.access}`);
         }
 
@@ -682,6 +731,21 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log(`   Size: ${sizeDisplay}`);
         console.log('');
 
+        // Check if admin should override author (before dry run so it shows in dry run)
+        let publishAsAuthor: string | undefined;
+        if (userInfo?.is_admin && manifest.author) {
+          // Author can be string or object { name, email }
+          publishAsAuthor = typeof manifest.author === 'string'
+            ? manifest.author
+            : manifest.author.name;
+          console.log(`   🔐 Admin override: Publishing as author "${publishAsAuthor}"`);
+        }
+
+        if (selectedOrgId) {
+          console.log(`   Publishing as organization: ${userInfo.organizations.find((org: any) => org.id === selectedOrgId)?.name}`);
+          console.log(`   Organization ID: ${selectedOrgId}`);
+        }
+
         if (options.dryRun) {
           console.log('✅ Dry run successful! Package is ready to publish.');
           publishedPackages.push({
@@ -689,16 +753,27 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
             version: manifest.version,
             url: ''
           });
-          continue;
+          publishSuccess = true;
+          break;
         }
 
         // Publish to registry
         console.log('🚀 Publishing to registry...');
+
+        // Build publish options
+        const publishOptions: { orgId?: string; publishAsAuthor?: string } = {};
         if (selectedOrgId) {
-          console.log(`   Publishing as organization: ${userInfo.organizations.find((org: any) => org.id === selectedOrgId)?.name}`);
-          console.log(`   Organization ID: ${selectedOrgId}`);
+          publishOptions.orgId = selectedOrgId;
         }
-        const result = await client.publish(manifest, tarball, selectedOrgId ? { orgId: selectedOrgId } : undefined);
+        if (publishAsAuthor) {
+          publishOptions.publishAsAuthor = publishAsAuthor;
+        }
+
+        const result = await client.publish(
+          manifest,
+          tarball,
+          Object.keys(publishOptions).length > 0 ? publishOptions : undefined
+        );
 
         // Determine the webapp URL based on registry URL
         let webappUrl: string;
@@ -734,8 +809,14 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           version: result.version,
           url: packageUrl
         });
+
+        // Mark as successful to exit retry loop
+        publishSuccess = true;
+
       } catch (err) {
         const pkgError = err instanceof Error ? err.message : String(err);
+        lastError = err instanceof Error ? err : new Error(String(err));
+
         // Try to use scoped name if we have user info, otherwise fall back to manifest name
         const displayName = userInfo
           ? predictScopedPackageName(
@@ -744,16 +825,37 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
               manifest.organization
             )
           : manifest.name;
-        console.error(`\n❌ Failed to publish ${displayName}: ${pkgError}\n`);
-        failedPackages.push({
-          name: displayName,
-          error: pkgError
-        });
+
+        // Check if error is retriable
+        if (isRetriableError(pkgError) && retryCount < MAX_RETRIES) {
+          console.error(`\n⚠️  Temporary error publishing ${displayName}: ${pkgError}`);
+          console.error(`   Will retry (${retryCount + 1}/${MAX_RETRIES})...\n`);
+          retryCount++;
+        } else {
+          // Non-retriable error or max retries exceeded
+          if (retryCount >= MAX_RETRIES) {
+            console.error(`\n❌ Failed to publish ${displayName} after ${MAX_RETRIES} retries: ${pkgError}\n`);
+          } else {
+            console.error(`\n❌ Failed to publish ${displayName}: ${pkgError}\n`);
+          }
+          failedPackages.push({
+            name: displayName,
+            error: pkgError
+          });
+          break; // Exit retry loop
+        }
       }
+    } // End of retry while loop
+
     }
 
     // Publish collections if present
-    if (collections.length > 0) {
+    // Only publish collections if:
+    // 1. No --package flag (publish all), OR
+    // 2. --collection flag explicitly specified
+    const shouldPublishCollections = !options.package || options.collection;
+
+    if (collections.length > 0 && shouldPublishCollections) {
       // Filter to specific collection if requested
       let filteredCollections = collections;
       if (options.collection) {

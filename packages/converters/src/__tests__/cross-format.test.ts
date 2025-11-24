@@ -749,7 +749,7 @@ describe('Cross-format conversions', () => {
       const result = toClaude(canonical);
 
       expect(result.content).toMatch(/^---\n/);
-      expect(result.content).toContain('name: debugger');
+      expect(result.content).toContain('name: test-package'); // Uses pkg.id, not Cursor's name field
       expect(result.content).toContain('# 🐛');
       expect(result.format).toBe('claude');
     });
@@ -800,8 +800,9 @@ describe('Cross-format conversions', () => {
     it('should convert Cursor command to Claude slash command', () => {
       const result = toClaude(canonical);
 
-      // Claude slash commands are plain markdown (no frontmatter)
-      expect(result.content).not.toMatch(/^---\n/);
+      // Claude slash commands MUST have frontmatter per schema
+      expect(result.content).toMatch(/^---\n/);
+      expect(result.content).toContain('description:');
       expect(result.content).toContain('# 🧪');
       expect(result.format).toBe('claude');
     });

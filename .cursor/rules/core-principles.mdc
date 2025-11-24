@@ -1,5 +1,4 @@
 ---
-ruleType: always
 alwaysApply: true
 description: Core development principles for building PRPM (Prompt Package Manager)
 ---

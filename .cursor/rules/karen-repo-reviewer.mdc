@@ -1,8 +1,6 @@
 ---
-ruleType: conditional
 alwaysApply: false
 description: Use Karen for brutally honest repository reviews with market-aware Karen Scores. Analyzes entire codebases for over-engineering, completion honesty, and whether the project actually solves a real problem.
-source: prpm-karen
 ---
 
 # Karen - Repository Reality Manager

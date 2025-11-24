@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/kiro-steering.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/kiro-steering.json",
+  "$comment": "https://kiro.dev/docs/steering/",
   "title": "Kiro Steering Files Format",
   "description": "JSON Schema for Kiro steering files (.kiro/steering/*.md) - context-aware instructions with optional frontmatter (defaults to 'always' inclusion)",
   "type": "object",

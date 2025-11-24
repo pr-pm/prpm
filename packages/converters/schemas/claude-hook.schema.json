@@ -1,8 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/claude-hook.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/hook.json",
+  "$comment": "https://code.claude.com/docs/en/hooks",
   "title": "Claude Hook Format",
-  "description": "JSON Schema for Claude Code Hooks - executable code triggered by events",
+  "description": "JSON Schema for Claude Code Hooks - executable code triggered by events. Valid hook events: PreToolUse (blocks the tool call, shows stderr to Claude), PermissionRequest (denies the permission, shows stderr to Claude), PostToolUse (shows stderr to Claude, tool already ran), Notification (shows stderr to user only), UserPromptSubmit (blocks prompt processing, erases prompt, shows stderr to user only), Stop (blocks stoppage, shows stderr to Claude), SubagentStop (blocks stoppage, shows stderr to Claude subagent), PreCompact (shows stderr to user only), SessionStart (shows stderr to user only), SessionEnd (shows stderr to user only)",
   "type": "object",
   "required": ["frontmatter", "content"],
   "properties": {
@@ -25,6 +26,7 @@
           "type": "string",
           "enum": [
             "PreToolUse",
+            "PermissionRequest",
             "PostToolUse",
             "UserPromptSubmit",
             "Notification",
@@ -34,7 +36,7 @@
             "SessionStart",
             "SessionEnd"
           ],
-          "description": "Event that triggers this hook"
+          "description": "Event that triggers this hook. PreToolUse: blocks the tool call, shows stderr to Claude. PermissionRequest: denies the permission, shows stderr to Claude. PostToolUse: shows stderr to Claude (tool already ran). Notification: shows stderr to user only. UserPromptSubmit: blocks prompt processing, erases prompt, shows stderr to user only. Stop: blocks stoppage, shows stderr to Claude. SubagentStop: blocks stoppage, shows stderr to Claude subagent. PreCompact: shows stderr to user only. SessionStart: shows stderr to user only. SessionEnd: shows stderr to user only."
         },
         "language": {
           "type": "string",

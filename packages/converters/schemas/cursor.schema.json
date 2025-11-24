@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/cursor.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/cursor.json",
+  "$comment": "https://cursor.com/docs/context/rules",
   "title": "Cursor Rules Format",
   "description": "JSON Schema for Cursor .cursor/rules format with MDC (Markdown Components) frontmatter",
   "type": "object",
@@ -37,21 +38,6 @@
           "items": {
             "type": "string"
           }
-        },
-        "agentType": {
-          "type": "string",
-          "enum": ["agent"],
-          "description": "Marks as agent subtype (PRPM extension for round-trip conversion)"
-        },
-        "skillType": {
-          "type": "string",
-          "enum": ["skill"],
-          "description": "Marks as skill subtype (PRPM extension for round-trip conversion)"
-        },
-        "commandType": {
-          "type": "string",
-          "enum": ["slash-command"],
-          "description": "Marks as slash command subtype (PRPM extension for round-trip conversion)"
         }
       },
       "additionalProperties": false

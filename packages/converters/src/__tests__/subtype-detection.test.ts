@@ -59,7 +59,7 @@ commandType: slash-command
       const content = `---
 name: test
 description: Test rule
-allowed-tools: Read, Write
+tools: Read, Write
 ---
 
 # Test Rule
@@ -88,7 +88,7 @@ description: Test
       const content = `---
 name: test-agent
 description: Test agent
-allowed-tools: Read, Write
+tools: Read, Write
 ---
 
 # Test Agent`;

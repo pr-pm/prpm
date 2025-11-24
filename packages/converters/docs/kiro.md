@@ -10,9 +10,11 @@ Kiro uses steering files in `.kiro/steering/` to provide context-aware instructi
 
 ## Frontmatter Fields
 
+**Note:** Frontmatter is entirely optional. If omitted, the file defaults to `always` inclusion mode.
+
 ### Optional Fields
 
-- **`inclusion`** (string): When to include this steering file (defaults to `always`)
+- **`inclusion`** (string): When to include this steering file (defaults to `always` if frontmatter is present, or if no frontmatter at all)
   - `always` (default): Include in all contexts
   - `fileMatch`: Include only for specific file patterns
   - `manual`: User manually triggers inclusion

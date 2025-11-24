@@ -221,7 +221,7 @@ export class RegistryClient {
   /**
    * Publish a package (requires authentication)
    */
-  async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string }): Promise<PublishResponse> {
+  async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string; publishAsAuthor?: string }): Promise<PublishResponse> {
     if (!this.token) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
@@ -233,6 +233,11 @@ export class RegistryClient {
     // Add org_id if provided
     if (options?.orgId) {
       formData.append('org_id', options.orgId);
+    }
+
+    // Add publish_as_author if provided (admin override)
+    if (options?.publishAsAuthor) {
+      formData.append('publish_as_author', options.publishAsAuthor);
     }
 
     const response = await this.fetch('/api/v1/packages', {

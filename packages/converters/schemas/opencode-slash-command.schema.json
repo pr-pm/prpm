@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/opencode/slash-command.json",
+  "$comment": "https://opencode.ai/docs/slash-commands/",
+  "title": "OpenCode Slash Command Format",
+  "description": "JSON Schema for OpenCode Slash Commands - markdown files with YAML frontmatter stored in .opencode/command/",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["template"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Brief description of what the command does (shown in TUI)"
+        },
+        "template": {
+          "type": "string",
+          "description": "The prompt text sent to the LLM when executed. Required field. Supports placeholders: $ARGUMENTS, $1-$9, !`command`, @filename"
+        },
+        "agent": {
+          "type": "string",
+          "description": "Specifies which agent executes the command"
+        },
+        "model": {
+          "type": "string",
+          "description": "Overrides default model for this command (e.g., 'anthropic/claude-sonnet-4-20250514')"
+        },
+        "subtask": {
+          "type": "boolean",
+          "description": "Forces subagent invocation behavior when true"
+        }
+      },
+      "additionalProperties": true
+    },
+    "content": {
+      "type": "string",
+      "description": "Additional command documentation or notes (optional)"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "description": "Run tests for a specific file",
+        "template": "Run the tests for $1 and report the results",
+        "agent": "test-runner",
+        "subtask": true
+      },
+      "content": "# Test Runner Command\n\nExecutes tests for the specified file and provides a detailed report."
+    },
+    {
+      "frontmatter": {
+        "template": "Review the following code for best practices:\n\n@$1",
+        "model": "anthropic/claude-sonnet-4-20250514"
+      },
+      "content": ""
+    }
+  ]
+}

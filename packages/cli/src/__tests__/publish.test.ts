@@ -16,8 +16,8 @@ jest.mock('@pr-pm/registry-client');
 jest.mock('../core/user-config');
 jest.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: jest.fn().mockResolvedValue(undefined),
+    shutdown: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -460,6 +460,7 @@ describe('Publish Command', () => {
           version: '1.0.0',
           description: 'Test package for testing purposes',
           format: 'cursor',
+          subtype: 'rule',
           files: ['.cursorrules'],
         })
       );
@@ -467,8 +468,14 @@ describe('Publish Command', () => {
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockPublish = jest.fn();
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [],
+      });
+
       mockGetRegistryClient.mockReturnValue({
         publish: mockPublish,
+        whoami: mockWhoami,
       } as any);
 
       await handlePublish({ dryRun: true });
@@ -1251,6 +1258,229 @@ describe('Publish Command', () => {
         author: 'Custom Author', // Should use package-level override
         license: 'Apache-2.0', // Should use package-level override
       });
+    });
+  });
+
+  describe('Admin Author Override', () => {
+    it('should allow admin to publish as different author from manifest', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package published by admin',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          author: 'different-user',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'admin-user',
+        is_admin: true,
+        organizations: [],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      expect(options).toBeDefined();
+      expect(options.publishAsAuthor).toBe('different-user');
+    });
+
+    it('should not override author for non-admin users', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          author: 'some-other-user',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'regular-user',
+        is_admin: false,
+        organizations: [],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      // Options should be undefined or not have publishAsAuthor
+      if (options) {
+        expect(options.publishAsAuthor).toBeUndefined();
+      }
+    });
+
+    it('should not override author if manifest does not have author field', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package without author',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          // No author field
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'admin-user',
+        is_admin: true,
+        organizations: [],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      // Options should be undefined or not have publishAsAuthor
+      if (options) {
+        expect(options.publishAsAuthor).toBeUndefined();
+      }
+    });
+
+    it('should work with organization publishing and admin override', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package with org and author override',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          author: 'target-user',
+          organization: 'my-company',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'admin-user',
+        is_admin: true,
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'owner' },
+        ],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      expect(options).toBeDefined();
+      expect(options.publishAsAuthor).toBe('target-user');
+      expect(options.orgId).toBe('org-123');
+    });
+
+    it('should handle author as object with name and email', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package with author object',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          author: {
+            name: 'target-user',
+            email: 'target@example.com'
+          },
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'admin-user',
+        is_admin: true,
+        organizations: [],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      expect(options).toBeDefined();
+      expect(options.publishAsAuthor).toBe('target-user');
     });
   });
 });

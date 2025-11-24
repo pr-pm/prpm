@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://prpm.dev/schemas/kiro-agent.schema.json",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/kiro/agent.json",
+  "$comment": "https://kiro.dev/docs/cli/custom-agents/",
   "title": "Kiro Agent Configuration Format",
   "description": "JSON Schema for Kiro custom agent configurations (.kiro/agents/*.json) - specialized AI assistants with specific tools and context",
   "type": "object",
