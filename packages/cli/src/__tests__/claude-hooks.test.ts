@@ -28,7 +28,19 @@ const mockDeleteFile = deleteFile as jest.Mock;
 const mockFileExists = fileExists as jest.Mock;
 const mockEnsureDirectoryExists = ensureDirectoryExists as jest.Mock;
 const mockGetDestinationDir = getDestinationDir as jest.Mock;
-jest.mock('../core/lockfile');
+jest.mock('../core/lockfile', () => {
+  const actual = jest.requireActual('../core/lockfile');
+  return {
+    ...actual,
+    readLockfile: jest.fn(),
+    writeLockfile: jest.fn(),
+    addToLockfile: jest.fn(),
+    createLockfile: jest.fn(() => ({ packages: {}, version: '1.0.0', lockfileVersion: 1, generated: new Date().toISOString() })),
+    setPackageIntegrity: jest.fn(),
+    getLockedVersion: jest.fn(() => null),
+    removePackage: jest.fn(),
+  };
+});
 jest.mock('../core/telemetry', () => ({
   telemetry: {
     track: jest.fn(),
@@ -366,6 +378,16 @@ describe('Claude Hooks', () => {
         },
       };
 
+      // Mock readLockfile for new uninstall flow
+      (readLockfile as jest.Mock).mockResolvedValue({
+        version: '1.0.0',
+        lockfileVersion: 1,
+        packages: {
+          '@author/hook1': mockPackageInfo,
+        },
+        generated: new Date().toISOString(),
+      });
+
       (removePackage as jest.Mock).mockResolvedValue(mockPackageInfo);
       mockFsReadFile.mockResolvedValue(JSON.stringify(existingSettings));
 
@@ -402,6 +424,16 @@ describe('Claude Hooks', () => {
           hookId: '@author/missing-hook@1.0.0',
         },
       };
+
+      // Mock readLockfile for new uninstall flow
+      (readLockfile as jest.Mock).mockResolvedValue({
+        version: '1.0.0',
+        lockfileVersion: 1,
+        packages: {
+          '@author/missing-hook': mockPackageInfo,
+        },
+        generated: new Date().toISOString(),
+      });
 
       (removePackage as jest.Mock).mockResolvedValue(mockPackageInfo);
       mockFsReadFile.mockRejectedValue({ code: 'ENOENT' });
@@ -445,6 +477,16 @@ describe('Claude Hooks', () => {
           hookId: '@author/only-hook@1.0.0',
         },
       };
+
+      // Mock readLockfile for new uninstall flow
+      (readLockfile as jest.Mock).mockResolvedValue({
+        version: '1.0.0',
+        lockfileVersion: 1,
+        packages: {
+          '@author/only-hook': mockPackageInfo,
+        },
+        generated: new Date().toISOString(),
+      });
 
       (removePackage as jest.Mock).mockResolvedValue(mockPackageInfo);
       mockFsReadFile.mockResolvedValue(JSON.stringify(existingSettings));

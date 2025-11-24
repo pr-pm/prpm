@@ -18,14 +18,18 @@ jest.mock('@pr-pm/registry-client', () => ({
 jest.mock('../core/user-config', () => ({
   getConfig: jest.fn(),
 }));
-jest.mock('../core/lockfile', () => ({
-  readLockfile: jest.fn(),
-  writeLockfile: jest.fn(),
-  addToLockfile: jest.fn(),
-  createLockfile: jest.fn(() => ({ packages: {} })),
-  setPackageIntegrity: jest.fn(),
-  getLockedVersion: jest.fn(() => null),
-}));
+jest.mock('../core/lockfile', () => {
+  const actual = jest.requireActual('../core/lockfile');
+  return {
+    ...actual,
+    readLockfile: jest.fn(),
+    writeLockfile: jest.fn(),
+    addToLockfile: jest.fn(),
+    createLockfile: jest.fn(() => ({ packages: {} })),
+    setPackageIntegrity: jest.fn(),
+    getLockedVersion: jest.fn(() => null),
+  };
+});
 jest.mock('../core/filesystem', () => ({
   getDestinationDir: jest.fn((format: string, subtype: string) => {
     // Return appropriate directory based on format
