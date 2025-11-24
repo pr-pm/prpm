@@ -38,3 +38,6 @@ export { toDroid } from './to-droid.js';
 // Utilities
 export * from './taxonomy-utils.js';
 export * from './validation.js';
+
+// JSON Schemas
+export * from './schema-files.js';
