@@ -144,7 +144,7 @@ export async function schemaRoutes(server: FastifyInstance) {
           url = `${baseUrl}/api/v1/schemas/${format}/${subtype}.json`;
         } else {
           // Base schema - extract format from filename
-          // Handle special cases: kiro-steering → kiro-steering, agents-md → agents-md
+          // Handle special cases: kiro-steering → kiro-steering, gemini-md → gemini-md
           format = filename.replace('.schema.json', '');
           url = `${baseUrl}/api/v1/schemas/${format}.json`;
         }
