@@ -6,8 +6,8 @@ import { createRequire } from 'module';
 
 type JsonSchema = Record<string, unknown>;
 
-const require = createRequire(import.meta.url);
-const loadSchema = (filename: string): JsonSchema => require(`../schemas/${filename}`) as JsonSchema;
+const schemaRequire = createRequire(import.meta.url);
+const loadSchema = (filename: string): JsonSchema => schemaRequire(`../schemas/${filename}`) as JsonSchema;
 
 // Base schemas
 export const agentsMdSchema = loadSchema('agents-md.schema.json');
