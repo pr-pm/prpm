@@ -165,6 +165,7 @@ jobs:
           cd ../..
           zip -r packages/registry/${VERSION_LABEL}.zip \
             packages/converters/dist/ \
+            packages/converters/schemas/ \
             packages/converters/package.json \
             packages/types/dist/ \
             packages/types/package.json \
