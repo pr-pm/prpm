@@ -24,6 +24,7 @@ import { extractLicenseInfo, validateLicenseInfo } from '../utils/license-extrac
 import { extractSnippet, validateSnippet } from '../utils/snippet-extractor';
 import { executePrepublishOnly } from '../utils/script-executor';
 import { validatePackageFiles } from '../utils/format-file-validator';
+import { publishInParallel, calculateStats, formatDuration, withRetry, type PublishTask } from '../utils/parallel-publisher';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -534,7 +535,9 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     // Helper to check if error is retriable
     const isRetriableError = (error: string): boolean => {
       return error.includes('Service Unavailable') ||
+             error.includes('Bad Gateway') ||
              error.includes('at capacity') ||
+             error.includes('502') ||
              error.includes('503') ||
              error.includes('ECONNRESET') ||
              error.includes('ETIMEDOUT');
