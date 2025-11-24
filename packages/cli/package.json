@@ -53,6 +53,7 @@
     "commander": "^11.1.0",
     "jsonwebtoken": "^9.0.2",
     "posthog-node": "^5.10.0",
+    "semver": "^7.7.3",
     "tar": "^6.2.1"
   },
   "devDependencies": {

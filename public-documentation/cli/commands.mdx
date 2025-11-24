@@ -587,13 +587,15 @@ Creates a multi-package manifest file that you can review, edit, and publish wit
 
 ### publish
 
-Publish your package to the PRPM registry.
+Publish packages or collections to the PRPM registry.
 
 ```bash
 prpm publish [options]
 ```
 
 **Options:**
+- `--package <name>` - Publish only a specific package from multi-package manifest
+- `--collection <id>` - Publish only a specific collection (skips packages)
 - `--dry-run` - Test publishing without actually uploading
 - `--tag <tag>` - Publish with a specific tag (e.g., `beta`, `next`)
 - `--access <public|private>` - Set package access level
@@ -607,18 +609,47 @@ prpm publish [options]
 **Examples:**
 
 ```bash
-# Publish package
+# Publish everything (all packages + all collections)
 prpm publish
 
-# Test publish
+# Publish only a specific package
+prpm publish --package my-package
+
+# Publish only a specific collection (skips all packages)
+prpm publish --collection my-collection
+
+# Test publish (dry run)
 prpm publish --dry-run
 
-# Publish beta version
-prpm publish --tag beta
+# Publish specific package as beta
+prpm publish --package my-package --tag beta
 
 # Publish private package
 prpm publish --access private
 ```
+
+**Multi-Package Publishing:**
+
+When your `prpm.json` has multiple packages or collections:
+
+```json
+{
+  "name": "my-workspace",
+  "packages": [
+    { "name": "package-a", ... },
+    { "name": "package-b", ... }
+  ],
+  "collections": [
+    { "id": "collection-1", ... },
+    { "id": "collection-2", ... }
+  ]
+}
+```
+
+**Publishing Behavior:**
+- `prpm publish` → Publishes **all** packages + **all** collections
+- `prpm publish --package package-a` → Publishes **only** `package-a` (skips collections)
+- `prpm publish --collection collection-1` → Publishes **only** `collection-1` (skips packages)
 
 **What happens during publish:**
 1. Package is validated against schema
@@ -626,6 +657,12 @@ prpm publish --access private
 3. Package metadata is uploaded to registry
 4. Tarball is uploaded to storage
 5. Package becomes available for installation
+
+**Rate Limiting:**
+- Burst capacity: 20 packages can be published immediately
+- Sustained rate: 10 packages per minute after burst
+- Requests are automatically queued when rate limit is reached
+- Maximum queue wait: 30 seconds
 
 ---
 

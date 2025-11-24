@@ -41,7 +41,6 @@ export interface LockfilePackage {
 }
 
 export interface LockfileCollection {
-  scope: string;
   name_slug: string;
   version: string;
   installedAt: string; // Timestamp
@@ -378,7 +377,6 @@ export function addCollectionToLockfile(
   lockfile: Lockfile,
   collectionKey: string,
   collectionInfo: {
-    scope: string;
     name_slug: string;
     version: string;
     packages: string[];
@@ -389,7 +387,6 @@ export function addCollectionToLockfile(
   }
 
   lockfile.collections[collectionKey] = {
-    scope: collectionInfo.scope,
     name_slug: collectionInfo.name_slug,
     version: collectionInfo.version,
     installedAt: new Date().toISOString(),
