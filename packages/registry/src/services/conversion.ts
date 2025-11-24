@@ -15,6 +15,12 @@ import {
   toRuler,
   toAgentsMd,
   toGemini,
+  toOpencode,
+  toDroid,
+  toTrae,
+  toAider,
+  toZencoder,
+  toReplit,
 } from '@pr-pm/converters';
 import type { Format } from '@pr-pm/types';
 
@@ -82,6 +88,34 @@ export async function convertToFormat(
         result = toAgentsMd(canonicalPkg);
         break;
 
+      case 'gemini':
+        result = toGemini(canonicalPkg);
+        break;
+
+      case 'opencode':
+        result = toOpencode(canonicalPkg);
+        break;
+
+      case 'droid':
+        result = toDroid(canonicalPkg);
+        break;
+
+      case 'trae':
+        result = toTrae(canonicalPkg);
+        break;
+
+      case 'aider':
+        result = toAider(canonicalPkg);
+        break;
+
+      case 'zencoder':
+        result = toZencoder(canonicalPkg);
+        break;
+
+      case 'replit':
+        result = toReplit(canonicalPkg);
+        break;
+
       case 'generic':
         // Generic markdown - use the most compatible format
         result = toCursor(canonicalPkg);
@@ -143,6 +177,27 @@ function getFilenameForFormat(format: Format, packageName: string): string {
     case 'agents.md':
       return 'agents.md';
 
+    case 'gemini':
+      return `${baseName}.toml`;
+
+    case 'opencode':
+      return `${baseName}.md`;
+
+    case 'droid':
+      return `${baseName}.md`;
+
+    case 'trae':
+      return `${baseName}.md`;
+
+    case 'aider':
+      return 'CONVENTIONS.md';
+
+    case 'zencoder':
+      return `${baseName}.md`;
+
+    case 'replit':
+      return 'replit_agent_instructions.md';
+
     case 'generic':
     case 'mcp':
     default:
@@ -158,6 +213,9 @@ function getContentTypeForFormat(format: Format): string {
     case 'kiro':
       return 'application/json';
 
+    case 'gemini':
+      return 'text/toml';
+
     case 'cursor':
     case 'claude':
     case 'continue':
@@ -165,6 +223,12 @@ function getContentTypeForFormat(format: Format): string {
     case 'copilot':
     case 'ruler':
     case 'agents.md':
+    case 'opencode':
+    case 'droid':
+    case 'trae':
+    case 'aider':
+    case 'zencoder':
+    case 'replit':
     case 'generic':
     case 'mcp':
     default:
@@ -185,6 +249,9 @@ export function getExtensionForFormat(format: Format): string {
 
     case 'windsurf':
       return '.windsurfrules';
+
+    case 'gemini':
+      return '.toml';
 
     default:
       return '.md';

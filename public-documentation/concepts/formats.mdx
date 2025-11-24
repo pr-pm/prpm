@@ -21,6 +21,10 @@ PRPM supports multiple AI tool formats, allowing you to install packages for dif
 | `opencode` | OpenCode AI | Agents, commands, and tools for OpenCode |
 | `ruler` | Ruler | Coding rules and agents for Ruler |
 | `droid` | Factory Droid | Skills, commands, and hooks for Factory Droid |
+| `trae` | Trae IDE | Rules for Trae IDE (ByteDance) |
+| `aider` | Aider | Conventions and rules for Aider AI coding assistant |
+| `zencoder` | Zencoder | Rules for Zencoder AI coding assistant |
+| `replit` | Replit Agent | Instructions for Replit Agent |
 | `agents.md` | Agents.md | Universal agent format (works with OpenAI, Gemini, etc.) |
 | `mcp` | Model Context Protocol | MCP server configurations |
 | `generic` | Multiple | Works across multiple tools |
@@ -59,6 +63,10 @@ PRPM auto-detects the format based on your project structure:
 - `.ruler/` directory → `ruler`
 - `.opencode/` directory → `opencode`
 - `.factory/` directory → `droid`
+- `.trae/` directory → `trae`
+- `.aider/` or `CONVENTIONS.md` file → `aider`
+- `.zencoder/` directory → `zencoder`
+- `.replit/` directory or `.replit` file → `replit`
 - `.mcp/` directory → `mcp`
 
 ## File Installation Paths
@@ -77,6 +85,10 @@ Each format has a standard installation path:
 | `opencode` | `.opencode/agent/` or `.opencode/command/` | `.opencode/agent/code-reviewer.md` |
 | `ruler` | `.ruler/rules/` or `.ruler/agents/` | `.ruler/rules/typescript.md` |
 | `droid` | `.factory/skills/` or `.factory/commands/` | `.factory/skills/code-review/SKILL.md` |
+| `trae` | `.trae/rules/` | `.trae/rules/typescript.md` |
+| `aider` | `CONVENTIONS.md` or `.aider/` | `CONVENTIONS.md` |
+| `zencoder` | `.zencoder/rules/` | `.zencoder/rules/typescript.md` |
+| `replit` | `.replit/` or `replit_agent_instructions.md` | `replit_agent_instructions.md` |
 | `agents.md` | `.agents/` | `.agents/code-reviewer.md` |
 | `mcp` | `.mcp/servers/` | `.mcp/servers/filesystem.json` |
 

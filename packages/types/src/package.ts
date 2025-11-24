@@ -19,6 +19,10 @@ export type Format =
   | 'opencode'
   | 'ruler'
   | 'droid'
+  | 'trae'
+  | 'aider'
+  | 'zencoder'
+  | 'replit'
   | 'generic'
   | 'mcp';
 
@@ -40,6 +44,10 @@ export const FORMATS: readonly Format[] = [
   'opencode',
   'ruler',
   'droid',
+  'trae',
+  'aider',
+  'zencoder',
+  'replit',
   'generic',
   'mcp',
 ] as const;

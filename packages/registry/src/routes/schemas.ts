@@ -18,6 +18,10 @@ import {
   opencodeSchema,
   rulerSchema,
   windsurfSchema,
+  traeSchema,
+  aiderSchema,
+  zencoderSchema,
+  replitSchema,
   claudeAgentSchema,
   claudeHookSchema,
   claudeSkillSchema,
@@ -47,6 +51,10 @@ const BASE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
   ['agents-md.schema.json', agentsMdSchema],
   ['gemini-md.schema.json', geminiMdSchema],
   ['canonical.schema.json', canonicalSchema],
+  ['trae.schema.json', traeSchema],
+  ['aider.schema.json', aiderSchema],
+  ['zencoder.schema.json', zencoderSchema],
+  ['replit.schema.json', replitSchema],
 ];
 
 const SUBTYPE_SCHEMA_ENTRIES: [string, JsonSchema][] = [

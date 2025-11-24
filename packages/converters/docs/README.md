@@ -6,29 +6,33 @@ Comprehensive documentation for all supported AI prompt formats in PRPM.
 
 Complete overview of all supported formats, their subtypes, and official documentation links.
 
-| Format | Subtype | Description | Official Docs | OpenCode Docs |
-|--------|---------|-------------|---------------|---------------|
-| **Cursor** | `rule` | MDC format with YAML frontmatter for context rules | [cursor.com](https://cursor.com/docs/context/rules) | [opencode.ai](https://opencode.ai/docs/cursor) |
-| | `agent` | Custom agent configurations | [cursor.com](https://cursor.com/docs/context/rules#agentsmd) | [opencode.ai](https://opencode.ai/docs/cursor) |
-| | `slash-command` | Executable slash commands | [cursor.com](https://cursor.com/docs/context/rules) | [opencode.ai](https://opencode.ai/docs/cursor) |
-| **Claude Code** | `agent` | AI agents with specific roles and capabilities | [code.claude.com](https://code.claude.com/docs/en/sub-agents) | [opencode.ai](https://opencode.ai/docs/claude) |
-| | `skill` | Specialized skills for Claude agents | [code.claude.com](https://code.claude.com/docs/en/skills) | [opencode.ai](https://opencode.ai/docs/claude) |
-| | `slash-command` | Custom slash commands for workflows | [code.claude.com](https://code.claude.com/docs/en/slash-commands) | [opencode.ai](https://opencode.ai/docs/claude) |
-| | `hook` | Event-driven automations | [code.claude.com](https://code.claude.com/docs/en/hooks) | [opencode.ai](https://opencode.ai/docs/claude) |
-| **Continue** | `rule` | Context rules with globs and regex matching | [docs.continue.dev](https://docs.continue.dev/customize/deep-dives/rules) | [opencode.ai](https://opencode.ai/docs/continue) |
-| **Windsurf** | `rule` | Plain markdown rules (12k character limit) | [docs.windsurf.com](https://docs.windsurf.com/windsurf/cascade/memories#rules) | [opencode.ai](https://opencode.ai/docs/windsurf) |
-| **GitHub Copilot** | `repository` | Repository-level instructions | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | [opencode.ai](https://opencode.ai/docs/copilot) |
-| | `path` | Path-specific instructions with excludeAgent | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | [opencode.ai](https://opencode.ai/docs/copilot) |
-| **Kiro** | `steering` | Steering files with inclusion modes (always/fileMatch/manual) | [kiro.dev](https://kiro.dev/docs/steering/) | [opencode.ai](https://opencode.ai/docs/kiro) |
-| | `hook` | Event-driven shell commands (JSON) | [kiro.dev](https://kiro.dev/docs/hooks/) | [opencode.ai](https://opencode.ai/docs/kiro) |
-| | `agent` | Custom AI agent configurations with MCP servers and tools | [kiro.dev](https://kiro.dev/docs/cli/custom-agents/) | [opencode.ai](https://opencode.ai/docs/kiro) |
-| **Ruler** | `rule` | Plain markdown for centralized management (no frontmatter) | [okigu.com/ruler](https://okigu.com/ruler) | [opencode.ai](https://opencode.ai/docs/rules/) |
-| **Factory Droid** | `skill` | Reusable workflows with YAML frontmatter | [docs.factory.ai](https://docs.factory.ai/cli/configuration/skills) | N/A |
-| | `slash-command` | Custom slash commands with argument hints | [docs.factory.ai](https://docs.factory.ai/cli/configuration/custom-slash-commands) | N/A |
-| | `agents-md` | Agent configurations in markdown | [docs.factory.ai](https://docs.factory.ai/cli/configuration/agents-md) | N/A |
-| **OpenCode** | `agent` | AI agents with mode, tools, and permissions | [opencode.ai](https://opencode.ai/docs/agents/) | N/A |
-| | `slash-command` | User-triggered prompts with templates and placeholders | [opencode.ai](https://opencode.ai/docs/commands/) | N/A |
-| **agents.md** | `agent` | OpenAI format, single file plain markdown | [github.com/openai](https://github.com/openai/agents.md) | N/A |
+| Format | Subtype | Description | Official Docs |
+|--------|---------|-------------|---------------|
+| **Cursor** | `rule` | MDC format with YAML frontmatter for context rules | [cursor.com](https://cursor.com/docs/context/rules) |
+| | `agent` | Custom agent configurations | [cursor.com](https://cursor.com/docs/context/rules#agentsmd) |
+| | `slash-command` | Executable slash commands | [cursor.com](https://cursor.com/docs/context/rules) |
+| **Claude Code** | `agent` | AI agents with specific roles and capabilities | [code.claude.com](https://code.claude.com/docs/en/sub-agents) |
+| | `skill` | Specialized skills for Claude agents | [code.claude.com](https://code.claude.com/docs/en/skills) |
+| | `slash-command` | Custom slash commands for workflows | [code.claude.com](https://code.claude.com/docs/en/slash-commands) |
+| | `hook` | Event-driven automations | [code.claude.com](https://code.claude.com/docs/en/hooks) |
+| **Continue** | `rule` | Context rules with globs and regex matching | [docs.continue.dev](https://docs.continue.dev/customize/deep-dives/rules) |
+| **Windsurf** | `rule` | Plain markdown rules (12k character limit) | [docs.windsurf.com](https://docs.windsurf.com/windsurf/cascade/memories#rules) |
+| **GitHub Copilot** | `repository` | Repository-level instructions | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) |
+| | `path` | Path-specific instructions with excludeAgent | [docs.github.com](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) |
+| **Kiro** | `steering` | Steering files with inclusion modes (always/fileMatch/manual) | [kiro.dev](https://kiro.dev/docs/steering/) |
+| | `hook` | Event-driven shell commands (JSON) | [kiro.dev](https://kiro.dev/docs/hooks/) |
+| | `agent` | Custom AI agent configurations with MCP servers and tools | [kiro.dev](https://kiro.dev/docs/cli/custom-agents/) |
+| **Ruler** | `rule` | Plain markdown for centralized management (no frontmatter) | [okigu.com/ruler](https://okigu.com/ruler) |
+| **Factory Droid** | `skill` | Reusable workflows with YAML frontmatter | [docs.factory.ai](https://docs.factory.ai/cli/configuration/skills) |
+| | `slash-command` | Custom slash commands with argument hints | [docs.factory.ai](https://docs.factory.ai/cli/configuration/custom-slash-commands) |
+| | `agents-md` | Agent configurations in markdown | [docs.factory.ai](https://docs.factory.ai/cli/configuration/agents-md) |
+| **OpenCode** | `agent` | AI agents with mode, tools, and permissions | [opencode.ai](https://opencode.ai/docs/agents/) |
+| | `slash-command` | User-triggered prompts with templates and placeholders | [opencode.ai](https://opencode.ai/docs/commands/) |
+| **agents.md** | `agent` | OpenAI format, single file plain markdown | [github.com/openai](https://github.com/openai/agents.md) |
+| **Trae** | `rule` | Plain markdown user and project rules (NO frontmatter) | [docs.trae.ai](https://docs.trae.ai/ide/rules) |
+| **Aider** | `rule` | Plain markdown coding conventions (NO frontmatter) | [aider.chat](https://aider.chat/docs/usage/conventions.html) |
+| **Zencoder** | `rule` | Markdown with optional YAML frontmatter (description, globs, alwaysApply) | [docs.zencoder.ai](https://docs.zencoder.ai/rules-context/zen-rules) |
+| **Replit** | `rule` | Plain markdown project configuration (NO frontmatter) | [docs.replit.com](https://docs.replit.com/replitai/replit-dot-md) |
 
 ## Format Specifications
 
@@ -60,6 +64,10 @@ This directory contains detailed specifications for each AI IDE/tool format that
 | **Factory Droid** | [factory-droid.md](./factory-droid.md) | Skills, slash commands, and hooks | [docs.factory.ai](https://docs.factory.ai/) |
 | **OpenCode** | [opencode.md](./opencode.md) | Agents and slash commands with YAML frontmatter | [opencode.ai/docs](https://opencode.ai/docs/) |
 | **agents.md** | [agents-md.md](./agents-md.md) | OpenAI format, plain markdown | [github.com/openai/agents.md](https://github.com/openai/agents.md) |
+| **Trae** | [trae.md](./trae.md) | Plain markdown rules, no frontmatter | [docs.trae.ai](https://docs.trae.ai/ide/rules) |
+| **Aider** | [aider.md](./aider.md) | Plain markdown coding conventions | [aider.chat](https://aider.chat/docs/usage/conventions.html) |
+| **Zencoder** | [zencoder.md](./zencoder.md) | Markdown with optional YAML frontmatter | [docs.zencoder.ai](https://docs.zencoder.ai/rules-context/zen-rules) |
+| **Replit** | [replit.md](./replit.md) | Plain markdown project configuration | [docs.replit.com](https://docs.replit.com/replitai/replit-dot-md) |
 
 ## Schema Validation
 
@@ -85,6 +93,10 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 - `gemini.schema.json` - Gemini CLI
 - `ruler.schema.json` - Ruler rules
 - `agents-md.schema.json` - OpenAI agents.md format
+- `trae.schema.json` - Trae rules
+- `aider.schema.json` - Aider conventions
+- `zencoder.schema.json` - Zencoder rules
+- `replit.schema.json` - Replit configuration
 - `canonical.schema.json` - PRPM universal format
 
 **Claude Code Subtypes:**
@@ -174,6 +186,10 @@ These specifications serve as the source of truth for:
 | OpenCode Agents | YAML (required) | `description`, `mode` | `model`, `temperature`, `prompt`, `tools`, `permission`, `disable` |
 | OpenCode Commands | YAML (required) | `template` | `description`, `agent`, `model`, `subtask` |
 | agents.md | None | none | none |
+| Trae | None | none | none |
+| Aider | None | none | none |
+| Zencoder | YAML (optional) | none | `description`, `globs`, `alwaysApply` |
+| Replit | None | none | none |
 
 ### File Organization
 
@@ -189,6 +205,10 @@ These specifications serve as the source of truth for:
 | Factory Droid | `.factory/skills/*/SKILL.md`, `.factory/commands/*.md` | Skills in subdirs, commands as files |
 | OpenCode | `.opencode/agent/*.md`, `.opencode/command/*.md` | Agents and commands as separate files |
 | agents.md | `agents.md` | Single file |
+| Trae | `.trae/rules/*.md` | Multiple files in directory |
+| Aider | `CONVENTIONS.md` | Single file |
+| Zencoder | `.zencoder/rules/*.md` | Multiple files in directory |
+| Replit | `replit.md` | Single file |
 
 ## Conversion Notes
 

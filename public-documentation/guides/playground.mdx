@@ -31,17 +31,17 @@ Playground eliminates this friction entirely. Test instantly, compare results, a
 
 ```bash
 # Single test
-prpm playground @user/package-name "your test input"
+prpm playground --package @user/package-name --input "your test input"
 
 # Interactive mode (multi-turn conversation)
-prpm playground @user/package-name --interactive
+prpm playground --package @user/package-name --interactive
 
 # Compare with baseline (test with and without the package)
-prpm playground @user/package-name "test input" --compare
+prpm playground --package @user/package-name --input "test input" --compare
 
 # Use a specific model
-prpm playground @user/package-name "test input" --model opus
-prpm playground @user/package-name "test input" --model gpt-4o
+prpm playground --package @user/package-name --input "test input" --model opus
+prpm playground --package @user/package-name --input "test input" --model gpt-4o
 ```
 
 ## Supported Models
@@ -84,7 +84,7 @@ prpm playground @user/package-name "test input" --model gpt-4o
 Compare the same input with and without the package prompt to see the actual value added:
 
 ```bash
-prpm playground @user/code-reviewer "Review this code" --compare
+prpm playground --package @user/code-reviewer --input "Review this code" --compare
 ```
 
 This runs two tests:
@@ -98,7 +98,7 @@ Perfect for evaluating if a package actually improves results or is just prompt 
 Have multi-turn conversations to stress test packages:
 
 ```bash
-prpm playground @user/brainstorm-assistant --interactive
+prpm playground --package @user/brainstorm-assistant --interactive
 ```
 
 - Multiple conversation turns
@@ -112,13 +112,13 @@ Choose the right model for your test:
 
 ```bash
 # Use Claude Opus for complex analysis
-prpm playground @user/complex-analyzer "analyze this" --model opus
+prpm playground --package @user/complex-analyzer --input "analyze this" --model opus
 
 # Use GPT-4o Mini for simple tests
-prpm playground @user/simple-formatter "format this" --model gpt-4o-mini
+prpm playground --package @user/simple-formatter --input "format this" --model gpt-4o-mini
 
 # Use GPT-4o for advanced reasoning
-prpm playground @user/problem-solver "solve this" --model gpt-4o
+prpm playground --package @user/problem-solver --input "solve this" --model gpt-4o
 ```
 
 ## Custom Prompts (Verified Authors Only)
@@ -405,8 +405,8 @@ prpm playground [options]
 ```bash
 # Package testing
 prpm playground --package @anthropic/code-reviewer --input "Review this: console.log('hi')"
-prpm playground -p @user/brainstorm -i
-prpm playground -p @user/optimizer --input "Optimize this" --compare
+prpm playground --package @user/brainstorm --interactive
+prpm playground --package @user/optimizer --input "Optimize this" --compare
 
 # Custom prompts (verified authors only)
 prpm playground --custom "You are a concise assistant" --input "Explain async"
@@ -414,7 +414,7 @@ prpm playground --prompt-file ./my-prompt.txt --input "Test"
 prpm playground --prompt-file ./my-prompt.txt --input "Test" --compare
 
 # Interactive mode
-prpm playground -p @user/prompt -i
+prpm playground --package @user/prompt --interactive
 prpm playground --prompt-file ./my-prompt.txt --interactive
 ```
 

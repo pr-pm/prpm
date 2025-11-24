@@ -274,11 +274,11 @@ export default function GettingStarted() {
             <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
               <h4 className="text-lg font-semibold text-white mb-3">Testing from CLI</h4>
               <div className="space-y-2">
-                <CodeBlock code='prpm playground @user/code-reviewer "Review this: console.log(x)"' id="playground-basic" />
+                <CodeBlock code='prpm playground --package @user/code-reviewer --input "Review this: console.log(x)"' id="playground-basic" />
                 <p className="text-gray-400 text-sm my-2">Interactive mode for multi-turn conversations:</p>
-                <CodeBlock code='prpm playground @user/brainstorm-assistant --interactive' id="playground-interactive" />
+                <CodeBlock code='prpm playground --package @user/brainstorm-assistant --interactive' id="playground-interactive" />
                 <p className="text-gray-400 text-sm my-2">Comparison mode (with vs without package):</p>
-                <CodeBlock code='prpm playground @user/typescript-helper "Explain generics" --compare' id="playground-compare" />
+                <CodeBlock code='prpm playground --package @user/typescript-helper --input "Explain generics" --compare' id="playground-compare" />
               </div>
             </div>
 

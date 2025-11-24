@@ -99,6 +99,22 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
     case 'mcp':
       return '.mcp/tools';
 
+    case 'trae':
+      // Trae rules: .trae/rules/*.md
+      return '.trae/rules';
+
+    case 'aider':
+      // Aider conventions: CONVENTIONS.md in root
+      return '.';
+
+    case 'zencoder':
+      // Zencoder rules: .zencoder/rules/*.md
+      return '.zencoder/rules';
+
+    case 'replit':
+      // Replit config: replit.md in root
+      return '.';
+
     default:
       throw new Error(`Unknown format: ${format}`);
   }
@@ -202,6 +218,12 @@ export async function autoDetectFormat(): Promise<Format | null> {
   if (await fileExists('AGENTS.md')) {
     return 'agents.md';
   }
+  if (await fileExists('CONVENTIONS.md')) {
+    return 'aider';
+  }
+  if (await fileExists('replit.md')) {
+    return 'replit';
+  }
 
   const formatDirs: Array<{ format: Format; dir: string }> = [
     { format: 'cursor', dir: '.cursor' },
@@ -213,6 +235,8 @@ export async function autoDetectFormat(): Promise<Format | null> {
     { format: 'gemini', dir: '.gemini' },
     { format: 'opencode', dir: '.opencode' },
     { format: 'droid', dir: '.factory' },
+    { format: 'trae', dir: '.trae' },
+    { format: 'zencoder', dir: '.zencoder' },
     { format: 'agents.md', dir: '.agents' },
   ];
 
