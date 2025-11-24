@@ -28,6 +28,8 @@ import {
   addToLockfile,
   setPackageIntegrity,
   getLockedVersion,
+  getLockfileKey,
+  parseLockfileKey,
 } from '../core/lockfile';
 import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-config';
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
@@ -199,7 +201,16 @@ export async function handleInstall(
 
     // Read existing lock file
     const lockfile = await readLockfile();
-    const lockedVersion = getLockedVersion(lockfile, packageId);
+
+    // Determine target format for installation check
+    // Priority: 1. --as flag, 2. config default, 3. auto-detect, 4. package native format
+    let targetFormat = options.as;
+    if (!targetFormat) {
+      targetFormat = config.defaultFormat || (await autoDetectFormat()) || undefined;
+    }
+
+    // Get locked version for the specific format if available
+    const lockedVersion = getLockedVersion(lockfile, packageId, targetFormat);
 
     // Determine version to install
     let version: string;
@@ -214,38 +225,41 @@ export async function handleInstall(
       version = options.version || specVersion || lockedVersion || 'latest';
     }
 
-    // Determine target format for installation check
-    // Priority: 1. --as flag, 2. config default, 3. auto-detect, 4. package native format
-    let targetFormat = options.as;
-    if (!targetFormat) {
-      targetFormat = config.defaultFormat || (await autoDetectFormat()) || undefined;
-    }
-
     // Check if package is already installed in the same format (skip if --force option is set)
-    if (!options.force && lockfile && lockfile.packages[packageId]) {
-      const installedPkg = lockfile.packages[packageId];
-      const requestedVersion = options.version || specVersion;
+    if (!options.force && lockfile && targetFormat) {
+      const lockfileKey = getLockfileKey(packageId, targetFormat);
+      const installedPkg = lockfile.packages[lockfileKey];
 
-      // Check if installing in the same format
-      const sameFormat = !targetFormat || installedPkg.format === targetFormat;
+      if (installedPkg) {
+        const requestedVersion = options.version || specVersion;
 
-      // If no specific version requested, or same version requested, AND same format
-      if (sameFormat && (!requestedVersion || requestedVersion === 'latest' || requestedVersion === installedPkg.version)) {
-        console.log(`\n✨ Package already installed!`);
-        console.log(`   📦 ${packageId}@${installedPkg.version}`);
-        console.log(`   🔄 Format: ${installedPkg.format || 'unknown'} | Subtype: ${installedPkg.subtype || 'unknown'}`);
-        console.log(`\n💡 To reinstall or upgrade:`);
-        console.log(`   prpm upgrade ${packageId}     # Upgrade to latest version`);
-        console.log(`   prpm uninstall ${packageId}   # Uninstall first, then install`);
-        console.log(`   prpm install ${packageId} --as <format>  # Install in different format`);
-        success = true;
-        return;
-      } else if (!sameFormat) {
-        // Different format requested - allow installation
-        console.log(`📦 Installing ${packageId} in ${targetFormat} format (already have ${installedPkg.format} version)`);
-      } else if (requestedVersion !== installedPkg.version) {
-        // Different version requested - allow upgrade/downgrade
-        console.log(`📦 Upgrading ${packageId}: ${installedPkg.version} → ${requestedVersion}`);
+        // If no specific version requested, or same version requested
+        if (!requestedVersion || requestedVersion === 'latest' || requestedVersion === installedPkg.version) {
+          console.log(`\n✨ Package already installed!`);
+          console.log(`   📦 ${packageId}@${installedPkg.version}`);
+          console.log(`   🔄 Format: ${installedPkg.format || 'unknown'} | Subtype: ${installedPkg.subtype || 'unknown'}`);
+          console.log(`\n💡 To reinstall or upgrade:`);
+          console.log(`   prpm upgrade ${packageId}     # Upgrade to latest version`);
+          console.log(`   prpm uninstall ${packageId}   # Uninstall first, then install`);
+          console.log(`   prpm install ${packageId} --as <format>  # Install in different format`);
+          success = true;
+          return;
+        } else {
+          // Different version requested - allow upgrade/downgrade
+          console.log(`📦 Upgrading ${packageId}: ${installedPkg.version} → ${requestedVersion}`);
+        }
+      } else if (options.as) {
+        // Different format explicitly requested - check if any other format is installed
+        const existingFormats: string[] = [];
+        for (const key of Object.keys(lockfile.packages)) {
+          const parsed = parseLockfileKey(key);
+          if (parsed.packageId === packageId && parsed.format) {
+            existingFormats.push(parsed.format);
+          }
+        }
+        if (existingFormats.length > 0) {
+          console.log(`📦 Installing ${packageId} in ${targetFormat} format (already have ${existingFormats.join(', ')} version${existingFormats.length > 1 ? 's' : ''})`);
+        }
       }
     }
 
@@ -462,6 +476,7 @@ export async function handleInstall(
             convertedContent = cursorResult.content;
             break;
           case 'claude':
+          case 'claude.md':
             const claudeResult = toClaude(canonicalPkg);
             convertedContent = claudeResult.content;
             break;
@@ -488,6 +503,7 @@ export async function handleInstall(
             convertedContent = agentsResult.content;
             break;
           case 'gemini':
+          case 'gemini.md':
             const geminiResult = toGemini(canonicalPkg);
             convertedContent = geminiResult.content;
             break;
@@ -908,7 +924,7 @@ export async function handleInstall(
       progressiveDisclosure: progressiveDisclosureMetadata,
     });
 
-    setPackageIntegrity(updatedLockfile, packageId, tarball);
+    setPackageIntegrity(updatedLockfile, packageId, tarball, effectiveFormat);
     await writeLockfile(updatedLockfile);
 
     // Update lockfile (already done above via addToLockfile + writeLockfile)
@@ -1123,8 +1139,12 @@ export async function installFromLockfile(options: {
     let failCount = 0;
 
     // Install each package from lockfile
-    for (const packageId of packageIds) {
-      const lockEntry = lockfile.packages[packageId];
+    for (const lockfileKey of packageIds) {
+      const lockEntry = lockfile.packages[lockfileKey];
+
+      // Parse lockfile key to get package ID and format (outside try block for error handling)
+      const { packageId, format } = parseLockfileKey(lockfileKey);
+      const displayName = format ? `${packageId} (${format})` : packageId;
 
       try {
         // Extract package spec (strip version if present in packageId)
@@ -1132,7 +1152,7 @@ export async function installFromLockfile(options: {
           ? packageId.substring(0, packageId.lastIndexOf('@'))
           : packageId;
 
-        console.log(`  Installing ${packageId}...`);
+        console.log(`  Installing ${displayName}...`);
 
         let locationOverride = options.location;
         if (!locationOverride && lockEntry.format === 'agents.md' && lockEntry.installedPath) {
@@ -1165,7 +1185,7 @@ export async function installFromLockfile(options: {
           successCount++;
         } else {
           failCount++;
-          console.error(`  ❌ Failed to install ${packageId}:`);
+          console.error(`  ❌ Failed to install ${displayName}:`);
           console.error(`     Type: ${error?.constructor?.name}`);
           console.error(`     Message: ${error instanceof Error ? error.message : String(error)}`);
           if (error instanceof CLIError) {
