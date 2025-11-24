@@ -164,7 +164,8 @@ jobs:
             "private": true,
             "workspaces": ["packages/*"],
             "scripts": {
-              "start": "node dist/index.js"
+              "start": "node dist/index.js",
+              "migrate": "node dist/migrations/run.js"
             },
             "engines": {
               "node": "20.x"
