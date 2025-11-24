@@ -103,6 +103,28 @@ export function createLockfile(): Lockfile {
 }
 
 /**
+ * Generate lockfile key for a package with optional format suffix
+ * Format: packageId or packageId#format
+ */
+export function getLockfileKey(packageId: string, format?: string): string {
+  if (!format) {
+    return packageId;
+  }
+  return `${packageId}#${format}`;
+}
+
+/**
+ * Parse lockfile key to extract package ID and format
+ */
+export function parseLockfileKey(key: string): { packageId: string; format?: string } {
+  const parts = key.split('#');
+  return {
+    packageId: parts[0],
+    format: parts[1],
+  };
+}
+
+/**
  * Add package to lock file
  */
 export function addToLockfile(
@@ -138,7 +160,10 @@ export function addToLockfile(
     };
   }
 ): void {
-  lockfile.packages[packageId] = {
+  // Use format-specific key if format is provided (enables multiple formats per package)
+  const lockfileKey = getLockfileKey(packageId, packageInfo.format);
+
+  lockfile.packages[lockfileKey] = {
     version: packageInfo.version,
     resolved: packageInfo.tarballUrl,
     integrity: '', // Will be set after download
@@ -161,14 +186,17 @@ export function addToLockfile(
 export function setPackageIntegrity(
   lockfile: Lockfile,
   packageId: string,
-  tarballBuffer: Buffer
+  tarballBuffer: Buffer,
+  format?: string
 ): void {
-  if (!lockfile.packages[packageId]) {
-    throw new Error(`Package ${packageId} not found in lock file`);
+  const lockfileKey = getLockfileKey(packageId, format);
+
+  if (!lockfile.packages[lockfileKey]) {
+    throw new Error(`Package ${lockfileKey} not found in lock file`);
   }
 
   const hash = createHash('sha256').update(tarballBuffer).digest('hex');
-  lockfile.packages[packageId].integrity = `sha256-${hash}`;
+  lockfile.packages[lockfileKey].integrity = `sha256-${hash}`;
 }
 
 /**
@@ -191,16 +219,37 @@ export function verifyPackageIntegrity(
 }
 
 /**
- * Get locked version for a package
+ * Get locked version for a package (searches all formats)
  */
 export function getLockedVersion(
   lockfile: Lockfile | null,
-  packageId: string
+  packageId: string,
+  format?: string
 ): string | null {
-  if (!lockfile || !lockfile.packages[packageId]) {
+  if (!lockfile) {
     return null;
   }
-  return lockfile.packages[packageId].version;
+
+  // If format specified, check specific key
+  if (format) {
+    const lockfileKey = getLockfileKey(packageId, format);
+    return lockfile.packages[lockfileKey]?.version || null;
+  }
+
+  // Otherwise, find any matching package (without format suffix first, then with format)
+  if (lockfile.packages[packageId]) {
+    return lockfile.packages[packageId].version;
+  }
+
+  // Search for format-specific entries
+  for (const key of Object.keys(lockfile.packages)) {
+    const parsed = parseLockfileKey(key);
+    if (parsed.packageId === packageId) {
+      return lockfile.packages[key].version;
+    }
+  }
+
+  return null;
 }
 
 /**

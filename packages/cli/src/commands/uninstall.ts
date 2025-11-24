@@ -3,21 +3,116 @@
  */
 
 import { Command } from 'commander';
-import { removePackage } from '../core/lockfile';
+import { removePackage, readLockfile, getLockfileKey, parseLockfileKey } from '../core/lockfile';
 import { stripAuthorNamespace } from '../core/filesystem';
 import { promises as fs } from 'fs';
 import { CLIError } from '../core/errors';
 import { removeSkillFromManifest } from '../core/agents-md-progressive.js';
+import { promptYesNo } from '../core/prompts';
+import * as readline from 'readline';
+
+/**
+ * Prompt user to select from multiple formats
+ */
+async function promptForFormat(packageId: string, formats: string[]): Promise<string> {
+  console.log(`\n📦 Multiple formats found for ${packageId}:`);
+  formats.forEach((fmt, idx) => {
+    console.log(`   ${idx + 1}. ${fmt}`);
+  });
+  console.log(`   ${formats.length + 1}. All formats`);
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question('\nSelect format to uninstall (number): ', (answer) => {
+      rl.close();
+      const choice = parseInt(answer.trim(), 10);
+
+      if (choice > 0 && choice <= formats.length) {
+        resolve(formats[choice - 1]);
+      } else if (choice === formats.length + 1) {
+        resolve('all');
+      } else {
+        console.log('Invalid choice, uninstalling all formats');
+        resolve('all');
+      }
+    });
+  });
+}
 
 /**
  * Handle the uninstall command
  */
-export async function handleUninstall(name: string): Promise<void> {
+export async function handleUninstall(name: string, options: { format?: string }): Promise<void> {
   try {
-    console.log(`🗑️  Uninstalling package: ${name}`);
+    // Read lockfile to find all formats for this package
+    const lockfile = await readLockfile();
 
-    // Remove from lockfile and get package info
-    const pkg = await removePackage(name);
+    if (!lockfile) {
+      throw new CLIError('❌ No prpm.lock file found', 1);
+    }
+
+    // Find all lockfile keys for this package
+    const matchingKeys: string[] = [];
+    for (const key of Object.keys(lockfile.packages)) {
+      const parsed = parseLockfileKey(key);
+      if (parsed.packageId === name) {
+        matchingKeys.push(key);
+      }
+    }
+
+    if (matchingKeys.length === 0) {
+      throw new CLIError(`❌ Package "${name}" not found`, 1);
+    }
+
+    // Determine which format(s) to uninstall
+    let keysToUninstall: string[];
+
+    if (options.format) {
+      // Specific format requested
+      const requestedKey = getLockfileKey(name, options.format);
+      if (!lockfile.packages[requestedKey]) {
+        // Check if package exists without format suffix
+        if (lockfile.packages[name] && lockfile.packages[name].format === options.format) {
+          keysToUninstall = [name];
+        } else {
+          throw new CLIError(`❌ Package "${name}" with format "${options.format}" not found`, 1);
+        }
+      } else {
+        keysToUninstall = [requestedKey];
+      }
+    } else if (matchingKeys.length > 1) {
+      // Multiple formats exist - prompt user
+      const formats = matchingKeys.map(key => {
+        const parsed = parseLockfileKey(key);
+        return parsed.format || lockfile.packages[key].format || 'unknown';
+      });
+
+      const selectedFormat = await promptForFormat(name, formats);
+
+      if (selectedFormat === 'all') {
+        keysToUninstall = matchingKeys;
+      } else {
+        const selectedKey = matchingKeys[formats.indexOf(selectedFormat)];
+        keysToUninstall = [selectedKey];
+      }
+    } else {
+      // Single format exists
+      keysToUninstall = matchingKeys;
+    }
+
+    // Uninstall each selected format
+    for (const lockfileKey of keysToUninstall) {
+      const parsed = parseLockfileKey(lockfileKey);
+      const formatDisplay = parsed.format ? ` (${parsed.format})` : '';
+
+      console.log(`\n🗑️  Uninstalling package: ${name}${formatDisplay}`);
+
+      // Remove from lockfile and get package info
+      const pkg = await removePackage(lockfileKey);
 
     if (!pkg) {
       throw new CLIError(`❌ Package "${name}" not found`, 1);
@@ -123,7 +218,8 @@ export async function handleUninstall(name: string): Promise<void> {
       }
     }
 
-    console.log(`✅ Successfully uninstalled ${name}`);
+      console.log(`✅ Successfully uninstalled ${name}${formatDisplay}`);
+    }
 
   } catch (error) {
     if (error instanceof CLIError) {
@@ -142,6 +238,7 @@ export function createUninstallCommand(): Command {
   command
     .description('Uninstall a prompt package')
     .argument('<id>', 'Package ID to uninstall')
+    .option('--format <format>', 'Specific format to uninstall (if multiple formats installed)')
     .alias('remove')  // Keep 'remove' as an alias for backwards compatibility
     .action(handleUninstall);
 
