@@ -46,7 +46,7 @@ async function promptForFormat(packageId: string, formats: string[]): Promise<st
 /**
  * Handle the uninstall command
  */
-export async function handleUninstall(name: string, options: { format?: string }): Promise<void> {
+export async function handleUninstall(name: string, options: { format?: string } = {}): Promise<void> {
   try {
     // Read lockfile to find all formats for this package
     const lockfile = await readLockfile();
