@@ -30,6 +30,10 @@ export const kiroSteeringSchema = loadSchema('kiro-steering.schema.json');
 export const opencodeSchema = loadSchema('opencode.schema.json');
 export const rulerSchema = loadSchema('ruler.schema.json');
 export const windsurfSchema = loadSchema('windsurf.schema.json');
+export const traeSchema = loadSchema('trae.schema.json');
+export const aiderSchema = loadSchema('aider.schema.json');
+export const zencoderSchema = loadSchema('zencoder.schema.json');
+export const replitSchema = loadSchema('replit.schema.json');
 
 // Subtype schemas
 export const claudeAgentSchema = loadSchema('claude-agent.schema.json');
