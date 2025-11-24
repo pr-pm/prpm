@@ -29,6 +29,10 @@ Complete overview of all supported formats, their subtypes, and official documen
 | **OpenCode** | `agent` | AI agents with mode, tools, and permissions | [opencode.ai](https://opencode.ai/docs/agents/) | N/A |
 | | `slash-command` | User-triggered prompts with templates and placeholders | [opencode.ai](https://opencode.ai/docs/commands/) | N/A |
 | **agents.md** | `agent` | OpenAI format, single file plain markdown | [github.com/openai](https://github.com/openai/agents.md) | N/A |
+| **Trae** | `rule` | Plain markdown user and project rules (NO frontmatter) | [docs.trae.ai](https://docs.trae.ai/ide/rules) | N/A |
+| **Aider** | `rule` | Plain markdown coding conventions (NO frontmatter) | [aider.chat](https://aider.chat/docs/usage/conventions.html) | N/A |
+| **Zencoder** | `rule` | Markdown with optional YAML frontmatter (description, globs, alwaysApply) | [docs.zencoder.ai](https://docs.zencoder.ai/rules-context/zen-rules) | N/A |
+| **Replit** | `rule` | Plain markdown project configuration (NO frontmatter) | [docs.replit.com](https://docs.replit.com/replitai/replit-dot-md) | N/A |
 
 ## Format Specifications
 
@@ -60,6 +64,10 @@ This directory contains detailed specifications for each AI IDE/tool format that
 | **Factory Droid** | [factory-droid.md](./factory-droid.md) | Skills, slash commands, and hooks | [docs.factory.ai](https://docs.factory.ai/) |
 | **OpenCode** | [opencode.md](./opencode.md) | Agents and slash commands with YAML frontmatter | [opencode.ai/docs](https://opencode.ai/docs/) |
 | **agents.md** | [agents-md.md](./agents-md.md) | OpenAI format, plain markdown | [github.com/openai/agents.md](https://github.com/openai/agents.md) |
+| **Trae** | [trae.md](./trae.md) | Plain markdown rules, no frontmatter | [docs.trae.ai](https://docs.trae.ai/ide/rules) |
+| **Aider** | [aider.md](./aider.md) | Plain markdown coding conventions | [aider.chat](https://aider.chat/docs/usage/conventions.html) |
+| **Zencoder** | [zencoder.md](./zencoder.md) | Markdown with optional YAML frontmatter | [docs.zencoder.ai](https://docs.zencoder.ai/rules-context/zen-rules) |
+| **Replit** | [replit.md](./replit.md) | Plain markdown project configuration | [docs.replit.com](https://docs.replit.com/replitai/replit-dot-md) |
 
 ## Schema Validation
 
@@ -85,6 +93,10 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 - `gemini.schema.json` - Gemini CLI
 - `ruler.schema.json` - Ruler rules
 - `agents-md.schema.json` - OpenAI agents.md format
+- `trae.schema.json` - Trae rules
+- `aider.schema.json` - Aider conventions
+- `zencoder.schema.json` - Zencoder rules
+- `replit.schema.json` - Replit configuration
 - `canonical.schema.json` - PRPM universal format
 
 **Claude Code Subtypes:**
@@ -174,6 +186,10 @@ These specifications serve as the source of truth for:
 | OpenCode Agents | YAML (required) | `description`, `mode` | `model`, `temperature`, `prompt`, `tools`, `permission`, `disable` |
 | OpenCode Commands | YAML (required) | `template` | `description`, `agent`, `model`, `subtask` |
 | agents.md | None | none | none |
+| Trae | None | none | none |
+| Aider | None | none | none |
+| Zencoder | YAML (optional) | none | `description`, `globs`, `alwaysApply` |
+| Replit | None | none | none |
 
 ### File Organization
 
@@ -189,6 +205,10 @@ These specifications serve as the source of truth for:
 | Factory Droid | `.factory/skills/*/SKILL.md`, `.factory/commands/*.md` | Skills in subdirs, commands as files |
 | OpenCode | `.opencode/agent/*.md`, `.opencode/command/*.md` | Agents and commands as separate files |
 | agents.md | `agents.md` | Single file |
+| Trae | `.trae/rules/*.md` | Multiple files in directory |
+| Aider | `CONVENTIONS.md` | Single file |
+| Zencoder | `.zencoder/rules/*.md` | Multiple files in directory |
+| Replit | `replit.md` | Single file |
 
 ## Conversion Notes
 
