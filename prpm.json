@@ -364,7 +364,7 @@
     },
     {
       "name": "creating-skills-skill",
-      "version": "1.0.2",
+      "version": "1.0.4",
       "description": "Use when creating new Claude Code skills or improving existing ones - ensures skills are discoverable, scannable, and effective through proper structure, CSO optimization, and real examples",
       "format": "claude",
       "subtype": "skill",
