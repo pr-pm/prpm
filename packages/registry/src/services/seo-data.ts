@@ -17,6 +17,7 @@ export class SeoDataService {
   private server: FastifyInstance;
   private enabled: boolean;
   private bucket: string;
+  private webappBucket: string;
   private prefix: string;
   private cacheControl: string;
   private ssgToken?: string;
@@ -27,6 +28,7 @@ export class SeoDataService {
     this.server = server;
     this.enabled = config.seoData?.enabled !== false;
     this.bucket = config.seoData?.bucket || config.s3.bucket;
+    this.webappBucket = config.seoData?.webappBucket || 'prpm-prod-webapp';
     this.prefix = config.seoData?.prefix || 'seo-data';
     this.cacheControl = config.seoData?.cacheControl || 'public, max-age=300';
     this.ssgToken = process.env.SSG_DATA_TOKEN;
@@ -181,20 +183,20 @@ export class SeoDataService {
       // Replace package-specific data in the HTML
       html = this.replacePackageDataInHtml(html, packageData, author, packagePath);
 
-      // Upload HTML to S3
+      // Upload HTML to webapp S3 bucket (separate from registry's package storage)
       const htmlKey = `packages/${author}/${packagePath}/index.html`;
 
       await s3Client.send(
         new PutObjectCommand({
-          Bucket: this.bucket,
+          Bucket: this.webappBucket,
           Key: htmlKey,
           Body: Buffer.from(html, 'utf-8'),
           ContentType: 'text/html',
-          CacheControl: 'public, max-age=3600',
+          CacheControl: 'no-cache, no-store, must-revalidate', // Match webapp HTML cache policy
         })
       );
 
-      this.server.log.info({ packageName, htmlKey }, '✅ Static HTML page uploaded (from template)');
+      this.server.log.info({ packageName, htmlKey, bucket: this.webappBucket }, '✅ Static HTML page uploaded to webapp bucket');
 
       // Invalidate CloudFront cache for immediate availability
       await this.invalidateCloudFrontCache(htmlKey);
@@ -259,15 +261,15 @@ export class SeoDataService {
 
     await s3Client.send(
       new PutObjectCommand({
-        Bucket: this.bucket,
+        Bucket: this.webappBucket,
         Key: htmlKey,
         Body: Buffer.from(html, 'utf-8'),
         ContentType: 'text/html',
-        CacheControl: 'public, max-age=3600',
+        CacheControl: 'no-cache, no-store, must-revalidate', // Match webapp HTML cache policy
       })
     );
 
-    this.server.log.info({ htmlKey }, '✅ Simple HTML page uploaded (fallback)');
+    this.server.log.info({ htmlKey, bucket: this.webappBucket }, '✅ Simple HTML page uploaded to webapp bucket (fallback)');
   }
 
   /**

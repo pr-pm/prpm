@@ -162,6 +162,7 @@ jobs:
           {
             "name": "prpm-registry-deployment",
             "private": true,
+            "type": "module",
             "workspaces": ["packages/*"],
             "scripts": {
               "start": "node dist/index.js",

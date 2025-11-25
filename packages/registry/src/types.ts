@@ -305,5 +305,6 @@ export interface RegistryConfig {
     bucket: string;
     prefix: string;
     cacheControl: string;
+    webappBucket?: string;
   };
 }

@@ -20,6 +20,9 @@ jest.mock('../../core/telemetry', () => ({
     shutdown: jest.fn().mockResolvedValue(undefined),
   },
 }));
+jest.mock('../../commands/init.js', () => ({
+  smartInit: jest.fn().mockResolvedValue(undefined),
+}));
 
 describe('Publish Command - E2E Tests', () => {
   let testDir: string;
@@ -166,9 +169,9 @@ describe('Publish Command - E2E Tests', () => {
   });
 
   describe('Validation', () => {
-    it('should reject package without prpm.json', async () => {
-      await expect(handlePublish({})).rejects.toThrow(CLIError);
-      await expect(handlePublish({})).rejects.toThrow(/No manifest file found|prpm\.json/i);
+    it('should trigger init and fail if no manifest created', async () => {
+      // smartInit is mocked to do nothing, so no prpm.json will be created
+      await expect(handlePublish({})).rejects.toThrow('No prpm.json was created');
     });
 
     it('should validate package name format', async () => {

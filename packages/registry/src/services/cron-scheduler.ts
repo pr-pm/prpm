@@ -539,9 +539,16 @@ export class CronScheduler {
     // Gradually migrates packages to canonical format
     // Configurable via environment variables
     // =====================================================
-    if (process.env.DISABLE_MIGRATION_CRON !== 'true') {
+    if (process.env.DISABLE_MIGRATION_CRON === 'true') {
+      this.server.log.info('Canonical migration cron disabled via DISABLE_MIGRATION_CRON=true');
+    } else {
       const batchSize = parseInt(process.env.MIGRATION_CRON_BATCH_SIZE || '100', 10);
       const schedule = process.env.MIGRATION_CRON_SCHEDULE || '*/20 * * * *'; // Every 20 minutes by default
+
+      this.server.log.info(
+        { schedule, batchSize },
+        '📝 Registering canonical migration cron job'
+      );
 
       // Track state across runs
       let currentOffset = 0;
@@ -551,6 +558,11 @@ export class CronScheduler {
         name: 'Canonical Format Migration',
         schedule,
         task: async () => {
+          this.server.log.info(
+            { schedule, batchSize, offset: currentOffset, completedCycle: completedCycleWithZeroMigrations },
+            '⏰ Canonical migration cron triggered'
+          );
+
           // Stop if we've already completed a full cycle with zero migrations
           if (completedCycleWithZeroMigrations) {
             this.server.log.info('All packages migrated - migration cron inactive');
@@ -585,25 +597,28 @@ export class CronScheduler {
               '✅ Completed scheduled migration batch'
             );
 
-            // If we processed a full batch, increment offset for next run
-            // Otherwise, we've reached the end - reset to start
-            if (result.total === batchSize && result.migrated > 0) {
+            // If we processed a full batch (regardless of how many were migrated vs skipped),
+            // increment offset to check next batch
+            if (result.total === batchSize) {
               currentOffset += batchSize;
-              this.server.log.debug(
+              this.server.log.info(
                 { newOffset: currentOffset },
                 'Incremented offset for next run'
               );
             } else {
-              // Reached end of packages
-              if (currentOffset > 0) {
-                this.server.log.info(
-                  { totalProcessed: currentOffset + result.total },
-                  'Migration cycle complete'
-                );
-              }
+              // Reached end of packages (less than batchSize returned)
+              this.server.log.info(
+                { totalProcessed: currentOffset + result.total },
+                'Migration cycle complete - reached end of packages'
+              );
 
-              // If we completed a cycle and migrated nothing, we're done
-              if (result.migrated === 0 && currentOffset === 0) {
+              // If we completed a full cycle and migrated nothing, all packages are done
+              if (result.migrated === 0 && currentOffset === 0 && result.total > 0) {
+                // Still have packages but all skipped = all already migrated
+                completedCycleWithZeroMigrations = true;
+                this.server.log.info('All packages already migrated - migration cron will be inactive');
+              } else if (result.total === 0 && currentOffset === 0) {
+                // No packages at all
                 completedCycleWithZeroMigrations = true;
                 this.server.log.info('No packages to migrate - migration cron will be inactive');
               }
