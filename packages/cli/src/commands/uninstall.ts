@@ -5,6 +5,7 @@
 import { Command } from 'commander';
 import { removePackage, readLockfile, getLockfileKey, parseLockfileKey } from '../core/lockfile';
 import { stripAuthorNamespace } from '../core/filesystem';
+import { FORMATS } from '../types';
 import { promises as fs } from 'fs';
 import { CLIError } from '../core/errors';
 import { removeSkillFromManifest } from '../core/agents-md-progressive.js';
@@ -46,8 +47,14 @@ async function promptForFormat(packageId: string, formats: string[]): Promise<st
 /**
  * Handle the uninstall command
  */
-export async function handleUninstall(name: string, options: { format?: string } = {}): Promise<void> {
+export async function handleUninstall(name: string, options: { format?: string; as?: string } = {}): Promise<void> {
   try {
+    const requestedFormat = options.format || options.as;
+
+    if (requestedFormat && !FORMATS.includes(requestedFormat as any)) {
+      throw new CLIError(`❌ Format must be one of: ${FORMATS.join(', ')}`, 1);
+    }
+
     // Read lockfile to find all formats for this package
     const lockfile = await readLockfile();
 
@@ -71,15 +78,15 @@ export async function handleUninstall(name: string, options: { format?: string }
     // Determine which format(s) to uninstall
     let keysToUninstall: string[];
 
-    if (options.format) {
+    if (requestedFormat) {
       // Specific format requested
-      const requestedKey = getLockfileKey(name, options.format);
+      const requestedKey = getLockfileKey(name, requestedFormat);
       if (!lockfile.packages[requestedKey]) {
         // Check if package exists without format suffix
-        if (lockfile.packages[name] && lockfile.packages[name].format === options.format) {
+        if (lockfile.packages[name] && lockfile.packages[name].format === requestedFormat) {
           keysToUninstall = [name];
         } else {
-          throw new CLIError(`❌ Package "${name}" with format "${options.format}" not found`, 1);
+          throw new CLIError(`❌ Package "${name}" with format "${requestedFormat}" not found`, 1);
         }
       } else {
         keysToUninstall = [requestedKey];
@@ -239,6 +246,7 @@ export function createUninstallCommand(): Command {
     .description('Uninstall a prompt package')
     .argument('<id>', 'Package ID to uninstall')
     .option('--format <format>', 'Specific format to uninstall (if multiple formats installed)')
+    .option('--as <format>', 'Alias for --format (use when multiple formats are installed)')
     .alias('remove')  // Keep 'remove' as an alias for backwards compatibility
     .action(handleUninstall);
 
