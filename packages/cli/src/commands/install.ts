@@ -9,7 +9,7 @@ import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists, getManifestFilename } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
-import { Package, Format, Subtype } from '../types';
+import { Package, Format, Subtype, FORMATS } from '../types';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import * as tar from 'tar';
@@ -51,6 +51,13 @@ import {
   toWindsurf,
   toAgentsMd,
   toGemini,
+  toRuler,
+  toOpencode,
+  toDroid,
+  toTrae,
+  toAider,
+  toZencoder,
+  toReplit,
   validateFormat,
   type CanonicalPackage,
 } from '@pr-pm/converters';
@@ -476,9 +483,10 @@ export async function handleInstall(
 
       // Convert from canonical to target format
       let convertedContent: string;
+      const targetFormat = format?.toLowerCase();
 
       try {
-        switch (format) {
+        switch (targetFormat) {
           case 'cursor':
             const cursorResult = toCursor(canonicalPkg);
             convertedContent = cursorResult.content;
@@ -515,8 +523,35 @@ export async function handleInstall(
             const geminiResult = toGemini(canonicalPkg);
             convertedContent = geminiResult.content;
             break;
+          case 'ruler':
+            convertedContent = toRuler(canonicalPkg).content;
+            break;
+          case 'opencode':
+            convertedContent = toOpencode(canonicalPkg).content;
+            break;
+          case 'droid':
+            convertedContent = toDroid(canonicalPkg).content;
+            break;
+          case 'trae':
+            convertedContent = toTrae(canonicalPkg).content;
+            break;
+          case 'aider':
+            convertedContent = toAider(canonicalPkg).content;
+            break;
+          case 'zencoder':
+            convertedContent = toZencoder(canonicalPkg).content;
+            break;
+          case 'replit':
+            convertedContent = toReplit(canonicalPkg).content;
+            break;
+          case 'generic':
+            convertedContent = toCursor(canonicalPkg).content;
+            break;
+          case 'canonical':
+            convertedContent = JSON.stringify(canonicalPkg, null, 2);
+            break;
           default:
-            throw new CLIError(`Unsupported target format for conversion: ${format}`);
+            throw new CLIError(`Unsupported target format for conversion: ${targetFormat || format}`);
         }
       } catch (error: any) {
         throw new CLIError(`Failed to convert to ${format} format: ${error.message}`);
@@ -636,6 +671,18 @@ export async function handleInstall(
       } else if (effectiveFormat === 'kiro' && effectiveSubtype === 'hook') {
         // Kiro hooks use .kiro.hook extension (JSON files)
         destPath = `${destDir}/${packageName}.kiro.hook`;
+      } else if (effectiveFormat === 'aider') {
+        // Aider progressive disclosure: store primary content per resource type
+        if (effectiveSubtype === 'skill') {
+          destPath = `${destDir}/SKILL.md`;
+        } else if (effectiveSubtype === 'agent') {
+          destPath = `${destDir}/AGENT.md`;
+        } else {
+          destPath = `${destDir}/CONVENTIONS.md`;
+        }
+      } else if (effectiveFormat === 'droid' && effectiveSubtype === 'skill') {
+        // Factory Droid skills use SKILL.md inside the skill directory
+        destPath = `${destDir}/SKILL.md`;
       } else {
         destPath = `${destDir}/${packageName}.${fileExtension}`;
       }
@@ -881,7 +928,7 @@ export async function handleInstall(
       skillName?: string;
     } | undefined;
 
-    if ((effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md') && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent') && !options.noAppend) {
+    if ((effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md' || effectiveFormat === 'aider') && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent') && !options.noAppend) {
       // Ensure destDir is defined (should always be set by this point for skill/agent installations)
       if (!destDir) {
         throw new Error('Internal error: destDir not set for progressive disclosure installation');
@@ -1224,19 +1271,20 @@ export function createInstallCommand(): Command {
     .description('Install a package from the registry, or install all packages from prpm.lock if no package specified')
     .argument('[package]', 'Package to install (e.g., react-rules or react-rules@1.2.0). If omitted, installs all packages from prpm.lock')
     .option('--version <version>', 'Specific version to install')
-    .option('--as <format>', 'Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, gemini.md, claude.md, canonical)')
+    .option('--as <format>', `Convert and install in specific format (${FORMATS.join(', ')})`)
     .option('--format <format>', 'Alias for --as')
     .option('--location <path>', 'Custom location for installed files (Agents.md or nested Cursor rules)')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
     .option('--no-append', 'Skip adding skill to manifest file (skill files only)')
-    .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure (default: AGENTS.md)', 'AGENTS.md')
+    .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure')
     .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean; location?: string; noAppend?: boolean; manifestFile?: string }) => {
       // Support both --as and --format (format is alias for as)
-      const convertTo = options.format || options.as;
+      const convertTo = (options.format || options.as) as Format | undefined;
+      const validFormats = FORMATS;
 
-      if (convertTo && !['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini.md', 'claude.md', 'canonical', 'gemini'].includes(convertTo)) {
-        throw new CLIError('❌ Format must be one of: cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical, gemini\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package                   # Install in native format', 1);
+      if (convertTo && !validFormats.includes(convertTo)) {
+        throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format claude.md # Convert to Claude.md format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package --format gemini.md # Convert to Gemini format\n   prpm install my-package                   # Install in native format`, 1);
       }
 
       // If no package specified, install from lockfile

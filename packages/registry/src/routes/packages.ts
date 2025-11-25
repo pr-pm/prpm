@@ -954,7 +954,7 @@ export async function packageRoutes(server: FastifyInstance) {
           stream.on('end', () => {
             if (header.type === 'file') {
               const content = Buffer.concat(chunks).toString('utf-8');
-              fullContent += `\n\n=== ${header.name} ===\n${content}`;
+              fullContent += fullContent ? `\n\n${content}` : content;
             }
             next();
           });

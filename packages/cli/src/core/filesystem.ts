@@ -83,6 +83,7 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
     case 'agents.md':
     case 'gemini.md':
     case 'claude.md':
+    case 'aider':
       // For skills in progressive disclosure mode, use .openskills directory
       if (subtype === 'skill' && packageName) {
         return `.openskills/${packageName}`;
@@ -102,10 +103,6 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
     case 'trae':
       // Trae rules: .trae/rules/*.md
       return '.trae/rules';
-
-    case 'aider':
-      // Aider conventions: CONVENTIONS.md in root
-      return '.';
 
     case 'zencoder':
       // Zencoder rules: .zencoder/rules/*.md
@@ -198,6 +195,8 @@ export function getManifestFilename(format: Format): string {
       return 'GEMINI.md';
     case 'claude.md':
       return 'CLAUDE.md';
+    case 'aider':
+      return 'CONVENTIONS.md';
     default:
       return 'AGENTS.md';
   }

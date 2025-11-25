@@ -12,12 +12,14 @@ import { gzipSync } from 'zlib';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { promptYesNo } from '../core/prompts';
+import { addSkillToManifest } from '../core/agents-md-progressive.js';
 
 jest.mock('../core/prompts', () => ({
   promptYesNo: jest.fn(),
 }));
 
 const promptYesNoMock = promptYesNo as jest.MockedFunction<typeof promptYesNo>;
+const addSkillToManifestMock = addSkillToManifest as jest.MockedFunction<typeof addSkillToManifest>;
 
 // Mock dependencies
 jest.mock('@pr-pm/registry-client');
@@ -39,6 +41,10 @@ jest.mock('../core/filesystem', () => {
     ensureDirectoryExists: jest.fn(actual.ensureDirectoryExists),
   };
 });
+
+jest.mock('../core/agents-md-progressive.js', () => ({
+  addSkillToManifest: jest.fn(),
+}));
 
 describe('install command - file locations', () => {
   const testDir = path.join(__dirname, '../../.test-install');
@@ -75,6 +81,7 @@ describe('install command - file locations', () => {
     }
 
     promptYesNoMock.mockReset();
+    addSkillToManifestMock.mockReset();
 
     (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
     (getConfig as jest.Mock).mockResolvedValue(mockConfig);
@@ -98,6 +105,97 @@ describe('install command - file locations', () => {
   afterEach(() => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
+  });
+
+  describe('Aider format', () => {
+    it('installs aider skill to .openskills/<name>/SKILL.md and updates CONVENTIONS.md manifest', async () => {
+      const mockPackage = {
+        id: 'test-aider-skill',
+        name: 'test-aider-skill',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 10,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Aider Skill'));
+
+      await handleInstall('test-aider-skill', { as: 'aider' });
+
+      expect(saveFile).toHaveBeenCalledWith('.openskills/test-aider-skill/SKILL.md', expect.any(String));
+      expect(addSkillToManifestMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'test-aider-skill',
+          skillPath: '.openskills/test-aider-skill',
+          mainFile: 'SKILL.md',
+        }),
+        'CONVENTIONS.md'
+      );
+    });
+  });
+
+  describe('Gemini manifest format', () => {
+    it('installs gemini.md skill to .openskills/<name>/SKILL.md and updates GEMINI.md manifest', async () => {
+      const mockPackage = {
+        id: 'test-gemini-skill',
+        name: 'test-gemini-skill',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 10,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Gemini Skill'));
+
+      await handleInstall('test-gemini-skill', { as: 'gemini.md' });
+
+      expect(saveFile).toHaveBeenCalledWith('.openskills/test-gemini-skill/SKILL.md', expect.any(String));
+      expect(addSkillToManifestMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'test-gemini-skill',
+          skillPath: '.openskills/test-gemini-skill',
+          mainFile: 'SKILL.md',
+        }),
+        'GEMINI.md'
+      );
+    });
+  });
+
+  describe('Droid format', () => {
+    it('installs droid skill to .factory/skills/<name>/SKILL.md', async () => {
+      const mockPackage = {
+        id: 'test-droid-skill',
+        name: 'test-droid-skill',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 5,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Droid Skill'));
+
+      await handleInstall('test-droid-skill', { as: 'droid' });
+
+      expect(saveFile).toHaveBeenCalledWith('.factory/skills/test-droid-skill/SKILL.md', expect.any(String));
+    });
   });
 
   describe('Claude package types', () => {
