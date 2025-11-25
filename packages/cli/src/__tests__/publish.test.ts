@@ -20,6 +20,9 @@ jest.mock('../core/telemetry', () => ({
     shutdown: jest.fn().mockResolvedValue(undefined),
   },
 }));
+jest.mock('../commands/init.js', () => ({
+  smartInit: jest.fn().mockResolvedValue(undefined),
+}));
 
 const mockGetConfig = getConfig as jest.MockedFunction<typeof getConfig>;
 const mockGetRegistryClient = getRegistryClient as jest.MockedFunction<typeof getRegistryClient>;
@@ -65,8 +68,9 @@ describe('Publish Command', () => {
   });
 
   describe('Manifest Validation', () => {
-    it('should require prpm.json to exist', async () => {
-      await expect(handlePublish({})).rejects.toThrow(CLIError);
+    it('should trigger init and fail if no manifest created', async () => {
+      // smartInit is mocked to do nothing, so no prpm.json will be created
+      await expect(handlePublish({})).rejects.toThrow('No prpm.json was created');
     });
 
     it('should validate required fields', async () => {

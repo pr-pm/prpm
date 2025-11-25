@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { readFile, stat, mkdir, rm } from 'fs/promises';
 import { join, basename } from 'path';
-import { createReadStream } from 'fs';
+import { createReadStream, existsSync } from 'fs';
 import * as tar from 'tar';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
@@ -25,6 +25,7 @@ import { extractSnippet, validateSnippet } from '../utils/snippet-extractor';
 import { executePrepublishOnly } from '../utils/script-executor';
 import { validatePackageFiles } from '../utils/format-file-validator';
 import { publishInParallel, calculateStats, formatDuration, withRetry, type PublishTask } from '../utils/parallel-publisher';
+import { smartInit } from './init.js';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -450,6 +451,28 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     }
 
     console.log('📦 Publishing package...\n');
+
+    // Check if any manifest file exists
+    const prpmJsonPath = join(process.cwd(), 'prpm.json');
+    const marketplaceJsonPath = join(process.cwd(), '.claude', 'marketplace.json');
+    const marketplaceJsonPluginPath = join(process.cwd(), '.claude-plugin', 'marketplace.json');
+
+    const hasManifest = existsSync(prpmJsonPath) ||
+                        existsSync(marketplaceJsonPath) ||
+                        existsSync(marketplaceJsonPluginPath);
+
+    // If no manifest exists, run init first
+    if (!hasManifest) {
+      console.log('No prpm.json found. Let\'s create one first.\n');
+      await smartInit({});
+
+      // Check if init created a manifest
+      if (!existsSync(prpmJsonPath)) {
+        throw new CLIError('No prpm.json was created. Cannot publish without a manifest.', 1);
+      }
+
+      console.log('\n📦 Continuing with publish...\n');
+    }
 
     // Read and validate manifests
     console.log('🔍 Validating package manifest(s)...');
