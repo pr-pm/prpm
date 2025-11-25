@@ -3,12 +3,14 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { mkdtemp, rm, readFile } from 'fs/promises';
+import { mkdtemp, rm, readFile, mkdir, writeFile as fsWriteFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { createInitCommand } from '../commands/init';
+import { createInitCommand, displayPackagesTable, displayReconciliationStatus } from '../commands/init';
 import { CLIError } from '../core/errors';
+import { scanForPackages } from '../core/package-scanner';
+import { reconcilePackages, readManifest, ReconciliationResult } from '../core/package-reconciler';
 
 describe('prpm init command', () => {
   let testDir: string;
@@ -261,3 +263,238 @@ async function writeFile(path: string, content: string, encoding: string) {
   const { writeFile: fsWriteFile } = await import('fs/promises');
   return fsWriteFile(path, content, encoding as any);
 }
+
+describe('smart init - package detection', () => {
+  let testDir: string;
+  let consoleLogMock: jest.SpyInstance;
+  let originalCwd: string;
+
+  beforeAll(() => {
+    originalCwd = process.cwd();
+  });
+
+  beforeEach(async () => {
+    consoleLogMock = jest.spyOn(console, 'log').mockImplementation();
+    testDir = await mkdtemp(join(tmpdir(), 'prpm-smart-init-test-'));
+    process.chdir(testDir);
+  });
+
+  afterEach(async () => {
+    consoleLogMock.mockRestore();
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
+    if (testDir && existsSync(testDir)) {
+      await rm(testDir, { recursive: true, force: true });
+    }
+  });
+
+  describe('scanForPackages integration', () => {
+    it('should detect cursor rules', async () => {
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await fsWriteFile(
+        join(testDir, '.cursor/rules/test-rule.mdc'),
+        `---
+name: test-rule
+description: A test rule
+tags: test, cursor
+---
+
+# Test Rule
+`
+      );
+
+      const packages = await scanForPackages(testDir);
+
+      expect(packages).toHaveLength(1);
+      expect(packages[0].name).toBe('test-rule');
+      expect(packages[0].format).toBe('cursor');
+      expect(packages[0].subtype).toBe('rule');
+    });
+
+    it('should detect claude skills', async () => {
+      await mkdir(join(testDir, '.claude/skills/my-skill'), { recursive: true });
+      await fsWriteFile(
+        join(testDir, '.claude/skills/my-skill/SKILL.md'),
+        `---
+name: my-skill
+description: My awesome skill
+---
+
+# My Skill
+`
+      );
+
+      const packages = await scanForPackages(testDir);
+
+      expect(packages).toHaveLength(1);
+      expect(packages[0].name).toBe('my-skill');
+      expect(packages[0].format).toBe('claude');
+      expect(packages[0].subtype).toBe('skill');
+    });
+
+    it('should detect multiple package types', async () => {
+      // Create cursor rule
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await fsWriteFile(join(testDir, '.cursor/rules/rule1.mdc'), '# Rule 1');
+
+      // Create windsurf rule
+      await mkdir(join(testDir, '.windsurf/rules'), { recursive: true });
+      await fsWriteFile(join(testDir, '.windsurf/rules/rule2.md'), '# Rule 2');
+
+      const packages = await scanForPackages(testDir);
+
+      expect(packages).toHaveLength(2);
+      const formats = packages.map(p => p.format).sort();
+      expect(formats).toEqual(['cursor', 'windsurf']);
+    });
+  });
+
+  describe('reconcilePackages integration', () => {
+    it('should identify new packages not in manifest', async () => {
+      // Create a manifest with one package
+      await fsWriteFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'existing',
+          version: '1.0.0',
+          format: 'cursor',
+          files: ['.cursor/rules/existing.mdc'],
+        })
+      );
+
+      // Create the existing file
+      await mkdir(join(testDir, '.cursor/rules'), { recursive: true });
+      await fsWriteFile(join(testDir, '.cursor/rules/existing.mdc'), '# Existing');
+
+      // Create a new file not in manifest
+      await fsWriteFile(join(testDir, '.cursor/rules/new-rule.mdc'), '# New Rule');
+
+      const detected = await scanForPackages(testDir);
+      const manifest = await readManifest(testDir);
+
+      expect(manifest).not.toBeNull();
+
+      const result = await reconcilePackages(detected, manifest!.packages, testDir);
+
+      expect(result.inSync.length).toBeGreaterThanOrEqual(1);
+      expect(result.newPackages.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should identify missing packages', async () => {
+      // Create a manifest with a package
+      await fsWriteFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'missing',
+          version: '1.0.0',
+          format: 'cursor',
+          files: ['.cursor/rules/missing.mdc'],
+        })
+      );
+
+      // Don't create the file
+
+      const detected = await scanForPackages(testDir);
+      const manifest = await readManifest(testDir);
+
+      const result = await reconcilePackages(detected, manifest!.packages, testDir);
+
+      expect(result.missingPackages).toHaveLength(1);
+      expect(result.missingPackages[0].name).toBe('missing');
+    });
+  });
+
+  describe('displayPackagesTable', () => {
+    it('should display packages in table format', () => {
+      const packages = [
+        {
+          name: 'test-package',
+          format: 'cursor' as const,
+          subtype: 'rule' as const,
+          description: 'Test',
+          tags: ['test'],
+          files: ['.cursor/rules/test.mdc'],
+          primaryFile: '.cursor/rules/test.mdc',
+        },
+      ];
+
+      displayPackagesTable(packages);
+
+      expect(consoleLogMock).toHaveBeenCalled();
+      const output = consoleLogMock.mock.calls.map(c => c[0]).join('\n');
+      expect(output).toContain('Format');
+      expect(output).toContain('cursor');
+      expect(output).toContain('test-package');
+    });
+  });
+
+  describe('displayReconciliationStatus', () => {
+    it('should display in-sync packages', () => {
+      const result: ReconciliationResult = {
+        inSync: [{
+          manifest: { name: 'pkg1', format: 'cursor', files: ['file1'] },
+          detected: {
+            name: 'pkg1',
+            format: 'cursor',
+            subtype: 'rule',
+            description: 'Test',
+            tags: [],
+            files: ['file1'],
+            primaryFile: 'file1',
+          },
+        }],
+        newPackages: [],
+        missingPackages: [],
+      };
+
+      displayReconciliationStatus(result);
+
+      const output = consoleLogMock.mock.calls.map(c => c[0]).join('\n');
+      expect(output).toContain('In sync');
+      expect(output).toContain('pkg1');
+    });
+
+    it('should display new packages', () => {
+      const result: ReconciliationResult = {
+        inSync: [],
+        newPackages: [{
+          name: 'new-pkg',
+          format: 'cursor',
+          subtype: 'rule',
+          description: 'New package',
+          tags: [],
+          files: ['file1'],
+          primaryFile: 'file1',
+        }],
+        missingPackages: [],
+      };
+
+      displayReconciliationStatus(result);
+
+      const output = consoleLogMock.mock.calls.map(c => c[0]).join('\n');
+      expect(output).toContain('New');
+      expect(output).toContain('new-pkg');
+    });
+
+    it('should display missing packages', () => {
+      const result: ReconciliationResult = {
+        inSync: [],
+        newPackages: [],
+        missingPackages: [{
+          name: 'missing-pkg',
+          format: 'cursor',
+          files: ['missing-file'],
+        }],
+      };
+
+      displayReconciliationStatus(result);
+
+      const output = consoleLogMock.mock.calls.map(c => c[0]).join('\n');
+      expect(output).toContain('Missing');
+      expect(output).toContain('missing-pkg');
+    });
+  });
+});

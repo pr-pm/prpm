@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/format-registry.json",
+  "title": "PRPM Format Registry",
+  "description": "Central registry defining all supported AI editor formats, their directory structures, file patterns, and scanning configurations",
+  "type": "object",
+  "required": ["version", "formats"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version for format registry"
+    },
+    "formats": {
+      "type": "object",
+      "description": "Map of format names to their configurations",
+      "additionalProperties": {
+        "$ref": "#/definitions/FormatConfig"
+      }
+    }
+  },
+  "definitions": {
+    "FormatConfig": {
+      "type": "object",
+      "required": ["name", "subtypes"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name for the format"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the format"
+        },
+        "documentationUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to official documentation"
+        },
+        "subtypes": {
+          "type": "object",
+          "description": "Map of subtype names to their configurations",
+          "additionalProperties": {
+            "$ref": "#/definitions/SubtypeConfig"
+          }
+        },
+        "rootFiles": {
+          "type": "array",
+          "description": "Root-level files that indicate this format (e.g., .cursorrules)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultSubtype": {
+          "type": "string",
+          "description": "Default subtype to use when an unknown subtype is requested for this format"
+        }
+      }
+    },
+    "SubtypeConfig": {
+      "type": "object",
+      "required": ["directory", "filePatterns"],
+      "properties": {
+        "directory": {
+          "type": "string",
+          "description": "Directory path relative to project root where packages are stored"
+        },
+        "scanDirectory": {
+          "type": "string",
+          "description": "Directory to scan if different from install directory (e.g., Claude hooks)"
+        },
+        "filePatterns": {
+          "type": "array",
+          "description": "Glob patterns for matching package files (e.g., *.md, *.mdc, SKILL.md)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nested": {
+          "type": "boolean",
+          "description": "Whether packages are in subdirectories (e.g., .claude/skills/skill-name/)",
+          "default": false
+        },
+        "nestedIndicator": {
+          "type": "string",
+          "description": "File that indicates a valid package in nested mode (e.g., SKILL.md)"
+        },
+        "fileExtension": {
+          "type": "string",
+          "description": "Default file extension for this format (e.g., .md, .mdc, .toml)"
+        },
+        "usesPackageSubdirectory": {
+          "type": "boolean",
+          "description": "Whether directory path includes package name (e.g., .claude/skills/{name})",
+          "default": false
+        }
+      }
+    }
+  }
+}

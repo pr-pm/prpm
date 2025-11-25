@@ -1,0 +1,351 @@
+{
+  "$schema": "../schemas/format-registry.schema.json",
+  "version": "1.0.0",
+  "formats": {
+    "cursor": {
+      "name": "Cursor",
+      "description": "Cursor AI coding rules and agents",
+      "documentationUrl": "https://cursor.com/docs/context/rules",
+      "rootFiles": [".cursorrules"],
+      "subtypes": {
+        "rule": {
+          "directory": ".cursor/rules",
+          "filePatterns": ["*.mdc", "*.md"],
+          "fileExtension": ".mdc"
+        },
+        "agent": {
+          "directory": ".cursor/agents",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "slash-command": {
+          "directory": ".cursor/commands",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "claude": {
+      "name": "Claude Code",
+      "description": "Claude AI skills, agents, commands, and hooks",
+      "documentationUrl": "https://code.claude.com/docs",
+      "defaultSubtype": "agent",
+      "subtypes": {
+        "skill": {
+          "directory": ".claude/skills",
+          "filePatterns": ["SKILL.md"],
+          "nested": true,
+          "nestedIndicator": "SKILL.md",
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        },
+        "agent": {
+          "directory": ".claude/agents",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "slash-command": {
+          "directory": ".claude/commands",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "fileExtension": ".md"
+        },
+        "hook": {
+          "directory": ".claude",
+          "scanDirectory": ".claude/hooks",
+          "filePatterns": ["hook.json"],
+          "nested": true,
+          "nestedIndicator": "hook.json",
+          "fileExtension": ".json"
+        }
+      }
+    },
+    "continue": {
+      "name": "Continue",
+      "description": "Continue AI coding rules and prompts",
+      "documentationUrl": "https://docs.continue.dev",
+      "rootFiles": [".continuerules"],
+      "subtypes": {
+        "rule": {
+          "directory": ".continue/rules",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "prompt": {
+          "directory": ".continue/prompts",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "windsurf": {
+      "name": "Windsurf",
+      "description": "Windsurf AI coding rules",
+      "documentationUrl": "https://windsurf.run",
+      "subtypes": {
+        "rule": {
+          "directory": ".windsurf/rules",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "copilot": {
+      "name": "GitHub Copilot",
+      "description": "GitHub Copilot instructions and chat modes",
+      "documentationUrl": "https://docs.github.com/en/copilot",
+      "subtypes": {
+        "rule": {
+          "directory": ".github/instructions",
+          "filePatterns": ["*.instructions.md"],
+          "fileExtension": ".instructions.md"
+        },
+        "chatmode": {
+          "directory": ".github/chatmodes",
+          "filePatterns": ["*.chatmode.md"],
+          "fileExtension": ".chatmode.md"
+        }
+      }
+    },
+    "kiro": {
+      "name": "Kiro",
+      "description": "Kiro steering files, hooks, and agents",
+      "documentationUrl": "https://kiro.dev",
+      "subtypes": {
+        "rule": {
+          "directory": ".kiro/steering",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "hook": {
+          "directory": ".kiro/hooks",
+          "filePatterns": ["*.kiro.hook"],
+          "fileExtension": ".kiro.hook"
+        },
+        "agent": {
+          "directory": ".kiro/agents",
+          "filePatterns": ["*.json"],
+          "fileExtension": ".json"
+        }
+      }
+    },
+    "gemini": {
+      "name": "Gemini CLI",
+      "description": "Gemini CLI custom commands",
+      "documentationUrl": "https://geminicli.com",
+      "subtypes": {
+        "slash-command": {
+          "directory": ".gemini/commands",
+          "filePatterns": ["*.toml"],
+          "fileExtension": ".toml"
+        }
+      }
+    },
+    "opencode": {
+      "name": "OpenCode",
+      "description": "OpenCode agents, commands, and tools",
+      "documentationUrl": "https://opencode.ai",
+      "subtypes": {
+        "agent": {
+          "directory": ".opencode/agent",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "slash-command": {
+          "directory": ".opencode/command",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "tool": {
+          "directory": ".opencode/tool",
+          "filePatterns": ["*.md", "*.json"],
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "droid": {
+      "name": "Factory Droid",
+      "description": "Factory Droid skills, commands, and hooks",
+      "documentationUrl": "https://docs.factory.ai",
+      "subtypes": {
+        "skill": {
+          "directory": ".factory/skills",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        },
+        "slash-command": {
+          "directory": ".factory/commands",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "hook": {
+          "directory": ".factory/hooks",
+          "filePatterns": ["*.json", "*.js"],
+          "fileExtension": ".json"
+        }
+      }
+    },
+    "trae": {
+      "name": "Trae",
+      "description": "Trae AI coding rules",
+      "subtypes": {
+        "rule": {
+          "directory": ".trae/rules",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "zencoder": {
+      "name": "Zencoder",
+      "description": "Zencoder AI coding rules",
+      "subtypes": {
+        "rule": {
+          "directory": ".zencoder/rules",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "generic": {
+      "name": "Generic Prompts",
+      "description": "Generic AI prompts",
+      "subtypes": {
+        "prompt": {
+          "directory": ".prompts",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "agents.md": {
+      "name": "AGENTS.md",
+      "description": "OpenAI AGENTS.md project instructions",
+      "rootFiles": ["AGENTS.md"],
+      "subtypes": {
+        "rule": {
+          "directory": ".",
+          "filePatterns": ["AGENTS.md"],
+          "fileExtension": ".md"
+        },
+        "skill": {
+          "directory": ".openskills",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        },
+        "agent": {
+          "directory": ".openagents",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "gemini.md": {
+      "name": "GEMINI.md",
+      "description": "Gemini GEMINI.md project instructions",
+      "rootFiles": ["GEMINI.md"],
+      "subtypes": {
+        "rule": {
+          "directory": ".",
+          "filePatterns": ["GEMINI.md"],
+          "fileExtension": ".md"
+        },
+        "skill": {
+          "directory": ".openskills",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        },
+        "agent": {
+          "directory": ".openagents",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "claude.md": {
+      "name": "CLAUDE.md",
+      "description": "Claude CLAUDE.md project instructions",
+      "rootFiles": ["CLAUDE.md"],
+      "subtypes": {
+        "rule": {
+          "directory": ".",
+          "filePatterns": ["CLAUDE.md"],
+          "fileExtension": ".md"
+        },
+        "skill": {
+          "directory": ".openskills",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        },
+        "agent": {
+          "directory": ".openagents",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "aider": {
+      "name": "Aider",
+      "description": "Aider CONVENTIONS.md project instructions",
+      "rootFiles": ["CONVENTIONS.md"],
+      "subtypes": {
+        "rule": {
+          "directory": ".",
+          "filePatterns": ["CONVENTIONS.md"],
+          "fileExtension": ".md"
+        },
+        "skill": {
+          "directory": ".openskills",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        },
+        "agent": {
+          "directory": ".openagents",
+          "filePatterns": ["*.md"],
+          "nested": true,
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "replit": {
+      "name": "Replit",
+      "description": "Replit replit.md configuration",
+      "rootFiles": ["replit.md"],
+      "subtypes": {
+        "rule": {
+          "directory": ".",
+          "filePatterns": ["replit.md"],
+          "fileExtension": ".md"
+        }
+      }
+    },
+    "mcp": {
+      "name": "MCP",
+      "description": "Model Context Protocol tools",
+      "subtypes": {
+        "tool": {
+          "directory": ".mcp/tools",
+          "filePatterns": ["*.json"],
+          "fileExtension": ".json"
+        }
+      }
+    }
+  }
+}

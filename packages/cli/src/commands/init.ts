@@ -1,6 +1,7 @@
 /**
  * Init command implementation
  * Scaffolds a new PRPM package with interactive prompts
+ * Supports smart detection of existing packages on disk
  */
 
 import { Command } from 'commander';
@@ -11,6 +12,15 @@ import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
 import { FORMATS, SUBTYPES } from '../types';
 import { CLIError } from '../core/errors';
+import { scanForPackages, DetectedPackage } from '../core/package-scanner';
+import {
+  readManifest,
+  reconcilePackages,
+  createManifestFromDetected,
+  mergePackagesIntoManifest,
+  ManifestPackage,
+  ReconciliationResult,
+} from '../core/package-reconciler';
 
 interface InitOptions {
   yes?: boolean; // Skip prompts and use defaults
@@ -320,6 +330,25 @@ async function prompt(
 }
 
 /**
+ * Prompt for yes/no confirmation
+ */
+async function confirm(
+  rl: readline.Interface,
+  question: string,
+  defaultYes: boolean = true
+): Promise<boolean> {
+  const hint = defaultYes ? 'Y/n' : 'y/N';
+  const answer = await rl.question(`${question} (${hint}): `);
+  const trimmed = answer.trim().toLowerCase();
+
+  if (trimmed === '') {
+    return defaultYes;
+  }
+
+  return trimmed === 'y' || trimmed === 'yes';
+}
+
+/**
  * Prompt user to select from a list
  */
 async function select(
@@ -414,7 +443,7 @@ async function extractMetadataFromFile(filePath: string): Promise<{
     }
 
     return metadata;
-  } catch (error) {
+  } catch {
     // File might not exist yet, that's okay
     return {};
   }
@@ -525,9 +554,291 @@ ${config.license}
 }
 
 /**
- * Initialize a new PRPM package
+ * Display detected packages in a table format
  */
-async function initPackage(options: InitOptions): Promise<void> {
+function displayPackagesTable(packages: DetectedPackage[]): void {
+  // Calculate column widths
+  const formatWidth = Math.max(8, ...packages.map(p => p.format.length));
+  const subtypeWidth = Math.max(8, ...packages.map(p => p.subtype.length));
+  const nameWidth = Math.max(20, ...packages.map(p => p.name.length));
+
+  // Header
+  console.log(
+    `  ${'Format'.padEnd(formatWidth)}  ${'Subtype'.padEnd(subtypeWidth)}  ${'Name'.padEnd(nameWidth)}  Source`
+  );
+  console.log('  ' + '─'.repeat(formatWidth + subtypeWidth + nameWidth + 50));
+
+  // Rows
+  for (const pkg of packages) {
+    console.log(
+      `  ${pkg.format.padEnd(formatWidth)}  ${pkg.subtype.padEnd(subtypeWidth)}  ${pkg.name.padEnd(nameWidth)}  ${pkg.primaryFile}`
+    );
+  }
+}
+
+/**
+ * Display reconciliation status
+ */
+function displayReconciliationStatus(result: ReconciliationResult): void {
+  if (result.inSync.length > 0) {
+    console.log(`\n✓ In sync (${result.inSync.length} package${result.inSync.length === 1 ? '' : 's'})`);
+    for (const { manifest } of result.inSync) {
+      const files = manifest.files.join(', ');
+      console.log(`  - ${manifest.name} (${files})`);
+    }
+  }
+
+  if (result.newPackages.length > 0) {
+    console.log(`\n+ New (${result.newPackages.length} package${result.newPackages.length === 1 ? '' : 's'} detected)`);
+    for (const pkg of result.newPackages) {
+      console.log(`  - ${pkg.name} (${pkg.primaryFile})`);
+    }
+  }
+
+  if (result.missingPackages.length > 0) {
+    console.log(`\n- Missing from disk (${result.missingPackages.length} package${result.missingPackages.length === 1 ? '' : 's'})`);
+    for (const pkg of result.missingPackages) {
+      const files = pkg.files.join(', ');
+      console.log(`  - ${pkg.name} (${files})`);
+    }
+  }
+}
+
+/**
+ * Review a single detected package interactively
+ */
+async function reviewPackage(
+  rl: readline.Interface,
+  pkg: DetectedPackage,
+  index: number,
+  total: number
+): Promise<DetectedPackage | null> {
+  console.log(`\nPackage ${index + 1}/${total}: ${pkg.name}`);
+  console.log(`  Format: ${pkg.format}`);
+  console.log(`  Subtype: ${pkg.subtype}`);
+
+  const name = await prompt(rl, `  Name`, pkg.name);
+  const description = await prompt(rl, `  Description`, pkg.description);
+  const tagsInput = await prompt(rl, `  Tags`, pkg.tags.join(', '));
+  const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+
+  console.log(`  Files: ${pkg.files.join(', ')}`);
+
+  const include = await confirm(rl, '\n  Include this package?', true);
+
+  if (!include) {
+    return null;
+  }
+
+  return {
+    ...pkg,
+    name,
+    description,
+    tags,
+  };
+}
+
+/**
+ * Review a missing package for removal
+ */
+async function reviewMissingPackage(
+  rl: readline.Interface,
+  pkg: ManifestPackage,
+  index: number,
+  total: number
+): Promise<boolean> {
+  console.log(`\n- Missing ${index + 1}/${total}: ${pkg.name}`);
+  console.log(`  This package is in prpm.json but the file was not found at:`);
+  for (const file of pkg.files) {
+    console.log(`    ${file}`);
+  }
+
+  return await confirm(rl, '\n  Remove from prpm.json?', true);
+}
+
+/**
+ * Smart init with package detection
+ */
+async function smartInit(options: InitOptions): Promise<void> {
+  const manifestPath = join(process.cwd(), 'prpm.json');
+  const hasManifest = existsSync(manifestPath);
+
+  console.log('\nScanning for packages...\n');
+
+  // Scan for packages on disk
+  const detected = await scanForPackages();
+
+  // Read existing manifest if present
+  const existingManifest = hasManifest ? await readManifest() : null;
+
+  // If no packages found and no manifest, fall back to classic wizard
+  if (detected.length === 0 && !hasManifest) {
+    console.log('No existing packages detected.\n');
+    return classicInit(options);
+  }
+
+  // If manifest exists, reconcile
+  if (existingManifest) {
+    const result = await reconcilePackages(detected, existingManifest.packages);
+
+    // Everything in sync
+    if (result.newPackages.length === 0 && result.missingPackages.length === 0) {
+      console.log('✅ Everything in sync!\n');
+      console.log(`Your prpm.json contains ${result.inSync.length} package${result.inSync.length === 1 ? '' : 's'}, all files present on disk.`);
+      console.log('No changes needed.\n');
+      return;
+    }
+
+    // Show status
+    displayReconciliationStatus(result);
+
+    const rl = readline.createInterface({ input, output });
+
+    try {
+      // Ask for bulk confirmation
+      const changes = result.newPackages.length + result.missingPackages.length;
+      const addCount = result.newPackages.length;
+      const removeCount = result.missingPackages.length;
+
+      let summaryParts: string[] = [];
+      if (addCount > 0) summaryParts.push(`add ${addCount}`);
+      if (removeCount > 0) summaryParts.push(`remove ${removeCount} stale`);
+
+      const bulkConfirm = await confirm(
+        rl,
+        `\n${summaryParts.join(' and ')} package${changes === 1 ? '' : 's'}?`,
+        true
+      );
+
+      let packagesToAdd: DetectedPackage[] = [];
+      let packagesToRemove = new Set<string>();
+
+      if (bulkConfirm) {
+        // Accept all changes
+        packagesToAdd = result.newPackages;
+        for (const pkg of result.missingPackages) {
+          packagesToRemove.add(pkg.name);
+        }
+      } else {
+        // Sequential review
+        console.log("\nLet's review each change:\n");
+
+        // Review new packages
+        for (let i = 0; i < result.newPackages.length; i++) {
+          const reviewed = await reviewPackage(rl, result.newPackages[i], i, result.newPackages.length);
+          if (reviewed) {
+            packagesToAdd.push(reviewed);
+          }
+        }
+
+        // Review missing packages
+        for (let i = 0; i < result.missingPackages.length; i++) {
+          const shouldRemove = await reviewMissingPackage(
+            rl,
+            result.missingPackages[i],
+            i,
+            result.missingPackages.length
+          );
+          if (shouldRemove) {
+            packagesToRemove.add(result.missingPackages[i].name);
+          }
+        }
+      }
+
+      // Apply changes
+      if (packagesToAdd.length > 0 || packagesToRemove.size > 0) {
+        const updatedManifest = mergePackagesIntoManifest(
+          existingManifest.raw,
+          existingManifest.packages,
+          packagesToAdd,
+          packagesToRemove,
+          existingManifest.isMultiPackage
+        );
+
+        await writeFile(
+          manifestPath,
+          JSON.stringify(updatedManifest, null, 2) + '\n',
+          'utf-8'
+        );
+
+        const addedMsg = packagesToAdd.length > 0 ? `added ${packagesToAdd.length}` : '';
+        const removedMsg = packagesToRemove.size > 0 ? `removed ${packagesToRemove.size}` : '';
+        const changeMsg = [addedMsg, removedMsg].filter(Boolean).join(', ');
+
+        console.log(`\n✅ Updated prpm.json (${changeMsg})\n`);
+      } else {
+        console.log('\nNo changes made.\n');
+      }
+    } finally {
+      rl.close();
+    }
+
+    return;
+  }
+
+  // No manifest, but packages detected - create new manifest
+  console.log(`Found ${detected.length} package${detected.length === 1 ? '' : 's'}:\n`);
+  displayPackagesTable(detected);
+
+  const rl = readline.createInterface({ input, output });
+
+  try {
+    const isMulti = detected.length > 1;
+    const confirmMsg = isMulti
+      ? `\nCreate multi-package prpm.json with these ${detected.length} packages?`
+      : '\nCreate prpm.json with this package?';
+
+    const bulkConfirm = await confirm(rl, confirmMsg, true);
+
+    let packagesToInclude: DetectedPackage[];
+
+    if (bulkConfirm) {
+      packagesToInclude = detected;
+    } else {
+      // Sequential review
+      console.log("\nLet's review each package:\n");
+      packagesToInclude = [];
+
+      for (let i = 0; i < detected.length; i++) {
+        const reviewed = await reviewPackage(rl, detected[i], i, detected.length);
+        if (reviewed) {
+          packagesToInclude.push(reviewed);
+        }
+      }
+    }
+
+    if (packagesToInclude.length === 0) {
+      console.log('\nNo packages selected. Run `prpm init` again to start from scratch.\n');
+      return;
+    }
+
+    // Get default author
+    const defaultAuthor = getDefaultAuthor();
+
+    const manifest = createManifestFromDetected(packagesToInclude, {
+      author: defaultAuthor || undefined,
+      license: 'MIT',
+    });
+
+    await writeFile(
+      manifestPath,
+      JSON.stringify(manifest, null, 2) + '\n',
+      'utf-8'
+    );
+
+    console.log(`\n✅ Created prpm.json with ${packagesToInclude.length} package${packagesToInclude.length === 1 ? '' : 's'}\n`);
+    console.log('Next steps:');
+    console.log('  1. Review and edit prpm.json as needed');
+    console.log('  2. Run `prpm publish` to publish your packages\n');
+  } finally {
+    rl.close();
+  }
+}
+
+/**
+ * Classic init wizard (fallback when no packages detected)
+ */
+async function classicInit(options: InitOptions): Promise<void> {
   const manifestPath = join(process.cwd(), 'prpm.json');
 
   // Check if prpm.json already exists
@@ -558,7 +869,7 @@ async function initPackage(options: InitOptions): Promise<void> {
     const rl = readline.createInterface({ input, output });
 
     try {
-      console.log('\n🚀 Welcome to PRPM package initialization!\n');
+      console.log('🚀 Welcome to PRPM package initialization!\n');
       console.log('This utility will walk you through creating a prpm.json file.\n');
 
       // Package name
@@ -609,27 +920,35 @@ async function initPackage(options: InitOptions): Promise<void> {
       const formatExamples = FORMAT_EXAMPLES[config.format];
 
       // Replace 'example-skill' with actual package name in file paths
-      const exampleFiles = formatExamples.files.map(f =>
+      const exampleFiles = formatExamples?.files.map(f =>
         f.replace(/example-skill/g, config.name || 'example-skill')
-      );
+      ) || [];
 
-      console.log(`\nExample files for ${config.format}:`);
-      exampleFiles.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
+      if (exampleFiles.length > 0) {
+        console.log(`\nExample files for ${config.format}:`);
+        exampleFiles.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
 
-      const useExamples = await prompt(
-        rl,
-        '\nUse example file structure? (Y/n)',
-        'y'
-      );
-
-      if (useExamples.toLowerCase() !== 'n') {
-        config.files = exampleFiles;
-      } else {
-        const filesInput = await prompt(
+        const useExamples = await prompt(
           rl,
-          'Files (comma-separated)',
-          exampleFiles.join(', ')
+          '\nUse example file structure? (Y/n)',
+          'y'
         );
+
+        if (useExamples.toLowerCase() !== 'n') {
+          config.files = exampleFiles;
+        } else {
+          const filesInput = await prompt(
+            rl,
+            'Files (comma-separated)',
+            exampleFiles.join(', ')
+          );
+          config.files = filesInput
+            .split(',')
+            .map(f => f.trim())
+            .filter(Boolean);
+        }
+      } else {
+        const filesInput = await prompt(rl, 'Files (comma-separated)', '');
         config.files = filesInput
           .split(',')
           .map(f => f.trim())
@@ -637,7 +956,7 @@ async function initPackage(options: InitOptions): Promise<void> {
       }
 
       // Try to extract metadata from the first file if it exists
-      if (config.files.length > 0) {
+      if (config.files && config.files.length > 0) {
         const firstFile = config.files[0];
         console.log(`\n🔍 Checking ${firstFile} for metadata...`);
         const extractedMetadata = await extractMetadataFromFile(firstFile);
@@ -699,7 +1018,7 @@ async function initPackage(options: InitOptions): Promise<void> {
             .map(f => f.trim())
             .filter(Boolean);
 
-          if (newFiles.length > 0) {
+          if (newFiles.length > 0 && config.files) {
             config.files = [...config.files, ...newFiles];
             console.log(`\nCurrent files (${config.files.length}):`);
             config.files.forEach((f, idx) => console.log(`  ${idx + 1}. ${f}`));
@@ -714,12 +1033,12 @@ async function initPackage(options: InitOptions): Promise<void> {
   }
 
   // Create manifest
-  const manifest: Record<string, any> = {
+  const manifest: Record<string, unknown> = {
     name: config.name,
     version: config.version,
     description: config.description,
     format: config.format,
-    subtype: config.subtype || 'rule',  // Default to 'rule' if not specified
+    subtype: config.subtype || 'rule', // Default to 'rule' if not specified
   };
 
   manifest.author = config.author;
@@ -763,6 +1082,19 @@ async function initPackage(options: InitOptions): Promise<void> {
 }
 
 /**
+ * Initialize a new PRPM package
+ */
+async function initPackage(options: InitOptions): Promise<void> {
+  // If --yes flag, use classic init with defaults
+  if (options.yes) {
+    return classicInit(options);
+  }
+
+  // Try smart init first
+  return smartInit(options);
+}
+
+/**
  * Create init command
  */
 export function createInitCommand(): Command {
@@ -784,3 +1116,14 @@ export function createInitCommand(): Command {
 
   return command;
 }
+
+// Export for testing
+export {
+  smartInit,
+  classicInit,
+  displayPackagesTable,
+  displayReconciliationStatus,
+  reviewPackage,
+  getDefaultAuthor,
+  getDefaultPackageName,
+};

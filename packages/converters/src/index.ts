@@ -49,3 +49,6 @@ export * from './validation.js';
 
 // JSON Schemas
 export * from './schema-files.js';
+
+// Format Registry - Single source of truth for format configurations
+export * from './format-registry.js';
