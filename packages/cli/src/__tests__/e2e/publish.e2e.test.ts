@@ -231,18 +231,19 @@ describe('Publish Command - E2E Tests', () => {
       // the error object structure isn't what's expected in the failedPackages handling
       await createMockPackage(testDir, 'huge-package', 'cursor');
 
-      // Create a large file (> 10MB)
-      const largeContent = Buffer.alloc(11 * 1024 * 1024, 'x');
-      await writeFile(join(testDir, 'large-file.txt'), largeContent);
+      // Create a large file (> 10MB) with random data that won't compress well
+      const { randomBytes } = await import('crypto');
+      const largeContent = randomBytes(12 * 1024 * 1024);
+      await writeFile(join(testDir, 'large-file.bin'), largeContent);
 
       // Update manifest to include the large file
       const manifest = JSON.parse(await (await import('fs/promises')).readFile(join(testDir, 'prpm.json'), 'utf-8'));
-      manifest.files = ['prpm.json', '.cursorrules', 'large-file.txt'];
+      manifest.files = ['prpm.json', '.cursorrules', 'large-file.bin'];
       await writeFile(join(testDir, 'prpm.json'), JSON.stringify(manifest));
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
-      await expect(handlePublish({})).rejects.toThrow('exceeds 10MB limit');
-    });
+      await expect(handlePublish({})).rejects.toThrow(/exceeds 10MB limit/i);
+    }, 15000); // 15 second timeout for large file operations
   });
 
   describe('Authentication', () => {

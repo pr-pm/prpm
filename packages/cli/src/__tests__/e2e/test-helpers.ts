@@ -33,12 +33,12 @@ export async function cleanupTestDir(testDir: string): Promise<void> {
 export async function createMockPackage(
   testDir: string,
   name: string,
-  type: string = 'cursor',
+  format: string = 'cursor',
   version: string = '1.0.0'
 ): Promise<string> {
   // Determine the file name/path for this format
   let fileName: string;
-  switch (type) {
+  switch (format) {
     case 'cursor':
       fileName = '.cursorrules';
       break;
@@ -64,10 +64,10 @@ export async function createMockPackage(
     name,
     version,
     description: `Test package ${name}`,
-    format: type,
+    format,
     subtype: 'rule',
     author: 'test-author',
-    tags: ['test', type],
+    tags: ['test', format],
     files: ['prpm.json', fileName],
   };
 
@@ -78,7 +78,7 @@ export async function createMockPackage(
   const rulesPath = join(testDir, fileName);
   let content: string;
 
-  switch (type) {
+  switch (format) {
     case 'cursor':
       // Cursor requires frontmatter with description
       content = `---
