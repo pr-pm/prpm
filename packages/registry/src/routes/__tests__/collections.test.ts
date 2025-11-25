@@ -2,7 +2,7 @@
  * Collections routes tests
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
 import { collectionRoutes } from '../collections';
 
@@ -339,14 +339,179 @@ describe('Collection Routes', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    // TODO: Fix version parameter test - needs proper mock handling
-    it.skip('should support version parameter', async () => {
+    it('should support version parameter', async () => {
       const response = await server.inject({
         method: 'GET',
         url: '/api/v1/collections/collection/test-collection?version=1.0.0'
       });
 
       expect(response.statusCode).toBe(200);
+    });
+  });
+
+  describe('POST /api/v1/collections/:scope/:nameSlug/star', () => {
+    let starredCollections: Set<string>;
+
+    beforeEach(() => {
+      starredCollections = new Set();
+
+      // Update mock to handle star queries
+      const originalMockQuery = (server as any).pg.query;
+      (server as any).pg.query = async (sql: string, params?: unknown[]) => {
+        // Get collection ID by scope and name_slug
+        if (sql.includes('SELECT id FROM collections WHERE scope = $1 AND name_slug = $2')) {
+          if (params?.[0] === 'collection' && params?.[1] === 'test-collection') {
+            return { rows: [{ id: 'uuid-test-collection' }], command: 'SELECT', rowCount: 1, oid: 0, fields: [] };
+          }
+          return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] };
+        }
+
+        // Star insert
+        if (sql.includes('INSERT INTO collection_stars')) {
+          const collectionId = params?.[0] as string;
+          starredCollections.add(collectionId);
+          return { rows: [], command: 'INSERT', rowCount: 1, oid: 0, fields: [] };
+        }
+
+        // Star delete
+        if (sql.includes('DELETE FROM collection_stars')) {
+          const collectionId = params?.[0] as string;
+          starredCollections.delete(collectionId);
+          return { rows: [], command: 'DELETE', rowCount: 1, oid: 0, fields: [] };
+        }
+
+        // Get updated star count
+        if (sql.includes('SELECT stars FROM collections WHERE id = $1')) {
+          const collectionId = params?.[0] as string;
+          const count = collectionId === 'uuid-test-collection' ? (starredCollections.has(collectionId) ? 26 : 25) : 0;
+          return { rows: [{ stars: count }], command: 'SELECT', rowCount: 1, oid: 0, fields: [] };
+        }
+
+        return originalMockQuery(sql, params);
+      };
+
+      // Mock user authentication
+      (server as any).decorate('authenticate', async (request: any) => {
+        request.user = { user_id: 'test-user-id', username: 'test-user' };
+      }, { decorateRequest: true });
+    });
+
+    it('should star a collection', async () => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/api/v1/collections/collection/test-collection/star',
+        headers: {
+          authorization: 'Bearer test-token'
+        },
+        payload: {
+          starred: true
+        }
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.starred).toBe(true);
+      expect(body.stars).toBe(26);
+    });
+
+    it('should unstar a collection', async () => {
+      // First star it
+      starredCollections.add('uuid-test-collection');
+
+      const response = await server.inject({
+        method: 'POST',
+        url: '/api/v1/collections/collection/test-collection/star',
+        headers: {
+          authorization: 'Bearer test-token'
+        },
+        payload: {
+          starred: false
+        }
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.starred).toBe(false);
+      expect(body.stars).toBe(25);
+    });
+  });
+
+  describe('GET /api/v1/collections/starred', () => {
+    beforeEach(() => {
+      // Mock starred collections query
+      const originalMockQuery = (server as any).pg.query;
+      (server as any).pg.query = async (sql: string, params?: unknown[]) => {
+        if (sql.includes('FROM collection_stars cs') && sql.includes('JOIN collections c')) {
+          return {
+            rows: [
+              {
+                id: 'starred-col-1',
+                scope: 'collection',
+                name_slug: 'starred-collection-1',
+                name: 'Starred Collection 1',
+                description: 'First starred collection',
+                author_username: 'author1',
+                stars: 30,
+                package_count: 5,
+                starred_at: new Date()
+              },
+              {
+                id: 'starred-col-2',
+                scope: 'collection',
+                name_slug: 'starred-collection-2',
+                name: 'Starred Collection 2',
+                description: 'Second starred collection',
+                author_username: 'author2',
+                stars: 40,
+                package_count: 8,
+                starred_at: new Date()
+              }
+            ],
+            command: 'SELECT',
+            rowCount: 2,
+            oid: 0,
+            fields: []
+          };
+        }
+
+        return originalMockQuery(sql, params);
+      };
+
+      // Mock user authentication
+      (server as any).decorate('authenticate', async (request: any) => {
+        request.user = { user_id: 'test-user-id', username: 'test-user' };
+      }, { decorateRequest: true });
+    });
+
+    it('should return starred collections', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/api/v1/collections/starred',
+        headers: {
+          authorization: 'Bearer test-token'
+        }
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(Array.isArray(body.collections)).toBe(true);
+      expect(body.collections.length).toBe(2);
+      expect(body.collections[0].name).toBe('Starred Collection 1');
+      expect(body.total).toBe(2);
+    });
+
+    it('should support pagination', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/api/v1/collections/starred?limit=10&offset=0',
+        headers: {
+          authorization: 'Bearer test-token'
+        }
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.collections).toBeDefined();
     });
   });
 });

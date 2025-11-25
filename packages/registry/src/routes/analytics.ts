@@ -7,11 +7,12 @@ import { z } from 'zod';
 import { createHash } from 'crypto';
 import { optionalAuth } from '../middleware/auth.js';
 import { AnalyticsQuery } from '../types/analytics.js';
+import { telemetry } from '../telemetry/index.js';
 
 const TrackDownloadSchema = z.object({
   packageId: z.string(),
   version: z.string().optional(),
-  format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp']).optional(),
+  format: z.enum(['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'trae', 'aider', 'zencoder', 'replit', 'generic', 'mcp']).optional(),
   client: z.enum(['cli', 'web', 'api']).optional(),
 });
 
@@ -41,7 +42,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
             version: { type: 'string', description: 'Package version' },
             format: {
               type: 'string',
-              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'],
+              enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'trae', 'aider', 'zencoder', 'replit', 'generic', 'mcp'],
               description: 'Download format'
             },
             client: { 
@@ -145,6 +146,14 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           format,
           client,
           totalDownloads,
+        });
+
+        // Send to PostHog for analytics
+        await telemetry.trackPackageDownload({
+          packageId,
+          version,
+          userId: request.user?.user_id,
+          type: format,
         });
 
         return reply.send({

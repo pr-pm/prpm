@@ -163,6 +163,19 @@ function generateSitemapXML(entries: SitemapEntry[]): string {
   return xml.join('\n')
 }
 
+function extractAuthorFromPackageId(packageId: string): string | null {
+  if (!packageId) return null
+
+  const normalized = packageId.startsWith('@') ? packageId.slice(1) : packageId
+  const [author] = normalized.split('/')
+
+  if (!author) {
+    return null
+  }
+
+  return author
+}
+
 async function main() {
   console.log(`\n🗺️  Generating sitemap for ${environment.toUpperCase()} environment`)
   console.log(`🌐 Site URL: ${envConfig.SITE_URL}`)
@@ -182,6 +195,8 @@ async function main() {
   }
   console.log(`   Added ${STATIC_PAGES.length} static pages\n`)
 
+  const authorSet = new Set<string>()
+
   // Fetch and add all packages
   const packages = await fetchAllPackages()
   console.log(`\n📦 Adding ${packages.length} package pages...`)
@@ -198,6 +213,11 @@ async function main() {
       changefreq: 'weekly',
       priority: 0.8,
     })
+
+    const author = extractAuthorFromPackageId(packageName)
+    if (author) {
+      authorSet.add(author)
+    }
   }
 
   // Fetch and add all collections
@@ -209,6 +229,19 @@ async function main() {
       lastmod: new Date().toISOString().split('T')[0],
       changefreq: 'weekly',
       priority: 0.8,
+    })
+  }
+
+  // Add author pages derived from package scopes
+  const authors = Array.from(authorSet).sort((a, b) => a.localeCompare(b))
+  console.log(`\n👤 Adding ${authors.length} author pages...`)
+  for (const author of authors) {
+    const encoded = encodeURIComponent(author)
+    entries.push({
+      url: `${envConfig.SITE_URL}/authors?username=${encoded}`,
+      lastmod: new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: 0.7,
     })
   }
 
@@ -231,6 +264,7 @@ async function main() {
   console.log(`   Static pages: ${STATIC_PAGES.length}`)
   console.log(`   Package pages: ${packages.length}`)
   console.log(`   Collection pages: ${collections.length}`)
+  console.log(`   Author pages: ${authors.length}`)
   console.log(`📁 Output: ${sitemapPath}`)
   console.log(`🌐 Will be available at: ${envConfig.SITE_URL}/sitemap.xml\n`)
 }

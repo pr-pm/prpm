@@ -1,0 +1,11 @@
+{
+  "name": "development-workflow",
+  "version": "1.0.0",
+  "description": "Enforces documentation and skill updates during PRPM development",
+  "type": "SessionStart",
+  "enabled": true,
+  "config": {
+    "enabledBranches": ["*"],
+    "repositoryOnly": true
+  }
+}

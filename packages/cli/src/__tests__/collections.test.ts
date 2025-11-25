@@ -64,6 +64,12 @@ describe('collections command', () => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
 
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
+
     // Clean up test directory
     try {
       await rm(testDir, { recursive: true, force: true });
@@ -148,23 +154,6 @@ describe('collections command', () => {
 
       expect(mockClient.getCollections).toHaveBeenCalledWith(
         expect.objectContaining({ official: true })
-      );
-    });
-
-    it('should filter by scope', async () => {
-      const mockCollections = {
-        collections: [],
-        total: 0,
-        offset: 0,
-        limit: 50,
-      };
-
-      mockClient.getCollections.mockResolvedValue(mockCollections);
-
-      await handleCollectionsList({ scope: 'official' });
-
-      expect(mockClient.getCollections).toHaveBeenCalledWith(
-        expect.objectContaining({ scope: 'official' })
       );
     });
 
@@ -253,7 +242,7 @@ describe('collections command', () => {
     it('should show collection details', async () => {
       const mockCollection = {
         id: 'react-essentials',
-        scope: 'official',
+        name_slug: 'react-essentials',
         name: 'React Essentials',
         description: 'Essential React packages for development',
         version: '1.0.0',
@@ -277,10 +266,9 @@ describe('collections command', () => {
 
       mockClient.getCollection.mockResolvedValue(mockCollection);
 
-      await handleCollectionInfo('@official/react-essentials');
+      await handleCollectionInfo('react-essentials');
 
       expect(mockClient.getCollection).toHaveBeenCalledWith(
-        'official',
         'react-essentials',
         undefined
       );
@@ -289,10 +277,10 @@ describe('collections command', () => {
       );
     });
 
-    it('should handle collection without @ prefix', async () => {
+    it('should handle collection by name', async () => {
       const mockCollection = {
         id: 'test',
-        scope: 'user',
+        name_slug: 'test',
         name: 'Test Collection',
         description: 'Test',
         version: '1.0.0',
@@ -308,15 +296,15 @@ describe('collections command', () => {
 
       mockClient.getCollection.mockResolvedValue(mockCollection);
 
-      await handleCollectionInfo('user/test');
+      await handleCollectionInfo('test');
 
-      expect(mockClient.getCollection).toHaveBeenCalledWith('user', 'test', undefined);
+      expect(mockClient.getCollection).toHaveBeenCalledWith('test', undefined);
     });
 
     it('should handle specific version', async () => {
       const mockCollection = {
         id: 'test',
-        scope: 'official',
+        name_slug: 'test',
         name: 'Test Collection',
         description: 'Test',
         version: '2.0.0',
@@ -332,15 +320,15 @@ describe('collections command', () => {
 
       mockClient.getCollection.mockResolvedValue(mockCollection);
 
-      await handleCollectionInfo('@official/test@2.0.0');
+      await handleCollectionInfo('test@2.0.0');
 
-      expect(mockClient.getCollection).toHaveBeenCalledWith('official', 'test', '2.0.0');
+      expect(mockClient.getCollection).toHaveBeenCalledWith('test', '2.0.0');
     });
 
     it('should display required and optional packages separately', async () => {
       const mockCollection = {
         id: 'test',
-        scope: 'official',
+        name_slug: 'test',
         name: 'Test Collection',
         description: 'Test',
         version: '1.0.0',
@@ -367,18 +355,15 @@ describe('collections command', () => {
 
       mockClient.getCollection.mockResolvedValue(mockCollection);
 
-      await handleCollectionInfo('@official/test');
+      await handleCollectionInfo('test');
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Required:'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Optional:'));
     });
 
-    // TODO: Fix flaky test - error message changed after collection display updates
-    // Expected: "Invalid collection format"
-    // Actual: "Cannot read properties of undefined (reading 'icon')"
-    // Need to mock getCollection to return proper error or update validation logic
-    it.skip('should handle invalid collection format', async () => {
-      await expect(handleCollectionInfo('invalid-format')).rejects.toThrow(CLIError);
+    it('should handle invalid collection format', async () => {
+      // Empty string is truly invalid and won't match any regex
+      await expect(handleCollectionInfo('')).rejects.toThrow(CLIError);
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Invalid collection format')
@@ -400,6 +385,12 @@ describe('collections command', () => {
     });
 
     afterEach(async () => {
+      try {
+        process.chdir(originalCwd);
+      } catch {
+        process.chdir(tmpdir());
+      }
+
       // Clean up test directory
       try {
         await rm(testDir, { recursive: true, force: true });
@@ -496,11 +487,7 @@ describe('collections command', () => {
       );
     });
 
-    // TODO: Fix flaky test - passes locally but fails in CI
-    // Error in CI: "Cannot read properties of undefined (reading 'scope')"
-    // Expected: validation error for empty packages array before createCollection is called
-    // Actual in CI: reaches success logging somehow, causing undefined access
-    it.skip('should validate packages array is not empty', async () => {
+    it('should validate packages array is not empty', async () => {
       await writeFile(
         join(testDir, 'collection.json'),
         JSON.stringify({
@@ -794,23 +781,10 @@ describe('collections command', () => {
       );
     });
 
-    it('should handle scoped collection names', async () => {
-      await handleCollectionInstall('@official/test-collection', {});
-
-      expect(mockClient.installCollection).toHaveBeenCalledWith({
-        scope: 'official',
-        id: 'test-collection',
-        version: undefined,
-        format: undefined,
-        skipOptional: undefined,
-      });
-    });
-
-    it('should handle collection names without scope', async () => {
+    it('should handle collection names', async () => {
       await handleCollectionInstall('test-collection', {});
 
       expect(mockClient.installCollection).toHaveBeenCalledWith({
-        scope: 'collection',
         id: 'test-collection',
         version: undefined,
         format: undefined,
@@ -822,7 +796,6 @@ describe('collections command', () => {
       await handleCollectionInstall('test-collection@2.0.0', {});
 
       expect(mockClient.installCollection).toHaveBeenCalledWith({
-        scope: 'collection',
         id: 'test-collection',
         version: '2.0.0',
         format: undefined,

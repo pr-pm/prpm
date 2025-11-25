@@ -45,13 +45,15 @@
       "pages": [
         "concepts/packages",
         "concepts/collections",
-        "concepts/formats"
+        "concepts/formats",
+        "concepts/schemas"
       ]
     },
     {
       "group": "Guides",
       "pages": [
         "guides/playground",
+        "guides/claude-hooks",
         "guides/format-conversion",
         "guides/mcp-servers"
       ]

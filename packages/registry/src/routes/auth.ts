@@ -50,6 +50,7 @@ async function authenticateWithNango(server: FastifyInstance, connectionId: stri
     username: user.username,
     email: user.email,
     is_admin: user.is_admin,
+    verified_author: user.verified_author || false,
     scopes: ['read:packages', 'write:packages'],
   } as JWTPayload);
 
@@ -402,6 +403,7 @@ export async function authRoutes(server: FastifyInstance) {
         username: user.username,
         email: user.email,
         is_admin: user.is_admin,
+        verified_author: user.verified_author || false,
         scopes: ['read:packages', 'write:packages'],
       } as JWTPayload);
 
@@ -560,6 +562,7 @@ export async function authRoutes(server: FastifyInstance) {
         username: user.username,
         email: user.email,
         is_admin: user.is_admin,
+        verified_author: user.verified_author || false,
         scopes: ['read:packages', 'write:packages'],
       } as JWTPayload);
 
@@ -660,6 +663,7 @@ export async function authRoutes(server: FastifyInstance) {
         username: user.username,
         email: user.email,
         is_admin: user.is_admin,
+        verified_author: user.verified_author || false,
         scopes: ['read:packages', 'write:packages'],
       } as JWTPayload);
 

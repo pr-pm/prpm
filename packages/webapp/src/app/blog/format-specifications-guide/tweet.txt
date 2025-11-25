@@ -1,0 +1,5 @@
+Each AI IDE has its own format. Some require YAML frontmatter. Others are plain markdown. Some have 12k character limits.
+
+PRPM maintains complete JSON schemas for all 8 formats. Validate your prompts, understand the specs, convert between formats.
+
+https://prpm.dev/blog/format-specifications-guide

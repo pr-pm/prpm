@@ -1,5 +1,4 @@
 ---
-title: TypeScript Type Safety
 description: Use when encountering TypeScript any types, type errors, or lax type checking - eliminates type holes and enforces strict type safety through proper interfaces, type guards, and module augmentation
 tags: [typescript, type-safety, best-practices, code-quality]
 ---

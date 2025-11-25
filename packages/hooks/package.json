@@ -1,0 +1,23 @@
+{
+  "name": "@prpm/hooks",
+  "version": "1.0.0",
+  "description": "Build system and shared utilities for PRPM Claude Code hooks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx scripts/build-all-hooks.ts",
+    "build:watch": "tsx scripts/build-all-hooks.ts --watch",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "esbuild": "^0.19.8",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4"
+  }
+}

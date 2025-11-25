@@ -1,0 +1,5 @@
+Your team asks how to start with AI assistants. You send docs. They get overwhelmed. Nothing changes.
+
+Here's a better way: Install 3 packages, try 3 examples, see immediate value in 5 minutes. No theory. Just results.
+
+https://prpm.dev/blog/how-to-get-started-ai-assistants

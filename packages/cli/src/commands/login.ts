@@ -4,6 +4,7 @@
 
 import { Command } from 'commander';
 import { createServer } from 'http';
+import * as jwt from 'jsonwebtoken';
 import { telemetry } from '../core/telemetry';
 import { getConfig, saveConfig } from '../core/user-config';
 import { CLIError } from '../core/errors';
@@ -268,11 +269,34 @@ export async function handleLogin(options: LoginOptions): Promise<void> {
       result = await loginWithOAuth(registryUrl);
     }
 
-    // Save token to config
+    // Extract user_id and email from JWT token
+    const decoded = jwt.decode(result.token) as {
+      user_id: string;
+      username: string;
+      email: string;
+      is_admin: boolean;
+    } | null;
+
+    if (!decoded) {
+      throw new Error('Failed to decode authentication token');
+    }
+
+    // Save token and user info to config
     await saveConfig({
       ...config,
       token: result.token,
       username: result.username,
+      userId: decoded.user_id,
+      email: decoded.email,
+    });
+
+    // Identify user in PostHog with user properties
+    await telemetry.identifyUser(decoded.user_id, {
+      username: result.username,
+      email: decoded.email,
+      cli_version: process.env.npm_package_version,
+      platform: process.platform,
+      first_login: new Date().toISOString(),
     });
 
     console.log('✅ Successfully logged in!\n');

@@ -10,9 +10,14 @@ import type {
   PackageManifest,
   PublishResponse
 } from '../types/registry.js';
+import packageJson from '../../package.json';
+
+// CLI version for User-Agent header (exempts from rate limiting)
+const CLI_VERSION = packageJson.version;
 
 export interface RegistryPackage {
   id: string;
+  author?: string;
   description?: string;
   format: Format;
   subtype: Subtype;
@@ -75,6 +80,7 @@ export interface CollectionInstallResult {
     version: string;
     format: string;
     required: boolean;
+    subtype?: string;
   }[];
 }
 
@@ -215,7 +221,7 @@ export class RegistryClient {
   /**
    * Publish a package (requires authentication)
    */
-  async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string }): Promise<PublishResponse> {
+  async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string; publishAsAuthor?: string }): Promise<PublishResponse> {
     if (!this.token) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
@@ -227,6 +233,11 @@ export class RegistryClient {
     // Add org_id if provided
     if (options?.orgId) {
       formData.append('org_id', options.orgId);
+    }
+
+    // Add publish_as_author if provided (admin override)
+    if (options?.publishAsAuthor) {
+      formData.append('publish_as_author', options.publishAsAuthor);
     }
 
     const response = await this.fetch('/api/v1/packages', {
@@ -356,6 +367,7 @@ export class RegistryClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'User-Agent': `prpm-cli/${CLI_VERSION}`,
       ...options.headers as Record<string, string>,
     };
 

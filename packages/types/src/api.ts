@@ -2,8 +2,9 @@
  * API request and response types
  */
 
-import { PackageManifest } from './package';
+import { PackageManifest, Package } from './package';
 import { Author } from './user';
+import { Collection } from './collection';
 
 /**
  * Publish request
@@ -62,5 +63,29 @@ export interface ClaimInviteResponse {
  */
 export interface TopAuthorsResponse {
   authors: Author[];
+  total: number;
+}
+
+/**
+ * Star action response
+ */
+export interface StarActionResponse {
+  starred: boolean;
+  stars: number;
+}
+
+/**
+ * Starred packages response
+ */
+export interface StarredPackagesResponse {
+  packages: Package[];
+  total: number;
+}
+
+/**
+ * Starred collections response
+ */
+export interface StarredCollectionsResponse {
+  collections: Collection[];
   total: number;
 }

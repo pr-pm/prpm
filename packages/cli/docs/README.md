@@ -5,8 +5,11 @@ Documentation for the PRPM (Prompt Package Manager) command-line interface.
 ## Quick Start
 
 ```bash
-# Search for packages
+# Search for packages (keyword search)
 prpm search react
+
+# AI-powered semantic search
+prpm ai-search "help me write better React code"
 
 # Install a package
 prpm install @community/react-rules
@@ -196,7 +199,7 @@ prpm install @username/package --as cursor
 ### Searching
 
 ```bash
-# Search packages
+# Traditional keyword search
 prpm search react
 
 # Search by type
@@ -204,7 +207,17 @@ prpm search --type cursor react
 
 # Search by tags
 prpm search --tags typescript,frontend
+
+# AI-powered semantic search (100% free, no login required)
+prpm ai-search "help me write better React components"
+
+# AI search with filters
+prpm ai-search "python best practices" --format cursor --limit 5
 ```
+
+**AI Search vs Traditional Search:**
+- **`ai-search`** - Natural language queries, understands intent, ranks by relevance
+- **`search`** - Keyword matching, faster, works offline with cached data
 
 ### Package Info
 

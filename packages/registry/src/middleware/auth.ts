@@ -147,8 +147,7 @@ export async function requireVerified(
       });
     }
 
-    // For now, all authenticated users are considered verified
-    // TODO: Add verified field to JWT payload
+    // Verified field is now included in JWT payload
   } catch (err) {
     return reply.code(401).send({
       error: 'Unauthorized',

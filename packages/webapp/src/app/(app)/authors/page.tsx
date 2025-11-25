@@ -13,7 +13,7 @@ import {
   getCurrentUser,
   type Author,
 } from '@/lib/api'
-import PackageModal from '@/components/PackageModal'
+import { getPackageUrl } from '@/lib/package-url'
 import PackageAnalyticsModal from '@/components/PackageAnalyticsModal'
 
 interface AuthorStats {
@@ -82,8 +82,6 @@ function AuthorsPageContent() {
   const [isOwnProfile, setIsOwnProfile] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
   const [dashboardData, setDashboardData] = useState<any>(null)
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
-  const [showPackageModal, setShowPackageModal] = useState(false)
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
   const [analyticsPackage, setAnalyticsPackage] = useState<Package | null>(null)
   const [copied, setCopied] = useState(false)
@@ -472,17 +470,14 @@ function AuthorsPageContent() {
                   className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-all group"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <button
-                      onClick={() => {
-                        setSelectedPackage(pkg)
-                        setShowPackageModal(true)
-                      }}
+                    <Link
+                      href={getPackageUrl(pkg.name, authorData?.author?.username)}
                       className="flex-1 text-left"
                     >
                       <h3 className="text-lg font-semibold text-white group-hover:text-prpm-accent transition-colors">
                         {pkg.name}
                       </h3>
-                    </button>
+                    </Link>
                     <div className="flex items-center gap-2">
                       {isOwnProfile && (
                         <button
@@ -508,12 +503,9 @@ function AuthorsPageContent() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setSelectedPackage(pkg)
-                      setShowPackageModal(true)
-                    }}
-                    className="w-full text-left"
+                  <Link
+                    href={getPackageUrl(pkg.name, authorData?.author?.username)}
+                    className="block w-full text-left"
                   >
                     <p className="text-gray-400 text-sm mb-4 line-clamp-2">
                       {pkg.description || 'No description'}
@@ -553,7 +545,7 @@ function AuthorsPageContent() {
                         ))}
                       </div>
                     )}
-                  </button>
+                  </Link>
                 </div>
               ))}
             </div>
@@ -639,15 +631,6 @@ function AuthorsPageContent() {
             </div>
           )}
         </div>
-
-        {/* Package Modal */}
-        {selectedPackage && (
-          <PackageModal
-            package={selectedPackage}
-            isOpen={showPackageModal}
-            onClose={() => setShowPackageModal(false)}
-          />
-        )}
 
         {/* Package Analytics Modal */}
         {analyticsPackage && (

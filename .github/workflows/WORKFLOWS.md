@@ -14,6 +14,24 @@ This directory contains GitHub Actions workflows for PRPM deployment.
 
 ## Workflows
 
+### 0. `codex-autofix.yml` - Auto-fix failed CI runs with Codex
+
+**Purpose:** Automatically trigger Codex to triage a failed `CI` workflow, apply the smallest fix, re-run tests, and open a pull request with the proposed patch.
+
+**Triggers:**
+- `workflow_run` on the `CI` workflow whenever it completes (only proceeds if the conclusion is `failure`)
+
+**Requirements:**
+- Repository secret `OPENAI_API_KEY`
+- Maintainer approval for pull requests opened from the auto-fix branch `codex/auto-fix-<run_id>`
+
+**What it does:**
+1. Ensures the OpenAI API key secret is configured, then checks out the commit/branch that failed.
+2. Sets up Node.js 20 and installs dependencies so Codex has the same environment as the primary CI job.
+3. Delegates to [`openai/codex-action`](https://developers.openai.com/codex/autofix-ci) with a prompt tailored for our monorepo to diagnose and fix the failure.
+4. Re-runs `npm test --silent` to verify Codex’s patch.
+5. Uses `peter-evans/create-pull-request` to open a PR referencing the failed workflow/run so humans can review & merge the automated fix.
+
 ### 1. `deploy-registry.yml` - Deploy Application
 
 **Purpose:** Deploy the registry application to Elastic Beanstalk

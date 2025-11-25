@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/block-env-writes/dist/hook.js",
+            "timeout": 2000,
+            "systemMessage": "🔒 Protecting sensitive files (.env, credentials, keys, .git, .ssh)"
+          }
+        ]
+      }
+    ]
+  }
+}

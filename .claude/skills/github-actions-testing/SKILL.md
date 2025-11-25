@@ -1,5 +1,5 @@
 ---
-name: GitHub Actions Testing & Validation
+name: github-actions-testing
 description: Expert guidance for testing and validating GitHub Actions workflows before deployment - catches cache errors, path issues, monorepo dependencies, and service container problems that local testing misses
 ---
 

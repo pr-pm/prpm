@@ -16,8 +16,8 @@ jest.mock('@pr-pm/registry-client');
 jest.mock('../core/user-config');
 jest.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: jest.fn().mockResolvedValue(undefined),
+    shutdown: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -55,7 +55,13 @@ describe('Publish Command', () => {
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
+    try {
+      process.chdir(originalCwd);
+    } catch (err) {
+      // Ignore errors if originalCwd no longer exists (parallel test cleanup)
+      const { tmpdir } = require('os');
+      process.chdir(tmpdir());
+    }
   });
 
   describe('Manifest Validation', () => {
@@ -139,10 +145,11 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test rules');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test rules"\n---\n\n# Test rules');
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -169,7 +176,7 @@ describe('Publish Command', () => {
       );
 
       await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test-skill/skill.md'), '# Test skill');
+      await writeFile(join(testDir, '.claude/skills/test-skill/skill.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
 
       await expect(handlePublish({})).rejects.toThrow(/SKILL\.md/);
     });
@@ -188,10 +195,11 @@ describe('Publish Command', () => {
       );
 
       await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '# Test skill');
+      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-skill',
+        name: 'test-skill',
         version: '1.0.0',
       });
 
@@ -219,12 +227,15 @@ describe('Publish Command', () => {
       );
 
       await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '# Test skill');
+      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
 
       await expect(handlePublish({})).rejects.toThrow(/64 character limit/);
     });
 
     it('should reject Claude skills with invalid name characters', async () => {
+      await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
+      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
+
       await writeFile(
         join(testDir, 'prpm.json'),
         JSON.stringify({
@@ -237,10 +248,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '# Test skill');
-
-      await expect(handlePublish({})).rejects.toThrow(/pattern|Manifest validation failed/);
+      await expect(handlePublish({})).rejects.toThrow(/invalid character|lowercase/i);
     });
 
     it('should reject Claude skills with description longer than 500 characters', async () => {
@@ -258,7 +266,7 @@ describe('Publish Command', () => {
       );
 
       await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '# Test skill');
+      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
 
       await expect(handlePublish({})).rejects.toThrow(/maxLength|Manifest validation failed/);
     });
@@ -277,11 +285,12 @@ describe('Publish Command', () => {
       );
 
       await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '# Test skill');
+      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
 
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-skill',
+        name: 'test-skill',
         version: '1.0.0',
       });
 
@@ -321,10 +330,11 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -355,11 +365,12 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Cursor rules');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Cursor rules"\n---\n\n# Cursor rules');
       await writeFile(join(testDir, 'README.md'), '# README');
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -383,14 +394,16 @@ describe('Publish Command', () => {
           version: '1.0.0',
           description: 'Test package for testing purposes',
           format: 'cursor',
-          files: ['prpm.json', 'custom-file.txt'],
+          files: ['prpm.json', '.cursorrules', 'custom-file.txt'],
         })
       );
 
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
       await writeFile(join(testDir, 'custom-file.txt'), 'Custom content');
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -447,15 +460,22 @@ describe('Publish Command', () => {
           version: '1.0.0',
           description: 'Test package for testing purposes',
           format: 'cursor',
+          subtype: 'rule',
           files: ['.cursorrules'],
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockPublish = jest.fn();
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'testuser',
+        organizations: [],
+      });
+
       mockGetRegistryClient.mockReturnValue({
         publish: mockPublish,
+        whoami: mockWhoami,
       } as any);
 
       await handlePublish({ dryRun: true });
@@ -488,11 +508,12 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test rules');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test rules"\n---\n\n# Test rules');
       await writeFile(join(testDir, 'README.md'), '# Test README');
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
         message: 'Package published successfully',
       });
@@ -539,7 +560,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockPublish = jest.fn().mockRejectedValue(new Error('Package already exists'));
 
@@ -568,9 +589,18 @@ describe('Publish Command', () => {
         const typeFiles: Record<string, string> = {
           cursor: '.cursorrules',
           claude: '.clinerules',
-          continue: '.continuerc.json',
+          continue: '.continue/rules/test-rule.md',
           windsurf: '.windsurfrules',
           generic: 'README.md',
+        };
+
+        // Generate format-specific content with proper frontmatter
+        const typeContent: Record<string, string> = {
+          cursor: '---\ndescription: "Test cursor package"\n---\n\n# Test cursor',
+          claude: '---\nname: test-claude\ndescription: Test claude package\n---\n\n# Test claude',
+          continue: '---\nname: "Test continue rule"\ndescription: "Test continue package"\n---\n\n# Test continue',
+          windsurf: '# Test windsurf',
+          generic: '# Test generic',
         };
 
         await writeFile(
@@ -584,10 +614,16 @@ describe('Publish Command', () => {
           })
         );
 
-        await writeFile(join(testDir, typeFiles[type]), `# Test ${type}`);
+        // Create directory for continue format
+        if (type === 'continue') {
+          await mkdir(join(testDir, '.continue/rules'), { recursive: true });
+        }
+
+        await writeFile(join(testDir, typeFiles[type]), typeContent[type]);
 
         const mockPublish = jest.fn().mockResolvedValue({
           package_id: `test-${type}-package`,
+          name: `test-${type}-package`,
           version: '1.0.0',
         });
 
@@ -621,10 +657,11 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: '@myorg/test-package',
+        name: '@myorg/test-package',
         version: '1.0.0',
       });
 
@@ -658,7 +695,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -670,6 +707,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: '@company/team-package',
+        name: '@company/team-package',
         version: '1.0.0',
       });
 
@@ -704,7 +742,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -715,6 +753,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'org-package',
+        name: 'org-package',
         version: '1.0.0',
       });
 
@@ -745,7 +784,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -775,7 +814,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -805,7 +844,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -816,6 +855,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'owner-package',
+        name: 'owner-package',
         version: '1.0.0',
       });
 
@@ -842,7 +882,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -853,6 +893,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'admin-package',
+        name: 'admin-package',
         version: '1.0.0',
       });
 
@@ -879,7 +920,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -890,6 +931,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'maintainer-package',
+        name: 'maintainer-package',
         version: '1.0.0',
       });
 
@@ -915,7 +957,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -926,6 +968,7 @@ describe('Publish Command', () => {
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'personal-package',
+        name: 'personal-package',
         version: '1.0.0',
       });
 
@@ -957,7 +1000,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockRejectedValue(new Error('Network error'));
 
@@ -981,11 +1024,12 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockWhoami = jest.fn().mockRejectedValue(new Error('Network error'));
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -1017,10 +1061,11 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockPublish = jest.fn().mockResolvedValue({
         package_id: 'test-package',
+        name: 'test-package',
         version: '1.0.0',
       });
 
@@ -1053,7 +1098,7 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '# Test');
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockPublish = jest.fn().mockRejectedValue(new Error('Network error'));
 
@@ -1106,13 +1151,20 @@ describe('Publish Command', () => {
       );
 
       // Create files for both packages
-      await writeFile(join(testDir, 'package-one.cursorrules'), '# Package one rules');
-      await writeFile(join(testDir, 'SKILL.md'), '# Package two skill');
+      await writeFile(join(testDir, 'package-one.cursorrules'), '---\ndescription: "Package one rules"\n---\n\n# Package one rules');
+      await writeFile(join(testDir, 'SKILL.md'), '---\nname: package-two\ndescription: Package two skill\n---\n\n# Package two skill');
 
-      const mockPublish = jest.fn().mockResolvedValue({
-        package_id: 'test',
-        version: '1.0.0',
-      });
+      const mockPublish = jest.fn()
+        .mockResolvedValueOnce({
+          package_id: 'package-one',
+          name: 'package-one',
+          version: '1.0.0',
+        })
+        .mockResolvedValueOnce({
+          package_id: 'package-two',
+          name: 'package-two',
+          version: '1.0.0',
+        });
 
       const mockWhoami = jest.fn().mockResolvedValue({
         username: 'testuser',
@@ -1178,10 +1230,11 @@ describe('Publish Command', () => {
         })
       );
 
-      await writeFile(join(testDir, 'test.cursorrules'), '# Test');
+      await writeFile(join(testDir, 'test.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
       const mockPublish = jest.fn().mockResolvedValue({
-        package_id: 'test',
+        package_id: 'package-override',
+        name: 'package-override',
         version: '2.0.0',
       });
 
@@ -1205,6 +1258,229 @@ describe('Publish Command', () => {
         author: 'Custom Author', // Should use package-level override
         license: 'Apache-2.0', // Should use package-level override
       });
+    });
+  });
+
+  describe('Admin Author Override', () => {
+    it('should allow admin to publish as different author from manifest', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package published by admin',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          author: 'different-user',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'admin-user',
+        is_admin: true,
+        organizations: [],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      expect(options).toBeDefined();
+      expect(options.publishAsAuthor).toBe('different-user');
+    });
+
+    it('should not override author for non-admin users', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          author: 'some-other-user',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'regular-user',
+        is_admin: false,
+        organizations: [],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      // Options should be undefined or not have publishAsAuthor
+      if (options) {
+        expect(options.publishAsAuthor).toBeUndefined();
+      }
+    });
+
+    it('should not override author if manifest does not have author field', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package without author',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          // No author field
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'admin-user',
+        is_admin: true,
+        organizations: [],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      // Options should be undefined or not have publishAsAuthor
+      if (options) {
+        expect(options.publishAsAuthor).toBeUndefined();
+      }
+    });
+
+    it('should work with organization publishing and admin override', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package with org and author override',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          author: 'target-user',
+          organization: 'my-company',
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'admin-user',
+        is_admin: true,
+        organizations: [
+          { id: 'org-123', name: 'my-company', role: 'owner' },
+        ],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      expect(options).toBeDefined();
+      expect(options.publishAsAuthor).toBe('target-user');
+      expect(options.orgId).toBe('org-123');
+    });
+
+    it('should handle author as object with name and email', async () => {
+      await writeFile(
+        join(testDir, 'prpm.json'),
+        JSON.stringify({
+          name: 'test-package',
+          version: '1.0.0',
+          description: 'Test package with author object',
+          format: 'cursor',
+          files: ['.cursorrules'],
+          author: {
+            name: 'target-user',
+            email: 'target@example.com'
+          },
+        })
+      );
+
+      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+
+      const mockWhoami = jest.fn().mockResolvedValue({
+        username: 'admin-user',
+        is_admin: true,
+        organizations: [],
+      });
+
+      const mockPublish = jest.fn().mockResolvedValue({
+        package_id: 'test-package',
+        name: 'test-package',
+        version: '1.0.0',
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalled();
+      const publishCall = mockPublish.mock.calls[0];
+      const options = publishCall[2];
+
+      expect(options).toBeDefined();
+      expect(options.publishAsAuthor).toBe('target-user');
     });
   });
 });

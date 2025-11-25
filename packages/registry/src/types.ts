@@ -3,8 +3,8 @@
  */
 
 // Package types
-export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'generic' | 'mcp';
-export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode';
+export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
+export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
 export type PackageVisibility = 'public' | 'private' | 'unlisted';
 export type OrgRole = 'owner' | 'admin' | 'maintainer' | 'member';
@@ -51,6 +51,7 @@ export interface OrganizationMember {
 export interface Package {
   id: string;
   name: string;
+  display_name?: string;
   description?: string;
   author_id?: string;
   author_username?: string;
@@ -112,6 +113,7 @@ export interface PackageVersion {
 export interface PackageManifest {
   name: string;
   version: string;
+  displayName?: string;
   description: string;
   author: string | PackageAuthor;
   license?: string;
@@ -182,7 +184,7 @@ export interface SearchFilters {
   framework?: string;  // Filter by framework
   verified?: boolean;
   featured?: boolean;
-  sort?: 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
+  sort?: 'relevance' | 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
   limit?: number;
   offset?: number;
 }
@@ -192,6 +194,9 @@ export interface SearchResult {
   total: number;
   offset: number;
   limit: number;
+  didYouMean?: string;
+  fallback?: boolean;
+  original_query?: string;
 }
 
 export interface PackageInfo extends Package {
@@ -234,6 +239,7 @@ export interface JWTPayload {
   username: string;
   email: string;
   is_admin: boolean;
+  verified_author: boolean;
   scopes: string[];
   iat: number;
   exp: number;
@@ -293,5 +299,11 @@ export interface RegistryConfig {
   };
   frontend: {
     url: string;
+  };
+  seoData?: {
+    enabled: boolean;
+    bucket: string;
+    prefix: string;
+    cacheControl: string;
   };
 }

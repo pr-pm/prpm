@@ -7,7 +7,7 @@ import { Package } from './package';
 import { Collection } from './collection';
 import { CollectionCategory } from './collection';
 
-export type SortType = 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
+export type SortType = 'relevance' | 'downloads' | 'created' | 'updated' | 'quality' | 'rating';
 
 /**
  * Package search filters
@@ -54,6 +54,8 @@ export interface SearchResult {
   total: number;
   offset: number;
   limit: number;
+  fallback?: boolean;
+  original_query?: string;
 }
 
 /**
@@ -64,6 +66,8 @@ export interface SearchPackagesResponse {
   total: number;
   offset: number;
   limit: number;
+  fallback?: boolean;
+  original_query?: string;
 }
 
 /**

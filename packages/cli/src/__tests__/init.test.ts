@@ -12,8 +12,25 @@ import { CLIError } from '../core/errors';
 
 describe('prpm init command', () => {
   let testDir: string;
+  let exitMock: jest.SpyInstance;
+  let consoleLogMock: jest.SpyInstance;
+  let consoleErrorMock: jest.SpyInstance;
+  let originalCwd: string;
+
+  beforeAll(() => {
+    originalCwd = process.cwd();
+  });
 
   beforeEach(async () => {
+    // Mock process.exit to prevent actual exit
+    exitMock = jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+      throw new Error(`Process exited with code ${code}`);
+    }) as any);
+
+    // Mock console methods to reduce noise in test output
+    consoleLogMock = jest.spyOn(console, 'log').mockImplementation();
+    consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+
     // Create temporary directory for each test
     testDir = await mkdtemp(join(tmpdir(), 'prpm-init-test-'));
     // Change to test directory
@@ -21,6 +38,17 @@ describe('prpm init command', () => {
   });
 
   afterEach(async () => {
+    // Restore mocks
+    exitMock.mockRestore();
+    consoleLogMock.mockRestore();
+    consoleErrorMock.mockRestore();
+
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      process.chdir(tmpdir());
+    }
+
     // Clean up test directory
     if (testDir && existsSync(testDir)) {
       await rm(testDir, { recursive: true, force: true });

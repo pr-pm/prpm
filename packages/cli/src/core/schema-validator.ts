@@ -4,18 +4,31 @@
 
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { PackageManifest } from '../types/registry.js';
 
 // Load the JSON schema
-const schemaPath = join(__dirname, '../../schemas/prpm-manifest.schema.json');
 let schema: any;
+const schemaCandidates = [
+  // Source file layout (src/core → ../../schemas)
+  join(__dirname, '../../schemas/prpm-manifest.schema.json'),
+  // Bundled layout (dist/index.js → ../schemas)
+  join(__dirname, '../schemas/prpm-manifest.schema.json'),
+];
 
-try {
-  schema = JSON.parse(readFileSync(schemaPath, 'utf-8'));
-} catch (error) {
-  // Schema file not found, validation will be skipped
+for (const candidate of schemaCandidates) {
+  try {
+    if (existsSync(candidate)) {
+      schema = JSON.parse(readFileSync(candidate, 'utf-8'));
+      break;
+    }
+  } catch {
+    // Try next candidate
+  }
+}
+
+if (!schema) {
   console.warn('⚠️  Could not load manifest schema, skipping schema validation');
 }
 

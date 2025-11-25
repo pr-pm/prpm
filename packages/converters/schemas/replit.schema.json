@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/replit.json",
+  "$comment": "https://docs.replit.com/replitai/replit-dot-md",
+  "title": "Replit.md Format",
+  "description": "JSON Schema for Replit replit.md format - plain markdown project configuration (NO frontmatter)",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "Plain markdown content with project overview, technology preferences, coding standards, and communication style. No frontmatter allowed."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "content": "# Project Name\n\n## Project Overview\n\nA web application for task management.\n\n## Technology Preferences\n\n- Frontend: React with TypeScript\n- Backend: Node.js with Express\n- Database: PostgreSQL\n\n## Coding Standards\n\n- Use ESLint and Prettier\n- Follow Airbnb style guide\n\n## Communication Style\n\n- Prefer detailed explanations\n- Include code examples"
+    }
+  ]
+}

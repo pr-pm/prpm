@@ -1,0 +1,7 @@
+Every PRPM feature in one guide.
+
+7,500+ packages, AI playground, quality scoring, format conversion, analytics for authors, and more.
+
+If you use AI coding tools, this is worth the 10-minute read.
+
+https://prpm.dev/blog/prpm-complete-feature-guide

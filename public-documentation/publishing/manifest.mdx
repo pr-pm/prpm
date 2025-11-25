@@ -100,21 +100,51 @@ Each package in the `packages` array requires the same fields, except top-level 
 | `cursor` | Cursor IDE |
 | `continue` | Continue.dev |
 | `windsurf` | Windsurf IDE |
-| `agents.md` | Agents.md format |
 | `copilot` | GitHub Copilot |
+| `kiro` | Kiro AI |
+| `gemini` | Gemini CLI |
+| `opencode` | OpenCode AI |
+| `ruler` | Ruler |
+| `droid` | Factory Droid |
+| `agents.md` | Agents.md universal format |
+| `mcp` | Model Context Protocol |
 | `generic` | Multi-tool |
+
+### Format Aliases
+
+Some formats have aliases for compatibility:
+- `claude.md` → `claude`
+- `gemini.md` → `gemini`
 
 ## Subtype Values
 
 | Subtype | Description |
 |---------|-------------|
-| `agent` | Autonomous agents |
-| `skill` | Specialized capabilities |
-| `rule` | IDE rules |
-| `slash-command` | Executable commands |
-| `prompt` | Prompt templates |
-| `chatmode` | Chat modes |
-| `tool` | MCP tools |
+| `agent` | Autonomous agents that execute multi-step tasks |
+| `skill` | Specialized capabilities and knowledge domains |
+| `rule` | IDE rules and coding standards |
+| `slash-command` | Executable commands for quick actions |
+| `prompt` | Reusable prompt templates |
+| `workflow` | Multi-step automation workflows |
+| `tool` | Executable utilities and scripts |
+| `template` | File and project templates |
+| `collection` | Curated package collections |
+| `chatmode` | Chat interface modes and configurations |
+| `hook` | Event-triggered executable hooks |
+
+### Subtype by Format
+
+Different formats support different subtypes:
+
+- **claude**: skill, agent, slash-command, tool, hook
+- **cursor**: rule, agent, slash-command, tool
+- **continue**: rule, agent, prompt
+- **windsurf**: rule, agent, slash-command
+- **kiro**: rule, agent, tool, hook
+- **opencode**: agent, slash-command, tool
+- **ruler**: rule, agent, tool
+- **droid**: skill, slash-command, hook
+- **generic**: all subtypes
 
 ## File Paths
 
@@ -162,6 +192,150 @@ Use 3-8 kebab-case tags:
 | `organization` | string | Organization name/ID |
 | `keywords` | string[] | Additional search keywords |
 | `private` | boolean | Mark as private (default: false) |
+| `scripts` | object | Lifecycle scripts (multi-package only) |
+
+## Lifecycle Scripts
+
+<Warning>
+The `scripts` field only applies to **multi-package manifests** (prpm.json with a `packages` array). It does not work in single-package manifests.
+</Warning>
+
+Use the `scripts` field to run commands automatically during package operations:
+
+```json
+{
+  "name": "my-packages",
+  "license": "MIT",
+  "repository": "https://github.com/username/repo",
+  "scripts": {
+    "prepublishOnly": "cd packages/hooks && npm run build"
+  },
+  "packages": [...]
+}
+```
+
+### Available Scripts
+
+| Script | When it Runs | Use Case |
+|--------|--------------|----------|
+| `prepublishOnly` | Before `prpm publish` | Build TypeScript hooks, compile assets |
+| `prepublish` | Before publish AND on install | Not recommended - use prepublishOnly |
+
+### prepublishOnly (Recommended)
+
+Use `prepublishOnly` to build hooks or compile code before publishing:
+
+```json
+{
+  "scripts": {
+    "prepublishOnly": "cd .claude/hooks/my-hook && npm run build"
+  }
+}
+```
+
+**What happens:**
+1. You run `prpm publish`
+2. PRPM runs your `prepublishOnly` script
+3. If the script succeeds, publishing continues
+4. If the script fails, publishing is aborted
+
+**Common use cases:**
+- Building TypeScript hooks to JavaScript
+- Compiling assets
+- Running tests before publish
+- Validating package contents
+
+### Multiple Commands
+
+Chain multiple commands with `&&`:
+
+```json
+{
+  "scripts": {
+    "prepublishOnly": "npm test && npm run build && npm run validate"
+  }
+}
+```
+
+### Example: Building Multiple Hooks
+
+```json
+{
+  "name": "my-hooks",
+  "scripts": {
+    "prepublishOnly": "cd .claude/hooks/hook-one && npm run build && cd ../hook-two && npm run build"
+  },
+  "packages": [
+    {
+      "name": "hook-one",
+      "version": "1.0.0",
+      "format": "claude",
+      "subtype": "hook",
+      "files": [
+        ".claude/hooks/hook-one/hook.ts",
+        ".claude/hooks/hook-one/hook.json",
+        ".claude/hooks/hook-one/dist/hook.js"
+      ]
+    },
+    {
+      "name": "hook-two",
+      "version": "1.0.0",
+      "format": "claude",
+      "subtype": "hook",
+      "files": [
+        ".claude/hooks/hook-two/hook.ts",
+        ".claude/hooks/hook-two/hook.json",
+        ".claude/hooks/hook-two/dist/hook.js"
+      ]
+    }
+  ]
+}
+```
+
+### Script Execution Details
+
+**Working Directory:** Scripts run from the directory containing prpm.json
+
+**Timeout:** Default 5 minutes (300,000ms)
+
+**Environment:** Inherits your shell's environment variables
+
+**Error Handling:**
+- Exit code 0 = success (publishing continues)
+- Exit code non-zero = failure (publishing aborted)
+- Script output is shown in real-time
+
+### Best Practices
+
+<Tip>
+**Always use prepublishOnly for builds**
+
+This ensures your published packages always contain up-to-date compiled code, preventing the common mistake of publishing stale JavaScript files.
+</Tip>
+
+**Good:**
+```json
+{
+  "scripts": {
+    "prepublishOnly": "npm run build"
+  }
+}
+```
+
+**Bad:**
+```json
+{
+  "scripts": {
+    "prepublish": "npm run build"  // Runs on install too!
+  }
+}
+```
+
+### Why Not prepublish?
+
+The `prepublish` script runs both before publishing AND when someone runs `npm install` in your repository. This can cause unexpected build steps for users installing your packages.
+
+Use `prepublishOnly` which ONLY runs before `prpm publish`.
 
 ## Next Steps
 

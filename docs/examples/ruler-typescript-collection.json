@@ -1,0 +1,44 @@
+{
+  "id": "ruler-typescript",
+  "name": "Ruler TypeScript Setup",
+  "description": "Complete TypeScript development rules and guidelines for Ruler - includes strict typing, code quality standards, and testing patterns",
+  "version": "1.0.0",
+  "category": "development",
+  "tags": ["ruler", "typescript", "javascript", "code-quality"],
+  "packages": [
+    {
+      "packageId": "@prpm/typescript-strict",
+      "version": "^1.0.0",
+      "required": true,
+      "reason": "Core TypeScript strict mode rules and type safety guidelines"
+    },
+    {
+      "packageId": "@prpm/code-quality",
+      "version": "^2.1.0",
+      "required": true,
+      "reason": "General code quality standards: naming, structure, documentation"
+    },
+    {
+      "packageId": "@prpm/testing-patterns",
+      "version": "^1.5.0",
+      "required": true,
+      "reason": "Testing best practices for TypeScript with Vitest/Jest"
+    },
+    {
+      "packageId": "@prpm/eslint-prettier",
+      "version": "^1.2.0",
+      "required": false,
+      "reason": "ESLint and Prettier configuration guidance"
+    },
+    {
+      "packageId": "@prpm/git-conventions",
+      "version": "^1.0.0",
+      "required": false,
+      "reason": "Git commit message and branching conventions"
+    }
+  ],
+  "icon": "📏",
+  "author": "PRPM Team",
+  "repository": "https://github.com/pr-pm/prpm",
+  "readme": "# Ruler TypeScript Setup\n\nComplete TypeScript development environment configured for Ruler.\n\n## What's Included\n\n- **Strict TypeScript Rules**: Type safety, null checking, strict mode\n- **Code Quality Standards**: Naming conventions, file organization, SOLID principles\n- **Testing Patterns**: Unit testing, integration testing, mocking strategies\n- **Linting Config** (optional): ESLint and Prettier guidelines\n- **Git Conventions** (optional): Commit messages and workflow\n\n## Installation\n\n```bash\nprpm install collections/ruler-typescript --as ruler\n```\n\n## Usage\n\nAfter installation, Ruler will automatically distribute these rules to your configured AI agents (Copilot, Cursor, Claude, etc.) according to your `ruler.toml` configuration.\n\n## Customization\n\nYou can edit any generated `.ruler/*.md` files to customize for your project.\n"
+}

@@ -343,7 +343,7 @@ function SharedResultContent() {
             Try this package
           </Link>
           <Link
-            href={`/packages/${session.package_name.split('/')[0]}/${session.package_name.split('/')[1]}`}
+            href={`/packages/${session.package_name.split('/')[0].replace('@', '')}/${session.package_name.split('/')[1]}`}
             className="px-4 py-3 bg-prpm-dark-card hover:bg-prpm-dark border border-prpm-border text-gray-300 font-medium rounded-lg transition-colors"
           >
             View Package

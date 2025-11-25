@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
-import { Format, Subtype } from '../types';
+import { Format, Subtype, FORMATS, SUBTYPES } from '../types';
 import { CLIError } from '../core/errors';
 
 export async function handleTrending(options: { format?: Format; subtype?: Subtype; limit?: number }): Promise<void> {
@@ -70,16 +70,16 @@ export function createTrendingCommand(): Command {
 
   command
     .description('Show trending packages')
-    .option('--format <format>', 'Filter by format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, generic)')
-    .option('--subtype <subtype>', 'Filter by subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection)')
+    .option('--format <format>', `Filter by format (${FORMATS.join(', ')})`)
+    .option('--subtype <subtype>', `Filter by subtype (${SUBTYPES.join(', ')})`)
     .option('--limit <number>', 'Number of packages to show', '10')
     .action(async (options: { limit?: string; format?: string; subtype?: string }) => {
       const format = options.format as Format | undefined;
       const subtype = options.subtype as Subtype | undefined;
       const limit = options.limit ? parseInt(options.limit, 10) : 10;
 
-      const validFormats = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'];
-      const validSubtypes = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'];
+      const validFormats = FORMATS;
+      const validSubtypes = SUBTYPES;
 
       if (options.format && !validFormats.includes(format!)) {
         console.error(`❌ Format must be one of: ${validFormats.join(', ')}`);

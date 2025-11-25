@@ -55,7 +55,7 @@ export default function DiscoveringCursorRulesPost() {
               <li><a href="https://cursor.directory" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">cursor.directory</a> - The main marketplace, browse and copy files</li>
               <li><a href="https://dotcursorrules.com" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">dotcursorrules.com</a> - Community collection, manual download</li>
               <li><a href="https://www.cursorhow.com/en/agent-skills-hub" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:underline">CursorHow</a> - Mixed with Claude skills</li>
-              <li>GitHub repos, Discord, Reddit</li>
+              <li>GitHub repos, Twitter, Reddit</li>
             </ul>
           </div>
 
@@ -189,7 +189,7 @@ prpm update`}</code></pre>
           <div className="not-prose my-12 p-8 bg-gradient-to-br from-prpm-accent/10 to-prpm-green/10 border border-prpm-accent/30 rounded-2xl">
             <h3 className="text-2xl font-bold text-white mb-4">Upgrade Your Cursor Workflow</h3>
             <p className="text-gray-300 mb-6">
-              2,100+ packages with CLI installation, version control, and format conversion. Move beyond manual copy-paste.
+              7,000+ packages with CLI installation, version control, and format conversion. Move beyond manual copy-paste.
             </p>
             <div className="flex gap-4">
               <Link

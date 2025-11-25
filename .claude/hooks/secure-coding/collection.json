@@ -1,0 +1,35 @@
+{
+  "id": "secure-coding",
+  "name": "Secure Coding Suite",
+  "description": "Complete security policy with environment protection, credential validation, audit logging, and data scanning for Claude Code",
+  "version": "1.0.0",
+  "category": "security",
+  "tags": ["security", "credentials", "audit", "compliance", "best-practices"],
+  "icon": "🔒",
+  "packages": [
+    {
+      "packageId": "@prpm/block-env-writes",
+      "version": "^1.0.0",
+      "required": true,
+      "reason": "Blocks writes to sensitive files (.env, .pem, .key) to prevent credential exposure"
+    },
+    {
+      "packageId": "@prpm/validate-credentials",
+      "version": "^1.0.0",
+      "required": true,
+      "reason": "Warns when hardcoded credentials detected in code (passwords, API keys, tokens)"
+    },
+    {
+      "packageId": "@prpm/audit-file-deletes",
+      "version": "^1.0.0",
+      "required": true,
+      "reason": "Logs all file deletion operations for audit trail and compliance"
+    },
+    {
+      "packageId": "@prpm/sensitive-data-scanner",
+      "version": "^1.0.0",
+      "required": true,
+      "reason": "Scans for AWS keys, private keys, JWT tokens, and other sensitive data patterns"
+    }
+  ]
+}

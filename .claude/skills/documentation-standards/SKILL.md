@@ -1,5 +1,5 @@
 ---
-name: PRPM Documentation Standards
+name: documentation-standards
 description: Standards and guidelines for organizing, structuring, and maintaining documentation in the PRPM repository - ensures consistency across user docs, development docs, and internal references
 ---
 

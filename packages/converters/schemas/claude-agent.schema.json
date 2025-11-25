@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/agent.json",
+  "$comment": "https://code.claude.com/docs/en/sub-agents",
+  "title": "Claude Agent Format",
+  "description": "JSON Schema for Claude Code Agents - long-running assistants with tool access",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 64,
+          "description": "Unique identifier using lowercase letters and hyphens"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Natural language description of the subagent's purpose"
+        },
+        "tools": {
+          "type": "string",
+          "description": "Comma-separated list of specific tools. If omitted, inherits all tools from the main thread"
+        },
+        "model": {
+          "type": "string",
+          "enum": ["sonnet", "opus", "haiku", "inherit"],
+          "description": "Model to use for this subagent. Can be a model alias (sonnet, opus, haiku) or 'inherit' to use the main conversation's model. If omitted, defaults to the configured subagent model"
+        },
+        "permissionMode": {
+          "type": "string",
+          "enum": ["default", "acceptEdits", "bypassPermissions", "plan", "ignore"],
+          "description": "Permission mode for the subagent. Controls how the subagent handles permission requests"
+        },
+        "skills": {
+          "type": "string",
+          "description": "Comma-separated list of skill names to auto-load when the subagent starts. Skills are loaded into the subagent's context automatically"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content with H1 title (can include emoji icon), persona, instructions, and examples"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "name": "code-reviewer",
+        "description": "Reviews code for best practices and potential issues",
+        "tools": "Read, Grep, Bash",
+        "model": "sonnet"
+      },
+      "content": "# 🔍 Code Reviewer\n\nYou are an expert code reviewer with deep knowledge of software engineering principles.\n\n## Instructions\n\n- Check for code smells and anti-patterns\n- Verify test coverage"
+    }
+  ]
+}

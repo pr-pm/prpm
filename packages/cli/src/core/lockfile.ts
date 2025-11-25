@@ -12,18 +12,35 @@ export interface LockfilePackage {
   resolved: string; // Tarball URL
   integrity: string; // SHA-256 hash
   dependencies?: Record<string, string>;
-  format?: string;
-  subtype?: string;
+  format?: string; // Installed format
+  subtype?: string; // Installed subtype
+  sourceFormat?: string; // Original package format from registry
+  sourceSubtype?: string; // Original subtype from registry
   installedPath?: string; // Path where the package was installed
   fromCollection?: {
     scope: string;
     name_slug: string;
     version?: string;
   };
+  // For Claude hooks: track which hook events were added
+  hookMetadata?: {
+    events: string[]; // e.g., ['PreToolUse', 'PostToolUse']
+    hookId: string; // Unique identifier to find and remove this hook
+  };
+  // For progressive disclosure (agents.md skills in .openskills/ or agents in .openagents/)
+  progressiveDisclosure?: {
+    mode: 'progressive'; // Progressive disclosure mode
+    resourceDir: string; // Path to resource directory (e.g., '.openskills/package-name' or '.openagents/agent-name')
+    manifestPath: string; // Path to AGENTS.md manifest file
+    resourceName: string; // Resource name as referenced in XML
+    resourceType: 'skill' | 'agent'; // Type of resource
+    // Legacy fields for backward compatibility
+    skillsDir?: string; // Deprecated: use resourceDir
+    skillName?: string; // Deprecated: use resourceName
+  };
 }
 
 export interface LockfileCollection {
-  scope: string;
   name_slug: string;
   version: string;
   installedAt: string; // Timestamp
@@ -86,6 +103,28 @@ export function createLockfile(): Lockfile {
 }
 
 /**
+ * Generate lockfile key for a package with optional format suffix
+ * Format: packageId or packageId#format
+ */
+export function getLockfileKey(packageId: string, format?: string): string {
+  if (!format) {
+    return packageId;
+  }
+  return `${packageId}#${format}`;
+}
+
+/**
+ * Parse lockfile key to extract package ID and format
+ */
+export function parseLockfileKey(key: string): { packageId: string; format?: string } {
+  const parts = key.split('#');
+  return {
+    packageId: parts[0],
+    format: parts[1],
+  };
+}
+
+/**
  * Add package to lock file
  */
 export function addToLockfile(
@@ -97,23 +136,46 @@ export function addToLockfile(
     dependencies?: Record<string, string>;
     format?: string;
     subtype?: string;
+    sourceFormat?: string;
+    sourceSubtype?: string;
     installedPath?: string;
     fromCollection?: {
       scope: string;
       name_slug: string;
       version?: string;
     };
+    hookMetadata?: {
+      events: string[];
+      hookId: string;
+    };
+    progressiveDisclosure?: {
+      mode: 'progressive';
+      resourceDir: string;
+      manifestPath: string;
+      resourceName: string;
+      resourceType: 'skill' | 'agent';
+      // Legacy support
+      skillsDir?: string;
+      skillName?: string;
+    };
   }
 ): void {
-  lockfile.packages[packageId] = {
+  // Use format-specific key if format is provided (enables multiple formats per package)
+  const lockfileKey = getLockfileKey(packageId, packageInfo.format);
+
+  lockfile.packages[lockfileKey] = {
     version: packageInfo.version,
     resolved: packageInfo.tarballUrl,
     integrity: '', // Will be set after download
     dependencies: packageInfo.dependencies,
     format: packageInfo.format,
     subtype: packageInfo.subtype,
+    sourceFormat: packageInfo.sourceFormat,
+    sourceSubtype: packageInfo.sourceSubtype,
     installedPath: packageInfo.installedPath,
     fromCollection: packageInfo.fromCollection,
+    hookMetadata: packageInfo.hookMetadata,
+    progressiveDisclosure: packageInfo.progressiveDisclosure,
   };
   lockfile.generated = new Date().toISOString();
 }
@@ -124,14 +186,17 @@ export function addToLockfile(
 export function setPackageIntegrity(
   lockfile: Lockfile,
   packageId: string,
-  tarballBuffer: Buffer
+  tarballBuffer: Buffer,
+  format?: string
 ): void {
-  if (!lockfile.packages[packageId]) {
-    throw new Error(`Package ${packageId} not found in lock file`);
+  const lockfileKey = getLockfileKey(packageId, format);
+
+  if (!lockfile.packages[lockfileKey]) {
+    throw new Error(`Package ${lockfileKey} not found in lock file`);
   }
 
   const hash = createHash('sha256').update(tarballBuffer).digest('hex');
-  lockfile.packages[packageId].integrity = `sha256-${hash}`;
+  lockfile.packages[lockfileKey].integrity = `sha256-${hash}`;
 }
 
 /**
@@ -154,16 +219,37 @@ export function verifyPackageIntegrity(
 }
 
 /**
- * Get locked version for a package
+ * Get locked version for a package (searches all formats)
  */
 export function getLockedVersion(
   lockfile: Lockfile | null,
-  packageId: string
+  packageId: string,
+  format?: string
 ): string | null {
-  if (!lockfile || !lockfile.packages[packageId]) {
+  if (!lockfile) {
     return null;
   }
-  return lockfile.packages[packageId].version;
+
+  // If format specified, check specific key
+  if (format) {
+    const lockfileKey = getLockfileKey(packageId, format);
+    return lockfile.packages[lockfileKey]?.version || null;
+  }
+
+  // Otherwise, find any matching package (without format suffix first, then with format)
+  if (lockfile.packages[packageId]) {
+    return lockfile.packages[packageId].version;
+  }
+
+  // Search for format-specific entries
+  for (const key of Object.keys(lockfile.packages)) {
+    const parsed = parseLockfileKey(key);
+    if (parsed.packageId === packageId) {
+      return lockfile.packages[key].version;
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -273,6 +359,8 @@ export async function addPackage(packageInfo: {
   dependencies?: Record<string, string>;
   format?: string;
   subtype?: string;
+  sourceFormat?: string;
+  sourceSubtype?: string;
   installedPath?: string;
 }): Promise<void> {
   const lockfile = (await readLockfile()) || createLockfile();
@@ -282,6 +370,8 @@ export async function addPackage(packageInfo: {
     dependencies: packageInfo.dependencies,
     format: packageInfo.format,
     subtype: packageInfo.subtype,
+    sourceFormat: packageInfo.sourceFormat,
+    sourceSubtype: packageInfo.sourceSubtype,
     installedPath: packageInfo.installedPath,
   });
   await writeLockfile(lockfile);
@@ -336,7 +426,6 @@ export function addCollectionToLockfile(
   lockfile: Lockfile,
   collectionKey: string,
   collectionInfo: {
-    scope: string;
     name_slug: string;
     version: string;
     packages: string[];
@@ -347,7 +436,6 @@ export function addCollectionToLockfile(
   }
 
   lockfile.collections[collectionKey] = {
-    scope: collectionInfo.scope,
     name_slug: collectionInfo.name_slug,
     version: collectionInfo.version,
     installedAt: new Date().toISOString(),

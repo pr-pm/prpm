@@ -26,6 +26,10 @@ export interface PlaygroundSession {
   run_count: number;
   is_public: boolean;
   share_token?: string;
+  view_count?: number;
+  helpful_count?: number;
+  not_helpful_count?: number;
+  shared_at?: string;
   created_at: string;
   updated_at: string;
   last_run_at: string;

@@ -256,7 +256,7 @@ describe('Taxonomy - Format and Subtype', () => {
   });
 
   describe('All subtype values', () => {
-    const subtypes = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection'];
+    const subtypes = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'];
 
     subtypes.forEach(subtype => {
       it(`should support ${subtype} subtype`, async () => {

@@ -1,0 +1,7 @@
+You can now install Claude Code hooks as packages. No more manual JSON editing.
+
+prpm install @prpm/prettier-on-save
+
+Auto-format, log commands, protect files. Share hooks via registry. Clean uninstalls.
+
+https://prpm.dev/blog/claude-hooks-support

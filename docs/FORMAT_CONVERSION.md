@@ -231,18 +231,25 @@ const MyComponent: FC<Props> = ({ data }) => {...}
 ```
 ```
 
-### Continue Format (.continuerc.json + prompts/)
+### Continue Format (.continue/rules/*.md)
 
-```json
-{
-  "name": "react-best-practices",
-  "description": "Production-grade React development patterns",
-  "systemMessage": "You are a React expert. Always use TypeScript...",
-  "prompts": {
-    "component": "Create a React component following best practices...",
-    "hook": "Create a custom hook that..."
-  }
-}
+```markdown
+---
+name: "React Best Practices"
+description: "Production-grade React development patterns"
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# React Best Practices
+
+You are a React expert. Always use TypeScript with proper typing.
+
+## Component Guidelines
+
+- Use functional components with hooks
+- Implement proper prop typing with TypeScript interfaces
+- Extract complex logic into custom hooks
 ```
 
 ### Windsurf Format (similar to Cursor)

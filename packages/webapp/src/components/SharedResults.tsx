@@ -35,8 +35,9 @@ export default function SharedResults({ packageId, limit = 5 }: SharedResultsPro
     const fetchResults = async () => {
       setLoading(true);
       try {
+        const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111';
         const response = await fetch(
-          `/api/v1/playground/packages/${packageId}/top-results?limit=${limit}&sort=${sortBy}`
+          `${registryUrl}/api/v1/playground/packages/${packageId}/top-results?limit=${limit}&sort=${sortBy}`
         );
 
         if (response.ok) {

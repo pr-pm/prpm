@@ -93,7 +93,7 @@ export default async function authorAnalyticsRoutes(fastify: FastifyInstance) {
             const pkg = pkgResult.rows[0];
             mostPopular = {
               package_id: pkg.id,
-              package_name: pkg.id,
+              package_name: pkg.name,
               downloads: pkg.total_downloads,
             };
           }

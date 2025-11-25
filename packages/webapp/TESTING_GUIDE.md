@@ -85,7 +85,7 @@ npm run test:e2e -- -g "should display hero"
 
 ### Real API Mode
 
-Tests against actual registry backend with real data (1,500+ packages).
+Tests against actual registry backend with real data (4,000+ packages).
 
 **Prerequisites:**
 ```bash

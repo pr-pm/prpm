@@ -1,9 +1,9 @@
-Windsurf is new. Its ecosystem is just forming. Early adopters are creating rules, sharing setups in Discord, publishing to GitHub repos. But there's no centralized marketplace yet.
+Windsurf is new. Its ecosystem is just forming. Early adopters are creating rules, sharing setups on Twitter, publishing to GitHub repos. But there's no centralized marketplace yet.
 
 We've seen this story before with Cursor, Claude, and GitHub Copilot:
 
 1. Tool launches with custom rule support
-2. Users share in Discord/Reddit, create GitHub repos
+2. Users share on Twitter/Reddit, create GitHub repos
 3. Discovery becomes harder as ecosystem grows
 4. Knowledge fragments across dozens of sources
 5. Someone eventually builds a marketplace

@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/zencoder.json",
+  "$comment": "https://docs.zencoder.ai/rules-context/zen-rules",
+  "title": "Zencoder Rules Format",
+  "description": "JSON Schema for Zencoder .zencoder/rules format with optional YAML frontmatter",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "description": "Optional YAML frontmatter enclosed in --- markers",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Brief description of what the rule covers"
+        },
+        "globs": {
+          "type": "array",
+          "description": "File patterns where the rule applies (e.g., ['*.md', '*.mdx'])",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alwaysApply": {
+          "type": "boolean",
+          "description": "Set to true if rule should always be active",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content following the frontmatter. Standard markdown with headings, lists, code blocks, etc."
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "description": "TypeScript coding standards",
+        "globs": ["*.ts", "*.tsx"],
+        "alwaysApply": false
+      },
+      "content": "# TypeScript Standards\n\n- Use strict mode\n- Prefer interfaces over types\n- Always define return types"
+    },
+    {
+      "content": "# General Coding Guidelines\n\nThese guidelines apply to all code.\n\n- Write clear, self-documenting code\n- Add comments for complex logic"
+    }
+  ]
+}

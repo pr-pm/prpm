@@ -22,6 +22,9 @@ import {
 import { validateManifestSchema } from '../core/schema-validator';
 import { extractLicenseInfo, validateLicenseInfo } from '../utils/license-extractor';
 import { extractSnippet, validateSnippet } from '../utils/snippet-extractor';
+import { executePrepublishOnly } from '../utils/script-executor';
+import { validatePackageFiles } from '../utils/format-file-validator';
+import { publishInParallel, calculateStats, formatDuration, withRetry, type PublishTask } from '../utils/parallel-publisher';
 
 interface PublishOptions {
   access?: 'public' | 'private';
@@ -100,7 +103,8 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
           engines: pkg.engines,
           main: pkg.main,
         };
-        return validateManifest(packageWithDefaults);
+        const label = pkg.name || `package #${idx + 1}`;
+        return validateManifest(packageWithDefaults, label);
       });
 
       return { manifests: validatedManifests, collections, source: 'prpm.json (multi-package)' };
@@ -112,7 +116,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
     }
 
     // Single package manifest
-    const validated = validateManifest(manifest as PackageManifest);
+    const validated = validateManifest(manifest as PackageManifest, (manifest as PackageManifest).name);
     return { manifests: [validated], collections, source: 'prpm.json' };
   } catch (error) {
     // Store error for later
@@ -144,7 +148,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
     const manifests: PackageManifest[] = [];
     for (let i = 0; i < marketplaceData.plugins.length; i++) {
       const manifest = marketplaceToManifest(marketplaceData, i);
-      const validated = validateManifest(manifest);
+      const validated = validateManifest(manifest, manifest.name);
       manifests.push(validated);
     }
 
@@ -167,7 +171,7 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
     const manifests: PackageManifest[] = [];
     for (let i = 0; i < marketplaceData.plugins.length; i++) {
       const manifest = marketplaceToManifest(marketplaceData, i);
-      const validated = validateManifest(manifest);
+      const validated = validateManifest(manifest, manifest.name);
       manifests.push(validated);
     }
 
@@ -188,7 +192,10 @@ async function findAndLoadManifests(): Promise<{ manifests: PackageManifest[]; c
 /**
  * Validate package manifest
  */
-function validateManifest(manifest: PackageManifest): PackageManifest {
+function validateManifest(manifest: PackageManifest, contextLabel?: string): PackageManifest {
+  const context = contextLabel || manifest.name || 'manifest';
+  const prefix = `[${context}] `;
+
   // Set default subtype to 'rule' if not provided
   if (!manifest.subtype) {
     manifest.subtype = 'rule';
@@ -198,7 +205,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
   const schemaValidation = validateManifestSchema(manifest);
   if (!schemaValidation.valid) {
     const errorMessages = schemaValidation.errors?.join('\n  - ') || 'Unknown validation error';
-    throw new Error(`Manifest validation failed:\n  - ${errorMessages}`);
+    throw new Error(`${prefix}Manifest validation failed:\n  - ${errorMessages}`);
   }
 
   // Additional custom validations (beyond what JSON schema can express)
@@ -216,7 +223,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
 
     // Only suggest "collection" if there are multiple distinct formats
     if (fileFormats.size > 1 && manifest.subtype !== 'collection') {
-      console.warn('⚠️  Package contains multiple file formats. Consider setting subtype to "collection" for clarity.');
+      console.warn(`${prefix}⚠️  Package contains multiple file formats. Consider setting subtype to "collection" for clarity.`);
     }
   }
 
@@ -227,7 +234,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
 
     if (!hasSkillMd) {
       throw new Error(
-        'Claude skills must contain a SKILL.md file.\n' +
+        `${prefix}Claude skills must contain a SKILL.md file.\n` +
         'According to Claude documentation at https://docs.claude.com/en/docs/claude-code/skills,\n' +
         'skills must have a file named SKILL.md in their directory.\n' +
         'Please rename your skill file to SKILL.md (all caps) and update your prpm.json files array.'
@@ -237,7 +244,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Validate skill name length (max 64 characters)
     if (manifest.name.length > 64) {
       throw new Error(
-        `Claude skill name "${manifest.name}" exceeds 64 character limit (${manifest.name.length} characters).\n` +
+        `${prefix}Claude skill name "${manifest.name}" exceeds 64 character limit (${manifest.name.length} characters).\n` +
         'According to Claude documentation, skill names must be max 64 characters.\n' +
         'Please shorten your package name.'
       );
@@ -246,7 +253,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Validate skill name format (lowercase, numbers, hyphens only)
     if (!/^[a-z0-9-]+$/.test(manifest.name)) {
       throw new Error(
-        `Claude skill name "${manifest.name}" contains invalid characters.\n` +
+        `${prefix}Claude skill name "${manifest.name}" contains invalid characters.\n` +
         'According to Claude documentation, skill names must use lowercase letters, numbers, and hyphens only.\n' +
         'Please update your package name.'
       );
@@ -255,7 +262,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Validate description length (max 1024 characters)
     if (manifest.description.length > 1024) {
       throw new Error(
-        `Claude skill description exceeds 1024 character limit (${manifest.description.length} characters).\n` +
+        `${prefix}Claude skill description exceeds 1024 character limit (${manifest.description.length} characters).\n` +
         'According to Claude documentation, skill descriptions must be max 1024 characters.\n' +
         'Please shorten your description.'
       );
@@ -264,7 +271,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Warn if description is approaching the limit (80% = 819 chars)
     if (manifest.description.length > 819) {
       console.warn(
-        `⚠️  Warning: Skill description is ${manifest.description.length}/1024 characters (${Math.round(manifest.description.length / 1024 * 100)}% of limit).\n` +
+        `${prefix}⚠️  Warning: Skill description is ${manifest.description.length}/1024 characters (${Math.round(manifest.description.length / 1024 * 100)}% of limit).\n` +
         '   Consider keeping it concise for better discoverability.'
       );
     }
@@ -272,7 +279,7 @@ function validateManifest(manifest: PackageManifest): PackageManifest {
     // Warn if description is too short (less than 100 chars)
     if (manifest.description.length < 100) {
       console.warn(
-        `⚠️  Warning: Skill description is only ${manifest.description.length} characters.\n` +
+        `${prefix}⚠️  Warning: Skill description is only ${manifest.description.length} characters.\n` +
         '   Claude uses descriptions for skill discovery - consider adding more detail about:\n' +
         '   - What the skill does\n' +
         '   - When Claude should use it\n' +
@@ -448,6 +455,27 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     console.log('🔍 Validating package manifest(s)...');
     const { manifests, collections, source } = await findAndLoadManifests();
 
+    // Execute prepublishOnly script if defined (for multi-package manifests)
+    // This runs before any packages are published
+    if (source === 'prpm.json (multi-package)' || source === 'prpm.json') {
+      try {
+        // Re-read the raw prpm.json to check for scripts
+        const prpmJsonPath = join(process.cwd(), 'prpm.json');
+        const prpmContent = await readFile(prpmJsonPath, 'utf-8');
+        const prpmManifest = JSON.parse(prpmContent);
+
+        if (prpmManifest.scripts) {
+          await executePrepublishOnly(prpmManifest.scripts);
+        }
+      } catch (error) {
+        // If script execution fails, abort publish
+        if (error instanceof Error && error.message.includes('script')) {
+          throw error;
+        }
+        // Ignore other errors (e.g., file not found - shouldn't happen at this point)
+      }
+    }
+
     if (manifests.length > 1 || collections.length > 0) {
       if (manifests.length > 0) {
         console.log(`   Found ${manifests.length} package(s) in ${source}`);
@@ -465,8 +493,13 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     }
 
     // Filter to specific package if requested
+    // Skip all packages if --collection flag is used (publish only collection)
     let filteredManifests = manifests;
-    if (options.package) {
+    if (options.collection) {
+      // When --collection is specified, skip all packages
+      filteredManifests = [];
+      console.log(`   Skipping packages (publishing collection only)\n`);
+    } else if (options.package) {
       filteredManifests = manifests.filter(m => m.name === options.package);
       if (filteredManifests.length === 0) {
         throw new Error(`Package "${options.package}" not found in manifest. Available packages: ${manifests.map(m => m.name).join(', ')}`);
@@ -517,23 +550,74 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     const publishedCollections: Array<{ id: string; name: string; version: string }> = [];
     const failedCollections: Array<{ id: string; error: string }> = [];
 
-    // Publish each manifest (filtered set)
+    // Batch configuration
+    const BATCH_SIZE = parseInt(process.env.PRPM_BATCH_SIZE || '5');
+    // Use 0ms delay in tests or dry run mode
+    const BATCH_DELAY_MS = options.dryRun || process.env.NODE_ENV === 'test'
+      ? 0
+      : parseInt(process.env.PRPM_BATCH_DELAY_MS || '2000');
+    const MAX_RETRIES = parseInt(process.env.PRPM_MAX_RETRIES || '3');
+    const RETRY_DELAY_MS = options.dryRun || process.env.NODE_ENV === 'test'
+      ? 0
+      : parseInt(process.env.PRPM_RETRY_DELAY_MS || '5000');
+
+    // Helper to delay between batches
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Helper to check if error is retriable
+    const isRetriableError = (error: string): boolean => {
+      return error.includes('Service Unavailable') ||
+             error.includes('Bad Gateway') ||
+             error.includes('at capacity') ||
+             error.includes('502') ||
+             error.includes('503') ||
+             error.includes('ECONNRESET') ||
+             error.includes('ETIMEDOUT');
+    };
+
+    // Show batch info if publishing multiple packages (only if delays are enabled)
+    if (filteredManifests.length > 1 && BATCH_DELAY_MS > 0) {
+      console.log(`📦 Publishing ${filteredManifests.length} packages in batches of ${BATCH_SIZE}`);
+      console.log(`⏱️  ${BATCH_DELAY_MS}ms delay between batches, ${RETRY_DELAY_MS}ms retry delay`);
+      console.log('');
+    }
+
+    // Publish each manifest (filtered set) in batches
     for (let i = 0; i < filteredManifests.length; i++) {
       const manifest = filteredManifests[i];
       packageName = manifest.name;
       version = manifest.version;
 
+      // Add batch delay between packages (but not before first package or in dry run/test mode)
+      if (i > 0 && i % BATCH_SIZE === 0 && BATCH_DELAY_MS > 0) {
+        console.log(`⏸️  Batch delay (${BATCH_DELAY_MS}ms) before next ${Math.min(BATCH_SIZE, filteredManifests.length - i)} packages...`);
+        await delay(BATCH_DELAY_MS);
+      }
+
       if (filteredManifests.length > 1) {
         console.log(`\n${'='.repeat(60)}`);
-        console.log(`📦 Publishing plugin ${i + 1} of ${filteredManifests.length}`);
+        console.log(`📦 Publishing package ${i + 1} of ${filteredManifests.length}`);
         console.log(`${'='.repeat(60)}\n`);
       }
 
-      try {
-        // Debug: Log access override logic only if DEBUG env var is set
-        if (process.env.DEBUG) {
-          console.log(`\n🔍 Before access override:`);
-          console.log(`   - manifest.private: ${manifest.private}`);
+      // Retry logic wrapper
+      let lastError: Error | null = null;
+      let retryCount = 0;
+      let publishSuccess = false;
+
+      while (retryCount <= MAX_RETRIES && !publishSuccess) {
+        try {
+          if (retryCount > 0 && RETRY_DELAY_MS > 0) {
+            console.log(`   🔄 Retry ${retryCount}/${MAX_RETRIES} after ${RETRY_DELAY_MS}ms...`);
+            await delay(RETRY_DELAY_MS);
+          } else if (retryCount > 0) {
+            console.log(`   🔄 Retry ${retryCount}/${MAX_RETRIES}...`);
+          }
+
+          // Debug: Log access override logic only if DEBUG env var is set
+          if (process.env.DEBUG) {
+            console.log(`\n🔍 Before access override:`);
+            console.log(`   - manifest.private: ${manifest.private}`);
           console.log(`   - options.access: ${options.access}`);
         }
 
@@ -610,6 +694,30 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         }
         console.log('');
 
+        // Validate package files against format schema
+        console.log('🔍 Validating package files...');
+        const fileValidation = await validatePackageFiles(manifest);
+
+        if (fileValidation.errors.length > 0) {
+          console.log('   ❌ Format validation errors:');
+          fileValidation.errors.forEach(err => {
+            console.log(`      - ${err}`);
+          });
+          console.log('');
+          throw new Error('Package files do not match the specified format. Please fix the errors above.');
+        }
+
+        if (fileValidation.warnings.length > 0) {
+          console.log('   ⚠️  Format validation warnings:');
+          fileValidation.warnings.forEach(warn => {
+            console.log(`      - ${warn}`);
+          });
+          console.log('');
+        } else {
+          console.log('   ✓ All files valid');
+          console.log('');
+        }
+
         // Extract license information
         console.log('📄 Extracting license information...');
         const licenseInfo = await extractLicenseInfo(manifest.repository);
@@ -658,6 +766,21 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log(`   Size: ${sizeDisplay}`);
         console.log('');
 
+        // Check if admin should override author (before dry run so it shows in dry run)
+        let publishAsAuthor: string | undefined;
+        if (userInfo?.is_admin && manifest.author) {
+          // Author can be string or object { name, email }
+          publishAsAuthor = typeof manifest.author === 'string'
+            ? manifest.author
+            : manifest.author.name;
+          console.log(`   🔐 Admin override: Publishing as author "${publishAsAuthor}"`);
+        }
+
+        if (selectedOrgId) {
+          console.log(`   Publishing as organization: ${userInfo.organizations.find((org: any) => org.id === selectedOrgId)?.name}`);
+          console.log(`   Organization ID: ${selectedOrgId}`);
+        }
+
         if (options.dryRun) {
           console.log('✅ Dry run successful! Package is ready to publish.');
           publishedPackages.push({
@@ -665,16 +788,27 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
             version: manifest.version,
             url: ''
           });
-          continue;
+          publishSuccess = true;
+          break;
         }
 
         // Publish to registry
         console.log('🚀 Publishing to registry...');
+
+        // Build publish options
+        const publishOptions: { orgId?: string; publishAsAuthor?: string } = {};
         if (selectedOrgId) {
-          console.log(`   Publishing as organization: ${userInfo.organizations.find((org: any) => org.id === selectedOrgId)?.name}`);
-          console.log(`   Organization ID: ${selectedOrgId}`);
+          publishOptions.orgId = selectedOrgId;
         }
-        const result = await client.publish(manifest, tarball, selectedOrgId ? { orgId: selectedOrgId } : undefined);
+        if (publishAsAuthor) {
+          publishOptions.publishAsAuthor = publishAsAuthor;
+        }
+
+        const result = await client.publish(
+          manifest,
+          tarball,
+          Object.keys(publishOptions).length > 0 ? publishOptions : undefined
+        );
 
         // Determine the webapp URL based on registry URL
         let webappUrl: string;
@@ -691,7 +825,12 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         }
 
         // Use the name returned from the API (which includes auto-prefixed scope)
-        const packageUrl = `${webappUrl}/packages/${encodeURIComponent(result.name)}`;
+        const packageSlug = result.name.startsWith('@') ? result.name.slice(1) : result.name;
+        const packagePath = packageSlug
+          .split('/')
+          .map(segment => encodeURIComponent(segment))
+          .join('/');
+        const packageUrl = `${webappUrl}/packages/${packagePath}`;
 
         console.log('');
         console.log('✅ Package published successfully!');
@@ -705,20 +844,48 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           version: result.version,
           url: packageUrl
         });
+
+        // Mark as successful to exit retry loop
+        publishSuccess = true;
+
       } catch (err) {
         const pkgError = err instanceof Error ? err.message : String(err);
+        lastError = err instanceof Error ? err : new Error(String(err));
+
         // Safely construct display name with fallbacks
         const displayName = getSafePackageName(manifest, userInfo, packageName);
-        console.error(`\n❌ Failed to publish ${displayName}: ${pkgError}\n`);
-        failedPackages.push({
-          name: displayName,
-          error: pkgError
-        });
+
+        // Check if error is retriable
+        if (isRetriableError(pkgError) && retryCount < MAX_RETRIES) {
+          console.error(`\n⚠️  Temporary error publishing ${displayName}: ${pkgError}`);
+          console.error(`   Will retry (${retryCount + 1}/${MAX_RETRIES})...\n`);
+          retryCount++;
+        } else {
+          // Non-retriable error or max retries exceeded
+          if (retryCount >= MAX_RETRIES) {
+            console.error(`\n❌ Failed to publish ${displayName} after ${MAX_RETRIES} retries: ${pkgError}\n`);
+          } else {
+            console.error(`\n❌ Failed to publish ${displayName}: ${pkgError}\n`);
+          }
+          failedPackages.push({
+            name: displayName,
+            error: pkgError
+          });
+          break; // Exit retry loop
+        }
       }
+    } // End of retry while loop
+
     }
 
     // Publish collections if present
-    if (collections.length > 0) {
+    // Only publish collections if:
+    // 1. No --package flag (publish all collections), OR
+    // 2. --collection flag explicitly specified (publish specific collection)
+    // Note: --package flag skips collections, --collection flag skips packages
+    const shouldPublishCollections = !options.package || options.collection;
+
+    if (collections.length > 0 && shouldPublishCollections) {
       // Filter to specific collection if requested
       let filteredCollections = collections;
       if (options.collection) {
@@ -775,7 +942,6 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           const result = await client.createCollection(collectionData);
 
           console.log(`✅ Collection published successfully!`);
-          console.log(`   Scope: ${result.scope}`);
           console.log(`   Name: ${result.name_slug}`);
           console.log(`   Version: ${result.version || '1.0.0'}`);
           console.log('');

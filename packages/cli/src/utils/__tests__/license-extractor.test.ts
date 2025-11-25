@@ -20,7 +20,12 @@ describe('license-extractor', () => {
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
+    try {
+      process.chdir(originalCwd);
+    } catch (err) {
+      // Ignore errors if originalCwd no longer exists (parallel test cleanup)
+      process.chdir(tmpdir());
+    }
     await rm(testDir, { recursive: true, force: true });
   });
 

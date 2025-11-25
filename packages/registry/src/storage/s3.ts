@@ -2,13 +2,13 @@
  * S3 Storage Helper
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { createHash } from 'crypto';
 
-const s3Client = new S3Client({
+export const s3Client = new S3Client({
   region: config.s3.region,
   endpoint: config.s3.endpoint !== 'https://s3.amazonaws.com' ? config.s3.endpoint : undefined,
   credentials: config.s3.accessKeyId
@@ -97,7 +97,6 @@ export async function uploadPackage(
  */
 async function objectExists(bucket: string, key: string): Promise<boolean> {
   try {
-    const { HeadObjectCommand } = await import('@aws-sdk/client-s3');
     await s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
     return true;
   } catch {
@@ -205,6 +204,43 @@ export async function getDownloadUrl(
   }
 }
 
+interface UploadJsonOptions {
+  bucket?: string;
+  prefix?: string;
+  cacheControl?: string;
+}
+
+export async function uploadJsonObject(
+  server: FastifyInstance,
+  filename: string,
+  data: unknown,
+  options?: UploadJsonOptions
+) {
+  const bucket = options?.bucket || config.s3.bucket;
+  const keyPrefix = options?.prefix ?? '';
+  const key = keyPrefix ? `${keyPrefix.replace(/\/?$/, '/')}${filename}` : filename;
+  const body = Buffer.from(JSON.stringify(data, null, 2), 'utf-8');
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: 'application/json',
+      CacheControl: options?.cacheControl,
+    })
+  );
+
+  server.log.info(
+    {
+      bucket,
+      key,
+      size: body.length,
+    },
+    'Uploaded JSON object to S3'
+  );
+}
+
 /**
  * Delete package from S3
  * Supports both UUID-based and author-based paths
@@ -263,42 +299,103 @@ export async function getTarballContent(
   version: string,
   packageName: string
 ): Promise<string> {
-  const key = `packages/${packageName}/${version}/package.tar.gz`;
+  // Try multiple filename variations (package.tar.gz is standard, package.tgz is legacy)
+  const possibleKeys = [
+    `packages/${packageName}/${version}/package.tar.gz`,
+    `packages/${packageName}/${version}/package.tgz`,
+  ];
 
-  try {
-    server.log.info({ packageName, version, key }, 'Fetching tarball from S3');
+  let key = possibleKeys[0];
+  let usingDeprecatedPath = false;
 
-    const command = new GetObjectCommand({
-      Bucket: config.s3.bucket,
-      Key: key,
-    });
+  // Try each possible key
+  for (const tryKey of possibleKeys) {
+    try {
+      server.log.info({ packageName, version, key: tryKey }, 'Trying to fetch tarball from S3');
 
-    const response = await s3Client.send(command);
+      const command = new GetObjectCommand({
+        Bucket: config.s3.bucket,
+        Key: tryKey,
+      });
 
-    if (!response.Body) {
-      throw new Error('Empty response from S3');
+      const response = await s3Client.send(command);
+
+      if (response.Body) {
+        key = tryKey;
+        if (tryKey.endsWith('.tgz')) {
+          server.log.warn({ packageName, version, key }, 'Using legacy .tgz extension');
+        }
+
+        // Convert stream to buffer
+        const chunks: Uint8Array[] = [];
+        for await (const chunk of response.Body as any) {
+          chunks.push(chunk);
+        }
+        const tarballBuffer = Buffer.concat(chunks);
+
+        server.log.info({ packageName, version, size: tarballBuffer.length }, 'Downloaded tarball from S3');
+
+        // Extract and return the content
+        return await extractPromptContent(tarballBuffer, packageName);
+      }
+    } catch (err) {
+      // Try next key
+      continue;
     }
-
-    // Convert stream to buffer
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of response.Body as any) {
-      chunks.push(chunk);
-    }
-    const tarballBuffer = Buffer.concat(chunks);
-
-    server.log.info({ packageName, version, size: tarballBuffer.length }, 'Downloaded tarball from S3');
-
-    // Extract and return the content
-    return await extractPromptContent(tarballBuffer, packageName);
-  } catch (error: unknown) {
-    server.log.error({
-      error: String(error),
-      packageName,
-      version,
-      key
-    }, 'Failed to fetch tarball from S3');
-    throw new Error(`Failed to fetch package content from storage: ${error instanceof Error ? error.message : String(error)}`);
   }
+
+  // If none of the author-based paths worked, try UUID-based paths
+  const uuidKeys = [
+    `packages/${packageId}/${version}/package.tar.gz`,
+    `packages/${packageId}/${version}/package.tgz`,
+  ];
+
+  for (const uuidKey of uuidKeys) {
+    try {
+      server.log.info({ packageName, packageId, version, uuidKey }, 'Trying UUID-based path (legacy)');
+
+      const command = new GetObjectCommand({
+        Bucket: config.s3.bucket,
+        Key: uuidKey,
+      });
+
+      const response = await s3Client.send(command);
+
+      if (!response.Body) {
+        continue;
+      }
+
+      // Convert stream to buffer
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of response.Body as any) {
+        chunks.push(chunk);
+      }
+      const tarballBuffer = Buffer.concat(chunks);
+
+      server.log.warn(
+        { packageName, packageId, version, uuidKey },
+        'Successfully fetched tarball using deprecated UUID-based path'
+      );
+
+      // Extract and return the content
+      return await extractPromptContent(tarballBuffer, packageName);
+    } catch (err) {
+      // Try next UUID key
+      continue;
+    }
+  }
+
+  // None of the paths worked
+  server.log.error(
+    {
+      packageName,
+      packageId,
+      version,
+      triedKeys: [...possibleKeys, ...uuidKeys],
+    },
+    'Failed to fetch tarball from S3 - tried all possible paths'
+  );
+  throw new Error('Failed to fetch package content from storage: The specified key does not exist.');
 }
 
 /**

@@ -89,8 +89,23 @@ class Telemetry {
     }
   }
 
+  /**
+   * Load userId from user config and update telemetry config
+   */
+  private async loadUserIdFromConfig(): Promise<void> {
+    try {
+      const userConfig = await getConfig();
+      if (userConfig.userId && userConfig.userId !== this.config.userId) {
+        this.config.userId = userConfig.userId;
+        await this.saveConfig();
+      }
+    } catch {
+      // Silently fail - telemetry shouldn't break the CLI
+    }
+  }
+
   private generateSessionId(): string {
-    return Math.random().toString(36).substring(2, 15) + 
+    return Math.random().toString(36).substring(2, 15) +
            Math.random().toString(36).substring(2, 15);
   }
 
@@ -111,6 +126,9 @@ class Telemetry {
     if (!this.userTelemetryEnabled) return;
 
     if (!this.config.enabled) return;
+
+    // Load userId from user config before tracking
+    await this.loadUserIdFromConfig();
 
     const fullEvent: TelemetryEvent = {
       ...event,
@@ -203,13 +221,45 @@ class Telemetry {
     }
   }
 
+  /**
+   * Identify user in PostHog with user properties
+   * Called after successful login to set user attributes
+   */
+  async identifyUser(userId: string, traits: Record<string, any>): Promise<void> {
+    if (!this.posthog || !this.config.enabled) return;
+
+    try {
+      // Update local config with userId
+      this.config.userId = userId;
+      await this.saveConfig();
+
+      // Send $identify event to PostHog
+      this.posthog.identify({
+        distinctId: userId,
+        properties: traits,
+      });
+
+      // Also capture the $identify event explicitly
+      this.posthog.capture({
+        distinctId: userId,
+        event: '$identify',
+        properties: traits,
+      });
+
+      // Flush immediately to ensure identification happens
+      await this.posthog.flush();
+    } catch (error) {
+      // Silently fail - telemetry shouldn't break the CLI
+    }
+  }
+
   // Send to PostHog
   private async sendToPostHog(event: TelemetryEvent): Promise<void> {
     if (!this.posthog) return;
 
     try {
       const distinctId = this.config.userId || this.config.sessionId || 'anonymous';
-      
+
       this.posthog.capture({
         distinctId,
         event: `prpm_${event.command}`,
@@ -219,16 +269,16 @@ class Telemetry {
           success: event.success,
           duration: event.duration,
           error: event.error,
-          
+
           // System information
           version: event.version,
           platform: event.platform,
           arch: event.arch,
           nodeVersion: event.nodeVersion,
-          
+
           // Command-specific data
           ...event.data,
-          
+
           // Metadata
           timestamp: event.timestamp,
           sessionId: this.config.sessionId,

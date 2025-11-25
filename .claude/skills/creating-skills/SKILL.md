@@ -1,7 +1,6 @@
 ---
 name: creating-skills
 description: Use when creating new Claude Code skills or improving existing ones - ensures skills are discoverable, scannable, and effective through proper structure, CSO optimization, and real examples
-tags: meta
 ---
 
 # Creating Skills
@@ -41,8 +40,9 @@ tags: relevant-tags
 
 **Rules:**
 - Only `name` and `description` fields supported (max 1024 chars total)
-- Name: letters, numbers, hyphens only (no special chars). Use gerund form (verb + -ing)
-- Description: Third person, starts with "Use when..."
+- Name: letters, numbers, hyphens only (max 64 chars). Use gerund form (verb + -ing)
+- Avoid reserved words: "anthropic", "claude" in names
+- Description: Third person, starts with "Use when..." (max 1024 chars)
 - Include BOTH triggering conditions AND what skill does
 - Match specificity to task complexity (degrees of freedom)
 
@@ -247,6 +247,7 @@ Skills load into every conversation. Keep them concise.
 - Getting-started workflows: <150 words
 - Frequently-loaded skills: <200 words total
 - Other skills: <500 words
+- Files > 100 lines: Include table of contents
 
 **Challenge each piece of information**: "Does Claude really need this explanation?"
 
@@ -366,10 +367,11 @@ Before extensive documentation:
 ### Utility Scripts
 
 For reliability, provide:
-- Scripts with explicit error handling
+- Scripts with explicit error handling (don't defer errors to Claude)
 - Exit codes for success/failure
 - Clear error messages
 - Examples of usage
+- List required dependencies explicitly
 
 **Example:**
 ```bash
@@ -385,6 +387,15 @@ fi
 echo "Success"
 exit 0
 ```
+
+### Verifiable Intermediate Outputs
+
+For complex operations, create validation checkpoints:
+1. Have Claude produce a structured plan file
+2. Validate the plan with a script
+3. Execute only after validation passes
+
+This catches errors before they compound.
 
 ### Templates for Structured Output
 
@@ -437,8 +448,9 @@ interface ExpectedOutput {
 - [ ] Concrete examples (not templates)
 - [ ] Degrees of freedom match task complexity
 
-**Testing (if discipline-enforcing skill):**
-- [ ] Tested with subagent scenarios
+**Testing:**
+- [ ] Tested with Claude Haiku, Sonnet, and Opus (instructions effective for Opus may need more detail for Haiku)
+- [ ] Tested with subagent scenarios (if discipline-enforcing skill)
 - [ ] Addresses common rationalizations
 - [ ] Includes red flags list
 

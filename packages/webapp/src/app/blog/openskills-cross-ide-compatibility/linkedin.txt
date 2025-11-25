@@ -1,0 +1,29 @@
+The AI tooling landscape is moving at breakneck speed. New editors launch every week. Formats evolve daily. Cursor rules, Claude skills, Continue prompts, Windsurf cascades, Kiro steering, agents.md, OpenSkills—the list grows faster than any package manager can keep up.
+
+We could play whack-a-mole adding native support for each format. More converters to write. More tests to maintain. More breaking changes when formats evolve. That's exhausting and unsustainable.
+
+**Or we could get smarter about composition.**
+
+Here's what we discovered: instead of adding OpenSkills as a native format in PRPM, you can compose existing tools for universal compatibility:
+
+1. Run `npx openskills sync` to generate OpenSkills content (adds to AGENTS.md)
+2. Extract the generated content and save to `.ruler/openskills.md`
+3. Ruler automatically splices all `.ruler/*.md` files into `AGENTS.md`
+4. Boom—now that content works in ANY tool that reads agents.md: Cursor, Windsurf, Continue, future editors
+
+**What is Ruler?** A beautifully simple tool from https://okigu.com/ruler that combines plain markdown files from `.ruler/` and splices them into `AGENTS.md`. Simple. Elegant. Universal.
+
+**The meta lesson:** AI tools are evolving too fast to build native support for everything. Composing specialized tools (OpenSkills → Ruler → AGENTS.md) is the superpower. Interoperability beats native integration.
+
+The Unix philosophy applied to AI tooling: build small, focused tools that work well together. Let specialized tools do what they're good at. Compose them for infinite flexibility.
+
+This isn't just about OpenSkills and Ruler—it's a mindset shift. When a new format emerges, ask: can we compose existing tools instead of building native support? Can we bridge formats with minimal glue code? Does this tool play well with others?
+
+The future of AI tooling isn't one universal format or one mega-tool. It's specialized tools that compose elegantly together.
+
+**Composition is the superpower.**
+
+Read the full technical breakdown:
+https://prpm.dev/blog/openskills-cross-ide-compatibility
+
+#AI #DeveloperTools #Unix #Composition #OpenSource #SoftwareEngineering

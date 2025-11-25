@@ -435,7 +435,7 @@ prpm playground @user/package "your test input"`}</code>
             </p>
 
             <ul className="list-disc ml-6 text-gray-300 space-y-2 mb-0">
-              <li>Twitter: <a href="https://twitter.com/prpm_dev" className="text-prpm-accent hover:underline font-medium">@prpm_dev</a></li>
+              <li>Twitter: <a href="https://twitter.com/prpmdev" className="text-prpm-accent hover:underline font-medium">@prpmdev</a></li>
               <li>Email: <a href="mailto:hello@prpm.dev" className="text-prpm-accent hover:underline font-medium">hello@prpm.dev</a></li>
             </ul>
           </div>

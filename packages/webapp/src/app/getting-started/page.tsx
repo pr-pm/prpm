@@ -105,7 +105,7 @@ export default function GettingStarted() {
               <div className="space-y-3 text-gray-300">
                 <div className="flex gap-3">
                   <span className="text-prpm-accent mt-1">✓</span>
-                  <span><strong>2,100+ packages</strong> - Battle-tested prompts and rules</span>
+                  <span><strong>7,000+ packages</strong> - Battle-tested prompts and rules</span>
                 </div>
                 <div className="flex gap-3">
                   <span className="text-prpm-accent mt-1">✓</span>
@@ -274,11 +274,11 @@ export default function GettingStarted() {
             <div className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6">
               <h4 className="text-lg font-semibold text-white mb-3">Testing from CLI</h4>
               <div className="space-y-2">
-                <CodeBlock code='prpm playground @user/code-reviewer "Review this: console.log(x)"' id="playground-basic" />
+                <CodeBlock code='prpm playground --package @user/code-reviewer --input "Review this: console.log(x)"' id="playground-basic" />
                 <p className="text-gray-400 text-sm my-2">Interactive mode for multi-turn conversations:</p>
-                <CodeBlock code='prpm playground @user/brainstorm-assistant --interactive' id="playground-interactive" />
+                <CodeBlock code='prpm playground --package @user/brainstorm-assistant --interactive' id="playground-interactive" />
                 <p className="text-gray-400 text-sm my-2">Comparison mode (with vs without package):</p>
-                <CodeBlock code='prpm playground @user/typescript-helper "Explain generics" --compare' id="playground-compare" />
+                <CodeBlock code='prpm playground --package @user/typescript-helper --input "Explain generics" --compare' id="playground-compare" />
               </div>
             </div>
 
@@ -369,7 +369,7 @@ export default function GettingStarted() {
                 Browse Packages
               </h3>
               <p className="text-gray-400">
-                Explore 2,100+ packages across all categories
+                Explore 7,000+ packages across all categories
               </p>
             </Link>
 

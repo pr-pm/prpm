@@ -1,0 +1,56 @@
+{
+  "id": "ruler-python",
+  "name": "Ruler Python Development",
+  "description": "Professional Python development rules for Ruler - PEP standards, type hints, testing with pytest, and modern Python practices",
+  "version": "1.0.0",
+  "category": "development",
+  "tags": ["ruler", "python", "backend", "testing"],
+  "packages": [
+    {
+      "packageId": "@prpm/python-pep8",
+      "version": "^1.0.0",
+      "required": true,
+      "reason": "PEP 8 style guide compliance and Python conventions"
+    },
+    {
+      "packageId": "@prpm/python-type-hints",
+      "version": "^1.2.0",
+      "required": true,
+      "reason": "Modern type hinting with mypy best practices"
+    },
+    {
+      "packageId": "@prpm/python-pytest",
+      "version": "^2.0.0",
+      "required": true,
+      "reason": "Testing with pytest: fixtures, parametrization, mocking"
+    },
+    {
+      "packageId": "@prpm/python-docstrings",
+      "version": "^1.1.0",
+      "required": true,
+      "reason": "Google/NumPy docstring conventions for documentation"
+    },
+    {
+      "packageId": "@prpm/python-async",
+      "version": "^1.0.0",
+      "required": false,
+      "reason": "Async/await patterns and asyncio best practices"
+    },
+    {
+      "packageId": "@prpm/python-data-classes",
+      "version": "^1.0.0",
+      "required": false,
+      "reason": "Dataclasses and pydantic for data validation"
+    },
+    {
+      "packageId": "@prpm/python-fastapi",
+      "version": "^1.5.0",
+      "required": false,
+      "reason": "FastAPI development patterns and conventions"
+    }
+  ],
+  "icon": "🐍",
+  "author": "PRPM Team",
+  "repository": "https://github.com/pr-pm/prpm",
+  "readme": "# Ruler Python Development\n\nProfessional Python development setup configured for Ruler.\n\n## What's Included\n\n### Required\n- **PEP 8 Standards**: Code style, naming, formatting\n- **Type Hints**: Static typing with mypy\n- **Pytest Patterns**: Unit testing, fixtures, parametrization\n- **Documentation**: Docstrings and code comments\n\n### Optional\n- **Async Programming**: asyncio and async/await patterns\n- **Data Validation**: dataclasses and pydantic\n- **FastAPI**: Modern API development\n\n## Installation\n\n```bash\nprpm install collections/ruler-python --as ruler\n```\n\n## Supports\n\n- Python 3.9+\n- Type checking with mypy\n- Linting with ruff/flake8\n- Testing with pytest\n"
+}

@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/command-logger/dist/hook.js",
+            "timeout": 1000,
+            "suppressOutput": true
+          }
+        ]
+      }
+    ]
+  }
+}

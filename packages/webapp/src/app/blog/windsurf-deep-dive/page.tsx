@@ -201,12 +201,12 @@ export default function WindsurfDeepDivePost() {
             <h3 className="text-xl font-bold text-white mb-4">PRPM Documentation</h3>
             <ul className="space-y-2 text-gray-300">
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/WINDSURF.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/docs/WINDSURF.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   PRPM Windsurf Guide
                 </a>
               </li>
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/docs/IMPORT_FORMAT_SPECS.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/docs/IMPORT_FORMAT_SPECS.md" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   PRPM Import Format Specifications
                 </a>
               </li>
@@ -217,12 +217,12 @@ export default function WindsurfDeepDivePost() {
             <h3 className="text-xl font-bold text-white mb-4">Source Code</h3>
             <ul className="space-y-2 text-gray-300">
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/packages/registry/src/converters/from-windsurf.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/packages/converters/src/from-windsurf.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   from-windsurf.ts Converter
                 </a>
               </li>
               <li>
-                <a href="https://github.com/khaliqgant/prompt-package-manager/blob/main/packages/registry/src/converters/to-windsurf.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
+                <a href="https://github.com/pr-pm/prpm/blob/main/packages/converters/src/to-windsurf.ts" target="_blank" rel="noopener noreferrer" className="text-prpm-accent hover:text-prpm-accent-light underline">
                   to-windsurf.ts Converter
                 </a>
               </li>

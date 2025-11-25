@@ -72,6 +72,13 @@ export function loadConfig(): RegistryConfig {
     frontend: {
       url: process.env.FRONTEND_URL || 'https://prpm.dev',
     },
+
+    seoData: {
+      enabled: process.env.SEO_DATA_ENABLED !== 'false',
+      bucket: process.env.SEO_DATA_BUCKET || process.env.S3_BUCKET || 'prpm-packages',
+      prefix: process.env.SEO_DATA_PREFIX || 'seo-data',
+      cacheControl: process.env.SEO_DATA_CACHE_CONTROL || 'public, max-age=300',
+    },
   };
 }
 

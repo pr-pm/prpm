@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import { getRegistryClient, SearchResult, RegistryPackage } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
-import { Format, Subtype } from '../types';
+import { Format, Subtype, FORMATS, SUBTYPES } from '../types';
 import * as readline from 'readline';
 import { CLIError } from '../core/errors';
 
@@ -25,6 +25,8 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'chatmode': '💬',
     'tool': '🔧',
     'hook': '🪝',
+    'workflow': '🔄',
+    'template': '📄',
   };
 
   // Format-specific icons for rules/defaults
@@ -35,8 +37,18 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'continue': '➡️',
     'copilot': '✈️',
     'kiro': '🎯',
+    'gemini': '✨',
+    'gemini.md': '✨',
+    'claude.md': '🤖',
+    'opencode': '⚡',
+    'droid': '🏭',
+    'trae': '🎯',
+    'aider': '🤝',
+    'zencoder': '⚡',
+    'replit': '🔮',
     'mcp': '🔗',
     'agents.md': '📝',
+    'ruler': '📏',
     'generic': '📦',
   };
 
@@ -54,8 +66,18 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'continue': 'Continue',
     'copilot': 'GitHub Copilot',
     'kiro': 'Kiro',
+    'gemini': 'Gemini',
+    'gemini.md': 'Gemini',
+    'claude.md': 'Claude',
+    'opencode': 'OpenCode',
+    'droid': 'Factory Droid',
+    'trae': 'Trae',
+    'aider': 'Aider',
+    'zencoder': 'Zencoder',
+    'replit': 'Replit',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
+    'ruler': 'Ruler',
     'generic': '',
   };
 
@@ -69,6 +91,8 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'chatmode': 'Chat Mode',
     'tool': 'Tool',
     'hook': 'Hook',
+    'workflow': 'Workflow',
+    'template': 'Template',
   };
 
   const formatLabel = formatLabels[format];
@@ -345,6 +369,25 @@ export async function handleSearch(
       return;
     }
 
+    // Show fallback message if this is a fallback result
+    if (result.fallback) {
+      console.log('\n❌ No packages found for your search');
+
+      // Build filter description
+      let filterMsg = '';
+      if (options.subtype) {
+        filterMsg = ` (${options.subtype}`;
+        if (options.format) {
+          filterMsg += ` for ${options.format}`;
+        }
+        filterMsg += ')';
+      } else if (options.format) {
+        filterMsg = ` (${options.format} format)`;
+      }
+
+      console.log(`\n💡 Showing top 10 most popular packages${filterMsg} instead:\n`);
+    }
+
     // If interactive mode is disabled or only one page, show simple results
     const totalPages = Math.ceil(result.total / limit);
     const shouldPaginate = options.interactive !== false && totalPages > 1;
@@ -421,8 +464,8 @@ export function createSearchCommand(): Command {
   command
     .description('Search for packages in the registry')
     .argument('[query]', 'Search query (optional when using --format/--subtype or --author)')
-    .option('--format <format>', 'Filter by package format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, generic, mcp)')
-    .option('--subtype <subtype>', 'Filter by package subtype (rule, agent, skill, slash-command, prompt, workflow, tool, template, collection, chatmode, hook)')
+    .option('--format <format>', `Filter by package format (${FORMATS.join(', ')})`)
+    .option('--subtype <subtype>', `Filter by package subtype (${SUBTYPES.join(', ')})`)
     .option('--author <username>', 'Filter by author username')
     .option('--language <language>', 'Filter by programming language (javascript, typescript, python, etc.)')
     .option('--framework <framework>', 'Filter by framework (react, nextjs, django, etc.)')
@@ -437,8 +480,8 @@ export function createSearchCommand(): Command {
       const limit = options.limit ? parseInt(options.limit, 10) : 20;
       const page = options.page ? parseInt(options.page, 10) : 1;
 
-      const validFormats: Format[] = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'];
-      const validSubtypes: Subtype[] = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode'];
+      const validFormats = [...FORMATS] as Format[];
+      const validSubtypes = [...SUBTYPES] as Subtype[];
 
       if (options.format && !validFormats.includes(format!)) {
         console.error(`❌ Format must be one of: ${validFormats.join(', ')}`);

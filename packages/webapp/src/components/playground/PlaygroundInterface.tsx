@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages } from '../../lib/api'
+import { runPlayground, runAnonymousPlayground, estimatePlaygroundCredits, getPlaygroundSession, searchPackages, getPackageById, runCustomPrompt, getCurrentUser } from '../../lib/api'
 import type { PlaygroundMessage, Package } from '../../lib/api'
+import FeedbackPrompt from './FeedbackPrompt'
+import CustomPromptInput from './CustomPromptInput'
 
 interface PlaygroundInterfaceProps {
   initialPackageId?: string
+  initialInput?: string
   sessionId?: string
   initialCompareMode?: boolean
   onCreditsChange: () => void
@@ -16,6 +19,7 @@ interface PlaygroundInterfaceProps {
 
 export default function PlaygroundInterface({
   initialPackageId,
+  initialInput,
   sessionId,
   initialCompareMode = false,
   onCreditsChange,
@@ -55,6 +59,11 @@ export default function PlaygroundInterface({
   const [collapsedExchangesB, setCollapsedExchangesB] = useState<Set<number>>(new Set())
   const [showAnonymousLoginPrompt, setShowAnonymousLoginPrompt] = useState(false)
   const [isAnonymousUser, setIsAnonymousUser] = useState(false)
+
+  // Custom prompt mode state
+  const [useCustomPrompt, setUseCustomPrompt] = useState(false)
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [isVerifiedAuthor, setIsVerifiedAuthor] = useState(false)
 
   // Helper function to group messages into exchanges (user input + assistant response pairs)
   const groupIntoExchanges = (messages: PlaygroundMessage[]): Array<{ user: PlaygroundMessage; assistant: PlaygroundMessage | null; index: number }> => {
@@ -108,6 +117,16 @@ export default function PlaygroundInterface({
     }
   }, [])
 
+  // Fetch user verification status for custom prompt feature
+  useEffect(() => {
+    const token = localStorage.getItem('prpm_token')
+    if (token) {
+      getCurrentUser(token).then(user => {
+        setIsVerifiedAuthor(user.verified_author || false)
+      }).catch(() => setIsVerifiedAuthor(false))
+    }
+  }, [])
+
   // Load session if provided
   useEffect(() => {
     if (sessionId) {
@@ -126,12 +145,18 @@ export default function PlaygroundInterface({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPackageId])
 
+  // Set initial input if provided via URL parameter
+  useEffect(() => {
+    if (initialInput && input === '') {
+      setInput(initialInput)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialInput])
+
   const loadInitialPackage = async (packageIdToLoad: string) => {
     try {
-      // Use searchPackages to find the package by searching for packages
-      // and filtering by ID client-side (not ideal but works for now)
-      const result = await searchPackages({ q: '', limit: 100 })
-      const pkg = result.packages.find((p) => p.id === packageIdToLoad)
+      // Use direct UUID lookup for fast package retrieval
+      const pkg = await getPackageById(packageIdToLoad)
 
       if (pkg) {
         setSelectedPackage(pkg)
@@ -146,6 +171,7 @@ export default function PlaygroundInterface({
 
   // Auto-collapse older exchanges (keep last 2 expanded)
   useEffect(() => {
+    if (!conversation) return
     const exchanges = groupIntoExchanges(conversation)
     if (exchanges.length > 2) {
       const newCollapsed = new Set<number>()
@@ -158,10 +184,11 @@ export default function PlaygroundInterface({
       setCollapsedExchanges(new Set())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation.length])
+  }, [conversation])
 
   // Auto-collapse older exchanges for Package B (keep last 2 expanded)
   useEffect(() => {
+    if (!conversationB) return
     const exchanges = groupIntoExchanges(conversationB)
     if (exchanges.length > 2) {
       const newCollapsed = new Set<number>()
@@ -174,7 +201,7 @@ export default function PlaygroundInterface({
       setCollapsedExchangesB(new Set())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationB.length])
+  }, [conversationB])
 
   // Load package options when searching (Package A)
   useEffect(() => {
@@ -251,9 +278,18 @@ export default function PlaygroundInterface({
   }
 
   const handleRun = async () => {
-    if (!packageId || !input.trim()) {
-      setError('Please select a package and enter input')
-      return
+    // Validation for custom prompt mode
+    if (useCustomPrompt) {
+      if (!customPrompt.trim() || !input.trim()) {
+        setError('Please enter both a custom prompt and input')
+        return
+      }
+    } else {
+      // Regular package mode validation
+      if (!packageId || !input.trim()) {
+        setError('Please select a package and enter input')
+        return
+      }
     }
 
     if (comparisonMode && !packageIdB) {
@@ -375,17 +411,30 @@ export default function PlaygroundInterface({
         setLoadingB(false)
       }
     } else {
-      // Single package mode
+      // Single package or custom prompt mode
       setLoading(true)
       setError(null)
 
       try {
-        const result = await runPlayground(token, {
-          package_id: packageId,
-          input: input.trim(),
-          model,
-          session_id: currentSessionId,
-        })
+        let result
+
+        if (useCustomPrompt) {
+          // Custom prompt mode
+          result = await runCustomPrompt(token, {
+            custom_prompt: customPrompt,
+            input: input.trim(),
+            session_id: currentSessionId,
+            model,
+          })
+        } else {
+          // Regular package mode
+          result = await runPlayground(token, {
+            package_id: packageId,
+            input: input.trim(),
+            model,
+            session_id: currentSessionId,
+          })
+        }
 
         console.log('[Playground] Run complete. Credits spent:', result.credits_spent, 'Remaining:', result.credits_remaining)
         setConversation(result.conversation)
@@ -457,7 +506,7 @@ export default function PlaygroundInterface({
       )}
 
       {/* Anonymous User Notice */}
-      {isAnonymousUser && !showAnonymousLoginPrompt && conversation.length === 0 && (
+      {isAnonymousUser && !showAnonymousLoginPrompt && (conversation?.length ?? 0) === 0 && (
         <div className="mb-4 sm:mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p className="text-sm text-blue-900 dark:text-blue-200">
             <strong>Try it free!</strong> Get one free playground run (using gpt-4o-mini). Sign up to get 5 free credits and access to all models.
@@ -470,6 +519,7 @@ export default function PlaygroundInterface({
         <div>
           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             {comparisonMode ? 'Package A' : 'Select Package'}
+            {useCustomPrompt && <span className="ml-2 text-xs text-gray-500">(disabled in custom prompt mode)</span>}
           </label>
           <div className="relative">
             <input
@@ -484,7 +534,8 @@ export default function PlaygroundInterface({
               }}
               onFocus={() => setShowPackageDropdown(true)}
               placeholder="Search for a package..."
-              className="w-full px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent"
+              disabled={useCustomPrompt}
+              className={`w-full px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-prpm-green focus:border-transparent ${useCustomPrompt ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
             {(selectedPackage || packageSearch) && (
               <button
@@ -753,183 +804,14 @@ export default function PlaygroundInterface({
         </div>
       </div>
 
-      {/* Conversation History */}
-      {(conversation.length > 0 || conversationB.length > 0) && (
-        <div className={`mb-4 sm:mb-6 ${comparisonMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}`}>
-          {/* Package A Conversation */}
-          {conversation.length > 0 && (
-            <div>
-              {comparisonMode && (
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  {selectedPackage ? selectedPackage.name : 'Package A'}
-                </h4>
-              )}
-              <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                {groupIntoExchanges(conversation).map((exchange, exchangeIdx) => {
-                  const isCollapsed = collapsedExchanges.has(exchange.index)
-                  const isLatest = exchangeIdx >= groupIntoExchanges(conversation).length - 2
-
-                  return (
-                    <div key={exchange.index} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                      {/* Exchange Header */}
-                      <div
-                        onClick={() => toggleExchange(exchange.index, false)}
-                        className={`flex items-center justify-between p-3 sm:p-4 cursor-pointer transition-all ${
-                          isCollapsed
-                            ? 'bg-prpm-green/10 dark:bg-prpm-green/20 hover:bg-prpm-green/15 dark:hover:bg-prpm-green/25 border-l-4 border-prpm-green'
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                            isCollapsed
-                              ? 'bg-prpm-green text-white'
-                              : 'bg-prpm-green/20 dark:bg-prpm-green/30 text-prpm-green-dark dark:text-prpm-green-light'
-                          }`}>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-semibold text-prpm-green-dark dark:text-prpm-green-light uppercase mb-1">
-                              Exchange #{exchange.index + 1}
-                            </div>
-                            <div className="text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
-                              {exchange.user.content}
-                            </div>
-                          </div>
-                        </div>
-                        <button className="ml-3 text-gray-500 hover:text-prpm-green dark:hover:text-prpm-green-light flex-shrink-0 transition-colors">
-                          <svg
-                            className={`w-5 h-5 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      {/* Exchange Content */}
-                      {!isCollapsed && (
-                        <div>
-                          {/* User Message */}
-                          <div className="p-3 sm:p-4 bg-prpm-green/10 dark:bg-prpm-green/20">
-                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                              User
-                            </div>
-                            <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.user.content}</ReactMarkdown>
-                            </div>
-                          </div>
-
-                          {/* Assistant Response */}
-                          {exchange.assistant && (
-                            <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
-                              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                                Assistant
-                              </div>
-                              <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Package B Conversation */}
-          {comparisonMode && conversationB.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                {selectedPackageB ? selectedPackageB.name : packageIdB ? 'Package B' : 'Baseline (No Package)'}
-              </h4>
-              <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                {groupIntoExchanges(conversationB).map((exchange, exchangeIdx) => {
-                  const isCollapsed = collapsedExchangesB.has(exchange.index)
-                  const isLatest = exchangeIdx >= groupIntoExchanges(conversationB).length - 2
-
-                  return (
-                    <div key={exchange.index} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                      {/* Exchange Header */}
-                      <div
-                        onClick={() => toggleExchange(exchange.index, true)}
-                        className={`flex items-center justify-between p-3 sm:p-4 cursor-pointer transition-all ${
-                          isCollapsed
-                            ? 'bg-amber-500/10 dark:bg-amber-500/20 hover:bg-amber-500/15 dark:hover:bg-amber-500/25 border-l-4 border-amber-500'
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                            isCollapsed
-                              ? 'bg-amber-500 text-white'
-                              : 'bg-amber-500/20 dark:bg-amber-500/30 text-amber-600 dark:text-amber-400'
-                          }`}>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase mb-1">
-                              Exchange #{exchange.index + 1}
-                            </div>
-                            <div className="text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
-                              {exchange.user.content}
-                            </div>
-                          </div>
-                        </div>
-                        <button className="ml-3 text-gray-500 hover:text-amber-500 dark:hover:text-amber-400 flex-shrink-0 transition-colors">
-                          <svg
-                            className={`w-5 h-5 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      {/* Exchange Content */}
-                      {!isCollapsed && (
-                        <div>
-                          {/* User Message */}
-                          <div className="p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20">
-                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                              User
-                            </div>
-                            <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.user.content}</ReactMarkdown>
-                            </div>
-                          </div>
-
-                          {/* Assistant Response */}
-                          {exchange.assistant && (
-                            <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
-                              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
-                                Assistant
-                              </div>
-                              <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Custom Prompt Input - Only show when not in comparison mode */}
+      {!comparisonMode && (
+        <CustomPromptInput
+          onPromptChange={setCustomPrompt}
+          onUseCustom={setUseCustomPrompt}
+          isVerifiedAuthor={isVerifiedAuthor}
+          isAnonymousUser={isAnonymousUser}
+        />
       )}
 
       {/* Input Area */}
@@ -992,9 +874,12 @@ export default function PlaygroundInterface({
       {/* Run Button */}
       <button
         onClick={handleRun}
-        disabled={loading || loadingB || !packageId || !input.trim()}
+        disabled={
+          loading || loadingB || !input.trim() ||
+          (useCustomPrompt ? !customPrompt.trim() : !packageId)
+        }
         className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-sm sm:text-base text-white transition ${
-          loading || !packageId || !input.trim()
+          loading || !input.trim() || (useCustomPrompt ? !customPrompt.trim() : !packageId)
             ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-prpm-green hover:bg-prpm-green-dark shadow-sm'
         }`}
@@ -1011,6 +896,215 @@ export default function PlaygroundInterface({
           comparisonMode ? 'Compare Prompts' : 'Run Playground'
         )}
       </button>
+
+      {/* Conversation History */}
+      {((conversation?.length ?? 0) > 0 || (conversationB?.length ?? 0) > 0) && (
+        <div className={`mb-4 sm:mb-6 ${comparisonMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}`}>
+          {/* Package A Conversation */}
+          {(conversation?.length ?? 0) > 0 && (
+            <div>
+              {comparisonMode && (
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  {selectedPackage ? selectedPackage.name : 'Package A'}
+                </h4>
+              )}
+              <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                {groupIntoExchanges(conversation || []).map((exchange, exchangeIdx) => {
+                  const isCollapsed = collapsedExchanges.has(exchange.index)
+                  const isLatest = exchangeIdx >= groupIntoExchanges(conversation || []).length - 2
+
+                  return (
+                    <div key={exchange.index} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                      {/* Exchange Header */}
+                      <div
+                        onClick={() => toggleExchange(exchange.index, false)}
+                        className={`flex items-center justify-between p-3 sm:p-4 cursor-pointer transition-all ${
+                          isCollapsed
+                            ? 'bg-prpm-green/10 dark:bg-prpm-green/20 hover:bg-prpm-green/15 dark:hover:bg-prpm-green/25 border-l-4 border-prpm-green'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                            isCollapsed
+                              ? 'bg-prpm-green text-white'
+                              : 'bg-prpm-green/20 dark:bg-prpm-green/30 text-prpm-green-dark dark:text-prpm-green-light'
+                          }`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-semibold text-prpm-green-dark dark:text-prpm-green-light uppercase mb-1">
+                              Exchange #{exchange.index + 1}
+                            </div>
+                            <div className="text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
+                              {exchange.user.content}
+                            </div>
+                          </div>
+                        </div>
+                        <button className="ml-3 text-gray-500 hover:text-prpm-green dark:hover:text-prpm-green-light flex-shrink-0 transition-colors">
+                          <svg
+                            className={`w-5 h-5 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Exchange Content */}
+                      {!isCollapsed && (
+                        <div>
+                          {/* User Message */}
+                          <div className="p-3 sm:p-4 bg-prpm-green/10 dark:bg-prpm-green/20">
+                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                              User
+                            </div>
+                            <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.user.content}</ReactMarkdown>
+                            </div>
+                          </div>
+
+                          {/* Assistant Response */}
+                          {exchange.assistant && (
+                            <>
+                              <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
+                                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                                  Assistant
+                                </div>
+                                <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
+                                </div>
+                              </div>
+
+                              {/* Feedback Prompt - shown after each response */}
+                              {!loading && currentSessionId && (
+                                <div className="px-3 sm:px-4 pb-3 sm:pb-4 bg-gray-50 dark:bg-gray-700/50">
+                                  <FeedbackPrompt
+                                    sessionId={currentSessionId}
+                                    exchangeIndex={exchange.index}
+                                    onFeedbackSubmitted={() => {
+                                      console.log('Feedback submitted for exchange:', exchange.index);
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Package B Conversation */}
+          {comparisonMode && (conversationB?.length ?? 0) > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {selectedPackageB ? selectedPackageB.name : packageIdB ? 'Package B' : 'Baseline (No Package)'}
+              </h4>
+              <div className="max-h-64 sm:max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                {groupIntoExchanges(conversationB || []).map((exchange, exchangeIdx) => {
+                  const isCollapsed = collapsedExchangesB.has(exchange.index)
+                  const isLatest = exchangeIdx >= groupIntoExchanges(conversationB || []).length - 2
+
+                  return (
+                    <div key={exchange.index} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                      {/* Exchange Header */}
+                      <div
+                        onClick={() => toggleExchange(exchange.index, true)}
+                        className={`flex items-center justify-between p-3 sm:p-4 cursor-pointer transition-all ${
+                          isCollapsed
+                            ? 'bg-amber-500/10 dark:bg-amber-500/20 hover:bg-amber-500/15 dark:hover:bg-amber-500/25 border-l-4 border-amber-500'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                            isCollapsed
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-amber-500/20 dark:bg-amber-500/30 text-amber-600 dark:text-amber-400'
+                          }`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase mb-1">
+                              Exchange #{exchange.index + 1}
+                            </div>
+                            <div className="text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
+                              {exchange.user.content}
+                            </div>
+                          </div>
+                        </div>
+                        <button className="ml-3 text-gray-500 hover:text-amber-500 dark:hover:text-amber-400 flex-shrink-0 transition-colors">
+                          <svg
+                            className={`w-5 h-5 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Exchange Content */}
+                      {!isCollapsed && (
+                        <div>
+                          {/* User Message */}
+                          <div className="p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20">
+                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                              User
+                            </div>
+                            <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.user.content}</ReactMarkdown>
+                            </div>
+                          </div>
+
+                          {/* Assistant Response */}
+                          {exchange.assistant && (
+                            <>
+                              <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50">
+                                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">
+                                  Assistant
+                                </div>
+                                <div className="text-sm sm:text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{exchange.assistant.content}</ReactMarkdown>
+                                </div>
+                              </div>
+
+                              {/* Feedback Prompt - shown after each response */}
+                              {!loadingB && currentSessionIdB && (
+                                <div className="px-3 sm:px-4 pb-3 sm:pb-4 bg-gray-50 dark:bg-gray-700/50">
+                                  <FeedbackPrompt
+                                    sessionId={currentSessionIdB}
+                                    exchangeIndex={exchange.index}
+                                    onFeedbackSubmitted={() => {
+                                      console.log('Feedback submitted for Package B exchange:', exchange.index);
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Anonymous User Login Prompt */}
       {showAnonymousLoginPrompt && (

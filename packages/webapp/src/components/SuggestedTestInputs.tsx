@@ -23,19 +23,14 @@ interface SuggestedTestInputsProps {
 export default function SuggestedTestInputs({ packageId, onInputSelect }: SuggestedTestInputsProps) {
   const [inputs, setInputs] = useState<SuggestedInput[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInputs = async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        if (selectedCategory) params.append('category', selectedCategory);
-        if (selectedDifficulty) params.append('difficulty', selectedDifficulty);
-
+        const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111';
         const response = await fetch(
-          `/api/v1/suggested-inputs/package/${packageId}?${params.toString()}`
+          `${registryUrl}/api/v1/suggested-inputs/package/${packageId}`
         );
 
         if (response.ok) {
@@ -50,12 +45,13 @@ export default function SuggestedTestInputs({ packageId, onInputSelect }: Sugges
     };
 
     fetchInputs();
-  }, [packageId, selectedCategory, selectedDifficulty]);
+  }, [packageId]);
 
   const handleTryThis = async (input: SuggestedInput) => {
     try {
+      const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111';
       // Record usage
-      await fetch('/api/v1/suggested-inputs/record-usage', {
+      await fetch(`${registryUrl}/api/v1/suggested-inputs/record-usage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ suggested_input_id: input.id }),
@@ -112,9 +108,6 @@ export default function SuggestedTestInputs({ packageId, onInputSelect }: Sugges
     }
   };
 
-  const uniqueCategories = Array.from(new Set(inputs.map(i => i.category).filter(Boolean)));
-  const uniqueDifficulties = Array.from(new Set(inputs.map(i => i.difficulty).filter(Boolean)));
-
   if (loading) {
     return (
       <div className="bg-prpm-dark-card border border-prpm-border rounded-lg p-6">
@@ -134,69 +127,6 @@ export default function SuggestedTestInputs({ packageId, onInputSelect }: Sugges
         <h2 className="text-xl font-semibold text-white">💡 Suggested Test Inputs</h2>
         <p className="text-sm text-gray-400">Author-curated examples to try</p>
       </div>
-
-      {/* Filters */}
-      {(uniqueCategories.length > 1 || uniqueDifficulties.length > 1) && (
-        <div className="flex flex-wrap gap-3 mb-4 pb-4 border-b border-prpm-border">
-          {uniqueCategories.length > 1 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">Category:</span>
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                  selectedCategory === null
-                    ? 'bg-prpm-accent text-white'
-                    : 'bg-prpm-dark text-gray-400 hover:text-white'
-                }`}
-              >
-                All
-              </button>
-              {uniqueCategories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat as string)}
-                  className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                    selectedCategory === cat
-                      ? 'bg-prpm-accent text-white'
-                      : 'bg-prpm-dark text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {uniqueDifficulties.length > 1 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">Difficulty:</span>
-              <button
-                onClick={() => setSelectedDifficulty(null)}
-                className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                  selectedDifficulty === null
-                    ? 'bg-prpm-accent text-white'
-                    : 'bg-prpm-dark text-gray-400 hover:text-white'
-                }`}
-              >
-                All
-              </button>
-              {uniqueDifficulties.map((diff) => (
-                <button
-                  key={diff}
-                  onClick={() => setSelectedDifficulty(diff as string)}
-                  className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                    selectedDifficulty === diff
-                      ? 'bg-prpm-accent text-white'
-                      : 'bg-prpm-dark text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {diff}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Suggested Inputs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -262,22 +192,6 @@ export default function SuggestedTestInputs({ packageId, onInputSelect }: Sugges
           </div>
         ))}
       </div>
-
-      {/* Empty State for Filters */}
-      {inputs.length === 0 && (selectedCategory || selectedDifficulty) && (
-        <div className="text-center py-8">
-          <p className="text-gray-400">No inputs match the selected filters</p>
-          <button
-            onClick={() => {
-              setSelectedCategory(null);
-              setSelectedDifficulty(null);
-            }}
-            className="mt-3 text-sm text-prpm-accent hover:underline"
-          >
-            Clear filters
-          </button>
-        </div>
-      )}
     </div>
   );
 }

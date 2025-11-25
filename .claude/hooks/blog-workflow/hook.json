@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "node .claude/hooks/blog-workflow/dist/hook.js",
+        "timeout": 10000,
+        "suppressOutput": false
+      }
+    ]
+  }
+}

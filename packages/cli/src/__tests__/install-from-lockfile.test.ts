@@ -6,7 +6,7 @@ import { installFromLockfile } from '../commands/install';
 import { readLockfile, writeLockfile, addToLockfile } from '../core/lockfile';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile } from '../core/filesystem';
+import { saveFile, getManifestFilename } from '../core/filesystem';
 import { gzipSync } from 'zlib';
 import type { Lockfile } from '../core/lockfile';
 import { CLIError } from '../core/errors';
@@ -18,16 +18,28 @@ jest.mock('@pr-pm/registry-client', () => ({
 jest.mock('../core/user-config', () => ({
   getConfig: jest.fn(),
 }));
-jest.mock('../core/lockfile', () => ({
-  readLockfile: jest.fn(),
-  writeLockfile: jest.fn(),
-  addToLockfile: jest.fn(),
-  createLockfile: jest.fn(() => ({ packages: {} })),
-  setPackageIntegrity: jest.fn(),
-  getLockedVersion: jest.fn(() => null),
-}));
+jest.mock('../core/lockfile', () => {
+  const actual = jest.requireActual('../core/lockfile');
+  return {
+    ...actual,
+    readLockfile: jest.fn(),
+    writeLockfile: jest.fn(),
+    addToLockfile: jest.fn(),
+    createLockfile: jest.fn(() => ({ packages: {} })),
+    setPackageIntegrity: jest.fn(),
+    getLockedVersion: jest.fn(() => null),
+  };
+});
 jest.mock('../core/filesystem', () => ({
-  getDestinationDir: jest.fn(() => '.cursor/rules'),
+  getDestinationDir: jest.fn((format: string, subtype: string) => {
+    // Return appropriate directory based on format
+    if (format === 'agents.md' || format === 'gemini.md' || format === 'claude.md') {
+      if (subtype === 'skill') return '.openskills/test-skill';
+      if (subtype === 'agent') return '.openagents/test-agent';
+      return '.'; // For non-skill/agent subtypes, return project root
+    }
+    return '.cursor/rules'; // Default for other formats
+  }),
   ensureDirectoryExists: jest.fn(),
   saveFile: jest.fn(),
   deleteFile: jest.fn(),
@@ -38,6 +50,12 @@ jest.mock('../core/filesystem', () => ({
     return packageId.replace(/^@[^/]+\//, '');
   }),
   autoDetectFormat: jest.fn(() => Promise.resolve(null)),
+  getManifestFilename: jest.fn((format: string) => {
+    // Map format to manifest filename
+    if (format === 'gemini.md') return 'GEMINI.md';
+    if (format === 'claude.md') return 'CLAUDE.md';
+    return 'AGENTS.md';
+  }),
 }));
 jest.mock('../core/telemetry', () => ({
   telemetry: {
@@ -52,6 +70,7 @@ const mockAddToLockfile = addToLockfile as jest.MockedFunction<typeof addToLockf
 const mockGetRegistryClient = getRegistryClient as jest.MockedFunction<typeof getRegistryClient>;
 const mockGetConfig = getConfig as jest.MockedFunction<typeof getConfig>;
 const mockSaveFile = saveFile as jest.MockedFunction<typeof saveFile>;
+const mockGetManifestFilename = getManifestFilename as jest.MockedFunction<typeof getManifestFilename>;
 
 describe('install from lockfile', () => {
   const mockClient = {
@@ -75,6 +94,13 @@ describe('install from lockfile', () => {
     mockWriteLockfile.mockResolvedValue(undefined);
     mockAddToLockfile.mockResolvedValue(undefined);
     mockSaveFile.mockResolvedValue(undefined);
+
+    // Ensure getManifestFilename is properly mocked
+    mockGetManifestFilename.mockImplementation((format: string) => {
+      if (format === 'gemini.md') return 'GEMINI.md';
+      if (format === 'claude.md') return 'CLAUDE.md';
+      return 'AGENTS.md';
+    });
 
     // Mock console methods
     jest.spyOn(console, 'log').mockImplementation();
@@ -168,6 +194,54 @@ describe('install from lockfile', () => {
       expect(mockSaveFile).toHaveBeenCalled();
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installing 1 package'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Installed 1/1'));
+    });
+
+    it('should honor agents.md location stored in lockfile', async () => {
+      const lockfile: Lockfile = {
+        version: '1.0.0',
+        lockfileVersion: 1,
+        packages: {
+          '@test/agents': {
+            version: '1.0.0',
+            resolved: 'https://registry.prpm.dev/packages/@test/agents/1.0.0/download',
+            integrity: 'sha256-abc123',
+            format: 'agents.md',
+            subtype: 'rule',
+            installedPath: 'custom/dir/AGENTS.override.md',
+          },
+        },
+        generated: new Date().toISOString(),
+      };
+      mockReadLockfile.mockResolvedValue(lockfile);
+
+      const mockPackage = {
+        id: '@test/agents',
+        name: '@test/agents',
+        author: 'test',
+        version: '1.0.0',
+        format: 'agents.md',
+        subtype: 'rule',
+        files: ['AGENTS.md'],
+        description: 'Test agents file',
+        total_downloads: 0,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://registry.prpm.dev/packages/@test/agents/1.0.0/download'
+        }
+      };
+      mockClient.getPackage.mockResolvedValue(mockPackage as any);
+      mockClient.getPackageVersion.mockResolvedValue({
+        version: '1.0.0',
+        tarball_url: 'https://registry.prpm.dev/packages/@test/agents/1.0.0/download'
+      } as any);
+
+      const fileContent = '# Agents\nTest content';
+      const tarballContent = gzipSync(fileContent);
+      mockClient.downloadPackage.mockResolvedValue(tarballContent);
+
+      await installFromLockfile({});
+
+      expect(mockSaveFile).toHaveBeenCalledWith('custom/dir/AGENTS.override.md', expect.any(String));
     });
 
     it('should preserve format from lockfile', async () => {

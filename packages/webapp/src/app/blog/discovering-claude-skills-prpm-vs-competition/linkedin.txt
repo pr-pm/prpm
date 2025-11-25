@@ -1,4 +1,4 @@
-Want to add a code review skill to Claude? You've got options: ctx.directory for browsing creators, SkillsMP for marketplace search, GitHub for raw files, or Discord communities for recommendations.
+Want to add a code review skill to Claude? You've got options: ctx.directory for browsing creators, SkillsMP for marketplace search, GitHub for raw files, or Twitter for recommendations.
 
 Each platform has its own discovery mechanism, format, and installation process. No unified search. No version control. No way to test before installing. You're manually copying markdown files into .claude/skills/ and hoping they work.
 

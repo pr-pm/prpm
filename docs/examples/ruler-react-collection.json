@@ -1,0 +1,56 @@
+{
+  "id": "ruler-react",
+  "name": "Ruler React Development",
+  "description": "Comprehensive React development rules for Ruler - modern hooks patterns, component architecture, performance optimization, and accessibility",
+  "version": "1.0.0",
+  "category": "development",
+  "tags": ["ruler", "react", "frontend", "javascript", "typescript"],
+  "packages": [
+    {
+      "packageId": "@prpm/react-hooks-patterns",
+      "version": "^2.0.0",
+      "required": true,
+      "reason": "Modern React hooks usage patterns and best practices"
+    },
+    {
+      "packageId": "@prpm/react-component-architecture",
+      "version": "^1.5.0",
+      "required": true,
+      "reason": "Component design principles, composition, and organization"
+    },
+    {
+      "packageId": "@prpm/react-performance",
+      "version": "^1.3.0",
+      "required": true,
+      "reason": "Performance optimization: memoization, lazy loading, bundle splitting"
+    },
+    {
+      "packageId": "@prpm/react-accessibility",
+      "version": "^1.1.0",
+      "required": true,
+      "reason": "WCAG compliance and accessibility best practices"
+    },
+    {
+      "packageId": "@prpm/react-testing-library",
+      "version": "^2.2.0",
+      "required": false,
+      "reason": "Testing React components with React Testing Library"
+    },
+    {
+      "packageId": "@prpm/react-state-management",
+      "version": "^1.0.0",
+      "required": false,
+      "reason": "State management patterns: Context, Redux, Zustand"
+    },
+    {
+      "packageId": "@prpm/tailwind-react",
+      "version": "^1.4.0",
+      "required": false,
+      "reason": "Tailwind CSS best practices for React"
+    }
+  ],
+  "icon": "⚛️",
+  "author": "PRPM Team",
+  "repository": "https://github.com/pr-pm/prpm",
+  "readme": "# Ruler React Development\n\nComplete React development setup configured for Ruler.\n\n## What's Included\n\n### Required\n- **React Hooks Patterns**: useState, useEffect, useContext, custom hooks\n- **Component Architecture**: Composition, props patterns, children patterns\n- **Performance Optimization**: Memoization, code splitting, lazy loading\n- **Accessibility**: ARIA, keyboard navigation, screen reader support\n\n### Optional\n- **Testing**: React Testing Library best practices\n- **State Management**: Context API, Redux Toolkit, Zustand\n- **Tailwind CSS**: Utility-first styling for React\n\n## Installation\n\n```bash\n# Install all required packages\nprpm install collections/ruler-react --as ruler\n\n# Skip optional packages\nprpm install collections/ruler-react --as ruler --skip-optional\n```\n\n## Usage\n\nRuler automatically distributes these rules to your AI coding assistants.\n\n## Perfect For\n\n- New React projects\n- Team standardization\n- Modern React (v18+) development\n- TypeScript + React projects\n"
+}

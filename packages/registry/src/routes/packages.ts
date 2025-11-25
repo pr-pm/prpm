@@ -10,6 +10,8 @@ import { Package, PackageVersion, PackageInfo } from '../types.js';
 import { toError } from '../types/errors.js';
 import { config } from '../config.js';
 import { optionalAuth } from '../middleware/auth.js';
+import { createPublishRateLimiter } from '../middleware/rate-limit.js';
+import { createConcurrencyController } from '../middleware/concurrency-control.js';
 import type { AIMetadataResult } from '../scoring/ai-evaluator.js';
 import type {
   ListPackagesQuery,
@@ -18,6 +20,37 @@ import type {
   TrendingQuery,
   ResolveQuery,
 } from '../types/requests.js';
+import { EmbeddingGenerationService } from '../services/embedding-generation.js';
+import {
+  fromCursor,
+  fromClaude,
+  fromContinue,
+  fromWindsurf,
+  fromCopilot,
+  fromKiro,
+  fromRuler,
+  fromAgentsMd,
+} from '@pr-pm/converters';
+import { uploadCanonicalPackage } from '../storage/canonical.js';
+
+// Reusable enum constants for schema validation
+const FORMAT_ENUM = ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] as const;
+const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook'] as const;
+
+// Columns to select for list results (excludes full_content to reduce payload size)
+const LIST_COLUMNS = `
+  p.id, p.name, p.display_name, p.description, p.author_id, p.org_id,
+  p.format, p.subtype, p.tags, p.keywords, p.category,
+  p.visibility, p.featured, p.verified, p.official,
+  p.total_downloads, p.weekly_downloads, p.monthly_downloads, p.version_count,
+  p.downloads_last_7_days, p.trending_score,
+  p.rating_average, p.rating_count, p.quality_score,
+  p.install_count, p.view_count,
+  p.license, p.license_text, p.license_url,
+  p.snippet, p.repository_url, p.homepage_url, p.documentation_url,
+  p.created_at, p.updated_at, p.last_published_at,
+  p.deprecated, p.deprecated_reason
+`.trim();
 
 export async function packageRoutes(server: FastifyInstance) {
   // List packages with pagination
@@ -29,12 +62,12 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           search: { type: 'string' },
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
           category: { type: 'string' },
           featured: { type: 'boolean' },
           verified: { type: 'boolean' },
-          sort: { type: 'string', enum: ['downloads', 'created', 'updated', 'quality', 'rating'], default: 'downloads' },
+          sort: { type: 'string', enum: ['relevance', 'downloads', 'created', 'updated', 'quality', 'rating'], default: 'downloads' },
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
           offset: { type: 'number', default: 0, minimum: 0 },
         },
@@ -244,6 +277,114 @@ export async function packageRoutes(server: FastifyInstance) {
         // Replace storage URL with registry download URL
         // URL-encode package name to handle slashes in scoped packages
         const encodedPackageName = encodeURIComponent(packageName);
+        return {
+          ...version,
+          tarball_url: `${baseUrl}/api/v1/packages/${encodedPackageName}/${version.version}.tar.gz`
+        };
+      }
+      return version;
+    });
+
+    const packageInfo: PackageInfo = {
+      ...pkg,
+      versions: transformedVersions,
+      latest_version: transformedVersions[0],
+    };
+
+    // Only cache public packages (private packages should not be cached)
+    if (pkg.visibility === 'public') {
+      await cacheSet(server, cacheKey, packageInfo, 300);
+    }
+
+    return packageInfo;
+  });
+
+  // Get package by ID (for fast UUID lookups)
+  server.get('/by-id/:packageId', {
+    onRequest: [optionalAuth],
+    schema: {
+      tags: ['packages'],
+      description: 'Get package details by ID (fast UUID lookup)',
+      params: {
+        type: 'object',
+        properties: {
+          packageId: { type: 'string', format: 'uuid' },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { packageId } = request.params as { packageId: string };
+    const userId = request.user?.user_id;
+
+    // Debug logging
+    server.log.debug({
+      packageId,
+      userId: userId || 'unauthenticated',
+      hasUser: !!request.user,
+    }, 'GET package by ID request');
+
+    // Check cache (skip cache for authenticated requests to private packages)
+    const cacheKey = `package:id:${packageId}`;
+    if (!userId) {
+      const cached = await cacheGet<PackageInfo>(server, cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    // Get package - include private packages if user is authenticated and has access
+    let pkg: Package | null = null;
+
+    if (userId) {
+      // For authenticated users, check if they have access to private packages
+      server.log.debug({ packageId, userId }, 'Checking private package access');
+      pkg = await queryOne<Package>(
+        server,
+        `SELECT p.*, u.username as author_username FROM packages p
+         LEFT JOIN users u ON p.author_id = u.id
+         LEFT JOIN organization_members om ON p.org_id = om.org_id AND om.user_id = $2
+         WHERE p.id = $1
+         AND (p.visibility = 'public'
+              OR (p.visibility = 'private'
+                  AND p.org_id IS NOT NULL
+                  AND om.user_id IS NOT NULL))`,
+        [packageId, userId]
+      );
+      server.log.debug({ packageId, userId, found: !!pkg }, 'Private package query result');
+    } else {
+      // For unauthenticated users, only show public packages
+      pkg = await queryOne<Package>(
+        server,
+        `SELECT p.*, u.username as author_username FROM packages p
+         LEFT JOIN users u ON p.author_id = u.id
+         WHERE p.id = $1 AND p.visibility = 'public'`,
+        [packageId]
+      );
+    }
+
+    if (!pkg) {
+      server.log.debug({ packageId, userId: userId || 'none' }, 'Package not found');
+      return reply.status(404).send({ error: 'Package not found' });
+    }
+
+    // Get versions
+    const versionsResult = await query<PackageVersion>(
+      server,
+      `SELECT * FROM package_versions
+       WHERE package_id = $1
+       ORDER BY published_at DESC`,
+      [pkg.id]
+    );
+
+    // Transform tarball URLs to registry download URLs
+    const protocol = (request.headers['x-forwarded-proto'] as string) || request.protocol;
+    const host = request.headers.host || `localhost:${config.port}`;
+    const baseUrl = `${protocol}://${host}`;
+
+    const transformedVersions = versionsResult.rows.map(version => {
+      if (version.tarball_url) {
+        // URL-encode package name to handle slashes in scoped packages
+        const encodedPackageName = encodeURIComponent(pkg.name);
         return {
           ...version,
           tarball_url: `${baseUrl}/api/v1/packages/${encodedPackageName}/${version.version}.tar.gz`
@@ -478,8 +619,12 @@ export async function packageRoutes(server: FastifyInstance) {
   });
 
   // Publish package (authenticated)
+  // Protected by rate limiting (10 req/min) and concurrency control (5 concurrent)
+  const publishRateLimiter = createPublishRateLimiter();
+  const publishConcurrencyControl = createConcurrencyController();
+
   server.post('/', {
-    onRequest: [server.authenticate],
+    preHandler: [server.authenticate, publishRateLimiter, publishConcurrencyControl],
     // No schema - multipart doesn't set request.body for validation
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = request.user.user_id;
@@ -489,6 +634,7 @@ export async function packageRoutes(server: FastifyInstance) {
 
     let manifest: Record<string, unknown>;
     let tarballBuffer: Buffer;
+    let publishAsAuthor: string | undefined;
 
     if (isMultipart) {
       // Handle multipart upload (from CLI)
@@ -497,6 +643,8 @@ export async function packageRoutes(server: FastifyInstance) {
       for await (const part of parts) {
         if (part.type === 'field' && part.fieldname === 'manifest') {
           manifestStr = part.value as string;
+        } else if (part.type === 'field' && part.fieldname === 'publish_as_author') {
+          publishAsAuthor = part.value as string;
         } else if (part.type === 'file' && part.fieldname === 'tarball') {
           const chunks: Buffer[] = [];
           for await (const chunk of part.file) {
@@ -541,6 +689,7 @@ export async function packageRoutes(server: FastifyInstance) {
       // 1. Validate manifest
       let packageName = manifest.name as string;
       const version = manifest.version as string;
+      const displayName = manifest.displayName as string | undefined;
       const description = manifest.description as string;
       const format = manifest.format as string;
       const subtype = (manifest.subtype as string) || 'rule';
@@ -560,9 +709,9 @@ export async function packageRoutes(server: FastifyInstance) {
       }
 
       // Fetch user info for scoping and validation
-      const user = await queryOne<{ username: string }>(
+      const user = await queryOne<{ username: string; is_admin: boolean }>(
         server,
-        'SELECT username FROM users WHERE id = $1',
+        'SELECT username, is_admin FROM users WHERE id = $1',
         [userId]
       );
 
@@ -573,7 +722,16 @@ export async function packageRoutes(server: FastifyInstance) {
         });
       }
 
-      const usernameLowercase = user.username.toLowerCase();
+      // Admin override: if user is admin and publishAsAuthor is specified, use that for scoping
+      let usernameLowercase = user.username.toLowerCase();
+      if (user.is_admin && publishAsAuthor) {
+        usernameLowercase = publishAsAuthor.toLowerCase();
+        server.log.info({
+          admin: user.username,
+          publishAsAuthor,
+          packageName: manifest.name
+        }, 'Admin override: Publishing as different author');
+      }
 
       // Auto-prefix package name with scope and validate ownership
       // If organization is specified, use @org-name/, otherwise use @username/
@@ -734,13 +892,15 @@ export async function packageRoutes(server: FastifyInstance) {
         pkg = await queryOne<Package>(
           server,
           `INSERT INTO packages (
-            name, description, author_id, org_id, format, subtype,
-            license, tags, keywords, language, framework, visibility, last_published_at
+            name, display_name, description, author_id, org_id, format, subtype,
+            license, tags, keywords, language, framework, visibility, last_published_at,
+            ai_enrichment_needed
           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), TRUE)
            RETURNING *`,
           [
             packageName,
+            displayName || null,
             description,
             userId,                 // Always record the author (person who published)
             orgId || null,          // Set org_id if publishing to org (org takes precedence for ownership)
@@ -762,7 +922,61 @@ export async function packageRoutes(server: FastifyInstance) {
         server.log.info({ packageName, userId }, 'Created new package');
       }
 
-      // 3. Upload tarball to S3 using package name for human-readable paths
+      // 3. Extract file metadata and content from tarball
+      interface FileMetadata {
+        path: string;
+        size: number;
+        type: 'file' | 'directory' | 'symlink';
+      }
+
+      const files: FileMetadata[] = [];
+      let fullContent = '';
+
+      try {
+        // @ts-ignore - tar-stream doesn't have types
+        const tar = await import('tar-stream');
+        const zlib = await import('zlib');
+        const { Readable } = await import('stream');
+
+        const extract = tar.extract();
+
+        extract.on('entry', (header: any, stream: any, next: any) => {
+          // Record file metadata
+          files.push({
+            path: header.name,
+            size: header.size || 0,
+            type: header.type === 'directory' ? 'directory' : header.type === 'symlink' ? 'symlink' : 'file'
+          });
+
+          // Collect file content for full_content column
+          const chunks: Buffer[] = [];
+          stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+          stream.on('end', () => {
+            if (header.type === 'file') {
+              const content = Buffer.concat(chunks).toString('utf-8');
+              fullContent += fullContent ? `\n\n${content}` : content;
+            }
+            next();
+          });
+          stream.resume();
+        });
+
+        // Decompress and extract tarball to get file list and content
+        await new Promise((resolve, reject) => {
+          extract.on('finish', resolve);
+          extract.on('error', reject);
+          Readable.from(tarballBuffer)
+            .pipe(zlib.createGunzip())
+            .pipe(extract);
+        });
+
+        server.log.info({ packageName, fileCount: files.length, contentLength: fullContent.length }, 'Extracted file metadata and content from tarball');
+      } catch (error) {
+        server.log.warn({ packageName, error }, 'Failed to extract file metadata from tarball');
+        // Continue with publish even if file extraction fails
+      }
+
+      // 4. Upload tarball to S3 using package name for human-readable paths
       const { uploadPackage } = await import('../storage/s3.js');
       const { url: tarballUrl, hash: tarballHash, size } = await uploadPackage(
         server,
@@ -772,7 +986,145 @@ export async function packageRoutes(server: FastifyInstance) {
         { packageId: pkg.id }  // Pass UUID for metadata
       );
 
-      // 4. Create package version record
+      // 4b. Convert and upload canonical format (for new packages)
+      // This enables lossless format conversions without migration overhead
+      try {
+        if (fullContent) {
+          server.log.info({ packageName, version }, 'Converting package to canonical format');
+
+          // Extract scope from package name (@scope/package-name)
+          const scopeMatch = packageName.match(/^@([^/]+)\//);
+          const scope = scopeMatch ? scopeMatch[1] : 'unknown';
+
+          // Determine if scope is organization or author
+          // If orgId exists, the scope is an organization
+          const isOrgPackage = !!orgId;
+
+          // Prepare metadata for conversion (includes prpm.json fields)
+          const metadata = {
+            id: pkg.id,
+            name: packageName,
+            version,
+            author: isOrgPackage ? user.username : scope, // Publisher if org, scope if personal
+            organization: isOrgPackage ? scope : undefined, // Scope name if org package
+            tags,
+            license,
+            repository: manifest.repository as string | undefined,
+            homepage: manifest.homepage as string | undefined,
+            documentation: manifest.documentation as string | undefined,
+            keywords,
+            category: manifest.category as string | undefined,
+            dependencies: manifest.dependencies as Record<string, string> | undefined,
+            peerDependencies: manifest.peerDependencies as Record<string, string> | undefined,
+            engines: manifest.engines as Record<string, string> | undefined,
+          };
+
+          // Convert to canonical based on format
+          server.log.info(
+            {
+              packageName,
+              version,
+              format,
+              contentLength: fullContent.length,
+              hasMetadata: !!metadata,
+            },
+            '🔄 Converting package to canonical format...'
+          );
+
+          let canonicalPkg;
+          try {
+            switch (format) {
+              case 'cursor':
+                canonicalPkg = fromCursor(fullContent, metadata);
+                break;
+              case 'claude':
+                canonicalPkg = fromClaude(fullContent, metadata);
+                break;
+              case 'continue':
+                canonicalPkg = fromContinue(fullContent, metadata);
+                break;
+              case 'windsurf':
+                canonicalPkg = fromWindsurf(fullContent, metadata);
+                break;
+              case 'copilot':
+                canonicalPkg = fromCopilot(fullContent, metadata);
+                break;
+              case 'kiro':
+                // Kiro returns CanonicalPackage directly
+                canonicalPkg = fromKiro(fullContent, metadata);
+                break;
+              case 'ruler':
+                {
+                  // Ruler returns ConversionResult with JSON content
+                  const result = fromRuler(fullContent);
+                  if (!result.content) {
+                    throw new Error('Ruler conversion produced empty content');
+                  }
+                  canonicalPkg = JSON.parse(result.content);
+                }
+                break;
+              default:
+                // Generic/unknown format - try cursor as fallback
+                server.log.warn({ packageName, version, format }, 'Unknown format, using cursor converter as fallback');
+                canonicalPkg = fromCursor(fullContent, metadata);
+            }
+
+            server.log.info(
+              {
+                packageName,
+                version,
+                format,
+                canonicalFormat: canonicalPkg.format,
+                hasContent: !!canonicalPkg.content,
+              },
+              '✅ Conversion to canonical format succeeded'
+            );
+
+            // Upload canonical to S3
+            await uploadCanonicalPackage(server, packageName, version, canonicalPkg);
+
+          } catch (conversionError) {
+            // Log detailed error but don't fail publish
+            const errorMessage = conversionError instanceof Error ? conversionError.message : String(conversionError);
+            const errorStack = conversionError instanceof Error ? conversionError.stack : undefined;
+
+            server.log.error(
+              {
+                error: errorMessage,
+                errorStack,
+                packageName,
+                version,
+                format,
+                contentPreview: fullContent.substring(0, 200),
+                metadataKeys: Object.keys(metadata),
+              },
+              '❌ CANONICAL CONVERSION FAILED (non-blocking) - package published without canonical format'
+            );
+          }
+        } else {
+          server.log.warn(
+            { packageName, version, format },
+            '⚠️  No content extracted from tarball, skipping canonical conversion'
+          );
+        }
+      } catch (error) {
+        // Canonical storage is non-blocking - log but continue
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+
+        server.log.error(
+          {
+            error: errorMessage,
+            errorStack,
+            packageName,
+            version,
+            format,
+          },
+          '❌ CANONICAL STORAGE OUTER FAILURE (non-blocking) - package published without canonical format'
+        );
+      }
+
+      // 5. Create package version record with file metadata
       const packageVersion = await queryOne(
         server,
         `INSERT INTO package_versions (
@@ -787,78 +1139,61 @@ export async function packageRoutes(server: FastifyInstance) {
           tarballUrl,
           tarballHash,
           size,
-          JSON.stringify({ manifest, readme: undefined })
+          JSON.stringify({ manifest, readme: undefined, files })
         ]
       );
 
-      // Update package updated_at and last_published_at
+      // Update package updated_at, last_published_at, and full_content (always use latest version content)
       await query(
         server,
-        'UPDATE packages SET last_published_at = NOW(), updated_at = NOW() WHERE id = $1',
-        [pkg.id]
+        'UPDATE packages SET last_published_at = NOW(), updated_at = NOW(), full_content = $2, ai_enrichment_needed = TRUE WHERE id = $1',
+        [pkg.id, fullContent || null]
       );
 
-      // 5. Calculate quality score and extract metadata (async, don't block response)
+      // 6. Calculate quality score and extract metadata (async, don't block response)
       server.log.info({ packageId: pkg.id }, '🎯 Starting quality score calculation and metadata extraction');
+      // Use the already-extracted content to avoid re-processing the tarball
+      const packageContentForScoring = fullContent;
       (async () => {
         try {
           const { updatePackageQualityScore } = await import('../scoring/quality-scorer.js');
-          const { getDetailedAIEvaluation, extractMetadataWithAI } = await import('../scoring/ai-evaluator.js');
+          const { getDetailedAIEvaluation, extractMetadataWithAI, generateDisplayName } = await import('../scoring/ai-evaluator.js');
 
-          // Extract content from the tarball we just uploaded
-          // @ts-ignore - tar-stream doesn't have types
-          const tar = await import('tar-stream');
-          const zlib = await import('zlib');
-          const { Readable } = await import('stream');
-
-          const extract = tar.extract();
-          let packageContent = '';
-
-          // Collect all file contents from tarball
-          extract.on('entry', (header: any, stream: any, next: any) => {
-            const chunks: Buffer[] = [];
-            stream.on('data', (chunk: Buffer) => chunks.push(chunk));
-            stream.on('end', () => {
-              if (header.type === 'file') {
-                packageContent += `\n\n=== ${header.name} ===\n${Buffer.concat(chunks).toString('utf-8')}`;
-              }
-              next();
-            });
-            stream.resume();
-          });
-
-          // Decompress and extract tarball
-          await new Promise((resolve, reject) => {
-            extract.on('finish', resolve);
-            extract.on('error', reject);
-            Readable.from(tarballBuffer)
-              .pipe(zlib.createGunzip())
-              .pipe(extract);
-          });
-
-          if (packageContent) {
+          if (packageContentForScoring) {
             // Get AI evaluation for explanation
-            const evaluation = await getDetailedAIEvaluation(packageContent, server);
+            const evaluation = await getDetailedAIEvaluation(packageContentForScoring, server);
             const explanation = `${evaluation.reasoning}\n\nStrengths: ${evaluation.strengths.join(', ')}\n\nWeaknesses: ${evaluation.weaknesses.join(', ') || 'None identified'}`;
 
             // Calculate quality score with the extracted content
-            const qualityScore = await updatePackageQualityScore(server, pkg.id, packageContent);
+            const qualityScore = await updatePackageQualityScore(server, pkg.id, packageContentForScoring);
 
             // Get current package data to check what metadata needs extraction
             const currentPkg = await queryOne<{
               category: string | null;
+              display_name: string | null;
             }>(
               server,
-              'SELECT category FROM packages WHERE id = $1',
+              'SELECT category, display_name FROM packages WHERE id = $1',
               [pkg.id]
             );
+
+            // Generate display name if not provided
+            let generatedDisplayName: string | undefined;
+            if (!displayName && !currentPkg?.display_name) {
+              generatedDisplayName = await generateDisplayName(
+                packageName,
+                description,
+                packageContentForScoring,
+                server
+              );
+            }
 
             // Extract metadata if not already provided
             const needsMetadata = !language || !framework || !currentPkg?.category;
             let extractedMetadata: AIMetadataResult = {};
             if (needsMetadata) {
               extractedMetadata = await extractMetadataWithAI(
-                packageContent,
+                packageContentForScoring,
                 {
                   language: language || undefined,
                   framework: framework || undefined,
@@ -875,6 +1210,10 @@ export async function packageRoutes(server: FastifyInstance) {
             const params: any[] = [explanation];
             let paramIndex = 2;
 
+            if (generatedDisplayName) {
+              updates.push(`display_name = $${paramIndex++}`);
+              params.push(generatedDisplayName);
+            }
             if (!language && extractedMetadata.language) {
               updates.push(`language = $${paramIndex++}`);
               params.push(extractedMetadata.language);
@@ -903,8 +1242,9 @@ export async function packageRoutes(server: FastifyInstance) {
                 qualityScore,
                 explanationLength: explanation.length,
                 extractedMetadata,
+                generatedDisplayName,
               },
-              '✅ Quality score, explanation, and metadata updated'
+              '✅ Quality score, explanation, metadata, and display name updated'
             );
           }
         } catch (error) {
@@ -921,6 +1261,37 @@ export async function packageRoutes(server: FastifyInstance) {
       await cacheDeletePattern(server, `packages:list:*`);
 
       server.log.info({ packageName, version, userId }, 'Package published successfully');
+
+      // 7. Generate embedding asynchronously (non-blocking)
+      // Only attempt if OpenAI API key is configured
+      if (process.env.OPENAI_API_KEY) {
+        (async () => {
+          try {
+            const embeddingService = new EmbeddingGenerationService(server);
+            const result = await embeddingService.generatePackageEmbedding({
+              package_id: pkg.id,
+              force_regenerate: true // Always regenerate on publish
+            });
+
+            if (result.success && !result.skipped) {
+              server.log.info({ packageId: pkg.id, packageName }, 'Embedding generated on publish');
+            } else if (result.error) {
+              server.log.warn({ packageId: pkg.id, packageName, error: result.error }, 'Failed to generate embedding on publish (non-blocking)');
+            }
+          } catch (error) {
+            server.log.warn({ packageId: pkg.id, packageName, error: String(error) }, 'Exception generating embedding on publish (non-blocking)');
+          }
+        })();
+      } else {
+        server.log.debug({ packageId: pkg.id }, 'Skipping embedding generation - OPENAI_API_KEY not configured');
+      }
+
+      // 8. Update SEO data for this package only (non-blocking)
+      if (server.seoData?.isEnabled()) {
+        server.seoData.updateSinglePackage(packageName).catch((error: unknown) => {
+          server.log.warn({ packageName, error: String(error) }, 'Failed to update SEO data for package');
+        });
+      }
 
       return reply.send({
         success: true,
@@ -1064,9 +1435,8 @@ export async function packageRoutes(server: FastifyInstance) {
     // Calculate trending score based on recent downloads vs historical average
     const result = await query<Package>(
       server,
-      `SELECT p.*,
-        p.downloads_last_7_days as recent_downloads,
-        p.trending_score
+      `SELECT ${LIST_COLUMNS},
+        p.downloads_last_7_days as recent_downloads
        FROM packages p
        WHERE p.visibility = 'public'
          AND p.downloads_last_7_days > 0
@@ -1094,8 +1464,8 @@ export async function packageRoutes(server: FastifyInstance) {
         type: 'object',
         properties: {
           limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
-          format: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
-          subtype: { type: 'string', enum: ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode'] },
+          format: { type: 'string', enum: FORMAT_ENUM },
+          subtype: { type: 'string', enum: SUBTYPE_ENUM },
         },
       },
     },
@@ -1130,10 +1500,7 @@ export async function packageRoutes(server: FastifyInstance) {
 
     const result = await query<Package>(
       server,
-      `SELECT p.*,
-        p.total_downloads,
-        p.weekly_downloads,
-        p.install_count
+      `SELECT ${LIST_COLUMNS}
        FROM packages p
        WHERE ${whereClause}
        ORDER BY p.total_downloads DESC, p.install_count DESC
@@ -1450,6 +1817,206 @@ export async function packageRoutes(server: FastifyInstance) {
   );
 
   /**
+   * GET /packages/ssg-data
+   * Get all public packages with full content for static site generation
+   * Used by webapp during build for generateStaticParams
+   * REQUIRES: X-SSG-Token header for authentication
+   * RATE LIMITING: Exempt from global rate limits (see index.ts allowList)
+   * PAGINATION: Default 500 packages per request (max 1000 to avoid payload size issues)
+   *             With 7000+ packages: ~8-14 requests needed to fetch all
+   * PAYLOAD SIZE: ~500 packages × ~10KB avg = ~5MB response (safe for JSON parsing)
+   */
+  server.get(
+    '/ssg-data',
+    {
+      schema: {
+        tags: ['packages'],
+        description: 'Get all packages with full content for SSG (requires X-SSG-Token header)',
+        headers: {
+          type: 'object',
+          properties: {
+            'x-ssg-token': { type: 'string' },
+          },
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            format: { type: 'string' },
+            packageName: { type: 'string' },
+            limit: { type: 'number', default: 500, minimum: 1, maximum: 1000 },
+            offset: { type: 'number', default: 0, minimum: 0 },
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest<{ Querystring: { format?: string; packageName?: string; limit?: number; offset?: number } }>, reply: FastifyReply) => {
+      try {
+        // Authenticate SSG token
+        const ssgToken = request.headers['x-ssg-token'];
+        const expectedToken = process.env.SSG_DATA_TOKEN;
+
+        if (!expectedToken) {
+          server.log.error('SSG_DATA_TOKEN environment variable not configured');
+          return reply.code(500).send({
+            error: 'Internal Server Error',
+            message: 'SSG endpoint not properly configured',
+          });
+        }
+
+        if (!ssgToken || ssgToken !== expectedToken) {
+          server.log.warn({ ip: request.ip }, 'Unauthorized SSG data access attempt');
+          return reply.code(401).send({
+            error: 'Unauthorized',
+            message: 'Valid X-SSG-Token header required',
+          });
+        }
+
+        const { format, packageName, limit = 500, offset = 0 } = request.query;
+
+        server.log.info({ format, packageName, limit, offset }, 'Fetching SSG data');
+
+        // Build WHERE clause
+        // NOTE: Includes deprecated packages - they still have pages, just with deprecation warnings
+        const conditions: string[] = ["visibility = 'public'"];
+        const params: unknown[] = [];
+        let paramIndex = 1;
+
+        if (format) {
+          conditions.push(`format = $${paramIndex++}`);
+          params.push(format);
+        }
+
+        if (packageName) {
+          conditions.push(`name = $${paramIndex++}`);
+          params.push(packageName);
+        }
+
+        // Get total count for pagination
+        const countResult = await query<{ total: string }>(
+          server,
+          `SELECT COUNT(*) as total FROM packages p WHERE ${conditions.join(' AND ')}`,
+          params.slice(0, paramIndex - 1) // Only use WHERE clause params
+        );
+        const totalCount = parseInt(countResult.rows[0]?.total || '0', 10);
+
+        // Add limit and offset
+        const limitIndex = paramIndex++;
+        const offsetIndex = paramIndex++;
+        params.push(limit);
+        params.push(offset);
+
+        // Get public packages with minimal fields + full_content (paginated)
+        // Exclude: monthly_downloads, quality_score, keywords, created_at, updated_at, snippet (not displayed on SEO page)
+        const result = await query(
+          server,
+          `SELECT
+            p.id,
+            p.name,
+            p.display_name,
+            p.description,
+            p.format,
+            p.subtype,
+            p.category,
+            p.tags,
+            p.license,
+            p.repository_url,
+            p.homepage_url,
+            p.documentation_url,
+            p.total_downloads,
+            p.weekly_downloads,
+            p.version_count,
+            p.stars,
+            p.rating_average,
+            p.rating_count,
+            p.verified,
+            p.featured,
+            p.deprecated,
+            p.deprecated_reason,
+            p.full_content,
+            u.username as author_username,
+            pv.version as latest_version,
+            pv.metadata as latest_version_metadata,
+            pv.file_size,
+            pv.downloads as version_downloads,
+            pv.changelog,
+            pv.published_at as version_published_at
+          FROM packages p
+          LEFT JOIN users u ON p.author_id = u.id
+          LEFT JOIN LATERAL (
+            SELECT version, metadata, file_size, downloads, changelog, published_at
+            FROM package_versions
+            WHERE package_id = p.id
+            ORDER BY published_at DESC
+            LIMIT 1
+          ) pv ON true
+          WHERE ${conditions.join(' AND ')}
+          ORDER BY p.total_downloads DESC, p.id ASC
+          LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+          params
+        );
+
+        const packages = result.rows.map((row: any) => ({
+          id: row.id,
+          name: row.name,
+          display_name: row.display_name,
+          description: row.description,
+          format: row.format,
+          subtype: row.subtype,
+          category: row.category,
+          tags: row.tags || [],
+          license: row.license,
+          repository_url: row.repository_url,
+          homepage_url: row.homepage_url,
+          documentation_url: row.documentation_url,
+          total_downloads: row.total_downloads || 0,
+          weekly_downloads: row.weekly_downloads || 0,
+          version_count: row.version_count || 0,
+          stars: row.stars || 0,
+          rating_average: row.rating_average ? parseFloat(row.rating_average) : null,
+          rating_count: row.rating_count || 0,
+          verified: row.verified || false,
+          featured: row.featured || false,
+          deprecated: row.deprecated || false,
+          deprecated_reason: row.deprecated_reason,
+          fullContent: row.full_content, // Include full content - essential for page rendering
+          author: row.author_username ? { username: row.author_username } : null,
+          latest_version: row.latest_version ? {
+            version: row.latest_version,
+            metadata: row.latest_version_metadata,
+            file_size: row.file_size,
+            downloads: row.version_downloads || 0,
+            changelog: row.changelog,
+            published_at: row.version_published_at,
+          } : null,
+        }));
+
+        server.log.info({
+          count: packages.length,
+          total: totalCount,
+          offset,
+          limit
+        }, 'SSG data fetched successfully');
+
+        return {
+          packages,
+          total: totalCount, // Total count across all pages
+          count: packages.length, // Count in this page
+          limit,
+          offset,
+          hasMore: offset + packages.length < totalCount,
+          generated_at: new Date().toISOString(),
+        };
+      } catch (error) {
+        server.log.error(error, 'Failed to fetch SSG data');
+        return reply.code(500).send({
+          error: 'Internal Server Error',
+          message: 'Failed to fetch SSG data',
+        });
+      }
+    }
+  );
+
+  /**
    * POST /packages/installations/track
    * Track a package installation for co-installation analysis
    * Called by CLI after successful package install
@@ -1537,6 +2104,167 @@ export async function packageRoutes(server: FastifyInstance) {
         return reply.code(201).send({
           success: false,
           message: 'Installation tracking skipped',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/v1/packages/:packageId/star
+   * Star/unstar a package
+   */
+  server.post(
+    '/:packageId/star',
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: 'Star or unstar a package',
+        tags: ['packages', 'stars'],
+        params: {
+          type: 'object',
+          required: ['packageId'],
+          properties: {
+            packageId: { type: 'string', description: 'Package ID (UUID)' },
+          },
+        },
+        body: {
+          type: 'object',
+          required: ['starred'],
+          properties: {
+            starred: { type: 'boolean' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { packageId } = request.params as { packageId: string };
+      const { starred } = request.body as { starred: boolean };
+      const user = request.user;
+
+      try {
+        // Check if package exists first to avoid foreign key constraint violation
+        const pkgCheck = await server.pg.query(
+          `SELECT id, visibility FROM packages WHERE id = $1`,
+          [packageId]
+        );
+
+        if (pkgCheck.rows.length === 0) {
+          return reply.status(404).send({
+            error: 'Package not found',
+          });
+        }
+
+        if (starred) {
+          // Add star
+          await server.pg.query(
+            `
+            INSERT INTO package_stars (package_id, user_id)
+            VALUES ($1, $2)
+            ON CONFLICT DO NOTHING
+          `,
+            [packageId, user.user_id]
+          );
+        } else {
+          // Remove star
+          await server.pg.query(
+            `
+            DELETE FROM package_stars
+            WHERE package_id = $1 AND user_id = $2
+          `,
+            [packageId, user.user_id]
+          );
+        }
+
+        // Get updated star count
+        const result = await server.pg.query(
+          `SELECT stars FROM packages WHERE id = $1`,
+          [packageId]
+        );
+
+        return reply.send({
+          starred,
+          stars: result.rows[0]?.stars || 0,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Failed to star package',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/v1/packages/starred
+   * Get user's starred packages
+   */
+  server.get(
+    '/starred',
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: 'Get packages starred by the current user',
+        tags: ['packages', 'stars'],
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', default: 20, minimum: 1, maximum: 100 },
+            offset: { type: 'number', default: 0, minimum: 0 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { limit = 20, offset = 0 } = request.query as { limit?: number; offset?: number };
+      const user = request.user;
+
+      try {
+        const result = await server.pg.query(
+          `
+          SELECT
+            p.*,
+            ps.starred_at,
+            u.username as author_username,
+            u.verified_author,
+            u.avatar_url as author_avatar_url,
+            o.name as org_name,
+            o.is_verified as org_verified,
+            o.avatar_url as org_avatar_url
+          FROM package_stars ps
+          JOIN packages p ON ps.package_id = p.id
+          LEFT JOIN users u ON p.author_id = u.id
+          LEFT JOIN organizations o ON p.org_id = o.id
+          WHERE ps.user_id = $1
+          ORDER BY ps.starred_at DESC
+          LIMIT $2 OFFSET $3
+        `,
+          [user.user_id, limit, offset]
+        );
+
+        const packages = result.rows.map((row) => ({
+          ...row,
+          author: row.author_username ? {
+            username: row.author_username,
+            verified_author: row.verified_author,
+            avatar_url: row.author_avatar_url,
+          } : null,
+          organization: row.org_name ? {
+            name: row.org_name,
+            is_verified: row.org_verified,
+            avatar_url: row.org_avatar_url,
+          } : null,
+        }));
+
+        return reply.send({
+          packages,
+          total: packages.length,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.status(500).send({
+          error: 'Failed to get starred packages',
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     }

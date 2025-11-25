@@ -28,6 +28,8 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       if (subtype === 'skill') return '.claude/skills';
       if (subtype === 'slash-command') return '.claude/commands';
       if (subtype === 'agent') return '.claude/agents';
+      // Hooks are configured in settings.json, return .claude directory
+      if (subtype === 'hook') return '.claude';
       return '.claude/agents'; // Default for claude
 
     case 'continue':
@@ -51,17 +53,64 @@ export function getDestinationDir(format: Format, subtype: Subtype, name?: strin
       // Kiro has different locations based on subtype:
       // - Steering files: .kiro/steering/*.md
       // - Hooks: .kiro/hooks/*.kiro.hook (JSON files)
+      // - Agents: .kiro/agents/*.json (custom AI agent configurations)
       if (subtype === 'hook') return '.kiro/hooks';
+      if (subtype === 'agent') return '.kiro/agents';
       return '.kiro/steering';
 
+    case 'gemini':
+      // Gemini custom commands: .gemini/commands/*.toml
+      return '.gemini/commands';
+
+    case 'opencode':
+      // OpenCode supports agents, slash commands, and custom tools
+      if (subtype === 'agent') return '.opencode/agent';
+      if (subtype === 'slash-command') return '.opencode/command';
+      if (subtype === 'tool') return '.opencode/tool';
+      return '.opencode/agent';
+
+    case 'droid':
+      // Factory Droid supports skills, slash commands, and hooks
+      // Skills: .factory/skills/<skill-name>/ (creates subdirectory)
+      // Slash Commands: .factory/commands/
+      // Hooks: .factory/hooks/ (executable scripts or hooks.json config)
+      if (subtype === 'skill' && packageName) return `.factory/skills/${packageName}`;
+      if (subtype === 'skill') return '.factory/skills';
+      if (subtype === 'slash-command') return '.factory/commands';
+      if (subtype === 'hook') return '.factory/hooks';
+      return '.factory/skills'; // Default to skills
+
     case 'agents.md':
-      return '.agents';
+    case 'gemini.md':
+    case 'claude.md':
+    case 'aider':
+      // For skills in progressive disclosure mode, use .openskills directory
+      if (subtype === 'skill' && packageName) {
+        return `.openskills/${packageName}`;
+      }
+      // For agents in progressive disclosure mode, use .openagents directory
+      if (subtype === 'agent' && packageName) {
+        return `.openagents/${packageName}`;
+      }
+      return '.';
 
     case 'generic':
       return '.prompts';
 
     case 'mcp':
       return '.mcp/tools';
+
+    case 'trae':
+      // Trae rules: .trae/rules/*.md
+      return '.trae/rules';
+
+    case 'zencoder':
+      // Zencoder rules: .zencoder/rules/*.md
+      return '.zencoder/rules';
+
+    case 'replit':
+      // Replit config: replit.md in root
+      return '.';
 
     default:
       throw new Error(`Unknown format: ${format}`);
@@ -136,10 +185,45 @@ export async function directoryExists(dirPath: string): Promise<boolean> {
 }
 
 /**
+ * Map manifest format to filename
+ */
+export function getManifestFilename(format: Format): string {
+  switch (format) {
+    case 'agents.md':
+      return 'AGENTS.md';
+    case 'gemini.md':
+      return 'GEMINI.md';
+    case 'claude.md':
+      return 'CLAUDE.md';
+    case 'aider':
+      return 'CONVENTIONS.md';
+    default:
+      return 'AGENTS.md';
+  }
+}
+
+/**
  * Auto-detect the format based on existing directories in the current project
  * Returns the format if a matching directory is found, or null if none found
  */
 export async function autoDetectFormat(): Promise<Format | null> {
+  // Check for manifest files
+  if (await fileExists('GEMINI.md')) {
+    return 'gemini.md';
+  }
+  if (await fileExists('CLAUDE.md')) {
+    return 'claude.md';
+  }
+  if (await fileExists('AGENTS.md')) {
+    return 'agents.md';
+  }
+  if (await fileExists('CONVENTIONS.md')) {
+    return 'aider';
+  }
+  if (await fileExists('replit.md')) {
+    return 'replit';
+  }
+
   const formatDirs: Array<{ format: Format; dir: string }> = [
     { format: 'cursor', dir: '.cursor' },
     { format: 'claude', dir: '.claude' },
@@ -147,6 +231,11 @@ export async function autoDetectFormat(): Promise<Format | null> {
     { format: 'windsurf', dir: '.windsurf' },
     { format: 'copilot', dir: '.github/instructions' },
     { format: 'kiro', dir: '.kiro' },
+    { format: 'gemini', dir: '.gemini' },
+    { format: 'opencode', dir: '.opencode' },
+    { format: 'droid', dir: '.factory' },
+    { format: 'trae', dir: '.trae' },
+    { format: 'zencoder', dir: '.zencoder' },
     { format: 'agents.md', dir: '.agents' },
   ];
 
@@ -225,7 +314,14 @@ export function getInstalledFilePath(
   }
 
   // Determine file extension
-  const fileExtension = format === 'cursor' ? 'mdc' : 'md';
+  let fileExtension: string;
+  if (format === 'cursor') {
+    fileExtension = 'mdc';
+  } else if (format === 'gemini') {
+    fileExtension = 'toml';
+  } else {
+    fileExtension = 'md';
+  }
 
   // For other formats, use package name as filename
   return path.join(destDir, `${packageBaseName}.${fileExtension}`);

@@ -41,7 +41,7 @@ export default function IntroducingPRPMPost() {
 
           <h2 className="text-3xl font-bold text-white mt-12 mb-4">The Problem We're Solving</h2>
           <p className="text-gray-300 leading-relaxed mb-6">
-            As AI coding assistants have exploded in popularity, developers are creating incredible prompts, custom skills, and specialized agents. But there's a problem: these tools are scattered across GitHub repos, Discord servers, Twitter threads, and personal notes. There's no central place to discover, share, or manage them.
+            As AI coding assistants have exploded in popularity, developers are creating incredible prompts, custom skills, and specialized agents. But there's a problem: these tools are scattered across GitHub repos, Twitter threads, and personal notes. There's no central place to discover, share, or manage them.
           </p>
 
           <p className="text-gray-300 leading-relaxed mb-6">
@@ -57,7 +57,7 @@ export default function IntroducingPRPMPost() {
             <ul className="space-y-3 text-gray-300">
               <li className="flex items-start gap-3">
                 <span className="text-prpm-accent mt-1">✓</span>
-                <span><strong className="text-white">Universal Registry:</strong> One place to discover 2,100+ prompts, agents, skills, and collections</span>
+                <span><strong className="text-white">Universal Registry:</strong> One place to discover 4,000+ prompts, agents, skills, and collections</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-prpm-accent mt-1">✓</span>
@@ -156,7 +156,7 @@ export default function IntroducingPRPMPost() {
           <div className="bg-gradient-to-r from-prpm-accent/20 to-prpm-green/20 border border-prpm-accent/30 rounded-2xl p-8 text-center">
             <h3 className="text-2xl font-bold text-white mb-4">Ready to get started?</h3>
             <p className="text-gray-300 mb-6">
-              Install the CLI and start exploring 2,100+ packages today
+              Install the CLI and start exploring 7,000+ packages today
             </p>
             <div className="bg-prpm-dark border border-prpm-border rounded-lg p-4 font-mono text-prpm-accent-light inline-block">
               npm install -g prpm

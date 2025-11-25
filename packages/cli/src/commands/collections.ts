@@ -146,7 +146,6 @@ export async function handleCollectionsList(options: {
       category: options.category,
       tag: options.tag,
       official: options.official,
-      scope: options.scope,
       limit: 500, // Increased limit to show more collections
     });
 
@@ -238,31 +237,25 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
   const startTime = Date.now();
 
   try {
-    // Parse collection spec: @scope/name_slug, scope/name_slug, or just name_slug (defaults to 'collection' scope)
-    let scope: string;
+    // Parse collection spec: name or name@version
     let name_slug: string;
     let version: string | undefined;
 
-    const matchWithScope = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
-    if (matchWithScope) {
-      // Has explicit scope: @scope/name or scope/name
-      [, scope, name_slug, version] = matchWithScope;
-    } else {
-      // No scope, assume 'collection' scope: just name or name@version
-      const matchNoScope = collectionSpec.match(/^([^/@]+)(?:@(.+))?$/);
-      if (!matchNoScope) {
-        throw new Error('Invalid collection format. Use: name, @scope/name, or scope/name (optionally with @version)');
-      }
-      [, name_slug, version] = matchNoScope;
-      scope = 'collection'; // Default scope
+    // Strip 'collections/' prefix if present
+    const cleanSpec = collectionSpec.replace(/^collections\//, '');
+
+    const match = cleanSpec.match(/^([^@]+)(?:@(.+))?$/);
+    if (!match) {
+      throw new Error('Invalid collection format. Use: name or name@version');
     }
+    [, name_slug, version] = match;
 
     const config = await getConfig();
     const client = getRegistryClient(config);
 
-    console.log(`📦 Loading collection: ${scope === 'collection' ? name_slug : `@${scope}/${name_slug}`}...\n`);
+    console.log(`📦 Loading collection: ${name_slug}...\n`);
 
-    const collection = await client.getCollection(scope, name_slug, version);
+    const collection = await client.getCollection(name_slug, version);
 
     // Header
     console.log(`${collection.icon || '📦'} ${collection.name}`);
@@ -325,16 +318,9 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
 
     // Installation
     console.log('💡 Install:');
-    if (scope === 'collection') {
-      console.log(`   prpm install ${name_slug}`);
-      if (optionalPkgs.length > 0) {
-        console.log(`   prpm install ${name_slug} --skip-optional  # Skip optional packages`);
-      }
-    } else {
-      console.log(`   prpm install @${scope}/${name_slug}`);
-      if (optionalPkgs.length > 0) {
-        console.log(`   prpm install @${scope}/${name_slug} --skip-optional  # Skip optional packages`);
-      }
+    console.log(`   prpm install ${name_slug}`);
+    if (optionalPkgs.length > 0) {
+      console.log(`   prpm install ${name_slug} --skip-optional  # Skip optional packages`);
     }
     console.log('');
 
@@ -343,7 +329,6 @@ export async function handleCollectionInfo(collectionSpec: string): Promise<void
       success: true,
       duration: Date.now() - startTime,
       data: {
-        scope,
         name_slug,
         packageCount: collection.packages.length,
       },
@@ -447,12 +432,11 @@ export async function handleCollectionPublish(
     });
 
     console.log(`✅ Collection published successfully!`);
-    console.log(`   Scope: ${result.scope}`);
     console.log(`   Name: ${result.name_slug}`);
     console.log(`   Version: ${result.version || '1.0.0'}`);
     console.log('');
-    console.log(`💡 View: prpm collection info @${result.scope}/${result.name_slug}`);
-    console.log(`💡 Install: prpm install @${result.scope}/${result.name_slug}`);
+    console.log(`💡 View: prpm collection info ${result.name_slug}`);
+    console.log(`💡 Install: prpm install ${result.name_slug}`);
     console.log('');
 
     await telemetry.track({
@@ -495,33 +479,26 @@ export async function handleCollectionInstall(
   let packagesFailed = 0;
 
   try {
-    // Parse collection spec: @scope/name_slug, scope/name_slug, or just name_slug (defaults to 'collection' scope)
-    let scope: string;
+    // Parse collection spec: name or name@version
     let name_slug: string;
     let version: string | undefined;
 
-    const matchWithScope = collectionSpec.match(/^@?([^/]+)\/([^/@]+)(?:@(.+))?$/);
-    if (matchWithScope) {
-      // Has explicit scope: @scope/name or scope/name
-      [, scope, name_slug, version] = matchWithScope;
-    } else {
-      // No scope, assume 'collection' scope: just name or name@version
-      const matchNoScope = collectionSpec.match(/^([^/@]+)(?:@(.+))?$/);
-      if (!matchNoScope) {
-        throw new Error('Invalid collection format. Use: name, @scope/name, or scope/name (optionally with @version)');
-      }
-      [, name_slug, version] = matchNoScope;
-      scope = 'collection'; // Default scope
+    // Strip 'collections/' prefix if present
+    const cleanSpec = collectionSpec.replace(/^collections\//, '');
+
+    const match = cleanSpec.match(/^([^@]+)(?:@(.+))?$/);
+    if (!match) {
+      throw new Error('Invalid collection format. Use: name or name@version');
     }
+    [, name_slug, version] = match;
 
     const config = await getConfig();
     const client = getRegistryClient(config);
 
     // Get collection installation plan
-    console.log(`📦 Installing collection: ${scope === 'collection' ? name_slug : `@${scope}/${name_slug}`}...\n`);
+    console.log(`📦 Installing collection: ${name_slug}...\n`);
 
     const installResult = await client.installCollection({
-      scope,
       id: name_slug,
       version,
       format: options.format,
@@ -546,6 +523,7 @@ export async function handleCollectionInstall(
 
     // Install packages sequentially
     const installedPackageIds: string[] = [];
+    let hasClaudeHooks = false;
     for (let i = 0; i < packages.length; i++) {
       const pkg = packages[i];
       const progress = `${i + 1}/${packages.length}`;
@@ -560,7 +538,6 @@ export async function handleCollectionInstall(
         // 3. Package native format
         const installOptions: any = {
           fromCollection: {
-            scope,
             name_slug,
             version: collection.version || version || '1.0.0',
           },
@@ -569,6 +546,11 @@ export async function handleCollectionInstall(
         // Only set 'as' if user explicitly provided a format
         if (options.format) {
           installOptions.as = options.format;
+        }
+
+        // Track if this collection contains Claude hooks
+        if (pkg.format === 'claude' && pkg.subtype === 'hook') {
+          hasClaudeHooks = true;
         }
 
         await handleInstall(`${pkg.packageId}@${pkg.version}`, installOptions);
@@ -589,9 +571,8 @@ export async function handleCollectionInstall(
 
     // Update lockfile with collection info
     const lockfile = (await readLockfile()) || createLockfile();
-    const collectionKey = `@${scope}/${name_slug}`;
+    const collectionKey = name_slug;
     addCollectionToLockfile(lockfile, collectionKey, {
-      scope,
       name_slug,
       version: collection.version || version || '1.0.0',
       packages: installedPackageIds,
@@ -604,6 +585,12 @@ export async function handleCollectionInstall(
       console.log(`   ${packagesFailed} optional packages failed`);
     }
     console.log(`   🔒 Collection tracked in lock file`);
+
+    // Show Claude hooks warning if any were installed
+    if (hasClaudeHooks) {
+      console.log(`\n⚠️  This collection includes Claude hooks that execute automatically.`);
+      console.log(`   📖 Review hook configurations in .claude/settings.json`);
+    }
     console.log('');
 
     await telemetry.track({
@@ -611,7 +598,6 @@ export async function handleCollectionInstall(
       success: true,
       duration: Date.now() - startTime,
       data: {
-        scope,
         name_slug,
         packageCount: packages.length,
         installed: packagesInstalled,

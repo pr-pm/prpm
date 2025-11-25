@@ -475,7 +475,7 @@ describe('RegistryClient', () => {
       collections: [
         {
           id: 'collection-1',
-          scope: 'official',
+          name_slug: 'test-collection',
           name: 'Test Collection',
           description: 'A test collection',
           version: '1.0.0',
@@ -541,7 +541,7 @@ describe('RegistryClient', () => {
   describe('getCollection', () => {
     const mockCollection = {
       id: 'test-collection',
-      scope: 'official',
+      name_slug: 'test-collection',
       name: 'Test Collection',
       description: 'A test collection',
       version: '1.0.0',
@@ -555,16 +555,16 @@ describe('RegistryClient', () => {
       package_count: 5,
     };
 
-    it('should fetch collection by scope and id', async () => {
+    it('should fetch collection by id', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => mockCollection,
       });
 
-      const result = await client.getCollection('official', 'test-collection');
+      const result = await client.getCollection('test-collection');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/collections/official/test-collection'),
+        expect.stringContaining('/api/v1/collections/test-collection'),
         expect.anything()
       );
       expect(result).toEqual(mockCollection);
@@ -576,10 +576,10 @@ describe('RegistryClient', () => {
         json: async () => mockCollection,
       });
 
-      await client.getCollection('official', 'test-collection', '2.0.0');
+      await client.getCollection('test-collection', '2.0.0');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/2.0.0'),
+        expect.stringContaining('?version=2.0.0'),
         expect.anything()
       );
     });
@@ -589,7 +589,7 @@ describe('RegistryClient', () => {
     const mockInstallResult = {
       collection: {
         id: 'test-collection',
-        scope: 'official',
+        name_slug: 'test-collection',
         name: 'Test Collection',
         description: 'A test collection',
         version: '1.0.0',
@@ -625,12 +625,11 @@ describe('RegistryClient', () => {
       });
 
       const result = await client.installCollection({
-        scope: 'official',
         id: 'test-collection',
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/collections/official/test-collection/install'),
+        expect.stringContaining('/api/v1/collections/test-collection/install'),
         expect.objectContaining({
           method: 'POST',
         })
@@ -645,7 +644,6 @@ describe('RegistryClient', () => {
       });
 
       await client.installCollection({
-        scope: 'official',
         id: 'test-collection',
         version: '2.0.0',
       });
@@ -666,7 +664,6 @@ describe('RegistryClient', () => {
       });
 
       await client.installCollection({
-        scope: 'official',
         id: 'test-collection',
         format: 'claude',
       });
@@ -687,7 +684,6 @@ describe('RegistryClient', () => {
       });
 
       await client.installCollection({
-        scope: 'official',
         id: 'test-collection',
         skipOptional: true,
       });
@@ -705,7 +701,6 @@ describe('RegistryClient', () => {
   describe('createCollection', () => {
     const mockCreatedCollection = {
       id: 'new-collection-uuid',
-      scope: 'testuser',
       name_slug: 'new-collection',
       name: 'New Collection',
       description: 'A new collection',

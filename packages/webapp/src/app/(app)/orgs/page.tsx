@@ -11,7 +11,7 @@ import {
   OrganizationPackage,
   OrganizationMember,
 } from '@/lib/api'
-import PackageModal from '@/components/PackageModal'
+import { getPackageUrl } from '@/lib/package-url'
 import EditOrganizationModal from '@/components/EditOrganizationModal'
 import UpgradePrompt from '@/components/UpgradePrompt'
 import UpgradeModal from '@/components/UpgradeModal'
@@ -23,8 +23,6 @@ function OrganizationPageContent() {
   const [orgData, setOrgData] = useState<OrganizationDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedPackage, setSelectedPackage] = useState<OrganizationPackage | null>(null)
-  const [showPackageModal, setShowPackageModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [jwtToken, setJwtToken] = useState<string | undefined>(undefined)
@@ -459,13 +457,10 @@ function OrganizationPageContent() {
             ) : (
               <div className="space-y-4">
                 {packages.map((pkg) => (
-                  <button
+                  <Link
                     key={pkg.id}
-                    onClick={() => {
-                      setSelectedPackage(pkg)
-                      setShowPackageModal(true)
-                    }}
-                    className="w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-all group"
+                    href={getPackageUrl(pkg.name, orgData?.organization?.name)}
+                    className="block w-full text-left bg-prpm-dark-card border border-prpm-border rounded-lg p-6 hover:border-prpm-accent transition-all group"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-lg font-semibold text-white group-hover:text-prpm-accent transition-colors">
@@ -506,7 +501,7 @@ function OrganizationPageContent() {
                         {pkg.subtype}
                       </span>
                     </div>
-                  </button>
+                  </Link>
                 ))}
               </div>
             )}
@@ -584,15 +579,6 @@ function OrganizationPageContent() {
           </div>
         </div>
       </div>
-
-      {/* Package Modal */}
-      {selectedPackage && (
-        <PackageModal
-          package={selectedPackage}
-          isOpen={showPackageModal}
-          onClose={() => setShowPackageModal(false)}
-        />
-      )}
 
       {/* Edit Organization Modal */}
       <EditOrganizationModal

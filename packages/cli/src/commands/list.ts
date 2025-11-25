@@ -31,7 +31,7 @@ function getDestinationDir(type: string): string {
     case 'windsurf':
       return '.windsurf/rules';
     case 'agents.md':
-      return '.agents';
+      return '.';
     case 'generic':
       return '.prompts';
     case 'mcp':
@@ -54,6 +54,15 @@ function stripAuthorNamespace(packageId: string): string {
  */
 async function findPackageLocation(id: string, format?: string, subtype?: string): Promise<string | null> {
   if (!format) return null;
+
+  if (format === 'agents.md') {
+    try {
+      await fs.access('AGENTS.md');
+      return 'AGENTS.md';
+    } catch {
+      return null;
+    }
+  }
 
   const baseDir = getDestinationDir(format);
 

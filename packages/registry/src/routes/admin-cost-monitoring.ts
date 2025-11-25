@@ -6,6 +6,7 @@
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { CostMonitoringService } from '../services/cost-monitoring.js';
+import { requireAdmin } from '../middleware/auth.js';
 
 export async function adminCostMonitoringRoutes(server: FastifyInstance) {
   const costMonitoring = new CostMonitoringService(server);
@@ -17,7 +18,7 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
   server.get(
     '/summary',
     {
-      preHandler: server.authenticate, // TODO: Add admin auth check
+      preHandler: requireAdmin(),
       schema: {
         description: 'Get aggregate cost analytics for admin dashboard',
         tags: ['admin', 'cost-monitoring'],
@@ -40,15 +41,6 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        // TODO: Add proper admin authorization check
-        // For now, just check if user is authenticated
-        if (!request.user) {
-          return reply.code(401).send({
-            error: 'unauthorized',
-            message: 'Admin authentication required',
-          });
-        }
-
         const metrics = await costMonitoring.getAggregateCostMetrics();
         return reply.code(200).send(metrics);
       } catch (error: any) {
@@ -68,7 +60,7 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
   server.get(
     '/users',
     {
-      preHandler: server.authenticate, // TODO: Add admin auth check
+      preHandler: requireAdmin(),
       schema: {
         description: 'Get per-user cost analytics',
         tags: ['admin', 'cost-monitoring'],
@@ -114,14 +106,6 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        // TODO: Add proper admin authorization check
-        if (!request.user) {
-          return reply.code(401).send({
-            error: 'unauthorized',
-            message: 'Admin authentication required',
-          });
-        }
-
         const { riskLevel, limit } = request.query as {
           riskLevel?: 'safe' | 'low_risk' | 'medium_risk' | 'high_risk';
           limit?: number;
@@ -150,7 +134,7 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
   server.get(
     '/user/:userId',
     {
-      preHandler: server.authenticate, // TODO: Add admin auth check
+      preHandler: requireAdmin(),
       schema: {
         description: 'Get detailed cost analytics for a specific user',
         tags: ['admin', 'cost-monitoring'],
@@ -180,13 +164,6 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        // TODO: Add proper admin authorization check
-        if (!request.user) {
-          return reply.code(401).send({
-            error: 'unauthorized',
-            message: 'Admin authentication required',
-          });
-        }
 
         const { userId } = request.params as { userId: string };
         const status = await costMonitoring.getUserCostStatus(userId);
@@ -209,7 +186,7 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
   server.post(
     '/user/:userId/unthrottle',
     {
-      preHandler: server.authenticate, // TODO: Add admin auth check
+      preHandler: requireAdmin(),
       schema: {
         description: 'Manually unthrottle a user (admin override)',
         tags: ['admin', 'cost-monitoring'],
@@ -234,13 +211,6 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        // TODO: Add proper admin authorization check
-        if (!request.user) {
-          return reply.code(401).send({
-            error: 'unauthorized',
-            message: 'Admin authentication required',
-          });
-        }
 
         const { userId } = request.params as { userId: string };
         await costMonitoring.unthrottleUser(userId);
@@ -271,7 +241,7 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
   server.post(
     '/refresh',
     {
-      preHandler: server.authenticate, // TODO: Add admin auth check
+      preHandler: requireAdmin(),
       schema: {
         description: 'Manually refresh cost analytics materialized view',
         tags: ['admin', 'cost-monitoring'],
@@ -289,13 +259,6 @@ export async function adminCostMonitoringRoutes(server: FastifyInstance) {
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        // TODO: Add proper admin authorization check
-        if (!request.user) {
-          return reply.code(401).send({
-            error: 'unauthorized',
-            message: 'Admin authentication required',
-          });
-        }
 
         await costMonitoring.refreshAnalytics();
 

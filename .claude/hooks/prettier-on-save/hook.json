@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/prettier-on-save/dist/hook.js",
+            "timeout": 5000,
+            "suppressOutput": true
+          }
+        ]
+      }
+    ]
+  }
+}
