@@ -5,116 +5,40 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { Format, Subtype } from '../types';
+import { getDestinationDirectory, getSubtypeConfig, getSubtypes, getDefaultSubtype } from '@pr-pm/converters';
 
 /**
  * Get the destination directory for a package based on format and subtype
+ * Uses the format-registry.json as the single source of truth.
+ *
  * @param format - Package format (cursor, claude, etc.)
  * @param subtype - Package subtype (skill, agent, rule, etc.)
- * @param name - Package name (optional, only needed for Claude skills which create subdirectories)
+ * @param name - Package name (optional, only needed for formats that create subdirectories)
  */
 export function getDestinationDir(format: Format, subtype: Subtype, name?: string): string {
   // Strip author namespace from package name to avoid nested directories
   const packageName = stripAuthorNamespace(name);
 
-  switch (format) {
-    case 'cursor':
-      if (subtype === 'agent') return '.cursor/agents';
-      if (subtype === 'slash-command') return '.cursor/commands';
-      return '.cursor/rules';
+  // Try to get from format registry first
+  let config = getSubtypeConfig(format, subtype);
 
-    case 'claude':
-      // Only create subdirectory for skills if name is provided
-      if (subtype === 'skill' && packageName) return `.claude/skills/${packageName}`;
-      if (subtype === 'skill') return '.claude/skills';
-      if (subtype === 'slash-command') return '.claude/commands';
-      if (subtype === 'agent') return '.claude/agents';
-      // Hooks are configured in settings.json, return .claude directory
-      if (subtype === 'hook') return '.claude';
-      return '.claude/agents'; // Default for claude
-
-    case 'continue':
-      // Continue has separate directories for prompts (slash commands) and rules
-      if (subtype === 'rule') return '.continue/rules';
-      return '.continue/prompts';
-
-    case 'windsurf':
-      return '.windsurf/rules';
-
-    case 'copilot':
-      // Copilot has different locations based on subtype:
-      // - Repository-wide instructions: .github/copilot-instructions.md
-      // - Path-specific instructions: .github/instructions/*.instructions.md
-      // - Chat modes: .github/chatmodes/*.chatmode.md
-      if (subtype === 'chatmode') return '.github/chatmodes';
-      // Default to path-specific instructions directory
-      return '.github/instructions';
-
-    case 'kiro':
-      // Kiro has different locations based on subtype:
-      // - Steering files: .kiro/steering/*.md
-      // - Hooks: .kiro/hooks/*.kiro.hook (JSON files)
-      // - Agents: .kiro/agents/*.json (custom AI agent configurations)
-      if (subtype === 'hook') return '.kiro/hooks';
-      if (subtype === 'agent') return '.kiro/agents';
-      return '.kiro/steering';
-
-    case 'gemini':
-      // Gemini custom commands: .gemini/commands/*.toml
-      return '.gemini/commands';
-
-    case 'opencode':
-      // OpenCode supports agents, slash commands, and custom tools
-      if (subtype === 'agent') return '.opencode/agent';
-      if (subtype === 'slash-command') return '.opencode/command';
-      if (subtype === 'tool') return '.opencode/tool';
-      return '.opencode/agent';
-
-    case 'droid':
-      // Factory Droid supports skills, slash commands, and hooks
-      // Skills: .factory/skills/<skill-name>/ (creates subdirectory)
-      // Slash Commands: .factory/commands/
-      // Hooks: .factory/hooks/ (executable scripts or hooks.json config)
-      if (subtype === 'skill' && packageName) return `.factory/skills/${packageName}`;
-      if (subtype === 'skill') return '.factory/skills';
-      if (subtype === 'slash-command') return '.factory/commands';
-      if (subtype === 'hook') return '.factory/hooks';
-      return '.factory/skills'; // Default to skills
-
-    case 'agents.md':
-    case 'gemini.md':
-    case 'claude.md':
-    case 'aider':
-      // For skills in progressive disclosure mode, use .openskills directory
-      if (subtype === 'skill' && packageName) {
-        return `.openskills/${packageName}`;
-      }
-      // For agents in progressive disclosure mode, use .openagents directory
-      if (subtype === 'agent' && packageName) {
-        return `.openagents/${packageName}`;
-      }
-      return '.';
-
-    case 'generic':
-      return '.prompts';
-
-    case 'mcp':
-      return '.mcp/tools';
-
-    case 'trae':
-      // Trae rules: .trae/rules/*.md
-      return '.trae/rules';
-
-    case 'zencoder':
-      // Zencoder rules: .zencoder/rules/*.md
-      return '.zencoder/rules';
-
-    case 'replit':
-      // Replit config: replit.md in root
-      return '.';
-
-    default:
-      throw new Error(`Unknown format: ${format}`);
+  // If subtype not found, try the format's default subtype
+  if (!config) {
+    const defaultSubtype = getDefaultSubtype(format);
+    if (defaultSubtype) {
+      config = getSubtypeConfig(format, defaultSubtype);
+    }
   }
+
+  if (config) {
+    // If the format uses package subdirectories and a name is provided
+    if (config.usesPackageSubdirectory && packageName) {
+      return `${config.directory}/${packageName}`;
+    }
+    return config.directory;
+  }
+
+  throw new Error(`Unknown format/subtype combination: ${format}/${subtype}`);
 }
 
 /**
@@ -205,43 +129,34 @@ export function getManifestFilename(format: Format): string {
 /**
  * Auto-detect the format based on existing directories in the current project
  * Returns the format if a matching directory is found, or null if none found
+ * Uses the format-registry.json as the single source of truth.
  */
 export async function autoDetectFormat(): Promise<Format | null> {
-  // Check for manifest files
-  if (await fileExists('GEMINI.md')) {
-    return 'gemini.md';
-  }
-  if (await fileExists('CLAUDE.md')) {
-    return 'claude.md';
-  }
-  if (await fileExists('AGENTS.md')) {
-    return 'agents.md';
-  }
-  if (await fileExists('CONVENTIONS.md')) {
-    return 'aider';
-  }
-  if (await fileExists('replit.md')) {
-    return 'replit';
+  const { getFormatRegistry, findFormatByRootFile } = await import('@pr-pm/converters');
+  const registry = getFormatRegistry();
+
+  // Check for root manifest files first
+  for (const [format, config] of Object.entries(registry.formats)) {
+    if (config.rootFiles) {
+      for (const rootFile of config.rootFiles) {
+        if (await fileExists(rootFile)) {
+          return format as Format;
+        }
+      }
+    }
   }
 
-  const formatDirs: Array<{ format: Format; dir: string }> = [
-    { format: 'cursor', dir: '.cursor' },
-    { format: 'claude', dir: '.claude' },
-    { format: 'continue', dir: '.continue' },
-    { format: 'windsurf', dir: '.windsurf' },
-    { format: 'copilot', dir: '.github/instructions' },
-    { format: 'kiro', dir: '.kiro' },
-    { format: 'gemini', dir: '.gemini' },
-    { format: 'opencode', dir: '.opencode' },
-    { format: 'droid', dir: '.factory' },
-    { format: 'trae', dir: '.trae' },
-    { format: 'zencoder', dir: '.zencoder' },
-    { format: 'agents.md', dir: '.agents' },
-  ];
-
-  for (const { format, dir } of formatDirs) {
-    if (await directoryExists(dir)) {
-      return format;
+  // Check for format directories
+  for (const [format, config] of Object.entries(registry.formats)) {
+    // Get the first subtype's directory as the format's base directory
+    const subtypeKeys = Object.keys(config.subtypes);
+    if (subtypeKeys.length > 0) {
+      const firstSubtype = config.subtypes[subtypeKeys[0]];
+      // Extract base directory (e.g., '.cursor' from '.cursor/rules')
+      const baseDir = firstSubtype.directory.split('/')[0];
+      if (baseDir && baseDir !== '.' && await directoryExists(baseDir)) {
+        return format as Format;
+      }
     }
   }
 
@@ -282,6 +197,7 @@ export function stripAuthorNamespace(packageId: string | undefined): string {
 /**
  * Get the expected installed file path for a package
  * This matches the logic used by the install command to determine where files are placed
+ * Uses the format-registry.json as the single source of truth.
  *
  * @param packageName - Full package name (e.g., '@prpm/typescript-rules')
  * @param format - Package format
@@ -297,15 +213,16 @@ export function getInstalledFilePath(
 ): string {
   const destDir = getDestinationDir(format, subtype, packageName);
   const packageBaseName = stripAuthorNamespace(packageName);
+  const config = getSubtypeConfig(format, subtype);
 
   // If a specific file name is provided, use it
   if (fileName) {
     return path.join(destDir, fileName);
   }
 
-  // Claude skills always use SKILL.md
-  if (format === 'claude' && subtype === 'skill') {
-    return path.join(destDir, 'SKILL.md');
+  // Check for nested indicator (e.g., SKILL.md for Claude skills)
+  if (config?.nestedIndicator) {
+    return path.join(destDir, config.nestedIndicator);
   }
 
   // agents.md uses package-name/AGENTS.md structure
@@ -313,15 +230,8 @@ export function getInstalledFilePath(
     return path.join(destDir, packageBaseName, 'AGENTS.md');
   }
 
-  // Determine file extension
-  let fileExtension: string;
-  if (format === 'cursor') {
-    fileExtension = 'mdc';
-  } else if (format === 'gemini') {
-    fileExtension = 'toml';
-  } else {
-    fileExtension = 'md';
-  }
+  // Get file extension from registry (strip the leading dot for path.join)
+  const fileExtension = config?.fileExtension?.replace(/^\./, '') || 'md';
 
   // For other formats, use package name as filename
   return path.join(destDir, `${packageBaseName}.${fileExtension}`);

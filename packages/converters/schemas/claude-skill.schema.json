@@ -21,6 +21,11 @@
           "type": "string",
           "maxLength": 1024,
           "description": "Brief overview of functionality and when to use it"
+        },
+        "license": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Optional license identifier for the skill (e.g., MIT, Apache-2.0)"
         }
       },
       "additionalProperties": false
