@@ -26,6 +26,7 @@ jest.mock('../core/filesystem', () => {
     ...actual,
     saveFile: jest.fn(actual.saveFile),
     ensureDirectoryExists: jest.fn(actual.ensureDirectoryExists),
+    autoDetectFormat: jest.fn(async () => undefined),
   };
 });
 
