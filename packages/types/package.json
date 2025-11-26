@@ -2,7 +2,7 @@
   "name": "@pr-pm/types",
   "version": "1.1.15",
   "description": "Shared TypeScript types for Prompt Package Manager",
-  "type": "module",
+  "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
