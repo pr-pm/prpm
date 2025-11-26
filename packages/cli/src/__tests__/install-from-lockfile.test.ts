@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for installing from lockfile (prpm install with no args)
  */
@@ -12,26 +13,26 @@ import type { Lockfile } from '../core/lockfile';
 import { CLIError } from '../core/errors';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client', () => ({
-  getRegistryClient: jest.fn(),
+vi.mock('@pr-pm/registry-client', () => ({
+  getRegistryClient: vi.fn(),
 }));
-jest.mock('../core/user-config', () => ({
-  getConfig: jest.fn(),
+vi.mock('../core/user-config', () => ({
+  getConfig: vi.fn(),
 }));
-jest.mock('../core/lockfile', () => {
-  const actual = jest.requireActual('../core/lockfile');
+vi.mock('../core/lockfile', async () => {
+  const actual = await vi.importActual('../core/lockfile');
   return {
     ...actual,
-    readLockfile: jest.fn(),
-    writeLockfile: jest.fn(),
-    addToLockfile: jest.fn(),
-    createLockfile: jest.fn(() => ({ packages: {} })),
-    setPackageIntegrity: jest.fn(),
-    getLockedVersion: jest.fn(() => null),
+    readLockfile: vi.fn(),
+    writeLockfile: vi.fn(),
+    addToLockfile: vi.fn(),
+    createLockfile: vi.fn(() => ({ packages: {} })),
+    setPackageIntegrity: vi.fn(),
+    getLockedVersion: vi.fn(() => null),
   };
 });
-jest.mock('../core/filesystem', () => ({
-  getDestinationDir: jest.fn((format: string, subtype: string) => {
+vi.mock('../core/filesystem', () => ({
+  getDestinationDir: vi.fn((format: string, subtype: string) => {
     // Return appropriate directory based on format
     if (format === 'agents.md' || format === 'gemini.md' || format === 'claude.md') {
       if (subtype === 'skill') return '.openskills/test-skill';
@@ -40,45 +41,45 @@ jest.mock('../core/filesystem', () => ({
     }
     return '.cursor/rules'; // Default for other formats
   }),
-  ensureDirectoryExists: jest.fn(),
-  saveFile: jest.fn(),
-  deleteFile: jest.fn(),
-  fileExists: jest.fn(() => Promise.resolve(false)),
-  generateId: jest.fn((name) => name),
-  stripAuthorNamespace: jest.fn((packageId: string) => {
+  ensureDirectoryExists: vi.fn(),
+  saveFile: vi.fn(),
+  deleteFile: vi.fn(),
+  fileExists: vi.fn(() => Promise.resolve(false)),
+  generateId: vi.fn((name) => name),
+  stripAuthorNamespace: vi.fn((packageId: string) => {
     // Strip @author/ prefix from package names
     return packageId.replace(/^@[^/]+\//, '');
   }),
-  autoDetectFormat: jest.fn(() => Promise.resolve(null)),
-  getManifestFilename: jest.fn((format: string) => {
+  autoDetectFormat: vi.fn(() => Promise.resolve(null)),
+  getManifestFilename: vi.fn((format: string) => {
     // Map format to manifest filename
     if (format === 'gemini.md') return 'GEMINI.md';
     if (format === 'claude.md') return 'CLAUDE.md';
     return 'AGENTS.md';
   }),
 }));
-jest.mock('../core/telemetry', () => ({
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
-const mockReadLockfile = readLockfile as jest.MockedFunction<typeof readLockfile>;
-const mockWriteLockfile = writeLockfile as jest.MockedFunction<typeof writeLockfile>;
-const mockAddToLockfile = addToLockfile as jest.MockedFunction<typeof addToLockfile>;
-const mockGetRegistryClient = getRegistryClient as jest.MockedFunction<typeof getRegistryClient>;
-const mockGetConfig = getConfig as jest.MockedFunction<typeof getConfig>;
-const mockSaveFile = saveFile as jest.MockedFunction<typeof saveFile>;
-const mockGetManifestFilename = getManifestFilename as jest.MockedFunction<typeof getManifestFilename>;
+const mockReadLockfile = readLockfile as MockedFunction<typeof readLockfile>;
+const mockWriteLockfile = writeLockfile as MockedFunction<typeof writeLockfile>;
+const mockAddToLockfile = addToLockfile as MockedFunction<typeof addToLockfile>;
+const mockGetRegistryClient = getRegistryClient as MockedFunction<typeof getRegistryClient>;
+const mockGetConfig = getConfig as MockedFunction<typeof getConfig>;
+const mockSaveFile = saveFile as MockedFunction<typeof saveFile>;
+const mockGetManifestFilename = getManifestFilename as MockedFunction<typeof getManifestFilename>;
 
 describe('install from lockfile', () => {
   const mockClient = {
-    getPackage: jest.fn(),
-    getPackageVersion: jest.fn(),
-    downloadPackage: jest.fn(),
-    trackDownload: jest.fn(),
-    getCollection: jest.fn(),
+    getPackage: vi.fn(),
+    getPackageVersion: vi.fn(),
+    downloadPackage: vi.fn(),
+    trackDownload: vi.fn(),
+    getCollection: vi.fn(),
   };
 
   const mockConfig = {
@@ -88,7 +89,7 @@ describe('install from lockfile', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGetRegistryClient.mockReturnValue(mockClient as any);
     mockGetConfig.mockReturnValue(mockConfig);
     mockWriteLockfile.mockResolvedValue(undefined);
@@ -103,12 +104,12 @@ describe('install from lockfile', () => {
     });
 
     // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('no lockfile', () => {

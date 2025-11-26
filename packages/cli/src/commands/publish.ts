@@ -568,7 +568,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
     }
 
     // Track published packages and collections
-    const publishedPackages: Array<{ name: string; version: string; url: string }> = [];
+    const publishedPackages: Array<{ name: string; version: string; url: string; authorOverride?: string }> = [];
     const failedPackages: Array<{ name: string; error: string }> = [];
     const publishedCollections: Array<{ id: string; name: string; version: string }> = [];
     const failedCollections: Array<{ id: string; error: string }> = [];
@@ -699,6 +699,15 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           selectedOrgName = orgFromManifest.name;
         }
 
+        // Check if admin should override author (check early so it shows in package info)
+        let publishAsAuthor: string | undefined;
+        if (userInfo?.is_admin && manifest.author) {
+          // Author can be string or object { name, email }
+          publishAsAuthor = typeof manifest.author === 'string'
+            ? manifest.author
+            : manifest.author.name;
+        }
+
         // Predict what the scoped package name will be
         const scopedPackageName = predictScopedPackageName(
           manifest.name,
@@ -711,6 +720,9 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log(`   Format: ${manifest.format} | Subtype: ${manifest.subtype}`);
         console.log(`   Description: ${manifest.description}`);
         console.log(`   Access: ${manifest.private ? 'private' : 'public'}`);
+        if (publishAsAuthor) {
+          console.log(`   🔐 Author Override: ${publishAsAuthor} (admin)`);
+        }
         if (selectedOrgId && userInfo) {
           const selectedOrg = userInfo.organizations.find((org: any) => org.id === selectedOrgId);
           console.log(`   Publishing to: ${selectedOrg?.name || 'organization'}`);
@@ -789,16 +801,6 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         console.log(`   Size: ${sizeDisplay}`);
         console.log('');
 
-        // Check if admin should override author (before dry run so it shows in dry run)
-        let publishAsAuthor: string | undefined;
-        if (userInfo?.is_admin && manifest.author) {
-          // Author can be string or object { name, email }
-          publishAsAuthor = typeof manifest.author === 'string'
-            ? manifest.author
-            : manifest.author.name;
-          console.log(`   🔐 Admin override: Publishing as author "${publishAsAuthor}"`);
-        }
-
         if (selectedOrgId) {
           console.log(`   Publishing as organization: ${userInfo.organizations.find((org: any) => org.id === selectedOrgId)?.name}`);
           console.log(`   Organization ID: ${selectedOrgId}`);
@@ -809,7 +811,8 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           publishedPackages.push({
             name: scopedPackageName,
             version: manifest.version,
-            url: ''
+            url: '',
+            authorOverride: publishAsAuthor
           });
           publishSuccess = true;
           break;
@@ -865,7 +868,8 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
         publishedPackages.push({
           name: result.name, // Use scoped name from server
           version: result.version,
-          url: packageUrl
+          url: packageUrl,
+          authorOverride: publishAsAuthor
         });
 
         // Mark as successful to exit retry loop
@@ -1011,9 +1015,16 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       console.log(`${'='.repeat(60)}\n`);
 
       if (publishedPackages.length > 0) {
+        // Check if any packages have author override
+        const hasAuthorOverride = publishedPackages.some(pkg => pkg.authorOverride);
+        if (hasAuthorOverride) {
+          console.log(`🔐 Admin author override active\n`);
+        }
+
         console.log(`✅ Successfully published ${publishedPackages.length} package(s):`);
         publishedPackages.forEach(pkg => {
-          console.log(`   - ${pkg.name}@${pkg.version}`);
+          const overrideSuffix = pkg.authorOverride ? ` (as ${pkg.authorOverride})` : '';
+          console.log(`   - ${pkg.name}@${pkg.version}${overrideSuffix}`);
           if (pkg.url) {
             console.log(`     ${pkg.url}`);
           }

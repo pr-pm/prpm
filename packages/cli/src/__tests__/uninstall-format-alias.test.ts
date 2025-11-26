@@ -1,30 +1,31 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { handleUninstall } from '../commands/uninstall';
 import { readLockfile, removePackage, getLockfileKey } from '../core/lockfile';
 
-jest.mock('../core/lockfile', () => {
-  const actual = jest.requireActual('../core/lockfile');
+vi.mock('../core/lockfile', async () => {
+  const actual = await vi.importActual('../core/lockfile');
   return {
     ...actual,
-    readLockfile: jest.fn(),
-    removePackage: jest.fn(),
+    readLockfile: vi.fn(),
+    removePackage: vi.fn(),
   };
 });
 
 describe('uninstall command format alias', () => {
-  const readLockfileMock = readLockfile as jest.MockedFunction<typeof readLockfile>;
-  const removePackageMock = removePackage as jest.MockedFunction<typeof removePackage>;
+  const readLockfileMock = readLockfile as MockedFunction<typeof readLockfile>;
+  const removePackageMock = removePackage as MockedFunction<typeof removePackage>;
   let tempDir: string;
 
   beforeEach(async () => {
     tempDir = await fs.mkdtemp(path.join(process.cwd(), '.uninstall-test-'));
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'warn').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'warn').mockImplementation();
   });
 
   afterEach(async () => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     removePackageMock.mockReset();
     readLockfileMock.mockReset();
     await fs.rm(tempDir, { recursive: true, force: true });

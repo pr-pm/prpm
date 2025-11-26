@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for AI search command
  */
@@ -7,16 +8,16 @@ import { getConfig } from '../core/user-config';
 import { telemetry } from '../core/telemetry';
 
 // Mock dependencies
-jest.mock('../core/user-config');
-jest.mock('../core/telemetry', () => ({
+vi.mock('../core/user-config');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
 // Mock fetch globally
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('AI Search Command', () => {
   const mockConfig = {
@@ -25,24 +26,24 @@ describe('AI Search Command', () => {
   };
 
   beforeEach(() => {
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
-    (global.fetch as jest.Mock).mockClear();
+    (getConfig as Mock).mockResolvedValue(mockConfig);
+    (global.fetch as Mock).mockClear();
 
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Authentication and Authorization', () => {
     it('should work without authentication (free for all)', async () => {
       const unauthConfig = { ...mockConfig, token: undefined };
-      (getConfig as jest.Mock).mockResolvedValue(unauthConfig);
+      (getConfig as Mock).mockResolvedValue(unauthConfig);
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -66,7 +67,7 @@ describe('AI Search Command', () => {
     });
 
     it('should include auth token when available for personalization', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -90,7 +91,7 @@ describe('AI Search Command', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         status: 500,
         ok: false,
         text: async () => 'Internal server error',
@@ -140,7 +141,7 @@ describe('AI Search Command', () => {
         query: 'Python Flask REST API',
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => mockResponse,
@@ -164,7 +165,7 @@ describe('AI Search Command', () => {
 
   describe('Search Options', () => {
     it('should apply limit parameter', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -177,13 +178,13 @@ describe('AI Search Command', () => {
 
       await handleAISearch('test query', { limit: 5 });
 
-      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+      const fetchCall = (global.fetch as Mock).mock.calls[0];
       const requestBody = JSON.parse(fetchCall[1].body);
       expect(requestBody.limit).toBe(5);
     });
 
     it('should apply format filter', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -196,13 +197,13 @@ describe('AI Search Command', () => {
 
       await handleAISearch('test query', { format: 'claude' });
 
-      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+      const fetchCall = (global.fetch as Mock).mock.calls[0];
       const requestBody = JSON.parse(fetchCall[1].body);
       expect(requestBody.filters.format).toBe('claude');
     });
 
     it('should apply multiple filters', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -219,7 +220,7 @@ describe('AI Search Command', () => {
         limit: 15,
       });
 
-      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+      const fetchCall = (global.fetch as Mock).mock.calls[0];
       const requestBody = JSON.parse(fetchCall[1].body);
       expect(requestBody.filters.format).toBe('cursor');
       expect(requestBody.filters.subtype).toBe('rule');
@@ -267,7 +268,7 @@ describe('AI Search Command', () => {
         query: 'REST API testing',
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => mockResponse,
@@ -288,7 +289,7 @@ describe('AI Search Command', () => {
     });
 
     it('should show no results message when empty', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -309,7 +310,7 @@ describe('AI Search Command', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors gracefully', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(
+      (global.fetch as Mock).mockRejectedValue(
         new Error('Network error')
       );
 
@@ -323,7 +324,7 @@ describe('AI Search Command', () => {
     });
 
     it('should handle API errors with message', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 500,
         text: async () => 'Internal server error',
@@ -337,7 +338,7 @@ describe('AI Search Command', () => {
 
   describe('Telemetry Tracking', () => {
     it('should track successful searches', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
@@ -364,7 +365,7 @@ describe('AI Search Command', () => {
     });
 
     it('should track failed searches', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(
+      (global.fetch as Mock).mockRejectedValue(
         new Error('Search failed')
       );
 

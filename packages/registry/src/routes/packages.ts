@@ -724,13 +724,34 @@ export async function packageRoutes(server: FastifyInstance) {
 
       // Admin override: if user is admin and publishAsAuthor is specified, use that for scoping
       let usernameLowercase = user.username.toLowerCase();
+      let effectiveAuthorId = userId; // Default to publishing admin's user ID
+
       if (user.is_admin && publishAsAuthor) {
         usernameLowercase = publishAsAuthor.toLowerCase();
-        server.log.info({
-          admin: user.username,
-          publishAsAuthor,
-          packageName: manifest.name
-        }, 'Admin override: Publishing as different author');
+
+        // Look up the target author's user ID
+        const targetAuthor = await queryOne<{ id: string; username: string }>(
+          server,
+          'SELECT id, username FROM users WHERE LOWER(username) = $1',
+          [usernameLowercase]
+        );
+
+        if (targetAuthor) {
+          effectiveAuthorId = targetAuthor.id;
+          server.log.info({
+            admin: user.username,
+            adminId: userId,
+            publishAsAuthor,
+            targetAuthorId: effectiveAuthorId,
+            packageName: manifest.name
+          }, 'Admin override: Publishing as different author with resolved user ID');
+        } else {
+          server.log.warn({
+            admin: user.username,
+            publishAsAuthor,
+            packageName: manifest.name
+          }, 'Admin override: Target author not found, using admin as author');
+        }
       }
 
       // Auto-prefix package name with scope and validate ownership
@@ -902,7 +923,7 @@ export async function packageRoutes(server: FastifyInstance) {
             packageName,
             displayName || null,
             description,
-            userId,                 // Always record the author (person who published)
+            effectiveAuthorId,      // Use effective author (may be admin override target)
             orgId || null,          // Set org_id if publishing to org (org takes precedence for ownership)
             format,
             subtype,

@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for install command format conversion with --as and --format flags
  */
@@ -10,32 +11,32 @@ import { readLockfile, writeLockfile, addToLockfile, createLockfile, setPackageI
 import { gzipSync } from 'zlib';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../core/lockfile');
-jest.mock('../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../core/lockfile');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
-jest.mock('../core/filesystem', () => {
-  const actual = jest.requireActual('../core/filesystem');
+vi.mock('../core/filesystem', async () => {
+  const actual = await vi.importActual('../core/filesystem');
   return {
     ...actual,
-    saveFile: jest.fn(actual.saveFile),
-    ensureDirectoryExists: jest.fn(actual.ensureDirectoryExists),
-    autoDetectFormat: jest.fn(async () => undefined),
+    saveFile: vi.fn(actual.saveFile),
+    ensureDirectoryExists: vi.fn(actual.ensureDirectoryExists),
+    autoDetectFormat: vi.fn(async () => undefined),
   };
 });
 
 describe('Install command - format conversion', () => {
   const mockClient = {
-    getPackage: jest.fn(),
-    getPackageVersion: jest.fn(),
-    downloadPackage: jest.fn(),
-    trackDownload: jest.fn(),
+    getPackage: vi.fn(),
+    getPackageVersion: vi.fn(),
+    downloadPackage: vi.fn(),
+    trackDownload: vi.fn(),
   };
 
   const mockConfig = {
@@ -44,23 +45,23 @@ describe('Install command - format conversion', () => {
   };
 
   beforeEach(() => {
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
-    (readLockfile as jest.Mock).mockResolvedValue(null);
-    (writeLockfile as jest.Mock).mockResolvedValue(undefined);
-    (addToLockfile as jest.Mock).mockImplementation(() => {});
-    (createLockfile as jest.Mock).mockReturnValue({ packages: {} });
-    (setPackageIntegrity as jest.Mock).mockImplementation(() => {});
-    (saveFile as jest.Mock).mockResolvedValue(undefined);
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue(mockConfig);
+    (readLockfile as Mock).mockResolvedValue(null);
+    (writeLockfile as Mock).mockResolvedValue(undefined);
+    (addToLockfile as Mock).mockImplementation(() => {});
+    (createLockfile as Mock).mockReturnValue({ packages: {} });
+    (setPackageIntegrity as Mock).mockImplementation(() => {});
+    (saveFile as Mock).mockResolvedValue(undefined);
     mockClient.trackDownload.mockResolvedValue(undefined);
 
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('--as flag (client-side conversion)', () => {
@@ -111,7 +112,7 @@ This is a test skill.
       );
 
       // Verify conversion happened - saved content should be in Cursor format
-      const savedContent = (saveFile as jest.Mock).mock.calls[0][1];
+      const savedContent = (saveFile as Mock).mock.calls[0][1];
       expect(savedContent).toContain('alwaysApply'); // Cursor frontmatter
     });
 
@@ -156,7 +157,7 @@ This is a test cursor rule.`;
       );
 
       // Verify conversion - should have Claude frontmatter
-      const savedContent = (saveFile as jest.Mock).mock.calls[0][1];
+      const savedContent = (saveFile as Mock).mock.calls[0][1];
       expect(savedContent).toContain('name:'); // Claude frontmatter
       expect(savedContent).toContain('description:');
     });
@@ -266,7 +267,7 @@ description: Test for kiro
         'https://example.com/package.tar.gz'
       );
 
-      const savedContent = (saveFile as jest.Mock).mock.calls[0][1];
+      const savedContent = (saveFile as Mock).mock.calls[0][1];
       expect(savedContent).toContain('inclusion:'); // Kiro frontmatter
     });
 

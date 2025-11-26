@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * End-to-End Tests for Auth Commands (login, whoami)
  */
@@ -14,21 +15,21 @@ import { CLIError } from '../../core/errors';
 import * as jwt from 'jsonwebtoken';
 
 // Mock dependencies
-jest.mock('../../core/user-config');
-jest.mock('@pr-pm/registry-client');
-jest.mock('../../core/telemetry', () => ({
+vi.mock('../../core/user-config');
+vi.mock('@pr-pm/registry-client');
+vi.mock('../../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
-    identifyUser: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
+    identifyUser: vi.fn(),
   },
 }));
 
 // Mock open for browser opening (virtual mock since 'open' isn't installed)
-jest.mock('open', () => jest.fn(), { virtual: true });
+vi.mock('open', () => vi.fn(), { virtual: true });
 
 // Mock fetch for API calls
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('Auth Commands - E2E Tests', () => {
   let testDir: string;
@@ -37,8 +38,8 @@ describe('Auth Commands - E2E Tests', () => {
 
   beforeAll(() => {
     originalCwd = process.cwd();
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   beforeEach(async () => {
@@ -47,7 +48,7 @@ describe('Auth Commands - E2E Tests', () => {
     await mkdir(configDir, { recursive: true });
     process.chdir(testDir);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(async () => {
@@ -67,11 +68,11 @@ describe('Auth Commands - E2E Tests', () => {
     it.skip('should initiate GitHub OAuth flow', async () => {
       const open = require('open');
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           url: 'https://github.com/login/oauth/authorize?client_id=test',
@@ -81,7 +82,7 @@ describe('Auth Commands - E2E Tests', () => {
       });
 
       // Mock token polling - return pending then success
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({
           ok: false,
           status: 403,
@@ -98,7 +99,7 @@ describe('Auth Commands - E2E Tests', () => {
           }),
         });
 
-      (saveConfig as jest.Mock).mockResolvedValue(undefined);
+      (saveConfig as Mock).mockResolvedValue(undefined);
 
       await handleLogin({});
 
@@ -123,11 +124,11 @@ describe('Auth Commands - E2E Tests', () => {
         { expiresIn: '1h' }
       );
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           user: {
@@ -137,15 +138,15 @@ describe('Auth Commands - E2E Tests', () => {
         }),
       });
 
-      (saveConfig as jest.Mock).mockResolvedValue(undefined);
+      (saveConfig as Mock).mockResolvedValue(undefined);
 
       // Mock readline for token input
       const readline = require('readline');
       const mockRl = {
-        question: jest.fn((query, callback) => callback(validToken)),
-        close: jest.fn(),
+        question: vi.fn((query, callback) => callback(validToken)),
+        close: vi.fn(),
       };
-      jest.spyOn(readline, 'createInterface').mockReturnValue(mockRl as any);
+      vi.spyOn(readline, 'createInterface').mockReturnValue(mockRl as any);
 
       await handleLogin({ token: validToken });
 
@@ -157,40 +158,38 @@ describe('Auth Commands - E2E Tests', () => {
     });
 
     it('should handle login timeout', async () => {
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
       });
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: false,
         status: 403,
         json: async () => ({ error: 'authorization_pending' }),
       });
 
       // This would timeout in real scenario, but we'll mock it to fail quickly
-      jest.setTimeout(1000);
+      // Note: In Vitest, test timeout should be set in the config or test options
 
       await expect(handleLogin()).rejects.toThrow();
-
-      jest.setTimeout(5000); // Reset timeout
     });
 
     it('should handle network errors during login', async () => {
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
       });
 
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+      (global.fetch as Mock).mockRejectedValue(new Error('Network error'));
 
       await expect(handleLogin()).rejects.toThrow();
     });
 
     it('should handle invalid token error', async () => {
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as Mock).mockResolvedValueOnce({
         ok: false,
         status: 401,
         json: async () => ({ error: 'Invalid token' }),
@@ -202,16 +201,16 @@ describe('Auth Commands - E2E Tests', () => {
 
   describe('Whoami Command', () => {
     it('should display current user info', async () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+      const logSpy = vi.spyOn(console, 'log').mockImplementation();
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'valid-token',
         username: 'testuser',
       });
 
       const mockClient = {
-        getUserProfile: jest.fn().mockResolvedValue({
+        getUserProfile: vi.fn().mockResolvedValue({
           id: 'user-123',
           username: 'testuser',
           email: 'test@example.com',
@@ -220,7 +219,7 @@ describe('Auth Commands - E2E Tests', () => {
         }),
       };
 
-      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
+      (getRegistryClient as Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
@@ -230,9 +229,9 @@ describe('Auth Commands - E2E Tests', () => {
     });
 
     it('should require authentication', async () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+      const logSpy = vi.spyOn(console, 'log').mockImplementation();
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: undefined,
       });
@@ -245,19 +244,19 @@ describe('Auth Commands - E2E Tests', () => {
     });
 
     it('should handle invalid/expired token', async () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+      const logSpy = vi.spyOn(console, 'log').mockImplementation();
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'expired-token',
         username: 'testuser',
       });
 
       const mockClient = {
-        getUserProfile: jest.fn().mockRejectedValue(new Error('Unauthorized')),
+        getUserProfile: vi.fn().mockRejectedValue(new Error('Unauthorized')),
       };
 
-      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
+      (getRegistryClient as Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
@@ -269,16 +268,16 @@ describe('Auth Commands - E2E Tests', () => {
     });
 
     it('should display user stats', async () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+      const logSpy = vi.spyOn(console, 'log').mockImplementation();
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'valid-token',
         username: 'poweruser',
       });
 
       const mockClient = {
-        getUserProfile: jest.fn().mockResolvedValue({
+        getUserProfile: vi.fn().mockResolvedValue({
           id: 'user-123',
           username: 'poweruser',
           email: 'power@example.com',
@@ -291,7 +290,7 @@ describe('Auth Commands - E2E Tests', () => {
         }),
       };
 
-      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
+      (getRegistryClient as Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
@@ -301,16 +300,16 @@ describe('Auth Commands - E2E Tests', () => {
     });
 
     it('should show verified badge', async () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+      const logSpy = vi.spyOn(console, 'log').mockImplementation();
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'valid-token',
         username: 'verified-user',
       });
 
       const mockClient = {
-        getUserProfile: jest.fn().mockResolvedValue({
+        getUserProfile: vi.fn().mockResolvedValue({
           id: 'user-123',
           username: 'verified-user',
           email: 'verified@example.com',
@@ -318,7 +317,7 @@ describe('Auth Commands - E2E Tests', () => {
         }),
       };
 
-      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
+      (getRegistryClient as Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
@@ -328,19 +327,19 @@ describe('Auth Commands - E2E Tests', () => {
     });
 
     it('should handle network errors', async () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+      const logSpy = vi.spyOn(console, 'log').mockImplementation();
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'valid-token',
         username: 'testuser',
       });
 
       const mockClient = {
-        getUserProfile: jest.fn().mockRejectedValue(new Error('Network error')),
+        getUserProfile: vi.fn().mockRejectedValue(new Error('Network error')),
       };
 
-      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
+      (getRegistryClient as Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
@@ -353,14 +352,14 @@ describe('Auth Commands - E2E Tests', () => {
 
   describe('Authentication Flow', () => {
     it.skip('should complete full login and whoami flow', async () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+      const logSpy = vi.spyOn(console, 'log').mockImplementation();
 
       // Step 1: Login
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
       });
 
-      (global.fetch as jest.Mock)
+      (global.fetch as Mock)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
@@ -380,19 +379,19 @@ describe('Auth Commands - E2E Tests', () => {
           }),
         });
 
-      (saveConfig as jest.Mock).mockResolvedValue(undefined);
+      (saveConfig as Mock).mockResolvedValue(undefined);
 
       await handleLogin({});
 
       // Step 2: Verify with whoami
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: 'new-access-token',
         username: 'newuser',
       });
 
       const mockClient = {
-        getUserProfile: jest.fn().mockResolvedValue({
+        getUserProfile: vi.fn().mockResolvedValue({
           id: 'user-new',
           username: 'newuser',
           email: 'new@example.com',
@@ -400,7 +399,7 @@ describe('Auth Commands - E2E Tests', () => {
         }),
       };
 
-      (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
+      (getRegistryClient as Mock).mockReturnValue(mockClient);
 
       await handleWhoami();
 
@@ -412,12 +411,12 @@ describe('Auth Commands - E2E Tests', () => {
     it('should persist token across commands', async () => {
       const testToken = 'persistent-token-123';
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: testToken,
       });
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           id: 'user-123',
@@ -432,7 +431,7 @@ describe('Auth Commands - E2E Tests', () => {
       await handleWhoami();
 
       expect(getConfig).toHaveBeenCalledTimes(3);
-      (global.fetch as jest.Mock).mock.calls.forEach((call: any) => {
+      (global.fetch as Mock).mock.calls.forEach((call: any) => {
         expect(call[1]?.headers?.Authorization).toContain(testToken);
       });
     });

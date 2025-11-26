@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * End-to-End Tests for Install Command
  */
@@ -13,12 +14,12 @@ import { CLIError } from '../../core/errors';
 import { gzipSync } from 'zlib';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../../core/user-config');
-jest.mock('../../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../../core/user-config');
+vi.mock('../../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
@@ -28,13 +29,13 @@ describe('Install Command - E2E Tests', () => {
   const mockFetchHelper = createMockFetch();
 
   const mockClient = {
-    getPackage: jest.fn(),
-    getPackageVersion: jest.fn(),
-    downloadPackage: jest.fn(),
-    resolveDependencies: jest.fn(),
-    getCollection: jest.fn(),
-    installCollection: jest.fn(),
-    trackDownload: jest.fn().mockResolvedValue(undefined),
+    getPackage: vi.fn(),
+    getPackageVersion: vi.fn(),
+    downloadPackage: vi.fn(),
+    resolveDependencies: vi.fn(),
+    getCollection: vi.fn(),
+    installCollection: vi.fn(),
+    trackDownload: vi.fn().mockResolvedValue(undefined),
   };
 
   beforeAll(() => {
@@ -47,21 +48,21 @@ describe('Install Command - E2E Tests', () => {
     process.chdir(testDir);
 
     // Set up console spies for each test
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
 
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue({
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue({
       registryUrl: 'http://localhost:3111',
       token: 'test-token',
     });
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetchHelper.clear();
   });
 
   afterEach(async () => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     try {
       process.chdir(originalCwd);
     } catch {

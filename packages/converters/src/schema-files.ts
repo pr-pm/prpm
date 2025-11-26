@@ -7,9 +7,10 @@ import { dirname, join } from 'path';
 
 type JsonSchema = Record<string, unknown>;
 
-// Resolve from the installed converters package root to avoid relative path issues in dev/prod/tests
-const schemaRequire: NodeRequire =
-  typeof require !== 'undefined' ? require : createRequire(process.cwd() + '/');
+// Create a require function for loading JSON files (ESM)
+const schemaRequire = createRequire(import.meta.url);
+
+// Resolve schemas directory from the converters package
 const convertersPackagePath = schemaRequire.resolve('@pr-pm/converters/package.json');
 const convertersDir = dirname(convertersPackagePath);
 

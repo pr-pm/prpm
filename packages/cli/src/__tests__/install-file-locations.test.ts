@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for install command - file location verification
  * Tests that packages are installed to the correct directories based on type and format
@@ -14,45 +15,45 @@ import * as path from 'path';
 import { promptYesNo } from '../core/prompts';
 import { addSkillToManifest } from '../core/agents-md-progressive.js';
 
-jest.mock('../core/prompts', () => ({
-  promptYesNo: jest.fn(),
+vi.mock('../core/prompts', () => ({
+  promptYesNo: vi.fn(),
 }));
 
-const promptYesNoMock = promptYesNo as jest.MockedFunction<typeof promptYesNo>;
-const addSkillToManifestMock = addSkillToManifest as jest.MockedFunction<typeof addSkillToManifest>;
+const promptYesNoMock = promptYesNo as MockedFunction<typeof promptYesNo>;
+const addSkillToManifestMock = addSkillToManifest as MockedFunction<typeof addSkillToManifest>;
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../core/lockfile');
-jest.mock('../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../core/lockfile');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
 // Don't mock filesystem - we want to test actual file operations
-jest.mock('../core/filesystem', () => {
-  const actual = jest.requireActual('../core/filesystem');
+vi.mock('../core/filesystem', async () => {
+  const actual = await vi.importActual('../core/filesystem');
   return {
     ...actual,
-    saveFile: jest.fn(actual.saveFile),
-    ensureDirectoryExists: jest.fn(actual.ensureDirectoryExists),
+    saveFile: vi.fn(actual.saveFile),
+    ensureDirectoryExists: vi.fn(actual.ensureDirectoryExists),
   };
 });
 
-jest.mock('../core/agents-md-progressive.js', () => ({
-  addSkillToManifest: jest.fn(),
+vi.mock('../core/agents-md-progressive.js', () => ({
+  addSkillToManifest: vi.fn(),
 }));
 
 describe('install command - file locations', () => {
   const testDir = path.join(__dirname, '../../.test-install');
   const mockClient = {
-    getPackage: jest.fn(),
-    getPackageVersion: jest.fn(),
-    downloadPackage: jest.fn(),
-    trackDownload: jest.fn(),
+    getPackage: vi.fn(),
+    getPackageVersion: vi.fn(),
+    downloadPackage: vi.fn(),
+    trackDownload: vi.fn(),
   };
 
   const mockConfig = {
@@ -74,8 +75,8 @@ describe('install command - file locations', () => {
   });
 
   beforeEach(async () => {
-    // Clean up any existing directories
-    const dirs = ['.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents', 'AGENTS.md', 'custom'];
+    // Clean up any existing directories (including droid/aider/gemini format directories to prevent auto-detection)
+    const dirs = ['.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents', 'AGENTS.md', 'custom', '.factory', '.droid', '.openskills'];
     for (const dir of dirs) {
       await fs.rm(path.join(testDir, dir), { recursive: true, force: true }).catch(() => {});
     }
@@ -83,28 +84,28 @@ describe('install command - file locations', () => {
     promptYesNoMock.mockReset();
     addSkillToManifestMock.mockReset();
 
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
-    (readLockfile as jest.Mock).mockResolvedValue(null);
-    (writeLockfile as jest.Mock).mockResolvedValue(undefined);
-    (addToLockfile as jest.Mock).mockImplementation(() => {});
-    (createLockfile as jest.Mock).mockReturnValue({ packages: {} });
-    (setPackageIntegrity as jest.Mock).mockImplementation(() => {});
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue(mockConfig);
+    (readLockfile as Mock).mockResolvedValue(null);
+    (writeLockfile as Mock).mockResolvedValue(undefined);
+    (addToLockfile as Mock).mockImplementation(() => {});
+    (createLockfile as Mock).mockReturnValue({ packages: {} });
+    (setPackageIntegrity as Mock).mockImplementation(() => {});
     mockClient.trackDownload.mockResolvedValue(undefined);
 
     // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
 
     // Mock process.exit to prevent test from exiting
-    jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+    vi.spyOn(process, 'exit').mockImplementation((code?: number) => {
       throw new Error(`process.exit called with ${code}`);
     });
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Aider format', () => {

@@ -1,8 +1,9 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest';
 /**
  * Tests for init command
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 import { mkdtemp, rm, readFile, mkdir, writeFile as fsWriteFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -14,9 +15,9 @@ import { reconcilePackages, readManifest, ReconciliationResult } from '../core/p
 
 describe('prpm init command', () => {
   let testDir: string;
-  let exitMock: jest.SpyInstance;
-  let consoleLogMock: jest.SpyInstance;
-  let consoleErrorMock: jest.SpyInstance;
+  let exitMock: MockInstance;
+  let consoleLogMock: MockInstance;
+  let consoleErrorMock: MockInstance;
   let originalCwd: string;
 
   beforeAll(() => {
@@ -25,13 +26,13 @@ describe('prpm init command', () => {
 
   beforeEach(async () => {
     // Mock process.exit to prevent actual exit
-    exitMock = jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+    exitMock = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
       throw new Error(`Process exited with code ${code}`);
     }) as any);
 
     // Mock console methods to reduce noise in test output
-    consoleLogMock = jest.spyOn(console, 'log').mockImplementation();
-    consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+    consoleLogMock = vi.spyOn(console, 'log').mockImplementation();
+    consoleErrorMock = vi.spyOn(console, 'error').mockImplementation();
 
     // Create temporary directory for each test
     testDir = await mkdtemp(join(tmpdir(), 'prpm-init-test-'));
@@ -266,7 +267,7 @@ async function writeFile(path: string, content: string, encoding: string) {
 
 describe('smart init - package detection', () => {
   let testDir: string;
-  let consoleLogMock: jest.SpyInstance;
+  let consoleLogMock: MockInstance;
   let originalCwd: string;
 
   beforeAll(() => {
@@ -274,7 +275,7 @@ describe('smart init - package detection', () => {
   });
 
   beforeEach(async () => {
-    consoleLogMock = jest.spyOn(console, 'log').mockImplementation();
+    consoleLogMock = vi.spyOn(console, 'log').mockImplementation();
     testDir = await mkdtemp(join(tmpdir(), 'prpm-smart-init-test-'));
     process.chdir(testDir);
   });

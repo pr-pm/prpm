@@ -2,7 +2,7 @@
  * Tests for package scanner module
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 import { mkdtemp, rm, mkdir, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
