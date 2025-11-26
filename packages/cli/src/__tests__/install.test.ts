@@ -30,7 +30,13 @@ vi.mock('../core/lockfile', () => ({
   createLockfile: vi.fn(() => ({ packages: {} })),
   addToLockfile: vi.fn(),
   setPackageIntegrity: vi.fn(),
+  verifyPackageIntegrity: vi.fn(() => true), // Default to passing verification
   getLockedVersion: vi.fn(() => null),
+  getLockfileKey: vi.fn((packageId: string, format?: string) => format ? `${packageId}#${format}` : packageId),
+  parseLockfileKey: vi.fn((key: string) => {
+    const parts = key.split('#');
+    return { packageId: parts[0], format: parts[1] };
+  }),
   addPackage: vi.fn(),
   removePackage: vi.fn(),
   getPackage: vi.fn(),

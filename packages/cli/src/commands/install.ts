@@ -27,6 +27,7 @@ import {
   createLockfile,
   addToLockfile,
   setPackageIntegrity,
+  verifyPackageIntegrity,
   getLockedVersion,
   getLockfileKey,
   parseLockfileKey,
@@ -410,6 +411,26 @@ export async function handleInstall(
     // Download package in native format (conversion happens client-side)
     console.log(`   ⬇️  Downloading...`);
     const tarball = await client.downloadPackage(tarballUrl);
+
+    // Verify integrity if we have a lockfile with integrity hash for this package
+    const lockfileKeyForVerification = getLockfileKey(packageId, targetFormat);
+    const existingEntry = lockfile?.packages[lockfileKeyForVerification];
+    if (existingEntry?.integrity) {
+      console.log(`   🔒 Verifying integrity...`);
+      const isValid = verifyPackageIntegrity(lockfile!, packageId, tarball, targetFormat);
+      if (!isValid) {
+        throw new CLIError(
+          `❌ Integrity verification failed for ${packageId}\n\n` +
+          `The downloaded package does not match the expected hash from prpm.lock.\n` +
+          `This could indicate:\n` +
+          `  • A corrupted download\n` +
+          `  • A modified package on the registry\n` +
+          `  • A potential security issue\n\n` +
+          `💡 To force installation anyway, delete the package from prpm.lock and retry.`
+        );
+      }
+      console.log(`   ✓ Integrity verified`);
+    }
 
     // Extract tarball and save files
     console.log(`   📂 Extracting...`);
@@ -1038,6 +1059,37 @@ interface ExtractedFile {
   content: string;
 }
 
+/**
+ * Validate that a path is safe and doesn't escape the target directory
+ * Prevents path traversal attacks (e.g., ../../../etc/passwd)
+ */
+function isPathSafe(targetDir: string, filePath: string): boolean {
+  // Resolve the full path
+  const resolvedPath = path.resolve(targetDir, filePath);
+  const resolvedTarget = path.resolve(targetDir);
+
+  // Check that the resolved path starts with the target directory
+  // This prevents ../ path traversal attacks
+  return resolvedPath.startsWith(resolvedTarget + path.sep) || resolvedPath === resolvedTarget;
+}
+
+/**
+ * Check if a filename contains potentially dangerous patterns
+ */
+function hasUnsafePathPatterns(filePath: string): boolean {
+  // Check for path traversal patterns
+  if (filePath.includes('..')) return true;
+
+  // Check for absolute paths (Unix and Windows)
+  if (filePath.startsWith('/')) return true;
+  if (/^[a-zA-Z]:/.test(filePath)) return true;
+
+  // Check for null bytes (can truncate paths in some systems)
+  if (filePath.includes('\0')) return true;
+
+  return false;
+}
+
 async function extractTarball(tarball: Buffer, packageId: string): Promise<ExtractedFile[]> {
   // Attempt to decompress
   let decompressed: Buffer;
@@ -1080,7 +1132,37 @@ async function extractTarball(tarball: Buffer, packageId: string): Promise<Extra
   try {
     const extract = tar.extract({
       cwd: tmpDir,
-      strict: false,
+      strict: true, // Enable strict mode to reject malformed archives
+      // Security: filter out dangerous entries before extraction
+      filter: (entryPath: string, entry) => {
+        // Block symlinks - they can be used for path traversal attacks
+        // Check if entry has a 'type' property (ReadEntry) vs Stats
+        const entryType = 'type' in entry ? entry.type : null;
+        if (entryType === 'SymbolicLink' || entryType === 'Link') {
+          console.warn(`   ⚠️  Blocked symlink in package: ${entryPath}`);
+          return false;
+        }
+
+        // Also check isSymbolicLink() for Stats objects
+        if ('isSymbolicLink' in entry && entry.isSymbolicLink()) {
+          console.warn(`   ⚠️  Blocked symlink in package: ${entryPath}`);
+          return false;
+        }
+
+        // Block entries with unsafe path patterns
+        if (hasUnsafePathPatterns(entryPath)) {
+          console.warn(`   ⚠️  Blocked unsafe path in package: ${entryPath}`);
+          return false;
+        }
+
+        // Verify the path stays within the extraction directory
+        if (!isPathSafe(tmpDir, entryPath)) {
+          console.warn(`   ⚠️  Blocked path traversal attempt: ${entryPath}`);
+          return false;
+        }
+
+        return true;
+      },
     });
 
     await pipeline(Readable.from(decompressed), extract);

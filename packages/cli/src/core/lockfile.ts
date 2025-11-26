@@ -205,9 +205,12 @@ export function setPackageIntegrity(
 export function verifyPackageIntegrity(
   lockfile: Lockfile,
   packageId: string,
-  tarballBuffer: Buffer
+  tarballBuffer: Buffer,
+  format?: string
 ): boolean {
-  const pkg = lockfile.packages[packageId];
+  // Use format-specific key if format is provided
+  const lockfileKey = getLockfileKey(packageId, format);
+  const pkg = lockfile.packages[lockfileKey];
   if (!pkg || !pkg.integrity) {
     return false;
   }
