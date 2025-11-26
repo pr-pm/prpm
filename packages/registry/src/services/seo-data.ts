@@ -50,7 +50,7 @@ export class SeoDataService {
     }
 
     try {
-      this.server.log.info({ packageName }, '🔄 Incremental SSG update for single package');
+      this.server.log.info({ packageName, bucket: this.bucket, webappBucket: this.webappBucket, prefix: this.prefix }, '🔄 Incremental SSG update for single package');
 
       const packageData = await this.fetchSinglePackage(packageName);
 
@@ -59,8 +59,12 @@ export class SeoDataService {
         return;
       }
 
+      this.server.log.info({ packageName }, '📦 Package data fetched, updating packages.json');
+
       // Incrementally update main packages.json
       await this.updateMainPackagesJson(packageData);
+
+      this.server.log.info({ packageName }, '📄 packages.json updated, generating HTML page');
 
       // Generate SEO-optimized HTML page with client-side enrichment
       await this.generateAndUploadStaticPage(packageData);
@@ -68,7 +72,7 @@ export class SeoDataService {
       this.server.log.info({ packageName }, '✅ Incremental SSG update complete');
     } catch (error) {
       this.server.log.error(
-        { packageName, error: error instanceof Error ? error.message : String(error) },
+        { packageName, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined },
         'Failed to update SEO data for package'
       );
     }
@@ -129,6 +133,8 @@ export class SeoDataService {
   private async downloadJsonFromS3(filename: string): Promise<any> {
     const key = this.prefix ? `${this.prefix.replace(/\/?$/, '/')}${filename}` : filename;
 
+    this.server.log.debug({ bucket: this.bucket, key }, 'Downloading JSON from S3');
+
     const response = await s3Client.send(
       new GetObjectCommand({
         Bucket: this.bucket,
@@ -141,6 +147,7 @@ export class SeoDataService {
     }
 
     const bodyString = await response.Body.transformToString();
+    this.server.log.debug({ bucket: this.bucket, key, size: bodyString.length }, 'Downloaded JSON from S3');
     return JSON.parse(bodyString);
   }
 
@@ -184,7 +191,10 @@ export class SeoDataService {
       html = this.replacePackageDataInHtml(html, packageData, author, packagePath);
 
       // Upload HTML to webapp S3 bucket (separate from registry's package storage)
-      const htmlKey = `packages/${author}/${packagePath}/index.html`;
+      // Use flat file structure to match Next.js static export: packages/{author}/{package}.html
+      const htmlKey = `packages/${author}/${packagePath}.html`;
+
+      this.server.log.info({ packageName, htmlKey, bucket: this.webappBucket, htmlSize: html.length }, '📤 Uploading static HTML page to webapp bucket');
 
       await s3Client.send(
         new PutObjectCommand({
@@ -251,25 +261,42 @@ export class SeoDataService {
    * Fallback: Generate simple HTML page if template fetching fails
    */
   private async generateSimpleHtmlPage(packageData: any) {
+    const packageName = packageData.name;
+    this.server.log.info({ packageName }, '🔧 Generating simple fallback HTML page');
+
     const match = packageData.name.match(/^@([^\/]+)\/(.+)$/);
-    if (!match) return;
+    if (!match) {
+      this.server.log.warn({ packageName }, 'Could not parse package name for simple HTML, skipping');
+      return;
+    }
 
     const [, author, packagePath] = match;
     const html = this.generatePackageHtml(packageData, author, packagePath);
 
-    const htmlKey = `packages/${author}/${packagePath}/index.html`;
+    // Use flat file structure to match Next.js static export: packages/{author}/{package}.html
+    const htmlKey = `packages/${author}/${packagePath}.html`;
 
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: this.webappBucket,
-        Key: htmlKey,
-        Body: Buffer.from(html, 'utf-8'),
-        ContentType: 'text/html',
-        CacheControl: 'no-cache, no-store, must-revalidate', // Match webapp HTML cache policy
-      })
-    );
+    this.server.log.info({ packageName, htmlKey, bucket: this.webappBucket, htmlSize: html.length }, '📤 Uploading simple HTML page to webapp bucket');
 
-    this.server.log.info({ htmlKey, bucket: this.webappBucket }, '✅ Simple HTML page uploaded to webapp bucket (fallback)');
+    try {
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.webappBucket,
+          Key: htmlKey,
+          Body: Buffer.from(html, 'utf-8'),
+          ContentType: 'text/html',
+          CacheControl: 'no-cache, no-store, must-revalidate', // Match webapp HTML cache policy
+        })
+      );
+
+      this.server.log.info({ packageName, htmlKey, bucket: this.webappBucket }, '✅ Simple HTML page uploaded to webapp bucket (fallback)');
+    } catch (error) {
+      this.server.log.error(
+        { packageName, htmlKey, bucket: this.webappBucket, error: error instanceof Error ? error.message : String(error) },
+        '❌ Failed to upload simple HTML page to webapp bucket'
+      );
+      throw error;
+    }
   }
 
   /**
