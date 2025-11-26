@@ -1,0 +1,33 @@
+AI coding assistants are everywhere. Cursor, Claude Code, Continue, Windsurf, Copilot—each with their own prompt format.
+
+Make a typo in a field name? Your prompt silently breaks. Forget a required field? No error until runtime. Want IDE autocomplete for frontmatter? You're on your own.
+
+That changes today.
+
+As part of building PRPM's universal format converter, we created comprehensive JSON schemas for 15+ AI prompt formats. These schemas define the structure, required fields, and validation rules for every major AI coding tool.
+
+What you can do with them:
+
+• IDE Autocomplete: Add schemas to VS Code for field suggestions, inline docs, and validation
+• CI/CD Validation: Catch invalid prompts before they reach production
+• Format Conversion: Validate both input and output when converting between formats
+• Build Tools: Use the validation API to build linters, editors, and analyzers
+
+Real example: When you edit a Claude agent in VS Code with our schema, you get autocomplete for `model` (sonnet/opus/haiku/inherit), inline docs explaining what `allowed-tools` does, and red squiggles for invalid syntax.
+
+We cover 29 format/subtype combinations:
+• Cursor (rules, slash commands)
+• Claude Code (agents, skills, slash commands, hooks)
+• Continue, Windsurf, Copilot
+• Kiro (steering files, hooks, agents)
+• Ruler, Factory Droid, OpenCode
+• agents.md, Trae, Aider, Zencoder, Replit
+
+All schemas are open source and available via our registry API.
+
+This is the infrastructure the AI coding ecosystem needed—now it exists.
+
+Read the full technical deep dive:
+https://prpm.dev/blog/json-schemas-for-ai-prompts
+
+#AI #DeveloperTools #OpenSource #JSONSchema #DevEx

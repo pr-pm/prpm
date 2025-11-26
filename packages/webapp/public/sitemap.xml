@@ -47,12 +47,19 @@
   <!-- Blog -->
   <url>
     <loc>https://prpm.dev/blog</loc>
-    <lastmod>2025-11-20</lastmod>
+    <lastmod>2025-01-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Blog Posts -->
+  <url>
+    <loc>https://prpm.dev/blog/json-schemas-for-ai-prompts</loc>
+    <lastmod>2025-01-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <url>
     <loc>https://prpm.dev/blog/openskills-cross-ide-compatibility</loc>
     <lastmod>2025-11-20</lastmod>
