@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for format+subtype taxonomy
  */
@@ -7,18 +8,18 @@ import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
 describe('Taxonomy - Format and Subtype', () => {
   const mockClient = {
-    search: jest.fn(),
+    search: vi.fn(),
   };
 
   const mockConfig = {
@@ -27,16 +28,16 @@ describe('Taxonomy - Format and Subtype', () => {
   };
 
   beforeEach(() => {
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue(mockConfig);
 
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Format filtering', () => {

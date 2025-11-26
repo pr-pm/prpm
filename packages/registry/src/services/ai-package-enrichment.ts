@@ -63,8 +63,7 @@ export class AIPackageEnrichmentService {
     try {
       const result = await this.server.pg.query(`
         SELECT slug, name, level
-        FROM taxonomy_categories
-        WHERE is_active = TRUE
+        FROM categories
         ORDER BY level ASC, name ASC
       `);
 
@@ -249,7 +248,7 @@ Always respond with valid JSON in the exact format specified.`,
    */
   private buildEnrichmentPrompt(pkg: Package): string {
     const topLevelCategories = Array.from(this.categoryMap.entries())
-      .filter(([_, info]) => info.level === 0)
+      .filter(([_, info]) => info.level === 1)
       .map(([slug, _]) => slug);
 
     const parts: string[] = [];

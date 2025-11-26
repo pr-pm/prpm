@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for Claude hooks installation, tracking, and removal
  */
@@ -6,11 +7,11 @@ import { gzipSync } from 'zlib';
 import { promises as fs } from 'fs';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
 
 // Mock filesystem module
-jest.mock('../core/filesystem');
+vi.mock('../core/filesystem');
 
 // Import after mocks are set up
 import { handleInstall } from '../commands/install';
@@ -23,73 +24,85 @@ import { readLockfile, writeLockfile, createLockfile, addToLockfile, removePacka
 import { saveFile, deleteFile, fileExists, ensureDirectoryExists, getDestinationDir } from '../core/filesystem';
 
 // Cast to jest mocks
-const mockSaveFile = saveFile as jest.Mock;
-const mockDeleteFile = deleteFile as jest.Mock;
-const mockFileExists = fileExists as jest.Mock;
-const mockEnsureDirectoryExists = ensureDirectoryExists as jest.Mock;
-const mockGetDestinationDir = getDestinationDir as jest.Mock;
-jest.mock('../core/lockfile', () => {
-  const actual = jest.requireActual('../core/lockfile');
+const mockSaveFile = saveFile as Mock;
+const mockDeleteFile = deleteFile as Mock;
+const mockFileExists = fileExists as Mock;
+const mockEnsureDirectoryExists = ensureDirectoryExists as Mock;
+const mockGetDestinationDir = getDestinationDir as Mock;
+vi.mock('../core/lockfile', async () => {
+  const actual = await vi.importActual('../core/lockfile');
   return {
     ...actual,
-    readLockfile: jest.fn(),
-    writeLockfile: jest.fn(),
-    addToLockfile: jest.fn(),
-    createLockfile: jest.fn(() => ({ packages: {}, version: '1.0.0', lockfileVersion: 1, generated: new Date().toISOString() })),
-    setPackageIntegrity: jest.fn(),
-    getLockedVersion: jest.fn(() => null),
-    removePackage: jest.fn(),
+    readLockfile: vi.fn(),
+    writeLockfile: vi.fn(),
+    addToLockfile: vi.fn(),
+    createLockfile: vi.fn(() => ({ packages: {}, version: '1.0.0', lockfileVersion: 1, generated: new Date().toISOString() })),
+    setPackageIntegrity: vi.fn(),
+    getLockedVersion: vi.fn(() => null),
+    removePackage: vi.fn(),
   };
 });
-jest.mock('../core/telemetry', () => ({
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 // Create shared mock functions for fs.promises
-const actualFsPromises = jest.requireActual('fs/promises');
-const mockFsReadFile = jest.fn();
-const mockFsWriteFile = jest.fn();
-const mockFsStat = jest.fn();
-const mockFsRm = jest.fn((...args: any[]) => actualFsPromises.rm(...args));
-const mockFsUnlink = jest.fn();
-const mockFsMkdtemp = jest.fn((...args: any[]) => actualFsPromises.mkdtemp(...args));
+const actualFsPromises = await vi.importActual('fs/promises');
+const mockFsReadFile = vi.fn();
+const mockFsWriteFile = vi.fn();
+const mockFsStat = vi.fn();
+const mockFsRm = vi.fn((...args: any[]) => actualFsPromises.rm(...args));
+const mockFsUnlink = vi.fn();
+const mockFsMkdtemp = vi.fn((...args: any[]) => actualFsPromises.mkdtemp(...args));
 
-jest.mock('fs', () => ({
-  promises: {
+vi.mock('fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('fs')>();
+  return {
+    ...actual,
+    promises: {
+      readFile: (...args: any[]) => mockFsReadFile(...args),
+      writeFile: (...args: any[]) => mockFsWriteFile(...args),
+      stat: (...args: any[]) => mockFsStat(...args),
+      rm: (...args: any[]) => mockFsRm(...args),
+      unlink: (...args: any[]) => mockFsUnlink(...args),
+      mkdtemp: (...args: any[]) => mockFsMkdtemp(...args),
+    },
+    constants: {
+      O_CREAT: 0o100,
+      O_TRUNC: 0o1000,
+      O_WRONLY: 0o1,
+      O_RDONLY: 0o0,
+      O_RDWR: 0o2,
+    },
+  };
+});
+
+// Also mock fs/promises module for dynamic imports
+vi.mock('fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('fs/promises')>();
+  const mockModule = {
+    ...actual,
     readFile: (...args: any[]) => mockFsReadFile(...args),
     writeFile: (...args: any[]) => mockFsWriteFile(...args),
     stat: (...args: any[]) => mockFsStat(...args),
     rm: (...args: any[]) => mockFsRm(...args),
     unlink: (...args: any[]) => mockFsUnlink(...args),
     mkdtemp: (...args: any[]) => mockFsMkdtemp(...args),
-  },
-  constants: {
-    O_CREAT: 0o100,
-    O_TRUNC: 0o1000,
-    O_WRONLY: 0o1,
-    O_RDONLY: 0o0,
-    O_RDWR: 0o2,
-  },
-}));
-
-// Also mock fs/promises module for dynamic imports
-jest.mock('fs/promises', () => ({
-  readFile: (...args: any[]) => mockFsReadFile(...args),
-  writeFile: (...args: any[]) => mockFsWriteFile(...args),
-  stat: (...args: any[]) => mockFsStat(...args),
-  rm: (...args: any[]) => mockFsRm(...args),
-  unlink: (...args: any[]) => mockFsUnlink(...args),
-  mkdtemp: (...args: any[]) => mockFsMkdtemp(...args),
-}));
+  };
+  return {
+    ...mockModule,
+    default: mockModule,
+  };
+});
 
 describe('Claude Hooks', () => {
   const mockClient = {
-    getPackage: jest.fn(),
-    getPackageVersion: jest.fn(),
-    downloadPackage: jest.fn(),
-    trackDownload: jest.fn(),
+    getPackage: vi.fn(),
+    getPackageVersion: vi.fn(),
+    downloadPackage: vi.fn(),
+    trackDownload: vi.fn(),
   };
 
   const mockConfig = {
@@ -99,22 +112,22 @@ describe('Claude Hooks', () => {
 
   beforeEach(() => {
     // Reset all mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Set up registry and config mocks
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue(mockConfig);
 
     // Set up lockfile mocks
-    (readLockfile as jest.Mock).mockResolvedValue(null);
-    (writeLockfile as jest.Mock).mockResolvedValue(undefined);
-    (createLockfile as jest.Mock).mockReturnValue({
+    (readLockfile as Mock).mockResolvedValue(null);
+    (writeLockfile as Mock).mockResolvedValue(undefined);
+    (createLockfile as Mock).mockReturnValue({
       version: '1.0.0',
       lockfileVersion: 1,
       packages: {},
       generated: new Date().toISOString()
     });
-    (addToLockfile as jest.Mock).mockImplementation(() => {});
+    (addToLockfile as Mock).mockImplementation(() => {});
 
     // Set up filesystem mocks with implementations
     mockGetDestinationDir.mockImplementation((format, subtype, name) => {
@@ -132,14 +145,14 @@ describe('Claude Hooks', () => {
     mockClient.trackDownload.mockResolvedValue(undefined);
 
     // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
-    jest.spyOn(console, 'warn').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'warn').mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Installation', () => {
@@ -379,7 +392,7 @@ describe('Claude Hooks', () => {
       };
 
       // Mock readLockfile for new uninstall flow
-      (readLockfile as jest.Mock).mockResolvedValue({
+      (readLockfile as Mock).mockResolvedValue({
         version: '1.0.0',
         lockfileVersion: 1,
         packages: {
@@ -388,7 +401,7 @@ describe('Claude Hooks', () => {
         generated: new Date().toISOString(),
       });
 
-      (removePackage as jest.Mock).mockResolvedValue(mockPackageInfo);
+      (removePackage as Mock).mockResolvedValue(mockPackageInfo);
       mockFsReadFile.mockResolvedValue(JSON.stringify(existingSettings));
 
       await handleUninstall('@author/hook1');
@@ -400,7 +413,7 @@ describe('Claude Hooks', () => {
         'utf-8'
       );
 
-      const writtenContent = (mockFsWriteFile as jest.Mock).mock.calls[0][1];
+      const writtenContent = (mockFsWriteFile as Mock).mock.calls[0][1];
       const updatedSettings = JSON.parse(writtenContent);
 
       // hook1 should be removed
@@ -426,7 +439,7 @@ describe('Claude Hooks', () => {
       };
 
       // Mock readLockfile for new uninstall flow
-      (readLockfile as jest.Mock).mockResolvedValue({
+      (readLockfile as Mock).mockResolvedValue({
         version: '1.0.0',
         lockfileVersion: 1,
         packages: {
@@ -435,7 +448,7 @@ describe('Claude Hooks', () => {
         generated: new Date().toISOString(),
       });
 
-      (removePackage as jest.Mock).mockResolvedValue(mockPackageInfo);
+      (removePackage as Mock).mockResolvedValue(mockPackageInfo);
       mockFsReadFile.mockRejectedValue({ code: 'ENOENT' });
 
       await handleUninstall('@author/missing-hook');
@@ -479,7 +492,7 @@ describe('Claude Hooks', () => {
       };
 
       // Mock readLockfile for new uninstall flow
-      (readLockfile as jest.Mock).mockResolvedValue({
+      (readLockfile as Mock).mockResolvedValue({
         version: '1.0.0',
         lockfileVersion: 1,
         packages: {
@@ -488,12 +501,12 @@ describe('Claude Hooks', () => {
         generated: new Date().toISOString(),
       });
 
-      (removePackage as jest.Mock).mockResolvedValue(mockPackageInfo);
+      (removePackage as Mock).mockResolvedValue(mockPackageInfo);
       mockFsReadFile.mockResolvedValue(JSON.stringify(existingSettings));
 
       await handleUninstall('@author/only-hook');
 
-      const writtenContent = (mockFsWriteFile as jest.Mock).mock.calls[0][1];
+      const writtenContent = (mockFsWriteFile as Mock).mock.calls[0][1];
       const updatedSettings = JSON.parse(writtenContent);
 
       // PreToolUse should be removed entirely (no hooks left)

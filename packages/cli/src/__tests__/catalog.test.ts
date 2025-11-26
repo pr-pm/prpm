@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest';
 /**
  * Tests for catalog command
  */
@@ -9,10 +10,10 @@ import { handleCatalog } from '../commands/catalog';
 import { readLockfile, writeLockfile, createLockfile } from '../core/lockfile';
 
 // Mock telemetry to prevent timeouts
-jest.mock('../core/telemetry', () => ({
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
@@ -75,7 +76,7 @@ describe('catalog command', () => {
       await writeLockfile(lockfile);
 
       // Mock console.log to capture output
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
 
       await handleCatalog(['.claude'], { dryRun: true });
 
@@ -107,7 +108,7 @@ describe('catalog command', () => {
       await writeLockfile(lockfile);
 
       // Mock console.log to capture output
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
 
       await handleCatalog(['.claude'], { dryRun: true });
 
@@ -145,7 +146,7 @@ describe('catalog command', () => {
       await writeLockfile(lockfile);
 
       // Mock console.log to capture output
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
 
       await handleCatalog(['.claude'], { dryRun: true });
 
@@ -171,7 +172,7 @@ describe('catalog command', () => {
       );
 
       // Mock console.log to capture output
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
 
       await handleCatalog(['.claude'], { dryRun: true });
 
@@ -221,7 +222,7 @@ describe('catalog command', () => {
       await writeLockfile(lockfile);
 
       // Mock console.log to capture output
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
 
       await handleCatalog(['.claude'], { dryRun: true });
 
@@ -262,7 +263,7 @@ describe('catalog command', () => {
       await writeLockfile(lockfile);
 
       // Mock console.log
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
 
       await handleCatalog(['.claude', '.cursor'], { dryRun: true });
 

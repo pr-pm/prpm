@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for install command
  */
@@ -6,48 +7,48 @@ import { handleInstall } from '../commands/install';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
-import { readLockfile, writeLockfile, addPackage, addToLockfile, createLockfile } from '../core/lockfile';
+import { readLockfile, writeLockfile, addPackage, addToLockfile, createLockfile, getLockedVersion } from '../core/lockfile';
 import { gzipSync } from 'zlib';
 import { CLIError } from '../core/errors';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../core/filesystem', () => ({
-  getDestinationDir: jest.fn(() => '.cursor/rules'),
-  ensureDirectoryExists: jest.fn(),
-  saveFile: jest.fn(),
-  deleteFile: jest.fn(),
-  fileExists: jest.fn(() => Promise.resolve(false)),
-  generateId: jest.fn((name) => name),
-  stripAuthorNamespace: jest.fn((name) => name.split('/').pop() || name),
-  autoDetectFormat: jest.fn(() => Promise.resolve('cursor')),
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../core/filesystem', () => ({
+  getDestinationDir: vi.fn(() => '.cursor/rules'),
+  ensureDirectoryExists: vi.fn(),
+  saveFile: vi.fn(),
+  deleteFile: vi.fn(),
+  fileExists: vi.fn(() => Promise.resolve(false)),
+  generateId: vi.fn((name) => name),
+  stripAuthorNamespace: vi.fn((name) => name.split('/').pop() || name),
+  autoDetectFormat: vi.fn(() => Promise.resolve('cursor')),
 }));
-jest.mock('../core/lockfile', () => ({
-  readLockfile: jest.fn(),
-  writeLockfile: jest.fn(),
-  createLockfile: jest.fn(() => ({ packages: {} })),
-  addToLockfile: jest.fn(),
-  setPackageIntegrity: jest.fn(),
-  getLockedVersion: jest.fn(() => null),
-  addPackage: jest.fn(),
-  removePackage: jest.fn(),
-  getPackage: jest.fn(),
-  listPackages: jest.fn(() => Promise.resolve([])),
+vi.mock('../core/lockfile', () => ({
+  readLockfile: vi.fn(),
+  writeLockfile: vi.fn(),
+  createLockfile: vi.fn(() => ({ packages: {} })),
+  addToLockfile: vi.fn(),
+  setPackageIntegrity: vi.fn(),
+  getLockedVersion: vi.fn(() => null),
+  addPackage: vi.fn(),
+  removePackage: vi.fn(),
+  getPackage: vi.fn(),
+  listPackages: vi.fn(() => Promise.resolve([])),
 }));
-jest.mock('../core/telemetry', () => ({
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
 describe('install command', () => {
   const mockClient = {
-    getPackage: jest.fn(),
-    getPackageVersion: jest.fn(),
-    downloadPackage: jest.fn(),
-    trackDownload: jest.fn(),
+    getPackage: vi.fn(),
+    getPackageVersion: vi.fn(),
+    downloadPackage: vi.fn(),
+    trackDownload: vi.fn(),
   };
 
   const mockConfig = {
@@ -57,24 +58,24 @@ describe('install command', () => {
   };
 
   beforeEach(() => {
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
-    (readLockfile as jest.Mock).mockResolvedValue(null);
-    (writeLockfile as jest.Mock).mockResolvedValue(undefined);
-    (saveFile as jest.Mock).mockResolvedValue(undefined);
-    (addPackage as jest.Mock).mockResolvedValue(undefined);
-    (addToLockfile as jest.Mock).mockImplementation(() => {});
-    (createLockfile as jest.Mock).mockReturnValue({ packages: {} });
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue(mockConfig);
+    (readLockfile as Mock).mockResolvedValue(null);
+    (writeLockfile as Mock).mockResolvedValue(undefined);
+    (saveFile as Mock).mockResolvedValue(undefined);
+    (addPackage as Mock).mockResolvedValue(undefined);
+    (addToLockfile as Mock).mockImplementation(() => {});
+    (createLockfile as Mock).mockReturnValue({ packages: {} });
     mockClient.trackDownload.mockResolvedValue(undefined);
 
     // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('basic installation', () => {
@@ -225,9 +226,8 @@ describe('install command', () => {
         },
       };
 
-      const { getLockedVersion } = jest.requireMock('../core/lockfile');
-      (readLockfile as jest.Mock).mockResolvedValue(mockLockfile);
-      (getLockedVersion as jest.Mock).mockReturnValue('1.0.0');
+      (readLockfile as Mock).mockResolvedValue(mockLockfile);
+      (getLockedVersion as Mock).mockReturnValue('1.0.0');
 
       const mockPackage = {
         id: 'test-package',
@@ -254,7 +254,7 @@ describe('install command', () => {
     });
 
     it('should fail on frozen lockfile without entry', async () => {
-      (readLockfile as jest.Mock).mockResolvedValue({ packages: {} });
+      (readLockfile as Mock).mockResolvedValue({ packages: {} });
 
       await expect(
         handleInstall('test-package', { frozenLockfile: true })

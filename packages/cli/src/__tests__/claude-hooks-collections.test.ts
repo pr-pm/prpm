@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for Claude hooks in collections
  */
@@ -11,37 +12,37 @@ import { readLockfile, writeLockfile, createLockfile, addToLockfile, addCollecti
 import { gzipSync } from 'zlib';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../commands/install');
-jest.mock('../core/filesystem', () => ({
-  getDestinationDir: jest.fn((format, subtype) => {
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../commands/install');
+vi.mock('../core/filesystem', () => ({
+  getDestinationDir: vi.fn((format, subtype) => {
     if (format === 'claude' && subtype === 'hook') {
       return '.claude';
     }
     return '.claude/skills';
   }),
-  ensureDirectoryExists: jest.fn(),
-  saveFile: jest.fn(),
-  deleteFile: jest.fn(),
-  fileExists: jest.fn(() => Promise.resolve(false)),
-  generateId: jest.fn((name) => name),
-  stripAuthorNamespace: jest.fn((name) => name.split('/').pop() || name),
-  autoDetectFormat: jest.fn(() => Promise.resolve('claude')),
+  ensureDirectoryExists: vi.fn(),
+  saveFile: vi.fn(),
+  deleteFile: vi.fn(),
+  fileExists: vi.fn(() => Promise.resolve(false)),
+  generateId: vi.fn((name) => name),
+  stripAuthorNamespace: vi.fn((name) => name.split('/').pop() || name),
+  autoDetectFormat: vi.fn(() => Promise.resolve('claude')),
 }));
-jest.mock('../core/lockfile');
-jest.mock('../core/telemetry', () => ({
+vi.mock('../core/lockfile');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
 describe('Claude Hooks in Collections', () => {
   const mockClient = {
-    getCollection: jest.fn(),
-    installCollection: jest.fn(),
-    trackDownload: jest.fn(),
+    getCollection: vi.fn(),
+    installCollection: vi.fn(),
+    trackDownload: vi.fn(),
   };
 
   const mockConfig = {
@@ -50,30 +51,30 @@ describe('Claude Hooks in Collections', () => {
   };
 
   beforeEach(() => {
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
-    (readLockfile as jest.Mock).mockResolvedValue(null);
-    (writeLockfile as jest.Mock).mockResolvedValue(undefined);
-    (saveFile as jest.Mock).mockResolvedValue(undefined);
-    (createLockfile as jest.Mock).mockReturnValue({
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue(mockConfig);
+    (readLockfile as Mock).mockResolvedValue(null);
+    (writeLockfile as Mock).mockResolvedValue(undefined);
+    (saveFile as Mock).mockResolvedValue(undefined);
+    (createLockfile as Mock).mockReturnValue({
       version: '1.0.0',
       lockfileVersion: 1,
       packages: {},
       generated: new Date().toISOString()
     });
-    (addToLockfile as jest.Mock).mockImplementation(() => {});
-    (addCollectionToLockfile as jest.Mock).mockImplementation(() => {});
-    (handleInstall as jest.Mock).mockResolvedValue(undefined);
+    (addToLockfile as Mock).mockImplementation(() => {});
+    (addCollectionToLockfile as Mock).mockImplementation(() => {});
+    (handleInstall as Mock).mockResolvedValue(undefined);
 
     // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
-    jest.spyOn(console, 'warn').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'warn').mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Collection with Claude hooks', () => {
@@ -287,7 +288,7 @@ describe('Claude Hooks in Collections', () => {
       );
 
       // But not mention Kiro hooks (different type)
-      const allLogs = (console.log as jest.Mock).mock.calls.map(call => call[0]).join(' ');
+      const allLogs = (console.log as Mock).mock.calls.map(call => call[0]).join(' ');
       expect(allLogs).toContain('.claude/settings.json');
     });
 
@@ -383,7 +384,7 @@ describe('Claude Hooks in Collections', () => {
       });
 
       // Make the hook install fail
-      (handleInstall as jest.Mock).mockImplementation(async (packageSpec) => {
+      (handleInstall as Mock).mockImplementation(async (packageSpec) => {
         if (packageSpec.includes('failing-hook')) {
           throw new Error('Hook installation failed');
         }
@@ -436,7 +437,7 @@ describe('Claude Hooks in Collections', () => {
         packagesToInstall,
       });
 
-      (handleInstall as jest.Mock).mockRejectedValue(new Error('Required hook failed'));
+      (handleInstall as Mock).mockRejectedValue(new Error('Required hook failed'));
 
       await expect(
         handleCollectionInstall('required-hook-collection', {

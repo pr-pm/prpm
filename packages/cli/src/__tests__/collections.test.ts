@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for collections command
  */
@@ -12,27 +13,27 @@ import { handleInstall } from '../commands/install';
 import { CLIError } from '../core/errors';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../commands/install');
-jest.mock('../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../commands/install');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
-jest.mock('../core/lockfile', () => ({
-  readLockfile: jest.fn().mockResolvedValue(null),
-  writeLockfile: jest.fn(),
-  createLockfile: jest.fn().mockReturnValue({ packages: {}, collections: {} }),
-  addCollectionToLockfile: jest.fn(),
+vi.mock('../core/lockfile', () => ({
+  readLockfile: vi.fn().mockResolvedValue(null),
+  writeLockfile: vi.fn(),
+  createLockfile: vi.fn().mockReturnValue({ packages: {}, collections: {} }),
+  addCollectionToLockfile: vi.fn(),
 }));
 
 describe('collections command', () => {
   const mockClient = {
-    getCollections: jest.fn(),
-    getCollection: jest.fn(),
-    createCollection: jest.fn(),
+    getCollections: vi.fn(),
+    getCollection: vi.fn(),
+    createCollection: vi.fn(),
   };
 
   const mockConfig = {
@@ -52,17 +53,17 @@ describe('collections command', () => {
     testDir = await mkdtemp(join(tmpdir(), 'prpm-test-'));
     process.chdir(testDir);
 
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue(mockConfig);
 
     // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(async () => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
 
     try {
       process.chdir(originalCwd);
@@ -400,7 +401,7 @@ describe('collections command', () => {
     });
 
     it('should require authentication', async () => {
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'https://test-registry.com',
         token: undefined,
       });
@@ -710,8 +711,8 @@ describe('collections command', () => {
     };
 
     beforeEach(() => {
-      mockClient.installCollection = jest.fn().mockResolvedValue(mockInstallCollection);
-      (handleInstall as jest.Mock).mockResolvedValue(undefined);
+      mockClient.installCollection = vi.fn().mockResolvedValue(mockInstallCollection);
+      (handleInstall as Mock).mockResolvedValue(undefined);
     });
 
     it('should auto-detect format when no --as flag is provided', async () => {
@@ -738,7 +739,7 @@ describe('collections command', () => {
       );
 
       // Verify 'as' is not set
-      const firstCall = (handleInstall as jest.Mock).mock.calls[0][1];
+      const firstCall = (handleInstall as Mock).mock.calls[0][1];
       expect(firstCall).not.toHaveProperty('as');
     });
 
@@ -816,7 +817,7 @@ describe('collections command', () => {
     });
 
     it('should continue installing after optional package failure', async () => {
-      (handleInstall as jest.Mock)
+      (handleInstall as Mock)
         .mockResolvedValueOnce(undefined) // First package succeeds
         .mockRejectedValueOnce(new Error('Install failed')); // Second package fails
 
@@ -831,7 +832,7 @@ describe('collections command', () => {
 
     it('should fail if required package installation fails', async () => {
       // Make the first (required) package fail
-      (handleInstall as jest.Mock).mockRejectedValueOnce(new Error('Required package failed'));
+      (handleInstall as Mock).mockRejectedValueOnce(new Error('Required package failed'));
 
       await expect(handleCollectionInstall('test-collection', {})).rejects.toThrow(CLIError);
 

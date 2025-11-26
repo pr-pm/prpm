@@ -3,6 +3,7 @@
  * Shared utilities for end-to-end CLI testing
  */
 
+import { vi } from 'vitest';
 import { mkdir, writeFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -201,7 +202,7 @@ export async function createMockConfig(
 export function createMockFetch() {
   const responses = new Map<string, any>();
 
-  const mockFetch = jest.fn(async (url: string, options?: any) => {
+  const mockFetch = vi.fn(async (url: string, options?: any) => {
     const key = `${options?.method || 'GET'} ${url}`;
     const response = responses.get(key) || responses.get(url);
 

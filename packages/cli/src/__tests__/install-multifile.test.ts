@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for multi-file package installation
  */
@@ -14,22 +15,22 @@ import * as path from 'path';
 import { CLIError } from '../core/errors';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../core/lockfile');
-jest.mock('../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../core/lockfile');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
-jest.mock('../core/filesystem', () => {
-  const actual = jest.requireActual('../core/filesystem');
+vi.mock('../core/filesystem', async () => {
+  const actual = await vi.importActual('../core/filesystem');
   return {
     ...actual,
-    saveFile: jest.fn(actual.saveFile),
-    ensureDirectoryExists: jest.fn(actual.ensureDirectoryExists),
+    saveFile: vi.fn(actual.saveFile),
+    ensureDirectoryExists: vi.fn(actual.ensureDirectoryExists),
   };
 });
 
@@ -93,10 +94,10 @@ async function createTarGz(files: Record<string, string>, options?: { format?: s
 
 describe('install command - multi-file packages', () => {
   const mockClient = {
-    getPackage: jest.fn(),
-    getPackageVersion: jest.fn(),
-    downloadPackage: jest.fn(),
-    trackDownload: jest.fn(),
+    getPackage: vi.fn(),
+    getPackageVersion: vi.fn(),
+    downloadPackage: vi.fn(),
+    trackDownload: vi.fn(),
   };
 
   const mockConfig = {
@@ -105,23 +106,23 @@ describe('install command - multi-file packages', () => {
   };
 
   beforeEach(() => {
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
-    (readLockfile as jest.Mock).mockResolvedValue(null);
-    (writeLockfile as jest.Mock).mockResolvedValue(undefined);
-    (addToLockfile as jest.Mock).mockImplementation(() => {});
-    (createLockfile as jest.Mock).mockReturnValue({ packages: {} });
-    (setPackageIntegrity as jest.Mock).mockImplementation(() => {});
-    (saveFile as jest.Mock).mockResolvedValue(undefined);
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue(mockConfig);
+    (readLockfile as Mock).mockResolvedValue(null);
+    (writeLockfile as Mock).mockResolvedValue(undefined);
+    (addToLockfile as Mock).mockImplementation(() => {});
+    (createLockfile as Mock).mockReturnValue({ packages: {} });
+    (setPackageIntegrity as Mock).mockImplementation(() => {});
+    (saveFile as Mock).mockResolvedValue(undefined);
     mockClient.trackDownload.mockResolvedValue(undefined);
 
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Single file packages', () => {
@@ -266,7 +267,7 @@ describe('install command - multi-file packages', () => {
       mockClient.downloadPackage.mockResolvedValue(tarGz);
 
       // Mock console.log to capture the warning
-      const consoleLogSpy = jest.spyOn(console, 'log');
+      const consoleLogSpy = vi.spyOn(console, 'log');
 
       await handleInstall('legacy-skill', {});
 

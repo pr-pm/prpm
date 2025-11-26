@@ -5,24 +5,8 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 
-// Get the directory where this file is located
-// Handle both CommonJS (Jest) and ES modules (Vitest/production)
-const currentDirname = (() => {
-  // Try CommonJS first (for Jest)
-  if (typeof __dirname !== 'undefined') {
-    return __dirname;
-  }
-
-  // ES modules (Vitest/production)
-  // Use indirect eval to hide import.meta from Jest's parser
-  try {
-    const importMeta = (0, eval)('import.meta');
-    return dirname(fileURLToPath(importMeta.url));
-  } catch (e) {
-    // Fallback: assume we're in the dist directory
-    return join(process.cwd(), 'packages', 'converters', 'dist');
-  }
-})();
+// Get the directory where this file is located (ESM)
+const currentDirname = dirname(fileURLToPath(import.meta.url));
 
 // Initialize Ajv with strict mode disabled for better compatibility
 const ajv = new Ajv({

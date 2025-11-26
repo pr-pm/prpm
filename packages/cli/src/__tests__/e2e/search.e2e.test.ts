@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * End-to-End Tests for Search Command
  */
@@ -10,12 +11,12 @@ import { CLIError } from '../../core/errors';
 import { tmpdir } from 'os';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../../core/user-config');
-jest.mock('../../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../../core/user-config');
+vi.mock('../../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
@@ -24,7 +25,7 @@ describe('Search Command - E2E Tests', () => {
   let originalCwd: string;
 
   const mockClient = {
-    search: jest.fn(),
+    search: vi.fn(),
   };
 
   beforeAll(() => {
@@ -36,19 +37,19 @@ describe('Search Command - E2E Tests', () => {
     process.chdir(testDir);
 
     // Set up console spies for each test
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
 
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue({
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue({
       registryUrl: 'http://localhost:3111',
     });
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(async () => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     try {
       process.chdir(originalCwd);
     } catch {

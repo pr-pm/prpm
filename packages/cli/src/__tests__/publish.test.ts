@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for package publishing flow
  */
@@ -12,31 +13,31 @@ import { tmpdir } from 'os';
 import { CLIError } from '../core/errors';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn().mockResolvedValue(undefined),
-    shutdown: jest.fn().mockResolvedValue(undefined),
+    track: vi.fn().mockResolvedValue(undefined),
+    shutdown: vi.fn().mockResolvedValue(undefined),
   },
 }));
-jest.mock('../commands/init.js', () => ({
-  smartInit: jest.fn().mockResolvedValue(undefined),
+vi.mock('../commands/init.js', () => ({
+  smartInit: vi.fn().mockResolvedValue(undefined),
 }));
 
-const mockGetConfig = getConfig as jest.MockedFunction<typeof getConfig>;
-const mockGetRegistryClient = getRegistryClient as jest.MockedFunction<typeof getRegistryClient>;
+const mockGetConfig = getConfig as MockedFunction<typeof getConfig>;
+const mockGetRegistryClient = getRegistryClient as MockedFunction<typeof getRegistryClient>;
 
 describe('Publish Command', () => {
   let testDir: string;
   let originalCwd: string;
-  let consoleMock: jest.SpyInstance;
-  let consoleErrorMock: jest.SpyInstance;
+  let consoleMock: MockInstance;
+  let consoleErrorMock: MockInstance;
 
   beforeAll(() => {
     // Mock console methods (persist across tests)
-    consoleMock = jest.spyOn(console, 'log').mockImplementation();
-    consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+    consoleMock = vi.spyOn(console, 'log').mockImplementation();
+    consoleErrorMock = vi.spyOn(console, 'error').mockImplementation();
   });
 
   beforeEach(async () => {
@@ -151,7 +152,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test rules"\n---\n\n# Test rules');
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -201,7 +202,7 @@ describe('Publish Command', () => {
       await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
       await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-skill',
         name: 'test-skill',
         version: '1.0.0',
@@ -291,8 +292,8 @@ describe('Publish Command', () => {
       await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
       await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
 
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      const mockPublish = jest.fn().mockResolvedValue({
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-skill',
         name: 'test-skill',
         version: '1.0.0',
@@ -336,7 +337,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -372,7 +373,7 @@ describe('Publish Command', () => {
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Cursor rules"\n---\n\n# Cursor rules');
       await writeFile(join(testDir, 'README.md'), '# README');
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -405,7 +406,7 @@ describe('Publish Command', () => {
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
       await writeFile(join(testDir, 'custom-file.txt'), 'Custom content');
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -471,8 +472,8 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockPublish = jest.fn();
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn();
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
         organizations: [],
       });
@@ -515,7 +516,7 @@ describe('Publish Command', () => {
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test rules"\n---\n\n# Test rules');
       await writeFile(join(testDir, 'README.md'), '# Test README');
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -566,7 +567,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockPublish = jest.fn().mockRejectedValue(new Error('Package already exists'));
+      const mockPublish = vi.fn().mockRejectedValue(new Error('Package already exists'));
 
       mockGetRegistryClient.mockReturnValue({
         publish: mockPublish,
@@ -625,7 +626,7 @@ describe('Publish Command', () => {
 
         await writeFile(join(testDir, typeFiles[type]), typeContent[type]);
 
-        const mockPublish = jest.fn().mockResolvedValue({
+        const mockPublish = vi.fn().mockResolvedValue({
           package_id: `test-${type}-package`,
           name: `test-${type}-package`,
           version: '1.0.0',
@@ -663,7 +664,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: '@myorg/test-package',
         name: '@myorg/test-package',
         version: '1.0.0',
@@ -701,7 +702,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
         organizations: [
           { id: 'org-123', name: 'my-company', role: 'owner' },
@@ -709,7 +710,7 @@ describe('Publish Command', () => {
         ],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: '@company/team-package',
         name: '@company/team-package',
         version: '1.0.0',
@@ -748,14 +749,14 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
         organizations: [
           { id: 'org-123', name: 'my-company', role: 'admin' },
         ],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'org-package',
         name: 'org-package',
         version: '1.0.0',
@@ -790,7 +791,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
         organizations: [
           { id: 'org-123', name: 'my-company', role: 'owner' },
@@ -799,7 +800,7 @@ describe('Publish Command', () => {
 
       mockGetRegistryClient.mockReturnValue({
         whoami: mockWhoami,
-        publish: jest.fn(),
+        publish: vi.fn(),
       } as any);
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
@@ -820,7 +821,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
         organizations: [
           { id: 'org-123', name: 'my-company', role: 'member' }, // Not owner/admin/maintainer
@@ -829,7 +830,7 @@ describe('Publish Command', () => {
 
       mockGetRegistryClient.mockReturnValue({
         whoami: mockWhoami,
-        publish: jest.fn(),
+        publish: vi.fn(),
       } as any);
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
@@ -850,14 +851,14 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
         organizations: [
           { id: 'org-123', name: 'my-company', role: 'owner' },
         ],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'owner-package',
         name: 'owner-package',
         version: '1.0.0',
@@ -888,14 +889,14 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
         organizations: [
           { id: 'org-123', name: 'my-company', role: 'admin' },
         ],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'admin-package',
         name: 'admin-package',
         version: '1.0.0',
@@ -926,14 +927,14 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
         organizations: [
           { id: 'org-123', name: 'my-company', role: 'maintainer' },
         ],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'maintainer-package',
         name: 'maintainer-package',
         version: '1.0.0',
@@ -963,14 +964,14 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
         organizations: [
           { id: 'org-123', name: 'my-company', role: 'owner' },
         ],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'personal-package',
         name: 'personal-package',
         version: '1.0.0',
@@ -1006,11 +1007,11 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockRejectedValue(new Error('Network error'));
+      const mockWhoami = vi.fn().mockRejectedValue(new Error('Network error'));
 
       mockGetRegistryClient.mockReturnValue({
         whoami: mockWhoami,
-        publish: jest.fn(),
+        publish: vi.fn(),
       } as any);
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
@@ -1030,8 +1031,8 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockRejectedValue(new Error('Network error'));
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockRejectedValue(new Error('Network error'));
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -1067,7 +1068,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -1104,7 +1105,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockPublish = jest.fn().mockRejectedValue(new Error('Network error'));
+      const mockPublish = vi.fn().mockRejectedValue(new Error('Network error'));
 
       mockGetRegistryClient.mockReturnValue({
         publish: mockPublish,
@@ -1158,7 +1159,7 @@ describe('Publish Command', () => {
       await writeFile(join(testDir, 'package-one.cursorrules'), '---\ndescription: "Package one rules"\n---\n\n# Package one rules');
       await writeFile(join(testDir, 'SKILL.md'), '---\nname: package-two\ndescription: Package two skill\n---\n\n# Package two skill');
 
-      const mockPublish = jest.fn()
+      const mockPublish = vi.fn()
         .mockResolvedValueOnce({
           package_id: 'package-one',
           name: 'package-one',
@@ -1170,7 +1171,7 @@ describe('Publish Command', () => {
           version: '1.0.0',
         });
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
       });
 
@@ -1236,13 +1237,13 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, 'test.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'package-override',
         name: 'package-override',
         version: '2.0.0',
       });
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'testuser',
       });
 
@@ -1281,13 +1282,13 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'admin-user',
         is_admin: true,
         organizations: [],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -1323,13 +1324,13 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'regular-user',
         is_admin: false,
         organizations: [],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -1367,13 +1368,13 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'admin-user',
         is_admin: true,
         organizations: [],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -1412,7 +1413,7 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'admin-user',
         is_admin: true,
         organizations: [
@@ -1420,7 +1421,7 @@ describe('Publish Command', () => {
         ],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',
@@ -1460,13 +1461,13 @@ describe('Publish Command', () => {
 
       await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
 
-      const mockWhoami = jest.fn().mockResolvedValue({
+      const mockWhoami = vi.fn().mockResolvedValue({
         username: 'admin-user',
         is_admin: true,
         organizations: [],
       });
 
-      const mockPublish = jest.fn().mockResolvedValue({
+      const mockPublish = vi.fn().mockResolvedValue({
         package_id: 'test-package',
         name: 'test-package',
         version: '1.0.0',

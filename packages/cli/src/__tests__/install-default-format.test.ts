@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for defaultFormat configuration in install command
  */
@@ -13,39 +14,39 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../core/filesystem', () => {
-  const actual = jest.requireActual('../core/filesystem');
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../core/filesystem', async () => {
+  const actual = await vi.importActual('../core/filesystem');
   return {
     ...actual,
-    autoDetectFormat: jest.fn(),
-    saveFile: jest.fn().mockResolvedValue(undefined),
-    ensureDirectoryExists: jest.fn().mockResolvedValue(undefined),
-    fileExists: jest.fn().mockResolvedValue(false),
+    autoDetectFormat: vi.fn(),
+    saveFile: vi.fn().mockResolvedValue(undefined),
+    ensureDirectoryExists: vi.fn().mockResolvedValue(undefined),
+    fileExists: vi.fn().mockResolvedValue(false),
   };
 });
-jest.mock('../core/lockfile', () => ({
-  readLockfile: jest.fn().mockResolvedValue(null),
-  writeLockfile: jest.fn(),
-  createLockfile: jest.fn(() => ({ packages: {} })),
-  addToLockfile: jest.fn(),
-  setPackageIntegrity: jest.fn(),
-  getLockedVersion: jest.fn(() => null),
+vi.mock('../core/lockfile', () => ({
+  readLockfile: vi.fn().mockResolvedValue(null),
+  writeLockfile: vi.fn(),
+  createLockfile: vi.fn(() => ({ packages: {} })),
+  addToLockfile: vi.fn(),
+  setPackageIntegrity: vi.fn(),
+  getLockedVersion: vi.fn(() => null),
 }));
-jest.mock('../core/telemetry', () => ({
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
 describe('install command - defaultFormat config', () => {
   const mockClient = {
-    getPackage: jest.fn(),
-    getPackageVersion: jest.fn(),
-    downloadPackage: jest.fn(),
-    trackDownload: jest.fn(),
+    getPackage: vi.fn(),
+    getPackageVersion: vi.fn(),
+    downloadPackage: vi.fn(),
+    trackDownload: vi.fn(),
   };
 
   const mockPackage = {
@@ -64,7 +65,7 @@ describe('install command - defaultFormat config', () => {
   };
 
   beforeEach(() => {
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
     mockClient.getPackage.mockResolvedValue(mockPackage);
     mockClient.trackDownload.mockResolvedValue(undefined);
 
@@ -77,26 +78,26 @@ describe('install command - defaultFormat config', () => {
     mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Content'));
 
     // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
 
     // Mock process.exit to prevent actual exit during tests
-    jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+    vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
       throw new Error(`Process exited with code ${code}`);
     }) as any);
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('should use CLI --as flag over config defaultFormat', async () => {
-    (getConfig as jest.Mock).mockResolvedValue({
+    (getConfig as Mock).mockResolvedValue({
       registryUrl: 'https://test-registry.com',
       defaultFormat: 'claude',
     });
-    (autoDetectFormat as jest.Mock).mockResolvedValue(null);
+    (autoDetectFormat as Mock).mockResolvedValue(null);
 
     await handleInstall('test-package', { as: 'windsurf' });
 
@@ -112,11 +113,11 @@ describe('install command - defaultFormat config', () => {
   });
 
   it('should use config defaultFormat over auto-detected format', async () => {
-    (getConfig as jest.Mock).mockResolvedValue({
+    (getConfig as Mock).mockResolvedValue({
       registryUrl: 'https://test-registry.com',
       defaultFormat: 'cursor',
     });
-    (autoDetectFormat as jest.Mock).mockResolvedValue('claude');
+    (autoDetectFormat as Mock).mockResolvedValue('claude');
 
     await handleInstall('test-package', {});
 
@@ -135,11 +136,11 @@ describe('install command - defaultFormat config', () => {
   });
 
   it('should use defaultFormat from config when no CLI flag and no auto-detection', async () => {
-    (getConfig as jest.Mock).mockResolvedValue({
+    (getConfig as Mock).mockResolvedValue({
       registryUrl: 'https://test-registry.com',
       defaultFormat: 'windsurf',
     });
-    (autoDetectFormat as jest.Mock).mockResolvedValue(null);
+    (autoDetectFormat as Mock).mockResolvedValue(null);
 
     await handleInstall('test-package', {});
 
@@ -158,11 +159,11 @@ describe('install command - defaultFormat config', () => {
   });
 
   it('should fall back to package native format when no config, CLI flag, or auto-detection', async () => {
-    (getConfig as jest.Mock).mockResolvedValue({
+    (getConfig as Mock).mockResolvedValue({
       registryUrl: 'https://test-registry.com',
       // No defaultFormat in config
     });
-    (autoDetectFormat as jest.Mock).mockResolvedValue(null);
+    (autoDetectFormat as Mock).mockResolvedValue(null);
 
     await handleInstall('test-package', {});
 
@@ -187,22 +188,22 @@ describe('install command - defaultFormat config', () => {
 
     for (const format of formats) {
       // Reset mocks between iterations
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       // Re-setup process.exit mock after clearAllMocks
-      jest.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+      vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
         throw new Error(`Process exited with code ${code}`);
       }) as any);
 
       // Re-setup console mocks
-      jest.spyOn(console, 'log').mockImplementation();
-      jest.spyOn(console, 'error').mockImplementation();
+      vi.spyOn(console, 'log').mockImplementation();
+      vi.spyOn(console, 'error').mockImplementation();
 
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'https://test-registry.com',
         defaultFormat: format,
       });
-      (autoDetectFormat as jest.Mock).mockResolvedValue(null);
+      (autoDetectFormat as Mock).mockResolvedValue(null);
 
       await handleInstall('test-package', {});
 
@@ -216,11 +217,11 @@ describe('install command - defaultFormat config', () => {
   it('should use defaultFormat from repo .prpmrc over user ~/.prpmrc', async () => {
     // This tests the config merging behavior
     // Repo config should override user config
-    (getConfig as jest.Mock).mockResolvedValue({
+    (getConfig as Mock).mockResolvedValue({
       registryUrl: 'https://test-registry.com',
       defaultFormat: 'windsurf', // This would be from repo .prpmrc
     });
-    (autoDetectFormat as jest.Mock).mockResolvedValue(null);
+    (autoDetectFormat as Mock).mockResolvedValue(null);
 
     await handleInstall('test-package', {});
 
@@ -236,11 +237,11 @@ describe('install command - defaultFormat config', () => {
   });
 
   it('should display correct console output when using defaultFormat', async () => {
-    (getConfig as jest.Mock).mockResolvedValue({
+    (getConfig as Mock).mockResolvedValue({
       registryUrl: 'https://test-registry.com',
       defaultFormat: 'claude',
     });
-    (autoDetectFormat as jest.Mock).mockResolvedValue(null);
+    (autoDetectFormat as Mock).mockResolvedValue(null);
 
     await handleInstall('test-package', {});
 

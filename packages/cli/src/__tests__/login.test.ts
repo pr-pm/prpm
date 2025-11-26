@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest';
 /**
  * Tests for login command
  */
@@ -6,24 +7,24 @@ import { handleLogin } from '../commands/login';
 import { CLIError } from '../core/errors';
 
 // Mock dependencies
-jest.mock('../core/user-config');
-jest.mock('../core/telemetry', () => ({
+vi.mock('../core/user-config');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
 describe('login command', () => {
   beforeEach(() => {
     // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('login flow', () => {

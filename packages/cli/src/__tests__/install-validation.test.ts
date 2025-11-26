@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createInstallCommand } from '../commands/install';
 import { CLIError } from '../core/errors';
 

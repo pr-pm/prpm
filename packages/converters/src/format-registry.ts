@@ -8,7 +8,17 @@
  * - File extensions
  */
 
-import formatRegistryData from './format-registry.json';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Get current directory (ESM)
+const currentDir = dirname(fileURLToPath(import.meta.url));
+
+// Read JSON file using fs for ESM compatibility
+const formatRegistryData = JSON.parse(
+  readFileSync(join(currentDir, 'format-registry.json'), 'utf-8')
+);
 
 /**
  * Configuration for a specific subtype within a format

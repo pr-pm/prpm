@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for search command
  */
@@ -8,18 +9,18 @@ import { getConfig } from '../core/user-config';
 import { CLIError } from '../core/errors';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../core/user-config');
-jest.mock('../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../core/user-config');
+vi.mock('../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn(),
-    shutdown: jest.fn(),
+    track: vi.fn(),
+    shutdown: vi.fn(),
   },
 }));
 
 describe('search command', () => {
   const mockClient = {
-    search: jest.fn(),
+    search: vi.fn(),
   };
 
   const mockConfig = {
@@ -28,17 +29,17 @@ describe('search command', () => {
   };
 
   beforeEach(() => {
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue(mockConfig);
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue(mockConfig);
 
     // Mock console methods
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('basic search', () => {
@@ -173,7 +174,7 @@ describe('search command', () => {
       await handleSearch('test', { interactive: false });
 
       // Check that verified badge is displayed
-      const logCalls = (console.log as jest.Mock).mock.calls;
+      const logCalls = (console.log as Mock).mock.calls;
       const hasVerifiedBadge = logCalls.some(call =>
         call[0] && (call[0].includes('Verified') || call[0].includes('✓'))
       );
@@ -200,7 +201,7 @@ describe('search command', () => {
 
       await handleSearch('test', { interactive: false });
 
-      const logCalls = (console.log as jest.Mock).mock.calls;
+      const logCalls = (console.log as Mock).mock.calls;
       const hasFormattedDownloads = logCalls.some(call =>
         call[0] && call[0].includes('5.0k')
       );
@@ -228,7 +229,7 @@ describe('search command', () => {
 
       await handleSearch('test', { interactive: false });
 
-      const logCalls = (console.log as jest.Mock).mock.calls;
+      const logCalls = (console.log as Mock).mock.calls;
       const hasRating = logCalls.some(call =>
         call[0] && call[0].includes('4.7')
       );
@@ -298,7 +299,7 @@ describe('search command', () => {
 
       await handleSearch('test', { interactive: false });
 
-      const logCalls = (console.log as jest.Mock).mock.calls;
+      const logCalls = (console.log as Mock).mock.calls;
       const hasPagination = logCalls.some(call =>
         call[0] && call[0].includes('Showing')
       );

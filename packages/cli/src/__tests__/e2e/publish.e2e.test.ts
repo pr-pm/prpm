@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
 /**
  * End-to-End Tests for Publish Command
  */
@@ -12,16 +13,16 @@ import { tmpdir } from 'os';
 import { CLIError } from '../../core/errors';
 
 // Mock dependencies
-jest.mock('@pr-pm/registry-client');
-jest.mock('../../core/user-config');
-jest.mock('../../core/telemetry', () => ({
+vi.mock('@pr-pm/registry-client');
+vi.mock('../../core/user-config');
+vi.mock('../../core/telemetry', () => ({
   telemetry: {
-    track: jest.fn().mockResolvedValue(undefined),
-    shutdown: jest.fn().mockResolvedValue(undefined),
+    track: vi.fn().mockResolvedValue(undefined),
+    shutdown: vi.fn().mockResolvedValue(undefined),
   },
 }));
-jest.mock('../../commands/init.js', () => ({
-  smartInit: jest.fn().mockResolvedValue(undefined),
+vi.mock('../../commands/init.js', () => ({
+  smartInit: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('Publish Command - E2E Tests', () => {
@@ -29,8 +30,8 @@ describe('Publish Command - E2E Tests', () => {
   let originalCwd: string;
 
   const mockClient = {
-    publish: jest.fn(),
-    whoami: jest.fn().mockResolvedValue({
+    publish: vi.fn(),
+    whoami: vi.fn().mockResolvedValue({
       username: 'testuser',
       organizations: [],
     }),
@@ -45,20 +46,20 @@ describe('Publish Command - E2E Tests', () => {
     process.chdir(testDir);
 
     // Set up console spies for each test
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation();
 
-    (getRegistryClient as jest.Mock).mockReturnValue(mockClient);
-    (getConfig as jest.Mock).mockResolvedValue({
+    (getRegistryClient as Mock).mockReturnValue(mockClient);
+    (getConfig as Mock).mockResolvedValue({
       registryUrl: 'http://localhost:3111',
       token: 'test-token-123',
     });
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(async () => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     try {
       process.chdir(originalCwd);
     } catch {
@@ -94,7 +95,7 @@ describe('Publish Command - E2E Tests', () => {
       const types = ['cursor', 'claude', 'continue', 'windsurf', 'generic'];
 
       for (const type of types) {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         try {
           process.chdir(originalCwd);
         } catch {
@@ -251,7 +252,7 @@ describe('Publish Command - E2E Tests', () => {
 
   describe('Authentication', () => {
     it('should require authentication token', async () => {
-      (getConfig as jest.Mock).mockResolvedValue({
+      (getConfig as Mock).mockResolvedValue({
         registryUrl: 'http://localhost:3111',
         token: undefined,
       });
