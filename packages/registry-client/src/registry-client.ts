@@ -201,6 +201,17 @@ export class RegistryClient {
     // Parse URL
     const urlObj = new URL(url);
 
+    // Security: Enforce HTTPS for production downloads
+    // Allow HTTP only for localhost (development)
+    const isLocalhost = urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1';
+    if (urlObj.protocol === 'http:' && !isLocalhost) {
+      throw new Error(
+        `Security error: HTTP downloads are not allowed for non-localhost URLs.\n` +
+        `URL: ${url}\n` +
+        `All package downloads must use HTTPS to prevent man-in-the-middle attacks.`
+      );
+    }
+
     // If format is specified, append format param
     if (options.format) {
       urlObj.searchParams.set('format', options.format);

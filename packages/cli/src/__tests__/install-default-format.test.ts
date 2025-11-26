@@ -32,7 +32,13 @@ vi.mock('../core/lockfile', () => ({
   createLockfile: vi.fn(() => ({ packages: {} })),
   addToLockfile: vi.fn(),
   setPackageIntegrity: vi.fn(),
+  verifyPackageIntegrity: vi.fn(() => true),
   getLockedVersion: vi.fn(() => null),
+  getLockfileKey: vi.fn((packageId: string, format?: string) => format ? `${packageId}#${format}` : packageId),
+  parseLockfileKey: vi.fn((key: string) => {
+    const parts = key.split('#');
+    return { packageId: parts[0], format: parts[1] };
+  }),
 }));
 vi.mock('../core/telemetry', () => ({
   telemetry: {

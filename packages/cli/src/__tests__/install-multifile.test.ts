@@ -17,7 +17,20 @@ import { CLIError } from '../core/errors';
 // Mock dependencies
 vi.mock('@pr-pm/registry-client');
 vi.mock('../core/user-config');
-vi.mock('../core/lockfile');
+vi.mock('../core/lockfile', () => ({
+  readLockfile: vi.fn(),
+  writeLockfile: vi.fn(),
+  createLockfile: vi.fn(() => ({ packages: {} })),
+  addToLockfile: vi.fn(),
+  setPackageIntegrity: vi.fn(),
+  verifyPackageIntegrity: vi.fn(() => true),
+  getLockedVersion: vi.fn(() => null),
+  getLockfileKey: vi.fn((packageId: string, format?: string) => format ? `${packageId}#${format}` : packageId),
+  parseLockfileKey: vi.fn((key: string) => {
+    const parts = key.split('#');
+    return { packageId: parts[0], format: parts[1] };
+  }),
+}));
 vi.mock('../core/telemetry', () => ({
   telemetry: {
     track: vi.fn(),
@@ -196,7 +209,8 @@ describe('install command - multi-file packages', () => {
       );
     });
 
-    it('should extract multi-file tarballs even without ustar headers', async () => {
+    it('should reject tampered tarballs with corrupted headers (security)', async () => {
+      // Security: tampered archives should be rejected with strict mode enabled
       const mockPackage = {
         id: 'complex-skill',
         name: 'complex-skill',
@@ -218,7 +232,7 @@ describe('install command - multi-file packages', () => {
 
       const tamperedTar = (() => {
         const decompressed = gunzipSync(tarGz);
-        // Wipe out the POSIX magic header so detection cannot rely on it
+        // Wipe out the POSIX magic header - this corrupts the archive
         decompressed.fill(0, 257, 263);
         return gzipSync(decompressed);
       })();
@@ -226,21 +240,8 @@ describe('install command - multi-file packages', () => {
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.downloadPackage.mockResolvedValue(tamperedTar);
 
-      await handleInstall('complex-skill', {});
-
-      expect(saveFile).toHaveBeenCalledTimes(3);
-      expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/complex-skill/SKILL.md',
-        '# Main Skill File'
-      );
-      expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/complex-skill/helpers/utils.md',
-        '# Utility Functions'
-      );
-      expect(saveFile).toHaveBeenCalledWith(
-        '.claude/skills/complex-skill/examples/demo.md',
-        '# Demo Examples'
-      );
+      // Should reject the tampered archive for security
+      await expect(handleInstall('complex-skill', {})).rejects.toThrow(CLIError);
     });
 
     it('should auto-fix skill.md to SKILL.md for Claude skills', async () => {
