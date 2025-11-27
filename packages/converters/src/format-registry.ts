@@ -8,7 +8,7 @@
  * - File extensions
  */
 
-import formatRegistryData from './format-registry.json' assert { type: 'json' };
+import formatRegistryData from "./format-registry.json" with { type: "json" };
 
 /**
  * Configuration for a specific subtype within a format
@@ -87,7 +87,10 @@ export function getFormatConfig(format: string): FormatConfig | undefined {
 /**
  * Get subtype configuration for a format/subtype combination
  */
-export function getSubtypeConfig(format: string, subtype: string): SubtypeConfig | undefined {
+export function getSubtypeConfig(
+  format: string,
+  subtype: string,
+): SubtypeConfig | undefined {
   const formatConfig = formatRegistry.formats[format];
   if (!formatConfig) return undefined;
   return formatConfig.subtypes[subtype];
@@ -102,7 +105,7 @@ export function getSubtypeConfig(format: string, subtype: string): SubtypeConfig
 export function getDestinationDirectory(
   format: string,
   subtype: string,
-  packageName?: string
+  packageName?: string,
 ): string | undefined {
   const config = getSubtypeConfig(format, subtype);
   if (!config) return undefined;
@@ -120,7 +123,10 @@ export function getDestinationDirectory(
  * @param format - Format name
  * @param subtype - Subtype name
  */
-export function getScanDirectory(format: string, subtype: string): string | undefined {
+export function getScanDirectory(
+  format: string,
+  subtype: string,
+): string | undefined {
   const config = getSubtypeConfig(format, subtype);
   if (!config) return undefined;
 
@@ -131,7 +137,10 @@ export function getScanDirectory(format: string, subtype: string): string | unde
 /**
  * Get file patterns for scanning a format/subtype
  */
-export function getFilePatterns(format: string, subtype: string): string[] | undefined {
+export function getFilePatterns(
+  format: string,
+  subtype: string,
+): string[] | undefined {
   const config = getSubtypeConfig(format, subtype);
   return config?.filePatterns;
 }
@@ -139,7 +148,10 @@ export function getFilePatterns(format: string, subtype: string): string[] | und
 /**
  * Get the default file extension for a format/subtype
  */
-export function getFileExtension(format: string, subtype: string): string | undefined {
+export function getFileExtension(
+  format: string,
+  subtype: string,
+): string | undefined {
   const config = getSubtypeConfig(format, subtype);
   return config?.fileExtension;
 }
@@ -155,7 +167,10 @@ export function isNestedPackage(format: string, subtype: string): boolean {
 /**
  * Get the nested indicator file for a format/subtype
  */
-export function getNestedIndicator(format: string, subtype: string): string | undefined {
+export function getNestedIndicator(
+  format: string,
+  subtype: string,
+): string | undefined {
   const config = getSubtypeConfig(format, subtype);
   return config?.nestedIndicator;
 }

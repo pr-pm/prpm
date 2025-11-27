@@ -26,6 +26,10 @@
           "type": "string",
           "maxLength": 128,
           "description": "Optional license identifier for the skill (e.g., MIT, Apache-2.0)"
+        },
+        "allowed-tools": {
+          "type": "string",
+          "description": "Comma-separated list of tools the skill is allowed to use (e.g., 'Read, Edit, Bash')"
         }
       },
       "additionalProperties": false

@@ -32,8 +32,13 @@ import type {
   CategoryListResponse,
   UseCaseListResponse,
   CategoryWithChildren,
-  UseCaseWithPackages
-} from '@pr-pm/types'
+  UseCaseWithPackages,
+} from "@pr-pm/types";
+
+import { FORMAT_SUBTYPES } from "@pr-pm/types";
+
+// Re-export constants
+export { FORMAT_SUBTYPES };
 
 // Re-export types for convenience
 export type {
@@ -66,27 +71,35 @@ export type {
   CategoryListResponse,
   UseCaseListResponse,
   CategoryWithChildren,
-  UseCaseWithPackages
-}
+  UseCaseWithPackages,
+};
 
-const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'http://localhost:3111'
+const REGISTRY_URL =
+  process.env.NEXT_PUBLIC_REGISTRY_URL || "http://localhost:3111";
 
 /**
  * Check for unclaimed packages (requires authentication)
  */
 export async function getUnclaimedPackages(jwtToken: string) {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/me/unclaimed-packages`, {
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/auth/me/unclaimed-packages`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to check unclaimed packages' }))
-    throw new Error(error.error || error.message || 'Failed to check unclaimed packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to check unclaimed packages" }));
+    throw new Error(
+      error.error || error.message || "Failed to check unclaimed packages",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -94,18 +107,20 @@ export async function getUnclaimedPackages(jwtToken: string) {
  */
 export async function claimPackages(jwtToken: string) {
   const response = await fetch(`${REGISTRY_URL}/api/v1/auth/claim`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+      Authorization: `Bearer ${jwtToken}`,
     },
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to claim packages' }))
-    throw new Error(error.error || error.message || 'Failed to claim packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to claim packages" }));
+    throw new Error(error.error || error.message || "Failed to claim packages");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -114,85 +129,116 @@ export async function claimPackages(jwtToken: string) {
 export async function getCurrentUser(jwtToken: string) {
   const response = await fetch(`${REGISTRY_URL}/api/v1/auth/me`, {
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+      Authorization: `Bearer ${jwtToken}`,
     },
-  })
+  });
 
   if (!response.ok) {
-    throw new Error('Not authenticated')
+    throw new Error("Not authenticated");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get top authors
  */
-export async function getTopAuthors(limit: number = 50, sort: 'downloads' | 'count' = 'downloads'): Promise<TopAuthorsResponse> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/search/authors?limit=${limit}&sort=${sort}`)
+export async function getTopAuthors(
+  limit: number = 50,
+  sort: "downloads" | "count" = "downloads",
+): Promise<TopAuthorsResponse> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/search/authors?limit=${limit}&sort=${sort}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch authors' }))
-    throw new Error(error.error || error.message || 'Failed to fetch top authors')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch authors" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch top authors",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Create Nango connect session
  */
-export async function createNangoConnectSession(userId: string, email: string, displayName: string) {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/nango/connect-session`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+export async function createNangoConnectSession(
+  userId: string,
+  email: string,
+  displayName: string,
+) {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/auth/nango/connect-session`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId, email, displayName }),
     },
-    body: JSON.stringify({ userId, email, displayName }),
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to create connect session' }))
-    throw new Error(error.error || error.message || 'Failed to create connect session')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to create connect session" }));
+    throw new Error(
+      error.error || error.message || "Failed to create connect session",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Handle Nango authentication callback
  */
 export async function checkAuthStatus(connectionId: string) {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/auth/nango/status/${connectionId}`, {
-    method: 'GET',
-  })
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/auth/nango/status/${connectionId}`,
+    {
+      method: "GET",
+    },
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Authentication not ready' }))
-    throw new Error(error.error || error.message || 'Authentication not ready')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Authentication not ready" }));
+    throw new Error(error.error || error.message || "Authentication not ready");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Register with email and password
  */
-export async function register(username: string, email: string, password: string) {
+export async function register(
+  username: string,
+  email: string,
+  password: string,
+) {
   const response = await fetch(`${REGISTRY_URL}/api/v1/auth/register`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ username, email, password }),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Registration failed' }))
-    throw new Error(error.error || error.message || 'Registration failed')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Registration failed" }));
+    throw new Error(error.error || error.message || "Registration failed");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -200,19 +246,21 @@ export async function register(username: string, email: string, password: string
  */
 export async function login(email: string, password: string) {
   const response = await fetch(`${REGISTRY_URL}/api/v1/auth/login`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ email, password }),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Login failed' }))
-    throw new Error(error.error || error.message || 'Login failed')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Login failed" }));
+    throw new Error(error.error || error.message || "Login failed");
   }
 
-  return response.json()
+  return response.json();
 }
 
 // ============================================
@@ -223,137 +271,184 @@ export async function login(email: string, password: string) {
  * Get package by ID (fast UUID lookup)
  */
 export async function getPackageById(packageId: string): Promise<Package> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/packages/by-id/${packageId}`)
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/packages/by-id/${packageId}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Package not found' }))
-    throw new Error(error.error || error.message || 'Package not found')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Package not found" }));
+    throw new Error(error.error || error.message || "Package not found");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Search for packages
  */
-export async function searchPackages(params: SearchPackagesParams): Promise<SearchPackagesResponse> {
-  const queryParams = new URLSearchParams()
+export async function searchPackages(
+  params: SearchPackagesParams,
+): Promise<SearchPackagesResponse> {
+  const queryParams = new URLSearchParams();
 
-  if (params.q) queryParams.append('q', params.q)
+  if (params.q) queryParams.append("q", params.q);
   if (params.format) {
     if (Array.isArray(params.format)) {
-      params.format.forEach((f: string) => queryParams.append('format', f))
+      params.format.forEach((f: string) => queryParams.append("format", f));
     } else {
-      queryParams.append('format', params.format)
+      queryParams.append("format", params.format);
     }
   }
   if (params.subtype) {
     if (Array.isArray(params.subtype)) {
-      params.subtype.forEach((s: string) => queryParams.append('subtype', s))
+      params.subtype.forEach((s: string) => queryParams.append("subtype", s));
     } else {
-      queryParams.append('subtype', params.subtype)
+      queryParams.append("subtype", params.subtype);
     }
   }
-  if (params.tags) params.tags.forEach((tag: string) => queryParams.append('tags', tag))
-  if (params.category) queryParams.append('category', params.category)
-  if (params.author) queryParams.append('author', params.author)
-  if (params.language) queryParams.append('language', params.language)
-  if (params.framework) queryParams.append('framework', params.framework)
-  if (params.verified !== undefined) queryParams.append('verified', String(params.verified))
-  if (params.featured !== undefined) queryParams.append('featured', String(params.featured))
-  if (params.sort) queryParams.append('sort', params.sort)
-  if (params.limit) queryParams.append('limit', String(params.limit))
-  if (params.offset) queryParams.append('offset', String(params.offset))
+  if (params.tags)
+    params.tags.forEach((tag: string) => queryParams.append("tags", tag));
+  if (params.category) queryParams.append("category", params.category);
+  if (params.author) queryParams.append("author", params.author);
+  if (params.language) queryParams.append("language", params.language);
+  if (params.framework) queryParams.append("framework", params.framework);
+  if (params.verified !== undefined)
+    queryParams.append("verified", String(params.verified));
+  if (params.featured !== undefined)
+    queryParams.append("featured", String(params.featured));
+  if (params.sort) queryParams.append("sort", params.sort);
+  if (params.limit) queryParams.append("limit", String(params.limit));
+  if (params.offset) queryParams.append("offset", String(params.offset));
 
-  const response = await fetch(`${REGISTRY_URL}/api/v1/search?${queryParams.toString()}`)
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/search?${queryParams.toString()}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to search packages' }))
-    throw new Error(error.error || error.message || 'Failed to search packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to search packages" }));
+    throw new Error(
+      error.error || error.message || "Failed to search packages",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Search for collections
  */
-export async function searchCollections(params: SearchCollectionsParams): Promise<SearchCollectionsResponse> {
-  const queryParams = new URLSearchParams()
+export async function searchCollections(
+  params: SearchCollectionsParams,
+): Promise<SearchCollectionsResponse> {
+  const queryParams = new URLSearchParams();
 
-  if (params.query) queryParams.append('query', params.query)
-  if (params.category) queryParams.append('category', params.category)
-  if (params.tag) queryParams.append('tag', params.tag)
-  if (params.framework) queryParams.append('framework', params.framework)
-  if (params.official !== undefined) queryParams.append('official', String(params.official))
-  if (params.verified !== undefined) queryParams.append('verified', String(params.verified))
-  if (params.scope) queryParams.append('scope', params.scope)
-  if (params.author) queryParams.append('author', params.author)
-  if (params.limit) queryParams.append('limit', String(params.limit))
-  if (params.offset) queryParams.append('offset', String(params.offset))
-  if (params.sortBy) queryParams.append('sortBy', params.sortBy)
-  if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder)
+  if (params.query) queryParams.append("query", params.query);
+  if (params.category) queryParams.append("category", params.category);
+  if (params.tag) queryParams.append("tag", params.tag);
+  if (params.framework) queryParams.append("framework", params.framework);
+  if (params.official !== undefined)
+    queryParams.append("official", String(params.official));
+  if (params.verified !== undefined)
+    queryParams.append("verified", String(params.verified));
+  if (params.scope) queryParams.append("scope", params.scope);
+  if (params.author) queryParams.append("author", params.author);
+  if (params.limit) queryParams.append("limit", String(params.limit));
+  if (params.offset) queryParams.append("offset", String(params.offset));
+  if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+  if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
 
-  const response = await fetch(`${REGISTRY_URL}/api/v1/collections?${queryParams.toString()}`)
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/collections?${queryParams.toString()}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to search collections' }))
-    throw new Error(error.error || error.message || 'Failed to search collections')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to search collections" }));
+    throw new Error(
+      error.error || error.message || "Failed to search collections",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get trending packages
  */
-export async function getTrendingPackages(options?: { format?: Format; subtype?: Subtype; limit?: number }) {
-  const queryParams = new URLSearchParams()
-  if (options?.format) queryParams.append('format', options.format)
-  if (options?.subtype) queryParams.append('subtype', options.subtype)
-  queryParams.append('limit', String(options?.limit || 20))
+export async function getTrendingPackages(options?: {
+  format?: Format;
+  subtype?: Subtype;
+  limit?: number;
+}) {
+  const queryParams = new URLSearchParams();
+  if (options?.format) queryParams.append("format", options.format);
+  if (options?.subtype) queryParams.append("subtype", options.subtype);
+  queryParams.append("limit", String(options?.limit || 20));
 
-  const response = await fetch(`${REGISTRY_URL}/api/v1/search/trending?${queryParams.toString()}`)
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/search/trending?${queryParams.toString()}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch trending packages' }))
-    throw new Error(error.error || error.message || 'Failed to fetch trending packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch trending packages" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch trending packages",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get featured packages
  */
-export async function getFeaturedPackages(options?: { format?: Format; subtype?: Subtype; limit?: number }) {
-  const queryParams = new URLSearchParams()
-  if (options?.format) queryParams.append('format', options.format)
-  if (options?.subtype) queryParams.append('subtype', options.subtype)
-  queryParams.append('limit', String(options?.limit || 20))
+export async function getFeaturedPackages(options?: {
+  format?: Format;
+  subtype?: Subtype;
+  limit?: number;
+}) {
+  const queryParams = new URLSearchParams();
+  if (options?.format) queryParams.append("format", options.format);
+  if (options?.subtype) queryParams.append("subtype", options.subtype);
+  queryParams.append("limit", String(options?.limit || 20));
 
-  const response = await fetch(`${REGISTRY_URL}/api/v1/search/featured?${queryParams.toString()}`)
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/search/featured?${queryParams.toString()}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch featured packages' }))
-    throw new Error(error.error || error.message || 'Failed to fetch featured packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch featured packages" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch featured packages",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get all available tags
  */
 export async function getTags() {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/search/tags`)
+  const response = await fetch(`${REGISTRY_URL}/api/v1/search/tags`);
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch tags' }))
-    throw new Error(error.error || error.message || 'Failed to fetch tags')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch tags" }));
+    throw new Error(error.error || error.message || "Failed to fetch tags");
   }
 
-  return response.json()
+  return response.json();
 }
 
 // ============================================
@@ -365,47 +460,60 @@ export async function getTags() {
  */
 export async function getAuthorProfile(
   username: string,
-  sort: 'downloads' | 'recent' | 'name' = 'downloads',
+  sort: "downloads" | "recent" | "name" = "downloads",
   limit: number = 100,
   offset: number = 0,
-  jwtToken?: string
+  jwtToken?: string,
 ) {
   const params = new URLSearchParams({
     sort,
     limit: limit.toString(),
-    offset: offset.toString()
-  })
+    offset: offset.toString(),
+  });
 
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = {};
 
   if (jwtToken) {
-    headers['Authorization'] = `Bearer ${jwtToken}`
+    headers["Authorization"] = `Bearer ${jwtToken}`;
   }
 
-  const response = await fetch(`${REGISTRY_URL}/api/v1/authors/${username}?${params}`, {
-    headers,
-  })
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/authors/${username}?${params}`,
+    {
+      headers,
+    },
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch author profile' }))
-    throw new Error(error.error || error.message || 'Failed to fetch author profile')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch author profile" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch author profile",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get unclaimed packages for an author
  */
 export async function getAuthorUnclaimedPackages(username: string) {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/authors/${username}/unclaimed`)
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/authors/${username}/unclaimed`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch unclaimed packages' }))
-    throw new Error(error.error || error.message || 'Failed to fetch unclaimed packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch unclaimed packages" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch unclaimed packages",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -414,145 +522,178 @@ export async function getAuthorUnclaimedPackages(username: string) {
 export async function getAuthorDashboard(jwtToken: string) {
   const response = await fetch(`${REGISTRY_URL}/api/v1/author/dashboard`, {
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+      Authorization: `Bearer ${jwtToken}`,
     },
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch dashboard' }))
-    throw new Error(error.error || error.message || 'Failed to fetch dashboard')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch dashboard" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch dashboard",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get author packages with analytics (authenticated)
  */
-export async function getAuthorPackages(jwtToken: string, sort: 'downloads' | 'views' | 'rating' | 'created' | 'updated' = 'downloads') {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/author/packages?sort=${sort}`, {
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+export async function getAuthorPackages(
+  jwtToken: string,
+  sort: "downloads" | "views" | "rating" | "created" | "updated" = "downloads",
+) {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/author/packages?sort=${sort}`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch packages' }))
-    throw new Error(error.error || error.message || 'Failed to fetch packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch packages" }));
+    throw new Error(error.error || error.message || "Failed to fetch packages");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Organization types
  */
 export interface Organization {
-  id: string
-  name: string
-  description: string | null
-  avatar_url: string | null
-  website_url: string | null
-  is_verified: boolean
-  created_at: string
-  updated_at: string
+  id: string;
+  name: string;
+  description: string | null;
+  avatar_url: string | null;
+  website_url: string | null;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface OrganizationMember {
-  user_id: string | null
-  username: string
-  email: string
-  avatar_url: string | null
-  role: string
-  joined_at: string
-  is_public?: boolean
+  user_id: string | null;
+  username: string;
+  email: string;
+  avatar_url: string | null;
+  role: string;
+  joined_at: string;
+  is_public?: boolean;
 }
 
 export interface OrganizationPackage {
-  id: string
-  name: string
-  description: string
-  format: string
-  subtype: string
-  visibility: string
-  total_downloads: number
-  weekly_downloads: number
-  is_featured: boolean
-  is_verified: boolean
-  last_published_at: string
-  created_at: string
-  tags: string[]
-  license?: string
-  repository_url?: string
-  author_username?: string
+  id: string;
+  name: string;
+  description: string;
+  format: string;
+  subtype: string;
+  visibility: string;
+  total_downloads: number;
+  weekly_downloads: number;
+  is_featured: boolean;
+  is_verified: boolean;
+  last_published_at: string;
+  created_at: string;
+  tags: string[];
+  license?: string;
+  repository_url?: string;
+  author_username?: string;
 }
 
 export interface OrganizationDetails {
-  organization: Organization
-  packages: OrganizationPackage[]
-  members: OrganizationMember[]
-  package_count: number
-  member_count: number
+  organization: Organization;
+  packages: OrganizationPackage[];
+  members: OrganizationMember[];
+  package_count: number;
+  member_count: number;
 }
 
 /**
  * Get organization details
  */
-export async function getOrganization(orgName: string, jwtToken?: string): Promise<OrganizationDetails> {
-  const headers: Record<string, string> = {}
+export async function getOrganization(
+  orgName: string,
+  jwtToken?: string,
+): Promise<OrganizationDetails> {
+  const headers: Record<string, string> = {};
 
   if (jwtToken) {
-    headers['Authorization'] = `Bearer ${jwtToken}`
+    headers["Authorization"] = `Bearer ${jwtToken}`;
   }
 
-  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations/${encodeURIComponent(orgName)}`, {
-    headers,
-  })
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/organizations/${encodeURIComponent(orgName)}`,
+    {
+      headers,
+    },
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch organization' }))
-    throw new Error(error.error || error.message || 'Failed to fetch organization')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch organization" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch organization",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 export interface OrganizationListItem {
-  id: string
-  name: string
-  description: string | null
-  avatar_url: string | null
-  website_url: string | null
-  is_verified: boolean
-  created_at: string
-  package_count: number
-  member_count: number
-  total_downloads: number
+  id: string;
+  name: string;
+  description: string | null;
+  avatar_url: string | null;
+  website_url: string | null;
+  is_verified: boolean;
+  created_at: string;
+  package_count: number;
+  member_count: number;
+  total_downloads: number;
 }
 
 export interface ListOrganizationsResponse {
-  organizations: OrganizationListItem[]
-  limit: number
-  offset: number
+  organizations: OrganizationListItem[];
+  limit: number;
+  offset: number;
 }
 
 /**
  * List all organizations
  */
-export async function listOrganizations(options?: { verified?: boolean; limit?: number; offset?: number }): Promise<ListOrganizationsResponse> {
-  const queryParams = new URLSearchParams()
-  if (options?.verified !== undefined) queryParams.append('verified', String(options.verified))
-  if (options?.limit) queryParams.append('limit', String(options.limit))
-  if (options?.offset) queryParams.append('offset', String(options.offset))
+export async function listOrganizations(options?: {
+  verified?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<ListOrganizationsResponse> {
+  const queryParams = new URLSearchParams();
+  if (options?.verified !== undefined)
+    queryParams.append("verified", String(options.verified));
+  if (options?.limit) queryParams.append("limit", String(options.limit));
+  if (options?.offset) queryParams.append("offset", String(options.offset));
 
-  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations?${queryParams.toString()}`)
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/organizations?${queryParams.toString()}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to list organizations' }))
-    throw new Error(error.error || error.message || 'Failed to list organizations')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to list organizations" }));
+    throw new Error(
+      error.error || error.message || "Failed to list organizations",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -560,23 +701,27 @@ export async function listOrganizations(options?: { verified?: boolean; limit?: 
  */
 export async function createOrganization(
   jwtToken: string,
-  data: { name: string; description?: string; website_url?: string }
+  data: { name: string; description?: string; website_url?: string },
 ): Promise<{ organization: Organization; message: string }> {
   const response = await fetch(`${REGISTRY_URL}/api/v1/organizations`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${jwtToken}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to create organization' }))
-    throw new Error(error.error || error.message || 'Failed to create organization')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to create organization" }));
+    throw new Error(
+      error.error || error.message || "Failed to create organization",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -585,23 +730,30 @@ export async function createOrganization(
 export async function updateOrganization(
   jwtToken: string,
   orgName: string,
-  data: { description?: string; website_url?: string; avatar_url?: string }
+  data: { description?: string; website_url?: string; avatar_url?: string },
 ): Promise<{ organization: Organization; message: string }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/organizations/${encodeURIComponent(orgName)}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json',
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/organizations/${encodeURIComponent(orgName)}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
     },
-    body: JSON.stringify(data),
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to update organization' }))
-    throw new Error(error.error || error.message || 'Failed to update organization')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to update organization" }));
+    throw new Error(
+      error.error || error.message || "Failed to update organization",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 // ============================================
@@ -614,20 +766,27 @@ export async function updateOrganization(
 export async function getPackageStats(
   jwtToken: string,
   packageId: string,
-  range: 'today' | 'week' | 'month' | 'year' | 'all' = 'month'
+  range: "today" | "week" | "month" | "year" | "all" = "month",
 ) {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/author/packages/${encodeURIComponent(packageId)}/stats?range=${range}`, {
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/author/packages/${encodeURIComponent(packageId)}/stats?range=${range}`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch package stats' }))
-    throw new Error(error.error || error.message || 'Failed to fetch package stats')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch package stats" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch package stats",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -636,20 +795,27 @@ export async function getPackageStats(
 export async function getPackageRecentDownloads(
   jwtToken: string,
   packageId: string,
-  limit: number = 50
+  limit: number = 50,
 ) {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/author/packages/${encodeURIComponent(packageId)}/downloads/recent?limit=${limit}`, {
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/author/packages/${encodeURIComponent(packageId)}/downloads/recent?limit=${limit}`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch recent downloads' }))
-    throw new Error(error.error || error.message || 'Failed to fetch recent downloads')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch recent downloads" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch recent downloads",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -657,18 +823,20 @@ export async function getPackageRecentDownloads(
  */
 export async function refreshAuthorStats(jwtToken: string) {
   const response = await fetch(`${REGISTRY_URL}/api/v1/author/refresh-stats`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+      Authorization: `Bearer ${jwtToken}`,
     },
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to refresh stats' }))
-    throw new Error(error.error || error.message || 'Failed to refresh stats')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to refresh stats" }));
+    throw new Error(error.error || error.message || "Failed to refresh stats");
   }
 
-  return response.json()
+  return response.json();
 }
 // PLAYGROUND & CREDITS
 // ============================================
@@ -679,72 +847,101 @@ export async function refreshAuthorStats(jwtToken: string) {
 /**
  * Get playground credit balance
  */
-export async function getPlaygroundCredits(jwtToken: string): Promise<CreditBalance> {
+export async function getPlaygroundCredits(
+  jwtToken: string,
+): Promise<CreditBalance> {
   const response = await fetch(`${REGISTRY_URL}/api/v1/playground/credits`, {
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+      Authorization: `Bearer ${jwtToken}`,
     },
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch credits' }))
-    throw new Error(error.error || error.message || 'Failed to fetch credits')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch credits" }));
+    throw new Error(error.error || error.message || "Failed to fetch credits");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get credit transaction history
  */
-export async function getCreditHistory(jwtToken: string, limit: number = 50, offset: number = 0): Promise<{ transactions: CreditTransaction[]; total: number }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/credits/history?limit=${limit}&offset=${offset}`, {
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+export async function getCreditHistory(
+  jwtToken: string,
+  limit: number = 50,
+  offset: number = 0,
+): Promise<{ transactions: CreditTransaction[]; total: number }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/credits/history?limit=${limit}&offset=${offset}`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch history' }))
-    throw new Error(error.error || error.message || 'Failed to fetch history')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch history" }));
+    throw new Error(error.error || error.message || "Failed to fetch history");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get available credit packages
  */
-export async function getCreditPackages(): Promise<{ packages: CreditPackage[] }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/credits/packages`)
+export async function getCreditPackages(): Promise<{
+  packages: CreditPackage[];
+}> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/credits/packages`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch packages' }))
-    throw new Error(error.error || error.message || 'Failed to fetch packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch packages" }));
+    throw new Error(error.error || error.message || "Failed to fetch packages");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Purchase credits
  */
-export async function purchaseCredits(jwtToken: string, packageId: string): Promise<{ clientSecret: string; credits: number; price: number }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/credits/purchase`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json',
+export async function purchaseCredits(
+  jwtToken: string,
+  packageId: string,
+): Promise<{ clientSecret: string; credits: number; price: number }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/credits/purchase`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ package: packageId }),
     },
-    body: JSON.stringify({ package: packageId }),
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to purchase credits' }))
-    throw new Error(error.error || error.message || 'Failed to purchase credits')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to purchase credits" }));
+    throw new Error(
+      error.error || error.message || "Failed to purchase credits",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -752,26 +949,28 @@ export async function purchaseCredits(jwtToken: string, packageId: string): Prom
  * Get PRPM+ pricing for current user
  */
 export async function getPRPMPlusPricing(jwtToken: string): Promise<{
-  price: number
-  currency: string
-  interval: string
-  credits: number
-  isOrgMember: boolean
-  orgName: string | null
-  discount: number
+  price: number;
+  currency: string;
+  interval: string;
+  credits: number;
+  isOrgMember: boolean;
+  orgName: string | null;
+  discount: number;
 }> {
   const response = await fetch(`${REGISTRY_URL}/api/v1/playground/pricing`, {
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+      Authorization: `Bearer ${jwtToken}`,
     },
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to get pricing' }))
-    throw new Error(error.error || error.message || 'Failed to get pricing')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to get pricing" }));
+    throw new Error(error.error || error.message || "Failed to get pricing");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -780,107 +979,140 @@ export async function getPRPMPlusPricing(jwtToken: string): Promise<{
 export async function subscribeToPRPMPlus(
   jwtToken: string,
   successUrl: string,
-  cancelUrl: string
+  cancelUrl: string,
 ): Promise<{ checkoutUrl: string }> {
   const response = await fetch(`${REGISTRY_URL}/api/v1/playground/subscribe`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${jwtToken}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ successUrl, cancelUrl }),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to create subscription' }))
-    throw new Error(error.error || error.message || 'Failed to create subscription')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to create subscription" }));
+    throw new Error(
+      error.error || error.message || "Failed to create subscription",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get PRPM+ subscription status
  */
 export async function getPRPMPlusStatus(jwtToken: string): Promise<{
-  isActive: boolean
-  status: string | null
-  cancelAtPeriodEnd: boolean
-  currentPeriodEnd: string | null
+  isActive: boolean;
+  status: string | null;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null;
 }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/subscription`, {
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/subscription`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to get subscription status' }))
-    throw new Error(error.error || error.message || 'Failed to get subscription status')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to get subscription status" }));
+    throw new Error(
+      error.error || error.message || "Failed to get subscription status",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Cancel PRPM+ subscription
  */
-export async function cancelPRPMPlus(jwtToken: string): Promise<{ message: string }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/subscription/cancel`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+export async function cancelPRPMPlus(
+  jwtToken: string,
+): Promise<{ message: string }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/subscription/cancel`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to cancel subscription' }))
-    throw new Error(error.error || error.message || 'Failed to cancel subscription')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to cancel subscription" }));
+    throw new Error(
+      error.error || error.message || "Failed to cancel subscription",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get Stripe Customer Portal URL
  */
-export async function getStripePortalUrl(jwtToken: string, returnUrl: string): Promise<{ portalUrl: string }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/subscription/portal`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json',
+export async function getStripePortalUrl(
+  jwtToken: string,
+  returnUrl: string,
+): Promise<{ portalUrl: string }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/subscription/portal`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ returnUrl }),
     },
-    body: JSON.stringify({ returnUrl }),
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to get portal URL' }))
-    throw new Error(error.error || error.message || 'Failed to get portal URL')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to get portal URL" }));
+    throw new Error(error.error || error.message || "Failed to get portal URL");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Run playground prompt
  */
-export async function runPlayground(jwtToken: string, request: PlaygroundRunRequest): Promise<PlaygroundRunResponse> {
+export async function runPlayground(
+  jwtToken: string,
+  request: PlaygroundRunRequest,
+): Promise<PlaygroundRunResponse> {
   const response = await fetch(`${REGISTRY_URL}/api/v1/playground/run`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${jwtToken}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(request),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to run playground' }))
-    throw new Error(error.error || error.message || 'Failed to run playground')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to run playground" }));
+    throw new Error(error.error || error.message || "Failed to run playground");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -889,239 +1121,340 @@ export async function runPlayground(jwtToken: string, request: PlaygroundRunRequ
 export async function runCustomPrompt(
   jwtToken: string,
   request: {
-    custom_prompt: string
-    input: string
-    session_id?: string
-    model?: 'sonnet' | 'opus' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo'
-  }
+    custom_prompt: string;
+    input: string;
+    session_id?: string;
+    model?: "sonnet" | "opus" | "gpt-4o" | "gpt-4o-mini" | "gpt-4-turbo";
+  },
 ): Promise<PlaygroundRunResponse> {
   const response = await fetch(`${REGISTRY_URL}/api/v1/custom-prompt/run`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${jwtToken}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(request),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to run custom prompt' }))
-    throw new Error(error.error || error.message || 'Failed to run custom prompt')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to run custom prompt" }));
+    throw new Error(
+      error.error || error.message || "Failed to run custom prompt",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Run anonymous playground (one free run for non-logged-in users)
  */
-export async function runAnonymousPlayground(request: { package_id: string; input: string }): Promise<{
-  response: string
-  tokens_used: number
-  duration_ms: number
-  model: string
-  login_required: boolean
-  message: string
+export async function runAnonymousPlayground(request: {
+  package_id: string;
+  input: string;
+}): Promise<{
+  response: string;
+  tokens_used: number;
+  duration_ms: number;
+  model: string;
+  login_required: boolean;
+  message: string;
 }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/anonymous-run`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/anonymous-run`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
     },
-    body: JSON.stringify(request),
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to run playground' }))
-    throw new Error(error.error || error.message || 'Failed to run playground')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to run playground" }));
+    throw new Error(error.error || error.message || "Failed to run playground");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Estimate credits for playground run
  */
-export async function estimatePlaygroundCredits(jwtToken: string, request: Omit<PlaygroundRunRequest, 'session_id'>): Promise<{ estimated_credits: number; estimated_tokens: number }> {
+export async function estimatePlaygroundCredits(
+  jwtToken: string,
+  request: Omit<PlaygroundRunRequest, "session_id">,
+): Promise<{ estimated_credits: number; estimated_tokens: number }> {
   const response = await fetch(`${REGISTRY_URL}/api/v1/playground/estimate`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${jwtToken}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(request),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to estimate' }))
-    throw new Error(error.error || error.message || 'Failed to estimate')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to estimate" }));
+    throw new Error(error.error || error.message || "Failed to estimate");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * List playground sessions
  */
-export async function listPlaygroundSessions(jwtToken: string, limit: number = 20, offset: number = 0): Promise<{ sessions: PlaygroundSession[]; total: number }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/sessions?limit=${limit}&offset=${offset}`, {
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+export async function listPlaygroundSessions(
+  jwtToken: string,
+  limit: number = 20,
+  offset: number = 0,
+): Promise<{ sessions: PlaygroundSession[]; total: number }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/sessions?limit=${limit}&offset=${offset}`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch sessions' }))
-    throw new Error(error.error || error.message || 'Failed to fetch sessions')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch sessions" }));
+    throw new Error(error.error || error.message || "Failed to fetch sessions");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get playground session
  */
-export async function getPlaygroundSession(jwtToken: string, sessionId: string): Promise<PlaygroundSession> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/sessions/${sessionId}`, {
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+export async function getPlaygroundSession(
+  jwtToken: string,
+  sessionId: string,
+): Promise<PlaygroundSession> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/sessions/${sessionId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch session' }))
-    throw new Error(error.error || error.message || 'Failed to fetch session')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch session" }));
+    throw new Error(error.error || error.message || "Failed to fetch session");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Delete playground session
  */
-export async function deletePlaygroundSession(jwtToken: string, sessionId: string): Promise<void> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/sessions/${sessionId}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+export async function deletePlaygroundSession(
+  jwtToken: string,
+  sessionId: string,
+): Promise<void> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/sessions/${sessionId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to delete session' }))
-    throw new Error(error.error || error.message || 'Failed to delete session')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to delete session" }));
+    throw new Error(error.error || error.message || "Failed to delete session");
   }
 }
 
 /**
  * Share playground session
  */
-export async function sharePlaygroundSession(jwtToken: string, sessionId: string): Promise<{ share_token: string; share_url: string }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/sessions/${sessionId}/share`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+export async function sharePlaygroundSession(
+  jwtToken: string,
+  sessionId: string,
+): Promise<{ share_token: string; share_url: string }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/sessions/${sessionId}/share`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to share session' }))
-    throw new Error(error.error || error.message || 'Failed to share session')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to share session" }));
+    throw new Error(error.error || error.message || "Failed to share session");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get shared playground session (public)
  */
-export async function getSharedPlaygroundSession(shareToken: string): Promise<PlaygroundSession> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/playground/shared/${shareToken}`)
+export async function getSharedPlaygroundSession(
+  shareToken: string,
+): Promise<PlaygroundSession> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/playground/shared/${shareToken}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch shared session' }))
-    throw new Error(error.error || error.message || 'Failed to fetch shared session')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch shared session" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch shared session",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Star/unstar a package
  */
-export async function starPackage(token: string, packageId: string, starred: boolean): Promise<{ starred: boolean; stars: number }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/packages/${packageId}/star`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+export async function starPackage(
+  token: string,
+  packageId: string,
+  starred: boolean,
+): Promise<{ starred: boolean; stars: number }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/packages/${packageId}/star`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ starred }),
     },
-    body: JSON.stringify({ starred }),
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to star package' }))
-    throw new Error(error.error || error.message || 'Failed to star package')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to star package" }));
+    throw new Error(error.error || error.message || "Failed to star package");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Star/unstar a collection
  */
-export async function starCollection(token: string, scope: string, nameSlug: string, starred: boolean): Promise<{ starred: boolean; stars: number }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/collections/${scope}/${nameSlug}/star`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+export async function starCollection(
+  token: string,
+  scope: string,
+  nameSlug: string,
+  starred: boolean,
+): Promise<{ starred: boolean; stars: number }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/collections/${scope}/${nameSlug}/star`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ starred }),
     },
-    body: JSON.stringify({ starred }),
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to star collection' }))
-    throw new Error(error.error || error.message || 'Failed to star collection')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to star collection" }));
+    throw new Error(
+      error.error || error.message || "Failed to star collection",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get user's starred packages
  */
-export async function getStarredPackages(token: string, limit = 20, offset = 0): Promise<{ packages: Package[]; total: number }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/packages/starred?limit=${limit}&offset=${offset}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+export async function getStarredPackages(
+  token: string,
+  limit = 20,
+  offset = 0,
+): Promise<{ packages: Package[]; total: number }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/packages/starred?limit=${limit}&offset=${offset}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch starred packages' }))
-    throw new Error(error.error || error.message || 'Failed to fetch starred packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch starred packages" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch starred packages",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get user's starred collections
  */
-export async function getStarredCollections(token: string, limit = 20, offset = 0): Promise<{ collections: Collection[]; total: number }> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/collections/starred?limit=${limit}&offset=${offset}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+export async function getStarredCollections(
+  token: string,
+  limit = 20,
+  offset = 0,
+): Promise<{ collections: Collection[]; total: number }> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/collections/starred?limit=${limit}&offset=${offset}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
-  })
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch starred collections' }))
-    throw new Error(error.error || error.message || 'Failed to fetch starred collections')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch starred collections" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch starred collections",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -1132,28 +1465,33 @@ export async function getStarredCollections(token: string, limit = 20, offset = 
  * Perform AI-powered semantic search
  * Token is optional - AI search is free for everyone
  */
-export async function aiSearch(query: AISearchQuery, jwtToken?: string): Promise<AISearchResponse> {
+export async function aiSearch(
+  query: AISearchQuery,
+  jwtToken?: string,
+): Promise<AISearchResponse> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  }
+    "Content-Type": "application/json",
+  };
 
   // Only add Authorization header if token is provided
   if (jwtToken) {
-    headers['Authorization'] = `Bearer ${jwtToken}`
+    headers["Authorization"] = `Bearer ${jwtToken}`;
   }
 
   const response = await fetch(`${REGISTRY_URL}/api/v1/ai-search`, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify(query),
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'AI search failed' }))
-    throw new Error(error.error || error.message || 'AI search failed')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "AI search failed" }));
+    throw new Error(error.error || error.message || "AI search failed");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -1162,61 +1500,79 @@ export async function aiSearch(query: AISearchQuery, jwtToken?: string): Promise
 export async function checkAISearchAccess(jwtToken: string) {
   const response = await fetch(`${REGISTRY_URL}/api/v1/ai-search/access`, {
     headers: {
-      'Authorization': `Bearer ${jwtToken}`,
+      Authorization: `Bearer ${jwtToken}`,
     },
-  })
+  });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to check AI search access' }))
-    throw new Error(error.error || error.message || 'Failed to check AI search access')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to check AI search access" }));
+    throw new Error(
+      error.error || error.message || "Failed to check AI search access",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get similar packages using AI
  */
-export async function getSimilarPackages(packageId: string, jwtToken: string | null, limit: number = 5) {
+export async function getSimilarPackages(
+  packageId: string,
+  jwtToken: string | null,
+  limit: number = 5,
+) {
   const headers: Record<string, string> = {};
   if (jwtToken) {
-    headers['Authorization'] = `Bearer ${jwtToken}`;
+    headers["Authorization"] = `Bearer ${jwtToken}`;
   }
 
-  const response = await fetch(`${REGISTRY_URL}/api/v1/ai-search/similar/${packageId}?limit=${limit}`, {
-    headers,
-  })
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/ai-search/similar/${packageId}?limit=${limit}`,
+    {
+      headers,
+    },
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to get similar packages' }))
-    throw new Error(error.error || error.message || 'Failed to get similar packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to get similar packages" }));
+    throw new Error(
+      error.error || error.message || "Failed to get similar packages",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get query suggestions for autocomplete
  */
-export async function getQuerySuggestions(partialQuery: string, limit: number = 5): Promise<string[]> {
+export async function getQuerySuggestions(
+  partialQuery: string,
+  limit: number = 5,
+): Promise<string[]> {
   if (partialQuery.length < 3) {
-    return []
+    return [];
   }
 
   try {
     const response = await fetch(
-      `${REGISTRY_URL}/api/v1/ai-search/suggestions?q=${encodeURIComponent(partialQuery)}&limit=${limit}`
-    )
+      `${REGISTRY_URL}/api/v1/ai-search/suggestions?q=${encodeURIComponent(partialQuery)}&limit=${limit}`,
+    );
 
     if (!response.ok) {
-      return []
+      return [];
     }
 
-    const data = await response.json()
-    return data.suggestions || []
+    const data = await response.json();
+    return data.suggestions || [];
   } catch (error) {
-    console.warn('Failed to fetch query suggestions:', error)
-    return []
+    console.warn("Failed to fetch query suggestions:", error);
+    return [];
   }
 }
 
@@ -1224,32 +1580,35 @@ export async function getQuerySuggestions(partialQuery: string, limit: number = 
  * Tag suggestion type
  */
 export interface TagSuggestion {
-  name: string
-  count: number
+  name: string;
+  count: number;
 }
 
 /**
  * Get tag autocomplete suggestions
  */
-export async function getTagSuggestions(partialTag: string, limit: number = 10): Promise<TagSuggestion[]> {
+export async function getTagSuggestions(
+  partialTag: string,
+  limit: number = 10,
+): Promise<TagSuggestion[]> {
   if (partialTag.length < 1) {
-    return []
+    return [];
   }
 
   try {
     const response = await fetch(
-      `${REGISTRY_URL}/api/v1/search/tags/autocomplete?q=${encodeURIComponent(partialTag)}&limit=${limit}`
-    )
+      `${REGISTRY_URL}/api/v1/search/tags/autocomplete?q=${encodeURIComponent(partialTag)}&limit=${limit}`,
+    );
 
     if (!response.ok) {
-      return []
+      return [];
     }
 
-    const data = await response.json()
-    return data.suggestions || []
+    const data = await response.json();
+    return data.suggestions || [];
   } catch (error) {
-    console.warn('Failed to fetch tag suggestions:', error)
-    return []
+    console.warn("Failed to fetch tag suggestions:", error);
+    return [];
   }
 }
 
@@ -1260,32 +1619,48 @@ export async function getTagSuggestions(partialTag: string, limit: number = 10):
 /**
  * Get all categories as hierarchical tree
  */
-export async function getCategories(includeCounts: boolean = false, top?: number): Promise<CategoryListResponse> {
-  const params = new URLSearchParams({ include_counts: String(includeCounts) })
-  if (top) params.set('top', String(top))
+export async function getCategories(
+  includeCounts: boolean = false,
+  top?: number,
+): Promise<CategoryListResponse> {
+  const params = new URLSearchParams({ include_counts: String(includeCounts) });
+  if (top) params.set("top", String(top));
 
-  const response = await fetch(`${REGISTRY_URL}/api/v1/taxonomy/categories?${params}`)
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/taxonomy/categories?${params}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch categories' }))
-    throw new Error(error.error || error.message || 'Failed to fetch categories')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch categories" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch categories",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get specific category by slug
  */
-export async function getCategory(slug: string, includeCounts: boolean = false) {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/taxonomy/categories/${slug}?include_counts=${includeCounts}`)
+export async function getCategory(
+  slug: string,
+  includeCounts: boolean = false,
+) {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/taxonomy/categories/${slug}?include_counts=${includeCounts}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch category' }))
-    throw new Error(error.error || error.message || 'Failed to fetch category')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch category" }));
+    throw new Error(error.error || error.message || "Failed to fetch category");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -1294,40 +1669,51 @@ export async function getCategory(slug: string, includeCounts: boolean = false) 
 export async function getPackagesByCategory(
   slug: string,
   options: {
-    limit?: number
-    offset?: number
-    includeChildren?: boolean
-  } = {}
+    limit?: number;
+    offset?: number;
+    includeChildren?: boolean;
+  } = {},
 ) {
-  const queryParams = new URLSearchParams()
-  if (options.limit) queryParams.append('limit', String(options.limit))
-  if (options.offset) queryParams.append('offset', String(options.offset))
-  if (options.includeChildren !== undefined) queryParams.append('include_children', String(options.includeChildren))
+  const queryParams = new URLSearchParams();
+  if (options.limit) queryParams.append("limit", String(options.limit));
+  if (options.offset) queryParams.append("offset", String(options.offset));
+  if (options.includeChildren !== undefined)
+    queryParams.append("include_children", String(options.includeChildren));
 
   const response = await fetch(
-    `${REGISTRY_URL}/api/v1/taxonomy/categories/${slug}/packages?${queryParams.toString()}`
-  )
+    `${REGISTRY_URL}/api/v1/taxonomy/categories/${slug}/packages?${queryParams.toString()}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch packages' }))
-    throw new Error(error.error || error.message || 'Failed to fetch packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch packages" }));
+    throw new Error(error.error || error.message || "Failed to fetch packages");
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
  * Get all use cases
  */
-export async function getUseCases(includeCounts: boolean = false): Promise<UseCaseListResponse> {
-  const response = await fetch(`${REGISTRY_URL}/api/v1/taxonomy/use-cases?include_counts=${includeCounts}`)
+export async function getUseCases(
+  includeCounts: boolean = false,
+): Promise<UseCaseListResponse> {
+  const response = await fetch(
+    `${REGISTRY_URL}/api/v1/taxonomy/use-cases?include_counts=${includeCounts}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch use cases' }))
-    throw new Error(error.error || error.message || 'Failed to fetch use cases')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch use cases" }));
+    throw new Error(
+      error.error || error.message || "Failed to fetch use cases",
+    );
   }
 
-  return response.json()
+  return response.json();
 }
 
 /**
@@ -1336,22 +1722,24 @@ export async function getUseCases(includeCounts: boolean = false): Promise<UseCa
 export async function getPackagesByUseCase(
   slug: string,
   options: {
-    limit?: number
-    offset?: number
-  } = {}
+    limit?: number;
+    offset?: number;
+  } = {},
 ) {
-  const queryParams = new URLSearchParams()
-  if (options.limit) queryParams.append('limit', String(options.limit))
-  if (options.offset) queryParams.append('offset', String(options.offset))
+  const queryParams = new URLSearchParams();
+  if (options.limit) queryParams.append("limit", String(options.limit));
+  if (options.offset) queryParams.append("offset", String(options.offset));
 
   const response = await fetch(
-    `${REGISTRY_URL}/api/v1/taxonomy/use-cases/${slug}?${queryParams.toString()}`
-  )
+    `${REGISTRY_URL}/api/v1/taxonomy/use-cases/${slug}?${queryParams.toString()}`,
+  );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch packages' }))
-    throw new Error(error.error || error.message || 'Failed to fetch packages')
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch packages" }));
+    throw new Error(error.error || error.message || "Failed to fetch packages");
   }
 
-  return response.json()
+  return response.json();
 }
