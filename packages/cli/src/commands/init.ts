@@ -1200,7 +1200,16 @@ async function scanMode(
 
   // Filter out packages that are installed from the registry (not user-created)
   const filteredDiscovered = allDiscovered.filter((pkg) => {
-    const isInstalled = installedPackageNames.has(pkg.name);
+    // Check both the package name (from frontmatter) and the folder name (from path)
+    // Lockfile stores folder names, but detected packages may have display names
+    const pathParts = pkg.primaryFile.split("/");
+    const folderName =
+      pathParts.length >= 2 ? pathParts[pathParts.length - 2] : pkg.name;
+
+    const isInstalled =
+      installedPackageNames.has(pkg.name) ||
+      installedPackageNames.has(folderName);
+
     if (isInstalled) {
       console.log(
         `   ⏩ Skipping ${pkg.name} (installed from registry, not user-created)`,
