@@ -107,6 +107,8 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
         --exclude "*" \
         --include "packages.json" \
         --include "collections.json" \
+        --include "use-cases.json" \
+        --include "categories.json" \
         --no-progress 2>/dev/null; then
 
         if [ -f "$SSG_DATA_DIR/packages.json" ] && [ -s "$SSG_DATA_DIR/packages.json" ]; then
