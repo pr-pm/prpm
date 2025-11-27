@@ -162,16 +162,19 @@ export async function generateStaticParams() {
       `[SSG Categories] ✅ Generating ${slugs.length} category pages from SSG data`,
     );
 
-    // If SSG data is empty, return empty array
+    // If SSG data is empty, return dummy entry to satisfy Next.js static export
     if (slugs.length === 0) {
-      console.log("[SSG Categories] ⚠️  SSG data file is empty");
-      return [];
+      console.log(
+        "[SSG Categories] ⚠️  SSG data file is empty, returning minimal params",
+      );
+      return [{ slug: "test-category" }];
     }
 
     return slugs.map((slug) => ({ slug }));
   } catch (error) {
     console.error("[SSG Categories] ERROR in generateStaticParams:", error);
-    return [];
+    // Return dummy entry to satisfy Next.js static export requirements
+    return [{ slug: "test-category" }];
   }
 }
 
