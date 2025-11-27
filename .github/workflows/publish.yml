@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version bump type'
+        description: "Version bump type"
         required: true
         type: choice
         options:
@@ -16,21 +16,36 @@ on:
           - premajor
           - prerelease
       custom_version:
-        description: 'Custom version (optional, overrides version type)'
+        description: "Custom version (optional, overrides version type)"
         required: false
         type: string
-      packages:
-        description: 'Packages to publish (comma-separated: types,registry-client,cli or "all")'
-        required: true
-        default: 'all'
-        type: string
+      publish_types:
+        description: "Publish @pr-pm/types"
+        required: false
+        type: boolean
+        default: true
+      publish_converters:
+        description: "Publish @pr-pm/converters"
+        required: false
+        type: boolean
+        default: true
+      publish_registry_client:
+        description: "Publish @pr-pm/registry-client"
+        required: false
+        type: boolean
+        default: true
+      publish_cli:
+        description: "Publish prpm (CLI)"
+        required: false
+        type: boolean
+        default: true
       dry_run:
-        description: 'Dry run (do not actually publish)'
+        description: "Dry run (do not actually publish)"
         required: false
         type: boolean
         default: false
       tag:
-        description: 'NPM dist-tag (latest, next, beta, alpha)'
+        description: "NPM dist-tag (latest, next, beta, alpha)"
         required: false
         type: choice
         options:
@@ -38,7 +53,7 @@ on:
           - next
           - beta
           - alpha
-        default: 'latest'
+        default: "latest"
 
 permissions:
   contents: write
@@ -66,8 +81,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
@@ -83,17 +98,43 @@ jobs:
       - name: Determine packages to publish
         id: determine
         run: |
-          PACKAGES="${{ github.event.inputs.packages }}"
+          # Build JSON array from checkbox inputs
+          PACKAGES="["
+          FIRST=true
 
-          if [ "$PACKAGES" = "all" ]; then
-            PUBLISH_PACKAGES='["types", "converters", "registry-client", "cli"]'
-          else
-            # Convert comma-separated to JSON array
-            PUBLISH_PACKAGES=$(echo "$PACKAGES" | jq -R 'split(",") | map(select(length > 0))')
+          if [ "${{ github.event.inputs.publish_types }}" = "true" ]; then
+            PACKAGES+="\"types\""
+            FIRST=false
           fi
 
-          echo "packages=$PUBLISH_PACKAGES" >> $GITHUB_OUTPUT
-          echo "Will publish: $PUBLISH_PACKAGES"
+          if [ "${{ github.event.inputs.publish_converters }}" = "true" ]; then
+            if [ "$FIRST" = false ]; then PACKAGES+=","; fi
+            PACKAGES+="\"converters\""
+            FIRST=false
+          fi
+
+          if [ "${{ github.event.inputs.publish_registry_client }}" = "true" ]; then
+            if [ "$FIRST" = false ]; then PACKAGES+=","; fi
+            PACKAGES+="\"registry-client\""
+            FIRST=false
+          fi
+
+          if [ "${{ github.event.inputs.publish_cli }}" = "true" ]; then
+            if [ "$FIRST" = false ]; then PACKAGES+=","; fi
+            PACKAGES+="\"cli\""
+            FIRST=false
+          fi
+
+          PACKAGES+="]"
+
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          echo "Will publish: $PACKAGES"
+
+          # Validate at least one package selected
+          if [ "$PACKAGES" = "[]" ]; then
+            echo "::error::No packages selected for publishing"
+            exit 1
+          fi
 
       - name: Determine version
         id: version
@@ -129,8 +170,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
@@ -229,11 +270,13 @@ jobs:
       - name: Collect versions as JSON
         id: collect_versions
         run: |
-          VERSIONS_JSON="{"
           PUBLISHED_PACKAGES='${{ needs.validate.outputs.packages_to_publish }}'
 
+          # Build versions JSON on a single line
+          VERSIONS_JSON="{"
           FIRST=true
-          echo "$PUBLISHED_PACKAGES" | jq -r '.[]' | while read pkg; do
+
+          for pkg in $(echo "$PUBLISHED_PACKAGES" | jq -r '.[]'); do
             VERSION=$(node -p "require('./packages/$pkg/package.json').version")
 
             if [ "$FIRST" = true ]; then
@@ -271,7 +314,7 @@ jobs:
     env:
       NPM_CONFIG_FUND: false
     strategy:
-      max-parallel: 1  # Publish sequentially to avoid race conditions
+      max-parallel: 1 # Publish sequentially to avoid race conditions
       matrix:
         package: ${{ fromJson(needs.validate.outputs.packages_to_publish) }}
 
@@ -284,10 +327,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: package-lock.json
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: "https://registry.npmjs.org"
 
       - name: Download versioned packages
         uses: actions/download-artifact@v4
@@ -369,7 +412,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Download versioned packages
         uses: actions/download-artifact@v4
@@ -397,7 +440,6 @@ jobs:
           fi
 
           # Collect current versions for release notes
-          VERSIONS_LIST=""
           echo "$PACKAGES" | jq -r '.[]' | while read package; do
             VERSION=$(node -p "require('./packages/$package/package.json').version")
             if [ "$package" = "cli" ]; then
@@ -479,7 +521,7 @@ jobs:
           echo "### Published Packages" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # List packages (each was versioned independently)
+          # List packages
           echo '${{ needs.validate.outputs.packages_to_publish }}' | jq -r '.[]' | while read pkg; do
             if [ "$pkg" = "cli" ]; then
               echo "- prpm (CLI)" >> $GITHUB_STEP_SUMMARY
