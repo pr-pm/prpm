@@ -4,15 +4,17 @@
  * Supports smart detection of existing packages on disk
  */
 
-import { Command } from 'commander';
-import { writeFile, mkdir, readFile } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
-import * as readline from 'readline/promises';
-import { stdin as input, stdout as output } from 'process';
-import { FORMATS, SUBTYPES } from '../types';
-import { CLIError } from '../core/errors';
-import { scanForPackages, DetectedPackage } from '../core/package-scanner';
+import { Command } from "commander";
+import { writeFile, mkdir, readFile } from "fs/promises";
+import { join } from "path";
+import { existsSync } from "fs";
+import * as readline from "readline/promises";
+import { stdin as input, stdout as output } from "process";
+import { FORMATS, SUBTYPES } from "../types";
+import { CLIError } from "../core/errors";
+import { scanForPackages, DetectedPackage } from "../core/package-scanner";
+import { readLockfile, parseLockfileKey } from "../core/lockfile";
+import type { PackageManifest, MultiPackageManifest } from "../types/registry";
 import {
   readManifest,
   reconcilePackages,
@@ -20,12 +22,16 @@ import {
   mergePackagesIntoManifest,
   ManifestPackage,
   ReconciliationResult,
-} from '../core/package-reconciler';
+} from "../core/package-reconciler";
 
 interface InitOptions {
   yes?: boolean; // Skip prompts and use defaults
   private?: boolean; // Create private package
   force?: boolean; // Overwrite existing prpm.json
+  scan?: boolean | string[]; // Scan mode (like catalog command)
+  output?: string; // Output path for prpm.json (scan mode)
+  append?: boolean; // Append to existing prpm.json (scan mode)
+  dryRun?: boolean; // Show what would be done without making changes (scan mode)
 }
 
 interface PackageConfig {
@@ -41,48 +47,61 @@ interface PackageConfig {
   files: string[];
 }
 
-const FORMAT_EXAMPLES: Record<string, { files: string[]; description: string }> = {
+const FORMAT_EXAMPLES: Record<
+  string,
+  { files: string[]; description: string }
+> = {
   cursor: {
-    description: 'Cursor AI coding rules',
-    files: ['.cursorrules', 'README.md'],
+    description: "Cursor AI coding rules",
+    files: [".cursorrules", "README.md"],
   },
   claude: {
-    description: 'Claude AI skills and agents',
-    files: ['.claude/skills/example-skill/SKILL.md', 'README.md'],
+    description: "Claude AI skills and agents",
+    files: [".claude/skills/example-skill/SKILL.md", "README.md"],
   },
   continue: {
-    description: 'Continue AI coding rules',
-    files: ['.continuerules', 'README.md'],
+    description: "Continue AI coding rules",
+    files: [".continuerules", "README.md"],
   },
   windsurf: {
-    description: 'Windsurf AI coding rules',
-    files: ['.windsurf/rules', 'README.md'],
+    description: "Windsurf AI coding rules",
+    files: [".windsurf/rules", "README.md"],
   },
   copilot: {
-    description: 'GitHub Copilot (repository-wide, path-specific, and chat modes)',
-    files: ['.github/copilot-instructions.md', '.github/instructions/typescript.instructions.md', '.github/chatmodes/code-reviewer.chatmode.md', 'README.md'],
+    description:
+      "GitHub Copilot (repository-wide, path-specific, and chat modes)",
+    files: [
+      ".github/copilot-instructions.md",
+      ".github/instructions/typescript.instructions.md",
+      ".github/chatmodes/code-reviewer.chatmode.md",
+      "README.md",
+    ],
   },
   kiro: {
-    description: 'Kiro steering files and hooks',
-    files: ['.kiro/steering/example.md', '.kiro/hooks/example-hook.kiro.hook', 'README.md'],
+    description: "Kiro steering files and hooks",
+    files: [
+      ".kiro/steering/example.md",
+      ".kiro/hooks/example-hook.kiro.hook",
+      "README.md",
+    ],
   },
-  'agents.md': {
-    description: 'OpenAI agents.md project instructions',
-    files: ['agents.md', 'README.md'],
+  "agents.md": {
+    description: "OpenAI agents.md project instructions",
+    files: ["agents.md", "README.md"],
   },
   generic: {
-    description: 'Generic AI prompts',
-    files: ['prompts/example.md', 'README.md'],
+    description: "Generic AI prompts",
+    files: ["prompts/example.md", "README.md"],
   },
   mcp: {
-    description: 'Model Context Protocol',
-    files: ['mcp.json', 'README.md'],
+    description: "Model Context Protocol",
+    files: ["mcp.json", "README.md"],
   },
 };
 
 const EXAMPLE_TEMPLATES: Record<string, Record<string, string>> = {
   cursor: {
-    '.cursorrules': `# Cursor Rules
+    ".cursorrules": `# Cursor Rules
 
 Add your Cursor AI coding rules here.
 
@@ -100,7 +119,7 @@ Add your Cursor AI coding rules here.
 `,
   },
   claude: {
-    '.claude/skills/example-skill/SKILL.md': `---
+    ".claude/skills/example-skill/SKILL.md": `---
 name: example-skill
 description: Example Claude skill - replace with your actual skill
 tags: example, template
@@ -124,7 +143,7 @@ Provide detailed instructions for the AI to follow when using this skill.
 `,
   },
   windsurf: {
-    '.windsurf/rules': `# Windsurf Rules
+    ".windsurf/rules": `# Windsurf Rules
 
 Add your Windsurf AI coding rules here.
 
@@ -142,7 +161,7 @@ Add your Windsurf AI coding rules here.
 `,
   },
   copilot: {
-    '.github/copilot-instructions.md': `# GitHub Copilot Repository-Wide Instructions
+    ".github/copilot-instructions.md": `# GitHub Copilot Repository-Wide Instructions
 
 These instructions apply to all files in this repository.
 
@@ -159,7 +178,7 @@ These instructions apply to all files in this repository.
 - Export named functions instead of default exports
 - Write unit tests for all new features
 `,
-    '.github/instructions/typescript.instructions.md': `---
+    ".github/instructions/typescript.instructions.md": `---
 applyTo:
   - "**/*.ts"
   - "**/*.tsx"
@@ -182,7 +201,7 @@ These instructions apply only to TypeScript files.
 - Use template literals for string concatenation
 - Destructure objects and arrays when appropriate
 `,
-    '.github/chatmodes/code-reviewer.chatmode.md': `---
+    ".github/chatmodes/code-reviewer.chatmode.md": `---
 name: Code Reviewer
 description: Expert code reviewer focusing on best practices, security, and maintainability
 ---
@@ -214,7 +233,7 @@ Provide examples of how this chat mode should respond.
 `,
   },
   kiro: {
-    '.kiro/steering/example.md': `---
+    ".kiro/steering/example.md": `---
 inclusion: manual
 ---
 
@@ -236,7 +255,7 @@ Describe the context where this steering file applies.
 
 Provide examples of correct patterns.
 `,
-    '.kiro/hooks/example-hook.kiro.hook': `{
+    ".kiro/hooks/example-hook.kiro.hook": `{
   "enabled": false,
   "name": "Example Hook",
   "description": "Example Kiro hook - disabled by default. Replace with your actual hook logic.",
@@ -254,8 +273,8 @@ Provide examples of correct patterns.
   }
 }`,
   },
-  'agents.md': {
-    'agents.md': `# Project Coding Guidelines
+  "agents.md": {
+    "agents.md": `# Project Coding Guidelines
 
 Project-specific instructions for AI coding agents (OpenAI Codex, etc.).
 
@@ -294,7 +313,7 @@ getData(function(data) {
 `,
   },
   generic: {
-    'prompts/example.md': `# Example Prompt
+    "prompts/example.md": `# Example Prompt
 
 This is an example generic AI prompt. Replace with your actual prompt content.
 
@@ -319,14 +338,14 @@ Include examples if helpful.
 async function prompt(
   rl: readline.Interface,
   question: string,
-  defaultValue?: string
+  defaultValue?: string,
 ): Promise<string> {
   const promptText = defaultValue
     ? `${question} (${defaultValue}): `
     : `${question}: `;
 
   const answer = await rl.question(promptText);
-  return answer.trim() || defaultValue || '';
+  return answer.trim() || defaultValue || "";
 }
 
 /**
@@ -335,17 +354,17 @@ async function prompt(
 async function confirm(
   rl: readline.Interface,
   question: string,
-  defaultYes: boolean = true
+  defaultYes: boolean = true,
 ): Promise<boolean> {
-  const hint = defaultYes ? 'Y/n' : 'y/N';
+  const hint = defaultYes ? "Y/n" : "y/N";
   const answer = await rl.question(`${question} (${hint}): `);
   const trimmed = answer.trim().toLowerCase();
 
-  if (trimmed === '') {
+  if (trimmed === "") {
     return defaultYes;
   }
 
-  return trimmed === 'y' || trimmed === 'yes';
+  return trimmed === "y" || trimmed === "yes";
 }
 
 /**
@@ -355,15 +374,15 @@ async function select(
   rl: readline.Interface,
   question: string,
   options: readonly string[],
-  defaultValue?: string
+  defaultValue?: string,
 ): Promise<string> {
   console.log(`\n${question}`);
   options.forEach((opt, idx) => {
     const isDefault = opt === defaultValue;
-    console.log(`  ${idx + 1}. ${opt}${isDefault ? ' (default)' : ''}`);
+    console.log(`  ${idx + 1}. ${opt}${isDefault ? " (default)" : ""}`);
   });
 
-  const answer = await rl.question('\nSelect (1-' + options.length + '): ');
+  const answer = await rl.question("\nSelect (1-" + options.length + "): ");
   const selection = parseInt(answer.trim(), 10);
 
   if (!answer.trim() && defaultValue) {
@@ -374,7 +393,7 @@ async function select(
     return options[selection - 1];
   }
 
-  console.log('Invalid selection, using default.');
+  console.log("Invalid selection, using default.");
   return defaultValue || options[0];
 }
 
@@ -387,8 +406,9 @@ async function extractMetadataFromFile(filePath: string): Promise<{
   name?: string;
 }> {
   try {
-    const content = await readFile(filePath, 'utf-8');
-    const metadata: { description?: string; tags?: string[]; name?: string } = {};
+    const content = await readFile(filePath, "utf-8");
+    const metadata: { description?: string; tags?: string[]; name?: string } =
+      {};
 
     // Try to extract YAML frontmatter (---\nkey: value\n---)
     const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
@@ -398,13 +418,13 @@ async function extractMetadataFromFile(filePath: string): Promise<{
       // Extract description
       const descMatch = frontmatter.match(/description:\s*(.+)/i);
       if (descMatch) {
-        metadata.description = descMatch[1].trim().replace(/^["']|["']$/g, '');
+        metadata.description = descMatch[1].trim().replace(/^["']|["']$/g, "");
       }
 
       // Extract name
       const nameMatch = frontmatter.match(/name:\s*(.+)/i);
       if (nameMatch) {
-        metadata.name = nameMatch[1].trim().replace(/^["']|["']$/g, '');
+        metadata.name = nameMatch[1].trim().replace(/^["']|["']$/g, "");
       }
 
       // Extract tags
@@ -412,16 +432,16 @@ async function extractMetadataFromFile(filePath: string): Promise<{
       if (tagsMatch) {
         const tagsStr = tagsMatch[1].trim();
         // Handle both array format [tag1, tag2] and comma-separated
-        if (tagsStr.startsWith('[')) {
+        if (tagsStr.startsWith("[")) {
           metadata.tags = tagsStr
-            .replace(/[\[\]]/g, '')
-            .split(',')
-            .map(t => t.trim().replace(/^["']|["']$/g, ''))
+            .replace(/[\[\]]/g, "")
+            .split(",")
+            .map((t) => t.trim().replace(/^["']|["']$/g, ""))
             .filter(Boolean);
         } else {
           metadata.tags = tagsStr
-            .split(',')
-            .map(t => t.trim().replace(/^["']|["']$/g, ''))
+            .split(",")
+            .map((t) => t.trim().replace(/^["']|["']$/g, ""))
             .filter(Boolean);
         }
       }
@@ -454,9 +474,9 @@ async function extractMetadataFromFile(filePath: string): Promise<{
  */
 function getDefaultPackageName(): string {
   const cwd = process.cwd();
-  const dirName = cwd.split('/').pop() || 'my-package';
+  const dirName = cwd.split("/").pop() || "my-package";
   // Normalize to package name format
-  return dirName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  return dirName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
 }
 
 /**
@@ -464,9 +484,11 @@ function getDefaultPackageName(): string {
  */
 function getDefaultAuthor(): string {
   try {
-    const { execSync } = require('child_process');
-    const name = execSync('git config user.name', { encoding: 'utf-8' }).trim();
-    const email = execSync('git config user.email', { encoding: 'utf-8' }).trim();
+    const { execSync } = require("child_process");
+    const name = execSync("git config user.name", { encoding: "utf-8" }).trim();
+    const email = execSync("git config user.email", {
+      encoding: "utf-8",
+    }).trim();
     if (name && email) {
       return `${name} <${email}>`;
     }
@@ -476,18 +498,22 @@ function getDefaultAuthor(): string {
   } catch {
     // Git not configured
   }
-  return '';
+  return "";
 }
 
 /**
  * Create example files based on format
  */
-async function createExampleFiles(format: string, files: string[], packageName: string): Promise<void> {
+async function createExampleFiles(
+  format: string,
+  files: string[],
+  packageName: string,
+): Promise<void> {
   const templates = EXAMPLE_TEMPLATES[format] || {};
 
   for (const file of files) {
     const filePath = join(process.cwd(), file);
-    const dirPath = join(filePath, '..');
+    const dirPath = join(filePath, "..");
 
     // Create directory if it doesn't exist
     if (!existsSync(dirPath)) {
@@ -506,7 +532,7 @@ async function createExampleFiles(format: string, files: string[], packageName: 
     // Replace 'example-skill' placeholder with actual package name in template content
     content = content.replace(/example-skill/g, packageName);
 
-    await writeFile(filePath, content, 'utf-8');
+    await writeFile(filePath, content, "utf-8");
     console.log(`  Created ${file}`);
   }
 }
@@ -515,10 +541,10 @@ async function createExampleFiles(format: string, files: string[], packageName: 
  * Create README.md
  */
 async function createReadme(config: PackageConfig): Promise<void> {
-  const readmePath = join(process.cwd(), 'README.md');
+  const readmePath = join(process.cwd(), "README.md");
 
   if (existsSync(readmePath)) {
-    console.log('  Skipping README.md (already exists)');
+    console.log("  Skipping README.md (already exists)");
     return;
   }
 
@@ -534,11 +560,11 @@ prpm install ${config.name}
 
 ## Format
 
-${config.format}${config.subtype ? ` (${config.subtype})` : ''}
+${config.format}${config.subtype ? ` (${config.subtype})` : ""}
 
 ## Files
 
-${config.files.map(f => `- ${f}`).join('\n')}
+${config.files.map((f) => `- ${f}`).join("\n")}
 
 ## Author
 
@@ -549,8 +575,8 @@ ${config.author}
 ${config.license}
 `;
 
-  await writeFile(readmePath, content, 'utf-8');
-  console.log('  Created README.md');
+  await writeFile(readmePath, content, "utf-8");
+  console.log("  Created README.md");
 }
 
 /**
@@ -558,20 +584,20 @@ ${config.license}
  */
 function displayPackagesTable(packages: DetectedPackage[]): void {
   // Calculate column widths
-  const formatWidth = Math.max(8, ...packages.map(p => p.format.length));
-  const subtypeWidth = Math.max(8, ...packages.map(p => p.subtype.length));
-  const nameWidth = Math.max(20, ...packages.map(p => p.name.length));
+  const formatWidth = Math.max(8, ...packages.map((p) => p.format.length));
+  const subtypeWidth = Math.max(8, ...packages.map((p) => p.subtype.length));
+  const nameWidth = Math.max(20, ...packages.map((p) => p.name.length));
 
   // Header
   console.log(
-    `  ${'Format'.padEnd(formatWidth)}  ${'Subtype'.padEnd(subtypeWidth)}  ${'Name'.padEnd(nameWidth)}  Source`
+    `  ${"Format".padEnd(formatWidth)}  ${"Subtype".padEnd(subtypeWidth)}  ${"Name".padEnd(nameWidth)}  Source`,
   );
-  console.log('  ' + '─'.repeat(formatWidth + subtypeWidth + nameWidth + 50));
+  console.log("  " + "─".repeat(formatWidth + subtypeWidth + nameWidth + 50));
 
   // Rows
   for (const pkg of packages) {
     console.log(
-      `  ${pkg.format.padEnd(formatWidth)}  ${pkg.subtype.padEnd(subtypeWidth)}  ${pkg.name.padEnd(nameWidth)}  ${pkg.primaryFile}`
+      `  ${pkg.format.padEnd(formatWidth)}  ${pkg.subtype.padEnd(subtypeWidth)}  ${pkg.name.padEnd(nameWidth)}  ${pkg.primaryFile}`,
     );
   }
 }
@@ -581,24 +607,30 @@ function displayPackagesTable(packages: DetectedPackage[]): void {
  */
 function displayReconciliationStatus(result: ReconciliationResult): void {
   if (result.inSync.length > 0) {
-    console.log(`\n✓ In sync (${result.inSync.length} package${result.inSync.length === 1 ? '' : 's'})`);
+    console.log(
+      `\n✓ In sync (${result.inSync.length} package${result.inSync.length === 1 ? "" : "s"})`,
+    );
     for (const { manifest } of result.inSync) {
-      const files = manifest.files.join(', ');
+      const files = manifest.files.join(", ");
       console.log(`  - ${manifest.name} (${files})`);
     }
   }
 
   if (result.newPackages.length > 0) {
-    console.log(`\n+ New (${result.newPackages.length} package${result.newPackages.length === 1 ? '' : 's'} detected)`);
+    console.log(
+      `\n+ New (${result.newPackages.length} package${result.newPackages.length === 1 ? "" : "s"} detected)`,
+    );
     for (const pkg of result.newPackages) {
       console.log(`  - ${pkg.name} (${pkg.primaryFile})`);
     }
   }
 
   if (result.missingPackages.length > 0) {
-    console.log(`\n- Missing from disk (${result.missingPackages.length} package${result.missingPackages.length === 1 ? '' : 's'})`);
+    console.log(
+      `\n- Missing from disk (${result.missingPackages.length} package${result.missingPackages.length === 1 ? "" : "s"})`,
+    );
     for (const pkg of result.missingPackages) {
-      const files = pkg.files.join(', ');
+      const files = pkg.files.join(", ");
       console.log(`  - ${pkg.name} (${files})`);
     }
   }
@@ -611,7 +643,7 @@ async function reviewPackage(
   rl: readline.Interface,
   pkg: DetectedPackage,
   index: number,
-  total: number
+  total: number,
 ): Promise<DetectedPackage | null> {
   console.log(`\nPackage ${index + 1}/${total}: ${pkg.name}`);
   console.log(`  Format: ${pkg.format}`);
@@ -619,12 +651,15 @@ async function reviewPackage(
 
   const name = await prompt(rl, `  Name`, pkg.name);
   const description = await prompt(rl, `  Description`, pkg.description);
-  const tagsInput = await prompt(rl, `  Tags`, pkg.tags.join(', '));
-  const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+  const tagsInput = await prompt(rl, `  Tags`, pkg.tags.join(", "));
+  const tags = tagsInput
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
 
-  console.log(`  Files: ${pkg.files.join(', ')}`);
+  console.log(`  Files: ${pkg.files.join(", ")}`);
 
-  const include = await confirm(rl, '\n  Include this package?', true);
+  const include = await confirm(rl, "\n  Include this package?", true);
 
   if (!include) {
     return null;
@@ -645,7 +680,7 @@ async function reviewMissingPackage(
   rl: readline.Interface,
   pkg: ManifestPackage,
   index: number,
-  total: number
+  total: number,
 ): Promise<boolean> {
   console.log(`\n- Missing ${index + 1}/${total}: ${pkg.name}`);
   console.log(`  This package is in prpm.json but the file was not found at:`);
@@ -653,17 +688,17 @@ async function reviewMissingPackage(
     console.log(`    ${file}`);
   }
 
-  return await confirm(rl, '\n  Remove from prpm.json?', true);
+  return await confirm(rl, "\n  Remove from prpm.json?", true);
 }
 
 /**
  * Smart init with package detection
  */
 async function smartInit(options: InitOptions): Promise<void> {
-  const manifestPath = join(process.cwd(), 'prpm.json');
+  const manifestPath = join(process.cwd(), "prpm.json");
   const hasManifest = existsSync(manifestPath);
 
-  console.log('\nScanning for packages...\n');
+  console.log("\nScanning for packages...\n");
 
   // Scan for packages on disk
   const detected = await scanForPackages();
@@ -673,7 +708,7 @@ async function smartInit(options: InitOptions): Promise<void> {
 
   // If no packages found and no manifest, fall back to classic wizard
   if (detected.length === 0 && !hasManifest) {
-    console.log('No existing packages detected.\n');
+    console.log("No existing packages detected.\n");
     return classicInit(options);
   }
 
@@ -682,10 +717,15 @@ async function smartInit(options: InitOptions): Promise<void> {
     const result = await reconcilePackages(detected, existingManifest.packages);
 
     // Everything in sync
-    if (result.newPackages.length === 0 && result.missingPackages.length === 0) {
-      console.log('✅ Everything in sync!\n');
-      console.log(`Your prpm.json contains ${result.inSync.length} package${result.inSync.length === 1 ? '' : 's'}, all files present on disk.`);
-      console.log('No changes needed.\n');
+    if (
+      result.newPackages.length === 0 &&
+      result.missingPackages.length === 0
+    ) {
+      console.log("✅ Everything in sync!\n");
+      console.log(
+        `Your prpm.json contains ${result.inSync.length} package${result.inSync.length === 1 ? "" : "s"}, all files present on disk.`,
+      );
+      console.log("No changes needed.\n");
       return;
     }
 
@@ -706,8 +746,8 @@ async function smartInit(options: InitOptions): Promise<void> {
 
       const bulkConfirm = await confirm(
         rl,
-        `\n${summaryParts.join(' and ')} package${changes === 1 ? '' : 's'}?`,
-        true
+        `\n${summaryParts.join(" and ")} package${changes === 1 ? "" : "s"}?`,
+        true,
       );
 
       let packagesToAdd: DetectedPackage[] = [];
@@ -725,7 +765,12 @@ async function smartInit(options: InitOptions): Promise<void> {
 
         // Review new packages
         for (let i = 0; i < result.newPackages.length; i++) {
-          const reviewed = await reviewPackage(rl, result.newPackages[i], i, result.newPackages.length);
+          const reviewed = await reviewPackage(
+            rl,
+            result.newPackages[i],
+            i,
+            result.newPackages.length,
+          );
           if (reviewed) {
             packagesToAdd.push(reviewed);
           }
@@ -737,7 +782,7 @@ async function smartInit(options: InitOptions): Promise<void> {
             rl,
             result.missingPackages[i],
             i,
-            result.missingPackages.length
+            result.missingPackages.length,
           );
           if (shouldRemove) {
             packagesToRemove.add(result.missingPackages[i].name);
@@ -752,22 +797,24 @@ async function smartInit(options: InitOptions): Promise<void> {
           existingManifest.packages,
           packagesToAdd,
           packagesToRemove,
-          existingManifest.isMultiPackage
+          existingManifest.isMultiPackage,
         );
 
         await writeFile(
           manifestPath,
-          JSON.stringify(updatedManifest, null, 2) + '\n',
-          'utf-8'
+          JSON.stringify(updatedManifest, null, 2) + "\n",
+          "utf-8",
         );
 
-        const addedMsg = packagesToAdd.length > 0 ? `added ${packagesToAdd.length}` : '';
-        const removedMsg = packagesToRemove.size > 0 ? `removed ${packagesToRemove.size}` : '';
-        const changeMsg = [addedMsg, removedMsg].filter(Boolean).join(', ');
+        const addedMsg =
+          packagesToAdd.length > 0 ? `added ${packagesToAdd.length}` : "";
+        const removedMsg =
+          packagesToRemove.size > 0 ? `removed ${packagesToRemove.size}` : "";
+        const changeMsg = [addedMsg, removedMsg].filter(Boolean).join(", ");
 
         console.log(`\n✅ Updated prpm.json (${changeMsg})\n`);
       } else {
-        console.log('\nNo changes made.\n');
+        console.log("\nNo changes made.\n");
       }
     } finally {
       rl.close();
@@ -777,7 +824,9 @@ async function smartInit(options: InitOptions): Promise<void> {
   }
 
   // No manifest, but packages detected - create new manifest
-  console.log(`Found ${detected.length} package${detected.length === 1 ? '' : 's'}:\n`);
+  console.log(
+    `Found ${detected.length} package${detected.length === 1 ? "" : "s"}:\n`,
+  );
   displayPackagesTable(detected);
 
   const rl = readline.createInterface({ input, output });
@@ -786,7 +835,7 @@ async function smartInit(options: InitOptions): Promise<void> {
     const isMulti = detected.length > 1;
     const confirmMsg = isMulti
       ? `\nCreate multi-package prpm.json with these ${detected.length} packages?`
-      : '\nCreate prpm.json with this package?';
+      : "\nCreate prpm.json with this package?";
 
     const bulkConfirm = await confirm(rl, confirmMsg, true);
 
@@ -800,7 +849,12 @@ async function smartInit(options: InitOptions): Promise<void> {
       packagesToInclude = [];
 
       for (let i = 0; i < detected.length; i++) {
-        const reviewed = await reviewPackage(rl, detected[i], i, detected.length);
+        const reviewed = await reviewPackage(
+          rl,
+          detected[i],
+          i,
+          detected.length,
+        );
         if (reviewed) {
           packagesToInclude.push(reviewed);
         }
@@ -808,7 +862,9 @@ async function smartInit(options: InitOptions): Promise<void> {
     }
 
     if (packagesToInclude.length === 0) {
-      console.log('\nNo packages selected. Run `prpm init` again to start from scratch.\n');
+      console.log(
+        "\nNo packages selected. Run `prpm init` again to start from scratch.\n",
+      );
       return;
     }
 
@@ -817,19 +873,21 @@ async function smartInit(options: InitOptions): Promise<void> {
 
     const manifest = createManifestFromDetected(packagesToInclude, {
       author: defaultAuthor || undefined,
-      license: 'MIT',
+      license: "MIT",
     });
 
     await writeFile(
       manifestPath,
-      JSON.stringify(manifest, null, 2) + '\n',
-      'utf-8'
+      JSON.stringify(manifest, null, 2) + "\n",
+      "utf-8",
     );
 
-    console.log(`\n✅ Created prpm.json with ${packagesToInclude.length} package${packagesToInclude.length === 1 ? '' : 's'}\n`);
-    console.log('Next steps:');
-    console.log('  1. Review and edit prpm.json as needed');
-    console.log('  2. Run `prpm publish` to publish your packages\n');
+    console.log(
+      `\n✅ Created prpm.json with ${packagesToInclude.length} package${packagesToInclude.length === 1 ? "" : "s"}\n`,
+    );
+    console.log("Next steps:");
+    console.log("  1. Review and edit prpm.json as needed");
+    console.log("  2. Run `prpm publish` to publish your packages\n");
   } finally {
     rl.close();
   }
@@ -839,12 +897,12 @@ async function smartInit(options: InitOptions): Promise<void> {
  * Classic init wizard (fallback when no packages detected)
  */
 async function classicInit(options: InitOptions): Promise<void> {
-  const manifestPath = join(process.cwd(), 'prpm.json');
+  const manifestPath = join(process.cwd(), "prpm.json");
 
   // Check if prpm.json already exists
   if (existsSync(manifestPath) && !options.force) {
     throw new Error(
-      'prpm.json already exists. Use --force to overwrite, or run this command in a different directory.'
+      "prpm.json already exists. Use --force to overwrite, or run this command in a different directory.",
     );
   }
 
@@ -853,76 +911,89 @@ async function classicInit(options: InitOptions): Promise<void> {
   // Use defaults if --yes flag
   if (options.yes) {
     config.name = getDefaultPackageName();
-    config.version = '1.0.0';
-    config.description = 'A PRPM package';
-    config.format = 'cursor';
-    config.subtype = 'rule';
-    config.author = getDefaultAuthor() || 'Your Name';
-    config.license = 'MIT';
+    config.version = "1.0.0";
+    config.description = "A PRPM package";
+    config.format = "cursor";
+    config.subtype = "rule";
+    config.author = getDefaultAuthor() || "Your Name";
+    config.license = "MIT";
     config.tags = [];
     // Replace 'example-skill' with actual package name in file paths
-    config.files = FORMAT_EXAMPLES.cursor.files.map(f =>
-      f.replace(/example-skill/g, config.name || 'example-skill')
+    config.files = FORMAT_EXAMPLES.cursor.files.map((f) =>
+      f.replace(/example-skill/g, config.name || "example-skill"),
     );
   } else {
     // Interactive prompts
     const rl = readline.createInterface({ input, output });
 
     try {
-      console.log('🚀 Welcome to PRPM package initialization!\n');
-      console.log('This utility will walk you through creating a prpm.json file.\n');
+      console.log("🚀 Welcome to PRPM package initialization!\n");
+      console.log(
+        "This utility will walk you through creating a prpm.json file.\n",
+      );
 
       // Package name
       const defaultName = getDefaultPackageName();
-      config.name = await prompt(rl, 'Package name', defaultName);
+      config.name = await prompt(rl, "Package name", defaultName);
 
       // Version
-      config.version = await prompt(rl, 'Version', '1.0.0');
+      config.version = await prompt(rl, "Version", "1.0.0");
 
       // Description
       config.description = await prompt(
         rl,
-        'Description',
-        'A PRPM package for AI coding assistants'
+        "Description",
+        "A PRPM package for AI coding assistants",
       );
 
       // Format
-      config.format = await select(rl, 'Select package format:', FORMATS, 'cursor');
+      config.format = await select(
+        rl,
+        "Select package format:",
+        FORMATS,
+        "cursor",
+      );
 
       // Subtype
-      config.subtype = await select(rl, 'Select package subtype:', SUBTYPES, 'rule');
+      config.subtype = await select(
+        rl,
+        "Select package subtype:",
+        SUBTYPES,
+        "rule",
+      );
 
       // Author
       const defaultAuthor = getDefaultAuthor();
-      config.author = await prompt(rl, 'Author', defaultAuthor || 'Your Name');
+      config.author = await prompt(rl, "Author", defaultAuthor || "Your Name");
 
       // License
-      config.license = await prompt(rl, 'License', 'MIT');
+      config.license = await prompt(rl, "License", "MIT");
 
       // Repository
-      const includeRepo = await prompt(rl, 'Add repository URL? (y/N)', 'n');
-      if (includeRepo.toLowerCase() === 'y') {
-        config.repository = await prompt(rl, 'Repository URL', '');
+      const includeRepo = await prompt(rl, "Add repository URL? (y/N)", "n");
+      if (includeRepo.toLowerCase() === "y") {
+        config.repository = await prompt(rl, "Repository URL", "");
       }
 
       // Tags
       const tagsInput = await prompt(
         rl,
-        'Tags (comma-separated)',
-        config.format
+        "Tags (comma-separated)",
+        config.format,
       );
       config.tags = tagsInput
-        .split(',')
-        .map(t => t.trim())
+        .split(",")
+        .map((t) => t.trim())
         .filter(Boolean);
 
       // Files - use examples based on format
       const formatExamples = FORMAT_EXAMPLES[config.format];
 
       // Replace 'example-skill' with actual package name in file paths
-      const exampleFiles = formatExamples?.files.map(f =>
-        f.replace(/example-skill/g, config.name || 'example-skill')
-      ) || [];
+      const exampleFiles =
+        formatExamples?.files.map((f) =>
+          f.replace(/example-skill/g, config.name || "example-skill"),
+        ) || [];
 
       if (exampleFiles.length > 0) {
         console.log(`\nExample files for ${config.format}:`);
@@ -930,28 +1001,28 @@ async function classicInit(options: InitOptions): Promise<void> {
 
         const useExamples = await prompt(
           rl,
-          '\nUse example file structure? (Y/n)',
-          'y'
+          "\nUse example file structure? (Y/n)",
+          "y",
         );
 
-        if (useExamples.toLowerCase() !== 'n') {
+        if (useExamples.toLowerCase() !== "n") {
           config.files = exampleFiles;
         } else {
           const filesInput = await prompt(
             rl,
-            'Files (comma-separated)',
-            exampleFiles.join(', ')
+            "Files (comma-separated)",
+            exampleFiles.join(", "),
           );
           config.files = filesInput
-            .split(',')
-            .map(f => f.trim())
+            .split(",")
+            .map((f) => f.trim())
             .filter(Boolean);
         }
       } else {
-        const filesInput = await prompt(rl, 'Files (comma-separated)', '');
+        const filesInput = await prompt(rl, "Files (comma-separated)", "");
         config.files = filesInput
-          .split(',')
-          .map(f => f.trim())
+          .split(",")
+          .map((f) => f.trim())
           .filter(Boolean);
       }
 
@@ -962,38 +1033,43 @@ async function classicInit(options: InitOptions): Promise<void> {
         const extractedMetadata = await extractMetadataFromFile(firstFile);
 
         if (extractedMetadata.description) {
-          console.log(`   Found description: "${extractedMetadata.description}"`);
+          console.log(
+            `   Found description: "${extractedMetadata.description}"`,
+          );
           const useExtracted = await prompt(
             rl,
-            '   Use this description? (Y/n)',
-            'y'
+            "   Use this description? (Y/n)",
+            "y",
           );
-          if (useExtracted.toLowerCase() !== 'n') {
+          if (useExtracted.toLowerCase() !== "n") {
             config.description = extractedMetadata.description;
           }
         }
 
         if (extractedMetadata.tags && extractedMetadata.tags.length > 0) {
-          console.log(`   Found tags: ${extractedMetadata.tags.join(', ')}`);
+          console.log(`   Found tags: ${extractedMetadata.tags.join(", ")}`);
           const useExtractedTags = await prompt(
             rl,
-            '   Use these tags? (Y/n)',
-            'y'
+            "   Use these tags? (Y/n)",
+            "y",
           );
-          if (useExtractedTags.toLowerCase() !== 'n') {
+          if (useExtractedTags.toLowerCase() !== "n") {
             config.tags = extractedMetadata.tags;
           }
         }
 
-        if (extractedMetadata.name && !config.name.includes(extractedMetadata.name)) {
+        if (
+          extractedMetadata.name &&
+          !config.name.includes(extractedMetadata.name)
+        ) {
           console.log(`   Found name: "${extractedMetadata.name}"`);
           const useExtractedName = await prompt(
             rl,
-            '   Include in package name? (y/N)',
-            'n'
+            "   Include in package name? (y/N)",
+            "n",
           );
-          if (useExtractedName.toLowerCase() === 'y') {
-            config.name = `${config.name}-${extractedMetadata.name.toLowerCase().replace(/\s+/g, '-')}`;
+          if (useExtractedName.toLowerCase() === "y") {
+            config.name = `${config.name}-${extractedMetadata.name.toLowerCase().replace(/\s+/g, "-")}`;
           }
         }
       }
@@ -1003,19 +1079,19 @@ async function classicInit(options: InitOptions): Promise<void> {
       while (addingMoreFiles) {
         const addMore = await prompt(
           rl,
-          '\nAdd more files to the package? (y/N)',
-          'n'
+          "\nAdd more files to the package? (y/N)",
+          "n",
         );
 
-        if (addMore.toLowerCase() === 'y') {
+        if (addMore.toLowerCase() === "y") {
           const additionalFiles = await prompt(
             rl,
-            'Additional files (comma-separated)',
-            ''
+            "Additional files (comma-separated)",
+            "",
           );
           const newFiles = additionalFiles
-            .split(',')
-            .map(f => f.trim())
+            .split(",")
+            .map((f) => f.trim())
             .filter(Boolean);
 
           if (newFiles.length > 0 && config.files) {
@@ -1038,7 +1114,7 @@ async function classicInit(options: InitOptions): Promise<void> {
     version: config.version,
     description: config.description,
     format: config.format,
-    subtype: config.subtype || 'rule', // Default to 'rule' if not specified
+    subtype: config.subtype || "rule", // Default to 'rule' if not specified
   };
 
   manifest.author = config.author;
@@ -1057,34 +1133,213 @@ async function classicInit(options: InitOptions): Promise<void> {
   // Write prpm.json
   await writeFile(
     manifestPath,
-    JSON.stringify(manifest, null, 2) + '\n',
-    'utf-8'
+    JSON.stringify(manifest, null, 2) + "\n",
+    "utf-8",
   );
 
-  console.log('\n✅ Created prpm.json\n');
+  console.log("\n✅ Created prpm.json\n");
 
   // Create example files
   if (config.files && config.format && config.name) {
-    console.log('Creating example files...\n');
+    console.log("Creating example files...\n");
     // Filter out README.md since createReadme will handle it with proper content
-    const filesToCreate = config.files.filter(f => f !== 'README.md');
+    const filesToCreate = config.files.filter((f) => f !== "README.md");
     await createExampleFiles(config.format, filesToCreate, config.name);
 
     // Create README
     await createReadme(config as PackageConfig);
   }
 
-  console.log('\n✨ Package initialized successfully!\n');
-  console.log('Next steps:');
-  console.log('  1. Edit the generated files with your content');
-  console.log('  2. Review and update prpm.json as needed');
-  console.log('  3. Run `prpm publish` to publish your package\n');
+  console.log("\n✨ Package initialized successfully!\n");
+  console.log("Next steps:");
+  console.log("  1. Edit the generated files with your content");
+  console.log("  2. Review and update prpm.json as needed");
+  console.log("  3. Run `prpm publish` to publish your package\n");
+}
+
+/**
+ * Scan mode - batch discovery of packages across directories
+ * This is the functionality from the deprecated `prpm catalog` command
+ */
+async function scanMode(
+  directories: string[],
+  options: InitOptions,
+): Promise<void> {
+  console.log("🔍 Scanning for packages...\n");
+
+  // Scan specified directories or current directory
+  const scanDirs = directories.length > 0 ? directories : [process.cwd()];
+
+  let allDiscovered: DetectedPackage[] = [];
+
+  for (const dir of scanDirs) {
+    console.log(`   Scanning ${dir}...`);
+    try {
+      const discovered = await scanForPackages(dir);
+      allDiscovered.push(...discovered);
+      console.log(`   Found ${discovered.length} package(s) in ${dir}`);
+    } catch (err) {
+      console.log(
+        `   ⚠️  Could not access ${dir}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  // Read lockfile to exclude packages installed from registry
+  const lockfile = await readLockfile();
+  const installedPackageNames = new Set<string>();
+
+  if (lockfile) {
+    for (const key of Object.keys(lockfile.packages)) {
+      const { packageId } = parseLockfileKey(key);
+      // Extract just the package name (after the last /)
+      const namePart = packageId.split("/").pop() || packageId;
+      installedPackageNames.add(namePart);
+    }
+  }
+
+  // Filter out packages that are installed from the registry (not user-created)
+  const filteredDiscovered = allDiscovered.filter((pkg) => {
+    const isInstalled = installedPackageNames.has(pkg.name);
+    if (isInstalled) {
+      console.log(
+        `   ⏩ Skipping ${pkg.name} (installed from registry, not user-created)`,
+      );
+      return false;
+    }
+    return true;
+  });
+
+  console.log(
+    `\n✨ Discovered ${filteredDiscovered.length} package(s) total:\n`,
+  );
+
+  if (filteredDiscovered.length === 0) {
+    console.log(
+      "No user-created packages found. Try scanning different directories or check if all packages were installed from registry.",
+    );
+    return;
+  }
+
+  // Display discovered packages grouped by format
+  const byFormat = new Map<string, DetectedPackage[]>();
+  for (const pkg of filteredDiscovered) {
+    if (!byFormat.has(pkg.format)) {
+      byFormat.set(pkg.format, []);
+    }
+    byFormat.get(pkg.format)!.push(pkg);
+  }
+
+  for (const [format, packages] of byFormat.entries()) {
+    console.log(`📦 ${format} (${packages.length}):`);
+    for (const pkg of packages) {
+      const fileCount =
+        pkg.files.length > 1 ? ` (${pkg.files.length} files)` : "";
+      console.log(
+        `   - ${pkg.name} (${pkg.subtype}): ${pkg.primaryFile}${fileCount}`,
+      );
+    }
+    console.log("");
+  }
+
+  if (options.dryRun) {
+    console.log("🔍 Dry run - no changes made\n");
+    return;
+  }
+
+  // Load or create prpm.json
+  const prpmJsonPath = options.output || join(process.cwd(), "prpm.json");
+  let manifest: MultiPackageManifest;
+
+  if (options.append) {
+    try {
+      const existingContent = await readFile(prpmJsonPath, "utf-8");
+      const existing = JSON.parse(existingContent);
+
+      // Check if it's a multi-package manifest
+      if ("packages" in existing && Array.isArray(existing.packages)) {
+        manifest = existing as MultiPackageManifest;
+      } else {
+        // Convert single package to multi-package
+        manifest = {
+          name: "multi-package",
+          version: "1.0.0",
+          packages: [existing as PackageManifest],
+        };
+      }
+    } catch {
+      // File doesn't exist, create new
+      manifest = {
+        name: "multi-package",
+        version: "1.0.0",
+        packages: [],
+      };
+    }
+  } else {
+    manifest = {
+      name: "multi-package",
+      version: "1.0.0",
+      packages: [],
+    };
+  }
+
+  // Convert discovered packages to manifests
+  const existingNames = new Set(manifest.packages.map((p) => p.name));
+  let addedCount = 0;
+
+  for (const discovered of filteredDiscovered) {
+    // Skip if already exists
+    if (existingNames.has(discovered.name)) {
+      console.log(`   ⚠️  Skipping ${discovered.name} (already in prpm.json)`);
+      continue;
+    }
+
+    const packageManifest: PackageManifest = {
+      name: discovered.name,
+      version: "1.0.0",
+      description: discovered.description,
+      author: "", // User should fill this in
+      format: discovered.format,
+      subtype: discovered.subtype,
+      files: discovered.files,
+      tags: discovered.tags,
+    };
+
+    manifest.packages.push(packageManifest);
+    addedCount++;
+  }
+
+  // Write updated prpm.json
+  await writeFile(
+    prpmJsonPath,
+    JSON.stringify(manifest, null, 2) + "\n",
+    "utf-8",
+  );
+
+  console.log(`✅ Updated ${prpmJsonPath}`);
+  console.log(`   Added ${addedCount} new package(s)`);
+  console.log(`   Total: ${manifest.packages.length} package(s)\n`);
+  console.log("💡 Next steps:");
+  console.log("   1. Review and edit package metadata in prpm.json");
+  console.log("   2. Add author, license, and other fields");
+  console.log("   3. Run: prpm publish --dry-run to validate");
+  console.log("   4. Run: prpm publish to publish packages\n");
 }
 
 /**
  * Initialize a new PRPM package
  */
-async function initPackage(options: InitOptions): Promise<void> {
+async function initPackage(
+  options: InitOptions,
+  scanDirectories?: string[],
+): Promise<void> {
+  // If --scan flag, use scan mode
+  if (options.scan) {
+    const dirs =
+      scanDirectories && scanDirectories.length > 0 ? scanDirectories : ["."];
+    return scanMode(dirs, options);
+  }
+
   // If --yes flag, use classic init with defaults
   if (options.yes) {
     return classicInit(options);
@@ -1098,26 +1353,46 @@ async function initPackage(options: InitOptions): Promise<void> {
  * Create init command
  */
 export function createInitCommand(): Command {
-  const command = new Command('init');
+  const command = new Command("init");
 
   command
-    .description('Initialize a new PRPM package with interactive prompts')
-    .option('-y, --yes', 'Skip prompts and use defaults')
-    .option('--private', 'Create a private package')
-    .option('-f, --force', 'Overwrite existing prpm.json')
-    .action(async (options: InitOptions) => {
+    .description("Initialize a new PRPM package with interactive prompts")
+    .argument("[directories...]", "Directories to scan (only used with --scan)")
+    .option("-y, --yes", "Skip prompts and use defaults")
+    .option("--private", "Create a private package")
+    .option("-f, --force", "Overwrite existing prpm.json")
+    .option(
+      "-s, --scan",
+      "Scan mode: discover packages in directories without prompts",
+    )
+    .option("-o, --output <path>", "Output path for prpm.json (scan mode only)")
+    .option(
+      "-a, --append",
+      "Append to existing prpm.json instead of overwriting (scan mode only)",
+    )
+    .option(
+      "--dry-run",
+      "Show what would be discovered without making changes (scan mode only)",
+    )
+    .action(async (directories: string[], options: InitOptions) => {
       try {
-        await initPackage(options);
+        await initPackage(options, directories);
       } catch (error) {
-        console.error('\n❌ Error:', error instanceof Error ? error.message : error);
-        throw new CLIError('\n❌ Error: ' + (error instanceof Error ? error.message : error), 1);
+        console.error(
+          "\n❌ Error:",
+          error instanceof Error ? error.message : error,
+        );
+        throw new CLIError(
+          "\n❌ Error: " + (error instanceof Error ? error.message : error),
+          1,
+        );
       }
     });
 
   return command;
 }
 
-// Export for testing
+// Export for testing and for deprecated catalog command
 export {
   smartInit,
   classicInit,
@@ -1126,4 +1401,5 @@ export {
   reviewPackage,
   getDefaultAuthor,
   getDefaultPackageName,
+  initPackage,
 };
