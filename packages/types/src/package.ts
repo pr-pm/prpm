@@ -6,88 +6,121 @@
  * Package format - the AI tool/platform the package is for
  */
 export type Format =
-  | 'cursor'
-  | 'claude'
-  | 'continue'
-  | 'windsurf'
-  | 'copilot'
-  | 'kiro'
-  | 'agents.md'
-  | 'gemini.md'
-  | 'claude.md'
-  | 'gemini'
-  | 'opencode'
-  | 'ruler'
-  | 'droid'
-  | 'trae'
-  | 'aider'
-  | 'zencoder'
-  | 'replit'
-  | 'generic'
-  | 'mcp';
+  | "cursor"
+  | "claude"
+  | "continue"
+  | "windsurf"
+  | "copilot"
+  | "kiro"
+  | "agents.md"
+  | "gemini.md"
+  | "claude.md"
+  | "gemini"
+  | "opencode"
+  | "ruler"
+  | "droid"
+  | "trae"
+  | "aider"
+  | "zencoder"
+  | "replit"
+  | "generic"
+  | "mcp";
 
 /**
  * Available formats as a constant array
  * Useful for CLI prompts, validation, etc.
  */
 export const FORMATS: readonly Format[] = [
-  'cursor',
-  'claude',
-  'continue',
-  'windsurf',
-  'copilot',
-  'kiro',
-  'agents.md',
-  'gemini.md',
-  'claude.md',
-  'gemini',
-  'opencode',
-  'ruler',
-  'droid',
-  'trae',
-  'aider',
-  'zencoder',
-  'replit',
-  'generic',
-  'mcp',
+  "cursor",
+  "claude",
+  "continue",
+  "windsurf",
+  "copilot",
+  "kiro",
+  "agents.md",
+  "gemini.md",
+  "claude.md",
+  "gemini",
+  "opencode",
+  "ruler",
+  "droid",
+  "trae",
+  "aider",
+  "zencoder",
+  "replit",
+  "generic",
+  "mcp",
 ] as const;
 
 /**
  * Package subtype - the functional category of the package
  */
 export type Subtype =
-  | 'rule'
-  | 'agent'
-  | 'skill'
-  | 'slash-command'
-  | 'prompt'
-  | 'workflow'
-  | 'tool'
-  | 'template'
-  | 'collection'
-  | 'chatmode'
-  | 'hook';
+  | "rule"
+  | "agent"
+  | "skill"
+  | "slash-command"
+  | "prompt"
+  | "workflow"
+  | "tool"
+  | "template"
+  | "collection"
+  | "chatmode"
+  | "hook";
 
 /**
  * Available subtypes as a constant array
  * Useful for CLI prompts, validation, etc.
  */
 export const SUBTYPES: readonly Subtype[] = [
-  'rule',
-  'agent',
-  'skill',
-  'slash-command',
-  'prompt',
-  'workflow',
-  'tool',
-  'template',
-  'collection',
-  'chatmode',
-  'hook',
+  "rule",
+  "agent",
+  "skill",
+  "slash-command",
+  "prompt",
+  "workflow",
+  "tool",
+  "template",
+  "collection",
+  "chatmode",
+  "hook",
 ] as const;
 
+/**
+ * Mapping of formats to their supported subtypes
+ * Defines which subtypes are valid/available for each format
+ */
+export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
+  cursor: ["rule", "agent", "slash-command", "tool"],
+  claude: ["skill", "agent", "slash-command", "tool", "hook"],
+  "claude.md": ["agent"],
+  continue: ["rule", "agent", "slash-command", "tool"],
+  windsurf: ["rule", "agent", "slash-command", "tool"],
+  copilot: ["tool", "chatmode"],
+  kiro: ["rule", "agent", "tool", "hook"],
+  gemini: ["slash-command"],
+  "gemini.md": ["slash-command"],
+  opencode: ["agent", "slash-command", "tool"],
+  ruler: ["rule", "agent", "tool"],
+  droid: ["skill", "slash-command", "hook"],
+  trae: ["rule"],
+  aider: ["rule"],
+  zencoder: ["rule"],
+  replit: ["rule"],
+  mcp: ["tool"],
+  "agents.md": ["skill", "agent"],
+  generic: [
+    "rule",
+    "agent",
+    "skill",
+    "slash-command",
+    "tool",
+    "chatmode",
+    "hook",
+  ],
+} as const;
 
-export type PackageVisibility = 'public' | 'private' | 'unlisted';
+export type PackageVisibility = "public" | "private" | "unlisted";
 
 /**
  * Core package interface
@@ -164,34 +197,37 @@ export interface ConversionHints {
   /** Hints for Cursor format conversion */
   cursor?: {
     alwaysApply?: boolean;
-    priority?: 'high' | 'medium' | 'low';
+    priority?: "high" | "medium" | "low";
     globs?: string[];
   };
 
   /** Hints for Claude format conversion */
   claude?: {
-    model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
+    model?: "sonnet" | "opus" | "haiku" | "inherit";
     tools?: string[];
     subagentType?: string;
   };
 
   /** Hints for Kiro format conversion */
   kiro?: {
-    inclusion?: 'always' | 'fileMatch' | 'manual';
+    inclusion?: "always" | "fileMatch" | "manual";
     fileMatchPattern?: string;
     domain?: string;
     tools?: string[];
-    mcpServers?: Record<string, {
-      command: string;
-      args?: string[];
-      env?: Record<string, string>;
-    }>;
+    mcpServers?: Record<
+      string,
+      {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+      }
+    >;
   };
 
   /** Hints for GitHub Copilot format conversion */
   copilot?: {
     applyTo?: string | string[];
-    excludeAgent?: 'code-review' | 'coding-agent';
+    excludeAgent?: "code-review" | "coding-agent";
   };
 
   /** Hints for Continue format conversion */
@@ -280,8 +316,10 @@ export type Manifest = PackageManifest | MultiPackageManifest;
 /**
  * Type guard to check if manifest is multi-package
  */
-export function isMultiPackageManifest(manifest: Manifest): manifest is MultiPackageManifest {
-  return 'packages' in manifest && Array.isArray(manifest.packages);
+export function isMultiPackageManifest(
+  manifest: Manifest,
+): manifest is MultiPackageManifest {
+  return "packages" in manifest && Array.isArray(manifest.packages);
 }
 
 /**
