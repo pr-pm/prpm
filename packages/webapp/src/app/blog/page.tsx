@@ -27,7 +27,7 @@ const blogPosts: BlogPost[] = [
     slug: "json-schemas-for-ai-prompts",
     title: "JSON Schemas for Every AI Prompt Format",
     excerpt: "PRPM ships comprehensive JSON schemas for 15+ AI prompt formats. Get IDE autocomplete, validate in CI/CD, and build tools with confidence.",
-    date: "2025-01-26",
+    date: "2025-11-28",
     author: "PRPM Team",
     readTime: "10 min read",
     tags: ["Technical", "Developer Experience", "Format Specifications"],

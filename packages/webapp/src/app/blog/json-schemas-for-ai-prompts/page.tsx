@@ -28,7 +28,7 @@ export default function JSONSchemasPost() {
           title="JSON Schemas for Every AI Prompt Format"
           subtitle="Get IDE autocomplete, validate in CI/CD, and build tools with confidence—PRPM ships comprehensive schemas for 15+ AI prompt formats."
           author="PRPM Team"
-          date="January 26, 2025"
+          date="November 28, 2025"
           readTime="10 min read"
         />
 
@@ -593,7 +593,7 @@ const result2 = validateMarkdown('claude', content, 'skill');`}</code></pre>
           <div className="not-prose mb-16">
             <h3 className="text-2xl font-bold text-white mb-6">2. Registry API</h3>
             <p className="text-gray-300 leading-relaxed mb-8">
-              Access schemas via HTTPS for IDE integration and tooling:
+              Access schemas via HTTPS for IDE integration and tooling. Browse all available schemas at the <Link href="https://registry.prpm.dev/api/v1/schemas" className="text-prpm-accent hover:underline font-medium">schema reference endpoint</Link>:
             </p>
 
             <pre className="bg-prpm-dark-card border border-prpm-border rounded-xl p-6 overflow-x-auto mb-6"><code className="text-sm text-gray-300 font-mono">{`# Base format schemas
