@@ -365,7 +365,7 @@ describe('install command - multi-file packages', () => {
       );
     });
 
-    it('should reject multi-file package with --as conversion', async () => {
+    it('should convert multi-file package by using main file', async () => {
       const mockPackage = {
         id: 'complex-skill',
         name: 'complex-skill',
@@ -379,17 +379,52 @@ describe('install command - multi-file packages', () => {
         },
       };
 
+      // Create tarball with SKILL.md as the main file
       const tarGz = await createTarGz({
-        'skill.md': '# Main Skill',
+        'SKILL.md': '# Main Skill\n\nThis is the main content.',
         'helper.md': '# Helper',
+      }, { format: 'claude', subtype: 'skill', packageName: 'complex-skill' });
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(tarGz);
+
+      // Should succeed and convert only the main file (SKILL.md)
+      await handleInstall('complex-skill', { as: 'cursor' });
+
+      // Should save as .cursor/rules/complex-skill.mdc (converted from SKILL.md)
+      expect(saveFile).toHaveBeenCalledTimes(1);
+      expect(saveFile).toHaveBeenCalledWith(
+        '.cursor/rules/complex-skill.mdc',
+        expect.stringContaining('Main Skill')
+      );
+    });
+
+    it('should fail conversion if no main file found', async () => {
+      const mockPackage = {
+        id: 'no-main-skill',
+        name: 'no-main-skill',
+        format: 'claude', subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      // Create tarball without any recognizable main file
+      const tarGz = await createTarGz({
+        'data.json': '{"key": "value"}',
+        'config.yaml': 'setting: true',
       });
 
       mockClient.getPackage.mockResolvedValue(mockPackage);
       mockClient.downloadPackage.mockResolvedValue(tarGz);
 
-      // Should reject conversion for multi-file packages
-      await expect(handleInstall('complex-skill', { as: 'cursor' })).rejects.toThrow(
-        'Format conversion is only supported for single-file packages'
+      // Should fail because no main file can be identified
+      await expect(handleInstall('no-main-skill', { as: 'cursor' })).rejects.toThrow(
+        'Could not identify main file'
       );
     });
   });
