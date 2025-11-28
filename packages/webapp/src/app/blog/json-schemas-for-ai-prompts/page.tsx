@@ -78,6 +78,62 @@ export default function JSONSchemasPost() {
           </p>
 
           <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
+            <h2 className="text-3xl font-bold text-white mb-0">The Inconsistency Problem</h2>
+          </div>
+
+          <p className="text-gray-300 leading-relaxed mb-8">
+            Even within a single vendor's ecosystem, frontmatter fields are inconsistent. Take Anthropic's Claude Code formats:
+          </p>
+
+          <div className="not-prose mb-8">
+            <table className="w-full border-collapse text-gray-300">
+              <thead className="border-b-2 border-prpm-border">
+                <tr>
+                  <th className="text-left text-white bg-prpm-dark-card px-4 py-4 font-semibold border border-prpm-border">Subtype</th>
+                  <th className="text-left text-white bg-prpm-dark-card px-4 py-4 font-semibold border border-prpm-border">Tool Access Field</th>
+                  <th className="text-left text-white bg-prpm-dark-card px-4 py-4 font-semibold border border-prpm-border">Example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="px-4 py-4 border border-prpm-border"><strong className="text-white">Skill</strong></td>
+                  <td className="px-4 py-4 border border-prpm-border"><code>allowed-tools</code></td>
+                  <td className="px-4 py-4 border border-prpm-border"><code>allowed-tools: Read, Grep, Glob</code></td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-4 border border-prpm-border"><strong className="text-white">Agent</strong></td>
+                  <td className="px-4 py-4 border border-prpm-border"><code>tools</code></td>
+                  <td className="px-4 py-4 border border-prpm-border"><code>tools: Read, Write, Bash</code></td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-4 border border-prpm-border"><strong className="text-white">Slash Command</strong></td>
+                  <td className="px-4 py-4 border border-prpm-border"><code>allowed-tools</code></td>
+                  <td className="px-4 py-4 border border-prpm-border"><code>allowed-tools: Read, Edit</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-gray-300 leading-relaxed mb-8">
+            Skills and slash commands use <code>allowed-tools</code>, but agents use <code>tools</code>. Same vendor, same ecosystem, different field names for the same concept. Without schemas, you'd have to discover this through trial and error—or by carefully reading documentation that may not exist.
+          </p>
+
+          <p className="text-gray-300 leading-relaxed mb-8">
+            This pattern repeats across the ecosystem:
+          </p>
+
+          <ul className="text-gray-300 space-y-3 mb-8 list-disc ml-6">
+            <li><strong>Cursor</strong> uses <code>description</code> (required) while <strong>Windsurf</strong> has no frontmatter at all</li>
+            <li><strong>Continue</strong> uses <code>name</code> (required) while <strong>Claude</strong> agents use <code>name</code> but skills don't require it</li>
+            <li><strong>Kiro</strong> steering files use <code>inclusion</code> modes while <strong>Cursor</strong> uses <code>alwaysApply</code> booleans</li>
+            <li><strong>GitHub Copilot</strong> uses <code>applyTo</code> globs while <strong>Cursor</strong> uses <code>globs</code></li>
+          </ul>
+
+          <p className="text-gray-300 leading-relaxed mb-8">
+            Schemas make these differences explicit and machine-readable. Instead of guessing, you get validation errors that tell you exactly what each format expects.
+          </p>
+
+          <div className="not-prose bg-gradient-to-r from-prpm-dark-card to-prpm-dark-card/50 border-l-4 border-prpm-accent rounded-r-2xl p-8 my-12">
             <h2 className="text-3xl font-bold text-white mb-0">Why PRPM Built These Schemas</h2>
           </div>
 
@@ -587,7 +643,8 @@ const result2 = validateMarkdown('claude', content, 'skill');`}</code></pre>
 ├── replit.schema.json
 ├── gemini.schema.json
 ├── gemini-md.schema.json
-└── canonical.schema.json`}</code></pre>
+├── canonical.schema.json
+└── format-registry.schema.json`}</code></pre>
           </div>
 
           <div className="not-prose mb-16">
@@ -602,10 +659,20 @@ https://registry.prpm.dev/api/v1/schemas/{format}.json
 # Subtype schemas (where applicable)
 https://registry.prpm.dev/api/v1/schemas/{format}/{subtype}.json
 
+# Format registry data (directory structures for all formats)
+https://registry.prpm.dev/api/v1/schemas/format-registry
+
+# Format registry schema (validates format-registry structure)
+https://registry.prpm.dev/api/v1/schemas/format-registry.json
+
 # Examples:
 https://registry.prpm.dev/api/v1/schemas/cursor.json
 https://registry.prpm.dev/api/v1/schemas/claude/agent.json
 https://registry.prpm.dev/api/v1/schemas/kiro/hook.json`}</code></pre>
+
+            <p className="text-gray-300 leading-relaxed mb-8">
+              The <Link href="https://registry.prpm.dev/api/v1/schemas/format-registry" className="text-prpm-accent hover:underline font-medium">format registry endpoint</Link> returns the complete directory structure configuration for all 15+ formats—where files should be installed, what patterns to scan for, and how nested packages work.
+            </p>
           </div>
 
           <div className="not-prose mb-16">

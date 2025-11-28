@@ -16,6 +16,9 @@ const convertersDir = dirname(convertersPackagePath);
 const loadSchema = (filename: string): JsonSchema =>
   schemaRequire(join(convertersDir, 'schemas', filename)) as JsonSchema;
 
+// Format registry schema
+export const formatRegistrySchema = loadSchema('format-registry.schema.json');
+
 // Base schemas
 export const agentsMdSchema = loadSchema('agents-md.schema.json');
 export const canonicalSchema = loadSchema('canonical.schema.json');

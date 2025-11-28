@@ -1,5 +1,5 @@
 {
-  "$schema": "../schemas/format-registry.schema.json",
+  "$schema": "https://registry.prpm.dev/api/v1/schemas/format-registry.json",
   "version": "1.0.0",
   "formats": {
     "cursor": {
@@ -10,7 +10,7 @@
       "subtypes": {
         "rule": {
           "directory": ".cursor/rules",
-          "filePatterns": ["*.mdc", "*.md"],
+          "filePatterns": ["*.mdc"],
           "fileExtension": ".mdc"
         },
         "agent": {
@@ -170,8 +170,9 @@
       "subtypes": {
         "skill": {
           "directory": ".factory/skills",
-          "filePatterns": ["*.md"],
+          "filePatterns": ["SKILL.md", "skill.mdx"],
           "nested": true,
+          "nestedIndicator": "SKILL.md",
           "usesPackageSubdirectory": true,
           "fileExtension": ".md"
         },

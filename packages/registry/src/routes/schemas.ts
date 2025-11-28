@@ -33,6 +33,8 @@ import {
   kiroAgentSchema,
   kiroHookSchema,
   opencodeSlashCommandSchema,
+  formatRegistrySchema,
+  getFormatRegistry,
 } from '@pr-pm/converters';
 
 type JsonSchema = Record<string, unknown>;
@@ -55,6 +57,7 @@ const BASE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
   ['aider.schema.json', aiderSchema],
   ['zencoder.schema.json', zencoderSchema],
   ['replit.schema.json', replitSchema],
+  ['format-registry.schema.json', formatRegistrySchema],
 ];
 
 const SUBTYPE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
@@ -278,6 +281,27 @@ export async function schemaRoutes(server: FastifyInstance) {
       reply.header('Content-Type', 'application/schema+json');
       reply.header('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
       return schema;
+    }
+  );
+
+  /**
+   * GET /schemas/format-registry
+   * Retrieve the format registry data (directory structures for all formats)
+   */
+  server.get(
+    '/format-registry',
+    {
+      schema: {
+        description: 'Get the format registry containing directory structures and file patterns for all AI editor formats',
+        tags: ['schemas'],
+      }
+    },
+    async (request, reply) => {
+      const registry = getFormatRegistry();
+
+      reply.header('Content-Type', 'application/json');
+      reply.header('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      return registry;
     }
   );
 }
