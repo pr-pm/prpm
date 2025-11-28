@@ -60,6 +60,8 @@ import {
   toZencoder,
   toReplit,
   validateFormat,
+  getNestedIndicator,
+  getFilePatterns,
   type CanonicalPackage,
 } from '@pr-pm/converters';
 
@@ -156,6 +158,76 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
   }
 
   return `${formatLabel} ${subtypeLabel}`;
+}
+
+/**
+ * Find the main file in a multi-file package based on format/subtype conventions.
+ * Uses the format-registry.json as the single source of truth.
+ */
+function findMainFile(
+  files: Array<{ name: string; content: string }>,
+  format: string,
+  subtype: string
+): { name: string; content: string } | null {
+  // 1. Check nestedIndicator from format registry (e.g., SKILL.md for Claude skills)
+  const nestedIndicator = getNestedIndicator(format, subtype);
+  if (nestedIndicator) {
+    const match = files.find(f => {
+      const filename = path.basename(f.name);
+      return filename.toLowerCase() === nestedIndicator.toLowerCase();
+    });
+    if (match) return match;
+  }
+
+  // 2. Check filePatterns from format registry (e.g., ["*.mdc"] for Cursor rules)
+  const filePatterns = getFilePatterns(format, subtype);
+  if (filePatterns) {
+    for (const pattern of filePatterns) {
+      for (const file of files) {
+        const filename = path.basename(file.name);
+        if (pattern.startsWith('*')) {
+          // Glob pattern like *.mdc or *.md
+          const extension = pattern.slice(1); // Remove the *
+          if (filename.endsWith(extension)) {
+            return file;
+          }
+        } else {
+          // Exact filename match (case-insensitive)
+          if (filename.toLowerCase() === pattern.toLowerCase()) {
+            return file;
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Fallback: look for common main file names
+  const fallbackPatterns = [
+    'SKILL.md', 'skill.md',
+    'agent.md', 'AGENT.md',
+    'command.md', 'COMMAND.md',
+    'rule.md', 'RULE.md',
+    'index.md', 'INDEX.md',
+    'main.md', 'MAIN.md',
+    'README.md',
+  ];
+
+  for (const pattern of fallbackPatterns) {
+    for (const file of files) {
+      const filename = path.basename(file.name);
+      if (filename.toLowerCase() === pattern.toLowerCase()) {
+        return file;
+      }
+    }
+  }
+
+  // 4. Last resort: return the first .md file
+  const mdFile = files.find(f => f.name.endsWith('.md'));
+  if (mdFile) {
+    return mdFile;
+  }
+
+  return null;
 }
 
 export async function handleInstall(
@@ -446,12 +518,25 @@ export async function handleInstall(
     if (options.as && format && format !== pkg.format) {
       console.log(`   🔄 Converting from ${pkg.format} to ${format}...`);
 
-      // Only convert single-file packages
-      if (extractedFiles.length !== 1) {
-        throw new CLIError('Format conversion is only supported for single-file packages');
-      }
+      // Find the main file to convert
+      // For single-file packages, use the only file
+      // For multi-file packages, find the main file based on format/subtype conventions
+      let sourceContent: string;
 
-      const sourceContent = extractedFiles[0].content;
+      if (extractedFiles.length === 1) {
+        sourceContent = extractedFiles[0].content;
+      } else {
+        // Multi-file package: find the main file
+        const mainFile = findMainFile(extractedFiles, pkg.format, pkg.subtype);
+        if (!mainFile) {
+          throw new CLIError(
+            `Could not identify main file for multi-file ${pkg.format} ${pkg.subtype} package. ` +
+            `Expected files like SKILL.md, agent.md, or similar main entry points.`
+          );
+        }
+        console.log(`   📄 Using main file: ${mainFile.name}`);
+        sourceContent = mainFile.content;
+      }
 
       // Extract author from package name scope (@author/package-name)
       const scopeMatch = packageId.match(/^@([^/]+)\//);
