@@ -44,7 +44,7 @@ export interface CanonicalPackage {
   tags: string[];
 
   // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
+  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'cursor-hooks' | 'generic' | 'mcp';
   subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
   // Additional metadata from prpm.json
@@ -77,6 +77,10 @@ export interface CanonicalPackage {
       event: 'session-start' | 'user-prompt-submit' | 'tool-call' | 'assistant-response'; // Hook event type
       language?: 'bash' | 'typescript' | 'javascript' | 'python' | 'binary'; // Execution format
       executable?: boolean; // Whether the hook is executable
+    };
+    cursorHook?: {
+      hookType: 'beforeShellExecution' | 'afterShellExecution' | 'beforeMCPExecution' | 'afterFileEdit' | 'beforeSubmitPrompt' | 'stop' | 'afterAgentResponse' | 'afterAgentThought' | 'beforeTabFileRead' | 'afterTabFileEdit';
+      scriptPath?: string; // Path to the executable script
     };
     copilotConfig?: {
       instructionName?: string; // Name for the instruction file
@@ -146,6 +150,7 @@ export interface CanonicalPackage {
   // Format compatibility scores
   formatScores?: {
     cursor?: number;
+    'cursor-hooks'?: number;
     claude?: number;
     continue?: number;
     windsurf?: number;
@@ -163,7 +168,7 @@ export interface CanonicalPackage {
   };
 
   // Source information
-  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic';
+  sourceFormat?: 'cursor' | 'cursor-hooks' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic';
   sourceUrl?: string;
 
   // Quality & verification flags
@@ -187,6 +192,7 @@ export type Section =
   | PersonaSection
   | ContextSection
   | HookSection
+  | CursorHookSection
   | CustomSection;
 
 /**
@@ -328,6 +334,18 @@ export interface HookSection {
   language: 'bash' | 'typescript' | 'javascript' | 'python' | 'binary';
   code: string; // The actual executable code
   description?: string; // What the hook does
+}
+
+/**
+ * Cursor Hook section
+ * Executable scripts for Cursor hooks
+ */
+export interface CursorHookSection {
+  type: 'cursor-hook';
+  hookType: 'beforeShellExecution' | 'afterShellExecution' | 'beforeMCPExecution' | 'afterFileEdit' | 'beforeSubmitPrompt' | 'stop' | 'afterAgentResponse' | 'afterAgentThought' | 'beforeTabFileRead' | 'afterTabFileEdit';
+  scriptPath: string; // Path to the executable script
+  description?: string; // What the hook does
+  script?: string; // The actual script content (if embedded)
 }
 
 /**
