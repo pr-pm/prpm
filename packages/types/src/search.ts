@@ -36,6 +36,7 @@ export interface SearchPackagesParams {
   subtype?: Subtype | Subtype[];
   tags?: string[];
   category?: string;
+  use_case?: string;
   author?: string;
   language?: string;
   framework?: string;
@@ -95,6 +96,7 @@ export interface CollectionSearchQuery {
 export interface SearchCollectionsParams {
   query?: string;
   category?: string;
+  use_case?: string;
   tag?: string;
   framework?: string;
   official?: boolean;
