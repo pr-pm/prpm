@@ -7,6 +7,9 @@
 // Types
 export * from './types/canonical.js';
 
+// Hook mapping utilities
+export * from './hook-mappings.js';
+
 // From converters (parse format → canonical)
 export { fromCursor } from './from-cursor.js';
 export { fromCursorHooks } from './from-cursor-hooks.js';
@@ -28,7 +31,7 @@ export { fromReplit } from './from-replit.js';
 
 // To converters (canonical → target format)
 export { toCursor, isCursorFormat } from './to-cursor.js';
-export { toCursorHooks, isCursorHooksFormat } from './to-cursor-hooks.js';
+export { toCursorHooks, isCursorHooksFormat, type CursorHooksConversionOptions } from './to-cursor-hooks.js';
 export { toClaude, toClaudeMd, isClaudeFormat } from './to-claude.js';
 export { toContinue, isContinueFormat } from './to-continue.js';
 export { toCopilot, isCopilotFormat } from './to-copilot.js';

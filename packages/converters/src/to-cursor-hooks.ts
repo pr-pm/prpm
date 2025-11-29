@@ -1,6 +1,6 @@
 /**
  * Cursor Hooks Format Converter
- * Converts canonical format to Cursor hooks.json format
+ * Converts canonical format to Cursor hooks.json format with intelligent hook mapping
  */
 
 import type {
@@ -8,10 +8,16 @@ import type {
   ConversionOptions,
   ConversionResult,
   CursorHookSection,
+  HookSection,
 } from './types/canonical.js';
+import { mapHook, type HookMappingStrategy } from './hook-mappings.js';
 
 interface CursorHooksConfig {
   [hookType: string]: string; // hookType -> script path
+}
+
+export interface CursorHooksConversionOptions extends Partial<ConversionOptions> {
+  hookMappingStrategy?: HookMappingStrategy;
 }
 
 /**
@@ -19,45 +25,88 @@ interface CursorHooksConfig {
  */
 export function toCursorHooks(
   pkg: CanonicalPackage,
-  options: Partial<ConversionOptions> = {}
+  options: CursorHooksConversionOptions = {}
 ): ConversionResult {
   const warnings: string[] = [];
   let qualityScore = 100;
+  const hookMappingStrategy = options.hookMappingStrategy || 'auto';
 
   try {
     const hooksConfig: CursorHooksConfig = {};
 
-    // Extract cursor-hook sections
+    // Extract cursor-hook sections (native Cursor hooks)
     const cursorHookSections = pkg.content.sections.filter(
       (section): section is CursorHookSection => section.type === 'cursor-hook'
     );
 
-    if (cursorHookSections.length === 0) {
-      warnings.push('No cursor-hook sections found in package');
-      qualityScore -= 50;
-    }
-
-    // Convert each hook section to hooks.json entry
+    // Convert native Cursor hooks
     for (const section of cursorHookSections) {
       hooksConfig[section.hookType] = section.scriptPath;
     }
 
-    // Check for other hook types that can't be converted
-    const claudeHooks = pkg.content.sections.filter(s => s.type === 'hook');
-    if (claudeHooks.length > 0) {
-      warnings.push(
-        `${claudeHooks.length} Claude hook(s) found but cannot be converted to Cursor hooks (different hook events). Claude hooks: session-start, user-prompt-submit, tool-call, assistant-response. Cursor hooks: beforeShellExecution, afterFileEdit, etc.`
-      );
-      qualityScore -= 30;
+    // Convert Claude hooks using mapping system
+    const claudeHooks = pkg.content.sections.filter(
+      (section): section is HookSection => section.type === 'hook'
+    );
+
+    if (claudeHooks.length > 0 && hookMappingStrategy !== 'skip') {
+      for (const claudeHook of claudeHooks) {
+        const mappingResult = mapHook('claude', 'cursor', claudeHook.event, hookMappingStrategy);
+
+        qualityScore -= mappingResult.qualityPenalty;
+
+        if (mappingResult.warning) {
+          warnings.push(mappingResult.warning);
+        }
+
+        if (mappingResult.mapped && mappingResult.targetHookType) {
+          // Create script file from Claude hook code
+          const scriptExt = claudeHook.language === 'bash' ? 'sh' :
+                           claudeHook.language === 'python' ? 'py' :
+                           claudeHook.language === 'javascript' || claudeHook.language === 'typescript' ? 'js' :
+                           'sh';
+          const scriptPath = `./hooks/${claudeHook.event}.${scriptExt}`;
+          hooksConfig[mappingResult.targetHookType] = scriptPath;
+
+          warnings.push(
+            `Mapped Claude hook "${claudeHook.event}" to Cursor hook "${mappingResult.targetHookType}". ` +
+            `Note: Claude hook code must be extracted to ${scriptPath}`
+          );
+        }
+      }
+    } else if (claudeHooks.length > 0 && hookMappingStrategy === 'skip') {
+      warnings.push(`${claudeHooks.length} Claude hook(s) skipped (--hook-mapping skip)`);
     }
 
-    // Check for Kiro hooks in metadata
-    if (pkg.metadata?.kiroAgent?.hooks) {
+    // Convert Kiro hooks from metadata using mapping system
+    if (pkg.metadata?.kiroAgent?.hooks && hookMappingStrategy !== 'skip') {
+      const kiroHooks = pkg.metadata.kiroAgent.hooks;
+
+      for (const [kiroHookType, scriptPaths] of Object.entries(kiroHooks)) {
+        if (!scriptPaths || !Array.isArray(scriptPaths) || scriptPaths.length === 0) continue;
+
+        const mappingResult = mapHook('kiro', 'cursor', kiroHookType, hookMappingStrategy);
+
+        qualityScore -= mappingResult.qualityPenalty;
+
+        if (mappingResult.warning) {
+          warnings.push(mappingResult.warning);
+        }
+
+        if (mappingResult.mapped && mappingResult.targetHookType) {
+          // Use first script path from Kiro hooks array
+          hooksConfig[mappingResult.targetHookType] = scriptPaths[0];
+        }
+      }
+    } else if (pkg.metadata?.kiroAgent?.hooks && hookMappingStrategy === 'skip') {
       const kiroHookTypes = Object.keys(pkg.metadata.kiroAgent.hooks);
-      warnings.push(
-        `Kiro hooks found in metadata but cannot be converted to Cursor hooks (different hook events). Kiro hooks: ${kiroHookTypes.join(', ')}. Cursor hooks: beforeShellExecution, afterFileEdit, etc.`
-      );
-      qualityScore -= 30;
+      warnings.push(`${kiroHookTypes.length} Kiro hook(s) skipped (--hook-mapping skip)`);
+    }
+
+    // Check if we have any hooks
+    if (Object.keys(hooksConfig).length === 0) {
+      warnings.push('No hooks converted to Cursor hooks format');
+      qualityScore -= 50;
     }
 
     // Check for unsupported sections
