@@ -60,6 +60,21 @@
         }
       }
     },
+    "claude-plugin": {
+      "name": "Claude Plugin",
+      "description": "Claude Code plugins containing agents, skills, commands, and MCP servers",
+      "documentationUrl": "https://code.claude.com/docs",
+      "rootFiles": [".claude-plugin/plugin.json"],
+      "subtypes": {
+        "plugin": {
+          "directory": ".claude",
+          "scanDirectory": ".claude-plugin",
+          "filePatterns": ["plugin.json"],
+          "nested": false,
+          "fileExtension": ".json"
+        }
+      }
+    },
     "continue": {
       "name": "Continue",
       "description": "Continue AI coding rules and prompts",
@@ -339,8 +354,14 @@
     },
     "mcp": {
       "name": "MCP",
-      "description": "Model Context Protocol tools",
+      "description": "Model Context Protocol servers and tools",
+      "defaultSubtype": "server",
       "subtypes": {
+        "server": {
+          "directory": ".mcp",
+          "filePatterns": ["*.json", "mcp-server.json"],
+          "fileExtension": ".json"
+        },
         "tool": {
           "directory": ".mcp/tools",
           "filePatterns": ["*.json"],

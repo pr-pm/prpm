@@ -10,6 +10,7 @@ import { promises as fs } from 'fs';
 import { CLIError } from '../core/errors';
 import { removeSkillFromManifest } from '../core/agents-md-progressive.js';
 import { promptYesNo } from '../core/prompts';
+import { removeMCPServers } from '../core/mcp.js';
 import * as readline from 'readline';
 
 /**
@@ -140,6 +141,50 @@ export async function handleUninstall(name: string, options: { format?: string; 
           console.warn(`   ⚠️  Failed to remove from manifest: ${error}`);
         }
       }
+    }
+
+    // Special handling for Claude plugins and MCP server packages
+    if (pkg.pluginMetadata) {
+      const isMCPServerOnly = pkg.pluginMetadata.files.length === 0 && pkg.pluginMetadata.mcpServers;
+      console.log(isMCPServerOnly ? `   🔧 Uninstalling MCP server...` : `   🔌 Uninstalling Claude plugin...`);
+
+      // Remove installed files
+      const { files, mcpServers, mcpGlobal } = pkg.pluginMetadata;
+      let filesRemoved = 0;
+
+      for (const filePath of files) {
+        try {
+          await fs.unlink(filePath);
+          filesRemoved++;
+          console.log(`   🗑️  Deleted: ${filePath}`);
+        } catch (error) {
+          const err = error as NodeJS.ErrnoException;
+          if (err.code !== 'ENOENT') {
+            console.warn(`   ⚠️  Failed to delete ${filePath}: ${err.message}`);
+          }
+        }
+      }
+
+      if (filesRemoved > 0) {
+        console.log(`   📦 Removed ${filesRemoved} file(s)`);
+      }
+
+      // Remove MCP servers (only if unchanged from original)
+      if (mcpServers && Object.keys(mcpServers).length > 0) {
+        const mcpResult = removeMCPServers(mcpServers, mcpGlobal || false);
+
+        if (mcpResult.removed.length > 0) {
+          const location = mcpGlobal ? '~/.claude/settings.json' : '.mcp.json';
+          console.log(`   🔧 Removed ${mcpResult.removed.length} MCP server(s) from ${location}`);
+        }
+
+        for (const warning of mcpResult.warnings) {
+          console.log(`   ⚠️  ${warning}`);
+        }
+      }
+
+      console.log(`✅ Successfully uninstalled ${name}${formatDisplay}`);
+      continue; // Move to next package if multiple
     }
 
     // Special handling for Claude hooks

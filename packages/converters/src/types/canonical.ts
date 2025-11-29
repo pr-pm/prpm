@@ -44,8 +44,8 @@ export interface CanonicalPackage {
   tags: string[];
 
   // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
-  subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
+  format: 'cursor' | 'claude' | 'claude-plugin' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
+  subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook' | 'plugin' | 'server';
 
   // Additional metadata from prpm.json
   license?: string;
@@ -141,6 +141,20 @@ export interface CanonicalPackage {
       globs?: string[]; // File patterns where the rule applies
       alwaysApply?: boolean; // Whether rule should always be active
     };
+    claudePlugin?: {
+      mcpServers?: Record<string, {
+        type?: 'stdio' | 'http' | 'sse';
+        command?: string;
+        args?: string[];
+        url?: string;
+        env?: Record<string, string>;
+      }>;
+      contents?: {
+        agents?: string[];
+        skills?: string[];
+        commands?: string[];
+      };
+    };
   };
 
   // Format compatibility scores
@@ -163,7 +177,7 @@ export interface CanonicalPackage {
   };
 
   // Source information
-  sourceFormat?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic';
+  sourceFormat?: 'cursor' | 'claude' | 'claude-plugin' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic';
   sourceUrl?: string;
 
   // Quality & verification flags
@@ -234,6 +248,20 @@ export interface MetadataSection {
     zencoderConfig?: {
       globs?: string[]; // File patterns where the rule applies
       alwaysApply?: boolean; // Whether rule should always be active
+    };
+    claudePlugin?: {
+      mcpServers?: Record<string, {
+        type?: 'stdio' | 'http' | 'sse';
+        command?: string;
+        args?: string[];
+        url?: string;
+        env?: Record<string, string>;
+      }>;
+      contents?: {
+        agents?: string[];
+        skills?: string[];
+        commands?: string[];
+      };
     };
   };
 }

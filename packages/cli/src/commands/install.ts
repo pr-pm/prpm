@@ -35,6 +35,7 @@ import {
 import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-config';
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
 import { addSkillToManifest, type SkillManifestEntry } from '../core/agents-md-progressive.js';
+import { mergeMCPServers, type MCPServer } from '../core/mcp.js';
 import {
   fromCursor,
   fromClaude,
@@ -44,6 +45,8 @@ import {
   fromWindsurf,
   fromAgentsMd,
   fromGemini,
+  parsePluginJson,
+  parseMCPServerJson,
   toCursor,
   toClaude,
   toContinue,
@@ -82,11 +85,14 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'hook': '🪝',
     'workflow': '🔄',
     'template': '📄',
+    'plugin': '🔌',
+    'server': '🖥️',
   };
 
   // Format-specific icons for rules/defaults
   const formatIcons: Record<Format, string> = {
     'claude': '🤖',
+    'claude-plugin': '🔌',
     'cursor': '📋',
     'windsurf': '🌊',
     'continue': '➡️',
@@ -116,6 +122,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
 function getPackageLabel(format: Format, subtype: Subtype): string {
   const formatLabels: Record<Format, string> = {
     'claude': 'Claude',
+    'claude-plugin': 'Claude Plugin',
     'cursor': 'Cursor',
     'windsurf': 'Windsurf',
     'continue': 'Continue',
@@ -148,6 +155,8 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'hook': 'Hook',
     'workflow': 'Workflow',
     'template': 'Template',
+    'plugin': 'Plugin',
+    'server': 'Server',
   };
 
   const formatLabel = formatLabels[format];
@@ -241,6 +250,7 @@ export async function handleInstall(
     location?: string;
     noAppend?: boolean; // Skip manifest file update for skills
     manifestFile?: string; // Custom manifest filename (default: AGENTS.md)
+    global?: boolean; // Install MCP servers to global ~/.claude/settings.json
     fromCollection?: {
       scope: string;
       name_slug: string;
@@ -689,9 +699,158 @@ export async function handleInstall(
     let destDir = ''; // Destination directory (needed for progressive disclosure)
     let fileCount = 0;
     let hookMetadata: { events: string[]; hookId: string } | undefined = undefined;
+    let pluginMetadata: { files: string[]; mcpServers?: Record<string, MCPServer>; mcpGlobal?: boolean } | undefined = undefined;
 
+    // Special handling for Claude plugins (bundles of agents, skills, commands, and MCP servers)
+    if (effectiveFormat === 'claude-plugin' || pkg.format === 'claude-plugin') {
+      console.log(`   🔌 Installing Claude Plugin...`);
+
+      // Find and parse plugin.json
+      const pluginJsonFile = extractedFiles.find(f =>
+        f.name === 'plugin.json' ||
+        f.name === '.claude-plugin/plugin.json' ||
+        f.name.endsWith('/plugin.json')
+      );
+
+      let pluginConfig: { mcpServers?: Record<string, MCPServer> } = {};
+      if (pluginJsonFile) {
+        try {
+          pluginConfig = parsePluginJson(pluginJsonFile.content);
+        } catch (err) {
+          console.log(`   ⚠️  Warning: Could not parse plugin.json: ${err}`);
+        }
+      }
+
+      // Track all installed files for the lockfile
+      const installedFiles: string[] = [];
+
+      // Install agents to .claude/agents/
+      const agentFiles = extractedFiles.filter(f =>
+        f.name.startsWith('agents/') && f.name.endsWith('.md')
+      );
+      if (agentFiles.length > 0) {
+        await fs.mkdir('.claude/agents', { recursive: true });
+        for (const file of agentFiles) {
+          const filename = path.basename(file.name);
+          const destFile = `.claude/agents/${filename}`;
+          await saveFile(destFile, file.content);
+          installedFiles.push(destFile);
+        }
+        console.log(`   ✓ Installed ${agentFiles.length} agents to .claude/agents/`);
+      }
+
+      // Install skills to .claude/skills/
+      const skillFiles = extractedFiles.filter(f =>
+        f.name.startsWith('skills/') && (f.name.endsWith('.md') || f.name.includes('SKILL.md'))
+      );
+      if (skillFiles.length > 0) {
+        for (const file of skillFiles) {
+          // Preserve skill directory structure (e.g., skills/my-skill/SKILL.md)
+          const relativePath = file.name.replace(/^skills\//, '');
+          const destFile = `.claude/skills/${relativePath}`;
+          const destFileDir = path.dirname(destFile);
+          await fs.mkdir(destFileDir, { recursive: true });
+          await saveFile(destFile, file.content);
+          installedFiles.push(destFile);
+        }
+        console.log(`   ✓ Installed ${skillFiles.length} skill files to .claude/skills/`);
+      }
+
+      // Install commands to .claude/commands/
+      const commandFiles = extractedFiles.filter(f =>
+        f.name.startsWith('commands/') && f.name.endsWith('.md')
+      );
+      if (commandFiles.length > 0) {
+        await fs.mkdir('.claude/commands', { recursive: true });
+        for (const file of commandFiles) {
+          const filename = path.basename(file.name);
+          const destFile = `.claude/commands/${filename}`;
+          await saveFile(destFile, file.content);
+          installedFiles.push(destFile);
+        }
+        console.log(`   ✓ Installed ${commandFiles.length} commands to .claude/commands/`);
+      }
+
+      // Merge MCP servers if present
+      if (pluginConfig.mcpServers && Object.keys(pluginConfig.mcpServers).length > 0) {
+        const mcpResult = mergeMCPServers(
+          pluginConfig.mcpServers,
+          options.global || false,
+          process.cwd()
+        );
+
+        if (mcpResult.added.length > 0) {
+          console.log(`   ✓ Added MCP servers: ${mcpResult.added.join(', ')}`);
+        }
+        if (mcpResult.skipped.length > 0) {
+          console.log(`   ⚠️  Skipped existing MCP servers: ${mcpResult.skipped.join(', ')}`);
+        }
+
+        // Store in pluginMetadata for lockfile
+        pluginMetadata = {
+          files: installedFiles,
+          mcpServers: pluginConfig.mcpServers,
+          mcpGlobal: options.global || false,
+        };
+      } else {
+        pluginMetadata = {
+          files: installedFiles,
+        };
+      }
+
+      destPath = '.claude/';
+      fileCount = installedFiles.length;
+    }
+    // Special handling for MCP server packages (install server configs to .mcp.json)
+    else if (effectiveFormat === 'mcp' && effectiveSubtype === 'server') {
+      console.log(`   🔧 Installing MCP Server...`);
+
+      // Find and parse the MCP server config file
+      const mcpServerFile = extractedFiles.find(f =>
+        f.name === 'mcp-server.json' ||
+        f.name.endsWith('/mcp-server.json') ||
+        (f.name.endsWith('.json') && !f.name.includes('/'))
+      );
+
+      if (!mcpServerFile) {
+        throw new Error('MCP server package must contain a JSON configuration file');
+      }
+
+      let mcpServerConfig;
+      try {
+        mcpServerConfig = parseMCPServerJson(mcpServerFile.content);
+      } catch (error) {
+        throw new Error(`Failed to parse MCP server config: ${error instanceof Error ? error.message : error}`);
+      }
+
+      // Merge MCP servers into .mcp.json (or global settings)
+      const mcpResult = mergeMCPServers(mcpServerConfig.mcpServers, options.global || false);
+
+      if (mcpResult.added.length > 0) {
+        const location = options.global ? '~/.claude/settings.json' : '.mcp.json';
+        console.log(`   ✓ Added MCP servers to ${location}: ${mcpResult.added.join(', ')}`);
+      }
+
+      if (mcpResult.skipped.length > 0) {
+        console.log(`   ⚠️  Skipped existing MCP servers: ${mcpResult.skipped.join(', ')}`);
+      }
+
+      for (const warning of mcpResult.warnings) {
+        console.log(`   ⚠️  ${warning}`);
+      }
+
+      // Store in pluginMetadata for lockfile (reuse same structure)
+      pluginMetadata = {
+        files: [], // No files to track for MCP server packages
+        mcpServers: mcpServerConfig.mcpServers,
+        mcpGlobal: options.global || false,
+      };
+
+      destPath = options.global ? '~/.claude/settings.json' : '.mcp.json';
+      fileCount = Object.keys(mcpServerConfig.mcpServers).length;
+    }
     // Special handling for CLAUDE.md format (goes in project root)
-    if (format === 'claude-md') {
+    else if (format === 'claude-md') {
       if (extractedFiles.length !== 1) {
         throw new Error('CLAUDE.md format only supports single-file packages');
       }
@@ -1083,6 +1242,7 @@ export async function handleInstall(
       fromCollection: options.fromCollection,
       hookMetadata, // Track hook installation metadata for uninstall
       progressiveDisclosure: progressiveDisclosureMetadata,
+      pluginMetadata, // Track plugin installation metadata for uninstall
     });
 
     setPackageIntegrity(updatedLockfile, packageId, tarball, effectiveFormat);
@@ -1112,6 +1272,17 @@ export async function handleInstall(
       console.log(`   📝 Skill added to ${manifestFile} manifest`);
       console.log(`   💡 The skill is available but not loaded into context by default`);
       console.log(`   ⚡ Your AI agent will activate this skill automatically when relevant based on its description`);
+    }
+
+    // Show plugin installation summary
+    if (pluginMetadata) {
+      console.log(`\n🔌 Plugin installation complete`);
+      console.log(`   📦 Installed ${pluginMetadata.files.length} file(s)`);
+      if (pluginMetadata.mcpServers && Object.keys(pluginMetadata.mcpServers).length > 0) {
+        const serverCount = Object.keys(pluginMetadata.mcpServers).length;
+        const location = pluginMetadata.mcpGlobal ? '~/.claude/settings.json' : '.mcp.json';
+        console.log(`   🔧 Configured ${serverCount} MCP server(s) in ${location}`);
+      }
     }
 
     console.log(`\n💡 This package has been downloaded ${newDownloadCount.toLocaleString()} times`);

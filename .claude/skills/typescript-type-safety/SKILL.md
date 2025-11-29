@@ -196,6 +196,60 @@ return data.packages;  // No cast needed - types match
 
 **Rule:** If you need `as unknown as Type`, your interfaces are misaligned. Fix the root cause, don't hide it with double casts.
 
+## ESM Import Extensions
+
+**Always use `.js` extension for relative imports in ESM projects.**
+
+Node.js ESM requires explicit file extensions. TypeScript compiles `.ts` → `.js`, so imports must reference the output extension.
+
+```typescript
+// ❌ BAD - Will fail at runtime in ESM
+import { helper } from './utils';
+import { CLIError } from '../utils/cli-error';
+import type { Package } from './types/package';
+
+// ✅ GOOD - Explicit .js extensions
+import { helper } from './utils.js';
+import { CLIError } from '../utils/cli-error.js';
+import type { Package } from './types/package.js';
+```
+
+**Why this is a TypeScript/type safety issue:**
+- TypeScript doesn't catch missing extensions at compile time
+- Errors only appear at runtime: `ERR_MODULE_NOT_FOUND`
+- CI builds fail but local development works (cached modules)
+- This is one of the most common "works locally, fails in CI" issues
+
+**TSConfig for ESM:**
+```json
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    // OR
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+**Common Import Mistakes:**
+
+| Pattern | Issue | Fix |
+|---------|-------|-----|
+| `import { x } from './file'` | Missing extension | `import { x } from './file.js'` |
+| `import { x } from './dir'` | Missing index | `import { x } from './dir/index.js'` |
+| `import pkg from 'pkg/subpath'` | Package export | Check package.json `exports` field |
+
+**Linting for Import Extensions:**
+```bash
+# Find imports missing .js extension
+grep -rn "from '\.\.\?/[^']*[^j][^s]'" --include="*.ts" src/
+
+# ESLint rule (if using eslint)
+# "import/extensions": ["error", "always", { "ignorePackages": true }]
+```
+
 ## Common Mistakes
 
 | Mistake | Why It Fails | Fix |
@@ -206,6 +260,7 @@ return data.packages;  // No cast needed - types match
 | Skipping catch block types | Unsafe error access | Use `unknown` with type guards or toError helper |
 | Generic functions without constraints | Allows invalid operations | Add `extends` constraint |
 | Ignoring `ts-ignore` accumulation | Tech debt compounds | Fix root cause, use `@ts-expect-error` with comment |
+| Missing `.js` import extensions | ESM runtime failures | Always use `.js` for relative imports |
 
 ## TSConfig Strict Settings
 

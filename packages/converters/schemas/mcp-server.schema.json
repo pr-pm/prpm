@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/mcp-server.schema.json",
+  "title": "MCP Server Package",
+  "description": "Schema for Model Context Protocol (MCP) server packages",
+  "type": "object",
+  "required": ["name", "mcpServers"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the MCP server package"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what this MCP server provides"
+    },
+    "version": {
+      "type": "string",
+      "description": "Package version (semver)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$"
+    },
+    "author": {
+      "type": "string",
+      "description": "Package author"
+    },
+    "repository": {
+      "type": "string",
+      "description": "Repository URL",
+      "format": "uri"
+    },
+    "homepage": {
+      "type": "string",
+      "description": "Homepage URL",
+      "format": "uri"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier"
+    },
+    "mcpServers": {
+      "type": "object",
+      "description": "MCP server configurations to install",
+      "additionalProperties": {
+        "$ref": "#/definitions/mcpServer"
+      },
+      "minProperties": 1
+    }
+  },
+  "definitions": {
+    "mcpServer": {
+      "type": "object",
+      "description": "MCP server configuration",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["stdio", "http", "sse"],
+          "description": "Server connection type",
+          "default": "stdio"
+        },
+        "command": {
+          "type": "string",
+          "description": "Command to execute (for stdio type)"
+        },
+        "args": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Command arguments (for stdio type)"
+        },
+        "url": {
+          "type": "string",
+          "description": "Server URL (for http/sse type)",
+          "format": "uri"
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Environment variables to set"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "type": { "const": "stdio" }
+          },
+          "required": ["command"]
+        },
+        {
+          "properties": {
+            "type": { "enum": ["http", "sse"] }
+          },
+          "required": ["url"]
+        },
+        {
+          "not": {
+            "required": ["type"]
+          },
+          "required": ["command"]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "name": "GitHub MCP Server",
+      "description": "MCP server for GitHub API integration",
+      "version": "1.0.0",
+      "author": "Anthropic",
+      "mcpServers": {
+        "github": {
+          "command": "npx",
+          "args": ["-y", "@anthropic/mcp-server-github"],
+          "env": {
+            "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+          }
+        }
+      }
+    },
+    {
+      "name": "Filesystem MCP Server",
+      "description": "MCP server for filesystem access",
+      "version": "1.0.0",
+      "mcpServers": {
+        "filesystem": {
+          "command": "npx",
+          "args": ["-y", "@anthropic/mcp-server-filesystem", "/path/to/allowed/dir"]
+        }
+      }
+    }
+  ]
+}

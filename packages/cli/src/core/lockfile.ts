@@ -7,6 +7,17 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
 
+/**
+ * MCP Server configuration stored in lockfile
+ */
+export interface LockfileMCPServer {
+  type?: 'stdio' | 'http' | 'sse';
+  command?: string;
+  args?: string[];
+  url?: string;
+  env?: Record<string, string>;
+}
+
 export interface LockfilePackage {
   version: string;
   resolved: string; // Tarball URL
@@ -37,6 +48,12 @@ export interface LockfilePackage {
     // Legacy fields for backward compatibility
     skillsDir?: string; // Deprecated: use resourceDir
     skillName?: string; // Deprecated: use resourceName
+  };
+  // For Claude plugins: track installed files and MCP servers
+  pluginMetadata?: {
+    files: string[]; // List of installed file paths (relative to project root)
+    mcpServers?: Record<string, LockfileMCPServer>; // MCP servers that were installed
+    mcpGlobal?: boolean; // Whether MCP servers were installed globally
   };
 }
 
@@ -158,6 +175,11 @@ export function addToLockfile(
       skillsDir?: string;
       skillName?: string;
     };
+    pluginMetadata?: {
+      files: string[];
+      mcpServers?: Record<string, LockfileMCPServer>;
+      mcpGlobal?: boolean;
+    };
   }
 ): void {
   // Use format-specific key if format is provided (enables multiple formats per package)
@@ -176,6 +198,7 @@ export function addToLockfile(
     fromCollection: packageInfo.fromCollection,
     hookMetadata: packageInfo.hookMetadata,
     progressiveDisclosure: packageInfo.progressiveDisclosure,
+    pluginMetadata: packageInfo.pluginMetadata,
   };
   lockfile.generated = new Date().toISOString();
 }

@@ -8,6 +8,7 @@
 export type Format =
   | "cursor"
   | "claude"
+  | "claude-plugin"
   | "continue"
   | "windsurf"
   | "copilot"
@@ -33,6 +34,7 @@ export type Format =
 export const FORMATS: readonly Format[] = [
   "cursor",
   "claude",
+  "claude-plugin",
   "continue",
   "windsurf",
   "copilot",
@@ -66,7 +68,9 @@ export type Subtype =
   | "template"
   | "collection"
   | "chatmode"
-  | "hook";
+  | "hook"
+  | "plugin"
+  | "server";
 
 /**
  * Available subtypes as a constant array
@@ -84,6 +88,8 @@ export const SUBTYPES: readonly Subtype[] = [
   "collection",
   "chatmode",
   "hook",
+  "plugin",
+  "server",
 ] as const;
 
 /**
@@ -93,6 +99,7 @@ export const SUBTYPES: readonly Subtype[] = [
 export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   cursor: ["rule", "agent", "slash-command", "tool"],
   claude: ["skill", "agent", "slash-command", "tool", "hook"],
+  "claude-plugin": ["plugin"],
   "claude.md": ["agent"],
   continue: ["rule", "agent", "slash-command", "tool"],
   windsurf: ["rule", "agent", "slash-command", "tool"],
@@ -107,7 +114,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   aider: ["rule"],
   zencoder: ["rule"],
   replit: ["rule"],
-  mcp: ["tool"],
+  mcp: ["server", "tool"],
   "agents.md": ["skill", "agent"],
   generic: [
     "rule",
@@ -117,6 +124,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
     "tool",
     "chatmode",
     "hook",
+    "plugin",
   ],
 } as const;
 
