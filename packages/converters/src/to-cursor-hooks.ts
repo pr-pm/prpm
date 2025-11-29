@@ -42,9 +42,27 @@ export function toCursorHooks(
       hooksConfig[section.hookType] = section.scriptPath;
     }
 
+    // Check for other hook types that can't be converted
+    const claudeHooks = pkg.content.sections.filter(s => s.type === 'hook');
+    if (claudeHooks.length > 0) {
+      warnings.push(
+        `${claudeHooks.length} Claude hook(s) found but cannot be converted to Cursor hooks (different hook events). Claude hooks: session-start, user-prompt-submit, tool-call, assistant-response. Cursor hooks: beforeShellExecution, afterFileEdit, etc.`
+      );
+      qualityScore -= 30;
+    }
+
+    // Check for Kiro hooks in metadata
+    if (pkg.metadata?.kiroAgent?.hooks) {
+      const kiroHookTypes = Object.keys(pkg.metadata.kiroAgent.hooks);
+      warnings.push(
+        `Kiro hooks found in metadata but cannot be converted to Cursor hooks (different hook events). Kiro hooks: ${kiroHookTypes.join(', ')}. Cursor hooks: beforeShellExecution, afterFileEdit, etc.`
+      );
+      qualityScore -= 30;
+    }
+
     // Check for unsupported sections
     const unsupportedSections = pkg.content.sections.filter(
-      section => section.type !== 'cursor-hook' && section.type !== 'metadata'
+      section => section.type !== 'cursor-hook' && section.type !== 'metadata' && section.type !== 'hook'
     );
 
     if (unsupportedSections.length > 0) {

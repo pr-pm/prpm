@@ -141,6 +141,68 @@ describe('Cursor Hooks Format', () => {
       const result = toCursorHooks(canonical);
       expect(result.warnings).toContain('1 non-hook sections skipped (not supported in hooks.json format)');
     });
+
+    it('should warn when converting Claude hooks to Cursor hooks', () => {
+      const canonical: CanonicalPackage = {
+        id: 'test',
+        name: 'test',
+        version: '1.0.0',
+        author: 'test',
+        description: 'test',
+        tags: [],
+        format: 'claude',
+        subtype: 'hook',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'hook',
+              event: 'session-start',
+              language: 'bash',
+              code: 'echo "Session started"',
+            },
+          ],
+        },
+      };
+
+      const result = toCursorHooks(canonical);
+      expect(result.warnings?.some(w => w.includes('Claude hook(s) found but cannot be converted'))).toBe(true);
+      expect(result.lossyConversion).toBe(true);
+      expect(result.qualityScore).toBeLessThan(70);
+    });
+
+    it('should warn when converting Kiro hooks to Cursor hooks', () => {
+      const canonical: CanonicalPackage = {
+        id: 'test',
+        name: 'test',
+        version: '1.0.0',
+        author: 'test',
+        description: 'test',
+        tags: [],
+        format: 'kiro',
+        subtype: 'hook',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [],
+        },
+        metadata: {
+          kiroAgent: {
+            hooks: {
+              agentSpawn: ['./spawn.sh'],
+              userPromptSubmit: ['./prompt.sh'],
+            },
+          },
+        },
+      };
+
+      const result = toCursorHooks(canonical);
+      expect(result.warnings?.some(w => w.includes('Kiro hooks found in metadata'))).toBe(true);
+      expect(result.warnings?.some(w => w.includes('agentSpawn, userPromptSubmit'))).toBe(true);
+      expect(result.lossyConversion).toBe(true);
+      expect(result.qualityScore).toBeLessThan(70);
+    });
   });
 
   describe('isCursorHooksFormat', () => {
