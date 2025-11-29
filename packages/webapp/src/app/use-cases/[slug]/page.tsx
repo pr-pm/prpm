@@ -112,7 +112,7 @@ export default async function UseCasePage({
                   "{useCase.example_query}"
                 </p>
                 <Link
-                  href={`/search?q=${encodeURIComponent(useCase.example_query)}`}
+                  href={`/search?q=${encodeURIComponent(useCase.example_query)}&ai=true`}
                   className="inline-block mt-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
                 >
                   Try this search →

@@ -118,8 +118,14 @@ function SearchPageContent() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
-  // AI Search state - load from localStorage
+  // AI Search state - load from URL param first, then localStorage
   const [aiSearchEnabled, setAiSearchEnabled] = useState(() => {
+    // Check URL parameter first (for deep links like from use case pages)
+    const aiParam = searchParams.get("ai") === "true";
+    if (aiParam) {
+      return true;
+    }
+    // Fall back to localStorage for user preference
     if (typeof window !== "undefined") {
       return localStorage.getItem("aiSearchEnabled") === "true";
     }
