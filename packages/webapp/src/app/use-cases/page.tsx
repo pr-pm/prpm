@@ -14,6 +14,9 @@ interface UseCase {
   package_count?: number
 }
 
+// Force static export for S3 deployment
+export const dynamic = 'force-static'
+
 export default async function UseCasesPage() {
   let useCases: UseCase[] = []
 

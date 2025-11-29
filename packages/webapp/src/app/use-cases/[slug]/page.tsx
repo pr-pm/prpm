@@ -14,8 +14,10 @@ interface UseCase {
   example_query: string | null
 }
 
-// Allow dynamic rendering for params not in generateStaticParams
-export const dynamicParams = true
+// Only serve statically generated pages (required for S3 static hosting)
+// Any slug not in generateStaticParams will return 404
+export const dynamicParams = false
+export const dynamic = 'force-static'
 
 // Generate static params for all use cases
 export async function generateStaticParams() {
