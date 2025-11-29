@@ -1,43 +1,32 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import BackLink from '@/components/BackLink'
-import { getUseCases } from '@/lib/api'
-import type { UseCaseWithPackages } from '@/lib/api'
 import { Lightbulb, ChevronRight } from 'lucide-react'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 
-export default function UseCasesPage() {
-  const [useCases, setUseCases] = useState<UseCaseWithPackages[]>([])
-  const [loading, setLoading] = useState(true)
+interface UseCase {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  example_query: string | null
+  package_count?: number
+}
 
-  useEffect(() => {
-    async function loadUseCases() {
-      try {
-        const result = await getUseCases(true)
-        setUseCases(result.use_cases)
-      } catch (error) {
-        console.error('Failed to load use cases:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+export default async function UseCasesPage() {
+  let useCases: UseCase[] = []
 
-    loadUseCases()
-  }, [])
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-prpm-dark">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-prpm-accent"></div>
-          </div>
-        </div>
-      </main>
-    )
+  try {
+    // Read from SSG data file prepared by prepare-ssg-data.sh
+    const ssgDataPath = join(process.cwd(), 'public', 'seo-data', 'use-cases.json')
+    const fileContent = await readFile(ssgDataPath, 'utf-8')
+    useCases = JSON.parse(fileContent)
+    console.log(`[UseCases Page] ✅ Loaded ${useCases.length} use cases from SSG data`)
+  } catch (error) {
+    console.error('[UseCases Page] ERROR loading use cases:', error)
+    // Fallback to empty array if file doesn't exist
+    useCases = []
   }
 
   return (
@@ -75,7 +64,7 @@ export default function UseCasesPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <Link
-                        href={`/search?use_case=${useCase.slug}`}
+                        href={`/use-cases/${useCase.slug}`}
                         className="group/link block"
                       >
                         <div className="flex items-center gap-3 mb-2">
@@ -103,65 +92,6 @@ export default function UseCasesPage() {
                     </p>
                   )}
 
-                  {/* Package Count */}
-                  {useCase.package_count && useCase.package_count > 0 && (
-                    <div className="mt-6 pt-6 border-t border-prpm-border/30">
-                      <div className="mb-4 flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        {useCase.package_count} {useCase.package_count === 1 ? 'Package' : 'Packages'} Available
-                      </div>
-                      {/* Commented out package listing code since packages property doesn't exist
-                      <div className="space-y-2">
-                        {useCase.packages.slice(0, 3).map((pkg: any) => (
-                          <Link
-                            key={pkg.id}
-                            href={`/packages/${pkg.name}`}
-                            className="group/pkg flex items-center gap-3 p-3 rounded-xl bg-prpm-dark/40 hover:bg-prpm-dark/80 border border-prpm-border/30 hover:border-prpm-accent/40 transition-all hover:shadow-lg hover:shadow-prpm-accent/5"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-semibold text-gray-200 group-hover/pkg:text-white transition-colors truncate">
-                                {pkg.name}
-                              </div>
-                              {pkg.description && (
-                                <p className="text-xs text-gray-500 group-hover/pkg:text-gray-400 transition-colors line-clamp-1 mt-0.5">
-                                  {pkg.description}
-                                </p>
-                              )}
-                            </div>
-                            {pkg.quality_score && (
-                              <div className="flex items-center gap-0.5 flex-shrink-0">
-                                {[...Array(5)].map((_, i) => (
-                                  <svg
-                                    key={i}
-                                    className={`w-3 h-3 ${i < Math.round(pkg.quality_score!) ? 'text-yellow-400' : 'text-gray-700'}`}
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                  </svg>
-                                ))}
-                              </div>
-                            )}
-                            <svg className="w-4 h-4 text-gray-600 group-hover/pkg:text-prpm-accent group-hover/pkg:translate-x-0.5 transition-all flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Link>
-                        ))}
-                      </div>
-                      {useCase.packages.length > 3 && (
-                        <Link
-                          href={`/search?use_case=${useCase.slug}`}
-                          className="block mt-3 text-center text-sm text-prpm-accent hover:text-prpm-accent-light font-medium"
-                        >
-                          View all {useCase.packages.length} packages →
-                        </Link>
-                      )}
-                      */}
-                    </div>
-                  )}
-
                   {/* Example Query */}
                   {useCase.example_query && (
                     <div className="mt-6 pt-6 border-t border-prpm-border/30">
@@ -169,6 +99,12 @@ export default function UseCasesPage() {
                       <p className="text-sm text-gray-300 italic bg-prpm-dark/50 px-3 py-2 rounded-lg border border-prpm-border/30">
                         "{useCase.example_query}"
                       </p>
+                      <Link
+                        href={`/search?q=${encodeURIComponent(useCase.example_query)}&ai=true`}
+                        className="inline-block mt-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                      >
+                        Try this search →
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -177,7 +113,7 @@ export default function UseCasesPage() {
           ))}
         </div>
 
-        {useCases.length === 0 && !loading && (
+        {useCases.length === 0 && (
           <div className="text-center py-20">
             <Lightbulb className="w-16 h-16 text-gray-600 mx-auto mb-4" />
             <p className="text-gray-400 text-lg">No use cases available yet</p>
