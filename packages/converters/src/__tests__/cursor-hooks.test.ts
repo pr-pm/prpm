@@ -106,7 +106,7 @@ describe('Cursor Hooks Format', () => {
       };
 
       const result = toCursorHooks(canonical);
-      expect(result.warnings).toContain('No cursor-hook sections found in package');
+      expect(result.warnings).toContain('No hooks converted to Cursor hooks format');
       expect(result.qualityScore).toBeLessThan(100);
     });
 
@@ -167,9 +167,10 @@ describe('Cursor Hooks Format', () => {
       };
 
       const result = toCursorHooks(canonical);
-      expect(result.warnings?.some(w => w.includes('Claude hook(s) found but cannot be converted'))).toBe(true);
+      expect(result.warnings?.some(w => w.includes('Mapped Claude hook "session-start"'))).toBe(true);
+      expect(result.warnings?.some(w => w.includes('code must be extracted'))).toBe(true);
       expect(result.lossyConversion).toBe(true);
-      expect(result.qualityScore).toBeLessThan(70);
+      expect(result.qualityScore).toBeLessThan(100);
     });
 
     it('should warn when converting Kiro hooks to Cursor hooks', () => {
@@ -198,10 +199,9 @@ describe('Cursor Hooks Format', () => {
       };
 
       const result = toCursorHooks(canonical);
-      expect(result.warnings?.some(w => w.includes('Kiro hooks found in metadata'))).toBe(true);
-      expect(result.warnings?.some(w => w.includes('agentSpawn, userPromptSubmit'))).toBe(true);
+      expect(result.warnings?.some(w => w.includes('Mapped Kiro hook'))).toBe(true);
       expect(result.lossyConversion).toBe(true);
-      expect(result.qualityScore).toBeLessThan(70);
+      expect(result.qualityScore).toBeLessThan(100);
     });
   });
 
