@@ -1394,6 +1394,7 @@ function SearchPageContent() {
                     >
                       <option value="">All Formats</option>
                       <option value="cursor">Cursor</option>
+                      <option value="cursor-hooks">Cursor Hooks</option>
                       <option value="claude">Claude</option>
                       <option value="continue">Continue</option>
                       <option value="windsurf">Windsurf</option>

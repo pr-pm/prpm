@@ -33,6 +33,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
   const formatIcons: Record<Format, string> = {
     'claude': '🤖',
     'cursor': '📋',
+    'cursor-hooks': '🪝',
     'windsurf': '🌊',
     'continue': '➡️',
     'copilot': '✈️',
@@ -62,6 +63,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
   const formatLabels: Record<Format, string> = {
     'claude': 'Claude',
     'cursor': 'Cursor',
+    'cursor-hooks': 'Cursor Hooks',
     'windsurf': 'Windsurf',
     'continue': 'Continue',
     'copilot': 'GitHub Copilot',
