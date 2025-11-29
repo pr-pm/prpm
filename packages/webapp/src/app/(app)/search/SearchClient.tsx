@@ -17,6 +17,7 @@ import {
   getQuerySuggestions,
   getTagSuggestions,
   getCategories,
+  getUseCases,
   SearchPackagesParams,
   SearchCollectionsParams,
   Package,
@@ -63,6 +64,7 @@ function SearchPageContent() {
       format: (searchParams.get("format") as Format) || "",
       subtype: (searchParams.get("subtype") as Subtype) || "",
       category: searchParams.get("category") || "",
+      useCase: searchParams.get("useCase") || "",
       author: searchParams.get("author") || "",
       tags: searchParams.get("tags")?.split(",").filter(Boolean) || [],
       sort,
@@ -84,6 +86,9 @@ function SearchPageContent() {
   const [selectedCategory, setSelectedCategory] = useState(
     initialParams.category,
   );
+  const [selectedUseCase, setSelectedUseCase] = useState(
+    initialParams.useCase,
+  );
   const [selectedLanguage, setSelectedLanguage] = useState(
     searchParams.get("language") || "",
   );
@@ -104,6 +109,9 @@ function SearchPageContent() {
   const [page, setPage] = useState(initialParams.page);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [availableCategories, setAvailableCategories] = useState<
+    Array<{ slug: string; name: string }>
+  >([]);
+  const [availableUseCases, setAvailableUseCases] = useState<
     Array<{ slug: string; name: string }>
   >([]);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -163,6 +171,7 @@ function SearchPageContent() {
     const format = searchParams.get("format") as Format;
     const subtype = searchParams.get("subtype") as Subtype;
     const category = searchParams.get("category");
+    const useCase = searchParams.get("useCase");
     const author = searchParams.get("author");
     const tags = searchParams.get("tags")?.split(",").filter(Boolean);
     const sortParam = searchParams.get("sort") as SortType;
@@ -180,6 +189,8 @@ function SearchPageContent() {
       setSelectedSubtype(subtype || "");
     if (category !== null && category !== selectedCategory)
       setSelectedCategory(category || "");
+    if (useCase !== null && useCase !== selectedUseCase)
+      setSelectedUseCase(useCase || "");
     if (author !== null && author !== selectedAuthor) {
       const authorValue = author || "";
       setSelectedAuthor(authorValue);
@@ -203,6 +214,7 @@ function SearchPageContent() {
     selectedFormat,
     selectedSubtype,
     selectedCategory,
+    selectedUseCase,
     selectedAuthor,
     selectedTags,
     sort,
@@ -424,6 +436,37 @@ function SearchPageContent() {
     fetchCategories();
   }, []);
 
+  // Fetch use cases on mount
+  useEffect(() => {
+    const fetchUseCases = async () => {
+      try {
+        const data = await getUseCases(false);
+        console.log("Use cases API response:", data);
+
+        const useCases: Array<{ slug: string; name: string }> = [];
+
+        if (data.use_cases) {
+          console.log("Processing use cases:", data.use_cases.length);
+          data.use_cases.forEach((uc: any) => {
+            useCases.push({
+              slug: uc.slug,
+              name: uc.name,
+            });
+          });
+        }
+
+        console.log("Setting available use cases:", useCases);
+        setAvailableUseCases(useCases);
+      } catch (error) {
+        console.error("Failed to fetch use cases:", error);
+        // Fall back to empty array on error
+        setAvailableUseCases([]);
+      }
+    };
+
+    fetchUseCases();
+  }, []);
+
   // Fetch starred IDs from localStorage + API on mount
   useEffect(() => {
     const fetchStarredIds = async () => {
@@ -487,6 +530,7 @@ function SearchPageContent() {
     if (selectedFormat) params.set("format", selectedFormat);
     if (selectedSubtype) params.set("subtype", selectedSubtype);
     if (selectedCategory) params.set("category", selectedCategory);
+    if (selectedUseCase) params.set("useCase", selectedUseCase);
     if (selectedLanguage) params.set("language", selectedLanguage);
     if (selectedFramework) params.set("framework", selectedFramework);
     if (selectedAuthor) params.set("author", selectedAuthor);
@@ -505,6 +549,7 @@ function SearchPageContent() {
     selectedFormat,
     selectedSubtype,
     selectedCategory,
+    selectedUseCase,
     selectedAuthor,
     selectedTags,
     sort,
@@ -649,6 +694,7 @@ function SearchPageContent() {
         if (selectedFormat) params.format = selectedFormat;
         if (selectedSubtype) params.subtype = selectedSubtype;
         if (selectedCategory) params.category = selectedCategory;
+        if (selectedUseCase) params.use_case = selectedUseCase;
         if (selectedLanguage) params.language = selectedLanguage;
         if (selectedFramework) params.framework = selectedFramework;
         if (selectedTags.length > 0) params.tags = selectedTags;
@@ -791,6 +837,7 @@ function SearchPageContent() {
 
         if (query.trim()) params.query = query;
         if (selectedCategory) params.category = selectedCategory;
+        if (selectedUseCase) params.use_case = selectedUseCase;
         if (selectedTags.length > 0 && selectedTags[0])
           params.tag = selectedTags[0];
 
@@ -819,6 +866,7 @@ function SearchPageContent() {
 
       if (query.trim()) params.q = query;
       if (selectedCategory) params.category = selectedCategory;
+      if (selectedUseCase) params.use_case = selectedUseCase;
       if (selectedLanguage) params.language = selectedLanguage;
       if (selectedFramework) params.framework = selectedFramework;
       if (selectedTags.length > 0) params.tags = selectedTags;
@@ -846,6 +894,7 @@ function SearchPageContent() {
 
       if (query.trim()) params.q = query;
       if (selectedCategory) params.category = selectedCategory;
+      if (selectedUseCase) params.use_case = selectedUseCase;
       if (selectedLanguage) params.language = selectedLanguage;
       if (selectedFramework) params.framework = selectedFramework;
       if (selectedTags.length > 0) params.tags = selectedTags;
@@ -873,6 +922,7 @@ function SearchPageContent() {
 
       if (query.trim()) params.q = query;
       if (selectedCategory) params.category = selectedCategory;
+      if (selectedUseCase) params.use_case = selectedUseCase;
       if (selectedLanguage) params.language = selectedLanguage;
       if (selectedFramework) params.framework = selectedFramework;
       if (selectedTags.length > 0) params.tags = selectedTags;
@@ -957,6 +1007,7 @@ function SearchPageContent() {
     selectedFormat,
     selectedSubtype,
     selectedCategory,
+    selectedUseCase,
     selectedLanguage,
     selectedFramework,
     selectedTags,
@@ -978,6 +1029,7 @@ function SearchPageContent() {
       selectedFormat !== initialParams.format ||
       selectedSubtype !== initialParams.subtype ||
       selectedCategory !== initialParams.category ||
+      selectedUseCase !== initialParams.useCase ||
       selectedLanguage !== (searchParams.get("language") || "") ||
       selectedFramework !== (searchParams.get("framework") || "") ||
       JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
@@ -996,6 +1048,7 @@ function SearchPageContent() {
     selectedFormat,
     selectedSubtype,
     selectedCategory,
+    selectedUseCase,
     selectedLanguage,
     selectedFramework,
     selectedTags,
@@ -1585,6 +1638,44 @@ function SearchPageContent() {
                     />
                   </svg>
                   View all categories
+                </Link>
+              </div>
+
+              {/* Use Case Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Use Case
+                </label>
+                <select
+                  value={selectedUseCase}
+                  onChange={(e) => setSelectedUseCase(e.target.value)}
+                  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
+                >
+                  <option value="">All Use Cases</option>
+                  {availableUseCases.map((uc) => (
+                    <option key={uc.slug} value={uc.slug}>
+                      {uc.name}
+                    </option>
+                  ))}
+                </select>
+                <Link
+                  href="/use-cases"
+                  className="mt-2 text-xs text-prpm-accent hover:text-prpm-accent-light transition-colors inline-flex items-center gap-1"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
+                  </svg>
+                  View all use cases
                 </Link>
               </div>
 
