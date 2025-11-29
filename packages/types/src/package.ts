@@ -7,6 +7,7 @@
  */
 export type Format =
   | "cursor"
+  | "cursor-hooks"
   | "claude"
   | "continue"
   | "windsurf"
@@ -32,6 +33,7 @@ export type Format =
  */
 export const FORMATS: readonly Format[] = [
   "cursor",
+  "cursor-hooks",
   "claude",
   "continue",
   "windsurf",
