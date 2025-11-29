@@ -17,6 +17,14 @@
       "type": "string",
       "description": "Path to script that runs before MCP tool calls"
     },
+    "afterMCPExecution": {
+      "type": "string",
+      "description": "Path to script that runs after MCP tool calls"
+    },
+    "beforeReadFile": {
+      "type": "string",
+      "description": "Path to script that runs before files are read"
+    },
     "afterFileEdit": {
       "type": "string",
       "description": "Path to script that runs after files are edited"

@@ -79,7 +79,7 @@ export interface CanonicalPackage {
       executable?: boolean; // Whether the hook is executable
     };
     cursorHook?: {
-      hookType: 'beforeShellExecution' | 'afterShellExecution' | 'beforeMCPExecution' | 'afterFileEdit' | 'beforeSubmitPrompt' | 'stop' | 'afterAgentResponse' | 'afterAgentThought' | 'beforeTabFileRead' | 'afterTabFileEdit';
+      hookType: 'beforeShellExecution' | 'afterShellExecution' | 'beforeMCPExecution' | 'afterMCPExecution' | 'beforeReadFile' | 'afterFileEdit' | 'beforeSubmitPrompt' | 'stop' | 'afterAgentResponse' | 'afterAgentThought' | 'beforeTabFileRead' | 'afterTabFileEdit';
       scriptPath?: string; // Path to the executable script
     };
     copilotConfig?: {
@@ -342,7 +342,7 @@ export interface HookSection {
  */
 export interface CursorHookSection {
   type: 'cursor-hook';
-  hookType: 'beforeShellExecution' | 'afterShellExecution' | 'beforeMCPExecution' | 'afterFileEdit' | 'beforeSubmitPrompt' | 'stop' | 'afterAgentResponse' | 'afterAgentThought' | 'beforeTabFileRead' | 'afterTabFileEdit';
+  hookType: 'beforeShellExecution' | 'afterShellExecution' | 'beforeMCPExecution' | 'afterMCPExecution' | 'beforeReadFile' | 'afterFileEdit' | 'beforeSubmitPrompt' | 'stop' | 'afterAgentResponse' | 'afterAgentThought' | 'beforeTabFileRead' | 'afterTabFileEdit';
   scriptPath: string; // Path to the executable script
   description?: string; // What the hook does
   script?: string; // The actual script content (if embedded)

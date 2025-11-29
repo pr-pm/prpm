@@ -33,6 +33,8 @@ export function fromCursorHooks(
       'beforeShellExecution',
       'afterShellExecution',
       'beforeMCPExecution',
+      'afterMCPExecution',
+      'beforeReadFile',
       'afterFileEdit',
       'beforeSubmitPrompt',
       'stop',

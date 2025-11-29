@@ -91,6 +91,8 @@ export function isCursorHooksFormat(content: string): boolean {
       'beforeShellExecution',
       'afterShellExecution',
       'beforeMCPExecution',
+      'afterMCPExecution',
+      'beforeReadFile',
       'afterFileEdit',
       'beforeSubmitPrompt',
       'stop',

@@ -33,6 +33,12 @@ The `hooks.json` file is a simple JSON object mapping hook types to script paths
 - **`beforeMCPExecution`**: Runs before MCP tool calls
   - Use case: Validate MCP tool usage, enforce security policies
 
+- **`afterMCPExecution`**: Runs after MCP tool calls complete
+  - Use case: Log MCP tool results, validate outputs
+
+- **`beforeReadFile`**: Runs before files are read by the agent
+  - Use case: Filter sensitive files, validate file access permissions
+
 - **`afterFileEdit`**: Runs after files are edited by the agent
   - Use case: Auto-format code, run linters, validate changes
 
