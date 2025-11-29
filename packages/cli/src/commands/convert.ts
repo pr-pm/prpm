@@ -31,6 +31,7 @@ import {
   toAgentsMd,
   toGemini,
   toRuler,
+  toCursorHooks,
   isCursorFormat,
   isClaudeFormat,
   isContinueFormat,
@@ -40,15 +41,18 @@ import {
   isWindsurfFormat,
   isAgentsMdFormat,
   isRulerFormat,
+  isCursorHooksFormat,
   type CanonicalPackage,
+  type HookMappingStrategy,
 } from '@pr-pm/converters';
 
 export interface ConvertOptions {
-  to: 'cursor' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler';
+  to: 'cursor' | 'cursor-hooks' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler';
   subtype?: Subtype;
   output?: string;
   name?: string; // Custom output filename (without extension)
   yes?: boolean; // Skip confirmation prompts
+  hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion
 }
 
 /**
@@ -286,6 +290,11 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
       case 'cursor':
         result = toCursor(canonicalPkg);
         break;
+      case 'cursor-hooks':
+        result = toCursorHooks(canonicalPkg, {
+          hookMappingStrategy: options.hookMapping || 'auto'
+        });
+        break;
       case 'claude':
         result = toClaude(canonicalPkg);
         break;
@@ -378,10 +387,11 @@ export function createConvertCommand() {
   const command = new Command('convert')
     .description('Convert AI prompt files between formats')
     .argument('<source>', 'Source file path to convert')
-    .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md, gemini, ruler)')
+    .option('-t, --to <format>', 'Target format (cursor, cursor-hooks, claude, windsurf, kiro, copilot, continue, agents.md, gemini, ruler)')
     .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, prompt, etc.)')
     .option('-o, --output <path>', 'Output path (defaults to format-specific location)')
     .option('-n, --name <name>', 'Custom output filename (without extension, e.g., "my-rule")')
+    .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip, manual', 'auto')
     .option('-y, --yes', 'Skip confirmation prompts')
     .action(async (source: string, options: any) => {
       try {
@@ -389,10 +399,17 @@ export function createConvertCommand() {
           throw new CLIError('Target format is required. Use --to <format>');
         }
 
-        const validFormats = ['cursor', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md', 'gemini', 'ruler'];
+        const validFormats = ['cursor', 'cursor-hooks', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md', 'gemini', 'ruler'];
         if (!validFormats.includes(options.to)) {
           throw new CLIError(
             `Invalid format: ${options.to}\n\nValid formats: ${validFormats.join(', ')}`
+          );
+        }
+
+        const validHookMappingStrategies = ['auto', 'strict', 'skip', 'manual'];
+        if (options.hookMapping && !validHookMappingStrategies.includes(options.hookMapping)) {
+          throw new CLIError(
+            `Invalid hook mapping strategy: ${options.hookMapping}\n\nValid strategies: ${validHookMappingStrategies.join(', ')}`
           );
         }
 
@@ -409,6 +426,7 @@ export function createConvertCommand() {
           output: options.output,
           name: options.name,
           yes: options.yes,
+          hookMapping: options.hookMapping as HookMappingStrategy,
         });
       } catch (error: any) {
         if (error instanceof CLIError) {

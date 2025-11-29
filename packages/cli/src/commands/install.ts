@@ -59,10 +59,12 @@ import {
   toAider,
   toZencoder,
   toReplit,
+  toCursorHooks,
   validateFormat,
   getNestedIndicator,
   getFilePatterns,
   type CanonicalPackage,
+  type HookMappingStrategy,
 } from '@pr-pm/converters';
 
 /**
@@ -243,6 +245,7 @@ export async function handleInstall(
     location?: string;
     noAppend?: boolean; // Skip manifest file update for skills
     manifestFile?: string; // Custom manifest filename (default: AGENTS.md)
+    hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion
     fromCollection?: {
       scope: string;
       name_slug: string;
@@ -598,6 +601,12 @@ export async function handleInstall(
           case 'cursor':
             const cursorResult = toCursor(canonicalPkg);
             convertedContent = cursorResult.content;
+            break;
+          case 'cursor-hooks':
+            const cursorHooksResult = toCursorHooks(canonicalPkg, {
+              hookMappingStrategy: options.hookMapping || 'auto'
+            });
+            convertedContent = cursorHooksResult.content;
             break;
           case 'claude':
           case 'claude.md':
@@ -1341,6 +1350,7 @@ export async function installFromLockfile(options: {
   subtype?: Subtype;
   frozenLockfile?: boolean;
   location?: string;
+  hookMapping?: HookMappingStrategy;
 }): Promise<void> {
   try {
     // Read lockfile
@@ -1400,6 +1410,7 @@ export async function installFromLockfile(options: {
           force: true, // Force reinstall when installing from lockfile
           location: locationOverride,
           manifestFile,
+          hookMapping: options.hookMapping,
         });
 
         successCount++;
@@ -1444,16 +1455,25 @@ export function createInstallCommand(): Command {
     .option('--format <format>', 'Alias for --as')
     .option('--location <path>', 'Custom location for installed files (Agents.md or nested Cursor rules)')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
+    .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip, manual', 'auto')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
     .option('--no-append', 'Skip adding skill to manifest file (skill files only)')
     .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure')
-    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; frozenLockfile?: boolean; location?: string; noAppend?: boolean; manifestFile?: string }) => {
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; location?: string; noAppend?: boolean; manifestFile?: string }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = (options.format || options.as) as Format | undefined;
       const validFormats = FORMATS;
 
       if (convertTo && !validFormats.includes(convertTo)) {
         throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format claude.md # Convert to Claude.md format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package --format gemini.md # Convert to Gemini format\n   prpm install my-package                   # Install in native format`, 1);
+      }
+
+      // Validate hook mapping strategy
+      const validHookMappingStrategies = ['auto', 'strict', 'skip', 'manual'];
+      if (options.hookMapping && !validHookMappingStrategies.includes(options.hookMapping)) {
+        throw new CLIError(
+          `Invalid hook mapping strategy: ${options.hookMapping}\n\nValid strategies: ${validHookMappingStrategies.join(', ')}`
+        );
       }
 
       // If no package specified, install from lockfile
@@ -1463,6 +1483,7 @@ export function createInstallCommand(): Command {
           subtype: options.subtype as Subtype | undefined,
           frozenLockfile: options.frozenLockfile,
           location: options.location,
+          hookMapping: options.hookMapping as HookMappingStrategy | undefined,
         });
         return;
       }
@@ -1475,6 +1496,7 @@ export function createInstallCommand(): Command {
         location: options.location,
         noAppend: options.noAppend,
         manifestFile: options.manifestFile,
+        hookMapping: options.hookMapping as HookMappingStrategy | undefined,
       });
     });
 
