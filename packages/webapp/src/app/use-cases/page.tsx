@@ -67,7 +67,7 @@ export default async function UseCasesPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <Link
-                        href={`/use-cases/${useCase.slug}`}
+                        href={`/search?useCase=${useCase.slug}`}
                         className="group/link block"
                       >
                         <div className="flex items-center gap-3 mb-2">
