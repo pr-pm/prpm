@@ -48,6 +48,8 @@ import {
   toClaude,
   toContinue,
   toCopilot,
+  VALID_HOOK_MAPPING_STRATEGIES,
+  isValidHookMappingStrategy,
   toKiro,
   toWindsurf,
   toAgentsMd,
@@ -1469,10 +1471,9 @@ export function createInstallCommand(): Command {
       }
 
       // Validate hook mapping strategy
-      const validHookMappingStrategies = ['auto', 'strict', 'skip', 'manual'];
-      if (options.hookMapping && !validHookMappingStrategies.includes(options.hookMapping)) {
+      if (options.hookMapping && !isValidHookMappingStrategy(options.hookMapping)) {
         throw new CLIError(
-          `Invalid hook mapping strategy: ${options.hookMapping}\n\nValid strategies: ${validHookMappingStrategies.join(', ')}`
+          `Invalid hook mapping strategy: ${options.hookMapping}\n\nValid strategies: ${VALID_HOOK_MAPPING_STRATEGIES.join(', ')}`
         );
       }
 

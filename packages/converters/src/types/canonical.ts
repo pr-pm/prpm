@@ -387,6 +387,16 @@ export interface ConversionOptions {
 }
 
 /**
+ * Extracted script file for hook conversions
+ */
+export interface ExtractedScript {
+  path: string;      // Relative path where the script should be written (e.g., './hooks/user-prompt-submit.sh')
+  content: string;   // The script content
+  language: string;  // Original language (bash, python, javascript, typescript)
+  executable?: boolean; // Whether the script needs execute permissions
+}
+
+/**
  * Conversion result
  */
 export interface ConversionResult {
@@ -396,4 +406,5 @@ export interface ConversionResult {
   validationErrors?: string[]; // Schema validation errors
   lossyConversion?: boolean; // Whether some features were lost
   qualityScore?: number; // 0-100, how well it converted
+  extractedScripts?: ExtractedScript[]; // Scripts that need to be written alongside the main content
 }

@@ -7,6 +7,9 @@
 // Types
 export * from './types/canonical.js';
 
+// Cursor Hooks constants and types
+export * from './cursor-hooks-constants.js';
+
 // Hook mapping utilities
 export * from './hook-mappings.js';
 

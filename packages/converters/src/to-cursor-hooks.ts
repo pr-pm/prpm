@@ -8,9 +8,11 @@ import type {
   ConversionOptions,
   ConversionResult,
   CursorHookSection,
+  ExtractedScript,
   HookSection,
 } from './types/canonical.js';
 import { mapHook, type HookMappingStrategy } from './hook-mappings.js';
+import { VALID_CURSOR_HOOK_TYPES, getScriptExtension } from './cursor-hooks-constants.js';
 
 interface CursorHooksConfig {
   [hookType: string]: string; // hookType -> script path
@@ -28,6 +30,7 @@ export function toCursorHooks(
   options: CursorHooksConversionOptions = {}
 ): ConversionResult {
   const warnings: string[] = [];
+  const extractedScripts: ExtractedScript[] = [];
   let qualityScore = 100;
   const hookMappingStrategy = options.hookMappingStrategy || 'auto';
 
@@ -61,16 +64,21 @@ export function toCursorHooks(
 
         if (mappingResult.mapped && mappingResult.targetHookType) {
           // Create script file from Claude hook code
-          const scriptExt = claudeHook.language === 'bash' ? 'sh' :
-                           claudeHook.language === 'python' ? 'py' :
-                           claudeHook.language === 'javascript' || claudeHook.language === 'typescript' ? 'js' :
-                           'sh';
+          const scriptExt = getScriptExtension(claudeHook.language);
           const scriptPath = `./hooks/${claudeHook.event}.${scriptExt}`;
           hooksConfig[mappingResult.targetHookType] = scriptPath;
 
+          // Extract the script content for the caller to write
+          extractedScripts.push({
+            path: scriptPath,
+            content: claudeHook.code,
+            language: claudeHook.language,
+            executable: true,
+          });
+
           warnings.push(
             `Mapped Claude hook "${claudeHook.event}" to Cursor hook "${mappingResult.targetHookType}". ` +
-            `Note: Claude hook code must be extracted to ${scriptPath}`
+            `Script extracted to ${scriptPath}`
           );
         }
       }
@@ -129,6 +137,7 @@ export function toCursorHooks(
       warnings: warnings.length > 0 ? warnings : undefined,
       lossyConversion: warnings.length > 0,
       qualityScore: Math.max(0, qualityScore),
+      extractedScripts: extractedScripts.length > 0 ? extractedScripts : undefined,
     };
   } catch (error) {
     warnings.push(`Conversion error: ${error instanceof Error ? error.message : String(error)}`);
@@ -154,24 +163,9 @@ export function isCursorHooksFormat(content: string): boolean {
       return false;
     }
 
-    const validHookTypes = [
-      'beforeShellExecution',
-      'afterShellExecution',
-      'beforeMCPExecution',
-      'afterMCPExecution',
-      'beforeReadFile',
-      'afterFileEdit',
-      'beforeSubmitPrompt',
-      'stop',
-      'afterAgentResponse',
-      'afterAgentThought',
-      'beforeTabFileRead',
-      'afterTabFileEdit'
-    ];
-
     // Check if at least one key is a valid hook type
     const keys = Object.keys(parsed);
-    return keys.length > 0 && keys.some(key => validHookTypes.includes(key));
+    return keys.length > 0 && keys.some(key => VALID_CURSOR_HOOK_TYPES.includes(key as any));
   } catch {
     return false;
   }

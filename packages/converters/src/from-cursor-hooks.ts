@@ -4,6 +4,7 @@
  */
 
 import type { CanonicalPackage, PackageMetadata, CursorHookSection } from './types/canonical.js';
+import { VALID_CURSOR_HOOK_TYPES, isValidCursorHookType } from './cursor-hooks-constants.js';
 
 interface CursorHookConfig {
   [hookType: string]: string; // hookType -> script path
@@ -29,23 +30,8 @@ export function fromCursorHooks(
 
   // Convert hooks to CursorHookSections
   const hookSections: CursorHookSection[] = Object.entries(hooksConfig).map(([hookType, scriptPath]) => {
-    const validHookTypes = [
-      'beforeShellExecution',
-      'afterShellExecution',
-      'beforeMCPExecution',
-      'afterMCPExecution',
-      'beforeReadFile',
-      'afterFileEdit',
-      'beforeSubmitPrompt',
-      'stop',
-      'afterAgentResponse',
-      'afterAgentThought',
-      'beforeTabFileRead',
-      'afterTabFileEdit'
-    ];
-
-    if (!validHookTypes.includes(hookType)) {
-      throw new Error(`Invalid hook type: ${hookType}`);
+    if (!isValidCursorHookType(hookType)) {
+      throw new Error(`Invalid hook type: ${hookType}. Valid types: ${VALID_CURSOR_HOOK_TYPES.join(', ')}`);
     }
 
     return {

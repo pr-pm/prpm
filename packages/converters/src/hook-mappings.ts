@@ -6,8 +6,10 @@
  */
 
 import type { HookSection, CursorHookSection } from './types/canonical.js';
+import { type HookMappingStrategy } from './cursor-hooks-constants.js';
 
-export type HookMappingStrategy = 'auto' | 'strict' | 'manual' | 'skip';
+// Re-export for backwards compatibility
+export type { HookMappingStrategy } from './cursor-hooks-constants.js';
 
 export type MappingQuality = 'direct' | 'semantic' | 'none';
 

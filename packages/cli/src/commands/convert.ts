@@ -42,6 +42,8 @@ import {
   isAgentsMdFormat,
   isRulerFormat,
   isCursorHooksFormat,
+  VALID_HOOK_MAPPING_STRATEGIES,
+  isValidHookMappingStrategy,
   type CanonicalPackage,
   type HookMappingStrategy,
 } from '@pr-pm/converters';
@@ -406,10 +408,9 @@ export function createConvertCommand() {
           );
         }
 
-        const validHookMappingStrategies = ['auto', 'strict', 'skip', 'manual'];
-        if (options.hookMapping && !validHookMappingStrategies.includes(options.hookMapping)) {
+        if (options.hookMapping && !isValidHookMappingStrategy(options.hookMapping)) {
           throw new CLIError(
-            `Invalid hook mapping strategy: ${options.hookMapping}\n\nValid strategies: ${validHookMappingStrategies.join(', ')}`
+            `Invalid hook mapping strategy: ${options.hookMapping}\n\nValid strategies: ${VALID_HOOK_MAPPING_STRATEGIES.join(', ')}`
           );
         }
 

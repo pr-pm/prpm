@@ -1457,6 +1457,7 @@ function SearchPageContent() {
                     )}
 
                     {(selectedFormat === "cursor" ||
+                      selectedFormat === "cursor-hooks" ||
                       selectedFormat === "claude" ||
                       selectedFormat === "continue" ||
                       selectedFormat === "windsurf" ||
@@ -1467,13 +1468,15 @@ function SearchPageContent() {
                           <strong>
                             {selectedFormat === "cursor"
                               ? "Cursor IDE"
-                              : selectedFormat === "claude"
-                                ? "Claude Desktop/Code"
-                                : selectedFormat === "continue"
-                                  ? "Continue (VS Code/JetBrains)"
-                                  : selectedFormat === "windsurf"
-                                    ? "Windsurf IDE"
-                                    : "Kiro AI"}
+                              : selectedFormat === "cursor-hooks"
+                                ? "Cursor IDE (Hooks)"
+                                : selectedFormat === "claude"
+                                  ? "Claude Desktop/Code"
+                                  : selectedFormat === "continue"
+                                    ? "Continue (VS Code/JetBrains)"
+                                    : selectedFormat === "windsurf"
+                                      ? "Windsurf IDE"
+                                      : "Kiro AI"}
                           </strong>
                         </p>
                       </div>
