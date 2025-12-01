@@ -35,3 +35,6 @@ coverage/
 # Temporary files
 tmp/
 temp/
+
+# Drizzle generated output (regenerate with: npm run db:introspect)
+drizzle/

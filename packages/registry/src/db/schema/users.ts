@@ -36,6 +36,13 @@ export const users = pgTable('users', {
   isAdmin: boolean('is_admin').default(false).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
 
+  // Stripe and PRPM+ subscription fields (migration 026)
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }).unique(),
+  prpmPlusSubscriptionId: varchar('prpm_plus_subscription_id', { length: 255 }).unique(),
+  prpmPlusStatus: varchar('prpm_plus_status', { length: 50 }), // active, past_due, canceled, incomplete, incomplete_expired, trialing, unpaid
+  prpmPlusCancelAtPeriodEnd: boolean('prpm_plus_cancel_at_period_end').default(false),
+  prpmPlusCurrentPeriodEnd: timestamp('prpm_plus_current_period_end', { withTimezone: true }),
+
   // Timestamps
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

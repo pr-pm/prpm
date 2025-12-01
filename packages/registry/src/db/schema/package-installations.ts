@@ -13,8 +13,8 @@ import { users } from './users.js';
 export const packageInstallations = pgTable('package_installations', {
   id: uuid('id').primaryKey().defaultRandom(),
 
-  // What was installed
-  packageId: uuid('package_id').references(() => packages.id, { onDelete: 'cascade' }),
+  // What was installed (required - every installation must be for a package)
+  packageId: uuid('package_id').references(() => packages.id, { onDelete: 'cascade' }).notNull(),
   version: varchar('version', { length: 50 }),
 
   // Who installed it (optional - for logged-in users)
@@ -35,7 +35,7 @@ export const packageInstallations = pgTable('package_installations', {
   userIdx: index('idx_installations_user').on(table.userId).where(sql`${table.userId} IS NOT NULL`),
   sessionIdx: index('idx_installations_session').on(table.sessionId).where(sql`${table.sessionId} IS NOT NULL`),
   batchIdx: index('idx_installations_batch').on(table.installBatchId).where(sql`${table.installBatchId} IS NOT NULL`),
-  dateIdx: index('idx_installations_date').on(table.installedAt),
+  dateIdx: index('idx_installations_date').on(desc(table.installedAt)),
 }));
 
 /**
@@ -53,6 +53,7 @@ export const packageCoInstallations = pgTable('package_co_installations', {
 
   // Confidence score (0-100) - higher means stronger relationship
   // Calculated based on: co_install_count, time proximity, user diversity
+  // Range enforced by CHECK constraint below
   confidenceScore: decimal('confidence_score', { precision: 5, scale: 2 }).default('0').notNull(),
 
   // Last time these were co-installed
@@ -64,6 +65,8 @@ export const packageCoInstallations = pgTable('package_co_installations', {
   pk: primaryKey({ columns: [table.packageAId, table.packageBId] }),
   // Ensure package_a_id < package_b_id to avoid duplicates (a,b) and (b,a)
   packageOrderCheck: check('package_order_check', sql`${table.packageAId} < ${table.packageBId}`),
+  // Ensure confidence score is within valid range (0-100)
+  confidenceScoreCheck: check('confidence_score_check', sql`${table.confidenceScore} >= 0 AND ${table.confidenceScore} <= 100`),
   // Note: DESC ordering on indexes is handled by PostgreSQL migration SQL
   packageAIdx: index('idx_co_installs_package_a').on(table.packageAId, table.confidenceScore),
   packageBIdx: index('idx_co_installs_package_b').on(table.packageBId, table.confidenceScore),
