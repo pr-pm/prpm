@@ -1469,10 +1469,10 @@ function SearchPageContent() {
                               : selectedFormat === "claude"
                                 ? "Claude Desktop/Code"
                                 : selectedFormat === "continue"
-                                  ? "Continue (VS Code/JetBrains)"
-                                  : selectedFormat === "windsurf"
-                                    ? "Windsurf IDE"
-                                    : "Kiro AI"}
+                                    ? "Continue (VS Code/JetBrains)"
+                                    : selectedFormat === "windsurf"
+                                      ? "Windsurf IDE"
+                                      : "Kiro AI"}
                           </strong>
                         </p>
                       </div>

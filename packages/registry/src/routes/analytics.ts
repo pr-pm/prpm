@@ -451,7 +451,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
           type: 'object',
           properties: {
             limit: { type: 'number', default: 10 },
-            type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp'] },
+            type: { type: 'string', enum: ['cursor', 'claude', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'trae', 'aider', 'zencoder', 'replit', 'generic', 'mcp'] },
           },
         },
       },

@@ -20,6 +20,7 @@ addFormats(ajv);
 
 export type FormatType =
   | 'cursor'
+  | 'cursor-hooks'
   | 'claude'
   | 'continue'
   | 'windsurf'
@@ -101,6 +102,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
   if (!schemaFilename) {
     const schemaMap: Record<FormatType, string> = {
       'cursor': 'cursor.schema.json',
+      'cursor-hooks': 'cursor-hooks.schema.json',
       'claude': 'claude.schema.json',
       'continue': 'continue.schema.json',
       'windsurf': 'windsurf.schema.json',
