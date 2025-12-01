@@ -221,7 +221,7 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
 
     # Fetch use cases
     echo "  Fetching use cases..."
-    RESPONSE=$(curl -s "${REGISTRY_URL}/api/v1/taxonomy/use-cases?include_counts=false")
+    RESPONSE=$(curl -s "${REGISTRY_URL}/api/v1/taxonomy/use-cases?include_counts=true")
 
     if [ $? -ne 0 ]; then
       error "Failed to fetch use cases from registry"
