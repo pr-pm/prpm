@@ -340,27 +340,41 @@ Always respond with valid JSON in the exact format specified.`,
     packageId: string,
     enrichment: EnrichmentResult
   ): Promise<void> {
-    // Update package with enrichment data
-    await this.server.pg.query(
-      `UPDATE packages
-       SET category = $1,
-           ai_tags = $2,
-           ai_use_cases = $3,
-           ai_enrichment_completed_at = NOW(),
-           ai_enrichment_needed = FALSE,
-           ai_use_cases_generated_at = NOW()
-       WHERE id = $4`,
-      [enrichment.category, enrichment.tags, enrichment.useCases, packageId]
-    );
+    // Use a transaction to ensure both operations succeed or fail together
+    const client = await this.server.pg.connect();
+    try {
+      await client.query('BEGIN');
 
-    // Match AI-generated use case strings to actual use case records and store relationships
-    await this.tagPackageWithUseCases(packageId, enrichment.useCases);
+      // Update package with enrichment data
+      await client.query(
+        `UPDATE packages
+         SET category = $1,
+             ai_tags = $2,
+             ai_use_cases = $3,
+             ai_enrichment_completed_at = NOW(),
+             ai_enrichment_needed = FALSE,
+             ai_use_cases_generated_at = NOW()
+         WHERE id = $4`,
+        [enrichment.category, enrichment.tags, enrichment.useCases, packageId]
+      );
+
+      // Match AI-generated use case strings to actual use case records and store relationships
+      await this.tagPackageWithUseCases(client, packageId, enrichment.useCases);
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**
    * Tag package with use cases by matching AI-generated strings to use case records
    */
   private async tagPackageWithUseCases(
+    client: { query: (text: string, values?: unknown[]) => Promise<unknown> },
     packageId: string,
     aiUseCaseStrings: string[]
   ): Promise<void> {
@@ -393,9 +407,10 @@ Always respond with valid JSON in the exact format specified.`,
         const useCaseDesc = (useCase.description || '').toLowerCase();
 
         // Calculate simple keyword match score
+        // Include short words (2+ chars) to match acronyms like API, CI, UI
         const keywords = normalizedString
           .split(/\s+/)
-          .filter(word => word.length > 3); // Filter out short words
+          .filter(word => word.length >= 2);
 
         let score = 0;
         for (const keyword of keywords) {
@@ -430,15 +445,13 @@ Always respond with valid JSON in the exact format specified.`,
       return;
     }
 
-    // Insert into package_use_cases table
-    for (const useCaseId of uniqueUseCaseIds) {
-      await this.server.pg.query(
-        `INSERT INTO package_use_cases (package_id, use_case_id)
-         VALUES ($1, $2)
-         ON CONFLICT (package_id, use_case_id) DO NOTHING`,
-        [packageId, useCaseId]
-      );
-    }
+    // Batch insert into package_use_cases table using unnest for efficiency
+    await client.query(
+      `INSERT INTO package_use_cases (package_id, use_case_id)
+       SELECT $1, unnest($2::uuid[])
+       ON CONFLICT (package_id, use_case_id) DO NOTHING`,
+      [packageId, uniqueUseCaseIds]
+    );
 
     this.server.log.info(
       { packageId, matchedCount: uniqueUseCaseIds.length, totalAiUseCases: aiUseCaseStrings.length },

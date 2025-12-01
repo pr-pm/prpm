@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
 import { Search } from 'lucide-react'
 
 interface UseCase {
@@ -50,11 +49,22 @@ export default function UseCasesTable({ useCases }: UseCasesTableProps) {
             <tbody className="divide-y divide-prpm-border/50">
               {filteredUseCases.length > 0 ? (
                 filteredUseCases.map((uc) => (
-                  <tr key={uc.id} className="group hover:bg-white/5 transition-colors cursor-pointer" onClick={() => window.location.href = `/search?useCase=${uc.slug}`}>
+                  <tr
+                    key={uc.id}
+                    className="group hover:bg-white/5 transition-colors cursor-pointer focus:outline-none focus:bg-white/5"
+                    onClick={() => window.location.href = `/search?useCase=${uc.slug}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        window.location.href = `/search?useCase=${uc.slug}`
+                      }
+                    }}
+                    tabIndex={0}
+                    role="link"
+                    aria-label={`View packages for ${uc.name}`}
+                  >
                     <td className="px-6 py-4 font-medium text-white group-hover:text-prpm-accent transition-colors">
-                      <Link href={`/search?useCase=${uc.slug}`} className="block" onClick={(e) => e.stopPropagation()}>
-                        {uc.name}
-                      </Link>
+                      <span>{uc.name}</span>
                     </td>
                     <td className="px-6 py-4 text-gray-500 font-mono text-right">
                       {uc.package_count || 0}

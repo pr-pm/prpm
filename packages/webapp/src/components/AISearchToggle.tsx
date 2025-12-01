@@ -10,6 +10,7 @@ interface AISearchToggleProps {
 export function AISearchToggle({ enabled, onChange }: AISearchToggleProps) {
   return (
     <button
+      type="button"
       onClick={() => onChange(!enabled)}
       className={`flex items-center gap-3 px-5 py-4 rounded-lg border transition-all whitespace-nowrap ${
         enabled
@@ -17,6 +18,8 @@ export function AISearchToggle({ enabled, onChange }: AISearchToggleProps) {
           : 'bg-prpm-dark-card border-prpm-border text-gray-400 hover:border-gray-600 hover:text-gray-300'
       }`}
       title="Toggle AI Search"
+      aria-pressed={enabled}
+      aria-label={`AI Search is ${enabled ? 'enabled' : 'disabled'}`}
     >
       <Sparkles className={`w-5 h-5 ${enabled ? 'text-yellow-500' : 'text-gray-500'}`} />
       <span className="text-sm font-medium">

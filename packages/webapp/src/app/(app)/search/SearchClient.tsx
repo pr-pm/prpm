@@ -117,6 +117,9 @@ function SearchPageContent() {
   >([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Ref to track if state change originated from URL sync (prevents circular updates)
+  const isUrlSyncRef = useRef(false);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
   // AI Search state - load from URL param first, then localStorage
@@ -166,12 +169,16 @@ function SearchPageContent() {
   }, [aiSearchEnabled]);
 
   // Sync URL parameters to state when URL changes (e.g., from navigation)
+  // Only depends on searchParams to avoid circular updates with state changes
   useEffect(() => {
     const paramsString = searchParams.toString();
     if (paramsString === lastSyncedParamsRef.current) {
       return;
     }
     lastSyncedParamsRef.current = paramsString;
+
+    // Mark that we're syncing from URL to prevent State→URL effect from running
+    isUrlSyncRef.current = true;
 
     const tab = searchParams.get("tab") as TabType;
     const urlQuery = searchParams.get("q");
@@ -188,49 +195,30 @@ function SearchPageContent() {
     const framework = searchParams.get("framework");
     const aiParam = searchParams.get("ai") === "true";
 
-    if (tab && tab !== activeTab) setActiveTab(tab);
-    if (urlQuery !== null && urlQuery !== query) setQuery(urlQuery);
-    if (format !== null && format !== selectedFormat)
-      setSelectedFormat(format || "");
-    if (subtype !== null && subtype !== selectedSubtype)
-      setSelectedSubtype(subtype || "");
-    if (category !== null && category !== selectedCategory)
-      setSelectedCategory(category || "");
-    if (useCase !== null && useCase !== selectedUseCase)
-      setSelectedUseCase(useCase || "");
-    if (author !== null && author !== selectedAuthor) {
-      const authorValue = author || "";
-      setSelectedAuthor(authorValue);
-      setAuthorInput(authorValue);
-    }
-    if (tags && JSON.stringify(tags) !== JSON.stringify(selectedTags))
-      setSelectedTags(tags);
-    if (sortParam && sortParam !== sort) setSort(sortParam);
-    if (pageParam && pageParam !== page) setPage(pageParam || 1);
-    if (starred !== starredOnly) setStarredOnly(starred);
-    if (language !== null && language !== selectedLanguage)
-      setSelectedLanguage(language || "");
-    if (framework !== null && framework !== selectedFramework)
-      setSelectedFramework(framework || "");
+    // Update all state values from URL (unconditionally to ensure sync)
+    if (tab) setActiveTab(tab);
+    setQuery(urlQuery || "");
+    setSelectedFormat((format || "") as Format | "");
+    setSelectedSubtype((subtype || "") as Subtype | "");
+    setSelectedCategory(category || "");
+    setSelectedUseCase(useCase || "");
+    const authorValue = author || "";
+    setSelectedAuthor(authorValue);
+    setAuthorInput(authorValue);
+    setSelectedTags(tags || []);
+    if (sortParam) setSort(sortParam);
+    setPage(pageParam || 1);
+    setStarredOnly(starred);
+    setSelectedLanguage(language || "");
+    setSelectedFramework(framework || "");
     // Enable AI search if coming from homepage AI search
-    if (aiParam && !aiSearchEnabled) setAiSearchEnabled(true);
-  }, [
-    searchParams,
-    activeTab,
-    query,
-    selectedFormat,
-    selectedSubtype,
-    selectedCategory,
-    selectedUseCase,
-    selectedAuthor,
-    selectedTags,
-    sort,
-    page,
-    starredOnly,
-    selectedLanguage,
-    selectedFramework,
-    aiSearchEnabled,
-  ]);
+    if (aiParam) setAiSearchEnabled(true);
+
+    // Reset the flag after a microtask to allow state updates to batch
+    Promise.resolve().then(() => {
+      isUrlSyncRef.current = false;
+    });
+  }, [searchParams]);
 
   // Debounce search query
   useEffect(() => {
@@ -523,10 +511,15 @@ function SearchPageContent() {
     fetchStarredIds();
   }, []);
 
-  // Update URL when state changes
+  // Update URL when state changes (State → URL sync)
   useEffect(() => {
     if (!isInitialized) {
       setIsInitialized(true);
+      return;
+    }
+
+    // Skip URL update when change originated from URL sync (prevents circular updates)
+    if (isUrlSyncRef.current) {
       return;
     }
 
