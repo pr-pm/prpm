@@ -93,7 +93,7 @@ export const SUBTYPES: readonly Subtype[] = [
  * Defines which subtypes are valid/available for each format
  */
 export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
-  cursor: ["rule", "agent", "slash-command", "tool"],
+  cursor: ["rule", "agent", "slash-command", "tool", "hook"],
   "cursor-hooks": ["hook"],
   claude: ["skill", "agent", "slash-command", "tool", "hook"],
   "claude.md": ["agent"],
