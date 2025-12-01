@@ -172,6 +172,16 @@ export function mapHook(
   sourceHookType: string,
   strategy: HookMappingStrategy
 ): HookMappingResult {
+  // Same-format conversion is a no-op (direct match)
+  if (sourceFormat === targetFormat) {
+    return {
+      mapped: true,
+      targetHookType: sourceHookType,
+      quality: 'direct',
+      qualityPenalty: 0
+    };
+  }
+
   // Skip strategy: don't convert hooks
   if (strategy === 'skip') {
     return {

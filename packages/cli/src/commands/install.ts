@@ -1457,7 +1457,7 @@ export function createInstallCommand(): Command {
     .option('--format <format>', 'Alias for --as')
     .option('--location <path>', 'Custom location for installed files (Agents.md or nested Cursor rules)')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
-    .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip, manual', 'auto')
+    .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip', 'auto')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
     .option('--no-append', 'Skip adding skill to manifest file (skill files only)')
     .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure')

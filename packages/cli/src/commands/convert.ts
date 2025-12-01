@@ -21,6 +21,7 @@ import {
   fromAgentsMd,
   fromGemini,
   fromRuler,
+  fromCursorHooks,
   toCursor,
   toClaude,
   toContinue,
@@ -71,6 +72,9 @@ function getDefaultPath(format: string, filename: string, subtype?: string, cust
       }
       // Default to rules
       return join(process.cwd(), '.cursor', 'rules', `${baseName}.mdc`);
+    case 'cursor-hooks':
+      // Cursor hooks go to .cursor/hooks/hooks.json
+      return join(process.cwd(), '.cursor', 'hooks', 'hooks.json');
     case 'claude':
       // Use subtype to determine the directory
       if (subtype === 'skill') {
@@ -157,6 +161,9 @@ function detectFormat(content: string, filepath: string): string | null {
   }
 
   // Use robust content detection from converters
+  // Check cursor-hooks first (more specific than cursor)
+  if (isCursorHooksFormat(content)) return 'cursor-hooks';
+
   if (isClaudeFormat(content)) {
     // Further refine claude subtype if possible
     if (content.includes('type: skill')) return 'claude-skill';
@@ -164,7 +171,7 @@ function detectFormat(content: string, filepath: string): string | null {
     if (content.includes('type: command')) return 'claude-command';
     return 'claude';
   }
-  
+
   if (isCursorFormat(content)) return 'cursor';
   if (isWindsurfFormat(content)) return 'windsurf';
   if (isKiroFormat(content)) return 'kiro';
@@ -241,6 +248,9 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
     switch (sourceFormat.toLowerCase()) {
       case 'cursor':
         canonicalPkg = fromCursor(content, metadata);
+        break;
+      case 'cursor-hooks':
+        canonicalPkg = fromCursorHooks(content, metadata);
         break;
       case 'claude':
       case 'claude-agent':
@@ -393,7 +403,7 @@ export function createConvertCommand() {
     .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, prompt, etc.)')
     .option('-o, --output <path>', 'Output path (defaults to format-specific location)')
     .option('-n, --name <name>', 'Custom output filename (without extension, e.g., "my-rule")')
-    .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip, manual', 'auto')
+    .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip', 'auto')
     .option('-y, --yes', 'Skip confirmation prompts')
     .action(async (source: string, options: any) => {
       try {
