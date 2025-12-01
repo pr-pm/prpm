@@ -150,6 +150,19 @@ export default function Header({ showDashboard = false, showAccount = false }: H
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                               </svg>
                             </Link>
+                            <Link
+                              href="/use-cases"
+                              className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-prpm-border/50 transition-all group"
+                              onClick={() => setSearchDropdownOpen(false)}
+                            >
+                              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                              </svg>
+                              <span className="flex-1">Use Cases</span>
+                              <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </Link>
                           </div>
                         </div>
                       )}
@@ -291,20 +304,36 @@ export default function Header({ showDashboard = false, showAccount = false }: H
                     )}
                   </Link>
                   {link.label === 'Search' && (
-                    <Link
-                      href="/categories"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`ml-4 text-sm transition-colors py-1 flex items-center gap-1.5 ${
-                        isActive('/categories')
-                          ? 'text-prpm-green-light'
-                          : 'text-gray-500 hover:text-white'
-                      }`}
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                      </svg>
-                      Categories
-                    </Link>
+                    <>
+                      <Link
+                        href="/categories"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`ml-4 text-sm transition-colors py-1 flex items-center gap-1.5 ${
+                          isActive('/categories')
+                            ? 'text-prpm-green-light'
+                            : 'text-gray-500 hover:text-white'
+                        }`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                        Categories
+                      </Link>
+                      <Link
+                        href="/use-cases"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`ml-4 text-sm transition-colors py-1 flex items-center gap-1.5 ${
+                          isActive('/use-cases')
+                            ? 'text-prpm-green-light'
+                            : 'text-gray-500 hover:text-white'
+                        }`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        Use Cases
+                      </Link>
+                    </>
                   )}
                 </Fragment>
               ))}

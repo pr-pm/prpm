@@ -179,6 +179,7 @@ export interface SearchFilters {
   subtype?: Subtype | Subtype[];
   tags?: string[];
   category?: string;
+  use_case?: string;  // Filter by use case slug
   author?: string;  // Filter by author username
   language?: string;  // Filter by programming language
   framework?: string;  // Filter by framework

@@ -109,6 +109,7 @@ export interface CollectionUpdateInput {
 
 export interface CollectionSearchQuery {
   category?: CollectionCategory;
+  use_case?: string;                 // Filter by use case slug
   tag?: string;
   tags?: string[];
   framework?: string;
