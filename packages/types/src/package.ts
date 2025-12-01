@@ -7,7 +7,6 @@
  */
 export type Format =
   | "cursor"
-  | "cursor-hooks"
   | "claude"
   | "continue"
   | "windsurf"
@@ -33,7 +32,6 @@ export type Format =
  */
 export const FORMATS: readonly Format[] = [
   "cursor",
-  "cursor-hooks",
   "claude",
   "continue",
   "windsurf",
@@ -94,7 +92,6 @@ export const SUBTYPES: readonly Subtype[] = [
  */
 export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   cursor: ["rule", "agent", "slash-command", "tool", "hook"],
-  "cursor-hooks": ["hook"],
   claude: ["skill", "agent", "slash-command", "tool", "hook"],
   "claude.md": ["agent"],
   continue: ["rule", "agent", "slash-command", "tool"],

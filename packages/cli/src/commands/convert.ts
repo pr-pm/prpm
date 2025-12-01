@@ -50,12 +50,12 @@ import {
 } from '@pr-pm/converters';
 
 export interface ConvertOptions {
-  to: 'cursor' | 'cursor-hooks' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler';
+  to: 'cursor' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler';
   subtype?: Subtype;
   output?: string;
   name?: string; // Custom output filename (without extension)
   yes?: boolean; // Skip confirmation prompts
-  hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion
+  hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion (used with --subtype hook)
 }
 
 /**
@@ -66,15 +66,15 @@ function getDefaultPath(format: string, filename: string, subtype?: string, cust
 
   switch (format) {
     case 'cursor':
-      // Cursor has two types: slash commands (.cursor/commands/*.md) and rules (.cursor/rules/*.mdc)
+      // Cursor has multiple subtypes: slash commands, hooks, and rules
       if (subtype === 'slash-command') {
         return join(process.cwd(), '.cursor', 'commands', `${baseName}.md`);
       }
+      if (subtype === 'hook') {
+        return join(process.cwd(), '.cursor', 'hooks', 'hooks.json');
+      }
       // Default to rules
       return join(process.cwd(), '.cursor', 'rules', `${baseName}.mdc`);
-    case 'cursor-hooks':
-      // Cursor hooks go to .cursor/hooks/hooks.json
-      return join(process.cwd(), '.cursor', 'hooks', 'hooks.json');
     case 'claude':
       // Use subtype to determine the directory
       if (subtype === 'skill') {
@@ -300,12 +300,14 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
     let result;
     switch (options.to) {
       case 'cursor':
-        result = toCursor(canonicalPkg);
-        break;
-      case 'cursor-hooks':
-        result = toCursorHooks(canonicalPkg, {
-          hookMappingStrategy: options.hookMapping || 'auto'
-        });
+        // Use toCursorHooks when subtype is 'hook'
+        if (options.subtype === 'hook') {
+          result = toCursorHooks(canonicalPkg, {
+            hookMappingStrategy: options.hookMapping || 'auto'
+          });
+        } else {
+          result = toCursor(canonicalPkg);
+        }
         break;
       case 'claude':
         result = toClaude(canonicalPkg);
@@ -399,8 +401,8 @@ export function createConvertCommand() {
   const command = new Command('convert')
     .description('Convert AI prompt files between formats')
     .argument('<source>', 'Source file path to convert')
-    .option('-t, --to <format>', 'Target format (cursor, cursor-hooks, claude, windsurf, kiro, copilot, continue, agents.md, gemini, ruler)')
-    .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, prompt, etc.)')
+    .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md, gemini, ruler)')
+    .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, hook, prompt, etc.)')
     .option('-o, --output <path>', 'Output path (defaults to format-specific location)')
     .option('-n, --name <name>', 'Custom output filename (without extension, e.g., "my-rule")')
     .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip', 'auto')
@@ -411,10 +413,10 @@ export function createConvertCommand() {
           throw new CLIError('Target format is required. Use --to <format>');
         }
 
-        const validFormats = ['cursor', 'cursor-hooks', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md', 'gemini', 'ruler'];
+        const validFormats = ['cursor', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md', 'gemini', 'ruler'];
         if (!validFormats.includes(options.to)) {
           throw new CLIError(
-            `Invalid format: ${options.to}\n\nValid formats: ${validFormats.join(', ')}`
+            `Invalid format: ${options.to}\n\nValid formats: ${validFormats.join(', ')}\n\n💡 For Cursor hooks, use: --to cursor --subtype hook`
           );
         }
 

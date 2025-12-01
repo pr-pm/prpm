@@ -92,7 +92,6 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
   const formatIcons: Record<Format, string> = {
     'claude': '🤖',
     'cursor': '📋',
-    'cursor-hooks': '🪝',
     'windsurf': '🌊',
     'continue': '➡️',
     'copilot': '✈️',
@@ -122,7 +121,6 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
   const formatLabels: Record<Format, string> = {
     'claude': 'Claude',
     'cursor': 'Cursor',
-    'cursor-hooks': 'Cursor Hooks',
     'windsurf': 'Windsurf',
     'continue': 'Continue',
     'copilot': 'GitHub Copilot',
@@ -601,14 +599,16 @@ export async function handleInstall(
       try {
         switch (targetFormat) {
           case 'cursor':
-            const cursorResult = toCursor(canonicalPkg);
-            convertedContent = cursorResult.content;
-            break;
-          case 'cursor-hooks':
-            const cursorHooksResult = toCursorHooks(canonicalPkg, {
-              hookMappingStrategy: options.hookMapping || 'auto'
-            });
-            convertedContent = cursorHooksResult.content;
+            // Check if targeting cursor hooks subtype
+            if (effectiveSubtype === 'hook') {
+              const cursorHooksResult = toCursorHooks(canonicalPkg, {
+                hookMappingStrategy: options.hookMapping || 'auto'
+              });
+              convertedContent = cursorHooksResult.content;
+            } else {
+              const cursorResult = toCursor(canonicalPkg);
+              convertedContent = cursorResult.content;
+            }
             break;
           case 'claude':
           case 'claude.md':
