@@ -25,6 +25,19 @@
         }
       }
     },
+    "cursor-hooks": {
+      "name": "Cursor Hooks",
+      "description": "Cursor agent hooks configuration",
+      "documentationUrl": "https://cursor.com/docs/agent/hooks",
+      "rootFiles": ["hooks.json"],
+      "subtypes": {
+        "hook": {
+          "directory": ".",
+          "filePatterns": ["hooks.json"],
+          "fileExtension": ".json"
+        }
+      }
+    },
     "claude": {
       "name": "Claude Code",
       "description": "Claude AI skills, agents, commands, and hooks",

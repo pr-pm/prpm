@@ -5,7 +5,7 @@
 
 import type { CanonicalPackage } from './types/canonical.js';
 
-export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
+export type Format = 'cursor' | 'cursor-hooks' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
 export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
 
 /**
@@ -65,6 +65,7 @@ export function setTaxonomy(
 export function normalizeFormat(sourceFormat: string): Format {
   const normalized = sourceFormat.toLowerCase();
 
+  if (normalized.includes('cursor-hooks') || normalized.includes('cursorhooks')) return 'cursor-hooks';
   if (normalized.includes('cursor')) return 'cursor';
   if (normalized.includes('claude')) return 'claude';
   if (normalized.includes('continue')) return 'continue';
