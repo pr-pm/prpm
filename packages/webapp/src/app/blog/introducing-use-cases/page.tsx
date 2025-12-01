@@ -28,7 +28,7 @@ export default function IntroducingUseCasesPost() {
           title="Finding Your Perfect Package Just Got Easier: Introducing Use Cases"
           subtitle="With over 7,000 packages in PRPM, we built a smarter way to discover what you need—organized by what you're trying to accomplish."
           author="PRPM Team"
-          date="January 29, 2025"
+          date="December 1, 2025"
           readTime="8 min read"
         />
 

@@ -27,7 +27,7 @@ const blogPosts: BlogPost[] = [
     slug: "introducing-use-cases",
     title: "Finding Your Perfect Package Just Got Easier: Introducing Use Cases",
     excerpt: "With over 7,000 packages in PRPM, we built a smarter way to discover what you need—organized by what you're trying to accomplish.",
-    date: "2025-01-29",
+    date: "2025-12-01",
     author: "PRPM Team",
     readTime: "8 min read",
     tags: ["Features", "Discovery", "Search", "AI"],
