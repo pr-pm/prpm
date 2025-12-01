@@ -492,18 +492,25 @@ prpm upgrade --interactive
 
 ### init
 
-Initialize a new PRPM package in the current directory.
+Initialize a new PRPM package or scan directories to discover existing packages.
 
 ```bash
-prpm init [options]
+prpm init [directories...] [options]
 ```
 
-**Options:**
-- `--yes` - Use default values, skip prompts
-- `--private` - Create a private package
-- `--force` - Overwrite existing `prpm.json` if present
+**Arguments:**
+- `directories` - Directories to scan (only used with `--scan`)
 
-**Interactive Prompts:**
+**Options:**
+- `-y, --yes` - Use default values, skip prompts
+- `--private` - Create a private package
+- `-f, --force` - Overwrite existing `prpm.json` if present
+- `-s, --scan` - Scan mode: discover packages in directories without prompts
+- `-o, --output <path>` - Output path for prpm.json (scan mode only)
+- `-a, --append` - Append to existing prpm.json instead of overwriting (scan mode only)
+- `--dry-run` - Show what would be discovered without making changes (scan mode only)
+
+**Interactive Prompts (standard mode):**
 - Package name
 - Version
 - Description
@@ -529,59 +536,34 @@ prpm init --private
 
 # Force overwrite
 prpm init --force
+
+# Scan mode: discover packages in current directory
+prpm init --scan
+
+# Scan specific directories
+prpm init --scan .claude .cursor .windsurf
+
+# Append discovered packages to existing prpm.json
+prpm init --scan --append
+
+# Preview what would be discovered
+prpm init --scan --dry-run
+
+# Output to custom location
+prpm init --scan -o packages.json
 ```
 
-**What gets created:**
+**What gets created (standard mode):**
 - `prpm.json` - Package manifest
 - `README.md` - Package documentation template
 - Format-specific example files based on your selection
 
----
-
-### catalog
-
-Discover and catalog existing packages from your directories. Scans specified directories for prompt files (Cursor rules, Claude skills, etc.) and creates or updates a `prpm.json` manifest that you can use to publish them.
-
-```bash
-prpm catalog [directories...] [options]
-```
-
-**Arguments:**
-- `directories` - Directories to scan (default: current directory)
-
-**Options:**
-- `-o, --output <path>` - Output path for prpm.json (default: ./prpm.json)
-- `-a, --append` - Append to existing prpm.json instead of overwriting
-- `--dry-run` - Show what would be cataloged without making changes
-
-**Examples:**
-
-```bash
-# Catalog packages in current directory
-prpm catalog
-
-# Catalog specific directories
-prpm catalog .claude .cursor .windsurf
-
-# Append to existing prpm.json
-prpm catalog --append
-
-# Preview without making changes
-prpm catalog --dry-run
-
-# Output to custom location
-prpm catalog -o packages.json
-```
-
-**What it does:**
+**What scan mode does:**
 1. Scans directories for prompt files (`.md`, `.mdc`, `SKILL.md`, etc.)
 2. Detects format (cursor, claude, windsurf, etc.) and subtype (rule, skill, agent)
 3. Extracts package metadata from file content
-4. Filters out packages installed from registry (only catalogs user-created content)
+4. Filters out packages installed from registry (only discovers user-created content)
 5. Creates/updates `prpm.json` with discovered packages
-
-**Output:**
-Creates a multi-package manifest file that you can review, edit, and publish with `prpm publish`.
 
 ---
 
@@ -596,6 +578,7 @@ prpm publish [options]
 **Options:**
 - `--package <name>` - Publish only a specific package from multi-package manifest
 - `--collection <id>` - Publish only a specific collection (skips packages)
+- `-l, --list` - List all packages in prpm.json without publishing
 - `--dry-run` - Test publishing without actually uploading
 - `--tag <tag>` - Publish with a specific tag (e.g., `beta`, `next`)
 - `--access <public|private>` - Set package access level
@@ -626,6 +609,9 @@ prpm publish --package my-package --tag beta
 
 # Publish private package
 prpm publish --access private
+
+# List all packages without publishing
+prpm publish --list
 ```
 
 **Multi-Package Publishing:**

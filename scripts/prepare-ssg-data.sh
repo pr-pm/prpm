@@ -107,6 +107,8 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
         --exclude "*" \
         --include "packages.json" \
         --include "collections.json" \
+        --include "use-cases.json" \
+        --include "categories.json" \
         --no-progress 2>/dev/null; then
 
         if [ -f "$SSG_DATA_DIR/packages.json" ] && [ -s "$SSG_DATA_DIR/packages.json" ]; then
@@ -230,6 +232,19 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
       success "Fetched $UC_COUNT use cases from registry"
     fi
 
+    # Fetch categories
+    echo "  Fetching categories..."
+    RESPONSE=$(curl -s "${REGISTRY_URL}/api/v1/taxonomy/categories?include_counts=true")
+
+    if [ $? -ne 0 ]; then
+      error "Failed to fetch categories from registry"
+    else
+      CATEGORIES=$(echo "$RESPONSE" | jq -r '.categories // []')
+      echo "$CATEGORIES" > "$SSG_DATA_DIR/categories.json"
+      CAT_COUNT=$(echo "$CATEGORIES" | jq '. | length')
+      success "Fetched $CAT_COUNT categories from registry"
+    fi
+
     API_SUCCESS=true
 
     # Upload fresh data to S3 for future builds
@@ -240,6 +255,7 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
         --include "packages.json" \
         --include "collections.json" \
         --include "use-cases.json" \
+        --include "categories.json" \
         --no-progress 2>&1)
       UPLOAD_EXIT_CODE=$?
 
@@ -268,6 +284,7 @@ if [ "$API_SUCCESS" = false ]; then
       --include "packages.json" \
       --include "collections.json" \
       --include "use-cases.json" \
+      --include "categories.json" \
       --no-progress 2>/dev/null; then
 
       if [ -f "$SSG_DATA_DIR/packages.json" ] && [ -s "$SSG_DATA_DIR/packages.json" ]; then
@@ -362,6 +379,31 @@ else
 fi
 echo ""
 
+# Validate categories.json
+echo "Step 5b: Validating categories.json..."
+if [ -f "$SSG_DATA_DIR/categories.json" ]; then
+  debug "Found categories.json at $SSG_DATA_DIR/categories.json"
+
+  # Check if valid JSON and not empty
+  if jq -e '. | length > 0' "$SSG_DATA_DIR/categories.json" > /dev/null 2>&1; then
+    CAT_COUNT=$(jq '. | length' "$SSG_DATA_DIR/categories.json")
+    success "categories.json is valid with $CAT_COUNT categories"
+
+    if [ "$DEBUG" = "true" ]; then
+      echo ""
+      debug "Sample category entry:"
+      jq '.[0] | {name, slug, description: .description[:50]}' "$SSG_DATA_DIR/categories.json" || true
+    fi
+  else
+    warn "categories.json is empty or invalid, creating empty array fallback"
+    echo "[]" > "$SSG_DATA_DIR/categories.json"
+  fi
+else
+  warn "categories.json not found, creating empty array fallback"
+  echo "[]" > "$SSG_DATA_DIR/categories.json"
+fi
+echo ""
+
 # Final verification
 echo "Step 6: Final verification..."
 echo ""
@@ -394,6 +436,14 @@ else
   exit 1
 fi
 
+if [ -f "$SSG_DATA_DIR/categories.json" ] && [ -r "$SSG_DATA_DIR/categories.json" ]; then
+  FILE_SIZE=$(wc -c < "$SSG_DATA_DIR/categories.json")
+  success "categories.json exists and is readable (${FILE_SIZE} bytes)"
+else
+  error "categories.json is missing or not readable!"
+  exit 1
+fi
+
 echo ""
 echo "=================================================="
 echo "SSG Data Preparation Complete!"
@@ -403,9 +453,11 @@ echo "Summary:"
 PKG_COUNT=$(jq '. | length' "$SSG_DATA_DIR/packages.json" 2>/dev/null || echo "0")
 COLL_COUNT=$(jq '. | length' "$SSG_DATA_DIR/collections.json" 2>/dev/null || echo "0")
 UC_COUNT=$(jq '. | length' "$SSG_DATA_DIR/use-cases.json" 2>/dev/null || echo "0")
+CAT_COUNT=$(jq '. | length' "$SSG_DATA_DIR/categories.json" 2>/dev/null || echo "0")
 echo "  📦 Packages: $PKG_COUNT"
 echo "  📚 Collections: $COLL_COUNT"
 echo "  💡 Use Cases: $UC_COUNT"
+echo "  📂 Categories: $CAT_COUNT"
 echo ""
 
 if [ "$DEBUG" = "true" ]; then

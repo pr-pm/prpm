@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "json-schemas-for-ai-prompts",
+    title: "JSON Schemas for Every AI Prompt Format",
+    excerpt: "PRPM ships comprehensive JSON schemas for 15+ AI prompt formats. Get IDE autocomplete, validate in CI/CD, and build tools with confidence.",
+    date: "2025-11-28",
+    author: "PRPM Team",
+    readTime: "10 min read",
+    tags: ["Technical", "Developer Experience", "Format Specifications"],
+  },
+  {
     slug: "openskills-cross-ide-compatibility",
     title: "Tool Composition is Your AI Superpower",
     excerpt: "AI tooling moves too fast to support everything natively. Instead: OpenSkills generates content, Ruler splices it into AGENTS.md, and boom—universal compatibility.",

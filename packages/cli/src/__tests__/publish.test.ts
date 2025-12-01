@@ -1,34 +1,48 @@
-import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, type MockedFunction, type MockInstance } from 'vitest'; type Mock = ReturnType<typeof vi.fn>;
+import {
+  vi,
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+  type MockedFunction,
+  type MockInstance,
+} from "vitest";
+type Mock = ReturnType<typeof vi.fn>;
 /**
  * Tests for package publishing flow
  */
 
-import { handlePublish } from '../commands/publish';
-import { getRegistryClient } from '@pr-pm/registry-client';
-import { getConfig } from '../core/user-config';
-import { telemetry } from '../core/telemetry';
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { tmpdir } from 'os';
-import { CLIError } from '../core/errors';
+import { handlePublish } from "../commands/publish";
+import { getRegistryClient } from "@pr-pm/registry-client";
+import { getConfig } from "../core/user-config";
+import { telemetry } from "../core/telemetry";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
+import { CLIError } from "../core/errors";
 
 // Mock dependencies
-vi.mock('@pr-pm/registry-client');
-vi.mock('../core/user-config');
-vi.mock('../core/telemetry', () => ({
+vi.mock("@pr-pm/registry-client");
+vi.mock("../core/user-config");
+vi.mock("../core/telemetry", () => ({
   telemetry: {
     track: vi.fn().mockResolvedValue(undefined),
     shutdown: vi.fn().mockResolvedValue(undefined),
   },
 }));
-vi.mock('../commands/init.js', () => ({
+vi.mock("../commands/init.js", () => ({
   smartInit: vi.fn().mockResolvedValue(undefined),
 }));
 
 const mockGetConfig = getConfig as MockedFunction<typeof getConfig>;
-const mockGetRegistryClient = getRegistryClient as MockedFunction<typeof getRegistryClient>;
+const mockGetRegistryClient = getRegistryClient as MockedFunction<
+  typeof getRegistryClient
+>;
 
-describe('Publish Command', () => {
+describe("Publish Command", () => {
   let testDir: string;
   let originalCwd: string;
   let consoleMock: MockInstance;
@@ -36,8 +50,8 @@ describe('Publish Command', () => {
 
   beforeAll(() => {
     // Mock console methods (persist across tests)
-    consoleMock = vi.spyOn(console, 'log').mockImplementation();
-    consoleErrorMock = vi.spyOn(console, 'error').mockImplementation();
+    consoleMock = vi.spyOn(console, "log").mockImplementation();
+    consoleErrorMock = vi.spyOn(console, "error").mockImplementation();
   });
 
   beforeEach(async () => {
@@ -49,8 +63,8 @@ describe('Publish Command', () => {
 
     // Mock config
     mockGetConfig.mockReturnValue({
-      token: 'test-token',
-      registryUrl: 'http://localhost:3111',
+      token: "test-token",
+      registryUrl: "http://localhost:3111",
     });
 
     // Clear registry client mock only, not the global mocks
@@ -63,99 +77,97 @@ describe('Publish Command', () => {
       process.chdir(originalCwd);
     } catch (err) {
       // Ignore errors if originalCwd no longer exists (parallel test cleanup)
-      const { tmpdir } = require('os');
+      const { tmpdir } = require("os");
       process.chdir(tmpdir());
     }
   });
 
-  describe('Manifest Validation', () => {
-    it('should trigger init and fail if no manifest created', async () => {
+  describe("Manifest Validation", () => {
+    it("should trigger init and fail if no manifest created", async () => {
       // smartInit is mocked to do nothing, so no prpm.json will be created
-      await expect(handlePublish({})).rejects.toThrow('No prpm.json was created');
+      await expect(handlePublish({})).rejects.toThrow(
+        "No prpm.json was created",
+      );
     });
 
-    it('should validate required fields', async () => {
+    it("should validate required fields", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
+          name: "test-package",
           // missing version, description, type
-        })
+        }),
       );
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
-
     });
 
-    it('should validate package name format', async () => {
-
+    it("should validate package name format", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'Invalid_Package_Name',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "Invalid_Package_Name",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
-
     });
 
-    it('should validate version format', async () => {
-
+    it("should validate version format", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: 'invalid',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "invalid",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
-
     });
 
-    it('should validate package type', async () => {
-
+    it("should validate package type", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'invalid-type',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "invalid-type",
+          files: [".cursorrules"],
+        }),
       );
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
-
     });
 
-    it('should accept valid manifest', async () => {
+    it("should accept valid manifest", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test rules"\n---\n\n# Test rules');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test rules"\n---\n\n# Test rules',
+      );
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -167,45 +179,55 @@ describe('Publish Command', () => {
       expect(mockPublish).toHaveBeenCalled();
     });
 
-    it('should reject Claude skills without SKILL.md file', async () => {
+    it("should reject Claude skills without SKILL.md file", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-skill',
-          version: '1.0.0',
-          description: 'Test Claude skill',
-          format: 'claude',
-          subtype: 'skill',
-          files: ['.claude/skills/test-skill/skill.md'], // Wrong filename (should be SKILL.md)
-        })
+          name: "test-skill",
+          version: "1.0.0",
+          description: "Test Claude skill",
+          format: "claude",
+          subtype: "skill",
+          files: [".claude/skills/test-skill/skill.md"], // Wrong filename (should be SKILL.md)
+        }),
       );
 
-      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test-skill/skill.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
+      await mkdir(join(testDir, ".claude/skills/test-skill"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(testDir, ".claude/skills/test-skill/skill.md"),
+        "---\nname: test\ndescription: Test skill\n---\n\n# Test skill",
+      );
 
       await expect(handlePublish({})).rejects.toThrow(/SKILL\.md/);
     });
 
-    it('should accept Claude skills with SKILL.md file', async () => {
+    it("should accept Claude skills with SKILL.md file", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-skill',
-          version: '1.0.0',
-          description: 'Test Claude skill',
-          format: 'claude',
-          subtype: 'skill',
-          files: ['.claude/skills/test-skill/SKILL.md'], // Correct filename
-        })
+          name: "test-skill",
+          version: "1.0.0",
+          description: "Test Claude skill",
+          format: "claude",
+          subtype: "skill",
+          files: [".claude/skills/test-skill/SKILL.md"], // Correct filename
+        }),
       );
 
-      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
+      await mkdir(join(testDir, ".claude/skills/test-skill"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(testDir, ".claude/skills/test-skill/SKILL.md"),
+        "---\nname: test\ndescription: Test skill\n---\n\n# Test skill",
+      );
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-skill',
-        name: 'test-skill',
-        version: '1.0.0',
+        package_id: "test-skill",
+        name: "test-skill",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -217,86 +239,107 @@ describe('Publish Command', () => {
       expect(mockPublish).toHaveBeenCalled();
     });
 
-    it('should reject Claude skills with name longer than 64 characters', async () => {
-      const longName = 'a'.repeat(65); // 65 characters
+    it("should reject Claude skills with name longer than 64 characters", async () => {
+      const longName = "a".repeat(65); // 65 characters
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
           name: longName,
-          version: '1.0.0',
-          description: 'Test Claude skill with name that exceeds the 64 character limit',
-          format: 'claude',
-          subtype: 'skill',
-          files: ['.claude/skills/test/SKILL.md'],
-        })
+          version: "1.0.0",
+          description:
+            "Test Claude skill with name that exceeds the 64 character limit",
+          format: "claude",
+          subtype: "skill",
+          files: [".claude/skills/test/SKILL.md"],
+        }),
       );
 
-      await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
+      await mkdir(join(testDir, ".claude/skills/test"), { recursive: true });
+      await writeFile(
+        join(testDir, ".claude/skills/test/SKILL.md"),
+        "---\nname: test\ndescription: Test skill\n---\n\n# Test skill",
+      );
 
       await expect(handlePublish({})).rejects.toThrow(/64 character limit/);
     });
 
-    it('should reject Claude skills with invalid name characters', async () => {
-      await mkdir(join(testDir, '.claude/skills/test'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
-
+    it("should reject Claude skills with invalid name characters", async () => {
+      await mkdir(join(testDir, ".claude/skills/test"), { recursive: true });
       await writeFile(
-        join(testDir, 'prpm.json'),
-        JSON.stringify({
-          name: 'Test_Skill_Invalid', // Uppercase and underscores not allowed
-          version: '1.0.0',
-          description: 'Test Claude skill with invalid name format',
-          format: 'claude',
-          subtype: 'skill',
-          files: ['.claude/skills/test/SKILL.md'],
-        })
+        join(testDir, ".claude/skills/test/SKILL.md"),
+        "---\nname: test\ndescription: Test skill\n---\n\n# Test skill",
       );
 
-      await expect(handlePublish({})).rejects.toThrow(/invalid character|lowercase/i);
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "Test_Skill_Invalid", // Uppercase and underscores not allowed
+          version: "1.0.0",
+          description: "Test Claude skill with invalid name format",
+          format: "claude",
+          subtype: "skill",
+          files: [".claude/skills/test/SKILL.md"],
+        }),
+      );
+
+      await expect(handlePublish({})).rejects.toThrow(
+        /invalid character|lowercase/i,
+      );
     });
 
-    it('should reject Claude skills with description longer than 500 characters', async () => {
-      const longDescription = 'a'.repeat(501); // 501 characters (schema max is 500)
+    it("should reject Claude skills with description longer than 500 characters", async () => {
+      const longDescription = "a".repeat(501); // 501 characters (schema max is 500)
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-skill',
-          version: '1.0.0',
+          name: "test-skill",
+          version: "1.0.0",
           description: longDescription,
-          format: 'claude',
-          subtype: 'skill',
-          files: ['.claude/skills/test-skill/SKILL.md'],
-        })
+          format: "claude",
+          subtype: "skill",
+          files: [".claude/skills/test-skill/SKILL.md"],
+        }),
       );
 
-      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
+      await mkdir(join(testDir, ".claude/skills/test-skill"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(testDir, ".claude/skills/test-skill/SKILL.md"),
+        "---\nname: test\ndescription: Test skill\n---\n\n# Test skill",
+      );
 
-      await expect(handlePublish({})).rejects.toThrow(/maxLength|Manifest validation failed/);
+      await expect(handlePublish({})).rejects.toThrow(
+        /maxLength|Manifest validation failed/,
+      );
     });
 
-    it('should warn about short descriptions for Claude skills', async () => {
+    it("should warn about short descriptions for Claude skills", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-skill',
-          version: '1.0.0',
-          description: 'Short but valid', // 16 characters - passes schema validation but triggers warning
-          format: 'claude',
-          subtype: 'skill',
-          files: ['.claude/skills/test-skill/SKILL.md'],
-        })
+          name: "test-skill",
+          version: "1.0.0",
+          description: "Short but valid", // 16 characters - passes schema validation but triggers warning
+          format: "claude",
+          subtype: "skill",
+          files: [".claude/skills/test-skill/SKILL.md"],
+        }),
       );
 
-      await mkdir(join(testDir, '.claude/skills/test-skill'), { recursive: true });
-      await writeFile(join(testDir, '.claude/skills/test-skill/SKILL.md'), '---\nname: test\ndescription: Test skill\n---\n\n# Test skill');
+      await mkdir(join(testDir, ".claude/skills/test-skill"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(testDir, ".claude/skills/test-skill/SKILL.md"),
+        "---\nname: test\ndescription: Test skill\n---\n\n# Test skill",
+      );
 
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation();
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-skill',
-        name: 'test-skill',
-        version: '1.0.0',
+        package_id: "test-skill",
+        name: "test-skill",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -306,41 +349,44 @@ describe('Publish Command', () => {
       await handlePublish({});
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('only 15 characters')
+        expect.stringContaining("only 15 characters"),
       );
 
       consoleWarnSpy.mockRestore();
     });
   });
 
-  describe('Authentication', () => {
-    it('should require authentication token', async () => {
+  describe("Authentication", () => {
+    it("should require authentication token", async () => {
       mockGetConfig.mockReturnValue({
         token: undefined,
-        registryUrl: 'http://localhost:3111',
+        registryUrl: "http://localhost:3111",
       });
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
-    it('should pass token to registry client', async () => {
+    it("should pass token to registry client", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -351,32 +397,35 @@ describe('Publish Command', () => {
 
       expect(mockGetRegistryClient).toHaveBeenCalledWith(
         expect.objectContaining({
-          token: 'test-token',
-        })
+          token: "test-token",
+        }),
       );
     });
   });
 
-  describe('Tarball Creation', () => {
-    it('should include default files in tarball', async () => {
+  describe("Tarball Creation", () => {
+    it("should include default files in tarball", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Cursor rules"\n---\n\n# Cursor rules');
-      await writeFile(join(testDir, 'README.md'), '# README');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Cursor rules"\n---\n\n# Cursor rules',
+      );
+      await writeFile(join(testDir, "README.md"), "# README");
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -391,25 +440,28 @@ describe('Publish Command', () => {
       expect(tarballArg.length).toBeGreaterThan(0);
     });
 
-    it('should respect manifest.files list', async () => {
+    it("should respect manifest.files list", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['prpm.json', '.cursorrules', 'custom-file.txt'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: ["prpm.json", ".cursorrules", "custom-file.txt"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
-      await writeFile(join(testDir, 'custom-file.txt'), 'Custom content');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+      await writeFile(join(testDir, "custom-file.txt"), "Custom content");
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -421,60 +473,63 @@ describe('Publish Command', () => {
       expect(mockPublish).toHaveBeenCalled();
     });
 
-    it('should reject packages over 10MB', async () => {
+    it("should reject packages over 10MB", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['prpm.json', 'large-file.txt'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: ["prpm.json", "large-file.txt"],
+        }),
       );
 
       // Create a file > 10MB
       const largeContent = Buffer.alloc(11 * 1024 * 1024); // 11MB
-      await writeFile(join(testDir, 'large-file.txt'), largeContent);
+      await writeFile(join(testDir, "large-file.txt"), largeContent);
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
-    it('should fail if no files to include', async () => {
+    it("should fail if no files to include", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['non-existent.txt'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: ["non-existent.txt"],
+        }),
       );
 
       await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
   });
 
-  describe('Dry Run', () => {
-    it('should validate without publishing', async () => {
+  describe("Dry Run", () => {
+    it("should validate without publishing", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          subtype: 'rule',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          subtype: "rule",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockPublish = vi.fn();
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
+        username: "testuser",
         organizations: [],
       });
 
@@ -488,39 +543,42 @@ describe('Publish Command', () => {
       expect(mockPublish).not.toHaveBeenCalled();
       expect(telemetry.track).toHaveBeenCalledWith(
         expect.objectContaining({
-          command: 'publish',
+          command: "publish",
           success: true,
           data: expect.objectContaining({
             dryRun: true,
           }),
-        })
+        }),
       );
     });
   });
 
-  describe('Publishing', () => {
-    it('should successfully publish package', async () => {
+  describe("Publishing", () => {
+    it("should successfully publish package", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          author: 'test-author',
-          license: 'MIT',
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+          author: "test-author",
+          license: "MIT",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test rules"\n---\n\n# Test rules');
-      await writeFile(join(testDir, 'README.md'), '# Test README');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test rules"\n---\n\n# Test rules',
+      );
+      await writeFile(join(testDir, "README.md"), "# Test README");
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
-        message: 'Package published successfully',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
+        message: "Package published successfully",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -531,43 +589,48 @@ describe('Publish Command', () => {
 
       expect(mockPublish).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
         }),
         expect.any(Buffer),
-        undefined
+        undefined,
       );
 
       expect(telemetry.track).toHaveBeenCalledWith(
         expect.objectContaining({
-          command: 'publish',
+          command: "publish",
           success: true,
           data: expect.objectContaining({
-            packageName: 'test-package',
-            version: '1.0.0',
+            packageName: "test-package",
+            version: "1.0.0",
           }),
-        })
+        }),
       );
     });
 
-    it('should handle publish errors', async () => {
+    it("should handle publish errors", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
-      const mockPublish = vi.fn().mockRejectedValue(new Error('Package already exists'));
+      const mockPublish = vi
+        .fn()
+        .mockRejectedValue(new Error("Package already exists"));
 
       mockGetRegistryClient.mockReturnValue({
         publish: mockPublish,
@@ -577,51 +640,60 @@ describe('Publish Command', () => {
 
       expect(telemetry.track).toHaveBeenCalledWith(
         expect.objectContaining({
-          command: 'publish',
+          command: "publish",
           success: false,
-          error: 'Package already exists',
-        })
+          error: "Package already exists",
+        }),
       );
     });
   });
 
-  describe('Package Types', () => {
-    const packageTypes = ['cursor', 'claude', 'continue', 'windsurf', 'generic'];
+  describe("Package Types", () => {
+    const packageTypes = [
+      "cursor",
+      "claude",
+      "continue",
+      "windsurf",
+      "generic",
+    ];
 
     packageTypes.forEach((type) => {
       it(`should publish ${type} package`, async () => {
         // Create type-specific file first
         const typeFiles: Record<string, string> = {
-          cursor: '.cursorrules',
-          claude: '.clinerules',
-          continue: '.continue/rules/test-rule.md',
-          windsurf: '.windsurfrules',
-          generic: 'README.md',
+          cursor: ".cursorrules",
+          claude: ".clinerules",
+          continue: ".continue/rules/test-rule.md",
+          windsurf: ".windsurfrules",
+          generic: "README.md",
         };
 
         // Generate format-specific content with proper frontmatter
         const typeContent: Record<string, string> = {
-          cursor: '---\ndescription: "Test cursor package"\n---\n\n# Test cursor',
-          claude: '---\nname: test-claude\ndescription: Test claude package\n---\n\n# Test claude',
-          continue: '---\nname: "Test continue rule"\ndescription: "Test continue package"\n---\n\n# Test continue',
-          windsurf: '# Test windsurf',
-          generic: '# Test generic',
+          cursor:
+            '---\ndescription: "Test cursor package"\n---\n\n# Test cursor',
+          claude:
+            "---\nname: test-claude\ndescription: Test claude package\n---\n\n# Test claude",
+          continue:
+            '---\nname: "Test continue rule"\ndescription: "Test continue package"\n---\n\n# Test continue',
+          windsurf: "# Test windsurf",
+          generic: "# Test generic",
         };
 
         await writeFile(
-          join(testDir, 'prpm.json'),
+          join(testDir, "prpm.json"),
           JSON.stringify({
             name: `test-${type}-package`,
-            version: '1.0.0',
+            version: "1.0.0",
             description: `Test ${type} package for testing purposes`,
             format: type,
             files: [typeFiles[type]],
-          })
+          }),
         );
 
         // Create directory for continue format
-        if (type === 'continue') {
-          await mkdir(join(testDir, '.continue/rules'), { recursive: true });
+        if (type === "continue") {
+          await mkdir(join(testDir, ".continue/rules"), { recursive: true });
         }
 
         await writeFile(join(testDir, typeFiles[type]), typeContent[type]);
@@ -629,7 +701,7 @@ describe('Publish Command', () => {
         const mockPublish = vi.fn().mockResolvedValue({
           package_id: `test-${type}-package`,
           name: `test-${type}-package`,
-          version: '1.0.0',
+          version: "1.0.0",
         });
 
         mockGetRegistryClient.mockReturnValue({
@@ -643,31 +715,34 @@ describe('Publish Command', () => {
             format: type,
           }),
           expect.any(Buffer),
-          undefined
+          undefined,
         );
       });
     });
   });
 
-  describe('Scoped Packages', () => {
-    it('should publish scoped package', async () => {
+  describe("Scoped Packages", () => {
+    it("should publish scoped package", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: '@myorg/test-package',
-          version: '1.0.0',
-          description: 'Test scoped package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "@myorg/test-package",
+          version: "1.0.0",
+          description: "Test scoped package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: '@myorg/test-package',
-        name: '@myorg/test-package',
-        version: '1.0.0',
+        package_id: "@myorg/test-package",
+        name: "@myorg/test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -678,42 +753,45 @@ describe('Publish Command', () => {
 
       expect(mockPublish).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: '@myorg/test-package',
+          name: "@myorg/test-package",
         }),
         expect.any(Buffer),
-        undefined
+        undefined,
       );
     });
   });
 
-  describe('Organization Publishing', () => {
-    it('should publish to organization when specified in manifest', async () => {
+  describe("Organization Publishing", () => {
+    it("should publish to organization when specified in manifest", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: '@company/team-package',
-          version: '1.0.0',
-          description: 'Test organization package',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          organization: 'my-company',
-        })
+          name: "@company/team-package",
+          version: "1.0.0",
+          description: "Test organization package",
+          format: "cursor",
+          files: [".cursorrules"],
+          organization: "my-company",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
+        username: "testuser",
         organizations: [
-          { id: 'org-123', name: 'my-company', role: 'owner' },
-          { id: 'org-456', name: 'other-org', role: 'maintainer' },
+          { id: "org-123", name: "my-company", role: "owner" },
+          { id: "org-456", name: "other-org", role: "maintainer" },
         ],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: '@company/team-package',
-        name: '@company/team-package',
-        version: '1.0.0',
+        package_id: "@company/team-package",
+        name: "@company/team-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -726,40 +804,41 @@ describe('Publish Command', () => {
       expect(mockWhoami).toHaveBeenCalled();
       expect(mockPublish).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: '@company/team-package',
-          organization: 'my-company',
+          name: "@company/team-package",
+          organization: "my-company",
         }),
         expect.any(Buffer),
-        { orgId: 'org-123' }
+        { orgId: "org-123" },
       );
     });
 
-    it('should publish to organization by ID', async () => {
+    it("should publish to organization by ID", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'org-package',
-          version: '1.0.0',
-          description: 'Test org package by ID',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          organization: 'org-123',
-        })
+          name: "org-package",
+          version: "1.0.0",
+          description: "Test org package by ID",
+          format: "cursor",
+          files: [".cursorrules"],
+          organization: "org-123",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
-        organizations: [
-          { id: 'org-123', name: 'my-company', role: 'admin' },
-        ],
+        username: "testuser",
+        organizations: [{ id: "org-123", name: "my-company", role: "admin" }],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'org-package',
-        name: 'org-package',
-        version: '1.0.0',
+        package_id: "org-package",
+        name: "org-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -772,29 +851,63 @@ describe('Publish Command', () => {
       expect(mockPublish).toHaveBeenCalledWith(
         expect.any(Object),
         expect.any(Buffer),
-        { orgId: 'org-123' }
+        { orgId: "org-123" },
       );
     });
 
-    it('should fail when organization not found', async () => {
+    it("should fail when organization not found", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          organization: 'nonexistent-org',
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package",
+          format: "cursor",
+          files: [".cursorrules"],
+          organization: "nonexistent-org",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
+        username: "testuser",
+        organizations: [{ id: "org-123", name: "my-company", role: "owner" }],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        whoami: mockWhoami,
+        publish: vi.fn(),
+      } as any);
+
+      await expect(handlePublish({})).rejects.toThrow(CLIError);
+    });
+
+    it("should fail when user has insufficient permissions", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package",
+          format: "cursor",
+          files: [".cursorrules"],
+          organization: "my-company",
+        }),
+      );
+
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
         organizations: [
-          { id: 'org-123', name: 'my-company', role: 'owner' },
+          { id: "org-123", name: "my-company", role: "member" }, // Not owner/admin/maintainer
         ],
       });
 
@@ -806,62 +919,33 @@ describe('Publish Command', () => {
       await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
-    it('should fail when user has insufficient permissions', async () => {
+    it("should accept owner role for publishing", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          organization: 'my-company',
-        })
+          name: "owner-package",
+          version: "1.0.0",
+          description: "Package published by owner",
+          format: "cursor",
+          files: [".cursorrules"],
+          organization: "my-company",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
-
-      const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
-        organizations: [
-          { id: 'org-123', name: 'my-company', role: 'member' }, // Not owner/admin/maintainer
-        ],
-      });
-
-      mockGetRegistryClient.mockReturnValue({
-        whoami: mockWhoami,
-        publish: vi.fn(),
-      } as any);
-
-      await expect(handlePublish({})).rejects.toThrow(CLIError);
-    });
-
-    it('should accept owner role for publishing', async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
-        JSON.stringify({
-          name: 'owner-package',
-          version: '1.0.0',
-          description: 'Package published by owner',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          organization: 'my-company',
-        })
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
-
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
-        organizations: [
-          { id: 'org-123', name: 'my-company', role: 'owner' },
-        ],
+        username: "testuser",
+        organizations: [{ id: "org-123", name: "my-company", role: "owner" }],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'owner-package',
-        name: 'owner-package',
-        version: '1.0.0',
+        package_id: "owner-package",
+        name: "owner-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -874,32 +958,33 @@ describe('Publish Command', () => {
       expect(mockPublish).toHaveBeenCalled();
     });
 
-    it('should accept admin role for publishing', async () => {
+    it("should accept admin role for publishing", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'admin-package',
-          version: '1.0.0',
-          description: 'Package published by admin',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          organization: 'my-company',
-        })
+          name: "admin-package",
+          version: "1.0.0",
+          description: "Package published by admin",
+          format: "cursor",
+          files: [".cursorrules"],
+          organization: "my-company",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
-        organizations: [
-          { id: 'org-123', name: 'my-company', role: 'admin' },
-        ],
+        username: "testuser",
+        organizations: [{ id: "org-123", name: "my-company", role: "admin" }],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'admin-package',
-        name: 'admin-package',
-        version: '1.0.0',
+        package_id: "admin-package",
+        name: "admin-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -912,32 +997,35 @@ describe('Publish Command', () => {
       expect(mockPublish).toHaveBeenCalled();
     });
 
-    it('should accept maintainer role for publishing', async () => {
+    it("should accept maintainer role for publishing", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'maintainer-package',
-          version: '1.0.0',
-          description: 'Package published by maintainer',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          organization: 'my-company',
-        })
+          name: "maintainer-package",
+          version: "1.0.0",
+          description: "Package published by maintainer",
+          format: "cursor",
+          files: [".cursorrules"],
+          organization: "my-company",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
+        username: "testuser",
         organizations: [
-          { id: 'org-123', name: 'my-company', role: 'maintainer' },
+          { id: "org-123", name: "my-company", role: "maintainer" },
         ],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'maintainer-package',
-        name: 'maintainer-package',
-        version: '1.0.0',
+        package_id: "maintainer-package",
+        name: "maintainer-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -950,31 +1038,32 @@ describe('Publish Command', () => {
       expect(mockPublish).toHaveBeenCalled();
     });
 
-    it('should publish to personal account when no organization specified', async () => {
+    it("should publish to personal account when no organization specified", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'personal-package',
-          version: '1.0.0',
-          description: 'Personal package',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "personal-package",
+          version: "1.0.0",
+          description: "Personal package",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
-        organizations: [
-          { id: 'org-123', name: 'my-company', role: 'owner' },
-        ],
+        username: "testuser",
+        organizations: [{ id: "org-123", name: "my-company", role: "owner" }],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'personal-package',
-        name: 'personal-package',
-        version: '1.0.0',
+        package_id: "personal-package",
+        name: "personal-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -988,26 +1077,29 @@ describe('Publish Command', () => {
       expect(mockPublish).toHaveBeenCalledWith(
         expect.any(Object),
         expect.any(Buffer),
-        undefined
+        undefined,
       );
     });
 
-    it('should handle network errors when fetching organizations', async () => {
+    it("should handle network errors when fetching organizations", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          organization: 'my-company',
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package",
+          format: "cursor",
+          files: [".cursorrules"],
+          organization: "my-company",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
-      const mockWhoami = vi.fn().mockRejectedValue(new Error('Network error'));
+      const mockWhoami = vi.fn().mockRejectedValue(new Error("Network error"));
 
       mockGetRegistryClient.mockReturnValue({
         whoami: mockWhoami,
@@ -1017,25 +1109,28 @@ describe('Publish Command', () => {
       await expect(handlePublish({})).rejects.toThrow(CLIError);
     });
 
-    it('should fallback to personal publishing on network error when no org specified', async () => {
+    it("should fallback to personal publishing on network error when no org specified", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
-      const mockWhoami = vi.fn().mockRejectedValue(new Error('Network error'));
+      const mockWhoami = vi.fn().mockRejectedValue(new Error("Network error"));
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -1048,30 +1143,33 @@ describe('Publish Command', () => {
       expect(mockPublish).toHaveBeenCalledWith(
         expect.any(Object),
         expect.any(Buffer),
-        undefined
+        undefined,
       );
     });
   });
 
-  describe('Telemetry', () => {
-    it('should track successful publish', async () => {
+  describe("Telemetry", () => {
+    it("should track successful publish", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -1082,30 +1180,33 @@ describe('Publish Command', () => {
 
       expect(telemetry.track).toHaveBeenCalledWith(
         expect.objectContaining({
-          command: 'publish',
+          command: "publish",
           success: true,
           duration: expect.any(Number),
-        })
+        }),
       );
 
       expect(telemetry.shutdown).toHaveBeenCalled();
     });
 
-    it('should track failed publish', async () => {
+    it("should track failed publish", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package for testing purposes',
-          format: 'cursor',
-          files: ['.cursorrules'],
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
-      const mockPublish = vi.fn().mockRejectedValue(new Error('Network error'));
+      const mockPublish = vi.fn().mockRejectedValue(new Error("Network error"));
 
       mockGetRegistryClient.mockReturnValue({
         publish: mockPublish,
@@ -1115,64 +1216,71 @@ describe('Publish Command', () => {
 
       expect(telemetry.track).toHaveBeenCalledWith(
         expect.objectContaining({
-          command: 'publish',
+          command: "publish",
           success: false,
-          error: 'Network error',
-        })
+          error: "Network error",
+        }),
       );
     });
 
-    it('should handle multi-package manifest from prpm.json', async () => {
+    it("should handle multi-package manifest from prpm.json", async () => {
       // Create multi-package manifest
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'multi-package-example',
-          version: '1.0.0',
-          description: 'Example multi-package manifest',
-          author: 'Test Author',
-          license: 'MIT',
-          repository: 'https://github.com/test/repo',
-          tags: ['test', 'multi'],
+          name: "multi-package-example",
+          version: "1.0.0",
+          description: "Example multi-package manifest",
+          author: "Test Author",
+          license: "MIT",
+          repository: "https://github.com/test/repo",
+          tags: ["test", "multi"],
           packages: [
             {
-              name: 'package-one',
-              version: '1.0.0',
-              description: 'First package',
-              format: 'cursor',
-              subtype: 'rule',
-              files: ['package-one.cursorrules'],
+              name: "package-one",
+              version: "1.0.0",
+              description: "First package",
+              format: "cursor",
+              subtype: "rule",
+              files: ["package-one.cursorrules"],
             },
             {
-              name: 'package-two',
-              version: '1.0.0',
-              description: 'Second package',
-              format: 'claude',
-              subtype: 'skill',
-              files: ['SKILL.md'],
+              name: "package-two",
+              version: "1.0.0",
+              description: "Second package",
+              format: "claude",
+              subtype: "skill",
+              files: ["SKILL.md"],
             },
           ],
-        })
+        }),
       );
 
       // Create files for both packages
-      await writeFile(join(testDir, 'package-one.cursorrules'), '---\ndescription: "Package one rules"\n---\n\n# Package one rules');
-      await writeFile(join(testDir, 'SKILL.md'), '---\nname: package-two\ndescription: Package two skill\n---\n\n# Package two skill');
+      await writeFile(
+        join(testDir, "package-one.cursorrules"),
+        '---\ndescription: "Package one rules"\n---\n\n# Package one rules',
+      );
+      await writeFile(
+        join(testDir, "SKILL.md"),
+        "---\nname: package-two\ndescription: Package two skill\n---\n\n# Package two skill",
+      );
 
-      const mockPublish = vi.fn()
+      const mockPublish = vi
+        .fn()
         .mockResolvedValueOnce({
-          package_id: 'package-one',
-          name: 'package-one',
-          version: '1.0.0',
+          package_id: "package-one",
+          name: "package-one",
+          version: "1.0.0",
         })
         .mockResolvedValueOnce({
-          package_id: 'package-two',
-          name: 'package-two',
-          version: '1.0.0',
+          package_id: "package-two",
+          name: "package-two",
+          version: "1.0.0",
         });
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
+        username: "testuser",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -1188,63 +1296,66 @@ describe('Publish Command', () => {
       // Verify first package call
       const firstCall = mockPublish.mock.calls[0];
       expect(firstCall[0]).toMatchObject({
-        name: 'package-one',
-        version: '1.0.0',
-        description: 'First package',
-        format: 'cursor',
-        subtype: 'rule',
-        author: 'Test Author', // Inherited from top-level
-        license: 'MIT', // Inherited from top-level
-        repository: 'https://github.com/test/repo', // Inherited from top-level
-        tags: ['test', 'multi'], // Inherited from top-level
+        name: "package-one",
+        version: "1.0.0",
+        description: "First package",
+        format: "cursor",
+        subtype: "rule",
+        author: "Test Author", // Inherited from top-level
+        license: "MIT", // Inherited from top-level
+        repository: "https://github.com/test/repo", // Inherited from top-level
+        tags: ["test", "multi"], // Inherited from top-level
       });
 
       // Verify second package call
       const secondCall = mockPublish.mock.calls[1];
       expect(secondCall[0]).toMatchObject({
-        name: 'package-two',
-        version: '1.0.0',
-        description: 'Second package',
-        format: 'claude',
-        subtype: 'skill',
-        author: 'Test Author', // Inherited from top-level
-        license: 'MIT', // Inherited from top-level
+        name: "package-two",
+        version: "1.0.0",
+        description: "Second package",
+        format: "claude",
+        subtype: "skill",
+        author: "Test Author", // Inherited from top-level
+        license: "MIT", // Inherited from top-level
       });
     });
 
-    it('should allow packages to override top-level fields in multi-package manifest', async () => {
+    it("should allow packages to override top-level fields in multi-package manifest", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'multi-package-override',
-          version: '1.0.0',
-          author: 'Default Author',
-          license: 'MIT',
+          name: "multi-package-override",
+          version: "1.0.0",
+          author: "Default Author",
+          license: "MIT",
           packages: [
             {
-              name: 'package-override',
-              version: '2.0.0',
-              description: 'Package with overrides',
-              format: 'cursor',
-              subtype: 'rule',
-              author: 'Custom Author', // Override
-              license: 'Apache-2.0', // Override
-              files: ['test.cursorrules'],
+              name: "package-override",
+              version: "2.0.0",
+              description: "Package with overrides",
+              format: "cursor",
+              subtype: "rule",
+              author: "Custom Author", // Override
+              license: "Apache-2.0", // Override
+              files: ["test.cursorrules"],
             },
           ],
-        })
+        }),
       );
 
-      await writeFile(join(testDir, 'test.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, "test.cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'package-override',
-        name: 'package-override',
-        version: '2.0.0',
+        package_id: "package-override",
+        name: "package-override",
+        version: "2.0.0",
       });
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'testuser',
+        username: "testuser",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -1258,40 +1369,839 @@ describe('Publish Command', () => {
 
       const call = mockPublish.mock.calls[0];
       expect(call[0]).toMatchObject({
-        name: 'package-override',
-        version: '2.0.0',
-        author: 'Custom Author', // Should use package-level override
-        license: 'Apache-2.0', // Should use package-level override
+        name: "package-override",
+        version: "2.0.0",
+        author: "Custom Author", // Should use package-level override
+        license: "Apache-2.0", // Should use package-level override
       });
     });
   });
 
-  describe('Admin Author Override', () => {
-    it('should allow admin to publish as different author from manifest', async () => {
+  describe("List Option", () => {
+    it("should list packages in prpm.json without publishing", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package published by admin',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          author: 'different-user',
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          subtype: "rule",
+          files: [".cursorrules"],
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockPublish = vi.fn();
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+      } as any);
+
+      // Should complete without throwing
+      await handlePublish({ list: true });
+
+      // Publish should not be called when using --list
+      expect(mockPublish).not.toHaveBeenCalled();
+    });
+
+    it("should list multiple packages in multi-package manifest", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "multi-package",
+          version: "1.0.0",
+          packages: [
+            {
+              name: "package-one",
+              version: "1.0.0",
+              description: "First package",
+              format: "cursor",
+              subtype: "rule",
+              files: ["one.cursorrules"],
+            },
+            {
+              name: "package-two",
+              version: "2.0.0",
+              description: "Second package",
+              format: "claude",
+              subtype: "skill",
+              files: ["SKILL.md"],
+            },
+          ],
+        }),
+      );
+
+      await writeFile(
+        join(testDir, "one.cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+      await writeFile(
+        join(testDir, "SKILL.md"),
+        "---\nname: test\ndescription: Test skill\n---\n\n# Test skill",
+      );
+
+      const mockPublish = vi.fn();
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+      } as any);
+
+      // Should complete without throwing and not call publish
+      await handlePublish({ list: true });
+
+      expect(mockPublish).not.toHaveBeenCalled();
+    });
+
+    it("should list collections in manifest", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "collections-manifest",
+          version: "1.0.0",
+          packages: [], // Empty packages array for collections-only manifest
+          collections: [
+            {
+              id: "test-collection",
+              name: "Test Collection",
+              description: "A test collection",
+              packages: [
+                { packageId: "@test/package-one", required: true },
+                { packageId: "@test/package-two", required: false },
+              ],
+            },
+          ],
+        }),
+      );
+
+      const mockPublish = vi.fn();
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+      } as any);
+
+      // Should complete without throwing and not call publish
+      await handlePublish({ list: true });
+
+      expect(mockPublish).not.toHaveBeenCalled();
+    });
+
+    it("should handle empty manifest gracefully", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "empty-manifest",
+          version: "1.0.0",
+          packages: [],
+          collections: [],
+        }),
+      );
+
+      // Should not throw for empty manifest with --list
+      await expect(handlePublish({ list: true })).resolves.not.toThrow();
+    });
+  });
+
+  describe("Package Filter Option", () => {
+    it("should publish only the specified package from multi-package manifest", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "multi-package",
+          version: "1.0.0",
+          packages: [
+            {
+              name: "package-one",
+              version: "1.0.0",
+              description: "First package",
+              format: "cursor",
+              subtype: "rule",
+              files: ["one.cursorrules"],
+            },
+            {
+              name: "package-two",
+              version: "2.0.0",
+              description: "Second package",
+              format: "cursor",
+              subtype: "rule",
+              files: ["two.cursorrules"],
+            },
+          ],
+        }),
+      );
+
+      await writeFile(
+        join(testDir, "one.cursorrules"),
+        '---\ndescription: "Test one"\n---\n\n# Test one',
+      );
+      await writeFile(
+        join(testDir, "two.cursorrules"),
+        '---\ndescription: "Test two"\n---\n\n# Test two',
+      );
+
+      const mockPublish = vi.fn().mockResolvedValue({
+        package_id: "package-one",
+        name: "package-one",
+        version: "1.0.0",
+      });
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'admin-user',
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({ package: "package-one" });
+
+      // Should only publish one package
+      expect(mockPublish).toHaveBeenCalledTimes(1);
+      expect(mockPublish).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "package-one" }),
+        expect.any(Buffer),
+        undefined,
+      );
+    });
+
+    it("should throw error when specified package not found", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "multi-package",
+          version: "1.0.0",
+          packages: [
+            {
+              name: "package-one",
+              version: "1.0.0",
+              description: "First package",
+              format: "cursor",
+              subtype: "rule",
+              files: ["one.cursorrules"],
+            },
+          ],
+        }),
+      );
+
+      await writeFile(
+        join(testDir, "one.cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: vi.fn(),
+        whoami: mockWhoami,
+      } as any);
+
+      await expect(
+        handlePublish({ package: "nonexistent-package" }),
+      ).rejects.toThrow(/not found in manifest/);
+    });
+
+    it("should skip collections when --package flag is used", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "mixed-manifest",
+          version: "1.0.0",
+          packages: [
+            {
+              name: "my-package",
+              version: "1.0.0",
+              description: "A package for testing purposes",
+              format: "cursor",
+              subtype: "rule",
+              files: ["test.cursorrules"],
+            },
+          ],
+          collections: [
+            {
+              id: "my-collection",
+              name: "My Collection",
+              description: "A collection for testing purposes",
+              packages: [{ packageId: "@test/pkg", required: true }],
+            },
+          ],
+        }),
+      );
+
+      await writeFile(
+        join(testDir, "test.cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockPublish = vi.fn().mockResolvedValue({
+        package_id: "my-package",
+        name: "my-package",
+        version: "1.0.0",
+      });
+
+      const mockCreateCollection = vi.fn();
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        createCollection: mockCreateCollection,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({ package: "my-package" });
+
+      // Should publish package
+      expect(mockPublish).toHaveBeenCalledTimes(1);
+      // Should NOT publish collection when --package is specified
+      expect(mockCreateCollection).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Collection Filter Option", () => {
+    it("should publish only the specified collection", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "collections-manifest",
+          version: "1.0.0",
+          collections: [
+            {
+              id: "collection-one",
+              name: "Collection One",
+              description: "First collection",
+              packages: [{ packageId: "@test/pkg-one", required: true }],
+            },
+            {
+              id: "collection-two",
+              name: "Collection Two",
+              description: "Second collection",
+              packages: [{ packageId: "@test/pkg-two", required: true }],
+            },
+          ],
+        }),
+      );
+
+      const mockCreateCollection = vi.fn().mockResolvedValue({
+        id: "collection-one",
+        name_slug: "collection-one",
+        version: "1.0.0",
+      });
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        createCollection: mockCreateCollection,
+        whoami: mockWhoami,
+        publish: vi.fn(),
+      } as any);
+
+      await handlePublish({ collection: "collection-one" });
+
+      // Should only publish one collection
+      expect(mockCreateCollection).toHaveBeenCalledTimes(1);
+      expect(mockCreateCollection).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "collection-one" }),
+      );
+    });
+
+    it("should throw error when specified collection not found", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "collections-manifest",
+          version: "1.0.0",
+          collections: [
+            {
+              id: "existing-collection",
+              name: "Existing Collection",
+              description: "An existing collection",
+              packages: [{ packageId: "@test/pkg", required: true }],
+            },
+          ],
+        }),
+      );
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        createCollection: vi.fn(),
+        whoami: mockWhoami,
+        publish: vi.fn(),
+      } as any);
+
+      await expect(
+        handlePublish({ collection: "nonexistent-collection" }),
+      ).rejects.toThrow(/not found in manifest/);
+    });
+
+    it("should skip packages when --collection flag is used", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "mixed-manifest",
+          version: "1.0.0",
+          packages: [
+            {
+              name: "my-package",
+              version: "1.0.0",
+              description: "A package for testing purposes",
+              format: "cursor",
+              subtype: "rule",
+              files: ["test.cursorrules"],
+            },
+          ],
+          collections: [
+            {
+              id: "my-collection",
+              name: "My Collection",
+              description: "A collection for testing purposes",
+              packages: [{ packageId: "@test/pkg", required: true }],
+            },
+          ],
+        }),
+      );
+
+      await writeFile(
+        join(testDir, "test.cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockPublish = vi.fn();
+
+      const mockCreateCollection = vi.fn().mockResolvedValue({
+        id: "my-collection",
+        name_slug: "my-collection",
+        version: "1.0.0",
+      });
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        createCollection: mockCreateCollection,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({ collection: "my-collection" });
+
+      // Should NOT publish packages when --collection is specified
+      expect(mockPublish).not.toHaveBeenCalled();
+      // Should publish collection
+      expect(mockCreateCollection).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("Access Option", () => {
+    it("should set package as private when --access private is specified", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          subtype: "rule",
+          files: [".cursorrules"],
+          private: false, // Default to public
+        }),
+      );
+
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockPublish = vi.fn().mockResolvedValue({
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
+      });
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({ access: "private" });
+
+      expect(mockPublish).toHaveBeenCalledWith(
+        expect.objectContaining({ private: true }),
+        expect.any(Buffer),
+        undefined,
+      );
+    });
+
+    it("should set package as public when --access public is specified", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          subtype: "rule",
+          files: [".cursorrules"],
+          private: true, // Set as private in manifest
+        }),
+      );
+
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockPublish = vi.fn().mockResolvedValue({
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
+      });
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({ access: "public" });
+
+      expect(mockPublish).toHaveBeenCalledWith(
+        expect.objectContaining({ private: false }),
+        expect.any(Buffer),
+        undefined,
+      );
+    });
+
+    it("should use manifest private setting when --access is not specified", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          subtype: "rule",
+          files: [".cursorrules"],
+          private: true, // Private in manifest
+        }),
+      );
+
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockPublish = vi.fn().mockResolvedValue({
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
+      });
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalledWith(
+        expect.objectContaining({ private: true }),
+        expect.any(Buffer),
+        undefined,
+      );
+    });
+
+    it("should default to public when neither --access nor manifest private is specified", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package for testing purposes",
+          format: "cursor",
+          subtype: "rule",
+          files: [".cursorrules"],
+          // No private field
+        }),
+      );
+
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockPublish = vi.fn().mockResolvedValue({
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
+      });
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockPublish).toHaveBeenCalledWith(
+        expect.objectContaining({ private: false }),
+        expect.any(Buffer),
+        undefined,
+      );
+    });
+  });
+
+  describe("Collections Publishing", () => {
+    it("should publish collections alongside packages", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "mixed-manifest",
+          version: "1.0.0",
+          packages: [
+            {
+              name: "my-package",
+              version: "1.0.0",
+              description: "A package for testing mixed manifests",
+              format: "cursor",
+              subtype: "rule",
+              files: ["test.cursorrules"],
+            },
+          ],
+          collections: [
+            {
+              id: "my-collection",
+              name: "My Collection",
+              description: "A collection for testing",
+              packages: [{ packageId: "@test/pkg", required: true }],
+            },
+          ],
+        }),
+      );
+
+      await writeFile(
+        join(testDir, "test.cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockPublish = vi.fn().mockResolvedValue({
+        package_id: "my-package",
+        name: "my-package",
+        version: "1.0.0",
+      });
+
+      const mockCreateCollection = vi.fn().mockResolvedValue({
+        id: "my-collection",
+        name_slug: "my-collection",
+        version: "1.0.0",
+      });
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+        createCollection: mockCreateCollection,
+        whoami: mockWhoami,
+      } as any);
+
+      await handlePublish({});
+
+      // Should publish both package and collection
+      expect(mockPublish).toHaveBeenCalledTimes(1);
+      expect(mockCreateCollection).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle collection publish errors gracefully", async () => {
+      // Use a mixed manifest with packages and a failing collection
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "mixed-with-failing-collection",
+          version: "1.0.0",
+          packages: [
+            {
+              name: "working-package",
+              version: "1.0.0",
+              description: "A package that will publish successfully",
+              format: "cursor",
+              subtype: "rule",
+              files: ["test.cursorrules"],
+            },
+          ],
+          collections: [
+            {
+              id: "failing-collection",
+              name: "Failing Collection",
+              description: "A collection that will fail during publishing",
+              packages: [{ packageId: "@test/pkg", required: true }],
+            },
+          ],
+        }),
+      );
+
+      await writeFile(
+        join(testDir, "test.cursorrules"),
+        '---\ndescription: "Test rules file"\n---\n\n# Test',
+      );
+
+      const mockPublish = vi.fn().mockResolvedValue({
+        package_id: "working-package",
+        name: "working-package",
+        version: "1.0.0",
+      });
+
+      const mockCreateCollection = vi
+        .fn()
+        .mockRejectedValue(new Error("Collection publish failed"));
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        createCollection: mockCreateCollection,
+        whoami: mockWhoami,
+        publish: mockPublish,
+      } as any);
+
+      // Should not throw - package succeeded even though collection failed
+      await handlePublish({});
+
+      // Package should have been published successfully
+      expect(mockPublish).toHaveBeenCalled();
+      // Collection publish was attempted
+      expect(mockCreateCollection).toHaveBeenCalled();
+    });
+
+    it("should publish collections-only manifest", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "collections-only",
+          version: "1.0.0",
+          packages: [], // Empty packages array for collections-only
+          collections: [
+            {
+              id: "standalone-collection",
+              name: "Standalone Collection",
+              description: "A standalone collection",
+              packages: [
+                { packageId: "@test/pkg-one", required: true },
+                { packageId: "@test/pkg-two", required: false },
+              ],
+            },
+          ],
+        }),
+      );
+
+      const mockCreateCollection = vi.fn().mockResolvedValue({
+        id: "standalone-collection",
+        name_slug: "standalone-collection",
+        version: "1.0.0",
+      });
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "testuser",
+        organizations: [],
+      });
+
+      mockGetRegistryClient.mockReturnValue({
+        createCollection: mockCreateCollection,
+        whoami: mockWhoami,
+        publish: vi.fn(),
+      } as any);
+
+      await handlePublish({});
+
+      expect(mockCreateCollection).toHaveBeenCalledTimes(1);
+      expect(mockCreateCollection).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "standalone-collection",
+          name: "Standalone Collection",
+          packages: expect.arrayContaining([
+            expect.objectContaining({
+              packageId: "@test/pkg-one",
+              required: true,
+            }),
+            expect.objectContaining({
+              packageId: "@test/pkg-two",
+              required: false,
+            }),
+          ]),
+        }),
+      );
+    });
+  });
+
+  describe("Admin Author Override", () => {
+    it("should allow admin to publish as different author from manifest", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package published by admin",
+          format: "cursor",
+          files: [".cursorrules"],
+          author: "different-user",
+        }),
+      );
+
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
+
+      const mockWhoami = vi.fn().mockResolvedValue({
+        username: "admin-user",
         is_admin: true,
         organizations: [],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -1306,34 +2216,37 @@ describe('Publish Command', () => {
       const options = publishCall[2];
 
       expect(options).toBeDefined();
-      expect(options.publishAsAuthor).toBe('different-user');
+      expect(options.publishAsAuthor).toBe("different-user");
     });
 
-    it('should not override author for non-admin users', async () => {
+    it("should not override author for non-admin users", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          author: 'some-other-user',
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package",
+          format: "cursor",
+          files: [".cursorrules"],
+          author: "some-other-user",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'regular-user',
+        username: "regular-user",
         is_admin: false,
         organizations: [],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -1353,31 +2266,34 @@ describe('Publish Command', () => {
       }
     });
 
-    it('should not override author if manifest does not have author field', async () => {
+    it("should not override author if manifest does not have author field", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package without author',
-          format: 'cursor',
-          files: ['.cursorrules'],
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package without author",
+          format: "cursor",
+          files: [".cursorrules"],
           // No author field
-        })
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'admin-user',
+        username: "admin-user",
         is_admin: true,
         organizations: [],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -1397,34 +2313,35 @@ describe('Publish Command', () => {
       }
     });
 
-    it('should work with organization publishing and admin override', async () => {
+    it("should work with organization publishing and admin override", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package with org and author override',
-          format: 'cursor',
-          files: ['.cursorrules'],
-          author: 'target-user',
-          organization: 'my-company',
-        })
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package with org and author override",
+          format: "cursor",
+          files: [".cursorrules"],
+          author: "target-user",
+          organization: "my-company",
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'admin-user',
+        username: "admin-user",
         is_admin: true,
-        organizations: [
-          { id: 'org-123', name: 'my-company', role: 'owner' },
-        ],
+        organizations: [{ id: "org-123", name: "my-company", role: "owner" }],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -1439,38 +2356,41 @@ describe('Publish Command', () => {
       const options = publishCall[2];
 
       expect(options).toBeDefined();
-      expect(options.publishAsAuthor).toBe('target-user');
-      expect(options.orgId).toBe('org-123');
+      expect(options.publishAsAuthor).toBe("target-user");
+      expect(options.orgId).toBe("org-123");
     });
 
-    it('should handle author as object with name and email', async () => {
+    it("should handle author as object with name and email", async () => {
       await writeFile(
-        join(testDir, 'prpm.json'),
+        join(testDir, "prpm.json"),
         JSON.stringify({
-          name: 'test-package',
-          version: '1.0.0',
-          description: 'Test package with author object',
-          format: 'cursor',
-          files: ['.cursorrules'],
+          name: "test-package",
+          version: "1.0.0",
+          description: "Test package with author object",
+          format: "cursor",
+          files: [".cursorrules"],
           author: {
-            name: 'target-user',
-            email: 'target@example.com'
+            name: "target-user",
+            email: "target@example.com",
           },
-        })
+        }),
       );
 
-      await writeFile(join(testDir, '.cursorrules'), '---\ndescription: "Test"\n---\n\n# Test');
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test"\n---\n\n# Test',
+      );
 
       const mockWhoami = vi.fn().mockResolvedValue({
-        username: 'admin-user',
+        username: "admin-user",
         is_admin: true,
         organizations: [],
       });
 
       const mockPublish = vi.fn().mockResolvedValue({
-        package_id: 'test-package',
-        name: 'test-package',
-        version: '1.0.0',
+        package_id: "test-package",
+        name: "test-package",
+        version: "1.0.0",
       });
 
       mockGetRegistryClient.mockReturnValue({
@@ -1485,7 +2405,7 @@ describe('Publish Command', () => {
       const options = publishCall[2];
 
       expect(options).toBeDefined();
-      expect(options.publishAsAuthor).toBe('target-user');
+      expect(options.publishAsAuthor).toBe("target-user");
     });
   });
 });

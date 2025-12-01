@@ -1,0 +1,5 @@
+Writing AI prompts? Make a typo in the frontmatter and your rule silently breaks.
+
+PRPM ships JSON schemas for 15+ formats. Get IDE autocomplete, validate in CI/CD, build tools with confidence.
+
+https://prpm.dev/blog/json-schemas-for-ai-prompts

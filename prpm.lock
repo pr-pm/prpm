@@ -204,7 +204,55 @@
       "integrity": "sha256-d495c72955bc09258529ec396456290b110d95ba0d4ffad2e42c7e61dc8342d7",
       "format": "agents.md",
       "installedPath": "AGENTS.md"
+    },
+    "@ryandonofrio3/osgrep-skill#claude": {
+      "version": "0.3.2",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40ryandonofrio3%2Fosgrep-skill/0.3.2.tar.gz",
+      "integrity": "sha256-6e02f98c6a08e0dbda71c4f24269daedc1e1b52596401e5ddfb37ebdae68b0e1",
+      "format": "claude",
+      "subtype": "skill",
+      "sourceFormat": "claude",
+      "sourceSubtype": "skill",
+      "installedPath": ".claude/skills/osgrep-skill/SKILL.md"
+    },
+    "@ryandonofrio3/osgrep-skill#agents.md": {
+      "version": "0.4.7",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40ryandonofrio3%2Fosgrep-skill/0.4.7.tar.gz",
+      "integrity": "sha256-fb03b8f4fac3ea73663aa01d8f05679fe2b6f609a157fd118807b211e2a9e157",
+      "format": "agents.md",
+      "subtype": "skill",
+      "sourceFormat": "claude",
+      "sourceSubtype": "skill",
+      "installedPath": ".openskills/osgrep-skill/SKILL.md",
+      "progressiveDisclosure": {
+        "mode": "progressive",
+        "resourceDir": ".openskills/osgrep-skill",
+        "manifestPath": "AGENTS.md",
+        "resourceName": "osgrep-skill",
+        "resourceType": "skill",
+        "skillsDir": ".openskills/osgrep-skill",
+        "skillName": "osgrep-skill"
+      }
+    },
+    "@prpm/prpm-development#agents.md": {
+      "version": "1.0.2",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40prpm%2Fprpm-development/1.0.2.tar.gz",
+      "integrity": "sha256-d495c72955bc09258529ec396456290b110d95ba0d4ffad2e42c7e61dc8342d7",
+      "format": "agents.md",
+      "subtype": "skill",
+      "sourceFormat": "claude",
+      "sourceSubtype": "skill",
+      "installedPath": ".openskills/prpm-development/SKILL.md",
+      "progressiveDisclosure": {
+        "mode": "progressive",
+        "resourceDir": ".openskills/prpm-development",
+        "manifestPath": "AGENTS.md",
+        "resourceName": "prpm-development",
+        "resourceType": "skill",
+        "skillsDir": ".openskills/prpm-development",
+        "skillName": "prpm-development"
+      }
     }
   },
-  "generated": "2025-11-14T10:12:31.592Z"
+  "generated": "2025-11-27T11:47:59.213Z"
 }
