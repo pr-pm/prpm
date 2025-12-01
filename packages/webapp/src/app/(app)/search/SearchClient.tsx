@@ -37,6 +37,7 @@ import {
 import { getPackageUrl } from "@/lib/package-url";
 import { AISearchToggle } from "@/components/AISearchToggle";
 import { AISearchResults } from "@/components/AISearchResults";
+import { UseCaseDisplay } from "@/components/UseCaseDisplay";
 import { useAuth } from "@/components/AuthProvider";
 
 type TabType =
@@ -1244,42 +1245,43 @@ function SearchPageContent() {
 
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="mb-8">
-          <div className="relative">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={query}
-              onChange={(e) => handleQueryChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() => {
-                if (suggestions.length > 0) setShowSuggestions(true);
-              }}
-              placeholder={
-                aiSearchEnabled
-                  ? "Search with AI (natural language)..."
-                  : "Search packages, collections, or skills..."
-              }
-              className="w-full px-6 py-4 bg-prpm-dark-card border border-prpm-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-prpm-accent transition-colors pr-12"
-              autoComplete="off"
-            />
-            <button
-              type="submit"
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-prpm-accent transition-colors"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={query}
+                onChange={(e) => handleQueryChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={() => {
+                  if (suggestions.length > 0) setShowSuggestions(true);
+                }}
+                placeholder={
+                  aiSearchEnabled
+                    ? "Search with AI (natural language)..."
+                    : "Search packages, collections, or skills..."
+                }
+                className="w-full px-6 py-4 bg-prpm-dark-card border border-prpm-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-prpm-accent transition-colors pr-12"
+                autoComplete="off"
+              />
+              <button
+                type="submit"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-prpm-accent transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </button>
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
@@ -1338,14 +1340,30 @@ function SearchPageContent() {
                 <div className="w-4 h-4 border-2 border-prpm-accent border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
-          </div>
+            </div>
 
-          {/* AI Search Toggle */}
-          {activeTab === "packages" && (
-            <div className="mt-4 flex justify-end">
+            {/* AI Search Toggle - next to search bar */}
+            {activeTab === "packages" && (
               <AISearchToggle
                 enabled={aiSearchEnabled}
                 onChange={setAiSearchEnabled}
+              />
+            )}
+          </div>
+
+          {/* Use Cases Row */}
+          {activeTab === "packages" && availableUseCases.length > 0 && (
+            <div className="mt-4">
+              <UseCaseDisplay
+                useCases={availableUseCases}
+                selectedUseCase={selectedUseCase}
+                onSelect={(slug) => {
+                  if (selectedUseCase === slug) {
+                    setSelectedUseCase("");
+                  } else {
+                    setSelectedUseCase(slug);
+                  }
+                }}
               />
             </div>
           )}
@@ -1644,44 +1662,6 @@ function SearchPageContent() {
                     />
                   </svg>
                   View all categories
-                </Link>
-              </div>
-
-              {/* Use Case Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Use Case
-                </label>
-                <select
-                  value={selectedUseCase}
-                  onChange={(e) => setSelectedUseCase(e.target.value)}
-                  className="w-full px-3 py-2 bg-prpm-dark border border-prpm-border rounded text-white focus:outline-none focus:border-prpm-accent"
-                >
-                  <option value="">All Use Cases</option>
-                  {availableUseCases.map((uc) => (
-                    <option key={uc.slug} value={uc.slug}>
-                      {uc.name}
-                    </option>
-                  ))}
-                </select>
-                <Link
-                  href="/use-cases"
-                  className="mt-2 text-xs text-prpm-accent hover:text-prpm-accent-light transition-colors inline-flex items-center gap-1"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                    />
-                  </svg>
-                  View all use cases
                 </Link>
               </div>
 

@@ -18,7 +18,6 @@ interface Package {
   category: string | null;
   tags: string[];
   ai_tags: string[] | null;
-  readme?: string | null;
 }
 
 interface EnrichmentResult {
@@ -127,7 +126,7 @@ export class AIPackageEnrichmentService {
       // Get packages that need enrichment
       const result = await this.server.pg.query<Package>(
         `SELECT id, name, display_name, description, format, subtype,
-                category, tags, ai_tags, readme
+                category, tags, ai_tags
          FROM packages
          WHERE ai_enrichment_needed = TRUE
            AND visibility = 'public'
@@ -288,12 +287,6 @@ Always respond with valid JSON in the exact format specified.`,
     parts.push(`- Current Category: ${pkg.category || 'None'}`);
     parts.push(`- User Tags: ${pkg.tags?.join(', ') || 'None'}`);
     parts.push(`- Current AI Tags: ${pkg.ai_tags?.join(', ') || 'None'}`);
-
-    // Add README excerpt if available
-    if (pkg.readme) {
-      const readmeSnippet = pkg.readme.substring(0, 800);
-      parts.push(`\n## README Excerpt\n${readmeSnippet}...`);
-    }
 
     parts.push('\n# Available Categories\n');
     parts.push('## Top-Level Categories:');
@@ -488,7 +481,7 @@ Always respond with valid JSON in the exact format specified.`,
       // Get packages with stale enrichments
       const result = await this.server.pg.query<Package>(
         `SELECT id, name, display_name, description, format, subtype,
-                category, tags, ai_tags, readme
+                category, tags, ai_tags
          FROM packages
          WHERE ai_enrichment_completed_at < NOW() - INTERVAL '90 days'
            AND visibility = 'public'

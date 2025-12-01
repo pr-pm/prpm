@@ -50,6 +50,7 @@ export async function searchRoutes(server: FastifyInstance) {
           },
           tags: { type: 'array', items: { type: 'string' } },
           category: { type: 'string' },
+          use_case: { type: 'string', description: 'Filter by use case slug' },
           author: { type: 'string' },
           language: { type: 'string', description: 'Filter by programming language (javascript, python, typescript, etc.)' },
           framework: { type: 'string', description: 'Filter by framework (react, nextjs, django, etc.)' },
@@ -68,6 +69,7 @@ export async function searchRoutes(server: FastifyInstance) {
       subtype?: Subtype | Subtype[];
       tags?: string[];
       category?: string;
+      use_case?: string;
       author?: string;
       language?: string;
       framework?: string;
@@ -81,7 +83,7 @@ export async function searchRoutes(server: FastifyInstance) {
     // Default sort: relevance when searching, downloads when browsing
     const defaultSort = queryParams.q ? 'relevance' : 'downloads';
 
-    const { q, format, subtype, tags, category, author, language, framework, verified, featured, limit = 20, offset = 0, sort = defaultSort } = queryParams;
+    const { q, format, subtype, tags, category, use_case, author, language, framework, verified, featured, limit = 20, offset = 0, sort = defaultSort } = queryParams;
 
     // Build deterministic cache key (sorted params for consistency)
     const sortedParams = {
@@ -90,6 +92,7 @@ export async function searchRoutes(server: FastifyInstance) {
       subtype: Array.isArray(subtype) ? subtype.sort().join(',') : subtype,
       tags: tags ? tags.sort().join(',') : undefined,
       category,
+      use_case,
       author,
       language,
       framework,
@@ -114,6 +117,7 @@ export async function searchRoutes(server: FastifyInstance) {
       subtype,
       tags,
       category,
+      use_case,
       author,
       language,
       framework,
