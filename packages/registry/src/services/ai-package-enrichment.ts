@@ -39,7 +39,7 @@ interface PackageEnrichmentResult {
 export class AIPackageEnrichmentService {
   private server: FastifyInstance;
   private openai: OpenAI | null = null;
-  private readonly BATCH_SIZE = 10;
+  private readonly BATCH_SIZE = parseInt(process.env.ENRICHMENT_BATCH_SIZE || '25', 10);
   private availableCategories: string[] = [];
   private categoryMap: Map<string, { name: string; level: number }> = new Map();
   private availableUseCases: Array<{ id: string; name: string; slug: string; description: string | null }> = [];
