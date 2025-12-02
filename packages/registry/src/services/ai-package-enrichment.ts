@@ -296,7 +296,8 @@ Always respond with valid JSON in the exact format specified.`,
 
     parts.push('\n# Available Use Cases\n');
     parts.push('Choose from these predefined use cases (up to 5 that match):');
-    const useCaseList = this.availableUseCases.slice(0, 30).map(uc =>
+    // Show all use cases - 50 is fine for context window
+    const useCaseList = this.availableUseCases.map(uc =>
       `- ${uc.name}` + (uc.description ? ` (${uc.description})` : '')
     );
     parts.push(useCaseList.join('\n'));
@@ -423,8 +424,9 @@ Always respond with valid JSON in the exact format specified.`,
         }
       }
 
-      // Only add if we found a reasonable match (score >= 3)
-      if (bestMatch && bestMatch.score >= 3) {
+      // Only add if we found a reasonable match (score >= 2)
+      // Lowered from 3 to catch more legitimate matches with shorter keyword overlap
+      if (bestMatch && bestMatch.score >= 2) {
         matchedUseCaseIds.push(bestMatch.id);
       } else {
         this.server.log.debug(
