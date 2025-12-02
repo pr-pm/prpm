@@ -17,6 +17,7 @@ import {
   getQuerySuggestions,
   getTagSuggestions,
   getCategories,
+  getUseCases,
   SearchPackagesParams,
   SearchCollectionsParams,
   Package,
@@ -36,6 +37,7 @@ import {
 import { getPackageUrl } from "@/lib/package-url";
 import { AISearchToggle } from "@/components/AISearchToggle";
 import { AISearchResults } from "@/components/AISearchResults";
+import { UseCaseDisplay } from "@/components/UseCaseDisplay";
 import { useAuth } from "@/components/AuthProvider";
 
 type TabType =
@@ -63,6 +65,7 @@ function SearchPageContent() {
       format: (searchParams.get("format") as Format) || "",
       subtype: (searchParams.get("subtype") as Subtype) || "",
       category: searchParams.get("category") || "",
+      useCase: searchParams.get("useCase") || "",
       author: searchParams.get("author") || "",
       tags: searchParams.get("tags")?.split(",").filter(Boolean) || [],
       sort,
@@ -83,6 +86,9 @@ function SearchPageContent() {
   );
   const [selectedCategory, setSelectedCategory] = useState(
     initialParams.category,
+  );
+  const [selectedUseCase, setSelectedUseCase] = useState(
+    initialParams.useCase,
   );
   const [selectedLanguage, setSelectedLanguage] = useState(
     searchParams.get("language") || "",
@@ -106,12 +112,24 @@ function SearchPageContent() {
   const [availableCategories, setAvailableCategories] = useState<
     Array<{ slug: string; name: string }>
   >([]);
+  const [availableUseCases, setAvailableUseCases] = useState<
+    Array<{ slug: string; name: string }>
+  >([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Ref to track if state change originated from URL sync (prevents circular updates)
+  const isUrlSyncRef = useRef(false);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
-  // AI Search state - load from localStorage
+  // AI Search state - load from URL param first, then localStorage
   const [aiSearchEnabled, setAiSearchEnabled] = useState(() => {
+    // Check URL parameter first (for deep links like from use case pages)
+    const aiParam = searchParams.get("ai") === "true";
+    if (aiParam) {
+      return true;
+    }
+    // Fall back to localStorage for user preference
     if (typeof window !== "undefined") {
       return localStorage.getItem("aiSearchEnabled") === "true";
     }
@@ -151,6 +169,7 @@ function SearchPageContent() {
   }, [aiSearchEnabled]);
 
   // Sync URL parameters to state when URL changes (e.g., from navigation)
+  // Only depends on searchParams to avoid circular updates with state changes
   useEffect(() => {
     const paramsString = searchParams.toString();
     if (paramsString === lastSyncedParamsRef.current) {
@@ -158,11 +177,15 @@ function SearchPageContent() {
     }
     lastSyncedParamsRef.current = paramsString;
 
+    // Mark that we're syncing from URL to prevent State→URL effect from running
+    isUrlSyncRef.current = true;
+
     const tab = searchParams.get("tab") as TabType;
     const urlQuery = searchParams.get("q");
     const format = searchParams.get("format") as Format;
     const subtype = searchParams.get("subtype") as Subtype;
     const category = searchParams.get("category");
+    const useCase = searchParams.get("useCase");
     const author = searchParams.get("author");
     const tags = searchParams.get("tags")?.split(",").filter(Boolean);
     const sortParam = searchParams.get("sort") as SortType;
@@ -172,46 +195,30 @@ function SearchPageContent() {
     const framework = searchParams.get("framework");
     const aiParam = searchParams.get("ai") === "true";
 
-    if (tab && tab !== activeTab) setActiveTab(tab);
-    if (urlQuery !== null && urlQuery !== query) setQuery(urlQuery);
-    if (format !== null && format !== selectedFormat)
-      setSelectedFormat(format || "");
-    if (subtype !== null && subtype !== selectedSubtype)
-      setSelectedSubtype(subtype || "");
-    if (category !== null && category !== selectedCategory)
-      setSelectedCategory(category || "");
-    if (author !== null && author !== selectedAuthor) {
-      const authorValue = author || "";
-      setSelectedAuthor(authorValue);
-      setAuthorInput(authorValue);
-    }
-    if (tags && JSON.stringify(tags) !== JSON.stringify(selectedTags))
-      setSelectedTags(tags);
-    if (sortParam && sortParam !== sort) setSort(sortParam);
-    if (pageParam && pageParam !== page) setPage(pageParam || 1);
-    if (starred !== starredOnly) setStarredOnly(starred);
-    if (language !== null && language !== selectedLanguage)
-      setSelectedLanguage(language || "");
-    if (framework !== null && framework !== selectedFramework)
-      setSelectedFramework(framework || "");
+    // Update all state values from URL (unconditionally to ensure sync)
+    if (tab) setActiveTab(tab);
+    setQuery(urlQuery || "");
+    setSelectedFormat((format || "") as Format | "");
+    setSelectedSubtype((subtype || "") as Subtype | "");
+    setSelectedCategory(category || "");
+    setSelectedUseCase(useCase || "");
+    const authorValue = author || "";
+    setSelectedAuthor(authorValue);
+    setAuthorInput(authorValue);
+    setSelectedTags(tags || []);
+    if (sortParam) setSort(sortParam);
+    setPage(pageParam || 1);
+    setStarredOnly(starred);
+    setSelectedLanguage(language || "");
+    setSelectedFramework(framework || "");
     // Enable AI search if coming from homepage AI search
-    if (aiParam && !aiSearchEnabled) setAiSearchEnabled(true);
-  }, [
-    searchParams,
-    activeTab,
-    query,
-    selectedFormat,
-    selectedSubtype,
-    selectedCategory,
-    selectedAuthor,
-    selectedTags,
-    sort,
-    page,
-    starredOnly,
-    selectedLanguage,
-    selectedFramework,
-    aiSearchEnabled,
-  ]);
+    if (aiParam) setAiSearchEnabled(true);
+
+    // Reset the flag after a microtask to allow state updates to batch
+    Promise.resolve().then(() => {
+      isUrlSyncRef.current = false;
+    });
+  }, [searchParams]);
 
   // Debounce search query
   useEffect(() => {
@@ -424,6 +431,37 @@ function SearchPageContent() {
     fetchCategories();
   }, []);
 
+  // Fetch use cases on mount
+  useEffect(() => {
+    const fetchUseCases = async () => {
+      try {
+        const data = await getUseCases(false);
+        console.log("Use cases API response:", data);
+
+        const useCases: Array<{ slug: string; name: string }> = [];
+
+        if (data.use_cases) {
+          console.log("Processing use cases:", data.use_cases.length);
+          data.use_cases.forEach((uc: any) => {
+            useCases.push({
+              slug: uc.slug,
+              name: uc.name,
+            });
+          });
+        }
+
+        console.log("Setting available use cases:", useCases);
+        setAvailableUseCases(useCases);
+      } catch (error) {
+        console.error("Failed to fetch use cases:", error);
+        // Fall back to empty array on error
+        setAvailableUseCases([]);
+      }
+    };
+
+    fetchUseCases();
+  }, []);
+
   // Fetch starred IDs from localStorage + API on mount
   useEffect(() => {
     const fetchStarredIds = async () => {
@@ -473,10 +511,15 @@ function SearchPageContent() {
     fetchStarredIds();
   }, []);
 
-  // Update URL when state changes
+  // Update URL when state changes (State → URL sync)
   useEffect(() => {
     if (!isInitialized) {
       setIsInitialized(true);
+      return;
+    }
+
+    // Skip URL update when change originated from URL sync (prevents circular updates)
+    if (isUrlSyncRef.current) {
       return;
     }
 
@@ -487,6 +530,7 @@ function SearchPageContent() {
     if (selectedFormat) params.set("format", selectedFormat);
     if (selectedSubtype) params.set("subtype", selectedSubtype);
     if (selectedCategory) params.set("category", selectedCategory);
+    if (selectedUseCase) params.set("useCase", selectedUseCase);
     if (selectedLanguage) params.set("language", selectedLanguage);
     if (selectedFramework) params.set("framework", selectedFramework);
     if (selectedAuthor) params.set("author", selectedAuthor);
@@ -505,6 +549,7 @@ function SearchPageContent() {
     selectedFormat,
     selectedSubtype,
     selectedCategory,
+    selectedUseCase,
     selectedAuthor,
     selectedTags,
     sort,
@@ -649,6 +694,7 @@ function SearchPageContent() {
         if (selectedFormat) params.format = selectedFormat;
         if (selectedSubtype) params.subtype = selectedSubtype;
         if (selectedCategory) params.category = selectedCategory;
+        if (selectedUseCase) params.use_case = selectedUseCase;
         if (selectedLanguage) params.language = selectedLanguage;
         if (selectedFramework) params.framework = selectedFramework;
         if (selectedTags.length > 0) params.tags = selectedTags;
@@ -791,6 +837,7 @@ function SearchPageContent() {
 
         if (query.trim()) params.query = query;
         if (selectedCategory) params.category = selectedCategory;
+        if (selectedUseCase) params.use_case = selectedUseCase;
         if (selectedTags.length > 0 && selectedTags[0])
           params.tag = selectedTags[0];
 
@@ -819,6 +866,7 @@ function SearchPageContent() {
 
       if (query.trim()) params.q = query;
       if (selectedCategory) params.category = selectedCategory;
+      if (selectedUseCase) params.use_case = selectedUseCase;
       if (selectedLanguage) params.language = selectedLanguage;
       if (selectedFramework) params.framework = selectedFramework;
       if (selectedTags.length > 0) params.tags = selectedTags;
@@ -846,6 +894,7 @@ function SearchPageContent() {
 
       if (query.trim()) params.q = query;
       if (selectedCategory) params.category = selectedCategory;
+      if (selectedUseCase) params.use_case = selectedUseCase;
       if (selectedLanguage) params.language = selectedLanguage;
       if (selectedFramework) params.framework = selectedFramework;
       if (selectedTags.length > 0) params.tags = selectedTags;
@@ -873,6 +922,7 @@ function SearchPageContent() {
 
       if (query.trim()) params.q = query;
       if (selectedCategory) params.category = selectedCategory;
+      if (selectedUseCase) params.use_case = selectedUseCase;
       if (selectedLanguage) params.language = selectedLanguage;
       if (selectedFramework) params.framework = selectedFramework;
       if (selectedTags.length > 0) params.tags = selectedTags;
@@ -957,6 +1007,7 @@ function SearchPageContent() {
     selectedFormat,
     selectedSubtype,
     selectedCategory,
+    selectedUseCase,
     selectedLanguage,
     selectedFramework,
     selectedTags,
@@ -978,6 +1029,7 @@ function SearchPageContent() {
       selectedFormat !== initialParams.format ||
       selectedSubtype !== initialParams.subtype ||
       selectedCategory !== initialParams.category ||
+      selectedUseCase !== initialParams.useCase ||
       selectedLanguage !== (searchParams.get("language") || "") ||
       selectedFramework !== (searchParams.get("framework") || "") ||
       JSON.stringify(selectedTags) !== JSON.stringify(initialParams.tags) ||
@@ -996,6 +1048,7 @@ function SearchPageContent() {
     selectedFormat,
     selectedSubtype,
     selectedCategory,
+    selectedUseCase,
     selectedLanguage,
     selectedFramework,
     selectedTags,
@@ -1185,42 +1238,43 @@ function SearchPageContent() {
 
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="mb-8">
-          <div className="relative">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={query}
-              onChange={(e) => handleQueryChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() => {
-                if (suggestions.length > 0) setShowSuggestions(true);
-              }}
-              placeholder={
-                aiSearchEnabled
-                  ? "Search with AI (natural language)..."
-                  : "Search packages, collections, or skills..."
-              }
-              className="w-full px-6 py-4 bg-prpm-dark-card border border-prpm-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-prpm-accent transition-colors pr-12"
-              autoComplete="off"
-            />
-            <button
-              type="submit"
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-prpm-accent transition-colors"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={query}
+                onChange={(e) => handleQueryChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={() => {
+                  if (suggestions.length > 0) setShowSuggestions(true);
+                }}
+                placeholder={
+                  aiSearchEnabled
+                    ? "Search with AI (natural language)..."
+                    : "Search packages, collections, or skills..."
+                }
+                className="w-full px-6 py-4 bg-prpm-dark-card border border-prpm-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-prpm-accent transition-colors pr-12"
+                autoComplete="off"
+              />
+              <button
+                type="submit"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-prpm-accent transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </button>
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
@@ -1279,14 +1333,30 @@ function SearchPageContent() {
                 <div className="w-4 h-4 border-2 border-prpm-accent border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
-          </div>
+            </div>
 
-          {/* AI Search Toggle */}
-          {activeTab === "packages" && (
-            <div className="mt-4 flex justify-end">
+            {/* AI Search Toggle - next to search bar */}
+            {activeTab === "packages" && (
               <AISearchToggle
                 enabled={aiSearchEnabled}
                 onChange={setAiSearchEnabled}
+              />
+            )}
+          </div>
+
+          {/* Use Cases Row */}
+          {activeTab === "packages" && availableUseCases.length > 0 && (
+            <div className="mt-4">
+              <UseCaseDisplay
+                useCases={availableUseCases}
+                selectedUseCase={selectedUseCase}
+                onSelect={(slug) => {
+                  if (selectedUseCase === slug) {
+                    setSelectedUseCase("");
+                  } else {
+                    setSelectedUseCase(slug);
+                  }
+                }}
               />
             </div>
           )}
@@ -1469,10 +1539,10 @@ function SearchPageContent() {
                               : selectedFormat === "claude"
                                 ? "Claude Desktop/Code"
                                 : selectedFormat === "continue"
-                                  ? "Continue (VS Code/JetBrains)"
-                                  : selectedFormat === "windsurf"
-                                    ? "Windsurf IDE"
-                                    : "Kiro AI"}
+                                    ? "Continue (VS Code/JetBrains)"
+                                    : selectedFormat === "windsurf"
+                                      ? "Windsurf IDE"
+                                      : "Kiro AI"}
                           </strong>
                         </p>
                       </div>

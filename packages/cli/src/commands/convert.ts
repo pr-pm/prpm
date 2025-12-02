@@ -21,6 +21,7 @@ import {
   fromAgentsMd,
   fromGemini,
   fromRuler,
+  fromCursorHooks,
   toCursor,
   toClaude,
   toContinue,
@@ -31,6 +32,7 @@ import {
   toAgentsMd,
   toGemini,
   toRuler,
+  toCursorHooks,
   isCursorFormat,
   isClaudeFormat,
   isContinueFormat,
@@ -40,7 +42,11 @@ import {
   isWindsurfFormat,
   isAgentsMdFormat,
   isRulerFormat,
+  isCursorHooksFormat,
+  VALID_HOOK_MAPPING_STRATEGIES,
+  isValidHookMappingStrategy,
   type CanonicalPackage,
+  type HookMappingStrategy,
 } from '@pr-pm/converters';
 
 export interface ConvertOptions {
@@ -49,6 +55,7 @@ export interface ConvertOptions {
   output?: string;
   name?: string; // Custom output filename (without extension)
   yes?: boolean; // Skip confirmation prompts
+  hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion (used with --subtype hook)
 }
 
 /**
@@ -59,9 +66,12 @@ function getDefaultPath(format: string, filename: string, subtype?: string, cust
 
   switch (format) {
     case 'cursor':
-      // Cursor has two types: slash commands (.cursor/commands/*.md) and rules (.cursor/rules/*.mdc)
+      // Cursor has multiple subtypes: slash commands, hooks, and rules
       if (subtype === 'slash-command') {
         return join(process.cwd(), '.cursor', 'commands', `${baseName}.md`);
+      }
+      if (subtype === 'hook') {
+        return join(process.cwd(), '.cursor', 'hooks', 'hooks.json');
       }
       // Default to rules
       return join(process.cwd(), '.cursor', 'rules', `${baseName}.mdc`);
@@ -151,6 +161,9 @@ function detectFormat(content: string, filepath: string): string | null {
   }
 
   // Use robust content detection from converters
+  // Check cursor-hooks first (more specific than cursor)
+  if (isCursorHooksFormat(content)) return 'cursor-hooks';
+
   if (isClaudeFormat(content)) {
     // Further refine claude subtype if possible
     if (content.includes('type: skill')) return 'claude-skill';
@@ -158,7 +171,7 @@ function detectFormat(content: string, filepath: string): string | null {
     if (content.includes('type: command')) return 'claude-command';
     return 'claude';
   }
-  
+
   if (isCursorFormat(content)) return 'cursor';
   if (isWindsurfFormat(content)) return 'windsurf';
   if (isKiroFormat(content)) return 'kiro';
@@ -236,6 +249,9 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
       case 'cursor':
         canonicalPkg = fromCursor(content, metadata);
         break;
+      case 'cursor-hooks':
+        canonicalPkg = fromCursorHooks(content, metadata);
+        break;
       case 'claude':
       case 'claude-agent':
       case 'claude-skill':
@@ -284,7 +300,14 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
     let result;
     switch (options.to) {
       case 'cursor':
-        result = toCursor(canonicalPkg);
+        // Use toCursorHooks when subtype is 'hook'
+        if (options.subtype === 'hook') {
+          result = toCursorHooks(canonicalPkg, {
+            hookMappingStrategy: options.hookMapping || 'auto'
+          });
+        } else {
+          result = toCursor(canonicalPkg);
+        }
         break;
       case 'claude':
         result = toClaude(canonicalPkg);
@@ -379,9 +402,10 @@ export function createConvertCommand() {
     .description('Convert AI prompt files between formats')
     .argument('<source>', 'Source file path to convert')
     .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md, gemini, ruler)')
-    .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, prompt, etc.)')
+    .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, hook, prompt, etc.)')
     .option('-o, --output <path>', 'Output path (defaults to format-specific location)')
     .option('-n, --name <name>', 'Custom output filename (without extension, e.g., "my-rule")')
+    .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip', 'auto')
     .option('-y, --yes', 'Skip confirmation prompts')
     .action(async (source: string, options: any) => {
       try {
@@ -392,7 +416,13 @@ export function createConvertCommand() {
         const validFormats = ['cursor', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md', 'gemini', 'ruler'];
         if (!validFormats.includes(options.to)) {
           throw new CLIError(
-            `Invalid format: ${options.to}\n\nValid formats: ${validFormats.join(', ')}`
+            `Invalid format: ${options.to}\n\nValid formats: ${validFormats.join(', ')}\n\n💡 For Cursor hooks, use: --to cursor --subtype hook`
+          );
+        }
+
+        if (options.hookMapping && !isValidHookMappingStrategy(options.hookMapping)) {
+          throw new CLIError(
+            `Invalid hook mapping strategy: ${options.hookMapping}\n\nValid strategies: ${VALID_HOOK_MAPPING_STRATEGIES.join(', ')}`
           );
         }
 
@@ -409,6 +439,7 @@ export function createConvertCommand() {
           output: options.output,
           name: options.name,
           yes: options.yes,
+          hookMapping: options.hookMapping as HookMappingStrategy,
         });
       } catch (error: any) {
         if (error instanceof CLIError) {

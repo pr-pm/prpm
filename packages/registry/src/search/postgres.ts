@@ -49,6 +49,7 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
         subtype,
         tags,
         category,
+        use_case,
         author,
         language,
         framework,
@@ -122,6 +123,16 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
             AND pc.category_id = ANY($${paramIndex++})
         )`);
         params.push(categoryIds);
+      }
+
+      if (use_case) {
+        conditions.push(`EXISTS (
+          SELECT 1 FROM package_use_cases puc
+          JOIN use_cases uc ON puc.use_case_id = uc.id
+          WHERE puc.package_id = p.id
+            AND uc.slug = $${paramIndex++}
+        )`);
+        params.push(use_case);
       }
 
       if (author) {

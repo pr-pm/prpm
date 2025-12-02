@@ -311,6 +311,7 @@ export async function searchPackages(
   if (params.tags)
     params.tags.forEach((tag: string) => queryParams.append("tags", tag));
   if (params.category) queryParams.append("category", params.category);
+  if (params.use_case) queryParams.append("use_case", params.use_case);
   if (params.author) queryParams.append("author", params.author);
   if (params.language) queryParams.append("language", params.language);
   if (params.framework) queryParams.append("framework", params.framework);

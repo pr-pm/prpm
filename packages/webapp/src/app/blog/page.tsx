@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "introducing-use-cases",
+    title: "Finding Your Perfect Package Just Got Easier: Introducing Use Cases",
+    excerpt: "With over 7,000 packages in PRPM, we built a smarter way to discover what you need—organized by what you're trying to accomplish.",
+    date: "2025-12-01",
+    author: "PRPM Team",
+    readTime: "8 min read",
+    tags: ["Features", "Discovery", "Search", "AI"],
+  },
+  {
     slug: "json-schemas-for-ai-prompts",
     title: "JSON Schemas for Every AI Prompt Format",
     excerpt: "PRPM ships comprehensive JSON schemas for 15+ AI prompt formats. Get IDE autocomplete, validate in CI/CD, and build tools with confidence.",

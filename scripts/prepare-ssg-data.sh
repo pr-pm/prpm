@@ -67,6 +67,7 @@ echo "Step 2: Fetching SSG data..."
 
 API_SUCCESS=false
 NEEDS_FETCH=false
+NEEDS_TAXONOMY_REFRESH=false
 
 # Skip data fetch entirely in CI when SSG is disabled
 if [ "$NEXT_PUBLIC_SKIP_SSG" = "true" ]; then
@@ -125,6 +126,8 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
       NEEDS_FETCH=true
     else
       success "S3 cache is up-to-date ($S3_COUNT packages)"
+      # Always fetch fresh taxonomy data (use-cases/categories) since counts change independently
+      NEEDS_TAXONOMY_REFRESH=true
       API_SUCCESS=true
     fi
   fi
@@ -221,7 +224,7 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
 
     # Fetch use cases
     echo "  Fetching use cases..."
-    RESPONSE=$(curl -s "${REGISTRY_URL}/api/v1/taxonomy/use-cases?include_counts=false")
+    RESPONSE=$(curl -s "${REGISTRY_URL}/api/v1/taxonomy/use-cases?include_counts=true")
 
     if [ $? -ne 0 ]; then
       error "Failed to fetch use cases from registry"
@@ -267,6 +270,44 @@ elif [ -n "$SSG_DATA_TOKEN" ]; then
       fi
     else
       debug "AWS CLI not available, skipping S3 upload"
+    fi
+  fi
+
+  # Always refresh taxonomy data (use-cases/categories) even when using S3 package cache
+  # These are lightweight API calls and counts change independently of package counts
+  if [ "$NEEDS_TAXONOMY_REFRESH" = true ]; then
+    echo ""
+    echo "  Refreshing taxonomy data (use-cases and categories)..."
+
+    # Fetch use cases with counts
+    echo "  Fetching use cases..."
+    RESPONSE=$(curl -s "${REGISTRY_URL}/api/v1/taxonomy/use-cases?include_counts=true")
+    if [ $? -eq 0 ]; then
+      USE_CASES=$(echo "$RESPONSE" | jq -r '.use_cases // []')
+      echo "$USE_CASES" > "$SSG_DATA_DIR/use-cases.json"
+      UC_COUNT=$(echo "$USE_CASES" | jq '. | length')
+      success "Refreshed $UC_COUNT use cases with current package counts"
+    else
+      warn "Failed to refresh use cases, keeping cached version"
+    fi
+
+    # Fetch categories with counts
+    echo "  Fetching categories..."
+    RESPONSE=$(curl -s "${REGISTRY_URL}/api/v1/taxonomy/categories?include_counts=true")
+    if [ $? -eq 0 ]; then
+      CATEGORIES=$(echo "$RESPONSE" | jq -r '.categories // []')
+      echo "$CATEGORIES" > "$SSG_DATA_DIR/categories.json"
+      CAT_COUNT=$(echo "$CATEGORIES" | jq '. | length')
+      success "Refreshed $CAT_COUNT categories with current package counts"
+    else
+      warn "Failed to refresh categories, keeping cached version"
+    fi
+
+    # Upload refreshed taxonomy to S3 cache
+    if command -v aws &> /dev/null; then
+      echo "  Uploading refreshed taxonomy to S3 cache..."
+      aws s3 cp "$SSG_DATA_DIR/use-cases.json" "$S3_BUCKET/use-cases.json" --no-progress 2>/dev/null || true
+      aws s3 cp "$SSG_DATA_DIR/categories.json" "$S3_BUCKET/categories.json" --no-progress 2>/dev/null || true
     fi
   fi
 

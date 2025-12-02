@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/cursor-hooks.json",
+  "title": "Cursor Hooks Configuration",
+  "description": "JSON Schema for Cursor hooks.json configuration files",
+  "type": "object",
+  "properties": {
+    "beforeShellExecution": {
+      "type": "string",
+      "description": "Path to script that runs before shell commands are executed"
+    },
+    "afterShellExecution": {
+      "type": "string",
+      "description": "Path to script that runs after shell commands are executed"
+    },
+    "beforeMCPExecution": {
+      "type": "string",
+      "description": "Path to script that runs before MCP tool calls"
+    },
+    "afterMCPExecution": {
+      "type": "string",
+      "description": "Path to script that runs after MCP tool calls"
+    },
+    "beforeReadFile": {
+      "type": "string",
+      "description": "Path to script that runs before files are read"
+    },
+    "afterFileEdit": {
+      "type": "string",
+      "description": "Path to script that runs after files are edited"
+    },
+    "beforeSubmitPrompt": {
+      "type": "string",
+      "description": "Path to script that runs before prompts are submitted"
+    },
+    "stop": {
+      "type": "string",
+      "description": "Path to script that runs when agent loop stops"
+    },
+    "afterAgentResponse": {
+      "type": "string",
+      "description": "Path to script that runs after agent responses"
+    },
+    "afterAgentThought": {
+      "type": "string",
+      "description": "Path to script that runs after agent thoughts"
+    },
+    "beforeTabFileRead": {
+      "type": "string",
+      "description": "Path to script that runs before tab file reads"
+    },
+    "afterTabFileEdit": {
+      "type": "string",
+      "description": "Path to script that runs after tab file edits"
+    }
+  },
+  "additionalProperties": false,
+  "minProperties": 1
+}

@@ -18,7 +18,6 @@ interface Package {
   category: string | null;
   tags: string[];
   ai_tags: string[] | null;
-  readme?: string | null;
 }
 
 interface EnrichmentResult {
@@ -40,9 +39,10 @@ interface PackageEnrichmentResult {
 export class AIPackageEnrichmentService {
   private server: FastifyInstance;
   private openai: OpenAI | null = null;
-  private readonly BATCH_SIZE = 10;
+  private readonly BATCH_SIZE = parseInt(process.env.ENRICHMENT_BATCH_SIZE || '25', 10);
   private availableCategories: string[] = [];
   private categoryMap: Map<string, { name: string; level: number }> = new Map();
+  private availableUseCases: Array<{ id: string; name: string; slug: string; description: string | null }> = [];
 
   constructor(server: FastifyInstance) {
     this.server = server;
@@ -83,6 +83,29 @@ export class AIPackageEnrichmentService {
   }
 
   /**
+   * Load available use cases from database
+   */
+  private async loadUseCases(): Promise<void> {
+    try {
+      const result = await this.server.pg.query(`
+        SELECT id, name, slug, description
+        FROM use_cases
+        ORDER BY display_order ASC, name ASC
+      `);
+
+      this.availableUseCases = result.rows;
+
+      this.server.log.info(
+        { useCaseCount: this.availableUseCases.length },
+        'Loaded use cases for AI enrichment'
+      );
+    } catch (error) {
+      this.server.log.error({ error }, 'Failed to load use cases');
+      throw error;
+    }
+  }
+
+  /**
    * Enrich packages that need AI metadata
    */
   async enrichPendingPackages(): Promise<number> {
@@ -91,16 +114,19 @@ export class AIPackageEnrichmentService {
       return 0;
     }
 
-    // Load categories if not already loaded
+    // Load categories and use cases if not already loaded
     if (this.availableCategories.length === 0) {
       await this.loadCategories();
+    }
+    if (this.availableUseCases.length === 0) {
+      await this.loadUseCases();
     }
 
     try {
       // Get packages that need enrichment
       const result = await this.server.pg.query<Package>(
         `SELECT id, name, display_name, description, format, subtype,
-                category, tags, ai_tags, readme
+                category, tags, ai_tags
          FROM packages
          WHERE ai_enrichment_needed = TRUE
            AND visibility = 'public'
@@ -262,17 +288,19 @@ Always respond with valid JSON in the exact format specified.`,
     parts.push(`- User Tags: ${pkg.tags?.join(', ') || 'None'}`);
     parts.push(`- Current AI Tags: ${pkg.ai_tags?.join(', ') || 'None'}`);
 
-    // Add README excerpt if available
-    if (pkg.readme) {
-      const readmeSnippet = pkg.readme.substring(0, 800);
-      parts.push(`\n## README Excerpt\n${readmeSnippet}...`);
-    }
-
     parts.push('\n# Available Categories\n');
     parts.push('## Top-Level Categories:');
     parts.push(topLevelCategories.join(', '));
     parts.push('\n## All Categories (including subcategories):');
     parts.push(this.availableCategories.slice(0, 50).join(', ')); // Limit to avoid token overflow
+
+    parts.push('\n# Available Use Cases\n');
+    parts.push('Choose from these predefined use cases (up to 5 that match):');
+    // Show all use cases - 50 is fine for context window
+    const useCaseList = this.availableUseCases.map(uc =>
+      `- ${uc.name}` + (uc.description ? ` (${uc.description})` : '')
+    );
+    parts.push(useCaseList.join('\n'));
 
     parts.push('\n# Your Task\n');
     parts.push('Analyze this package and provide:');
@@ -281,9 +309,9 @@ Always respond with valid JSON in the exact format specified.`,
     parts.push('   - Avoid generic tags like "react" unless package specifically helps with React');
     parts.push('   - Focus on what the package actually does');
     parts.push('   - Review existing AI tags and fix/remove incorrect ones');
-    parts.push('3. **Use Cases**: Generate 3-5 practical use case scenarios (max 100 chars each)');
-    parts.push('   - Write as specific, actionable sentences');
-    parts.push('   - Example: "Enforce consistent code style for React components"');
+    parts.push('3. **Use Cases**: Select 2-5 use case NAMES from the list above that best match what this package helps with');
+    parts.push('   - Use the EXACT names from the available use cases list');
+    parts.push('   - Only select use cases that are directly relevant');
     parts.push('4. **Confidence**: Rate your confidence (0.0 to 1.0)');
     parts.push('5. **Reasoning**: Briefly explain your choices\n');
 
@@ -313,16 +341,123 @@ Always respond with valid JSON in the exact format specified.`,
     packageId: string,
     enrichment: EnrichmentResult
   ): Promise<void> {
-    await this.server.pg.query(
-      `UPDATE packages
-       SET category = $1,
-           ai_tags = $2,
-           ai_use_cases = $3,
-           ai_enrichment_completed_at = NOW(),
-           ai_enrichment_needed = FALSE,
-           ai_use_cases_generated_at = NOW()
-       WHERE id = $4`,
-      [enrichment.category, enrichment.tags, enrichment.useCases, packageId]
+    // Use a transaction to ensure both operations succeed or fail together
+    const client = await this.server.pg.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Update package with enrichment data
+      await client.query(
+        `UPDATE packages
+         SET category = $1,
+             ai_tags = $2,
+             ai_use_cases = $3,
+             ai_enrichment_completed_at = NOW(),
+             ai_enrichment_needed = FALSE,
+             ai_use_cases_generated_at = NOW()
+         WHERE id = $4`,
+        [enrichment.category, enrichment.tags, enrichment.useCases, packageId]
+      );
+
+      // Match AI-generated use case strings to actual use case records and store relationships
+      await this.tagPackageWithUseCases(client, packageId, enrichment.useCases);
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Tag package with use cases by matching AI-generated strings to use case records
+   */
+  private async tagPackageWithUseCases(
+    client: { query: (text: string, values?: unknown[]) => Promise<unknown> },
+    packageId: string,
+    aiUseCaseStrings: string[]
+  ): Promise<void> {
+    if (aiUseCaseStrings.length === 0) {
+      return;
+    }
+
+    // Match AI-generated use case strings to actual use case records
+    // Since we now provide exact names in the prompt, try exact match first, then fuzzy
+    const matchedUseCaseIds: string[] = [];
+
+    for (const useCaseString of aiUseCaseStrings) {
+      const normalizedString = useCaseString.toLowerCase().trim();
+
+      // Try exact match first
+      const exactMatch = this.availableUseCases.find(
+        uc => uc.name.toLowerCase() === normalizedString
+      );
+
+      if (exactMatch) {
+        matchedUseCaseIds.push(exactMatch.id);
+        continue;
+      }
+
+      // Fallback: fuzzy keyword matching for cases where AI didn't use exact names
+      let bestMatch: { id: string; score: number } | null = null;
+
+      for (const useCase of this.availableUseCases) {
+        const useCaseName = useCase.name.toLowerCase();
+        const useCaseDesc = (useCase.description || '').toLowerCase();
+
+        // Calculate simple keyword match score
+        // Include short words (2+ chars) to match acronyms like API, CI, UI
+        const keywords = normalizedString
+          .split(/\s+/)
+          .filter(word => word.length >= 2);
+
+        let score = 0;
+        for (const keyword of keywords) {
+          if (useCaseName.includes(keyword)) score += 2; // Name match worth more
+          if (useCaseDesc.includes(keyword)) score += 1;
+        }
+
+        if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+          bestMatch = { id: useCase.id, score };
+        }
+      }
+
+      // Only add if we found a reasonable match (score >= 2)
+      // Lowered from 3 to catch more legitimate matches with shorter keyword overlap
+      if (bestMatch && bestMatch.score >= 2) {
+        matchedUseCaseIds.push(bestMatch.id);
+      } else {
+        this.server.log.debug(
+          { packageId, useCaseString },
+          'Could not match AI use case to database record'
+        );
+      }
+    }
+
+    // Remove duplicates
+    const uniqueUseCaseIds = [...new Set(matchedUseCaseIds)];
+
+    if (uniqueUseCaseIds.length === 0) {
+      this.server.log.debug(
+        { packageId, aiUseCases: aiUseCaseStrings },
+        'No matching use cases found for AI-generated strings'
+      );
+      return;
+    }
+
+    // Batch insert into package_use_cases table using unnest for efficiency
+    await client.query(
+      `INSERT INTO package_use_cases (package_id, use_case_id)
+       SELECT $1, unnest($2::uuid[])
+       ON CONFLICT (package_id, use_case_id) DO NOTHING`,
+      [packageId, uniqueUseCaseIds]
+    );
+
+    this.server.log.info(
+      { packageId, matchedCount: uniqueUseCaseIds.length, totalAiUseCases: aiUseCaseStrings.length },
+      'Tagged package with use cases'
     );
   }
 
@@ -353,12 +488,15 @@ Always respond with valid JSON in the exact format specified.`,
     if (this.availableCategories.length === 0) {
       await this.loadCategories();
     }
+    if (this.availableUseCases.length === 0) {
+      await this.loadUseCases();
+    }
 
     try {
       // Get packages with stale enrichments
       const result = await this.server.pg.query<Package>(
         `SELECT id, name, display_name, description, format, subtype,
-                category, tags, ai_tags, readme
+                category, tags, ai_tags
          FROM packages
          WHERE ai_enrichment_completed_at < NOW() - INTERVAL '90 days'
            AND visibility = 'public'

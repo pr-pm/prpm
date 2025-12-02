@@ -444,7 +444,7 @@ export class CronScheduler {
     if (this.enrichmentService) {
       this.jobs.push({
         name: 'AI Package Enrichment',
-        schedule: '0 */2 * * *', // Every 2 hours at :00
+        schedule: process.env.ENRICHMENT_CRON_SCHEDULE || '*/10 * * * *', // Default: every 10 minutes
         task: async () => {
           try {
             this.server.log.info('🔄 Starting AI package enrichment...');
