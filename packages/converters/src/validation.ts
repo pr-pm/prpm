@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
+import type { Format, Subtype } from './types/canonical.js';
 
 // Get the directory where this file is located (ESM)
 const currentDirname = dirname(fileURLToPath(import.meta.url));
@@ -18,37 +19,11 @@ const ajv = new Ajv({
 // Add format validators (email, uri, etc.)
 addFormats(ajv);
 
-export type FormatType =
-  | 'cursor'
-  | 'cursor-hooks'
-  | 'claude'
-  | 'continue'
-  | 'windsurf'
-  | 'copilot'
-  | 'kiro'
-  | 'agents-md'
-  | 'gemini'
-  | 'opencode'
-  | 'ruler'
-  | 'droid'
-  | 'trae'
-  | 'aider'
-  | 'zencoder'
-  | 'replit'
-  | 'canonical';
+// FormatType extends Format with 'canonical' for internal validation
+export type FormatType = Format | 'canonical';
 
-export type SubtypeType =
-  | 'rule'
-  | 'agent'
-  | 'skill'
-  | 'slash-command'
-  | 'prompt'
-  | 'workflow'
-  | 'tool'
-  | 'template'
-  | 'collection'
-  | 'chatmode'
-  | 'hook';
+// SubtypeType is the same as Subtype from canonical
+export type SubtypeType = Subtype;
 
 export interface ValidationError {
   path: string;
@@ -87,6 +62,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'claude:slash-command': 'claude-slash-command.schema.json',
       'claude:hook': 'claude-hook.schema.json',
       'cursor:slash-command': 'cursor-command.schema.json',
+      'cursor:hook': 'cursor-hooks.schema.json', // cursor + hook subtype uses cursor-hooks schema
       'kiro:hook': 'kiro-hooks.schema.json',
       'kiro:agent': 'kiro-agent.schema.json',
       'droid:skill': 'droid-skill.schema.json',
@@ -100,9 +76,8 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
 
   // Fall back to format-level schema if no subtype schema exists
   if (!schemaFilename) {
-    const schemaMap: Record<FormatType, string> = {
+    const schemaMap: Partial<Record<FormatType, string>> = {
       'cursor': 'cursor.schema.json',
-      'cursor-hooks': 'cursor-hooks.schema.json',
       'claude': 'claude.schema.json',
       'continue': 'continue.schema.json',
       'windsurf': 'windsurf.schema.json',
@@ -118,6 +93,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'zencoder': 'zencoder.schema.json',
       'replit': 'replit.schema.json',
       'canonical': 'canonical.schema.json',
+      // generic and mcp don't have specific schemas, will use fallback
     };
     schemaFilename = schemaMap[format] || `${format}.schema.json`;
   }

@@ -50,7 +50,7 @@ export function fromCursorHooks(
     author: metadata.author,
     organization: metadata.organization,
     tags: metadata.tags || ['cursor', 'hooks'],
-    format: 'cursor-hooks',
+    format: 'cursor',
     subtype: 'hook',
 
     // Additional metadata
@@ -70,7 +70,7 @@ export function fromCursorHooks(
       sections: hookSections
     },
 
-    sourceFormat: 'cursor-hooks'
+    sourceFormat: 'cursor'
   };
 
   return pkg;

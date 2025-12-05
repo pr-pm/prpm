@@ -126,7 +126,7 @@ export function fromClaudePlugin(
       version: '1.0',
       sections,
     },
-    sourceFormat: 'claude-plugin',
+    sourceFormat: 'claude',
     metadata: {
       title: metadataSection.data.title,
       description: metadataSection.data.description,
@@ -137,7 +137,7 @@ export function fromClaudePlugin(
   };
 
   // Set taxonomy
-  setTaxonomy(pkg, 'claude-plugin', 'plugin');
+  setTaxonomy(pkg, 'claude', 'plugin');
 
   return pkg as CanonicalPackage;
 }
