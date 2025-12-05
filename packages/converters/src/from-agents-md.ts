@@ -61,7 +61,7 @@ export function fromAgentsMd(
     author: metadata.author || '',
     tags: metadata.tags || ['agents.md', ...inferTags(body)],
     content: canonicalContent,
-    sourceFormat: 'agents-md',
+    sourceFormat: 'agents.md',
     metadata: {
       title: metadata.name,
       description,
@@ -74,7 +74,7 @@ export function fromAgentsMd(
 
   // Set taxonomy (format + subtype + legacy type)
   // agents.md files are rules by default (project instructions)
-  setTaxonomy(pkg, 'agents-md', 'rule');
+  setTaxonomy(pkg, 'agents.md', 'rule');
 
   return pkg as CanonicalPackage;
 }

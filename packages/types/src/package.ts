@@ -4,11 +4,11 @@
 
 /**
  * Package format - the AI tool/platform the package is for
+ * Note: Combined formats like 'cursor-hooks' are now format + subtype (e.g., cursor + hook)
  */
 export type Format =
   | "cursor"
   | "claude"
-  | "claude-plugin"
   | "continue"
   | "windsurf"
   | "copilot"
@@ -34,7 +34,6 @@ export type Format =
 export const FORMATS: readonly Format[] = [
   "cursor",
   "claude",
-  "claude-plugin",
   "continue",
   "windsurf",
   "copilot",
@@ -98,8 +97,7 @@ export const SUBTYPES: readonly Subtype[] = [
  */
 export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   cursor: ["rule", "agent", "slash-command", "tool", "hook"],
-  claude: ["skill", "agent", "slash-command", "tool", "hook"],
-  "claude-plugin": ["plugin"],
+  claude: ["skill", "agent", "slash-command", "tool", "hook", "plugin"],
   "claude.md": ["agent"],
   continue: ["rule", "agent", "slash-command", "tool"],
   windsurf: ["rule", "agent", "slash-command", "tool"],
@@ -115,7 +113,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   zencoder: ["rule"],
   replit: ["rule"],
   mcp: ["server", "tool"],
-  "agents.md": ["skill", "agent"],
+  "agents.md": ["skill", "agent", "rule"],
   generic: [
     "rule",
     "agent",

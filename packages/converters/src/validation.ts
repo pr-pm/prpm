@@ -83,7 +83,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'windsurf': 'windsurf.schema.json',
       'copilot': 'copilot.schema.json',
       'kiro': 'kiro-steering.schema.json',
-      'agents-md': 'agents-md.schema.json',
+      'agents.md': 'agents-md.schema.json',
       'gemini': 'gemini.schema.json',
       'opencode': 'opencode.schema.json',
       'ruler': 'ruler.schema.json',
@@ -272,8 +272,8 @@ export function validateMarkdown(
 ): ValidationResult {
   const { frontmatter, content } = parseMarkdownWithFrontmatter(markdown);
 
-  // Windsurf, agents-md, and ruler don't have frontmatter, so validate differently
-  if (format === 'windsurf' || format === 'agents-md' || format === 'ruler') {
+  // Windsurf, agents.md, and ruler don't have frontmatter, so validate differently
+  if (format === 'windsurf' || format === 'agents.md' || format === 'ruler') {
     return validateFormat(format, { content: markdown }, subtype);
   }
 

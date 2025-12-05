@@ -72,7 +72,7 @@ export function normalizeFormat(sourceFormat: string): Format {
   if (normalized.includes('windsurf')) return 'windsurf';
   if (normalized.includes('copilot')) return 'copilot';
   if (normalized.includes('kiro')) return 'kiro';
-  if (normalized.includes('agents.md') || normalized.includes('agentsmd') || normalized.includes('agents-md')) return 'agents-md';
+  if (normalized.includes('agents.md') || normalized.includes('agentsmd') || normalized.includes('agents-md')) return 'agents.md';
   if (normalized.includes('gemini')) return 'gemini';
   if (normalized.includes('opencode')) return 'opencode';
   if (normalized.includes('ruler')) return 'ruler';

@@ -96,7 +96,6 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
   // Format-specific icons for rules/defaults
   const formatIcons: Record<Format, string> = {
     'claude': '🤖',
-    'claude-plugin': '🔌',
     'cursor': '📋',
     'windsurf': '🌊',
     'continue': '➡️',
@@ -126,7 +125,6 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
 function getPackageLabel(format: Format, subtype: Subtype): string {
   const formatLabels: Record<Format, string> = {
     'claude': 'Claude',
-    'claude-plugin': 'Claude Plugin',
     'cursor': 'Cursor',
     'windsurf': 'Windsurf',
     'continue': 'Continue',
@@ -715,7 +713,9 @@ export async function handleInstall(
     let pluginMetadata: { files: string[]; mcpServers?: Record<string, MCPServer>; mcpGlobal?: boolean } | undefined = undefined;
 
     // Special handling for Claude plugins (bundles of agents, skills, commands, and MCP servers)
-    if (effectiveFormat === 'claude-plugin' || pkg.format === 'claude-plugin') {
+    // Note: claude plugins are format: 'claude', subtype: 'plugin'
+    const isClaudePlugin = (pkg.format === 'claude' && pkg.subtype === 'plugin');
+    if (isClaudePlugin) {
       console.log(`   🔌 Installing Claude Plugin...`);
 
       // Find and parse plugin.json

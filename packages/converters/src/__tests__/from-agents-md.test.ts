@@ -27,7 +27,7 @@ This project follows TypeScript best practices.
       const result = fromAgentsMd(content, basicMetadata);
 
       expect(result.id).toBe('test-agents-md');
-      expect(result.sourceFormat).toBe('agents-md');
+      expect(result.sourceFormat).toBe('agents.md');
       expect(result.content.sections.length).toBeGreaterThan(0);
     });
 
@@ -170,7 +170,7 @@ No frontmatter here.
 
       const result = fromAgentsMd(content, basicMetadata);
 
-      expect(result.sourceFormat).toBe('agents-md');
+      expect(result.sourceFormat).toBe('agents.md');
       expect(result.metadata?.agentsMdConfig?.project).toBeUndefined();
     });
   });
@@ -386,7 +386,7 @@ Some content.
 
       const result = fromAgentsMd(content, basicMetadata);
 
-      expect(result.sourceFormat).toBe('agents-md');
+      expect(result.sourceFormat).toBe('agents.md');
     });
 
     it('should preserve provided metadata', () => {
@@ -500,7 +500,7 @@ async function fetchData() {
 
       const result = fromAgentsMd(content, basicMetadata);
 
-      expect(result.sourceFormat).toBe('agents-md');
+      expect(result.sourceFormat).toBe('agents.md');
       expect(result.content.sections.length).toBeGreaterThan(0);
       expect(result.tags).toContain('agents.md');
       expect(result.tags).toContain('typescript');

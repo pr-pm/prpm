@@ -91,7 +91,7 @@ export function toClaudePlugin(
 
     return {
       content,
-      format: 'claude-plugin',
+      format: 'claude', // format: claude + subtype: plugin
       warnings: warnings.length > 0 ? warnings : undefined,
       lossyConversion: false, // Plugin format preserves all data
       qualityScore,
@@ -102,7 +102,7 @@ export function toClaudePlugin(
     warnings.push(`Conversion error: ${error instanceof Error ? error.message : String(error)}`);
     return {
       content: '{}',
-      format: 'claude-plugin',
+      format: 'claude', // format: claude + subtype: plugin
       warnings,
       lossyConversion: true,
       qualityScore: 0,

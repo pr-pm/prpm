@@ -34,7 +34,6 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
   // Format-specific icons for rules/defaults
   const formatIcons: Record<Format, string> = {
     'claude': '🤖',
-    'claude-plugin': '🔌',
     'cursor': '📋',
     'windsurf': '🌊',
     'continue': '➡️',
@@ -64,7 +63,6 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
 function getPackageLabel(format: Format, subtype: Subtype): string {
   const formatLabels: Record<Format, string> = {
     'claude': 'Claude',
-    'claude-plugin': 'Claude Plugin',
     'cursor': 'Cursor',
     'windsurf': 'Windsurf',
     'continue': 'Continue',
