@@ -103,7 +103,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   windsurf: ["rule", "agent", "slash-command", "tool"],
   copilot: ["tool", "chatmode"],
   kiro: ["rule", "agent", "tool", "hook"],
-  gemini: ["slash-command"],
+  gemini: ["slash-command", "plugin"],
   "gemini.md": ["slash-command"],
   opencode: ["agent", "slash-command", "tool"],
   ruler: ["rule", "agent", "tool"],

@@ -120,13 +120,17 @@ export async function downloadRoutes(server: FastifyInstance) {
       }
 
       // Determine target format (use requested format or original format)
-      const outputFormat = targetFormat || canonical.format;
+      // Migrate old gemini-extension format to gemini
+      let outputFormat = targetFormat || canonical.format;
+      if (outputFormat === 'gemini-extension' as any) {
+        outputFormat = 'gemini';
+      }
 
       // Convert to target format
       const result = await convertToFormat(
         server,
         canonical,
-        outputFormat
+        outputFormat as Format
       );
 
       // Log warnings if any

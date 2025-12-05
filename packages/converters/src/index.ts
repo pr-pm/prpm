@@ -25,6 +25,7 @@ export { fromKiroAgent } from './from-kiro-agent.js';
 export { fromWindsurf } from './from-windsurf.js';
 export { fromAgentsMd } from './from-agents-md.js';
 export { fromGemini } from './from-gemini.js';
+export { fromGeminiPlugin } from './from-gemini-plugin.js';
 export { fromOpencode } from './from-opencode.js';
 export { fromRuler } from './from-ruler.js';
 export { fromDroid } from './from-droid.js';
@@ -46,6 +47,7 @@ export { toKiroAgent, isKiroAgentFormat, type KiroAgentConfig } from './to-kiro-
 export { toWindsurf, isWindsurfFormat } from './to-windsurf.js';
 export { toAgentsMd, isAgentsMdFormat } from './to-agents-md.js';
 export { toGemini } from './to-gemini.js';
+export { toGeminiPlugin } from './to-gemini-plugin.js';
 export { toOpencode } from './to-opencode.js';
 export { toRuler, isRulerFormat } from './to-ruler.js';
 export { toDroid } from './to-droid.js';

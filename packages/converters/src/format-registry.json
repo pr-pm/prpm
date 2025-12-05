@@ -159,13 +159,22 @@
     },
     "gemini": {
       "name": "Gemini CLI",
-      "description": "Gemini CLI custom commands",
+      "description": "Gemini CLI custom commands and extensions",
       "documentationUrl": "https://geminicli.com",
+      "rootFiles": [".gemini/extensions/*/gemini-extension.json"],
       "subtypes": {
         "slash-command": {
           "directory": ".gemini/commands",
           "filePatterns": ["*.toml"],
           "fileExtension": ".toml"
+        },
+        "plugin": {
+          "directory": ".gemini/extensions",
+          "filePatterns": ["gemini-extension.json"],
+          "nested": true,
+          "nestedIndicator": "gemini-extension.json",
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".json"
         }
       }
     },
