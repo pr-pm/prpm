@@ -69,6 +69,7 @@ import {
   getNestedIndicator,
   getFilePatterns,
   getFileExtension,
+  getDefaultSubtype,
   resolveFormatForSubtype,
   type CanonicalPackage,
   type HookMappingStrategy,
@@ -460,7 +461,10 @@ export async function handleInstall(
         console.log(`   ⚠️  ${fallbackResult.reason}`);
         format = fallbackResult.format;
       }
-      console.log(`   🔄 Converting to ${format} format...`);
+      // Only show conversion message when format actually differs from source
+      if (format !== pkg.format) {
+        console.log(`   🔄 Converting to ${format} format...`);
+      }
     }
 
     // Determine version to install
@@ -896,7 +900,14 @@ export async function handleInstall(
       // Single file package
       let mainFile = extractedFiles[0].content;
       // Determine file extension from format registry (e.g., .mdc for cursor, .toml for gemini)
-      const registryExtension = getFileExtension(effectiveFormat, effectiveSubtype);
+      // Use fallback to default subtype if the exact subtype isn't in the registry
+      let registryExtension = getFileExtension(effectiveFormat, effectiveSubtype);
+      if (!registryExtension) {
+        const defaultSubtype = getDefaultSubtype(effectiveFormat);
+        if (defaultSubtype) {
+          registryExtension = getFileExtension(effectiveFormat, defaultSubtype);
+        }
+      }
       // Strip leading dot if present, default to 'md'
       const fileExtension = registryExtension?.replace(/^\./, '') || 'md';
       const packageName = stripAuthorNamespace(packageId);
