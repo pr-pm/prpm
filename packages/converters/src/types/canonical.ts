@@ -227,7 +227,7 @@ export interface MetadataSection {
     };
     claudeSlashCommand?: {
       description?: string; // Description of the slash command
-      argumentHint?: string; // Arguments expected for the slash command
+      argumentHint?: string | string[]; // Arguments expected for the slash command (string or array of positional args)
       allowedTools?: string; // Comma-separated list of tools
       model?: string; // Model to use for the command
       disableModelInvocation?: boolean; // Whether to prevent SlashCommand tool from calling this

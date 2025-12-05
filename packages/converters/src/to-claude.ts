@@ -108,7 +108,10 @@ function convertContent(
         lines.push(`allowed-tools: ${claudeSlashCommand.allowedTools}`);
       }
       if (claudeSlashCommand.argumentHint) {
-        lines.push(`argument-hint: ${claudeSlashCommand.argumentHint}`);
+        const hint = Array.isArray(claudeSlashCommand.argumentHint)
+          ? `[${claudeSlashCommand.argumentHint.join(', ')}]`
+          : claudeSlashCommand.argumentHint;
+        lines.push(`argument-hint: ${hint}`);
       }
       if (claudeSlashCommand.description) {
         lines.push(`description: ${claudeSlashCommand.description}`);

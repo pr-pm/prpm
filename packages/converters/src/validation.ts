@@ -258,7 +258,16 @@ function parseMarkdownWithFrontmatter(markdown: string): {
   }
 
   // Extract and parse frontmatter
-  const frontmatterText = lines.slice(1, closingIndex + 1).join('\n');
+  let frontmatterText = lines.slice(1, closingIndex + 1).join('\n');
+
+  // Preprocess: Claude's argument-hint format `[arg1] [arg2] [arg3]` is invalid YAML
+  // (YAML interprets [arg1] as an array start). Quote these values to make them valid.
+  // Matches: argument-hint: [foo] [bar] ... (multiple bracketed items without commas)
+  frontmatterText = frontmatterText.replace(
+    /^(argument-hint:\s*)(\[[\w-]+\](?:\s+\[[\w-]+\])+)\s*$/m,
+    (_, prefix, value) => `${prefix}"${value}"`
+  );
+
   let frontmatter: Record<string, unknown> = {};
 
   try {

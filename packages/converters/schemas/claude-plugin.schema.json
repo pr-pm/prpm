@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/claude-plugin.json",
-  "$comment": "Schema for Claude plugins containing agents, skills, commands, and MCP servers",
+  "$comment": "https://code.claude.com/docs/en/plugins",
   "title": "Claude Plugin Format",
   "description": "JSON Schema for Claude plugins - bundles of agents, skills, commands, and MCP server configurations",
   "type": "object",

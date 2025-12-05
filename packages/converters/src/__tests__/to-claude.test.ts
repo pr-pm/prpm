@@ -477,5 +477,55 @@ describe('JSON Schema Validation', () => {
       const validation = validateMarkdown('claude', result.content, 'slash-command');
       expect(validation.valid).toBe(true);
     });
+
+    it('should handle argument-hint as array of positional arguments', () => {
+      const commandPackage: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        format: 'claude',
+        subtype: 'slash-command',
+        content: {
+          ...minimalCanonicalPackage.content,
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Bulk Build Actions',
+                description: 'Build GitHub Actions for multiple PRs',
+                claudeSlashCommand: {
+                  description: 'Bulk build GitHub Actions for PRs',
+                  argumentHint: ['pr-number', 'priority', 'assignee'],
+                  allowedTools: 'Bash, Read',
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toClaude(commandPackage);
+
+      // Should serialize array as YAML-compatible format
+      expect(result.content).toContain('argument-hint: [pr-number, priority, assignee]');
+
+      const validation = validateMarkdown('claude', result.content, 'slash-command');
+      expect(validation.valid).toBe(true);
+    });
+
+    it('should validate Claude-style bracketed argument-hint format', () => {
+      // Claude uses [arg1] [arg2] format which is invalid YAML but should be handled
+      const markdownWithBracketedHint = `---
+description: Bulk build GitHub Actions for PRs
+argument-hint: [pr-number] [priority] [assignee]
+allowed-tools: Bash, Read
+---
+
+# Bulk Build Actions
+
+Build GitHub Actions for multiple PRs.
+`;
+
+      const validation = validateMarkdown('claude', markdownWithBracketedHint, 'slash-command');
+      expect(validation.valid).toBe(true);
+    });
   });
 });

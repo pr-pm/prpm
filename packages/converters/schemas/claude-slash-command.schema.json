@@ -15,8 +15,18 @@
           "description": "List of tools the command can use (inherits from conversation if not specified)"
         },
         "argument-hint": {
-          "type": "string",
-          "description": "The arguments expected for the slash command (e.g., 'add [tagId] | remove [tagId] | list'). Shown when auto-completing the command."
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "The arguments expected for the slash command as a string (e.g., 'add [tagId] | remove [tagId] | list')"
+            },
+            {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "The arguments expected for the slash command as an array of positional arguments (e.g., ['pr-number', 'priority', 'assignee'])"
+            }
+          ],
+          "description": "The arguments expected for the slash command. Can be a string or array of positional arguments. Shown when auto-completing the command."
         },
         "description": {
           "type": "string",
@@ -54,6 +64,14 @@
         "allowed-tools": "Read, Write"
       },
       "content": "# Tag Manager\n\nManage tags for project files.\n\n## Usage\n\n- `/tags add <tagId>` - Add a tag\n- `/tags remove <tagId>` - Remove a tag\n- `/tags list` - List all tags"
+    },
+    {
+      "frontmatter": {
+        "description": "Bulk build GitHub Actions for PRs",
+        "argument-hint": ["pr-number", "priority", "assignee"],
+        "allowed-tools": "Bash, Read"
+      },
+      "content": "# Bulk Build Actions\n\nBuild GitHub Actions for multiple PRs.\n\n## Arguments\n\n- `pr-number` - The PR number to build\n- `priority` - Build priority (high, normal, low)\n- `assignee` - Person responsible for the build"
     }
   ]
 }
