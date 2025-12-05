@@ -2022,6 +2022,7 @@ function SearchPageContent() {
                                         </code>
                                         <button
                                           onClick={(e) => {
+                                            e.preventDefault();
                                             e.stopPropagation();
                                             const command =
                                               selectedFormat &&
@@ -2303,6 +2304,7 @@ function SearchPageContent() {
                               </code>
                               <button
                                 onClick={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
                                   copyToClipboard(
                                     `prpm install collections/${collection.name_slug}`,
