@@ -423,9 +423,9 @@ description: Test for copilot
       await handleInstall('claude-agent', { as: 'cursor' });
 
       // Should save to cursor agents directory (preserving agent subtype)
-      // Note: cursor uses .mdc for all files
+      // Note: cursor agents use .md extension per format registry
       expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/agents/claude-agent.mdc',
+        '.cursor/agents/claude-agent.md',
         expect.any(String)
       );
     });
@@ -451,9 +451,9 @@ description: Test for copilot
       await handleInstall('claude-command', { as: 'cursor' });
 
       // Should save to cursor commands directory
-      // Note: cursor uses .mdc for all files
+      // Note: cursor slash-commands use .md extension per format registry
       expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/commands/claude-command.mdc',
+        '.cursor/commands/claude-command.md',
         expect.any(String)
       );
     });

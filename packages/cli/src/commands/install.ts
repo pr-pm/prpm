@@ -68,6 +68,9 @@ import {
   validateFormat,
   getNestedIndicator,
   getFilePatterns,
+  getFileExtension,
+  getDefaultSubtype,
+  resolveFormatForSubtype,
   type CanonicalPackage,
   type HookMappingStrategy,
 } from '@pr-pm/converters';
@@ -450,8 +453,18 @@ export async function handleInstall(
       }
     }
 
-    if (options.as && format !== 'canonical') {
-      console.log(`   🔄 Converting to ${format} format...`);
+    // Apply format fallback if target format doesn't support the source subtype
+    // e.g., gemini doesn't support skills/agents, fall back to gemini.md
+    if (options.as && format && format !== 'canonical') {
+      const fallbackResult = resolveFormatForSubtype(format, pkg.subtype);
+      if (fallbackResult.fallbackUsed) {
+        console.log(`   ⚠️  ${fallbackResult.reason}`);
+        format = fallbackResult.format;
+      }
+      // Only show conversion message when format actually differs from source
+      if (format !== pkg.format) {
+        console.log(`   🔄 Converting to ${format} format...`);
+      }
     }
 
     // Determine version to install
@@ -886,9 +899,17 @@ export async function handleInstall(
 
       // Single file package
       let mainFile = extractedFiles[0].content;
-      // Determine file extension based on effective format
-      // Cursor rules use .mdc, but slash commands and other files use .md
-      const fileExtension = (effectiveFormat === 'cursor' && format === 'cursor') ? 'mdc' : 'md';
+      // Determine file extension from format registry (e.g., .mdc for cursor, .toml for gemini)
+      // Use fallback to default subtype if the exact subtype isn't in the registry
+      let registryExtension = getFileExtension(effectiveFormat, effectiveSubtype);
+      if (!registryExtension) {
+        const defaultSubtype = getDefaultSubtype(effectiveFormat);
+        if (defaultSubtype) {
+          registryExtension = getFileExtension(effectiveFormat, defaultSubtype);
+        }
+      }
+      // Strip leading dot if present, default to 'md'
+      const fileExtension = registryExtension?.replace(/^\./, '') || 'md';
       const packageName = stripAuthorNamespace(packageId);
 
       // For Claude skills, use SKILL.md filename in the package directory

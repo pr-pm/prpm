@@ -214,4 +214,70 @@ export function findFormatByRootFile(filename: string): string | undefined {
   return undefined;
 }
 
+/**
+ * Format fallback mapping - defines which format to use when the target format
+ * doesn't support a particular subtype.
+ *
+ * Key: target format that lacks support
+ * Value: { subtypes: [...], fallbackFormat: format to use instead }
+ */
+const FORMAT_FALLBACKS: Record<string, { subtypes: string[]; fallbackFormat: string }> = {
+  // Gemini CLI only supports slash-command, fall back to gemini.md for skills/agents
+  'gemini': {
+    subtypes: ['skill', 'agent', 'rule'],
+    fallbackFormat: 'gemini.md',
+  },
+  // OpenCode - similar pattern if needed in future
+  // 'opencode': {
+  //   subtypes: ['skill'],
+  //   fallbackFormat: 'agents.md',
+  // },
+};
+
+/**
+ * Check if a format supports a specific subtype
+ */
+export function formatSupportsSubtype(format: string, subtype: string): boolean {
+  const config = getSubtypeConfig(format, subtype);
+  return config !== undefined;
+}
+
+/**
+ * Resolve the appropriate format for a given subtype.
+ *
+ * When a target format doesn't support the source subtype, this function
+ * returns a fallback format that does support it.
+ *
+ * Examples:
+ * - resolveFormatForSubtype('gemini', 'skill') → 'gemini.md'
+ * - resolveFormatForSubtype('gemini', 'slash-command') → 'gemini'
+ * - resolveFormatForSubtype('claude', 'skill') → 'claude'
+ *
+ * @param targetFormat - The requested target format
+ * @param subtype - The source package subtype
+ * @returns The resolved format (may be different from targetFormat if fallback needed)
+ */
+export function resolveFormatForSubtype(
+  targetFormat: string,
+  subtype: string,
+): { format: string; fallbackUsed: boolean; reason?: string } {
+  // First check if the target format directly supports this subtype
+  if (formatSupportsSubtype(targetFormat, subtype)) {
+    return { format: targetFormat, fallbackUsed: false };
+  }
+
+  // Check if we have a defined fallback for this format/subtype
+  const fallback = FORMAT_FALLBACKS[targetFormat];
+  if (fallback && fallback.subtypes.includes(subtype)) {
+    return {
+      format: fallback.fallbackFormat,
+      fallbackUsed: true,
+      reason: `${targetFormat} doesn't support ${subtype} subtype, using ${fallback.fallbackFormat} instead`,
+    };
+  }
+
+  // No fallback defined - return original format (will likely cause an error downstream)
+  return { format: targetFormat, fallbackUsed: false };
+}
+
 export { formatRegistry };
