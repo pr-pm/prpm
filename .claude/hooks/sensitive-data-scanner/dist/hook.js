@@ -2,7 +2,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// ../../.claude/hooks/sensitive-data-scanner/src/hook-utils.ts
+// sensitive-data-scanner/hook-utils.ts
 var import_fs = require("fs");
 function readStdin() {
   try {
@@ -36,7 +36,7 @@ function exitHook(code) {
   process.exit(code);
 }
 
-// ../../.claude/hooks/sensitive-data-scanner/src/hook.ts
+// sensitive-data-scanner/hook.ts
 async function main() {
   const input = readStdin();
   const filePath = getFilePath(input);

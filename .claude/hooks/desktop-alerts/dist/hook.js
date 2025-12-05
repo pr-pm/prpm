@@ -2,7 +2,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// ../../.claude/hooks/desktop-alerts/src/hook-utils.ts
+// desktop-alerts/hook-utils.ts
 var import_fs = require("fs");
 var import_child_process = require("child_process");
 function readStdin() {
@@ -53,7 +53,7 @@ function exitHook(code) {
   process.exit(code);
 }
 
-// ../../.claude/hooks/desktop-alerts/src/hook.ts
+// desktop-alerts/hook.ts
 async function main() {
   const input = readStdin();
   const message = input.message || "Claude Code notification";

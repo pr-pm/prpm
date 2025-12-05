@@ -2,11 +2,11 @@
 #!/usr/bin/env node
 "use strict";
 
-// ../../.claude/hooks/audit-file-deletes/src/hook.ts
+// audit-file-deletes/hook.ts
 var import_path = require("path");
 var import_os = require("os");
 
-// ../../.claude/hooks/audit-file-deletes/src/hook-utils.ts
+// audit-file-deletes/hook-utils.ts
 var import_fs = require("fs");
 function readStdin() {
   try {
@@ -45,7 +45,7 @@ function getTimestamp() {
   return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
 }
 
-// ../../.claude/hooks/audit-file-deletes/src/hook.ts
+// audit-file-deletes/hook.ts
 async function main() {
   const input = readStdin();
   const command = getCommand(input);

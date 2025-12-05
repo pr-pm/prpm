@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 "use strict";
 
-// ../../.claude/hooks/development-workflow/src/hook.ts
+// development-workflow/hook.ts
 var import_fs2 = require("fs");
 
-// ../../.claude/hooks/development-workflow/src/hook-utils.ts
+// development-workflow/hook-utils.ts
 var import_fs = require("fs");
 var import_path = require("path");
 function isPrpmRepository(workingDirectory) {
@@ -168,7 +168,7 @@ function buildDevelopmentContext(workType) {
   return contexts.join("\n");
 }
 
-// ../../.claude/hooks/development-workflow/src/hook.ts
+// development-workflow/hook.ts
 function readStdin() {
   try {
     const input = (0, import_fs2.readFileSync)(0, "utf-8");

@@ -1,10 +1,13 @@
 #!/usr/bin/env tsx
 /**
  * Build script for compiling all Claude Code hooks to standalone JavaScript bundles
+ *
+ * Source: packages/hooks/<name>/hook.ts
+ * Output: .claude/hooks/<name>/dist/hook.js
  */
 
 import { build, BuildOptions } from 'esbuild';
-import { readdirSync, statSync, existsSync, mkdirSync, writeFileSync } from 'fs';
+import { readdirSync, statSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -13,7 +16,8 @@ const __dirname = dirname(__filename);
 
 // Root directory is app/ which is 2 levels up from packages/hooks/scripts/
 const ROOT_DIR = join(__dirname, '../../..');
-const HOOKS_DIR = join(ROOT_DIR, '.claude/hooks');
+const CLAUDE_HOOKS_DIR = join(ROOT_DIR, '.claude/hooks');
+const PACKAGES_HOOKS_DIR = join(__dirname, '..');
 
 interface HookInfo {
   name: string;
@@ -22,28 +26,33 @@ interface HookInfo {
 }
 
 /**
- * Find all hooks with TypeScript source files
+ * Find all hooks with TypeScript source files in packages/hooks/
  */
 function findHooks(): HookInfo[] {
   const hooks: HookInfo[] = [];
 
-  if (!existsSync(HOOKS_DIR)) {
-    console.error(`Hooks directory not found: ${HOOKS_DIR}`);
+  if (!existsSync(PACKAGES_HOOKS_DIR)) {
+    console.error(`Hooks directory not found: ${PACKAGES_HOOKS_DIR}`);
     return hooks;
   }
 
-  const entries = readdirSync(HOOKS_DIR);
+  const entries = readdirSync(PACKAGES_HOOKS_DIR);
 
   for (const entry of entries) {
-    const hookPath = join(HOOKS_DIR, entry);
+    const hookPath = join(PACKAGES_HOOKS_DIR, entry);
 
-    // Skip non-directories and special directories
-    if (!statSync(hookPath).isDirectory() || entry === 'shared') {
+    // Skip non-directories, special directories, and non-hook folders
+    if (
+      !statSync(hookPath).isDirectory() ||
+      entry === 'shared' ||
+      entry === 'scripts' ||
+      entry === 'node_modules'
+    ) {
       continue;
     }
 
-    const srcPath = join(hookPath, 'src/hook.ts');
-    const distPath = join(hookPath, 'dist/hook.js');
+    const srcPath = join(hookPath, 'hook.ts');
+    const distPath = join(CLAUDE_HOOKS_DIR, entry, 'dist/hook.js');
 
     if (existsSync(srcPath)) {
       hooks.push({

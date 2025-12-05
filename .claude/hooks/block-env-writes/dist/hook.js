@@ -2,7 +2,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// ../../.claude/hooks/block-env-writes/src/hook-utils.ts
+// block-env-writes/hook-utils.ts
 var import_fs = require("fs");
 function readStdin() {
   try {
@@ -39,7 +39,7 @@ function exitHook(code) {
   process.exit(code);
 }
 
-// ../../.claude/hooks/block-env-writes/src/hook.ts
+// block-env-writes/hook.ts
 async function main() {
   const input = readStdin();
   const filePath = getFilePath(input);

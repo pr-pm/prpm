@@ -45,6 +45,7 @@ export const claudeHookSchema = loadSchema('claude-hook.schema.json');
 export const claudeSkillSchema = loadSchema('claude-skill.schema.json');
 export const claudeSlashCommandSchema = loadSchema('claude-slash-command.schema.json');
 export const cursorCommandSchema = loadSchema('cursor-command.schema.json');
+export const cursorHooksSchema = loadSchema('cursor-hooks.schema.json');
 export const droidHookSchema = loadSchema('droid-hook.schema.json');
 export const droidSkillSchema = loadSchema('droid-skill.schema.json');
 export const droidSlashCommandSchema = loadSchema('droid-slash-command.schema.json');
