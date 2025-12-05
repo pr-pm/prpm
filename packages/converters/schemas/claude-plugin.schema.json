@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude-plugin.json",
+  "$comment": "https://code.claude.com/docs/en/plugins",
+  "title": "Claude Plugin Format",
+  "description": "JSON Schema for Claude plugins - bundles of agents, skills, commands, and MCP server configurations",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Plugin identifier/slug (e.g., 'compounding-engineering')",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (e.g., '1.0.0')",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?(\\+[a-zA-Z0-9.]+)?$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the plugin"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author name and optional email (e.g., 'John Doe <john@example.com>')"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., 'MIT', 'Apache-2.0')"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "description": "Repository URL"
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Homepage URL"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords for discovery"
+    },
+    "mcpServers": {
+      "type": "object",
+      "description": "MCP (Model Context Protocol) server configurations",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["stdio", "http", "sse"],
+            "description": "Server transport type"
+          },
+          "command": {
+            "type": "string",
+            "description": "Command to run for stdio servers (e.g., 'npx')"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Arguments for the command"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL for http/sse servers"
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Environment variables for the server"
+          }
+        },
+        "oneOf": [
+          {
+            "required": ["command"],
+            "properties": {
+              "type": { "const": "stdio" }
+            }
+          },
+          {
+            "required": ["url"],
+            "properties": {
+              "type": { "enum": ["http", "sse"] }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "compounding-engineering",
+      "version": "2.8.1",
+      "description": "AI-powered development tools with agents, commands, and MCP servers",
+      "author": "Kieran Klaassen <kieran@every.to>",
+      "license": "MIT",
+      "keywords": ["ai-powered", "code-review", "playwright", "browser-automation"],
+      "mcpServers": {
+        "playwright": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "@playwright/mcp@latest"]
+        },
+        "context7": {
+          "type": "http",
+          "url": "https://mcp.context7.com/mcp"
+        }
+      }
+    }
+  ]
+}

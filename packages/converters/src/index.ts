@@ -17,6 +17,7 @@ export * from './hook-mappings.js';
 export { fromCursor } from './from-cursor.js';
 export { fromCursorHooks } from './from-cursor-hooks.js';
 export { fromClaude } from './from-claude.js';
+export { fromClaudePlugin, parsePluginJson, extractMCPServers, type ClaudePluginJson, type MCPServer, type PluginContents } from './from-claude-plugin.js';
 export { fromContinue } from './from-continue.js';
 export { fromCopilot } from './from-copilot.js';
 export { fromKiro } from './from-kiro.js';
@@ -31,11 +32,13 @@ export { fromTrae } from './from-trae.js';
 export { fromAider } from './from-aider.js';
 export { fromZencoder } from './from-zencoder.js';
 export { fromReplit } from './from-replit.js';
+export { fromMCPServer, parseMCPServerJson, extractMCPServers as extractMCPServersFromCanonical, type MCPServerJson } from './from-mcp-server.js';
 
 // To converters (canonical → target format)
 export { toCursor, isCursorFormat } from './to-cursor.js';
 export { toCursorHooks, isCursorHooksFormat, type CursorHooksConversionOptions } from './to-cursor-hooks.js';
 export { toClaude, toClaudeMd, isClaudeFormat } from './to-claude.js';
+export { toClaudePlugin, generatePluginJson, createMinimalPluginJson, type ClaudePluginConversionResult } from './to-claude-plugin.js';
 export { toContinue, isContinueFormat } from './to-continue.js';
 export { toCopilot, isCopilotFormat } from './to-copilot.js';
 export { toKiro, isKiroFormat } from './to-kiro.js';
@@ -50,6 +53,7 @@ export { toTrae, isTraeFormat } from './to-trae.js';
 export { toAider, isAiderFormat } from './to-aider.js';
 export { toZencoder, isZencoderFormat, type ZencoderConfig } from './to-zencoder.js';
 export { toReplit, isReplitFormat } from './to-replit.js';
+export { toMCPServer, generateMCPServerPackage, type MCPServerConversionResult } from './to-mcp-server.js';
 
 // Utilities
 export * from './taxonomy-utils.js';

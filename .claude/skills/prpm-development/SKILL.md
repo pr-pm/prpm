@@ -48,11 +48,43 @@ PRPM uses a **branch-based workflow** with CI/CD automation. Direct pushes to ma
    git checkout -b fix/bug-description
    ```
 
-2. **Make commits** on your branch:
+2. **Make commits** on your branch using conventional commit format:
    ```bash
    git add [files]
-   git commit -m "feat: description"
+   git commit -m "feat: add OpenCode format support"
    ```
+
+### Commit Message Format
+
+Use conventional commit prefixes for all commits:
+
+| Prefix | Use For | Example |
+|--------|---------|---------|
+| `feat:` | New features | `feat: add Kiro format support` |
+| `fix:` | Bug fixes | `fix: resolve publish timeout issue` |
+| `docs:` | Documentation | `docs: update API reference` |
+| `chore:` | Maintenance | `chore(release): publish packages` |
+| `refactor:` | Code refactoring | `refactor: simplify converter logic` |
+| `test:` | Test changes | `test: add roundtrip tests for Gemini` |
+| `perf:` | Performance | `perf: optimize search query` |
+
+**Why this matters:**
+- Automated changelog generation
+- Clear commit history
+- Easier code review
+- Semantic versioning automation
+
+**Bad commits to avoid:**
+```bash
+# ❌ Too vague
+git commit -m "fixes"
+git commit -m "updates"
+git commit -m "changes"
+
+# ✅ Clear and descriptive
+git commit -m "fix: resolve schema validation for Claude agents"
+git commit -m "feat: add support for Droid format subtypes"
+```
 
 3. **Push your branch**:
    ```bash
@@ -675,6 +707,48 @@ npm version patch --workspace=prpm --workspace=@prpm/registry-client
 npm version minor --workspace=prpm
 ```
 
+### Publish Command Troubleshooting
+
+The publish command is a complex flow. Common issues and fixes:
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| `Schema not found` | Schemas not copied to dist | Ensure build copies schemas: check `tsup.config.ts` |
+| `Cannot find module '@pr-pm/types'` | Types not built first | Run `npm run build --workspace=@pr-pm/types` first |
+| `Type export missing` | tsup not exporting types | Check `dts: true` in tsup.config.ts |
+| `Version mismatch` | Workspaces out of sync | Bump all related packages together |
+| `Tarball too large` | Including unnecessary files | Check `.npmignore` or `files` in package.json |
+| `Authentication failed` | Token expired/missing | Re-run `prpm login` or check `PRPM_TOKEN` |
+
+**Build Order for Publishing:**
+```bash
+# Always build in dependency order
+npm run build --workspace=@pr-pm/types
+npm run build --workspace=@pr-pm/converters
+npm run build --workspace=@pr-pm/registry-client
+npm run build --workspace=prpm
+```
+
+**Pre-Publish Checklist:**
+1. ✅ All tests pass: `npm test`
+2. ✅ Types compile: `npm run typecheck`
+3. ✅ Build succeeds: `npm run build`
+4. ✅ Version bumped in all affected packages
+5. ✅ Schemas copied to dist (for CLI)
+6. ✅ No uncommitted changes
+
+**Debugging Publish Issues:**
+```bash
+# Check what will be published
+npm pack --workspace=prpm --dry-run
+
+# Verify package contents
+tar -tzf prpm-*.tgz
+
+# Check for missing exports
+node -e "console.log(require('./packages/cli/dist/index.js'))"
+```
+
 ## Common Patterns
 
 ### CLI Command Structure
@@ -693,6 +767,73 @@ export async function handleCommand(args: Args, options: Options) {
     process.exit(1);
   }
 }
+```
+
+### CLI Error Handling Pattern
+
+**Use `CLIError` instead of `process.exit()` for testable CLI errors.**
+
+```typescript
+// ❌ BAD - Untestable, tests can't catch process.exit()
+if (!packageId) {
+  console.error('Package ID is required');
+  process.exit(1);
+}
+
+// ✅ GOOD - Testable with CLIError
+import { CLIError } from '../utils/cli-error.js';
+
+if (!packageId) {
+  throw new CLIError('Package ID is required', { exitCode: 1 });
+}
+```
+
+**Why CLIError?**
+- Tests can catch and verify error conditions
+- Consistent error formatting across CLI
+- Exit codes are explicit and documented
+- Enables reliable CI testing (PR #110 refactor)
+
+**CLIError Usage:**
+```typescript
+import { CLIError, createError, createSuccess } from '../utils/cli-error.js';
+
+// Simple error
+throw new CLIError('Something went wrong');
+
+// With exit code
+throw new CLIError('Invalid format specified', { exitCode: 1 });
+
+// With suggestions
+throw new CLIError('Package not found', {
+  exitCode: 1,
+  suggestion: 'Try running: prpm search <query>'
+});
+
+// Helper functions for consistent messaging
+createError('Operation failed');     // Returns formatted error
+createSuccess('Package installed'); // Returns formatted success
+```
+
+**Testing CLI Errors:**
+```typescript
+import { describe, it, expect } from 'vitest';
+import { CLIError } from '../utils/cli-error.js';
+
+describe('install command', () => {
+  it('throws CLIError for missing package', async () => {
+    await expect(handleInstall('')).rejects.toThrow(CLIError);
+  });
+
+  it('provides helpful error message', async () => {
+    try {
+      await handleInstall('');
+    } catch (error) {
+      expect(error).toBeInstanceOf(CLIError);
+      expect(error.message).toContain('Package ID is required');
+    }
+  });
+});
 ```
 
 ### Registry Route Structure

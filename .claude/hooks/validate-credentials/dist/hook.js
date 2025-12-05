@@ -2,7 +2,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// ../../.claude/hooks/validate-credentials/src/hook-utils.ts
+// validate-credentials/hook-utils.ts
 var import_fs = require("fs");
 function readStdin() {
   try {
@@ -36,7 +36,7 @@ function exitHook(code) {
   process.exit(code);
 }
 
-// ../../.claude/hooks/validate-credentials/src/hook.ts
+// validate-credentials/hook.ts
 async function main() {
   const input = readStdin();
   const filePath = getFilePath(input);

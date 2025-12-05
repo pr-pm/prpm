@@ -27,6 +27,8 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'hook': '🪝',
     'workflow': '🔄',
     'template': '📄',
+    'plugin': '🔌',
+    'server': '🖥️',
   };
 
   // Format-specific icons for rules/defaults
@@ -93,6 +95,8 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'hook': 'Hook',
     'workflow': 'Workflow',
     'template': 'Template',
+    'plugin': 'Plugin',
+    'server': 'Server',
   };
 
   const formatLabel = formatLabels[format];

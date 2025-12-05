@@ -15,7 +15,7 @@ type FormatType =
   | 'windsurf'
   | 'copilot'
   | 'kiro'
-  | 'agents-md'
+  | 'agents.md'
   | 'canonical';
 
 type SubtypeType =
@@ -67,7 +67,7 @@ function getFormatType(format: string): FormatType | null {
     'windsurf': 'windsurf',
     'copilot': 'copilot',
     'kiro': 'kiro',
-    'agents-md': 'agents-md',
+    'agents.md': 'agents.md',
     'canonical': 'canonical',
   };
 
@@ -221,7 +221,7 @@ export async function validatePackageFiles(
       return filePath.includes('.continue/') && filePath.endsWith('.json');
     } else if (formatType === 'windsurf') {
       return filePath.includes('.windsurf/rules');
-    } else if (formatType === 'agents-md') {
+    } else if (formatType === 'agents.md') {
       return filePath === 'agents.md';
     } else if (formatType === 'kiro') {
       // Kiro: validate .md (steering files) and .json (hooks), but skip examples
@@ -246,7 +246,7 @@ export async function validatePackageFiles(
         const result = await validateMarkdownFile(filePath, formatType);
         errors.push(...result.errors);
         warnings.push(...result.warnings);
-      } else if (formatType === 'agents-md') {
+      } else if (formatType === 'agents.md') {
         // agents.md uses plain markdown (no frontmatter)
         const result = await validateMarkdownFile(filePath, formatType);
         errors.push(...result.errors);

@@ -2,7 +2,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// ../../.claude/hooks/prettier-on-save/src/hook-utils.ts
+// prettier-on-save/hook-utils.ts
 var import_fs = require("fs");
 var import_child_process = require("child_process");
 function readStdin() {
@@ -63,7 +63,7 @@ function exitHook(code) {
   process.exit(code);
 }
 
-// ../../.claude/hooks/prettier-on-save/src/hook.ts
+// prettier-on-save/hook.ts
 async function main() {
   const input = readStdin();
   const filePath = getFilePath(input);

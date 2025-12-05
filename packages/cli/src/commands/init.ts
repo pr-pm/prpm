@@ -59,6 +59,16 @@ const FORMAT_EXAMPLES: Record<
     description: "Claude AI skills and agents",
     files: [".claude/skills/example-skill/SKILL.md", "README.md"],
   },
+  "claude-plugin": {
+    description: "Claude Code plugins with agents, skills, commands, and MCP servers",
+    files: [
+      ".claude-plugin/plugin.json",
+      ".claude-plugin/agents/example.md",
+      ".claude-plugin/skills/example/SKILL.md",
+      ".claude-plugin/commands/example.md",
+      "README.md",
+    ],
+  },
   continue: {
     description: "Continue AI coding rules",
     files: [".continuerules", "README.md"],
@@ -94,8 +104,8 @@ const FORMAT_EXAMPLES: Record<
     files: ["prompts/example.md", "README.md"],
   },
   mcp: {
-    description: "Model Context Protocol",
-    files: ["mcp.json", "README.md"],
+    description: "Model Context Protocol servers",
+    files: ["mcp-server.json", "README.md"],
   },
 };
 
@@ -140,6 +150,69 @@ Explain when this skill should be invoked.
 ## Instructions
 
 Provide detailed instructions for the AI to follow when using this skill.
+`,
+  },
+  "claude-plugin": {
+    ".claude-plugin/plugin.json": `{
+  "name": "Example Plugin",
+  "description": "An example Claude plugin - replace with your actual plugin",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "mcpServers": {
+    "example-server": {
+      "command": "npx",
+      "args": ["-y", "@example/mcp-server"],
+      "env": {}
+    }
+  }
+}`,
+    ".claude-plugin/agents/example.md": `---
+name: example-agent
+description: Example agent - replace with your actual agent
+---
+
+# Example Agent
+
+This is an example Claude agent. Replace this content with your actual agent definition.
+
+## Role
+
+Describe the agent's role and responsibilities.
+
+## Instructions
+
+Provide detailed instructions for the agent to follow.
+`,
+    ".claude-plugin/skills/example/SKILL.md": `---
+name: example-skill
+description: Example skill - replace with your actual skill
+tags: example, template
+---
+
+# Example Skill
+
+This is an example skill bundled with the plugin.
+
+## What this skill does
+
+Describe what this skill helps the AI accomplish.
+
+## Instructions
+
+Provide detailed instructions for the AI to follow when using this skill.
+`,
+    ".claude-plugin/commands/example.md": `---
+name: example-command
+description: Example slash command - replace with your actual command
+---
+
+# Example Command
+
+This is an example slash command. It will be available as /example-command in Claude Code.
+
+## Usage
+
+Describe how to use this command.
 `,
   },
   windsurf: {
@@ -329,6 +402,23 @@ Provide clear instructions for the AI.
 
 Include examples if helpful.
 `,
+  },
+  mcp: {
+    "mcp-server.json": `{
+  "name": "Example MCP Server",
+  "description": "An example MCP server package - replace with your actual server configuration",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "mcpServers": {
+    "example-server": {
+      "command": "npx",
+      "args": ["-y", "@example/mcp-server"],
+      "env": {
+        "API_KEY": "\${API_KEY}"
+      }
+    }
+  }
+}`,
   },
 };
 

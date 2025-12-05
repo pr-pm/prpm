@@ -6,6 +6,49 @@
  */
 
 /**
+ * Supported package formats (AI editors/tools)
+ * Note: format + subtype combinations replace legacy combined formats like 'cursor-hooks'
+ */
+export type Format =
+  | 'cursor'
+  | 'claude'
+  | 'continue'
+  | 'windsurf'
+  | 'copilot'
+  | 'kiro'
+  | 'agents.md'
+  | 'gemini.md'
+  | 'claude.md'
+  | 'gemini'
+  | 'opencode'
+  | 'ruler'
+  | 'droid'
+  | 'trae'
+  | 'aider'
+  | 'zencoder'
+  | 'replit'
+  | 'generic'
+  | 'mcp';
+
+/**
+ * Package subtypes (what kind of package it is)
+ */
+export type Subtype =
+  | 'rule'
+  | 'agent'
+  | 'skill'
+  | 'slash-command'
+  | 'prompt'
+  | 'workflow'
+  | 'tool'
+  | 'template'
+  | 'collection'
+  | 'chatmode'
+  | 'hook'
+  | 'plugin'
+  | 'server';
+
+/**
  * Package metadata provided to converters
  * Shared interface for all from* converter functions
  */
@@ -43,9 +86,9 @@ export interface CanonicalPackage {
   organization?: string; // Organization name if published under org
   tags: string[];
 
-  // New taxonomy: format + subtype
-  format: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'cursor-hooks' | 'generic' | 'mcp';
-  subtype: 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
+  // Taxonomy: format (AI editor) + subtype (package kind)
+  format: Format;
+  subtype: Subtype;
 
   // Additional metadata from prpm.json
   license?: string;
@@ -145,30 +188,27 @@ export interface CanonicalPackage {
       globs?: string[]; // File patterns where the rule applies
       alwaysApply?: boolean; // Whether rule should always be active
     };
+    claudePlugin?: {
+      mcpServers?: Record<string, {
+        type?: 'stdio' | 'http' | 'sse';
+        command?: string;
+        args?: string[];
+        url?: string;
+        env?: Record<string, string>;
+      }>;
+      contents?: {
+        agents?: string[];
+        skills?: string[];
+        commands?: string[];
+      };
+    };
   };
 
-  // Format compatibility scores
-  formatScores?: {
-    cursor?: number;
-    'cursor-hooks'?: number;
-    claude?: number;
-    continue?: number;
-    windsurf?: number;
-    copilot?: number;
-    kiro?: number;
-    'agents.md'?: number;
-    gemini?: number;
-    opencode?: number;
-    ruler?: number;
-    droid?: number;
-    trae?: number;
-    aider?: number;
-    zencoder?: number;
-    replit?: number;
-  };
+  // Format compatibility scores (keyed by Format type)
+  formatScores?: Partial<Record<Format, number>>;
 
-  // Source information
-  sourceFormat?: 'cursor' | 'cursor-hooks' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic';
+  // Source information - which format was this package originally in
+  sourceFormat?: Format;
   sourceUrl?: string;
 
   // Quality & verification flags
@@ -213,7 +253,7 @@ export interface MetadataSection {
     };
     claudeSlashCommand?: {
       description?: string; // Description of the slash command
-      argumentHint?: string; // Arguments expected for the slash command
+      argumentHint?: string | string[]; // Arguments expected for the slash command (string or array of positional args)
       allowedTools?: string; // Comma-separated list of tools
       model?: string; // Model to use for the command
       disableModelInvocation?: boolean; // Whether to prevent SlashCommand tool from calling this
@@ -240,6 +280,20 @@ export interface MetadataSection {
     zencoderConfig?: {
       globs?: string[]; // File patterns where the rule applies
       alwaysApply?: boolean; // Whether rule should always be active
+    };
+    claudePlugin?: {
+      mcpServers?: Record<string, {
+        type?: 'stdio' | 'http' | 'sse';
+        command?: string;
+        args?: string[];
+        url?: string;
+        env?: Record<string, string>;
+      }>;
+      contents?: {
+        agents?: string[];
+        skills?: string[];
+        commands?: string[];
+      };
     };
   };
 }

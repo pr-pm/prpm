@@ -1586,6 +1586,8 @@ function SearchPageContent() {
                           collection: "Collection",
                           chatmode: "Chat Mode",
                           hook: "Hook",
+                          plugin: "Plugin",
+                          server: "Server",
                         };
                         return (
                           <option key={subtype} value={subtype}>

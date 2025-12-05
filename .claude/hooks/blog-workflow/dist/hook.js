@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 "use strict";
 
-// ../../.claude/hooks/blog-workflow/src/hook.ts
+// blog-workflow/hook.ts
 var import_fs = require("fs");
 
-// ../../.claude/hooks/blog-workflow/src/hook-utils.ts
+// blog-workflow/hook-utils.ts
 function isBlogRelatedPrompt(prompt) {
   const blogKeywords = [
     "blog post",
@@ -112,7 +112,7 @@ DO NOT proceed with blog writing without using these tools!
 `.trim();
 }
 
-// ../../.claude/hooks/blog-workflow/src/hook.ts
+// blog-workflow/hook.ts
 function readStdin() {
   try {
     const input = (0, import_fs.readFileSync)(0, "utf-8");

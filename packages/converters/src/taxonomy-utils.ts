@@ -3,10 +3,10 @@
  * Helper functions for working with package format and subtype
  */
 
-import type { CanonicalPackage } from './types/canonical.js';
+import type { CanonicalPackage, Format, Subtype } from './types/canonical.js';
 
-export type Format = 'cursor' | 'cursor-hooks' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
-export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
+// Re-export types from canonical for backwards compatibility
+export type { Format, Subtype } from './types/canonical.js';
 
 /**
  * Detect subtype from frontmatter fields
@@ -65,14 +65,14 @@ export function setTaxonomy(
 export function normalizeFormat(sourceFormat: string): Format {
   const normalized = sourceFormat.toLowerCase();
 
-  if (normalized.includes('cursor-hooks') || normalized.includes('cursorhooks')) return 'cursor-hooks';
+  // Note: cursor-hooks is not a separate format - use format: 'cursor', subtype: 'hook'
   if (normalized.includes('cursor')) return 'cursor';
   if (normalized.includes('claude')) return 'claude';
   if (normalized.includes('continue')) return 'continue';
   if (normalized.includes('windsurf')) return 'windsurf';
   if (normalized.includes('copilot')) return 'copilot';
   if (normalized.includes('kiro')) return 'kiro';
-  if (normalized.includes('agents.md') || normalized.includes('agentsmd')) return 'agents.md';
+  if (normalized.includes('agents.md') || normalized.includes('agentsmd') || normalized.includes('agents-md')) return 'agents.md';
   if (normalized.includes('gemini')) return 'gemini';
   if (normalized.includes('opencode')) return 'opencode';
   if (normalized.includes('ruler')) return 'ruler';

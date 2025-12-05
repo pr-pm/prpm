@@ -42,6 +42,7 @@ import { uploadCanonicalPackage } from "../storage/canonical.js";
 const FORMAT_ENUM = [
   "cursor",
   "claude",
+  "claude-plugin",
   "continue",
   "windsurf",
   "copilot",
@@ -70,6 +71,8 @@ const SUBTYPE_ENUM = [
   "collection",
   "chatmode",
   "hook",
+  "plugin",
+  "server",
 ] as const;
 
 // Columns to select for list results (excludes full_content to reduce payload size)

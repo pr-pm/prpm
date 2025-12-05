@@ -25,9 +25,9 @@ describe('Cursor Hooks Format', () => {
     it('should parse hooks.json correctly', () => {
       const result = fromCursorHooks(sampleHooksJson, metadata);
 
-      expect(result.format).toBe('cursor-hooks');
+      expect(result.format).toBe('cursor');
       expect(result.subtype).toBe('hook');
-      expect(result.sourceFormat).toBe('cursor-hooks');
+      expect(result.sourceFormat).toBe('cursor');
     });
 
     it('should extract hook sections', () => {
@@ -79,7 +79,7 @@ describe('Cursor Hooks Format', () => {
       const canonical = fromCursorHooks(sampleHooksJson, metadata);
       const result = toCursorHooks(canonical);
 
-      expect(result.format).toBe('cursor-hooks');
+      expect(result.format).toBe('cursor');
       expect(result.lossyConversion).toBe(false);
 
       const parsed = JSON.parse(result.content);
@@ -96,7 +96,7 @@ describe('Cursor Hooks Format', () => {
         author: 'test',
         description: 'test',
         tags: [],
-        format: 'cursor-hooks',
+        format: 'cursor',
         subtype: 'hook',
         content: {
           format: 'canonical',
@@ -118,7 +118,7 @@ describe('Cursor Hooks Format', () => {
         author: 'test',
         description: 'test',
         tags: [],
-        format: 'cursor-hooks',
+        format: 'cursor',
         subtype: 'hook',
         content: {
           format: 'canonical',

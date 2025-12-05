@@ -8,7 +8,7 @@ import { fromAgentsMd } from '../from-agents-md.js';
 describe('fromAgentsMd', () => {
   const basicMetadata = {
     id: 'test-agents-md',
-    name: 'agents.md',
+    name: 'agents-md',
     version: '1.0.0',
   };
 

@@ -45,6 +45,7 @@
       "enum": [
         "cursor",
         "claude",
+        "claude-plugin",
         "continue",
         "windsurf",
         "copilot",
@@ -68,7 +69,9 @@
         "template",
         "collection",
         "chatmode",
-        "hook"
+        "hook",
+        "plugin",
+        "server"
       ]
     },
     "author": {
@@ -268,6 +271,7 @@
                 "enum": [
                   "cursor",
                   "claude",
+                  "claude-plugin",
                   "continue",
                   "windsurf",
                   "copilot",
@@ -291,7 +295,9 @@
                   "template",
                   "collection",
                   "chatmode",
-                  "hook"
+                  "hook",
+                  "plugin",
+                  "server"
                 ]
               },
               "name": {

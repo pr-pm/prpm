@@ -133,7 +133,7 @@ export function toCursorHooks(
 
     return {
       content,
-      format: 'cursor-hooks',
+      format: 'cursor',
       warnings: warnings.length > 0 ? warnings : undefined,
       lossyConversion: warnings.length > 0,
       qualityScore: Math.max(0, qualityScore),
@@ -143,7 +143,7 @@ export function toCursorHooks(
     warnings.push(`Conversion error: ${error instanceof Error ? error.message : String(error)}`);
     return {
       content: '{}',
-      format: 'cursor-hooks',
+      format: 'cursor',
       warnings,
       lossyConversion: true,
       qualityScore: 0,

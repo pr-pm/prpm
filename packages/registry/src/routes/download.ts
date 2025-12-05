@@ -120,9 +120,7 @@ export async function downloadRoutes(server: FastifyInstance) {
       }
 
       // Determine target format (use requested format or original format)
-      // Normalize cursor-hooks to cursor (cursor-hooks is a subtype, not a format)
-      const normalizedCanonicalFormat = canonical.format === 'cursor-hooks' ? 'cursor' : canonical.format;
-      const outputFormat = targetFormat || normalizedCanonicalFormat as Format;
+      const outputFormat = targetFormat || canonical.format;
 
       // Convert to target format
       const result = await convertToFormat(

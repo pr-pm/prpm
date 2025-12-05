@@ -27,6 +27,7 @@ import {
   claudeSkillSchema,
   claudeSlashCommandSchema,
   cursorCommandSchema,
+  cursorHooksSchema,
   droidHookSchema,
   droidSkillSchema,
   droidSlashCommandSchema,
@@ -66,6 +67,7 @@ const SUBTYPE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
   ['claude-slash-command.schema.json', claudeSlashCommandSchema],
   ['claude-hook.schema.json', claudeHookSchema],
   ['cursor-command.schema.json', cursorCommandSchema],
+  ['cursor-hooks.schema.json', cursorHooksSchema],
   ['kiro-agent.schema.json', kiroAgentSchema],
   ['kiro-hook.schema.json', kiroHookSchema],
   ['droid-skill.schema.json', droidSkillSchema],
@@ -90,6 +92,7 @@ const SUBTYPE_SCHEMAS: Record<string, { format: string; subtype: string }> = {
 
   // Cursor subtypes
   'cursor-command.schema.json': { format: 'cursor', subtype: 'command' },
+  'cursor-hooks.schema.json': { format: 'cursor', subtype: 'hooks' },
 
   // Kiro subtypes
   'kiro-agent.schema.json': { format: 'kiro', subtype: 'agent' },
