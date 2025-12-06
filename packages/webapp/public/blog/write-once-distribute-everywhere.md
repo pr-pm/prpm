@@ -1,6 +1,6 @@
 # Write Once. Distribute Everywhere: Why Package Publishers Choose PRPM
 
-**Subtitle:** The only AI package manager with lossless cross-format conversion—publish in one format, install in eight.
+**Subtitle:** The only AI package manager with lossless cross-format conversion—publish in one format, install in 24+.
 
 **Tags:** Technical, Package Publishing, Format Conversion, Developer Experience
 
@@ -16,14 +16,14 @@ You've built the perfect Cursor rule for React best practices. It took weeks to 
 
 Your options:
 
-1. **Maintain eight separate versions** - Different repos, different formats, different update cycles
+1. **Maintain dozens of separate versions** - Different repos, different formats, different update cycles
 2. **Pick one format and tell others "sorry"** - Lose 80% of potential users
 3. **Copy-paste with manual tweaks** - Introduce bugs, forget which version has which fix
 4. **Give up on multi-platform support** - Watch your package's reach plateau
 
 None of these are good. All waste your time. And when AI tooling evolves monthly, the maintenance burden compounds.
 
-**PRPM solves this:** Write your package once in any format. The registry handles conversion to all eight formats automatically. Users get the right format for their editor. You publish once.
+**PRPM solves this:** Write your package once in any format. The registry handles conversion to all 24+ formats automatically. Users get the right format for their editor. You publish once.
 
 ---
 
@@ -70,22 +70,41 @@ The user gets a working Claude skill. You didn't write two versions. Zero mainte
 
 ---
 
-## Format Support: All Eight Major Platforms
+## Format Support: All Major AI Coding Platforms
 
 PRPM supports every major AI coding platform, each with complete JSON schemas and validation:
 
 | Format | File Location | Frontmatter | Key Features |
 |--------|---------------|-------------|--------------|
-| **Cursor** | `.cursor/rules` | Required | 4 rule types, MDC format, `@file` references |
+| **Cursor** | `.cursor/rules/*.mdc` | Required | 4 rule types, MDC format, `@file` references |
+| **Cursor (Legacy)** | `.cursorrules` → `.cursor/rules/` | Migration | Auto-converts legacy single-file to new format |
+| **Cursor Hooks** | `hooks.json` | N/A (JSON) | Event-driven agent hooks |
 | **Claude Code** | `.claude/{agents,skills,commands}/` | Required | allowed-tools, model selection, hooks |
+| **Claude Plugin** | `.claude-plugin/plugin.json` | N/A (JSON) | Bundled agents, skills, commands, MCP servers |
 | **Continue** | `.continue/rules/*.md` | Required | Globs, regex, alwaysApply logic |
-| **Windsurf** | `.windsurf/rules` | None | Plain markdown, 12k character limit |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | Optional | Two-tier, comma-separated patterns |
-| **Kiro Steering** | `.kiro/steering/*.md` | Optional | Inclusion modes, foundational types |
-| **Kiro Hooks** | `.kiro/hooks/*.json` | N/A (JSON) | Event-driven file automations |
-| **agents.md** | `agents.md` | None | Plain markdown only |
+| **Continue (Legacy)** | `.continuerules` → `.continue/rules/` | Migration | Auto-converts legacy format |
+| **Windsurf** | `.windsurf/rules/*.md` | None | Plain markdown, 12K character limit |
+| **GitHub Copilot** | `.github/instructions/*.instructions.md` | Optional | Two-tier patterns, chatmodes |
+| **Kiro Steering** | `.kiro/steering/*.md` | Optional | Inclusion modes (always/fileMatch/manual) |
+| **Kiro Hooks** | `.kiro/hooks/*.kiro.hook` | N/A (JSON) | Event-driven file automations |
+| **Kiro Agents** | `.kiro/agents/*.json` | N/A (JSON) | Custom agent configurations |
+| **Gemini CLI** | `.gemini/commands/*.toml` | N/A (TOML) | Custom slash commands |
+| **Gemini Extension** | `.gemini/extensions/*/gemini-extension.json` | N/A (JSON) | MCP servers, context files |
+| **OpenCode** | `.opencode/{agent,command,tool}/*.md` | Optional | Agents, commands, tools |
+| **Factory Droid** | `.factory/{skills,commands,hooks}/` | Required | Skills, commands, hooks |
+| **Zed** | `.zed/extensions/*.json` | N/A (JSON) | Rust/WASM extensions, slash commands |
+| **Zencoder** | `.zencoder/rules/*.md` | Optional | Globs, alwaysApply rules |
+| **Trae** | `.trae/rules/*.md` | Optional | AI coding rules |
+| **Aider** | `CONVENTIONS.md` | None | Project conventions file |
+| **Replit** | `replit.md` | None | Replit agent configuration |
+| **Ruler** | Various | Optional | VS Code extension rules |
+| **AGENTS.md** | `AGENTS.md` | None | OpenAI-style project instructions |
+| **GEMINI.md** | `GEMINI.md` | None | Gemini project instructions |
+| **CLAUDE.md** | `CLAUDE.md` | None | Claude project instructions |
+| **MCP** | `.mcp/*.json` | N/A (JSON) | Model Context Protocol servers/tools |
+| **Generic** | `.prompts/*.md` | Optional | Universal AI prompts |
 
-Each format has different conventions. PRPM knows them all.
+That's **24 formats** with **2 legacy migration paths**—full bidirectional conversion support across the entire AI coding ecosystem.
 
 ---
 
@@ -221,7 +240,7 @@ $ prpm publish
 
 New AI editor launches? PRPM adds conversion support. Your existing package automatically works with it. No republish needed.
 
-**Real example:** When Claude Code launched hooks support in November 2024, PRPM added `claude-hook` conversion. Every existing package with equivalent automation became compatible **retroactively**.
+**Real example:** When Claude Code launched hooks support in July 2025, PRPM added `claude-hook` conversion. Every existing package with equivalent automation became compatible **retroactively**.
 
 ### 4. Analytics Across Formats
 
@@ -377,14 +396,14 @@ prpm init
 ### Step 2: Test Locally
 
 ```bash
-# Test conversion to all formats
-prpm convert --input=.cursor/rules/main.md --validate-all
+# Test conversion to different formats
+prpm convert .cursor/rules/main.md --to claude
+prpm convert .cursor/rules/main.md --to continue
+prpm convert .cursor/rules/main.md --to windsurf
 
-✓ cursor: valid
-✓ claude-skill: valid
-✓ continue-prompt: valid
-✓ windsurf-rule: valid
-✓ copilot-instruction: valid
+✓ Converted from cursor to claude
+✓ Converted from cursor to continue
+✓ Converted from cursor to windsurf
 ```
 
 ### Step 3: Publish
@@ -400,9 +419,9 @@ prpm publish
 
 ### Step 4: Monitor Analytics
 
-```bash
-prpm stats @yourname/my-package
+Check your package analytics in the [PRPM Dashboard](https://prpm.dev/dashboard):
 
+```
 Downloads by format:
   cursor: ████████████ 450
   claude-skill: ████████ 320
@@ -418,7 +437,7 @@ Total downloads: 1,240
 
 ### For Package Authors
 
-- **10x reach** with same effort (one package, eight platforms)
+- **10x reach** with same effort (one package, 24+ platforms)
 - **Zero maintenance burden** from format differences
 - **Future-proof** against new editors launching
 
@@ -482,7 +501,7 @@ Your package will work in Cursor, Claude, Continue, Windsurf, Copilot, Kiro, age
 
 ## Additional Resources
 
-- **[Format Specifications Guide](/blog/format-specifications-guide)** - Complete reference for all eight formats
+- **[Format Specifications Guide](/blog/format-specifications-guide)** - Complete reference for all supported formats
 - **[JSON Schemas for AI Prompts](/blog/json-schemas-for-ai-prompts)** - Deep dive on PRPM's validation system
 - **[Publishing Documentation](https://docs.prpm.dev/publishing)** - Step-by-step publishing guide
 - **[Conversion API Reference](https://docs.prpm.dev/conversion)** - Programmatic access to converters
@@ -501,4 +520,4 @@ We're here to help package publishers succeed. If you're considering publishing 
 
 ---
 
-**Tweet this post:** "I publish AI coding packages for one editor. PRPM converts them for eight. Same package, zero extra work. Write once, distribute everywhere. 🚀 https://prpm.dev/blog/write-once-distribute-everywhere"
+**Tweet this post:** "I publish AI coding packages for one editor. PRPM converts them for 24+ platforms. Same package, zero extra work. Write once, distribute everywhere. 🚀 https://prpm.dev/blog/write-once-distribute-everywhere"
