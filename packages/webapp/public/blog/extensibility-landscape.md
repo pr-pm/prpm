@@ -15,11 +15,11 @@ AI coding assistants fall into three categories:
 - Kiro
 - Droid
 
-**Partially Extensible** (Rules + Limited Extensions)
-- Gemini CLI
+**Partially Extensible** (Slash Commands + Limited Extensions)
+- Cursor (slash commands only, no plugins)
+- Gemini CLI (slash commands + MCP servers)
 
-**Rules-Only** (No Native Extensions)
-- Cursor
+**Rules-Only** (No Extensions or Commands)
 - Continue
 - Windsurf
 - GitHub Copilot
@@ -371,12 +371,27 @@ JSON configuration:
 - Experimental settings
 - Per-extension metadata
 
+**Slash Commands**: Custom shortcuts for frequently-used prompts
+- **User-scoped**: `~/.gemini/commands/` (available across all projects)
+- **Project-scoped**: `.gemini/commands/` (only within current project)
+- Built-in commands:
+  - `/help` - Display available commands and shortcuts
+  - `/copy` - Copy last output to clipboard
+  - `/mcp` - List MCP servers and tools
+  - `/memory` - Manage instructional context from GEMINI.md
+  - `/directory` - Manage workspace directories
+
 ### Installation
 
 ```bash
+# Extensions
 gemini extensions install <path>
 gemini extensions list
 gemini extensions enable <name>
+
+# Create custom slash command
+mkdir -p ~/.gemini/commands
+echo "Review this code for security issues" > ~/.gemini/commands/security-review.md
 ```
 
 ### Developer Experience
@@ -386,26 +401,27 @@ gemini extensions enable <name>
 - MCP server ecosystem
 - Variable substitution for paths
 - Built-in extension management commands
+- Custom slash commands for workflow automation
 
 **Cons:**
 - Limited to MCP servers (no custom hooks or events)
-- No native slash command support in extensions
-- TOML commands not yet supported in PRPM conversion
+- TOML commands not yet fully supported
 - Smaller ecosystem vs other systems
 
 ---
 
-## 5. Cursor: No Native Extensions (Rules Only)
+## 5. Cursor: Rules and Slash Commands
 
-**Extensibility:** None (Rules files only)
+**Extensibility:** Partial (Rules + Custom Slash Commands)
 
 ### File Locations
 
 - **Rules**: `.cursor/rules/*.mdc` (MDC format with frontmatter)
+- **Slash Commands**: `.cursor/commands/*.md` (introduced v1.6, September 2025)
 
 ### Format
 
-MDC (Markdown Components) with YAML frontmatter:
+**Rules** - MDC (Markdown Components) with YAML frontmatter:
 
 ```markdown
 ---
@@ -424,6 +440,19 @@ When writing React components:
 - Extract logic into custom hooks
 ```
 
+**Slash Commands** - Plain Markdown:
+
+```markdown
+# Fix Compile Errors
+
+Review the TypeScript compiler errors and fix them systematically:
+
+1. Read the error messages carefully
+2. Fix type errors first
+3. Address missing imports
+4. Verify all fixes compile successfully
+```
+
 ### Capabilities
 
 **Rules**: Declarative coding standards
@@ -431,11 +460,20 @@ When writing React components:
 - Conditional application via `alwaysApply`
 - Rich markdown instructions
 - Code examples
+- **Automatically appended** to agent context
+
+**Slash Commands**: Reusable prompts with more weight
+- Custom commands in `.cursor/commands/*.md`
+- Run by typing `/` in Agent input
+- **Explicit prompts** - LLM follows them more closely than rules
+- Built-in `/summarize` command to free context space
+- Team-shareable via version control
+
+**Key Difference**: Rules are automatically appended; slash commands are your explicit prompt and carry more weight in the LLM's decision-making.
 
 **No Extensions**: Cursor has no plugin system
 - Cannot add custom tools
 - Cannot define event hooks
-- Cannot create slash commands
 - Limited to what Cursor provides out-of-box
 
 ### Installation
@@ -824,8 +862,8 @@ prpm install @username/analyst-agent --as kiro
 | **Claude Code** | ✅ Plugins | ✅ 4 events | ✅ Via plugins | ❌ | MD + YAML |
 | **Zed** | ✅ Rust/WASM | ❌ | ✅ | ✅ In rules | Plain MD / TOML |
 | **OpenCode** | ✅ JS/TS | ✅ 40+ events | ✅ | ✅ | MD + YAML |
-| **Gemini CLI** | ✅ JSON config | ❌ | ✅ | ⚠️ TOML (limited) | JSON |
-| **Cursor** | ❌ | ❌ | ❌ | ❌ | MDC + YAML |
+| **Gemini CLI** | ✅ JSON config | ❌ | ✅ | ✅ Custom + Built-in | JSON |
+| **Cursor** | ❌ | ❌ | ❌ | ✅ Custom (v1.6+) | MDC + YAML |
 | **Continue** | ❌ | ❌ | ❌ | ❌ | MD + YAML |
 | **Windsurf** | ❌ | ❌ | ❌ | ❌ | Plain MD |
 | **GitHub Copilot** | ❌ | ❌ | ❌ | ❌ | Plain MD |
@@ -839,8 +877,8 @@ prpm install @username/analyst-agent --as kiro
 | **Claude Code** | `.claude/skills/`, `.claude/plugins/`, `.claude/agents/` | None |
 | **Zed** | `.rules` | `.cursorrules`, `AGENTS.md`, `CLAUDE.md`, etc. |
 | **OpenCode** | `.opencode/agent/`, `.opencode/command/`, `.opencode/plugin/` | `~/.config/opencode/` |
-| **Gemini CLI** | `~/.gemini/extensions/` | None |
-| **Cursor** | `.cursor/rules/` | None |
+| **Gemini CLI** | `~/.gemini/extensions/`, `~/.gemini/commands/` | `.gemini/commands/` (project-scoped) |
+| **Cursor** | `.cursor/rules/`, `.cursor/commands/` | None |
 | **Continue** | `.continue/rules/` | None |
 | **Windsurf** | `.windsurfrules` | None |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | None |
@@ -855,7 +893,7 @@ prpm install @username/analyst-agent --as kiro
 | **Zed** | Rust (compiles to WASM) | TOML + Markdown | Extensions are Rust crates |
 | **OpenCode** | JavaScript/TypeScript | YAML + Markdown | Plugin API is JS/TS with 40+ events |
 | **Gemini CLI** | N/A (config only) | JSON | MCP servers can be any language |
-| **Cursor** | N/A (no extensions) | YAML + Markdown | Rules only |
+| **Cursor** | N/A (no extensions) | YAML + Markdown | Rules + Slash commands (v1.6+) |
 | **Continue** | N/A (no extensions) | YAML + Markdown | Rules only |
 | **Windsurf** | N/A (no extensions) | Markdown | Rules only |
 | **GitHub Copilot** | N/A (no extensions) | Markdown | Instructions only |
@@ -1012,15 +1050,17 @@ The AI coding assistant landscape is fragmented when it comes to extensibility:
 - MCP server integrations
 - Rich configuration options
 
-**Rules-Only** (4 systems): Cursor, Continue, Windsurf, GitHub Copilot
-- Simple, focused on instructions
+**Partially Extensible** (2 systems): Cursor, Gemini CLI
+- Cursor: Slash commands for reusable prompts (v1.6+)
+- Gemini CLI: Slash commands + MCP servers
 - No hooks or plugins
-- Limited to built-in features
-- Easier to learn but less flexible
+- Limited automation capabilities
 
-**Hybrid** (1 system): Gemini CLI
-- MCP servers but no hooks
-- Extension config but limited capabilities
+**Rules-Only** (3 systems): Continue, Windsurf, GitHub Copilot
+- Simple, focused on instructions
+- No hooks, plugins, or commands
+- Limited to built-in features
+- Easier to learn but least flexible
 
 Choose based on your needs:
 - **Power users building tools**: OpenCode, Claude Code, Zed
