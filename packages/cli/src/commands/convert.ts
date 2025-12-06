@@ -297,7 +297,15 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
     let canonicalPkg: CanonicalPackage;
     switch (sourceFormat.toLowerCase()) {
       case 'cursor':
-        canonicalPkg = fromCursor(content, metadata);
+        // Auto-detect if we should resolve @file references
+        const hasFileReferences = /@[\w\-\/\.]+\.[\w]+/m.test(content);
+        if (hasFileReferences) {
+          console.log(chalk.dim('📁 Detected @file references - resolving linked files...'));
+        }
+        canonicalPkg = fromCursor(content, metadata, {
+          resolveFiles: hasFileReferences,
+          basePath: hasFileReferences ? dirname(sourcePath) : undefined,
+        });
         break;
       case 'cursor-hooks':
         canonicalPkg = fromCursorHooks(content, metadata);
