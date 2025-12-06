@@ -316,4 +316,128 @@ describe('File Reference Utilities', () => {
       expect(grouped).toEqual({});
     });
   });
+
+  describe('loadReferencedFiles - security', () => {
+    it('should block path traversal attacks with ../', () => {
+      const basePath = '/safe/base/path';
+      const maliciousRefs = ['../../etc/passwd'];
+
+      // Mock console.warn to capture warnings
+      const warnings: string[] = [];
+      const originalWarn = console.warn;
+      console.warn = (...args: any[]) => {
+        warnings.push(args.join(' '));
+      };
+
+      try {
+        const { loadReferencedFiles } = require('../../utils/file-references.js');
+        const loaded = loadReferencedFiles(maliciousRefs, basePath);
+
+        // Should not load any files
+        expect(loaded).toHaveLength(0);
+
+        // Should log warning about path traversal
+        expect(warnings.some(w => w.includes('Path traversal attempt blocked'))).toBe(true);
+      } finally {
+        console.warn = originalWarn;
+      }
+    });
+
+    it('should block absolute path attempts', () => {
+      const basePath = '/safe/base/path';
+      const maliciousRefs = ['/etc/passwd'];
+
+      const warnings: string[] = [];
+      const originalWarn = console.warn;
+      console.warn = (...args: any[]) => {
+        warnings.push(args.join(' '));
+      };
+
+      try {
+        const { loadReferencedFiles } = require('../../utils/file-references.js');
+        const loaded = loadReferencedFiles(maliciousRefs, basePath);
+
+        // On most systems, /etc/passwd won't be under /safe/base/path
+        // so it should be blocked
+        expect(loaded.length).toBeLessThanOrEqual(0);
+      } finally {
+        console.warn = originalWarn;
+      }
+    });
+
+    it('should allow safe relative paths', () => {
+      const basePath = process.cwd();
+      const safeRefs = ['package.json']; // Exists in repo root
+
+      const warnings: string[] = [];
+      const originalWarn = console.warn;
+      console.warn = (...args: any[]) => {
+        warnings.push(args.join(' '));
+      };
+
+      try {
+        const { loadReferencedFiles } = require('../../utils/file-references.js');
+        const loaded = loadReferencedFiles(safeRefs, basePath);
+
+        // Should successfully load package.json
+        expect(loaded.length).toBeGreaterThan(0);
+        expect(loaded[0].path).toBe('package.json');
+        expect(loaded[0].content).toContain('"name"');
+
+        // Should not log path traversal warnings
+        expect(warnings.some(w => w.includes('Path traversal attempt blocked'))).toBe(false);
+      } finally {
+        console.warn = originalWarn;
+      }
+    });
+
+    it('should block backslash traversal on Windows', () => {
+      const basePath = '/safe/base/path';
+      const maliciousRefs = ['..\\..\\etc\\passwd'];
+
+      const warnings: string[] = [];
+      const originalWarn = console.warn;
+      console.warn = (...args: any[]) => {
+        warnings.push(args.join(' '));
+      };
+
+      try {
+        const { loadReferencedFiles } = require('../../utils/file-references.js');
+        const loaded = loadReferencedFiles(maliciousRefs, basePath);
+
+        expect(loaded).toHaveLength(0);
+        expect(warnings.some(w => w.includes('Path traversal') || w.includes('not found'))).toBe(true);
+      } finally {
+        console.warn = originalWarn;
+      }
+    });
+
+    it('should block mixed traversal attempts', () => {
+      const basePath = '/safe/base/path';
+      const maliciousRefs = [
+        '../../etc/passwd',
+        '/absolute/path',
+        '../sensitive/data.txt',
+      ];
+
+      const warnings: string[] = [];
+      const originalWarn = console.warn;
+      console.warn = (...args: any[]) => {
+        warnings.push(args.join(' '));
+      };
+
+      try {
+        const { loadReferencedFiles } = require('../../utils/file-references.js');
+        const loaded = loadReferencedFiles(maliciousRefs, basePath);
+
+        // None should be loaded
+        expect(loaded).toHaveLength(0);
+
+        // Should have warnings for each attempt
+        expect(warnings.length).toBeGreaterThan(0);
+      } finally {
+        console.warn = originalWarn;
+      }
+    });
+  });
 });

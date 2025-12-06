@@ -385,3 +385,247 @@ describe('isCursorFormat', () => {
     expect(isCursorFormat(plainContent)).toBe(false);
   });
 });
+
+describe('toCursor - security', () => {
+  describe('path sanitization', () => {
+    it('should reject absolute paths in file references', () => {
+      const pkgWithAbsolutePath: any = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'file-reference',
+              title: 'Malicious File',
+              path: '/etc/passwd',
+              content: 'secret data',
+              category: 'config',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(pkgWithAbsolutePath);
+
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings).toContain('Rejected absolute path: /etc/passwd - converted to relative path');
+      expect(result.content).not.toContain('@file /etc/passwd');
+      expect(result.content).toContain('@file etc/passwd');
+    });
+
+    it('should reject Windows absolute paths in file references', () => {
+      const pkgWithWindowsPath: any = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'file-reference',
+              title: 'Windows Path',
+              path: 'C:/Windows/System32/config',
+              content: 'data',
+              category: 'config',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(pkgWithWindowsPath);
+
+      expect(result.warnings).toContain('Rejected absolute path: C:/Windows/System32/config - converted to relative path');
+      expect(result.content).not.toContain('@file C:/');
+    });
+
+    it('should remove parent directory traversal from paths', () => {
+      const pkgWithTraversal: any = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'file-reference',
+              title: 'Traversal Attack',
+              path: '../../etc/passwd',
+              content: 'secret',
+              category: 'config',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(pkgWithTraversal);
+
+      expect(result.warnings).toContain('Rejected parent traversal in path: ../../etc/passwd - removed traversal segments');
+      expect(result.content).not.toContain('../');
+      expect(result.content).toContain('@file etc/passwd');
+    });
+
+    it('should reject control characters in paths', () => {
+      const pkgWithControlChars: any = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'file-reference',
+              title: 'Control Chars',
+              path: 'file\nwith\rnewlines\t.txt',
+              content: 'data',
+              category: 'doc',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(pkgWithControlChars);
+
+      expect(result.warnings).toContain('Rejected control characters in path: file\nwith\rnewlines\t.txt');
+      expect(result.content).not.toMatch(/[\r\n\t]/);
+      expect(result.content).toContain('@file filewithnewlines.txt');
+    });
+
+    it('should handle multiple path violations at once', () => {
+      const pkgWithMultipleIssues: any = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'file-reference',
+              title: 'Multiple Issues',
+              path: '/absolute/../path\nwith\ttabs',
+              content: 'data',
+              category: 'test',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(pkgWithMultipleIssues);
+
+      expect(result.warnings?.length).toBeGreaterThan(0);
+      expect(result.content).not.toContain('../');
+      expect(result.content).not.toMatch(/[\r\n\t]/);
+    });
+  });
+
+  describe('HTML comment injection prevention', () => {
+    it('should escape --> in category field', () => {
+      const pkgWithInjection: any = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'file-reference',
+              title: 'Injection Attempt',
+              path: 'safe.txt',
+              content: 'data',
+              category: 'malicious--> <script>alert("XSS")</script> <!--',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(pkgWithInjection);
+
+      expect(result.content).not.toContain('-->');
+      expect(result.content).toContain('--&gt;');
+      expect(result.content).not.toContain('<script>');
+      expect(result.content).toContain('&lt;script&gt;');
+    });
+
+    it('should escape < and > in category field', () => {
+      const pkgWithTags: any = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'file-reference',
+              title: 'HTML Tags',
+              path: 'file.txt',
+              content: 'data',
+              category: '<div>category</div>',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(pkgWithTags);
+
+      expect(result.content).toContain('&lt;div&gt;category&lt;/div&gt;');
+      expect(result.content).not.toContain('<div>');
+    });
+
+    it('should handle missing category field safely', () => {
+      const pkgWithoutCategory: any = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'file-reference',
+              title: 'No Category',
+              path: 'file.txt',
+              content: 'data',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(pkgWithoutCategory);
+
+      expect(result.content).toContain('<!-- PRPM: File reference from converted package -->');
+    });
+  });
+
+  describe('combined security scenarios', () => {
+    it('should handle file reference with all security issues', () => {
+      const dangerousPkg: any = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'file-reference',
+              title: 'Kitchen Sink Attack',
+              path: '/absolute/../../etc/passwd\nwith\nnewlines',
+              content: 'malicious content',
+              category: 'attack--> <script>alert(1)</script> <!--',
+            },
+          ],
+        },
+      };
+
+      const result = toCursor(dangerousPkg);
+
+      // Should have multiple warnings
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings!.length).toBeGreaterThan(0);
+
+      // Path should be sanitized
+      expect(result.content).not.toContain('/absolute');
+      expect(result.content).not.toContain('../');
+      expect(result.content).not.toMatch(/[\r\n]/);
+
+      // HTML should be escaped
+      expect(result.content).not.toContain('-->');
+      expect(result.content).not.toContain('<script>');
+      expect(result.content).toContain('--&gt;');
+      expect(result.content).toContain('&lt;script&gt;');
+
+      // Quality score should be reduced for lossy conversion
+      expect(result.qualityScore).toBeLessThan(100);
+    });
+  });
+});
