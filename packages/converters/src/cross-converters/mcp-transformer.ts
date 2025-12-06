@@ -163,7 +163,8 @@ export function validateMCPServer(config: MCPServerConfig): string[] {
     errors.push('MCP server args must be an array');
   }
 
-  if (config.env && (typeof config.env !== 'object' || config.env === null)) {
+  // Check env is either undefined or a non-null object
+  if (config.env !== undefined && (typeof config.env !== 'object' || config.env === null)) {
     errors.push('MCP server env must be an object');
   }
 
