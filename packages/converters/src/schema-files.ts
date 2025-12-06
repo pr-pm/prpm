@@ -38,6 +38,7 @@ export const traeSchema = loadSchema('trae.schema.json');
 export const aiderSchema = loadSchema('aider.schema.json');
 export const zencoderSchema = loadSchema('zencoder.schema.json');
 export const replitSchema = loadSchema('replit.schema.json');
+export const zedSchema = loadSchema('zed.schema.json');
 
 // Subtype schemas
 export const claudeAgentSchema = loadSchema('claude-agent.schema.json');

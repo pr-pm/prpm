@@ -11,7 +11,8 @@
     "windsurf": "https://docs.codeium.com/windsurf/cascade",
     "gemini": "https://geminicli.com/docs/extensions/",
     "aider": "https://aider.chat/docs/usage/conventions.html",
-    "replit": "https://docs.replit.com/replitai/agent"
+    "replit": "https://docs.replit.com/replitai/agent",
+    "zed": "https://zed.dev/docs/assistant/assistant-settings"
   },
   "formats": {
     "cursor": {
@@ -154,6 +155,16 @@
       "markdownFallback": "AGENTS.md",
       "notes": "Replit Agent supports AGENTS.md for custom agent instructions. Full agents.md support following the agent-rules.org standard."
     },
+    "zed": {
+      "name": "Zed",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": true,
+      "supportsAgents": false,
+      "supportsAgentsMd": true,
+      "markdownFallback": ".rules",
+      "notes": "Zed supports .rules files (plain markdown, no frontmatter). Also reads .cursorrules, .windsurfrules, .clinerules, AGENTS.md, CLAUDE.md, GEMINI.md in priority order. Extensions are installed to ~/Library/Application Support/Zed/extensions (macOS) written in Rust/WASM."
+    },
     "agents.md": {
       "name": "agents.md (Universal)",
       "supportsSkills": false,
@@ -195,9 +206,10 @@
       "ruler",
       "droid",
       "replit",
+      "zed",
       "agents.md",
       "generic"
     ],
-    "notes": "These formats can use AGENTS.md as a universal fallback. Claude Code uses CLAUDE.md instead (not AGENTS.md). Gemini uses GEMINI.md instead. Cursor added AGENTS.md support in version 1.6+. GitHub Copilot added AGENTS.md support in August 2025."
+    "notes": "These formats can use AGENTS.md as a universal fallback. Claude Code uses CLAUDE.md instead (not AGENTS.md). Gemini uses GEMINI.md instead. Cursor added AGENTS.md support in version 1.6+. GitHub Copilot added AGENTS.md support in August 2025. Zed reads AGENTS.md along with other rule file formats."
   }
 }

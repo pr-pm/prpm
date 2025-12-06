@@ -22,6 +22,7 @@ import {
   aiderSchema,
   zencoderSchema,
   replitSchema,
+  zedSchema,
   claudeAgentSchema,
   claudeHookSchema,
   claudeSkillSchema,
@@ -58,6 +59,7 @@ const BASE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
   ['aider.schema.json', aiderSchema],
   ['zencoder.schema.json', zencoderSchema],
   ['replit.schema.json', replitSchema],
+  ['zed.schema.json', zedSchema],
   ['format-registry.schema.json', formatRegistrySchema],
 ];
 

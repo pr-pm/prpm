@@ -24,6 +24,7 @@ export type Format =
   | "aider"
   | "zencoder"
   | "replit"
+  | "zed"
   | "generic"
   | "mcp";
 
@@ -49,6 +50,7 @@ export const FORMATS: readonly Format[] = [
   "aider",
   "zencoder",
   "replit",
+  "zed",
   "generic",
   "mcp",
 ] as const;
@@ -114,6 +116,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   aider: ["rule"],
   zencoder: ["rule"],
   replit: ["rule"],
+  zed: ["rule"],
   mcp: ["server", "tool"],
   "agents.md": ["skill", "agent", "rule"],
   generic: [

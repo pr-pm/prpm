@@ -28,6 +28,7 @@ export type Format =
   | 'aider'
   | 'zencoder'
   | 'replit'
+  | 'zed'
   | 'generic'
   | 'mcp';
 
@@ -491,7 +492,7 @@ export interface FileReferenceSection {
  */
 export interface CustomSection {
   type: 'custom';
-  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini';
+  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini' | 'zed';
   title?: string;
   content: string;
   metadata?: Record<string, any>;
