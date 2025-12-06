@@ -39,10 +39,11 @@ describe('Progressive Disclosure', () => {
   describe('AGENTS_MD_SUPPORTED_FORMATS', () => {
     it('should be a readonly array with all agent-supporting formats', () => {
       expect(Array.isArray(AGENTS_MD_SUPPORTED_FORMATS)).toBe(true);
-      expect(AGENTS_MD_SUPPORTED_FORMATS.length).toBe(9);
+      expect(AGENTS_MD_SUPPORTED_FORMATS.length).toBe(10);
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('cursor');
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('copilot');
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('kiro');
+      expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('zed');
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('agents.md');
     });
   });
