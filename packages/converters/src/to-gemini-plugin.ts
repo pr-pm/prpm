@@ -80,7 +80,7 @@ function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
   }
 
   // Restore Gemini-specific metadata (for roundtrip)
-  const geminiData = metadata?.type === 'metadata' ? metadata.data.geminiExtension : undefined;
+  const geminiData = metadata?.type === 'metadata' ? metadata.data?.geminiExtension : undefined;
   const geminiMeta = pkg.metadata?.geminiExtension;
 
   if (geminiData || geminiMeta) {

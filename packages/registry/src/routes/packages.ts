@@ -72,6 +72,7 @@ const SUBTYPE_ENUM = [
   "chatmode",
   "hook",
   "plugin",
+  "extension",
   "server",
 ] as const;
 
