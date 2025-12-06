@@ -10,7 +10,7 @@ import { getSearchProvider } from '../search/index.js';
 
 // Reusable enum constants for schema validation
 const FORMAT_ENUM = ['cursor', 'claude', 'claude-plugin', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'trae', 'aider', 'zencoder', 'replit', 'generic', 'mcp'] as const;
-const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook', 'plugin', 'server'] as const;
+const SUBTYPE_ENUM = ['rule', 'agent', 'skill', 'slash-command', 'prompt', 'workflow', 'tool', 'template', 'collection', 'chatmode', 'hook', 'plugin', 'extension', 'server'] as const;
 
 // Columns to select for list results (excludes full_content to reduce payload size)
 const LIST_COLUMNS = `
