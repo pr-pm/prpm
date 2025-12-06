@@ -1,0 +1,191 @@
+{
+  "$schema": "../../schemas/format-capabilities.schema.json",
+  "version": "1.0.0",
+  "description": "Format capability matrix for PRPM converters - defines which subtypes each format supports and progressive disclosure fallbacks",
+  "formats": {
+    "cursor": {
+      "name": "Cursor",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "cursor-rules.md",
+      "notes": "Cursor uses simple .cursorrules files. No native support for advanced package types."
+    },
+    "claude": {
+      "name": "Claude Code",
+      "supportsSkills": true,
+      "supportsPlugins": true,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "CLAUDE.md",
+      "notes": "Claude Code supports skills, agents, and plugins. Full agents.md support for progressive disclosure."
+    },
+    "continue": {
+      "name": "Continue",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "continue-prompts.md",
+      "notes": "Continue uses simple prompt files. No native support for advanced package types."
+    },
+    "windsurf": {
+      "name": "Windsurf",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "windsurf-rules.md",
+      "notes": "Windsurf uses markdown rules with 12K character limit. No advanced package support."
+    },
+    "copilot": {
+      "name": "GitHub Copilot",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "copilot-instructions.md",
+      "notes": "GitHub Copilot uses simple instruction files. No advanced package support."
+    },
+    "kiro": {
+      "name": "Kiro AI",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "kiro-agent.md",
+      "notes": "Kiro supports agents in .kiro/agents/ directory. Full agents.md support."
+    },
+    "gemini": {
+      "name": "Gemini Code Assist",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": true,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "GEMINI.md",
+      "notes": "Gemini uses extensions in gemini_extensions.json. No agents.md support."
+    },
+    "opencode": {
+      "name": "OpenCode",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "opencode-agent.md",
+      "notes": "OpenCode supports agents with mode/model/temperature config. Full agents.md support."
+    },
+    "ruler": {
+      "name": "Ruler",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "ruler-rules.md",
+      "notes": "Ruler supports agents in .ruler/agents/ directory. Full agents.md support."
+    },
+    "droid": {
+      "name": "Factory Droid",
+      "supportsSkills": true,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "droid-skill.md",
+      "notes": "Factory Droid supports both skills and agents. Full agents.md support."
+    },
+    "trae": {
+      "name": "Trae",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "trae-rules.md",
+      "notes": "Trae uses simple markdown rules. No advanced package support."
+    },
+    "aider": {
+      "name": "Aider",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "CONVENTIONS.md",
+      "notes": "Aider uses CONVENTIONS.md for coding standards. No advanced package support."
+    },
+    "zencoder": {
+      "name": "Zencoder",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "zencoder-rules.md",
+      "notes": "Zencoder uses simple rules with glob patterns. No advanced package support."
+    },
+    "replit": {
+      "name": "Replit Agent",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "replit_agent_instructions.md",
+      "notes": "Replit Agent supports agents in .replit_agent_instructions.md. Full agents.md support."
+    },
+    "agents.md": {
+      "name": "agents.md (Universal)",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "agents.md",
+      "notes": "Universal agents.md format - works with OpenAI, Gemini, Claude, and most AI systems."
+    },
+    "mcp": {
+      "name": "Model Context Protocol",
+      "supportsSkills": false,
+      "supportsPlugins": true,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "mcp-server.json",
+      "notes": "MCP is a server protocol, not a package format. Supports plugins via server configuration."
+    },
+    "generic": {
+      "name": "Generic (Markdown)",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "README.md",
+      "notes": "Generic markdown format for maximum compatibility. Supports agents.md convention."
+    }
+  },
+  "agentsMdSupport": {
+    "description": "Formats that intelligently support agents.md for progressive disclosure",
+    "formats": [
+      "claude",
+      "kiro",
+      "opencode",
+      "ruler",
+      "droid",
+      "replit",
+      "agents.md",
+      "generic"
+    ],
+    "notes": "These formats can use agents.md as a universal fallback when they don't support advanced subtypes like skills or plugins."
+  }
+}

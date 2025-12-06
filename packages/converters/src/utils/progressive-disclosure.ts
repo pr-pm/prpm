@@ -9,116 +9,90 @@
  * - Claude skill → CLAUDE.md
  * - Gemini extension → GEMINI.md
  * - Generic → agents.md (universal)
+ *
+ * NOTE: All format capabilities are loaded from data/format-capabilities.json
+ * to avoid hardcoding format-specific logic.
  */
 
 import type { Format, Subtype } from '@pr-pm/types';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+/**
+ * Format capability definition
+ */
+export interface FormatCapability {
+  name: string;
+  supportsSkills: boolean;
+  supportsPlugins: boolean;
+  supportsExtensions: boolean;
+  supportsAgents: boolean;
+  supportsAgentsMd: boolean;
+  markdownFallback?: string;
+  notes?: string;
+}
+
+/**
+ * Format capabilities data structure
+ */
+export interface FormatCapabilitiesData {
+  version: string;
+  description: string;
+  formats: Record<string, FormatCapability>;
+  agentsMdSupport: {
+    description: string;
+    formats: string[];
+    notes?: string;
+  };
+}
+
+/**
+ * Load format capabilities from JSON file
+ */
+function loadFormatCapabilities(): FormatCapabilitiesData {
+  const dataPath = join(__dirname, 'format-capabilities.json');
+  const data = readFileSync(dataPath, 'utf-8');
+  return JSON.parse(data) as FormatCapabilitiesData;
+}
+
+// Load capabilities once at module initialization
+const capabilitiesData = loadFormatCapabilities();
 
 /**
  * Formats that support agents.md for progressive disclosure
  *
- * These systems can intelligently use agents.md as a universal fallback
- * when they don't support advanced subtypes like skills or plugins.
+ * Loaded dynamically from data/format-capabilities.json
  */
-export const AGENTS_MD_SUPPORTED_FORMATS: readonly Format[] = [
-  'claude',      // Claude Code supports agents.md
-  'kiro',        // Kiro AI supports agents
-  'opencode',    // OpenCode AI supports agents
-  'ruler',       // Ruler supports agents
-  'droid',       // Factory Droid supports agents
-  'replit',      // Replit Agent supports agents.md
-  'agents.md',   // Native agents.md format
-  'generic',     // Generic format supports agents.md
-] as const;
-
-/**
- * Check if a format supports agents.md for progressive disclosure
- */
-export function supportsAgentsMd(format: Format): boolean {
-  return AGENTS_MD_SUPPORTED_FORMATS.includes(format);
-}
+export const AGENTS_MD_SUPPORTED_FORMATS: readonly Format[] =
+  capabilitiesData.agentsMdSupport.formats as Format[];
 
 /**
  * Format capabilities - what subtypes each format supports
+ *
+ * Loaded dynamically from data/format-capabilities.json
  */
 export const FORMAT_CAPABILITIES: Partial<Record<Format, {
   supportsSkills?: boolean;
   supportsPlugins?: boolean;
   supportsExtensions?: boolean;
   supportsAgents?: boolean;
+  supportsAgentsMd?: boolean;
   markdownFallback?: string;
-}>> = {
-  cursor: {
-    supportsAgents: false,
-    markdownFallback: 'cursor-rules.md',
-  },
-  claude: {
-    supportsSkills: true,
-    supportsPlugins: true,
-    supportsAgents: true,
-    markdownFallback: 'CLAUDE.md',
-  },
-  continue: {
-    supportsAgents: false,
-    markdownFallback: 'continue-prompts.md',
-  },
-  windsurf: {
-    supportsAgents: false,
-    markdownFallback: 'windsurf-rules.md',
-  },
-  copilot: {
-    supportsAgents: false,
-    markdownFallback: 'copilot-instructions.md',
-  },
-  kiro: {
-    supportsAgents: true,
-    markdownFallback: 'kiro-agent.md',
-  },
-  gemini: {
-    supportsExtensions: true,
-    markdownFallback: 'GEMINI.md',
-  },
-  opencode: {
-    supportsAgents: true,
-    markdownFallback: 'opencode-agent.md',
-  },
-  ruler: {
-    supportsAgents: true,
-    markdownFallback: 'ruler-rules.md',
-  },
-  droid: {
-    supportsSkills: true,
-    supportsAgents: true,
-    markdownFallback: 'droid-skill.md',
-  },
-  trae: {
-    supportsAgents: false,
-    markdownFallback: 'trae-rules.md',
-  },
-  aider: {
-    supportsAgents: false,
-    markdownFallback: 'CONVENTIONS.md',
-  },
-  zencoder: {
-    supportsAgents: false,
-    markdownFallback: 'zencoder-rules.md',
-  },
-  replit: {
-    supportsAgents: true,
-    markdownFallback: 'replit_agent_instructions.md',
-  },
-  'agents.md': {
-    supportsAgents: true,
-    markdownFallback: 'agents.md',
-  },
-  mcp: {
-    supportsPlugins: true,
-    markdownFallback: 'mcp-server.json',
-  },
-  generic: {
-    supportsAgents: true,
-    markdownFallback: 'README.md',
-  },
-};
+}>> = capabilitiesData.formats as any;
+
+/**
+ * Check if a format supports agents.md for progressive disclosure
+ *
+ * Reads from data/format-capabilities.json agentsMdSupport section
+ */
+export function supportsAgentsMd(format: Format): boolean {
+  return AGENTS_MD_SUPPORTED_FORMATS.includes(format);
+}
 
 /**
  * Check if a format supports a specific subtype
@@ -353,4 +327,18 @@ export function getConversionStrategy(
     warnings: [],
     qualityScore,
   };
+}
+
+/**
+ * Get all format capabilities for inspection/debugging
+ */
+export function getAllFormatCapabilities(): FormatCapabilitiesData {
+  return capabilitiesData;
+}
+
+/**
+ * Get capability for a specific format
+ */
+export function getFormatCapability(format: Format): FormatCapability | undefined {
+  return capabilitiesData.formats[format];
 }
