@@ -235,6 +235,20 @@ export interface CanonicalPackage {
   official?: boolean;    // Official package from cursor.directory, claude.ai, etc.
   verified?: boolean;    // Verified by PRPM team for quality/safety
   karenScore?: number;   // 0-100 quality score from Karen
+
+  // Multi-file package structure (for Cursor @file references, etc.)
+  fileStructure?: {
+    /** Main entry file path */
+    mainFile: string;
+    /** Additional files referenced in the package */
+    files: Array<{
+      path: string;
+      category?: string;
+      description?: string;
+    }>;
+    /** Directory structure for visualization */
+    directories?: string[];
+  };
 }
 
 export interface CanonicalContent {
@@ -253,6 +267,7 @@ export type Section =
   | ContextSection
   | HookSection
   | CursorHookSection
+  | FileReferenceSection
   | CustomSection;
 
 /**
@@ -438,6 +453,27 @@ export interface CursorHookSection {
   scriptPath: string; // Path to the executable script
   description?: string; // What the hook does
   script?: string; // The actual script content (if embedded)
+}
+
+/**
+ * File Reference section
+ * References to additional files in multi-file packages
+ * Particularly useful for Cursor @file references
+ */
+export interface FileReferenceSection {
+  type: 'file-reference';
+  /** Display title for the file */
+  title: string;
+  /** Relative path within the package (e.g., "patterns/naming.md") */
+  path: string;
+  /** File content */
+  content: string;
+  /** MIME type or language identifier (e.g., "text/markdown", "typescript") */
+  contentType?: string;
+  /** Purpose/category for organization */
+  category?: 'pattern' | 'example' | 'context' | 'config' | 'data' | 'documentation' | 'other';
+  /** Optional description of what this file provides */
+  description?: string;
 }
 
 /**
