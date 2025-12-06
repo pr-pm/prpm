@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "write-once-distribute-everywhere",
+    title: "Write Once. Distribute Everywhere: Why Package Publishers Choose PRPM",
+    excerpt: "The only AI package manager with lossless cross-format conversion—publish in one format, install in eight.",
+    date: "2025-12-06",
+    author: "PRPM Team",
+    readTime: "10 min read",
+    tags: ["Technical", "Package Publishing", "Format Conversion", "Developer Experience"],
+  },
+  {
     slug: "introducing-use-cases",
     title: "Finding Your Perfect Package Just Got Easier: Introducing Use Cases",
     excerpt: "With over 7,000 packages in PRPM, we built a smarter way to discover what you need—organized by what you're trying to accomplish.",
