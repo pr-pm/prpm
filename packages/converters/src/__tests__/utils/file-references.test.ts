@@ -10,6 +10,7 @@ import {
   extractDirectories,
   hasAtReferences,
   groupByCategory,
+  loadReferencedFiles,
 } from '../../utils/file-references.js';
 
 describe('File Reference Utilities', () => {
@@ -330,7 +331,6 @@ describe('File Reference Utilities', () => {
       };
 
       try {
-        const { loadReferencedFiles } = require('../../utils/file-references.js');
         const loaded = loadReferencedFiles(maliciousRefs, basePath);
 
         // Should not load any files
@@ -354,7 +354,6 @@ describe('File Reference Utilities', () => {
       };
 
       try {
-        const { loadReferencedFiles } = require('../../utils/file-references.js');
         const loaded = loadReferencedFiles(maliciousRefs, basePath);
 
         // On most systems, /etc/passwd won't be under /safe/base/path
@@ -376,7 +375,6 @@ describe('File Reference Utilities', () => {
       };
 
       try {
-        const { loadReferencedFiles } = require('../../utils/file-references.js');
         const loaded = loadReferencedFiles(safeRefs, basePath);
 
         // Should successfully load package.json
@@ -402,7 +400,6 @@ describe('File Reference Utilities', () => {
       };
 
       try {
-        const { loadReferencedFiles } = require('../../utils/file-references.js');
         const loaded = loadReferencedFiles(maliciousRefs, basePath);
 
         expect(loaded).toHaveLength(0);
@@ -427,7 +424,6 @@ describe('File Reference Utilities', () => {
       };
 
       try {
-        const { loadReferencedFiles } = require('../../utils/file-references.js');
         const loaded = loadReferencedFiles(maliciousRefs, basePath);
 
         // None should be loaded
