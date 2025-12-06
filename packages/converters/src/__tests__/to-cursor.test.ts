@@ -111,13 +111,15 @@ describe('toCursor', () => {
               title: 'Naming Patterns',
               path: 'patterns/naming.md',
               content: '# Naming conventions...',
-              description: 'Additional naming pattern rules'
+              description: 'Additional naming pattern rules',
+              category: 'pattern' as const
             },
             {
               type: 'file-reference' as const,
               title: 'TypeScript Patterns',
               path: 'patterns/typescript.md',
               content: '# TypeScript guidelines...',
+              category: 'example' as const
             }
           ]
         }
@@ -128,6 +130,10 @@ describe('toCursor', () => {
       // Should include @file references
       expect(result.content).toContain('@file patterns/naming.md');
       expect(result.content).toContain('@file patterns/typescript.md');
+
+      // Should include PRPM marker comments
+      expect(result.content).toContain('<!-- PRPM: File reference from pattern -->');
+      expect(result.content).toContain('<!-- PRPM: File reference from example -->');
 
       // Should include section header and description when provided
       expect(result.content).toContain('## Naming Patterns');

@@ -380,6 +380,9 @@ function convertContext(section: {
  * @file path/to/file.md
  *
  * This creates a reference that Cursor will read and include when the rule is active.
+ *
+ * PRPM adds a special marker comment to indicate this @file reference was generated
+ * during format conversion, helping distinguish between original and converted refs.
  */
 function convertFileReference(section: {
   type: 'file-reference';
@@ -399,7 +402,8 @@ function convertFileReference(section: {
     lines.push('');
   }
 
-  // Add @file reference
+  // Add PRPM marker and @file reference
+  lines.push(`<!-- PRPM: File reference from ${section.category || 'converted package'} -->`);
   lines.push(`@file ${section.path}`);
 
   return lines.join('\n');
