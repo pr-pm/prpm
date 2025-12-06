@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/zed/extension.json",
+  "$comment": "https://zed.dev/docs/extensions/developing-extensions",
+  "title": "Zed Extension Format",
+  "description": "JSON Schema for Zed extension.toml manifest files. Extensions are written in Rust, compiled to WebAssembly, and can provide languages, themes, slash commands, debuggers, and MCP servers.",
+  "type": "object",
+  "required": ["id", "name", "version", "authors", "repository"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique extension identifier (lowercase, hyphens allowed)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable extension name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the extension"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (e.g., 0.1.0)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "authors": {
+      "type": "array",
+      "description": "Extension authors",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "repository": {
+      "type": "string",
+      "description": "Git repository URL",
+      "format": "uri"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier. Must be one of: MIT, Apache-2.0, BSD-3-Clause, GPL-3.0",
+      "enum": ["MIT", "Apache-2.0", "BSD-3-Clause", "GPL-3.0"]
+    },
+    "slash_commands": {
+      "type": "object",
+      "description": "Slash command definitions for the Assistant",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Description shown in slash command menu"
+          },
+          "requires_argument": {
+            "type": "boolean",
+            "description": "Whether the command requires an argument",
+            "default": false
+          }
+        }
+      }
+    },
+    "languages": {
+      "type": "array",
+      "description": "Programming languages provided by this extension",
+      "items": {
+        "type": "string"
+      }
+    },
+    "themes": {
+      "type": "object",
+      "description": "Color themes provided by this extension",
+      "additionalProperties": {
+        "type": "string",
+        "description": "Path to theme JSON file"
+      }
+    },
+    "grammars": {
+      "type": "object",
+      "description": "Tree-sitter grammars provided by this extension",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "repository": {
+            "type": "string",
+            "description": "Git repository URL for the grammar"
+          },
+          "commit": {
+            "type": "string",
+            "description": "Git commit hash"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "id": "my-extension",
+      "name": "My Extension",
+      "description": "Custom slash commands for development",
+      "version": "0.1.0",
+      "authors": ["Developer Name"],
+      "repository": "https://github.com/username/my-extension",
+      "license": "MIT",
+      "slash_commands": {
+        "echo": {
+          "description": "echoes the provided input",
+          "requires_argument": true
+        },
+        "greet": {
+          "description": "greets the user",
+          "requires_argument": false
+        }
+      }
+    },
+    {
+      "id": "python-extension",
+      "name": "Python Language Support",
+      "description": "Python language features for Zed",
+      "version": "1.0.0",
+      "authors": ["Zed Team"],
+      "repository": "https://github.com/zed-industries/zed",
+      "license": "Apache-2.0",
+      "languages": ["Python"],
+      "grammars": {
+        "python": {
+          "repository": "https://github.com/tree-sitter/tree-sitter-python",
+          "commit": "abc123def456"
+        }
+      }
+    }
+  ]
+}

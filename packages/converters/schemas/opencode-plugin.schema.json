@@ -1,0 +1,244 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/opencode/plugin.json",
+  "$comment": "https://opencode.ai/docs/plugins/",
+  "title": "OpenCode Plugin Format",
+  "description": "JSON Schema for OpenCode plugin modules. Plugins are JavaScript/TypeScript modules that can hook into 40+ events across commands, files, LSP, messages, permissions, sessions, todos, tools, and TUI interactions.",
+  "type": "object",
+  "required": ["name", "description", "plugin"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Plugin name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of plugin functionality"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "author": {
+      "type": "string",
+      "description": "Plugin author"
+    },
+    "plugin": {
+      "type": "object",
+      "description": "Plugin implementation details",
+      "required": ["file"],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Path to plugin JavaScript/TypeScript file (e.g., plugin.js, plugin.ts)"
+        },
+        "export": {
+          "type": "string",
+          "description": "Named export from the plugin file",
+          "default": "default"
+        },
+        "location": {
+          "type": "string",
+          "description": "Plugin location: 'project' (.opencode/plugin/) or 'global' (~/.config/opencode/plugin)",
+          "enum": ["project", "global"],
+          "default": "project"
+        }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Event hooks implemented by this plugin",
+      "properties": {
+        "command": {
+          "type": "array",
+          "description": "Command event hooks",
+          "items": {
+            "type": "string",
+            "enum": [
+              "onCommandStart",
+              "onCommandEnd",
+              "onCommandError"
+            ]
+          }
+        },
+        "file": {
+          "type": "array",
+          "description": "File event hooks",
+          "items": {
+            "type": "string",
+            "enum": [
+              "onFileCreate",
+              "onFileRead",
+              "onFileWrite",
+              "onFileDelete",
+              "onFileChange"
+            ]
+          }
+        },
+        "lsp": {
+          "type": "array",
+          "description": "LSP event hooks",
+          "items": {
+            "type": "string",
+            "enum": [
+              "onLSPStart",
+              "onLSPMessage",
+              "onLSPError"
+            ]
+          }
+        },
+        "message": {
+          "type": "array",
+          "description": "Message event hooks",
+          "items": {
+            "type": "string",
+            "enum": [
+              "onMessageSend",
+              "onMessageReceive",
+              "onMessageError"
+            ]
+          }
+        },
+        "permission": {
+          "type": "array",
+          "description": "Permission event hooks",
+          "items": {
+            "type": "string",
+            "enum": [
+              "onPermissionRequest",
+              "onPermissionGrant",
+              "onPermissionDeny"
+            ]
+          }
+        },
+        "session": {
+          "type": "array",
+          "description": "Session event hooks",
+          "items": {
+            "type": "string",
+            "enum": [
+              "onSessionStart",
+              "onSessionEnd",
+              "onSessionPause",
+              "onSessionResume"
+            ]
+          }
+        },
+        "todo": {
+          "type": "array",
+          "description": "Todo event hooks",
+          "items": {
+            "type": "string",
+            "enum": [
+              "onTodoCreate",
+              "onTodoUpdate",
+              "onTodoComplete",
+              "onTodoDelete"
+            ]
+          }
+        },
+        "tool": {
+          "type": "array",
+          "description": "Tool event hooks",
+          "items": {
+            "type": "string",
+            "enum": [
+              "onToolRegister",
+              "onToolCall",
+              "onToolResponse",
+              "onToolError"
+            ]
+          }
+        },
+        "tui": {
+          "type": "array",
+          "description": "TUI event hooks",
+          "items": {
+            "type": "string",
+            "enum": [
+              "onTUIRender",
+              "onTUIInput",
+              "onTUIUpdate"
+            ]
+          }
+        }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "description": "Custom tools provided by this plugin",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tool name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Tool description"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Tool parameters (JSON Schema)"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "env-protection",
+      "description": "Prevents sharing .env files",
+      "version": "1.0.0",
+      "author": "Security Team",
+      "plugin": {
+        "file": "env-protection.js",
+        "location": "global"
+      },
+      "hooks": {
+        "file": ["onFileRead"],
+        "permission": ["onPermissionRequest"]
+      }
+    },
+    {
+      "name": "notification-plugin",
+      "description": "Sends notifications on command completion",
+      "version": "1.0.0",
+      "author": "DevOps Team",
+      "plugin": {
+        "file": "notify.ts",
+        "export": "NotifyPlugin",
+        "location": "project"
+      },
+      "hooks": {
+        "command": ["onCommandEnd", "onCommandError"]
+      }
+    },
+    {
+      "name": "custom-tools",
+      "description": "Adds custom development tools",
+      "version": "1.0.0",
+      "plugin": {
+        "file": "tools.js"
+      },
+      "tools": [
+        {
+          "name": "lint",
+          "description": "Run linter on current file",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "fix": {
+                "type": "boolean",
+                "description": "Auto-fix issues"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

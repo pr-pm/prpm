@@ -88,12 +88,13 @@
     "opencode": {
       "name": "OpenCode",
       "supportsSkills": false,
-      "supportsPlugins": false,
+      "supportsPlugins": true,
       "supportsExtensions": false,
       "supportsAgents": true,
       "supportsAgentsMd": true,
+      "supportsSlashCommands": true,
       "markdownFallback": "opencode-agent.md",
-      "notes": "OpenCode supports agents with mode/model/temperature config. Full agents.md support."
+      "notes": "OpenCode supports agents with mode/model/temperature config. Plugins are JavaScript/TypeScript modules in .opencode/plugin with 40+ event hooks. Slash commands available. Full agents.md support."
     },
     "ruler": {
       "name": "Ruler",
@@ -162,8 +163,9 @@
       "supportsExtensions": true,
       "supportsAgents": false,
       "supportsAgentsMd": true,
+      "supportsSlashCommands": true,
       "markdownFallback": ".rules",
-      "notes": "Zed supports .rules files (plain markdown, no frontmatter). Also reads .cursorrules, .windsurfrules, .clinerules, AGENTS.md, CLAUDE.md, GEMINI.md in priority order. Extensions are installed to ~/Library/Application Support/Zed/extensions (macOS) written in Rust/WASM."
+      "notes": "Zed supports .rules files (plain markdown, no frontmatter). Slash commands can be used in rules with /file, /diagnostics, /fetch, etc. Extensions written in Rust/WASM with extension.toml manifest. Also reads .cursorrules, .windsurfrules, .clinerules, AGENTS.md, CLAUDE.md, GEMINI.md in priority order. Extensions installed to ~/Library/Application Support/Zed/extensions (macOS). License required: MIT, Apache 2.0, BSD 3-Clause, or GPLv3."
     },
     "agents.md": {
       "name": "agents.md (Universal)",

@@ -141,6 +141,53 @@ class UserProfile extends React.Component {
 \`\`\`
 ```
 
+### Slash Commands in Rules
+
+**Support:** Text threads only
+**Official Docs:** https://zed.dev/docs/ai/text-threads#slash-commands-in-rules
+
+Zed supports slash commands within `.rules` files for dynamic content insertion. Slash commands must be on their own line and are evaluated when the text thread is created.
+
+**Available Slash Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `/default` | Inserts default rule |
+| `/diagnostics` | Injects language server errors/warnings |
+| `/fetch` | Retrieves webpage content |
+| `/file` | Inserts file or directory contents |
+| `/now` | Adds current date and time |
+| `/prompt` | Adds custom-configured prompt |
+| `/symbols` | Inserts current tab's symbols |
+| `/tab` | Inserts active tab or all tab contents |
+| `/terminal` | Inserts terminal output lines |
+| `/selection` | Inserts selected text |
+
+**Example with Slash Commands:**
+
+`.rules`:
+```markdown
+# Code Review Assistant
+
+You are an expert Rust engineer reviewing a project.
+
+Here is the project configuration:
+
+/file Cargo.toml
+
+Here are the current diagnostics:
+
+/diagnostics
+
+Review the code and provide feedback.
+```
+
+**Important Notes:**
+- Slash commands only work in **text threads**, not other AI interaction modes
+- Commands are evaluated once when the thread is created (not continuously updated)
+- Can be nested within other rules for dynamic context injection
+- Must be on their own line
+
 ---
 
 ## Zed Extensions
@@ -150,17 +197,103 @@ class UserProfile extends React.Component {
 - **Linux:** `$XDG_DATA_HOME/zed/extensions` or `~/.local/share/zed/extensions`
 - **Windows:** `%LOCALAPPDATA%\Zed\extensions`
 
-**Extension Format:** `extension.toml` manifest
+**Extension Format:** `extension.toml` manifest with Rust/WebAssembly code
+**Official Docs:** https://zed.dev/docs/extensions/developing-extensions
 
-Zed extensions are different from coding instructions. Extensions are plugins written in Rust and compiled to WebAssembly. They support:
+Zed extensions are different from coding instructions. Extensions are plugins written in Rust and compiled to WebAssembly.
 
-- Language support (syntax highlighting, LSP)
-- Debuggers
-- Themes
-- Slash commands
-- MCP (Model Context Protocol) servers
+### Extension Capabilities
 
-**Note:** PRPM focuses on AI coding instructions (`.rules` files), not Zed extensions. For extension development, see https://zed.dev/docs/extensions/developing-extensions
+- **Language Support**: Syntax highlighting, LSP integration, tree-sitter grammars
+- **Debuggers**: Debugging protocol adapters
+- **Themes**: Color schemes and UI themes
+- **Slash Commands**: Custom `/command` implementations for the Assistant
+- **MCP Servers**: Model Context Protocol server integrations
+
+### Extension Structure
+
+**Required Files:**
+- `extension.toml` - Manifest with metadata, dependencies, and features
+- `Cargo.toml` - Rust package configuration
+- `src/lib.rs` - Rust implementation
+
+**Extension Manifest Example (`extension.toml`):**
+```toml
+id = "my-extension"
+name = "My Extension"
+description = "Custom development tools"
+version = "0.1.0"
+authors = ["Your Name"]
+repository = "https://github.com/username/my-extension"
+license = "MIT"
+
+[slash_commands.echo]
+description = "echoes the provided input"
+requires_argument = true
+
+[slash_commands.greet]
+description = "greets the user"
+requires_argument = false
+```
+
+**Rust Implementation Example (`src/lib.rs`):**
+```rust
+use zed_extension_api::{self as zed, SlashCommand, SlashCommandOutput};
+
+struct MyExtension;
+
+impl zed::Extension for MyExtension {
+    fn run_slash_command(
+        &self,
+        command: SlashCommand,
+        args: Vec<String>,
+        worktree: Option<&zed::Worktree>,
+    ) -> Result<SlashCommandOutput, String> {
+        match command.name.as_str() {
+            "echo" => {
+                let text = args.join(" ");
+                Ok(SlashCommandOutput {
+                    text,
+                    sections: vec![],
+                })
+            }
+            "greet" => {
+                Ok(SlashCommandOutput {
+                    text: "Hello from my extension!".to_string(),
+                    sections: vec![],
+                })
+            }
+            _ => Err(format!("Unknown command: {}", command.name)),
+        }
+    }
+}
+
+zed::register_extension!(MyExtension);
+```
+
+### License Requirements
+
+**Accepted Licenses (as of October 1st, 2025):**
+- MIT
+- Apache-2.0
+- BSD-3-Clause
+- GPL-3.0
+
+**Important:** Extensions MUST specify one of these licenses in `extension.toml` to be published to the Zed extension registry.
+
+### Development Workflow
+
+1. **Install Rust**: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+2. **Create Extension**: Use `zed_extension_api` crate
+3. **Local Testing**: In Zed, click "Install Dev Extension" and select your extension directory
+4. **Debugging**: Check `zed.log` or run `zed --foreground` for live output
+5. **Publishing**:
+   - Fork `zed-industries/extensions`
+   - Add extension as Git submodule
+   - Update `extensions.toml`
+   - Open pull request
+
+**Note:** PRPM currently focuses on AI coding instructions (`.rules` files) and slash command definitions, not full Zed extension development with Rust/WASM. For complete extension development, see https://zed.dev/docs/extensions/developing-extensions
 
 ---
 
