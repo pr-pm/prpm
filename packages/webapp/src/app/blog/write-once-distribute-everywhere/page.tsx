@@ -106,7 +106,7 @@ Use TypeScript strict mode as defined in @tsconfig.json.`}</code></pre>
 
           <p><strong>What happens when a Claude Code user installs it:</strong></p>
 
-          <pre><code>{`prpm install @yourname/react-best-practices --format=claude-skill`}</code></pre>
+          <pre><code>{`prpm install @yourname/react-best-practices --as claude --subtype skill`}</code></pre>
 
           <p>PRPM&apos;s converter:</p>
 
@@ -299,13 +299,13 @@ prpm publish @nextjs/app-router-migration`}</code></pre>
 prpm install @nextjs/app-router-migration
 
 # Claude user
-prpm install @nextjs/app-router-migration --format=claude-skill
+prpm install @nextjs/app-router-migration --as claude --subtype skill
 
 # Continue user
-prpm install @nextjs/app-router-migration --format=continue-prompt
+prpm install @nextjs/app-router-migration --as continue
 
 # Windsurf user
-prpm install @nextjs/app-router-migration --format=windsurf-rule`}</code></pre>
+prpm install @nextjs/app-router-migration --as windsurf`}</code></pre>
 
           <p>PRPM converts on-the-fly. Every user gets a validated, working package. You maintain one version.</p>
 

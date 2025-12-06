@@ -54,7 +54,7 @@ Use TypeScript strict mode as defined in @tsconfig.json.
 **What happens when a Claude Code user installs it:**
 
 ```bash
-prpm install @yourname/react-best-practices --format=claude-skill
+prpm install @yourname/react-best-practices --as claude --subtype skill
 ```
 
 PRPM's converter:
@@ -186,13 +186,13 @@ Users install in their preferred format automatically:
 prpm install @nextjs/app-router-migration
 
 # Claude user
-prpm install @nextjs/app-router-migration --format=claude-skill
+prpm install @nextjs/app-router-migration --as claude --subtype skill
 
 # Continue user
-prpm install @nextjs/app-router-migration --format=continue-prompt
+prpm install @nextjs/app-router-migration --as continue
 
 # Windsurf user
-prpm install @nextjs/app-router-migration --format=windsurf-rule
+prpm install @nextjs/app-router-migration --as windsurf
 ```
 
 PRPM converts on-the-fly. Every user gets a validated, working package. You maintain one version.
@@ -319,7 +319,7 @@ PRPM uses the native version when available, falls back to conversion when not. 
 
 ```bash
 # User installs your package for Claude
-prpm install @yourname/advanced-package --format=claude-skill
+prpm install @yourname/advanced-package --as claude --subtype skill
 
 # PRPM also installs dependencies for Claude
 ✓ Installing @company/shared-rules (claude-skill)
