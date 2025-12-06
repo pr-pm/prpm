@@ -222,6 +222,15 @@ export interface CanonicalPackage {
       excludeTools?: string[];
       experimentalSettings?: Record<string, any>;
     };
+    fileStructure?: {
+      mainFile: string;
+      files: Array<{
+        path: string;
+        category?: string;
+        description?: string;
+      }>;
+      directories?: string[];
+    };
   };
 
   // Format compatibility scores (keyed by Format type)

@@ -10,9 +10,41 @@ import {
   getUniversalFallback,
   getFallbackChain,
   getConversionStrategy,
+  supportsAgentsMd,
+  AGENTS_MD_SUPPORTED_FORMATS,
 } from '../../utils/progressive-disclosure.js';
 
 describe('Progressive Disclosure', () => {
+  describe('supportsAgentsMd', () => {
+    it('should identify formats that support agents.md', () => {
+      expect(supportsAgentsMd('claude')).toBe(true);
+      expect(supportsAgentsMd('kiro')).toBe(true);
+      expect(supportsAgentsMd('opencode')).toBe(true);
+      expect(supportsAgentsMd('ruler')).toBe(true);
+      expect(supportsAgentsMd('droid')).toBe(true);
+      expect(supportsAgentsMd('replit')).toBe(true);
+      expect(supportsAgentsMd('agents.md')).toBe(true);
+      expect(supportsAgentsMd('generic')).toBe(true);
+    });
+
+    it('should identify formats that do not support agents.md', () => {
+      expect(supportsAgentsMd('cursor')).toBe(false);
+      expect(supportsAgentsMd('continue')).toBe(false);
+      expect(supportsAgentsMd('windsurf')).toBe(false);
+      expect(supportsAgentsMd('copilot')).toBe(false);
+    });
+  });
+
+  describe('AGENTS_MD_SUPPORTED_FORMATS', () => {
+    it('should be a readonly array with all agent-supporting formats', () => {
+      expect(Array.isArray(AGENTS_MD_SUPPORTED_FORMATS)).toBe(true);
+      expect(AGENTS_MD_SUPPORTED_FORMATS.length).toBe(8);
+      expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('claude');
+      expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('kiro');
+      expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('agents.md');
+    });
+  });
+
   describe('formatSupportsSubtype', () => {
     it('should detect Claude supports skills', () => {
       expect(formatSupportsSubtype('claude', 'skill')).toBe(true);

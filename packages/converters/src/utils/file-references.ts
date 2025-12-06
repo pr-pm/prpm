@@ -9,6 +9,17 @@ import { readFileSync, existsSync } from 'fs';
 import { join, dirname, extname } from 'path';
 
 /**
+ * Loaded file with content and metadata
+ */
+export interface LoadedFile {
+  path: string;
+  content: string;
+  contentType: string;
+  category: 'pattern' | 'example' | 'context' | 'config' | 'data' | 'documentation' | 'other';
+  description?: string;
+}
+
+/**
  * Extract @file references from content
  *
  * Supports various patterns:
@@ -123,20 +134,8 @@ export function detectContentType(path: string): string {
 export function loadReferencedFiles(
   references: string[],
   basePath: string
-): Array<{
-  path: string;
-  content: string;
-  contentType: string;
-  category: string;
-  description?: string;
-}> {
-  const loaded: Array<{
-    path: string;
-    content: string;
-    contentType: string;
-    category: string;
-    description?: string;
-  }> = [];
+): LoadedFile[] {
+  const loaded: LoadedFile[] = [];
 
   for (const ref of references) {
     // Resolve relative path

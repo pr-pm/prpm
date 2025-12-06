@@ -14,6 +14,30 @@
 import type { Format, Subtype } from '@pr-pm/types';
 
 /**
+ * Formats that support agents.md for progressive disclosure
+ *
+ * These systems can intelligently use agents.md as a universal fallback
+ * when they don't support advanced subtypes like skills or plugins.
+ */
+export const AGENTS_MD_SUPPORTED_FORMATS: readonly Format[] = [
+  'claude',      // Claude Code supports agents.md
+  'kiro',        // Kiro AI supports agents
+  'opencode',    // OpenCode AI supports agents
+  'ruler',       // Ruler supports agents
+  'droid',       // Factory Droid supports agents
+  'replit',      // Replit Agent supports agents.md
+  'agents.md',   // Native agents.md format
+  'generic',     // Generic format supports agents.md
+] as const;
+
+/**
+ * Check if a format supports agents.md for progressive disclosure
+ */
+export function supportsAgentsMd(format: Format): boolean {
+  return AGENTS_MD_SUPPORTED_FORMATS.includes(format);
+}
+
+/**
  * Format capabilities - what subtypes each format supports
  */
 export const FORMAT_CAPABILITIES: Partial<Record<Format, {
