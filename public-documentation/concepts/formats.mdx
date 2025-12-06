@@ -17,7 +17,7 @@ PRPM supports multiple AI tool formats, allowing you to install packages for dif
 | `windsurf` | Windsurf IDE | Rules for Windsurf |
 | `copilot` | GitHub Copilot | Copilot configurations |
 | `kiro` | Kiro AI | Agents and steering files for Kiro |
-| `gemini` | Gemini CLI | Custom commands for Gemini CLI |
+| `gemini` | Gemini CLI | Custom commands and extensions for Gemini CLI |
 | `opencode` | OpenCode AI | Agents, commands, and tools for OpenCode |
 | `ruler` | Ruler | Coding rules and agents for Ruler |
 | `droid` | Factory Droid | Skills, commands, and hooks for Factory Droid |
@@ -35,6 +35,19 @@ Some formats have aliases for compatibility:
 
 - `claude.md` → `claude`
 - `gemini.md` → installs `GEMINI.md` (Gemini markdown); `gemini` installs Gemini CLI commands into `.gemini/commands`
+
+### Gemini Format Details
+
+The `gemini` format supports two subtypes:
+
+- **Slash Commands** (`subtype: slash-command`): Custom commands defined in `.toml` files, installed to `.gemini/commands/`
+- **Extensions** (`subtype: extension`): Full extensions with MCP servers and context files, installed to `.gemini/extensions/<name>/gemini-extension.json`
+
+Extensions support:
+- MCP (Model Context Protocol) server configurations
+- Custom context files
+- Tool exclusions
+- Experimental settings
 
 ## Installing for Specific Formats
 
@@ -81,7 +94,7 @@ Each format has a standard installation path:
 | `windsurf` | `.windsurf/rules/` | `.windsurf/rules/python.md` |
 | `copilot` | `.github/.copilot-instructions.md` | `.github/.copilot-instructions.md` |
 | `kiro` | `.kiro/agents/` or `.kiro/steering/` | `.kiro/agents/code-reviewer.json` |
-| `gemini` | Custom commands directory | `commands/refactor.toml` |
+| `gemini` | `.gemini/commands/` or `.gemini/extensions/` | `.gemini/commands/refactor.toml` or `.gemini/extensions/my-ext/gemini-extension.json` |
 | `opencode` | `.opencode/agent/` or `.opencode/command/` | `.opencode/agent/code-reviewer.md` |
 | `ruler` | `.ruler/rules/` or `.ruler/agents/` | `.ruler/rules/typescript.md` |
 | `droid` | `.factory/skills/` or `.factory/commands/` | `.factory/skills/code-review/SKILL.md` |
