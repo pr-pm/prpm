@@ -24,6 +24,12 @@ import {
   fromRuler,
   fromCursorHooks,
   fromZed,
+  fromOpencode,
+  fromAider,
+  fromTrae,
+  fromReplit,
+  fromZencoder,
+  fromDroid,
   toCursor,
   toClaude,
   toContinue,
@@ -37,6 +43,12 @@ import {
   toRuler,
   toCursorHooks,
   toZed,
+  toOpencode,
+  toAider,
+  toTrae,
+  toReplit,
+  toZencoder,
+  toDroid,
   isCursorFormat,
   isClaudeFormat,
   isContinueFormat,
@@ -48,14 +60,20 @@ import {
   isRulerFormat,
   isCursorHooksFormat,
   isZedFormat,
+  isTraeFormat,
+  isAiderFormat,
+  isReplitFormat,
+  isZencoderFormat,
   VALID_HOOK_MAPPING_STRATEGIES,
   isValidHookMappingStrategy,
+  CLI_SUPPORTED_FORMATS,
+  type CLISupportedFormat,
   type CanonicalPackage,
   type HookMappingStrategy,
 } from '@pr-pm/converters';
 
 export interface ConvertOptions {
-  to: 'cursor' | 'claude' | 'windsurf' | 'continue' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'ruler' | 'zed';
+  to: CLISupportedFormat;
   subtype?: Subtype;
   output?: string;
   name?: string; // Custom output filename (without extension)
@@ -129,6 +147,18 @@ function getDefaultPath(format: string, filename: string, subtype?: string, cust
       }
       // Default to extensions
       return join(process.cwd(), '.zed', 'extensions', `${baseName}.json`);
+    case 'opencode':
+      return join(process.cwd(), '.opencode', `${baseName}.md`);
+    case 'aider':
+      return join(process.cwd(), '.aider', `${baseName}.md`);
+    case 'trae':
+      return join(process.cwd(), '.trae', 'rules', `${baseName}.md`);
+    case 'replit':
+      return join(process.cwd(), '.replit', `${baseName}.md`);
+    case 'zencoder':
+      return join(process.cwd(), '.zencoder', `${baseName}.md`);
+    case 'droid':
+      return join(process.cwd(), '.factory', `${baseName}.md`);
     default:
       throw new CLIError(`Unknown format: ${format}`);
   }
@@ -313,6 +343,24 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
       case 'zed':
         canonicalPkg = fromZed(content, metadata);
         break;
+      case 'opencode':
+        canonicalPkg = fromOpencode(content, metadata);
+        break;
+      case 'aider':
+        canonicalPkg = fromAider(content, metadata);
+        break;
+      case 'trae':
+        canonicalPkg = fromTrae(content, metadata);
+        break;
+      case 'replit':
+        canonicalPkg = fromReplit(content, metadata);
+        break;
+      case 'zencoder':
+        canonicalPkg = fromZencoder(content, metadata);
+        break;
+      case 'droid':
+        canonicalPkg = fromDroid(content, metadata);
+        break;
       default:
         throw new CLIError(`Unsupported source format: ${sourceFormat}`);
     }
@@ -373,6 +421,24 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         break;
       case 'zed':
         result = toZed(canonicalPkg);
+        break;
+      case 'opencode':
+        result = toOpencode(canonicalPkg);
+        break;
+      case 'aider':
+        result = toAider(canonicalPkg);
+        break;
+      case 'trae':
+        result = toTrae(canonicalPkg);
+        break;
+      case 'replit':
+        result = toReplit(canonicalPkg);
+        break;
+      case 'zencoder':
+        result = toZencoder(canonicalPkg);
+        break;
+      case 'droid':
+        result = toDroid(canonicalPkg);
         break;
       default:
         throw new CLIError(`Unsupported target format: ${options.to}`);
@@ -437,7 +503,7 @@ export function createConvertCommand() {
   const command = new Command('convert')
     .description('Convert AI prompt files between formats')
     .argument('<source>', 'Source file path to convert')
-    .option('-t, --to <format>', 'Target format (cursor, claude, windsurf, kiro, copilot, continue, agents.md, gemini, ruler, zed)')
+    .option('-t, --to <format>', `Target format (${CLI_SUPPORTED_FORMATS.join(', ')})`)
     .option('-s, --subtype <subtype>', 'Target subtype (agent, skill, slash-command, rule, hook, prompt, etc.)')
     .option('-o, --output <path>', 'Output path (defaults to format-specific location)')
     .option('-n, --name <name>', 'Custom output filename (without extension, e.g., "my-rule")')
@@ -449,10 +515,9 @@ export function createConvertCommand() {
           throw new CLIError('Target format is required. Use --to <format>');
         }
 
-        const validFormats = ['cursor', 'claude', 'windsurf', 'kiro', 'copilot', 'continue', 'agents.md', 'gemini', 'ruler', 'zed'];
-        if (!validFormats.includes(options.to)) {
+        if (!CLI_SUPPORTED_FORMATS.includes(options.to)) {
           throw new CLIError(
-            `Invalid format: ${options.to}\n\nValid formats: ${validFormats.join(', ')}\n\n💡 For Cursor hooks, use: --to cursor --subtype hook`
+            `Invalid format: ${options.to}\n\nValid formats: ${CLI_SUPPORTED_FORMATS.join(', ')}\n\n💡 For Cursor hooks, use: --to cursor --subtype hook`
           );
         }
 

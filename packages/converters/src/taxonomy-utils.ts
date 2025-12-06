@@ -9,6 +9,32 @@ import type { CanonicalPackage, Format, Subtype } from './types/canonical.js';
 export type { Format, Subtype } from './types/canonical.js';
 
 /**
+ * CLI-supported formats for the convert command
+ * This is the single source of truth for formats exposed via CLI
+ * Add new formats here when converters are implemented
+ */
+export const CLI_SUPPORTED_FORMATS = [
+  'cursor',
+  'claude',
+  'windsurf',
+  'continue',
+  'copilot',
+  'kiro',
+  'agents.md',
+  'gemini',
+  'ruler',
+  'zed',
+  'opencode',
+  'aider',
+  'trae',
+  'replit',
+  'zencoder',
+  'droid',
+] as const;
+
+export type CLISupportedFormat = (typeof CLI_SUPPORTED_FORMATS)[number];
+
+/**
  * Detect subtype from frontmatter fields
  *
  * Strategy:
@@ -81,6 +107,7 @@ export function normalizeFormat(sourceFormat: string): Format {
   if (normalized.includes('aider')) return 'aider';
   if (normalized.includes('zencoder')) return 'zencoder';
   if (normalized.includes('replit')) return 'replit';
+  if (normalized.includes('zed')) return 'zed';
   if (normalized.includes('mcp')) return 'mcp';
 
   return 'generic';
