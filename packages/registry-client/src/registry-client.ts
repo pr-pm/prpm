@@ -456,6 +456,7 @@ export class RegistryClient {
     organizations?: Array<{
       id: string;
       name: string;
+      slug?: string;
       role: string;
     }>;
   }> {
@@ -473,6 +474,7 @@ export class RegistryClient {
       organizations?: Array<{
         id: string;
         name: string;
+        slug?: string;
         role: string;
       }>;
     }>;

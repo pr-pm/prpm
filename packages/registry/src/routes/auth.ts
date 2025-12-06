@@ -718,6 +718,7 @@ export async function authRoutes(server: FastifyInstance) {
                   id: { type: 'string' },
                   name: { type: 'string' },
                   role: { type: 'string' },
+                  slug: { type: 'string' },
                   avatar_url: { type: 'string' },
                 },
               },
@@ -753,9 +754,9 @@ export async function authRoutes(server: FastifyInstance) {
     );
 
     // Get user's organizations
-    const organizations = await query<{ id: string; name: string; role: string; avatar_url: string | null }>(
+    const organizations = await query<{ id: string; name: string; slug: string; role: string; avatar_url: string | null }>(
       server,
-      `SELECT o.id, o.name, om.role, o.avatar_url
+      `SELECT o.id, o.name, o.slug, om.role, o.avatar_url
        FROM organizations o
        INNER JOIN organization_members om ON o.id = om.org_id
        WHERE om.user_id = $1

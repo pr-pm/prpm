@@ -17,6 +17,14 @@ import {
 } from "../core/marketplace-converter";
 import { validateManifestSchema } from "../core/schema-validator";
 
+function toOrganizationSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-+/g, "-");
+}
+
 export interface CollectionManifest {
   id: string;
   name: string;
@@ -343,8 +351,8 @@ export function predictScopedPackageName(
 
   // If organization is specified, use @org-name/
   if (organization) {
-    const orgNameLowercase = organization.toLowerCase();
-    const expectedPrefix = `@${orgNameLowercase}/`;
+    const orgSlug = toOrganizationSlug(organization);
+    const expectedPrefix = `@${orgSlug}/`;
     if (!manifestName.startsWith(expectedPrefix)) {
       return `${expectedPrefix}${manifestName}`;
     }

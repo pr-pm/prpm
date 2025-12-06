@@ -6,10 +6,12 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { query, queryOne } from '../db/index.js';
 import { cacheGet, cacheSet } from '../cache/redis.js';
 import { optionalAuth } from '../middleware/auth.js';
+import { toOrganizationSlug } from '../utils/org-slug.js';
 
 interface Organization {
   id: string;
   name: string;
+  slug: string;
   description: string | null;
   avatar_url: string | null;
   website_url: string | null;
@@ -85,9 +87,9 @@ export async function organizationRoutes(server: FastifyInstance) {
       // Get organization info
       const org = await queryOne<Organization>(
         server,
-        `SELECT id, name, description, avatar_url, website_url, is_verified, created_at, updated_at
+        `SELECT id, name, slug, description, avatar_url, website_url, is_verified, created_at, updated_at
          FROM organizations
-         WHERE name = $1`,
+         WHERE LOWER(slug) = LOWER($1) OR LOWER(name) = LOWER($1)`,
         [orgName]
       );
 
@@ -238,7 +240,7 @@ export async function organizationRoutes(server: FastifyInstance) {
 
     try {
       let sql = `
-        SELECT o.id, o.name, o.description, o.avatar_url, o.website_url, o.is_verified, o.created_at,
+        SELECT o.id, o.name, o.slug, o.description, o.avatar_url, o.website_url, o.is_verified, o.created_at,
                COUNT(DISTINCT p.id) as package_count,
                COUNT(DISTINCT om.user_id) as member_count,
                COALESCE(SUM(p.total_downloads), 0) as total_downloads
@@ -307,6 +309,14 @@ export async function organizationRoutes(server: FastifyInstance) {
     },
   }, async (request, reply) => {
     const { name, description, website_url } = request.body;
+    const slug = toOrganizationSlug(name);
+
+    if (!slug) {
+      return reply.status(400).send({
+        error: 'Bad request',
+        message: 'Organization name must produce a valid slug',
+      });
+    }
 
     // Check if user is authenticated
     const userId = (request as any).user?.user_id;
@@ -320,6 +330,7 @@ export async function organizationRoutes(server: FastifyInstance) {
     server.log.info({
       action: 'create_organization',
       name,
+      slug,
       userId,
     }, '🏢 Creating organization');
 
@@ -327,8 +338,8 @@ export async function organizationRoutes(server: FastifyInstance) {
       // Check if organization name already exists
       const existing = await queryOne(
         server,
-        'SELECT id FROM organizations WHERE name = $1',
-        [name]
+        'SELECT id FROM organizations WHERE LOWER(slug) = LOWER($1) OR LOWER(name) = LOWER($2)',
+        [slug, name]
       );
 
       if (existing) {
@@ -341,10 +352,10 @@ export async function organizationRoutes(server: FastifyInstance) {
       // Create the organization
       const org = await queryOne<Organization>(
         server,
-        `INSERT INTO organizations (name, description, website_url, is_verified, created_at, updated_at)
-         VALUES ($1, $2, $3, false, NOW(), NOW())
-         RETURNING id, name, description, avatar_url, website_url, is_verified, created_at, updated_at`,
-        [name, description || null, website_url || null]
+        `INSERT INTO organizations (name, slug, description, website_url, is_verified, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, false, NOW(), NOW())
+         RETURNING id, name, slug, description, avatar_url, website_url, is_verified, created_at, updated_at`,
+        [name, slug, description || null, website_url || null]
       );
 
       if (!org) {
@@ -423,7 +434,7 @@ export async function organizationRoutes(server: FastifyInstance) {
       // Get organization
       const org = await queryOne<Organization>(
         server,
-        'SELECT id FROM organizations WHERE name = $1',
+        'SELECT id, slug FROM organizations WHERE LOWER(slug) = LOWER($1) OR LOWER(name) = LOWER($1)',
         [orgName]
       );
 
@@ -502,12 +513,12 @@ export async function organizationRoutes(server: FastifyInstance) {
         `UPDATE organizations
          SET ${updates.join(', ')}
          WHERE id = $${paramCount}
-         RETURNING id, name, description, avatar_url, website_url, is_verified, created_at, updated_at`,
+         RETURNING id, name, slug, description, avatar_url, website_url, is_verified, created_at, updated_at`,
         values
       );
 
       // Invalidate cache
-      const cacheKey = `org:${orgName}`;
+      const cacheKey = `org:${org.slug}`;
       await server.redis?.del(cacheKey);
 
       server.log.info({

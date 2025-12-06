@@ -37,6 +37,7 @@ import {
   fromAgentsMd,
 } from "@pr-pm/converters";
 import { uploadCanonicalPackage } from "../storage/canonical.js";
+import { toOrganizationSlug } from "../utils/org-slug.js";
 
 // Reusable enum constants for schema validation
 const FORMAT_ENUM = [
@@ -923,18 +924,84 @@ export async function packageRoutes(server: FastifyInstance) {
           }
         }
 
-        // Auto-prefix package name with scope and validate ownership
-        // If organization is specified, use @org-name/, otherwise use @username/
+        // Lookup organization if specified (case-insensitive) and prefer slug for scope
+        let orgId: string | undefined;
+        let orgVerified: boolean = false;
+        let orgSlug: string | undefined;
+        let orgDisplayName: string | undefined;
         if (organization) {
-          // Organization packages: @org-name/package
-          const orgNameLowercase = organization.toLowerCase();
-          const expectedPrefix = `@${orgNameLowercase}/`;
-          if (!packageName.startsWith(expectedPrefix)) {
-            // Auto-prefix the package name
-            packageName = `${expectedPrefix}${packageName}`;
+          const organizationSlug = toOrganizationSlug(organization);
+          const org = await queryOne<{
+            id: string;
+            name: string;
+            slug: string;
+            verified: boolean;
+          }>(
+            server,
+            `SELECT id, name, slug, is_verified as verified
+             FROM organizations
+             WHERE id = $1
+                OR LOWER(slug) = LOWER($1)
+                OR LOWER(name) = LOWER($1)
+                OR LOWER(slug) = LOWER($2)
+                OR LOWER(name) = LOWER($2)`,
+            [organization, organizationSlug],
+          );
+
+          if (!org) {
+            return reply.status(404).send({
+              error: "Organization not found",
+              message: `Organization '${organization}' does not exist`,
+            });
+          }
+
+          orgId = org.id;
+          orgSlug = org.slug;
+          orgDisplayName = org.name;
+          orgVerified = org.verified || false;
+
+          // Verify user has permission to publish to this org
+          const orgMembership = await queryOne<{ role: string }>(
+            server,
+            `SELECT role FROM organization_members
+           WHERE org_id = $1 AND user_id = $2`,
+            [orgId, userId],
+          );
+
+          if (!orgMembership) {
+            return reply.status(403).send({
+              error: "Forbidden",
+              message: `You are not a member of the '${orgDisplayName}' organization`,
+            });
+          }
+
+          if (!["owner", "admin", "maintainer"].includes(orgMembership.role)) {
+            return reply.status(403).send({
+              error: "Forbidden",
+              message: `You do not have permission to publish packages for the '${orgDisplayName}' organization. Required role: owner, admin, or maintainer. Your role: ${orgMembership.role}`,
+            });
+          }
+
+          // Check if trying to publish private package with unverified organization
+          if (isPrivate && !orgVerified) {
+            return reply.status(403).send({
+              error: "Forbidden",
+              message: `Cannot publish private packages for unverified organization '${orgDisplayName}'. Only verified organizations can publish private packages. Please contact support to verify your organization.`,
+            });
+          }
+        }
+
+        // Auto-prefix package name with scope and validate ownership
+        // If organization is specified, use @org-slug/, otherwise use @username/
+        if (orgSlug) {
+          const sanitizedOrgScope = toOrganizationSlug(orgSlug);
+          const expectedPrefix = `@${sanitizedOrgScope}/`;
+          const unscopedName = packageName.replace(/^@[a-z0-9-]+\//, "");
+          packageName = `${expectedPrefix}${unscopedName}`;
+          if (process.env.DEBUG) {
             server.log.info(
-              { originalName: manifest.name, newName: packageName },
-              "Auto-prefixed package name with organization",
+              { originalName: manifest.name, newName: packageName, orgSlug: sanitizedOrgScope },
+              "Auto-prefixed package name with organization slug",
             );
           }
         } else if (!packageName.startsWith("@")) {
@@ -946,7 +1013,6 @@ export async function packageRoutes(server: FastifyInstance) {
           );
         } else {
           // Package already has a scope - validate the user owns this scope
-          // Extract scope from package name (e.g., "@alice/package" -> "alice")
           const scopeMatch = packageName.match(/^@([a-z0-9-]+)\//);
           if (scopeMatch) {
             const scopeUsername = scopeMatch[1];
@@ -976,57 +1042,6 @@ export async function packageRoutes(server: FastifyInstance) {
             error: "Invalid version",
             message: "Version must be valid semver (e.g., 1.0.0)",
           });
-        }
-
-        // Lookup organization if specified (case-insensitive)
-        let orgId: string | undefined;
-        let orgVerified: boolean = false;
-        if (organization) {
-          const org = await queryOne<{ id: string; verified: boolean }>(
-            server,
-            "SELECT id, is_verified as verified FROM organizations WHERE LOWER(name) = LOWER($1)",
-            [organization],
-          );
-
-          if (!org) {
-            return reply.status(404).send({
-              error: "Organization not found",
-              message: `Organization '${organization}' does not exist`,
-            });
-          }
-
-          orgId = org.id;
-          orgVerified = org.verified || false;
-
-          // Verify user has permission to publish to this org
-          const orgMembership = await queryOne<{ role: string }>(
-            server,
-            `SELECT role FROM organization_members
-           WHERE org_id = $1 AND user_id = $2`,
-            [orgId, userId],
-          );
-
-          if (!orgMembership) {
-            return reply.status(403).send({
-              error: "Forbidden",
-              message: `You are not a member of the '${organization}' organization`,
-            });
-          }
-
-          if (!["owner", "admin", "maintainer"].includes(orgMembership.role)) {
-            return reply.status(403).send({
-              error: "Forbidden",
-              message: `You do not have permission to publish packages for the '${organization}' organization. Required role: owner, admin, or maintainer. Your role: ${orgMembership.role}`,
-            });
-          }
-
-          // Check if trying to publish private package with unverified organization
-          if (isPrivate && !orgVerified) {
-            return reply.status(403).send({
-              error: "Forbidden",
-              message: `Cannot publish private packages for unverified organization '${organization}'. Only verified organizations can publish private packages. Please contact support to verify your organization.`,
-            });
-          }
         }
 
         // 2. Check if package exists and user has permission
@@ -2605,6 +2620,7 @@ export async function packageRoutes(server: FastifyInstance) {
             u.verified_author,
             u.avatar_url as author_avatar_url,
             o.name as org_name,
+            o.slug as org_slug,
             o.is_verified as org_verified,
             o.avatar_url as org_avatar_url
           FROM package_stars ps
@@ -2629,6 +2645,7 @@ export async function packageRoutes(server: FastifyInstance) {
             : null,
           organization: row.org_name
             ? {
+                slug: row.org_slug,
                 name: row.org_name,
                 is_verified: row.org_verified,
                 avatar_url: row.org_avatar_url,

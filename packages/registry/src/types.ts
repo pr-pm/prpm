@@ -32,6 +32,7 @@ export interface User {
 export interface Organization {
   id: string;
   name: string;
+  slug: string;
   description?: string;
   avatar_url?: string;
   website_url?: string;
@@ -57,6 +58,7 @@ export interface Package {
   author_username?: string;
   org_id?: string;
   org_name?: string;
+  org_slug?: string;
   format: Format;
   subtype: Subtype;
   license?: string;
