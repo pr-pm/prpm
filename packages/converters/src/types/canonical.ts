@@ -47,6 +47,7 @@ export type Subtype =
   | 'chatmode'
   | 'hook'
   | 'plugin'
+  | 'extension'
   | 'server';
 
 /**

@@ -28,6 +28,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'workflow': '🔄',
     'template': '📄',
     'plugin': '🔌',
+    'extension': '📦',
     'server': '🖥️',
   };
 
@@ -96,6 +97,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'workflow': 'Workflow',
     'template': 'Template',
     'plugin': 'Plugin',
+    'extension': 'Extension',
     'server': 'Server',
   };
 

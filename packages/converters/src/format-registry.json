@@ -168,7 +168,7 @@
           "filePatterns": ["*.toml"],
           "fileExtension": ".toml"
         },
-        "plugin": {
+        "extension": {
           "directory": ".gemini/extensions",
           "filePatterns": ["gemini-extension.json"],
           "nested": true,

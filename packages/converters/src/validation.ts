@@ -69,7 +69,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'droid:slash-command': 'droid-slash-command.schema.json',
       'droid:hook': 'droid-hook.schema.json',
       'opencode:slash-command': 'opencode-slash-command.schema.json',
-      'gemini:plugin': 'gemini-plugin.schema.json',
+      'gemini:extension': 'gemini-plugin.schema.json',
     };
 
     schemaFilename = subtypeSchemaMap[cacheKey];

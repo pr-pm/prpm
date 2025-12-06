@@ -84,7 +84,7 @@ export function fromGeminiPlugin(
     description: metadata.description || config.description || '',
     tags: metadata.tags || [],
     format: 'gemini',
-    subtype: 'plugin',
+    subtype: 'extension',
     content: canonicalContent,
   };
 
@@ -101,6 +101,6 @@ export function fromGeminiPlugin(
     };
   }
 
-  setTaxonomy(pkg, 'gemini', 'plugin');
+  setTaxonomy(pkg, 'gemini', 'extension');
   return pkg;
 }
