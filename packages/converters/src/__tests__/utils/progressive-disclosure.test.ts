@@ -31,15 +31,17 @@ describe('Progressive Disclosure', () => {
       expect(supportsAgentsMd('cursor')).toBe(false);
       expect(supportsAgentsMd('continue')).toBe(false);
       expect(supportsAgentsMd('windsurf')).toBe(false);
-      expect(supportsAgentsMd('copilot')).toBe(false);
+      expect(supportsAgentsMd('aider')).toBe(false);
+      expect(supportsAgentsMd('gemini')).toBe(false);
     });
   });
 
   describe('AGENTS_MD_SUPPORTED_FORMATS', () => {
     it('should be a readonly array with all agent-supporting formats', () => {
       expect(Array.isArray(AGENTS_MD_SUPPORTED_FORMATS)).toBe(true);
-      expect(AGENTS_MD_SUPPORTED_FORMATS.length).toBe(8);
+      expect(AGENTS_MD_SUPPORTED_FORMATS.length).toBe(9);
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('claude');
+      expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('copilot');
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('kiro');
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('agents.md');
     });

@@ -27,10 +27,10 @@ describe('Progressive disclosure - agents.md support', () => {
       expect(supportsAgentsMd('cursor')).toBe(false);
       expect(supportsAgentsMd('continue')).toBe(false);
       expect(supportsAgentsMd('windsurf')).toBe(false);
-      expect(supportsAgentsMd('copilot')).toBe(false);
       expect(supportsAgentsMd('aider')).toBe(false);
       expect(supportsAgentsMd('zencoder')).toBe(false);
       expect(supportsAgentsMd('trae')).toBe(false);
+      expect(supportsAgentsMd('gemini')).toBe(false);
     });
   });
 
@@ -43,6 +43,7 @@ describe('Progressive disclosure - agents.md support', () => {
     it('should include all expected formats', () => {
       const expected: Format[] = [
         'claude',
+        'copilot',
         'kiro',
         'opencode',
         'ruler',
@@ -62,10 +63,10 @@ describe('Progressive disclosure - agents.md support', () => {
         'cursor',
         'continue',
         'windsurf',
-        'copilot',
         'aider',
         'zencoder',
         'trae',
+        'gemini',
       ];
 
       for (const format of notSupported) {

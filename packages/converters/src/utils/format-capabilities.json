@@ -1,7 +1,18 @@
 {
   "$schema": "../../schemas/format-capabilities.schema.json",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Format capability matrix for PRPM converters - defines which subtypes each format supports and progressive disclosure fallbacks",
+  "lastVerified": "2025-12-06",
+  "verificationSources": {
+    "claude": "https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview",
+    "copilot": "https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/",
+    "cursor": "https://docs.cursor.com/context/rules",
+    "continue": "https://docs.continue.dev/reference",
+    "windsurf": "https://docs.codeium.com/windsurf/cascade",
+    "gemini": "https://geminicli.com/docs/extensions/",
+    "aider": "https://aider.chat/docs/usage/conventions.html",
+    "replit": "https://docs.replit.com/replitai/agent"
+  },
   "formats": {
     "cursor": {
       "name": "Cursor",
@@ -48,10 +59,10 @@
       "supportsSkills": false,
       "supportsPlugins": false,
       "supportsExtensions": false,
-      "supportsAgents": false,
-      "supportsAgentsMd": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
       "markdownFallback": "copilot-instructions.md",
-      "notes": "GitHub Copilot uses simple instruction files. No advanced package support."
+      "notes": "GitHub Copilot coding agent supports AGENTS.md, CLAUDE.md, GEMINI.md, and .instructions.md custom instructions (as of August 2025). Full agents.md support."
     },
     "kiro": {
       "name": "Kiro AI",
@@ -140,8 +151,8 @@
       "supportsExtensions": false,
       "supportsAgents": true,
       "supportsAgentsMd": true,
-      "markdownFallback": "replit_agent_instructions.md",
-      "notes": "Replit Agent supports agents in .replit_agent_instructions.md. Full agents.md support."
+      "markdownFallback": "AGENTS.md",
+      "notes": "Replit Agent supports AGENTS.md for custom agent instructions. Full agents.md support following the agent-rules.org standard."
     },
     "agents.md": {
       "name": "agents.md (Universal)",
@@ -178,6 +189,7 @@
     "description": "Formats that intelligently support agents.md for progressive disclosure",
     "formats": [
       "claude",
+      "copilot",
       "kiro",
       "opencode",
       "ruler",
@@ -186,6 +198,6 @@
       "agents.md",
       "generic"
     ],
-    "notes": "These formats can use agents.md as a universal fallback when they don't support advanced subtypes like skills or plugins."
+    "notes": "These formats can use agents.md as a universal fallback when they don't support advanced subtypes like skills or plugins. GitHub Copilot added AGENTS.md support in August 2025."
   }
 }
