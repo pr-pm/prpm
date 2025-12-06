@@ -20,6 +20,7 @@ export type Format =
   | 'gemini.md'
   | 'claude.md'
   | 'gemini'
+  | 'gemini-extension'
   | 'opencode'
   | 'ruler'
   | 'droid'
@@ -46,6 +47,7 @@ export type Subtype =
   | 'chatmode'
   | 'hook'
   | 'plugin'
+  | 'extension'
   | 'server';
 
 /**
@@ -202,6 +204,17 @@ export interface CanonicalPackage {
         commands?: string[];
       };
     };
+    geminiExtension?: {
+      mcpServers?: Record<string, {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+        disabled?: boolean;
+      }>;
+      contextFileName?: string;
+      excludeTools?: string[];
+      experimentalSettings?: Record<string, any>;
+    };
   };
 
   // Format compatibility scores (keyed by Format type)
@@ -294,6 +307,17 @@ export interface MetadataSection {
         skills?: string[];
         commands?: string[];
       };
+    };
+    geminiExtension?: {
+      mcpServers?: Record<string, {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+        disabled?: boolean;
+      }>;
+      contextFileName?: string;
+      excludeTools?: string[];
+      experimentalSettings?: Record<string, any>;
     };
   };
 }

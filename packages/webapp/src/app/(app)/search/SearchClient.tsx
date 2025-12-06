@@ -1587,6 +1587,7 @@ function SearchPageContent() {
                           chatmode: "Chat Mode",
                           hook: "Hook",
                           plugin: "Plugin",
+                          extension: "Extension",
                           server: "Server",
                         };
                         return (

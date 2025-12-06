@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/gemini/plugin.json",
+  "title": "Gemini CLI Plugin Format",
+  "description": "JSON Schema for Gemini CLI Plugins (gemini-extension.json)",
+  "type": "object",
+  "required": ["name", "version"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique extension name (lowercase with dashes)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?$",
+      "description": "Extension version (semver)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Extension description"
+    },
+    "author": {
+      "type": "string",
+      "description": "Extension author"
+    },
+    "mcpServers": {
+      "type": "object",
+      "description": "MCP server configurations",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Command to run the MCP server"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Command arguments"
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Environment variables"
+          },
+          "disabled": {
+            "type": "boolean",
+            "description": "Whether the server is disabled"
+          }
+        },
+        "required": ["command"]
+      }
+    },
+    "contextFileName": {
+      "type": "string",
+      "description": "Name of the context file (e.g., GEMINI.md)"
+    },
+    "excludeTools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of tools to exclude from the model"
+    },
+    "experimentalSettings": {
+      "type": "object",
+      "description": "Experimental Gemini CLI settings",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

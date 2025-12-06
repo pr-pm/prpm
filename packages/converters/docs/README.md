@@ -28,6 +28,8 @@ Complete overview of all supported formats, their subtypes, and official documen
 | | `agents-md` | Agent configurations in markdown | [docs.factory.ai](https://docs.factory.ai/cli/configuration/agents-md) |
 | **OpenCode** | `agent` | AI agents with mode, tools, and permissions | [opencode.ai](https://opencode.ai/docs/agents/) |
 | | `slash-command` | User-triggered prompts with templates and placeholders | [opencode.ai](https://opencode.ai/docs/commands/) |
+| **Gemini CLI** | `slash-command` | Custom slash commands in TOML format | [geminicli.com](https://geminicli.com/docs/commands/) |
+| | `extension` | Extensions with MCP servers and context files | [geminicli.com](https://geminicli.com/docs/extensions/) |
 | **agents.md** | `agent` | OpenAI format, single file plain markdown | [github.com/openai](https://github.com/openai/agents.md) |
 | **Trae** | `rule` | Plain markdown user and project rules (NO frontmatter) | [docs.trae.ai](https://docs.trae.ai/ide/rules) |
 | **Aider** | `rule` | Plain markdown coding conventions (NO frontmatter) | [aider.chat](https://aider.chat/docs/usage/conventions.html) |
@@ -63,6 +65,7 @@ This directory contains detailed specifications for each AI IDE/tool format that
 | **Ruler** | [ruler.md](./ruler.md) | Plain markdown rules, centralized management | [okigu.com/ruler](https://okigu.com/ruler) |
 | **Factory Droid** | [factory-droid.md](./factory-droid.md) | Skills, slash commands, and hooks | [docs.factory.ai](https://docs.factory.ai/) |
 | **OpenCode** | [opencode.md](./opencode.md) | Agents and slash commands with YAML frontmatter | [opencode.ai/docs](https://opencode.ai/docs/) |
+| **Gemini CLI** | [gemini-plugin.md](./gemini-plugin.md) | Extensions with MCP servers and custom commands | [geminicli.com/docs](https://geminicli.com/docs/extensions/) |
 | **agents.md** | [agents-md.md](./agents-md.md) | OpenAI format, plain markdown | [github.com/openai/agents.md](https://github.com/openai/agents.md) |
 | **Trae** | [trae.md](./trae.md) | Plain markdown rules, no frontmatter | [docs.trae.ai](https://docs.trae.ai/ide/rules) |
 | **Aider** | [aider.md](./aider.md) | Plain markdown coding conventions | [aider.chat](https://aider.chat/docs/usage/conventions.html) |
@@ -119,6 +122,9 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 
 **OpenCode Subtypes:**
 - `opencode-slash-command.schema.json` - Template-based commands
+
+**Gemini CLI Subtypes:**
+- `gemini-plugin.schema.json` - Extensions with MCP servers
 
 ### Accessing Schemas
 
@@ -185,6 +191,7 @@ These specifications serve as the source of truth for:
 | Factory Droid | YAML (required) | `name`, `description` | `argument-hint`, `allowed-tools` |
 | OpenCode Agents | YAML (required) | `description`, `mode` | `model`, `temperature`, `prompt`, `tools`, `permission`, `disable` |
 | OpenCode Commands | YAML (required) | `template` | `description`, `agent`, `model`, `subtask` |
+| Gemini Extension | JSON (required) | `name`, `version` | `description`, `author`, `mcpServers`, `contextFileName`, `excludeTools`, `experimentalSettings` |
 | agents.md | None | none | none |
 | Trae | None | none | none |
 | Aider | None | none | none |
@@ -204,6 +211,7 @@ These specifications serve as the source of truth for:
 | Kiro Hooks | `.kiro/hooks/*.json` | Multiple JSON files |
 | Factory Droid | `.factory/skills/*/SKILL.md`, `.factory/commands/*.md` | Skills in subdirs, commands as files |
 | OpenCode | `.opencode/agent/*.md`, `.opencode/command/*.md` | Agents and commands as separate files |
+| Gemini CLI | `.gemini/extensions/*/gemini-extension.json` | Extensions in subdirectories with JSON config |
 | agents.md | `agents.md` | Single file |
 | Trae | `.trae/rules/*.md` | Multiple files in directory |
 | Aider | `CONVENTIONS.md` | Single file |
