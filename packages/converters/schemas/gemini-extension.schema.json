@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://registry.prpm.dev/api/v1/schemas/gemini/plugin.json",
-  "title": "Gemini CLI Plugin Format",
-  "description": "JSON Schema for Gemini CLI Plugins (gemini-extension.json)",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/gemini/extension.json",
+  "title": "Gemini CLI Extension Format",
+  "description": "JSON Schema for Gemini CLI Extensions (gemini-extension.json)",
   "type": "object",
   "required": ["name", "version"],
   "properties": {
