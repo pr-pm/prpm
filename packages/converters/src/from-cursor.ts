@@ -56,7 +56,8 @@ export function fromCursor(
     const fileRefs = extractAtReferences(content);
 
     if (fileRefs.length > 0) {
-      const loadedFiles = loadReferencedFiles(fileRefs, opts.basePath);
+      try {
+        const loadedFiles = loadReferencedFiles(fileRefs, opts.basePath);
 
       // Create FileReferenceSection for each loaded file
       const fileSections: FileReferenceSection[] = loadedFiles.map((file: LoadedFile) => ({
@@ -72,18 +73,23 @@ export function fromCursor(
       // Add file sections to the package
       pkg.content.sections.push(...fileSections);
 
-      // Populate fileStructure metadata
-      const directories = extractDirectories(fileRefs);
-      pkg.metadata = pkg.metadata || {};
-      pkg.metadata.fileStructure = {
-        mainFile: 'rule.md', // Cursor typically uses single rule files
-        files: loadedFiles.map((file: LoadedFile) => ({
-          path: file.path,
-          category: file.category,
-          description: `Referenced via @${file.path}`,
-        })),
-        directories: directories.length > 0 ? directories : undefined,
-      };
+        // Populate fileStructure metadata
+        const directories = extractDirectories(fileRefs);
+        pkg.metadata = pkg.metadata || {};
+        pkg.metadata.fileStructure = {
+          mainFile: 'rule.md', // Cursor typically uses single rule files
+          files: loadedFiles.map((file: LoadedFile) => ({
+            path: file.path,
+            category: file.category,
+            description: `Referenced via @${file.path}`,
+          })),
+          directories: directories.length > 0 ? directories : undefined,
+        };
+      } catch (error) {
+        // File loading failed - log warning but don't fail conversion
+        console.warn(`Failed to load @file references: ${error instanceof Error ? error.message : String(error)}`);
+        // Continue with conversion without file references
+      }
     }
   }
 

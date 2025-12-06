@@ -6,7 +6,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { join, dirname, extname } from 'path';
+import { join, dirname, extname, resolve, sep } from 'path';
 
 /**
  * Loaded file with content and metadata
@@ -136,10 +136,17 @@ export function loadReferencedFiles(
   basePath: string
 ): LoadedFile[] {
   const loaded: LoadedFile[] = [];
+  const resolvedBasePath = resolve(basePath);
 
   for (const ref of references) {
     // Resolve relative path
-    const fullPath = join(basePath, ref);
+    const fullPath = resolve(join(basePath, ref));
+
+    // Security: Ensure resolved path is within basePath (prevent path traversal)
+    if (!fullPath.startsWith(resolvedBasePath + sep) && fullPath !== resolvedBasePath) {
+      console.warn(`Warning: Path traversal attempt blocked: ${ref}`);
+      continue;
+    }
 
     if (!existsSync(fullPath)) {
       console.warn(`Warning: Referenced file not found: ${ref}`);

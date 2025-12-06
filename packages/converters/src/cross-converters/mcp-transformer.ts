@@ -71,7 +71,7 @@ export function geminiToClaudeMCP(
 
       // Check for Gemini-specific variable substitutions
       const hasGeminiVars = Object.values(config.env).some(
-        val => val.includes('${extensionPath}') || val.includes('${home}')
+        val => typeof val === 'string' && (val.includes('${extensionPath}') || val.includes('${home}'))
       );
 
       if (hasGeminiVars) {
@@ -163,7 +163,7 @@ export function validateMCPServer(config: MCPServerConfig): string[] {
     errors.push('MCP server args must be an array');
   }
 
-  if (config.env && typeof config.env !== 'object') {
+  if (config.env && (typeof config.env !== 'object' || config.env === null)) {
     errors.push('MCP server env must be an object');
   }
 

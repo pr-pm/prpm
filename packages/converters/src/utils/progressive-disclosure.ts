@@ -55,9 +55,37 @@ export interface FormatCapabilitiesData {
  * Load format capabilities from JSON file
  */
 function loadFormatCapabilities(): FormatCapabilitiesData {
-  const dataPath = join(__dirname, 'format-capabilities.json');
-  const data = readFileSync(dataPath, 'utf-8');
-  return JSON.parse(data) as FormatCapabilitiesData;
+  try {
+    const dataPath = join(__dirname, 'format-capabilities.json');
+    const data = readFileSync(dataPath, 'utf-8');
+    const parsed = JSON.parse(data);
+
+    // Validate basic structure
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('Invalid format-capabilities.json: not an object');
+    }
+    if (!parsed.agentsMdSupport || !Array.isArray(parsed.agentsMdSupport.formats)) {
+      throw new Error('Invalid format-capabilities.json: missing agentsMdSupport.formats array');
+    }
+    if (!parsed.formats || typeof parsed.formats !== 'object') {
+      throw new Error('Invalid format-capabilities.json: missing formats object');
+    }
+
+    return parsed as FormatCapabilitiesData;
+  } catch (error) {
+    // Provide fallback minimal capabilities to prevent startup crash
+    console.error(`Failed to load format-capabilities.json: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('Using minimal fallback capabilities');
+    return {
+      version: '1.0.0',
+      description: 'Minimal fallback capabilities due to load error',
+      agentsMdSupport: {
+        description: 'Basic agents.md support (fallback)',
+        formats: ['cursor', 'copilot', 'windsurf', 'continue', 'kiro', 'droid', 'opencode', 'trae', 'zed', 'agents.md']
+      },
+      formats: {}
+    };
+  }
 }
 
 // Load capabilities once at module initialization

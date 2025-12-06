@@ -177,7 +177,7 @@ function convertSection(section: Section, warnings: string[]): string {
       return convertContext(section);
 
     case 'file-reference':
-      return convertFileReference(section);
+      return convertFileReference(section, warnings);
 
     case 'tools':
       // Tools are Claude-specific, skip for Cursor
@@ -391,7 +391,7 @@ function convertFileReference(section: {
   content: string;
   description?: string;
   category?: string;
-}): string {
+}, warnings: string[]): string {
   const lines: string[] = [];
 
   // Add section header with description if provided
@@ -402,9 +402,36 @@ function convertFileReference(section: {
     lines.push('');
   }
 
+  // Sanitize and validate path
+  let sanitizedPath = section.path.trim();
+
+  // Reject absolute paths
+  if (sanitizedPath.startsWith('/') || /^[A-Z]:/i.test(sanitizedPath)) {
+    warnings.push(`Rejected absolute path: ${section.path} - converted to relative path`);
+    sanitizedPath = sanitizedPath.replace(/^\/+/, '').replace(/^[A-Z]:/i, '');
+  }
+
+  // Reject parent directory traversal
+  if (sanitizedPath.includes('../') || sanitizedPath.includes('..\\')) {
+    warnings.push(`Rejected parent traversal in path: ${section.path} - removed traversal segments`);
+    sanitizedPath = sanitizedPath.split('/').filter(seg => seg !== '..').join('/');
+  }
+
+  // Reject newlines and other control characters
+  if (/[\r\n\t]/.test(sanitizedPath)) {
+    warnings.push(`Rejected control characters in path: ${section.path}`);
+    sanitizedPath = sanitizedPath.replace(/[\r\n\t]/g, '');
+  }
+
+  // Sanitize category to prevent HTML comment injection
+  const sanitizedCategory = (section.category || 'converted package')
+    .replace(/-->/g, '--&gt;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
   // Add PRPM marker and @file reference
-  lines.push(`<!-- PRPM: File reference from ${section.category || 'converted package'} -->`);
-  lines.push(`@file ${section.path}`);
+  lines.push(`<!-- PRPM: File reference from ${sanitizedCategory} -->`);
+  lines.push(`@file ${sanitizedPath}`);
 
   return lines.join('\n');
 }
