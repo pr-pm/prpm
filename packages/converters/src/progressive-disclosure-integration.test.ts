@@ -13,7 +13,8 @@ import type { Format } from '@pr-pm/types';
 describe('Progressive disclosure - agents.md support', () => {
   describe('supportsAgentsMd', () => {
     it('should identify formats that support agents.md', () => {
-      expect(supportsAgentsMd('claude')).toBe(true);
+      expect(supportsAgentsMd('cursor')).toBe(true);
+      expect(supportsAgentsMd('copilot')).toBe(true);
       expect(supportsAgentsMd('kiro')).toBe(true);
       expect(supportsAgentsMd('opencode')).toBe(true);
       expect(supportsAgentsMd('ruler')).toBe(true);
@@ -24,7 +25,7 @@ describe('Progressive disclosure - agents.md support', () => {
     });
 
     it('should identify formats that do not support agents.md', () => {
-      expect(supportsAgentsMd('cursor')).toBe(false);
+      expect(supportsAgentsMd('claude')).toBe(false);
       expect(supportsAgentsMd('continue')).toBe(false);
       expect(supportsAgentsMd('windsurf')).toBe(false);
       expect(supportsAgentsMd('aider')).toBe(false);
@@ -42,7 +43,7 @@ describe('Progressive disclosure - agents.md support', () => {
 
     it('should include all expected formats', () => {
       const expected: Format[] = [
-        'claude',
+        'cursor',
         'copilot',
         'kiro',
         'opencode',
@@ -60,7 +61,7 @@ describe('Progressive disclosure - agents.md support', () => {
 
     it('should not include formats that do not support agents.md', () => {
       const notSupported: Format[] = [
-        'cursor',
+        'claude',
         'continue',
         'windsurf',
         'aider',

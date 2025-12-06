@@ -17,7 +17,7 @@ import {
 describe('Progressive Disclosure', () => {
   describe('supportsAgentsMd', () => {
     it('should identify formats that support agents.md', () => {
-      expect(supportsAgentsMd('claude')).toBe(true);
+      expect(supportsAgentsMd('cursor')).toBe(true);
       expect(supportsAgentsMd('kiro')).toBe(true);
       expect(supportsAgentsMd('opencode')).toBe(true);
       expect(supportsAgentsMd('ruler')).toBe(true);
@@ -28,7 +28,7 @@ describe('Progressive Disclosure', () => {
     });
 
     it('should identify formats that do not support agents.md', () => {
-      expect(supportsAgentsMd('cursor')).toBe(false);
+      expect(supportsAgentsMd('claude')).toBe(false);
       expect(supportsAgentsMd('continue')).toBe(false);
       expect(supportsAgentsMd('windsurf')).toBe(false);
       expect(supportsAgentsMd('aider')).toBe(false);
@@ -40,7 +40,7 @@ describe('Progressive Disclosure', () => {
     it('should be a readonly array with all agent-supporting formats', () => {
       expect(Array.isArray(AGENTS_MD_SUPPORTED_FORMATS)).toBe(true);
       expect(AGENTS_MD_SUPPORTED_FORMATS.length).toBe(9);
-      expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('claude');
+      expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('cursor');
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('copilot');
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('kiro');
       expect(AGENTS_MD_SUPPORTED_FORMATS).toContain('agents.md');

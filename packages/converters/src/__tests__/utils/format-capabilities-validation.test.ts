@@ -101,7 +101,7 @@ describe('Format Capabilities JSON Validation', () => {
     it('should include claude, kiro, and droid in agents.md support', () => {
       const agentsMdFormats = allCapabilities.agentsMdSupport.formats;
 
-      expect(agentsMdFormats).toContain('claude');
+      expect(agentsMdFormats).toContain('cursor');
       expect(agentsMdFormats).toContain('kiro');
       expect(agentsMdFormats).toContain('droid');
       expect(agentsMdFormats).toContain('agents.md');
@@ -137,16 +137,16 @@ describe('Format Capabilities JSON Validation', () => {
             capability.supportsAgents;
 
           // Most formats with agents.md support should have some advanced features
-          // (agents.md format itself is an exception)
-          if (formatName !== 'agents.md' && formatName !== 'generic') {
+          // (agents.md, generic, and cursor are exceptions - cursor supports AGENTS.md without native advanced features)
+          if (formatName !== 'agents.md' && formatName !== 'generic' && formatName !== 'cursor') {
             expect(hasAdvancedSupport).toBe(true);
           }
         }
       });
     });
 
-    it('should have cursor, continue, and windsurf NOT supporting agents.md', () => {
-      expect(supportsAgentsMd('cursor')).toBe(false);
+    it('should have claude, continue, and windsurf NOT supporting agents.md', () => {
+      expect(supportsAgentsMd('claude')).toBe(false);
       expect(supportsAgentsMd('continue')).toBe(false);
       expect(supportsAgentsMd('windsurf')).toBe(false);
     });
@@ -159,13 +159,13 @@ describe('Format Capabilities JSON Validation', () => {
   });
 
   describe('Format-specific validations', () => {
-    it('claude should support skills, plugins, agents, and agents.md', () => {
+    it('claude should support skills, plugins, agents, but NOT agents.md', () => {
       const claude = allCapabilities.formats.claude;
 
       expect(claude.supportsSkills).toBe(true);
       expect(claude.supportsPlugins).toBe(true);
       expect(claude.supportsAgents).toBe(true);
-      expect(claude.supportsAgentsMd).toBe(true);
+      expect(claude.supportsAgentsMd).toBe(false);
     });
 
     it('droid should support skills, agents, and agents.md', () => {
@@ -186,14 +186,14 @@ describe('Format Capabilities JSON Validation', () => {
       expect(gemini.supportsAgentsMd).toBe(false);
     });
 
-    it('cursor should not support any advanced features', () => {
+    it('cursor should support agents.md but not other advanced features', () => {
       const cursor = allCapabilities.formats.cursor;
 
       expect(cursor.supportsSkills).toBe(false);
       expect(cursor.supportsPlugins).toBe(false);
       expect(cursor.supportsExtensions).toBe(false);
       expect(cursor.supportsAgents).toBe(false);
-      expect(cursor.supportsAgentsMd).toBe(false);
+      expect(cursor.supportsAgentsMd).toBe(true);
     });
   });
 });

@@ -20,9 +20,9 @@
       "supportsPlugins": false,
       "supportsExtensions": false,
       "supportsAgents": false,
-      "supportsAgentsMd": false,
+      "supportsAgentsMd": true,
       "markdownFallback": "cursor-rules.md",
-      "notes": "Cursor uses simple .cursorrules files. No native support for advanced package types."
+      "notes": "Cursor supports AGENTS.md files for project instructions. Uses .cursorrules for simple rules. No native agent/skill/plugin packages."
     },
     "claude": {
       "name": "Claude Code",
@@ -30,9 +30,9 @@
       "supportsPlugins": true,
       "supportsExtensions": false,
       "supportsAgents": true,
-      "supportsAgentsMd": true,
+      "supportsAgentsMd": false,
       "markdownFallback": "CLAUDE.md",
-      "notes": "Claude Code supports skills, agents, and plugins. Full agents.md support for progressive disclosure."
+      "notes": "Claude Code supports skills, agents, and plugins. Uses CLAUDE.md (not AGENTS.md) for project-specific instructions. Feature request open for AGENTS.md support (Issue #6235)."
     },
     "continue": {
       "name": "Continue",
@@ -82,7 +82,7 @@
       "supportsAgents": false,
       "supportsAgentsMd": false,
       "markdownFallback": "GEMINI.md",
-      "notes": "Gemini uses extensions in gemini_extensions.json. No agents.md support."
+      "notes": "Gemini CLI uses extensions in gemini-extension.json. Supports GEMINI.md for context (takes precedence over AGENTS.md). Also supports AGENT.md (singular) but not AGENTS.md (plural)."
     },
     "opencode": {
       "name": "OpenCode",
@@ -188,7 +188,7 @@
   "agentsMdSupport": {
     "description": "Formats that intelligently support agents.md for progressive disclosure",
     "formats": [
-      "claude",
+      "cursor",
       "copilot",
       "kiro",
       "opencode",
@@ -198,6 +198,6 @@
       "agents.md",
       "generic"
     ],
-    "notes": "These formats can use agents.md as a universal fallback when they don't support advanced subtypes like skills or plugins. GitHub Copilot added AGENTS.md support in August 2025."
+    "notes": "These formats can use AGENTS.md as a universal fallback. Claude Code uses CLAUDE.md instead (not AGENTS.md). Gemini uses GEMINI.md instead. Cursor added AGENTS.md support in version 1.6+. GitHub Copilot added AGENTS.md support in August 2025."
   }
 }
