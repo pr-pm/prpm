@@ -176,6 +176,9 @@ function convertSection(section: Section, warnings: string[]): string {
     case 'context':
       return convertContext(section);
 
+    case 'file-reference':
+      return convertFileReference(section);
+
     case 'tools':
       // Tools are Claude-specific, skip for Cursor
       warnings.push('Tools section skipped (Claude-specific)');
@@ -366,6 +369,38 @@ function convertContext(section: {
   lines.push(`## ${section.title}`);
   lines.push('');
   lines.push(section.content);
+
+  return lines.join('\n');
+}
+
+/**
+ * Convert file reference to Cursor @file syntax
+ *
+ * Cursor supports multi-file rules using @file syntax:
+ * @file path/to/file.md
+ *
+ * This creates a reference that Cursor will read and include when the rule is active.
+ */
+function convertFileReference(section: {
+  type: 'file-reference';
+  title: string;
+  path: string;
+  content: string;
+  description?: string;
+  category?: string;
+}): string {
+  const lines: string[] = [];
+
+  // Add section header with description if provided
+  if (section.description) {
+    lines.push(`## ${section.title}`);
+    lines.push('');
+    lines.push(section.description);
+    lines.push('');
+  }
+
+  // Add @file reference
+  lines.push(`@file ${section.path}`);
 
   return lines.join('\n');
 }

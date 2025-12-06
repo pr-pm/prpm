@@ -100,6 +100,43 @@ describe('toCursor', () => {
         'This agent was created to assist with testing tasks'
       );
     });
+
+    it('should convert file-reference section to @file syntax', () => {
+      const pkg = {
+        ...minimalCanonicalPackage,
+        content: {
+          sections: [
+            {
+              type: 'file-reference' as const,
+              title: 'Naming Patterns',
+              path: 'patterns/naming.md',
+              content: '# Naming conventions...',
+              description: 'Additional naming pattern rules'
+            },
+            {
+              type: 'file-reference' as const,
+              title: 'TypeScript Patterns',
+              path: 'patterns/typescript.md',
+              content: '# TypeScript guidelines...',
+            }
+          ]
+        }
+      };
+
+      const result = toCursor(pkg);
+
+      // Should include @file references
+      expect(result.content).toContain('@file patterns/naming.md');
+      expect(result.content).toContain('@file patterns/typescript.md');
+
+      // Should include section header and description when provided
+      expect(result.content).toContain('## Naming Patterns');
+      expect(result.content).toContain('Additional naming pattern rules');
+
+      // Should not include the actual file content (just the reference)
+      expect(result.content).not.toContain('# Naming conventions');
+      expect(result.content).not.toContain('# TypeScript guidelines');
+    });
   });
 
   describe('edge cases', () => {
