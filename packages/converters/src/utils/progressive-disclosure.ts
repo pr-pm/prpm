@@ -77,6 +77,7 @@ export const AGENTS_MD_SUPPORTED_FORMATS: readonly Format[] =
  * Loaded dynamically from data/format-capabilities.json
  */
 export const FORMAT_CAPABILITIES: Partial<Record<Format, {
+  name?: string;
   supportsSkills?: boolean;
   supportsPlugins?: boolean;
   supportsExtensions?: boolean;
@@ -206,6 +207,7 @@ export function getUniversalFallback(): {
  * Determine best fallback order for a format
  *
  * Returns an array of fallback options in priority order
+ * Dynamically loaded from format-capabilities.json
  */
 export function getFallbackChain(format: Format): Array<{
   format: Format | 'markdown';
@@ -220,32 +222,31 @@ export function getFallbackChain(format: Format): Array<{
     description: string;
   }> = [];
 
+  const capabilities = FORMAT_CAPABILITIES[format];
+
   // Primary: Native format
   chain.push({
     format,
-    filename: FORMAT_CAPABILITIES[format]?.markdownFallback || 'README.md',
+    filename: capabilities?.markdownFallback || 'README.md',
     priority: 1,
     description: `Native ${format} format`,
   });
 
-  // Secondary: Format-specific markdown
-  if (format === 'claude') {
+  // Secondary: Format-specific markdown (loaded from JSON)
+  if (capabilities?.markdownFallback) {
+    const fallbackFilename = capabilities.markdownFallback;
+    const formatName = capabilities.name || format;
+
     chain.push({
       format: 'markdown',
-      filename: 'CLAUDE.md',
+      filename: fallbackFilename,
       priority: 2,
-      description: 'Claude-specific markdown format',
-    });
-  } else if (format === 'gemini') {
-    chain.push({
-      format: 'markdown',
-      filename: 'GEMINI.md',
-      priority: 2,
-      description: 'Gemini-specific markdown format',
+      description: `${formatName}-specific markdown format`,
     });
   }
 
-  // Tertiary: agents.md (universal)
+  // Tertiary: agents.md (universal fallback for all formats)
+  // Note: lowercase 'agents.md' for broader compatibility
   chain.push({
     format: 'markdown',
     filename: 'agents.md',

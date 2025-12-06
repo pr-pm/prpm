@@ -177,6 +177,14 @@ describe('Progressive Disclosure', () => {
       expect(chain.some(f => f.filename === 'agents.md')).toBe(true);
     });
 
+    it('should return fallback chain for Aider with CONVENTIONS.md', () => {
+      const chain = getFallbackChain('aider');
+
+      expect(chain[0].format).toBe('aider'); // Native first
+      expect(chain.some(f => f.filename === 'CONVENTIONS.md')).toBe(true);
+      expect(chain.some(f => f.filename === 'agents.md')).toBe(true);
+    });
+
     it('should order by priority', () => {
       const chain = getFallbackChain('claude');
 
