@@ -608,7 +608,12 @@ export async function handleInstall(
             canonicalPkg = fromAgentsMd(sourceContent, metadata);
             break;
           case 'gemini':
-            canonicalPkg = fromGemini(sourceContent, metadata);
+            // Check subtype: extension uses fromGeminiPlugin, slash-command uses fromGemini
+            if (pkg.subtype === 'extension') {
+              canonicalPkg = fromGeminiPlugin(sourceContent, metadata);
+            } else {
+              canonicalPkg = fromGemini(sourceContent, metadata);
+            }
             break;
           default:
             throw new CLIError(`Unsupported source format for conversion: ${pkg.format}`);
@@ -664,8 +669,14 @@ export async function handleInstall(
             break;
           case 'gemini':
           case 'gemini.md':
-            const geminiResult = toGemini(canonicalPkg);
-            convertedContent = geminiResult.content;
+            // Check subtype: extension uses toGeminiPlugin, slash-command uses toGemini
+            if (effectiveSubtype === 'extension') {
+              const geminiPluginResult = toGeminiPlugin(canonicalPkg);
+              convertedContent = geminiPluginResult.content;
+            } else {
+              const geminiResult = toGemini(canonicalPkg);
+              convertedContent = geminiResult.content;
+            }
             break;
           case 'ruler':
             convertedContent = toRuler(canonicalPkg).content;

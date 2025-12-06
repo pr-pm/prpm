@@ -15,6 +15,7 @@ import {
   toRuler,
   toAgentsMd,
   toGemini,
+  toGeminiPlugin,
   toOpencode,
   toDroid,
   toTrae,
@@ -89,7 +90,12 @@ export async function convertToFormat(
         break;
 
       case 'gemini':
-        result = toGemini(canonicalPkg);
+        // Check subtype: extension uses toGeminiPlugin, slash-command uses toGemini
+        if (canonicalPkg.subtype === 'extension') {
+          result = toGeminiPlugin(canonicalPkg);
+        } else {
+          result = toGemini(canonicalPkg);
+        }
         break;
 
       case 'opencode':
@@ -127,8 +133,8 @@ export async function convertToFormat(
 
     return {
       content: result.content,
-      filename: getFilenameForFormat(targetFormat, canonicalPkg.name),
-      contentType: getContentTypeForFormat(targetFormat),
+      filename: getFilenameForFormat(targetFormat, canonicalPkg.name, canonicalPkg.subtype),
+      contentType: getContentTypeForFormat(targetFormat, canonicalPkg.subtype),
       warnings: result.warnings,
       lossyConversion: result.lossyConversion,
     };
@@ -148,7 +154,7 @@ export async function convertToFormat(
 /**
  * Get appropriate filename for target format
  */
-function getFilenameForFormat(format: Format, packageName: string): string {
+function getFilenameForFormat(format: Format, packageName: string, subtype?: string): string {
   const baseName = packageName.split('/').pop() || 'package';
 
   switch (format) {
@@ -178,7 +184,8 @@ function getFilenameForFormat(format: Format, packageName: string): string {
       return 'agents.md';
 
     case 'gemini':
-      return `${baseName}.toml`;
+      // Extensions use .json, slash-commands use .toml
+      return subtype === 'extension' ? 'gemini-extension.json' : `${baseName}.toml`;
 
     case 'opencode':
       return `${baseName}.md`;
@@ -208,13 +215,14 @@ function getFilenameForFormat(format: Format, packageName: string): string {
 /**
  * Get content type for target format
  */
-function getContentTypeForFormat(format: Format): string {
+function getContentTypeForFormat(format: Format, subtype?: string): string {
   switch (format) {
     case 'kiro':
       return 'application/json';
 
     case 'gemini':
-      return 'text/toml';
+      // Extensions use JSON, slash-commands use TOML
+      return subtype === 'extension' ? 'application/json' : 'text/toml';
 
     case 'cursor':
     case 'claude':
@@ -239,7 +247,7 @@ function getContentTypeForFormat(format: Format): string {
 /**
  * Get file extension for format
  */
-export function getExtensionForFormat(format: Format): string {
+export function getExtensionForFormat(format: Format, subtype?: string): string {
   switch (format) {
     case 'kiro':
       return '.json';
@@ -251,7 +259,8 @@ export function getExtensionForFormat(format: Format): string {
       return '.windsurfrules';
 
     case 'gemini':
-      return '.toml';
+      // Extensions use .json, slash-commands use .toml
+      return subtype === 'extension' ? '.json' : '.toml';
 
     default:
       return '.md';

@@ -20,6 +20,7 @@ import {
   fromWindsurf,
   fromAgentsMd,
   fromGemini,
+  fromGeminiPlugin,
   fromRuler,
   fromCursorHooks,
   toCursor,
@@ -31,6 +32,7 @@ import {
   toWindsurf,
   toAgentsMd,
   toGemini,
+  toGeminiPlugin,
   toRuler,
   toCursorHooks,
   isCursorFormat,
@@ -152,6 +154,9 @@ function detectFormat(content: string, filepath: string): string | null {
   }
   if (basename(filepath) === 'agents.md') {
     return 'agents.md';
+  }
+  if (basename(filepath) === 'gemini-extension.json' || filepath.includes('.gemini/extensions')) {
+    return 'gemini-extension';
   }
   if (ext === '.toml' || filepath.includes('.gemini/commands')) {
     return 'gemini';
@@ -279,6 +284,9 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
       case 'agents.md':
         canonicalPkg = fromAgentsMd(content, metadata);
         break;
+      case 'gemini-extension':
+        canonicalPkg = fromGeminiPlugin(content, metadata);
+        break;
       case 'gemini':
         canonicalPkg = fromGemini(content, metadata);
         break;
@@ -335,7 +343,12 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         result = toAgentsMd(canonicalPkg);
         break;
       case 'gemini':
-        result = toGemini(canonicalPkg);
+        // Check subtype: extension uses toGeminiPlugin, slash-command uses toGemini
+        if (canonicalPkg.subtype === 'extension' || options.subtype === 'extension') {
+          result = toGeminiPlugin(canonicalPkg);
+        } else {
+          result = toGemini(canonicalPkg);
+        }
         break;
       case 'ruler':
         result = toRuler(canonicalPkg);
