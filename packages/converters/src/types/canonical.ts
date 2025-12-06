@@ -197,11 +197,18 @@ export interface CanonicalPackage {
         args?: string[];
         url?: string;
         env?: Record<string, string>;
+        disabled?: boolean;
       }>;
       contents?: {
         agents?: string[];
         skills?: string[];
         commands?: string[];
+      };
+      instructions?: string;
+      _geminiMetadata?: {
+        contextFileName?: string;
+        excludeTools?: string[];
+        experimentalSettings?: Record<string, any>;
       };
     };
     geminiExtension?: {
@@ -301,11 +308,18 @@ export interface MetadataSection {
         args?: string[];
         url?: string;
         env?: Record<string, string>;
+        disabled?: boolean;
       }>;
       contents?: {
         agents?: string[];
         skills?: string[];
         commands?: string[];
+      };
+      instructions?: string;
+      _geminiMetadata?: {
+        contextFileName?: string;
+        excludeTools?: string[];
+        experimentalSettings?: Record<string, any>;
       };
     };
     geminiExtension?: {
