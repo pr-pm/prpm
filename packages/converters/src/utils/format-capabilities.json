@@ -1,6 +1,6 @@
 {
   "$schema": "../../schemas/format-capabilities.schema.json",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Format capability matrix for PRPM converters - defines which subtypes each format supports and progressive disclosure fallbacks",
   "lastVerified": "2025-12-06",
   "verificationSources": {
@@ -75,14 +75,14 @@
       "notes": "Kiro supports agents in .kiro/agents/ directory. Full agents.md support."
     },
     "gemini": {
-      "name": "Gemini Code Assist",
+      "name": "Gemini CLI",
       "supportsSkills": false,
       "supportsPlugins": false,
       "supportsExtensions": true,
       "supportsAgents": false,
       "supportsAgentsMd": false,
       "markdownFallback": "GEMINI.md",
-      "notes": "Gemini CLI uses extensions in gemini-extension.json. Supports GEMINI.md for context (takes precedence over AGENTS.md). Also supports AGENT.md (singular) but not AGENTS.md (plural)."
+      "notes": "Gemini CLI uses extensions in gemini-extension.json. Only supports GEMINI.md for project context. Does not support AGENT.md or AGENTS.md."
     },
     "opencode": {
       "name": "OpenCode",
