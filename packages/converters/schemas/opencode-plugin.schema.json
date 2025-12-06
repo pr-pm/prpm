@@ -3,9 +3,143 @@
   "$id": "https://registry.prpm.dev/api/v1/schemas/opencode/plugin.json",
   "$comment": "https://opencode.ai/docs/plugins/",
   "title": "OpenCode Plugin Format",
-  "description": "JSON Schema for OpenCode plugin modules. Plugins are JavaScript/TypeScript modules that can hook into 40+ events across commands, files, LSP, messages, permissions, sessions, todos, tools, and TUI interactions.",
+  "description": "JSON Schema for OpenCode plugin modules. Plugins are JavaScript/TypeScript modules that hook into events across commands, files, LSP, messages, permissions, server, sessions, todos, tools, and TUI interactions. Plugins export an async function that receives a context object (with project, client, $, directory, worktree) and returns an object with an event handler function.",
   "type": "object",
   "required": ["name", "description", "plugin"],
+  "$defs": {
+    "eventTypes": {
+      "command": {
+        "command.executed": {
+          "description": "Triggered when a command is executed",
+          "event": "command.executed"
+        }
+      },
+      "file": {
+        "file.edited": {
+          "description": "Triggered when a file is edited",
+          "event": "file.edited"
+        },
+        "file.watcher.updated": {
+          "description": "Triggered when a file watcher detects changes",
+          "event": "file.watcher.updated"
+        }
+      },
+      "installation": {
+        "installation.updated": {
+          "description": "Triggered when installation state is updated",
+          "event": "installation.updated"
+        }
+      },
+      "lsp": {
+        "lsp.client.diagnostics": {
+          "description": "Triggered when LSP client receives diagnostics",
+          "event": "lsp.client.diagnostics"
+        },
+        "lsp.updated": {
+          "description": "Triggered when LSP state is updated",
+          "event": "lsp.updated"
+        }
+      },
+      "message": {
+        "message.part.removed": {
+          "description": "Triggered when a message part is removed",
+          "event": "message.part.removed"
+        },
+        "message.part.updated": {
+          "description": "Triggered when a message part is updated",
+          "event": "message.part.updated"
+        },
+        "message.removed": {
+          "description": "Triggered when a message is removed",
+          "event": "message.removed"
+        },
+        "message.updated": {
+          "description": "Triggered when a message is updated",
+          "event": "message.updated"
+        }
+      },
+      "permission": {
+        "permission.replied": {
+          "description": "Triggered when a permission request receives a reply",
+          "event": "permission.replied"
+        },
+        "permission.updated": {
+          "description": "Triggered when permission state is updated",
+          "event": "permission.updated"
+        }
+      },
+      "server": {
+        "server.connected": {
+          "description": "Triggered when server connection is established",
+          "event": "server.connected"
+        }
+      },
+      "session": {
+        "session.created": {
+          "description": "Triggered when a new session is created",
+          "event": "session.created"
+        },
+        "session.compacted": {
+          "description": "Triggered when a session is compacted",
+          "event": "session.compacted"
+        },
+        "session.deleted": {
+          "description": "Triggered when a session is deleted",
+          "event": "session.deleted"
+        },
+        "session.diff": {
+          "description": "Triggered when session changes are detected",
+          "event": "session.diff"
+        },
+        "session.error": {
+          "description": "Triggered when a session error occurs",
+          "event": "session.error"
+        },
+        "session.idle": {
+          "description": "Triggered when session becomes idle",
+          "event": "session.idle"
+        },
+        "session.status": {
+          "description": "Triggered when session status changes",
+          "event": "session.status"
+        },
+        "session.updated": {
+          "description": "Triggered when session is updated",
+          "event": "session.updated"
+        }
+      },
+      "todo": {
+        "todo.updated": {
+          "description": "Triggered when a todo item is updated",
+          "event": "todo.updated"
+        }
+      },
+      "tool": {
+        "tool.execute.after": {
+          "description": "Triggered after a tool execution completes",
+          "event": "tool.execute.after"
+        },
+        "tool.execute.before": {
+          "description": "Triggered before a tool execution begins",
+          "event": "tool.execute.before"
+        }
+      },
+      "tui": {
+        "tui.prompt.append": {
+          "description": "Triggered when content is appended to the TUI prompt",
+          "event": "tui.prompt.append"
+        },
+        "tui.command.execute": {
+          "description": "Triggered when a TUI command is executed",
+          "event": "tui.command.execute"
+        },
+        "tui.toast.show": {
+          "description": "Triggered when a toast notification is shown",
+          "event": "tui.toast.show"
+        }
+      }
+    }
+  },
   "properties": {
     "name": {
       "type": "string",
@@ -48,118 +182,131 @@
     },
     "hooks": {
       "type": "object",
-      "description": "Event hooks implemented by this plugin",
+      "description": "Event hooks implemented by this plugin. All event handlers receive an event object with the event type and relevant data. Plugin exports: export const MyPlugin = async (context) => { return { event: async ({ event }) => { /* handler */ } } }",
       "properties": {
         "command": {
           "type": "array",
-          "description": "Command event hooks",
+          "description": "Command execution events",
           "items": {
             "type": "string",
             "enum": [
-              "onCommandStart",
-              "onCommandEnd",
-              "onCommandError"
+              "command.executed"
             ]
           }
         },
         "file": {
           "type": "array",
-          "description": "File event hooks",
+          "description": "File system events including edits and watcher updates",
           "items": {
             "type": "string",
             "enum": [
-              "onFileCreate",
-              "onFileRead",
-              "onFileWrite",
-              "onFileDelete",
-              "onFileChange"
+              "file.edited",
+              "file.watcher.updated"
+            ]
+          }
+        },
+        "installation": {
+          "type": "array",
+          "description": "Installation state events",
+          "items": {
+            "type": "string",
+            "enum": [
+              "installation.updated"
             ]
           }
         },
         "lsp": {
           "type": "array",
-          "description": "LSP event hooks",
+          "description": "Language Server Protocol events including diagnostics and state updates",
           "items": {
             "type": "string",
             "enum": [
-              "onLSPStart",
-              "onLSPMessage",
-              "onLSPError"
+              "lsp.client.diagnostics",
+              "lsp.updated"
             ]
           }
         },
         "message": {
           "type": "array",
-          "description": "Message event hooks",
+          "description": "Message and message part lifecycle events",
           "items": {
             "type": "string",
             "enum": [
-              "onMessageSend",
-              "onMessageReceive",
-              "onMessageError"
+              "message.part.removed",
+              "message.part.updated",
+              "message.removed",
+              "message.updated"
             ]
           }
         },
         "permission": {
           "type": "array",
-          "description": "Permission event hooks",
+          "description": "Permission request and response events",
           "items": {
             "type": "string",
             "enum": [
-              "onPermissionRequest",
-              "onPermissionGrant",
-              "onPermissionDeny"
+              "permission.replied",
+              "permission.updated"
+            ]
+          }
+        },
+        "server": {
+          "type": "array",
+          "description": "Server connection events",
+          "items": {
+            "type": "string",
+            "enum": [
+              "server.connected"
             ]
           }
         },
         "session": {
           "type": "array",
-          "description": "Session event hooks",
+          "description": "Session lifecycle events including creation, updates, errors, and deletion",
           "items": {
             "type": "string",
             "enum": [
-              "onSessionStart",
-              "onSessionEnd",
-              "onSessionPause",
-              "onSessionResume"
+              "session.created",
+              "session.compacted",
+              "session.deleted",
+              "session.diff",
+              "session.error",
+              "session.idle",
+              "session.status",
+              "session.updated"
             ]
           }
         },
         "todo": {
           "type": "array",
-          "description": "Todo event hooks",
+          "description": "Todo item update events",
           "items": {
             "type": "string",
             "enum": [
-              "onTodoCreate",
-              "onTodoUpdate",
-              "onTodoComplete",
-              "onTodoDelete"
+              "todo.updated"
             ]
           }
         },
         "tool": {
           "type": "array",
-          "description": "Tool event hooks",
+          "description": "Tool execution lifecycle events (before/after execution)",
           "items": {
             "type": "string",
             "enum": [
-              "onToolRegister",
-              "onToolCall",
-              "onToolResponse",
-              "onToolError"
+              "tool.execute.after",
+              "tool.execute.before"
             ]
           }
         },
         "tui": {
           "type": "array",
-          "description": "TUI event hooks",
+          "description": "Terminal UI events including prompts, commands, and notifications",
           "items": {
             "type": "string",
             "enum": [
-              "onTUIRender",
-              "onTUIInput",
-              "onTUIUpdate"
+              "tui.prompt.append",
+              "tui.command.execute",
+              "tui.toast.show"
             ]
           }
         }
