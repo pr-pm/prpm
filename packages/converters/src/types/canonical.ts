@@ -28,6 +28,7 @@ export type Format =
   | 'aider'
   | 'zencoder'
   | 'replit'
+  | 'zed'
   | 'generic'
   | 'mcp';
 
@@ -197,11 +198,18 @@ export interface CanonicalPackage {
         args?: string[];
         url?: string;
         env?: Record<string, string>;
+        disabled?: boolean;
       }>;
       contents?: {
         agents?: string[];
         skills?: string[];
         commands?: string[];
+      };
+      instructions?: string;
+      _geminiMetadata?: {
+        contextFileName?: string;
+        excludeTools?: string[];
+        experimentalSettings?: Record<string, any>;
       };
     };
     geminiExtension?: {
@@ -214,6 +222,15 @@ export interface CanonicalPackage {
       contextFileName?: string;
       excludeTools?: string[];
       experimentalSettings?: Record<string, any>;
+    };
+    fileStructure?: {
+      mainFile: string;
+      files: Array<{
+        path: string;
+        category?: string;
+        description?: string;
+      }>;
+      directories?: string[];
     };
   };
 
@@ -228,6 +245,20 @@ export interface CanonicalPackage {
   official?: boolean;    // Official package from cursor.directory, claude.ai, etc.
   verified?: boolean;    // Verified by PRPM team for quality/safety
   karenScore?: number;   // 0-100 quality score from Karen
+
+  // Multi-file package structure (for Cursor @file references, etc.)
+  fileStructure?: {
+    /** Main entry file path */
+    mainFile: string;
+    /** Additional files referenced in the package */
+    files: Array<{
+      path: string;
+      category?: string;
+      description?: string;
+    }>;
+    /** Directory structure for visualization */
+    directories?: string[];
+  };
 }
 
 export interface CanonicalContent {
@@ -246,6 +277,7 @@ export type Section =
   | ContextSection
   | HookSection
   | CursorHookSection
+  | FileReferenceSection
   | CustomSection;
 
 /**
@@ -301,11 +333,18 @@ export interface MetadataSection {
         args?: string[];
         url?: string;
         env?: Record<string, string>;
+        disabled?: boolean;
       }>;
       contents?: {
         agents?: string[];
         skills?: string[];
         commands?: string[];
+      };
+      instructions?: string;
+      _geminiMetadata?: {
+        contextFileName?: string;
+        excludeTools?: string[];
+        experimentalSettings?: Record<string, any>;
       };
     };
     geminiExtension?: {
@@ -427,12 +466,33 @@ export interface CursorHookSection {
 }
 
 /**
+ * File Reference section
+ * References to additional files in multi-file packages
+ * Particularly useful for Cursor @file references
+ */
+export interface FileReferenceSection {
+  type: 'file-reference';
+  /** Display title for the file */
+  title: string;
+  /** Relative path within the package (e.g., "patterns/naming.md") */
+  path: string;
+  /** File content */
+  content: string;
+  /** MIME type or language identifier (e.g., "text/markdown", "typescript") */
+  contentType?: string;
+  /** Purpose/category for organization */
+  category?: 'pattern' | 'example' | 'context' | 'config' | 'data' | 'documentation' | 'other';
+  /** Optional description of what this file provides */
+  description?: string;
+}
+
+/**
  * Custom section
  * Fallback for editor-specific features
  */
 export interface CustomSection {
   type: 'custom';
-  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini';
+  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini' | 'zed';
   title?: string;
   content: string;
   metadata?: Record<string, any>;

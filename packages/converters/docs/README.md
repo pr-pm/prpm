@@ -124,7 +124,7 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 - `opencode-slash-command.schema.json` - Template-based commands
 
 **Gemini CLI Subtypes:**
-- `gemini-plugin.schema.json` - Extensions with MCP servers
+- `gemini-extension.schema.json` - Extensions with MCP servers
 
 ### Accessing Schemas
 

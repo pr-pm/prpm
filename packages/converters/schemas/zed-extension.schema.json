@@ -1,0 +1,238 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/zed/extension.json",
+  "$comment": "https://zed.dev/docs/extensions/developing-extensions",
+  "title": "Zed Extension Format",
+  "description": "JSON Schema for Zed extension.toml manifest files. Extensions are written in Rust, compiled to WebAssembly, and can provide languages, themes, slash commands, debuggers, and MCP servers. Extensions must implement the zed::Extension trait and can define slash commands via run_slash_command method. Slash commands receive SlashCommand struct, args Vec<String>, and optional Worktree, returning Result<SlashCommandOutput, String>.",
+  "type": "object",
+  "required": ["id", "name", "version", "authors", "repository"],
+  "$defs": {
+    "slashCommandAPI": {
+      "description": "Slash Command API Specification",
+      "methods": {
+        "run_slash_command": {
+          "description": "Execute a slash command",
+          "signature": "fn run_slash_command(&self, command: SlashCommand, args: Vec<String>, worktree: Option<&Worktree>) -> Result<SlashCommandOutput, String>",
+          "parameters": {
+            "command": {
+              "type": "SlashCommand",
+              "description": "The slash command being executed with name and other metadata"
+            },
+            "args": {
+              "type": "Vec<String>",
+              "description": "Command arguments provided by user"
+            },
+            "worktree": {
+              "type": "Option<&Worktree>",
+              "description": "Optional reference to the current worktree context"
+            }
+          },
+          "returns": {
+            "success": {
+              "type": "SlashCommandOutput",
+              "fields": {
+                "text": {
+                  "type": "String",
+                  "description": "Command output text to display"
+                },
+                "sections": {
+                  "type": "Option<Vec<SlashCommandOutputSection>>",
+                  "description": "Optional output sections with ranges and labels",
+                  "fields": {
+                    "range": {
+                      "description": "Character range in output text"
+                    },
+                    "label": {
+                      "type": "String",
+                      "description": "Section label for UI display"
+                    }
+                  }
+                }
+              }
+            },
+            "error": {
+              "type": "String",
+              "description": "Error message if command execution fails"
+            }
+          }
+        },
+        "complete_slash_command_argument": {
+          "description": "Provide argument autocompletion (optional method)",
+          "signature": "fn complete_slash_command_argument(&self, command: SlashCommand, args: Vec<String>) -> Result<Vec<SlashCommandArgumentCompletion>, String>",
+          "parameters": {
+            "command": {
+              "type": "SlashCommand",
+              "description": "The command being completed"
+            },
+            "args": {
+              "type": "Vec<String>",
+              "description": "Current arguments for context"
+            }
+          },
+          "returns": {
+            "success": {
+              "type": "Vec<SlashCommandArgumentCompletion>",
+              "fields": {
+                "label": {
+                  "type": "String",
+                  "description": "Display text in completion menu"
+                },
+                "new_text": {
+                  "type": "String",
+                  "description": "Text to insert when selected"
+                },
+                "run_command": {
+                  "type": "bool",
+                  "description": "Whether to execute command immediately after selection"
+                }
+              }
+            },
+            "error": {
+              "type": "String",
+              "description": "Error message if completion fails"
+            }
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique extension identifier (lowercase, hyphens allowed)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable extension name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the extension"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (e.g., 0.1.0)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "authors": {
+      "type": "array",
+      "description": "Extension authors",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "repository": {
+      "type": "string",
+      "description": "Git repository URL",
+      "format": "uri"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier. Must be one of: MIT, Apache-2.0, BSD-3-Clause, GPL-3.0",
+      "enum": ["MIT", "Apache-2.0", "BSD-3-Clause", "GPL-3.0"]
+    },
+    "slash_commands": {
+      "type": "object",
+      "description": "Slash command definitions for the Assistant. Each command key maps to configuration. Extensions must implement run_slash_command method to handle execution. Commands are invoked from the Assistant panel by typing /command-name. See $defs.slashCommandAPI for complete API specification including SlashCommand, SlashCommandOutput, and SlashCommandOutputSection types.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Description shown in slash command menu. Should briefly explain what the command does."
+          },
+          "requires_argument": {
+            "type": "boolean",
+            "description": "Whether the command requires an argument. If true, command will not execute without an argument. If false, command can be invoked without arguments.",
+            "default": false
+          }
+        }
+      }
+    },
+    "languages": {
+      "type": "array",
+      "description": "Programming languages provided by this extension. Extensions can register language support including syntax highlighting, LSP integration, and code intelligence features.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "themes": {
+      "type": "object",
+      "description": "Color themes provided by this extension. Theme keys map to JSON file paths containing theme definitions.",
+      "additionalProperties": {
+        "type": "string",
+        "description": "Path to theme JSON file relative to extension root"
+      }
+    },
+    "grammars": {
+      "type": "object",
+      "description": "Tree-sitter grammars provided by this extension for syntax highlighting and parsing. Grammar keys identify the language.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "repository": {
+            "type": "string",
+            "description": "Git repository URL for the tree-sitter grammar source"
+          },
+          "commit": {
+            "type": "string",
+            "description": "Git commit hash to use from the grammar repository"
+          }
+        }
+      }
+    },
+    "lib": {
+      "type": "object",
+      "description": "Rust library configuration for the extension WASM module",
+      "properties": {
+        "kind": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["cdylib"]
+          },
+          "description": "Library type - must be cdylib for WASM compilation"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "id": "my-extension",
+      "name": "My Extension",
+      "description": "Custom slash commands for development",
+      "version": "0.1.0",
+      "authors": ["Developer Name"],
+      "repository": "https://github.com/username/my-extension",
+      "license": "MIT",
+      "slash_commands": {
+        "echo": {
+          "description": "echoes the provided input",
+          "requires_argument": true
+        },
+        "greet": {
+          "description": "greets the user",
+          "requires_argument": false
+        }
+      }
+    },
+    {
+      "id": "python-extension",
+      "name": "Python Language Support",
+      "description": "Python language features for Zed",
+      "version": "1.0.0",
+      "authors": ["Zed Team"],
+      "repository": "https://github.com/zed-industries/zed",
+      "license": "Apache-2.0",
+      "languages": ["Python"],
+      "grammars": {
+        "python": {
+          "repository": "https://github.com/tree-sitter/tree-sitter-python",
+          "commit": "abc123def456"
+        }
+      }
+    }
+  ]
+}

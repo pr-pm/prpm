@@ -22,6 +22,7 @@ import {
   aiderSchema,
   zencoderSchema,
   replitSchema,
+  zedSchema,
   claudeAgentSchema,
   claudeHookSchema,
   claudeSkillSchema,
@@ -58,6 +59,7 @@ const BASE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
   ['aider.schema.json', aiderSchema],
   ['zencoder.schema.json', zencoderSchema],
   ['replit.schema.json', replitSchema],
+  ['zed.schema.json', zedSchema],
   ['format-registry.schema.json', formatRegistrySchema],
 ];
 
@@ -112,14 +114,28 @@ const AVAILABLE_SCHEMAS = [...BASE_SCHEMAS, ...Object.keys(SUBTYPE_SCHEMAS)];
 export async function schemaRoutes(server: FastifyInstance) {
   /**
    * GET /schemas
-   * List all available schemas
+   * List all available schemas with navigation and grouping
    */
   server.get(
     '/',
     {
       schema: {
-        description: 'List all available JSON Schema files',
+        description: 'List all available JSON Schema files with navigation, grouping, and metadata',
         tags: ['schemas'],
+        querystring: {
+          type: 'object',
+          properties: {
+            format: {
+              type: 'string',
+              description: 'Filter by format (e.g., claude, cursor)'
+            },
+            grouped: {
+              type: 'boolean',
+              description: 'Return schemas grouped by format',
+              default: false
+            }
+          }
+        },
         response: {
           200: {
             type: 'object',
@@ -132,19 +148,31 @@ export async function schemaRoutes(server: FastifyInstance) {
                     name: { type: 'string' },
                     url: { type: 'string' },
                     format: { type: 'string' },
-                    subtype: { type: ['string', 'null'] }
+                    subtype: { type: ['string', 'null'] },
+                    description: { type: 'string' },
+                    title: { type: 'string' }
                   }
                 }
               },
-              total: { type: 'number' }
+              grouped: {
+                type: 'object',
+                additionalProperties: true
+              },
+              total: { type: 'number' },
+              formats: {
+                type: 'array',
+                items: { type: 'string' }
+              }
             }
           }
         }
       }
     },
     async (request, reply) => {
+      const { format: filterFormat, grouped } = request.query as { format?: string; grouped?: boolean };
       const baseUrl = 'https://registry.prpm.dev';
 
+      // Build schema list with metadata
       const schemas = AVAILABLE_SCHEMAS.map(filename => {
         let format: string;
         let subtype: string | null = null;
@@ -158,22 +186,67 @@ export async function schemaRoutes(server: FastifyInstance) {
           url = `${baseUrl}/api/v1/schemas/${format}/${subtype}.json`;
         } else {
           // Base schema - extract format from filename
-          // Handle special cases: kiro-steering → kiro-steering, gemini-md → gemini-md
           format = filename.replace('.schema.json', '');
           url = `${baseUrl}/api/v1/schemas/${format}.json`;
         }
+
+        // Get schema metadata
+        const schemaData = SCHEMAS.get(filename);
+        const description = (schemaData as any)?.description || '';
+        const title = (schemaData as any)?.title || '';
 
         return {
           name: filename,
           url,
           format,
-          subtype
+          subtype,
+          description,
+          title
         };
       });
 
+      // Filter by format if requested
+      const filteredSchemas = filterFormat
+        ? schemas.filter(s => s.format === filterFormat)
+        : schemas;
+
+      // Get unique formats
+      const formats = [...new Set(schemas.map(s => s.format))].sort();
+
+      // Build grouped response if requested
+      let groupedData: Record<string, any> | undefined;
+      if (grouped) {
+        groupedData = {};
+
+        for (const format of formats) {
+          const formatSchemas = schemas.filter(s => s.format === format);
+          const baseSchema = formatSchemas.find(s => s.subtype === null);
+          const subtypeSchemas = formatSchemas.filter(s => s.subtype !== null);
+
+          groupedData[format] = {
+            format,
+            base: baseSchema ? {
+              name: baseSchema.name,
+              url: baseSchema.url,
+              description: baseSchema.description,
+              title: baseSchema.title
+            } : null,
+            subtypes: subtypeSchemas.map(s => ({
+              name: s.name,
+              url: s.url,
+              subtype: s.subtype,
+              description: s.description,
+              title: s.title
+            }))
+          };
+        }
+      }
+
       return {
-        schemas,
-        total: schemas.length
+        schemas: filteredSchemas,
+        grouped: groupedData,
+        total: filteredSchemas.length,
+        formats
       };
     }
   );

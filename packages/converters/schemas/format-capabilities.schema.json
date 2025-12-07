@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/format-capabilities.json",
+  "title": "Format Capabilities Schema",
+  "description": "Schema defining format capability matrix for PRPM converters - which subtypes each format supports and progressive disclosure fallbacks",
+  "type": "object",
+  "required": ["version", "formats", "agentsMdSupport"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version for format capabilities",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of this capabilities file"
+    },
+    "lastVerified": {
+      "type": "string",
+      "description": "Date when capabilities were last verified against official documentation (YYYY-MM-DD)",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "verificationSources": {
+      "type": "object",
+      "description": "URLs to official documentation for each format",
+      "additionalProperties": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "formats": {
+      "type": "object",
+      "description": "Map of format names to their capability configurations",
+      "additionalProperties": {
+        "$ref": "#/definitions/FormatCapability"
+      }
+    },
+    "agentsMdSupport": {
+      "type": "object",
+      "description": "Special section documenting which formats support agents.md for progressive disclosure",
+      "required": ["description", "formats"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Explanation of agents.md support"
+        },
+        "formats": {
+          "type": "array",
+          "description": "List of format names that support agents.md",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes about agents.md support"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "FormatCapability": {
+      "type": "object",
+      "required": ["name", "supportsSkills", "supportsPlugins", "supportsExtensions", "supportsAgents", "supportsAgentsMd"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name for the format"
+        },
+        "supportsSkills": {
+          "type": "boolean",
+          "description": "Whether this format natively supports skill packages"
+        },
+        "supportsPlugins": {
+          "type": "boolean",
+          "description": "Whether this format natively supports plugin packages"
+        },
+        "supportsExtensions": {
+          "type": "boolean",
+          "description": "Whether this format natively supports extension packages"
+        },
+        "supportsAgents": {
+          "type": "boolean",
+          "description": "Whether this format natively supports agent packages"
+        },
+        "supportsAgentsMd": {
+          "type": "boolean",
+          "description": "Whether this format intelligently supports agents.md for progressive disclosure"
+        },
+        "markdownFallback": {
+          "type": "string",
+          "description": "Recommended markdown filename for fallback when advanced features aren't supported"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes about format capabilities"
+        }
+      }
+    }
+  }
+}

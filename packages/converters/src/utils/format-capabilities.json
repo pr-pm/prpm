@@ -1,0 +1,219 @@
+{
+  "$schema": "../../schemas/format-capabilities.schema.json",
+  "version": "1.0.2",
+  "description": "Format capability matrix for PRPM converters - defines which subtypes each format supports and progressive disclosure fallbacks",
+  "lastVerified": "2025-12-06",
+  "verificationSources": {
+    "claude": "https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview",
+    "copilot": "https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/",
+    "cursor": "https://docs.cursor.com/context/rules",
+    "continue": "https://docs.continue.dev/reference",
+    "windsurf": "https://docs.codeium.com/windsurf/cascade",
+    "gemini": "https://geminicli.com/docs/extensions/",
+    "aider": "https://aider.chat/docs/usage/conventions.html",
+    "replit": "https://docs.replit.com/replitai/agent",
+    "zed": "https://zed.dev/docs/assistant/assistant-settings"
+  },
+  "formats": {
+    "cursor": {
+      "name": "Cursor",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": true,
+      "supportsSlashCommands": true,
+      "markdownFallback": "cursor-rules.md",
+      "notes": "Cursor supports AGENTS.md files for project instructions. Custom slash commands in .cursor/commands/*.md (introduced v1.6, Sept 2025). Built-in /summarize command. Rules are appended automatically, slash commands are explicit prompts with more weight. No native agent/skill/plugin packages."
+    },
+    "claude": {
+      "name": "Claude Code",
+      "supportsSkills": true,
+      "supportsPlugins": true,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": false,
+      "markdownFallback": "CLAUDE.md",
+      "notes": "Claude Code supports skills, agents, and plugins. Uses CLAUDE.md (not AGENTS.md) for project-specific instructions. Feature request open for AGENTS.md support (Issue #6235)."
+    },
+    "continue": {
+      "name": "Continue",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "continue-prompts.md",
+      "notes": "Continue uses simple prompt files. No native support for advanced package types."
+    },
+    "windsurf": {
+      "name": "Windsurf",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "windsurf-rules.md",
+      "notes": "Windsurf uses markdown rules with 12K character limit. No advanced package support."
+    },
+    "copilot": {
+      "name": "GitHub Copilot",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "copilot-instructions.md",
+      "notes": "GitHub Copilot coding agent supports AGENTS.md, CLAUDE.md, GEMINI.md, and .instructions.md custom instructions (as of August 2025). Full agents.md support."
+    },
+    "kiro": {
+      "name": "Kiro AI",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "kiro-agent.md",
+      "notes": "Kiro supports agents in .kiro/agents/ directory. Full agents.md support."
+    },
+    "gemini": {
+      "name": "Gemini CLI",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": true,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "supportsSlashCommands": true,
+      "markdownFallback": "GEMINI.md",
+      "notes": "Gemini CLI uses extensions in gemini-extension.json. Custom slash commands in ~/.gemini/commands/ (user-scoped) or .gemini/commands/ (project-scoped). Built-in commands: /help, /copy, /mcp, /memory, /directory. Only supports GEMINI.md for project context. Does not support AGENT.md or AGENTS.md."
+    },
+    "opencode": {
+      "name": "OpenCode",
+      "supportsSkills": false,
+      "supportsPlugins": true,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "supportsSlashCommands": true,
+      "markdownFallback": "opencode-agent.md",
+      "notes": "OpenCode supports agents with mode/model/temperature config. Plugins are JavaScript/TypeScript modules in .opencode/plugin with 40+ event hooks. Slash commands available. Full agents.md support."
+    },
+    "ruler": {
+      "name": "Ruler",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "ruler-rules.md",
+      "notes": "Ruler supports agents in .ruler/agents/ directory. Full agents.md support."
+    },
+    "droid": {
+      "name": "Factory Droid",
+      "supportsSkills": true,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "droid-skill.md",
+      "notes": "Factory Droid supports both skills and agents. Full agents.md support."
+    },
+    "trae": {
+      "name": "Trae",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "trae-rules.md",
+      "notes": "Trae uses simple markdown rules. No advanced package support."
+    },
+    "aider": {
+      "name": "Aider",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "CONVENTIONS.md",
+      "notes": "Aider uses CONVENTIONS.md for coding standards. No advanced package support."
+    },
+    "zencoder": {
+      "name": "Zencoder",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "zencoder-rules.md",
+      "notes": "Zencoder uses simple rules with glob patterns. No advanced package support."
+    },
+    "replit": {
+      "name": "Replit Agent",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "AGENTS.md",
+      "notes": "Replit Agent supports AGENTS.md for custom agent instructions. Full agents.md support following the agent-rules.org standard."
+    },
+    "zed": {
+      "name": "Zed",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": true,
+      "supportsAgents": false,
+      "supportsAgentsMd": true,
+      "supportsSlashCommands": true,
+      "markdownFallback": ".rules",
+      "notes": "Zed supports .rules files (plain markdown, no frontmatter). Slash commands can be used in rules with /file, /diagnostics, /fetch, etc. Extensions written in Rust/WASM with extension.toml manifest. Also reads .cursorrules, .windsurfrules, .clinerules, AGENTS.md, CLAUDE.md, GEMINI.md in priority order. Extensions installed to ~/Library/Application Support/Zed/extensions (macOS). License required: MIT, Apache 2.0, BSD 3-Clause, or GPLv3."
+    },
+    "agents.md": {
+      "name": "agents.md (Universal)",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "agents.md",
+      "notes": "Universal agents.md format - works with OpenAI, Gemini, Claude, and most AI systems."
+    },
+    "mcp": {
+      "name": "Model Context Protocol",
+      "supportsSkills": false,
+      "supportsPlugins": true,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": false,
+      "markdownFallback": "mcp-server.json",
+      "notes": "MCP is a server protocol, not a package format. Supports plugins via server configuration."
+    },
+    "generic": {
+      "name": "Generic (Markdown)",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "README.md",
+      "notes": "Generic markdown format for maximum compatibility. Supports agents.md convention."
+    }
+  },
+  "agentsMdSupport": {
+    "description": "Formats that intelligently support agents.md for progressive disclosure",
+    "formats": [
+      "cursor",
+      "copilot",
+      "kiro",
+      "opencode",
+      "ruler",
+      "droid",
+      "replit",
+      "zed",
+      "agents.md",
+      "generic"
+    ],
+    "notes": "These formats can use AGENTS.md as a universal fallback. Claude Code uses CLAUDE.md instead (not AGENTS.md). Gemini uses GEMINI.md instead. Cursor added AGENTS.md support in version 1.6+. GitHub Copilot added AGENTS.md support in August 2025. Zed reads AGENTS.md along with other rule file formats."
+  }
+}

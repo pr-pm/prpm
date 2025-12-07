@@ -33,6 +33,7 @@ export { fromTrae } from './from-trae.js';
 export { fromAider } from './from-aider.js';
 export { fromZencoder } from './from-zencoder.js';
 export { fromReplit } from './from-replit.js';
+export { fromZed, isZedFormat } from './from-zed.js';
 export { fromMCPServer, parseMCPServerJson, extractMCPServers as extractMCPServersFromCanonical, type MCPServerJson } from './from-mcp-server.js';
 
 // To converters (canonical → target format)
@@ -55,6 +56,7 @@ export { toTrae, isTraeFormat } from './to-trae.js';
 export { toAider, isAiderFormat } from './to-aider.js';
 export { toZencoder, isZencoderFormat, type ZencoderConfig } from './to-zencoder.js';
 export { toReplit, isReplitFormat } from './to-replit.js';
+export { toZed, isZedFormat as isZedFormatTo, generateFilename as generateZedFilename, type ZedConfig } from './to-zed.js';
 export { toMCPServer, generateMCPServerPackage, type MCPServerConversionResult } from './to-mcp-server.js';
 
 // Utilities

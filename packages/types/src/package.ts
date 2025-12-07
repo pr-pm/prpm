@@ -24,6 +24,7 @@ export type Format =
   | "aider"
   | "zencoder"
   | "replit"
+  | "zed"
   | "generic"
   | "mcp";
 
@@ -49,6 +50,7 @@ export const FORMATS: readonly Format[] = [
   "aider",
   "zencoder",
   "replit",
+  "zed",
   "generic",
   "mcp",
 ] as const;
@@ -107,13 +109,14 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   kiro: ["rule", "agent", "tool", "hook"],
   gemini: ["slash-command", "extension"],
   "gemini.md": ["slash-command"],
-  opencode: ["agent", "slash-command", "tool"],
+  opencode: ["agent", "slash-command", "tool", "plugin"],
   ruler: ["rule", "agent", "tool"],
   droid: ["skill", "slash-command", "hook"],
   trae: ["rule"],
   aider: ["rule"],
   zencoder: ["rule"],
   replit: ["rule"],
+  zed: ["rule", "slash-command", "extension"],
   mcp: ["server", "tool"],
   "agents.md": ["skill", "agent", "rule"],
   generic: [

@@ -27,8 +27,84 @@ describe('Schema Routes', () => {
 
       expect(body).toHaveProperty('schemas');
       expect(body).toHaveProperty('total');
+      expect(body).toHaveProperty('formats');
       expect(Array.isArray(body.schemas)).toBe(true);
+      expect(Array.isArray(body.formats)).toBe(true);
       expect(body.total).toBeGreaterThan(0);
+    });
+
+    it('should include schema metadata (description and title)', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/'
+      });
+
+      const body = JSON.parse(response.body);
+      const firstSchema = body.schemas[0];
+
+      expect(firstSchema).toHaveProperty('name');
+      expect(firstSchema).toHaveProperty('url');
+      expect(firstSchema).toHaveProperty('format');
+      expect(firstSchema).toHaveProperty('subtype');
+      expect(firstSchema).toHaveProperty('description');
+      expect(firstSchema).toHaveProperty('title');
+    });
+
+    it('should filter schemas by format', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/?format=claude'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      expect(body.schemas.length).toBeGreaterThan(0);
+      expect(body.schemas.every((s: any) => s.format === 'claude')).toBe(true);
+    });
+
+    it('should return grouped schemas when grouped=true', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/?grouped=true'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      expect(body).toHaveProperty('grouped');
+      expect(typeof body.grouped).toBe('object');
+      expect(Object.keys(body.grouped).length).toBeGreaterThan(0);
+
+      // Check structure of grouped data
+      const firstFormat = Object.keys(body.grouped)[0];
+      const formatData = body.grouped[firstFormat];
+
+      expect(formatData).toHaveProperty('format');
+      expect(formatData).toHaveProperty('base');
+      expect(formatData).toHaveProperty('subtypes');
+      expect(Array.isArray(formatData.subtypes)).toBe(true);
+    });
+
+    it('should group claude schemas correctly', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/?grouped=true'
+      });
+
+      const body = JSON.parse(response.body);
+      const claudeGroup = body.grouped.claude;
+
+      expect(claudeGroup).toBeDefined();
+      expect(claudeGroup.format).toBe('claude');
+      expect(claudeGroup.base).toBeDefined();
+      expect(claudeGroup.base.name).toBe('claude.schema.json');
+      expect(claudeGroup.subtypes.length).toBeGreaterThan(0);
+
+      // Check that subtypes include agent, skill, etc.
+      const subtypeNames = claudeGroup.subtypes.map((s: any) => s.subtype);
+      expect(subtypeNames).toContain('agent');
+      expect(subtypeNames).toContain('skill');
     });
 
     it('should include base schemas without subtypes', async () => {

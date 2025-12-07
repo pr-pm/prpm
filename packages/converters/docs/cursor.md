@@ -302,6 +302,89 @@ The agent will execute the instructions from the corresponding `.cursor/commands
 - Four rule types vs always/globs/regex
 - description field (not name)
 
+---
+
+## Multi-File Rules with @file References
+
+**Support:** Cursor v1.6+
+**Location:** `.cursor/rules/`
+
+Cursor supports organizing complex rules across multiple files using `@file` references. This allows you to create modular, reusable rule components.
+
+### Recommended Structure
+
+```
+.cursor/rules/
+├── react-typescript.mdc          ← Main rule file
+└── react-typescript/             ← Dedicated folder for this rule
+    ├── patterns/
+    │   ├── naming.md
+    │   └── hooks.md
+    └── examples/
+        └── good-component.tsx
+```
+
+### File Extension Requirements
+
+| File Type | Extension | Example |
+|-----------|-----------|---------|
+| Main rule file | `.mdc` | `react-typescript.mdc` |
+| Referenced markdown | `.md` | `patterns/naming.md` |
+| Referenced code | original | `examples/component.tsx` |
+
+### Using @file References
+
+In your main rule file (`.mdc`), reference other files using `@file`:
+
+```markdown
+---
+description: "React TypeScript coding standards"
+globs:
+  - "**/*.tsx"
+---
+
+# React TypeScript Best Practices
+
+## Naming Conventions
+
+@file react-typescript/patterns/naming.md
+
+## Code Examples
+
+@file react-typescript/examples/good-component.tsx
+```
+
+### PRPM Conversion
+
+PRPM automatically handles multi-file Cursor rules:
+
+**Converting TO Cursor:**
+- PRPM generates `@file` references with helpful comment markers
+- Each reference includes a `<!-- PRPM: File reference from {category} -->` comment
+- Files are organized in rule-specific subdirectories
+
+**Converting FROM Cursor:**
+- PRPM reads all `@file` references and loads the actual file contents
+- Files are bundled into the canonical package format
+- Original structure is preserved for round-trip conversion
+
+**Example Output:**
+```markdown
+<!-- PRPM: File reference from pattern -->
+@file react-typescript/patterns/naming.md
+<!-- PRPM: File reference from example -->
+@file react-typescript/examples/good-component.tsx
+```
+
+### Benefits
+
+- ✅ **Organized:** Keep related files together in dedicated folders
+- ✅ **Reusable:** Share pattern files across multiple rules
+- ✅ **Scalable:** Add new rules without cluttering the rules directory
+- ✅ **Portable:** PRPM preserves the entire multi-file structure
+
+---
+
 ## Migration Tips
 
 1. **Start with Always Apply**: Core standards that apply everywhere
@@ -309,3 +392,4 @@ The agent will execute the instructions from the corresponding `.cursor/commands
 3. **Specific Files for tech**: Apply TypeScript rules to .ts files
 4. **Manual for workflows**: Special procedures, optimization guides
 5. **Clear descriptions**: Write descriptions that help AI understand context
+6. **Organize with @file**: Use multi-file structure for complex rules

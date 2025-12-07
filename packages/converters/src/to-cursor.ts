@@ -176,6 +176,9 @@ function convertSection(section: Section, warnings: string[]): string {
     case 'context':
       return convertContext(section);
 
+    case 'file-reference':
+      return convertFileReference(section, warnings);
+
     case 'tools':
       // Tools are Claude-specific, skip for Cursor
       warnings.push('Tools section skipped (Claude-specific)');
@@ -366,6 +369,69 @@ function convertContext(section: {
   lines.push(`## ${section.title}`);
   lines.push('');
   lines.push(section.content);
+
+  return lines.join('\n');
+}
+
+/**
+ * Convert file reference to Cursor @file syntax
+ *
+ * Cursor supports multi-file rules using @file syntax:
+ * @file path/to/file.md
+ *
+ * This creates a reference that Cursor will read and include when the rule is active.
+ *
+ * PRPM adds a special marker comment to indicate this @file reference was generated
+ * during format conversion, helping distinguish between original and converted refs.
+ */
+function convertFileReference(section: {
+  type: 'file-reference';
+  title: string;
+  path: string;
+  content: string;
+  description?: string;
+  category?: string;
+}, warnings: string[]): string {
+  const lines: string[] = [];
+
+  // Add section header with description if provided
+  if (section.description) {
+    lines.push(`## ${section.title}`);
+    lines.push('');
+    lines.push(section.description);
+    lines.push('');
+  }
+
+  // Sanitize and validate path
+  let sanitizedPath = section.path.trim();
+
+  // Reject absolute paths
+  if (sanitizedPath.startsWith('/') || /^[A-Z]:/i.test(sanitizedPath)) {
+    warnings.push(`Rejected absolute path: ${section.path} - converted to relative path`);
+    sanitizedPath = sanitizedPath.replace(/^\/+/, '').replace(/^[A-Z]:/i, '');
+  }
+
+  // Reject parent directory traversal
+  if (sanitizedPath.includes('../') || sanitizedPath.includes('..\\')) {
+    warnings.push(`Rejected parent traversal in path: ${section.path} - removed traversal segments`);
+    sanitizedPath = sanitizedPath.split('/').filter(seg => seg !== '..').join('/');
+  }
+
+  // Reject newlines and other control characters
+  if (/[\r\n\t]/.test(sanitizedPath)) {
+    warnings.push(`Rejected control characters in path: ${section.path}`);
+    sanitizedPath = sanitizedPath.replace(/[\r\n\t]/g, '');
+  }
+
+  // Sanitize category to prevent HTML comment injection
+  const sanitizedCategory = (section.category || 'converted package')
+    .replace(/-->/g, '--&gt;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Add PRPM marker and @file reference
+  lines.push(`<!-- PRPM: File reference from ${sanitizedCategory} -->`);
+  lines.push(`@file ${sanitizedPath}`);
 
   return lines.join('\n');
 }

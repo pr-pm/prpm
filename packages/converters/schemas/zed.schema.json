@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/zed.json",
+  "$comment": "https://zed.dev/docs/assistant/assistant-settings",
+  "title": "Zed Rules Format",
+  "description": "JSON Schema for Zed .rules format - plain markdown instructions for AI coding assistants",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "Plain markdown content with AI coding instructions. Zed uses .rules files (no frontmatter required). Also reads .cursorrules, .windsurfrules, .clinerules, .github/copilot-instructions.md, AGENT.md, AGENTS.md, CLAUDE.md, and GEMINI.md in priority order."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata for PRPM packaging (not used by Zed itself)",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Package identifier"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Categorization tags",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "content": "# Project Coding Guidelines\n\nYou are an expert TypeScript developer. Follow these rules:\n\n## Code Style\n\n- Use functional components with hooks\n- Prefer const over let\n- Always use TypeScript strict mode\n\n## Testing\n\n- Write unit tests for all business logic\n- Use Vitest for testing\n- Aim for >80% coverage"
+    },
+    {
+      "content": "# API Development Standards\n\nWhen working on API endpoints:\n\n1. Use REST conventions\n2. Always validate input\n3. Return proper HTTP status codes\n4. Include error messages in responses\n\n## Example\n\n```typescript\napp.get('/api/users/:id', async (req, res) => {\n  const { id } = req.params;\n  const user = await db.users.findOne({ id });\n  if (!user) {\n    return res.status(404).json({ error: 'User not found' });\n  }\n  res.json(user);\n});\n```"
+    }
+  ]
+}
