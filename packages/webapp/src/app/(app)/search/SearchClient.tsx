@@ -1470,11 +1470,13 @@ function SearchPageContent() {
                       <option value="copilot">GitHub Copilot</option>
                       <option value="kiro">Kiro</option>
                       <option value="gemini">Gemini CLI</option>
+                      <option value="opencode">OpenCode</option>
                       <option value="droid">Droid</option>
                       <option value="trae">Trae</option>
                       <option value="aider">Aider</option>
                       <option value="zencoder">Zencoder</option>
                       <option value="replit">Replit</option>
+                      <option value="zed">Zed</option>
                       <option value="mcp">MCP</option>
                       <option value="agents.md">Agents.md</option>
                       <option value="generic">Generic</option>
