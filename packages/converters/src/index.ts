@@ -68,3 +68,20 @@ export * from './schema-files.js';
 
 // Format Registry - Single source of truth for format configurations
 export * from './format-registry.js';
+
+// Progressive Disclosure - Format capabilities and fallback logic
+export {
+  getAllFormatCapabilities,
+  getFormatCapability,
+  supportsAgentsMd,
+  formatSupportsSubtype,
+  shouldUseMarkdownFallback,
+  getRecommendedFormat,
+  getUniversalFallback,
+  getFallbackChain,
+  getConversionStrategy,
+  FORMAT_CAPABILITIES,
+  AGENTS_MD_SUPPORTED_FORMATS,
+  type FormatCapability,
+  type FormatCapabilitiesData,
+} from './utils/progressive-disclosure.js';

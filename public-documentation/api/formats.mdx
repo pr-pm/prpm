@@ -1,0 +1,164 @@
+---
+title: 'Format Capabilities'
+description: 'API endpoints for discovering what features each AI editor format supports'
+---
+
+# Format Capabilities API
+
+The format capabilities API provides information about what features each AI editor format supports. Use this to determine compatibility when converting packages between formats.
+
+## Get All Format Capabilities
+
+```bash
+GET /api/v1/formats/capabilities
+```
+
+Returns the complete format capabilities matrix.
+
+**Example Response:**
+
+```json
+{
+  "version": "1.0.2",
+  "description": "Format capability matrix for PRPM converters",
+  "formats": {
+    "cursor": {
+      "name": "Cursor",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": false,
+      "supportsAgentsMd": true,
+      "supportsSlashCommands": true,
+      "markdownFallback": "cursor-rules.md",
+      "notes": "Cursor supports AGENTS.md files for project instructions..."
+    },
+    "claude": {
+      "name": "Claude Code",
+      "supportsSkills": true,
+      "supportsPlugins": true,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": false,
+      "markdownFallback": "CLAUDE.md",
+      "notes": "Claude Code supports skills, agents, and plugins..."
+    },
+    "kiro": {
+      "name": "Kiro AI",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "markdownFallback": "kiro-agent.md",
+      "notes": "Kiro supports agents in .kiro/agents/ directory..."
+    }
+  },
+  "agentsMdSupport": {
+    "description": "Formats that support agents.md for progressive disclosure",
+    "formats": ["cursor", "copilot", "kiro", "opencode", "ruler", "droid", "replit", "zed"],
+    "notes": "These formats can use AGENTS.md as a universal fallback..."
+  }
+}
+```
+
+## Get Specific Format Capabilities
+
+```bash
+GET /api/v1/formats/capabilities/:format
+```
+
+Returns capabilities for a single format.
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `format` | string | Format name (e.g., `cursor`, `claude`, `kiro`) |
+
+**Example Request:**
+
+```bash
+curl https://registry.prpm.dev/api/v1/formats/capabilities/kiro
+```
+
+**Example Response:**
+
+```json
+{
+  "format": "kiro",
+  "name": "Kiro AI",
+  "supportsSkills": false,
+  "supportsPlugins": false,
+  "supportsExtensions": false,
+  "supportsAgents": true,
+  "supportsAgentsMd": true,
+  "markdownFallback": "kiro-agent.md",
+  "notes": "Kiro supports agents in .kiro/agents/ directory. Full agents.md support."
+}
+```
+
+**404 Response (format not found):**
+
+```json
+{
+  "error": "Format not found",
+  "message": "Format \"invalid\" does not exist in the capabilities matrix",
+  "availableFormats": ["cursor", "claude", "continue", "windsurf", "copilot", "kiro", ...]
+}
+```
+
+## Capability Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Human-readable format name |
+| `supportsSkills` | boolean | Can use skill packages |
+| `supportsPlugins` | boolean | Can use plugin packages |
+| `supportsExtensions` | boolean | Can use extension packages |
+| `supportsAgents` | boolean | Has native agent support |
+| `supportsAgentsMd` | boolean | Reads AGENTS.md files |
+| `supportsSlashCommands` | boolean | Has custom slash commands |
+| `markdownFallback` | string | Fallback filename for unsupported features |
+| `notes` | string | Additional capability notes |
+
+## Progressive Disclosure
+
+When a target format doesn't support a specific feature (e.g., skills), PRPM uses progressive disclosure to convert to the best available alternative:
+
+1. **Native format** - Use if supported
+2. **Format-specific markdown** - e.g., `CLAUDE.md`, `GEMINI.md`
+3. **Universal fallback** - `AGENTS.md` for maximum compatibility
+
+Use the capabilities API to determine the best conversion strategy for your packages.
+
+## Example: Check Agents.md Support
+
+```typescript
+const response = await fetch('https://registry.prpm.dev/api/v1/formats/capabilities');
+const { agentsMdSupport } = await response.json();
+
+// Check if a format supports agents.md
+const supportsAgentsMd = agentsMdSupport.formats.includes('cursor');
+console.log(`Cursor supports agents.md: ${supportsAgentsMd}`); // true
+```
+
+## Available Formats
+
+| Format | Key | Supports Agents.md |
+|--------|-----|-------------------|
+| Cursor | `cursor` | Yes |
+| Claude Code | `claude` | No (uses CLAUDE.md) |
+| Continue | `continue` | No |
+| Windsurf | `windsurf` | No |
+| GitHub Copilot | `copilot` | Yes |
+| Kiro AI | `kiro` | Yes |
+| Gemini CLI | `gemini` | No (uses GEMINI.md) |
+| OpenCode | `opencode` | Yes |
+| Ruler | `ruler` | Yes |
+| Factory Droid | `droid` | Yes |
+| Trae | `trae` | No |
+| Aider | `aider` | No (uses CONVENTIONS.md) |
+| Zencoder | `zencoder` | No |
+| Replit Agent | `replit` | Yes |
+| Zed | `zed` | Yes |

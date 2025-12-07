@@ -1,0 +1,174 @@
+---
+title: 'Schema Endpoints'
+description: 'JSON Schema endpoints for validating AI editor prompt packages'
+---
+
+# Schema Endpoints
+
+The PRPM Registry serves JSON Schema files for validating prompt packages across all supported AI editor formats.
+
+## List All Schemas
+
+```bash
+GET /api/v1/schemas
+```
+
+Returns a list of all available schemas with metadata.
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `format` | string | Filter by format (e.g., `claude`, `cursor`) |
+| `grouped` | boolean | Return schemas grouped by format |
+
+**Example Response:**
+
+```json
+{
+  "schemas": [
+    {
+      "name": "cursor.schema.json",
+      "url": "https://registry.prpm.dev/api/v1/schemas/cursor.json",
+      "format": "cursor",
+      "subtype": null,
+      "description": "JSON Schema for Cursor rules"
+    }
+  ],
+  "total": 25,
+  "formats": ["cursor", "claude", "kiro", "copilot", ...]
+}
+```
+
+## Get Base Format Schema
+
+```bash
+GET /api/v1/schemas/:format.json
+```
+
+Returns the JSON Schema for a base format.
+
+**Available Base Formats:**
+
+| Format | Schema URL |
+|--------|------------|
+| `cursor` | `/api/v1/schemas/cursor.json` |
+| `claude` | `/api/v1/schemas/claude.json` |
+| `continue` | `/api/v1/schemas/continue.json` |
+| `windsurf` | `/api/v1/schemas/windsurf.json` |
+| `copilot` | `/api/v1/schemas/copilot.json` |
+| `kiro-steering` | `/api/v1/schemas/kiro-steering.json` |
+| `gemini` | `/api/v1/schemas/gemini.json` |
+| `opencode` | `/api/v1/schemas/opencode.json` |
+| `droid` | `/api/v1/schemas/droid.json` |
+| `trae` | `/api/v1/schemas/trae.json` |
+| `aider` | `/api/v1/schemas/aider.json` |
+| `zencoder` | `/api/v1/schemas/zencoder.json` |
+| `replit` | `/api/v1/schemas/replit.json` |
+| `zed` | `/api/v1/schemas/zed.json` |
+| `agents-md` | `/api/v1/schemas/agents-md.json` |
+| `canonical` | `/api/v1/schemas/canonical.json` |
+
+## Get Subtype Schema
+
+```bash
+GET /api/v1/schemas/:format/:subtype.json
+```
+
+Returns the JSON Schema for a specific subtype within a format.
+
+**Available Subtypes:**
+
+### Claude Subtypes
+
+| Subtype | Schema URL | Description |
+|---------|------------|-------------|
+| `agent` | `/api/v1/schemas/claude/agent.json` | Claude Code agents |
+| `skill` | `/api/v1/schemas/claude/skill.json` | Claude Code skills |
+| `slash-command` | `/api/v1/schemas/claude/slash-command.json` | Slash commands |
+| `hook` | `/api/v1/schemas/claude/hook.json` | Claude Code hooks |
+
+### Cursor Subtypes
+
+| Subtype | Schema URL | Description |
+|---------|------------|-------------|
+| `command` | `/api/v1/schemas/cursor/command.json` | Cursor slash commands |
+| `hooks` | `/api/v1/schemas/cursor/hooks.json` | Cursor hooks configuration |
+
+### Kiro Subtypes
+
+| Subtype | Schema URL | Description |
+|---------|------------|-------------|
+| `agent` | `/api/v1/schemas/kiro/agent.json` | Kiro agents |
+| `hook` | `/api/v1/schemas/kiro/hook.json` | Kiro hooks (file events + lifecycle) |
+
+### Factory Droid Subtypes
+
+| Subtype | Schema URL | Description |
+|---------|------------|-------------|
+| `skill` | `/api/v1/schemas/droid/skill.json` | Droid skills |
+| `slash-command` | `/api/v1/schemas/droid/slash-command.json` | Droid slash commands |
+| `hook` | `/api/v1/schemas/droid/hook.json` | Droid hooks |
+
+### OpenCode Subtypes
+
+| Subtype | Schema URL | Description |
+|---------|------------|-------------|
+| `slash-command` | `/api/v1/schemas/opencode/slash-command.json` | OpenCode slash commands |
+
+## Get Format Registry
+
+```bash
+GET /api/v1/schemas/format-registry
+```
+
+Returns directory structures and file patterns for all AI editor formats.
+
+**Example Response:**
+
+```json
+{
+  "cursor": {
+    "directories": [".cursor", ".cursor/rules", ".cursor/commands"],
+    "files": {
+      "rules": ".cursor/rules/*.mdc",
+      "commands": ".cursor/commands/*.md"
+    }
+  },
+  "claude": {
+    "directories": [".claude", ".claude/agents", ".claude/skills"],
+    "files": {
+      "agents": ".claude/agents/*.md",
+      "skills": ".claude/skills/*.md"
+    }
+  }
+}
+```
+
+## Using Schemas for Validation
+
+You can reference these schemas directly in your files:
+
+```json
+{
+  "$schema": "https://registry.prpm.dev/api/v1/schemas/cursor.json",
+  "name": "my-rule",
+  "content": "..."
+}
+```
+
+Or validate programmatically:
+
+```typescript
+import Ajv from 'ajv';
+
+const schema = await fetch('https://registry.prpm.dev/api/v1/schemas/claude/hook.json')
+  .then(r => r.json());
+
+const ajv = new Ajv();
+const validate = ajv.compile(schema);
+
+if (!validate(myHookConfig)) {
+  console.error(validate.errors);
+}
+```
