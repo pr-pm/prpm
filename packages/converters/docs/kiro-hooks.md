@@ -40,7 +40,11 @@ Kiro hooks are event-driven automations that trigger actions when specific file 
 
 ## Event Types
 
-### fileCreated
+Kiro hooks support two categories of events: **file events** (require patterns) and **lifecycle events** (no patterns needed).
+
+### File Events
+
+#### fileCreated
 Triggers when new files are created matching the patterns.
 
 ```json
@@ -55,7 +59,7 @@ Triggers when new files are created matching the patterns.
 }
 ```
 
-### fileModified
+#### fileModified
 Triggers when files are modified.
 
 ```json
@@ -67,7 +71,7 @@ Triggers when files are modified.
 }
 ```
 
-### fileDeleted
+#### fileDeleted
 Triggers when files are deleted.
 
 ```json
@@ -75,6 +79,63 @@ Triggers when files are deleted.
   "when": {
     "type": "fileDeleted",
     "patterns": ["src/**/*.ts"]
+  }
+}
+```
+
+### Lifecycle Events
+
+#### agentSpawn
+Triggers when the agent is activated/starts a session.
+
+```json
+{
+  "when": {
+    "type": "agentSpawn"
+  }
+}
+```
+
+#### userPromptSubmit
+Triggers when the user submits a prompt, before processing.
+
+```json
+{
+  "when": {
+    "type": "userPromptSubmit"
+  }
+}
+```
+
+#### preToolUse
+Triggers before tool execution. Can block the tool call.
+
+```json
+{
+  "when": {
+    "type": "preToolUse"
+  }
+}
+```
+
+#### postToolUse
+Triggers after tool execution completes.
+
+```json
+{
+  "when": {
+    "type": "postToolUse"
+  }
+}
+```
+
+#### stop
+Triggers when the agent finishes responding (end of turn).
+
+```json
+{
+  "when": {
+    "type": "stop"
   }
 }
 ```

@@ -3,7 +3,7 @@
   "$id": "https://registry.prpm.dev/api/v1/schemas/kiro/hook.json",
   "$comment": "https://kiro.dev/docs/hooks/",
   "title": "Kiro Hook Format",
-  "description": "JSON Schema for Kiro hook configuration files (.kiro/hooks/*.json) - event-driven automations",
+  "description": "JSON Schema for Kiro hook configuration files (.kiro/hooks/*.json) - event-driven automations. Supports both file-based events (fileCreated, fileModified, fileDeleted) and lifecycle events (agentSpawn, userPromptSubmit, preToolUse, postToolUse, stop).",
   "type": "object",
   "required": ["name", "description", "version", "when", "then"],
   "properties": {
@@ -24,23 +24,44 @@
     },
     "when": {
       "type": "object",
-      "description": "Event trigger configuration",
-      "required": ["type", "patterns"],
+      "description": "Event trigger configuration. File events require patterns, lifecycle events do not.",
+      "required": ["type"],
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["fileCreated", "fileModified", "fileDeleted"],
-          "description": "Type of file system event to trigger on"
+          "enum": [
+            "fileCreated",
+            "fileModified",
+            "fileDeleted",
+            "agentSpawn",
+            "userPromptSubmit",
+            "preToolUse",
+            "postToolUse",
+            "stop"
+          ],
+          "description": "Event type. File events: fileCreated (new files created), fileModified (files saved), fileDeleted (files removed). Lifecycle events: agentSpawn (agent activated), userPromptSubmit (user submits prompt), preToolUse (before tool execution, can block), postToolUse (after tool execution), stop (agent finishes responding)."
         },
         "patterns": {
           "type": "array",
-          "description": "Glob patterns to match files",
+          "description": "Glob patterns to match files (required for file events, optional for lifecycle events)",
           "items": {
             "type": "string"
           },
           "minItems": 1
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": { "enum": ["fileCreated", "fileModified", "fileDeleted"] }
+            }
+          },
+          "then": {
+            "required": ["patterns"]
+          }
+        }
+      ]
     },
     "then": {
       "type": "object",
@@ -114,6 +135,30 @@
       "then": {
         "type": "runCommand",
         "command": "npm run lint"
+      }
+    },
+    {
+      "name": "Session Setup",
+      "description": "Loads project context when agent starts",
+      "version": "1",
+      "when": {
+        "type": "agentSpawn"
+      },
+      "then": {
+        "type": "askAgent",
+        "prompt": "Read the README.md and CONTRIBUTING.md to understand the project structure and coding conventions."
+      }
+    },
+    {
+      "name": "Security Check",
+      "description": "Reviews tool calls for security concerns",
+      "version": "1",
+      "when": {
+        "type": "preToolUse"
+      },
+      "then": {
+        "type": "askAgent",
+        "prompt": "Review this tool call for potential security issues. Block if it accesses sensitive files or runs dangerous commands."
       }
     }
   ]
