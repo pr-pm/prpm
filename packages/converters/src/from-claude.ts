@@ -76,6 +76,33 @@ export function fromClaude(
     metadataSection.data.claudeAgent.model = frontmatter.model;
   }
 
+  // Extract Claude slash command specific fields (argument-hint, allowed-tools, etc.)
+  const argumentHint = frontmatter['argument-hint'];
+  const hasSlashCommandFields = argumentHint || frontmatter['allowed-tools'] || frontmatter['disable-model-invocation'];
+
+  if (hasSlashCommandFields) {
+    metadataSection.data.claudeSlashCommand = {
+      description: frontmatter.description,
+    };
+
+    if (argumentHint) {
+      metadataSection.data.claudeSlashCommand.argumentHint = argumentHint;
+    }
+
+    if (frontmatter['allowed-tools']) {
+      metadataSection.data.claudeSlashCommand.allowedTools = frontmatter['allowed-tools'];
+    }
+
+    if (frontmatter.model) {
+      metadataSection.data.claudeSlashCommand.model = frontmatter.model;
+    }
+
+    if (frontmatter['disable-model-invocation'] !== undefined) {
+      metadataSection.data.claudeSlashCommand.disableModelInvocation =
+        frontmatter['disable-model-invocation'] === 'true' || frontmatter['disable-model-invocation'] === true;
+    }
+  }
+
   // Parse body content
   const { sections: bodySections, h1Title, h1Icon } = parseMarkdownBody(body);
 

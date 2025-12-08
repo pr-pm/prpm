@@ -2,7 +2,16 @@
  * Registry API types for CLI
  */
 
-import { Format, Subtype } from '../types';
+// Import shared types from @pr-pm/types
+import type {
+  Format,
+  Subtype,
+  PackageManifest as SharedPackageManifest,
+  PackageAuthor
+} from '@pr-pm/types';
+
+// Re-export shared types for convenience
+export type { Format, Subtype, PackageAuthor };
 
 /**
  * Enhanced file metadata for collection packages
@@ -17,29 +26,13 @@ export interface PackageFileMetadata {
 }
 
 /**
- * Package manifest - supports both simple and enhanced file formats
+ * Package manifest - extends shared manifest with enhanced file format support for collections
  */
-export interface PackageManifest {
-  name: string;
-  version: string;
-  description: string;
-  author: string | { name: string; email?: string };
-  license?: string;
-  repository?: string;
-  homepage?: string;
-  format: Format;
-  subtype?: Subtype;
-  tags?: string[];
-  keywords?: string[];
-  category?: string;
-  dependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
-  engines?: Record<string, string>;
+export interface PackageManifest extends Omit<SharedPackageManifest, 'files'> {
   // Files can be either:
   // 1. Simple format: string[] (backward compatible)
   // 2. Enhanced format: PackageFileMetadata[] (for collections)
   files: string[] | PackageFileMetadata[];
-  main?: string;
 }
 
 export interface DependencyTreeNode {

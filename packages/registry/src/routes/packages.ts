@@ -81,7 +81,7 @@ const SUBTYPE_ENUM = [
 const LIST_COLUMNS = `
   p.id, p.name, p.display_name, p.description, p.author_id, p.org_id,
   p.format, p.subtype, p.tags, p.keywords, p.category,
-  p.visibility, p.featured, p.verified, p.official,
+  p.visibility, p.featured, p.verified, p.official, p.eager,
   p.total_downloads, p.weekly_downloads, p.monthly_downloads, p.version_count,
   p.downloads_last_7_days, p.trending_score,
   p.rating_average, p.rating_count, p.quality_score,
@@ -863,6 +863,7 @@ export async function packageRoutes(server: FastifyInstance) {
         const language = manifest.language as string | undefined;
         const framework = manifest.framework as string | undefined;
         const isPrivate = manifest.private === true; // Explicitly extract private field
+        const eager = manifest.eager === true; // Extract eager field
 
         if (!packageName || !version || !description || !format) {
           return reply.status(400).send({
@@ -1095,6 +1096,13 @@ export async function packageRoutes(server: FastifyInstance) {
               message: `Version ${version} of ${packageName} already exists. Use a new version number.`,
             });
           }
+
+          // Update eager field for existing package if it changed in the manifest
+          await query(
+            server,
+            "UPDATE packages SET eager = $1 WHERE id = $2",
+            [eager, pkg.id],
+          );
         } else {
           // New package - create it
           // Determine visibility: private field in manifest maps to visibility in database
@@ -1113,10 +1121,10 @@ export async function packageRoutes(server: FastifyInstance) {
             server,
             `INSERT INTO packages (
             name, display_name, description, author_id, org_id, format, subtype,
-            license, tags, keywords, language, framework, visibility, last_published_at,
+            license, tags, keywords, language, framework, visibility, eager, last_published_at,
             ai_enrichment_needed
           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), TRUE)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), TRUE)
            RETURNING *`,
             [
               packageName,
@@ -1132,6 +1140,7 @@ export async function packageRoutes(server: FastifyInstance) {
               language || null,
               framework || null,
               visibility,
+              eager,
             ],
           );
 
@@ -1404,9 +1413,9 @@ export async function packageRoutes(server: FastifyInstance) {
           server,
           `INSERT INTO package_versions (
           package_id, version, tarball_url, content_hash, file_size,
-          published_at, metadata
+          published_at, metadata, eager
         )
-        VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+        VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7)
         RETURNING *`,
           [
             pkg.id,
@@ -1415,6 +1424,7 @@ export async function packageRoutes(server: FastifyInstance) {
             tarballHash,
             size,
             JSON.stringify({ manifest, readme: undefined, files }),
+            eager,
           ],
         );
 
@@ -2308,6 +2318,7 @@ export async function packageRoutes(server: FastifyInstance) {
             p.rating_count,
             p.verified,
             p.featured,
+            p.eager,
             p.deprecated,
             p.deprecated_reason,
             p.full_content,
@@ -2356,6 +2367,7 @@ export async function packageRoutes(server: FastifyInstance) {
           rating_count: row.rating_count || 0,
           verified: row.verified || false,
           featured: row.featured || false,
+          eager: row.eager || false,
           deprecated: row.deprecated || false,
           deprecated_reason: row.deprecated_reason,
           fullContent: row.full_content, // Include full content - essential for page rendering

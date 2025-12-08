@@ -57,6 +57,7 @@ export { toAider, isAiderFormat } from './to-aider.js';
 export { toZencoder, isZencoderFormat, type ZencoderConfig } from './to-zencoder.js';
 export { toReplit, isReplitFormat } from './to-replit.js';
 export { toZed, isZedFormat as isZedFormatTo, generateFilename as generateZedFilename, type ZedConfig } from './to-zed.js';
+export { toCodex, generateFilename as generateCodexFilename, type CodexConfig } from './to-codex.js';
 export { toMCPServer, generateMCPServerPackage, type MCPServerConversionResult } from './to-mcp-server.js';
 
 // Utilities
@@ -68,3 +69,20 @@ export * from './schema-files.js';
 
 // Format Registry - Single source of truth for format configurations
 export * from './format-registry.js';
+
+// Progressive Disclosure - Format capabilities and fallback logic
+export {
+  getAllFormatCapabilities,
+  getFormatCapability,
+  supportsAgentsMd,
+  formatSupportsSubtype,
+  shouldUseMarkdownFallback,
+  getRecommendedFormat,
+  getUniversalFallback,
+  getFallbackChain,
+  getConversionStrategy,
+  FORMAT_CAPABILITIES,
+  AGENTS_MD_SUPPORTED_FORMATS,
+  type FormatCapability,
+  type FormatCapabilitiesData,
+} from './utils/progressive-disclosure.js';

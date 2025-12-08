@@ -258,11 +258,23 @@ Hooks are JSON configuration files for event-driven automation:
 
 ### Event Types
 
+**File Events** (require `patterns`):
+
 | Event | Triggers When |
 |-------|---------------|
 | `fileCreated` | New files created matching patterns |
 | `fileModified` | Files modified matching patterns |
 | `fileDeleted` | Files deleted matching patterns |
+
+**Lifecycle Events** (no patterns needed):
+
+| Event | Triggers When |
+|-------|---------------|
+| `agentSpawn` | Agent is activated/session starts |
+| `userPromptSubmit` | User submits a prompt (before processing) |
+| `preToolUse` | Before tool execution (can block) |
+| `postToolUse` | After tool execution completes |
+| `stop` | Agent finishes responding (end of turn) |
 
 ### Action Types
 
@@ -334,6 +346,42 @@ Hooks are JSON configuration files for event-driven automation:
 }
 ```
 
+### Session Context Loader (Lifecycle Hook)
+
+`.kiro/hooks/session-setup.json`:
+```json
+{
+  "name": "Session Setup",
+  "description": "Loads project context when agent starts",
+  "version": "1",
+  "when": {
+    "type": "agentSpawn"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Read the README.md and CONTRIBUTING.md to understand the project structure and coding conventions before starting work."
+  }
+}
+```
+
+### Security Gate (Lifecycle Hook)
+
+`.kiro/hooks/security-check.json`:
+```json
+{
+  "name": "Security Check",
+  "description": "Reviews tool calls for security concerns",
+  "version": "1",
+  "when": {
+    "type": "preToolUse"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review this tool call for potential security issues. Block if it accesses sensitive files (.env, credentials) or runs dangerous commands."
+  }
+}
+```
+
 ## Common Mistakes
 
 | Mistake | Fix |
@@ -343,6 +391,8 @@ Hooks are JSON configuration files for event-driven automation:
 | Using regex in fileMatchPattern | Globs only, no regex support |
 | Multiple patterns in fileMatchPattern | Use single pattern string only |
 | Forgetting domain field | Use domain for organization and discovery |
+| Adding patterns to lifecycle hooks | Lifecycle events (agentSpawn, preToolUse, etc.) don't need patterns |
+| Missing patterns for file hooks | File events (fileCreated, fileModified, fileDeleted) require patterns |
 
 ## Validation
 

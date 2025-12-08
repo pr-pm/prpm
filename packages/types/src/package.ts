@@ -17,6 +17,7 @@ export type Format =
   | "gemini.md"
   | "claude.md"
   | "gemini"
+  | "gemini-extension"
   | "opencode"
   | "ruler"
   | "droid"
@@ -25,6 +26,7 @@ export type Format =
   | "zencoder"
   | "replit"
   | "zed"
+  | "codex"
   | "generic"
   | "mcp";
 
@@ -43,6 +45,7 @@ export const FORMATS: readonly Format[] = [
   "gemini.md",
   "claude.md",
   "gemini",
+  "gemini-extension",
   "opencode",
   "ruler",
   "droid",
@@ -51,6 +54,7 @@ export const FORMATS: readonly Format[] = [
   "zencoder",
   "replit",
   "zed",
+  "codex",
   "generic",
   "mcp",
 ] as const;
@@ -108,6 +112,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   copilot: ["tool", "chatmode"],
   kiro: ["rule", "agent", "tool", "hook"],
   gemini: ["slash-command", "extension"],
+  "gemini-extension": ["extension", "plugin"],
   "gemini.md": ["slash-command"],
   opencode: ["agent", "slash-command", "tool", "plugin"],
   ruler: ["rule", "agent", "tool"],
@@ -117,6 +122,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   zencoder: ["rule"],
   replit: ["rule"],
   zed: ["rule", "slash-command", "extension"],
+  codex: ["rule", "agent", "slash-command"],
   mcp: ["server", "tool"],
   "agents.md": ["skill", "agent", "rule"],
   generic: [
@@ -285,6 +291,13 @@ export interface PackageManifest {
   main?: string;
 
   /**
+   * Whether this package should be loaded eagerly (at session start) or lazily (on-demand).
+   * Only applies to skills and agents in progressive disclosure formats (AGENTS.md, GEMINI.md, etc.).
+   * Default: false (lazy loading)
+   */
+  eager?: boolean;
+
+  /**
    * Optional conversion hints for cross-format transformations
    * Used to improve quality when converting to other formats
    */
@@ -316,6 +329,11 @@ export interface MultiPackageManifest {
   organization?: string;
   tags?: string[];
   keywords?: string[];
+  /**
+   * Default eager setting for all packages in this manifest.
+   * Individual packages can override this setting.
+   */
+  eager?: boolean;
   packages: PackageManifest[];
 }
 

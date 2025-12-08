@@ -472,6 +472,7 @@ export async function handleCollectionInstall(
     format?: string;
     skipOptional?: boolean;
     dryRun?: boolean;
+    eager?: boolean; // Apply eager loading to all packages in collection
   }
 ): Promise<void> {
   const startTime = Date.now();
@@ -546,6 +547,11 @@ export async function handleCollectionInstall(
         // Only set 'as' if user explicitly provided a format
         if (options.format) {
           installOptions.as = options.format;
+        }
+
+        // Pass eager flag to apply to all packages in collection
+        if (options.eager !== undefined) {
+          installOptions.eager = options.eager;
         }
 
         // Track if this collection contains Claude hooks

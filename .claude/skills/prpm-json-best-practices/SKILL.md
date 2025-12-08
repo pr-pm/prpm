@@ -1,6 +1,6 @@
 ---
 name: prpm-json-best-practices
-description: Best practices for structuring prpm.json package manifests with required fields, tags, organization, multi-package management, enhanced file format, and conversion hints
+description: Best practices for structuring prpm.json package manifests with required fields, tags, organization, multi-package management, enhanced file format, eager/lazy activation, and conversion hints
 ---
 
 # PRPM JSON Best Practices
@@ -97,6 +97,7 @@ See `examples/packages-with-collections.json` for complete structure.
 | `private` | boolean | If `true`, won't be published to public registry |
 | `dependencies` | object | Package dependencies (name: semver) |
 | `scripts` | object | Lifecycle scripts (multi-package only) |
+| `eager` | boolean | If `true`, skill/agent loads at session start (not on-demand) |
 
 ### Multi-Package Fields
 
@@ -112,6 +113,7 @@ When using `packages` array:
 | `tags` | string[] | Recommended | Searchable tags |
 | `files` | string[] | **Yes** | Files to include |
 | `private` | boolean | No | Mark as private |
+| `eager` | boolean | No | Load at session start (skills/agents only) |
 
 ### Collection Fields
 
@@ -172,6 +174,76 @@ When using `collections` array:
 | `collection` | Package collections | Any |
 | `chatmode` | Chat modes | `kiro` |
 | `tool` | MCP tools | `mcp` |
+
+## Eager vs Lazy Activation
+
+Skills and agents can be configured to load eagerly (at session start) or lazily (on-demand when relevant).
+
+### When to Use Eager
+
+**Use `eager: true` when:**
+- The skill should ALWAYS be active (coding standards, style guides)
+- Critical behavior that must never be skipped
+- Small, foundational skills with minimal token cost
+
+**Keep lazy (default) when:**
+- Specialized skills for specific contexts
+- Large skills with significant token overhead
+- Skills that only apply to certain file types
+
+### Setting Eager in prpm.json
+
+**Package-level:**
+```json
+{
+  "name": "code-style-enforcer",
+  "version": "1.0.0",
+  "format": "claude",
+  "subtype": "skill",
+  "eager": true,
+  "files": [".claude/skills/code-style/SKILL.md"]
+}
+```
+
+**File-level (enhanced files format):**
+```json
+{
+  "files": [
+    {
+      "path": ".claude/skills/critical-skill/SKILL.md",
+      "format": "claude",
+      "subtype": "skill",
+      "eager": true
+    },
+    {
+      "path": ".claude/skills/optional-skill/SKILL.md",
+      "format": "claude",
+      "subtype": "skill",
+      "eager": false
+    }
+  ]
+}
+```
+
+### Precedence
+
+When installing, the final eager setting is determined by:
+1. CLI flag (`--eager`/`--lazy`) - highest priority
+2. File-level `eager` setting (enhanced files)
+3. Package-level `eager` setting
+4. Default: lazy (false)
+
+### Applicable Subtypes
+
+| Subtype | Supports Eager |
+|---------|----------------|
+| `skill` | Yes |
+| `agent` | Yes |
+| `rule` | No |
+| `slash-command` | No |
+| `hook` | No |
+
+Eager loading only affects progressive disclosure formats (agents.md, gemini.md, claude.md, aider).
 
 ## Tags Best Practices
 

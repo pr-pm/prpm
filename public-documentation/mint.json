@@ -29,6 +29,10 @@
     {
       "name": "CLI Reference",
       "url": "cli"
+    },
+    {
+      "name": "API Reference",
+      "url": "api"
     }
   ],
   "navigation": [
@@ -38,6 +42,14 @@
         "introduction",
         "quickstart",
         "installation"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api/overview",
+        "api/schemas",
+        "api/formats"
       ]
     },
     {

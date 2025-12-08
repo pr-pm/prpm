@@ -1,0 +1,82 @@
+---
+title: 'API Overview'
+description: 'PRPM Registry API endpoints for packages, schemas, and format capabilities'
+---
+
+# Registry API
+
+The PRPM Registry provides a REST API for accessing packages, schemas, and format capabilities. All endpoints are available at `https://registry.prpm.dev/api/v1/`.
+
+## Base URL
+
+```
+https://registry.prpm.dev/api/v1
+```
+
+## Authentication
+
+Most read endpoints are public. Write operations (publishing, updating packages) require authentication via GitHub OAuth.
+
+## Rate Limits
+
+- Public endpoints: 100 requests/minute
+- Authenticated endpoints: 1000 requests/minute
+
+## Response Format
+
+All responses are JSON with appropriate `Content-Type` headers. Schema endpoints use `application/schema+json`.
+
+## Available Endpoints
+
+### Packages
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /packages` | List all packages |
+| `GET /packages/:name` | Get package by name |
+| `GET /packages/:name/:version` | Get specific version |
+
+### Search
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /search?q=:query` | Search packages |
+| `GET /ai-search?q=:query` | AI-powered semantic search |
+
+### Schemas
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /schemas` | List all available schemas |
+| `GET /schemas/:format.json` | Get base format schema |
+| `GET /schemas/:format/:subtype.json` | Get subtype schema |
+| `GET /schemas/format-registry` | Get format directory structures |
+
+### Format Capabilities
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /formats/capabilities` | Get all format capabilities |
+| `GET /formats/capabilities/:format` | Get capabilities for specific format |
+
+### Collections
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /collections` | List all collections |
+| `GET /collections/:slug` | Get collection by slug |
+
+### Taxonomy
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /taxonomy` | Get full taxonomy tree |
+| `GET /taxonomy/formats` | Get supported formats |
+| `GET /taxonomy/subtypes` | Get package subtypes |
+
+### Download
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /download/:name` | Download latest package version |
+| `GET /download/:name/:version` | Download specific version |

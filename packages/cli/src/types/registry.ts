@@ -14,6 +14,7 @@ export interface PackageFileMetadata {
   name?: string;
   description?: string;
   tags?: string[];
+  eager?: boolean; // File-level eager override (always activate this file)
 }
 
 /**
@@ -46,6 +47,7 @@ export interface PackageManifest {
   // 2. Enhanced format: PackageFileMetadata[] (for collections)
   files: string[] | PackageFileMetadata[];
   main?: string;
+  eager?: boolean; // Package-level eager (always activate, not on-demand)
 }
 
 export interface DependencyTreeNode {
@@ -126,6 +128,7 @@ export interface MultiPackageManifest {
   keywords?: string[];
   scripts?: PackageScripts; // Lifecycle scripts (prepublishOnly, etc.)
   packages: PackageManifest[];
+  eager?: boolean; // Default eager setting for all packages (can be overridden per package)
 }
 
 /**
