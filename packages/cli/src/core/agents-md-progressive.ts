@@ -31,6 +31,7 @@ export interface SkillManifestEntry {
   skillPath: string; // Relative path to resource directory (e.g., '.openskills/backend-architect' or '.openagents/code-reviewer')
   mainFile?: string; // Main file (defaults to 'SKILL.md' for skills, 'AGENT.md' for agents)
   resourceType?: ResourceType; // Type of resource: 'skill' or 'agent' (defaults to 'skill' for backward compatibility)
+  eager?: boolean; // Whether this resource should always activate (eager) or be on-demand (lazy/default)
 }
 
 /**
@@ -44,8 +45,9 @@ export function generateSkillXML(entry: SkillManifestEntry): string {
   const tag = resourceType === 'agent' ? 'agent' : 'skill';
   const mainFile = entry.mainFile || (resourceType === 'agent' ? 'AGENT.md' : 'SKILL.md');
   const fullPath = path.join(entry.skillPath, mainFile);
+  const activation = entry.eager ? 'eager' : 'lazy';
 
-  return `<${tag}>
+  return `<${tag} activation="${activation}">
 <name>${escapeXML(entry.name)}</name>
 <description>${escapeXML(entry.description)}</description>
 <path>${escapeXML(fullPath)}</path>
@@ -53,15 +55,37 @@ export function generateSkillXML(entry: SkillManifestEntry): string {
 }
 
 /**
- * Generate skills system header
+ * Generate eager skills system header (priority="0" - processed first)
+ *
+ * Eager skills MUST be loaded at the START of every session.
+ * They are always active and do not wait for relevance.
+ */
+function generateEagerSkillsSystemHeader(): string {
+  return `<!-- PRPM_MANIFEST_START -->
+
+<skills_system priority="0">
+<usage>
+MANDATORY: You MUST load and apply these skills at the START of every session.
+Do not wait for relevance - these are always active.
+
+How to use eager skills:
+- Load each skill immediately using Bash("cat <path>")
+- These skills apply to ALL work in this project
+- Do NOT skip or defer loading these skills
+</usage>
+
+<eager_skills>`;
+}
+
+/**
+ * Generate skills system header (priority="1" - progressive disclosure)
  *
  * Uses OpenSkills progressive disclosure pattern (@numman-ali)
  * Skills are listed but not loaded until explicitly requested via Bash("cat <path>")
  */
-function generateSkillsSystemHeader(): string {
-  return `<!-- PRPM_MANIFEST_START -->
-
-<skills_system priority="1">
+function generateSkillsSystemHeader(includeManifestStart: boolean = true): string {
+  const prefix = includeManifestStart ? '<!-- PRPM_MANIFEST_START -->\n\n' : '';
+  return `${prefix}<skills_system priority="1">
 <usage>
 When users ask you to perform tasks, check if any of the available skills below can help complete the task more effectively. Skills provide specialized capabilities and domain knowledge.
 
@@ -205,18 +229,14 @@ export async function addSkillToManifest(
   // Add new entry
   updatedResources.push(entry);
 
-  // Separate skills and agents
+  // Separate skills and agents, then further separate by eager/lazy
   const skills = updatedResources.filter(r => (r.resourceType || 'skill') === 'skill');
   const agents = updatedResources.filter(r => r.resourceType === 'agent');
 
-  // Generate XML entries
-  const skillsXML = skills
-    .map(s => generateSkillXML(s))
-    .join('\n\n');
-
-  const agentsXML = agents.length > 0
-    ? agents.map(a => generateSkillXML(a)).join('\n\n')
-    : undefined;
+  const eagerSkills = skills.filter(s => s.eager === true);
+  const lazySkills = skills.filter(s => s.eager !== true);
+  const eagerAgents = agents.filter(a => a.eager === true);
+  const lazyAgents = agents.filter(a => a.eager !== true);
 
   // Reconstruct AGENTS.md
   let newContent = '';
@@ -228,13 +248,55 @@ export async function addSkillToManifest(
     newContent = beforeManifest;
   }
 
-  // Generate full OpenSkills-compatible manifest with separate systems
-  const hasAgents = agents.length > 0;
-  newContent += generateSkillsSystemHeader();
-  newContent += '\n\n';
-  newContent += skillsXML;
-  newContent += '\n\n';
-  newContent += generateManifestFooter(hasAgents, agentsXML);
+  // Generate eager section first (priority="0") if there are any eager skills/agents
+  const hasEagerContent = eagerSkills.length > 0 || eagerAgents.length > 0;
+  const hasLazyContent = lazySkills.length > 0 || lazyAgents.length > 0;
+
+  if (hasEagerContent) {
+    // Eager skills section
+    if (eagerSkills.length > 0) {
+      newContent += generateEagerSkillsSystemHeader();
+      newContent += '\n\n';
+      newContent += eagerSkills.map(s => generateSkillXML(s)).join('\n\n');
+      newContent += '\n\n</eager_skills>\n</skills_system>\n\n';
+    }
+
+    // Eager agents section
+    if (eagerAgents.length > 0) {
+      newContent += `<agents_system priority="0">
+<usage>
+MANDATORY: These agents are always available and should be used proactively.
+Do not wait for explicit requests - invoke these agents when their expertise applies.
+</usage>
+
+<eager_agents>\n\n`;
+      newContent += eagerAgents.map(a => generateSkillXML(a)).join('\n\n');
+      newContent += '\n\n</eager_agents>\n</agents_system>\n\n';
+    }
+  }
+
+  // Generate lazy section (priority="1") - progressive disclosure
+  if (hasLazyContent) {
+    // Lazy skills
+    if (lazySkills.length > 0) {
+      // Only include manifest start marker if there's no eager content
+      newContent += generateSkillsSystemHeader(!hasEagerContent);
+      newContent += '\n\n';
+      newContent += lazySkills.map(s => generateSkillXML(s)).join('\n\n');
+      newContent += '\n\n</available_skills>\n</skills_system>';
+    }
+
+    // Lazy agents
+    if (lazyAgents.length > 0) {
+      newContent += '\n\n' + generateAgentsSystemHeader();
+      newContent += '\n\n';
+      newContent += lazyAgents.map(a => generateSkillXML(a)).join('\n\n');
+      newContent += '\n\n</available_agents>\n</agents_system>';
+    }
+  }
+
+  // Add manifest end marker
+  newContent += '\n\n<!-- PRPM_MANIFEST_END -->';
   newContent += afterManifest;
 
   await fs.writeFile(agentsPath, newContent.trim() + '\n', 'utf-8');
@@ -304,12 +366,12 @@ export async function removeSkillFromManifest(
 function parseSkillsFromManifest(manifestXML: string): SkillManifestEntry[] {
   const resources: SkillManifestEntry[] = [];
 
-  // Try new format for skills: <skill><name>...</name><description>...</description><path>...</path></skill>
-  const skillFormatRegex = /<skill>\s*<name>([^<]+)<\/name>\s*<description>([^<]+)<\/description>\s*<path>([^<]+)<\/path>\s*<\/skill>/g;
+  // Try new format with activation attribute: <skill activation="eager|lazy">...</skill>
+  const skillFormatWithAttrRegex = /<skill(?:\s+activation="(eager|lazy)")?\s*>\s*<name>([^<]+)<\/name>\s*<description>([^<]+)<\/description>\s*<path>([^<]+)<\/path>\s*<\/skill>/g;
 
   let match;
-  while ((match = skillFormatRegex.exec(manifestXML)) !== null) {
-    const [, name, description, fullPath] = match;
+  while ((match = skillFormatWithAttrRegex.exec(manifestXML)) !== null) {
+    const [, activation, name, description, fullPath] = match;
 
     // Extract directory and file from path
     const pathParts = fullPath.trim().split('/');
@@ -322,14 +384,15 @@ function parseSkillsFromManifest(manifestXML: string): SkillManifestEntry[] {
       skillPath: dir,
       mainFile,
       resourceType: 'skill',
+      eager: activation === 'eager',
     });
   }
 
-  // Try new format for agents: <agent><name>...</name><description>...</description><path>...</path></agent>
-  const agentFormatRegex = /<agent>\s*<name>([^<]+)<\/name>\s*<description>([^<]+)<\/description>\s*<path>([^<]+)<\/path>\s*<\/agent>/g;
+  // Try new format for agents with activation attribute: <agent activation="eager|lazy">...</agent>
+  const agentFormatWithAttrRegex = /<agent(?:\s+activation="(eager|lazy)")?\s*>\s*<name>([^<]+)<\/name>\s*<description>([^<]+)<\/description>\s*<path>([^<]+)<\/path>\s*<\/agent>/g;
 
-  while ((match = agentFormatRegex.exec(manifestXML)) !== null) {
-    const [, name, description, fullPath] = match;
+  while ((match = agentFormatWithAttrRegex.exec(manifestXML)) !== null) {
+    const [, activation, name, description, fullPath] = match;
 
     // Extract directory and file from path
     const pathParts = fullPath.trim().split('/');
@@ -342,6 +405,7 @@ function parseSkillsFromManifest(manifestXML: string): SkillManifestEntry[] {
       skillPath: dir,
       mainFile,
       resourceType: 'agent',
+      eager: activation === 'eager',
     });
   }
 
@@ -364,6 +428,7 @@ function parseSkillsFromManifest(manifestXML: string): SkillManifestEntry[] {
         skillPath: dir,
         mainFile,
         resourceType: 'skill',
+        eager: false, // Legacy format defaults to lazy
       });
     }
   }

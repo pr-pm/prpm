@@ -84,6 +84,7 @@ For repositories with multiple packages:
 | `format` | string | Target AI tool format | `"claude"`, `"cursor"`, `"windsurf"` |
 | `subtype` | string | Package type | `"skill"`, `"agent"`, `"rule"` |
 | `files` | string[] | **Full paths** from project root | `[".claude/skills/my-skill/SKILL.md"]` |
+| `eager` | boolean | Optional: Always activate (not on-demand) | `true`, `false` |
 
 ### Multi-Package
 
@@ -385,6 +386,126 @@ Private packages:
 - Won't appear in public registry searches
 - Can still be published to private registries
 - Useful for company-internal prompts/rules
+
+## Eager vs Lazy Activation
+
+By default, skills and agents are **lazy** (on-demand): they're available to the AI but only activated when relevant to the task. **Eager** packages are always activated at the start of every session.
+
+### When to Use Eager
+
+Use `eager: true` for packages that:
+- Must apply to every interaction (coding standards, style guides)
+- Are core to your workflow (mandatory best practices)
+- Should never be forgotten or overlooked
+
+### Precedence
+
+Eager/lazy can be set at multiple levels. Precedence (highest to lowest):
+
+1. **CLI flag**: `prpm install --eager` or `prpm install --lazy`
+2. **File-level**: Individual file in `files` array with `eager: true`
+3. **Package-level**: `eager: true` on the package
+4. **Default**: Lazy (on-demand)
+
+### Package-Level Eager
+
+```json
+{
+  "name": "mandatory-code-standards",
+  "version": "1.0.0",
+  "description": "Must-follow coding standards",
+  "format": "claude",
+  "subtype": "skill",
+  "eager": true,
+  "files": [".claude/skills/mandatory-code-standards/SKILL.md"]
+}
+```
+
+### File-Level Eager (Collections)
+
+For collections with multiple files, you can mark specific files as eager:
+
+```json
+{
+  "name": "team-standards",
+  "version": "1.0.0",
+  "description": "Team coding standards collection",
+  "format": "claude",
+  "subtype": "skill",
+  "files": [
+    {
+      "path": ".claude/skills/always-active.md",
+      "format": "claude",
+      "subtype": "skill",
+      "eager": true
+    },
+    {
+      "path": ".claude/skills/optional-helpers.md",
+      "format": "claude",
+      "subtype": "skill"
+    }
+  ]
+}
+```
+
+### Multi-Package Default
+
+Set a default for all packages in a multi-package manifest:
+
+```json
+{
+  "name": "company-standards",
+  "author": "Your Company",
+  "license": "MIT",
+  "eager": true,
+  "packages": [
+    {
+      "name": "style-guide",
+      "version": "1.0.0",
+      "description": "Company style guide (inherits eager: true)"
+    },
+    {
+      "name": "optional-helper",
+      "version": "1.0.0",
+      "description": "Optional helper (overrides to lazy)",
+      "eager": false
+    }
+  ]
+}
+```
+
+### AGENTS.md Output
+
+Eager packages appear in a special `priority="0"` section in AGENTS.md:
+
+```xml
+<skills_system priority="0">
+<usage>
+MANDATORY: You MUST load and apply these skills at the START of every session.
+Do not wait for relevance - these are always active.
+</usage>
+
+<eager_skills>
+<skill activation="eager">
+  <name>mandatory-code-standards</name>
+  <description>Must-follow coding standards</description>
+  <path>/full/path/to/skill</path>
+</skill>
+</eager_skills>
+</skills_system>
+```
+
+### CLI Override
+
+Override package settings at install time:
+
+```bash
+# Force eager activation (even if package says lazy)
+prpm install my-skill --eager
+
+# Force lazy activation (even if package says eager)
+prpm install mandatory-rule --lazy
+```
 
 ## Publishing
 

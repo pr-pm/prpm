@@ -275,6 +275,8 @@ prpm install <package-name> [additional-packages...] [options]
 - `--subtype <subtype>` - Specify subtype when converting (skill, agent, rule, etc.)
 - `--location <path>` - Custom installation location (Cursor and agents.md only)
 - `--frozen-lockfile` - Fail if lock file needs to be updated (for CI)
+- `--eager` - Force skill/agent to always activate at session start (not on-demand)
+- `--lazy` - Use default on-demand activation (overrides package eager setting)
 
 **Examples:**
 
@@ -302,6 +304,12 @@ prpm install @username/project-context --as agents.md --location docs
 
 # Frozen lockfile (for CI)
 prpm install @username/typescript-rules --frozen-lockfile
+
+# Install skill with eager activation (always active)
+prpm install @username/code-style --as agents.md --eager
+
+# Install with lazy activation (on-demand, default)
+prpm install @username/debugging-helper --as agents.md --lazy
 ```
 
 **What happens during installation:**
@@ -320,6 +328,22 @@ The `--location` flag allows you to install packages to custom directories. This
 **Supported formats:**
 - `cursor` - Installs to nested `.cursor/` directory within the specified path
 - `agents.md` - Creates `AGENTS.override.md` in the specified path
+
+**Eager vs Lazy Activation (`--eager` / `--lazy`):**
+
+These flags control how skills and agents are loaded in progressive disclosure formats (agents.md, gemini.md, claude.md, aider):
+
+- **Lazy (default)**: Skills/agents are available but only activated when relevant based on their description. The AI decides when to use them.
+- **Eager**: Skills/agents are loaded at the START of every session. Always active, no activation needed.
+
+| Mode | When Loaded | Use Case |
+|------|-------------|----------|
+| Lazy | On-demand when relevant | Most skills - keeps context clean |
+| Eager | Every session start | Critical skills that should always apply |
+
+**Precedence:** CLI flag (`--eager`/`--lazy`) > file-level setting > package-level setting > default (lazy)
+
+**Applies to:** Skills and agents in progressive disclosure formats only. Rules, hooks, and other subtypes are not affected.
 
 **Example directory structure:**
 ```bash
