@@ -452,7 +452,7 @@ export interface FileReferenceSection {
  */
 export interface CustomSection {
   type: 'custom';
-  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini' | 'zed';
+  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini' | 'zed' | 'codex';
   title?: string;
   content: string;
   metadata?: Record<string, any>;

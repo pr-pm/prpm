@@ -66,6 +66,7 @@ import {
   toAider,
   toZencoder,
   toReplit,
+  toCodex,
   toCursorHooks,
   validateFormat,
   getNestedIndicator,
@@ -118,6 +119,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'zencoder': '⚡',
     'replit': '🔮',
     'zed': '⚡',
+    'codex': '🧠',
     'mcp': '🔗',
     'agents.md': '📝',
     'ruler': '📏',
@@ -149,6 +151,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'zencoder': 'Zencoder',
     'replit': 'Replit',
     'zed': 'Zed',
+    'codex': 'Codex',
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
     'ruler': 'Ruler',
@@ -709,6 +712,10 @@ export async function handleInstall(
             break;
           case 'replit':
             convertedContent = toReplit(canonicalPkg).content;
+            break;
+          case 'codex':
+            // Codex uses AGENTS.md with section-based slash commands
+            convertedContent = toCodex(canonicalPkg).content;
             break;
           case 'generic':
             convertedContent = toCursor(canonicalPkg).content;

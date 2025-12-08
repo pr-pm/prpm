@@ -169,6 +169,18 @@
       "markdownFallback": ".rules",
       "notes": "Zed supports .rules files (plain markdown, no frontmatter). Slash commands can be used in rules with /file, /diagnostics, /fetch, etc. Extensions written in Rust/WASM with extension.toml manifest. Also reads .cursorrules, .windsurfrules, .clinerules, AGENTS.md, CLAUDE.md, GEMINI.md in priority order. Extensions installed to ~/Library/Application Support/Zed/extensions (macOS). License required: MIT, Apache 2.0, BSD 3-Clause, or GPLv3."
     },
+    "codex": {
+      "name": "OpenAI Codex CLI",
+      "supportsSkills": false,
+      "supportsPlugins": false,
+      "supportsExtensions": false,
+      "supportsAgents": true,
+      "supportsAgentsMd": true,
+      "supportsSlashCommands": false,
+      "slashCommandFallback": "agents.md",
+      "markdownFallback": "AGENTS.md",
+      "notes": "OpenAI Codex CLI uses AGENTS.md for project instructions. No native slash commands - slash commands are converted to named sections in AGENTS.md that users invoke by saying the command name (e.g., 'build-actions' not '/build-actions')."
+    },
     "agents.md": {
       "name": "agents.md (Universal)",
       "supportsSkills": false,
@@ -211,6 +223,7 @@
       "droid",
       "replit",
       "zed",
+      "codex",
       "agents.md",
       "generic"
     ],

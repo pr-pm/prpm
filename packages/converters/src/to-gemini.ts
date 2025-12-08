@@ -30,7 +30,15 @@ export function toGemini(
 
   try {
     // Build the prompt from canonical sections
-    const prompt = buildPrompt(pkg.content, warnings);
+    let prompt = buildPrompt(pkg.content, warnings);
+
+    // Handle argument hints for slash commands (Claude → Gemini conversion)
+    // Claude uses argumentHint: "[arg1] [arg2]" or "arg1 arg2"
+    // Gemini uses {{args}} placeholder in the prompt
+    const argumentHint = extractArgumentHint(pkg);
+    if (argumentHint) {
+      prompt = integrateArgumentsIntoPrompt(prompt, argumentHint, warnings);
+    }
 
     // Build Gemini command object
     const geminiCommand: GeminiCommand = {
@@ -299,4 +307,172 @@ function convertContext(section: {
   lines.push(section.content);
 
   return lines.join('\n');
+}
+
+/**
+ * Extract argument hint from canonical package metadata
+ * Looks in claudeSlashCommand, droid, or opencode metadata
+ */
+function extractArgumentHint(pkg: CanonicalPackage): string | string[] | undefined {
+  // Check metadata section for slash command argument hints
+  const metadataSection = pkg.content.sections.find(s => s.type === 'metadata');
+  if (metadataSection && metadataSection.type === 'metadata') {
+    // Claude slash commands
+    if (metadataSection.data.claudeSlashCommand?.argumentHint) {
+      return metadataSection.data.claudeSlashCommand.argumentHint;
+    }
+    // OpenCode slash commands
+    if (metadataSection.data.opencodeSlashCommand?.argumentHint) {
+      return metadataSection.data.opencodeSlashCommand.argumentHint;
+    }
+    // Droid slash commands (in metadata section)
+    if (metadataSection.data.droid?.argumentHint) {
+      return metadataSection.data.droid.argumentHint;
+    }
+  }
+
+  // Check package-level metadata (legacy)
+  if (pkg.metadata?.droid?.argumentHint) {
+    return pkg.metadata.droid.argumentHint;
+  }
+
+  return undefined;
+}
+
+/**
+ * Parse argument hint into individual argument names
+ * Handles formats:
+ *   - "[arg1] [arg2] [arg3]" (Claude bracket format)
+ *   - "arg1 arg2 arg3" (space-separated)
+ *   - ["arg1", "arg2", "arg3"] (array format)
+ */
+function parseArgumentHint(hint: string | string[]): string[] {
+  if (Array.isArray(hint)) {
+    return hint;
+  }
+
+  // Match bracketed arguments: [arg1] [arg2] [arg3]
+  const bracketMatches = hint.match(/\[([^\]]+)\]/g);
+  if (bracketMatches) {
+    return bracketMatches.map(m => m.replace(/^\[|\]$/g, ''));
+  }
+
+  // Space-separated arguments
+  return hint.split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Integrate argument hints into the prompt using Gemini's {{args}} syntax
+ *
+ * Gemini supports:
+ *   - {{args}} - All arguments as a single string
+ *   - Individual named placeholders in documentation
+ *
+ * For Claude's structured argument hints, we prepend usage instructions
+ * and use {{args}} for the actual arguments in the prompt.
+ *
+ * Also translates Claude's positional argument syntax ($1, $2, $3) to
+ * descriptive placeholders based on the argumentHint names.
+ */
+function integrateArgumentsIntoPrompt(
+  prompt: string,
+  argumentHint: string | string[],
+  warnings: string[]
+): string {
+  const args = parseArgumentHint(argumentHint);
+
+  if (args.length === 0) {
+    return prompt;
+  }
+
+  // First, translate Claude's positional argument syntax ($1, $2, $3) to named placeholders
+  let translatedPrompt = translatePositionalArgs(prompt, args, warnings);
+
+  // Build usage instruction showing expected arguments
+  const usageFormat = args.map(arg => `<${arg}>`).join(' ');
+
+  // Prepend usage instructions to the prompt
+  const usageSection = `**Expected Arguments:** ${usageFormat}
+
+The user will provide these arguments which are available via {{args}}.
+
+`;
+
+  // Check if prompt already has some form of {{args}} reference
+  if (translatedPrompt.includes('{{args}}')) {
+    // Already has args placeholder, just add usage instructions
+    return usageSection + translatedPrompt;
+  }
+
+  // Add {{args}} placeholder at the appropriate location
+  // If prompt has "Instructions:" or similar header, add args reference after it
+  const instructionHeaders = /^(#+\s*(?:Instructions?|Overview|Task):?\s*\n)/im;
+  const match = translatedPrompt.match(instructionHeaders);
+
+  if (match) {
+    // Insert args reference after the header
+    const insertPoint = match.index! + match[0].length;
+    const before = translatedPrompt.slice(0, insertPoint);
+    const after = translatedPrompt.slice(insertPoint);
+    return usageSection + before + `\n**Arguments provided:** {{args}}\n\n` + after;
+  }
+
+  // Default: prepend usage section and add args at the beginning
+  return usageSection + `**Arguments provided:** {{args}}\n\n` + translatedPrompt;
+}
+
+/**
+ * Translate Claude's positional argument syntax ($1, $2, $3) to named placeholders
+ *
+ * Claude slash commands use $1, $2, $3, etc. as positional arguments.
+ * This function translates them to descriptive {{arg-name}} placeholders
+ * based on the argumentHint field.
+ *
+ * Example:
+ *   argumentHint: [integration-name] [action-name] [instructions]
+ *   $1 -> {{integration-name}}
+ *   $2 -> {{action-name}}
+ *   $3 -> {{instructions}}
+ */
+function translatePositionalArgs(
+  prompt: string,
+  argNames: string[],
+  warnings: string[]
+): string {
+  let result = prompt;
+
+  // Check if the prompt contains any positional arguments
+  const hasPositionalArgs = /\$\d+/.test(prompt);
+
+  if (!hasPositionalArgs) {
+    return result;
+  }
+
+  // Replace $N with {{arg-name}} where N is 1-indexed
+  for (let i = 0; i < argNames.length; i++) {
+    const positionalArg = `$${i + 1}`;
+    const namedPlaceholder = `{{${argNames[i]}}}`;
+
+    // Use regex to replace all occurrences, handling word boundaries
+    // But also handle cases like **$1** or ($1)
+    const regex = new RegExp(`\\$${i + 1}(?![0-9])`, 'g');
+    result = result.replace(regex, namedPlaceholder);
+  }
+
+  // Check for any remaining positional arguments that weren't mapped
+  const remainingArgs = result.match(/\$(\d+)/g);
+  if (remainingArgs) {
+    const unmappedArgs = remainingArgs.filter(arg => {
+      const num = parseInt(arg.slice(1), 10);
+      return num > argNames.length;
+    });
+
+    if (unmappedArgs.length > 0) {
+      warnings.push(
+        `Positional arguments ${unmappedArgs.join(', ')} found but no corresponding argumentHint names provided`
+      );
+    }
+  }
+
+  return result;
 }
