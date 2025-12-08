@@ -287,7 +287,6 @@
     "codex": {
       "name": "OpenAI Codex CLI",
       "description": "OpenAI Codex CLI using AGENTS.md for project instructions",
-      "rootFiles": ["AGENTS.md"],
       "subtypes": {
         "rule": {
           "directory": ".",
