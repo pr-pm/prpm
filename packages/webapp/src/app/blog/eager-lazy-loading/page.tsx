@@ -406,7 +406,7 @@ prpm install @acme/security-checklist
             <li><strong className="text-white">AGENTS.md</strong> - OpenAI's open standard for agent definitions</li>
             <li><strong className="text-white">GEMINI.md</strong> - Gemini CLI's manifest format</li>
             <li><strong className="text-white">CLAUDE.md</strong> - Claude Desktop's project context</li>
-            <li><strong className="text-white">Aider</strong> - Aider's architect mode</li>
+            <li><strong className="text-white">CONVENTIONS.md</strong> - Aider's conventions file</li>
           </ul>
 
           <p className="mb-8">
