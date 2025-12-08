@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "eager-lazy-loading",
+    title: "Eager vs Lazy Loading: Control When Your AI Skills Activate",
+    excerpt: "Some skills must always be active. Others should wait until needed. Now package authors can control activation with eager/lazy loading in PRPM.",
+    date: "2025-12-08",
+    author: "PRPM Team",
+    readTime: "8 min read",
+    tags: ["Feature Release", "Technical", "Developer Experience"],
+  },
+  {
     slug: "write-once-distribute-everywhere",
     title: "Write Once. Distribute Everywhere: Why Package Publishers Choose PRPM",
     excerpt: "The only AI package manager with lossless cross-format conversion—publish in one format, install in eight.",

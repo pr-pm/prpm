@@ -1,0 +1,5 @@
+Context windows are limited. Some skills need to be active from session start. Others should wait until needed.
+
+PRPM now lets package authors control when skills load: --eager for always-on standards, --lazy for on-demand helpers.
+
+https://prpm.dev/blog/eager-lazy-loading
