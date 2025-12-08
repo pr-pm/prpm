@@ -285,6 +285,13 @@ export interface PackageManifest {
   main?: string;
 
   /**
+   * Whether this package should be loaded eagerly (at session start) or lazily (on-demand).
+   * Only applies to skills and agents in progressive disclosure formats (AGENTS.md, GEMINI.md, etc.).
+   * Default: false (lazy loading)
+   */
+  eager?: boolean;
+
+  /**
    * Optional conversion hints for cross-format transformations
    * Used to improve quality when converting to other formats
    */
@@ -316,6 +323,11 @@ export interface MultiPackageManifest {
   organization?: string;
   tags?: string[];
   keywords?: string[];
+  /**
+   * Default eager setting for all packages in this manifest.
+   * Individual packages can override this setting.
+   */
+  eager?: boolean;
   packages: PackageManifest[];
 }
 
