@@ -259,6 +259,14 @@ function convertSection(section: Section, warnings: string[]): string {
       warnings.push('Hook section skipped (not supported by Codex)');
       return '';
 
+    case 'cursor-hook':
+      warnings.push('Cursor hook section skipped (not supported by Codex)');
+      return '';
+
+    case 'file-reference':
+      warnings.push('File reference section skipped (not supported by Codex)');
+      return '';
+
     case 'custom':
       if (!section.editorType || section.editorType === 'codex') {
         return section.content;

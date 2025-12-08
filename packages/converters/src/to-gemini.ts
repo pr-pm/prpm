@@ -314,16 +314,24 @@ function convertContext(section: {
  * Looks in claudeSlashCommand, droid, or opencode metadata
  */
 function extractArgumentHint(pkg: CanonicalPackage): string | string[] | undefined {
-  // Check claudeSlashCommand metadata (primary source for Claude slash commands)
+  // Check metadata section for slash command argument hints
   const metadataSection = pkg.content.sections.find(s => s.type === 'metadata');
   if (metadataSection && metadataSection.type === 'metadata') {
-    const claudeSlashCommand = metadataSection.data.claudeSlashCommand;
-    if (claudeSlashCommand?.argumentHint) {
-      return claudeSlashCommand.argumentHint;
+    // Claude slash commands
+    if (metadataSection.data.claudeSlashCommand?.argumentHint) {
+      return metadataSection.data.claudeSlashCommand.argumentHint;
+    }
+    // OpenCode slash commands
+    if (metadataSection.data.opencodeSlashCommand?.argumentHint) {
+      return metadataSection.data.opencodeSlashCommand.argumentHint;
+    }
+    // Droid slash commands (in metadata section)
+    if (metadataSection.data.droid?.argumentHint) {
+      return metadataSection.data.droid.argumentHint;
     }
   }
 
-  // Check package-level metadata
+  // Check package-level metadata (legacy)
   if (pkg.metadata?.droid?.argumentHint) {
     return pkg.metadata.droid.argumentHint;
   }
