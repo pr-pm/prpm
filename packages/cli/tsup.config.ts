@@ -45,6 +45,13 @@ export default defineConfig({
         );
       });
       console.log('✓ Copied schema files to dist/');
+
+      // Copy format-capabilities.json for progressive-disclosure.ts
+      copyFileSync(
+        join('..', 'converters', 'src', 'utils', 'format-capabilities.json'),
+        join('dist', 'format-capabilities.json')
+      );
+      console.log('✓ Copied format-capabilities.json to dist/');
     } catch (err) {
       console.warn('Warning: Could not copy schema files:', err);
     }

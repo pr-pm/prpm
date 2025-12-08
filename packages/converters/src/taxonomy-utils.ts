@@ -30,6 +30,7 @@ export const CLI_SUPPORTED_FORMATS = [
   'replit',
   'zencoder',
   'droid',
+  'codex',
 ] as const;
 
 export type CLISupportedFormat = (typeof CLI_SUPPORTED_FORMATS)[number];

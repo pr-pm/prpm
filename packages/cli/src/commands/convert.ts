@@ -49,6 +49,7 @@ import {
   toReplit,
   toZencoder,
   toDroid,
+  toCodex,
   isCursorFormat,
   isClaudeFormat,
   isContinueFormat,
@@ -159,6 +160,8 @@ function getDefaultPath(format: string, filename: string, subtype?: string, cust
       return join(process.cwd(), '.zencoder', `${baseName}.md`);
     case 'droid':
       return join(process.cwd(), '.factory', `${baseName}.md`);
+    case 'codex':
+      return join(process.cwd(), 'AGENTS.md');
     default:
       throw new CLIError(`Unknown format: ${format}`);
   }
@@ -447,6 +450,9 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         break;
       case 'droid':
         result = toDroid(canonicalPkg);
+        break;
+      case 'codex':
+        result = toCodex(canonicalPkg);
         break;
       default:
         throw new CLIError(`Unsupported target format: ${options.to}`);
