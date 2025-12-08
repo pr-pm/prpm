@@ -337,6 +337,52 @@ Old content for my-command
       expect(result.warnings?.some(w => w.includes('Persona section skipped'))).toBe(true);
     });
 
+    it('should skip cursor-hook section with warning', () => {
+      const pkgWithCursorHook: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        subtype: 'slash-command',
+        content: {
+          ...minimalCanonicalPackage.content,
+          sections: [
+            ...minimalCanonicalPackage.content.sections,
+            {
+              type: 'cursor-hook',
+              hookType: 'beforeShellExecution',
+              command: 'echo "test"',
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(pkgWithCursorHook);
+
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings?.some(w => w.includes('Cursor hook section skipped'))).toBe(true);
+    });
+
+    it('should skip file-reference section with warning', () => {
+      const pkgWithFileRef: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        subtype: 'slash-command',
+        content: {
+          ...minimalCanonicalPackage.content,
+          sections: [
+            ...minimalCanonicalPackage.content.sections,
+            {
+              type: 'file-reference',
+              path: 'src/utils.ts',
+              required: true,
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(pkgWithFileRef);
+
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings?.some(w => w.includes('File reference section skipped'))).toBe(true);
+    });
+
     it('should include examples section', () => {
       const pkgWithExamples: CanonicalPackage = {
         ...minimalCanonicalPackage,
