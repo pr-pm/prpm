@@ -180,6 +180,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
   return `${formatLabel} ${subtypeLabel}`;
 }
 
+
 /**
  * Find the main file in a multi-file package based on format/subtype conventions.
  * Uses the format-registry.json as the single source of truth.
@@ -1262,6 +1263,18 @@ export async function handleInstall(
       const resourceType = effectiveSubtype as 'skill' | 'agent';
       const mainFile = resourceType === 'agent' ? 'AGENT.md' : 'SKILL.md';
 
+      // Determine eager setting with precedence: CLI flag > package-level > default (lazy)
+      // options.eager is: true (--eager), false (--lazy), or undefined (no flag)
+      let resolvedEager: boolean | undefined;
+      if (options.eager !== undefined) {
+        // CLI flag takes highest priority
+        resolvedEager = options.eager;
+      } else if (pkg.eager !== undefined) {
+        // Package-level eager setting from registry metadata
+        resolvedEager = pkg.eager;
+      }
+      // Default is undefined (treated as false/lazy by manifest generator)
+
       // Add skill or agent to manifest file (AGENTS.md, GEMINI.md, CLAUDE.md, etc.)
       const manifestEntry: SkillManifestEntry = {
         name: resourceName,
@@ -1269,11 +1282,11 @@ export async function handleInstall(
         skillPath: destDir,
         mainFile,
         resourceType,
-        eager: options.eager, // Pass eager setting to manifest
+        eager: resolvedEager,
       };
 
       await addSkillToManifest(manifestEntry, manifestPath);
-      const eagerLabel = options.eager ? ' (eager)' : '';
+      const eagerLabel = resolvedEager ? ' (eager)' : '';
       console.log(`   ✓ Added ${resourceType}${eagerLabel} to ${manifestPath} manifest`);
 
       progressiveDisclosureMetadata = {
@@ -1285,7 +1298,7 @@ export async function handleInstall(
         // Legacy fields for backward compatibility
         skillsDir: destDir,
         skillName: resourceName,
-        eager: options.eager,
+        eager: resolvedEager,
       };
     }
 
