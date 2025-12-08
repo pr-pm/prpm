@@ -57,6 +57,7 @@ export { toAider, isAiderFormat } from './to-aider.js';
 export { toZencoder, isZencoderFormat, type ZencoderConfig } from './to-zencoder.js';
 export { toReplit, isReplitFormat } from './to-replit.js';
 export { toZed, isZedFormat as isZedFormatTo, generateFilename as generateZedFilename, type ZedConfig } from './to-zed.js';
+export { toCodex, generateFilename as generateCodexFilename, type CodexConfig } from './to-codex.js';
 export { toMCPServer, generateMCPServerPackage, type MCPServerConversionResult } from './to-mcp-server.js';
 
 // Utilities
