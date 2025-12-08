@@ -17,6 +17,7 @@ export type Format =
   | "gemini.md"
   | "claude.md"
   | "gemini"
+  | "gemini-extension"
   | "opencode"
   | "ruler"
   | "droid"
@@ -43,6 +44,7 @@ export const FORMATS: readonly Format[] = [
   "gemini.md",
   "claude.md",
   "gemini",
+  "gemini-extension",
   "opencode",
   "ruler",
   "droid",
@@ -108,6 +110,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   copilot: ["tool", "chatmode"],
   kiro: ["rule", "agent", "tool", "hook"],
   gemini: ["slash-command", "extension"],
+  "gemini-extension": ["extension", "plugin"],
   "gemini.md": ["slash-command"],
   opencode: ["agent", "slash-command", "tool", "plugin"],
   ruler: ["rule", "agent", "tool"],

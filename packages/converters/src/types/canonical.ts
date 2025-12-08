@@ -5,51 +5,11 @@
  * (Cursor, Claude, Continue, Windsurf, etc.)
  */
 
-/**
- * Supported package formats (AI editors/tools)
- * Note: format + subtype combinations replace legacy combined formats like 'cursor-hooks'
- */
-export type Format =
-  | 'cursor'
-  | 'claude'
-  | 'continue'
-  | 'windsurf'
-  | 'copilot'
-  | 'kiro'
-  | 'agents.md'
-  | 'gemini.md'
-  | 'claude.md'
-  | 'gemini'
-  | 'gemini-extension'
-  | 'opencode'
-  | 'ruler'
-  | 'droid'
-  | 'trae'
-  | 'aider'
-  | 'zencoder'
-  | 'replit'
-  | 'zed'
-  | 'generic'
-  | 'mcp';
+// Import Format and Subtype from shared types package
+import type { Format, Subtype } from '@pr-pm/types';
 
-/**
- * Package subtypes (what kind of package it is)
- */
-export type Subtype =
-  | 'rule'
-  | 'agent'
-  | 'skill'
-  | 'slash-command'
-  | 'prompt'
-  | 'workflow'
-  | 'tool'
-  | 'template'
-  | 'collection'
-  | 'chatmode'
-  | 'hook'
-  | 'plugin'
-  | 'extension'
-  | 'server';
+// Re-export for convenience
+export type { Format, Subtype };
 
 /**
  * Package metadata provided to converters
