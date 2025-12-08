@@ -525,9 +525,10 @@ export async function handleInstall(
     const tarball = await client.downloadPackage(tarballUrl);
 
     // Verify integrity if we have a lockfile with integrity hash for this package
+    // Only verify if the version matches - different versions will have different hashes
     const lockfileKeyForVerification = getLockfileKey(packageId, targetFormat);
     const existingEntry = lockfile?.packages[lockfileKeyForVerification];
-    if (existingEntry?.integrity) {
+    if (existingEntry?.integrity && existingEntry.version === actualVersion) {
       console.log(`   🔒 Verifying integrity...`);
       const isValid = verifyPackageIntegrity(lockfile!, packageId, tarball, targetFormat);
       if (!isValid) {
@@ -1261,7 +1262,25 @@ export async function handleInstall(
       eager?: boolean; // Whether this skill/agent should always activate
     } | undefined;
 
-    if ((effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md' || effectiveFormat === 'aider') && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent') && !options.noAppend) {
+    // Formats that use progressive disclosure for skills/agents
+    // These formats don't have native skill support but can use AGENTS.md (or similar manifest)
+    const progressiveDisclosureFormats = [
+      'agents.md',   // Universal AGENTS.md format
+      'gemini.md',   // Uses GEMINI.md
+      'claude.md',   // Uses CLAUDE.md
+      'aider',       // Uses CONVENTIONS.md
+      'codex',       // Uses AGENTS.md (no native skills)
+      'cursor',      // Uses AGENTS.md (no native skills)
+      'copilot',     // Uses AGENTS.md (no native skills)
+      'kiro',        // Uses AGENTS.md (no native skills)
+      'opencode',    // Uses AGENTS.md (no native skills)
+      'ruler',       // Uses AGENTS.md (no native skills)
+      'replit',      // Uses AGENTS.md (no native skills)
+      'zed',         // Uses AGENTS.md (no native skills)
+      'generic',     // Uses AGENTS.md (fallback format)
+    ];
+
+    if (progressiveDisclosureFormats.includes(effectiveFormat) && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent') && !options.noAppend) {
       // Ensure destDir is defined (should always be set by this point for skill/agent installations)
       if (!destDir) {
         throw new Error('Internal error: destDir not set for progressive disclosure installation');
