@@ -23,6 +23,7 @@ export interface RegistryPackage {
   verified: boolean;
   official?: boolean;
   featured?: boolean;
+  eager?: boolean;
   latest_version?: {
     version: string;
     tarball_url: string;

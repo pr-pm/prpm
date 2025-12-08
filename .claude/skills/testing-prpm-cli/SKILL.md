@@ -1,13 +1,13 @@
 ---
 name: testing-prpm-cli
-description: Use when testing PRPM CLI commands locally - provides build, environment setup, execution workflow, and comprehensive cross-format conversion testing against local registry
+description: Use when testing PRPM CLI commands locally - provides build, environment setup, execution workflow, contract testing to verify documented behavior matches implementation, and comprehensive cross-format conversion testing against local registry
 ---
 
 # Testing PRPM CLI
 
 ## Overview
 
-Test PRPM CLI commands against a local registry by building the package, setting the registry URL, and invoking the CLI directly. Includes comprehensive cross-format conversion testing patterns.
+Test PRPM CLI commands against a local registry by building the package, setting the registry URL, and invoking the CLI directly. Includes comprehensive cross-format conversion testing patterns and **contract testing** to verify documented behavior matches implementation.
 
 ## When to Use
 
@@ -17,6 +17,7 @@ Test PRPM CLI commands against a local registry by building the package, setting
 - Testing against local registry data
 - **Validating cross-format conversions**
 - **Testing new format converters**
+- **Contract testing: verifying documented behavior matches implementation**
 
 ## Quick Reference
 
@@ -208,6 +209,107 @@ Document results in this format:
 - [Note any issues, truncations, or unexpected behavior]
 ```
 
+## Contract Testing (CRITICAL)
+
+**Contract testing ensures documented behavior matches implementation.** This is the most important type of testing for features with configurable behavior.
+
+### Why Contract Testing Matters
+
+The eager/lazy loading bug is a case study: documentation described a precedence chain (CLI > file > package > default), but implementation only handled CLI flags. Tests passed because they only tested the CLI flag path. **Contract testing would have caught this.**
+
+### Contract Testing Principles
+
+1. **Test EVERY documented behavior path, not just the happy path**
+2. **Test precedence chains completely** - if docs say "A > B > C > default", test all 4 cases
+3. **Test behavior WITHOUT flags** - verify defaults and configuration-driven behavior
+4. **Test WITH and WITHOUT explicit settings** - don't assume flag presence
+
+### Contract Testing Checklist
+
+For ANY feature with documented behavior:
+
+- [ ] **Read the documentation first** - what does it claim to do?
+- [ ] **List all behavior paths** - every if/else/default mentioned
+- [ ] **Create test for each path** - one test per documented behavior
+- [ ] **Test WITHOUT user flags** - verify package/config defaults work
+- [ ] **Test precedence** - verify higher-priority overrides lower
+- [ ] **Verify error messages match** - documented errors should occur
+
+### Example: Eager/Lazy Loading Contract Tests
+
+Documentation states: "Precedence: CLI flag > package-level > default (lazy)"
+
+**Required tests:**
+
+```bash
+# Setup test directory
+mkdir -p /tmp/prpm-contract-tests
+cd /tmp/prpm-contract-tests
+export PRPM_REGISTRY_URL=http://127.0.0.1:3111
+CLI="/Users/khaliqgant/Projects/prpm/app/packages/cli/dist/index.js"
+
+# Test 1: CLI --eager flag (highest priority)
+rm -rf .openskills AGENTS.md
+node $CLI install @prpm/some-skill --as agents.md --eager
+# VERIFY: AGENTS.md contains activation="eager" or priority="0"
+grep -q 'activation="eager"\|priority="0"' AGENTS.md && echo "PASS: CLI --eager works" || echo "FAIL: CLI --eager"
+
+# Test 2: CLI --lazy flag overrides package eager
+rm -rf .openskills AGENTS.md
+# Install a package that has eager:true in prpm.json with --lazy flag
+node $CLI install @prpm/eager-package --as agents.md --lazy
+# VERIFY: Should be lazy despite package setting
+grep -q 'activation="lazy"\|priority="1"' AGENTS.md && echo "PASS: CLI --lazy overrides" || echo "FAIL: CLI --lazy"
+
+# Test 3: Package-level eager (NO CLI flag) - THIS IS THE BUG THAT WAS MISSED
+rm -rf .openskills AGENTS.md
+# Install a package that has eager:true in its prpm.json WITHOUT --eager flag
+node $CLI install @prpm/eager-package --as agents.md
+# VERIFY: Should be eager based on package setting
+grep -q 'activation="eager"\|priority="0"' AGENTS.md && echo "PASS: Package eager works" || echo "FAIL: Package eager"
+
+# Test 4: Default (lazy) when no flags and no package setting
+rm -rf .openskills AGENTS.md
+node $CLI install @prpm/normal-skill --as agents.md
+# VERIFY: Should be lazy by default
+grep -q 'activation="lazy"\|priority="1"' AGENTS.md && echo "PASS: Default lazy works" || echo "FAIL: Default"
+```
+
+### Contract Test Template
+
+For any new feature, create tests in this format:
+
+```markdown
+## Contract Tests for [Feature Name]
+
+### Documentation Claims:
+1. [Claim 1 from docs]
+2. [Claim 2 from docs]
+3. [Precedence/default behavior from docs]
+
+### Test Cases:
+
+| # | Documented Behavior | Test Setup | Expected Result | Pass/Fail |
+|---|--------------------|-----------| ----------------|-----------|
+| 1 | [Claim 1] | [How to test] | [What to verify] | |
+| 2 | [Claim 2] | [How to test] | [What to verify] | |
+| 3 | Default behavior | [No flags/config] | [Default result] | |
+
+### Results:
+- All tests must pass before feature is considered complete
+- Document any deviations between docs and implementation
+```
+
+### Anti-Patterns to Avoid
+
+| Anti-Pattern | Why It Fails | Correct Approach |
+|--------------|--------------|------------------|
+| Only testing with flags | Misses config/default paths | Test without flags first |
+| Assuming documentation is implementation | Docs may describe intent, not reality | Verify each claim with test |
+| Testing happy path only | Misses precedence bugs | Test all documented paths |
+| Skipping default behavior test | Defaults often broken | Always test "no config" case |
+| Not reading docs before testing | Miss documented behaviors | Read docs, list claims, test each |
+
 ## Common Mistakes
 
 | Mistake | Symptom | Fix |
@@ -218,6 +320,8 @@ Document results in this format:
 | Local registry not running | Connection refused errors | Start registry: `npm run dev --workspace=packages/registry` |
 | Testing single format only | Miss format-specific bugs | Test ALL formats in CLI_SUPPORTED_FORMATS |
 | No round-trip testing | Miss content loss bugs | Always verify round-trip preservation |
+| **No contract testing** | **Docs ≠ implementation** | **Test EVERY documented behavior** |
+| **Only testing with CLI flags** | **Miss config/default bugs** | **Test without flags to verify defaults** |
 
 ## One-Liner Setup
 

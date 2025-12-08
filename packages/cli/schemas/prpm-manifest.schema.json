@@ -158,6 +158,12 @@
       "description": "Whether the package is private. Private packages are only accessible to the owner/organization members. Defaults to false (public).",
       "default": false
     },
+    "eager": {
+      "type": "boolean",
+      "description": "Whether this package should be loaded eagerly (at session start) or lazily (on-demand). Only applies to skills and agents in progressive disclosure formats (AGENTS.md, GEMINI.md, etc.). Defaults to false (lazy loading).",
+      "default": false,
+      "examples": [true, false]
+    },
     "scripts": {
       "type": "object",
       "description": "Lifecycle scripts that run during package operations. Only applies to multi-package manifests (prpm.json with packages array).",
@@ -329,6 +335,11 @@
                     "tdd"
                   ]
                 ]
+              },
+              "eager": {
+                "type": "boolean",
+                "description": "File-level eager setting. Overrides package-level eager for this specific file.",
+                "default": false
               }
             },
             "additionalProperties": false
@@ -508,6 +519,20 @@
       "files": [
         "skill.md",
         "README.md"
+      ]
+    },
+    {
+      "name": "@company/coding-standards",
+      "version": "1.0.0",
+      "description": "Team coding standards that must be active in every session",
+      "format": "claude",
+      "subtype": "skill",
+      "author": "Company Team",
+      "organization": "my-company",
+      "license": "MIT",
+      "eager": true,
+      "files": [
+        ".claude/skills/coding-standards/SKILL.md"
       ]
     },
     {

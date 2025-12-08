@@ -180,6 +180,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
   return `${formatLabel} ${subtypeLabel}`;
 }
 
+
 /**
  * Find the main file in a multi-file package based on format/subtype conventions.
  * Uses the format-registry.json as the single source of truth.
@@ -263,6 +264,7 @@ export async function handleInstall(
     manifestFile?: string; // Custom manifest filename (default: AGENTS.md)
     global?: boolean; // Install MCP servers to global ~/.claude/settings.json
     hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion
+    eager?: boolean; // Force skill/agent to always activate (not on-demand)
     fromCollection?: {
       scope: string;
       name_slug: string;
@@ -283,6 +285,7 @@ export async function handleInstall(
         format: options.as,
         skipOptional: false,
         dryRun: false,
+        eager: options.eager,
       });
     }
 
@@ -670,8 +673,7 @@ export async function handleInstall(
             convertedContent = agentsResult.content;
             break;
           case 'gemini':
-          case 'gemini.md':
-            // Check subtype: extension uses toGeminiPlugin, slash-command uses toGemini
+            // Native Gemini CLI format (TOML with prompt = """)
             if (effectiveSubtype === 'extension') {
               const geminiPluginResult = toGeminiPlugin(canonicalPkg);
               convertedContent = geminiPluginResult.content;
@@ -679,6 +681,11 @@ export async function handleInstall(
               const geminiResult = toGemini(canonicalPkg);
               convertedContent = geminiResult.content;
             }
+            break;
+          case 'gemini.md':
+            // Progressive disclosure format (plain markdown for GEMINI.md manifest)
+            const geminiMdResult = toAgentsMd(canonicalPkg);
+            convertedContent = geminiMdResult.content;
             break;
           case 'ruler':
             convertedContent = toRuler(canonicalPkg).content;
@@ -1242,6 +1249,7 @@ export async function handleInstall(
       resourceType: 'skill' | 'agent';
       skillsDir?: string;
       skillName?: string;
+      eager?: boolean; // Whether this skill/agent should always activate
     } | undefined;
 
     if ((effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md' || effectiveFormat === 'aider') && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent') && !options.noAppend) {
@@ -1255,6 +1263,18 @@ export async function handleInstall(
       const resourceType = effectiveSubtype as 'skill' | 'agent';
       const mainFile = resourceType === 'agent' ? 'AGENT.md' : 'SKILL.md';
 
+      // Determine eager setting with precedence: CLI flag > package-level > default (lazy)
+      // options.eager is: true (--eager), false (--lazy), or undefined (no flag)
+      let resolvedEager: boolean | undefined;
+      if (options.eager !== undefined) {
+        // CLI flag takes highest priority
+        resolvedEager = options.eager;
+      } else if (pkg.eager !== undefined) {
+        // Package-level eager setting from registry metadata
+        resolvedEager = pkg.eager;
+      }
+      // Default is undefined (treated as false/lazy by manifest generator)
+
       // Add skill or agent to manifest file (AGENTS.md, GEMINI.md, CLAUDE.md, etc.)
       const manifestEntry: SkillManifestEntry = {
         name: resourceName,
@@ -1262,10 +1282,12 @@ export async function handleInstall(
         skillPath: destDir,
         mainFile,
         resourceType,
+        eager: resolvedEager,
       };
 
       await addSkillToManifest(manifestEntry, manifestPath);
-      console.log(`   ✓ Added ${resourceType} to ${manifestPath} manifest`);
+      const eagerLabel = resolvedEager ? ' (eager)' : '';
+      console.log(`   ✓ Added ${resourceType}${eagerLabel} to ${manifestPath} manifest`);
 
       progressiveDisclosureMetadata = {
         mode: 'progressive',
@@ -1276,6 +1298,7 @@ export async function handleInstall(
         // Legacy fields for backward compatibility
         skillsDir: destDir,
         skillName: resourceName,
+        eager: resolvedEager,
       };
     }
 
@@ -1319,10 +1342,16 @@ export async function handleInstall(
     // Show progressive disclosure hint for skills
     if (progressiveDisclosureMetadata && !options.noAppend) {
       const manifestFile = progressiveDisclosureMetadata.manifestPath;
+      const isEager = progressiveDisclosureMetadata.eager;
       console.log(`\n🎓 Skill installed with progressive disclosure`);
       console.log(`   📝 Skill added to ${manifestFile} manifest`);
-      console.log(`   💡 The skill is available but not loaded into context by default`);
-      console.log(`   ⚡ Your AI agent will activate this skill automatically when relevant based on its description`);
+      if (isEager) {
+        console.log(`   🔥 This skill will be loaded at the START of every session (eager mode)`);
+        console.log(`   ⚡ Your AI agent will always apply this skill - no activation needed`);
+      } else {
+        console.log(`   💡 The skill is available but not loaded into context by default`);
+        console.log(`   ⚡ Your AI agent will activate this skill automatically when relevant based on its description`);
+      }
     }
 
     // Show plugin installation summary
@@ -1670,7 +1699,9 @@ export function createInstallCommand(): Command {
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
     .option('--no-append', 'Skip adding skill to manifest file (skill files only)')
     .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure')
-    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; location?: string; noAppend?: boolean; manifestFile?: string }) => {
+    .option('--eager', 'Force skill/agent to always activate (not on-demand)')
+    .option('--lazy', 'Use default on-demand activation (overrides package eager setting)')
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = (options.format || options.as) as Format | undefined;
       const validFormats = FORMATS;
@@ -1698,6 +1729,9 @@ export function createInstallCommand(): Command {
         return;
       }
 
+      // Determine eager setting: --eager flag takes precedence, then --lazy, then undefined (use package default)
+      const eager = options.eager ? true : options.lazy ? false : undefined;
+
       await handleInstall(packageSpec, {
         version: options.version,
         as: convertTo,
@@ -1707,6 +1741,7 @@ export function createInstallCommand(): Command {
         noAppend: options.noAppend,
         manifestFile: options.manifestFile,
         hookMapping: options.hookMapping as HookMappingStrategy | undefined,
+        eager,
       });
     });
 

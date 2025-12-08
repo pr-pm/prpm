@@ -75,6 +75,7 @@ export interface Package {
   verified: boolean;
   featured: boolean;
   official?: boolean;
+  eager?: boolean;
   total_downloads: number;
   weekly_downloads: number;
   monthly_downloads: number;
@@ -104,6 +105,7 @@ export interface PackageVersion {
   metadata: Record<string, any>;
   is_prerelease: boolean;
   is_deprecated: boolean;
+  eager?: boolean;
   downloads: number;
   published_by?: string;
   published_at: Date;
@@ -130,6 +132,7 @@ export interface PackageManifest {
   engines?: Record<string, string>;
   files: string[];
   main?: string;
+  eager?: boolean;
 }
 
 export interface PackageAuthor {

@@ -35,11 +35,19 @@ prpm install nextjs-pro
 
 # Skip optional packages in collection
 prpm install nextjs-pro --skip-optional
+
+# Install with eager activation (always active, not on-demand)
+prpm install my-skill --eager
+
+# Install with lazy activation (override package default)
+prpm install my-skill --lazy
 ```
 
 **Options:**
 - `--as <format>` - Force specific format (cursor, claude, continue, windsurf)
 - `--skip-optional` - Skip optional packages in collections
+- `--eager` - Force skill/agent to always activate (not on-demand)
+- `--lazy` - Use default on-demand activation (overrides package eager setting)
 
 **Examples:**
 ```bash

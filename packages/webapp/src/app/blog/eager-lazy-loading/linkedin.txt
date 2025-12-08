@@ -1,0 +1,24 @@
+Your AI coding assistant has a limited context window. Load every skill at once, and you waste tokens on capabilities you don't need. But some skills—coding standards, security rules, architecture patterns—can't wait until "relevant." They need to be active from the start.
+
+We just shipped eager and lazy loading flags for PRPM packages. Package authors can now control when skills activate:
+
+Eager skills load at every session start—no activation needed, no chance of being forgotten. Perfect for mandatory coding standards, security checklists, and architectural patterns that must apply to every piece of code.
+
+Lazy skills (the default) activate on-demand when the AI determines they're relevant to the current task. These keep your context clean until you need specialized expertise like AWS CDK patterns, database migrations, or debugging helpers.
+
+The precedence system gives users final control: CLI flags override package settings, which override defaults. Trust your package author's judgment, or override when needed.
+
+What this unlocks:
+• Companies can publish always-on standards packages that every developer's AI enforces automatically
+• You can install dozens of specialized skills without bloating your context window
+• Package authors express their intent about how packages should be used
+
+Real-world example: Install 3 eager skills for team standards + 15 lazy skills for specialized tasks = 18 total skills, but only 3 loaded at session start. That's 83% context efficiency.
+
+Try it today:
+prpm install @myteam/coding-standards --eager
+
+Read the full post:
+https://prpm.dev/blog/eager-lazy-loading
+
+#AI #DeveloperTools #SoftwareEngineering #DevEx #ContextManagement

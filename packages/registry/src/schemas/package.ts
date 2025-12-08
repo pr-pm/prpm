@@ -111,6 +111,7 @@ export const PackageInfoSchema = z.object({
   deprecated_reason: z.string().nullable(),
   verified: z.boolean(),
   featured: z.boolean(),
+  eager: z.boolean().optional(),
   total_downloads: z.number(),
   weekly_downloads: z.number(),
   monthly_downloads: z.number(),
