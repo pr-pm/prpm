@@ -1,4 +1,5 @@
 * Use the `bd` tool instead of markdown to coordinate all work and tasks.
+* NEVER commit changes unless the user explicitly asks you to.
 
 # Using bv as an AI sidecar
 
