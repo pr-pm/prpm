@@ -2,11 +2,23 @@
  * Core types for PRMP Registry
  */
 
-// Package types
-export type Format = 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'agents.md' | 'gemini' | 'opencode' | 'ruler' | 'droid' | 'trae' | 'aider' | 'zencoder' | 'replit' | 'generic' | 'mcp';
-export type Subtype = 'rule' | 'agent' | 'skill' | 'slash-command' | 'prompt' | 'workflow' | 'tool' | 'template' | 'collection' | 'chatmode' | 'hook';
+// Import shared types from @pr-pm/types
+import type {
+  Format,
+  Subtype,
+  Package as SharedPackage,
+  PackageVersion as SharedPackageVersion,
+  PackageManifest as SharedPackageManifest,
+  PackageVisibility,
+  PackageAuthor,
+  PackageInfo as SharedPackageInfo,
+  PackageReview as SharedPackageReview,
+  PackageStats as SharedPackageStats
+} from '@pr-pm/types';
 
-export type PackageVisibility = 'public' | 'private' | 'unlisted';
+// Re-export shared types for convenience
+export type { Format, Subtype, PackageVisibility, PackageAuthor };
+
 export type OrgRole = 'owner' | 'admin' | 'maintainer' | 'member';
 
 // User & Authentication
@@ -47,119 +59,41 @@ export interface OrganizationMember {
   joined_at: Date;
 }
 
-// Package
-export interface Package {
-  id: string;
-  name: string;
-  display_name?: string;
-  description?: string;
-  author_id?: string;
-  author_username?: string;
-  org_id?: string;
-  org_name?: string;
-  format: Format;
-  subtype: Subtype;
-  license?: string;
-  license_text?: string;
-  license_url?: string;
-  snippet?: string;
-  repository_url?: string;
-  homepage_url?: string;
-  documentation_url?: string;
-  tags: string[];
-  keywords: string[];
-  category?: string;
-  visibility: PackageVisibility;
-  deprecated: boolean;
-  deprecated_reason?: string;
-  verified: boolean;
-  featured: boolean;
-  official?: boolean;
-  eager?: boolean;
-  total_downloads: number;
-  weekly_downloads: number;
-  monthly_downloads: number;
-  version_count: number;
-  quality_score?: number;
-  rating_average?: number;
-  rating_count: number;
-  install_count?: number;
-  view_count?: number;
+// Package types - extend shared types with DB-specific fields
+// Registry uses Date objects, not Date | string
+export interface Package extends Omit<SharedPackage, 'created_at' | 'updated_at' | 'last_published_at' | 'ai_use_cases_generated_at' | 'quality_score'> {
   created_at: Date;
   updated_at: Date;
   last_published_at?: Date;
+  ai_use_cases_generated_at?: Date;
+  quality_score?: number;
+  // DB-specific fields not in shared types
+  official?: boolean;
+  eager?: boolean;
+  install_count?: number;
+  view_count?: number;
 }
 
-export interface PackageVersion {
-  id: string;
-  package_id: string;
-  version: string;
-  description?: string;
-  changelog?: string;
-  tarball_url: string;
-  content_hash: string;
-  file_size: number;
-  dependencies: Record<string, string>;
-  peer_dependencies: Record<string, string>;
-  engines: Record<string, string>;
-  metadata: Record<string, any>;
-  is_prerelease: boolean;
-  is_deprecated: boolean;
-  eager?: boolean;
-  downloads: number;
-  published_by?: string;
+export interface PackageVersion extends Omit<SharedPackageVersion, 'published_at'> {
   published_at: Date;
-}
-
-// Package manifest (from prpm.json)
-export interface PackageManifest {
-  name: string;
-  version: string;
-  displayName?: string;
-  description: string;
-  author: string | PackageAuthor;
-  license?: string;
-  repository?: string;
-  homepage?: string;
-  documentation?: string;
-  format: Format;
-  subtype?: Subtype;
-  tags?: string[];
-  keywords?: string[];
-  category?: string;
-  dependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
-  engines?: Record<string, string>;
-  files: string[];
-  main?: string;
+  // DB-specific field
   eager?: boolean;
 }
 
-export interface PackageAuthor {
-  name: string;
-  email?: string;
-  url?: string;
+// Package manifest - use shared type but extend for registry-specific needs
+export interface PackageManifest extends SharedPackageManifest {
+  // Registry accepts the same fields as shared manifest
 }
 
-// Reviews & Ratings
-export interface PackageReview {
-  id: string;
-  package_id: string;
-  user_id: string;
-  rating: number;
-  title?: string;
-  comment?: string;
-  helpful_count: number;
+// Reviews & Ratings - use shared types with Date normalization
+export interface PackageReview extends Omit<SharedPackageReview, 'created_at' | 'updated_at'> {
   created_at: Date;
   updated_at: Date;
 }
 
-// Statistics
-export interface PackageStats {
-  package_id: string;
-  version: string;
+// Statistics - use shared types with Date normalization
+export interface PackageStats extends Omit<SharedPackageStats, 'date'> {
   date: Date;
-  downloads: number;
 }
 
 // Access Tokens
@@ -203,12 +137,12 @@ export interface SearchResult {
   original_query?: string;
 }
 
-export interface PackageInfo extends Package {
+export interface PackageInfo extends Omit<SharedPackageInfo, 'created_at' | 'updated_at' | 'last_published_at'> {
+  created_at: Date;
+  updated_at: Date;
+  last_published_at?: Date;
   author?: User;
   organization?: Organization;
-  versions: PackageVersion[];
-  latest_version?: PackageVersion;
-  readme?: string;
 }
 
 export interface PublishRequest {
