@@ -498,10 +498,20 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         const collection = collectionResult.rows[0];
 
-        // Get packages with their names
+        // Get packages with their names and resolve "latest" to actual version
         const packagesResult = await server.pg.query(
           `
-          SELECT cp.*, p.name as package_name
+          SELECT cp.*, p.name as package_name,
+            CASE
+              WHEN cp.package_version IS NULL OR cp.package_version = 'latest' THEN (
+                SELECT pv.version
+                FROM package_versions pv
+                WHERE pv.package_id = cp.package_id
+                ORDER BY pv.created_at DESC
+                LIMIT 1
+              )
+              ELSE cp.package_version
+            END as resolved_version
           FROM collection_packages cp
           JOIN packages p ON p.id = cp.package_id
           WHERE cp.collection_id = $1
@@ -532,7 +542,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           collection,
           packagesToInstall: packages.map(pkg => ({
             packageId: pkg.package_name, // Use package name, not UUID
-            version: pkg.package_version || 'latest',
+            version: pkg.resolved_version || pkg.package_version || 'latest',
             format: pkg.format_override || input.format || 'cursor',
             required: pkg.required,
           })),

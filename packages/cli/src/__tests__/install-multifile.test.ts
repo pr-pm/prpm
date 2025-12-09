@@ -44,6 +44,9 @@ vi.mock('../core/filesystem', async () => {
     ...actual,
     saveFile: vi.fn(actual.saveFile),
     ensureDirectoryExists: vi.fn(actual.ensureDirectoryExists),
+    // Mock autoDetectFormat to return null so tests use the package's native format
+    // This prevents the test environment's AGENTS.md from interfering with format detection
+    autoDetectFormat: vi.fn(() => Promise.resolve(null)),
   };
 });
 

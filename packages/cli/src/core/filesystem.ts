@@ -109,18 +109,20 @@ export async function directoryExists(dirPath: string): Promise<boolean> {
 }
 
 /**
- * Map manifest format to filename
+ * Map manifest format to filename for progressive disclosure
+ * Most formats use AGENTS.md, with a few exceptions
  */
 export function getManifestFilename(format: Format): string {
   switch (format) {
-    case 'agents.md':
-      return 'AGENTS.md';
+    // Formats with custom manifest files
     case 'gemini.md':
       return 'GEMINI.md';
     case 'claude.md':
       return 'CLAUDE.md';
     case 'aider':
       return 'CONVENTIONS.md';
+    // All other formats use AGENTS.md for progressive disclosure
+    // Including: agents.md, codex, cursor, copilot, kiro, opencode, ruler, replit, zed, generic
     default:
       return 'AGENTS.md';
   }
