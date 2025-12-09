@@ -21,7 +21,18 @@ describe('Collection Routes', () => {
       // console.log('SQL:', sql.substring(0, 150));
       // console.log('Params:', params);
 
-      // Mock COUNT query for collections list
+      // Mock COUNT query for collections list (new optimized pattern with CTE)
+      if (sql.includes('SELECT COUNT(*)') && sql.includes('latest_versions')) {
+        return {
+          rows: [{ count: '2' }],
+          command: 'SELECT',
+          rowCount: 1,
+          oid: 0,
+          fields: []
+        };
+      }
+
+      // Mock COUNT query for collections list (legacy pattern)
       if (sql.includes('COUNT(*)') && sql.includes('count_query')) {
         return {
           rows: [{ count: '2' }],
@@ -178,7 +189,57 @@ describe('Collection Routes', () => {
         };
       }
 
-      // Mock collections list query
+      // Mock collections list query (new pattern with CTE from latest_versions)
+      if (sql.includes('FROM latest_versions c') && sql.includes('LEFT JOIN')) {
+        return {
+          rows: [
+            {
+              id: 'typescript-fullstack',
+              name_slug: 'typescript-fullstack',
+              name: 'TypeScript Full Stack',
+              description: 'Full stack TypeScript development',
+              version: '1.0.0',
+              author: 'admin',
+              official: true,
+              verified: true,
+              category: 'development',
+              tags: ['typescript', 'fullstack'],
+              framework: null,
+              package_count: 5,
+              downloads: 1000,
+              stars: 50,
+              icon: '📦',
+              created_at: new Date(),
+              updated_at: new Date()
+            },
+            {
+              id: 'pulumi-infrastructure',
+              name_slug: 'pulumi-infrastructure',
+              name: 'Pulumi Infrastructure',
+              description: 'Infrastructure as code with Pulumi',
+              version: '1.0.0',
+              author: 'admin',
+              official: true,
+              verified: true,
+              category: 'infrastructure',
+              tags: ['pulumi', 'iac'],
+              framework: null,
+              package_count: 7,
+              downloads: 750,
+              stars: 40,
+              icon: '☁️',
+              created_at: new Date(),
+              updated_at: new Date()
+            }
+          ],
+          command: 'SELECT',
+          rowCount: 2,
+          oid: 0,
+          fields: []
+        };
+      }
+
+      // Mock collections list query (legacy pattern)
       if (sql.includes('FROM collections c') && sql.includes('LEFT JOIN')) {
         return {
           rows: [
