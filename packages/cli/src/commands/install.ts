@@ -1273,10 +1273,9 @@ export async function handleInstall(
       'gemini.md',   // Uses GEMINI.md
       'claude.md',   // Uses CLAUDE.md
       'aider',       // Uses CONVENTIONS.md
-      'codex',       // Uses AGENTS.md (no native skills/agents)
-      'copilot',     // Uses AGENTS.md (no native skills/agents)
+      'codex',       // Uses AGENTS.md (no native skills/agents/commands)
+      'copilot',     // Uses AGENTS.md (no native skills/agents/commands)
       'kiro',        // Uses AGENTS.md (no native skills)
-      'opencode',    // Uses AGENTS.md (no native skills)
       'replit',      // Uses AGENTS.md (no native skills)
       'zed',         // Uses AGENTS.md (no native skills)
       'generic',     // Uses AGENTS.md (fallback format)
@@ -1284,7 +1283,8 @@ export async function handleInstall(
 
     // Formats with partial native support - need progressive disclosure only for specific subtypes
     const partialNativeSupport: Record<string, string[]> = {
-      'cursor': ['agent'],  // Cursor has native rules/commands but no native agents
+      'cursor': ['agent'],     // Cursor has native rules/commands but no native agents
+      'opencode': ['skill'],   // OpenCode has native agents/commands but no native skills
     };
 
     // Check if this format/subtype combination needs progressive disclosure

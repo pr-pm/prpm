@@ -180,7 +180,7 @@
     },
     "opencode": {
       "name": "OpenCode",
-      "description": "OpenCode agents, commands, and tools",
+      "description": "OpenCode agents, commands, tools, and plugins",
       "documentationUrl": "https://opencode.ai",
       "subtypes": {
         "agent": {
@@ -197,6 +197,11 @@
           "directory": ".opencode/tool",
           "filePatterns": ["*.md", "*.json"],
           "fileExtension": ".md"
+        },
+        "plugin": {
+          "directory": ".opencode/plugin",
+          "filePatterns": ["*.js", "*.ts"],
+          "fileExtension": ".ts"
         }
       }
     },
