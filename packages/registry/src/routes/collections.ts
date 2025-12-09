@@ -48,8 +48,17 @@ export async function collectionRoutes(server: FastifyInstance) {
       const query = request.query as CollectionSearchQuery;
 
       try {
-        // Build SQL query - use subquery to get latest version per collection
+        // Build SQL query using CTE to get only the latest version per name_slug
+        // This prevents duplicate entries when collections have multiple versions
         let sql = `
+          WITH latest_versions AS (
+            SELECT DISTINCT ON (name_slug)
+              id, name_slug, version, name, description, author_id, org_id,
+              official, verified, category, tags, framework, downloads, stars,
+              icon, created_at, updated_at
+            FROM collections
+            ORDER BY name_slug, created_at DESC
+          )
           SELECT
             c.id,
             c.name_slug,
@@ -68,7 +77,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             c.created_at,
             c.updated_at,
             COALESCE(cp.package_count, 0) as package_count
-          FROM collections c
+          FROM latest_versions c
           LEFT JOIN users u ON c.author_id = u.id
           LEFT JOIN organizations o ON c.org_id = o.id
           LEFT JOIN (
@@ -654,7 +663,16 @@ export async function collectionRoutes(server: FastifyInstance) {
    */
   server.get('/featured', async (request, reply) => {
     try {
+      // Use CTE to get only the latest version per name_slug
       const result = await server.pg.query(`
+        WITH latest_versions AS (
+          SELECT DISTINCT ON (name_slug)
+            id, name_slug, version, name, description, author_id, org_id,
+            official, verified, category, tags, framework, downloads, stars,
+            icon, created_at, updated_at
+          FROM collections
+          ORDER BY name_slug, created_at DESC
+        )
         SELECT
           c.id,
           c.name_slug,
@@ -673,7 +691,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           c.created_at,
           c.updated_at,
           COALESCE(cp.package_count, 0) as package_count
-        FROM collections c
+        FROM latest_versions c
         LEFT JOIN users u ON c.author_id = u.id
         LEFT JOIN organizations o ON c.org_id = o.id
         LEFT JOIN (
@@ -846,14 +864,22 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         server.log.info({ limit, offset }, 'Fetching collections SSG data');
 
-        // Get total count
+        // Get total count of unique collections (by name_slug)
         const countResult = await server.pg.query(
-          `SELECT COUNT(*) as total FROM collections c`
+          `SELECT COUNT(DISTINCT name_slug) as total FROM collections`
         );
         const totalCount = parseInt(countResult.rows[0]?.total || '0', 10);
 
+        // Use CTE to get only the latest version per name_slug
         const result = await server.pg.query(
-          `SELECT
+          `WITH latest_versions AS (
+            SELECT DISTINCT ON (name_slug)
+              id, name, name_slug, description, category, framework, tags,
+              icon, official, verified, downloads, stars, created_at, updated_at, author_id
+            FROM collections
+            ORDER BY name_slug, created_at DESC
+          )
+          SELECT
             c.id,
             c.name,
             c.name_slug,
@@ -869,7 +895,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             c.created_at,
             c.updated_at,
             u.username as author_username
-          FROM collections c
+          FROM latest_versions c
           LEFT JOIN users u ON c.author_id = u.id
           ORDER BY c.downloads DESC
           LIMIT $1 OFFSET $2`,
@@ -991,17 +1017,32 @@ export async function collectionRoutes(server: FastifyInstance) {
       const user = request.user;
 
       try {
+        // Get starred collections, but show the latest version of each
+        // A user may have starred an older version, but we want to show the current latest
         const result = await server.pg.query(
           `
+          WITH starred_slugs AS (
+            -- Get the name_slug of each collection the user has starred
+            SELECT DISTINCT c.name_slug, MAX(cs.starred_at) as starred_at
+            FROM collection_stars cs
+            JOIN collections c ON cs.collection_id = c.id
+            WHERE cs.user_id = $1
+            GROUP BY c.name_slug
+          ),
+          latest_versions AS (
+            -- Get the latest version of each starred collection
+            SELECT DISTINCT ON (c.name_slug)
+              c.*, ss.starred_at
+            FROM collections c
+            JOIN starred_slugs ss ON c.name_slug = ss.name_slug
+            ORDER BY c.name_slug, c.created_at DESC
+          )
           SELECT
-            c.*,
-            cs.starred_at,
+            lv.*,
             u.username as author_username
-          FROM collection_stars cs
-          JOIN collections c ON cs.collection_id = c.id
-          LEFT JOIN users u ON c.author_id = u.id
-          WHERE cs.user_id = $1
-          ORDER BY cs.starred_at DESC
+          FROM latest_versions lv
+          LEFT JOIN users u ON lv.author_id = u.id
+          ORDER BY lv.starred_at DESC
           LIMIT $2 OFFSET $3
         `,
           [user.user_id, limit, offset]
