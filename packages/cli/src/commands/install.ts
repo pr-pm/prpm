@@ -1285,6 +1285,7 @@ export async function handleInstall(
     const partialNativeSupport: Record<string, string[]> = {
       'cursor': ['agent'],     // Cursor has native rules/commands but no native agents
       'opencode': ['skill'],   // OpenCode has native agents/commands but no native skills
+      'droid': ['agent'],      // Factory Droid has native skills/commands/hooks but no native agents
     };
 
     // Check if this format/subtype combination needs progressive disclosure
