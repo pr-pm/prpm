@@ -1020,6 +1020,21 @@ export async function handleInstall(
       } else if (effectiveFormat === 'droid' && effectiveSubtype === 'skill') {
         // Factory Droid skills use SKILL.md inside the skill directory
         destPath = `${destDir}/SKILL.md`;
+      } else if (effectiveFormat === 'droid' && effectiveSubtype === 'agent') {
+        // Factory Droid agents use progressive disclosure (no native agent support)
+        destDir = `.openagents/${packageName}`;
+        destPath = `${destDir}/AGENT.md`;
+        console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+      } else if (effectiveFormat === 'cursor' && effectiveSubtype === 'agent') {
+        // Cursor agents use progressive disclosure (no native agent support)
+        destDir = `.openagents/${packageName}`;
+        destPath = `${destDir}/AGENT.md`;
+        console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+      } else if (effectiveFormat === 'opencode' && effectiveSubtype === 'skill') {
+        // OpenCode skills use progressive disclosure (no native skill support)
+        destDir = `.openskills/${packageName}`;
+        destPath = `${destDir}/SKILL.md`;
+        console.log(`   📦 Installing skill to ${destDir}/ for progressive disclosure`);
       } else {
         destPath = `${destDir}/${packageName}.${fileExtension}`;
       }
@@ -1294,6 +1309,19 @@ export async function handleInstall(
       (partialNativeSupport[effectiveFormat]?.includes(effectiveSubtype));
 
     if (needsProgressiveDisclosure && !options.noAppend) {
+      // For partial native support formats, override destDir to use .openskills/.openagents/.opencommands
+      // instead of the native directory that getDestinationDir() returned
+      if (partialNativeSupport[effectiveFormat]?.includes(effectiveSubtype)) {
+        const resourceName = stripAuthorNamespace(packageId);
+        if (effectiveSubtype === 'skill') {
+          destDir = `.openskills/${resourceName}`;
+        } else if (effectiveSubtype === 'agent') {
+          destDir = `.openagents/${resourceName}`;
+        } else if (effectiveSubtype === 'slash-command') {
+          destDir = '.opencommands';
+        }
+      }
+
       // Ensure destDir is defined (should always be set by this point for skill/agent installations)
       if (!destDir) {
         throw new Error('Internal error: destDir not set for progressive disclosure installation');
