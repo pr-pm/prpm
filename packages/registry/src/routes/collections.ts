@@ -556,7 +556,7 @@ export async function collectionRoutes(server: FastifyInstance) {
                 SELECT pv.version
                 FROM package_versions pv
                 WHERE pv.package_id = cp.package_id
-                ORDER BY pv.created_at DESC
+                ORDER BY pv.published_at DESC
                 LIMIT 1
               )
               ELSE cp.package_version
