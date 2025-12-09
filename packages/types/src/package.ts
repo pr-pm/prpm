@@ -146,7 +146,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
 export const FORMAT_NATIVE_SUBTYPES: Partial<Record<Format, readonly Subtype[]>> = {
   cursor: ["rule", "slash-command", "hook"],  // No native agent/skill - uses AGENTS.md
   claude: ["skill", "agent", "slash-command", "tool", "hook", "plugin"],  // Full native support
-  "claude.md": ["skill", "agent"],  // Progressive disclosure format
+  // Note: claude.md is NOT listed - it uses progressive disclosure (.openskills/.openagents with manifest)
   continue: ["rule", "prompt"],  // Full native support
   windsurf: ["rule"],  // Full native support
   copilot: ["rule", "chatmode"],  // No native skill/agent - uses AGENTS.md
