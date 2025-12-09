@@ -368,7 +368,7 @@ describe('install command - multi-file packages', () => {
       );
     });
 
-    it('should convert multi-file package by using main file', async () => {
+    it('should convert multi-file package by using main file (progressive disclosure for skills)', async () => {
       const mockPackage = {
         id: 'complex-skill',
         name: 'complex-skill',
@@ -394,10 +394,11 @@ describe('install command - multi-file packages', () => {
       // Should succeed and convert only the main file (SKILL.md)
       await handleInstall('complex-skill', { as: 'cursor' });
 
-      // Should save as .cursor/rules/complex-skill.mdc (converted from SKILL.md)
+      // Cursor doesn't have native skill support - uses progressive disclosure
+      // Should save to .openskills/ with AGENTS.md reference
       expect(saveFile).toHaveBeenCalledTimes(1);
       expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/rules/complex-skill.mdc',
+        '.openskills/complex-skill/SKILL.md',
         expect.stringContaining('Main Skill')
       );
     });

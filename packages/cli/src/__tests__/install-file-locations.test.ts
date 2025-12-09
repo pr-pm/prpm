@@ -310,7 +310,7 @@ describe('install command - file locations', () => {
       expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
     });
 
-    it('should install any package with --as cursor to .cursor/rules with .mdc extension', async () => {
+    it('should install skill with --as cursor to .openskills (progressive disclosure)', async () => {
       const mockPackage = {
         id: 'test-skill',
         name: 'test-skill',
@@ -330,8 +330,8 @@ describe('install command - file locations', () => {
 
       await handleInstall('test-skill', { as: 'cursor' });
 
-      // Should go to .cursor/rules with .mdc extension when using --as cursor
-      const expectedPath = '.cursor/rules/test-skill.mdc';
+      // Cursor doesn't have native skill support - uses progressive disclosure
+      const expectedPath = '.openskills/test-skill/SKILL.md';
       expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
     });
 
@@ -750,8 +750,8 @@ describe('install command - file locations', () => {
       );
     });
 
-    it('installs cursor skill to native .cursor/rules (no progressive disclosure)', async () => {
-      // Cursor has native rule support for skills - should NOT use progressive disclosure
+    it('installs cursor skill to .openskills with progressive disclosure (no native skill support)', async () => {
+      // Cursor does NOT have native skill support - skills use progressive disclosure
       const mockPackage = {
         id: 'test-cursor-skill',
         name: 'test-cursor-skill',
@@ -771,9 +771,10 @@ describe('install command - file locations', () => {
 
       await handleInstall('test-cursor-skill', { as: 'cursor' });
 
-      expect(saveFile).toHaveBeenCalledWith('.cursor/rules/test-cursor-skill.mdc', expect.any(String));
-      // Should NOT call addSkillToManifest for native rule support
-      expect(addSkillToManifestMock).not.toHaveBeenCalled();
+      // Skills go to .openskills/ with AGENTS.md reference (progressive disclosure)
+      expect(saveFile).toHaveBeenCalledWith('.openskills/test-cursor-skill/SKILL.md', expect.any(String));
+      // SHOULD call addSkillToManifest for progressive disclosure
+      expect(addSkillToManifestMock).toHaveBeenCalled();
     });
   });
 
