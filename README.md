@@ -4,6 +4,9 @@
 
 # PRPM - The Package Manager for AI Prompts
 
+[![Run in Smithery](https://smithery.ai/badge/skills/pr-pm)](https://smithery.ai/skills?ns=pr-pm&utm_source=github&utm_medium=badge)
+
+
 The universal registry for AI coding tools.
 
 Discover and install cross-platform prompts, rules, skills, and agents that work with Cursor, Claude, Continue, Windsurf, GitHub Copilot, OpenAI Codex, Google Gemini, Kiro, and more — all from one file.
