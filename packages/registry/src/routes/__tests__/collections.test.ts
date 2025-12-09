@@ -21,7 +21,18 @@ describe('Collection Routes', () => {
       // console.log('SQL:', sql.substring(0, 150));
       // console.log('Params:', params);
 
-      // Mock COUNT query for collections list
+      // Mock COUNT query for collections list (new optimized pattern with CTE)
+      if (sql.includes('SELECT COUNT(*)') && sql.includes('latest_versions')) {
+        return {
+          rows: [{ count: '2' }],
+          command: 'SELECT',
+          rowCount: 1,
+          oid: 0,
+          fields: []
+        };
+      }
+
+      // Mock COUNT query for collections list (legacy pattern)
       if (sql.includes('COUNT(*)') && sql.includes('count_query')) {
         return {
           rows: [{ count: '2' }],
@@ -178,7 +189,57 @@ describe('Collection Routes', () => {
         };
       }
 
-      // Mock collections list query
+      // Mock collections list query (new pattern with CTE from latest_versions)
+      if (sql.includes('FROM latest_versions c') && sql.includes('LEFT JOIN')) {
+        return {
+          rows: [
+            {
+              id: 'typescript-fullstack',
+              name_slug: 'typescript-fullstack',
+              name: 'TypeScript Full Stack',
+              description: 'Full stack TypeScript development',
+              version: '1.0.0',
+              author: 'admin',
+              official: true,
+              verified: true,
+              category: 'development',
+              tags: ['typescript', 'fullstack'],
+              framework: null,
+              package_count: 5,
+              downloads: 1000,
+              stars: 50,
+              icon: '📦',
+              created_at: new Date(),
+              updated_at: new Date()
+            },
+            {
+              id: 'pulumi-infrastructure',
+              name_slug: 'pulumi-infrastructure',
+              name: 'Pulumi Infrastructure',
+              description: 'Infrastructure as code with Pulumi',
+              version: '1.0.0',
+              author: 'admin',
+              official: true,
+              verified: true,
+              category: 'infrastructure',
+              tags: ['pulumi', 'iac'],
+              framework: null,
+              package_count: 7,
+              downloads: 750,
+              stars: 40,
+              icon: '☁️',
+              created_at: new Date(),
+              updated_at: new Date()
+            }
+          ],
+          command: 'SELECT',
+          rowCount: 2,
+          oid: 0,
+          fields: []
+        };
+      }
+
+      // Mock collections list query (legacy pattern)
       if (sql.includes('FROM collections c') && sql.includes('LEFT JOIN')) {
         return {
           rows: [
@@ -512,6 +573,202 @@ describe('Collection Routes', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
       expect(body.collections).toBeDefined();
+    });
+  });
+
+  describe('Collection version deduplication', () => {
+    let deduplicationServer: FastifyInstance;
+
+    beforeAll(async () => {
+      deduplicationServer = Fastify();
+
+      // Mock authenticate decorator
+      deduplicationServer.decorate('authenticate', async () => {});
+
+      // Mock redis
+      deduplicationServer.decorate('redis', {
+        del: async () => {},
+        get: async () => null,
+        set: async () => {},
+      } as any);
+
+      // Create mock query function that simulates multiple versions of same collection
+      const mockQuery = async (sql: string, params?: unknown[]) => {
+        // Mock COUNT query - should count unique name_slugs, not total rows
+        if (sql.includes('COUNT(*)') && sql.includes('count_query')) {
+          // The CTE should deduplicate, so only 2 unique collections
+          return {
+            rows: [{ count: '2' }],
+            command: 'SELECT',
+            rowCount: 1,
+            oid: 0,
+            fields: []
+          };
+        }
+
+        // Mock COUNT DISTINCT for SSG endpoint
+        if (sql.includes('COUNT(DISTINCT name_slug)')) {
+          return {
+            rows: [{ total: '2' }],
+            command: 'SELECT',
+            rowCount: 1,
+            oid: 0,
+            fields: []
+          };
+        }
+
+        // Mock collections list query with CTE (deduplication query)
+        // This simulates having multiple versions but only returning the latest
+        if (sql.includes('WITH latest_versions AS') && sql.includes('DISTINCT ON (name_slug)')) {
+          return {
+            rows: [
+              {
+                id: 'uuid-v2',
+                name_slug: 'my-collection',
+                name: 'My Collection',
+                description: 'Test collection with multiple versions',
+                version: '2.0.0',  // Latest version
+                author: 'test-author',
+                official: false,
+                verified: false,
+                category: 'development',
+                tags: ['test'],
+                framework: null,
+                package_count: 3,
+                downloads: 150,  // Aggregated from both versions
+                stars: 10,
+                icon: '📦',
+                created_at: new Date('2024-02-01'),
+                updated_at: new Date('2024-02-01')
+              },
+              {
+                id: 'uuid-other',
+                name_slug: 'other-collection',
+                name: 'Other Collection',
+                description: 'Another collection',
+                version: '1.0.0',
+                author: 'other-author',
+                official: true,
+                verified: true,
+                category: 'infrastructure',
+                tags: ['iac'],
+                framework: null,
+                package_count: 5,
+                downloads: 500,
+                stars: 25,
+                icon: '☁️',
+                created_at: new Date('2024-01-15'),
+                updated_at: new Date('2024-01-15')
+              }
+            ],
+            command: 'SELECT',
+            rowCount: 2,
+            oid: 0,
+            fields: []
+          };
+        }
+
+        // Mock collection packages query
+        if (sql.includes('FROM collection_packages cp')) {
+          return {
+            rows: [
+              {
+                package_id: 'pkg1',
+                package_version: '1.0.0',
+                required: true,
+                reason: 'Core package',
+                install_order: 1,
+                package_name: 'Package 1',
+                package_description: 'First package',
+                description: 'First package',
+                package_type: 'agent',
+                type: 'agent',
+                tags: ['test'],
+                latest_version: '1.0.0'
+              }
+            ],
+            command: 'SELECT',
+            rowCount: 1,
+            oid: 0,
+            fields: []
+          };
+        }
+
+        return {
+          rows: [],
+          command: 'SELECT',
+          rowCount: 0,
+          oid: 0,
+          fields: []
+        };
+      };
+
+      // Mock database
+      (deduplicationServer as any).decorate('pg', {
+        query: mockQuery,
+        connect: async () => ({
+          query: mockQuery,
+          release: () => {}
+        })
+      } as any);
+
+      await deduplicationServer.register(collectionRoutes, { prefix: '/api/v1/collections' });
+      await deduplicationServer.ready();
+    });
+
+    afterAll(async () => {
+      await deduplicationServer.close();
+    });
+
+    it('should return only latest version of each collection in list', async () => {
+      const response = await deduplicationServer.inject({
+        method: 'GET',
+        url: '/api/v1/collections'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // Should have 2 collections, not 3 (one collection has 2 versions)
+      expect(body.collections.length).toBe(2);
+
+      // Verify we got the latest version of 'my-collection'
+      const myCollection = body.collections.find((c: any) => c.name_slug === 'my-collection');
+      expect(myCollection).toBeDefined();
+      expect(myCollection.version).toBe('2.0.0');
+
+      // Verify no duplicate name_slugs
+      const nameSlugs = body.collections.map((c: any) => c.name_slug);
+      const uniqueSlugs = [...new Set(nameSlugs)];
+      expect(nameSlugs.length).toBe(uniqueSlugs.length);
+    });
+
+    it('should count unique collections, not total versions', async () => {
+      const response = await deduplicationServer.inject({
+        method: 'GET',
+        url: '/api/v1/collections'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // Total should be 2 unique collections, not 3 total rows
+      expect(body.total).toBe(2);
+    });
+
+    it('should return deduplicated featured collections', async () => {
+      const response = await deduplicationServer.inject({
+        method: 'GET',
+        url: '/api/v1/collections/featured'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // Verify no duplicate name_slugs in featured
+      const nameSlugs = body.collections.map((c: any) => c.name_slug);
+      const uniqueSlugs = [...new Set(nameSlugs)];
+      expect(nameSlugs.length).toBe(uniqueSlugs.length);
     });
   });
 });

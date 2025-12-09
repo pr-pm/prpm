@@ -13,6 +13,22 @@ import type {
   CollectionInstallResult,
 } from '../types/collection.js';
 
+// SQL CTE for getting only the latest version of each collection by name_slug
+// Used across multiple endpoints to prevent duplicate entries when collections have multiple versions
+const LATEST_VERSIONS_CTE = `
+  WITH latest_versions AS (
+    SELECT DISTINCT ON (name_slug)
+      id, name_slug, version, name, description, author_id, org_id,
+      official, verified, category, tags, framework, downloads, stars,
+      icon, created_at, updated_at
+    FROM collections
+    ORDER BY name_slug, created_at DESC
+  )
+`;
+
+// Maximum allowed limit for pagination to prevent expensive queries
+const MAX_LIMIT = 100;
+
 export async function collectionRoutes(server: FastifyInstance) {
   /**
    * GET /api/v1/collections
@@ -32,8 +48,8 @@ export async function collectionRoutes(server: FastifyInstance) {
             verified: { type: 'boolean' },
             author: { type: 'string' },
             query: { type: 'string' },
-            limit: { type: 'number', default: 20 },
-            offset: { type: 'number', default: 0 },
+            limit: { type: 'number', default: 20, minimum: 1, maximum: MAX_LIMIT },
+            offset: { type: 'number', default: 0, minimum: 0 },
             sortBy: {
               type: 'string',
               enum: ['downloads', 'stars', 'created', 'updated', 'name'],
@@ -48,8 +64,87 @@ export async function collectionRoutes(server: FastifyInstance) {
       const query = request.query as CollectionSearchQuery;
 
       try {
-        // Build SQL query - use subquery to get latest version per collection
+        // Clamp limit to MAX_LIMIT for safety (schema validation should handle this, but defense in depth)
+        const safeLimit = Math.min(Math.max(1, query.limit || 20), MAX_LIMIT);
+        const safeOffset = Math.max(0, query.offset || 0);
+
+        // Build filter conditions (shared between count and data queries)
+        const filterConditions: string[] = [];
+        const params: unknown[] = [];
+        let paramIndex = 1;
+
+        if (query.category) {
+          filterConditions.push(`c.category = $${paramIndex++}`);
+          params.push(query.category);
+        }
+
+        if (query.tag) {
+          filterConditions.push(`$${paramIndex++} = ANY(c.tags)`);
+          params.push(query.tag);
+        }
+
+        if (query.framework) {
+          filterConditions.push(`c.framework = $${paramIndex++}`);
+          params.push(query.framework);
+        }
+
+        if (query.official !== undefined) {
+          filterConditions.push(`c.official = $${paramIndex++}`);
+          params.push(query.official);
+        }
+
+        if (query.verified !== undefined) {
+          filterConditions.push(`c.verified = $${paramIndex++}`);
+          params.push(query.verified);
+        }
+
+        // Full-text search filter
+        if (query.query) {
+          filterConditions.push(`(
+            to_tsvector('english', coalesce(c.name, '') || ' ' || coalesce(c.description, '') || ' ' || coalesce(c.name_slug, '')) @@ websearch_to_tsquery('english', $${paramIndex}) OR
+            c.name ILIKE $${paramIndex + 1} OR
+            c.description ILIKE $${paramIndex + 1} OR
+            c.name_slug ILIKE $${paramIndex + 1} OR
+            $${paramIndex + 2} = ANY(c.tags)
+          )`);
+          params.push(query.query, `%${query.query}%`, query.query);
+          paramIndex += 3;
+        }
+
+        const whereClause = filterConditions.length > 0 ? `WHERE ${filterConditions.join(' AND ')}` : '';
+
+        // Optimized count query - only counts, no joins needed for package_count
+        // Uses same CTE but simplified query
+        const countSql = `
+          ${LATEST_VERSIONS_CTE}
+          SELECT COUNT(*) as count
+          FROM latest_versions c
+          LEFT JOIN users u ON c.author_id = u.id
+          ${whereClause}
+        `;
+
+        // Author filter needs the join, so add it separately for count if needed
+        let countParams = [...params];
+        let countWhereClause = whereClause;
+        if (query.author) {
+          const authorCondition = `u.username = $${paramIndex}`;
+          countParams.push(query.author);
+          countWhereClause = whereClause ? `${whereClause} AND ${authorCondition}` : `WHERE ${authorCondition}`;
+        }
+
+        const countResult = await server.pg.query(
+          `${LATEST_VERSIONS_CTE}
+           SELECT COUNT(*) as count
+           FROM latest_versions c
+           LEFT JOIN users u ON c.author_id = u.id
+           ${countWhereClause}`,
+          countParams
+        );
+        const total = parseInt(countResult.rows[0].count);
+
+        // Build main data query using shared CTE
         let sql = `
+          ${LATEST_VERSIONS_CTE}
           SELECT
             c.id,
             c.name_slug,
@@ -68,7 +163,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             c.created_at,
             c.updated_at,
             COALESCE(cp.package_count, 0) as package_count
-          FROM collections c
+          FROM latest_versions c
           LEFT JOIN users u ON c.author_id = u.id
           LEFT JOIN organizations o ON c.org_id = o.id
           LEFT JOIN (
@@ -76,60 +171,16 @@ export async function collectionRoutes(server: FastifyInstance) {
             FROM collection_packages
             GROUP BY collection_id
           ) cp ON c.id = cp.collection_id
-          WHERE 1=1
+          ${whereClause}
         `;
 
-        const params: unknown[] = [];
-        let paramIndex = 1;
-
-        // Filters
-        if (query.category) {
-          sql += ` AND c.category = $${paramIndex++}`;
-          params.push(query.category);
-        }
-
-        if (query.tag) {
-          sql += ` AND $${paramIndex++} = ANY(c.tags)`;
-          params.push(query.tag);
-        }
-
-        if (query.framework) {
-          sql += ` AND c.framework = $${paramIndex++}`;
-          params.push(query.framework);
-        }
-
-        if (query.official !== undefined) {
-          sql += ` AND c.official = $${paramIndex++}`;
-          params.push(query.official);
-        }
-
-        if (query.verified !== undefined) {
-          sql += ` AND c.verified = $${paramIndex++}`;
-          params.push(query.verified);
-        }
-
+        // Add author filter if specified
         if (query.author) {
-          sql += ` AND u.username = $${paramIndex++}`;
+          const authorCondition = `u.username = $${paramIndex}`;
+          sql += whereClause ? ` AND ${authorCondition}` : ` WHERE ${authorCondition}`;
           params.push(query.author);
+          paramIndex++;
         }
-
-        // Full-text search with PostgreSQL tsvector and trigram similarity
-        if (query.query) {
-          sql += ` AND (
-            to_tsvector('english', coalesce(c.name, '') || ' ' || coalesce(c.description, '') || ' ' || coalesce(c.name_slug, '')) @@ websearch_to_tsquery('english', $${paramIndex}) OR
-            c.name ILIKE $${paramIndex + 1} OR
-            c.description ILIKE $${paramIndex + 1} OR
-            c.name_slug ILIKE $${paramIndex + 1} OR
-            $${paramIndex + 2} = ANY(c.tags)
-          )`;
-          params.push(query.query, `%${query.query}%`, query.query);
-          paramIndex += 3;
-        }
-
-        // Count total before pagination
-        const countSql = `SELECT COUNT(*) FROM (${sql}) as count_query`;
-        const countResult = await server.pg.query(countSql, params);
-        const total = parseInt(countResult.rows[0].count);
 
         // Sorting
         const sortBy = query.sortBy || 'downloads';
@@ -156,20 +207,18 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         sql += ` ORDER BY ${orderByColumn} ${validatedSortOrder}`;
 
-        // Pagination
-        const limit = query.limit || 20;
-        const offset = query.offset || 0;
+        // Pagination with safe bounds
         sql += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
-        params.push(limit, offset);
+        params.push(safeLimit, safeOffset);
 
         const result = await server.pg.query(sql, params);
 
         return reply.send({
           collections: result.rows,
           total,
-          page: Math.floor(offset / limit) + 1,
-          perPage: limit,
-          hasMore: offset + limit < total,
+          page: Math.floor(safeOffset / safeLimit) + 1,
+          perPage: safeLimit,
+          hasMore: safeOffset + safeLimit < total,
         });
       } catch (error) {
         server.log.error(error);
@@ -654,7 +703,9 @@ export async function collectionRoutes(server: FastifyInstance) {
    */
   server.get('/featured', async (request, reply) => {
     try {
+      // Use shared CTE to get only the latest version per name_slug
       const result = await server.pg.query(`
+        ${LATEST_VERSIONS_CTE}
         SELECT
           c.id,
           c.name_slug,
@@ -673,7 +724,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           c.created_at,
           c.updated_at,
           COALESCE(cp.package_count, 0) as package_count
-        FROM collections c
+        FROM latest_versions c
         LEFT JOIN users u ON c.author_id = u.id
         LEFT JOIN organizations o ON c.org_id = o.id
         LEFT JOIN (
@@ -843,17 +894,22 @@ export async function collectionRoutes(server: FastifyInstance) {
         }
 
         const { limit = 500, offset = 0 } = request.query;
+        // SSG endpoint allows higher limit (1000) since it's authenticated and used for build
+        const safeLimit = Math.min(Math.max(1, limit), 1000);
+        const safeOffset = Math.max(0, offset);
 
-        server.log.info({ limit, offset }, 'Fetching collections SSG data');
+        server.log.info({ limit: safeLimit, offset: safeOffset }, 'Fetching collections SSG data');
 
-        // Get total count
+        // Get total count of unique collections (by name_slug)
         const countResult = await server.pg.query(
-          `SELECT COUNT(*) as total FROM collections c`
+          `SELECT COUNT(DISTINCT name_slug) as total FROM collections`
         );
         const totalCount = parseInt(countResult.rows[0]?.total || '0', 10);
 
+        // Use shared CTE to get only the latest version per name_slug
         const result = await server.pg.query(
-          `SELECT
+          `${LATEST_VERSIONS_CTE}
+          SELECT
             c.id,
             c.name,
             c.name_slug,
@@ -869,11 +925,11 @@ export async function collectionRoutes(server: FastifyInstance) {
             c.created_at,
             c.updated_at,
             u.username as author_username
-          FROM collections c
+          FROM latest_versions c
           LEFT JOIN users u ON c.author_id = u.id
           ORDER BY c.downloads DESC
           LIMIT $1 OFFSET $2`,
-          [limit, offset]
+          [safeLimit, safeOffset]
         );
 
         // Fetch packages for each collection
@@ -988,23 +1044,42 @@ export async function collectionRoutes(server: FastifyInstance) {
     },
     async (request, reply) => {
       const { limit = 20, offset = 0 } = request.query as { limit?: number; offset?: number };
+      // Defense in depth: clamp values even though schema validates
+      const safeLimit = Math.min(Math.max(1, limit), MAX_LIMIT);
+      const safeOffset = Math.max(0, offset);
       const user = request.user;
 
       try {
+        // Get starred collections, but show the latest version of each
+        // A user may have starred an older version, but we want to show the current latest
+        // Note: This uses its own CTE structure since it needs to join starred_slugs first
         const result = await server.pg.query(
           `
+          WITH starred_slugs AS (
+            -- Get the name_slug of each collection the user has starred
+            SELECT DISTINCT c.name_slug, MAX(cs.starred_at) as starred_at
+            FROM collection_stars cs
+            JOIN collections c ON cs.collection_id = c.id
+            WHERE cs.user_id = $1
+            GROUP BY c.name_slug
+          ),
+          latest_versions AS (
+            -- Get the latest version of each starred collection
+            SELECT DISTINCT ON (c.name_slug)
+              c.*, ss.starred_at
+            FROM collections c
+            JOIN starred_slugs ss ON c.name_slug = ss.name_slug
+            ORDER BY c.name_slug, c.created_at DESC
+          )
           SELECT
-            c.*,
-            cs.starred_at,
+            lv.*,
             u.username as author_username
-          FROM collection_stars cs
-          JOIN collections c ON cs.collection_id = c.id
-          LEFT JOIN users u ON c.author_id = u.id
-          WHERE cs.user_id = $1
-          ORDER BY cs.starred_at DESC
+          FROM latest_versions lv
+          LEFT JOIN users u ON lv.author_id = u.id
+          ORDER BY lv.starred_at DESC
           LIMIT $2 OFFSET $3
         `,
-          [user.user_id, limit, offset]
+          [user.user_id, safeLimit, safeOffset]
         );
 
         const collections = result.rows.map((row) => ({
