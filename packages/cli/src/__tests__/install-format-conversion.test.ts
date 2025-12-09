@@ -402,7 +402,7 @@ description: Test for copilot
   });
 
   describe('Subtype preservation', () => {
-    it('should preserve agent subtype when converting formats', async () => {
+    it('should preserve agent subtype when converting formats (using progressive disclosure for cursor)', async () => {
       const mockPackage = {
         id: 'claude-agent',
         name: 'claude-agent',
@@ -422,10 +422,10 @@ description: Test for copilot
 
       await handleInstall('claude-agent', { as: 'cursor' });
 
-      // Should save to cursor agents directory (preserving agent subtype)
-      // Note: cursor agents use .md extension per format registry
+      // Cursor doesn't have native agent support, so agents use progressive disclosure
+      // to .openagents/ directory with AGENTS.md manifest
       expect(saveFile).toHaveBeenCalledWith(
-        '.cursor/agents/claude-agent.md',
+        '.openagents/claude-agent/AGENT.md',
         expect.any(String)
       );
     });
