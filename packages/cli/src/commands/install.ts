@@ -955,7 +955,7 @@ export async function handleInstall(
       } else if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
         // Claude hooks are merged into settings.json
         destPath = `${destDir}/settings.json`;
-      } else if (effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md') {
+      } else if (effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md' || effectiveFormat === 'codex') {
         // For manifest formats, use progressive disclosure (install to .openskills/ or .openagents/)
         if (effectiveSubtype === 'skill') {
           // Skills go to .openskills/package-name/ directory
@@ -965,6 +965,10 @@ export async function handleInstall(
           // Agents go to .openagents/package-name/ directory
           destPath = `${destDir}/AGENT.md`;
           console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+        } else if (effectiveSubtype === 'slash-command') {
+          // Commands go to .opencommands/ directory (no subdirectory, just the file)
+          destPath = `${destDir}/${packageName}.md`;
+          console.log(`   ⚡ Installing command to ${destDir}/ for progressive disclosure`);
         } else {
           // Non-skill/agent packages go to root manifest file
           const manifestFilename = getManifestFilename(effectiveFormat);
@@ -1250,37 +1254,45 @@ export async function handleInstall(
       }
     }
 
-    // Handle AGENTS.md manifest update for progressive disclosure skills
+    // Handle AGENTS.md manifest update for progressive disclosure skills/agents/commands
     let progressiveDisclosureMetadata: {
       mode: 'progressive';
       resourceDir: string;
       manifestPath: string;
       resourceName: string;
-      resourceType: 'skill' | 'agent';
+      resourceType: 'skill' | 'agent' | 'command';
       skillsDir?: string;
       skillName?: string;
-      eager?: boolean; // Whether this skill/agent should always activate
+      eager?: boolean; // Whether this skill/agent/command should always activate
     } | undefined;
 
-    // Formats that use progressive disclosure for skills/agents
-    // These formats don't have native skill support but can use AGENTS.md (or similar manifest)
+    // Formats that use progressive disclosure for skills/agents/commands
+    // These formats don't have native support for certain subtypes and use AGENTS.md (or similar manifest)
     const progressiveDisclosureFormats = [
       'agents.md',   // Universal AGENTS.md format
       'gemini.md',   // Uses GEMINI.md
       'claude.md',   // Uses CLAUDE.md
       'aider',       // Uses CONVENTIONS.md
-      'codex',       // Uses AGENTS.md (no native skills)
-      'cursor',      // Uses AGENTS.md (no native skills)
-      'copilot',     // Uses AGENTS.md (no native skills)
+      'codex',       // Uses AGENTS.md (no native skills/agents)
+      'copilot',     // Uses AGENTS.md (no native skills/agents)
       'kiro',        // Uses AGENTS.md (no native skills)
       'opencode',    // Uses AGENTS.md (no native skills)
-      'ruler',       // Uses AGENTS.md (no native skills)
       'replit',      // Uses AGENTS.md (no native skills)
       'zed',         // Uses AGENTS.md (no native skills)
       'generic',     // Uses AGENTS.md (fallback format)
     ];
 
-    if (progressiveDisclosureFormats.includes(effectiveFormat) && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent') && !options.noAppend) {
+    // Formats with partial native support - need progressive disclosure only for specific subtypes
+    const partialNativeSupport: Record<string, string[]> = {
+      'cursor': ['agent'],  // Cursor has native rules/commands but no native agents
+    };
+
+    // Check if this format/subtype combination needs progressive disclosure
+    const needsProgressiveDisclosure =
+      (progressiveDisclosureFormats.includes(effectiveFormat) && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent' || effectiveSubtype === 'slash-command')) ||
+      (partialNativeSupport[effectiveFormat]?.includes(effectiveSubtype));
+
+    if (needsProgressiveDisclosure && !options.noAppend) {
       // Ensure destDir is defined (should always be set by this point for skill/agent installations)
       if (!destDir) {
         throw new Error('Internal error: destDir not set for progressive disclosure installation');
@@ -1288,8 +1300,15 @@ export async function handleInstall(
 
       const manifestPath = options.manifestFile || getManifestFilename(effectiveFormat);
       const resourceName = stripAuthorNamespace(packageId);
-      const resourceType = effectiveSubtype as 'skill' | 'agent';
-      const mainFile = resourceType === 'agent' ? 'AGENT.md' : 'SKILL.md';
+      const resourceType = effectiveSubtype === 'slash-command' ? 'command' : effectiveSubtype as 'skill' | 'agent' | 'command';
+      let mainFile: string;
+      if (resourceType === 'command') {
+        mainFile = `${resourceName}.md`;
+      } else if (resourceType === 'agent') {
+        mainFile = 'AGENT.md';
+      } else {
+        mainFile = 'SKILL.md';
+      }
 
       // Determine eager setting with precedence: CLI flag > package-level > default (lazy)
       // options.eager is: true (--eager), false (--lazy), or undefined (no flag)
