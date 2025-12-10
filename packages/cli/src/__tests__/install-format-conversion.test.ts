@@ -305,9 +305,9 @@ description: Test for copilot
         'https://example.com/package.tar.gz'
       );
 
-      // Copilot uses official GitHub naming: .github/instructions/NAME.instructions.md
+      // Copilot doesn't natively support skills - uses progressive disclosure via .openskills/
       expect(saveFile).toHaveBeenCalledWith(
-        expect.stringContaining('.github/instructions/'),
+        expect.stringContaining('.openskills/'),
         expect.any(String)
       );
     });

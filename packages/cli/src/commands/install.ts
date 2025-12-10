@@ -996,8 +996,9 @@ export async function handleInstall(
             }
           }
         }
-      } else if (effectiveFormat === 'copilot') {
-        // Official GitHub Copilot naming conventions
+      } else if (effectiveFormat === 'copilot' && (effectiveSubtype === 'chatmode' || effectiveSubtype === 'rule')) {
+        // Official GitHub Copilot naming conventions - only for native subtypes (rule, chatmode)
+        // skill/agent subtypes need progressive disclosure via AGENTS.md (handled in else block)
         if (effectiveSubtype === 'chatmode') {
           // Chat modes: .github/chatmodes/NAME.chatmode.md
           destPath = `${destDir}/${packageName}.chatmode.md`;

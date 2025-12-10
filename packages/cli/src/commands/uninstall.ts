@@ -109,9 +109,13 @@ async function handleCollectionUninstall(
     }
   }
 
-  // Remove collection from lockfile
-  removeCollectionFromLockfile(lockfile, collectionKey);
-  await writeLockfile(lockfile);
+  // Re-read the lockfile since removePackage writes its own copy
+  // This avoids a race condition where our stale copy would overwrite package removals
+  const freshLockfile = await readLockfile();
+  if (freshLockfile) {
+    removeCollectionFromLockfile(freshLockfile, collectionKey);
+    await writeLockfile(freshLockfile);
+  }
 
   console.log(`\n✅ Collection uninstalled`);
   console.log(`   ${uninstalledCount} packages removed`);
