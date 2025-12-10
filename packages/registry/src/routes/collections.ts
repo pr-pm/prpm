@@ -12,6 +12,7 @@ import type {
   CollectionInstallInput,
   CollectionInstallResult,
 } from '../types/collection.js';
+import { ciModeAuth } from '../middleware/auth.js';
 
 // SQL CTE for getting only the latest version of each collection by name_slug
 // Used across multiple endpoints to prevent duplicate entries when collections have multiple versions
@@ -340,12 +341,13 @@ export async function collectionRoutes(server: FastifyInstance) {
 
   /**
    * POST /api/v1/collections
-   * Create new collection (requires authentication)
+   * Create new collection (requires authentication, or CI_MODE bypass)
    */
   server.post(
     '/',
     {
-      onRequest: [server.authenticate],
+      // Use ciModeAuth which allows CI_MODE bypass or falls back to JWT auth
+      onRequest: [ciModeAuth],
       schema: {
         body: {
           type: 'object',

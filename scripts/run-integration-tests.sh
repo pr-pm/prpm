@@ -97,10 +97,17 @@ for batch_dir in "$TEST_DIR"/batch-*; do
     log_info "Publishing $batch_name..."
 
     cd "$batch_dir"
-    if prpm publish 2>&1; then
+    PUBLISH_OUTPUT=$(prpm publish 2>&1)
+    PUBLISH_EXIT=$?
+
+    # Check for success or "Version already exists" (which is fine for re-runs)
+    if [ $PUBLISH_EXIT -eq 0 ]; then
       log_success "Published $batch_name"
+    elif echo "$PUBLISH_OUTPUT" | grep -q "Version already exists"; then
+      log_success "Published $batch_name (packages already exist)"
     else
       log_error "Failed to publish $batch_name"
+      echo "$PUBLISH_OUTPUT"
       FAILED=1
     fi
     cd "$PROJECT_ROOT"
@@ -118,10 +125,17 @@ echo "--------------------------------------------"
 if [ -d "$TEST_DIR/collection" ] && [ -f "$TEST_DIR/collection/prpm.json" ]; then
   log_info "Publishing collection..."
   cd "$TEST_DIR/collection"
-  if prpm publish 2>&1; then
+  PUBLISH_OUTPUT=$(prpm publish 2>&1)
+  PUBLISH_EXIT=$?
+
+  # Check for success or "Version already exists" (which is fine for re-runs)
+  if [ $PUBLISH_EXIT -eq 0 ]; then
     log_success "Published collection"
+  elif echo "$PUBLISH_OUTPUT" | grep -q "Version already exists"; then
+    log_success "Published collection (already exists)"
   else
     log_error "Failed to publish collection"
+    echo "$PUBLISH_OUTPUT"
     FAILED=1
   fi
   cd "$PROJECT_ROOT"
