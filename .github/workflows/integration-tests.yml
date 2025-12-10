@@ -73,7 +73,7 @@ jobs:
           npm run build --workspace=@pr-pm/converters
           npm run build --workspace=@pr-pm/registry-client
           npm run build --workspace=@pr-pm/registry
-          npm run build --workspace=@pr-pm/cli
+          cd ./packages/cli && npm run build && cd ../
 
       - name: Start MinIO
         run: |
