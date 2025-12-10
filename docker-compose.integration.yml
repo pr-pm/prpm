@@ -6,7 +6,7 @@
 #   docker-compose -f docker-compose.integration.yml down -v
 #
 # This provides the same services as the GitHub Actions workflow:
-# - PostgreSQL 15
+# - PostgreSQL 15 with pgvector extension
 # - Redis 7
 # - MinIO (S3-compatible storage)
 
@@ -14,7 +14,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: prpm-integration-postgres
     environment:
       POSTGRES_USER: prpm
