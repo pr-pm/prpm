@@ -536,7 +536,8 @@ export async function collectionRoutes(server: FastifyInstance) {
             official DESC,
             verified DESC,
             created_at DESC,
-            downloads DESC
+            downloads DESC,
+            id DESC
           LIMIT 1
         `,
           input.version ? [name_slug, input.version] : [name_slug]

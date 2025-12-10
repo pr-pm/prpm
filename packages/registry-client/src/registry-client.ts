@@ -429,7 +429,7 @@ export class RegistryClient {
     skipOptional?: boolean;
   }): Promise<CollectionInstallResult> {
     const response = await this.fetch(
-      `/api/v1/collections/${options.id}/install`,
+      `/api/v1/collections/${encodeURIComponent(options.id)}/install`,
       {
         method: 'POST',
         body: JSON.stringify({

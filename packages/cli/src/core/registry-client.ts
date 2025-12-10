@@ -317,7 +317,7 @@ export class RegistryClient {
     if (options.skipOptional) body.skipOptional = true;
 
     const response = await this.fetch(
-      `/api/v1/collections/${options.id}/install`,
+      `/api/v1/collections/${encodeURIComponent(options.id)}/install`,
       {
         method: 'POST',
         body: JSON.stringify(body),
