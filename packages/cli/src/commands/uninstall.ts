@@ -421,8 +421,8 @@ export async function handleUninstall(name: string, options: { format?: string; 
         }
       }
 
-      console.log(`✅ Successfully uninstalled ${name}`);
-      return;
+      console.log(`✅ Successfully uninstalled ${name}${formatDisplay}`);
+      continue; // Move to next package if multiple
     }
 
     // Standard file/directory uninstall for non-hook packages
