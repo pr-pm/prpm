@@ -1,6 +1,6 @@
 {
   "name": "@pr-pm/types",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "Shared TypeScript types for Prompt Package Manager",
   "type": "module",
   "main": "dist/index.cjs",
