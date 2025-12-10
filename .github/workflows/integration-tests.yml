@@ -1,0 +1,164 @@
+# Integration Tests - E2E Registry Testing
+#
+# This workflow runs comprehensive end-to-end tests that:
+# 1. Spin up a local registry with Postgres, Redis, and MinIO
+# 2. Publish test packages covering all format/subtype combinations
+# 3. Install packages with --as flag conversions
+# 4. Verify install locations match expected paths
+# 5. Test version updates (patch, minor, major)
+# 6. Test collection install and verification
+#
+# Uses CI_MODE=true to enable anonymous publishing for testing.
+
+name: Integration Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Enable debug logging'
+        required: false
+        default: 'false'
+
+jobs:
+  integration-tests:
+    name: E2E Registry Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: prpm
+          POSTGRES_PASSWORD: prpm
+          POSTGRES_DB: prpm_registry
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all packages
+        run: |
+          npm run build --workspace=@pr-pm/types
+          npm run build --workspace=@pr-pm/converters
+          npm run build --workspace=@pr-pm/registry-client
+          npm run build --workspace=@pr-pm/registry
+          npm run build --workspace=@pr-pm/cli
+
+      - name: Start MinIO
+        run: |
+          docker run -d \
+            --name minio \
+            -p 9000:9000 -p 9001:9001 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data --console-address ":9001"
+
+      - name: Wait for MinIO
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:9000/minio/health/live 2>/dev/null; do echo "Waiting for MinIO..."; sleep 2; done'
+          echo "MinIO is ready"
+
+      - name: Create MinIO bucket
+        run: |
+          # Install mc (MinIO client)
+          wget -q https://dl.min.io/client/mc/release/linux-amd64/mc -O /tmp/mc
+          chmod +x /tmp/mc
+          /tmp/mc alias set local http://localhost:9000 minioadmin minioadmin
+          /tmp/mc mb local/prpm-packages --ignore-existing
+          echo "MinIO bucket created"
+
+      - name: Run database migrations
+        working-directory: ./packages/registry
+        run: npm run migrate
+        env:
+          DATABASE_URL: postgresql://prpm:prpm@localhost:5432/prpm_registry
+
+      - name: Start registry server
+        run: |
+          cd packages/registry
+          npm start &
+          echo $! > /tmp/registry.pid
+          # Wait for registry to be ready
+          timeout 60 bash -c 'until curl -f http://localhost:3111/health 2>/dev/null; do echo "Waiting for registry..."; sleep 2; done'
+          echo "Registry server is ready"
+        env:
+          DATABASE_URL: postgresql://prpm:prpm@localhost:5432/prpm_registry
+          REDIS_URL: redis://localhost:6379
+          S3_ENDPOINT: http://localhost:9000
+          S3_ACCESS_KEY: minioadmin
+          S3_SECRET_KEY: minioadmin
+          S3_BUCKET: prpm-packages
+          JWT_SECRET: ci-test-secret-key-for-integration-tests
+          CI_MODE: 'true'
+          NODE_ENV: test
+          LOG_LEVEL: ${{ inputs.debug == 'true' && 'debug' || 'info' }}
+
+      - name: Link CLI globally
+        run: |
+          cd packages/cli
+          npm link
+          # Verify CLI is available
+          prpm --version
+
+      - name: Run integration tests
+        run: |
+          chmod +x scripts/run-integration-tests.sh
+          ./scripts/run-integration-tests.sh
+        env:
+          PRPM_REGISTRY: http://localhost:3111
+          DEBUG: ${{ inputs.debug }}
+
+      - name: Stop registry server
+        if: always()
+        run: |
+          if [ -f /tmp/registry.pid ]; then
+            kill $(cat /tmp/registry.pid) 2>/dev/null || true
+            rm /tmp/registry.pid
+          fi
+
+      - name: Stop MinIO
+        if: always()
+        run: |
+          docker stop minio 2>/dev/null || true
+          docker rm minio 2>/dev/null || true
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs
+          path: |
+            /tmp/prpm-integration-*
+            packages/registry/logs/
+          retention-days: 7

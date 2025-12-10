@@ -1,0 +1,7 @@
+{
+  "name": "ci-test-kiro-hook",
+  "description": "CI Test Kiro Hook for PRPM integration testing",
+  "version": "1.0.0",
+  "event": "pre-commit",
+  "script": "echo 'CI test hook'"
+}

@@ -1,0 +1,39 @@
+---
+description: Unicode test rule - 日本語のルール
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# Unicode Test Rule 🎉
+
+## 日本語セクション
+
+コードを書くときは以下のガイドラインに従ってください：
+
+1. 変数名は意味のある名前を使用する
+2. コメントは明確に書く
+3. テストを忘れずに書く
+
+## Section Française
+
+Suivez ces bonnes pratiques:
+
+- Utilisez des noms de variables descriptifs
+- Écrivez des commentaires clairs
+- N'oubliez pas les tests
+
+## 中文部分
+
+编写代码时请遵循以下准则：
+
+- 使用有意义的变量名
+- 编写清晰的注释
+- 不要忘记编写测试
+
+## Emoji Support 🚀
+
+- ✅ Use meaningful variable names
+- ✅ Write clear comments
+- ✅ Don't forget tests
+- ❌ Don't use magic numbers
+- ❌ Don't skip error handling

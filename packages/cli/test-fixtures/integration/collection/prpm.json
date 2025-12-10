@@ -1,0 +1,23 @@
+{
+  "$schema": "https://prpm.dev/schema/prpm.json",
+  "name": "@ci-test/integration-collection",
+  "version": "1.0.0",
+  "description": "CI Test Collection - bundles multiple packages for collection install testing",
+  "author": "prpm-ci",
+  "license": "MIT",
+  "repository": "https://github.com/pr-pm/prpm",
+  "tags": ["ci-test", "collection", "integration"],
+  "collection": {
+    "packages": [
+      "@ci-test/cursor-rule",
+      "@ci-test/continue-rule",
+      "@ci-test/windsurf-rule",
+      "@ci-test/claude-agent",
+      "@ci-test/claude-skill",
+      "@ci-test/cursor-agent",
+      "@ci-test/claude-hook",
+      "@ci-test/mcp-server"
+    ],
+    "description": "A curated collection of CI test packages spanning rules, agents, skills, hooks, and MCP servers"
+  }
+}

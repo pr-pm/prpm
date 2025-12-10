@@ -1,0 +1,14 @@
+{
+  "name": "ci-test-mcp-tool",
+  "description": "CI Test MCP Tool for PRPM integration testing",
+  "version": "1.0.0",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Test input"
+      }
+    }
+  }
+}

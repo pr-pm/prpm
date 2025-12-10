@@ -1,0 +1,22 @@
+{
+  "$schema": "https://prpm.dev/schema/prpm.json",
+  "name": "@ci-test/dependency-chain",
+  "version": "1.0.0",
+  "description": "Package with dependencies to test dependency resolution",
+  "author": "prpm-ci",
+  "license": "MIT",
+  "tags": ["ci-test", "dependencies", "chain"],
+  "dependencies": {
+    "@ci-test/cursor-rule": "^1.0.0",
+    "@ci-test/claude-agent": "^1.0.0"
+  },
+  "packages": [
+    {
+      "name": "dependent-rule",
+      "description": "A rule that depends on other packages",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/dependent.mdc"
+    }
+  ]
+}

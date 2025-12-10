@@ -1,0 +1,8 @@
+{
+  "name": "ci-test-kiro-agent",
+  "description": "CI Test Kiro Agent for PRPM integration testing",
+  "version": "1.0.0",
+  "triggers": ["manual"],
+  "tools": ["read", "write"],
+  "instructions": "This is a test agent for verifying Kiro agent installation to .kiro/agents/"
+}

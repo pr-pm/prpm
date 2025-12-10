@@ -1,0 +1,7 @@
+{
+  "name": "ci-test-droid-hook",
+  "description": "CI Test Factory Droid Hook for PRPM integration testing",
+  "version": "1.0.0",
+  "event": "on_save",
+  "handler": "echo 'CI test hook'"
+}

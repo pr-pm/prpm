@@ -1,0 +1,9 @@
+{
+  "name": "ci-test-claude-plugin",
+  "description": "CI Test Claude Plugin for PRPM integration testing",
+  "version": "1.0.0",
+  "agents": [],
+  "skills": [],
+  "commands": [],
+  "mcpServers": {}
+}

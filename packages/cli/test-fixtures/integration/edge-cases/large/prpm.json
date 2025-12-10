@@ -1,0 +1,81 @@
+{
+  "$schema": "https://prpm.dev/schema/prpm.json",
+  "name": "@ci-test/large-package",
+  "version": "1.0.0",
+  "description": "Large package with many entries to test scalability",
+  "author": "prpm-ci",
+  "license": "MIT",
+  "tags": ["ci-test", "large", "scalability"],
+  "packages": [
+    {
+      "name": "large-rule-01",
+      "description": "Large test rule 01",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-01.mdc"
+    },
+    {
+      "name": "large-rule-02",
+      "description": "Large test rule 02",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-02.mdc"
+    },
+    {
+      "name": "large-rule-03",
+      "description": "Large test rule 03",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-03.mdc"
+    },
+    {
+      "name": "large-rule-04",
+      "description": "Large test rule 04",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-04.mdc"
+    },
+    {
+      "name": "large-rule-05",
+      "description": "Large test rule 05",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-05.mdc"
+    },
+    {
+      "name": "large-rule-06",
+      "description": "Large test rule 06",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-06.mdc"
+    },
+    {
+      "name": "large-rule-07",
+      "description": "Large test rule 07",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-07.mdc"
+    },
+    {
+      "name": "large-rule-08",
+      "description": "Large test rule 08",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-08.mdc"
+    },
+    {
+      "name": "large-rule-09",
+      "description": "Large test rule 09",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-09.mdc"
+    },
+    {
+      "name": "large-rule-10",
+      "description": "Large test rule 10",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/rule-10.mdc"
+    }
+  ]
+}

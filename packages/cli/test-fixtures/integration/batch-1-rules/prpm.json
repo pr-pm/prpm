@@ -1,0 +1,124 @@
+{
+  "$schema": "https://prpm.dev/schemas/manifest.json",
+  "name": "ci-test-batch-1-rules",
+  "version": "1.0.0",
+  "description": "Integration test batch 1: Rule-type packages across formats",
+  "author": "ci-test",
+  "license": "MIT",
+  "repository": "https://github.com/pr-pm/prpm",
+  "tags": ["ci-test", "integration-test"],
+  "packages": [
+    {
+      "name": "@ci-test/cursor-rule",
+      "version": "1.0.0",
+      "description": "CI test: Cursor rule package",
+      "format": "cursor",
+      "subtype": "rule",
+      "files": ["files/cursor-rule.mdc"]
+    },
+    {
+      "name": "@ci-test/continue-rule",
+      "version": "1.0.0",
+      "description": "CI test: Continue rule package",
+      "format": "continue",
+      "subtype": "rule",
+      "files": ["files/continue-rule.md"]
+    },
+    {
+      "name": "@ci-test/windsurf-rule",
+      "version": "1.0.0",
+      "description": "CI test: Windsurf rule package",
+      "format": "windsurf",
+      "subtype": "rule",
+      "files": ["files/windsurf-rule.md"]
+    },
+    {
+      "name": "@ci-test/copilot-rule",
+      "version": "1.0.0",
+      "description": "CI test: GitHub Copilot instruction package",
+      "format": "copilot",
+      "subtype": "rule",
+      "files": ["files/copilot-rule.instructions.md"]
+    },
+    {
+      "name": "@ci-test/kiro-rule",
+      "version": "1.0.0",
+      "description": "CI test: Kiro steering file package",
+      "format": "kiro",
+      "subtype": "rule",
+      "files": ["files/kiro-rule.md"]
+    },
+    {
+      "name": "@ci-test/trae-rule",
+      "version": "1.0.0",
+      "description": "CI test: Trae rule package",
+      "format": "trae",
+      "subtype": "rule",
+      "files": ["files/trae-rule.md"]
+    },
+    {
+      "name": "@ci-test/zencoder-rule",
+      "version": "1.0.0",
+      "description": "CI test: Zencoder rule package",
+      "format": "zencoder",
+      "subtype": "rule",
+      "files": ["files/zencoder-rule.md"]
+    },
+    {
+      "name": "@ci-test/replit-rule",
+      "version": "1.0.0",
+      "description": "CI test: Replit rule package",
+      "format": "replit",
+      "subtype": "rule",
+      "files": ["files/replit-rule.md"]
+    },
+    {
+      "name": "@ci-test/aider-rule",
+      "version": "1.0.0",
+      "description": "CI test: Aider conventions package",
+      "format": "aider",
+      "subtype": "rule",
+      "files": ["files/aider-rule.md"]
+    },
+    {
+      "name": "@ci-test/codex-rule",
+      "version": "1.0.0",
+      "description": "CI test: Codex AGENTS.md rule package",
+      "format": "codex",
+      "subtype": "rule",
+      "files": ["files/codex-rule.md"]
+    },
+    {
+      "name": "@ci-test/agents-md-rule",
+      "version": "1.0.0",
+      "description": "CI test: AGENTS.md rule package",
+      "format": "agents.md",
+      "subtype": "rule",
+      "files": ["files/agents-md-rule.md"]
+    },
+    {
+      "name": "@ci-test/gemini-md-rule",
+      "version": "1.0.0",
+      "description": "CI test: GEMINI.md rule package",
+      "format": "gemini.md",
+      "subtype": "rule",
+      "files": ["files/gemini-md-rule.md"]
+    },
+    {
+      "name": "@ci-test/claude-md-rule",
+      "version": "1.0.0",
+      "description": "CI test: CLAUDE.md rule package",
+      "format": "claude.md",
+      "subtype": "rule",
+      "files": ["files/claude-md-rule.md"]
+    },
+    {
+      "name": "@ci-test/ruler-rule",
+      "version": "1.0.0",
+      "description": "CI test: Ruler rule package",
+      "format": "ruler",
+      "subtype": "rule",
+      "files": ["files/ruler-rule.md"]
+    }
+  ]
+}

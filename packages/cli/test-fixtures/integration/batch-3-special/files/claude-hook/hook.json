@@ -1,0 +1,11 @@
+{
+  "name": "ci-test-claude-hook",
+  "description": "CI Test Claude Hook for PRPM integration testing",
+  "version": "1.0.0",
+  "hooks": [
+    {
+      "event": "on_message",
+      "script": "./hook.js"
+    }
+  ]
+}

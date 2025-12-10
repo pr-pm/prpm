@@ -1,0 +1,7 @@
+{
+  "name": "ci-test-gemini-extension",
+  "description": "CI Test Gemini CLI Extension for PRPM integration testing",
+  "version": "1.0.0",
+  "main": "index.js",
+  "commands": []
+}

@@ -14,7 +14,7 @@ import {
 import { Package, PackageVersion, PackageInfo } from "../types.js";
 import { toError } from "../types/errors.js";
 import { config } from "../config.js";
-import { optionalAuth } from "../middleware/auth.js";
+import { optionalAuth, ciModeAuth } from "../middleware/auth.js";
 import { createPublishRateLimiter } from "../middleware/rate-limit.js";
 import { createConcurrencyController } from "../middleware/concurrency-control.js";
 import type { AIMetadataResult } from "../scoring/ai-evaluator.js";
@@ -775,7 +775,8 @@ export async function packageRoutes(server: FastifyInstance) {
     "/",
     {
       preHandler: [
-        server.authenticate,
+        // Use ciModeAuth which allows CI_MODE bypass or falls back to JWT auth
+        ciModeAuth,
         publishRateLimiter,
         publishConcurrencyControl,
       ],

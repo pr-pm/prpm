@@ -1,0 +1,25 @@
+{
+  "$schema": "https://prpm.dev/schema/prpm.json",
+  "name": "@ci-test/dry-run-test",
+  "version": "1.0.0",
+  "description": "Package for testing --dry-run flag behavior",
+  "author": "prpm-ci",
+  "license": "MIT",
+  "tags": ["ci-test", "dry-run", "verification"],
+  "packages": [
+    {
+      "name": "dry-run-rule",
+      "description": "Rule for dry-run testing - should NOT be installed with --dry-run",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/dry-run.mdc"
+    },
+    {
+      "name": "dry-run-agent",
+      "description": "Agent for dry-run testing - should NOT be installed with --dry-run",
+      "format": "claude",
+      "subtype": "agent",
+      "file": "files/dry-run-agent.md"
+    }
+  ]
+}

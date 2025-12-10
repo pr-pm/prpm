@@ -1,0 +1,17 @@
+{
+  "$schema": "https://prpm.dev/schema/prpm.json",
+  "name": "@ci-test/unicode-package",
+  "version": "1.0.0",
+  "description": "Package with unicode characters in name and content - 日本語テスト",
+  "author": "测试用户",
+  "tags": ["ci-test", "unicode", "日本語", "中文", "emoji"],
+  "packages": [
+    {
+      "name": "unicode-rule-日本語",
+      "description": "A rule with unicode content - émojis et accents français 🎉",
+      "format": "cursor",
+      "subtype": "rule",
+      "file": "files/unicode.mdc"
+    }
+  ]
+}
