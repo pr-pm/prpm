@@ -2,7 +2,7 @@
   "$schema": "https://prpm.dev/schemas/manifest.json",
   "name": "@ci-test/batch-3-special",
   "version": "1.0.0",
-  "description": "Integration test batch 3: Hooks, plugins, and MCP packages",
+  "description": "Integration test batch 3: Hooks and AGENTS.md packages",
   "author": "ci-test",
   "license": "MIT",
   "repository": "https://github.com/pr-pm/prpm",
@@ -25,30 +25,6 @@
       "files": ["files/kiro-hook.json"]
     },
     {
-      "name": "@ci-test/claude-plugin",
-      "version": "1.0.0",
-      "description": "CI test: Claude plugin package for integration testing",
-      "format": "claude",
-      "subtype": "plugin",
-      "files": ["files/claude-plugin/plugin.json"]
-    },
-    {
-      "name": "@ci-test/mcp-server",
-      "version": "1.0.0",
-      "description": "CI test: MCP server package for integration testing",
-      "format": "mcp",
-      "subtype": "server",
-      "files": ["files/mcp-server.json"]
-    },
-    {
-      "name": "@ci-test/mcp-tool",
-      "version": "1.0.0",
-      "description": "CI test: MCP tool package for integration testing",
-      "format": "mcp",
-      "subtype": "tool",
-      "files": ["files/mcp-tool.json"]
-    },
-    {
       "name": "ci-test-agents-md-skill",
       "version": "1.0.0",
       "description": "CI test: AGENTS.md skill package for integration testing",
@@ -63,22 +39,6 @@
       "format": "agents.md",
       "subtype": "agent",
       "files": ["files/agents-md-agent/AGENT.md"]
-    },
-    {
-      "name": "@ci-test/generic-tool",
-      "version": "1.0.0",
-      "description": "CI test: Generic tool package for integration testing",
-      "format": "generic",
-      "subtype": "tool",
-      "files": ["files/generic-tool.md"]
-    },
-    {
-      "name": "@ci-test/generic-plugin",
-      "version": "1.0.0",
-      "description": "CI test: Generic plugin package for integration testing",
-      "format": "generic",
-      "subtype": "plugin",
-      "files": ["files/generic-plugin.md"]
     }
   ]
 }

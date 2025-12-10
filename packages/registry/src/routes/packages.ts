@@ -1621,10 +1621,16 @@ export async function packageRoutes(server: FastifyInstance) {
           message: `Successfully published ${packageName}@${version}`,
         });
       } catch (error: unknown) {
-        server.log.error({ error: String(error) }, "Failed to publish package");
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        server.log.error({
+          error: errorMessage,
+          stack: errorStack,
+          packageName: manifest?.name ?? "unknown",
+        }, "Failed to publish package");
         return reply.status(500).send({
           error: "Failed to publish package",
-          message: error instanceof Error ? error.message : "Unknown error",
+          message: errorMessage,
         });
       }
     },

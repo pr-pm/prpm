@@ -1,8 +1,3 @@
----
-name: ci-test-agents-md-skill
-description: CI Test AGENTS.md Skill
----
-
 # CI Test AGENTS.md Skill
 
 This is a test skill for PRPM integration testing.
