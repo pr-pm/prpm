@@ -308,10 +308,11 @@ export class RegistryClient {
   }
 
   /**
-   * Publish a package (requires authentication)
+   * Publish a package (requires authentication, or CI_MODE for testing)
    */
   async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string; publishAsAuthor?: string }): Promise<PublishResponse> {
-    if (!this.token) {
+    const isCIMode = process.env.CI_MODE === 'true';
+    if (!this.token && !isCIMode) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
 
@@ -480,7 +481,7 @@ export class RegistryClient {
   }
 
   /**
-   * Create a collection (requires authentication)
+   * Create a collection (requires authentication, or CI_MODE for testing)
    */
   async createCollection(data: {
     id: string;
@@ -497,7 +498,8 @@ export class RegistryClient {
     }[];
     icon?: string;
   }): Promise<Collection> {
-    if (!this.token) {
+    const isCIMode = process.env.CI_MODE === 'true';
+    if (!this.token && !isCIMode) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
 
