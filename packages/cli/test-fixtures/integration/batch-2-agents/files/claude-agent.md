@@ -1,4 +1,5 @@
 ---
+name: ci-test-claude-agent
 description: CI Test Claude Agent
 model: sonnet
 tools:

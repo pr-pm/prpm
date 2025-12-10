@@ -1,4 +1,5 @@
 ---
+name: ci-test
 description: CI Test Claude Slash Command
 ---
 

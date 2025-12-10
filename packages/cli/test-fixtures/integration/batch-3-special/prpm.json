@@ -28,7 +28,7 @@
       "name": "@ci-test/claude-plugin",
       "version": "1.0.0",
       "description": "CI test: Claude plugin package for integration testing",
-      "format": "claude-plugin",
+      "format": "claude",
       "subtype": "plugin",
       "files": ["files/claude-plugin/plugin.json"]
     },

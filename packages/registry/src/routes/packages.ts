@@ -874,11 +874,21 @@ export async function packageRoutes(server: FastifyInstance) {
         }
 
         // Fetch user info for scoping and validation
-        const user = await queryOne<{ username: string; is_admin: boolean }>(
-          server,
-          "SELECT username, is_admin FROM users WHERE id = $1",
-          [userId],
-        );
+        // In CI_MODE, use synthetic user info directly instead of querying DB
+        const isCIMode = process.env.CI_MODE === "true";
+        let user: { username: string; is_admin: boolean } | null;
+
+        if (isCIMode && request.user?.username === 'ci-test') {
+          // Use synthetic CI user - no DB query needed
+          user = { username: 'ci-test', is_admin: true };
+          server.log.info({ ciMode: true }, 'Using synthetic CI user for publish');
+        } else {
+          user = await queryOne<{ username: string; is_admin: boolean }>(
+            server,
+            "SELECT username, is_admin FROM users WHERE id = $1",
+            [userId],
+          );
+        }
 
         if (!user) {
           return reply.status(500).send({
@@ -889,7 +899,8 @@ export async function packageRoutes(server: FastifyInstance) {
 
         // Admin override: if user is admin and publishAsAuthor is specified, use that for scoping
         let usernameLowercase = user.username.toLowerCase();
-        let effectiveAuthorId = userId; // Default to publishing admin's user ID
+        // In CI_MODE, don't set author_id since the synthetic user doesn't exist in DB
+        let effectiveAuthorId: string | null = isCIMode ? null : userId; // Default to publishing admin's user ID (null in CI mode)
 
         if (user.is_admin && publishAsAuthor) {
           usernameLowercase = publishAsAuthor.toLowerCase();

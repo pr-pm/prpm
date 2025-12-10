@@ -186,7 +186,7 @@ COLLECTION_WORKSPACE="$WORKSPACE/collection-test"
 mkdir -p "$COLLECTION_WORKSPACE"
 cd "$COLLECTION_WORKSPACE"
 
-if prpm install @ci-test/integration-collection 2>&1; then
+if prpm install collections/ci-test-collection 2>&1; then
   log_success "Collection installed successfully"
 
   # Verify collection contents

@@ -1,3 +1,8 @@
+---
+name: ci-test-claude-rule
+description: CI test rule for PRPM integration testing
+---
+
 # CI Test Claude Rule
 
 This is a test rule for PRPM integration testing.

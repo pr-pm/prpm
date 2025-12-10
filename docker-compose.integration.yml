@@ -21,7 +21,7 @@ services:
       POSTGRES_PASSWORD: prpm
       POSTGRES_DB: prpm_registry
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "prpm"]
       interval: 5s

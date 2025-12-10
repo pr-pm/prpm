@@ -63,7 +63,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'claude:hook': 'claude-hook.schema.json',
       'cursor:slash-command': 'cursor-command.schema.json',
       'cursor:hook': 'cursor-hooks.schema.json', // cursor + hook subtype uses cursor-hooks schema
-      'kiro:hook': 'kiro-hooks.schema.json',
+      'kiro:hook': 'kiro-hook.schema.json',
       'kiro:agent': 'kiro-agent.schema.json',
       'droid:skill': 'droid-skill.schema.json',
       'droid:slash-command': 'droid-slash-command.schema.json',

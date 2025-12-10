@@ -176,8 +176,9 @@ export async function ciModeAuth(
 ) {
   if (process.env.CI_MODE === 'true') {
     // Create synthetic CI user for testing
+    // Use a valid UUID format (zeros are valid UUIDs)
     request.user = {
-      user_id: 'ci-test-user-00000000-0000-0000-0000-000000000000',
+      user_id: '00000000-0000-0000-0000-000000000000',
       username: 'ci-test',
       is_admin: true,
     };
