@@ -89,6 +89,7 @@ jobs:
           S3_BUCKET: prpm-packages
           JWT_SECRET: test-secret-key-for-ci
           STRIPE_SECRET_KEY: sk_test_fake_key_for_ci_testing
+          OPENAI_API_KEY: sk-fake-key-for-ci-testing
           NODE_ENV: test
 
   # CLI Tests
