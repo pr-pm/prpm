@@ -1,0 +1,18 @@
+{
+  "$schema": "https://prpm.dev/schemas/manifest.json",
+  "name": "@ci-test/unicode-package",
+  "version": "1.0.0",
+  "description": "Package with unicode characters in content - tests international text",
+  "author": "ci-test",
+  "tags": ["ci-test", "unicode", "international"],
+  "packages": [
+    {
+      "name": "@ci-test/unicode-rule",
+      "version": "1.0.0",
+      "description": "A rule with unicode content to test international text handling",
+      "format": "cursor",
+      "subtype": "rule",
+      "files": ["files/unicode.mdc"]
+    }
+  ]
+}

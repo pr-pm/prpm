@@ -105,13 +105,14 @@ This is a test skill.
         'https://example.com/package.tar.gz'
       );
 
-      // Should save to cursor directory
+      // Cursor doesn't have native skill support, so uses progressive disclosure
+      // Skills go to .openskills/ with AGENTS.md reference
       expect(saveFile).toHaveBeenCalledWith(
-        expect.stringContaining('.cursor/rules'),
+        '.openskills/claude-skill/SKILL.md',
         expect.any(String)
       );
 
-      // Verify conversion happened - saved content should be in Cursor format
+      // Verify conversion happened - saved content should be in Cursor format (converted)
       const savedContent = (saveFile as Mock).mock.calls[0][1];
       expect(savedContent).toContain('alwaysApply'); // Cursor frontmatter
     });
@@ -193,8 +194,9 @@ description: Test for windsurf conversion
         'https://example.com/package.tar.gz'
       );
 
+      // Windsurf doesn't have native skill support, so uses progressive disclosure
       expect(saveFile).toHaveBeenCalledWith(
-        expect.stringContaining('.windsurf/'),
+        '.openskills/claude-skill/SKILL.md',
         expect.any(String)
       );
     });
@@ -230,8 +232,9 @@ description: Test agent
         'https://example.com/package.tar.gz'
       );
 
+      // Continue doesn't have native agent support, so uses progressive disclosure
       expect(saveFile).toHaveBeenCalledWith(
-        expect.stringContaining('.continue'),
+        '.openagents/claude-agent/AGENT.md',
         expect.any(String)
       );
     });
@@ -302,9 +305,9 @@ description: Test for copilot
         'https://example.com/package.tar.gz'
       );
 
-      // Copilot uses official GitHub naming: .github/instructions/NAME.instructions.md
+      // Copilot doesn't natively support skills - uses progressive disclosure via .openskills/
       expect(saveFile).toHaveBeenCalledWith(
-        expect.stringContaining('.github/instructions/'),
+        expect.stringContaining('.openskills/'),
         expect.any(String)
       );
     });
@@ -374,7 +377,7 @@ description: Test for copilot
       );
     });
 
-    it('should install Windsurf agent in native format', async () => {
+    it('should install Windsurf agent using progressive disclosure (no native agent support)', async () => {
       const mockPackage = {
         id: 'windsurf-agent',
         name: 'windsurf-agent',
@@ -394,8 +397,9 @@ description: Test for copilot
 
       await handleInstall('windsurf-agent', {});
 
+      // Windsurf doesn't have native agent support, so uses progressive disclosure
       expect(saveFile).toHaveBeenCalledWith(
-        '.windsurf/rules/windsurf-agent.md',
+        '.openagents/windsurf-agent/AGENT.md',
         expect.any(String)
       );
     });

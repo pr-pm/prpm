@@ -1,0 +1,7 @@
+---
+description: Minimal rule
+globs: ["*"]
+alwaysApply: true
+---
+
+Follow best practices.

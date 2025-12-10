@@ -1,0 +1,19 @@
+---
+description: CI Test Cursor Rule
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+
+# CI Test Cursor Rule
+
+This is a test rule for PRPM integration testing.
+
+## Guidelines
+
+- Follow TypeScript best practices
+- Use proper error handling
+- Write clean, maintainable code
+
+## Testing
+
+This package verifies that Cursor rules install correctly to `.cursor/rules/`.

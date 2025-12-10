@@ -1,0 +1,6 @@
+{
+  "name": "ci-test-kiro-agent",
+  "description": "CI Test Kiro Agent for PRPM integration testing",
+  "prompt": "This is a test agent for verifying Kiro agent installation to .kiro/agents/",
+  "tools": ["fs_read", "fs_write"]
+}

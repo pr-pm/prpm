@@ -9,7 +9,7 @@ import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists, getManifestFilename } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
-import { Package, Format, Subtype, FORMATS } from '../types';
+import { Package, Format, Subtype, FORMATS, FORMAT_NATIVE_SUBTYPES } from '../types';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import * as tar from 'tar';
@@ -753,7 +753,7 @@ export async function handleInstall(
     }
 
     // Track where files were saved for user feedback
-    let destPath: string;
+    let destPath = ''; // Will be set based on format/subtype before saving
     let destDir = ''; // Destination directory (needed for progressive disclosure)
     let fileCount = 0;
     let hookMetadata: { events: string[]; hookId: string } | undefined = undefined;
@@ -996,8 +996,9 @@ export async function handleInstall(
             }
           }
         }
-      } else if (effectiveFormat === 'copilot') {
-        // Official GitHub Copilot naming conventions
+      } else if (effectiveFormat === 'copilot' && (effectiveSubtype === 'chatmode' || effectiveSubtype === 'rule')) {
+        // Official GitHub Copilot naming conventions - only for native subtypes (rule, chatmode)
+        // skill/agent subtypes need progressive disclosure via AGENTS.md (handled in else block)
         if (effectiveSubtype === 'chatmode') {
           // Chat modes: .github/chatmodes/NAME.chatmode.md
           destPath = `${destDir}/${packageName}.chatmode.md`;
@@ -1020,23 +1021,32 @@ export async function handleInstall(
       } else if (effectiveFormat === 'droid' && effectiveSubtype === 'skill') {
         // Factory Droid skills use SKILL.md inside the skill directory
         destPath = `${destDir}/SKILL.md`;
-      } else if (effectiveFormat === 'droid' && effectiveSubtype === 'agent') {
-        // Factory Droid agents use progressive disclosure (no native agent support)
-        destDir = `.openagents/${packageName}`;
-        destPath = `${destDir}/AGENT.md`;
-        console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
-      } else if (effectiveFormat === 'cursor' && effectiveSubtype === 'agent') {
-        // Cursor agents use progressive disclosure (no native agent support)
-        destDir = `.openagents/${packageName}`;
-        destPath = `${destDir}/AGENT.md`;
-        console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
-      } else if (effectiveFormat === 'opencode' && effectiveSubtype === 'skill') {
-        // OpenCode skills use progressive disclosure (no native skill support)
-        destDir = `.openskills/${packageName}`;
-        destPath = `${destDir}/SKILL.md`;
-        console.log(`   📦 Installing skill to ${destDir}/ for progressive disclosure`);
       } else {
-        destPath = `${destDir}/${packageName}.${fileExtension}`;
+        // Check if this format/subtype needs progressive disclosure
+        // (format supports the subtype but doesn't have native file location for it)
+        const nativeSubtypes = FORMAT_NATIVE_SUBTYPES[effectiveFormat as Format];
+        const needsProgressiveDisclosureHere = nativeSubtypes &&
+          !nativeSubtypes.includes(effectiveSubtype as Subtype) &&
+          (effectiveSubtype === 'skill' || effectiveSubtype === 'agent' || effectiveSubtype === 'slash-command');
+
+        if (needsProgressiveDisclosureHere) {
+          // Use progressive disclosure directories
+          if (effectiveSubtype === 'skill') {
+            destDir = `.openskills/${packageName}`;
+            destPath = `${destDir}/SKILL.md`;
+            console.log(`   📦 Installing skill to ${destDir}/ for progressive disclosure`);
+          } else if (effectiveSubtype === 'agent') {
+            destDir = `.openagents/${packageName}`;
+            destPath = `${destDir}/AGENT.md`;
+            console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+          } else if (effectiveSubtype === 'slash-command') {
+            destDir = '.opencommands';
+            destPath = `${destDir}/${packageName}.md`;
+            console.log(`   ⚡ Installing command to ${destDir}/ for progressive disclosure`);
+          }
+        } else {
+          destPath = `${destDir}/${packageName}.${fileExtension}`;
+        }
       }
 
       // Handle cursor format - add header if missing for .mdc files
@@ -1062,6 +1072,8 @@ export async function handleInstall(
 
       // Special handling for Claude hooks - merge into settings.json
       if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
+        // Ensure destPath is set for hooks (should be set earlier, but TypeScript can't verify)
+        destPath = destPath || `${destDir}/settings.json`;
 
         // Parse the hook configuration from the downloaded file
         let hookConfig: any;
@@ -1281,45 +1293,24 @@ export async function handleInstall(
       eager?: boolean; // Whether this skill/agent/command should always activate
     } | undefined;
 
-    // Formats that use progressive disclosure for skills/agents/commands
-    // These formats don't have native support for certain subtypes and use AGENTS.md (or similar manifest)
-    const progressiveDisclosureFormats = [
-      'agents.md',   // Universal AGENTS.md format
-      'gemini.md',   // Uses GEMINI.md
-      'claude.md',   // Uses CLAUDE.md
-      'aider',       // Uses CONVENTIONS.md
-      'codex',       // Uses AGENTS.md (no native skills/agents/commands)
-      'copilot',     // Uses AGENTS.md (no native skills/agents/commands)
-      'kiro',        // Uses AGENTS.md (no native skills)
-      'replit',      // Uses AGENTS.md (no native skills)
-      'zed',         // Uses AGENTS.md (no native skills)
-      'generic',     // Uses AGENTS.md (fallback format)
-    ];
-
-    // Formats with partial native support - need progressive disclosure only for specific subtypes
-    const partialNativeSupport: Record<string, string[]> = {
-      'cursor': ['agent'],     // Cursor has native rules/commands but no native agents
-      'opencode': ['skill'],   // OpenCode has native agents/commands but no native skills
-      'droid': ['agent'],      // Factory Droid has native skills/commands/hooks but no native agents
-    };
-
-    // Check if this format/subtype combination needs progressive disclosure
-    const needsProgressiveDisclosure =
-      (progressiveDisclosureFormats.includes(effectiveFormat) && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent' || effectiveSubtype === 'slash-command')) ||
-      (partialNativeSupport[effectiveFormat]?.includes(effectiveSubtype));
+    // Check if this format/subtype needs progressive disclosure using FORMAT_NATIVE_SUBTYPES
+    // Progressive disclosure is needed when:
+    // 1. The subtype is skill, agent, or slash-command AND
+    // 2. The format doesn't have native support for that subtype (not in FORMAT_NATIVE_SUBTYPES)
+    const nativeSubtypes = FORMAT_NATIVE_SUBTYPES[effectiveFormat as Format];
+    const isProgressiveDisclosureSubtype = effectiveSubtype === 'skill' || effectiveSubtype === 'agent' || effectiveSubtype === 'slash-command';
+    const hasNativeSupport = nativeSubtypes?.includes(effectiveSubtype as Subtype) ?? false;
+    const needsProgressiveDisclosure = isProgressiveDisclosureSubtype && !hasNativeSupport;
 
     if (needsProgressiveDisclosure && !options.noAppend) {
-      // For partial native support formats, override destDir to use .openskills/.openagents/.opencommands
-      // instead of the native directory that getDestinationDir() returned
-      if (partialNativeSupport[effectiveFormat]?.includes(effectiveSubtype)) {
-        const resourceName = stripAuthorNamespace(packageId);
-        if (effectiveSubtype === 'skill') {
-          destDir = `.openskills/${resourceName}`;
-        } else if (effectiveSubtype === 'agent') {
-          destDir = `.openagents/${resourceName}`;
-        } else if (effectiveSubtype === 'slash-command') {
-          destDir = '.opencommands';
-        }
+      // Override destDir to use .openskills/.openagents/.opencommands
+      const resourceName = stripAuthorNamespace(packageId);
+      if (effectiveSubtype === 'skill') {
+        destDir = `.openskills/${resourceName}`;
+      } else if (effectiveSubtype === 'agent') {
+        destDir = `.openagents/${resourceName}`;
+      } else if (effectiveSubtype === 'slash-command') {
+        destDir = '.opencommands';
       }
 
       // Ensure destDir is defined (should always be set by this point for skill/agent installations)
@@ -1328,7 +1319,7 @@ export async function handleInstall(
       }
 
       const manifestPath = options.manifestFile || getManifestFilename(effectiveFormat);
-      const resourceName = stripAuthorNamespace(packageId);
+      // resourceName already declared above when setting destDir
       const resourceType = effectiveSubtype === 'slash-command' ? 'command' : effectiveSubtype as 'skill' | 'agent' | 'command';
       let mainFile: string;
       if (resourceType === 'command') {

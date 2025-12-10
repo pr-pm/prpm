@@ -771,4 +771,173 @@ describe('Collection Routes', () => {
       expect(nameSlugs.length).toBe(uniqueSlugs.length);
     });
   });
+
+  describe('Collection Install - Always Resolves to Latest Version', () => {
+    let installServer: FastifyInstance;
+
+    beforeAll(async () => {
+      installServer = Fastify();
+
+      // Mock authenticate decorator
+      installServer.decorate('authenticate', async () => {});
+
+      // Mock Redis
+      (installServer as any).decorate('redis', {
+        get: async () => null,
+        set: async () => 'OK',
+        del: async () => 1,
+      });
+
+      // Mock query function that simulates:
+      // - Collection with packages that have various stored versions
+      // - The subquery ALWAYS returns the latest version from package_versions
+      // - Even if a specific version was stored, we resolve to latest
+      const mockQuery = async (sql: string, params?: unknown[]) => {
+        // Mock collection lookup
+        if (sql.includes('SELECT * FROM collections') && sql.includes('name_slug = $1')) {
+          if (params?.[0] === 'test-collection') {
+            return {
+              rows: [{
+                id: 'collection-uuid',
+                name_slug: 'test-collection',
+                name: 'Test Collection',
+                description: 'A test collection',
+                version: '1.0.0',
+                official: true,
+                verified: true,
+                downloads: 100,
+              }],
+              command: 'SELECT',
+              rowCount: 1,
+              oid: 0,
+              fields: []
+            };
+          }
+        }
+
+        // Mock collection packages query - the subquery ALWAYS runs now
+        // Regardless of what's stored in package_version, we resolve to latest
+        if (sql.includes('SELECT cp.*, p.name as package_name') &&
+            sql.includes('SELECT pv.version') &&
+            sql.includes('FROM package_versions pv')) {
+          return {
+            rows: [
+              {
+                package_id: 'pkg-uuid-1',
+                package_name: '@test/package-a',
+                package_version: '1.0.0',    // Stored as specific old version
+                resolved_version: '2.0.0',   // Latest version from subquery
+                required: true,
+                format_override: null,
+              },
+              {
+                package_id: 'pkg-uuid-2',
+                package_name: '@test/package-b',
+                package_version: 'latest',   // Stored as "latest"
+                resolved_version: '3.0.0',   // Latest version from subquery
+                required: false,
+                format_override: null,
+              },
+              {
+                package_id: 'pkg-uuid-3',
+                package_name: '@test/package-c',
+                package_version: null,       // Stored as NULL
+                resolved_version: '4.0.0',   // Latest version from subquery
+                required: true,
+                format_override: null,
+              },
+            ],
+            command: 'SELECT',
+            rowCount: 3,
+            oid: 0,
+            fields: []
+          };
+        }
+
+        // Mock collection_installs INSERT (tracking)
+        if (sql.includes('INSERT INTO collection_installs')) {
+          return {
+            rows: [],
+            command: 'INSERT',
+            rowCount: 1,
+            oid: 0,
+            fields: []
+          };
+        }
+
+        return {
+          rows: [],
+          command: 'SELECT',
+          rowCount: 0,
+          oid: 0,
+          fields: []
+        };
+      };
+
+      // Mock database
+      (installServer as any).decorate('pg', {
+        query: mockQuery,
+        connect: async () => ({
+          query: mockQuery,
+          release: () => {}
+        })
+      } as any);
+
+      await installServer.register(collectionRoutes, { prefix: '/api/v1/collections' });
+      await installServer.ready();
+    });
+
+    afterAll(async () => {
+      await installServer.close();
+    });
+
+    it('should always resolve to latest version regardless of stored package_version', async () => {
+      const response = await installServer.inject({
+        method: 'POST',
+        url: '/api/v1/collections/test-collection/install',
+        payload: {
+          format: 'cursor',
+        }
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // Verify packagesToInstall contains the resolved latest versions
+      expect(body.packagesToInstall).toHaveLength(3);
+
+      // Package A: stored as "1.0.0" (old pinned version), resolved to latest 2.0.0
+      const packageA = body.packagesToInstall.find((p: any) => p.packageId === '@test/package-a');
+      expect(packageA).toBeDefined();
+      expect(packageA.version).toBe('2.0.0');
+
+      // Package B: stored as "latest", resolved to 3.0.0
+      const packageB = body.packagesToInstall.find((p: any) => p.packageId === '@test/package-b');
+      expect(packageB).toBeDefined();
+      expect(packageB.version).toBe('3.0.0');
+
+      // Package C: stored as NULL, resolved to 4.0.0
+      const packageC = body.packagesToInstall.find((p: any) => p.packageId === '@test/package-c');
+      expect(packageC).toBeDefined();
+      expect(packageC.version).toBe('4.0.0');
+    });
+
+    it('should use resolved_version (latest) instead of stored package_version', async () => {
+      const response = await installServer.inject({
+        method: 'POST',
+        url: '/api/v1/collections/test-collection/install',
+        payload: {}
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // The version should come from resolved_version (subquery result),
+      // NOT from package_version (which could be old/pinned/latest/NULL)
+      body.packagesToInstall.forEach((pkg: any) => {
+        // Version should be a real semver, not 'latest' or undefined
+        expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/);
+      });
+    });
+  });
 });
