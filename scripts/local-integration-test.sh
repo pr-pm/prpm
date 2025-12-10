@@ -162,7 +162,9 @@ S3_ENDPOINT=http://localhost:9000 \
 S3_ACCESS_KEY=minioadmin \
 S3_SECRET_KEY=minioadmin \
 S3_BUCKET=prpm-packages \
-JWT_SECRET=local-test-secret \
+JWT_SECRET=local-test-secret-key-minimum-32-chars \
+STRIPE_SECRET_KEY=sk_test_fake_key_for_local_testing \
+OPENAI_API_KEY=sk-fake-key-for-local-testing \
 LOG_LEVEL=$LOG_LEVEL \
 npm start &
 
@@ -189,7 +191,7 @@ echo ""
 log_info "Running integration tests..."
 echo ""
 
-export PRPM_REGISTRY=http://localhost:3111
+export PRPM_REGISTRY_URL=http://localhost:3111
 export DEBUG=$DEBUG
 
 TEST_EXIT=0

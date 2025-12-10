@@ -138,7 +138,7 @@ jobs:
           chmod +x scripts/run-integration-tests.sh
           ./scripts/run-integration-tests.sh
         env:
-          PRPM_REGISTRY: http://localhost:3111
+          PRPM_REGISTRY_URL: http://localhost:3111
           DEBUG: ${{ inputs.debug }}
 
       - name: Stop registry server

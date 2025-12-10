@@ -966,7 +966,6 @@ prpm login [options]
 
 **Options:**
 - `--token <token>` - Use an existing authentication token
-- `--registry <url>` - Specify a custom registry URL
 
 **Examples:**
 
@@ -977,8 +976,11 @@ prpm login
 # Login with token
 prpm login --token your-auth-token
 
-# Login to custom registry
-prpm login --registry https://custom-registry.example.com
+# Login to custom registry (set registry URL first)
+PRPM_REGISTRY_URL=https://custom-registry.example.com prpm login
+# Or configure permanently:
+prpm config set registryUrl https://custom-registry.example.com
+prpm login
 ```
 
 **Authentication Flow:**
