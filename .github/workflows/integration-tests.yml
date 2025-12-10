@@ -120,6 +120,7 @@ jobs:
           S3_SECRET_KEY: minioadmin
           S3_BUCKET: prpm-packages
           JWT_SECRET: ci-test-secret-key-for-integration-tests
+          STRIPE_SECRET_KEY: sk_test_fake_key_for_ci_testing
           CI_MODE: 'true'
           NODE_ENV: test
           LOG_LEVEL: ${{ inputs.debug == 'true' && 'debug' || 'info' }}
