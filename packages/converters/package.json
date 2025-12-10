@@ -43,6 +43,11 @@
     "docs",
     "schemas"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pr-pm/prpm.git",
+    "directory": "packages/converters"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
