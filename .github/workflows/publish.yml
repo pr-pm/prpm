@@ -375,7 +375,7 @@ jobs:
         if: github.event.inputs.dry_run != 'true'
         run: |
           cd packages/${{ matrix.package }}
-          npm publish --access public --tag ${{ github.event.inputs.tag }}
+          npm publish --access public --provenance --tag ${{ github.event.inputs.tag }}
 
       - name: Report published
         run: |
