@@ -1,6 +1,6 @@
 {
   "$schema": "https://prpm.dev/schemas/manifest.json",
-  "name": "ci-test-batch-2-agents",
+  "name": "@ci-test/batch-2-agents",
   "version": "1.0.0",
   "description": "Integration test batch 2: Agent, skill, and command packages",
   "author": "ci-test",
@@ -11,15 +11,15 @@
     {
       "name": "@ci-test/claude-agent",
       "version": "1.0.0",
-      "description": "CI test: Claude agent package",
+      "description": "CI test: Claude agent package for integration testing",
       "format": "claude",
       "subtype": "agent",
       "files": ["files/claude-agent.md"]
     },
     {
-      "name": "@ci-test/claude-skill",
+      "name": "ci-test-claude-skill",
       "version": "1.0.0",
-      "description": "CI test: Claude skill package",
+      "description": "CI test: Claude skill package for integration testing",
       "format": "claude",
       "subtype": "skill",
       "files": ["files/claude-skill/SKILL.md"]
@@ -27,7 +27,7 @@
     {
       "name": "@ci-test/claude-slash-command",
       "version": "1.0.0",
-      "description": "CI test: Claude slash command package",
+      "description": "CI test: Claude slash command package for integration testing",
       "format": "claude",
       "subtype": "slash-command",
       "files": ["files/claude-slash-command.md"]
@@ -35,7 +35,7 @@
     {
       "name": "@ci-test/cursor-agent",
       "version": "1.0.0",
-      "description": "CI test: Cursor agent package",
+      "description": "CI test: Cursor agent package for integration testing",
       "format": "cursor",
       "subtype": "agent",
       "files": ["files/cursor-agent.md"]
@@ -43,7 +43,7 @@
     {
       "name": "@ci-test/cursor-slash-command",
       "version": "1.0.0",
-      "description": "CI test: Cursor slash command package",
+      "description": "CI test: Cursor slash command package for integration testing",
       "format": "cursor",
       "subtype": "slash-command",
       "files": ["files/cursor-slash-command.md"]
@@ -51,63 +51,15 @@
     {
       "name": "@ci-test/kiro-agent",
       "version": "1.0.0",
-      "description": "CI test: Kiro agent package",
+      "description": "CI test: Kiro agent package for integration testing",
       "format": "kiro",
       "subtype": "agent",
       "files": ["files/kiro-agent.json"]
     },
     {
-      "name": "@ci-test/opencode-agent",
-      "version": "1.0.0",
-      "description": "CI test: OpenCode agent package",
-      "format": "opencode",
-      "subtype": "agent",
-      "files": ["files/opencode-agent.md"]
-    },
-    {
-      "name": "@ci-test/opencode-slash-command",
-      "version": "1.0.0",
-      "description": "CI test: OpenCode slash command package",
-      "format": "opencode",
-      "subtype": "slash-command",
-      "files": ["files/opencode-slash-command.md"]
-    },
-    {
-      "name": "@ci-test/droid-skill",
-      "version": "1.0.0",
-      "description": "CI test: Factory Droid skill package",
-      "format": "droid",
-      "subtype": "skill",
-      "files": ["files/droid-skill/SKILL.md"]
-    },
-    {
-      "name": "@ci-test/droid-slash-command",
-      "version": "1.0.0",
-      "description": "CI test: Factory Droid slash command package",
-      "format": "droid",
-      "subtype": "slash-command",
-      "files": ["files/droid-slash-command.md"]
-    },
-    {
-      "name": "@ci-test/gemini-slash-command",
-      "version": "1.0.0",
-      "description": "CI test: Gemini CLI slash command package",
-      "format": "gemini",
-      "subtype": "slash-command",
-      "files": ["files/gemini-slash-command.toml"]
-    },
-    {
-      "name": "@ci-test/codex-slash-command",
-      "version": "1.0.0",
-      "description": "CI test: Codex slash command package",
-      "format": "codex",
-      "subtype": "slash-command",
-      "files": ["files/codex-slash-command.md"]
-    },
-    {
       "name": "@ci-test/copilot-chatmode",
       "version": "1.0.0",
-      "description": "CI test: GitHub Copilot chatmode package",
+      "description": "CI test: GitHub Copilot chatmode package for integration testing",
       "format": "copilot",
       "subtype": "chatmode",
       "files": ["files/copilot-chatmode.chatmode.md"]
@@ -115,7 +67,7 @@
     {
       "name": "@ci-test/continue-prompt",
       "version": "1.0.0",
-      "description": "CI test: Continue prompt package",
+      "description": "CI test: Continue prompt package for integration testing",
       "format": "continue",
       "subtype": "prompt",
       "files": ["files/continue-prompt.md"]
@@ -123,7 +75,7 @@
     {
       "name": "@ci-test/generic-prompt",
       "version": "1.0.0",
-      "description": "CI test: Generic prompt package",
+      "description": "CI test: Generic prompt package for integration testing",
       "format": "generic",
       "subtype": "prompt",
       "files": ["files/generic-prompt.md"]

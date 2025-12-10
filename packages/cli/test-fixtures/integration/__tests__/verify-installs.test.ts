@@ -17,7 +17,8 @@ const WORKSPACE = process.env.TEST_WORKSPACE || '/tmp/prpm-integration-test';
 
 /**
  * Expected install locations for each format/subtype combination
- * Format: { format: { subtype: expectedPath } }
+ * Valid formats: cursor, claude, claude-plugin, continue, windsurf, copilot, kiro, agents.md, generic, mcp
+ * Valid subtypes: rule, agent, skill, slash-command, prompt, collection, chatmode, hook, tool, plugin, server
  */
 const INSTALL_LOCATIONS: Record<string, Record<string, string>> = {
   // Cursor format
@@ -51,6 +52,10 @@ const INSTALL_LOCATIONS: Record<string, Record<string, string>> = {
     skill: '.claude/skills',
     'slash-command': '.claude/commands',
     hook: '.claude/hooks',
+  },
+
+  // Claude plugin format
+  'claude-plugin': {
     plugin: '.claude/plugins',
   },
 
@@ -61,14 +66,6 @@ const INSTALL_LOCATIONS: Record<string, Record<string, string>> = {
     hook: '.kiro/hooks',
   },
 
-  // Codex (OpenAI) format
-  codex: {
-    rule: '.codex',
-    agent: '.openagents',
-    skill: '.openskills',
-    'slash-command': '.codex/commands',
-  },
-
   // Agents.md format
   'agents.md': {
     rule: '',
@@ -76,146 +73,73 @@ const INSTALL_LOCATIONS: Record<string, Record<string, string>> = {
     skill: '.openskills',
   },
 
-  // Gemini format
-  'gemini.md': {
-    rule: '',
-    'slash-command': '.gemini/commands',
-    extension: '.gemini/extensions',
-  },
-
-  // Claude.md format
-  'claude.md': {
-    rule: '',
-  },
-
-  // OpenCode format
-  opencode: {
-    agent: '.opencode/agents',
-    'slash-command': '.opencode/commands',
-    tool: '.opencode/tools',
-    plugin: '.opencode/plugins',
-  },
-
-  // Droid format
-  droid: {
-    skill: '.droid/skills',
-    'slash-command': '.droid/commands',
-    hook: '.droid/hooks',
-  },
-
   // MCP format
   mcp: {
+    rule: '.mcp',
     server: '.mcp/servers',
     tool: '.mcp/tools',
   },
 
-  // Generic formats
-  trae: {
-    rule: '.trae/rules',
-  },
-  zencoder: {
-    rule: '.zencoder/rules',
-  },
-  replit: {
-    rule: '.replit/rules',
-  },
-  aider: {
-    rule: '.aider/rules',
-  },
-  ruler: {
-    rule: '.ruler/rules',
-  },
+  // Generic format
   generic: {
+    rule: '.prompts',
     prompt: '.prompts',
+    tool: '.tools',
+    plugin: '.plugins',
   },
 };
 
 /**
- * Test packages from batch-1-rules
+ * Test packages from batch-1-rules (9 packages - all valid formats)
  */
 const BATCH_1_RULES = [
-  { name: 'ci-test-cursor-rule', format: 'cursor', subtype: 'rule' },
-  { name: 'ci-test-continue-rule', format: 'continue', subtype: 'rule' },
-  { name: 'ci-test-windsurf-rule', format: 'windsurf', subtype: 'rule' },
-  { name: 'ci-test-copilot-rule', format: 'copilot', subtype: 'rule' },
-  { name: 'ci-test-kiro-rule', format: 'kiro', subtype: 'rule' },
-  { name: 'ci-test-trae-rule', format: 'trae', subtype: 'rule' },
-  { name: 'ci-test-zencoder-rule', format: 'zencoder', subtype: 'rule' },
-  { name: 'ci-test-replit-rule', format: 'replit', subtype: 'rule' },
-  { name: 'ci-test-aider-rule', format: 'aider', subtype: 'rule' },
-  { name: 'ci-test-codex-rule', format: 'codex', subtype: 'rule' },
-  { name: 'ci-test-agents-md-rule', format: 'agents.md', subtype: 'rule' },
-  { name: 'ci-test-gemini-rule', format: 'gemini.md', subtype: 'rule' },
-  { name: 'ci-test-claude-md-rule', format: 'claude.md', subtype: 'rule' },
-  { name: 'ci-test-ruler-rule', format: 'ruler', subtype: 'rule' },
+  { name: '@ci-test/cursor-rule', format: 'cursor', subtype: 'rule' },
+  { name: '@ci-test/claude-rule', format: 'claude', subtype: 'rule' },
+  { name: '@ci-test/continue-rule', format: 'continue', subtype: 'rule' },
+  { name: '@ci-test/windsurf-rule', format: 'windsurf', subtype: 'rule' },
+  { name: '@ci-test/copilot-rule', format: 'copilot', subtype: 'rule' },
+  { name: '@ci-test/kiro-rule', format: 'kiro', subtype: 'rule' },
+  { name: '@ci-test/agents-md-rule', format: 'agents.md', subtype: 'rule' },
+  { name: '@ci-test/generic-rule', format: 'generic', subtype: 'rule' },
+  { name: '@ci-test/mcp-rule', format: 'mcp', subtype: 'rule' },
 ];
 
 /**
- * Test packages from batch-2-agents
+ * Test packages from batch-2-agents (9 packages - agents, skills, commands)
  */
 const BATCH_2_AGENTS = [
-  { name: 'ci-test-claude-agent', format: 'claude', subtype: 'agent' },
+  { name: '@ci-test/claude-agent', format: 'claude', subtype: 'agent' },
   { name: 'ci-test-claude-skill', format: 'claude', subtype: 'skill' },
   {
-    name: 'ci-test-claude-slash-command',
+    name: '@ci-test/claude-slash-command',
     format: 'claude',
     subtype: 'slash-command',
   },
-  { name: 'ci-test-cursor-agent', format: 'cursor', subtype: 'agent' },
+  { name: '@ci-test/cursor-agent', format: 'cursor', subtype: 'agent' },
   {
-    name: 'ci-test-cursor-slash-command',
+    name: '@ci-test/cursor-slash-command',
     format: 'cursor',
     subtype: 'slash-command',
   },
-  { name: 'ci-test-kiro-agent', format: 'kiro', subtype: 'agent' },
-  { name: 'ci-test-opencode-agent', format: 'opencode', subtype: 'agent' },
-  {
-    name: 'ci-test-opencode-slash-command',
-    format: 'opencode',
-    subtype: 'slash-command',
-  },
-  { name: 'ci-test-droid-skill', format: 'droid', subtype: 'skill' },
-  {
-    name: 'ci-test-droid-slash-command',
-    format: 'droid',
-    subtype: 'slash-command',
-  },
-  {
-    name: 'ci-test-gemini-slash-command',
-    format: 'gemini.md',
-    subtype: 'slash-command',
-  },
-  {
-    name: 'ci-test-codex-slash-command',
-    format: 'codex',
-    subtype: 'slash-command',
-  },
-  { name: 'ci-test-copilot-chatmode', format: 'copilot', subtype: 'chatmode' },
-  { name: 'ci-test-continue-prompt', format: 'continue', subtype: 'prompt' },
-  { name: 'ci-test-generic-prompt', format: 'generic', subtype: 'prompt' },
+  { name: '@ci-test/kiro-agent', format: 'kiro', subtype: 'agent' },
+  { name: '@ci-test/copilot-chatmode', format: 'copilot', subtype: 'chatmode' },
+  { name: '@ci-test/continue-prompt', format: 'continue', subtype: 'prompt' },
+  { name: '@ci-test/generic-prompt', format: 'generic', subtype: 'prompt' },
 ];
 
 /**
- * Test packages from batch-3-special
+ * Test packages from batch-3-special (9 packages - hooks, plugins, MCP)
  */
 const BATCH_3_SPECIAL = [
-  { name: 'ci-test-claude-hook', format: 'claude', subtype: 'hook' },
-  { name: 'ci-test-kiro-hook', format: 'kiro', subtype: 'hook' },
-  { name: 'ci-test-droid-hook', format: 'droid', subtype: 'hook' },
-  { name: 'ci-test-claude-plugin', format: 'claude', subtype: 'plugin' },
-  { name: 'ci-test-opencode-tool', format: 'opencode', subtype: 'tool' },
-  { name: 'ci-test-opencode-plugin', format: 'opencode', subtype: 'plugin' },
-  {
-    name: 'ci-test-gemini-extension',
-    format: 'gemini.md',
-    subtype: 'extension',
-  },
-  { name: 'ci-test-mcp-server', format: 'mcp', subtype: 'server' },
-  { name: 'ci-test-mcp-tool', format: 'mcp', subtype: 'tool' },
+  { name: '@ci-test/claude-hook', format: 'claude', subtype: 'hook' },
+  { name: '@ci-test/kiro-hook', format: 'kiro', subtype: 'hook' },
+  { name: '@ci-test/claude-plugin', format: 'claude-plugin', subtype: 'plugin' },
+  { name: '@ci-test/mcp-server', format: 'mcp', subtype: 'server' },
+  { name: '@ci-test/mcp-tool', format: 'mcp', subtype: 'tool' },
   { name: 'ci-test-agents-md-skill', format: 'agents.md', subtype: 'skill' },
-  { name: 'ci-test-agents-md-agent', format: 'agents.md', subtype: 'agent' },
-  { name: 'ci-test-codex-skill', format: 'codex', subtype: 'skill' },
-  { name: 'ci-test-codex-agent', format: 'codex', subtype: 'agent' },
+  { name: '@ci-test/agents-md-agent', format: 'agents.md', subtype: 'agent' },
+  { name: '@ci-test/generic-tool', format: 'generic', subtype: 'tool' },
+  { name: '@ci-test/generic-plugin', format: 'generic', subtype: 'plugin' },
 ];
 
 /**
@@ -238,11 +162,9 @@ function getExpectedPath(
 
   // Special cases for root-level files
   if (basePath === '') {
-    // Root level files like AGENTS.md, GEMINI.md, CLAUDE.md
+    // Root level files like AGENTS.md
     const fileMap: Record<string, string> = {
       'agents.md': 'AGENTS.md',
-      'gemini.md': 'GEMINI.md',
-      'claude.md': 'CLAUDE.md',
     };
     return fileMap[format] || `${packageName}.md`;
   }
@@ -320,14 +242,14 @@ describe('Integration Tests: Install Location Verification', () => {
   describe('Collection Install', () => {
     it('should install all packages from collection', () => {
       const collectionPackages = [
-        { name: 'ci-test-cursor-rule', format: 'cursor', subtype: 'rule' },
-        { name: 'ci-test-continue-rule', format: 'continue', subtype: 'rule' },
-        { name: 'ci-test-windsurf-rule', format: 'windsurf', subtype: 'rule' },
-        { name: 'ci-test-claude-agent', format: 'claude', subtype: 'agent' },
+        { name: '@ci-test/cursor-rule', format: 'cursor', subtype: 'rule' },
+        { name: '@ci-test/continue-rule', format: 'continue', subtype: 'rule' },
+        { name: '@ci-test/windsurf-rule', format: 'windsurf', subtype: 'rule' },
+        { name: '@ci-test/claude-agent', format: 'claude', subtype: 'agent' },
         { name: 'ci-test-claude-skill', format: 'claude', subtype: 'skill' },
-        { name: 'ci-test-cursor-agent', format: 'cursor', subtype: 'agent' },
-        { name: 'ci-test-claude-hook', format: 'claude', subtype: 'hook' },
-        { name: 'ci-test-mcp-server', format: 'mcp', subtype: 'server' },
+        { name: '@ci-test/cursor-agent', format: 'cursor', subtype: 'agent' },
+        { name: '@ci-test/claude-hook', format: 'claude', subtype: 'hook' },
+        { name: '@ci-test/mcp-server', format: 'mcp', subtype: 'server' },
       ];
 
       for (const pkg of collectionPackages) {
@@ -344,7 +266,7 @@ describe('Integration Tests: Install Location Verification', () => {
   describe('Edge Cases', () => {
     describe('Minimal Package', () => {
       it('should install minimal package correctly', () => {
-        const expectedPath = join('.cursor/rules', 'ci-test-minimal-rule');
+        const expectedPath = join('.cursor/rules', '@ci-test/minimal-rule');
         expect(
           pathExists(expectedPath),
           'Minimal package should be installed'
@@ -353,12 +275,9 @@ describe('Integration Tests: Install Location Verification', () => {
     });
 
     describe('Unicode Package', () => {
-      it('should handle unicode in package names and content', () => {
-        // The package name contains unicode, check it installs
-        const expectedPath = join(
-          '.cursor/rules',
-          'ci-test-unicode-rule-日本語'
-        );
+      it('should handle unicode in package content', () => {
+        // Package name is now valid ASCII, but content has unicode
+        const expectedPath = join('.cursor/rules', '@ci-test/unicode-rule');
         expect(
           pathExists(expectedPath),
           'Unicode package should be installed'
@@ -372,7 +291,7 @@ describe('Integration Tests: Install Location Verification', () => {
           const num = i.toString().padStart(2, '0');
           const expectedPath = join(
             '.cursor/rules',
-            `ci-test-large-rule-${num}`
+            `@ci-test/large-rule-${num}`
           );
           expect(
             pathExists(expectedPath),
@@ -393,12 +312,12 @@ describe('Integration Tests: Install Location Verification', () => {
           const rulePath = join(
             dryRunWorkspace,
             '.cursor/rules',
-            'ci-test-dry-run-rule'
+            '@ci-test/dry-run-rule'
           );
           const agentPath = join(
             dryRunWorkspace,
             '.claude/agents',
-            'ci-test-dry-run-agent'
+            '@ci-test/dry-run-agent'
           );
 
           expect(
@@ -440,19 +359,19 @@ describe('Integration Tests: Install Location Verification', () => {
       {
         source: 'cursor',
         target: 'claude',
-        package: 'ci-test-cursor-rule',
+        package: '@ci-test/cursor-rule',
         expectedPath: '.claude',
       },
       {
         source: 'claude',
         target: 'cursor',
-        package: 'ci-test-claude-agent',
+        package: '@ci-test/claude-agent',
         expectedPath: '.cursor/agents',
       },
       {
         source: 'continue',
         target: 'windsurf',
-        package: 'ci-test-continue-rule',
+        package: '@ci-test/continue-rule',
         expectedPath: '.windsurf/rules',
       },
     ];

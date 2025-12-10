@@ -1,8 +1,8 @@
 {
   "$schema": "https://prpm.dev/schemas/manifest.json",
-  "name": "ci-test-batch-3-special",
+  "name": "@ci-test/batch-3-special",
   "version": "1.0.0",
-  "description": "Integration test batch 3: Hooks, plugins, extensions, and MCP packages",
+  "description": "Integration test batch 3: Hooks, plugins, and MCP packages",
   "author": "ci-test",
   "license": "MIT",
   "repository": "https://github.com/pr-pm/prpm",
@@ -11,7 +11,7 @@
     {
       "name": "@ci-test/claude-hook",
       "version": "1.0.0",
-      "description": "CI test: Claude hook package",
+      "description": "CI test: Claude hook package for integration testing",
       "format": "claude",
       "subtype": "hook",
       "files": ["files/claude-hook/hook.json", "files/claude-hook/hook.js"]
@@ -19,55 +19,23 @@
     {
       "name": "@ci-test/kiro-hook",
       "version": "1.0.0",
-      "description": "CI test: Kiro hook package",
+      "description": "CI test: Kiro hook package for integration testing",
       "format": "kiro",
       "subtype": "hook",
-      "files": ["files/kiro-hook.kiro.hook"]
-    },
-    {
-      "name": "@ci-test/droid-hook",
-      "version": "1.0.0",
-      "description": "CI test: Factory Droid hook package",
-      "format": "droid",
-      "subtype": "hook",
-      "files": ["files/droid-hook.json"]
+      "files": ["files/kiro-hook.json"]
     },
     {
       "name": "@ci-test/claude-plugin",
       "version": "1.0.0",
-      "description": "CI test: Claude plugin package",
+      "description": "CI test: Claude plugin package for integration testing",
       "format": "claude-plugin",
       "subtype": "plugin",
       "files": ["files/claude-plugin/plugin.json"]
     },
     {
-      "name": "@ci-test/opencode-tool",
-      "version": "1.0.0",
-      "description": "CI test: OpenCode tool package",
-      "format": "opencode",
-      "subtype": "tool",
-      "files": ["files/opencode-tool.md"]
-    },
-    {
-      "name": "@ci-test/opencode-plugin",
-      "version": "1.0.0",
-      "description": "CI test: OpenCode plugin package",
-      "format": "opencode",
-      "subtype": "plugin",
-      "files": ["files/opencode-plugin.ts"]
-    },
-    {
-      "name": "@ci-test/gemini-extension",
-      "version": "1.0.0",
-      "description": "CI test: Gemini CLI extension package",
-      "format": "gemini",
-      "subtype": "extension",
-      "files": ["files/gemini-extension/gemini-extension.json"]
-    },
-    {
       "name": "@ci-test/mcp-server",
       "version": "1.0.0",
-      "description": "CI test: MCP server package",
+      "description": "CI test: MCP server package for integration testing",
       "format": "mcp",
       "subtype": "server",
       "files": ["files/mcp-server.json"]
@@ -75,15 +43,15 @@
     {
       "name": "@ci-test/mcp-tool",
       "version": "1.0.0",
-      "description": "CI test: MCP tool package",
+      "description": "CI test: MCP tool package for integration testing",
       "format": "mcp",
       "subtype": "tool",
       "files": ["files/mcp-tool.json"]
     },
     {
-      "name": "@ci-test/agents-md-skill",
+      "name": "ci-test-agents-md-skill",
       "version": "1.0.0",
-      "description": "CI test: AGENTS.md skill package",
+      "description": "CI test: AGENTS.md skill package for integration testing",
       "format": "agents.md",
       "subtype": "skill",
       "files": ["files/agents-md-skill/SKILL.md"]
@@ -91,26 +59,26 @@
     {
       "name": "@ci-test/agents-md-agent",
       "version": "1.0.0",
-      "description": "CI test: AGENTS.md agent package",
+      "description": "CI test: AGENTS.md agent package for integration testing",
       "format": "agents.md",
       "subtype": "agent",
       "files": ["files/agents-md-agent/AGENT.md"]
     },
     {
-      "name": "@ci-test/codex-skill",
+      "name": "@ci-test/generic-tool",
       "version": "1.0.0",
-      "description": "CI test: Codex skill package",
-      "format": "codex",
-      "subtype": "skill",
-      "files": ["files/codex-skill/SKILL.md"]
+      "description": "CI test: Generic tool package for integration testing",
+      "format": "generic",
+      "subtype": "tool",
+      "files": ["files/generic-tool.md"]
     },
     {
-      "name": "@ci-test/codex-agent",
+      "name": "@ci-test/generic-plugin",
       "version": "1.0.0",
-      "description": "CI test: Codex agent package",
-      "format": "codex",
-      "subtype": "agent",
-      "files": ["files/codex-agent/AGENT.md"]
+      "description": "CI test: Generic plugin package for integration testing",
+      "format": "generic",
+      "subtype": "plugin",
+      "files": ["files/generic-plugin.md"]
     }
   ]
 }

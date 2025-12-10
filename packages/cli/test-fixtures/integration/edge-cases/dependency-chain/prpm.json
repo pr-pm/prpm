@@ -1,9 +1,9 @@
 {
-  "$schema": "https://prpm.dev/schema/prpm.json",
+  "$schema": "https://prpm.dev/schemas/manifest.json",
   "name": "@ci-test/dependency-chain",
   "version": "1.0.0",
   "description": "Package with dependencies to test dependency resolution",
-  "author": "prpm-ci",
+  "author": "ci-test",
   "license": "MIT",
   "tags": ["ci-test", "dependencies", "chain"],
   "dependencies": {
@@ -12,11 +12,12 @@
   },
   "packages": [
     {
-      "name": "dependent-rule",
-      "description": "A rule that depends on other packages",
+      "name": "@ci-test/dependent-rule",
+      "version": "1.0.0",
+      "description": "A rule that depends on other packages for testing",
       "format": "cursor",
       "subtype": "rule",
-      "file": "files/dependent.mdc"
+      "files": ["files/dependent.mdc"]
     }
   ]
 }

@@ -1,15 +1,16 @@
 {
-  "$schema": "https://prpm.dev/schema/prpm.json",
+  "$schema": "https://prpm.dev/schemas/manifest.json",
   "name": "@ci-test/minimal-package",
   "version": "1.0.0",
-  "description": "Minimal package with only required fields",
+  "description": "Minimal package with only required fields for testing",
   "packages": [
     {
-      "name": "minimal-rule",
-      "description": "A minimal rule with bare minimum content",
+      "name": "@ci-test/minimal-rule",
+      "version": "1.0.0",
+      "description": "A minimal rule with bare minimum content for testing",
       "format": "cursor",
       "subtype": "rule",
-      "file": "files/minimal.mdc"
+      "files": ["files/minimal.mdc"]
     }
   ]
 }
