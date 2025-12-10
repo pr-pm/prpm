@@ -547,20 +547,20 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         const collection = collectionResult.rows[0];
 
-        // Get packages with their names and resolve "latest" to actual version
+        // Get packages with their names and ALWAYS resolve to latest version
+        // The package_version stored in collection_packages is informational only -
+        // we always want to install the latest version of each package to ensure
+        // users get the most up-to-date packages when installing a collection
         const packagesResult = await server.pg.query(
           `
           SELECT cp.*, p.name as package_name,
-            CASE
-              WHEN cp.package_version IS NULL OR cp.package_version = 'latest' THEN (
-                SELECT pv.version
-                FROM package_versions pv
-                WHERE pv.package_id = cp.package_id
-                ORDER BY pv.published_at DESC
-                LIMIT 1
-              )
-              ELSE cp.package_version
-            END as resolved_version
+            (
+              SELECT pv.version
+              FROM package_versions pv
+              WHERE pv.package_id = cp.package_id
+              ORDER BY pv.published_at DESC
+              LIMIT 1
+            ) as resolved_version
           FROM collection_packages cp
           JOIN packages p ON p.id = cp.package_id
           WHERE cp.collection_id = $1
