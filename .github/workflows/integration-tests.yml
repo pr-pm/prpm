@@ -139,6 +139,7 @@ jobs:
           ./scripts/run-integration-tests.sh
         env:
           PRPM_REGISTRY_URL: http://localhost:3111
+          CI_MODE: 'true'
           DEBUG: ${{ inputs.debug }}
 
       - name: Stop registry server

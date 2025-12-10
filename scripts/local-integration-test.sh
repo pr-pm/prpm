@@ -192,6 +192,7 @@ log_info "Running integration tests..."
 echo ""
 
 export PRPM_REGISTRY_URL=http://localhost:3111
+export CI_MODE=true
 export DEBUG=$DEBUG
 
 TEST_EXIT=0
