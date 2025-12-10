@@ -525,7 +525,8 @@ export async function collectionRoutes(server: FastifyInstance) {
       const user = request.user;
 
       try {
-        // Get collection - prefer official/verified, then by downloads
+        // Get collection - prefer official/verified, then by most recent version
+        // Note: We prioritize created_at over downloads to ensure latest version is installed
         const collectionResult = await server.pg.query(
           `
           SELECT * FROM collections
@@ -534,8 +535,8 @@ export async function collectionRoutes(server: FastifyInstance) {
           ORDER BY
             official DESC,
             verified DESC,
-            downloads DESC,
-            created_at DESC
+            created_at DESC,
+            downloads DESC
           LIMIT 1
         `,
           input.version ? [name_slug, input.version] : [name_slug]
