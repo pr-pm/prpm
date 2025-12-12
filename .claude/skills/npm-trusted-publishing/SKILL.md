@@ -83,6 +83,33 @@ For each package, go to **Settings > Publishing access** and add:
 | Missing `id-token: write` | Add to workflow permissions |
 | Forgot npmjs.com setup | Configure trusted publisher in package settings |
 | Using NODE_AUTH_TOKEN | Remove - OIDC handles auth |
+| Outdated npm version | Add `npm install -g npm@latest` step (see below) |
+
+## npm Version Requirement
+
+GitHub Actions runners may have an outdated npm version that doesn't properly support OIDC trusted publishing. This causes a confusing error:
+
+```
+npm notice Access token expired or revoked. Please try logging in again.
+npm error code E404
+npm error 404 Not Found - PUT https://registry.npmjs.org/@scope%2fpackage - Not found
+```
+
+**Solution:** Update npm to latest before publishing:
+
+```yaml
+- uses: actions/setup-node@v4
+  with:
+    node-version: "20"
+    registry-url: "https://registry.npmjs.org"
+
+- name: Update npm to latest
+  run: npm install -g npm@latest
+
+- run: npm publish --access public --provenance
+```
+
+See [GitHub Community Discussion #173102](https://github.com/orgs/community/discussions/173102) for details.
 
 ## Reference
 
