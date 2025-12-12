@@ -138,6 +138,15 @@ const BATCH_3_SPECIAL = [
 ];
 
 /**
+ * Strip author namespace from package ID (mirrors CLI behavior)
+ * @example stripAuthorNamespace('@ci-test/cursor-rule') => 'cursor-rule'
+ */
+function stripAuthorNamespace(packageId: string): string {
+  const parts = packageId.split('/');
+  return parts[parts.length - 1];
+}
+
+/**
  * Helper to get expected install path for a package
  */
 function getExpectedPath(
@@ -155,16 +164,19 @@ function getExpectedPath(
     throw new Error(`Unknown subtype ${subtype} for format ${format}`);
   }
 
+  // Strip the @scope/ prefix - CLI does this during install
+  const strippedName = stripAuthorNamespace(packageName);
+
   // Special cases for root-level files
   if (basePath === '') {
     // Root level files like AGENTS.md
     const fileMap: Record<string, string> = {
       'agents.md': 'AGENTS.md',
     };
-    return fileMap[format] || `${packageName}.md`;
+    return fileMap[format] || `${strippedName}.md`;
   }
 
-  return join(basePath, packageName);
+  return join(basePath, strippedName);
 }
 
 /**
@@ -261,7 +273,8 @@ describe('Integration Tests: Install Location Verification', () => {
   describe('Edge Cases', () => {
     describe('Minimal Package', () => {
       it('should install minimal package correctly', () => {
-        const expectedPath = join('.cursor/rules', '@ci-test/minimal-rule');
+        // CLI strips @scope/ prefix during install
+        const expectedPath = join('.cursor/rules', 'minimal-rule');
         expect(
           pathExists(expectedPath),
           'Minimal package should be installed'
@@ -272,7 +285,8 @@ describe('Integration Tests: Install Location Verification', () => {
     describe('Unicode Package', () => {
       it('should handle unicode in package content', () => {
         // Package name is now valid ASCII, but content has unicode
-        const expectedPath = join('.cursor/rules', '@ci-test/unicode-rule');
+        // CLI strips @scope/ prefix during install
+        const expectedPath = join('.cursor/rules', 'unicode-rule');
         expect(
           pathExists(expectedPath),
           'Unicode package should be installed'
@@ -284,10 +298,8 @@ describe('Integration Tests: Install Location Verification', () => {
       it('should install all 10 rules from large package', () => {
         for (let i = 1; i <= 10; i++) {
           const num = i.toString().padStart(2, '0');
-          const expectedPath = join(
-            '.cursor/rules',
-            `@ci-test/large-rule-${num}`
-          );
+          // CLI strips @scope/ prefix during install
+          const expectedPath = join('.cursor/rules', `large-rule-${num}`);
           expect(
             pathExists(expectedPath),
             `Large package rule ${num} should be installed`
@@ -304,15 +316,16 @@ describe('Integration Tests: Install Location Verification', () => {
           process.env.DRY_RUN_WORKSPACE || '/tmp/prpm-dry-run-test';
 
         if (existsSync(dryRunWorkspace)) {
+          // CLI strips @scope/ prefix during install
           const rulePath = join(
             dryRunWorkspace,
             '.cursor/rules',
-            '@ci-test/dry-run-rule'
+            'dry-run-rule'
           );
           const agentPath = join(
             dryRunWorkspace,
             '.claude/agents',
-            '@ci-test/dry-run-agent'
+            'dry-run-agent'
           );
 
           expect(
@@ -379,7 +392,9 @@ describe('Integration Tests: Install Location Verification', () => {
           process.env.AS_FLAG_WORKSPACE || '/tmp/prpm-as-flag-test';
 
         if (existsSync(asWorkspace)) {
-          const fullPath = join(asWorkspace, expectedPath, pkg);
+          // CLI strips @scope/ prefix during install
+          const strippedPkg = stripAuthorNamespace(pkg);
+          const fullPath = join(asWorkspace, expectedPath, strippedPkg);
           expect(
             existsSync(fullPath),
             `Package ${pkg} should be converted to ${target} format at ${expectedPath}`
