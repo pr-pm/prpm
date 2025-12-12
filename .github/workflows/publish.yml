@@ -332,6 +332,9 @@ jobs:
           cache-dependency-path: package-lock.json
           registry-url: "https://registry.npmjs.org"
 
+      - name: Update npm to latest
+        run: npm install -g npm@latest
+
       - name: Download versioned packages
         uses: actions/download-artifact@v4
         with:
