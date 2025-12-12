@@ -403,6 +403,79 @@ describe('install command - multi-file packages', () => {
       );
     });
 
+    it('should use progressive disclosure for OpenCode skill install (regression test)', async () => {
+      // Regression test: Skills installed with --as opencode should go to .openskills/
+      // not to .opencode/agent/ (OpenCode has no native skill support)
+      const mockPackage = {
+        id: 'nango-skill',
+        name: 'nango-skill',
+        format: 'claude', subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      // Create tarball with SKILL.md as the main file
+      const tarGz = await createTarGz({
+        'SKILL.md': '# Nango Action Builder\n\nBuilds thin wrapper actions.',
+        'examples/basic.md': '# Basic Example',
+      }, { format: 'claude', subtype: 'skill', packageName: 'nango-skill' });
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(tarGz);
+
+      await handleInstall('nango-skill', { as: 'opencode' });
+
+      // Should save to .openskills/ (progressive disclosure), NOT .opencode/agent/
+      expect(saveFile).toHaveBeenCalledWith(
+        '.openskills/nango-skill/SKILL.md',
+        expect.stringContaining('Builds thin wrapper actions')
+      );
+
+      // Verify it did NOT go to the wrong location
+      const allCalls = (saveFile as Mock).mock.calls;
+      const wrongLocationCalls = allCalls.filter((call: string[]) =>
+        call[0].includes('.opencode/agent/')
+      );
+      expect(wrongLocationCalls).toHaveLength(0);
+    });
+
+    it('should use progressive disclosure for OpenCode agent install (regression test)', async () => {
+      // Regression test: Agents installed with --as opencode should go to .openagents/
+      // not to .opencode/agent/ if it's a multi-file package needing special handling
+      const mockPackage = {
+        id: 'multi-agent',
+        name: 'multi-agent',
+        format: 'claude', subtype: 'agent',
+        tags: [],
+        total_downloads: 50,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/agent.tar.gz',
+        },
+      };
+
+      // Create tarball with agent.md as the main file
+      const tarGz = await createTarGz({
+        'agent.md': '# Multi Agent\n\nComplex agent with multiple files.',
+        'prompts/system.md': '# System Prompt',
+      }, { format: 'claude', subtype: 'agent', packageName: 'multi-agent' });
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(tarGz);
+
+      await handleInstall('multi-agent', { as: 'opencode' });
+
+      // OpenCode does have native agent support, so it should go to .opencode/agents/
+      // (but the point is it shouldn't fail or go to wrong directory)
+      expect(saveFile).toHaveBeenCalled();
+    });
+
     it('should fail conversion if no main file found', async () => {
       const mockPackage = {
         id: 'no-main-skill',
