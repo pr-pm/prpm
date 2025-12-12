@@ -1144,7 +1144,32 @@ export async function handleInstall(
       await saveFile(destPath, mainFile);
       fileCount = 1;
     } else {
-      destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      // Multi-file package handling
+      const packageName = stripAuthorNamespace(packageId);
+
+      // Check if this format/subtype needs progressive disclosure (same check as single-file branch)
+      // This ensures skills go to .openskills/ for formats that don't natively support them
+      const nativeSubtypesMulti = FORMAT_NATIVE_SUBTYPES[effectiveFormat as Format];
+      const needsProgressiveDisclosureMulti = nativeSubtypesMulti &&
+        !nativeSubtypesMulti.includes(effectiveSubtype as Subtype) &&
+        (effectiveSubtype === 'skill' || effectiveSubtype === 'agent' || effectiveSubtype === 'slash-command');
+
+      if (needsProgressiveDisclosureMulti) {
+        // Use progressive disclosure directories for multi-file packages
+        if (effectiveSubtype === 'skill') {
+          destDir = `.openskills/${packageName}`;
+          console.log(`   📦 Installing multi-file skill to ${destDir}/ for progressive disclosure`);
+        } else if (effectiveSubtype === 'agent') {
+          destDir = `.openagents/${packageName}`;
+          console.log(`   🤖 Installing multi-file agent to ${destDir}/ for progressive disclosure`);
+        } else if (effectiveSubtype === 'slash-command') {
+          destDir = `.opencommands/${packageName}`;
+          console.log(`   ⚡ Installing multi-file command to ${destDir}/ for progressive disclosure`);
+        }
+      } else {
+        // Use format's native directory
+        destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      }
 
       if (locationOverride && effectiveFormat === 'cursor') {
         const relativeDestDir = destDir.startsWith('./') ? destDir.slice(2) : destDir;
@@ -1155,12 +1180,13 @@ export async function handleInstall(
       // Multi-file package - create directory for package
       // For Claude skills, destDir already includes package name, so use it directly
       // For Cursor rules converted from Claude skills, use flat structure
-      const packageName = stripAuthorNamespace(packageId);
       const isCursorConversion = (effectiveFormat === 'cursor' && pkg.format === 'claude' && pkg.subtype === 'skill');
       const packageDir = (effectiveFormat === 'claude' && effectiveSubtype === 'skill')
         ? destDir
         : isCursorConversion
         ? destDir // Cursor uses flat structure
+        : needsProgressiveDisclosureMulti
+        ? destDir // Progressive disclosure already includes package name
         : `${destDir}/${packageName}`;
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
