@@ -1790,11 +1790,12 @@ export function createInstallCommand(): Command {
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip', 'auto')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
+    .option('-y, --yes', 'Auto-confirm prompts (overwrite files without asking)')
     .option('--no-append', 'Skip adding skill to manifest file (skill files only)')
     .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure')
     .option('--eager', 'Force skill/agent to always activate (not on-demand)')
     .option('--lazy', 'Use default on-demand activation (overrides package eager setting)')
-    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean }) => {
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; yes?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = (options.format || options.as) as Format | undefined;
       const validFormats = FORMATS;
@@ -1830,6 +1831,7 @@ export function createInstallCommand(): Command {
         as: convertTo,
         subtype: options.subtype as Subtype | undefined,
         frozenLockfile: options.frozenLockfile,
+        force: options.yes,
         location: options.location,
         noAppend: options.noAppend,
         manifestFile: options.manifestFile,

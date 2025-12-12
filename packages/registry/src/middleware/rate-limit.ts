@@ -174,10 +174,13 @@ export function createPublishRateLimiter() {
     const key = `ratelimit:publish:tokens:${userId}`;
     const now = Date.now();
 
+    // Check for CI_MODE to bypass strict limits for testing
+    const isCI = process.env.CI_MODE === 'true';
+
     // Token bucket parameters
-    const maxTokens = 20;           // Burst capacity (can publish 20 immediately)
-    const refillRate = 10 / 60;     // 10 tokens per minute = 0.1667 tokens/sec
-    const maxWaitMs = 30000;        // Max 30 seconds wait time
+    const maxTokens = isCI ? 1000 : 20;           // Burst capacity (can publish 20 immediately)
+    const refillRate = isCI ? 1000 / 60 : 10 / 60;     // 10 tokens per minute (or 1000 in CI)
+    const maxWaitMs = isCI ? 120000 : 30000;        // Max 30 seconds wait time (or 2m in CI)
 
     try {
       const redis = request.server.redis;

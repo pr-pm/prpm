@@ -96,8 +96,14 @@ class Semaphore {
 }
 
 // Global semaphore for publish operations
-// Limit to 5 concurrent publishes to prevent overload
-const publishSemaphore = new Semaphore(5, 50, 30000);
+// Limit to 5 concurrent publishes to prevent overload in production
+// CI_MODE uses much higher limits for integration testing
+const isCI = process.env.CI_MODE === 'true';
+const publishSemaphore = new Semaphore(
+  isCI ? 100 : 5,      // 100 concurrent in CI, 5 in prod
+  isCI ? 500 : 50,     // 500 queue in CI, 50 in prod
+  isCI ? 120000 : 30000 // 2 min timeout in CI, 30s in prod
+);
 
 /**
  * Middleware factory for concurrency control
