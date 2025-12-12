@@ -27,6 +27,10 @@ jobs:
     name: E2E Registry Tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      PRPM_REGISTRY_URL: http://localhost:3111
+      CI_MODE: "true"
+      NODE_ENV: test
 
     services:
       postgres:

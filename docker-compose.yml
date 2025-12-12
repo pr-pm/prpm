@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Shared PostgreSQL database for all services
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: prpm-postgres
     environment:
       POSTGRES_USER: prpm
