@@ -59,7 +59,6 @@ function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
   // Extract sections
   const metadata = pkg.content.sections.find(s => s.type === 'metadata');
   const tools = pkg.content.sections.find(s => s.type === 'tools');
-  const instructions = pkg.content.sections.find(s => s.type === 'instructions');
 
   // Build frontmatter
   const frontmatter: Record<string, any> = {};
@@ -68,12 +67,13 @@ function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
   if (pkg.subtype === 'slash-command') {
     // OpenCode Slash Command format requires 'template' field
     const opencodeSlashCommand = metadata?.type === 'metadata' ? metadata.data.opencodeSlashCommand : undefined;
+    const firstInstructions = pkg.content.sections.find(s => s.type === 'instructions');
 
     if (opencodeSlashCommand?.template) {
       frontmatter.template = opencodeSlashCommand.template;
-    } else if (instructions?.type === 'instructions') {
+    } else if (firstInstructions?.type === 'instructions') {
       // Fallback: use first instruction as template
-      frontmatter.template = instructions.content;
+      frontmatter.template = firstInstructions.content;
       warnings.push('No template field found, using instructions content as template');
     } else {
       // Required field missing
@@ -148,46 +148,56 @@ function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
   lines.push('---');
   lines.push('');
 
-  // Add instructions/body content
-  if (instructions?.type === 'instructions') {
-    lines.push(instructions.content);
-  } else {
-    // Fallback: compile all non-metadata sections
-    const contentSections = pkg.content.sections
-      .filter(s => s.type !== 'metadata' && s.type !== 'tools');
+  // Add all content sections (not just the first instructions section)
+  // This ensures skills and agents with multiple sections are fully converted
+  const contentSections = pkg.content.sections
+    .filter(s => s.type !== 'metadata' && s.type !== 'tools');
 
-    for (const section of contentSections) {
-      if (section.type === 'persona') {
-        if (section.data.role) {
-          lines.push(`You are a ${section.data.role}.`);
-          lines.push('');
-        }
-      } else if (section.type === 'instructions') {
-        lines.push(section.content);
+  for (const section of contentSections) {
+    if (section.type === 'persona') {
+      if (section.data.role) {
+        lines.push(`You are a ${section.data.role}.`);
         lines.push('');
-      } else if (section.type === 'rules') {
-        lines.push('## Rules');
-        lines.push('');
-        for (const rule of section.items) {
-          lines.push(`- ${rule.content}`);
-        }
-        lines.push('');
-      } else if (section.type === 'examples') {
-        lines.push('## Examples');
-        lines.push('');
-        for (const example of section.examples) {
-          if (example.description) {
-            lines.push(`### ${example.description}`);
-            lines.push('');
-          }
-          lines.push('```');
-          lines.push(example.code);
-          lines.push('```');
-          lines.push('');
-        }
-      } else {
-        warnings.push(`Section type '${section.type}' may not be fully supported in OpenCode format`);
       }
+    } else if (section.type === 'instructions') {
+      // Include section title as header if present and not generic
+      if (section.title && section.title !== 'Overview' && section.title !== 'Instructions') {
+        lines.push(`## ${section.title}`);
+        lines.push('');
+      }
+      lines.push(section.content);
+      lines.push('');
+    } else if (section.type === 'rules') {
+      const rulesTitle = section.title || 'Rules';
+      lines.push(`## ${rulesTitle}`);
+      lines.push('');
+      for (const rule of section.items) {
+        lines.push(`- ${rule.content}`);
+      }
+      lines.push('');
+    } else if (section.type === 'examples') {
+      const examplesTitle = section.title || 'Examples';
+      lines.push(`## ${examplesTitle}`);
+      lines.push('');
+      for (const example of section.examples) {
+        if (example.description) {
+          lines.push(`### ${example.description}`);
+          lines.push('');
+        }
+        lines.push('```');
+        lines.push(example.code);
+        lines.push('```');
+        lines.push('');
+      }
+    } else if (section.type === 'context') {
+      // Include context sections with their title
+      const contextTitle = section.title || 'Context';
+      lines.push(`## ${contextTitle}`);
+      lines.push('');
+      lines.push(section.content);
+      lines.push('');
+    } else {
+      warnings.push(`Section type '${section.type}' may not be fully supported in OpenCode format`);
     }
   }
 
