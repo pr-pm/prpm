@@ -371,13 +371,11 @@ jobs:
           npm pack --dry-run
           npm publish --dry-run --access public --tag ${{ github.event.inputs.tag }}
 
-      - name: Publish to NPM
+      - name: Publish to NPM (Trusted Publishing)
         if: github.event.inputs.dry_run != 'true'
         run: |
           cd packages/${{ matrix.package }}
-          npm publish --access public --tag ${{ github.event.inputs.tag }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --access public --provenance --tag ${{ github.event.inputs.tag }}
 
       - name: Report published
         run: |
