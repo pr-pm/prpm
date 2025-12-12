@@ -385,6 +385,10 @@ export async function collectionRoutes(server: FastifyInstance) {
       const input = request.body as CollectionCreateInput;
       const user = request.user;
 
+      // In CI_MODE, the synthetic user doesn't exist in DB, so use null for author_id
+      const isCIMode = process.env.CI_MODE === 'true';
+      const effectiveAuthorId: string | null = isCIMode ? null : user.user_id;
+
       try {
         // Determine version (use input.version or default to 1.0.0)
         const version = input.version || '1.0.0';
@@ -437,7 +441,7 @@ export async function collectionRoutes(server: FastifyInstance) {
             version,
             input.name,
             input.description,
-            user.user_id,
+            effectiveAuthorId, // Use null in CI_MODE, actual user_id otherwise
             input.category,
             input.tags || [],
             input.framework,
