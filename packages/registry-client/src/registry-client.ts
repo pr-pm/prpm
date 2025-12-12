@@ -87,15 +87,19 @@ export interface CollectionInstallResult {
 export interface RegistryConfig {
   url: string;
   token?: string;
+  userAgent?: string;
 }
 
 export class RegistryClient {
   private baseUrl: string;
   private token?: string;
+  private userAgent: string;
 
   constructor(config: RegistryConfig) {
     this.baseUrl = config.url.replace(/\/$/, ''); // Remove trailing slash
     this.token = config.token;
+    // Default User-Agent; CLI should override with actual version
+    this.userAgent = config.userAgent || 'prpm-registry-client/1.0.0';
   }
 
   /**
@@ -528,6 +532,7 @@ export class RegistryClient {
     if (isFormData) {
       // For FormData, create new Headers instance and don't set Content-Type
       const headersObj = new Headers(options.headers as Record<string, string>);
+      headersObj.set('User-Agent', this.userAgent);
       if (this.token) {
         headersObj.set('Authorization', `Bearer ${this.token}`);
       }
@@ -537,6 +542,7 @@ export class RegistryClient {
       headers = {
         ...options.headers as Record<string, string>,
         'Content-Type': 'application/json',
+        'User-Agent': this.userAgent,
       };
       if (this.token) {
         headers['Authorization'] = `Bearer ${this.token}`;

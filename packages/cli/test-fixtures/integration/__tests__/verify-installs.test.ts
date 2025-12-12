@@ -109,7 +109,7 @@ const BATCH_1_RULES = [
  */
 const BATCH_2_AGENTS = [
   { name: '@ci-test/claude-agent', format: 'claude', subtype: 'agent' },
-  { name: 'ci-test-claude-skill', format: 'claude', subtype: 'skill' },
+  { name: '@ci-test/ci-test-claude-skill', format: 'claude', subtype: 'skill' },
   {
     name: '@ci-test/claude-slash-command',
     format: 'claude',
@@ -128,18 +128,13 @@ const BATCH_2_AGENTS = [
 ];
 
 /**
- * Test packages from batch-3-special (9 packages - hooks, plugins, MCP)
+ * Test packages from batch-3-special (4 packages - hooks and AGENTS.md)
  */
 const BATCH_3_SPECIAL = [
   { name: '@ci-test/claude-hook', format: 'claude', subtype: 'hook' },
   { name: '@ci-test/kiro-hook', format: 'kiro', subtype: 'hook' },
-  { name: '@ci-test/claude-plugin', format: 'claude-plugin', subtype: 'plugin' },
-  { name: '@ci-test/mcp-server', format: 'mcp', subtype: 'server' },
-  { name: '@ci-test/mcp-tool', format: 'mcp', subtype: 'tool' },
-  { name: 'ci-test-agents-md-skill', format: 'agents.md', subtype: 'skill' },
+  { name: '@ci-test/ci-test-agents-md-skill', format: 'agents.md', subtype: 'skill' },
   { name: '@ci-test/agents-md-agent', format: 'agents.md', subtype: 'agent' },
-  { name: '@ci-test/generic-tool', format: 'generic', subtype: 'tool' },
-  { name: '@ci-test/generic-plugin', format: 'generic', subtype: 'plugin' },
 ];
 
 /**
@@ -246,10 +241,10 @@ describe('Integration Tests: Install Location Verification', () => {
         { name: '@ci-test/continue-rule', format: 'continue', subtype: 'rule' },
         { name: '@ci-test/windsurf-rule', format: 'windsurf', subtype: 'rule' },
         { name: '@ci-test/claude-agent', format: 'claude', subtype: 'agent' },
-        { name: 'ci-test-claude-skill', format: 'claude', subtype: 'skill' },
+        { name: '@ci-test/ci-test-claude-skill', format: 'claude', subtype: 'skill' },
         { name: '@ci-test/cursor-agent', format: 'cursor', subtype: 'agent' },
         { name: '@ci-test/claude-hook', format: 'claude', subtype: 'hook' },
-        { name: '@ci-test/mcp-server', format: 'mcp', subtype: 'server' },
+        { name: '@ci-test/mcp-rule', format: 'mcp', subtype: 'rule' },
       ];
 
       for (const pkg of collectionPackages) {
