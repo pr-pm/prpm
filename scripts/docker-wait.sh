@@ -71,6 +71,12 @@ done
 
 echo ""
 echo "🎉 All services ready!"
+
+# Ensure MinIO bucket exists
+echo ""
+echo "📦 Ensuring MinIO bucket exists..."
+node "$PROJECT_ROOT/packages/registry/scripts/create-minio-bucket.js"
+
 echo ""
 echo "Service URLs:"
 echo "  • PostgreSQL: localhost:5434 (user: prpm, password: prpm, db: prpm)"

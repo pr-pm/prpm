@@ -79,7 +79,8 @@ export function loadConfig(): RegistryConfig {
       prefix: process.env.SEO_DATA_PREFIX || 'seo-data',
       cacheControl: process.env.SEO_DATA_CACHE_CONTROL || 'public, max-age=300',
       // Webapp bucket for static HTML pages (incremental SSG)
-      webappBucket: process.env.WEBAPP_S3_BUCKET || 'prpm-prod-webapp',
+      // Falls back to S3_BUCKET for local dev, then prod default
+      webappBucket: process.env.WEBAPP_S3_BUCKET || process.env.S3_BUCKET || 'prpm-prod-webapp',
     },
   };
 }
