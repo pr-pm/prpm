@@ -8,7 +8,7 @@
  * - File extensions
  */
 
-import formatRegistryData from "./format-registry.json";
+import formatRegistryData from "./format-registry.json" with { type: "json" };
 
 /**
  * Configuration for a specific subtype within a format
