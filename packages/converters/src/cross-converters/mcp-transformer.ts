@@ -2,11 +2,12 @@
  * MCP Transformer
  *
  * Utility for transforming MCP (Model Context Protocol) server configurations
- * between Gemini extensions and Claude plugins.
+ * between different AI coding assistants.
  *
- * Both formats use nearly identical MCP server structures:
+ * Supported formats:
  * - Gemini: mcpServers in gemini-extension.json
  * - Claude: mcpServers in claude_desktop_config.json or plugin.json
+ * - Kiro: mcpServers in .kiro/agents/*.json (with optional timeout field)
  *
  * Compatibility: 85-95% lossless conversion
  */
@@ -22,6 +23,13 @@ export interface MCPServerConfig {
 }
 
 /**
+ * Kiro-specific MCP server configuration (includes timeout)
+ */
+export interface KiroMCPServerConfig extends MCPServerConfig {
+  timeout?: number;
+}
+
+/**
  * Gemini-specific MCP servers structure
  */
 export interface GeminiMCPServers {
@@ -33,6 +41,13 @@ export interface GeminiMCPServers {
  */
 export interface ClaudeMCPServers {
   [serverName: string]: MCPServerConfig;
+}
+
+/**
+ * Kiro-specific MCP servers structure
+ */
+export interface KiroMCPServers {
+  [serverName: string]: KiroMCPServerConfig;
 }
 
 /**
@@ -205,5 +220,273 @@ export function mergeMCPServers(
     servers,
     warnings,
     lossless,
+  };
+}
+
+/**
+ * Transform Kiro MCP servers to Claude format
+ *
+ * @param kiroServers - MCP servers from Kiro agent
+ * @returns Transformed servers with warnings
+ */
+export function kiroToClaudeMCP(
+  kiroServers: KiroMCPServers
+): TransformResult<ClaudeMCPServers> {
+  const warnings: string[] = [];
+  const servers: ClaudeMCPServers = {};
+  let lossless = true;
+
+  for (const [name, config] of Object.entries(kiroServers)) {
+    servers[name] = {
+      command: config.command,
+    };
+
+    if (config.args) {
+      servers[name].args = [...config.args];
+    }
+
+    if (config.env) {
+      servers[name].env = { ...config.env };
+    }
+
+    if (config.disabled) {
+      servers[name].disabled = config.disabled;
+    }
+
+    // Kiro-specific timeout field is not supported in Claude
+    if (config.timeout !== undefined) {
+      warnings.push(
+        `MCP server '${name}' has timeout=${config.timeout}ms which is not supported in Claude format. This field will be lost.`
+      );
+      lossless = false;
+    }
+  }
+
+  return {
+    servers,
+    warnings,
+    lossless,
+  };
+}
+
+/**
+ * Transform Claude MCP servers to Kiro format
+ *
+ * @param claudeServers - MCP servers from Claude plugin
+ * @returns Transformed servers with warnings
+ */
+export function claudeToKiroMCP(
+  claudeServers: ClaudeMCPServers
+): TransformResult<KiroMCPServers> {
+  const warnings: string[] = [];
+  const servers: KiroMCPServers = {};
+  let lossless = true;
+
+  for (const [name, config] of Object.entries(claudeServers)) {
+    servers[name] = {
+      command: config.command,
+    };
+
+    if (config.args) {
+      servers[name].args = [...config.args];
+    }
+
+    if (config.env) {
+      servers[name].env = { ...config.env };
+    }
+
+    if (config.disabled) {
+      servers[name].disabled = config.disabled;
+    }
+
+    // Note: timeout is not set as it's not available in Claude format
+    // Users can manually add it if needed
+  }
+
+  return {
+    servers,
+    warnings,
+    lossless,
+  };
+}
+
+/**
+ * Transform Kiro MCP servers to Gemini format
+ *
+ * @param kiroServers - MCP servers from Kiro agent
+ * @returns Transformed servers with warnings
+ */
+export function kiroToGeminiMCP(
+  kiroServers: KiroMCPServers
+): TransformResult<GeminiMCPServers> {
+  const warnings: string[] = [];
+  const servers: GeminiMCPServers = {};
+  let lossless = true;
+
+  for (const [name, config] of Object.entries(kiroServers)) {
+    servers[name] = {
+      command: config.command,
+    };
+
+    if (config.args) {
+      servers[name].args = [...config.args];
+    }
+
+    if (config.env) {
+      servers[name].env = { ...config.env };
+    }
+
+    if (config.disabled) {
+      servers[name].disabled = config.disabled;
+    }
+
+    // Kiro-specific timeout field is not supported in Gemini
+    if (config.timeout !== undefined) {
+      warnings.push(
+        `MCP server '${name}' has timeout=${config.timeout}ms which is not supported in Gemini format. This field will be lost.`
+      );
+      lossless = false;
+    }
+  }
+
+  return {
+    servers,
+    warnings,
+    lossless,
+  };
+}
+
+/**
+ * Transform Gemini MCP servers to Kiro format
+ *
+ * @param geminiServers - MCP servers from Gemini extension
+ * @returns Transformed servers with warnings
+ */
+export function geminiToKiroMCP(
+  geminiServers: GeminiMCPServers
+): TransformResult<KiroMCPServers> {
+  const warnings: string[] = [];
+  const servers: KiroMCPServers = {};
+  let lossless = true;
+
+  for (const [name, config] of Object.entries(geminiServers)) {
+    servers[name] = {
+      command: config.command,
+    };
+
+    if (config.args) {
+      servers[name].args = [...config.args];
+    }
+
+    if (config.env) {
+      servers[name].env = { ...config.env };
+
+      // Check for Gemini-specific variable substitutions
+      const hasGeminiVars = Object.values(config.env).some(
+        val => typeof val === 'string' && (val.includes('${extensionPath}') || val.includes('${home}'))
+      );
+
+      if (hasGeminiVars) {
+        warnings.push(
+          `MCP server '${name}' uses Gemini variable substitutions (\${extensionPath}, \${home}). ` +
+          `These may need manual adjustment for Kiro.`
+        );
+        lossless = false;
+      }
+    }
+
+    if (config.disabled) {
+      servers[name].disabled = config.disabled;
+    }
+
+    // Note: timeout is not set as it's not available in Gemini format
+    // Users can manually add it if needed
+  }
+
+  return {
+    servers,
+    warnings,
+    lossless,
+  };
+}
+
+/**
+ * Environment variable translation mappings
+ */
+const ENV_VAR_MAPPINGS: Record<string, Record<string, string>> = {
+  'gemini-to-claude': {
+    '${extensionPath}': '${CLAUDE_EXTENSIONS_PATH}',
+    '${home}': '${HOME}',
+  },
+  'claude-to-gemini': {
+    '${CLAUDE_EXTENSIONS_PATH}': '${extensionPath}',
+    '${HOME}': '${home}',
+    '%APPDATA%': '${home}',
+  },
+};
+
+/**
+ * Translate environment variable syntax between formats
+ *
+ * @param envValue - Environment variable value to translate
+ * @param direction - Translation direction
+ * @returns Translated value and whether translation occurred
+ */
+export function translateEnvVar(
+  envValue: string,
+  direction: 'gemini-to-claude' | 'claude-to-gemini' | 'kiro-to-claude' | 'claude-to-kiro' | 'gemini-to-kiro' | 'kiro-to-gemini'
+): { value: string; translated: boolean } {
+  let translated = false;
+  let value = envValue;
+
+  // Get mappings for this direction (if available)
+  const mappings = ENV_VAR_MAPPINGS[direction];
+  if (mappings) {
+    for (const [from, to] of Object.entries(mappings)) {
+      if (value.includes(from)) {
+        value = value.replace(new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), to);
+        translated = true;
+      }
+    }
+  }
+
+  return { value, translated };
+}
+
+/**
+ * Translate all environment variables in an MCP server config
+ *
+ * @param config - MCP server config
+ * @param direction - Translation direction
+ * @returns Translated config and list of warnings
+ */
+export function translateMCPServerEnv(
+  config: MCPServerConfig | KiroMCPServerConfig,
+  direction: 'gemini-to-claude' | 'claude-to-gemini' | 'kiro-to-claude' | 'claude-to-kiro' | 'gemini-to-kiro' | 'kiro-to-gemini'
+): { config: MCPServerConfig | KiroMCPServerConfig; warnings: string[] } {
+  const warnings: string[] = [];
+
+  if (!config.env) {
+    return { config, warnings };
+  }
+
+  const translatedEnv: Record<string, string> = {};
+  let anyTranslated = false;
+
+  for (const [key, value] of Object.entries(config.env)) {
+    const { value: translatedValue, translated } = translateEnvVar(value, direction);
+    translatedEnv[key] = translatedValue;
+    if (translated) {
+      anyTranslated = true;
+    }
+  }
+
+  if (anyTranslated) {
+    warnings.push(`Environment variables were automatically translated for target format`);
+  }
+
+  return {
+    config: { ...config, env: translatedEnv },
+    warnings,
   };
 }

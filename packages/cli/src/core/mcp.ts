@@ -2,8 +2,9 @@
  * MCP (Model Context Protocol) Server Utilities
  *
  * Handles merging and removing MCP server configurations from:
- * - Project-local .mcp.json
- * - Global ~/.claude/settings.json
+ * - Claude: Project-local .mcp.json or Global ~/.claude/settings.json
+ * - Gemini: Extension-specific gemini-extension.json files
+ * - Kiro: Agent-specific .kiro/agents/*.json files
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
@@ -268,4 +269,133 @@ export function hasMCPServers(projectDir: string = process.cwd()): {
     global: globalServers.length > 0,
     servers: [...new Set([...localServers, ...globalServers])],
   };
+}
+
+/**
+ * Merge MCP servers into a Gemini extension file
+ *
+ * @param extensionPath - Path to the gemini-extension.json file
+ * @param servers - MCP servers to merge
+ * @returns Merge result
+ */
+export function mergeGeminiMCPServers(
+  extensionPath: string,
+  servers: Record<string, MCPServer>
+): MCPMergeResult {
+  const result: MCPMergeResult = {
+    added: [],
+    skipped: [],
+    warnings: [],
+  };
+
+  if (!servers || Object.keys(servers).length === 0) {
+    return result;
+  }
+
+  // Read existing extension config
+  let config: any = { mcpServers: {} };
+
+  if (existsSync(extensionPath)) {
+    try {
+      const content = readFileSync(extensionPath, 'utf-8');
+      config = JSON.parse(content);
+      if (!config.mcpServers) {
+        config.mcpServers = {};
+      }
+    } catch (error) {
+      result.warnings.push(`Failed to read extension file: ${error instanceof Error ? error.message : String(error)}`);
+      return result;
+    }
+  }
+
+  // Merge servers
+  for (const [name, server] of Object.entries(servers)) {
+    if (config.mcpServers[name]) {
+      result.skipped.push(name);
+      result.warnings.push(`MCP server '${name}' already exists in extension, keeping existing configuration`);
+    } else {
+      config.mcpServers[name] = server;
+      result.added.push(name);
+    }
+  }
+
+  // Write back only if we added something
+  if (result.added.length > 0) {
+    try {
+      const dir = dirname(extensionPath);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+      writeFileSync(extensionPath, JSON.stringify(config, null, 2) + '\n');
+    } catch (error) {
+      result.warnings.push(`Failed to write extension file: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Remove MCP servers from a Gemini extension file
+ *
+ * @param extensionPath - Path to the gemini-extension.json file
+ * @param servers - MCP servers that were originally installed
+ * @returns Remove result
+ */
+export function removeGeminiMCPServers(
+  extensionPath: string,
+  servers: Record<string, MCPServer>
+): MCPRemoveResult {
+  const result: MCPRemoveResult = {
+    removed: [],
+    kept: [],
+    warnings: [],
+  };
+
+  if (!servers || Object.keys(servers).length === 0) {
+    return result;
+  }
+
+  if (!existsSync(extensionPath)) {
+    return result;
+  }
+
+  try {
+    const content = readFileSync(extensionPath, 'utf-8');
+    const config = JSON.parse(content);
+
+    if (!config.mcpServers) {
+      return result;
+    }
+
+    for (const [name, originalServer] of Object.entries(servers)) {
+      const currentServer = config.mcpServers[name];
+
+      if (!currentServer) {
+        continue;
+      }
+
+      if (serversEqual(currentServer, originalServer)) {
+        delete config.mcpServers[name];
+        result.removed.push(name);
+      } else {
+        result.kept.push(name);
+        result.warnings.push(`Keeping modified MCP server '${name}' in Gemini extension`);
+      }
+    }
+
+    // Clean up empty mcpServers
+    if (Object.keys(config.mcpServers).length === 0) {
+      delete config.mcpServers;
+    }
+
+    // Write back if we removed something
+    if (result.removed.length > 0) {
+      writeFileSync(extensionPath, JSON.stringify(config, null, 2) + '\n');
+    }
+  } catch (error) {
+    result.warnings.push(`Failed to process extension file: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  return result;
 }
