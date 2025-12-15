@@ -1,0 +1,44 @@
+{
+  "$schema": "https://prpm.dev/schemas/manifest.json",
+  "name": "@ci-test/batch-3-special",
+  "version": "1.0.0",
+  "description": "Integration test batch 3: Hooks and AGENTS.md packages",
+  "author": "ci-test",
+  "license": "MIT",
+  "repository": "https://github.com/pr-pm/prpm",
+  "tags": ["ci-test", "integration-test"],
+  "packages": [
+    {
+      "name": "@ci-test/claude-hook",
+      "version": "1.0.0",
+      "description": "CI test: Claude hook package for integration testing",
+      "format": "claude",
+      "subtype": "hook",
+      "files": ["files/claude-hook/hook.json", "files/claude-hook/hook.js"]
+    },
+    {
+      "name": "@ci-test/kiro-hook",
+      "version": "1.0.0",
+      "description": "CI test: Kiro hook package for integration testing",
+      "format": "kiro",
+      "subtype": "hook",
+      "files": ["files/kiro-hook.json"]
+    },
+    {
+      "name": "ci-test-agents-md-skill",
+      "version": "1.0.0",
+      "description": "CI test: AGENTS.md skill package for integration testing",
+      "format": "agents.md",
+      "subtype": "skill",
+      "files": ["files/agents-md-skill/SKILL.md"]
+    },
+    {
+      "name": "@ci-test/agents-md-agent",
+      "version": "1.0.0",
+      "description": "CI test: AGENTS.md agent package for integration testing",
+      "format": "agents.md",
+      "subtype": "agent",
+      "files": ["files/agents-md-agent/AGENT.md"]
+    }
+  ]
+}

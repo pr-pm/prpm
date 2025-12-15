@@ -9,7 +9,7 @@ import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists, getManifestFilename } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
-import { Package, Format, Subtype, FORMATS } from '../types';
+import { Package, Format, Subtype, FORMATS, FORMAT_NATIVE_SUBTYPES } from '../types';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import * as tar from 'tar';
@@ -271,7 +271,7 @@ export async function handleInstall(
     hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion
     eager?: boolean; // Force skill/agent to always activate (not on-demand)
     fromCollection?: {
-      scope: string;
+      scope?: string;
       name_slug: string;
       version?: string;
     };
@@ -525,9 +525,10 @@ export async function handleInstall(
     const tarball = await client.downloadPackage(tarballUrl);
 
     // Verify integrity if we have a lockfile with integrity hash for this package
+    // Only verify if the version matches - different versions will have different hashes
     const lockfileKeyForVerification = getLockfileKey(packageId, targetFormat);
     const existingEntry = lockfile?.packages[lockfileKeyForVerification];
-    if (existingEntry?.integrity) {
+    if (existingEntry?.integrity && existingEntry.version === actualVersion) {
       console.log(`   🔒 Verifying integrity...`);
       const isValid = verifyPackageIntegrity(lockfile!, packageId, tarball, targetFormat);
       if (!isValid) {
@@ -752,7 +753,7 @@ export async function handleInstall(
     }
 
     // Track where files were saved for user feedback
-    let destPath: string;
+    let destPath = ''; // Will be set based on format/subtype before saving
     let destDir = ''; // Destination directory (needed for progressive disclosure)
     let fileCount = 0;
     let hookMetadata: { events: string[]; hookId: string } | undefined = undefined;
@@ -954,7 +955,7 @@ export async function handleInstall(
       } else if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
         // Claude hooks are merged into settings.json
         destPath = `${destDir}/settings.json`;
-      } else if (effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md') {
+      } else if (effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md' || effectiveFormat === 'codex') {
         // For manifest formats, use progressive disclosure (install to .openskills/ or .openagents/)
         if (effectiveSubtype === 'skill') {
           // Skills go to .openskills/package-name/ directory
@@ -964,6 +965,10 @@ export async function handleInstall(
           // Agents go to .openagents/package-name/ directory
           destPath = `${destDir}/AGENT.md`;
           console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+        } else if (effectiveSubtype === 'slash-command') {
+          // Commands go to .opencommands/ directory (no subdirectory, just the file)
+          destPath = `${destDir}/${packageName}.md`;
+          console.log(`   ⚡ Installing command to ${destDir}/ for progressive disclosure`);
         } else {
           // Non-skill/agent packages go to root manifest file
           const manifestFilename = getManifestFilename(effectiveFormat);
@@ -991,8 +996,9 @@ export async function handleInstall(
             }
           }
         }
-      } else if (effectiveFormat === 'copilot') {
-        // Official GitHub Copilot naming conventions
+      } else if (effectiveFormat === 'copilot' && (effectiveSubtype === 'chatmode' || effectiveSubtype === 'rule')) {
+        // Official GitHub Copilot naming conventions - only for native subtypes (rule, chatmode)
+        // skill/agent subtypes need progressive disclosure via AGENTS.md (handled in else block)
         if (effectiveSubtype === 'chatmode') {
           // Chat modes: .github/chatmodes/NAME.chatmode.md
           destPath = `${destDir}/${packageName}.chatmode.md`;
@@ -1016,7 +1022,31 @@ export async function handleInstall(
         // Factory Droid skills use SKILL.md inside the skill directory
         destPath = `${destDir}/SKILL.md`;
       } else {
-        destPath = `${destDir}/${packageName}.${fileExtension}`;
+        // Check if this format/subtype needs progressive disclosure
+        // (format supports the subtype but doesn't have native file location for it)
+        const nativeSubtypes = FORMAT_NATIVE_SUBTYPES[effectiveFormat as Format];
+        const needsProgressiveDisclosureHere = nativeSubtypes &&
+          !nativeSubtypes.includes(effectiveSubtype as Subtype) &&
+          (effectiveSubtype === 'skill' || effectiveSubtype === 'agent' || effectiveSubtype === 'slash-command');
+
+        if (needsProgressiveDisclosureHere) {
+          // Use progressive disclosure directories
+          if (effectiveSubtype === 'skill') {
+            destDir = `.openskills/${packageName}`;
+            destPath = `${destDir}/SKILL.md`;
+            console.log(`   📦 Installing skill to ${destDir}/ for progressive disclosure`);
+          } else if (effectiveSubtype === 'agent') {
+            destDir = `.openagents/${packageName}`;
+            destPath = `${destDir}/AGENT.md`;
+            console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+          } else if (effectiveSubtype === 'slash-command') {
+            destDir = '.opencommands';
+            destPath = `${destDir}/${packageName}.md`;
+            console.log(`   ⚡ Installing command to ${destDir}/ for progressive disclosure`);
+          }
+        } else {
+          destPath = `${destDir}/${packageName}.${fileExtension}`;
+        }
       }
 
       // Handle cursor format - add header if missing for .mdc files
@@ -1042,6 +1072,8 @@ export async function handleInstall(
 
       // Special handling for Claude hooks - merge into settings.json
       if (effectiveFormat === 'claude' && effectiveSubtype === 'hook') {
+        // Ensure destPath is set for hooks (should be set earlier, but TypeScript can't verify)
+        destPath = destPath || `${destDir}/settings.json`;
 
         // Parse the hook configuration from the downloaded file
         let hookConfig: any;
@@ -1112,7 +1144,32 @@ export async function handleInstall(
       await saveFile(destPath, mainFile);
       fileCount = 1;
     } else {
-      destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      // Multi-file package handling
+      const packageName = stripAuthorNamespace(packageId);
+
+      // Check if this format/subtype needs progressive disclosure (same check as single-file branch)
+      // This ensures skills go to .openskills/ for formats that don't natively support them
+      const nativeSubtypesMulti = FORMAT_NATIVE_SUBTYPES[effectiveFormat as Format];
+      const needsProgressiveDisclosureMulti = nativeSubtypesMulti &&
+        !nativeSubtypesMulti.includes(effectiveSubtype as Subtype) &&
+        (effectiveSubtype === 'skill' || effectiveSubtype === 'agent' || effectiveSubtype === 'slash-command');
+
+      if (needsProgressiveDisclosureMulti) {
+        // Use progressive disclosure directories for multi-file packages
+        if (effectiveSubtype === 'skill') {
+          destDir = `.openskills/${packageName}`;
+          console.log(`   📦 Installing multi-file skill to ${destDir}/ for progressive disclosure`);
+        } else if (effectiveSubtype === 'agent') {
+          destDir = `.openagents/${packageName}`;
+          console.log(`   🤖 Installing multi-file agent to ${destDir}/ for progressive disclosure`);
+        } else if (effectiveSubtype === 'slash-command') {
+          destDir = `.opencommands/${packageName}`;
+          console.log(`   ⚡ Installing multi-file command to ${destDir}/ for progressive disclosure`);
+        }
+      } else {
+        // Use format's native directory
+        destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      }
 
       if (locationOverride && effectiveFormat === 'cursor') {
         const relativeDestDir = destDir.startsWith('./') ? destDir.slice(2) : destDir;
@@ -1123,12 +1180,13 @@ export async function handleInstall(
       // Multi-file package - create directory for package
       // For Claude skills, destDir already includes package name, so use it directly
       // For Cursor rules converted from Claude skills, use flat structure
-      const packageName = stripAuthorNamespace(packageId);
       const isCursorConversion = (effectiveFormat === 'cursor' && pkg.format === 'claude' && pkg.subtype === 'skill');
       const packageDir = (effectiveFormat === 'claude' && effectiveSubtype === 'skill')
         ? destDir
         : isCursorConversion
         ? destDir // Cursor uses flat structure
+        : needsProgressiveDisclosureMulti
+        ? destDir // Progressive disclosure already includes package name
         : `${destDir}/${packageName}`;
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
@@ -1249,28 +1307,54 @@ export async function handleInstall(
       }
     }
 
-    // Handle AGENTS.md manifest update for progressive disclosure skills
+    // Handle AGENTS.md manifest update for progressive disclosure skills/agents/commands
     let progressiveDisclosureMetadata: {
       mode: 'progressive';
       resourceDir: string;
       manifestPath: string;
       resourceName: string;
-      resourceType: 'skill' | 'agent';
+      resourceType: 'skill' | 'agent' | 'command';
       skillsDir?: string;
       skillName?: string;
-      eager?: boolean; // Whether this skill/agent should always activate
+      eager?: boolean; // Whether this skill/agent/command should always activate
     } | undefined;
 
-    if ((effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md' || effectiveFormat === 'aider') && (effectiveSubtype === 'skill' || effectiveSubtype === 'agent') && !options.noAppend) {
+    // Check if this format/subtype needs progressive disclosure using FORMAT_NATIVE_SUBTYPES
+    // Progressive disclosure is needed when:
+    // 1. The subtype is skill, agent, or slash-command AND
+    // 2. The format doesn't have native support for that subtype (not in FORMAT_NATIVE_SUBTYPES)
+    const nativeSubtypes = FORMAT_NATIVE_SUBTYPES[effectiveFormat as Format];
+    const isProgressiveDisclosureSubtype = effectiveSubtype === 'skill' || effectiveSubtype === 'agent' || effectiveSubtype === 'slash-command';
+    const hasNativeSupport = nativeSubtypes?.includes(effectiveSubtype as Subtype) ?? false;
+    const needsProgressiveDisclosure = isProgressiveDisclosureSubtype && !hasNativeSupport;
+
+    if (needsProgressiveDisclosure && !options.noAppend) {
+      // Override destDir to use .openskills/.openagents/.opencommands
+      const resourceName = stripAuthorNamespace(packageId);
+      if (effectiveSubtype === 'skill') {
+        destDir = `.openskills/${resourceName}`;
+      } else if (effectiveSubtype === 'agent') {
+        destDir = `.openagents/${resourceName}`;
+      } else if (effectiveSubtype === 'slash-command') {
+        destDir = '.opencommands';
+      }
+
       // Ensure destDir is defined (should always be set by this point for skill/agent installations)
       if (!destDir) {
         throw new Error('Internal error: destDir not set for progressive disclosure installation');
       }
 
       const manifestPath = options.manifestFile || getManifestFilename(effectiveFormat);
-      const resourceName = stripAuthorNamespace(packageId);
-      const resourceType = effectiveSubtype as 'skill' | 'agent';
-      const mainFile = resourceType === 'agent' ? 'AGENT.md' : 'SKILL.md';
+      // resourceName already declared above when setting destDir
+      const resourceType = effectiveSubtype === 'slash-command' ? 'command' : effectiveSubtype as 'skill' | 'agent' | 'command';
+      let mainFile: string;
+      if (resourceType === 'command') {
+        mainFile = `${resourceName}.md`;
+      } else if (resourceType === 'agent') {
+        mainFile = 'AGENT.md';
+      } else {
+        mainFile = 'SKILL.md';
+      }
 
       // Determine eager setting with precedence: CLI flag > package-level > default (lazy)
       // options.eager is: true (--eager), false (--lazy), or undefined (no flag)
@@ -1706,11 +1790,12 @@ export function createInstallCommand(): Command {
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
     .option('--hook-mapping <strategy>', 'Hook mapping strategy: auto (default), strict, skip', 'auto')
     .option('--frozen-lockfile', 'Fail if lock file needs to be updated (for CI)')
+    .option('-y, --yes', 'Auto-confirm prompts (overwrite files without asking)')
     .option('--no-append', 'Skip adding skill to manifest file (skill files only)')
     .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure')
     .option('--eager', 'Force skill/agent to always activate (not on-demand)')
     .option('--lazy', 'Use default on-demand activation (overrides package eager setting)')
-    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean }) => {
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; yes?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = (options.format || options.as) as Format | undefined;
       const validFormats = FORMATS;
@@ -1746,6 +1831,7 @@ export function createInstallCommand(): Command {
         as: convertTo,
         subtype: options.subtype as Subtype | undefined,
         frozenLockfile: options.frozenLockfile,
+        force: options.yes,
         location: options.location,
         noAppend: options.noAppend,
         manifestFile: options.manifestFile,

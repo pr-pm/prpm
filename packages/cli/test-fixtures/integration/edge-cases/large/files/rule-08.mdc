@@ -1,0 +1,25 @@
+---
+description: Large test rule
+globs: ["**/*.ts"]
+alwaysApply: false
+---
+
+# Large Test Rule
+
+This is test rule number in the large package scalability test.
+
+## Guidelines
+
+1. Follow consistent coding patterns
+2. Write comprehensive tests
+3. Document your code
+4. Use meaningful variable names
+5. Handle errors gracefully
+
+## Best Practices
+
+- Keep functions small and focused
+- Use TypeScript for type safety
+- Write unit tests for all new code
+- Review code before merging
+- Follow the project style guide

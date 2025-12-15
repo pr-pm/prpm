@@ -305,20 +305,23 @@ export class RegistryClient {
    * Install collection (get installation plan)
    */
   async installCollection(options: {
-    scope: string;
     id: string;
     version?: string;
     format?: string;
     skipOptional?: boolean;
   }): Promise<CollectionInstallResult> {
-    const params = new URLSearchParams();
-    if (options.format) params.append('format', options.format);
-    if (options.skipOptional) params.append('skipOptional', 'true');
+    // Build request body for POST (version is passed in body, not URL)
+    const body: Record<string, any> = {};
+    if (options.version) body.version = options.version;
+    if (options.format) body.format = options.format;
+    if (options.skipOptional) body.skipOptional = true;
 
-    const versionPath = options.version ? `@${options.version}` : '';
     const response = await this.fetch(
-      `/api/v1/collections/${options.scope}/${options.id}${versionPath}/install?${params}`,
-      { method: 'POST' }
+      `/api/v1/collections/${encodeURIComponent(options.id)}/install`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }
     );
     return response.json() as Promise<CollectionInstallResult>;
   }

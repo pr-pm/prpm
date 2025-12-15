@@ -156,3 +156,44 @@ export async function requireVerified(
     });
   }
 }
+
+/**
+ * CI Mode authentication bypass
+ *
+ * When CI_MODE=true environment variable is set, this middleware creates a
+ * synthetic CI test user with admin privileges for testing purposes.
+ *
+ * SECURITY: This should NEVER be enabled in production. It is intended only
+ * for integration tests running in GitHub Actions against a local ephemeral
+ * registry instance.
+ *
+ * Usage: Set CI_MODE=true in the environment and use this as a preHandler
+ * for routes that need to allow anonymous access during CI testing.
+ */
+export async function ciModeAuth(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  if (process.env.CI_MODE === 'true') {
+    // Create synthetic CI user for testing
+    // Use a valid UUID format (zeros are valid UUIDs)
+    request.user = {
+      user_id: '00000000-0000-0000-0000-000000000000',
+      username: 'ci-test',
+      is_admin: true,
+    };
+    request.log.info({ ciMode: true, username: 'ci-test' }, 'CI_MODE: Using synthetic test user');
+    return;
+  }
+
+  // Fall through to normal JWT authentication
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    return reply.code(401).send({
+      error: 'Unauthorized',
+      message: 'Authentication required. Please log in.',
+      statusCode: 401,
+    });
+  }
+}

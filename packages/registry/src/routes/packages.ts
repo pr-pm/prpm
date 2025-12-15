@@ -14,7 +14,7 @@ import {
 import { Package, PackageVersion, PackageInfo } from "../types.js";
 import { toError } from "../types/errors.js";
 import { config } from "../config.js";
-import { optionalAuth } from "../middleware/auth.js";
+import { optionalAuth, ciModeAuth } from "../middleware/auth.js";
 import { createPublishRateLimiter } from "../middleware/rate-limit.js";
 import { createConcurrencyController } from "../middleware/concurrency-control.js";
 import type { AIMetadataResult } from "../scoring/ai-evaluator.js";
@@ -776,7 +776,8 @@ export async function packageRoutes(server: FastifyInstance) {
     "/",
     {
       preHandler: [
-        server.authenticate,
+        // Use ciModeAuth which allows CI_MODE bypass or falls back to JWT auth
+        ciModeAuth,
         publishRateLimiter,
         publishConcurrencyControl,
       ],
@@ -874,11 +875,21 @@ export async function packageRoutes(server: FastifyInstance) {
         }
 
         // Fetch user info for scoping and validation
-        const user = await queryOne<{ username: string; is_admin: boolean }>(
-          server,
-          "SELECT username, is_admin FROM users WHERE id = $1",
-          [userId],
-        );
+        // In CI_MODE, use synthetic user info directly instead of querying DB
+        const isCIMode = process.env.CI_MODE === "true";
+        let user: { username: string; is_admin: boolean } | null;
+
+        if (isCIMode && request.user?.username === 'ci-test') {
+          // Use synthetic CI user - no DB query needed
+          user = { username: 'ci-test', is_admin: true };
+          server.log.info({ ciMode: true }, 'Using synthetic CI user for publish');
+        } else {
+          user = await queryOne<{ username: string; is_admin: boolean }>(
+            server,
+            "SELECT username, is_admin FROM users WHERE id = $1",
+            [userId],
+          );
+        }
 
         if (!user) {
           return reply.status(500).send({
@@ -889,7 +900,8 @@ export async function packageRoutes(server: FastifyInstance) {
 
         // Admin override: if user is admin and publishAsAuthor is specified, use that for scoping
         let usernameLowercase = user.username.toLowerCase();
-        let effectiveAuthorId = userId; // Default to publishing admin's user ID
+        // In CI_MODE, don't set author_id since the synthetic user doesn't exist in DB
+        let effectiveAuthorId: string | null = isCIMode ? null : userId; // Default to publishing admin's user ID (null in CI mode)
 
         if (user.is_admin && publishAsAuthor) {
           usernameLowercase = publishAsAuthor.toLowerCase();
@@ -1624,10 +1636,16 @@ export async function packageRoutes(server: FastifyInstance) {
           message: `Successfully published ${packageName}@${version}`,
         });
       } catch (error: unknown) {
-        server.log.error({ error: String(error) }, "Failed to publish package");
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        server.log.error({
+          error: errorMessage,
+          stack: errorStack,
+          packageName: manifest?.name ?? "unknown",
+        }, "Failed to publish package");
         return reply.status(500).send({
           error: "Failed to publish package",
-          message: error instanceof Error ? error.message : "Unknown error",
+          message: errorMessage,
         });
       }
     },

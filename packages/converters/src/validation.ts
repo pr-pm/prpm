@@ -61,15 +61,18 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'claude:skill': 'claude-skill.schema.json',
       'claude:slash-command': 'claude-slash-command.schema.json',
       'claude:hook': 'claude-hook.schema.json',
+      'claude:plugin': 'claude-plugin.schema.json',
       'cursor:slash-command': 'cursor-command.schema.json',
       'cursor:hook': 'cursor-hooks.schema.json', // cursor + hook subtype uses cursor-hooks schema
-      'kiro:hook': 'kiro-hooks.schema.json',
+      'kiro:hook': 'kiro-hook.schema.json',
       'kiro:agent': 'kiro-agent.schema.json',
       'droid:skill': 'droid-skill.schema.json',
       'droid:slash-command': 'droid-slash-command.schema.json',
       'droid:hook': 'droid-hook.schema.json',
       'opencode:slash-command': 'opencode-slash-command.schema.json',
+      'opencode:plugin': 'opencode-plugin.schema.json',
       'gemini:extension': 'gemini-extension.schema.json',
+      'mcp:server': 'mcp-server.schema.json',
     };
 
     schemaFilename = subtypeSchemaMap[cacheKey];

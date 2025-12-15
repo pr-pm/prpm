@@ -1,0 +1,11 @@
+---
+description: Dry run test rule
+globs: ["**/*.ts"]
+alwaysApply: false
+---
+
+# Dry Run Test Rule
+
+This rule is used to test --dry-run functionality.
+
+If this file exists after a --dry-run install, the test has FAILED.

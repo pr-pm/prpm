@@ -1,0 +1,9 @@
+{
+  "frontmatter": {
+    "name": "ci-test-claude-hook",
+    "description": "CI Test Claude Hook for PRPM integration testing",
+    "event": "SessionStart",
+    "language": "bash"
+  },
+  "content": "# CI Test Hook\n\nTest hook for PRPM integration testing.\n\n```bash\n#!/bin/bash\necho 'CI test hook executed'\n```"
+}

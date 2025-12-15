@@ -1,0 +1,9 @@
+# CI Test Gemini CLI Slash Command
+# Tests installation to .gemini/commands/
+
+[command]
+name = "ci-test"
+description = "CI Test command for PRPM integration testing"
+
+[command.parameters]
+test_param = { type = "string", description = "Test parameter", required = false }

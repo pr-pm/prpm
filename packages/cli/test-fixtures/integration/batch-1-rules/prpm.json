@@ -1,0 +1,84 @@
+{
+  "$schema": "https://prpm.dev/schemas/manifest.json",
+  "name": "@ci-test/batch-1-rules",
+  "version": "1.0.0",
+  "description": "Integration test batch 1: Rule-type packages across all valid formats",
+  "author": "ci-test",
+  "license": "MIT",
+  "repository": "https://github.com/pr-pm/prpm",
+  "tags": ["ci-test", "integration-test"],
+  "packages": [
+    {
+      "name": "@ci-test/cursor-rule",
+      "version": "1.0.0",
+      "description": "CI test: Cursor rule package for integration testing",
+      "format": "cursor",
+      "subtype": "rule",
+      "files": ["files/cursor-rule.mdc"]
+    },
+    {
+      "name": "@ci-test/claude-rule",
+      "version": "1.0.0",
+      "description": "CI test: Claude rule package for integration testing",
+      "format": "claude",
+      "subtype": "rule",
+      "files": ["files/claude-rule.md"]
+    },
+    {
+      "name": "@ci-test/continue-rule",
+      "version": "1.0.0",
+      "description": "CI test: Continue rule package for integration testing",
+      "format": "continue",
+      "subtype": "rule",
+      "files": ["files/continue-rule.md"]
+    },
+    {
+      "name": "@ci-test/windsurf-rule",
+      "version": "1.0.0",
+      "description": "CI test: Windsurf rule package for integration testing",
+      "format": "windsurf",
+      "subtype": "rule",
+      "files": ["files/windsurf-rule.md"]
+    },
+    {
+      "name": "@ci-test/copilot-rule",
+      "version": "1.0.0",
+      "description": "CI test: GitHub Copilot instruction package for integration testing",
+      "format": "copilot",
+      "subtype": "rule",
+      "files": ["files/copilot-rule.instructions.md"]
+    },
+    {
+      "name": "@ci-test/kiro-rule",
+      "version": "1.0.0",
+      "description": "CI test: Kiro steering file package for integration testing",
+      "format": "kiro",
+      "subtype": "rule",
+      "files": ["files/kiro-rule.md"]
+    },
+    {
+      "name": "@ci-test/agents-md-rule",
+      "version": "1.0.0",
+      "description": "CI test: AGENTS.md rule package for integration testing",
+      "format": "agents.md",
+      "subtype": "rule",
+      "files": ["files/agents-md-rule.md"]
+    },
+    {
+      "name": "@ci-test/generic-rule",
+      "version": "1.0.0",
+      "description": "CI test: Generic rule package for integration testing",
+      "format": "generic",
+      "subtype": "rule",
+      "files": ["files/generic-rule.md"]
+    },
+    {
+      "name": "@ci-test/mcp-rule",
+      "version": "1.0.0",
+      "description": "CI test: MCP rule package for integration testing",
+      "format": "mcp",
+      "subtype": "rule",
+      "files": ["files/mcp-rule.md"]
+    }
+  ]
+}

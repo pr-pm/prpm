@@ -1,3 +1,7 @@
+-- Enable pgvector extension for vector similarity search
+-- This extension must be available in the PostgreSQL instance
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- AI embeddings and enriched content for semantic search
 CREATE TABLE IF NOT EXISTS package_embeddings (
   package_id UUID PRIMARY KEY REFERENCES packages(id) ON DELETE CASCADE,

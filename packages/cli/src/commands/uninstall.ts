@@ -3,7 +3,7 @@
  */
 
 import { Command } from 'commander';
-import { removePackage, readLockfile, getLockfileKey, parseLockfileKey } from '../core/lockfile';
+import { removePackage, readLockfile, writeLockfile, getLockfileKey, parseLockfileKey, getCollectionFromLockfile, removeCollectionFromLockfile } from '../core/lockfile';
 import { stripAuthorNamespace } from '../core/filesystem';
 import { FORMATS } from '../types';
 import { promises as fs } from 'fs';
@@ -46,6 +46,191 @@ async function promptForFormat(packageId: string, formats: string[]): Promise<st
 }
 
 /**
+ * Handle uninstalling a collection and all its packages
+ */
+async function handleCollectionUninstall(
+  collectionKey: string,
+  collection: { name_slug: string; version?: string; packages: string[] } | null,
+  lockfile: any,
+  requestedFormat?: string
+): Promise<void> {
+  if (!collection) {
+    throw new CLIError(`❌ Collection "collections/${collectionKey}" not found in lockfile`, 1);
+  }
+
+  console.log(`\n📦 Uninstalling collection: ${collectionKey}`);
+  console.log(`   ${collection.packages.length} packages to uninstall\n`);
+
+  let uninstalledCount = 0;
+  let failedCount = 0;
+
+  // Uninstall each package in the collection
+  for (const packageId of collection.packages) {
+    try {
+      // Find all lockfile keys for this package that match the collection
+      const matchingKeys: string[] = [];
+      for (const key of Object.keys(lockfile.packages)) {
+        const parsed = parseLockfileKey(key);
+        if (parsed.packageId === packageId) {
+          const pkg = lockfile.packages[key];
+          // Check if this package was installed from this collection
+          if (pkg.fromCollection?.name_slug === collectionKey) {
+            // If format is specified, only include matching format
+            if (requestedFormat) {
+              if (pkg.format === requestedFormat || parsed.format === requestedFormat) {
+                matchingKeys.push(key);
+              }
+            } else {
+              matchingKeys.push(key);
+            }
+          }
+        }
+      }
+
+      if (matchingKeys.length === 0) {
+        console.log(`   ⚠️  ${packageId}: not found (may have been uninstalled manually)`);
+        continue;
+      }
+
+      // Uninstall each matching format
+      for (const lockfileKey of matchingKeys) {
+        const parsed = parseLockfileKey(lockfileKey);
+        const formatDisplay = parsed.format ? ` (${parsed.format})` : '';
+
+        // Use the existing uninstall logic for individual packages
+        await uninstallSinglePackage(lockfileKey, packageId, lockfile);
+        console.log(`   ✓ ${packageId}${formatDisplay}`);
+        uninstalledCount++;
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`   ✗ ${packageId}: ${errorMessage}`);
+      failedCount++;
+    }
+  }
+
+  // Re-read the lockfile since removePackage writes its own copy
+  // This avoids a race condition where our stale copy would overwrite package removals
+  const freshLockfile = await readLockfile();
+  if (freshLockfile) {
+    removeCollectionFromLockfile(freshLockfile, collectionKey);
+    await writeLockfile(freshLockfile);
+  }
+
+  console.log(`\n✅ Collection uninstalled`);
+  console.log(`   ${uninstalledCount} packages removed`);
+  if (failedCount > 0) {
+    console.log(`   ${failedCount} packages failed to uninstall`);
+  }
+  console.log(`   🔒 Collection removed from lock file`);
+}
+
+/**
+ * Uninstall a single package by its lockfile key
+ * Extracted from handleUninstall for reuse in collection uninstall
+ */
+async function uninstallSinglePackage(
+  lockfileKey: string,
+  packageId: string,
+  lockfile: any
+): Promise<void> {
+  const parsed = parseLockfileKey(lockfileKey);
+  const pkg = await removePackage(lockfileKey);
+
+  if (!pkg) {
+    throw new Error(`Package not found in lockfile`);
+  }
+
+  // Special handling for progressive disclosure skills and agents
+  if (pkg.progressiveDisclosure) {
+    const { manifestPath, resourceName, skillName } = pkg.progressiveDisclosure;
+    const name = resourceName || skillName;
+
+    if (name) {
+      try {
+        await removeSkillFromManifest(name, manifestPath);
+      } catch (error) {
+        // Silently continue - manifest may have been modified manually
+      }
+    }
+  }
+
+  // Special handling for Claude plugins and MCP server packages
+  if (pkg.pluginMetadata) {
+    const { files, mcpServers, mcpGlobal } = pkg.pluginMetadata;
+
+    for (const filePath of files) {
+      try {
+        await fs.unlink(filePath);
+      } catch (error) {
+        const err = error as NodeJS.ErrnoException;
+        if (err.code !== 'ENOENT') {
+          // Silently continue
+        }
+      }
+    }
+
+    if (mcpServers && Object.keys(mcpServers).length > 0) {
+      removeMCPServers(mcpServers, mcpGlobal || false);
+    }
+
+    return;
+  }
+
+  // Special handling for Claude hooks
+  if (pkg.format === 'claude' && pkg.subtype === 'hook' && pkg.hookMetadata) {
+    const settingsPath = pkg.installedPath || '.claude/settings.json';
+
+    try {
+      const settingsContent = await fs.readFile(settingsPath, 'utf-8');
+      const settings = JSON.parse(settingsContent);
+
+      if (settings.hooks) {
+        for (const event of pkg.hookMetadata.events) {
+          if (settings.hooks[event]) {
+            settings.hooks[event] = settings.hooks[event].filter(
+              (hook: any) => hook.__prpm_hook_id !== pkg.hookMetadata!.hookId
+            );
+
+            if (settings.hooks[event].length === 0) {
+              delete settings.hooks[event];
+            }
+          }
+        }
+
+        await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+      }
+    } catch (error) {
+      // Silently continue - settings may have been modified manually
+    }
+
+    return;
+  }
+
+  // Standard file/directory uninstall
+  const targetPath = pkg.installedPath;
+
+  if (!targetPath) {
+    throw new Error('Installation path unknown');
+  }
+
+  try {
+    const stats = await fs.stat(targetPath);
+
+    if (stats.isDirectory()) {
+      await fs.rm(targetPath, { recursive: true, force: true });
+    } else if (stats.isFile()) {
+      await fs.unlink(targetPath);
+    }
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err.code !== 'ENOENT') {
+      throw err;
+    }
+  }
+}
+
+/**
  * Handle the uninstall command
  */
 export async function handleUninstall(name: string, options: { format?: string; as?: string } = {}): Promise<void> {
@@ -61,6 +246,17 @@ export async function handleUninstall(name: string, options: { format?: string; 
 
     if (!lockfile) {
       throw new CLIError('❌ No prpm.lock file found', 1);
+    }
+
+    // Check if this is a collection (starts with 'collections/' or exists in lockfile.collections)
+    const isCollectionPrefix = name.startsWith('collections/');
+    const collectionKey = isCollectionPrefix ? name.replace('collections/', '') : name;
+    const collection = getCollectionFromLockfile(lockfile, collectionKey);
+
+    if (collection || isCollectionPrefix) {
+      // Handle collection uninstall
+      await handleCollectionUninstall(collectionKey, collection, lockfile, requestedFormat);
+      return;
     }
 
     // Find all lockfile keys for this package
@@ -229,8 +425,8 @@ export async function handleUninstall(name: string, options: { format?: string; 
         }
       }
 
-      console.log(`✅ Successfully uninstalled ${name}`);
-      return;
+      console.log(`✅ Successfully uninstalled ${name}${formatDisplay}`);
+      continue; // Move to next package if multiple
     }
 
     // Standard file/directory uninstall for non-hook packages
@@ -288,8 +484,8 @@ export function createUninstallCommand(): Command {
   const command = new Command('uninstall');
 
   command
-    .description('Uninstall a prompt package')
-    .argument('<id>', 'Package ID to uninstall')
+    .description('Uninstall a prompt package or collection')
+    .argument('<id>', 'Package ID or collection name (e.g., collections/my-collection)')
     .option('--format <format>', 'Specific format to uninstall (if multiple formats installed)')
     .option('--as <format>', 'Alias for --format (use when multiple formats are installed)')
     .alias('remove')  // Keep 'remove' as an alias for backwards compatibility

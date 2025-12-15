@@ -252,10 +252,10 @@ export async function validatePackageFiles(
         errors.push(...result.errors);
         warnings.push(...result.warnings);
       } else if (formatType === 'kiro') {
-        // Kiro can be steering files (.md) or hooks (.json)
+        // Kiro can be steering files (.md), hooks (.json), or agents (.json)
         if (filePath.endsWith('.json')) {
-          // Validate Kiro hooks using validateFormat with 'hook' subtype
-          const result = await validateStructuredFile(filePath, formatType, 'hook');
+          // Validate Kiro JSON files using manifest's subtype (hook, agent, etc.)
+          const result = await validateStructuredFile(filePath, formatType, manifest.subtype);
           errors.push(...result.errors);
           warnings.push(...result.warnings);
         } else {

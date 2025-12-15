@@ -129,9 +129,14 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
   try {
     const config = await getConfig();
 
-    // Check if logged in
-    if (!config.token) {
+    // Check if logged in (skip in CI mode)
+    const isCIMode = process.env.CI_MODE === 'true';
+    if (!config.token && !isCIMode) {
       throw new CLIError('❌ Not logged in. Run "prpm login" first.', 1);
+    }
+
+    if (isCIMode && !config.token) {
+      console.log("🤖 CI Mode: Publishing without authentication\n");
     }
 
     console.log("📦 Publishing package...\n");

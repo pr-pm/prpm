@@ -1,0 +1,21 @@
+---
+description: Dependent rule that extends other packages
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# Dependent Rule
+
+This rule depends on and extends functionality from:
+- @ci-test/cursor-rule
+- @ci-test/claude-agent
+
+## Extended Guidelines
+
+When using this rule, ensure the dependencies are also installed.
+
+### Integration Points
+
+1. Follows cursor-rule conventions
+2. Works with claude-agent capabilities
+3. Provides additional context for both

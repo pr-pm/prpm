@@ -38,6 +38,7 @@ export function fromClaude(
   const sections: Section[] = [];
 
   // Extract metadata from frontmatter
+  // Initial title: frontmatter.name > metadata.id (H1 title will override if found)
   const metadataSection: MetadataSection = {
     type: 'metadata',
     data: {
@@ -106,7 +107,8 @@ export function fromClaude(
   // Parse body content
   const { sections: bodySections, h1Title, h1Icon } = parseMarkdownBody(body);
 
-  // Update metadata title from H1 if present (overrides frontmatter name)
+  // Update metadata title from H1 if found - the H1 represents the content's actual title
+  // (H1s that look like data/output are already filtered out by parseMarkdownBody)
   if (h1Title) {
     metadataSection.data.title = h1Title;
     if (h1Icon) {
@@ -120,10 +122,11 @@ export function fromClaude(
   const subtype = detectSubtypeFromFrontmatter(frontmatter, explicitSubtype);
 
   // Create package with new taxonomy
+  // pkg.name is for registry/package system, pkg.metadata.title is for display
   const pkg: Partial<CanonicalPackage> = {
     id: metadata.id,
     version: metadata.version || '1.0.0',
-    name: frontmatter.name || metadata.id,
+    name: metadata.name || frontmatter.name || metadata.id,  // Package name for registry
     description: frontmatter.description || '',
     author: metadata.author || 'unknown',
     tags: metadata.tags || [],
@@ -194,28 +197,40 @@ function parseMarkdownBody(body: string): {
   let preamble: string[] = [];
   let h1Title: string | undefined;
   let h1Icon: string | undefined;
+  let inCodeBlock = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Check for h1 (main title) - extract it for metadata
-    if (line.startsWith('# ')) {
-      const titleText = line.substring(2).trim();
-
-      // Check if title has an icon (emoji at start)
-      const iconMatch = titleText.match(/^(\p{Emoji})\s+(.+)$/u);
-      if (iconMatch) {
-        h1Icon = iconMatch[1];
-        h1Title = iconMatch[2];
-      } else {
-        h1Title = titleText;
-      }
-
-      continue; // Skip main title in body sections
+    // Track code blocks to avoid parsing headers inside them
+    if (line.startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
     }
 
-    // Check for h2 (section header)
-    if (line.startsWith('## ')) {
+    // Check for h1 (main title) - extract it for metadata
+    // Only take the FIRST H1 and ignore H1s inside code blocks
+    if (line.startsWith('# ') && !inCodeBlock && h1Title === undefined) {
+      const titleText = line.substring(2).trim();
+
+      // Skip H1s that look like output/data (contain JSON-like patterns)
+      if (titleText.includes('{') || titleText.includes('[') || titleText.startsWith('Output')) {
+        // This is likely an example/output, not the title - treat as content
+      } else {
+        // Check if title has an icon (emoji at start)
+        const iconMatch = titleText.match(/^(\p{Emoji})\s+(.+)$/u);
+        if (iconMatch) {
+          h1Icon = iconMatch[1];
+          h1Title = iconMatch[2];
+        } else {
+          h1Title = titleText;
+        }
+
+        continue; // Skip main title in body sections
+      }
+    }
+
+    // Check for h2 (section header) - ignore headers inside code blocks
+    if (line.startsWith('## ') && !inCodeBlock) {
       // Save previous section
       if (currentSection) {
         sections.push(

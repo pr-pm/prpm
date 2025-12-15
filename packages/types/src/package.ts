@@ -101,30 +101,30 @@ export const SUBTYPES: readonly Subtype[] = [
 
 /**
  * Mapping of formats to their supported subtypes
- * Defines which subtypes are valid/available for each format
+ * Defines which subtypes are valid/available for each format (can be installed as)
  */
 export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
-  cursor: ["rule", "agent", "slash-command", "tool", "hook"],
+  cursor: ["rule", "slash-command", "hook", "skill", "agent"],  // skill/agent via progressive disclosure
   claude: ["skill", "agent", "slash-command", "tool", "hook", "plugin"],
-  "claude.md": ["agent"],
-  continue: ["rule", "agent", "slash-command", "tool"],
-  windsurf: ["rule", "agent", "slash-command", "tool"],
-  copilot: ["tool", "chatmode"],
-  kiro: ["rule", "agent", "tool", "hook"],
+  "claude.md": ["skill", "agent"],
+  continue: ["rule", "prompt"],
+  windsurf: ["rule"],
+  copilot: ["rule", "chatmode", "skill", "agent"],  // skill/agent via progressive disclosure
+  kiro: ["rule", "hook", "agent", "skill"],  // skill via progressive disclosure
   gemini: ["slash-command", "extension"],
   "gemini-extension": ["extension", "plugin"],
-  "gemini.md": ["slash-command"],
-  opencode: ["agent", "slash-command", "tool", "plugin"],
-  ruler: ["rule", "agent", "tool"],
-  droid: ["skill", "slash-command", "hook"],
+  "gemini.md": ["skill", "agent"],
+  opencode: ["agent", "slash-command", "tool", "plugin", "skill"],  // skill via progressive disclosure
+  ruler: ["rule"],
+  droid: ["skill", "slash-command", "hook", "agent"],  // agent via progressive disclosure
   trae: ["rule"],
-  aider: ["rule"],
+  aider: ["rule", "skill", "agent"],
   zencoder: ["rule"],
   replit: ["rule"],
-  zed: ["rule", "slash-command", "extension"],
-  codex: ["rule", "agent", "slash-command"],
+  zed: ["rule", "slash-command", "extension", "skill", "agent"],  // skill/agent via progressive disclosure
+  codex: ["rule", "skill", "agent", "slash-command"],
   mcp: ["server", "tool"],
-  "agents.md": ["skill", "agent", "rule"],
+  "agents.md": ["skill", "agent", "rule", "slash-command"],
   generic: [
     "rule",
     "agent",
@@ -135,6 +135,27 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
     "hook",
     "plugin",
   ],
+} as const;
+
+/**
+ * Mapping of formats to their NATIVELY supported subtypes
+ * Subtypes not listed here will use progressive disclosure (AGENTS.md manifest)
+ * This determines whether a package installs to the format's native directory
+ * or to .openskills/.openagents/.opencommands with AGENTS.md reference
+ */
+export const FORMAT_NATIVE_SUBTYPES: Partial<Record<Format, readonly Subtype[]>> = {
+  cursor: ["rule", "slash-command", "hook"],  // No native agent/skill - uses AGENTS.md
+  claude: ["skill", "agent", "slash-command", "tool", "hook", "plugin"],  // Full native support
+  // Note: claude.md is NOT listed - it uses progressive disclosure (.openskills/.openagents with manifest)
+  continue: ["rule", "prompt"],  // Full native support
+  windsurf: ["rule"],  // Full native support
+  copilot: ["rule", "chatmode"],  // No native skill/agent - uses AGENTS.md
+  kiro: ["rule", "hook", "agent"],  // No native skill - uses AGENTS.md
+  gemini: ["slash-command", "extension"],  // Full native support
+  opencode: ["agent", "slash-command", "tool", "plugin"],  // No native skill - uses AGENTS.md
+  droid: ["skill", "slash-command", "hook"],  // No native agent - uses AGENTS.md
+  zed: ["rule", "slash-command", "extension"],  // No native skill/agent - uses AGENTS.md
+  // Formats not listed use progressive disclosure for all skill/agent/command subtypes
 } as const;
 
 export type PackageVisibility = "public" | "private" | "unlisted";

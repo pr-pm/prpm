@@ -1,0 +1,12 @@
+{
+  "name": "CI Test MCP Server",
+  "description": "CI Test MCP Server for PRPM integration testing",
+  "version": "1.0.0",
+  "mcpServers": {
+    "ci-test": {
+      "command": "node",
+      "args": ["server.js"],
+      "env": {}
+    }
+  }
+}

@@ -6,13 +6,34 @@ import Stripe from 'stripe';
 import type { FastifyInstance } from 'fastify';
 import { query, queryOne } from '../db/index.js';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+// Check if Stripe is configured
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const stripeEnabled = !!STRIPE_SECRET_KEY;
+
+// Initialize Stripe only if API key is provided
+// Use a dummy key format for disabled mode to satisfy SDK validation
+const stripe = new Stripe(STRIPE_SECRET_KEY || 'sk_test_disabled_placeholder', {
   apiVersion: '2025-02-24.acacia',
 });
 
 // Subscription price IDs (to be set in environment variables)
 const VERIFIED_PLAN_PRICE_ID = process.env.STRIPE_VERIFIED_PLAN_PRICE_ID || '';
+
+/**
+ * Check if Stripe is enabled
+ */
+export function isStripeEnabled(): boolean {
+  return stripeEnabled;
+}
+
+/**
+ * Guard function to ensure Stripe is enabled before API calls
+ */
+function requireStripe(): void {
+  if (!stripeEnabled) {
+    throw new Error('Stripe is not configured. Set STRIPE_SECRET_KEY environment variable.');
+  }
+}
 
 export interface CreateCheckoutSessionParams {
   orgId: string;
@@ -39,6 +60,7 @@ export async function createCustomer(
   orgName: string,
   email?: string
 ): Promise<string> {
+  requireStripe();
   try {
     const customer = await stripe.customers.create({
       name: orgName,
@@ -74,6 +96,7 @@ export async function getOrCreateCustomer(
   orgName: string,
   email?: string
 ): Promise<string> {
+  requireStripe();
   // Check if customer already exists
   const org = await queryOne<{ stripe_customer_id: string | null }>(
     server,
@@ -96,6 +119,7 @@ export async function createCheckoutSession(
   server: FastifyInstance,
   params: CreateCheckoutSessionParams
 ): Promise<string> {
+  requireStripe();
   try {
     const { orgId, orgName, successUrl, cancelUrl, customerEmail } = params;
 
@@ -149,6 +173,7 @@ export async function createPortalSession(
   orgId: string,
   returnUrl: string
 ): Promise<string> {
+  requireStripe();
   try {
     const org = await queryOne<{ stripe_customer_id: string | null }>(
       server,
@@ -219,6 +244,7 @@ export async function cancelSubscription(
   server: FastifyInstance,
   orgId: string
 ): Promise<void> {
+  requireStripe();
   try {
     const org = await queryOne<{ stripe_subscription_id: string | null }>(
       server,
@@ -255,6 +281,7 @@ export async function resumeSubscription(
   server: FastifyInstance,
   orgId: string
 ): Promise<void> {
+  requireStripe();
   try {
     const org = await queryOne<{ stripe_subscription_id: string | null }>(
       server,
@@ -291,6 +318,7 @@ export async function handleWebhookEvent(
   server: FastifyInstance,
   event: Stripe.Event
 ): Promise<void> {
+  requireStripe();
   const eventType = event.type;
 
   server.log.info({ eventType, eventId: event.id }, '📬 Processing Stripe webhook event');

@@ -29,7 +29,7 @@ export interface LockfilePackage {
   sourceSubtype?: string; // Original subtype from registry
   installedPath?: string; // Path where the package was installed
   fromCollection?: {
-    scope: string;
+    scope?: string;
     name_slug: string;
     version?: string;
   };
@@ -38,13 +38,13 @@ export interface LockfilePackage {
     events: string[]; // e.g., ['PreToolUse', 'PostToolUse']
     hookId: string; // Unique identifier to find and remove this hook
   };
-  // For progressive disclosure (agents.md skills in .openskills/ or agents in .openagents/)
+  // For progressive disclosure (agents.md skills in .openskills/, agents in .openagents/, commands in .opencommands/)
   progressiveDisclosure?: {
     mode: 'progressive'; // Progressive disclosure mode
     resourceDir: string; // Path to resource directory (e.g., '.openskills/package-name' or '.openagents/agent-name')
     manifestPath: string; // Path to AGENTS.md manifest file
     resourceName: string; // Resource name as referenced in XML
-    resourceType: 'skill' | 'agent'; // Type of resource
+    resourceType: 'skill' | 'agent' | 'command'; // Type of resource
     // Legacy fields for backward compatibility
     skillsDir?: string; // Deprecated: use resourceDir
     skillName?: string; // Deprecated: use resourceName
@@ -157,7 +157,7 @@ export function addToLockfile(
     sourceSubtype?: string;
     installedPath?: string;
     fromCollection?: {
-      scope: string;
+      scope?: string;
       name_slug: string;
       version?: string;
     };
@@ -170,7 +170,7 @@ export function addToLockfile(
       resourceDir: string;
       manifestPath: string;
       resourceName: string;
-      resourceType: 'skill' | 'agent';
+      resourceType: 'skill' | 'agent' | 'command';
       // Legacy support
       skillsDir?: string;
       skillName?: string;

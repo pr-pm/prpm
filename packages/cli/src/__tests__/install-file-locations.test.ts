@@ -310,7 +310,7 @@ describe('install command - file locations', () => {
       expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
     });
 
-    it('should install any package with --as cursor to .cursor/rules with .mdc extension', async () => {
+    it('should install skill with --as cursor to .openskills (progressive disclosure)', async () => {
       const mockPackage = {
         id: 'test-skill',
         name: 'test-skill',
@@ -330,8 +330,8 @@ describe('install command - file locations', () => {
 
       await handleInstall('test-skill', { as: 'cursor' });
 
-      // Should go to .cursor/rules with .mdc extension when using --as cursor
-      const expectedPath = '.cursor/rules/test-skill.mdc';
+      // Cursor doesn't have native skill support - uses progressive disclosure
+      const expectedPath = '.openskills/test-skill/SKILL.md';
       expect(saveFile).toHaveBeenCalledWith(expectedPath, expect.any(String));
     });
 
@@ -621,6 +621,160 @@ describe('install command - file locations', () => {
 
       expect(promptYesNoMock).not.toHaveBeenCalled();
       expect(saveFile).toHaveBeenCalledWith('AGENTS.md', expect.any(String));
+    });
+  });
+
+  describe('Progressive disclosure - partial native support', () => {
+    it('installs cursor agent to .openagents/<name>/AGENT.md and updates AGENTS.md manifest', async () => {
+      // Cursor has native rules/commands but no native agents
+      const mockPackage = {
+        id: 'test-cursor-agent',
+        name: 'test-cursor-agent',
+        format: 'claude',
+        subtype: 'agent',
+        tags: [],
+        total_downloads: 10,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Cursor Agent'));
+
+      await handleInstall('test-cursor-agent', { as: 'cursor' });
+
+      expect(saveFile).toHaveBeenCalledWith('.openagents/test-cursor-agent/AGENT.md', expect.any(String));
+      expect(addSkillToManifestMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'test-cursor-agent',
+          skillPath: '.openagents/test-cursor-agent',
+          mainFile: 'AGENT.md',
+          resourceType: 'agent',
+        }),
+        'AGENTS.md'
+      );
+    });
+
+    it('installs opencode skill to .openskills/<name>/SKILL.md and updates AGENTS.md manifest', async () => {
+      // OpenCode has native agents/commands but no native skills
+      const mockPackage = {
+        id: 'test-opencode-skill',
+        name: 'test-opencode-skill',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 10,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test OpenCode Skill'));
+
+      await handleInstall('test-opencode-skill', { as: 'opencode' });
+
+      expect(saveFile).toHaveBeenCalledWith('.openskills/test-opencode-skill/SKILL.md', expect.any(String));
+      expect(addSkillToManifestMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'test-opencode-skill',
+          skillPath: '.openskills/test-opencode-skill',
+          mainFile: 'SKILL.md',
+          resourceType: 'skill',
+        }),
+        'AGENTS.md'
+      );
+    });
+
+    it('installs opencode agent to native .opencode/agent/<name>.md (no progressive disclosure)', async () => {
+      // OpenCode has native agent support - should NOT use progressive disclosure
+      const mockPackage = {
+        id: 'test-opencode-agent',
+        name: 'test-opencode-agent',
+        format: 'claude',
+        subtype: 'agent',
+        tags: [],
+        total_downloads: 10,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test OpenCode Agent'));
+
+      await handleInstall('test-opencode-agent', { as: 'opencode' });
+
+      expect(saveFile).toHaveBeenCalledWith('.opencode/agent/test-opencode-agent.md', expect.any(String));
+      // Should NOT call addSkillToManifest for native agent support
+      expect(addSkillToManifestMock).not.toHaveBeenCalled();
+    });
+
+    it('installs droid agent to .openagents/<name>/AGENT.md and updates AGENTS.md manifest', async () => {
+      // Factory Droid has native skills/commands/hooks but no native agents
+      const mockPackage = {
+        id: 'test-droid-agent',
+        name: 'test-droid-agent',
+        format: 'claude',
+        subtype: 'agent',
+        tags: [],
+        total_downloads: 10,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Droid Agent'));
+
+      await handleInstall('test-droid-agent', { as: 'droid' });
+
+      expect(saveFile).toHaveBeenCalledWith('.openagents/test-droid-agent/AGENT.md', expect.any(String));
+      expect(addSkillToManifestMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'test-droid-agent',
+          skillPath: '.openagents/test-droid-agent',
+          mainFile: 'AGENT.md',
+          resourceType: 'agent',
+        }),
+        'AGENTS.md'
+      );
+    });
+
+    it('installs cursor skill to .openskills with progressive disclosure (no native skill support)', async () => {
+      // Cursor does NOT have native skill support - skills use progressive disclosure
+      const mockPackage = {
+        id: 'test-cursor-skill',
+        name: 'test-cursor-skill',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 10,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Test Cursor Skill'));
+
+      await handleInstall('test-cursor-skill', { as: 'cursor' });
+
+      // Skills go to .openskills/ with AGENTS.md reference (progressive disclosure)
+      expect(saveFile).toHaveBeenCalledWith('.openskills/test-cursor-skill/SKILL.md', expect.any(String));
+      // SHOULD call addSkillToManifest for progressive disclosure
+      expect(addSkillToManifestMock).toHaveBeenCalled();
     });
   });
 

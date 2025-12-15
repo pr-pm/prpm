@@ -23,28 +23,44 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { fileExists } from './filesystem.js';
 
-export type ResourceType = 'skill' | 'agent';
+export type ResourceType = 'skill' | 'agent' | 'command';
 
 export interface SkillManifestEntry {
-  name: string; // Resource name (e.g., 'backend-architect', 'code-reviewer')
+  name: string; // Resource name (e.g., 'backend-architect', 'code-reviewer', 'build-actions')
   description: string; // Brief description for progressive disclosure
-  skillPath: string; // Relative path to resource directory (e.g., '.openskills/backend-architect' or '.openagents/code-reviewer')
-  mainFile?: string; // Main file (defaults to 'SKILL.md' for skills, 'AGENT.md' for agents)
-  resourceType?: ResourceType; // Type of resource: 'skill' or 'agent' (defaults to 'skill' for backward compatibility)
+  skillPath: string; // Relative path to resource directory or file (e.g., '.openskills/backend-architect', '.opencommands/build-actions.md')
+  mainFile?: string; // Main file (defaults to 'SKILL.md' for skills, 'AGENT.md' for agents, filename for commands)
+  resourceType?: ResourceType; // Type of resource: 'skill', 'agent', or 'command' (defaults to 'skill' for backward compatibility)
   eager?: boolean; // Whether this resource should always activate (eager) or be on-demand (lazy/default)
 }
 
 /**
- * Generate XML manifest entry for a skill or agent
+ * Generate XML manifest entry for a skill, agent, or command
  *
  * Format inspired by OpenSkills (@numman-ali)
  * @see https://github.com/numman-ali/openskills
  */
 export function generateSkillXML(entry: SkillManifestEntry): string {
   const resourceType = entry.resourceType || 'skill';
-  const tag = resourceType === 'agent' ? 'agent' : 'skill';
-  const mainFile = entry.mainFile || (resourceType === 'agent' ? 'AGENT.md' : 'SKILL.md');
-  const fullPath = path.join(entry.skillPath, mainFile);
+  let tag: string;
+  let mainFile: string;
+  let fullPath: string;
+
+  if (resourceType === 'command') {
+    tag = 'command';
+    // For commands, skillPath is the directory and mainFile is the filename
+    mainFile = entry.mainFile || `${entry.name}.md`;
+    fullPath = path.join(entry.skillPath, mainFile);
+  } else if (resourceType === 'agent') {
+    tag = 'agent';
+    mainFile = entry.mainFile || 'AGENT.md';
+    fullPath = path.join(entry.skillPath, mainFile);
+  } else {
+    tag = 'skill';
+    mainFile = entry.mainFile || 'SKILL.md';
+    fullPath = path.join(entry.skillPath, mainFile);
+  }
+
   const activation = entry.eager ? 'eager' : 'lazy';
 
   return `<${tag} activation="${activation}">
@@ -126,6 +142,30 @@ Usage notes:
 </usage>
 
 <available_agents>`;
+}
+
+/**
+ * Generate commands system header
+ */
+function generateCommandsSystemHeader(): string {
+  return `<commands_system priority="1">
+<usage>
+Commands are reusable workflows that can be invoked by the user or triggered by context.
+
+How to use commands:
+- When a user explicitly asks for a command (e.g., "run build-actions" or "/build-actions")
+- Or when the task context matches a command's description
+- Load the command: Bash("cat <path>")
+- Follow the instructions in the loaded command file
+- Example: Bash("cat .opencommands/build-actions.md")
+
+Usage notes:
+- Commands are loaded into your current context when invoked
+- Each command contains step-by-step instructions for a specific workflow
+- Commands may reference other skills or agents
+</usage>
+
+<available_commands>`;
 }
 
 /**
@@ -229,14 +269,17 @@ export async function addSkillToManifest(
   // Add new entry
   updatedResources.push(entry);
 
-  // Separate skills and agents, then further separate by eager/lazy
+  // Separate skills, agents, and commands, then further separate by eager/lazy
   const skills = updatedResources.filter(r => (r.resourceType || 'skill') === 'skill');
   const agents = updatedResources.filter(r => r.resourceType === 'agent');
+  const commands = updatedResources.filter(r => r.resourceType === 'command');
 
   const eagerSkills = skills.filter(s => s.eager === true);
   const lazySkills = skills.filter(s => s.eager !== true);
   const eagerAgents = agents.filter(a => a.eager === true);
   const lazyAgents = agents.filter(a => a.eager !== true);
+  const eagerCommands = commands.filter(c => c.eager === true);
+  const lazyCommands = commands.filter(c => c.eager !== true);
 
   // Reconstruct AGENTS.md
   let newContent = '';
@@ -248,9 +291,9 @@ export async function addSkillToManifest(
     newContent = beforeManifest;
   }
 
-  // Generate eager section first (priority="0") if there are any eager skills/agents
-  const hasEagerContent = eagerSkills.length > 0 || eagerAgents.length > 0;
-  const hasLazyContent = lazySkills.length > 0 || lazyAgents.length > 0;
+  // Generate eager section first (priority="0") if there are any eager skills/agents/commands
+  const hasEagerContent = eagerSkills.length > 0 || eagerAgents.length > 0 || eagerCommands.length > 0;
+  const hasLazyContent = lazySkills.length > 0 || lazyAgents.length > 0 || lazyCommands.length > 0;
 
   if (hasEagerContent) {
     // Eager skills section
@@ -273,6 +316,19 @@ Do not wait for explicit requests - invoke these agents when their expertise app
       newContent += eagerAgents.map(a => generateSkillXML(a)).join('\n\n');
       newContent += '\n\n</eager_agents>\n</agents_system>\n\n';
     }
+
+    // Eager commands section
+    if (eagerCommands.length > 0) {
+      newContent += `<commands_system priority="0">
+<usage>
+MANDATORY: These commands are always available and should be suggested proactively.
+When user tasks match these commands, offer to run them.
+</usage>
+
+<eager_commands>\n\n`;
+      newContent += eagerCommands.map(c => generateSkillXML(c)).join('\n\n');
+      newContent += '\n\n</eager_commands>\n</commands_system>\n\n';
+    }
   }
 
   // Generate lazy section (priority="1") - progressive disclosure
@@ -292,6 +348,14 @@ Do not wait for explicit requests - invoke these agents when their expertise app
       newContent += '\n\n';
       newContent += lazyAgents.map(a => generateSkillXML(a)).join('\n\n');
       newContent += '\n\n</available_agents>\n</agents_system>';
+    }
+
+    // Lazy commands
+    if (lazyCommands.length > 0) {
+      newContent += '\n\n' + generateCommandsSystemHeader();
+      newContent += '\n\n';
+      newContent += lazyCommands.map(c => generateSkillXML(c)).join('\n\n');
+      newContent += '\n\n</available_commands>\n</commands_system>';
     }
   }
 
@@ -405,6 +469,27 @@ function parseSkillsFromManifest(manifestXML: string): SkillManifestEntry[] {
       skillPath: dir,
       mainFile,
       resourceType: 'agent',
+      eager: activation === 'eager',
+    });
+  }
+
+  // Try new format for commands with activation attribute: <command activation="eager|lazy">...</command>
+  const commandFormatWithAttrRegex = /<command(?:\s+activation="(eager|lazy)")?\s*>\s*<name>([^<]+)<\/name>\s*<description>([^<]+)<\/description>\s*<path>([^<]+)<\/path>\s*<\/command>/g;
+
+  while ((match = commandFormatWithAttrRegex.exec(manifestXML)) !== null) {
+    const [, activation, name, description, fullPath] = match;
+
+    // Extract directory and file from path
+    const pathParts = fullPath.trim().split('/');
+    const mainFile = pathParts[pathParts.length - 1];
+    const dir = pathParts.slice(0, -1).join('/');
+
+    resources.push({
+      name: unescapeXML(name.trim()),
+      description: unescapeXML(description.trim()),
+      skillPath: dir,
+      mainFile,
+      resourceType: 'command',
       eager: activation === 'eager',
     });
   }

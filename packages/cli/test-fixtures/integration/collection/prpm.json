@@ -1,0 +1,30 @@
+{
+  "$schema": "https://prpm.dev/schemas/manifest.json",
+  "name": "@ci-test/integration-collection-manifest",
+  "version": "1.0.0",
+  "description": "CI Test Collection manifest for integration testing",
+  "author": "ci-test",
+  "license": "MIT",
+  "repository": "https://github.com/pr-pm/prpm",
+  "tags": ["ci-test", "collection", "integration"],
+  "collections": [
+    {
+      "id": "ci-test-collection",
+      "name": "CI Test Collection",
+      "description": "A curated collection of CI test packages spanning rules, agents, skills, hooks, and MCP servers",
+      "version": "1.0.0",
+      "category": "testing",
+      "tags": ["ci-test", "integration"],
+      "packages": [
+        { "packageId": "@ci-test/cursor-rule", "required": true },
+        { "packageId": "@ci-test/continue-rule", "required": true },
+        { "packageId": "@ci-test/windsurf-rule", "required": true },
+        { "packageId": "@ci-test/claude-agent", "required": true },
+        { "packageId": "@ci-test/ci-test-claude-skill", "required": true },
+        { "packageId": "@ci-test/cursor-agent", "required": true },
+        { "packageId": "@ci-test/claude-hook", "required": true },
+        { "packageId": "@ci-test/mcp-rule", "required": true }
+      ]
+    }
+  ]
+}

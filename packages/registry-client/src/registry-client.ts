@@ -87,15 +87,19 @@ export interface CollectionInstallResult {
 export interface RegistryConfig {
   url: string;
   token?: string;
+  userAgent?: string;
 }
 
 export class RegistryClient {
   private baseUrl: string;
   private token?: string;
+  private userAgent: string;
 
   constructor(config: RegistryConfig) {
     this.baseUrl = config.url.replace(/\/$/, ''); // Remove trailing slash
     this.token = config.token;
+    // Default User-Agent; CLI should override with actual version
+    this.userAgent = config.userAgent || 'prpm-registry-client/1.0.0';
   }
 
   /**
@@ -308,10 +312,11 @@ export class RegistryClient {
   }
 
   /**
-   * Publish a package (requires authentication)
+   * Publish a package (requires authentication, or CI_MODE for testing)
    */
   async publish(manifest: PackageManifest, tarball: Buffer, options?: { orgId?: string; publishAsAuthor?: string }): Promise<PublishResponse> {
-    if (!this.token) {
+    const isCIMode = process.env.CI_MODE === 'true';
+    if (!this.token && !isCIMode) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
 
@@ -428,7 +433,7 @@ export class RegistryClient {
     skipOptional?: boolean;
   }): Promise<CollectionInstallResult> {
     const response = await this.fetch(
-      `/api/v1/collections/${options.id}/install`,
+      `/api/v1/collections/${encodeURIComponent(options.id)}/install`,
       {
         method: 'POST',
         body: JSON.stringify({
@@ -482,7 +487,7 @@ export class RegistryClient {
   }
 
   /**
-   * Create a collection (requires authentication)
+   * Create a collection (requires authentication, or CI_MODE for testing)
    */
   async createCollection(data: {
     id: string;
@@ -499,7 +504,8 @@ export class RegistryClient {
     }[];
     icon?: string;
   }): Promise<Collection> {
-    if (!this.token) {
+    const isCIMode = process.env.CI_MODE === 'true';
+    if (!this.token && !isCIMode) {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
 
@@ -528,6 +534,7 @@ export class RegistryClient {
     if (isFormData) {
       // For FormData, create new Headers instance and don't set Content-Type
       const headersObj = new Headers(options.headers as Record<string, string>);
+      headersObj.set('User-Agent', this.userAgent);
       if (this.token) {
         headersObj.set('Authorization', `Bearer ${this.token}`);
       }
@@ -537,6 +544,7 @@ export class RegistryClient {
       headers = {
         ...options.headers as Record<string, string>,
         'Content-Type': 'application/json',
+        'User-Agent': this.userAgent,
       };
       if (this.token) {
         headers['Authorization'] = `Bearer ${this.token}`;
