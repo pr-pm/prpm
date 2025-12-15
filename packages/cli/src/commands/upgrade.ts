@@ -51,7 +51,7 @@ export async function handleUpgrade(
 
     for (const pkg of packagesToUpgrade) {
       // Parse the lockfile key to get the actual package ID (without #format suffix)
-      const { packageId, format: installedFormat } = parseLockfileKey(pkg.id);
+      const { packageId } = parseLockfileKey(pkg.id);
 
       try {
         // Get package info from registry using the base package ID
@@ -85,12 +85,11 @@ export async function handleUpgrade(
           );
         }
 
-        // Install new version, preserving the installed format if it was converted
-        const installOptions: { as?: string } = {};
-        if (installedFormat && installedFormat !== pkg.sourceFormat) {
-          installOptions.as = installedFormat;
-        }
-        await handleInstall(`${packageId}@${latestVersion}`, installOptions);
+        // Install new version, preserving the installed format from the lockfile
+        // Always use the lockfile's format to ensure upgrades go to the same location
+        await handleInstall(`${packageId}@${latestVersion}`, {
+          as: pkg.format,
+        });
 
         upgradedCount++;
       } catch (err) {
