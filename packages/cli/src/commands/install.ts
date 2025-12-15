@@ -1744,6 +1744,7 @@ export async function installFromLockfile(options: {
           location: locationOverride,
           manifestFile,
           hookMapping: options.hookMapping,
+          fromCollection: lockEntry.fromCollection, // Preserve collection metadata
         });
 
         successCount++;
