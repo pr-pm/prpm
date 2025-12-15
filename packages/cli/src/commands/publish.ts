@@ -27,6 +27,13 @@ import {
 import { createTarball, formatTarballSize } from "../utils/tarball-creator";
 import { smartInit } from "./init.js";
 
+const toOrgSlug = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-+/g, "-");
+
 interface PublishOptions {
   access?: "public" | "private";
   tag?: string;
@@ -408,13 +415,21 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
           let selectedOrgId: string | undefined;
           let selectedOrgName: string | undefined;
+          let selectedOrgSlug: string | undefined;
 
           // Check if organization is specified in manifest
           if (manifest.organization && userInfo) {
+            const manifestOrgSlug = toOrgSlug(manifest.organization);
             const orgFromManifest = userInfo.organizations?.find(
               (org: any) =>
+                org.id === manifest.organization ||
                 org.name === manifest.organization ||
-                org.id === manifest.organization,
+                (org.slug &&
+                  typeof org.slug === "string" &&
+                  org.slug.toLowerCase() === manifestOrgSlug) ||
+                (org.name &&
+                  toOrgSlug(typeof org.name === "string" ? org.name : "") ===
+                    manifestOrgSlug),
             );
 
             if (!orgFromManifest) {
@@ -435,6 +450,13 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
             selectedOrgId = orgFromManifest.id;
             selectedOrgName = orgFromManifest.name;
+            selectedOrgSlug =
+              (typeof orgFromManifest.slug === "string"
+                ? orgFromManifest.slug
+                : undefined) ||
+              (orgFromManifest.name
+                ? toOrgSlug(String(orgFromManifest.name))
+                : undefined);
           }
 
           // Check if admin should override author (check early so it shows in package info)
@@ -451,7 +473,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           const scopedPackageName = predictScopedPackageName(
             manifest.name,
             userInfo?.username || config.username || "unknown",
-            selectedOrgName || manifest.organization,
+            selectedOrgSlug || manifest.organization,
           );
 
           console.log(`   Source: ${source}`);

@@ -15,6 +15,7 @@ import {
 interface Organization {
   id: string;
   name: string;
+  slug: string;
 }
 
 export async function subscriptionRoutes(server: FastifyInstance) {
@@ -61,7 +62,7 @@ export async function subscriptionRoutes(server: FastifyInstance) {
       // Get organization
       const org = await queryOne<Organization>(
         server,
-        'SELECT id, name FROM organizations WHERE name = $1',
+        'SELECT id, name, slug FROM organizations WHERE LOWER(slug) = LOWER($1) OR LOWER(name) = LOWER($1)',
         [orgName]
       );
 
@@ -154,7 +155,7 @@ export async function subscriptionRoutes(server: FastifyInstance) {
       // Get organization
       const org = await queryOne<Organization>(
         server,
-        'SELECT id, name FROM organizations WHERE name = $1',
+        'SELECT id, name, slug FROM organizations WHERE LOWER(slug) = LOWER($1) OR LOWER(name) = LOWER($1)',
         [orgName]
       );
 
@@ -234,7 +235,7 @@ export async function subscriptionRoutes(server: FastifyInstance) {
       // Get organization
       const org = await queryOne<Organization>(
         server,
-        'SELECT id, name FROM organizations WHERE name = $1',
+        'SELECT id, name, slug FROM organizations WHERE LOWER(slug) = LOWER($1) OR LOWER(name) = LOWER($1)',
         [orgName]
       );
 
@@ -311,7 +312,7 @@ export async function subscriptionRoutes(server: FastifyInstance) {
       // Get organization
       const org = await queryOne<Organization>(
         server,
-        'SELECT id, name FROM organizations WHERE name = $1',
+        'SELECT id, name, slug FROM organizations WHERE LOWER(slug) = LOWER($1) OR LOWER(name) = LOWER($1)',
         [orgName]
       );
 
@@ -390,7 +391,7 @@ export async function subscriptionRoutes(server: FastifyInstance) {
       // Get organization
       const org = await queryOne<Organization>(
         server,
-        'SELECT id, name FROM organizations WHERE name = $1',
+        'SELECT id, name, slug FROM organizations WHERE LOWER(slug) = LOWER($1) OR LOWER(name) = LOWER($1)',
         [orgName]
       );
 

@@ -139,7 +139,7 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
         // Search by both author username and organization name (case-insensitive)
         conditions.push(`(
           p.author_id = (SELECT id FROM users WHERE LOWER(username) = LOWER($${paramIndex})) OR
-          p.org_id = (SELECT id FROM organizations WHERE LOWER(name) = LOWER($${paramIndex}))
+          p.org_id = (SELECT id FROM organizations WHERE LOWER(slug) = LOWER($${paramIndex}) OR LOWER(name) = LOWER($${paramIndex}))
         )`);
         params.push(author);
         paramIndex++;
@@ -234,7 +234,7 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       const result = await query<Package & { relevance: number }>(
         server,
         `/*+ IndexScan(p idx_packages_search_vector) */
-         SELECT ${LIST_COLUMNS}, u.username as author_username, o.name as org_name, ${rankColumn}
+         SELECT ${LIST_COLUMNS}, u.username as author_username, o.name as org_name, o.slug as org_slug, ${rankColumn}
          FROM packages p
          LEFT JOIN users u ON p.author_id = u.id
          LEFT JOIN organizations o ON p.org_id = o.id

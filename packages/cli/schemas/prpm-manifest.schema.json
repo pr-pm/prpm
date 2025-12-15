@@ -147,10 +147,11 @@
     },
     "organization": {
       "type": "string",
-      "description": "Organization name or ID to publish this package under. If not specified, publishes to personal account.",
+      "description": "Organization slug or ID to publish this package under (used for package scope). If not specified, publishes to personal account. Slugs should be lowercase, alphanumeric with hyphens (spaces removed).",
       "examples": [
         "my-team",
-        "my-company"
+        "my-company",
+        "my-senior-dev"
       ]
     },
     "private": {
