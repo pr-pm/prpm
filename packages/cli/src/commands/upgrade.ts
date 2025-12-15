@@ -51,7 +51,8 @@ export async function handleUpgrade(
 
     for (const pkg of packagesToUpgrade) {
       // Parse the lockfile key to get the actual package ID (without #format suffix)
-      const { packageId } = parseLockfileKey(pkg.id);
+      // Also extract format from key as fallback for older lockfiles
+      const { packageId, format: keyFormat } = parseLockfileKey(pkg.id);
 
       try {
         // Get package info from registry using the base package ID
@@ -86,9 +87,11 @@ export async function handleUpgrade(
         }
 
         // Install new version, preserving the installed format from the lockfile
-        // Always use the lockfile's format to ensure upgrades go to the same location
+        // Use pkg.format (entry data) with keyFormat (from key suffix) as fallback for older lockfiles
+        // Always pass the format to ensure upgrades go to the same location, not auto-detect
+        const installedFormat = pkg.format || keyFormat;
         await handleInstall(`${packageId}@${latestVersion}`, {
-          as: pkg.format,
+          as: installedFormat,
         });
 
         upgradedCount++;
