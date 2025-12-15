@@ -5,7 +5,14 @@
 import { Command } from "commander";
 import { getRegistryClient } from "@pr-pm/registry-client";
 import { getConfig } from "../core/user-config";
-import { listPackages, parseLockfileKey } from "../core/lockfile";
+import {
+  listPackages,
+  parseLockfileKey,
+  readLockfile,
+  writeLockfile,
+  addCollectionToLockfile,
+  listCollectionsFromLockfile,
+} from "../core/lockfile";
 import { handleInstall } from "./install";
 import { telemetry } from "../core/telemetry";
 import { CLIError } from "../core/errors";
@@ -99,6 +106,93 @@ export async function handleUpgrade(
         console.error(
           `   ❌ Failed to upgrade ${packageId}: ${err instanceof Error ? err.message : String(err)}`,
         );
+      }
+    }
+
+    // Check for new packages in installed collections
+    // Only do this when upgrading all packages (not a specific package)
+    if (!packageName) {
+      const lockfile = await readLockfile();
+      if (lockfile) {
+        const installedCollections = listCollectionsFromLockfile(lockfile);
+
+        for (const collection of installedCollections) {
+          try {
+            // Get latest collection info from registry
+            const latestCollection = await client.getCollection(
+              collection.name_slug,
+            );
+
+            if (!latestCollection) continue;
+
+            // Check if collection version has changed
+            const currentVersion = collection.version;
+            const latestVersion = latestCollection.version || "1.0.0";
+
+            if (currentVersion !== latestVersion) {
+              console.log(
+                `\n📦 Collection ${collection.name_slug}: ${currentVersion} → ${latestVersion}`,
+              );
+
+              // Find packages in latest version that aren't in installed version
+              const installedPackageIds = new Set(collection.packages);
+              const newPackages = latestCollection.packages.filter(
+                (pkg) => !installedPackageIds.has(pkg.package?.name || ""),
+              );
+
+              if (newPackages.length > 0) {
+                console.log(
+                  `   📥 ${newPackages.length} new package(s) added to collection`,
+                );
+
+                // Get format from an existing collection package to maintain consistency
+                const existingCollectionPkg = installedPackages.find(
+                  (p) =>
+                    p.fromCollection?.name_slug === collection.name_slug,
+                );
+                const collectionFormat = existingCollectionPkg?.format;
+
+                for (const pkg of newPackages) {
+                  const pkgName = pkg.package?.name;
+                  if (!pkgName) continue;
+
+                  try {
+                    console.log(`   📥 Installing new package: ${pkgName}`);
+                    await handleInstall(`${pkgName}@${pkg.version || "latest"}`, {
+                      as: collectionFormat,
+                      fromCollection: {
+                        name_slug: collection.name_slug,
+                        version: latestVersion,
+                      },
+                    });
+                    upgradedCount++;
+                  } catch (err) {
+                    console.error(
+                      `   ❌ Failed to install ${pkgName}: ${err instanceof Error ? err.message : String(err)}`,
+                    );
+                  }
+                }
+              }
+
+              // Update collection version in lockfile
+              addCollectionToLockfile(lockfile, collection.name_slug, {
+                name_slug: collection.name_slug,
+                version: latestVersion,
+                packages: [
+                  ...collection.packages,
+                  ...newPackages
+                    .map((p) => p.package?.name)
+                    .filter((n): n is string => !!n),
+                ],
+              });
+              await writeLockfile(lockfile);
+            }
+          } catch (err) {
+            console.error(
+              `   ⚠️ Could not check collection ${collection.name_slug}: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }
       }
     }
 

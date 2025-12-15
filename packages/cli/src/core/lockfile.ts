@@ -29,7 +29,7 @@ export interface LockfilePackage {
   sourceSubtype?: string; // Original subtype from registry
   installedPath?: string; // Path where the package was installed
   fromCollection?: {
-    scope: string;
+    scope?: string;
     name_slug: string;
     version?: string;
   };
@@ -157,7 +157,7 @@ export function addToLockfile(
     sourceSubtype?: string;
     installedPath?: string;
     fromCollection?: {
-      scope: string;
+      scope?: string;
       name_slug: string;
       version?: string;
     };
