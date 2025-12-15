@@ -271,7 +271,7 @@ export async function handleInstall(
     hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion
     eager?: boolean; // Force skill/agent to always activate (not on-demand)
     fromCollection?: {
-      scope: string;
+      scope?: string;
       name_slug: string;
       version?: string;
     };
