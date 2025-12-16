@@ -5,8 +5,6 @@ import {
   expect,
   beforeEach,
   afterEach,
-  beforeAll,
-  afterAll,
   type MockedFunction,
   type MockInstance,
 } from "vitest";
@@ -48,13 +46,12 @@ describe("Publish Command", () => {
   let consoleMock: MockInstance;
   let consoleErrorMock: MockInstance;
 
-  beforeAll(() => {
-    // Mock console methods (persist across tests)
+  beforeEach(async () => {
+    // Mock console methods in beforeEach (not beforeAll) because vitest's
+    // restoreMocks: true option restores spies before each test
     consoleMock = vi.spyOn(console, "log").mockImplementation();
     consoleErrorMock = vi.spyOn(console, "error").mockImplementation();
-  });
 
-  beforeEach(async () => {
     // Create test directory
     testDir = join(tmpdir(), `prpm-test-${Date.now()}`);
     await mkdir(testDir, { recursive: true });
