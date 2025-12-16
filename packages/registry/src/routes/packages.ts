@@ -2677,7 +2677,7 @@ export async function packageRoutes(server: FastifyInstance) {
           // Check if user is a member of the owning organization
           const orgMemberResult = await server.pg.query(
             `SELECT 1 FROM organization_members
-             WHERE organization_id = $1 AND user_id = $2`,
+             WHERE org_id = $1 AND user_id = $2`,
             [pkg.org_id, user.user_id]
           );
           isOwner = orgMemberResult.rows.length > 0;

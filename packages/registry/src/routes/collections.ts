@@ -322,7 +322,7 @@ export async function collectionRoutes(server: FastifyInstance) {
           LEFT JOIN LATERAL (
             SELECT version FROM package_versions
             WHERE package_id = p.id
-            ORDER BY created_at DESC
+            ORDER BY published_at DESC
             LIMIT 1
           ) lv ON true
           WHERE cp.collection_id = $1

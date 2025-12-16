@@ -828,8 +828,9 @@ describe('Collection Routes', () => {
         // Mock collection packages query with LATERAL JOIN
         // This simulates the fixed query that uses LATERAL to get only 1 version per package
         // Before the fix, LEFT JOIN package_versions would create N rows per package (where N = number of versions)
+        // NOTE: We specifically require LEFT JOIN LATERAL to ensure the deduplication fix is present
         if (sql.includes('FROM collection_packages cp') &&
-            (sql.includes('LEFT JOIN LATERAL') || sql.includes('JOIN packages p'))) {
+            sql.includes('LEFT JOIN LATERAL')) {
           // Return exactly 4 unique packages, each with their latest version
           // This is the correct behavior after the LATERAL JOIN fix
           // Fields match the actual query: cp.*, p.name as package_name, p.description as package_description, etc.
