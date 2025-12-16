@@ -953,7 +953,7 @@ export async function packageRoutes(server: FastifyInstance) {
             server,
             `SELECT id, name, slug, is_verified as verified
              FROM organizations
-             WHERE id = $1
+             WHERE id::text = $1
                 OR LOWER(slug) = LOWER($1)
                 OR LOWER(name) = LOWER($1)
                 OR LOWER(slug) = LOWER($2)
