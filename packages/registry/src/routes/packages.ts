@@ -944,6 +944,11 @@ export async function packageRoutes(server: FastifyInstance) {
         let orgDisplayName: string | undefined;
         if (organization) {
           const organizationSlug = toOrganizationSlug(organization);
+          // Check if organization is a UUID to use index-friendly query
+          const isOrgUUID =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+              organization,
+            );
           const org = await queryOne<{
             id: string;
             name: string;
@@ -951,14 +956,17 @@ export async function packageRoutes(server: FastifyInstance) {
             verified: boolean;
           }>(
             server,
-            `SELECT id, name, slug, is_verified as verified
-             FROM organizations
-             WHERE id::text = $1
-                OR LOWER(slug) = LOWER($1)
-                OR LOWER(name) = LOWER($1)
-                OR LOWER(slug) = LOWER($2)
-                OR LOWER(name) = LOWER($2)`,
-            [organization, organizationSlug],
+            isOrgUUID
+              ? `SELECT id, name, slug, is_verified as verified
+                 FROM organizations
+                 WHERE id = $1`
+              : `SELECT id, name, slug, is_verified as verified
+                 FROM organizations
+                 WHERE LOWER(slug) = LOWER($1)
+                    OR LOWER(name) = LOWER($1)
+                    OR LOWER(slug) = LOWER($2)
+                    OR LOWER(name) = LOWER($2)`,
+            isOrgUUID ? [organization] : [organization, organizationSlug],
           );
 
           if (!org) {
