@@ -129,8 +129,7 @@ describe('RegistryClient', () => {
     });
 
     it('should handle search errors', async () => {
-      // Mock all 3 retries to return error (no retry needed as it's not 500/429)
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         status: 400,
         statusText: 'Bad Request',
@@ -138,6 +137,7 @@ describe('RegistryClient', () => {
       });
 
       await expect(client.search('test')).rejects.toThrow('Server error');
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -172,8 +172,7 @@ describe('RegistryClient', () => {
     });
 
     it('should handle package not found', async () => {
-      // The current implementation will retry even for 404, so we need to mock all attempts
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         status: 404,
         statusText: 'Not Found',
@@ -181,6 +180,7 @@ describe('RegistryClient', () => {
       });
 
       await expect(client.getPackage('nonexistent')).rejects.toThrow('Package not found');
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -934,6 +934,18 @@ describe('RegistryClient', () => {
       const result = await searchPromise;
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not retry on 409 conflict', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        statusText: 'Conflict',
+        json: async () => ({ error: 'Version already exists' }),
+      });
+
+      await expect(client.search('test')).rejects.toThrow('Version already exists');
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
     it('should fail after max retries', async () => {

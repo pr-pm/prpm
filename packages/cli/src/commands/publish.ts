@@ -364,6 +364,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       let lastError: Error | null = null;
       let retryCount = 0;
       let publishSuccess = false;
+      let sawGatewayLikeError = false;
 
       while (retryCount <= MAX_RETRIES && !publishSuccess) {
         try {
@@ -650,8 +651,65 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
             packageName,
           );
 
+          // If we previously saw a gateway-like failure, a subsequent "already exists"
+          // often means the first publish succeeded but the response was lost.
+          if (
+            sawGatewayLikeError &&
+            pkgError.toLowerCase().includes("version already exists")
+          ) {
+            const assumedName = predictScopedPackageName(
+              manifest.name,
+              userInfo?.username || config.username || "unknown",
+              manifest.organization,
+            );
+
+            // Determine the webapp URL based on registry URL
+            let webappUrl: string;
+            const registryUrl = config.registryUrl || "https://registry.prpm.dev";
+            if (
+              registryUrl.includes("localhost") ||
+              registryUrl.includes("127.0.0.1")
+            ) {
+              webappUrl = "http://localhost:5173";
+            } else if (registryUrl.includes("registry.prpm.dev")) {
+              webappUrl = "https://prpm.dev";
+            } else {
+              webappUrl = registryUrl;
+            }
+
+            const packageSlug = assumedName.startsWith("@")
+              ? assumedName.slice(1)
+              : assumedName;
+            const packagePath = packageSlug
+              .split("/")
+              .map((segment) => encodeURIComponent(segment))
+              .join("/");
+            const packageUrl = `${webappUrl}/packages/${packagePath}`;
+
+            console.log(
+              `\n✅ ${displayName}@${manifest.version} now exists on the registry after a transient gateway error; assuming publish succeeded.`,
+            );
+
+            publishedPackages.push({
+              name: assumedName,
+              version: manifest.version,
+              url: packageUrl,
+            });
+            publishSuccess = true;
+            break;
+          }
+
           // Check if error is retriable
           if (isRetriableError(pkgError) && retryCount < MAX_RETRIES) {
+            if (
+              pkgError.includes("Bad Gateway") ||
+              pkgError.includes("Service Unavailable") ||
+              pkgError.includes("502") ||
+              pkgError.includes("503") ||
+              pkgError.includes("504")
+            ) {
+              sawGatewayLikeError = true;
+            }
             console.error(
               `\n⚠️  Temporary error publishing ${displayName}: ${pkgError}`,
             );

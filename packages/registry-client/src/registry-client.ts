@@ -567,6 +567,9 @@ export class RegistryClient {
           const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, attempt) * 1000;
 
           if (attempt < retries - 1) {
+            if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+              console.error(`[RegistryClient] 429 rate limited (attempt ${attempt + 1}/${retries}), retrying in ${waitTime}ms`);
+            }
             await new Promise(resolve => setTimeout(resolve, waitTime));
             continue;
           }
@@ -575,6 +578,9 @@ export class RegistryClient {
         // Handle server errors with retry
         if (response.status >= 500 && response.status < 600 && attempt < retries - 1) {
           const waitTime = Math.pow(2, attempt) * 1000;
+          if (process.env.DEBUG || process.env.PRPM_DEBUG) {
+            console.error(`[RegistryClient] HTTP ${response.status} (attempt ${attempt + 1}/${retries}), retrying in ${waitTime}ms`);
+          }
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }
@@ -610,12 +616,15 @@ export class RegistryClient {
           });
         }
 
-        // Network errors - retry with exponential backoff
-        if (attempt < retries - 1 && (
+        const isRetryableNetworkError =
           lastError.message.includes('fetch failed') ||
           lastError.message.includes('ECONNREFUSED') ||
-          lastError.message.includes('ETIMEDOUT')
-        )) {
+          lastError.message.includes('ECONNRESET') ||
+          lastError.message.includes('ETIMEDOUT') ||
+          lastError.message.includes('EAI_AGAIN') ||
+          lastError.name === 'AbortError';
+
+        if (attempt < retries - 1 && isRetryableNetworkError) {
           const waitTime = Math.pow(2, attempt) * 1000;
           if (process.env.DEBUG || process.env.PRPM_DEBUG) {
             console.log(`[RegistryClient] Retrying in ${waitTime}ms...`);
@@ -624,10 +633,8 @@ export class RegistryClient {
           continue;
         }
 
-        // If it's not a retryable error or we're out of retries, throw
-        if (attempt === retries - 1) {
-          throw lastError;
-        }
+        // Non-retryable errors should fail fast (e.g. 400/401/403/404/409).
+        throw lastError;
       }
     }
 

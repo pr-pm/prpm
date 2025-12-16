@@ -179,6 +179,40 @@ describe("Publish Command", () => {
       expect(mockPublish).toHaveBeenCalled();
     });
 
+    it("should treat 'version already exists' after gateway error as success", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "@test-org/test-package",
+          version: "1.0.0",
+          description: "Test package for retry handling",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
+      );
+
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test rules"\n---\n\n# Test rules',
+      );
+
+      const mockPublish = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("Bad Gateway"))
+        .mockRejectedValueOnce(new Error("Version already exists"));
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+      } as any);
+
+      await expect(handlePublish({})).resolves.toBeUndefined();
+      expect(mockPublish).toHaveBeenCalledTimes(2);
+
+      expect(consoleMock).toHaveBeenCalledWith(
+        expect.stringContaining("after a transient gateway error"),
+      );
+    });
+
     it("should reject Claude skills without SKILL.md file", async () => {
       await writeFile(
         join(testDir, "prpm.json"),
