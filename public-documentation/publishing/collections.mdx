@@ -266,6 +266,29 @@ Explain why each package is included:
 }
 ```
 
+## Deprecating Collections
+
+If you need to deprecate a collection (e.g., it's been superseded by a better alternative), use the `deprecate` command:
+
+```bash
+# Deprecate a collection with a reason
+prpm collections deprecate my-collection --reason "Use my-new-collection instead"
+
+# Remove deprecation status
+prpm collections deprecate my-collection --undo
+```
+
+### What Happens When You Deprecate
+
+- The collection is hidden from search results
+- Users who have the collection installed will see a deprecation warning
+- The collection can still be installed directly by name
+- All versions of the collection are marked as deprecated
+
+### Who Can Deprecate
+
+Only the collection owner (or organization members for org-owned collections) can deprecate a collection. Admins can also deprecate any collection.
+
 ## Next Steps
 
 <CardGroup cols={2}>
