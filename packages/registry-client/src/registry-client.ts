@@ -537,7 +537,7 @@ export class RegistryClient {
       throw new Error('Authentication required. Run `prpm login` first.');
     }
 
-    const response = await this.fetch(`/api/v1/collections/${nameSlug}/deprecate`, {
+    const response = await this.fetch(`/api/v1/collections/${encodeURIComponent(nameSlug)}/deprecate`, {
       method: 'POST',
       body: JSON.stringify({
         deprecated: options?.deprecated ?? true,

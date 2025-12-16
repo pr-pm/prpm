@@ -477,8 +477,21 @@ export async function handleCollectionDeprecate(
 
   try {
     // Parse collection spec: name or name@version
-    const cleanSpec = collectionSpec.replace(/^collections\//, '');
+    const cleanSpec = collectionSpec.replace(/^collections\//, '').trim();
     const name_slug = cleanSpec.split('@')[0]; // Ignore version for deprecation
+
+    // Validate name_slug
+    if (!name_slug || name_slug.length === 0) {
+      throw new CLIError('Collection name cannot be empty', 1);
+    }
+
+    // Validate format: must be lowercase alphanumeric with hyphens
+    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(name_slug)) {
+      throw new CLIError(
+        `Invalid collection name "${name_slug}". Must be lowercase alphanumeric with hyphens (e.g., "my-collection")`,
+        1
+      );
+    }
 
     const config = await getConfig();
 

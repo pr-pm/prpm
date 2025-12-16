@@ -723,7 +723,7 @@ export async function collectionRoutes(server: FastifyInstance) {
    * Deprecate a collection (owner only)
    */
   server.post(
-    ':name_slug/deprecate',
+    '/:name_slug/deprecate',
     {
       onRequest: [server.authenticate],
       schema: {
