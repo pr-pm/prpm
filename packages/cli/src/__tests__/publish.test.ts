@@ -5,8 +5,6 @@ import {
   expect,
   beforeEach,
   afterEach,
-  beforeAll,
-  afterAll,
   type MockedFunction,
   type MockInstance,
 } from "vitest";
@@ -48,13 +46,12 @@ describe("Publish Command", () => {
   let consoleMock: MockInstance;
   let consoleErrorMock: MockInstance;
 
-  beforeAll(() => {
-    // Mock console methods (persist across tests)
+  beforeEach(async () => {
+    // Mock console methods in beforeEach (not beforeAll) because vitest's
+    // restoreMocks: true option restores spies before each test
     consoleMock = vi.spyOn(console, "log").mockImplementation();
     consoleErrorMock = vi.spyOn(console, "error").mockImplementation();
-  });
 
-  beforeEach(async () => {
     // Create test directory
     testDir = join(tmpdir(), `prpm-test-${Date.now()}`);
     await mkdir(testDir, { recursive: true });
@@ -177,6 +174,40 @@ describe("Publish Command", () => {
       await handlePublish({});
 
       expect(mockPublish).toHaveBeenCalled();
+    });
+
+    it("should treat 'version already exists' after gateway error as success", async () => {
+      await writeFile(
+        join(testDir, "prpm.json"),
+        JSON.stringify({
+          name: "@test-org/test-package",
+          version: "1.0.0",
+          description: "Test package for retry handling",
+          format: "cursor",
+          files: [".cursorrules"],
+        }),
+      );
+
+      await writeFile(
+        join(testDir, ".cursorrules"),
+        '---\ndescription: "Test rules"\n---\n\n# Test rules',
+      );
+
+      const mockPublish = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("Bad Gateway"))
+        .mockRejectedValueOnce(new Error("Version already exists"));
+
+      mockGetRegistryClient.mockReturnValue({
+        publish: mockPublish,
+      } as any);
+
+      await expect(handlePublish({})).resolves.toBeUndefined();
+      expect(mockPublish).toHaveBeenCalledTimes(2);
+
+      expect(consoleMock).toHaveBeenCalledWith(
+        expect.stringContaining("after a transient gateway error"),
+      );
     });
 
     it("should reject Claude skills without SKILL.md file", async () => {
