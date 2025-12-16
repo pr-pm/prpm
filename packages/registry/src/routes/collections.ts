@@ -15,13 +15,26 @@ import type {
 import { ciModeAuth } from '../middleware/auth.js';
 
 // SQL CTE for getting only the latest version of each collection by name_slug
-// Used across multiple endpoints to prevent duplicate entries when collections have multiple versions
+// Excludes deprecated collections from search/list results
 const LATEST_VERSIONS_CTE = `
   WITH latest_versions AS (
     SELECT DISTINCT ON (name_slug)
       id, name_slug, version, name, description, author_id, org_id,
       official, verified, category, tags, framework, downloads, stars,
-      icon, created_at, updated_at
+      icon, created_at, updated_at, deprecated, deprecated_reason
+    FROM collections
+    WHERE COALESCE(deprecated, false) = false
+    ORDER BY name_slug, created_at DESC
+  )
+`;
+
+// SQL CTE that includes ALL collections (including deprecated) - for detail views
+const LATEST_VERSIONS_ALL_CTE = `
+  WITH latest_versions AS (
+    SELECT DISTINCT ON (name_slug)
+      id, name_slug, version, name, description, author_id, org_id,
+      official, verified, category, tags, framework, downloads, stars,
+      icon, created_at, updated_at, deprecated, deprecated_reason
     FROM collections
     ORDER BY name_slug, created_at DESC
   )
@@ -706,6 +719,108 @@ export async function collectionRoutes(server: FastifyInstance) {
   );
 
   /**
+   * POST /api/v1/collections/:name_slug/deprecate
+   * Deprecate a collection (owner only)
+   */
+  server.post(
+    ':name_slug/deprecate',
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        params: {
+          type: 'object',
+          required: ['name_slug'],
+          properties: {
+            name_slug: { type: 'string' },
+          },
+        },
+        body: {
+          type: 'object',
+          properties: {
+            deprecated: { type: 'boolean', default: true },
+            reason: { type: 'string' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { name_slug } = request.params as { name_slug: string };
+      const { deprecated = true, reason } = request.body as { deprecated?: boolean; reason?: string };
+      const user = request.user;
+
+      try {
+        // Get collection and verify ownership
+        const collectionResult = await server.pg.query(
+          `SELECT id, author_id, org_id, name FROM collections
+           WHERE name_slug = $1
+           ORDER BY created_at DESC LIMIT 1`,
+          [name_slug]
+        );
+
+        if (collectionResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: 'Collection not found',
+          });
+        }
+
+        const collection = collectionResult.rows[0];
+
+        // Check if user owns this collection (either directly or via organization)
+        let isOwner = collection.author_id === user.user_id;
+
+        if (!isOwner && collection.org_id) {
+          // Check if user is a member of the owning organization
+          const orgMemberResult = await server.pg.query(
+            `SELECT 1 FROM organization_members
+             WHERE organization_id = $1 AND user_id = $2`,
+            [collection.org_id, user.user_id]
+          );
+          isOwner = orgMemberResult.rows.length > 0;
+        }
+
+        // Allow admins to deprecate any collection
+        if (!isOwner && !user.is_admin) {
+          return reply.code(403).send({
+            error: 'Forbidden',
+            message: 'Only the collection owner or an admin can deprecate this collection',
+          });
+        }
+
+        // Update all versions of this collection
+        await server.pg.query(
+          `UPDATE collections
+           SET deprecated = $1, deprecated_reason = $2, updated_at = NOW()
+           WHERE name_slug = $3`,
+          [deprecated, reason || null, name_slug]
+        );
+
+        server.log.info({
+          collection: name_slug,
+          deprecated,
+          reason,
+          user_id: user.user_id,
+        }, 'Collection deprecation status updated');
+
+        return reply.send({
+          success: true,
+          collection: name_slug,
+          deprecated,
+          reason: reason || null,
+          message: deprecated
+            ? `Collection "${collection.name}" has been deprecated${reason ? `: ${reason}` : ''}`
+            : `Collection "${collection.name}" deprecation has been removed`,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.code(500).send({
+          error: 'Failed to update collection deprecation status',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
+
+  /**
    * GET /api/v1/collections/featured
    * Get featured collections
    */
@@ -908,9 +1023,9 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         server.log.info({ limit: safeLimit, offset: safeOffset }, 'Fetching collections SSG data');
 
-        // Get total count of unique collections (by name_slug)
+        // Get total count of unique non-deprecated collections (by name_slug)
         const countResult = await server.pg.query(
-          `SELECT COUNT(DISTINCT name_slug) as total FROM collections`
+          `SELECT COUNT(DISTINCT name_slug) as total FROM collections WHERE COALESCE(deprecated, false) = false`
         );
         const totalCount = parseInt(countResult.rows[0]?.total || '0', 10);
 

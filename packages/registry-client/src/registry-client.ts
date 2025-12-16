@@ -518,6 +518,43 @@ export class RegistryClient {
   }
 
   /**
+   * Deprecate a collection (requires authentication)
+   */
+  async deprecateCollection(
+    nameSlug: string,
+    options?: {
+      deprecated?: boolean;
+      reason?: string;
+    }
+  ): Promise<{
+    success: boolean;
+    collection: string;
+    deprecated: boolean;
+    reason: string | null;
+    message: string;
+  }> {
+    if (!this.token) {
+      throw new Error('Authentication required. Run `prpm login` first.');
+    }
+
+    const response = await this.fetch(`/api/v1/collections/${nameSlug}/deprecate`, {
+      method: 'POST',
+      body: JSON.stringify({
+        deprecated: options?.deprecated ?? true,
+        reason: options?.reason,
+      }),
+    });
+
+    return response.json() as Promise<{
+      success: boolean;
+      collection: string;
+      deprecated: boolean;
+      reason: string | null;
+      message: string;
+    }>;
+  }
+
+  /**
    * Helper method for making authenticated requests with retry logic
    */
   private async fetch(path: string, options: RequestInit = {}, retries: number = 3): Promise<Response> {

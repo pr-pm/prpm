@@ -840,6 +840,7 @@ function SearchPageContent() {
         if (selectedUseCase) params.use_case = selectedUseCase;
         if (selectedTags.length > 0 && selectedTags[0])
           params.tag = selectedTags[0];
+        if (selectedAuthor) params.author = selectedAuthor;
 
         const result = await searchCollections(params);
         setCollections(result.collections);
