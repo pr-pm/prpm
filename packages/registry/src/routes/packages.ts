@@ -2622,6 +2622,111 @@ export async function packageRoutes(server: FastifyInstance) {
   );
 
   /**
+   * POST /api/v1/packages/:packageId/deprecate
+   * Deprecate a package (owner only)
+   */
+  server.post(
+    "/:packageId/deprecate",
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: "Deprecate or undeprecate a package",
+        tags: ["packages"],
+        params: {
+          type: "object",
+          required: ["packageId"],
+          properties: {
+            packageId: { type: "string", description: "Package ID (UUID) or name" },
+          },
+        },
+        body: {
+          type: "object",
+          properties: {
+            deprecated: { type: "boolean", default: true },
+            reason: { type: "string" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { packageId } = request.params as { packageId: string };
+      const { deprecated = true, reason } = request.body as { deprecated?: boolean; reason?: string };
+      const user = request.user;
+
+      try {
+        // Get package and verify ownership - support both UUID and name lookup
+        const packageResult = await server.pg.query(
+          `SELECT id, name, display_name, author_id, org_id FROM packages
+           WHERE id::text = $1 OR name = $1
+           ORDER BY created_at DESC LIMIT 1`,
+          [packageId]
+        );
+
+        if (packageResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: "Package not found",
+          });
+        }
+
+        const pkg = packageResult.rows[0];
+
+        // Check if user owns this package (either directly or via organization)
+        let isOwner = pkg.author_id === user.user_id;
+
+        if (!isOwner && pkg.org_id) {
+          // Check if user is a member of the owning organization
+          const orgMemberResult = await server.pg.query(
+            `SELECT 1 FROM organization_members
+             WHERE org_id = $1 AND user_id = $2`,
+            [pkg.org_id, user.user_id]
+          );
+          isOwner = orgMemberResult.rows.length > 0;
+        }
+
+        // Allow admins to deprecate any package
+        if (!isOwner && !user.is_admin) {
+          return reply.code(403).send({
+            error: "Forbidden",
+            message: "Only the package owner or an admin can deprecate this package",
+          });
+        }
+
+        // Update the package deprecation status
+        await server.pg.query(
+          `UPDATE packages
+           SET deprecated = $1, deprecated_reason = $2, updated_at = NOW()
+           WHERE id = $3`,
+          [deprecated, reason || null, pkg.id]
+        );
+
+        server.log.info({
+          package: pkg.name,
+          packageId: pkg.id,
+          deprecated,
+          reason,
+          user_id: user.user_id,
+        }, "Package deprecation status updated");
+
+        return reply.send({
+          success: true,
+          package: pkg.name,
+          deprecated,
+          reason: reason || null,
+          message: deprecated
+            ? `Package "${pkg.display_name || pkg.name}" has been deprecated${reason ? `: ${reason}` : ""}`
+            : `Package "${pkg.display_name || pkg.name}" deprecation has been removed`,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.code(500).send({
+          error: "Failed to update package deprecation status",
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
+
+  /**
    * GET /api/v1/packages/starred
    * Get user's starred packages
    */
