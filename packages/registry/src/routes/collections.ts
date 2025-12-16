@@ -302,7 +302,7 @@ export async function collectionRoutes(server: FastifyInstance) {
 
         const collection = result.rows[0];
 
-        // Get packages
+        // Get packages (use subquery to get only latest version per package, avoiding duplicates)
         const packagesResult = await server.pg.query(
           `
           SELECT
@@ -316,10 +316,15 @@ export async function collectionRoutes(server: FastifyInstance) {
             p.description as package_description,
             p.format as package_format,
             p.subtype as package_subtype,
-            pv.version as latest_version
+            lv.version as latest_version
           FROM collection_packages cp
           JOIN packages p ON cp.package_id = p.id
-          LEFT JOIN package_versions pv ON p.id = pv.package_id
+          LEFT JOIN LATERAL (
+            SELECT version FROM package_versions
+            WHERE package_id = p.id
+            ORDER BY created_at DESC
+            LIMIT 1
+          ) lv ON true
           WHERE cp.collection_id = $1
           ORDER BY cp.install_order ASC, cp.package_id ASC
         `,
