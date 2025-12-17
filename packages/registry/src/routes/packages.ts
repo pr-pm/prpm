@@ -2727,6 +2727,116 @@ export async function packageRoutes(server: FastifyInstance) {
   );
 
   /**
+   * POST /api/v1/packages/:packageId/visibility
+   * Change package visibility (owner only)
+   */
+  server.post(
+    "/:packageId/visibility",
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: "Change package visibility (public/private)",
+        tags: ["packages"],
+        params: {
+          type: "object",
+          required: ["packageId"],
+          properties: {
+            packageId: { type: "string", description: "Package ID (UUID) or name" },
+          },
+        },
+        body: {
+          type: "object",
+          required: ["visibility"],
+          properties: {
+            visibility: { type: "string", enum: ["public", "private"] },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { packageId } = request.params as { packageId: string };
+      const { visibility } = request.body as { visibility: "public" | "private" };
+      const user = request.user;
+
+      try {
+        // Get package and verify ownership - support both UUID and name lookup
+        const packageResult = await server.pg.query(
+          `SELECT id, name, display_name, author_id, org_id, visibility FROM packages
+           WHERE id::text = $1 OR name = $1
+           ORDER BY created_at DESC LIMIT 1`,
+          [packageId]
+        );
+
+        if (packageResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: "Package not found",
+          });
+        }
+
+        const pkg = packageResult.rows[0];
+
+        // Check if user owns this package (either directly or via organization)
+        let isOwner = pkg.author_id === user.user_id;
+
+        if (!isOwner && pkg.org_id) {
+          // Check if user is a member of the owning organization
+          const orgMemberResult = await server.pg.query(
+            `SELECT 1 FROM organization_members
+             WHERE org_id = $1 AND user_id = $2`,
+            [pkg.org_id, user.user_id]
+          );
+          isOwner = orgMemberResult.rows.length > 0;
+        }
+
+        // Allow admins to change visibility of any package
+        if (!isOwner && !user.is_admin) {
+          return reply.code(403).send({
+            error: "Forbidden",
+            message: "Only the package owner or an admin can change visibility",
+          });
+        }
+
+        // Private packages require org membership
+        if (visibility === "private" && !pkg.org_id) {
+          return reply.code(400).send({
+            error: "Bad Request",
+            message: "Private packages must belong to an organization",
+          });
+        }
+
+        // Update the package visibility
+        await server.pg.query(
+          `UPDATE packages
+           SET visibility = $1, updated_at = NOW()
+           WHERE id = $2`,
+          [visibility, pkg.id]
+        );
+
+        server.log.info({
+          package: pkg.name,
+          packageId: pkg.id,
+          oldVisibility: pkg.visibility,
+          newVisibility: visibility,
+          user_id: user.user_id,
+        }, "Package visibility updated");
+
+        return reply.send({
+          success: true,
+          package: pkg.name,
+          visibility,
+          message: `Package "${pkg.display_name || pkg.name}" is now ${visibility}`,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.code(500).send({
+          error: "Failed to update package visibility",
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
+
+  /**
    * GET /api/v1/packages/starred
    * Get user's starred packages
    */

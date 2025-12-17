@@ -61,7 +61,8 @@ export function postgresSearch(server: FastifyInstance): SearchProvider {
       } = filters;
 
       // Build WHERE clause
-      const conditions: string[] = ["p.visibility = 'public'"];
+      // Exclude deprecated packages by default
+      const conditions: string[] = ["p.visibility = 'public'", "(p.deprecated = false OR p.deprecated IS NULL)"];
       const params: unknown[] = [];
       let paramIndex = 1;
 

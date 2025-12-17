@@ -68,7 +68,11 @@ export function openSearchSearch(server: FastifyInstance): SearchProvider {
         },
       ];
 
-      const filter: unknown[] = [{ term: { visibility: 'public' } }];
+      const filter: unknown[] = [
+        { term: { visibility: 'public' } },
+        // Exclude deprecated packages
+        { bool: { should: [{ term: { deprecated: false } }, { bool: { must_not: { exists: { field: 'deprecated' } } } }] } },
+      ];
 
       if (format) {
         if (Array.isArray(format)) {

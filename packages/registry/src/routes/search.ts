@@ -184,7 +184,7 @@ export async function searchRoutes(server: FastifyInstance) {
       return cached;
     }
 
-    const conditions: string[] = ["p.visibility = 'public'"];
+    const conditions: string[] = ["p.visibility = 'public'", "(p.deprecated = false OR p.deprecated IS NULL)"];
     const params: unknown[] = [];
     let paramIndex = 1;
 
@@ -246,7 +246,7 @@ export async function searchRoutes(server: FastifyInstance) {
       return cached;
     }
 
-    const conditions: string[] = ["p.visibility = 'public'", 'p.featured = TRUE'];
+    const conditions: string[] = ["p.visibility = 'public'", 'p.featured = TRUE', "(p.deprecated = false OR p.deprecated IS NULL)"];
     const params: unknown[] = [];
     let paramIndex = 1;
 
@@ -454,7 +454,7 @@ export async function searchRoutes(server: FastifyInstance) {
       return cached;
     }
 
-    const conditions: string[] = ["p.visibility = 'public'", "p.subtype = 'slash-command'"];
+    const conditions: string[] = ["p.visibility = 'public'", "p.subtype = 'slash-command'", "(p.deprecated = false OR p.deprecated IS NULL)"];
     const params: unknown[] = [];
     let paramIndex = 1;
 
@@ -723,6 +723,7 @@ export async function searchRoutes(server: FastifyInstance) {
         `SELECT name, similarity(name, $1) as sim, total_downloads
          FROM packages
          WHERE visibility = 'public'
+           AND (deprecated = false OR deprecated IS NULL)
            AND (name ILIKE $2 OR name % $1)
          ORDER BY
            CASE WHEN name ILIKE $3 THEN 0 ELSE 1 END,
@@ -738,6 +739,7 @@ export async function searchRoutes(server: FastifyInstance) {
         `SELECT unnest(tags) as tag, COUNT(*) as count
          FROM packages
          WHERE visibility = 'public'
+           AND (deprecated = false OR deprecated IS NULL)
            AND EXISTS (
              SELECT 1 FROM unnest(tags) t WHERE t ILIKE $1
            )
@@ -753,6 +755,7 @@ export async function searchRoutes(server: FastifyInstance) {
         `SELECT category, COUNT(*) as count
          FROM packages
          WHERE visibility = 'public'
+           AND (deprecated = false OR deprecated IS NULL)
            AND category IS NOT NULL
            AND category ILIKE $1
          GROUP BY category
