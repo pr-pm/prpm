@@ -134,7 +134,7 @@ export async function organizationRoutes(server: FastifyInstance) {
         ? `p.visibility IN ('public', 'private')`  // Show all packages if member
         : `p.visibility = 'public'`;                // Show only public packages otherwise
 
-      // Get organization packages
+      // Get organization packages (exclude deprecated)
       const packagesResult = await query<OrganizationPackage>(
         server,
         `SELECT
@@ -157,6 +157,7 @@ export async function organizationRoutes(server: FastifyInstance) {
          FROM packages p
          LEFT JOIN users u ON p.author_id = u.id
          WHERE p.org_id = $1 AND ${visibilityFilter}
+           AND (p.deprecated = false OR p.deprecated IS NULL)
          ORDER BY p.total_downloads DESC`,
         [org.id]
       );
