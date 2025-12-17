@@ -592,6 +592,35 @@ export class RegistryClient {
   }
 
   /**
+   * Change package visibility (requires authentication)
+   */
+  async setPackageVisibility(
+    packageName: string,
+    visibility: 'public' | 'private'
+  ): Promise<{
+    success: boolean;
+    package: string;
+    visibility: 'public' | 'private';
+    message: string;
+  }> {
+    if (!this.token) {
+      throw new Error('Authentication required. Run `prpm login` first.');
+    }
+
+    const response = await this.fetch(`/api/v1/packages/${encodeURIComponent(packageName)}/visibility`, {
+      method: 'POST',
+      body: JSON.stringify({ visibility }),
+    });
+
+    return response.json() as Promise<{
+      success: boolean;
+      package: string;
+      visibility: 'public' | 'private';
+      message: string;
+    }>;
+  }
+
+  /**
    * Helper method for making authenticated requests with retry logic
    */
   private async fetch(path: string, options: RequestInit = {}, retries: number = 3): Promise<Response> {
