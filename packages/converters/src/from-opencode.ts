@@ -1,9 +1,13 @@
 /**
  * OpenCode Format Parser
- * Converts OpenCode agent format to canonical format
+ * Converts OpenCode agents and slash commands to canonical format
  *
- * OpenCode stores agents in .opencode/agent/${name}.md with YAML frontmatter
+ * OpenCode stores:
+ * - Agents in .opencode/agent/${name}.md with YAML frontmatter
+ * - Slash commands in .opencode/command/${name}.md with YAML frontmatter (has 'template' field)
+ *
  * @see https://opencode.ai/docs/agents/
+ * @see https://opencode.ai/docs/commands/
  */
 
 import type {
@@ -36,13 +40,17 @@ interface OpencodePermission {
 }
 
 interface OpencodeFrontmatter {
-  description: string; // Required
+  description?: string; // Required for agents
   mode?: 'subagent' | 'primary' | 'all';
   model?: string;
   temperature?: number;
   tools?: OpencodeTools;
   permission?: OpencodePermission;
   disable?: boolean;
+  // Slash command specific fields
+  template?: string; // Required for slash commands
+  agent?: string;
+  subtask?: boolean;
 }
 
 /**
@@ -61,7 +69,11 @@ function parseFrontmatter(content: string): { frontmatter: Record<string, any>; 
 }
 
 /**
- * Convert OpenCode agent format to canonical format
+ * Convert OpenCode format (agent or slash command) to canonical format
+ *
+ * Automatically detects subtype based on presence of 'template' field:
+ * - If 'template' exists → slash-command
+ * - Otherwise → agent
  *
  * @param content - Markdown content with YAML frontmatter
  * @param metadata - Package metadata
@@ -87,6 +99,7 @@ export function fromOpencode(
   };
 
   // Store OpenCode-specific data for roundtrip conversion
+  // For agents: store mode, model, temperature, permission, disable
   if (fm.mode || fm.model || fm.temperature !== undefined || fm.permission || fm.disable !== undefined) {
     metadataSection.data.opencode = {
       mode: fm.mode,
@@ -97,6 +110,17 @@ export function fromOpencode(
     };
   }
 
+  // For slash commands: store template, agent, model, subtask
+  if (fm.template) {
+    metadataSection.data.opencodeSlashCommand = {
+      template: fm.template,
+      description: fm.description,
+      agent: fm.agent,
+      model: fm.model,
+      subtask: fm.subtask,
+    };
+  }
+
   sections.push(metadataSection);
 
   // Extract tools if present
@@ -104,7 +128,7 @@ export function fromOpencode(
     const enabledTools = Object.entries(fm.tools)
       .filter(([_, enabled]) => enabled === true)
       .map(([tool, _]) => {
-        // Normalize tool names to match canonical format
+        // Normalize tool names to match canonical format (PascalCase)
         const toolMap: Record<string, string> = {
           'write': 'Write',
           'edit': 'Edit',
@@ -115,7 +139,12 @@ export function fromOpencode(
           'webfetch': 'WebFetch',
           'websearch': 'WebSearch',
         };
-        return toolMap[tool.toLowerCase()] || tool;
+        const normalized = toolMap[tool.toLowerCase()];
+        if (normalized) {
+          return normalized;
+        }
+        // For unknown tools, normalize to PascalCase for consistency
+        return tool.charAt(0).toUpperCase() + tool.slice(1).toLowerCase();
       });
 
     if (enabledTools.length > 0) {
@@ -143,6 +172,11 @@ export function fromOpencode(
     sections
   };
 
+  // Detect subtype: if 'template' field exists and is a non-empty string, it's a slash-command
+  const templateValue = fm.template;
+  const isSlashCommand = typeof templateValue === 'string' && templateValue.trim().length > 0;
+  const detectedSubtype = isSlashCommand ? 'slash-command' : 'agent';
+
   const pkg: CanonicalPackage = {
     ...metadata,
     id: metadata.id,
@@ -152,10 +186,10 @@ export function fromOpencode(
     description: metadata.description || fm.description || '',
     tags: metadata.tags || [],
     format: 'opencode',
-    subtype: 'agent', // OpenCode only supports agents
+    subtype: detectedSubtype,
     content: canonicalContent,
   };
 
-  setTaxonomy(pkg, 'opencode', 'agent');
+  setTaxonomy(pkg, 'opencode', detectedSubtype);
   return pkg;
 }
