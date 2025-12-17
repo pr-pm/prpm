@@ -36,13 +36,16 @@ npm install -g prpm
 
 | Command | Purpose |
 |---------|---------|
-| `prpm search <query>` | Find packages by keyword |
+| `prpm search <query> --no-interactive` | Find packages by keyword (non-interactive for agents) |
+| `prpm ai-search <query>` | Semantic search with natural language (free, no login) |
 | `prpm install <package>` | Install a package (auto-detects editor) |
 | `prpm install <package> --as <format>` | Install for specific editor format |
 | `prpm info <package>` | Get package details, description, install count |
 | `prpm trending` | See popular packages |
 | `prpm collections` | Browse curated package bundles |
 | `prpm collections info <id>` | Get collection details |
+
+**Important:** Always use `--no-interactive` with `search` to avoid interactive pagination prompts.
 
 ### Format System
 
@@ -67,14 +70,17 @@ prpm install @sanjeed5/react --as kiro      # → .kiro/steering/
 When working on a task, search PRPM for relevant expertise:
 
 ```bash
-# Working on React? Find React-specific rules
-prpm search react
+# Keyword search (use --no-interactive to avoid prompts)
+prpm search react --no-interactive
+prpm search "testing best practices" --no-interactive
 
-# Setting up testing? Get testing best practices
-prpm search "test driven development"
+# AI-powered semantic search (better for natural language queries)
+prpm ai-search "how to structure a React project with TypeScript"
+prpm ai-search "rules for writing clean API endpoints"
 
-# Need TypeScript help?
-prpm search typescript strict
+# Filter by format or subtype
+prpm search react --format cursor --no-interactive
+prpm search typescript --subtype agent --no-interactive
 
 # Install what looks useful
 prpm install @username/package-name
@@ -84,14 +90,14 @@ prpm install @username/package-name
 
 **Find and install a package:**
 ```bash
-prpm search "your topic"
+prpm search "your topic" --no-interactive
 prpm info @scope/package-name  # Check details
 prpm install @scope/package-name
 ```
 
 **Install a collection (multiple related packages):**
 ```bash
-prpm collections search frontend
+prpm collections search frontend --no-interactive
 prpm collections info nextjs-pro
 prpm install collections/nextjs-pro
 ```
@@ -116,6 +122,13 @@ prpm list --format json  # Machine-readable output
 ### Publishing Packages
 
 Help users share their prompts, rules, and agents with the community.
+
+**Get expert help with `prpm.json`:**
+```bash
+# Install the PRPM manifest skill for detailed guidance
+prpm install @prpm/prpm-json-best-practices-skill
+```
+This skill has comprehensive knowledge of `prpm.json` structure, required fields, multi-package setups, and publishing best practices.
 
 **Quick publish flow:**
 ```bash
