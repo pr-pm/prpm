@@ -128,7 +128,7 @@ export function fromOpencode(
     const enabledTools = Object.entries(fm.tools)
       .filter(([_, enabled]) => enabled === true)
       .map(([tool, _]) => {
-        // Normalize tool names to match canonical format
+        // Normalize tool names to match canonical format (PascalCase)
         const toolMap: Record<string, string> = {
           'write': 'Write',
           'edit': 'Edit',
@@ -139,7 +139,12 @@ export function fromOpencode(
           'webfetch': 'WebFetch',
           'websearch': 'WebSearch',
         };
-        return toolMap[tool.toLowerCase()] || tool;
+        const normalized = toolMap[tool.toLowerCase()];
+        if (normalized) {
+          return normalized;
+        }
+        // For unknown tools, normalize to PascalCase for consistency
+        return tool.charAt(0).toUpperCase() + tool.slice(1).toLowerCase();
       });
 
     if (enabledTools.length > 0) {
@@ -167,8 +172,10 @@ export function fromOpencode(
     sections
   };
 
-  // Detect subtype: if 'template' field exists, it's a slash-command; otherwise it's an agent
-  const detectedSubtype = (frontmatter as Record<string, unknown>).template ? 'slash-command' : 'agent';
+  // Detect subtype: if 'template' field exists and is a non-empty string, it's a slash-command
+  const templateValue = fm.template;
+  const isSlashCommand = typeof templateValue === 'string' && templateValue.trim().length > 0;
+  const detectedSubtype = isSlashCommand ? 'slash-command' : 'agent';
 
   const pkg: CanonicalPackage = {
     ...metadata,

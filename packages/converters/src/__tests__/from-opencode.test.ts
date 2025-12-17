@@ -185,6 +185,36 @@ Says hello.
 
       expect(result.subtype).toBe('slash-command');
     });
+
+    it('should treat empty string template as agent (not slash-command)', () => {
+      const content = `---
+template: ""
+description: Agent with empty template field
+mode: all
+---
+
+# Agent
+`;
+
+      const result = fromOpencode(content, baseMetadata);
+
+      expect(result.subtype).toBe('agent');
+    });
+
+    it('should treat whitespace-only template as agent (not slash-command)', () => {
+      const content = `---
+template: "   "
+description: Agent with whitespace template
+mode: subagent
+---
+
+# Agent
+`;
+
+      const result = fromOpencode(content, baseMetadata);
+
+      expect(result.subtype).toBe('agent');
+    });
   });
 
   describe('content parsing', () => {
