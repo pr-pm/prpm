@@ -2,10 +2,7 @@
 name: ci-test-claude-agent
 description: CI Test Claude Agent
 model: sonnet
-tools:
-  - Read
-  - Write
-  - Bash
+tools: Read, Write, Bash
 ---
 
 # CI Test Claude Agent
