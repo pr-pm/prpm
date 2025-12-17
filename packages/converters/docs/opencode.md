@@ -211,12 +211,66 @@ OpenCode includes built-in agents:
 - **<Leader>+Right/Left**: Navigate parent/child sessions created by subagents
 - **Slash commands**: Type `/` to see available commands
 
+## Plugins (Non-Convertible)
+
+OpenCode supports plugins - JavaScript/TypeScript modules that hook into various events. **Plugins are not convertible** between formats due to fundamental architectural differences.
+
+### Why Plugins Don't Convert
+
+| Aspect | Claude Hooks | OpenCode Plugins |
+|--------|--------------|------------------|
+| **Format** | Executable scripts (bash/node) | JS/TS modules |
+| **Events** | 4 types (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`) | 32+ granular events |
+| **File Location** | `.claude/hooks/*` | `.opencode/plugin/*` |
+
+### OpenCode Plugin Events
+
+Plugins can hook into events across multiple categories:
+- **command**: `command.executed`
+- **file**: `file.edited`, `file.watcher.updated`
+- **lsp**: `lsp.client.diagnostics`, `lsp.updated`
+- **message**: `message.part.removed`, `message.part.updated`, `message.removed`, `message.updated`
+- **permission**: `permission.replied`, `permission.updated`
+- **session**: `session.created`, `session.idle`, `session.error`, etc.
+- **tool**: `tool.execute.before`, `tool.execute.after`
+- **tui**: `tui.prompt.append`, `tui.command.execute`, `tui.toast.show`
+
+### Plugin Example
+
+```typescript
+import type { Plugin } from "@opencode-ai/plugin"
+
+export const EnvProtection: Plugin = async ({ project, client, $, directory }) => {
+  return {
+    "tool.execute.before": async (input, output) => {
+      if (input.tool === "read" && output.args.filePath.includes(".env")) {
+        throw new Error("Do not read .env files")
+      }
+    },
+  }
+}
+```
+
+### Claude Code Event Mapping
+
+For plugins that need Claude Code-like behavior, these event mappings apply:
+
+| Claude Hook | OpenCode Event |
+|-------------|----------------|
+| `PreToolUse` | `tool.execute.before` |
+| `PostToolUse` | `tool.execute.after` |
+| `UserPromptSubmit` | Custom handling via `message.*` events |
+| `SessionEnd` | `session.idle` |
+
+While PRPM can't directly convert Claude hooks to OpenCode plugins due to architectural differences, understanding these mappings helps when manually porting functionality.
+
 ## Limitations
 
 - Agent mode cannot be changed after creation (requires recreation)
 - Slash commands execute in project root directory
 - Custom commands override built-in commands with same name
 - File locations are fixed (`.opencode/agent/` and `.opencode/command/`)
+- **Plugins are non-convertible** - different event models and formats prevent cross-platform conversion
 
 ## PRPM Integration
 

@@ -1,9 +1,13 @@
 /**
  * OpenCode Format Parser
- * Converts OpenCode agent format to canonical format
+ * Converts OpenCode agents and slash commands to canonical format
  *
- * OpenCode stores agents in .opencode/agent/${name}.md with YAML frontmatter
+ * OpenCode stores:
+ * - Agents in .opencode/agent/${name}.md with YAML frontmatter
+ * - Slash commands in .opencode/command/${name}.md with YAML frontmatter (has 'template' field)
+ *
  * @see https://opencode.ai/docs/agents/
+ * @see https://opencode.ai/docs/commands/
  */
 
 import type {
@@ -36,13 +40,17 @@ interface OpencodePermission {
 }
 
 interface OpencodeFrontmatter {
-  description: string; // Required
+  description?: string; // Required for agents
   mode?: 'subagent' | 'primary' | 'all';
   model?: string;
   temperature?: number;
   tools?: OpencodeTools;
   permission?: OpencodePermission;
   disable?: boolean;
+  // Slash command specific fields
+  template?: string; // Required for slash commands
+  agent?: string;
+  subtask?: boolean;
 }
 
 /**
@@ -61,7 +69,11 @@ function parseFrontmatter(content: string): { frontmatter: Record<string, any>; 
 }
 
 /**
- * Convert OpenCode agent format to canonical format
+ * Convert OpenCode format (agent or slash command) to canonical format
+ *
+ * Automatically detects subtype based on presence of 'template' field:
+ * - If 'template' exists → slash-command
+ * - Otherwise → agent
  *
  * @param content - Markdown content with YAML frontmatter
  * @param metadata - Package metadata
@@ -87,6 +99,7 @@ export function fromOpencode(
   };
 
   // Store OpenCode-specific data for roundtrip conversion
+  // For agents: store mode, model, temperature, permission, disable
   if (fm.mode || fm.model || fm.temperature !== undefined || fm.permission || fm.disable !== undefined) {
     metadataSection.data.opencode = {
       mode: fm.mode,
@@ -94,6 +107,17 @@ export function fromOpencode(
       temperature: fm.temperature,
       permission: fm.permission,
       disable: fm.disable,
+    };
+  }
+
+  // For slash commands: store template, agent, model, subtask
+  if (fm.template) {
+    metadataSection.data.opencodeSlashCommand = {
+      template: fm.template,
+      description: fm.description,
+      agent: fm.agent,
+      model: fm.model,
+      subtask: fm.subtask,
     };
   }
 
@@ -143,6 +167,9 @@ export function fromOpencode(
     sections
   };
 
+  // Detect subtype: if 'template' field exists, it's a slash-command; otherwise it's an agent
+  const detectedSubtype = (frontmatter as Record<string, unknown>).template ? 'slash-command' : 'agent';
+
   const pkg: CanonicalPackage = {
     ...metadata,
     id: metadata.id,
@@ -152,10 +179,10 @@ export function fromOpencode(
     description: metadata.description || fm.description || '',
     tags: metadata.tags || [],
     format: 'opencode',
-    subtype: 'agent', // OpenCode only supports agents
+    subtype: detectedSubtype,
     content: canonicalContent,
   };
 
-  setTaxonomy(pkg, 'opencode', 'agent');
+  setTaxonomy(pkg, 'opencode', detectedSubtype);
   return pkg;
 }
