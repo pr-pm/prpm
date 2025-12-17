@@ -163,8 +163,8 @@ export async function packageRoutes(server: FastifyInstance) {
         return cached;
       }
 
-      // Build WHERE clause
-      const conditions: string[] = ["visibility = 'public'"];
+      // Build WHERE clause (exclude deprecated packages)
+      const conditions: string[] = ["visibility = 'public'", "(deprecated = false OR deprecated IS NULL)"];
       const params: unknown[] = [];
       let paramIndex = 1;
 
@@ -1795,13 +1795,14 @@ export async function packageRoutes(server: FastifyInstance) {
         return cached;
       }
 
-      // Calculate trending score based on recent downloads vs historical average
+      // Calculate trending score based on recent downloads vs historical average (exclude deprecated)
       const result = await query<Package>(
         server,
         `SELECT ${LIST_COLUMNS},
         p.downloads_last_7_days as recent_downloads
        FROM packages p
        WHERE p.visibility = 'public'
+         AND (p.deprecated = false OR p.deprecated IS NULL)
          AND p.downloads_last_7_days > 0
        ORDER BY p.trending_score DESC, p.downloads_last_7_days DESC
        LIMIT $1`,
@@ -1853,7 +1854,7 @@ export async function packageRoutes(server: FastifyInstance) {
         return cached;
       }
 
-      const conditions: string[] = ["visibility = 'public'"];
+      const conditions: string[] = ["visibility = 'public'", "(deprecated = false OR deprecated IS NULL)"];
       const params: unknown[] = [limit];
       let paramIndex = 2;
 

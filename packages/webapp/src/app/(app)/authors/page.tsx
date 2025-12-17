@@ -30,6 +30,8 @@ interface Package {
   format: string
   subtype: string
   visibility: string
+  deprecated?: boolean
+  deprecated_reason?: string | null
   total_downloads: number
   weekly_downloads: number
   monthly_downloads: number
@@ -66,6 +68,7 @@ interface AuthorData {
     offset: number
     hasMore: boolean
   }
+  is_own_profile?: boolean
 }
 
 function AuthorsPageContent() {
@@ -85,15 +88,16 @@ function AuthorsPageContent() {
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
   const [analyticsPackage, setAnalyticsPackage] = useState<Package | null>(null)
   const [copied, setCopied] = useState(false)
+  const [includeDeprecated, setIncludeDeprecated] = useState(false)
 
   useEffect(() => {
     if (username) {
-      loadAuthorProfile(username, offset, limit)
+      loadAuthorProfile(username, offset, limit, includeDeprecated)
     } else {
       loadAuthors(sortBy)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username, offset, limit, sortBy])
+  }, [username, offset, limit, sortBy, includeDeprecated])
 
   async function loadAuthors(sort: 'downloads' | 'count' = 'downloads') {
     try {
@@ -108,7 +112,7 @@ function AuthorsPageContent() {
     }
   }
 
-  async function loadAuthorProfile(username: string, offset: number = 0, limit: number = 100) {
+  async function loadAuthorProfile(username: string, offset: number = 0, limit: number = 100, showDeprecated: boolean = false) {
     try {
       setLoading(true)
       setError(null)
@@ -116,6 +120,7 @@ function AuthorsPageContent() {
       // Check if user is logged in and viewing their own profile
       const token = typeof window !== 'undefined' ? localStorage.getItem('prpm_token') : null
       let currentUsername = null
+      let ownProfile = false
 
       if (token) {
         try {
@@ -124,9 +129,10 @@ function AuthorsPageContent() {
 
           // If viewing own profile, load analytics dashboard
           if (user.username.toLowerCase() === username.toLowerCase()) {
+            ownProfile = true
             setIsOwnProfile(true)
             const [profile, dashboard, packages] = await Promise.all([
-              getAuthorProfile(username, 'downloads', limit, offset, token),
+              getAuthorProfile(username, 'downloads', limit, offset, token, showDeprecated),
               getAuthorDashboard(token),
               getAuthorPackages(token, 'downloads'),
             ])
@@ -139,9 +145,9 @@ function AuthorsPageContent() {
         }
       }
 
-      if (!isOwnProfile) {
+      if (!ownProfile) {
         // Load public profile (with token if available to show private packages)
-        const profile = await getAuthorProfile(username, 'downloads', limit, offset, token || undefined)
+        const profile = await getAuthorProfile(username, 'downloads', limit, offset, token || undefined, false)
         setAuthorData(profile)
       }
     } catch (err) {
@@ -266,12 +272,23 @@ function AuthorsPageContent() {
               </div>
 
               {isOwnProfile && (
-                <button
-                  onClick={() => setShowAnalytics(!showAnalytics)}
-                  className="px-4 py-2 bg-prpm-dark border border-prpm-border hover:border-prpm-accent text-white rounded-lg font-semibold transition-all text-sm"
-                >
-                  {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
-                </button>
+                <div className="flex flex-col items-end gap-3">
+                  <button
+                    onClick={() => setShowAnalytics(!showAnalytics)}
+                    className="px-4 py-2 bg-prpm-dark border border-prpm-border hover:border-prpm-accent text-white rounded-lg font-semibold transition-all text-sm"
+                  >
+                    {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+                  </button>
+                  <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={includeDeprecated}
+                      onChange={(e) => setIncludeDeprecated(e.target.checked)}
+                      className="w-4 h-4 rounded border-prpm-border bg-prpm-dark text-prpm-accent focus:ring-prpm-accent focus:ring-offset-prpm-dark cursor-pointer"
+                    />
+                    Show deprecated packages
+                  </label>
+                </div>
               )}
             </div>
 
@@ -498,6 +515,11 @@ function AuthorsPageContent() {
                       {pkg.visibility === 'private' && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 border border-gray-500/30 text-gray-400">
                           🔒
+                        </span>
+                      )}
+                      {pkg.deprecated && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 border border-yellow-500/30 text-yellow-400">
+                          ⚠️ Deprecated
                         </span>
                       )}
                     </div>

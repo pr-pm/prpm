@@ -465,12 +465,17 @@ export async function getAuthorProfile(
   limit: number = 100,
   offset: number = 0,
   jwtToken?: string,
+  includeDeprecated: boolean = false,
 ) {
   const params = new URLSearchParams({
     sort,
     limit: limit.toString(),
     offset: offset.toString(),
   });
+
+  if (includeDeprecated) {
+    params.set("include_deprecated", "true");
+  }
 
   const headers: Record<string, string> = {};
 
