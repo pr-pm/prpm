@@ -237,6 +237,10 @@ echo "--------------------------------------------"
 echo "  Phase 3: Installing and verifying packages"
 echo "--------------------------------------------"
 
+# Brief delay to allow registry to index newly published packages
+log_info "Waiting for registry to index packages..."
+sleep 3
+
 # Create install workspace
 INSTALL_WORKSPACE="$WORKSPACE/install-test"
 mkdir -p "$INSTALL_WORKSPACE"
@@ -279,6 +283,8 @@ for pkg in "${BATCH_PACKAGES[@]}"; do
     log_error "Failed to install $pkg"
     FAILED=1
   fi
+  # Small delay to avoid rate limiting
+  sleep 0.5
 done
 
 # Install edge case packages
@@ -294,6 +300,7 @@ for pkg in "${EDGE_CASE_PACKAGES[@]}"; do
     log_error "Failed to install $pkg"
     FAILED=1
   fi
+  sleep 0.5
 done
 
 # Install large package rules (10 rules)
@@ -305,6 +312,7 @@ for i in $(seq -w 1 10); do
     log_error "Failed to install @ci-test/large-rule-$i"
     FAILED=1
   fi
+  sleep 0.5
 done
 
 # Run Vitest verification if test file exists

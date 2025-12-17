@@ -276,8 +276,19 @@ export function validateMarkdown(
 ): ValidationResult {
   const { frontmatter, content } = parseMarkdownWithFrontmatter(markdown);
 
-  // Windsurf, agents.md, and ruler don't have frontmatter, so validate differently
-  if (format === 'windsurf' || format === 'agents.md' || format === 'ruler') {
+  // Some formats/subtypes don't use frontmatter - validate as content-only
+  // - Windsurf, agents.md, and ruler: never have frontmatter
+  // - Cursor slash-commands: plain markdown files, no frontmatter
+  const noFrontmatterFormats = ['windsurf', 'agents.md', 'ruler'];
+  const noFrontmatterSubtypes: Record<string, string[]> = {
+    cursor: ['slash-command'],
+  };
+
+  const isNoFrontmatter =
+    noFrontmatterFormats.includes(format) ||
+    (subtype && noFrontmatterSubtypes[format]?.includes(subtype));
+
+  if (isNoFrontmatter) {
     return validateFormat(format, { content: markdown }, subtype);
   }
 

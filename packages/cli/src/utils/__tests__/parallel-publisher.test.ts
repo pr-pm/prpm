@@ -2,6 +2,7 @@
  * Tests for parallel publishing utilities
  */
 
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   publishInParallel,
   withRetry,

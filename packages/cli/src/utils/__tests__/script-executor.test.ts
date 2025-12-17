@@ -2,18 +2,19 @@
  * Tests for script executor utility
  */
 
-// Use var for hoisting compatibility with jest.mock
-var mockExecAsync: jest.Mock;
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Create mock function
+const mockExecAsync = vi.fn();
 
 // Mock child_process
-jest.mock('child_process', () => ({
-  exec: jest.fn(),
+vi.mock('child_process', () => ({
+  exec: vi.fn(),
 }));
 
 // Mock util.promisify to return a function that calls mockExecAsync
-// Use a function wrapper so mockExecAsync is resolved at call time
-jest.mock('util', () => ({
-  promisify: jest.fn(() => {
+vi.mock('util', () => ({
+  promisify: vi.fn(() => {
     return (...args: any[]) => mockExecAsync(...args);
   }),
 }));
@@ -21,21 +22,18 @@ jest.mock('util', () => ({
 // Now import after mocks are set up
 import { executeScript, executePrepublishOnly } from '../script-executor';
 
-// Initialize the mock
-mockExecAsync = jest.fn();
-
 describe('script-executor', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Suppress console output during tests
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('executeScript', () => {

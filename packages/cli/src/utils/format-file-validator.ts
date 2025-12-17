@@ -188,8 +188,11 @@ export async function validatePackageFiles(
     }
 
     // Check if file matches format-specific patterns
+    // Note: Files will be auto-relocated to canonical locations during publish,
+    // so we accept files from any location (not just the standard directories)
     if (formatType === 'cursor') {
-      return filePath.includes('.cursorrules') || filePath.endsWith('.mdc');
+      // Cursor accepts .mdc and .md files (will be converted to .mdc during publish)
+      return filePath.includes('.cursorrules') || filePath.endsWith('.mdc') || filePath.endsWith('.md');
     } else if (formatType === 'claude') {
       // For Claude skills: ONLY validate SKILL.md
       if (manifest.subtype === 'skill') {
@@ -208,23 +211,21 @@ export async function validatePackageFiles(
         return false;
       }
 
-      // Validate based on subtype
-      if (manifest.subtype === 'agent') {
-        return filePath.includes('.claude/agents/') && filePath.endsWith('.md');
-      } else if (manifest.subtype === 'slash-command') {
-        return filePath.includes('.claude/commands/') && filePath.endsWith('.md');
-      }
-
-      // For other subtypes or no subtype, validate .md files
-      return filePath.endsWith('.md') && !filePath.endsWith('.json');
+      // Validate .md files from any location
+      return filePath.endsWith('.md');
     } else if (formatType === 'continue') {
-      return filePath.includes('.continue/') && filePath.endsWith('.json');
+      // Continue accepts .md files (will be relocated during publish)
+      return filePath.endsWith('.md') || filePath.endsWith('.json');
     } else if (formatType === 'windsurf') {
-      return filePath.includes('.windsurf/rules');
+      // Windsurf accepts .md files from any location
+      return filePath.endsWith('.md');
+    } else if (formatType === 'copilot') {
+      // Copilot accepts .md files (will be renamed to .instructions.md during publish)
+      return filePath.endsWith('.md');
     } else if (formatType === 'agents.md') {
       return filePath === 'agents.md';
     } else if (formatType === 'kiro') {
-      // Kiro: validate .md (steering files) and .json (hooks), but skip examples
+      // Kiro: validate .md (steering files) and .json (hooks/agents)
       return filePath.endsWith('.md') || filePath.endsWith('.json');
     }
 
@@ -279,10 +280,26 @@ export async function validatePackageFiles(
 
   // Format-specific additional validation
   if (manifest.format === 'claude' && manifest.subtype === 'skill') {
-    // Ensure SKILL.md exists (already checked in manifest validation, but double-check)
+    // Check for skill file - SKILL.md is canonical, single .md file auto-renamed, multiple require SKILL.md
     const hasSkillMd = filePaths.some(path => path.endsWith('/SKILL.md') || path === 'SKILL.md');
-    if (!hasSkillMd) {
-      errors.push('Claude skills must contain a SKILL.md file');
+    // Only treat real skill candidates as markdown files (exclude docs, tests, examples, and READMEs)
+    const mdFiles = filePaths.filter(path => {
+      if (!path.endsWith('.md')) return false;
+      const filename = path.split(/[\\/]/).pop()?.toLowerCase() || '';
+      if (filename === 'readme.md') return false;
+      // Exclude docs/tests/examples directories
+      if (path.includes('examples/') || path.includes('example/') ||
+          path.includes('tests/') || path.includes('__tests__/') ||
+          path.includes('docs/') || path.includes('doc/')) return false;
+      return true;
+    });
+
+    if (!hasSkillMd && mdFiles.length === 0) {
+      errors.push('Claude skills must contain a markdown file (.md)');
+    } else if (!hasSkillMd && mdFiles.length === 1) {
+      warnings.push('Skill file will be auto-renamed to SKILL.md during publish');
+    } else if (!hasSkillMd && mdFiles.length > 1) {
+      errors.push(`Claude skills with multiple .md files must use SKILL.md for the main skill file (found ${mdFiles.length} .md files)`);
     }
   }
 

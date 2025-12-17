@@ -2,6 +2,7 @@
  * Tests for snippet-extractor utilities
  */
 
+import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest';
 import { extractSnippet, validateSnippet } from '../snippet-extractor';
 import type { PackageManifest } from '../../types/registry';
 import { writeFile, mkdir, rm } from 'fs/promises';
@@ -132,7 +133,7 @@ describe('snippet-extractor', () => {
         files: ['.cursor/rules/nonexistent.mdc'],
       };
 
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const snippet = await extractSnippet(manifest);
 
@@ -155,7 +156,7 @@ describe('snippet-extractor', () => {
         files: ['.cursor/rules/subdir'],
       };
 
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const snippet = await extractSnippet(manifest);
 
@@ -228,12 +229,12 @@ describe('snippet-extractor', () => {
   });
 
   describe('validateSnippet', () => {
-    let warnSpy: jest.SpyInstance;
-    let logSpy: jest.SpyInstance;
+    let warnSpy: MockInstance;
+    let logSpy: MockInstance;
 
     beforeEach(() => {
-      warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      logSpy = jest.spyOn(console, 'log').mockImplementation();
+      warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     });
 
     afterEach(() => {

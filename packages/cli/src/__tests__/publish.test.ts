@@ -210,7 +210,7 @@ describe("Publish Command", () => {
       );
     });
 
-    it("should reject Claude skills without SKILL.md file", async () => {
+    it("should reject Claude skills with multiple .md files but no SKILL.md", async () => {
       await writeFile(
         join(testDir, "prpm.json"),
         JSON.stringify({
@@ -219,7 +219,10 @@ describe("Publish Command", () => {
           description: "Test Claude skill",
           format: "claude",
           subtype: "skill",
-          files: [".claude/skills/test-skill/skill.md"], // Wrong filename (should be SKILL.md)
+          files: [
+            ".claude/skills/test-skill/skill1.md",
+            ".claude/skills/test-skill/skill2.md",
+          ], // Multiple .md files without SKILL.md
         }),
       );
 
@@ -227,11 +230,15 @@ describe("Publish Command", () => {
         recursive: true,
       });
       await writeFile(
-        join(testDir, ".claude/skills/test-skill/skill.md"),
-        "---\nname: test\ndescription: Test skill\n---\n\n# Test skill",
+        join(testDir, ".claude/skills/test-skill/skill1.md"),
+        "---\nname: test1\ndescription: Test skill 1\n---\n\n# Test skill 1",
+      );
+      await writeFile(
+        join(testDir, ".claude/skills/test-skill/skill2.md"),
+        "---\nname: test2\ndescription: Test skill 2\n---\n\n# Test skill 2",
       );
 
-      await expect(handlePublish({})).rejects.toThrow(/SKILL\.md/);
+      await expect(handlePublish({})).rejects.toThrow(/SKILL\.md|Package files do not match/);
     });
 
     it("should accept Claude skills with SKILL.md file", async () => {

@@ -1,7 +1,3 @@
----
-description: CI Test Cursor Slash Command
----
-
 # CI Test Cursor Slash Command
 
 This is a test slash command for PRPM integration testing.

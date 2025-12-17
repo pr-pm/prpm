@@ -2,6 +2,7 @@
  * Tests for license-extractor utilities
  */
 
+import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest';
 import { extractLicenseInfo, validateLicenseInfo, LicenseInfo } from '../license-extractor';
 import { writeFile, mkdir, rm } from 'fs/promises';
 import { join } from 'path';
@@ -196,10 +197,10 @@ Anyone is free to copy, modify, publish...`;
   });
 
   describe('validateLicenseInfo', () => {
-    let consoleSpy: jest.SpyInstance;
+    let consoleSpy: MockInstance;
 
     beforeEach(() => {
-      consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     });
 
     afterEach(() => {
