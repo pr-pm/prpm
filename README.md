@@ -158,11 +158,15 @@ prpm publish
 - `tags`: Keywords for discoverability
 
 **Publishing to an organization:**
-```json
+```bash
+# Add organization to manifest
 {
   "organization": "my-org",
   ...
 }
+
+# Or specify at publish time
+prpm publish --org my-org
 ```
 
 **Multi-package publishing** (one repo, multiple packages):
