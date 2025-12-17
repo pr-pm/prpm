@@ -256,19 +256,39 @@ export function validateManifest(
     }
   }
 
-  // Enforce SKILL.md filename for Claude skills
+  // Validate Claude skills - allow single .md file to be auto-renamed, but multiple files require SKILL.md
   if (manifest.format === "claude" && manifest.subtype === "skill") {
     const filePaths = normalizeFilePaths(manifest.files);
     const hasSkillMd = filePaths.some(
       (path) => path.endsWith("/SKILL.md") || path === "SKILL.md",
     );
 
-    if (!hasSkillMd) {
+    // Count .md files (excluding README)
+    const mdFiles = filePaths.filter(
+      (path) => path.endsWith(".md") && !path.toLowerCase().includes("readme"),
+    );
+
+    if (!hasSkillMd && mdFiles.length === 0) {
       throw new Error(
-        `${prefix}Claude skills must contain a SKILL.md file.\n` +
-          "According to Claude documentation at https://docs.claude.com/en/docs/claude-code/skills,\n" +
-          "skills must have a file named SKILL.md in their directory.\n" +
-          "Please rename your skill file to SKILL.md (all caps) and update your prpm.json files array.",
+        `${prefix}Claude skills must contain a markdown file.\n` +
+          "No .md file found in the files array.\n" +
+          "Please add your skill file to the prpm.json files array.",
+      );
+    }
+
+    if (!hasSkillMd && mdFiles.length === 1) {
+      // Single .md file - will be auto-renamed during tarball creation
+      console.log(
+        `${prefix}⚠️  Skill file will be auto-renamed to SKILL.md during publish`,
+      );
+    }
+
+    if (!hasSkillMd && mdFiles.length > 1) {
+      // Multiple .md files - require SKILL.md to identify the main skill
+      throw new Error(
+        `${prefix}Claude skills with multiple .md files must use SKILL.md for the main skill file.\n` +
+          `Found ${mdFiles.length} .md files but no SKILL.md.\n` +
+          "Please rename your main skill file to SKILL.md so we know which file is the skill.",
       );
     }
 
