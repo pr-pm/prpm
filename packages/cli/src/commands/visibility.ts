@@ -73,17 +73,22 @@ export async function handleVisibility(
     error = err instanceof Error ? err.message : String(err);
     throw new CLIError(`❌ Failed to update visibility: ${error}`, 1);
   } finally {
-    await telemetry.track({
-      command: 'visibility',
-      success,
-      error,
-      duration: Date.now() - startTime,
-      data: {
-        packageName,
-        visibility,
-      },
-    });
-    await telemetry.shutdown();
+    // Wrap telemetry in try/catch to prevent masking original errors
+    try {
+      await telemetry.track({
+        command: 'visibility',
+        success,
+        error,
+        duration: Date.now() - startTime,
+        data: {
+          packageName,
+          visibility,
+        },
+      });
+      await telemetry.shutdown();
+    } catch {
+      // Silently ignore telemetry errors
+    }
   }
 }
 

@@ -2775,24 +2775,30 @@ export async function packageRoutes(server: FastifyInstance) {
 
         const pkg = packageResult.rows[0];
 
-        // Check if user owns this package (either directly or via organization)
+        // Check if user owns this package (either directly or via organization with proper role)
         let isOwner = pkg.author_id === user.user_id;
 
         if (!isOwner && pkg.org_id) {
-          // Check if user is a member of the owning organization
+          // Check if user has owner/admin/maintainer role in the organization
           const orgMemberResult = await server.pg.query(
-            `SELECT 1 FROM organization_members
+            `SELECT role FROM organization_members
              WHERE org_id = $1 AND user_id = $2`,
             [pkg.org_id, user.user_id]
           );
-          isOwner = orgMemberResult.rows.length > 0;
+
+          if (orgMemberResult.rows.length > 0) {
+            const role = orgMemberResult.rows[0].role;
+            if (["owner", "admin", "maintainer"].includes(role)) {
+              isOwner = true;
+            }
+          }
         }
 
         // Allow admins to change visibility of any package
         if (!isOwner && !user.is_admin) {
           return reply.code(403).send({
             error: "Forbidden",
-            message: "Only the package owner or an admin can change visibility",
+            message: "Only the package owner, organization owner/admin/maintainer, or a site admin can change visibility",
           });
         }
 
@@ -2811,6 +2817,12 @@ export async function packageRoutes(server: FastifyInstance) {
            WHERE id = $2`,
           [visibility, pkg.id]
         );
+
+        // Invalidate caches for this package
+        await cacheDelete(server, `package:${pkg.name}`);
+        await cacheDeletePattern(server, `package:${pkg.name}:*`);
+        await cacheDeletePattern(server, `packages:list:*`);
+        await cacheDeletePattern(server, `search:*`);
 
         server.log.info({
           package: pkg.name,

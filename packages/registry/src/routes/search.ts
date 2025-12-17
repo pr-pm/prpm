@@ -718,9 +718,9 @@ export async function searchRoutes(server: FastifyInstance) {
       const lowerQ = q.toLowerCase();
 
       // Get package name suggestions using prefix + trigram (optimized with indexes)
-      const packageResults = await query<{ name: string; similarity: number; downloads: number }>(
+      const packageResults = await query<{ name: string; sim: number; downloads: number }>(
         server,
-        `SELECT name, similarity(name, $1) as sim, total_downloads
+        `SELECT name, similarity(name, $1) as sim, total_downloads as downloads
          FROM packages
          WHERE visibility = 'public'
            AND (deprecated = false OR deprecated IS NULL)
@@ -728,7 +728,7 @@ export async function searchRoutes(server: FastifyInstance) {
          ORDER BY
            CASE WHEN name ILIKE $3 THEN 0 ELSE 1 END,
            sim DESC,
-           total_downloads DESC
+           downloads DESC
          LIMIT $4`,
         [lowerQ, `${lowerQ}%`, `${lowerQ}%`, Math.ceil(limit / 2)]
       );
