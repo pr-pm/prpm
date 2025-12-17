@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { PackageManifest } from '../../types/registry.js';
 
 // Mock the schema validator to always return valid - must be before imports
@@ -14,6 +14,10 @@ describe('manifest-loader', () => {
     // Suppress console.log and console.warn during tests
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('normalizeFilePaths', () => {

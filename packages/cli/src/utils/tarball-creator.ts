@@ -2,7 +2,7 @@
  * Tarball creation utilities for publish command
  */
 
-import { readFile, stat, mkdir, rm, copyFile, writeFile } from "fs/promises";
+import { readFile, stat, mkdir, rm, copyFile } from "fs/promises";
 import { join, dirname, basename } from "path";
 import * as tar from "tar";
 import { tmpdir } from "os";

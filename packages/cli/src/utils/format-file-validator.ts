@@ -282,7 +282,17 @@ export async function validatePackageFiles(
   if (manifest.format === 'claude' && manifest.subtype === 'skill') {
     // Check for skill file - SKILL.md is canonical, single .md file auto-renamed, multiple require SKILL.md
     const hasSkillMd = filePaths.some(path => path.endsWith('/SKILL.md') || path === 'SKILL.md');
-    const mdFiles = filePaths.filter(path => path.endsWith('.md') && !path.toLowerCase().includes('readme'));
+    // Only treat real skill candidates as markdown files (exclude docs, tests, examples, and READMEs)
+    const mdFiles = filePaths.filter(path => {
+      if (!path.endsWith('.md')) return false;
+      const filename = path.split(/[\\/]/).pop()?.toLowerCase() || '';
+      if (filename === 'readme.md') return false;
+      // Exclude docs/tests/examples directories
+      if (path.includes('examples/') || path.includes('example/') ||
+          path.includes('tests/') || path.includes('__tests__/') ||
+          path.includes('docs/') || path.includes('doc/')) return false;
+      return true;
+    });
 
     if (!hasSkillMd && mdFiles.length === 0) {
       errors.push('Claude skills must contain a markdown file (.md)');

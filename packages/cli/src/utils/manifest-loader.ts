@@ -263,10 +263,12 @@ export function validateManifest(
       (path) => path.endsWith("/SKILL.md") || path === "SKILL.md",
     );
 
-    // Count .md files (excluding README)
-    const mdFiles = filePaths.filter(
-      (path) => path.endsWith(".md") && !path.toLowerCase().includes("readme"),
-    );
+    // Count .md files (excluding README.md specifically, not files containing "readme")
+    const mdFiles = filePaths.filter((filePath) => {
+      if (!filePath.endsWith(".md")) return false;
+      const filename = filePath.split(/[\\/]/).pop()?.toLowerCase() || '';
+      return filename !== "readme.md";
+    });
 
     if (!hasSkillMd && mdFiles.length === 0) {
       throw new Error(

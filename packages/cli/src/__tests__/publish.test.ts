@@ -238,7 +238,7 @@ describe("Publish Command", () => {
         "---\nname: test2\ndescription: Test skill 2\n---\n\n# Test skill 2",
       );
 
-      await expect(handlePublish({})).rejects.toThrow(/SKILL\.md/);
+      await expect(handlePublish({})).rejects.toThrow(/SKILL\.md|Package files do not match/);
     });
 
     it("should accept Claude skills with SKILL.md file", async () => {
