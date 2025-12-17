@@ -45,7 +45,7 @@ export async function userRoutes(server: FastifyInstance) {
 
     // Check if user is viewing their own profile
     const loggedInUser = request.user;
-    const isOwnProfile = loggedInUser && loggedInUser.user_id === user.id;
+    const isOwnProfile = loggedInUser?.user_id === user.id;
 
     // Only allow including deprecated packages for own profile
     const showDeprecated = include_deprecated && isOwnProfile;
@@ -129,7 +129,7 @@ export async function userRoutes(server: FastifyInstance) {
 
     // Check if user is viewing their own profile
     const loggedInUser = request.user;
-    const isOwnProfile = loggedInUser && loggedInUser.user_id === user.id;
+    const isOwnProfile = loggedInUser?.user_id === user.id;
 
     // Only allow including deprecated packages for own profile
     const showDeprecated = include_deprecated && isOwnProfile;
