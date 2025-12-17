@@ -116,6 +116,8 @@ function AuthorsPageContent() {
     try {
       setLoading(true)
       setError(null)
+      // Reset own-profile flag before determining whether this profile belongs to the current user
+      setIsOwnProfile(false)
 
       // Check if user is logged in and viewing their own profile
       const token = typeof window !== 'undefined' ? localStorage.getItem('prpm_token') : null
