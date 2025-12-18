@@ -199,6 +199,70 @@ describe('install command - file locations', () => {
     });
   });
 
+  describe('Copilot format', () => {
+    it('installs copilot skill to .github/skills/<name>/SKILL.md', async () => {
+      const mockPackage = {
+        id: 'test-copilot-skill',
+        name: 'test-copilot-skill',
+        format: 'copilot',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 10,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(`---
+name: test-copilot-skill
+description: A test Copilot skill
+---
+
+# Test Copilot Skill
+
+This is a test skill for GitHub Copilot.
+`));
+
+      await handleInstall('test-copilot-skill', {});
+
+      expect(saveFile).toHaveBeenCalledWith('.github/skills/test-copilot-skill/SKILL.md', expect.any(String));
+    });
+
+    it('installs copilot rule to .github/instructions/', async () => {
+      const mockPackage = {
+        id: 'test-copilot-rule',
+        name: 'test-copilot-rule',
+        format: 'copilot',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 10,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(`---
+applyTo:
+  - "**/*.ts"
+---
+
+# TypeScript Guidelines
+
+Follow TypeScript best practices.
+`));
+
+      await handleInstall('test-copilot-rule', {});
+
+      expect(saveFile).toHaveBeenCalledWith('.github/instructions/test-copilot-rule.instructions.md', expect.any(String));
+    });
+  });
+
   describe('Claude package types', () => {
     it('should install claude-skill to .claude/skills', async () => {
       const mockPackage = {

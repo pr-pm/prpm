@@ -5,7 +5,7 @@
   "lastVerified": "2025-12-06",
   "verificationSources": {
     "claude": "https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview",
-    "copilot": "https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/",
+    "copilot": "https://code.visualstudio.com/docs/copilot/customization/agent-skills",
     "cursor": "https://docs.cursor.com/context/rules",
     "continue": "https://docs.continue.dev/reference",
     "windsurf": "https://docs.codeium.com/windsurf/cascade",

@@ -195,6 +195,32 @@ General coding guidelines.
       });
     });
 
+    it('should detect copilot skills in .github/skills/', async () => {
+      await mkdir(join(testDir, '.github/skills/webapp-testing'), { recursive: true });
+      await writeFile(
+        join(testDir, '.github/skills/webapp-testing/SKILL.md'),
+        `---
+name: webapp-testing
+description: Guides testing of web applications
+---
+
+# Web Application Testing
+
+This skill helps you test web applications effectively.
+`
+      );
+
+      const packages = await scanForPackages(testDir);
+
+      expect(packages).toHaveLength(1);
+      expect(packages[0]).toMatchObject({
+        name: 'webapp-testing',
+        format: 'copilot',
+        subtype: 'skill',
+        primaryFile: '.github/skills/webapp-testing/SKILL.md',
+      });
+    });
+
     it('should detect kiro steering files', async () => {
       await mkdir(join(testDir, '.kiro/steering'), { recursive: true });
       await writeFile(

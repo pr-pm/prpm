@@ -1021,6 +1021,9 @@ export async function handleInstall(
       } else if (effectiveFormat === 'droid' && effectiveSubtype === 'skill') {
         // Factory Droid skills use SKILL.md inside the skill directory
         destPath = `${destDir}/SKILL.md`;
+      } else if (effectiveFormat === 'copilot' && effectiveSubtype === 'skill') {
+        // GitHub Copilot skills use SKILL.md inside the skill directory
+        destPath = `${destDir}/SKILL.md`;
       } else {
         // Check if this format/subtype needs progressive disclosure
         // (format supports the subtype but doesn't have native file location for it)

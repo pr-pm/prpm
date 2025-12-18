@@ -111,8 +111,8 @@ function convertToSkill(
 
   // Derive skill name from config, package name, or ID
   const skillName = config.skillName ||
-    pkg.name?.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').slice(0, 64) ||
-    pkg.id.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').slice(0, 64);
+    pkg.name?.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 64) ||
+    pkg.id.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 64);
 
   // Derive description from config, package description, or metadata
   const skillDescription = config.skillDescription ||
@@ -167,7 +167,9 @@ function generateSkillFrontmatter(name: string, description: string): string {
   const truncatedDesc = description.length > 1024
     ? description.slice(0, 1021) + '...'
     : description;
-  lines.push(`description: ${truncatedDesc}`);
+  // Quote description to handle special YAML characters (colons, quotes, newlines)
+  const quotedDesc = `"${truncatedDesc.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+  lines.push(`description: ${quotedDesc}`);
   lines.push('---');
   return lines.join('\n');
 }
