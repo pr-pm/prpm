@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/copilot/skill.json",
+  "$comment": "https://code.visualstudio.com/docs/copilot/customization/agent-skills",
+  "title": "GitHub Copilot Skill Format",
+  "description": "JSON Schema for GitHub Copilot agent skills (.github/skills/*/SKILL.md)",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "description": "YAML frontmatter with skill metadata",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique identifier for the skill. Must be lowercase, using hyphens for spaces.",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of what the skill does and when to use it. Be specific about both capabilities and use cases.",
+          "maxLength": 1024
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown body with detailed instructions, procedures, examples, and references to bundled resources."
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "name": "webapp-testing",
+        "description": "Guides testing of web applications using browser automation and testing frameworks"
+      },
+      "content": "# Web Application Testing\n\nThis skill helps you test web applications effectively.\n\n## Procedures\n\n1. Set up testing environment\n2. Write unit tests\n3. Run integration tests\n\n## Resources\n\n- [Test template](./test-template.ts)"
+    },
+    {
+      "frontmatter": {
+        "name": "api-documentation",
+        "description": "Generates and maintains API documentation following OpenAPI specifications"
+      },
+      "content": "# API Documentation\n\nThis skill assists with creating comprehensive API documentation.\n\n## Guidelines\n\n- Document all endpoints\n- Include request/response examples\n- Specify authentication requirements"
+    }
+  ]
+}

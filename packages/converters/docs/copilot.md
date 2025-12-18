@@ -3,13 +3,16 @@
 **File Locations:**
 - Repository-wide: `.github/copilot-instructions.md`
 - Path-specific: `.github/instructions/*.instructions.md`
+- Skills: `.github/skills/*/SKILL.md`
 
 **Format:** Natural language markdown (optional YAML frontmatter for path-specific)
-**Official Docs:** https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot
+**Official Docs:**
+- Instructions: https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot
+- Skills: https://code.visualstudio.com/docs/copilot/customization/agent-skills
 
 ## Overview
 
-GitHub Copilot uses natural language instructions in markdown format. Instructions can be repository-wide or path-specific. The format emphasizes simplicity and natural language over structured formats.
+GitHub Copilot uses natural language instructions in markdown format. Instructions can be repository-wide or path-specific. Skills are reusable, task-specific capabilities that Copilot can discover and apply. The format emphasizes simplicity and natural language over structured formats.
 
 ## Repository-Wide Instructions
 
@@ -306,12 +309,104 @@ async function transferFunds(fromId: string, toId: string, amount: number) {
 \`\`\`
 ```
 
+## Skills
+
+**File:** `.github/skills/<skill-name>/SKILL.md`
+**Format:** Markdown with YAML frontmatter
+**Availability:** VS Code Insiders with `chat.useAgentSkills` setting enabled
+
+Skills are task-specific capabilities that Copilot can discover and apply based on context. Each skill requires its own subdirectory with a `SKILL.md` file.
+
+### Skill Frontmatter
+
+**Required:**
+- **`name`** (string): Unique identifier for the skill (lowercase, hyphens for spaces, max 64 chars)
+- **`description`** (string): What the skill does and when to use it (max 1024 chars)
+
+### Skill Structure
+
+```markdown
+---
+name: webapp-testing
+description: Guides testing of web applications using browser automation and testing frameworks
+---
+
+# Web Application Testing
+
+This skill helps you test web applications effectively.
+
+## Procedures
+
+1. Set up testing environment
+2. Write unit tests
+3. Run integration tests
+
+## Resources
+
+- [Test template](./test-template.ts)
+```
+
+### Skill Discovery
+
+Copilot uses a three-level progressive disclosure system:
+
+1. **Discovery**: Copilot reads metadata from frontmatter to identify relevant skills
+2. **Loading**: When matched, the full `SKILL.md` body enters context
+3. **Access**: Referenced resources (scripts, templates, examples) load only when needed
+
+### Skill Best Practices
+
+1. **Specific descriptions**: Be explicit about capabilities and use cases
+2. **Bundled resources**: Include supporting files (scripts, templates, examples)
+3. **Relative references**: Use relative paths like `[template](./file.js)` for resources
+4. **Clear procedures**: Document step-by-step processes
+5. **Example inputs/outputs**: Show concrete usage patterns
+
+### Example Skill
+
+```markdown
+---
+name: api-documentation
+description: Generates and maintains API documentation following OpenAPI specifications
+---
+
+# API Documentation Generator
+
+Assists with creating comprehensive API documentation.
+
+## When to Use
+
+- Creating new API endpoints
+- Updating existing documentation
+- Generating OpenAPI specs
+
+## Procedures
+
+1. Analyze endpoint code
+2. Extract request/response schemas
+3. Generate markdown documentation
+4. Create OpenAPI specification
+
+## Guidelines
+
+- Document all parameters and return types
+- Include request/response examples
+- Specify authentication requirements
+- Add error response documentation
+
+## Templates
+
+- [Endpoint template](./endpoint-template.md)
+- [Schema template](./schema-template.yaml)
+```
+
 ## Conversion Notes
 
 ### From Canonical
 
 - Repository-wide: No frontmatter
 - Path-specific: `applyTo` in YAML frontmatter as array
+- Skills: `name` and `description` in frontmatter, content as markdown body
 - Natural language markdown content
 - Sections converted to H2 headers
 
@@ -321,6 +416,7 @@ async function transferFunds(fromId: string, toId: string, amount: number) {
 - Parses `applyTo` (string or array)
 - Detects path-specific vs repository-wide
 - Extracts description from first paragraph
+- Skills: frontmatter `description` becomes canonical description
 
 ## Limitations
 
@@ -328,7 +424,7 @@ async function transferFunds(fromId: string, toId: string, amount: number) {
 - No tool specifications
 - No versioning or metadata
 - Limited context window
-- No native support for agents/skills
+- Skills require VS Code Insiders with specific setting enabled
 
 ## Differences from Other Formats
 
@@ -336,16 +432,17 @@ async function transferFunds(fromId: string, toId: string, amount: number) {
 - More natural language focused
 - Path-specific via separate files (not globs in frontmatter)
 - Simpler format overall
+- Skills have different structure (subdirectory with SKILL.md vs single file)
 
 **vs Claude:**
 - No tools or model selection
-- No agents/skills distinction
-- Pure instruction focus
+- Skills use similar subdirectory pattern (SKILL.md)
+- No agents distinction (Copilot skills are task-focused, not persona-based)
 
 **vs Windsurf:**
 - Supports path-specific rules
 - Can have multiple instruction files
-- No hard character limit
+- Has native skill support (Windsurf does not)
 
 ## Migration Tips
 

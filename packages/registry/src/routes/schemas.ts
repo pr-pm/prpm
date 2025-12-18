@@ -10,6 +10,7 @@ import {
   claudeSchema,
   continueSchema,
   copilotSchema,
+  copilotSkillSchema,
   cursorSchema,
   droidSchema,
   geminiMdSchema,
@@ -68,6 +69,7 @@ const SUBTYPE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
   ['claude-skill.schema.json', claudeSkillSchema],
   ['claude-slash-command.schema.json', claudeSlashCommandSchema],
   ['claude-hook.schema.json', claudeHookSchema],
+  ['copilot-skill.schema.json', copilotSkillSchema],
   ['cursor-command.schema.json', cursorCommandSchema],
   ['cursor-hooks.schema.json', cursorHooksSchema],
   ['kiro-agent.schema.json', kiroAgentSchema],
@@ -91,6 +93,9 @@ const SUBTYPE_SCHEMAS: Record<string, { format: string; subtype: string }> = {
   'claude-skill.schema.json': { format: 'claude', subtype: 'skill' },
   'claude-slash-command.schema.json': { format: 'claude', subtype: 'slash-command' },
   'claude-hook.schema.json': { format: 'claude', subtype: 'hook' },
+
+  // GitHub Copilot subtypes
+  'copilot-skill.schema.json': { format: 'copilot', subtype: 'skill' },
 
   // Cursor subtypes
   'cursor-command.schema.json': { format: 'cursor', subtype: 'command' },

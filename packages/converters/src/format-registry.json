@@ -120,7 +120,7 @@
     },
     "copilot": {
       "name": "GitHub Copilot",
-      "description": "GitHub Copilot instructions and chat modes",
+      "description": "GitHub Copilot instructions, chat modes, and skills",
       "documentationUrl": "https://docs.github.com/en/copilot",
       "subtypes": {
         "rule": {
@@ -132,6 +132,14 @@
           "directory": ".github/chatmodes",
           "filePatterns": ["*.chatmode.md"],
           "fileExtension": ".chatmode.md"
+        },
+        "skill": {
+          "directory": ".github/skills",
+          "filePatterns": ["SKILL.md"],
+          "nested": true,
+          "nestedIndicator": "SKILL.md",
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
         }
       }
     },
