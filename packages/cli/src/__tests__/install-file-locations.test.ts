@@ -75,8 +75,13 @@ describe('install command - file locations', () => {
   });
 
   beforeEach(async () => {
-    // Clean up any existing directories (including droid/aider/gemini format directories to prevent auto-detection)
-    const dirs = ['.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents', 'AGENTS.md', 'custom', '.factory', '.droid', '.openskills'];
+    // Clean up any existing directories (including all format directories to prevent auto-detection)
+    const dirs = [
+      '.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents',
+      '.github', '.kiro', '.gemini', '.opencode', '.factory', '.droid',
+      '.trae', '.zencoder', '.mcp', '.openskills', '.openagents', '.opencommands',
+      'AGENTS.md', 'GEMINI.md', 'CLAUDE.md', 'CONVENTIONS.md', 'replit.md', 'custom'
+    ];
     for (const dir of dirs) {
       await fs.rm(path.join(testDir, dir), { recursive: true, force: true }).catch(() => {});
     }
