@@ -167,8 +167,8 @@ function generateSkillFrontmatter(name: string, description: string): string {
   const truncatedDesc = description.length > 1024
     ? description.slice(0, 1021) + '...'
     : description;
-  // Quote description to handle special YAML characters (colons, quotes, newlines)
-  const quotedDesc = `"${truncatedDesc.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+  // Quote description to handle special YAML characters (colons, quotes, newlines, carriage returns)
+  const quotedDesc = `"${truncatedDesc.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n')}"`;
   lines.push(`description: ${quotedDesc}`);
   lines.push('---');
   return lines.join('\n');
