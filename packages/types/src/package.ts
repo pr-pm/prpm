@@ -149,7 +149,7 @@ export const FORMAT_NATIVE_SUBTYPES: Partial<Record<Format, readonly Subtype[]>>
   // Note: claude.md is NOT listed - it uses progressive disclosure (.openskills/.openagents with manifest)
   continue: ["rule", "prompt"],  // Full native support
   windsurf: ["rule"],  // Full native support
-  copilot: ["rule", "chatmode"],  // No native skill/agent - uses AGENTS.md
+  copilot: ["rule", "chatmode", "skill"],  // Native skill support via .github/skills/
   kiro: ["rule", "hook", "agent"],  // No native skill - uses AGENTS.md
   gemini: ["slash-command", "extension"],  // Full native support
   opencode: ["agent", "slash-command", "tool", "plugin"],  // No native skill - uses AGENTS.md

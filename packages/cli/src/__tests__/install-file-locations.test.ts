@@ -75,8 +75,13 @@ describe('install command - file locations', () => {
   });
 
   beforeEach(async () => {
-    // Clean up any existing directories (including droid/aider/gemini format directories to prevent auto-detection)
-    const dirs = ['.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents', 'AGENTS.md', 'custom', '.factory', '.droid', '.openskills'];
+    // Clean up any existing directories (including all format directories to prevent auto-detection)
+    const dirs = [
+      '.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents',
+      '.github', '.kiro', '.gemini', '.opencode', '.factory', '.droid',
+      '.trae', '.zencoder', '.mcp', '.openskills', '.openagents', '.opencommands',
+      'AGENTS.md', 'GEMINI.md', 'CLAUDE.md', 'CONVENTIONS.md', 'replit.md', 'custom'
+    ];
     for (const dir of dirs) {
       await fs.rm(path.join(testDir, dir), { recursive: true, force: true }).catch(() => {});
     }
@@ -196,6 +201,70 @@ describe('install command - file locations', () => {
       await handleInstall('test-droid-skill', { as: 'droid' });
 
       expect(saveFile).toHaveBeenCalledWith('.factory/skills/test-droid-skill/SKILL.md', expect.any(String));
+    });
+  });
+
+  describe('Copilot format', () => {
+    it('installs copilot skill to .github/skills/<name>/SKILL.md', async () => {
+      const mockPackage = {
+        id: 'test-copilot-skill',
+        name: 'test-copilot-skill',
+        format: 'copilot',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 10,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(`---
+name: test-copilot-skill
+description: A test Copilot skill
+---
+
+# Test Copilot Skill
+
+This is a test skill for GitHub Copilot.
+`));
+
+      await handleInstall('test-copilot-skill', {});
+
+      expect(saveFile).toHaveBeenCalledWith('.github/skills/test-copilot-skill/SKILL.md', expect.any(String));
+    });
+
+    it('installs copilot rule to .github/instructions/', async () => {
+      const mockPackage = {
+        id: 'test-copilot-rule',
+        name: 'test-copilot-rule',
+        format: 'copilot',
+        subtype: 'rule',
+        tags: [],
+        total_downloads: 10,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(`---
+applyTo:
+  - "**/*.ts"
+---
+
+# TypeScript Guidelines
+
+Follow TypeScript best practices.
+`));
+
+      await handleInstall('test-copilot-rule', {});
+
+      expect(saveFile).toHaveBeenCalledWith('.github/instructions/test-copilot-rule.instructions.md', expect.any(String));
     });
   });
 

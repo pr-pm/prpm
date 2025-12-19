@@ -305,9 +305,9 @@ description: Test for copilot
         'https://example.com/package.tar.gz'
       );
 
-      // Copilot doesn't natively support skills - uses progressive disclosure via .openskills/
+      // Copilot natively supports skills in .github/skills/<name>/SKILL.md
       expect(saveFile).toHaveBeenCalledWith(
-        expect.stringContaining('.openskills/'),
+        expect.stringContaining('.github/skills/'),
         expect.any(String)
       );
     });
