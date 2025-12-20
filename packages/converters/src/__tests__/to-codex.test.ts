@@ -450,4 +450,253 @@ Old content for my-command
       expect(result.content).toContain('or asks to "run tests"');
     });
   });
+
+  describe('skill conversion (Agent Skills format)', () => {
+    it('should convert skill to SKILL.md format with YAML frontmatter', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'typescript-expert',
+        subtype: 'skill',
+        description: 'Expert TypeScript development assistance.',
+        metadata: {
+          title: 'TypeScript Expert',
+          description: 'Expert TypeScript development assistance.',
+        },
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'TypeScript Expert',
+                description: 'Expert TypeScript development assistance.',
+              },
+            },
+            {
+              type: 'instructions',
+              title: 'Guidelines',
+              content: 'Always use strict type checking.',
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      expect(result.format).toBe('codex');
+      expect(result.content).toContain('---');
+      expect(result.content).toContain('name: typescript-expert');
+      expect(result.content).toContain('description:');
+      expect(result.content).toContain('### Guidelines');
+    });
+
+    it('should include license in SKILL.md frontmatter', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'licensed-skill',
+        subtype: 'skill',
+        license: 'MIT',
+        description: 'A licensed skill.',
+        metadata: {
+          title: 'Licensed Skill',
+          description: 'A licensed skill.',
+        },
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Licensed Skill',
+                description: 'A licensed skill.',
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      expect(result.content).toContain('license: MIT');
+    });
+
+    it('should preserve Agent Skills metadata for roundtrip', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'roundtrip-skill',
+        subtype: 'skill',
+        description: 'Testing roundtrip.',
+        metadata: {
+          title: 'Roundtrip Skill',
+          description: 'Testing roundtrip.',
+        },
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Roundtrip Skill',
+                description: 'Testing roundtrip.',
+                agentSkills: {
+                  name: 'original-name',
+                  license: 'Apache-2.0',
+                  compatibility: 'Requires python3',
+                  allowedTools: 'Bash(python:*) Read',
+                  metadata: {
+                    category: 'data-science',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      expect(result.content).toContain('name: original-name');
+      expect(result.content).toContain('license: Apache-2.0');
+      expect(result.content).toContain('compatibility: Requires python3');
+      expect(result.content).toContain('allowed-tools: Bash(python:*) Read');
+      expect(result.content).toContain('metadata:');
+      expect(result.content).toContain('category:');
+    });
+
+    it('should convert tools section to allowed-tools', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'tools-skill',
+        subtype: 'skill',
+        description: 'Skill with tools.',
+        metadata: {
+          title: 'Tools Skill',
+          description: 'Skill with tools.',
+        },
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Tools Skill',
+                description: 'Skill with tools.',
+              },
+            },
+            {
+              type: 'tools',
+              tools: ['Read', 'Write', 'Bash'],
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      expect(result.content).toContain('allowed-tools: Read Write Bash');
+    });
+
+    it('should skip persona section with warning for skills', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'persona-skill',
+        subtype: 'skill',
+        description: 'Skill with persona.',
+        metadata: {
+          title: 'Persona Skill',
+          description: 'Skill with persona.',
+        },
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Persona Skill',
+                description: 'Skill with persona.',
+              },
+            },
+            {
+              type: 'persona',
+              data: {
+                role: 'Expert developer',
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings?.some(w => w.includes('Persona section skipped'))).toBe(true);
+    });
+
+    it('should truncate description to 1024 chars', () => {
+      const longDescription = 'A'.repeat(1100);
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'long-desc-skill',
+        subtype: 'skill',
+        description: longDescription,
+        metadata: {
+          title: 'Long Desc Skill',
+          description: longDescription,
+        },
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Long Desc Skill',
+                description: longDescription,
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      // Description should be truncated
+      expect(result.content).toContain('...');
+    });
+
+    it('should slugify skill name properly', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'My Cool Skill',
+        subtype: 'skill',
+        description: 'Test.',
+        metadata: {
+          title: 'My Cool Skill',
+          description: 'Test.',
+        },
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'My Cool Skill',
+                description: 'Test.',
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      expect(result.content).toContain('name: my-cool-skill');
+    });
+  });
 });

@@ -10,7 +10,7 @@ import {
   claudeSchema,
   continueSchema,
   copilotSchema,
-  copilotSkillSchema,
+  agentSkillsSchema,
   cursorSchema,
   droidSchema,
   geminiMdSchema,
@@ -69,7 +69,9 @@ const SUBTYPE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
   ['claude-skill.schema.json', claudeSkillSchema],
   ['claude-slash-command.schema.json', claudeSlashCommandSchema],
   ['claude-hook.schema.json', claudeHookSchema],
-  ['copilot-skill.schema.json', copilotSkillSchema],
+  ['agent-skills.schema.json', agentSkillsSchema],
+  ['copilot-skill.schema.json', agentSkillsSchema], // Alias - uses Agent Skills schema
+  ['codex-skill.schema.json', agentSkillsSchema], // Alias - uses Agent Skills schema
   ['cursor-command.schema.json', cursorCommandSchema],
   ['cursor-hooks.schema.json', cursorHooksSchema],
   ['kiro-agent.schema.json', kiroAgentSchema],
@@ -94,8 +96,14 @@ const SUBTYPE_SCHEMAS: Record<string, { format: string; subtype: string }> = {
   'claude-slash-command.schema.json': { format: 'claude', subtype: 'slash-command' },
   'claude-hook.schema.json': { format: 'claude', subtype: 'hook' },
 
-  // GitHub Copilot subtypes
+  // Agent Skills (shared standard for Codex and Copilot)
+  'agent-skills.schema.json': { format: 'agent-skills', subtype: 'skill' },
+
+  // GitHub Copilot subtypes (uses Agent Skills schema)
   'copilot-skill.schema.json': { format: 'copilot', subtype: 'skill' },
+
+  // OpenAI Codex subtypes (uses Agent Skills schema)
+  'codex-skill.schema.json': { format: 'codex', subtype: 'skill' },
 
   // Cursor subtypes
   'cursor-command.schema.json': { format: 'cursor', subtype: 'command' },

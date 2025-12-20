@@ -62,7 +62,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'claude:slash-command': 'claude-slash-command.schema.json',
       'claude:hook': 'claude-hook.schema.json',
       'claude:plugin': 'claude-plugin.schema.json',
-      'copilot:skill': 'copilot-skill.schema.json',
+      'copilot:skill': 'agent-skills.schema.json',
       'cursor:slash-command': 'cursor-command.schema.json',
       'cursor:hook': 'cursor-hooks.schema.json', // cursor + hook subtype uses cursor-hooks schema
       'kiro:hook': 'kiro-hook.schema.json',
@@ -72,6 +72,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'droid:hook': 'droid-hook.schema.json',
       'opencode:slash-command': 'opencode-slash-command.schema.json',
       'opencode:plugin': 'opencode-plugin.schema.json',
+      'codex:skill': 'agent-skills.schema.json',
       'gemini:extension': 'gemini-extension.schema.json',
       'mcp:server': 'mcp-server.schema.json',
     };
