@@ -198,12 +198,21 @@ function truncateDescription(desc: string, maxLength: number): string {
 
 /**
  * Convert a skill name to a slug (lowercase, hyphens)
+ * Per Agent Skills spec: 1-64 characters, lowercase alphanumeric and hyphens
  */
 function slugify(name: string): string {
-  return name
+  const slug = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+
+  // If slug is empty (e.g., input was only special characters), use a fallback
+  if (!slug) {
+    return 'unnamed-skill';
+  }
+
+  // Truncate to 64 characters per Agent Skills spec
+  return slug.slice(0, 64);
 }
 
 /**
@@ -337,6 +346,13 @@ function convertToAgentsMd(
 }
 
 /**
+ * Escape special regex characters in a string
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Append a new command section to existing AGENTS.md content
  */
 function appendToExistingAgentsMd(
@@ -344,12 +360,16 @@ function appendToExistingAgentsMd(
   newSection: string,
   commandName: string
 ): string {
+  // Strip leading slash and escape regex metacharacters
+  const cleanCommandName = commandName.replace(/^\//, '');
+  const escapedCommandName = escapeRegex(cleanCommandName);
+
   // Check if command already exists
-  const sectionHeader = `## ${commandName.replace(/^\//, '')}`;
+  const sectionHeader = `## ${cleanCommandName}`;
   if (existingContent.includes(sectionHeader)) {
     // Replace existing section
     const regex = new RegExp(
-      `## ${commandName.replace(/^\//, '')}[\\s\\S]*?(?=## |$)`,
+      `## ${escapedCommandName}[\\s\\S]*?(?=## |$)`,
       'g'
     );
     return existingContent.replace(regex, newSection + '\n\n');
@@ -561,8 +581,11 @@ export function generateFilename(pkg?: CanonicalPackage): string {
  * Check if content appears to be in Codex SKILL.md format
  */
 export function isCodexSkillFormat(content: string): boolean {
+  // Normalize line endings (handle Windows CRLF)
+  const normalizedContent = content.replace(/\r\n/g, '\n');
+
   // Check for YAML frontmatter with name and description
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  const match = normalizedContent.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return false;
 
   const frontmatterText = match[1];
