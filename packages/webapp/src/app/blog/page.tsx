@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "agent-skills-support",
+    title: "PRPM Now Supports Agent Skills: Build Once, Deploy Everywhere",
+    excerpt: "Agent Skills is Anthropic's open format for packaging procedural knowledge. PRPM adds native support with validation, cross-format conversion, and registry integration across Copilot, Claude, Cursor, and more.",
+    date: "2025-12-20",
+    author: "PRPM Team",
+    readTime: "10 min read",
+    tags: ["Feature Release", "Agent Skills", "Format Conversion", "Integration"],
+  },
+  {
     slug: "eager-lazy-loading",
     title: "Eager vs Lazy Loading: Control When Your AI Skills Activate",
     excerpt: "Some skills must always be active. Others should wait until needed. Now package authors can control activation with eager/lazy loading in PRPM.",
