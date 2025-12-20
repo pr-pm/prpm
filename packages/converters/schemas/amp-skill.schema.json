@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/amp/skill.json",
+  "$comment": "https://ampcode.com/manual#skills",
+  "title": "Amp Skill Format",
+  "description": "JSON Schema for Amp Skills - reusable patterns with optional tools and MCP servers",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "maxLength": 64,
+          "description": "Skill identifier (lowercase letters, numbers, hyphens only)"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Brief overview of functionality and when to use it"
+        },
+        "argument-hint": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Hint shown for skill invocation arguments (e.g., '[query]')"
+        },
+        "disable-model-invocation": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, prevents the model from auto-invoking this skill"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content with instructions and examples"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "name": "code-review",
+        "description": "Reviews code for best practices and potential issues",
+        "argument-hint": "[file or directory]"
+      },
+      "content": "# Code Review Skill\n\nReviews code for:\n- Best practices\n- Potential bugs\n- Performance issues\n\n## Usage\n\nProvide a file or directory path to review."
+    }
+  ]
+}

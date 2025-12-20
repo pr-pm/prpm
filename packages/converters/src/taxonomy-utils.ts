@@ -31,6 +31,7 @@ export const CLI_SUPPORTED_FORMATS = [
   'zencoder',
   'droid',
   'codex',
+  'amp',
 ] as const;
 
 export type CLISupportedFormat = (typeof CLI_SUPPORTED_FORMATS)[number];
@@ -110,6 +111,7 @@ export function normalizeFormat(sourceFormat: string): Format {
   if (normalized.includes('replit')) return 'replit';
   if (normalized.includes('zed')) return 'zed';
   if (normalized.includes('mcp')) return 'mcp';
+  if (normalized.includes('amp')) return 'amp';
 
   return 'generic';
 }

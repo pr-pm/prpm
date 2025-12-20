@@ -35,6 +35,9 @@ Complete overview of all supported formats, their subtypes, and official documen
 | **Aider** | `rule` | Plain markdown coding conventions (NO frontmatter) | [aider.chat](https://aider.chat/docs/usage/conventions.html) |
 | **Zencoder** | `rule` | Markdown with optional YAML frontmatter (description, globs, alwaysApply) | [docs.zencoder.ai](https://docs.zencoder.ai/rules-context/zen-rules) |
 | **Replit** | `rule` | Plain markdown project configuration (NO frontmatter) | [docs.replit.com](https://docs.replit.com/replitai/replit-dot-md) |
+| **Amp** | `skill` | Reusable patterns with bundled tools and MCP servers | [ampcode.com](https://ampcode.com/manual) |
+| | `slash-command` | Custom commands extending prompt input | [ampcode.com](https://ampcode.com/manual#custom-commands) |
+| | `rule` | AGENTS.md with optional glob filtering | [ampcode.com](https://ampcode.com/manual#agents-md) |
 
 ## Format Specifications
 
@@ -71,6 +74,7 @@ This directory contains detailed specifications for each AI IDE/tool format that
 | **Aider** | [aider.md](./aider.md) | Plain markdown coding conventions | [aider.chat](https://aider.chat/docs/usage/conventions.html) |
 | **Zencoder** | [zencoder.md](./zencoder.md) | Markdown with optional YAML frontmatter | [docs.zencoder.ai](https://docs.zencoder.ai/rules-context/zen-rules) |
 | **Replit** | [replit.md](./replit.md) | Plain markdown project configuration | [docs.replit.com](https://docs.replit.com/replitai/replit-dot-md) |
+| **Amp** | [amp.md](./amp.md) | Skills, commands, and AGENTS.md with optional globs | [ampcode.com](https://ampcode.com/manual) |
 
 ## Schema Validation
 
@@ -100,6 +104,7 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 - `aider.schema.json` - Aider conventions
 - `zencoder.schema.json` - Zencoder rules
 - `replit.schema.json` - Replit configuration
+- `amp.schema.json` - Amp AGENTS.md format
 - `canonical.schema.json` - PRPM universal format
 
 **Claude Code Subtypes:**
@@ -122,6 +127,10 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 
 **OpenCode Subtypes:**
 - `opencode-slash-command.schema.json` - Template-based commands
+
+**Amp Subtypes:**
+- `amp-skill.schema.json` - Reusable skills with bundled tools
+- `amp-command.schema.json` - Custom slash commands
 
 **Gemini CLI Subtypes:**
 - `gemini-extension.schema.json` - Extensions with MCP servers
@@ -197,6 +206,8 @@ These specifications serve as the source of truth for:
 | Aider | None | none | none |
 | Zencoder | YAML (optional) | none | `description`, `globs`, `alwaysApply` |
 | Replit | None | none | none |
+| Amp Skills | YAML (required) | `name`, `description` | `argument-hint`, `disable-model-invocation` |
+| Amp AGENTS.md | YAML (optional) | none | `globs` |
 
 ### File Organization
 
@@ -217,6 +228,7 @@ These specifications serve as the source of truth for:
 | Aider | `CONVENTIONS.md` | Single file |
 | Zencoder | `.zencoder/rules/*.md` | Multiple files in directory |
 | Replit | `replit.md` | Single file |
+| Amp | `.agents/skills/*/SKILL.md`, `.agents/commands/*.md` | Skills in subdirs, commands as files |
 
 ## Conversion Notes
 

@@ -74,6 +74,8 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'opencode:plugin': 'opencode-plugin.schema.json',
       'codex:skill': 'agent-skills.schema.json',
       'gemini:extension': 'gemini-extension.schema.json',
+      'amp:skill': 'amp-skill.schema.json',
+      'amp:slash-command': 'amp-command.schema.json',
       'mcp:server': 'mcp-server.schema.json',
     };
 
@@ -98,6 +100,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'aider': 'aider.schema.json',
       'zencoder': 'zencoder.schema.json',
       'replit': 'replit.schema.json',
+      'amp': 'amp.schema.json',
       'canonical': 'canonical.schema.json',
       // generic and mcp don't have specific schemas, will use fallback
     };
