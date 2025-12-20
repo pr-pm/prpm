@@ -11,12 +11,14 @@ import { fromContinue } from '../from-continue.js';
 import { fromCopilot } from '../from-copilot.js';
 import { fromKiro } from '../from-kiro.js';
 import { fromWindsurf } from '../from-windsurf.js';
+import { fromAmp } from '../from-amp.js';
 import { toCursor } from '../to-cursor.js';
 import { toClaude } from '../to-claude.js';
 import { toContinue } from '../to-continue.js';
 import { toCopilot } from '../to-copilot.js';
 import { toKiro } from '../to-kiro.js';
 import { toWindsurf } from '../to-windsurf.js';
+import { toAmp } from '../to-amp.js';
 import type { CanonicalPackage } from '../../types/canonical.js';
 
 const metadata = {
@@ -271,6 +273,48 @@ Generate comprehensive documentation.
 - Document parameters and return types
 - Include usage examples
 - Follow JSDoc format
+`;
+
+const sampleAmpSkill = `---
+name: code-review
+description: Reviews code for best practices and potential issues
+argument-hint: "[file or directory]"
+---
+
+# Code Review Skill
+
+You are an expert code reviewer.
+
+## Review Process
+
+1. Check for code smells
+2. Verify error handling
+3. Suggest improvements
+
+## Examples
+
+\`\`\`typescript
+function example() {
+  return 'reviewed';
+}
+\`\`\`
+`;
+
+const sampleAmpRule = `---
+globs:
+  - '**/*.ts'
+  - '**/*.tsx'
+---
+
+# TypeScript Guidelines
+
+These rules apply when working with TypeScript files.
+
+## Principles
+
+- Use strict mode
+- Avoid any types
+- Prefer interfaces over type aliases
 `;
 
 describe('Cross-format conversions', () => {
@@ -616,8 +660,116 @@ describe('Cross-format conversions', () => {
     it('should convert Windsurf to Continue', () => {
       const result = toContinue(canonical);
 
-      
+
       expect(result.format).toBe('continue');
+    });
+  });
+
+  describe('Amp Skill to all formats', () => {
+    let canonical: CanonicalPackage;
+
+    it('should parse Amp skill format', () => {
+      canonical = fromAmp(sampleAmpSkill, metadata);
+      expect(canonical).toBeDefined();
+      expect(canonical.format).toBe('amp');
+      expect(canonical.subtype).toBe('skill');
+    });
+
+    it('should convert Amp skill to Claude', () => {
+      const result = toClaude(canonical);
+
+      expect(result.content).toMatch(/^---\n/);
+      expect(result.content).toContain('name:');
+      expect(result.content).toContain('description:');
+      expect(result.format).toBe('claude');
+    });
+
+    it('should convert Amp skill to Cursor', () => {
+      const result = toCursor(canonical);
+
+      expect(result.content).toMatch(/^---\n/);
+      expect(result.format).toBe('cursor');
+    });
+
+    it('should convert Amp skill to Continue', () => {
+      const result = toContinue(canonical);
+
+      expect(result.content).toContain('Code Review Skill');
+      expect(result.format).toBe('continue');
+    });
+
+    it('should convert Amp skill to Copilot', () => {
+      const result = toCopilot(canonical);
+
+      expect(result.content).toContain('Code Review Skill');
+      expect(result.format).toBe('copilot');
+    });
+
+    it('should convert Amp skill to Kiro', () => {
+      const result = toKiro(canonical, { kiroConfig: { inclusion: 'manual' } });
+
+      expect(result.content).toContain('inclusion: manual');
+      expect(result.format).toBe('kiro');
+    });
+
+    it('should convert Amp skill to Windsurf', () => {
+      const result = toWindsurf(canonical);
+
+      expect(result.content).toContain('Code Review Skill');
+      expect(result.format).toBe('windsurf');
+    });
+  });
+
+  describe('Amp Rule to all formats', () => {
+    let canonical: CanonicalPackage;
+
+    it('should parse Amp rule format with globs', () => {
+      canonical = fromAmp(sampleAmpRule, metadata);
+      expect(canonical).toBeDefined();
+      expect(canonical.format).toBe('amp');
+      expect(canonical.subtype).toBe('rule');
+    });
+
+    it('should convert Amp rule to Claude', () => {
+      const result = toClaude(canonical);
+
+      expect(result.content).toMatch(/^---\n/);
+      expect(result.format).toBe('claude');
+    });
+
+    it('should convert Amp rule to Cursor', () => {
+      const result = toCursor(canonical);
+
+      expect(result.content).toMatch(/^---\n/);
+      expect(result.format).toBe('cursor');
+    });
+
+    it('should convert Amp rule to Continue', () => {
+      const result = toContinue(canonical);
+
+      expect(result.content).toContain('TypeScript Guidelines');
+      expect(result.format).toBe('continue');
+    });
+
+    it('should convert Amp rule to Copilot', () => {
+      const result = toCopilot(canonical);
+
+      expect(result.content).toContain('TypeScript Guidelines');
+      expect(result.format).toBe('copilot');
+    });
+
+    it('should convert Amp rule to Kiro', () => {
+      const result = toKiro(canonical, { kiroConfig: { inclusion: 'always' } });
+
+      expect(result.content).toContain('inclusion: always');
+      expect(result.format).toBe('kiro');
+    });
+
+    it('should convert Amp rule to Windsurf', () => {
+      const result = toWindsurf(canonical);
+
+      expect(result.content).toContain('TypeScript Guidelines');
+      expect(result.format).toBe('windsurf');
     });
   });
 
