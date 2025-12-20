@@ -43,15 +43,22 @@ interface AgentSkillsFrontmatter {
  * Parse YAML frontmatter from markdown
  */
 function parseFrontmatter(content: string): { frontmatter: Record<string, any>; body: string } {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  // Normalize line endings (handle Windows CRLF)
+  const normalizedContent = content.replace(/\r\n/g, '\n');
+
+  const match = normalizedContent.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!match) {
-    return { frontmatter: {}, body: content };
+    return { frontmatter: {}, body: normalizedContent };
   }
 
-  const frontmatter = yaml.load(match[1]) as Record<string, any>;
-  const body = match[2];
-
-  return { frontmatter, body };
+  try {
+    const frontmatter = yaml.load(match[1]) as Record<string, any>;
+    const body = match[2];
+    return { frontmatter: frontmatter || {}, body };
+  } catch (error) {
+    // If YAML parsing fails, return empty frontmatter and full content as body
+    return { frontmatter: {}, body: normalizedContent };
+  }
 }
 
 /**
