@@ -168,7 +168,7 @@ export async function generateMetadata({ params }: { params: { author: string; p
       tags: pkg.tags || undefined,
       images: [
         {
-          url: '/og-image.png',
+          url: 'https://prpm.dev/og-image.png',
           width: 1200,
           height: 630,
           alt: `${displayTitle} - PRPM Package`,
@@ -181,7 +181,14 @@ export async function generateMetadata({ params }: { params: { author: string; p
       title: displayTitle,
       description,
       creator: author ? `@${author}` : undefined,
-      images: ['/og-image.png'],
+      images: [
+        {
+          url: 'https://prpm.dev/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: `${displayTitle} - PRPM Package`,
+        }
+      ],
     },
   }
 }
