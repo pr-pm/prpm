@@ -166,6 +166,14 @@ export async function generateMetadata({ params }: { params: { author: string; p
       modifiedTime: pkg.updated_at ? new Date(pkg.updated_at).toISOString() : undefined,
       section: pkg.category || undefined,
       tags: pkg.tags || undefined,
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: `${displayTitle} - PRPM Package`,
+        }
+      ],
     },
     twitter: {
       card: 'summary_large_image',
@@ -173,6 +181,7 @@ export async function generateMetadata({ params }: { params: { author: string; p
       title: displayTitle,
       description,
       creator: author ? `@${author}` : undefined,
+      images: ['/og-image.png'],
     },
   }
 }
