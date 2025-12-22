@@ -287,10 +287,35 @@ async function handleGitHubInstall(
   console.log(`\n📦 Fetching from GitHub: ${chalk.cyan(repoName)}${chalk.dim(refDisplay)}`);
 
   try {
+    // Check lockfile to see if we already have this installed at a specific commit
+    const existingLockfile = await readLockfile();
+    let cachedCommitSha: string | undefined;
+
+    if (existingLockfile) {
+      // Look for any GitHub package from this repo
+      for (const [, pkg] of Object.entries(existingLockfile.packages)) {
+        if (pkg.githubSource?.owner === spec.owner && pkg.githubSource?.repo === spec.repo) {
+          cachedCommitSha = pkg.githubSource.commitSha;
+          break;
+        }
+      }
+    }
+
     // Download and scan the repository
     const result = await downloadGitHubRepo(spec);
 
-    console.log(`   ${chalk.dim(`Resolved to commit: ${result.commitSha.slice(0, 7)}`)}`);
+    if (result.fromCache) {
+      console.log(`   ${chalk.dim(`Resolved to commit: ${result.commitSha.slice(0, 7)}`)} ${chalk.green('(cached)')}`);
+    } else {
+      console.log(`   ${chalk.dim(`Resolved to commit: ${result.commitSha.slice(0, 7)}`)}`);
+    }
+
+    // Check if this is the same commit as what's already installed
+    if (cachedCommitSha && cachedCommitSha === result.commitSha && !options.force) {
+      console.log(`\n${chalk.green('✓')} Already up to date at commit ${chalk.dim(result.commitSha.slice(0, 7))}`);
+      console.log(`   ${chalk.dim('Use -y or --force to reinstall')}`);
+      return;
+    }
 
     if (result.packages.length === 0) {
       console.log(`\n${chalk.yellow('⚠️  No AI tool configurations found in this repository.')}`);

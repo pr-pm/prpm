@@ -4,9 +4,9 @@
  */
 
 import { createHash } from 'crypto';
-import { tmpdir } from 'os';
+import { tmpdir, homedir } from 'os';
 import { join, basename, dirname, extname, relative } from 'path';
-import { mkdir, rm, readFile, readdir, stat } from 'fs/promises';
+import { mkdir, rm, readFile, readdir, stat, writeFile, access } from 'fs/promises';
 import { randomBytes } from 'crypto';
 import * as zlib from 'zlib';
 import { promisify } from 'util';
@@ -14,6 +14,9 @@ import * as tar from 'tar';
 import type { Format, Subtype } from '../types';
 
 const gunzip = promisify(zlib.gunzip);
+
+/** Cache directory for GitHub tarballs */
+const GITHUB_CACHE_DIR = join(homedir(), '.prpm', 'cache', 'github');
 
 /**
  * Parsed GitHub repository specification
@@ -53,6 +56,8 @@ export interface GitHubDownloadResult {
   packages: DiscoveredPackage[];
   /** Raw tarball for integrity hashing */
   tarballBuffer: Buffer;
+  /** Whether the tarball was served from cache */
+  fromCache?: boolean;
 }
 
 /**
@@ -477,7 +482,37 @@ async function discoverPackages(
 }
 
 /**
+ * Get the cache path for a GitHub repo tarball
+ */
+function getCachePath(owner: string, repo: string, commitSha: string): string {
+  return join(GITHUB_CACHE_DIR, owner, repo, `${commitSha}.tar.gz`);
+}
+
+/**
+ * Check if a cached tarball exists for the given commit
+ */
+async function getCachedTarball(owner: string, repo: string, commitSha: string): Promise<Buffer | null> {
+  const cachePath = getCachePath(owner, repo, commitSha);
+  try {
+    await access(cachePath);
+    return await readFile(cachePath);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save a tarball to the cache
+ */
+async function cacheTarball(owner: string, repo: string, commitSha: string, buffer: Buffer): Promise<void> {
+  const cachePath = getCachePath(owner, repo, commitSha);
+  await mkdir(dirname(cachePath), { recursive: true });
+  await writeFile(cachePath, buffer);
+}
+
+/**
  * Download and scan a GitHub repository for packages
+ * Uses cached tarballs when the commit SHA matches
  */
 export async function downloadGitHubRepo(
   spec: GitHubSpec,
@@ -488,9 +523,20 @@ export async function downloadGitHubRepo(
   // Resolve ref to commit SHA for reproducibility
   const commitSha = await resolveGitHubRef(spec, effectiveToken);
 
-  // Download tarball
-  const specWithSha = { ...spec, ref: commitSha };
-  const tarballBuffer = await downloadGitHubTarball(specWithSha, effectiveToken);
+  // Check cache first
+  let tarballBuffer = await getCachedTarball(spec.owner, spec.repo, commitSha);
+  let fromCache = false;
+
+  if (tarballBuffer) {
+    fromCache = true;
+  } else {
+    // Download tarball
+    const specWithSha = { ...spec, ref: commitSha };
+    tarballBuffer = await downloadGitHubTarball(specWithSha, effectiveToken);
+
+    // Cache for future use
+    await cacheTarball(spec.owner, spec.repo, commitSha, tarballBuffer);
+  }
 
   // Create temp directory
   const tmpDir = join(tmpdir(), `prpm-github-${randomBytes(8).toString('hex')}`);
@@ -507,6 +553,7 @@ export async function downloadGitHubRepo(
       commitSha,
       packages,
       tarballBuffer,
+      fromCache,
     };
   } finally {
     // Clean up temp directory
