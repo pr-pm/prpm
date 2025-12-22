@@ -30,6 +30,8 @@ import {
   fromReplit,
   fromZencoder,
   fromDroid,
+  fromCodex,
+  isCodexSkillFormat,
   toCursor,
   toClaude,
   toContinue,
@@ -161,6 +163,11 @@ function getDefaultPath(format: string, filename: string, subtype?: string, cust
     case 'droid':
       return join(process.cwd(), '.factory', `${baseName}.md`);
     case 'codex':
+      // Codex skills go to .codex/skills/{name}/SKILL.md
+      if (subtype === 'skill') {
+        return join(process.cwd(), '.codex', 'skills', baseName, 'SKILL.md');
+      }
+      // Other subtypes use AGENTS.md
       return join(process.cwd(), 'AGENTS.md');
     default:
       throw new CLIError(`Unknown format: ${format}`);
@@ -210,6 +217,9 @@ function detectFormat(content: string, filepath: string): string | null {
   if (filepath.includes('.zed/extensions') || filepath.includes('.zed/slash_commands')) {
     return 'zed';
   }
+  if (filepath.includes('.codex/skills') || basename(filepath) === 'SKILL.md') {
+    return 'codex';
+  }
 
   // Use robust content detection from converters
   // Check cursor-hooks first (more specific than cursor)
@@ -231,6 +241,7 @@ function detectFormat(content: string, filepath: string): string | null {
   if (isAgentsMdFormat(content)) return 'agents.md';
   if (isRulerFormat(content)) return 'ruler';
   if (isZedFormat(content)) return 'zed';
+  if (isCodexSkillFormat(content)) return 'codex';
 
   return null;
 }
@@ -371,6 +382,9 @@ export async function handleConvert(sourcePath: string, options: ConvertOptions)
         break;
       case 'droid':
         canonicalPkg = fromDroid(content, metadata);
+        break;
+      case 'codex':
+        canonicalPkg = fromCodex(content, metadata);
         break;
       default:
         throw new CLIError(`Unsupported source format: ${sourceFormat}`);
