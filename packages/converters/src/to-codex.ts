@@ -208,7 +208,7 @@ function slugify(name: string): string {
 
   // Handle edge case: empty result (e.g., input was '!!!')
   if (!slug) {
-    slug = 'unnamed-skill';
+    return 'unnamed-skill';
   }
 
   // Enforce max length of 64 chars per Agent Skills spec
@@ -352,7 +352,7 @@ function convertToAgentsMd(
 /**
  * Escape special regex characters in a string
  */
-function escapeRegExp(str: string): string {
+function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
@@ -364,16 +364,16 @@ function appendToExistingAgentsMd(
   newSection: string,
   commandName: string
 ): string {
-  // Strip leading slash and escape for regex
-  const cleanName = commandName.replace(/^\//, '');
-  const escapedName = escapeRegExp(cleanName);
+  // Strip leading slash and escape regex metacharacters
+  const cleanCommandName = commandName.replace(/^\//, '');
+  const escapedCommandName = escapeRegex(cleanCommandName);
 
   // Check if command already exists
-  const sectionHeader = `## ${cleanName}`;
+  const sectionHeader = `## ${cleanCommandName}`;
   if (existingContent.includes(sectionHeader)) {
     // Replace existing section
     const regex = new RegExp(
-      `## ${escapedName}[\\s\\S]*?(?=## |$)`,
+      `## ${escapedCommandName}[\\s\\S]*?(?=## |$)`,
       'g'
     );
     return existingContent.replace(regex, newSection + '\n\n');
@@ -586,7 +586,7 @@ export function generateFilename(pkg?: CanonicalPackage): string {
  * Handles both Unix (\n) and Windows (\r\n) line endings
  */
 export function isCodexSkillFormat(content: string): boolean {
-  // Normalize line endings for consistent matching
+  // Normalize line endings (handle Windows CRLF)
   const normalizedContent = content.replace(/\r\n/g, '\n');
 
   // Check for YAML frontmatter with name and description

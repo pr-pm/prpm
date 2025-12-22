@@ -44,7 +44,7 @@ interface AgentSkillsFrontmatter {
  * Handles both Unix (\n) and Windows (\r\n) line endings
  */
 function parseFrontmatter(content: string): { frontmatter: Record<string, any>; body: string } {
-  // Normalize line endings to Unix style
+  // Normalize line endings (handle Windows CRLF)
   const normalizedContent = content.replace(/\r\n/g, '\n');
 
   const match = normalizedContent.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -60,7 +60,7 @@ function parseFrontmatter(content: string): { frontmatter: Record<string, any>; 
     }
     return { frontmatter, body: match[2] };
   } catch {
-    // Invalid YAML - return empty frontmatter
+    // If YAML parsing fails, return empty frontmatter and full content as body
     return { frontmatter: {}, body: normalizedContent };
   }
 }
