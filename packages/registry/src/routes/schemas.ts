@@ -62,6 +62,7 @@ const BASE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
   ['replit.schema.json', replitSchema],
   ['zed.schema.json', zedSchema],
   ['format-registry.schema.json', formatRegistrySchema],
+  ['agent-skills.schema.json', agentSkillsSchema], // Shared Agent Skills schema (used by codex:skill and copilot:skill)
 ];
 
 const SUBTYPE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
@@ -69,9 +70,8 @@ const SUBTYPE_SCHEMA_ENTRIES: [string, JsonSchema][] = [
   ['claude-skill.schema.json', claudeSkillSchema],
   ['claude-slash-command.schema.json', claudeSlashCommandSchema],
   ['claude-hook.schema.json', claudeHookSchema],
-  ['agent-skills.schema.json', agentSkillsSchema],
-  ['copilot-skill.schema.json', agentSkillsSchema], // Alias - uses Agent Skills schema
-  ['codex-skill.schema.json', agentSkillsSchema], // Alias - uses Agent Skills schema
+  ['copilot-skill.schema.json', agentSkillsSchema], // Uses shared Agent Skills schema
+  ['codex-skill.schema.json', agentSkillsSchema], // Uses shared Agent Skills schema
   ['cursor-command.schema.json', cursorCommandSchema],
   ['cursor-hooks.schema.json', cursorHooksSchema],
   ['kiro-agent.schema.json', kiroAgentSchema],
@@ -96,13 +96,10 @@ const SUBTYPE_SCHEMAS: Record<string, { format: string; subtype: string }> = {
   'claude-slash-command.schema.json': { format: 'claude', subtype: 'slash-command' },
   'claude-hook.schema.json': { format: 'claude', subtype: 'hook' },
 
-  // Agent Skills (shared standard for Codex and Copilot)
-  'agent-skills.schema.json': { format: 'agent-skills', subtype: 'skill' },
-
-  // GitHub Copilot subtypes (uses Agent Skills schema)
+  // GitHub Copilot subtypes (uses shared Agent Skills schema)
   'copilot-skill.schema.json': { format: 'copilot', subtype: 'skill' },
 
-  // OpenAI Codex subtypes (uses Agent Skills schema)
+  // OpenAI Codex subtypes (uses shared Agent Skills schema)
   'codex-skill.schema.json': { format: 'codex', subtype: 'skill' },
 
   // Cursor subtypes
