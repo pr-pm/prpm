@@ -584,15 +584,20 @@ export function generateFilename(pkg?: CanonicalPackage): string {
 /**
  * Check if content appears to be in Codex SKILL.md format
  * Handles both Unix (\n) and Windows (\r\n) line endings
+ * Tolerates trailing spaces after ---
  */
 export function isCodexSkillFormat(content: string): boolean {
   // Normalize line endings (handle Windows CRLF)
   const normalizedContent = content.replace(/\r\n/g, '\n');
 
   // Check for YAML frontmatter with name and description
-  const match = normalizedContent.match(/^---\n([\s\S]*?)\n---/);
+  // Lenient regex: allows trailing spaces after ---
+  const match = normalizedContent.match(/^---[ \t]*\n([\s\S]*?)\n---/);
   if (!match) return false;
 
   const frontmatterText = match[1];
-  return frontmatterText.includes('name:') && frontmatterText.includes('description:');
+  // Check for required Agent Skills fields (handles both quoted and unquoted keys)
+  const hasName = /^[ \t]*name\s*:/m.test(frontmatterText);
+  const hasDescription = /^[ \t]*description\s*:/m.test(frontmatterText);
+  return hasName && hasDescription;
 }

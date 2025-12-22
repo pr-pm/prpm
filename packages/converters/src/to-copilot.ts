@@ -205,10 +205,10 @@ function generateSkillFrontmatter(
   // Quote description to handle special YAML characters
   lines.push(`description: "${escapeYamlString(truncatedDesc)}"`);
 
-  // Add optional Agent Skills fields
+  // Add optional Agent Skills fields (all quoted for YAML safety)
   const license = agentSkillsData?.license || pkg.license;
   if (license) {
-    lines.push(`license: ${license}`);
+    lines.push(`license: "${escapeYamlString(license)}"`);
   }
 
   if (agentSkillsData?.compatibility) {
@@ -216,7 +216,7 @@ function generateSkillFrontmatter(
   }
 
   if (agentSkillsData?.allowedTools) {
-    lines.push(`allowed-tools: ${agentSkillsData.allowedTools}`);
+    lines.push(`allowed-tools: "${escapeYamlString(agentSkillsData.allowedTools)}"`);
   }
 
   if (agentSkillsData?.metadata && Object.keys(agentSkillsData.metadata).length > 0) {
