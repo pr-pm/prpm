@@ -222,7 +222,9 @@ function generateSkillFrontmatter(
   if (agentSkillsData?.metadata && Object.keys(agentSkillsData.metadata).length > 0) {
     lines.push('metadata:');
     for (const [key, value] of Object.entries(agentSkillsData.metadata)) {
-      lines.push(`  ${key}: "${escapeYamlString(value)}"`);
+      // Escape both key and value for YAML safety
+      const safeKey = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key) ? key : `"${escapeYamlString(key)}"`;
+      lines.push(`  ${safeKey}: "${escapeYamlString(value)}"`);
     }
   }
 

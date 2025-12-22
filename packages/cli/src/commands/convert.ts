@@ -217,7 +217,7 @@ function detectFormat(content: string, filepath: string): string | null {
   if (filepath.includes('.zed/extensions') || filepath.includes('.zed/slash_commands')) {
     return 'zed';
   }
-  if (filepath.includes('.codex/skills') || basename(filepath) === 'SKILL.md') {
+  if (filepath.includes('.codex/skills')) {
     return 'codex';
   }
 
