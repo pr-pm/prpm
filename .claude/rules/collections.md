@@ -95,15 +95,17 @@ expect(lockfile.packages).toEqual(installed);
 Don't lose collection metadata during operations:
 
 ```typescript
-// WRONG - metadata lost during update
-const updated = { ...pkg, version: newVersion };
+// WRONG - metadata lost (only copies specific fields)
+const updated = {
+  name: pkg.name,
+  version: newVersion,
+  format: pkg.format,
+  // collection and collectionVersion lost!
+};
 
-// CORRECT - preserve all metadata
+// CORRECT - preserve all metadata with spread
 const updated = {
   ...pkg,
   version: newVersion,
-  // Explicitly preserve collection fields
-  collection: pkg.collection,
-  collectionVersion: pkg.collectionVersion,
 };
 ```

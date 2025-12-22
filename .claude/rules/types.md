@@ -30,12 +30,15 @@ export const FORMATS: readonly Format[] = [
 
 ### Mapping Types
 
-Use `Record` for format-to-configuration mappings:
+Use `Record` for format-to-configuration mappings (must include all Format keys):
 
 ```typescript
 export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
-  cursor: ["rule", "slash-command", "hook"],
-  claude: ["skill", "agent", "slash-command"],
+  cursor: ["rule", "slash-command", "hooks"],
+  claude: ["skill", "agent", "slash-command", "hook"],
+  continue: ["rule"],
+  windsurf: ["rule"],
+  // ... all Format keys required
 };
 ```
 
