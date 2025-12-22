@@ -83,7 +83,6 @@ import {
   downloadGitHubRepo,
   formatGitHubSource,
   computeIntegrity,
-  generateRegistryPackageId,
   type GitHubSpec,
   type DiscoveredPackage,
 } from '../core/github';
@@ -264,132 +263,6 @@ function findMainFile(
   }
 
   return null;
-}
-
-/**
- * Auto-register discovered GitHub packages to the PRPM registry
- * This makes packages available for other users to install directly from PRPM
- * Runs as fire-and-forget to not block the install
- */
-async function autoRegisterGitHubPackages(
-  packages: DiscoveredPackage[],
-  spec: GitHubSpec,
-  commitSha: string,
-  tarballBuffer: Buffer
-): Promise<void> {
-  try {
-    const config = await getConfig();
-
-    // Skip if user is not authenticated - can't publish without auth
-    if (!config.token) {
-      return;
-    }
-
-    const client = getRegistryClient(config);
-
-    // Process each package
-    for (const pkg of packages) {
-      try {
-        // Generate the registry package ID
-        const registryPackageId = generateRegistryPackageId(spec, pkg);
-
-        // Check if package already exists in registry
-        try {
-          await client.getPackage(registryPackageId);
-          // Package exists, skip
-          continue;
-        } catch {
-          // Package doesn't exist, proceed to publish
-        }
-
-        // Create manifest for the package
-        const manifest = {
-          name: registryPackageId,
-          version: '0.0.1',
-          description: `Auto-imported from GitHub: ${spec.owner}/${spec.repo}`,
-          format: pkg.format,
-          subtype: pkg.subtype,
-          repository: `https://github.com/${spec.owner}/${spec.repo}`,
-          tags: ['github-import', spec.owner, spec.repo],
-          files: [pkg.sourcePath],
-        };
-
-        // Create a minimal tarball with just this package's content
-        const packageTarball = await createPackageTarball(pkg);
-
-        // Publish to registry (fire and forget - don't await)
-        client.publish(manifest as any, packageTarball).then(() => {
-          console.log(`   ${chalk.dim(`📤 Added ${registryPackageId} to PRPM registry`)}`);
-        }).catch(() => {
-          // Silently ignore publish failures - this is best-effort
-        });
-      } catch {
-        // Silently ignore individual package failures
-      }
-    }
-  } catch {
-    // Silently ignore all errors - auto-register is best-effort
-  }
-}
-
-/**
- * Create a minimal tarball for a single GitHub-discovered package
- */
-async function createPackageTarball(pkg: DiscoveredPackage): Promise<Buffer> {
-  const { tmpdir } = await import('os');
-  const { randomBytes } = await import('crypto');
-
-  const tmpDir = path.join(tmpdir(), `prpm-github-${randomBytes(8).toString('hex')}`);
-  const stagingDir = path.join(tmpDir, 'staging');
-  const tarballPath = path.join(tmpDir, 'package.tar.gz');
-
-  try {
-    // Create temp directories
-    await fs.mkdir(stagingDir, { recursive: true });
-
-    // Determine file name based on subtype
-    let fileName: string;
-    if (pkg.subtype === 'skill') {
-      fileName = 'SKILL.md';
-    } else if (pkg.subtype === 'agent') {
-      fileName = 'AGENT.md';
-    } else {
-      fileName = `${pkg.name}.md`;
-    }
-
-    // Write content to staging
-    const filePath = path.join(stagingDir, fileName);
-    await fs.writeFile(filePath, pkg.content, 'utf-8');
-
-    // Write additional files if present
-    if (pkg.additionalFiles) {
-      for (const file of pkg.additionalFiles) {
-        const additionalPath = path.join(stagingDir, file.path);
-        await fs.mkdir(path.dirname(additionalPath), { recursive: true });
-        await fs.writeFile(additionalPath, file.content, 'utf-8');
-      }
-    }
-
-    // Create tarball
-    await tar.create(
-      {
-        gzip: true,
-        file: tarballPath,
-        cwd: stagingDir,
-      },
-      [fileName, ...(pkg.additionalFiles?.map(f => f.path) || [])]
-    );
-
-    // Read tarball into buffer
-    return await fs.readFile(tarballPath);
-  } finally {
-    // Clean up temp directory
-    try {
-      await fs.rm(tmpDir, { recursive: true, force: true });
-    } catch {
-      // Ignore cleanup errors
-    }
-  }
 }
 
 /**
@@ -604,10 +477,6 @@ async function handleGitHubInstall(
     await writeLockfile(lockfile);
 
     console.log(`\n${chalk.green('✓')} Installed ${installedCount} package${installedCount !== 1 ? 's' : ''} from ${chalk.cyan(repoName)}`);
-
-    // Auto-register discovered packages to the PRPM registry (fire-and-forget)
-    // This makes packages available for other users to install via PRPM
-    await autoRegisterGitHubPackages(result.packages, spec, result.commitSha, result.tarballBuffer);
 
   } catch (err) {
     if (err instanceof Error) {
