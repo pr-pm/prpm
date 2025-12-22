@@ -175,6 +175,18 @@ interface AgentSkillsMetadata {
 }
 
 /**
+ * Escape a string for use in YAML double-quoted strings
+ * Handles backslashes, quotes, newlines, and carriage returns
+ */
+function escapeYamlString(str: string): string {
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n');
+}
+
+/**
  * Generate YAML frontmatter for skills per Agent Skills spec
  */
 function generateSkillFrontmatter(
@@ -190,28 +202,27 @@ function generateSkillFrontmatter(
   const truncatedDesc = description.length > 1024
     ? description.slice(0, 1021) + '...'
     : description;
-  // Quote description to handle special YAML characters (colons, quotes, newlines, carriage returns)
-  const quotedDesc = `"${truncatedDesc.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n')}"`;
-  lines.push(`description: ${quotedDesc}`);
+  // Quote description to handle special YAML characters
+  lines.push(`description: "${escapeYamlString(truncatedDesc)}"`);
 
-  // Add optional Agent Skills fields
+  // Add optional Agent Skills fields (all quoted for YAML safety)
   const license = agentSkillsData?.license || pkg.license;
   if (license) {
-    lines.push(`license: ${license}`);
+    lines.push(`license: "${escapeYamlString(license)}"`);
   }
 
   if (agentSkillsData?.compatibility) {
-    lines.push(`compatibility: "${agentSkillsData.compatibility}"`);
+    lines.push(`compatibility: "${escapeYamlString(agentSkillsData.compatibility)}"`);
   }
 
   if (agentSkillsData?.allowedTools) {
-    lines.push(`allowed-tools: ${agentSkillsData.allowedTools}`);
+    lines.push(`allowed-tools: "${escapeYamlString(agentSkillsData.allowedTools)}"`);
   }
 
   if (agentSkillsData?.metadata && Object.keys(agentSkillsData.metadata).length > 0) {
     lines.push('metadata:');
     for (const [key, value] of Object.entries(agentSkillsData.metadata)) {
-      lines.push(`  ${key}: "${value}"`);
+      lines.push(`  ${key}: "${escapeYamlString(value)}"`);
     }
   }
 

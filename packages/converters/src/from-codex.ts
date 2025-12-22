@@ -41,21 +41,27 @@ interface AgentSkillsFrontmatter {
 
 /**
  * Parse YAML frontmatter from markdown
+ * Handles both Unix (\n) and Windows (\r\n) line endings
+ * Tolerates trailing spaces after --- and optional trailing newline
  */
 function parseFrontmatter(content: string): { frontmatter: Record<string, any>; body: string } {
   // Normalize line endings (handle Windows CRLF)
   const normalizedContent = content.replace(/\r\n/g, '\n');
 
-  const match = normalizedContent.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  // More lenient regex: allows trailing spaces after ---, optional final newline
+  const match = normalizedContent.match(/^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n([\s\S]*))?$/);
   if (!match) {
     return { frontmatter: {}, body: normalizedContent };
   }
 
   try {
     const frontmatter = yaml.load(match[1]) as Record<string, any>;
-    const body = match[2];
-    return { frontmatter: frontmatter || {}, body };
-  } catch (error) {
+    // Ensure frontmatter is an object
+    if (typeof frontmatter !== 'object' || frontmatter === null) {
+      return { frontmatter: {}, body: match[2] || '' };
+    }
+    return { frontmatter, body: match[2] || '' };
+  } catch {
     // If YAML parsing fails, return empty frontmatter and full content as body
     return { frontmatter: {}, body: normalizedContent };
   }
