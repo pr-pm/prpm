@@ -58,6 +58,8 @@ export interface GitHubDownloadResult {
   tarballBuffer: Buffer;
   /** Whether the tarball was served from cache */
   fromCache?: boolean;
+  /** Where the tarball was loaded from */
+  cacheSource: 'local' | 'registry' | 'github';
 }
 
 /**
@@ -502,7 +504,7 @@ async function getCachedTarball(owner: string, repo: string, commitSha: string):
 }
 
 /**
- * Save a tarball to the cache
+ * Save a tarball to the local cache
  */
 async function cacheTarball(owner: string, repo: string, commitSha: string, buffer: Buffer): Promise<void> {
   const cachePath = getCachePath(owner, repo, commitSha);
@@ -510,32 +512,114 @@ async function cacheTarball(owner: string, repo: string, commitSha: string, buff
   await writeFile(cachePath, buffer);
 }
 
+/** Default registry URL for shared cache */
+const DEFAULT_REGISTRY_URL = 'https://registry.prpm.dev';
+
+/**
+ * Get tarball from the shared registry cache
+ */
+async function getRegistryCachedTarball(
+  registryUrl: string,
+  owner: string,
+  repo: string,
+  commitSha: string
+): Promise<Buffer | null> {
+  try {
+    const url = `${registryUrl}/api/v1/github-cache/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${commitSha}`;
+    const response = await fetch(url);
+
+    if (response.ok) {
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    }
+
+    return null;
+  } catch {
+    // Silently fail - registry cache is optional
+    return null;
+  }
+}
+
+/**
+ * Upload tarball to the shared registry cache (fire and forget)
+ */
+function uploadToRegistryCache(
+  registryUrl: string,
+  owner: string,
+  repo: string,
+  commitSha: string,
+  buffer: Buffer
+): void {
+  const url = `${registryUrl}/api/v1/github-cache/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${commitSha}`;
+
+  // Fire and forget - don't block on this
+  fetch(url, {
+    method: 'POST',
+    body: buffer,
+    headers: {
+      'Content-Type': 'application/gzip',
+    },
+  }).catch(() => {
+    // Silently fail - registry cache upload is optional
+  });
+}
+
 /**
  * Download and scan a GitHub repository for packages
  * Uses cached tarballs when the commit SHA matches
+ * Cache hierarchy: local -> registry -> GitHub
  */
 export async function downloadGitHubRepo(
   spec: GitHubSpec,
-  token?: string
+  token?: string,
+  registryUrl?: string
 ): Promise<GitHubDownloadResult> {
   const effectiveToken = token || getGitHubToken();
+  const effectiveRegistryUrl = registryUrl || process.env.PRPM_REGISTRY_URL || DEFAULT_REGISTRY_URL;
 
   // Resolve ref to commit SHA for reproducibility
   const commitSha = await resolveGitHubRef(spec, effectiveToken);
 
-  // Check cache first
+  // Check local cache first
   let tarballBuffer = await getCachedTarball(spec.owner, spec.repo, commitSha);
   let fromCache = false;
+  let cacheSource: 'local' | 'registry' | 'github' = 'github';
 
   if (tarballBuffer) {
     fromCache = true;
+    cacheSource = 'local';
   } else {
-    // Download tarball
-    const specWithSha = { ...spec, ref: commitSha };
-    tarballBuffer = await downloadGitHubTarball(specWithSha, effectiveToken);
+    // Check registry cache
+    tarballBuffer = await getRegistryCachedTarball(
+      effectiveRegistryUrl,
+      spec.owner,
+      spec.repo,
+      commitSha
+    );
 
-    // Cache for future use
-    await cacheTarball(spec.owner, spec.repo, commitSha, tarballBuffer);
+    if (tarballBuffer) {
+      fromCache = true;
+      cacheSource = 'registry';
+      // Save to local cache for next time
+      await cacheTarball(spec.owner, spec.repo, commitSha, tarballBuffer);
+    } else {
+      // Download from GitHub
+      const specWithSha = { ...spec, ref: commitSha };
+      tarballBuffer = await downloadGitHubTarball(specWithSha, effectiveToken);
+      cacheSource = 'github';
+
+      // Cache locally
+      await cacheTarball(spec.owner, spec.repo, commitSha, tarballBuffer);
+
+      // Upload to registry cache (fire and forget)
+      uploadToRegistryCache(
+        effectiveRegistryUrl,
+        spec.owner,
+        spec.repo,
+        commitSha,
+        tarballBuffer
+      );
+    }
   }
 
   // Create temp directory
@@ -554,6 +638,7 @@ export async function downloadGitHubRepo(
       packages,
       tarballBuffer,
       fromCache,
+      cacheSource,
     };
   } finally {
     // Clean up temp directory
@@ -588,4 +673,13 @@ export function formatGitHubSource(spec: GitHubSpec, commitSha?: string): string
     result += `:${spec.filePath}`;
   }
   return result;
+}
+
+/**
+ * Generate a registry package ID for a GitHub-discovered package
+ * Format: owner/repo-slug (e.g., anthropics/skills-agent-builder)
+ */
+export function generateRegistryPackageId(spec: GitHubSpec, pkg: DiscoveredPackage): string {
+  // Use owner/repo-name format for registry package ID
+  return `${spec.owner}/${spec.repo}-${pkg.name}`.toLowerCase();
 }

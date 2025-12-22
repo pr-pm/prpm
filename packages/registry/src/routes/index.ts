@@ -29,6 +29,7 @@ import { downloadRoutes } from './download.js';
 import { adminMigrationRoutes } from './admin-migration.js';
 import { schemaRoutes } from './schemas.js';
 import { formatRoutes } from './formats.js';
+import { githubCacheRoutes } from './github-cache.js';
 
 export async function registerRoutes(server: FastifyInstance) {
   // API v1 routes
@@ -60,6 +61,7 @@ export async function registerRoutes(server: FastifyInstance) {
       await api.register(aiSearchRoutes, { prefix: '/ai-search' });
       await api.register(schemaRoutes, { prefix: '/schemas' });
       await api.register(formatRoutes, { prefix: '/formats' });
+      await api.register(githubCacheRoutes, { prefix: '/github-cache' });
     },
     { prefix: '/api/v1' }
   );
