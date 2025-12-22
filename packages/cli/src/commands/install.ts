@@ -77,6 +77,15 @@ import {
   type CanonicalPackage,
   type HookMappingStrategy,
 } from '@pr-pm/converters';
+import {
+  parseGitHubSpec,
+  looksLikeGitHubSpec,
+  downloadGitHubRepo,
+  formatGitHubSource,
+  computeIntegrity,
+  type GitHubSpec,
+  type DiscoveredPackage,
+} from '../core/github';
 
 /**
  * Get icon for package format and subtype
@@ -256,6 +265,230 @@ function findMainFile(
   return null;
 }
 
+/**
+ * Handle installation from a GitHub repository
+ * Downloads the repo, discovers packages, and installs them
+ */
+async function handleGitHubInstall(
+  spec: GitHubSpec,
+  options: {
+    as?: string;
+    subtype?: Subtype;
+    force?: boolean;
+    location?: string;
+    noAppend?: boolean;
+    manifestFile?: string;
+    eager?: boolean;
+  }
+): Promise<void> {
+  const repoName = `${spec.owner}/${spec.repo}`;
+  const refDisplay = spec.ref ? `@${spec.ref}` : '';
+
+  console.log(`\n📦 Fetching from GitHub: ${chalk.cyan(repoName)}${chalk.dim(refDisplay)}`);
+
+  try {
+    // Download and scan the repository
+    const result = await downloadGitHubRepo(spec);
+
+    console.log(`   ${chalk.dim(`Resolved to commit: ${result.commitSha.slice(0, 7)}`)}`);
+
+    if (result.packages.length === 0) {
+      console.log(`\n${chalk.yellow('⚠️  No AI tool configurations found in this repository.')}`);
+      console.log(`\n   Looking for:`);
+      console.log(`   • ${chalk.dim('.cursor/rules/*.mdc')}`);
+      console.log(`   • ${chalk.dim('.claude/skills/**/*.md')}`);
+      console.log(`   • ${chalk.dim('CLAUDE.md, AGENTS.md')}`);
+      console.log(`   • ${chalk.dim('.cursorrules, .windsurfrules')}`);
+      console.log(`   • ${chalk.dim('and more...')}`);
+      console.log(`\n   ${chalk.dim('Specify a file path:')} prpm install ${repoName}:path/to/file.md`);
+      return;
+    }
+
+    // Group packages by format
+    const byFormat = new Map<Format, DiscoveredPackage[]>();
+    for (const pkg of result.packages) {
+      const existing = byFormat.get(pkg.format) || [];
+      existing.push(pkg);
+      byFormat.set(pkg.format, existing);
+    }
+
+    // Display discovered packages
+    console.log(`\n🔍 ${chalk.bold('Discovered packages:')}`);
+    for (const pkg of result.packages) {
+      const icon = getPackageIcon(pkg.format, pkg.subtype);
+      console.log(`   ${icon} ${chalk.cyan(pkg.sourcePath)} ${chalk.dim(`(${pkg.format} ${pkg.subtype})`)}`);
+    }
+
+    // Determine target format
+    const config = await getConfig();
+    let targetFormat = options.as as Format | undefined;
+
+    if (!targetFormat) {
+      if (config.defaultFormat) {
+        targetFormat = config.defaultFormat as Format;
+      } else {
+        targetFormat = await autoDetectFormat() as Format | undefined;
+      }
+    }
+
+    // If no target format and multiple formats discovered, ask user
+    if (!targetFormat && byFormat.size > 1) {
+      console.log(`\n   ${chalk.dim('Tip: Use --as <format> to convert all packages to a specific format')}`);
+    }
+
+    // Install each discovered package
+    const lockfile = await readLockfile() || createLockfile();
+    let installedCount = 0;
+
+    for (const pkg of result.packages) {
+      const effectiveFormat = targetFormat || pkg.format;
+      const icon = getPackageIcon(effectiveFormat, pkg.subtype);
+
+      console.log(`\n${icon} Installing ${chalk.cyan(pkg.name)}...`);
+
+      try {
+        // Determine destination
+        const destDir = await getDestinationDir(effectiveFormat, pkg.subtype);
+        const destPath = await getGitHubPackageDestination(pkg, effectiveFormat, destDir, options.location);
+
+        // Check if file exists and handle --force
+        if (await fileExists(destPath) && !options.force) {
+          const shouldOverwrite = await promptYesNo(
+            `File ${destPath} already exists. Overwrite?`,
+            'Use -y or --yes flag to auto-confirm overwrites'
+          );
+          if (!shouldOverwrite) {
+            console.log(`   ${chalk.yellow('Skipped')} (file exists)`);
+            continue;
+          }
+        }
+
+        // Use content as-is (format conversion for GitHub packages not yet supported)
+        const content = pkg.content;
+
+        // Save the file
+        await saveFile(destPath, content);
+        console.log(`   ${chalk.green('✓')} Saved to ${chalk.dim(destPath)}`);
+
+        // Handle additional files for directory-based packages
+        if (pkg.additionalFiles) {
+          const pkgDir = path.dirname(destPath);
+          for (const file of pkg.additionalFiles) {
+            const fileDest = path.join(pkgDir, file.path);
+            await fs.mkdir(path.dirname(fileDest), { recursive: true });
+            await fs.writeFile(fileDest, file.content, 'utf-8');
+            console.log(`   ${chalk.green('✓')} Saved ${chalk.dim(file.path)}`);
+          }
+        }
+
+        // Add to manifest if it's a skill/agent with progressive disclosure
+        if (!options.noAppend && (pkg.subtype === 'skill' || pkg.subtype === 'agent')) {
+          const manifestFile = options.manifestFile || await getManifestFilename(effectiveFormat);
+          if (manifestFile) {
+            const entry: SkillManifestEntry = {
+              name: pkg.name,
+              description: extractDescription(pkg.content),
+              skillPath: destPath,
+              eager: options.eager,
+            };
+            await addSkillToManifest(entry, manifestFile);
+            console.log(`   ${chalk.green('✓')} Added to ${chalk.dim(manifestFile)}`);
+          }
+        }
+
+        // Update lockfile
+        const lockfileKey = getLockfileKey(pkg.name, effectiveFormat);
+        lockfile.packages[lockfileKey] = {
+          version: '0.0.0-github',
+          resolved: formatGitHubSource(spec, result.commitSha),
+          integrity: computeIntegrity(result.tarballBuffer),
+          format: effectiveFormat,
+          subtype: pkg.subtype,
+          sourceFormat: pkg.format,
+          sourceSubtype: pkg.subtype,
+          installedPath: destPath,
+          githubSource: {
+            owner: spec.owner,
+            repo: spec.repo,
+            ref: spec.ref,
+            commitSha: result.commitSha,
+            sourcePath: pkg.sourcePath,
+          },
+        };
+
+        installedCount++;
+      } catch (err) {
+        console.log(`   ${chalk.red('✗')} Failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    // Save lockfile
+    await writeLockfile(lockfile);
+
+    console.log(`\n${chalk.green('✓')} Installed ${installedCount} package${installedCount !== 1 ? 's' : ''} from ${chalk.cyan(repoName)}`);
+
+  } catch (err) {
+    if (err instanceof Error) {
+      throw new CLIError(`GitHub install failed: ${err.message}`);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Determine the destination path for a GitHub-sourced package
+ */
+async function getGitHubPackageDestination(
+  pkg: DiscoveredPackage,
+  format: Format,
+  baseDir: string,
+  locationOverride?: string
+): Promise<string> {
+  if (locationOverride) {
+    return locationOverride;
+  }
+
+  // For skills, use the skill directory structure
+  if (pkg.subtype === 'skill') {
+    const skillsDir = format === 'claude' ? '.claude/skills' : '.openskills';
+    return path.join(skillsDir, pkg.name, 'SKILL.md');
+  }
+
+  // For agents
+  if (pkg.subtype === 'agent') {
+    const agentsDir = format === 'claude' ? '.claude/agents' : '.openagents';
+    return path.join(agentsDir, pkg.name, 'AGENT.md');
+  }
+
+  // For slash commands
+  if (pkg.subtype === 'slash-command') {
+    if (format === 'claude') {
+      return path.join('.claude/commands', `${pkg.name}.md`);
+    }
+    return path.join('.opencommands', `${pkg.name}.md`);
+  }
+
+  // For rules
+  const ext = getFileExtension(format, pkg.subtype);
+  return path.join(baseDir, `${pkg.name}${ext}`);
+}
+
+/**
+ * Extract a brief description from package content
+ */
+function extractDescription(content: string): string {
+  // Try to get first non-empty, non-heading line
+  const lines = content.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('---')) {
+      // Truncate if too long
+      return trimmed.length > 100 ? trimmed.slice(0, 97) + '...' : trimmed;
+    }
+  }
+  return 'No description';
+}
+
 export async function handleInstall(
   packageSpec: string,
   options: {
@@ -292,6 +525,22 @@ export async function handleInstall(
         dryRun: false,
         eager: options.eager,
       });
+    }
+
+    // Check if this is a GitHub repository spec
+    if (looksLikeGitHubSpec(packageSpec)) {
+      const githubSpec = parseGitHubSpec(packageSpec);
+      if (githubSpec) {
+        return await handleGitHubInstall(githubSpec, {
+          as: options.as,
+          subtype: options.subtype,
+          force: options.force,
+          location: options.location,
+          noAppend: options.noAppend,
+          manifestFile: options.manifestFile,
+          eager: options.eager,
+        });
+      }
     }
 
     // Parse package spec (e.g., "react-rules" or "react-rules@1.2.0" or "@pr-pm/pkg@1.0.0")

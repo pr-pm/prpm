@@ -20,7 +20,7 @@ export interface LockfileMCPServer {
 
 export interface LockfilePackage {
   version: string;
-  resolved: string; // Tarball URL
+  resolved: string; // Tarball URL or GitHub source
   integrity: string; // SHA-256 hash
   dependencies?: Record<string, string>;
   format?: string; // Installed format
@@ -32,6 +32,14 @@ export interface LockfilePackage {
     scope?: string;
     name_slug: string;
     version?: string;
+  };
+  // For GitHub-sourced packages: track the source repository
+  githubSource?: {
+    owner: string;
+    repo: string;
+    ref?: string; // Branch or tag name
+    commitSha: string; // Resolved commit SHA for reproducibility
+    sourcePath: string; // Path within the repo where this package was found
   };
   // For Claude hooks: track which hook events were added
   hookMetadata?: {
