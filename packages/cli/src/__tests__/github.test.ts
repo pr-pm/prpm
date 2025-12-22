@@ -7,6 +7,10 @@ import {
   parseGitHubSpec,
   looksLikeGitHubSpec,
   formatGitHubSource,
+  generateRegistryPackageId,
+  computeIntegrity,
+  type GitHubSpec,
+  type DiscoveredPackage,
 } from '../core/github';
 
 describe('parseGitHubSpec', () => {
@@ -187,5 +191,82 @@ describe('formatGitHubSource', () => {
       filePath: '.cursor/rules/test.mdc',
     });
     expect(result).toBe('github:foo/bar:.cursor/rules/test.mdc');
+  });
+});
+
+describe('generateRegistryPackageId', () => {
+  it('generates lowercase package ID from owner/repo/name', () => {
+    const spec: GitHubSpec = { owner: 'Anthropics', repo: 'Skills' };
+    const pkg: DiscoveredPackage = {
+      name: 'Agent-Builder',
+      sourcePath: '.claude/agents/agent-builder.md',
+      format: 'claude',
+      subtype: 'agent',
+      content: 'test content',
+    };
+    const result = generateRegistryPackageId(spec, pkg);
+    expect(result).toBe('anthropics/skills-agent-builder');
+  });
+
+  it('handles hyphenated names', () => {
+    const spec: GitHubSpec = { owner: 'cursor-tools', repo: 'awesome-rules' };
+    const pkg: DiscoveredPackage = {
+      name: 'typescript-strict',
+      sourcePath: '.cursor/rules/typescript-strict.mdc',
+      format: 'cursor',
+      subtype: 'rule',
+      content: 'test content',
+    };
+    const result = generateRegistryPackageId(spec, pkg);
+    expect(result).toBe('cursor-tools/awesome-rules-typescript-strict');
+  });
+
+  it('handles numeric names', () => {
+    const spec: GitHubSpec = { owner: 'user123', repo: 'repo456' };
+    const pkg: DiscoveredPackage = {
+      name: 'rule789',
+      sourcePath: '.cursor/rules/rule789.mdc',
+      format: 'cursor',
+      subtype: 'rule',
+      content: 'test content',
+    };
+    const result = generateRegistryPackageId(spec, pkg);
+    expect(result).toBe('user123/repo456-rule789');
+  });
+});
+
+describe('computeIntegrity', () => {
+  it('computes sha256 hash of buffer', () => {
+    const buffer = Buffer.from('hello world');
+    const result = computeIntegrity(buffer);
+    expect(result).toMatch(/^sha256-[A-Za-z0-9+/]+=*$/);
+  });
+
+  it('returns different hashes for different content', () => {
+    const buffer1 = Buffer.from('content one');
+    const buffer2 = Buffer.from('content two');
+    const result1 = computeIntegrity(buffer1);
+    const result2 = computeIntegrity(buffer2);
+    expect(result1).not.toBe(result2);
+  });
+
+  it('returns same hash for same content', () => {
+    const buffer1 = Buffer.from('identical content');
+    const buffer2 = Buffer.from('identical content');
+    const result1 = computeIntegrity(buffer1);
+    const result2 = computeIntegrity(buffer2);
+    expect(result1).toBe(result2);
+  });
+
+  it('handles empty buffer', () => {
+    const buffer = Buffer.from('');
+    const result = computeIntegrity(buffer);
+    expect(result).toMatch(/^sha256-/);
+  });
+
+  it('handles binary content', () => {
+    const buffer = Buffer.from([0x00, 0x01, 0x02, 0xff, 0xfe, 0xfd]);
+    const result = computeIntegrity(buffer);
+    expect(result).toMatch(/^sha256-/);
   });
 });
