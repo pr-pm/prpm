@@ -312,11 +312,39 @@ async function handleGitHubInstall(
       byFormat.set(pkg.format, existing);
     }
 
-    // Display discovered packages
-    console.log(`\n🔍 ${chalk.bold('Discovered packages:')}`);
+    // Display discovered packages with counts by format
+    console.log(`\n🔍 ${chalk.bold(`Discovered ${result.packages.length} package${result.packages.length !== 1 ? 's' : ''}:`)}`);
+
+    // Show counts by format
+    for (const [format, pkgs] of byFormat) {
+      const subtypeCounts = new Map<string, number>();
+      for (const pkg of pkgs) {
+        subtypeCounts.set(pkg.subtype, (subtypeCounts.get(pkg.subtype) || 0) + 1);
+      }
+      const countStr = Array.from(subtypeCounts.entries())
+        .map(([subtype, count]) => `${count} ${subtype}${count !== 1 ? 's' : ''}`)
+        .join(', ');
+      console.log(`   ${chalk.cyan(format)}: ${countStr}`);
+    }
+
+    console.log('');
     for (const pkg of result.packages) {
       const icon = getPackageIcon(pkg.format, pkg.subtype);
-      console.log(`   ${icon} ${chalk.cyan(pkg.sourcePath)} ${chalk.dim(`(${pkg.format} ${pkg.subtype})`)}`);
+      console.log(`   ${icon} ${pkg.sourcePath} ${chalk.dim(`(${pkg.format} ${pkg.subtype})`)}`);
+    }
+
+    // Ask user if they want to install all packages
+    if (result.packages.length > 1 && !options.force) {
+      console.log('');
+      const installAll = await promptYesNo(
+        `Install all ${result.packages.length} packages?`,
+        'Use -y flag to auto-confirm'
+      );
+      if (!installAll) {
+        console.log(`\n${chalk.dim('To install a specific file, use:')}`);
+        console.log(`   prpm install github:${repoName}:path/to/file`);
+        return;
+      }
     }
 
     // Determine target format
@@ -329,11 +357,6 @@ async function handleGitHubInstall(
       } else {
         targetFormat = await autoDetectFormat() as Format | undefined;
       }
-    }
-
-    // If no target format and multiple formats discovered, ask user
-    if (!targetFormat && byFormat.size > 1) {
-      console.log(`\n   ${chalk.dim('Tip: Use --as <format> to convert all packages to a specific format')}`);
     }
 
     // Install each discovered package

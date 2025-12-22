@@ -178,44 +178,18 @@ export function parseGitHubSpec(input: string): GitHubSpec | null {
 }
 
 /**
- * Check if a string looks like a GitHub spec (for auto-detection)
- * Returns true for patterns like "owner/repo" that aren't scoped packages
+ * Check if a string looks like a GitHub spec (explicit prefixes only)
+ * Returns true for github: or gh: prefixes
  */
 export function looksLikeGitHubSpec(input: string): boolean {
-  // Explicit prefixes
+  // Only support explicit prefixes
   if (input.startsWith('github:') || input.startsWith('gh:')) {
     return true;
   }
   if (input.startsWith('https://github.com/') || input.startsWith('http://github.com/')) {
     return true;
   }
-
-  // Auto-detect: looks like owner/repo
-  // Must have exactly one slash (or more for subdirs)
-  // Must not start with @ (scoped package)
-  // Must not look like a file path (no . in first segment, doesn't start with ./ or ../)
-  if (input.startsWith('@') || input.startsWith('./') || input.startsWith('../') || input.startsWith('/')) {
-    return false;
-  }
-
-  const parts = input.split('/');
-  if (parts.length < 2) {
-    return false;
-  }
-
-  // First part should look like a GitHub username (alphanumeric, hyphens)
-  const owner = parts[0].split('@')[0]; // Handle owner/repo@ref
-  if (!/^[a-zA-Z0-9][-a-zA-Z0-9]*$/.test(owner)) {
-    return false;
-  }
-
-  // Second part should look like a repo name
-  const repo = parts[1].split('@')[0].split(':')[0];
-  if (!/^[a-zA-Z0-9._-]+$/.test(repo)) {
-    return false;
-  }
-
-  return true;
+  return false;
 }
 
 /**

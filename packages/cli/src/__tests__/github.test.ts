@@ -127,21 +127,27 @@ describe('parseGitHubSpec', () => {
 });
 
 describe('looksLikeGitHubSpec', () => {
-  it('returns true for owner/repo patterns', () => {
-    expect(looksLikeGitHubSpec('anthropics/skills')).toBe(true);
-    expect(looksLikeGitHubSpec('cursor-tools/rules')).toBe(true);
-    expect(looksLikeGitHubSpec('foo/bar')).toBe(true);
-  });
-
-  it('returns true for explicit prefixes', () => {
+  it('returns true for github: prefix', () => {
     expect(looksLikeGitHubSpec('github:foo/bar')).toBe(true);
-    expect(looksLikeGitHubSpec('gh:foo/bar')).toBe(true);
-    expect(looksLikeGitHubSpec('https://github.com/foo/bar')).toBe(true);
+    expect(looksLikeGitHubSpec('github:anthropics/skills')).toBe(true);
+    expect(looksLikeGitHubSpec('github:foo/bar@v1.0.0')).toBe(true);
   });
 
-  it('returns true for refs and paths', () => {
-    expect(looksLikeGitHubSpec('foo/bar@v1.0.0')).toBe(true);
-    expect(looksLikeGitHubSpec('foo/bar:path/to/file')).toBe(true);
+  it('returns true for gh: prefix', () => {
+    expect(looksLikeGitHubSpec('gh:foo/bar')).toBe(true);
+    expect(looksLikeGitHubSpec('gh:cursor-tools/rules')).toBe(true);
+  });
+
+  it('returns true for full GitHub URLs', () => {
+    expect(looksLikeGitHubSpec('https://github.com/foo/bar')).toBe(true);
+    expect(looksLikeGitHubSpec('http://github.com/foo/bar')).toBe(true);
+  });
+
+  it('returns false for owner/repo without prefix (registry packages)', () => {
+    expect(looksLikeGitHubSpec('anthropics/skills')).toBe(false);
+    expect(looksLikeGitHubSpec('cursor-tools/rules')).toBe(false);
+    expect(looksLikeGitHubSpec('foo/bar')).toBe(false);
+    expect(looksLikeGitHubSpec('foo/bar@v1.0.0')).toBe(false);
   });
 
   it('returns false for scoped packages', () => {
@@ -149,19 +155,9 @@ describe('looksLikeGitHubSpec', () => {
     expect(looksLikeGitHubSpec('@pr-pm/cli')).toBe(false);
   });
 
-  it('returns false for local paths', () => {
-    expect(looksLikeGitHubSpec('./local/path')).toBe(false);
-    expect(looksLikeGitHubSpec('../parent/path')).toBe(false);
-    expect(looksLikeGitHubSpec('/absolute/path')).toBe(false);
-  });
-
   it('returns false for simple package names', () => {
     expect(looksLikeGitHubSpec('react-rules')).toBe(false);
     expect(looksLikeGitHubSpec('some-package')).toBe(false);
-  });
-
-  it('returns false for packages with version', () => {
-    expect(looksLikeGitHubSpec('react-rules@1.0.0')).toBe(false);
   });
 });
 
