@@ -2,7 +2,7 @@
  * Registry API types for CLI
  */
 
-import { Format, Subtype } from '../types';
+import { Format, Subtype, SnippetConfig } from '../types';
 
 /**
  * Enhanced file metadata for collection packages
@@ -28,7 +28,7 @@ export interface PackageManifest {
   license?: string;
   license_text?: string;
   license_url?: string;
-  snippet?: string;
+  snippet?: SnippetConfig;
   repository?: string;
   homepage?: string;
   documentation?: string;
