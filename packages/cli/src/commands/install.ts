@@ -266,6 +266,96 @@ function findMainFile(
 }
 
 /**
+ * Compute SHA-256 hash of content for deduplication
+ */
+function computeContentHash(content: string): string {
+  const crypto = require('crypto');
+  return crypto.createHash('sha256').update(content).digest('hex');
+}
+
+/**
+ * Extract license from discovered packages (look for LICENSE file in repo)
+ */
+function extractLicense(packages: DiscoveredPackage[]): string | undefined {
+  // Look for a LICENSE file among additional files
+  for (const pkg of packages) {
+    if (pkg.additionalFiles) {
+      for (const file of pkg.additionalFiles) {
+        if (file.path.toLowerCase().includes('license')) {
+          // Extract first line or known license identifier
+          const firstLine = file.content.split('\n')[0].trim();
+          if (firstLine.includes('MIT')) return 'MIT';
+          if (firstLine.includes('Apache')) return 'Apache-2.0';
+          if (firstLine.includes('BSD')) return 'BSD-3-Clause';
+          if (firstLine.includes('GPL')) return 'GPL-3.0';
+          if (firstLine.includes('ISC')) return 'ISC';
+          return firstLine.slice(0, 50); // Return first 50 chars
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Auto-register discovered GitHub packages to the PRPM registry
+ * Packages are attributed to the GitHub owner, not the downloading user
+ * Deduplication is done by content hash
+ */
+async function autoRegisterGitHubPackages(
+  packages: DiscoveredPackage[],
+  spec: GitHubSpec,
+  commitSha: string,
+  license?: string
+): Promise<void> {
+  // Get registry URL from config or use default
+  const config = await getConfig();
+  const registryUrl = config.registryUrl || 'https://registry.prpm.dev';
+
+  // Extract license from repo if not provided
+  const repoLicense = license || extractLicense(packages);
+
+  // Register each package (fire and forget)
+  for (const pkg of packages) {
+    try {
+      const contentHash = computeContentHash(pkg.content);
+
+      const body = {
+        owner: spec.owner,
+        repo: spec.repo,
+        commitSha,
+        name: pkg.name,
+        format: pkg.format,
+        subtype: pkg.subtype,
+        sourcePath: pkg.sourcePath,
+        contentHash,
+        content: pkg.content,
+        license: repoLicense,
+        description: `${pkg.format} ${pkg.subtype} from ${spec.owner}/${spec.repo}`,
+      };
+
+      // Fire and forget - don't await
+      fetch(`${registryUrl}/api/v1/github-cache/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then(async (response) => {
+        if (response.ok) {
+          const result = await response.json() as { packageId: string; created: boolean; duplicate: boolean };
+          if (result.created) {
+            console.log(`   ${chalk.dim(`📤 Registered ${result.packageId} to PRPM`)}`);
+          }
+        }
+      }).catch(() => {
+        // Silently ignore - registration is best-effort
+      });
+    } catch {
+      // Silently ignore individual package failures
+    }
+  }
+}
+
+/**
  * Handle installation from a GitHub repository
  * Downloads the repo, discovers packages, and installs them
  */
@@ -477,6 +567,10 @@ async function handleGitHubInstall(
     await writeLockfile(lockfile);
 
     console.log(`\n${chalk.green('✓')} Installed ${installedCount} package${installedCount !== 1 ? 's' : ''} from ${chalk.cyan(repoName)}`);
+
+    // Auto-register discovered packages to the PRPM registry (fire-and-forget)
+    // Packages are attributed to the GitHub owner, with deduplication by content hash
+    autoRegisterGitHubPackages(result.packages, spec, result.commitSha);
 
   } catch (err) {
     if (err instanceof Error) {

@@ -237,4 +237,129 @@ export async function githubCacheRoutes(server: FastifyInstance) {
       ttlSeconds: CACHE_TTL_SECONDS,
     };
   });
+
+  /**
+   * Register a package discovered from GitHub
+   * POST /api/v1/github-cache/register
+   *
+   * This endpoint allows anyone to register packages from GitHub repos.
+   * Packages are attributed to the GitHub owner, not the uploader.
+   * Deduplication is done by content hash to avoid storing duplicates.
+   */
+  server.post('/register', {
+    schema: {
+      tags: ['github-cache'],
+      description: 'Register a package discovered from GitHub (attributed to GitHub owner)',
+      body: {
+        type: 'object',
+        required: ['owner', 'repo', 'commitSha', 'name', 'format', 'subtype', 'contentHash', 'content'],
+        properties: {
+          owner: { type: 'string', description: 'GitHub repository owner' },
+          repo: { type: 'string', description: 'GitHub repository name' },
+          commitSha: { type: 'string', description: 'Commit SHA' },
+          name: { type: 'string', description: 'Package name (derived from file path)' },
+          format: { type: 'string', description: 'Package format (cursor, claude, etc.)' },
+          subtype: { type: 'string', description: 'Package subtype (rule, skill, etc.)' },
+          sourcePath: { type: 'string', description: 'Original file path in repo' },
+          contentHash: { type: 'string', description: 'SHA-256 hash of content for deduplication' },
+          content: { type: 'string', description: 'Package content' },
+          license: { type: 'string', description: 'License from repository' },
+          description: { type: 'string', description: 'Package description' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            packageId: { type: 'string' },
+            created: { type: 'boolean', description: 'True if new package, false if already existed' },
+            duplicate: { type: 'boolean', description: 'True if content hash matched existing package' },
+          },
+        },
+        400: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const body = request.body as {
+      owner: string;
+      repo: string;
+      commitSha: string;
+      name: string;
+      format: string;
+      subtype: string;
+      sourcePath?: string;
+      contentHash: string;
+      content: string;
+      license?: string;
+      description?: string;
+    };
+
+    try {
+      // Generate package ID: owner/repo-name
+      const packageId = `${body.owner}/${body.repo}-${body.name}`.toLowerCase();
+
+      // Check if this content hash already exists (deduplication)
+      const hashKey = `github:content-hash:${body.contentHash}`;
+      const existingPackageId = await server.redis.get(hashKey);
+
+      if (existingPackageId) {
+        server.log.info(
+          { packageId, existingPackageId, contentHash: body.contentHash.slice(0, 12) },
+          'GitHub package content already exists'
+        );
+        return {
+          success: true,
+          packageId: existingPackageId,
+          created: false,
+          duplicate: true,
+        };
+      }
+
+      // Store content hash -> package ID mapping for deduplication
+      await server.redis.set(hashKey, packageId);
+
+      // Store package metadata
+      const metadataKey = `github:package:${packageId}`;
+      const metadata = {
+        owner: body.owner,
+        repo: body.repo,
+        commitSha: body.commitSha,
+        name: body.name,
+        format: body.format,
+        subtype: body.subtype,
+        sourcePath: body.sourcePath,
+        contentHash: body.contentHash,
+        license: body.license,
+        description: body.description,
+        createdAt: new Date().toISOString(),
+      };
+
+      await server.redis.set(metadataKey, JSON.stringify(metadata));
+
+      // Store content (for future retrieval if needed)
+      const contentKey = `github:content:${packageId}`;
+      await server.redis.set(contentKey, body.content);
+
+      server.log.info(
+        { packageId, owner: body.owner, repo: body.repo, format: body.format },
+        'GitHub package registered'
+      );
+
+      return {
+        success: true,
+        packageId,
+        created: true,
+        duplicate: false,
+      };
+    } catch (error) {
+      server.log.error({ error, body }, 'GitHub package registration failed');
+      return reply.status(500).send({ error: 'Registration failed' });
+    }
+  });
 }
