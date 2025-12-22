@@ -1,6 +1,6 @@
 ---
 description: Testing patterns and requirements for the PRPM monorepo
-globs:
+paths:
   - "**/*.test.ts"
   - "**/*.e2e.test.ts"
   - "**/vitest.config.ts"

@@ -1,6 +1,6 @@
 ---
 description: TypeScript conventions for the PRPM monorepo
-globs:
+paths:
   - "**/*.ts"
   - "**/*.tsx"
 ---

@@ -1,6 +1,6 @@
 ---
 description: Claude Code hooks development patterns
-globs:
+paths:
   - "packages/hooks/**/*.ts"
   - ".claude/hooks/**/*.ts"
   - ".claude/hooks/**/*.js"

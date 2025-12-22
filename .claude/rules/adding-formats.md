@@ -1,6 +1,6 @@
 ---
 description: Checklist for adding new AI format support
-globs:
+paths:
   - "packages/types/src/package.ts"
   - "packages/converters/src/format-registry.json"
   - "packages/converters/src/from-*.ts"

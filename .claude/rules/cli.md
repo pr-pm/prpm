@@ -1,6 +1,6 @@
 ---
 description: CLI package development patterns
-globs:
+paths:
   - "packages/cli/**/*.ts"
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Collection and lockfile handling rules - prevents common integrity bugs
-globs:
+paths:
   - "packages/cli/src/commands/install.ts"
   - "packages/cli/src/commands/update.ts"
   - "packages/cli/src/core/lockfile.ts"

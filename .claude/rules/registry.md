@@ -1,6 +1,6 @@
 ---
 description: Registry API development patterns
-globs:
+paths:
   - "packages/registry/**/*.ts"
 ---
 

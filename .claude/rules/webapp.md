@@ -1,6 +1,6 @@
 ---
 description: Webapp development patterns (Next.js)
-globs:
+paths:
   - "packages/webapp/**/*.ts"
   - "packages/webapp/**/*.tsx"
 ---

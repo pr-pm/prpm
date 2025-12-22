@@ -1,6 +1,6 @@
 ---
 description: Shared types package conventions
-globs:
+paths:
   - "packages/types/**/*.ts"
 ---
 

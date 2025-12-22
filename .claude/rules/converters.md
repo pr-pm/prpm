@@ -1,6 +1,6 @@
 ---
 description: Converter development patterns for format conversion
-globs:
+paths:
   - "packages/converters/**/*.ts"
 ---
 
