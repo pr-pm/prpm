@@ -208,17 +208,20 @@ function insertAfterSection(
   sectionHeader: string,
   insertContent: string
 ): { content: string; found: boolean } {
-  // Look for the section header (e.g., "## Section Name")
-  // Handle both with and without the ## prefix
-  const headerPattern = sectionHeader.startsWith('#')
-    ? sectionHeader
-    : `## ${sectionHeader}`;
+  // Normalize the header text by removing leading # symbols and whitespace
+  const normalizedHeader = sectionHeader.replace(/^#+\s*/, '').trim();
+
+  // Create a regex pattern that matches any header level (1-6) with this text
+  const headerRegex = new RegExp(
+    `^#{1,6}\\s+${escapeRegExp(normalizedHeader)}\\s*$`,
+    'i'
+  );
 
   const lines = content.split('\n');
   let insertIndex = -1;
 
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim() === headerPattern.trim()) {
+    if (headerRegex.test(lines[i].trim())) {
       // Find the end of this section (next header or end of file)
       for (let j = i + 1; j < lines.length; j++) {
         if (lines[j].match(/^#{1,6}\s/)) {
