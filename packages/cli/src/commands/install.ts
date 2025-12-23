@@ -1614,17 +1614,11 @@ async function extractTarball(tarball: Buffer, packageId: string): Promise<Extra
       cwd: tmpDir,
       strict: true, // Enable strict mode to reject malformed archives
       // Security: filter out dangerous entries before extraction
-      filter: (entryPath: string, entry) => {
+      filter: (entryPath: string, entry: tar.FileStat) => {
         // Block symlinks - they can be used for path traversal attacks
-        // Check if entry has a 'type' property (ReadEntry) vs Stats
-        const entryType = 'type' in entry ? entry.type : null;
+        // FileStat has header.type that indicates the entry type
+        const entryType = entry.header?.type;
         if (entryType === 'SymbolicLink' || entryType === 'Link') {
-          console.warn(`   ⚠️  Blocked symlink in package: ${entryPath}`);
-          return false;
-        }
-
-        // Also check isSymbolicLink() for Stats objects
-        if ('isSymbolicLink' in entry && entry.isSymbolicLink()) {
           console.warn(`   ⚠️  Blocked symlink in package: ${entryPath}`);
           return false;
         }
