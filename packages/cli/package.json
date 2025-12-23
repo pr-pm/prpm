@@ -50,6 +50,7 @@
     "@pr-pm/types": "^2.1.19",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "chalk": "^5.6.2",
     "commander": "^11.1.0",
     "jsonwebtoken": "^9.0.2",
     "posthog-node": "^5.10.0",

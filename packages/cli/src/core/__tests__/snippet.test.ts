@@ -159,6 +159,90 @@ Content of section two.
       expect(content).toContain('Snippet');
     });
 
+    it('should match section header at any markdown level', async () => {
+      const targetPath = join(testDir, 'AGENTS.md');
+      await fs.writeFile(targetPath, `# Title
+
+### Deep Section
+
+Content of deep section.
+
+## Another Section
+
+Content here.
+`, 'utf-8');
+
+      // Search for "Deep Section" but file has "### Deep Section"
+      const result = await installSnippet('Inserted snippet', '@prpm/test', '1.0.0', {
+        target: targetPath,
+        position: 'section:## Deep Section',
+      });
+
+      expect(result.position).toContain('Deep Section');
+
+      const content = await fs.readFile(targetPath, 'utf-8');
+      const deepSectionIndex = content.indexOf('Content of deep section');
+      const snippetIndex = content.indexOf('Inserted snippet');
+      const anotherSectionIndex = content.indexOf('## Another Section');
+      expect(snippetIndex).toBeGreaterThan(deepSectionIndex);
+      expect(snippetIndex).toBeLessThan(anotherSectionIndex);
+    });
+
+    it('should match section header without # prefix', async () => {
+      const targetPath = join(testDir, 'AGENTS.md');
+      await fs.writeFile(targetPath, `# Title
+
+## Target Section
+
+Content here.
+
+## Other Section
+
+More content.
+`, 'utf-8');
+
+      // Search without # prefix
+      const result = await installSnippet('Inserted snippet', '@prpm/test', '1.0.0', {
+        target: targetPath,
+        position: 'section:Target Section',
+      });
+
+      expect(result.position).toContain('Target Section');
+
+      const content = await fs.readFile(targetPath, 'utf-8');
+      expect(content).toContain('Inserted snippet');
+      const targetIndex = content.indexOf('Content here');
+      const snippetIndex = content.indexOf('Inserted snippet');
+      const otherIndex = content.indexOf('## Other Section');
+      expect(snippetIndex).toBeGreaterThan(targetIndex);
+      expect(snippetIndex).toBeLessThan(otherIndex);
+    });
+
+    it('should match section header case-insensitively', async () => {
+      const targetPath = join(testDir, 'AGENTS.md');
+      await fs.writeFile(targetPath, `# Title
+
+## My Section
+
+Content here.
+
+## Other Section
+
+More content.
+`, 'utf-8');
+
+      // Search with different case
+      const result = await installSnippet('Inserted snippet', '@prpm/test', '1.0.0', {
+        target: targetPath,
+        position: 'section:my section',
+      });
+
+      expect(result.position).toContain('my section');
+
+      const content = await fs.readFile(targetPath, 'utf-8');
+      expect(content).toContain('Inserted snippet');
+    });
+
     it('should update existing snippet with same package ID', async () => {
       const targetPath = join(testDir, 'AGENTS.md');
 
