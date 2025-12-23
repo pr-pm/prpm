@@ -2,6 +2,7 @@
  * Tests for Claude agent configuration
  */
 
+import { describe, it, expect } from 'vitest';
 import { hasClaudeHeader, applyClaudeConfig, parseClaudeFrontmatter } from '../claude-config';
 
 describe('claude-config', () => {
