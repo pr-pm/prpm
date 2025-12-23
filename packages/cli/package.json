@@ -45,9 +45,9 @@
   "license": "MIT",
   "dependencies": {
     "@octokit/rest": "^22.0.0",
-    "@pr-pm/converters": "workspace:*",
-    "@pr-pm/registry-client": "workspace:*",
-    "@pr-pm/types": "workspace:*",
+    "@pr-pm/converters": "^2.1.19",
+    "@pr-pm/registry-client": "^2.3.18",
+    "@pr-pm/types": "^2.1.19",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "chalk": "^5.6.2",
