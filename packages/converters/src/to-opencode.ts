@@ -109,6 +109,8 @@ function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
       }
       if (opencodeData.model) frontmatter.model = opencodeData.model;
       if (opencodeData.temperature !== undefined) frontmatter.temperature = opencodeData.temperature;
+      if (opencodeData.prompt) frontmatter.prompt = opencodeData.prompt;
+      if (opencodeData.maxSteps !== undefined) frontmatter.maxSteps = opencodeData.maxSteps;
       if (opencodeData.permission) frontmatter.permission = opencodeData.permission;
       if (opencodeData.disable !== undefined) frontmatter.disable = opencodeData.disable;
     } else {

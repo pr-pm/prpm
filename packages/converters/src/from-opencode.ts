@@ -44,6 +44,8 @@ interface OpencodeFrontmatter {
   mode?: 'subagent' | 'primary' | 'all';
   model?: string;
   temperature?: number;
+  prompt?: string; // Path to custom system prompt file using {file:./path} syntax
+  maxSteps?: number; // Iteration limit - unlimited if unset
   tools?: OpencodeTools;
   permission?: OpencodePermission;
   disable?: boolean;
@@ -99,12 +101,14 @@ export function fromOpencode(
   };
 
   // Store OpenCode-specific data for roundtrip conversion
-  // For agents: store mode, model, temperature, permission, disable
-  if (fm.mode || fm.model || fm.temperature !== undefined || fm.permission || fm.disable !== undefined) {
+  // For agents: store mode, model, temperature, prompt, maxSteps, permission, disable
+  if (fm.mode || fm.model || fm.temperature !== undefined || fm.prompt || fm.maxSteps !== undefined || fm.permission || fm.disable !== undefined) {
     metadataSection.data.opencode = {
       mode: fm.mode,
       model: fm.model,
       temperature: fm.temperature,
+      prompt: fm.prompt,
+      maxSteps: fm.maxSteps,
       permission: fm.permission,
       disable: fm.disable,
     };

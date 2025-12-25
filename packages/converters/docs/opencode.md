@@ -39,6 +39,7 @@ OpenCode is an AI coding assistant that uses specialized agents and slash comman
   - 0.6-1.0: Creative work
   - Defaults to model-specific values (typically 0, or 0.55 for Qwen models)
 - **`prompt`** (string): Path to custom system prompt file using `{file:./path}` syntax
+- **`maxSteps`** (number): Maximum number of iterations the agent can run. Unlimited if not set.
 - **`tools`** (object): Enable/disable specific tools
   - Supports wildcards: `"mymcp_*": false` disables all MCP tools starting with `mymcp_`
   - Example: `{ "write": true, "edit": false, "bash": false }`
