@@ -287,6 +287,47 @@ describe('toOpencode', () => {
     });
   });
 
+  describe('agent field roundtrip', () => {
+    it('should preserve prompt and maxSteps fields', () => {
+      const pkgWithAgentFields: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Test Agent',
+                description: 'Agent with prompt and maxSteps',
+                opencode: {
+                  mode: 'subagent',
+                  model: 'anthropic/claude-sonnet-4',
+                  temperature: 0.3,
+                  prompt: '{file:./custom-prompt.txt}',
+                  maxSteps: 50,
+                },
+              },
+            },
+            {
+              type: 'instructions',
+              title: 'Instructions',
+              content: 'Follow these instructions.',
+            },
+          ],
+        },
+      };
+
+      const result = toOpencode(pkgWithAgentFields);
+
+      // YAML uses single quotes for strings with special characters
+      expect(result.content).toContain("prompt: '{file:./custom-prompt.txt}'");
+      expect(result.content).toContain('maxSteps: 50');
+      expect(result.content).toContain('mode: subagent');
+      expect(result.content).toContain('temperature: 0.3');
+    });
+  });
+
   describe('tools conversion', () => {
     it('should convert tools to OpenCode format', () => {
       const pkgWithTools: CanonicalPackage = {

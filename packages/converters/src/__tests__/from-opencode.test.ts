@@ -43,6 +43,8 @@ description: Expert assistant
 mode: primary
 model: anthropic/claude-opus-4
 temperature: 0.2
+prompt: "{file:./prompts/expert.txt}"
+maxSteps: 100
 disable: false
 permission:
   edit: ask
@@ -64,6 +66,8 @@ Expert instructions here.
           mode: 'primary',
           model: 'anthropic/claude-opus-4',
           temperature: 0.2,
+          prompt: '{file:./prompts/expert.txt}',
+          maxSteps: 100,
           permission: { edit: 'ask', bash: 'deny' },
           disable: false,
         });
