@@ -338,6 +338,100 @@ mode: all
     });
   });
 
+  describe('skill detection', () => {
+    it('should detect skill subtype when name field present', () => {
+      const content = `---
+name: code-review
+description: Reviews code for best practices and security issues
+license: MIT
+compatibility: Requires git
+---
+
+# Code Review Skill
+
+Expert code reviewer.
+
+## Instructions
+
+- Check for code smells
+- Verify test coverage
+`;
+
+      const result = fromOpencode(content, baseMetadata);
+
+      expect(result.subtype).toBe('skill');
+      expect(result.format).toBe('opencode');
+    });
+
+    it('should preserve skill-specific fields for roundtrip', () => {
+      const content = `---
+name: pdf-processing
+description: Extracts and processes content from PDF documents
+license: MIT
+compatibility: Requires pdftotext
+allowed-tools: Bash(pdftotext:*) Read Write
+metadata:
+  category: document-processing
+  version: "1.0.0"
+---
+
+# PDF Processing Skill
+
+Process PDF documents.
+`;
+
+      const result = fromOpencode(content, baseMetadata);
+
+      expect(result.subtype).toBe('skill');
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+      expect(metadataSection?.type).toBe('metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.agentSkills).toEqual({
+          name: 'pdf-processing',
+          license: 'MIT',
+          compatibility: 'Requires pdftotext',
+          allowedTools: 'Bash(pdftotext:*) Read Write',
+          metadata: {
+            category: 'document-processing',
+            version: '1.0.0',
+          },
+        });
+      }
+    });
+
+    it('should detect skill even with minimal fields', () => {
+      const content = `---
+name: simple-skill
+description: A simple skill
+---
+
+# Simple Skill
+
+Basic instructions.
+`;
+
+      const result = fromOpencode(content, baseMetadata);
+
+      expect(result.subtype).toBe('skill');
+    });
+
+    it('should prefer slash-command over skill when both name and template present', () => {
+      // Edge case: if both name and template are present, template wins (slash-command)
+      const content = `---
+name: test-command
+template: Run test $1
+description: A test command
+---
+
+# Test Command
+`;
+
+      const result = fromOpencode(content, baseMetadata);
+
+      expect(result.subtype).toBe('slash-command');
+    });
+  });
+
   describe('edge cases', () => {
     it('should handle mode: all (default)', () => {
       const content = `---

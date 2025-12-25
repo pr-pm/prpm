@@ -328,6 +328,80 @@ describe('toOpencode', () => {
     });
   });
 
+  describe('skill conversion', () => {
+    it('should convert canonical skill to OpenCode skill format', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'code-review',
+        subtype: 'skill',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Code Review',
+                description: 'Reviews code for best practices and security issues',
+                agentSkills: {
+                  name: 'code-review',
+                  license: 'MIT',
+                  compatibility: 'Requires git',
+                  allowedTools: 'Bash(git:*) Read',
+                  metadata: {
+                    category: 'development',
+                  },
+                },
+              },
+            },
+            {
+              type: 'instructions',
+              title: 'Instructions',
+              content: 'Review code carefully.',
+            },
+          ],
+        },
+      };
+
+      const result = toOpencode(skillPkg);
+
+      expect(result.format).toBe('opencode');
+      expect(result.content).toContain('name: code-review');
+      expect(result.content).toContain('description: Reviews code for best practices');
+      expect(result.content).toContain('license: MIT');
+      expect(result.content).toContain('compatibility: Requires git');
+      expect(result.content).toContain('allowed-tools: Bash(git:*) Read');
+      expect(result.content).toContain('category: development');
+    });
+
+    it('should derive skill name from package name when not provided', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: '@myorg/My-Custom_Skill',
+        subtype: 'skill',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'My Skill',
+                description: 'A test skill',
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toOpencode(skillPkg);
+
+      // Should normalize to kebab-case
+      expect(result.content).toContain('name: my-custom-skill');
+      expect(result.warnings).toContain('Skill name derived from package name');
+    });
+  });
+
   describe('tools conversion', () => {
     it('should convert tools to OpenCode format', () => {
       const pkgWithTools: CanonicalPackage = {

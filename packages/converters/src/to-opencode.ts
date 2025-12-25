@@ -1,9 +1,15 @@
 /**
  * OpenCode Format Converter
- * Converts canonical format to OpenCode agent format
+ * Converts canonical format to OpenCode agent, skill, or slash command format
  *
- * OpenCode stores agents in .opencode/agent/${name}.md with YAML frontmatter
+ * OpenCode stores:
+ * - Agents in .opencode/agent/${name}.md with YAML frontmatter
+ * - Skills in .opencode/skill/${name}/SKILL.md with YAML frontmatter (Agent Skills spec)
+ * - Slash commands in .opencode/command/${name}.md with YAML frontmatter
+ *
  * @see https://opencode.ai/docs/agents/
+ * @see https://opencode.ai/docs/skills/
+ * @see https://opencode.ai/docs/commands/
  */
 
 import type {
@@ -51,7 +57,7 @@ export function toOpencode(pkg: CanonicalPackage): ConversionResult {
 }
 
 /**
- * Convert canonical content to OpenCode agent or slash command format
+ * Convert canonical content to OpenCode agent, skill, or slash command format
  */
 function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
   const lines: string[] = [];
@@ -63,8 +69,40 @@ function convertContent(pkg: CanonicalPackage, warnings: string[]): string {
   // Build frontmatter
   const frontmatter: Record<string, any> = {};
 
-  // Handle slash commands differently from agents
-  if (pkg.subtype === 'slash-command') {
+  // Handle skills (Agent Skills spec)
+  if (pkg.subtype === 'skill') {
+    const agentSkillsData = metadata?.type === 'metadata' ? metadata.data.agentSkills : undefined;
+
+    // Required: name (falls back to package name, normalized to kebab-case)
+    if (agentSkillsData?.name) {
+      frontmatter.name = agentSkillsData.name;
+    } else {
+      // Normalize package name to kebab-case for skill name
+      const normalizedName = pkg.name
+        .replace(/^@[^/]+\//, '') // Remove @scope/ prefix
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+      frontmatter.name = normalizedName || 'unnamed-skill';
+      warnings.push('Skill name derived from package name');
+    }
+
+    // Required: description
+    if (metadata?.type === 'metadata' && metadata.data.description) {
+      frontmatter.description = metadata.data.description;
+    } else {
+      frontmatter.description = pkg.description || 'No description provided';
+      warnings.push('REQUIRED description field missing');
+    }
+
+    // Optional Agent Skills fields
+    if (agentSkillsData) {
+      if (agentSkillsData.license) frontmatter.license = agentSkillsData.license;
+      if (agentSkillsData.compatibility) frontmatter.compatibility = agentSkillsData.compatibility;
+      if (agentSkillsData.allowedTools) frontmatter['allowed-tools'] = agentSkillsData.allowedTools;
+      if (agentSkillsData.metadata) frontmatter.metadata = agentSkillsData.metadata;
+    }
+  } else if (pkg.subtype === 'slash-command') {
     // OpenCode Slash Command format requires 'template' field
     const opencodeSlashCommand = metadata?.type === 'metadata' ? metadata.data.opencodeSlashCommand : undefined;
     const firstInstructions = pkg.content.sections.find(s => s.type === 'instructions');

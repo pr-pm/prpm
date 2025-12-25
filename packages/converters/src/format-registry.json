@@ -188,12 +188,20 @@
     },
     "opencode": {
       "name": "OpenCode",
-      "description": "OpenCode agents, commands, tools, and plugins",
+      "description": "OpenCode agents, commands, tools, plugins, and skills",
       "documentationUrl": "https://opencode.ai",
       "subtypes": {
         "agent": {
           "directory": ".opencode/agent",
           "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "skill": {
+          "directory": ".opencode/skill",
+          "filePatterns": ["SKILL.md"],
+          "nested": true,
+          "nestedIndicator": "SKILL.md",
+          "usesPackageSubdirectory": true,
           "fileExtension": ".md"
         },
         "slash-command": {

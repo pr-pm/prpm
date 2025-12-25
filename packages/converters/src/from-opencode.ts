@@ -1,12 +1,14 @@
 /**
  * OpenCode Format Parser
- * Converts OpenCode agents and slash commands to canonical format
+ * Converts OpenCode agents, skills, and slash commands to canonical format
  *
  * OpenCode stores:
  * - Agents in .opencode/agent/${name}.md with YAML frontmatter
+ * - Skills in .opencode/skill/${name}/SKILL.md with YAML frontmatter (has 'name' field, Agent Skills spec)
  * - Slash commands in .opencode/command/${name}.md with YAML frontmatter (has 'template' field)
  *
  * @see https://opencode.ai/docs/agents/
+ * @see https://opencode.ai/docs/skills/
  * @see https://opencode.ai/docs/commands/
  */
 
@@ -40,7 +42,7 @@ interface OpencodePermission {
 }
 
 interface OpencodeFrontmatter {
-  description?: string; // Required for agents
+  description?: string; // Required for agents and skills
   mode?: 'subagent' | 'primary' | 'all';
   model?: string;
   temperature?: number;
@@ -53,6 +55,12 @@ interface OpencodeFrontmatter {
   template?: string; // Required for slash commands
   agent?: string;
   subtask?: boolean;
+  // Skill specific fields (Agent Skills spec)
+  name?: string; // Required for skills: 1-64 chars, lowercase alphanumeric with hyphens
+  license?: string;
+  compatibility?: string;
+  'allowed-tools'?: string; // Space-delimited list of pre-approved tools
+  metadata?: Record<string, string>; // Arbitrary string key-value pairs
 }
 
 /**
@@ -71,10 +79,11 @@ function parseFrontmatter(content: string): { frontmatter: Record<string, any>; 
 }
 
 /**
- * Convert OpenCode format (agent or slash command) to canonical format
+ * Convert OpenCode format (agent, skill, or slash command) to canonical format
  *
- * Automatically detects subtype based on presence of 'template' field:
+ * Automatically detects subtype based on frontmatter fields:
  * - If 'template' exists → slash-command
+ * - If 'name' exists (Agent Skills spec) → skill
  * - Otherwise → agent
  *
  * @param content - Markdown content with YAML frontmatter
@@ -122,6 +131,17 @@ export function fromOpencode(
       agent: fm.agent,
       model: fm.model,
       subtask: fm.subtask,
+    };
+  }
+
+  // For skills (Agent Skills spec): store name, license, compatibility, allowed-tools, metadata
+  if (fm.name) {
+    metadataSection.data.agentSkills = {
+      name: fm.name,
+      license: fm.license,
+      compatibility: fm.compatibility,
+      allowedTools: fm['allowed-tools'],
+      metadata: fm.metadata,
     };
   }
 
@@ -176,10 +196,14 @@ export function fromOpencode(
     sections
   };
 
-  // Detect subtype: if 'template' field exists and is a non-empty string, it's a slash-command
+  // Detect subtype based on frontmatter fields:
+  // 1. If 'template' field exists and is non-empty → slash-command
+  // 2. If 'name' field exists (Agent Skills spec) → skill
+  // 3. Otherwise → agent
   const templateValue = fm.template;
   const isSlashCommand = typeof templateValue === 'string' && templateValue.trim().length > 0;
-  const detectedSubtype = isSlashCommand ? 'slash-command' : 'agent';
+  const isSkill = typeof fm.name === 'string' && fm.name.trim().length > 0;
+  const detectedSubtype = isSlashCommand ? 'slash-command' : isSkill ? 'skill' : 'agent';
 
   const pkg: CanonicalPackage = {
     ...metadata,
