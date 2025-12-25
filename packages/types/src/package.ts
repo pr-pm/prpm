@@ -152,7 +152,7 @@ export const FORMAT_NATIVE_SUBTYPES: Partial<Record<Format, readonly Subtype[]>>
   copilot: ["rule", "chatmode", "skill"],  // Native skill support via .github/skills/
   kiro: ["rule", "hook", "agent"],  // No native skill - uses AGENTS.md
   gemini: ["slash-command", "extension"],  // Full native support
-  opencode: ["agent", "slash-command", "tool", "plugin"],  // No native skill - uses AGENTS.md
+  opencode: ["agent", "slash-command", "tool", "plugin", "skill"],  // Native skill support in .opencode/skill/
   droid: ["skill", "slash-command", "hook"],  // No native agent - uses AGENTS.md
   zed: ["rule", "slash-command", "extension"],  // No native skill/agent - uses AGENTS.md
   // Formats not listed use progressive disclosure for all skill/agent/command subtypes

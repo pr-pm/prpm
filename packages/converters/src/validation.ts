@@ -72,6 +72,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'droid:hook': 'droid-hook.schema.json',
       'opencode:slash-command': 'opencode-slash-command.schema.json',
       'opencode:plugin': 'opencode-plugin.schema.json',
+      'opencode:skill': 'agent-skills.schema.json',
       'codex:skill': 'agent-skills.schema.json',
       'gemini:extension': 'gemini-extension.schema.json',
       'mcp:server': 'mcp-server.schema.json',

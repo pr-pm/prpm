@@ -140,6 +140,8 @@ export interface CanonicalPackage {
       mode?: 'subagent' | 'primary' | 'all';
       model?: string;
       temperature?: number;
+      prompt?: string; // Path to custom system prompt file using {file:./path} syntax
+      maxSteps?: number; // Iteration limit - unlimited if unset
       permission?: Record<string, any>;
       disable?: boolean;
     };
@@ -274,6 +276,8 @@ export interface MetadataSection {
       mode?: 'subagent' | 'primary' | 'all';
       model?: string;
       temperature?: number;
+      prompt?: string; // Path to custom system prompt file using {file:./path} syntax
+      maxSteps?: number; // Iteration limit - unlimited if unset
       permission?: Record<string, any>;
       disable?: boolean;
     };
