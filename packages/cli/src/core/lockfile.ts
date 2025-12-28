@@ -55,6 +55,15 @@ export interface LockfilePackage {
     mcpServers?: Record<string, LockfileMCPServer>; // MCP servers that were installed
     mcpGlobal?: boolean; // Whether MCP servers were installed globally
   };
+  // For snippet packages: track where content was appended
+  snippetMetadata?: {
+    targetPath: string; // Target file where snippet was installed
+    config: {
+      target: string;
+      position?: 'append' | 'prepend' | string; // section:## Header
+      header?: string;
+    };
+  };
 }
 
 export interface LockfileCollection {
@@ -180,6 +189,14 @@ export function addToLockfile(
       mcpServers?: Record<string, LockfileMCPServer>;
       mcpGlobal?: boolean;
     };
+    snippetMetadata?: {
+      targetPath: string;
+      config: {
+        target: string;
+        position?: 'append' | 'prepend' | string;
+        header?: string;
+      };
+    };
   }
 ): void {
   // Use format-specific key if format is provided (enables multiple formats per package)
@@ -199,6 +216,7 @@ export function addToLockfile(
     hookMetadata: packageInfo.hookMetadata,
     progressiveDisclosure: packageInfo.progressiveDisclosure,
     pluginMetadata: packageInfo.pluginMetadata,
+    snippetMetadata: packageInfo.snippetMetadata,
   };
   lockfile.generated = new Date().toISOString();
 }

@@ -36,6 +36,7 @@ import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-co
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
 import { addSkillToManifest, type SkillManifestEntry } from '../core/agents-md-progressive.js';
 import { mergeMCPServers, type MCPServer } from '../core/mcp.js';
+import { installSnippet, type SnippetConfig } from '../core/snippet.js';
 import {
   fromCursor,
   fromClaude,
@@ -98,6 +99,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'plugin': '🔌',
     'extension': '📦',
     'server': '🖥️',
+    'snippet': '📎',
   };
 
   // Format-specific icons for rules/defaults
@@ -173,6 +175,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'plugin': 'Plugin',
     'extension': 'Extension',
     'server': 'Server',
+    'snippet': 'Snippet',
   };
 
   const formatLabel = formatLabels[format];
@@ -747,8 +750,10 @@ export async function handleInstall(
     const locationSupportedFormats: Format[] = ['agents.md', 'cursor'];
     let locationOverride = options.location?.trim();
 
-    if (locationOverride && !locationSupportedFormats.includes(effectiveFormat)) {
-      console.log(`   ⚠️  --location option currently applies to Cursor or Agents.md installs. Ignoring provided value for ${effectiveFormat}.`);
+    // Allow --location for snippets (to override target file) regardless of format
+    const isSnippet = effectiveSubtype === 'snippet';
+    if (locationOverride && !locationSupportedFormats.includes(effectiveFormat) && !isSnippet) {
+      console.log(`   ⚠️  --location option currently applies to Cursor, Agents.md, or snippet installs. Ignoring provided value for ${effectiveFormat}.`);
       locationOverride = undefined;
     }
 
@@ -758,6 +763,7 @@ export async function handleInstall(
     let fileCount = 0;
     let hookMetadata: { events: string[]; hookId: string } | undefined = undefined;
     let pluginMetadata: { files: string[]; mcpServers?: Record<string, MCPServer>; mcpGlobal?: boolean } | undefined = undefined;
+    let snippetMetadata: { targetPath: string; config: SnippetConfig } | undefined = undefined;
 
     // Special handling for Claude plugins (bundles of agents, skills, commands, and MCP servers)
     // Note: claude plugins are format: 'claude', subtype: 'plugin'
@@ -908,6 +914,55 @@ export async function handleInstall(
 
       destPath = options.global ? '~/.claude/settings.json' : '.mcp.json';
       fileCount = Object.keys(mcpServerConfig.mcpServers).length;
+    }
+    // Special handling for snippet packages (append content to existing files)
+    else if (effectiveSubtype === 'snippet') {
+      console.log(`   📎 Installing Snippet...`);
+
+      if (extractedFiles.length !== 1) {
+        throw new Error('Snippet packages must contain exactly one file');
+      }
+
+      const snippetContent = extractedFiles[0].content;
+
+      // Get snippet config from package metadata
+      // The snippet config should be in pkg.snippet (from prpm.json)
+      const snippetConfig: SnippetConfig = (pkg as any).snippet || {
+        target: 'AGENTS.md', // Default target
+        position: 'append',
+      };
+
+      // Allow --location to override the target file (e.g., --location CLAUDE.md)
+      if (locationOverride) {
+        snippetConfig.target = locationOverride;
+        console.log(`   📁 Using custom target: ${locationOverride}`);
+      }
+
+      if (!snippetConfig.target) {
+        throw new Error('Snippet package must specify a target file in prpm.json');
+      }
+
+      const result = await installSnippet(
+        snippetContent,
+        packageId,
+        actualVersion || version,
+        snippetConfig
+      );
+
+      destPath = result.targetPath;
+      fileCount = 1;
+
+      // Store snippet metadata for lockfile
+      snippetMetadata = {
+        targetPath: result.targetPath,
+        config: snippetConfig,
+      };
+
+      if (result.created) {
+        console.log(`   ✓ Created ${result.targetPath} with snippet content`);
+      } else {
+        console.log(`   ✓ Appended snippet to ${result.targetPath} (${result.position})`);
+      }
     }
     // Special handling for CLAUDE.md format (goes in project root)
     else if (format === 'claude-md') {
@@ -1413,6 +1468,7 @@ export async function handleInstall(
       hookMetadata, // Track hook installation metadata for uninstall
       progressiveDisclosure: progressiveDisclosureMetadata,
       pluginMetadata, // Track plugin installation metadata for uninstall
+      snippetMetadata, // Track snippet installation metadata for uninstall
     });
 
     setPackageIntegrity(updatedLockfile, packageId, tarball, effectiveFormat);

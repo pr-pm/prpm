@@ -19,6 +19,7 @@ export default defineConfig({
   ],
   noExternal: [
     '@pr-pm/converters', // Bundle converters to handle ESM
+    'chalk', // ESM-only since v5, must be bundled
   ],
   platform: 'node',
   target: 'node16',
