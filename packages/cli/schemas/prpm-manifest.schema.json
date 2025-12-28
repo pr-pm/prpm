@@ -86,9 +86,10 @@
         },
         "position": {
           "type": "string",
-          "description": "Where to insert the snippet in the target file",
-          "enum": ["append", "prepend"],
-          "default": "append"
+          "description": "Where to insert the snippet in the target file. Use 'append', 'prepend', or 'section:## Header Name' to insert after a specific section.",
+          "pattern": "^(append|prepend|section:.+)$",
+          "default": "append",
+          "examples": ["append", "prepend", "section:## Tools", "section:## Guidelines"]
         },
         "header": {
           "type": "string",

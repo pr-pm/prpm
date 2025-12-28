@@ -135,7 +135,8 @@ export function fromOpencode(
   }
 
   // For skills (Agent Skills spec): store name, license, compatibility, allowed-tools, metadata
-  if (fm.name) {
+  // Use consistent check with skill detection (line ~205)
+  if (typeof fm.name === 'string' && fm.name.trim().length > 0) {
     metadataSection.data.agentSkills = {
       name: fm.name,
       license: fm.license,
