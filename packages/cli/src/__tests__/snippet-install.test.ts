@@ -428,5 +428,60 @@ describe('snippet package installation', () => {
       const lockfileCall = (addToLockfile as Mock).mock.calls[0];
       expect(lockfileCall[2].snippetMetadata.config.header).toBe('My Custom Section');
     });
+
+    it('should allow --location to override target file', async () => {
+      const mockPackage = {
+        id: '@prpm/override-snippet',
+        name: 'override-snippet',
+        format: 'generic',
+        subtype: 'snippet',
+        tags: [],
+        total_downloads: 10,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/override.tar.gz',
+        },
+        snippet: {
+          target: 'AGENTS.md', // Default target
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(createSnippetTarball('Override content'));
+
+      // Use --location to override target to CLAUDE.md
+      await handleInstall('@prpm/override-snippet', { location: 'CLAUDE.md' });
+
+      const lockfileCall = (addToLockfile as Mock).mock.calls[0];
+      // The target should be overridden to CLAUDE.md
+      expect(lockfileCall[2].snippetMetadata.targetPath).toBe('CLAUDE.md');
+    });
+
+    it('should use --location for snippet even with generic format', async () => {
+      const mockPackage = {
+        id: '@prpm/generic-snippet',
+        name: 'generic-snippet',
+        format: 'generic',
+        subtype: 'snippet',
+        tags: [],
+        total_downloads: 10,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/generic.tar.gz',
+        },
+        // No snippet config - should default to AGENTS.md but be overridable
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(createSnippetTarball('Generic content'));
+
+      // Override to custom file
+      await handleInstall('@prpm/generic-snippet', { location: 'CONVENTIONS.md' });
+
+      const lockfileCall = (addToLockfile as Mock).mock.calls[0];
+      expect(lockfileCall[2].snippetMetadata.targetPath).toBe('CONVENTIONS.md');
+    });
   });
 });

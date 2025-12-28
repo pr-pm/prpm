@@ -750,8 +750,10 @@ export async function handleInstall(
     const locationSupportedFormats: Format[] = ['agents.md', 'cursor'];
     let locationOverride = options.location?.trim();
 
-    if (locationOverride && !locationSupportedFormats.includes(effectiveFormat)) {
-      console.log(`   ⚠️  --location option currently applies to Cursor or Agents.md installs. Ignoring provided value for ${effectiveFormat}.`);
+    // Allow --location for snippets (to override target file) regardless of format
+    const isSnippet = effectiveSubtype === 'snippet';
+    if (locationOverride && !locationSupportedFormats.includes(effectiveFormat) && !isSnippet) {
+      console.log(`   ⚠️  --location option currently applies to Cursor, Agents.md, or snippet installs. Ignoring provided value for ${effectiveFormat}.`);
       locationOverride = undefined;
     }
 
@@ -929,6 +931,12 @@ export async function handleInstall(
         target: 'AGENTS.md', // Default target
         position: 'append',
       };
+
+      // Allow --location to override the target file (e.g., --location CLAUDE.md)
+      if (locationOverride) {
+        snippetConfig.target = locationOverride;
+        console.log(`   📁 Using custom target: ${locationOverride}`);
+      }
 
       if (!snippetConfig.target) {
         throw new Error('Snippet package must specify a target file in prpm.json');
