@@ -354,17 +354,30 @@ export async function handleInstall(
       if (installedPkg) {
         const requestedVersion = options.version || specVersion;
 
+        // Check if installing to a different location than what's already installed
+        // This allows installing the same package to multiple files (especially for snippets)
+        const existingLocation = installedPkg.snippetMetadata?.targetPath || installedPkg.installedPath;
+        const requestedLocation = options.location?.trim();
+        const isDifferentLocation = requestedLocation && existingLocation &&
+          path.resolve(requestedLocation) !== path.resolve(existingLocation);
+
         // If no specific version requested, or same version requested
         if (!requestedVersion || requestedVersion === 'latest' || requestedVersion === installedPkg.version) {
-          console.log(`\n✨ Package already installed!`);
-          console.log(`   📦 ${packageId}@${installedPkg.version}`);
-          console.log(`   🔄 Format: ${installedPkg.format || 'unknown'} | Subtype: ${installedPkg.subtype || 'unknown'}`);
-          console.log(`\n💡 To reinstall or upgrade:`);
-          console.log(`   prpm upgrade ${packageId}     # Upgrade to latest version`);
-          console.log(`   prpm uninstall ${packageId}   # Uninstall first, then install`);
-          console.log(`   prpm install ${packageId} --as <format>  # Install in different format`);
-          success = true;
-          return;
+          // If installing to a different location, proceed with install
+          if (isDifferentLocation) {
+            console.log(`📦 Installing ${packageId} to different location: ${requestedLocation}`);
+            console.log(`   (already installed at: ${existingLocation})`);
+          } else {
+            console.log(`\n✨ Package already installed!`);
+            console.log(`   📦 ${packageId}@${installedPkg.version}`);
+            console.log(`   🔄 Format: ${installedPkg.format || 'unknown'} | Subtype: ${installedPkg.subtype || 'unknown'}`);
+            console.log(`\n💡 To reinstall or upgrade:`);
+            console.log(`   prpm upgrade ${packageId}     # Upgrade to latest version`);
+            console.log(`   prpm uninstall ${packageId}   # Uninstall first, then install`);
+            console.log(`   prpm install ${packageId} --as <format>  # Install in different format`);
+            success = true;
+            return;
+          }
         } else {
           // Different version requested - allow upgrade/downgrade
           console.log(`📦 Upgrading ${packageId}: ${installedPkg.version} → ${requestedVersion}`);
@@ -479,7 +492,8 @@ export async function handleInstall(
         format = fallbackResult.format;
       }
       // Only show conversion message when format actually differs from source
-      if (format !== pkg.format) {
+      // Skip for snippets - they don't need format conversion
+      if (format !== pkg.format && pkg.subtype !== 'snippet') {
         console.log(`   🔄 Converting to ${format} format...`);
       }
     }
@@ -559,7 +573,8 @@ export async function handleInstall(
     let extractedFiles = await extractTarball(tarball, packageId);
 
     // Client-side format conversion (if --as flag is specified)
-    if (options.as && format && format !== pkg.format) {
+    // Skip conversion for snippets - they're raw content that doesn't need format conversion
+    if (options.as && format && format !== pkg.format && effectiveSubtype !== 'snippet') {
       console.log(`   🔄 Converting from ${pkg.format} to ${format}...`);
 
       // Find the main file to convert
