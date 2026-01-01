@@ -358,8 +358,18 @@ export async function handleInstall(
         // This allows installing the same package to multiple files (especially for snippets)
         const existingLocation = installedPkg.snippetMetadata?.targetPath || installedPkg.installedPath;
         const requestedLocation = options.location?.trim();
-        const isDifferentLocation = requestedLocation && existingLocation &&
-          path.resolve(requestedLocation) !== path.resolve(existingLocation);
+        let isDifferentLocation = false;
+
+        if (requestedLocation && existingLocation) {
+          if (installedPkg.subtype === 'snippet') {
+            // For snippets, location refers directly to the target file
+            isDifferentLocation = path.resolve(requestedLocation) !== path.resolve(existingLocation);
+          } else {
+            // For other formats, location is a directory; compare directory paths
+            const existingDir = path.dirname(existingLocation);
+            isDifferentLocation = path.resolve(requestedLocation) !== path.resolve(existingDir);
+          }
+        }
 
         // If no specific version requested, or same version requested
         if (!requestedVersion || requestedVersion === 'latest' || requestedVersion === installedPkg.version) {
