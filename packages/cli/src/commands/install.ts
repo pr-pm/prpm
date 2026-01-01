@@ -348,8 +348,28 @@ export async function handleInstall(
 
     // Check if package is already installed in the same format (skip if --force option is set)
     if (!options.force && lockfile && targetFormat) {
-      const lockfileKey = getLockfileKey(packageId, targetFormat);
-      const installedPkg = lockfile.packages[lockfileKey];
+      // Try to find an existing installation
+      // For snippets, the key includes location, so we need to search
+      const requestedLocation = options.location?.trim();
+      let installedPkg: typeof lockfile.packages[string] | undefined;
+      let matchedKey: string | undefined;
+
+      // First, check for snippet installations at the requested location (or default AGENTS.md)
+      const snippetLocation = requestedLocation || 'AGENTS.md';
+      const snippetKey = getLockfileKey(packageId, targetFormat, snippetLocation);
+      if (lockfile.packages[snippetKey]) {
+        installedPkg = lockfile.packages[snippetKey];
+        matchedKey = snippetKey;
+      }
+
+      // If not found as snippet, check for non-snippet installation
+      if (!installedPkg) {
+        const standardKey = getLockfileKey(packageId, targetFormat);
+        if (lockfile.packages[standardKey]) {
+          installedPkg = lockfile.packages[standardKey];
+          matchedKey = standardKey;
+        }
+      }
 
       if (installedPkg) {
         const requestedVersion = options.version || specVersion;
@@ -357,7 +377,6 @@ export async function handleInstall(
         // Check if installing to a different location than what's already installed
         // This allows installing the same package to multiple files (especially for snippets)
         const existingLocation = installedPkg.snippetMetadata?.targetPath || installedPkg.installedPath;
-        const requestedLocation = options.location?.trim();
         let isDifferentLocation = false;
 
         if (requestedLocation && existingLocation) {
@@ -1496,7 +1515,9 @@ export async function handleInstall(
       snippetMetadata, // Track snippet installation metadata for uninstall
     });
 
-    setPackageIntegrity(updatedLockfile, packageId, tarball, effectiveFormat);
+    // For snippets, include the target path in the key
+    const snippetTargetPath = effectiveSubtype === 'snippet' ? snippetMetadata?.targetPath : undefined;
+    setPackageIntegrity(updatedLockfile, packageId, tarball, effectiveFormat, snippetTargetPath);
     await writeLockfile(updatedLockfile);
 
     // Update lockfile (already done above via addToLockfile + writeLockfile)
