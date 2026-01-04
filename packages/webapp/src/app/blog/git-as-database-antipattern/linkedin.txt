@@ -1,0 +1,34 @@
+Every major package manager that started with git as a registry database eventually abandoned it. The failures are so consistent it's almost predictable.
+
+Cargo: Clone times became unbearable. Migrated to sparse HTTP. Now 99% adoption.
+
+Homebrew: Git repo too slow at scale. Switched to JSON API with CDN.
+
+CocoaPods: 16,000+ directories broke filesystem performance. Deployed CDN-based delivery.
+
+Go modules: Added GOPROXY for HTTP + checksum database to prevent force-push attacks.
+
+The problems are structural, not fixable:
+• Full history downloads for single package installs
+• Delta resolution eating CPU and disk
+• Directory limits degrading filesystem operations
+• No database features: no indexes, constraints, or schema migrations
+• Security vulnerabilities from history rewriting
+
+When we built PRPM, we didn't repeat these mistakes. We learned from them.
+
+From day one:
+✓ HTTP-based REST API (not git repos)
+✓ PostgreSQL for metadata with proper indexes
+✓ S3 storage for packages (CDN-ready)
+✓ Individual package fetching (not full registry clones)
+✓ Cryptographic integrity via SHA-256 (not git tags)
+
+This is the architecture that Cargo, Homebrew, and Go all converged on after painful migrations. We started there.
+
+Git is brilliant for version control. It's terrible for databases. The lesson: use the right tool for the job.
+
+Read the full technical breakdown:
+https://prpm.dev/blog/git-as-database-antipattern
+
+#SoftwareEngineering #Architecture #PackageManagement #DevTools #PostgreSQL

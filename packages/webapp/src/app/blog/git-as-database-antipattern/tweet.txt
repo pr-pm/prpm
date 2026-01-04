@@ -1,0 +1,5 @@
+Cargo, Homebrew, CocoaPods, Go—every major package manager that started with git as a database eventually abandoned it.
+
+The pattern is so consistent it's predictable. Here's why it fails and how PRPM avoided the trap from day one:
+
+https://prpm.dev/blog/git-as-database-antipattern

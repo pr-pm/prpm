@@ -24,6 +24,15 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    slug: "git-as-database-antipattern",
+    title: "Why Every Package Manager Abandoned Git - And How PRPM Avoided The Trap",
+    excerpt: "Cargo, Homebrew, CocoaPods, and Go all started with git registries. They all regretted it. Here's why PRPM chose HTTP from day one.",
+    date: "2026-01-04",
+    author: "PRPM Team",
+    readTime: "8 min read",
+    tags: ["Technical", "Architecture", "Registry"],
+  },
+  {
     slug: "eager-lazy-loading",
     title: "Eager vs Lazy Loading: Control When Your AI Skills Activate",
     excerpt: "Some skills must always be active. Others should wait until needed. Now package authors can control activation with eager/lazy loading in PRPM.",

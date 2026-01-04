@@ -47,12 +47,19 @@
   <!-- Blog -->
   <url>
     <loc>https://prpm.dev/blog</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2026-01-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Blog Posts -->
+  <url>
+    <loc>https://prpm.dev/blog/git-as-database-antipattern</loc>
+    <lastmod>2026-01-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <url>
     <loc>https://prpm.dev/blog/eager-lazy-loading</loc>
     <lastmod>2025-12-08</lastmod>
