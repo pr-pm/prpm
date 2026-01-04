@@ -101,6 +101,7 @@ export function toCopilot(
 
 /**
  * Convert canonical package to Copilot skill format
+ * Uses Agent Skills standard (agentskills.io)
  */
 function convertToSkill(
   pkg: CanonicalPackage,
@@ -109,8 +110,13 @@ function convertToSkill(
 ): ConversionResult {
   let qualityScore = 100;
 
-  // Derive skill name from config, package name, or ID
-  const skillName = config.skillName ||
+  // Extract metadata section for Agent Skills data
+  const metadataSection = pkg.content.sections.find(s => s.type === 'metadata');
+  const agentSkillsData = metadataSection?.type === 'metadata' ? metadataSection.data.agentSkills : undefined;
+
+  // Derive skill name from agentSkills metadata, config, package name, or ID
+  const skillName = agentSkillsData?.name ||
+    config.skillName ||
     pkg.name?.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 64) ||
     pkg.id.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 64);
 
@@ -125,14 +131,14 @@ function convertToSkill(
     qualityScore -= 20;
   }
 
-  // Validate skill name format
-  if (!/^[a-z0-9-]+$/.test(skillName)) {
-    warnings.push('Skill name should be lowercase with hyphens only');
+  // Validate skill name format per Agent Skills spec
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(skillName)) {
+    warnings.push('Skill name should be lowercase alphanumeric with single hyphens (no start/end/consecutive hyphens)');
     qualityScore -= 10;
   }
 
-  // Generate skill frontmatter
-  const frontmatter = generateSkillFrontmatter(skillName, skillDescription);
+  // Build frontmatter with Agent Skills fields
+  const frontmatter = generateSkillFrontmatter(skillName, skillDescription, pkg, agentSkillsData);
 
   // Generate skill content (similar to instruction content but optimized for skills)
   const content = convertSkillContent(pkg, warnings);
@@ -158,18 +164,70 @@ function convertToSkill(
 }
 
 /**
- * Generate YAML frontmatter for skills
+ * Agent Skills metadata interface
  */
-function generateSkillFrontmatter(name: string, description: string): string {
+interface AgentSkillsMetadata {
+  name?: string;
+  license?: string;
+  compatibility?: string;
+  allowedTools?: string;
+  metadata?: Record<string, string>;
+}
+
+/**
+ * Escape a string for use in YAML double-quoted strings
+ * Handles backslashes, quotes, newlines, and carriage returns
+ */
+function escapeYamlString(str: string): string {
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n');
+}
+
+/**
+ * Generate YAML frontmatter for skills per Agent Skills spec
+ */
+function generateSkillFrontmatter(
+  name: string,
+  description: string,
+  pkg: CanonicalPackage,
+  agentSkillsData?: AgentSkillsMetadata
+): string {
   const lines: string[] = ['---'];
   lines.push(`name: ${name}`);
+
   // Truncate description to 1024 chars if needed
   const truncatedDesc = description.length > 1024
     ? description.slice(0, 1021) + '...'
     : description;
-  // Quote description to handle special YAML characters (colons, quotes, newlines, carriage returns)
-  const quotedDesc = `"${truncatedDesc.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n')}"`;
-  lines.push(`description: ${quotedDesc}`);
+  // Quote description to handle special YAML characters
+  lines.push(`description: "${escapeYamlString(truncatedDesc)}"`);
+
+  // Add optional Agent Skills fields (all quoted for YAML safety)
+  const license = agentSkillsData?.license || pkg.license;
+  if (license) {
+    lines.push(`license: "${escapeYamlString(license)}"`);
+  }
+
+  if (agentSkillsData?.compatibility) {
+    lines.push(`compatibility: "${escapeYamlString(agentSkillsData.compatibility)}"`);
+  }
+
+  if (agentSkillsData?.allowedTools) {
+    lines.push(`allowed-tools: "${escapeYamlString(agentSkillsData.allowedTools)}"`);
+  }
+
+  if (agentSkillsData?.metadata && Object.keys(agentSkillsData.metadata).length > 0) {
+    lines.push('metadata:');
+    for (const [key, value] of Object.entries(agentSkillsData.metadata)) {
+      // Escape both key and value for YAML safety
+      const safeKey = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key) ? key : `"${escapeYamlString(key)}"`;
+      lines.push(`  ${safeKey}: "${escapeYamlString(value)}"`);
+    }
+  }
+
   lines.push('---');
   return lines.join('\n');
 }

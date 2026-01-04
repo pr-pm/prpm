@@ -403,9 +403,8 @@ describe('install command - multi-file packages', () => {
       );
     });
 
-    it('should use progressive disclosure for OpenCode skill install (regression test)', async () => {
-      // Regression test: Skills installed with --as opencode should go to .openskills/
-      // not to .opencode/agent/ (OpenCode has no native skill support)
+    it('should use native skill location for OpenCode skill install', async () => {
+      // OpenCode has native skill support - skills go to .opencode/skill/
       const mockPackage = {
         id: 'nango-skill',
         name: 'nango-skill',
@@ -430,13 +429,13 @@ describe('install command - multi-file packages', () => {
 
       await handleInstall('nango-skill', { as: 'opencode' });
 
-      // Should save to .openskills/ (progressive disclosure), NOT .opencode/agent/
+      // OpenCode has native skill support - installs to .opencode/skill/<name>/
       expect(saveFile).toHaveBeenCalledWith(
-        '.openskills/nango-skill/SKILL.md',
+        '.opencode/skill/nango-skill/nango-skill.md',
         expect.stringContaining('Builds thin wrapper actions')
       );
 
-      // Verify it did NOT go to the wrong location
+      // Verify it did NOT go to the wrong location (.opencode/agent/)
       const allCalls = (saveFile as Mock).mock.calls;
       const wrongLocationCalls = allCalls.filter((call: string[]) =>
         call[0].includes('.opencode/agent/')

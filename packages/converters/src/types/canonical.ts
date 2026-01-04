@@ -140,8 +140,17 @@ export interface CanonicalPackage {
       mode?: 'subagent' | 'primary' | 'all';
       model?: string;
       temperature?: number;
+      prompt?: string; // Path to custom system prompt file using {file:./path} syntax
+      maxSteps?: number; // Iteration limit - unlimited if unset
       permission?: Record<string, any>;
       disable?: boolean;
+    };
+    agentSkills?: {
+      name?: string;
+      license?: string;
+      compatibility?: string;
+      allowedTools?: string; // Space-delimited list per Agent Skills spec
+      metadata?: Record<string, string>; // Arbitrary key-value pairs
     };
     droid?: {
       argumentHint?: string; // Usage hint for slash commands
@@ -267,8 +276,17 @@ export interface MetadataSection {
       mode?: 'subagent' | 'primary' | 'all';
       model?: string;
       temperature?: number;
+      prompt?: string; // Path to custom system prompt file using {file:./path} syntax
+      maxSteps?: number; // Iteration limit - unlimited if unset
       permission?: Record<string, any>;
       disable?: boolean;
+    };
+    agentSkills?: {
+      name?: string;
+      license?: string;
+      compatibility?: string;
+      allowedTools?: string; // Space-delimited list per Agent Skills spec
+      metadata?: Record<string, string>; // Arbitrary key-value pairs
     };
     opencodeSlashCommand?: {
       description?: string; // Description of the slash command

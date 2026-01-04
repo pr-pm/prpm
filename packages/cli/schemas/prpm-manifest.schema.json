@@ -71,8 +71,33 @@
         "chatmode",
         "hook",
         "plugin",
-        "server"
+        "server",
+        "snippet"
       ]
+    },
+    "snippet": {
+      "type": "object",
+      "description": "Configuration for snippet packages. Snippets are content that gets appended to existing files (AGENTS.md, CLAUDE.md, etc.)",
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Target file to append the snippet to",
+          "examples": ["AGENTS.md", "CLAUDE.md", "CONVENTIONS.md"]
+        },
+        "position": {
+          "type": "string",
+          "description": "Where to insert the snippet in the target file. Use 'append', 'prepend', or 'section:## Header Name' to insert after a specific section.",
+          "pattern": "^(append|prepend|section:.+)$",
+          "default": "append",
+          "examples": ["append", "prepend", "section:## Tools", "section:## Guidelines"]
+        },
+        "header": {
+          "type": "string",
+          "description": "Optional section header to wrap the snippet content",
+          "examples": ["My Custom Section", "Project Guidelines"]
+        }
+      },
+      "required": ["target"]
     },
     "author": {
       "description": "Package author",
@@ -304,7 +329,8 @@
                   "chatmode",
                   "hook",
                   "plugin",
-                  "server"
+                  "server",
+                  "snippet"
                 ]
               },
               "name": {

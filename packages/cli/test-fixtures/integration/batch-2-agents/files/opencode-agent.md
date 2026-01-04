@@ -1,3 +1,13 @@
+---
+description: Test OpenCode agent for PRPM integration testing
+mode: all
+temperature: 0.7
+tools:
+  read: true
+  write: true
+  bash: false
+---
+
 # CI Test OpenCode Agent
 
 This is a test agent for PRPM integration testing.

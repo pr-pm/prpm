@@ -55,6 +55,15 @@ export interface LockfilePackage {
     mcpServers?: Record<string, LockfileMCPServer>; // MCP servers that were installed
     mcpGlobal?: boolean; // Whether MCP servers were installed globally
   };
+  // For snippet packages: track where content was appended
+  snippetMetadata?: {
+    targetPath: string; // Target file where snippet was installed
+    config: {
+      target: string;
+      position?: 'append' | 'prepend' | string; // section:## Header
+      header?: string;
+    };
+  };
 }
 
 export interface LockfileCollection {
@@ -121,23 +130,40 @@ export function createLockfile(): Lockfile {
 
 /**
  * Generate lockfile key for a package with optional format suffix
- * Format: packageId or packageId#format
+ * Format: packageId, packageId#format, or packageId#format:location (for snippets)
  */
-export function getLockfileKey(packageId: string, format?: string): string {
+export function getLockfileKey(packageId: string, format?: string, location?: string): string {
   if (!format) {
     return packageId;
+  }
+  if (location) {
+    // For snippets installed to specific files, include location in key
+    return `${packageId}#${format}:${location}`;
   }
   return `${packageId}#${format}`;
 }
 
 /**
- * Parse lockfile key to extract package ID and format
+ * Parse lockfile key to extract package ID, format, and optional location
  */
-export function parseLockfileKey(key: string): { packageId: string; format?: string } {
-  const parts = key.split('#');
+export function parseLockfileKey(key: string): { packageId: string; format?: string; location?: string } {
+  const hashIndex = key.indexOf('#');
+  if (hashIndex === -1) {
+    return { packageId: key };
+  }
+
+  const packageId = key.substring(0, hashIndex);
+  const rest = key.substring(hashIndex + 1);
+
+  const colonIndex = rest.indexOf(':');
+  if (colonIndex === -1) {
+    return { packageId, format: rest };
+  }
+
   return {
-    packageId: parts[0],
-    format: parts[1],
+    packageId,
+    format: rest.substring(0, colonIndex),
+    location: rest.substring(colonIndex + 1),
   };
 }
 
@@ -180,10 +206,20 @@ export function addToLockfile(
       mcpServers?: Record<string, LockfileMCPServer>;
       mcpGlobal?: boolean;
     };
+    snippetMetadata?: {
+      targetPath: string;
+      config: {
+        target: string;
+        position?: 'append' | 'prepend' | string;
+        header?: string;
+      };
+    };
   }
 ): void {
   // Use format-specific key if format is provided (enables multiple formats per package)
-  const lockfileKey = getLockfileKey(packageId, packageInfo.format);
+  // For snippets, include target path in key to allow multiple installations to different files
+  const snippetLocation = packageInfo.subtype === 'snippet' ? packageInfo.snippetMetadata?.targetPath : undefined;
+  const lockfileKey = getLockfileKey(packageId, packageInfo.format, snippetLocation);
 
   lockfile.packages[lockfileKey] = {
     version: packageInfo.version,
@@ -199,6 +235,7 @@ export function addToLockfile(
     hookMetadata: packageInfo.hookMetadata,
     progressiveDisclosure: packageInfo.progressiveDisclosure,
     pluginMetadata: packageInfo.pluginMetadata,
+    snippetMetadata: packageInfo.snippetMetadata,
   };
   lockfile.generated = new Date().toISOString();
 }
@@ -210,9 +247,10 @@ export function setPackageIntegrity(
   lockfile: Lockfile,
   packageId: string,
   tarballBuffer: Buffer,
-  format?: string
+  format?: string,
+  location?: string
 ): void {
-  const lockfileKey = getLockfileKey(packageId, format);
+  const lockfileKey = getLockfileKey(packageId, format, location);
 
   if (!lockfile.packages[lockfileKey]) {
     throw new Error(`Package ${lockfileKey} not found in lock file`);
@@ -229,10 +267,11 @@ export function verifyPackageIntegrity(
   lockfile: Lockfile,
   packageId: string,
   tarballBuffer: Buffer,
-  format?: string
+  format?: string,
+  location?: string
 ): boolean {
   // Use format-specific key if format is provided
-  const lockfileKey = getLockfileKey(packageId, format);
+  const lockfileKey = getLockfileKey(packageId, format, location);
   const pkg = lockfile.packages[lockfileKey];
   if (!pkg || !pkg.integrity) {
     return false;
