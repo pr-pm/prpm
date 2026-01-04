@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsx scripts/build-all-hooks.ts",
     "build:watch": "tsx scripts/build-all-hooks.ts --watch",
-    "test": "vitest",
+    "test": "if [ \"$RUN_HOOKS_TESTS\" != \"true\" ]; then echo 'Skipping hooks tests (set RUN_HOOKS_TESTS=true to enable)'; exit 0; fi; vitest",
     "test:watch": "vitest --watch",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"

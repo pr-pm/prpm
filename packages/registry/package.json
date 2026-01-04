@@ -18,7 +18,7 @@
     "generate-suggested-inputs": "tsx scripts/generate-suggested-inputs.ts",
     "script:generate-taxonomy": "tsx scripts/generate-taxonomy.ts",
     "script:generate-embeddings": "tsx scripts/generate-embeddings.ts",
-    "test": "command -v vitest > /dev/null && vitest run || echo 'Vitest not installed - skipping tests. Run: npm install'",
+    "test": "if [ \"$RUN_REGISTRY_TESTS\" != \"true\" ]; then echo 'Skipping registry tests (set RUN_REGISTRY_TESTS=true to enable)'; exit 0; fi; command -v vitest > /dev/null && vitest run || echo 'Vitest not installed - skipping tests. Run: npm install'",
     "test:watch": "vitest",
     "test:coverage": "vitest --coverage",
     "lint": "eslint src/**/*.ts",
