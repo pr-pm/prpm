@@ -19,6 +19,49 @@ interface ExtractedFile {
   name: string;
   content: string;
   size: number;
+  isBinary: boolean;
+}
+
+/**
+ * Validate that a path is safe and doesn't escape the target directory
+ * Prevents path traversal attacks (e.g., ../../../etc/passwd)
+ */
+function isPathSafe(targetDir: string, filePath: string): boolean {
+  const resolvedPath = path.resolve(targetDir, filePath);
+  const resolvedTarget = path.resolve(targetDir);
+  return resolvedPath.startsWith(resolvedTarget + path.sep) || resolvedPath === resolvedTarget;
+}
+
+/**
+ * Check if a filename contains potentially dangerous patterns
+ */
+function hasUnsafePathPatterns(filePath: string): boolean {
+  if (filePath.includes('..')) return true;
+  if (filePath.startsWith('/')) return true;
+  if (/^[a-zA-Z]:/.test(filePath)) return true;
+  if (filePath.includes('\0')) return true;
+  return false;
+}
+
+/**
+ * Detect if content is binary (contains null bytes or high ratio of non-printable chars)
+ */
+function isBinaryContent(buffer: Buffer): boolean {
+  // Check for null bytes (common in binary files)
+  if (buffer.includes(0)) return true;
+
+  // Sample first 512 bytes for non-printable characters
+  const sampleSize = Math.min(buffer.length, 512);
+  let nonPrintable = 0;
+  for (let i = 0; i < sampleSize; i++) {
+    const byte = buffer[i];
+    // Allow common text characters: tab, newline, carriage return, and printable ASCII
+    if (byte !== 9 && byte !== 10 && byte !== 13 && (byte < 32 || byte > 126)) {
+      nonPrintable++;
+    }
+  }
+  // If more than 30% non-printable, treat as binary
+  return nonPrintable / sampleSize > 0.3;
 }
 
 /**
@@ -54,6 +97,34 @@ async function extractTarballContents(tarball: Buffer): Promise<ExtractedFile[]>
     const extract = tar.extract({
       cwd: tmpDir,
       strict: true,
+      // Security: filter out dangerous entries before extraction
+      filter: (entryPath: string, entry) => {
+        // Block symlinks - they can be used for path traversal attacks
+        const entryType = 'type' in entry ? entry.type : null;
+        if (entryType === 'SymbolicLink' || entryType === 'Link') {
+          console.warn(`   ⚠️  Blocked symlink in package: ${entryPath}`);
+          return false;
+        }
+
+        if ('isSymbolicLink' in entry && entry.isSymbolicLink()) {
+          console.warn(`   ⚠️  Blocked symlink in package: ${entryPath}`);
+          return false;
+        }
+
+        // Block entries with unsafe path patterns
+        if (hasUnsafePathPatterns(entryPath)) {
+          console.warn(`   ⚠️  Blocked unsafe path in package: ${entryPath}`);
+          return false;
+        }
+
+        // Verify the path stays within the extraction directory
+        if (!isPathSafe(tmpDir, entryPath)) {
+          console.warn(`   ⚠️  Blocked path traversal attempt: ${entryPath}`);
+          return false;
+        }
+
+        return true;
+      },
     });
 
     await pipeline(Readable.from(decompressed), extract);
@@ -80,14 +151,16 @@ async function extractTarballContents(tarball: Buffer): Promise<ExtractedFile[]>
           continue;
         }
 
-        const content = await fs.readFile(fullPath, 'utf-8');
+        const buffer = await fs.readFile(fullPath);
         const stats = await fs.stat(fullPath);
         const relativePath = path.relative(tmpDir, fullPath).split(path.sep).join('/');
+        const binary = isBinaryContent(buffer);
 
         files.push({
           name: relativePath,
-          content,
+          content: binary ? `[Binary file - ${stats.size} bytes]` : buffer.toString('utf-8'),
           size: stats.size,
+          isBinary: binary,
         });
       }
     }
@@ -110,7 +183,8 @@ function formatSize(bytes: number): string {
 /**
  * Get file type icon based on extension
  */
-function getFileIcon(filename: string): string {
+function getFileIcon(filename: string, isBinary: boolean = false): string {
+  if (isBinary) return '🔒';
   const ext = path.extname(filename).toLowerCase();
   const iconMap: Record<string, string> = {
     '.md': '📄',
@@ -211,6 +285,7 @@ export async function handleShow(
         files: files.map(f => ({
           path: f.name,
           size: f.size,
+          isBinary: f.isBinary,
           content: options.full ? f.content : undefined,
         })),
       };
@@ -244,7 +319,7 @@ export async function handleShow(
         console.log(`\n❌ File not found: ${options.file}`);
         console.log('\n📋 Available files:');
         for (const file of files) {
-          console.log(`   ${getFileIcon(file.name)} ${file.name}`);
+          console.log(`   ${getFileIcon(file.name, file.isBinary)} ${file.name}`);
         }
         throw new CLIError(`File "${options.file}" not found in package`, 1);
       }
@@ -263,7 +338,8 @@ export async function handleShow(
     console.log('─'.repeat(60));
 
     for (const file of files) {
-      console.log(`   ${getFileIcon(file.name)} ${file.name} (${formatSize(file.size)})`);
+      const binaryLabel = file.isBinary ? ' [binary]' : '';
+      console.log(`   ${getFileIcon(file.name, file.isBinary)} ${file.name} (${formatSize(file.size)})${binaryLabel}`);
     }
 
     // If --full flag, show all file contents
