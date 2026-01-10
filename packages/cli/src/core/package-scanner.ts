@@ -330,15 +330,22 @@ async function collectPackageFiles(
 
 /**
  * Build root manifest files list from format-registry.json
+ * Deduplicates by file path - first format to list a file wins
+ * (e.g., agents.md format takes precedence over amp for AGENTS.md)
  */
 function buildRootManifestFiles(): Array<{ file: string; format: Format }> {
   const files: Array<{ file: string; format: Format }> = [];
+  const seenFiles = new Set<string>();
   const registry = getFormatRegistry();
 
   for (const [formatName, formatConfig] of Object.entries(registry.formats)) {
     if (formatConfig.rootFiles) {
       for (const rootFile of formatConfig.rootFiles) {
-        files.push({ file: rootFile, format: formatName as Format });
+        // Only add if we haven't seen this file before
+        if (!seenFiles.has(rootFile)) {
+          seenFiles.add(rootFile);
+          files.push({ file: rootFile, format: formatName as Format });
+        }
       }
     }
   }

@@ -27,6 +27,7 @@ export type Format =
   | "replit"
   | "zed"
   | "codex"
+  | "amp"
   | "generic"
   | "mcp";
 
@@ -55,6 +56,7 @@ export const FORMATS: readonly Format[] = [
   "replit",
   "zed",
   "codex",
+  "amp",
   "generic",
   "mcp",
 ] as const;
@@ -125,6 +127,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   replit: ["rule"],
   zed: ["rule", "slash-command", "extension", "skill", "agent"],  // skill/agent via progressive disclosure
   codex: ["rule", "skill", "agent", "slash-command"],
+  amp: ["skill", "slash-command", "agent", "rule"],  // Native skills + commands, agent via AGENTS.md
   mcp: ["server", "tool"],
   "agents.md": ["skill", "agent", "rule", "slash-command"],
   generic: [
@@ -157,6 +160,7 @@ export const FORMAT_NATIVE_SUBTYPES: Partial<Record<Format, readonly Subtype[]>>
   opencode: ["agent", "slash-command", "tool", "plugin", "skill"],  // Native skill support in .opencode/skill/
   droid: ["skill", "slash-command", "hook"],  // No native agent - uses AGENTS.md
   zed: ["rule", "slash-command", "extension"],  // No native skill/agent - uses AGENTS.md
+  amp: ["skill", "slash-command"],  // Native skills (.agents/skills/) and commands (.agents/commands/)
   // Formats not listed use progressive disclosure for all skill/agent/command subtypes
 } as const;
 
@@ -286,6 +290,13 @@ export interface ConversionHints {
   agentsMd?: {
     project?: string;
     scope?: string;
+  };
+
+  /** Hints for Amp format conversion */
+  amp?: {
+    globs?: string[];  // File patterns for granular guidance
+    argumentHint?: string;  // Hint shown for skill invocation
+    disableModelInvocation?: boolean;  // Prevent model from auto-invoking
   };
 }
 

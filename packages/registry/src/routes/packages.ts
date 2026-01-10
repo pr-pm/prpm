@@ -53,6 +53,8 @@ const FORMAT_ENUM = [
   "ruler",
   "droid",
   "opencode",
+  "codex",
+  "amp",
   "trae",
   "aider",
   "zencoder",

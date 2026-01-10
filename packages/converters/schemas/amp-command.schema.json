@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/amp/command.json",
+  "$comment": "https://ampcode.com/manual#custom-commands",
+  "title": "Amp Custom Command Format",
+  "description": "JSON Schema for Amp Custom Commands - markdown files or executables that extend prompt input",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Brief description of what this command does"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Markdown content appended to the prompt when command is invoked"
+    }
+  },
+  "examples": [
+    {
+      "content": "# Deploy Command\n\nDeploy the application to production:\n\n1. Run tests\n2. Build the application\n3. Deploy to production server\n4. Verify deployment health"
+    },
+    {
+      "frontmatter": {
+        "description": "Generate a comprehensive test suite"
+      },
+      "content": "# Generate Tests\n\nCreate comprehensive tests for the specified code:\n\n- Unit tests for all functions\n- Integration tests for API endpoints\n- Edge case coverage"
+    }
+  ]
+}

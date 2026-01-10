@@ -452,6 +452,41 @@
           "fileExtension": ".json"
         }
       }
+    },
+    "amp": {
+      "name": "Amp",
+      "description": "Amp code editor skills, commands, and AGENTS.md",
+      "documentationUrl": "https://ampcode.com/manual",
+      "rootFiles": ["AGENTS.md", "AGENT.md", "CLAUDE.md"],
+      "defaultSubtype": "skill",
+      "subtypes": {
+        "skill": {
+          "directory": ".agents/skills",
+          "filePatterns": ["SKILL.md"],
+          "nested": true,
+          "nestedIndicator": "SKILL.md",
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        },
+        "slash-command": {
+          "directory": ".agents/commands",
+          "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "rule": {
+          "directory": ".",
+          "filePatterns": ["AGENTS.md"],
+          "fileExtension": ".md"
+        },
+        "agent": {
+          "directory": ".openagents",
+          "filePatterns": ["AGENT.md"],
+          "nested": true,
+          "nestedIndicator": "AGENT.md",
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
+        }
+      }
     }
   }
 }
