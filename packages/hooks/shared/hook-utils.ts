@@ -1,22 +1,51 @@
 /**
  * Shared utilities for PRPM Claude Code hooks
+ * Based on official documentation: https://code.claude.com/docs/en/hooks
  */
 
 import { readFileSync } from 'fs';
 import { execSync, spawn } from 'child_process';
-import type { HookInput, ExecOptions, HookExitCode, PatternMatch } from './types';
+import type {
+  HookInput,
+  ExecOptions,
+  HookExitCode,
+  PatternMatch,
+  LegacyHookInput,
+  ToolInput,
+  HookOutput,
+} from './types';
+
+// Re-export types for convenience
+export * from './types';
 
 /**
  * Read and parse JSON input from stdin
  * @returns Parsed HookInput or empty object if parsing fails
  */
-export function readStdin(): HookInput {
+export function readStdin(): HookInput | LegacyHookInput {
   try {
     const input = readFileSync(0, 'utf-8');
-    return JSON.parse(input) as HookInput;
+    return JSON.parse(input);
   } catch {
-    return {};
+    return {} as LegacyHookInput;
   }
+}
+
+/**
+ * Get tool input from hook input (works with both new and legacy formats)
+ * @param input - Hook input object
+ * @returns Tool input object or undefined
+ */
+export function getToolInput(input: HookInput | LegacyHookInput): ToolInput | undefined {
+  // New format: tool_input field
+  if ('tool_input' in input && input.tool_input) {
+    return input.tool_input as ToolInput;
+  }
+  // Legacy format: input field
+  if ('input' in input && input.input) {
+    return input.input as ToolInput;
+  }
+  return undefined;
 }
 
 /**
@@ -24,8 +53,9 @@ export function readStdin(): HookInput {
  * @param input - Hook input object
  * @returns File path if valid, undefined otherwise
  */
-export function getFilePath(input: HookInput): string | undefined {
-  const filePath = input.input?.file_path;
+export function getFilePath(input: HookInput | LegacyHookInput): string | undefined {
+  const toolInput = getToolInput(input);
+  const filePath = toolInput?.file_path;
   if (!filePath || typeof filePath !== 'string' || filePath.trim() === '') {
     return undefined;
   }
@@ -37,8 +67,9 @@ export function getFilePath(input: HookInput): string | undefined {
  * @param input - Hook input object
  * @returns Command string if present, undefined otherwise
  */
-export function getCommand(input: HookInput): string | undefined {
-  const command = input.input?.command;
+export function getCommand(input: HookInput | LegacyHookInput): string | undefined {
+  const toolInput = getToolInput(input);
+  const command = toolInput?.command;
   if (!command || typeof command !== 'string' || command.trim() === '') {
     return undefined;
   }
@@ -50,13 +81,15 @@ export function getCommand(input: HookInput): string | undefined {
  * @param input - Hook input object
  * @returns Content string if present, undefined otherwise
  */
-export function getContent(input: HookInput): string | undefined {
+export function getContent(input: HookInput | LegacyHookInput): string | undefined {
+  const toolInput = getToolInput(input);
+
   // Try content field first (Write tool)
-  let content = input.input?.content;
+  let content = toolInput?.content;
 
   // Try new_string field (Edit tool)
   if (!content) {
-    content = input.input?.new_string;
+    content = toolInput?.new_string;
   }
 
   if (!content || typeof content !== 'string') {
@@ -64,6 +97,41 @@ export function getContent(input: HookInput): string | undefined {
   }
 
   return content;
+}
+
+/**
+ * Get the tool name from hook input
+ * @param input - Hook input object
+ * @returns Tool name or undefined
+ */
+export function getToolName(input: HookInput | LegacyHookInput): string | undefined {
+  if ('tool_name' in input) {
+    return input.tool_name;
+  }
+  if ('tool' in input) {
+    return input.tool;
+  }
+  return undefined;
+}
+
+/**
+ * Get the hook event name
+ * @param input - Hook input object
+ * @returns Event name or undefined
+ */
+export function getEventName(input: HookInput | LegacyHookInput): string | undefined {
+  if ('hook_event_name' in input) {
+    return input.hook_event_name;
+  }
+  return undefined;
+}
+
+/**
+ * Output JSON response to stdout (for advanced hook control)
+ * @param output - Hook output object
+ */
+export function outputJson(output: HookOutput): void {
+  console.log(JSON.stringify(output));
 }
 
 /**
