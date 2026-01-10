@@ -4,6 +4,9 @@
 
 import { Format, Subtype, SnippetConfig } from '../types';
 
+// Re-export SnippetConfig for consumers
+export type { SnippetConfig };
+
 /**
  * Enhanced file metadata for collection packages
  */

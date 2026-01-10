@@ -6,10 +6,17 @@ import { describe, it, expect } from 'vitest';
 import {
   geminiToClaudeMCP,
   claudeToGeminiMCP,
+  kiroToClaudeMCP,
+  claudeToKiroMCP,
+  kiroToGeminiMCP,
+  geminiToKiroMCP,
   validateMCPServer,
   mergeMCPServers,
+  translateEnvVar,
+  translateMCPServerEnv,
   type GeminiMCPServers,
   type ClaudeMCPServers,
+  type KiroMCPServers,
   type MCPServerConfig,
 } from '../../cross-converters/mcp-transformer.js';
 
@@ -365,6 +372,202 @@ describe('MCP Transformer', () => {
 
       expect(toClaude.lossless).toBe(false);
       expect(toClaude.warnings.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('kiroToClaudeMCP', () => {
+    it('should transform basic Kiro MCP server config', () => {
+      const kiro: KiroMCPServers = {
+        filesystem: {
+          command: 'npx',
+          args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace'],
+        },
+      };
+
+      const result = kiroToClaudeMCP(kiro);
+
+      expect(result.servers.filesystem).toEqual({
+        command: 'npx',
+        args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace'],
+      });
+      expect(result.warnings).toHaveLength(0);
+      expect(result.lossless).toBe(true);
+    });
+
+    it('should warn about timeout field loss', () => {
+      const kiro: KiroMCPServers = {
+        slowServer: {
+          command: 'python',
+          args: ['server.py'],
+          timeout: 10000,
+        },
+      };
+
+      const result = kiroToClaudeMCP(kiro);
+
+      expect(result.servers.slowServer.timeout).toBeUndefined();
+      expect(result.lossless).toBe(false);
+      expect(result.warnings).toContain(
+        `MCP server 'slowServer' has timeout=10000ms which is not supported in Claude format. This field will be lost.`
+      );
+    });
+
+    it('should preserve env and disabled fields', () => {
+      const kiro: KiroMCPServers = {
+        server: {
+          command: 'node',
+          args: ['index.js'],
+          env: { API_KEY: 'secret' },
+          disabled: true,
+        },
+      };
+
+      const result = kiroToClaudeMCP(kiro);
+
+      expect(result.servers.server.env).toEqual({ API_KEY: 'secret' });
+      expect(result.servers.server.disabled).toBe(true);
+      expect(result.lossless).toBe(true);
+    });
+  });
+
+  describe('claudeToKiroMCP', () => {
+    it('should transform Claude MCP config to Kiro', () => {
+      const claude: ClaudeMCPServers = {
+        github: {
+          command: 'npx',
+          args: ['-y', '@anthropic/mcp-server-github'],
+          env: { GITHUB_TOKEN: '${GITHUB_TOKEN}' },
+        },
+      };
+
+      const result = claudeToKiroMCP(claude);
+
+      expect(result.servers.github).toEqual({
+        command: 'npx',
+        args: ['-y', '@anthropic/mcp-server-github'],
+        env: { GITHUB_TOKEN: '${GITHUB_TOKEN}' },
+      });
+      expect(result.lossless).toBe(true);
+    });
+  });
+
+  describe('kiroToGeminiMCP', () => {
+    it('should transform Kiro to Gemini with timeout warning', () => {
+      const kiro: KiroMCPServers = {
+        server: {
+          command: 'deno',
+          args: ['run', 'server.ts'],
+          timeout: 5000,
+        },
+      };
+
+      const result = kiroToGeminiMCP(kiro);
+
+      expect(result.servers.server.timeout).toBeUndefined();
+      expect(result.lossless).toBe(false);
+      expect(result.warnings).toContain(
+        `MCP server 'server' has timeout=5000ms which is not supported in Gemini format. This field will be lost.`
+      );
+    });
+  });
+
+  describe('geminiToKiroMCP', () => {
+    it('should transform Gemini to Kiro', () => {
+      const gemini: GeminiMCPServers = {
+        postgres: {
+          command: 'uvx',
+          args: ['mcp-server-postgres'],
+          env: { DATABASE_URL: 'postgresql://localhost/db' },
+        },
+      };
+
+      const result = geminiToKiroMCP(gemini);
+
+      expect(result.servers.postgres).toEqual({
+        command: 'uvx',
+        args: ['mcp-server-postgres'],
+        env: { DATABASE_URL: 'postgresql://localhost/db' },
+      });
+      expect(result.lossless).toBe(true);
+    });
+
+    it('should warn about Gemini-specific variable substitutions', () => {
+      const gemini: GeminiMCPServers = {
+        customServer: {
+          command: 'node',
+          args: ['${extensionPath}/server.js'],
+          env: { HOME: '${home}' },
+        },
+      };
+
+      const result = geminiToKiroMCP(gemini);
+
+      expect(result.lossless).toBe(false);
+      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(result.warnings[0]).toContain('Gemini variable substitutions');
+    });
+  });
+
+  describe('translateEnvVar', () => {
+    it('should translate Gemini to Claude variables', () => {
+      const result = translateEnvVar('${extensionPath}/config.json', 'gemini-to-claude');
+
+      expect(result.value).toBe('${CLAUDE_EXTENSIONS_PATH}/config.json');
+      expect(result.translated).toBe(true);
+    });
+
+    it('should translate Claude to Gemini variables', () => {
+      const result = translateEnvVar('${HOME}/.config', 'claude-to-gemini');
+
+      expect(result.value).toBe('${home}/.config');
+      expect(result.translated).toBe(true);
+    });
+
+    it('should handle Windows-style paths', () => {
+      const result = translateEnvVar('%APPDATA%/data', 'claude-to-gemini');
+
+      expect(result.value).toBe('${home}/data');
+      expect(result.translated).toBe(true);
+    });
+
+    it('should not translate when no matching variables', () => {
+      const result = translateEnvVar('/absolute/path', 'gemini-to-claude');
+
+      expect(result.value).toBe('/absolute/path');
+      expect(result.translated).toBe(false);
+    });
+  });
+
+  describe('translateMCPServerEnv', () => {
+    it('should translate all env vars in config', () => {
+      const config: MCPServerConfig = {
+        command: 'node',
+        env: {
+          PATH1: '${extensionPath}/bin',
+          PATH2: '${home}/.local',
+          API_KEY: 'secret',
+        },
+      };
+
+      const result = translateMCPServerEnv(config, 'gemini-to-claude');
+
+      expect(result.config.env).toEqual({
+        PATH1: '${CLAUDE_EXTENSIONS_PATH}/bin',
+        PATH2: '${HOME}/.local',
+        API_KEY: 'secret',
+      });
+      expect(result.warnings).toContain('Environment variables were automatically translated for target format');
+    });
+
+    it('should handle missing env gracefully', () => {
+      const config: MCPServerConfig = {
+        command: 'node',
+      };
+
+      const result = translateMCPServerEnv(config, 'gemini-to-claude');
+
+      expect(result.config).toEqual(config);
+      expect(result.warnings).toHaveLength(0);
     });
   });
 });
