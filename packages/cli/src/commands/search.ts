@@ -30,6 +30,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'plugin': '🔌',
     'extension': '📦',
     'server': '🖥️',
+    'snippet': '📎',
   };
 
   // Format-specific icons for rules/defaults
@@ -105,6 +106,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'plugin': 'Plugin',
     'extension': 'Extension',
     'server': 'Server',
+    'snippet': 'Snippet',
   };
 
   const formatLabel = formatLabels[format];

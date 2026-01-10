@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/agent-skills.json",
+  "$comment": "https://agentskills.io/specification",
+  "title": "Agent Skills Format",
+  "description": "JSON Schema for Agent Skills - a shared standard implemented by Codex, GitHub Copilot, and other AI assistants. Skills are SKILL.md files with YAML frontmatter.",
+  "type": "object",
+  "required": ["frontmatter", "content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Skill identifier: 1-64 chars, lowercase alphanumeric and hyphens only, cannot start/end with hyphens or contain consecutive hyphens. Must match parent directory name.",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Explains what the skill does and when to use it. Should include specific keywords for agent identification. (1-1024 chars)",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "license": {
+          "type": "string",
+          "description": "Specifies skill licensing terms. Keep brief (license name or bundled file reference)."
+        },
+        "compatibility": {
+          "type": "string",
+          "description": "Indicates environment requirements (products, system packages, network access). Example: 'Requires git, docker, jq, and internet access'",
+          "maxLength": 500
+        },
+        "allowed-tools": {
+          "type": "string",
+          "description": "Space-delimited list of pre-approved tools. Experimental; support varies by implementation. Example: 'Bash(git:*) Bash(jq:*) Read'"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Arbitrary string key-value pairs for additional properties not defined by the specification",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "content": {
+      "type": "string",
+      "description": "Skill instructions as markdown text. Recommended to keep under 5000 tokens for progressive disclosure."
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "name": "code-review",
+        "description": "Reviews code for best practices, security issues, and improvements. Use when analyzing pull requests, code changes, or conducting security audits.",
+        "license": "MIT",
+        "compatibility": "Requires git",
+        "metadata": {
+          "category": "development",
+          "version": "1.0.0"
+        }
+      },
+      "content": "You are an expert code reviewer.\n\n## Instructions\n\n- Check for code smells\n- Verify test coverage\n- Suggest improvements"
+    },
+    {
+      "frontmatter": {
+        "name": "pdf-processing",
+        "description": "Extracts and processes content from PDF documents. Use for document analysis, text extraction, and PDF manipulation tasks.",
+        "allowed-tools": "Bash(pdftotext:*) Read Write"
+      },
+      "content": "Process PDF documents using available command-line tools.\n\n## Capabilities\n\n- Extract text from PDFs\n- Convert PDF pages to images\n- Merge and split PDF files"
+    }
+  ]
+}
