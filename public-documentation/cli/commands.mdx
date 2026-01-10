@@ -360,6 +360,126 @@ packages/
 
 ---
 
+### install (from GitHub)
+
+Install packages directly from GitHub repositories. PRPM automatically discovers and installs AI tool configurations (rules, skills, agents, etc.) from any GitHub repo.
+
+```bash
+prpm install github:<owner>/<repo> [options]
+prpm install gh:<owner>/<repo> [options]
+```
+
+**Supported formats:**
+- `github:owner/repo` - Full prefix
+- `gh:owner/repo` - Short prefix
+- `https://github.com/owner/repo` - Full URL
+
+**Specifiers:**
+- `@<ref>` - Specify a tag, branch, or commit SHA
+- `:<path>` - Target a specific file within the repo
+
+**Options:**
+- `--as <format>` - Install in specific format (cursor, claude, continue, etc.)
+- `--force` or `-y` - Skip confirmation prompts
+- `--location <path>` - Custom installation location
+- `--eager` - Force skill/agent to always activate
+
+**Examples:**
+
+```bash
+# Install from a GitHub repository
+prpm install github:anthropics/skills
+prpm install gh:cursor-tools/awesome-rules
+
+# Install a specific tag or branch
+prpm install github:anthropics/skills@v1.0.0
+prpm install gh:owner/repo@main
+
+# Install a specific commit
+prpm install github:owner/repo@abc123f
+
+# Install a specific file from a repo
+prpm install github:owner/dotfiles:.cursor/rules/typescript.mdc
+
+# Combine ref and file path
+prpm install github:owner/repo@main:.claude/skills/helper/SKILL.md
+
+# Install from a subdirectory (monorepo)
+prpm install github:owner/monorepo/packages/skills
+
+# Convert to a specific format
+prpm install github:anthropics/skills --as cursor
+
+# Skip prompts when installing multiple packages
+prpm install github:owner/repo -y
+```
+
+**Auto-discovery:**
+
+When you install from a GitHub repo without specifying a file path, PRPM automatically scans for AI tool configurations:
+
+| Format | Discovered Paths |
+|--------|------------------|
+| Claude | `.claude/skills/**/*.md`, `.claude/agents/*.md`, `.claude/commands/*.md`, `CLAUDE.md` |
+| Cursor | `.cursor/rules/*.mdc`, `.cursor/rules/*.md`, `.cursorrules` |
+| Continue | `.continue/rules/*.md` |
+| Windsurf | `.windsurf/rules/*.md`, `.windsurfrules` |
+| Copilot | `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md` |
+| Kiro | `.kiro/steering/*.md`, `.kiro/agents/*.json` |
+| Agents.md | `AGENTS.md` |
+| Aider | `.aider.conf.yml`, `CONVENTIONS.md` |
+| Codex | `AGENTS.md`, `codex.md` |
+
+**Caching:**
+
+GitHub installations use a three-tier caching system for performance:
+1. **Local cache** - `~/.prpm/cache/github/` stores downloaded tarballs
+2. **Registry cache** - Shared cache at registry.prpm.dev for popular repos
+3. **GitHub API** - Falls back to GitHub's tarball API
+
+Subsequent installs of the same commit are instant from cache.
+
+**Private repositories:**
+
+For private repos, set a GitHub token:
+```bash
+export GITHUB_TOKEN=ghp_your_token_here
+# or
+export GH_TOKEN=ghp_your_token_here
+```
+
+**Lockfile tracking:**
+
+GitHub packages are tracked in `prpm.lock` with the exact commit SHA for reproducibility:
+```json
+{
+  "packages": {
+    "anthropics-skills-agent-builder:claude": {
+      "version": "0.0.0-github",
+      "resolved": "github:anthropics/skills@main#abc123d",
+      "integrity": "sha256-...",
+      "githubSource": {
+        "owner": "anthropics",
+        "repo": "skills",
+        "ref": "main",
+        "commitSha": "abc123def456...",
+        "sourcePath": ".claude/agents/agent-builder.md"
+      }
+    }
+  }
+}
+```
+
+**Re-installing:**
+
+If the same commit is already installed, PRPM skips the download:
+```
+✓ Already up to date at commit abc123d
+  Use -y or --force to reinstall
+```
+
+---
+
 ### uninstall
 
 Remove installed packages from your project.

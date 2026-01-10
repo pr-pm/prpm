@@ -128,6 +128,29 @@ describe('parseGitHubSpec', () => {
     expect(parseGitHubSpec('just-a-name')).toBeNull();
     expect(parseGitHubSpec('')).toBeNull();
   });
+
+  it('rejects path traversal in file path', () => {
+    expect(parseGitHubSpec('github:owner/repo:../etc/passwd')).toBeNull();
+    expect(parseGitHubSpec('github:owner/repo:../../secret')).toBeNull();
+    expect(parseGitHubSpec('github:owner/repo:foo/../bar')).toBeNull();
+    expect(parseGitHubSpec('gh:owner/repo:..\\windows\\system32')).toBeNull();
+  });
+
+  it('rejects absolute paths in file path', () => {
+    expect(parseGitHubSpec('github:owner/repo:/etc/passwd')).toBeNull();
+    expect(parseGitHubSpec('github:owner/repo:/root/.ssh/id_rsa')).toBeNull();
+  });
+
+  it('rejects path traversal in subdirectory', () => {
+    expect(parseGitHubSpec('github:owner/repo/../other-repo/packages')).toBeNull();
+    expect(parseGitHubSpec('gh:owner/repo/foo/../../bar')).toBeNull();
+  });
+
+  it('accepts valid nested paths', () => {
+    const result = parseGitHubSpec('github:owner/repo:.cursor/rules/test.mdc');
+    expect(result).not.toBeNull();
+    expect(result?.filePath).toBe('.cursor/rules/test.mdc');
+  });
 });
 
 describe('looksLikeGitHubSpec', () => {

@@ -107,6 +107,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'plugin': '🔌',
     'extension': '📦',
     'server': '🖥️',
+    'snippet': '📝',
   };
 
   // Format-specific icons for rules/defaults
@@ -132,6 +133,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'mcp': '🔗',
     'agents.md': '📝',
     'ruler': '📏',
+    'amp': '⚡',
     'generic': '📦',
   };
 
@@ -164,6 +166,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'mcp': 'MCP',
     'agents.md': 'Agents.md',
     'ruler': 'Ruler',
+    'amp': 'Amp',
     'generic': '',
   };
 
@@ -182,6 +185,7 @@ function getPackageLabel(format: Format, subtype: Subtype): string {
     'plugin': 'Plugin',
     'extension': 'Extension',
     'server': 'Server',
+    'snippet': 'Snippet',
   };
 
   const formatLabel = formatLabels[format];
@@ -487,10 +491,17 @@ async function handleGitHubInstall(
 
       console.log(`\n${icon} Installing ${chalk.cyan(pkg.name)}...`);
 
+      // Warn if format conversion was requested but not applied
+      if (targetFormat && targetFormat !== pkg.format) {
+        console.log(`   ${chalk.yellow('⚠')} Format conversion (${pkg.format} → ${targetFormat}) not yet supported for GitHub packages`);
+        console.log(`   ${chalk.dim('Installing as native')} ${chalk.cyan(pkg.format)} ${chalk.dim('format')}`);
+      }
+
       try {
-        // Determine destination
-        const destDir = await getDestinationDir(effectiveFormat, pkg.subtype);
-        const destPath = await getGitHubPackageDestination(pkg, effectiveFormat, destDir, options.location);
+        // Determine destination - use source format when conversion not supported
+        const installFormat = targetFormat && targetFormat !== pkg.format ? pkg.format : effectiveFormat;
+        const destDir = await getDestinationDir(installFormat, pkg.subtype);
+        const destPath = await getGitHubPackageDestination(pkg, installFormat, destDir, options.location);
 
         // Check if file exists and handle --force
         if (await fileExists(destPath) && !options.force) {
@@ -524,7 +535,7 @@ async function handleGitHubInstall(
 
         // Add to manifest if it's a skill/agent with progressive disclosure
         if (!options.noAppend && (pkg.subtype === 'skill' || pkg.subtype === 'agent')) {
-          const manifestFile = options.manifestFile || await getManifestFilename(effectiveFormat);
+          const manifestFile = options.manifestFile || await getManifestFilename(installFormat);
           if (manifestFile) {
             const entry: SkillManifestEntry = {
               name: pkg.name,
@@ -538,12 +549,12 @@ async function handleGitHubInstall(
         }
 
         // Update lockfile
-        const lockfileKey = getLockfileKey(pkg.name, effectiveFormat);
+        const lockfileKey = getLockfileKey(pkg.name, installFormat);
         lockfile.packages[lockfileKey] = {
           version: '0.0.0-github',
           resolved: formatGitHubSource(spec, result.commitSha),
           integrity: computeIntegrity(result.tarballBuffer),
-          format: effectiveFormat,
+          format: installFormat,
           subtype: pkg.subtype,
           sourceFormat: pkg.format,
           sourceSubtype: pkg.subtype,

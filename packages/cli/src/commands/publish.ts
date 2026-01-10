@@ -591,8 +591,10 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
             publishOptions.publishAsAuthor = publishAsAuthor;
           }
 
+          // Type assertion needed because local PackageManifest.snippet is string | SnippetConfig
+          // while registry-client expects only SnippetConfig (types are out of sync)
           const result = await client.publish(
-            manifest,
+            manifest as Parameters<typeof client.publish>[0],
             tarball,
             Object.keys(publishOptions).length > 0 ? publishOptions : undefined,
           );

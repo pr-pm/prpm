@@ -6,7 +6,7 @@
 import { createHash } from 'crypto';
 import { tmpdir, homedir } from 'os';
 import { join, basename, dirname, extname, relative } from 'path';
-import { mkdir, rm, readFile, readdir, stat, writeFile, access } from 'fs/promises';
+import { mkdir, rm, readFile, readdir, stat, writeFile, access, rename } from 'fs/promises';
 import { randomBytes } from 'crypto';
 import * as zlib from 'zlib';
 import { promisify } from 'util';
@@ -17,6 +17,39 @@ const gunzip = promisify(zlib.gunzip);
 
 /** Cache directory for GitHub tarballs */
 const GITHUB_CACHE_DIR = join(homedir(), '.prpm', 'cache', 'github');
+
+/** Default timeout for GitHub API requests (30 seconds) */
+const GITHUB_API_TIMEOUT = 30000;
+
+/** Default timeout for tarball downloads (5 minutes for large repos) */
+const GITHUB_DOWNLOAD_TIMEOUT = 300000;
+
+/**
+ * Fetch with timeout using AbortController
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit & { timeout?: number } = {}
+): Promise<Response> {
+  const { timeout = GITHUB_API_TIMEOUT, ...fetchOptions } = options;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      signal: controller.signal,
+    });
+    return response;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Request timed out after ${timeout}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 /**
  * Parsed GitHub repository specification
@@ -105,8 +138,7 @@ const DISCOVERY_PATTERNS: Array<{
   { pattern: /^\.aider\.conf\.yml$/i, format: 'aider', subtype: 'rule' },
   { pattern: /^CONVENTIONS\.md$/i, format: 'aider', subtype: 'rule' },
 
-  // Codex
-  { pattern: /^AGENTS\.md$/i, format: 'codex', subtype: 'rule' },
+  // Codex (codex.md only - AGENTS.md handled by agents.md format above)
   { pattern: /^codex\.md$/i, format: 'codex', subtype: 'rule' },
 
   // OpenCode
@@ -153,6 +185,14 @@ export function parseGitHubSpec(input: string): GitHubSpec | null {
   if (colonIndex > 0 && !cleaned.slice(colonIndex).startsWith('://')) {
     filePath = cleaned.slice(colonIndex + 1);
     cleaned = cleaned.slice(0, colonIndex);
+
+    // Validate file path to prevent path traversal attacks
+    if (filePath) {
+      const normalized = filePath.replace(/\\/g, '/');
+      if (normalized.includes('..') || normalized.startsWith('/')) {
+        return null; // Invalid path - reject specs with traversal attempts
+      }
+    }
   }
 
   // Extract ref (after @)
@@ -174,6 +214,11 @@ export function parseGitHubSpec(input: string): GitHubSpec | null {
 
   // Remaining parts are subdirectory
   const subdir = parts.length > 2 ? parts.slice(2).join('/') : undefined;
+
+  // Validate subdir to prevent path traversal
+  if (subdir && subdir.includes('..')) {
+    return null;
+  }
 
   return {
     owner,
@@ -228,7 +273,7 @@ export async function resolveGitHubRef(
   // Try to resolve as a ref (branch or tag)
   const url = `https://api.github.com/repos/${owner}/${repo}/commits/${ref}`;
 
-  const response = await fetch(url, { headers });
+  const response = await fetchWithTimeout(url, { headers });
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -244,7 +289,11 @@ export async function resolveGitHubRef(
     throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json() as { sha: string };
+  // Validate response shape
+  const data = await response.json() as Record<string, unknown>;
+  if (!data || typeof data.sha !== 'string') {
+    throw new Error('Unexpected GitHub API response: missing commit SHA');
+  }
   return data.sha;
 }
 
@@ -269,9 +318,10 @@ export async function downloadGitHubTarball(
   // Use the tarball API endpoint
   const url = `https://api.github.com/repos/${owner}/${repo}/tarball/${ref}`;
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers,
     redirect: 'follow',
+    timeout: GITHUB_DOWNLOAD_TIMEOUT, // Longer timeout for large repos
   });
 
   if (!response.ok) {
@@ -504,12 +554,29 @@ async function getCachedTarball(owner: string, repo: string, commitSha: string):
 }
 
 /**
- * Save a tarball to the local cache
+ * Save a tarball to the local cache using atomic write
+ * Uses a temp file + rename to prevent race conditions with concurrent installs
  */
 async function cacheTarball(owner: string, repo: string, commitSha: string, buffer: Buffer): Promise<void> {
   const cachePath = getCachePath(owner, repo, commitSha);
-  await mkdir(dirname(cachePath), { recursive: true });
-  await writeFile(cachePath, buffer);
+  const cacheDir = dirname(cachePath);
+  await mkdir(cacheDir, { recursive: true });
+
+  // Use atomic write: write to temp file then rename
+  const tmpPath = join(cacheDir, `.${commitSha}.${randomBytes(4).toString('hex')}.tmp`);
+  try {
+    await writeFile(tmpPath, buffer);
+    // rename is atomic on most filesystems
+    await rename(tmpPath, cachePath);
+  } catch (err) {
+    // Clean up temp file on error
+    try {
+      await rm(tmpPath, { force: true });
+    } catch {
+      // Ignore cleanup errors
+    }
+    throw err;
+  }
 }
 
 /** Default registry URL for shared cache */
