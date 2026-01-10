@@ -15,7 +15,7 @@ PRPM supports multiple AI tool formats, allowing you to install packages for dif
 | `cursor` | Cursor IDE | Rules and configurations for Cursor |
 | `continue` | Continue.dev | Prompts for Continue extension |
 | `windsurf` | Windsurf IDE | Rules for Windsurf |
-| `copilot` | GitHub Copilot | Copilot configurations |
+| `copilot` | GitHub Copilot | Instructions, chat modes, and skills for Copilot |
 | `kiro` | Kiro AI | Agents and steering files for Kiro |
 | `gemini` | Gemini CLI | Custom commands and extensions for Gemini CLI |
 | `opencode` | OpenCode AI | Agents, commands, and tools for OpenCode |
@@ -35,6 +35,23 @@ Some formats have aliases for compatibility:
 
 - `claude.md` → `claude`
 - `gemini.md` → installs `GEMINI.md` (Gemini markdown); `gemini` installs Gemini CLI commands into `.gemini/commands`
+
+### Copilot Format Details
+
+The `copilot` format supports three subtypes:
+
+- **Rules** (`subtype: rule`): Path-specific instructions in `.github/instructions/*.instructions.md`
+- **Chat Modes** (`subtype: chatmode`): Custom chat modes in `.github/chatmodes/*.chatmode.md`
+- **Skills** (`subtype: skill`): Reusable task-specific capabilities in `.github/skills/<name>/SKILL.md`
+
+Skills are discovered by Copilot based on context and loaded when relevant. Each skill requires:
+- A `name` field (lowercase, hyphens for spaces, max 64 chars)
+- A `description` field (max 1024 chars)
+- Markdown body with detailed instructions
+
+<Note>
+Skills require VS Code Insiders with the `chat.useAgentSkills` setting enabled.
+</Note>
 
 ### Gemini Format Details
 
@@ -92,7 +109,7 @@ Each format has a standard installation path:
 | `cursor` | `.cursor/rules/` | `.cursor/rules/typescript.mdc` |
 | `continue` | `.continue/prompts/` | `.continue/prompts/refactor.md` |
 | `windsurf` | `.windsurf/rules/` | `.windsurf/rules/python.md` |
-| `copilot` | `.github/.copilot-instructions.md` | `.github/.copilot-instructions.md` |
+| `copilot` | `.github/instructions/`, `.github/chatmodes/`, or `.github/skills/` | `.github/skills/my-skill/SKILL.md` |
 | `kiro` | `.kiro/agents/` or `.kiro/steering/` | `.kiro/agents/code-reviewer.json` |
 | `gemini` | `.gemini/commands/` or `.gemini/extensions/` | `.gemini/commands/refactor.toml` or `.gemini/extensions/my-ext/gemini-extension.json` |
 | `opencode` | `.opencode/agent/` or `.opencode/command/` | `.opencode/agent/code-reviewer.md` |

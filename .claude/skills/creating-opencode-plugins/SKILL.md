@@ -315,6 +315,69 @@ await plugin.event({
 
 **Monitoring**: Track tool usage patterns (tool.execute hooks log analytics)
 
+## Claude Code Event Mapping
+
+When porting Claude Code hook behavior to OpenCode plugins, use these event mappings:
+
+| Claude Hook | OpenCode Event | Description |
+|-------------|----------------|-------------|
+| `PreToolUse` | `tool.execute.before` | Run before tool execution, can block |
+| `PostToolUse` | `tool.execute.after` | Run after tool execution |
+| `UserPromptSubmit` | `message.*` events | Process user prompts |
+| `SessionEnd` | `session.idle` | Session completion |
+
+### Example: Claude-like Hook Behavior
+
+```javascript
+export const CompatiblePlugin = async (context) => {
+  return {
+    // Equivalent to Claude's PreToolUse hook
+    'tool.execute.before': async (input, output) => {
+      if (shouldBlock(input)) {
+        throw new Error('Blocked by policy');
+      }
+    },
+
+    // Equivalent to Claude's PostToolUse hook
+    'tool.execute.after': async (result) => {
+      console.log(`Tool completed: ${result.tool}`);
+    },
+
+    // Equivalent to Claude's SessionEnd hook
+    event: async ({ event }) => {
+      if (event.type === 'session.idle') {
+        await cleanup();
+      }
+    }
+  };
+};
+```
+
+## Plugin Composition
+
+Combine multiple plugins using [opencode-plugin-compose](https://github.com/ericc-ch/opencode-plugins):
+
+```javascript
+import { compose } from "opencode-plugin-compose";
+
+const composedPlugin = compose([
+  envProtectionPlugin,
+  notifyPlugin,
+  customToolsPlugin
+]);
+// Runs all hooks in sequence
+```
+
+## Non-Convertibility Note
+
+**Important**: OpenCode plugins cannot be directly converted from Claude Code hooks due to fundamental differences:
+
+- **Event models differ**: Claude has 4 hook events, OpenCode has 32+
+- **Formats differ**: Claude uses executable scripts, OpenCode uses JS/TS modules
+- **Execution context differs**: Different context objects and return value semantics
+
+When porting Claude hooks to OpenCode plugins, you'll need to rewrite the logic using the OpenCode plugin API.
+
 ---
 
 **Schema Reference**: `packages/converters/schemas/opencode-plugin.schema.json`

@@ -772,6 +772,226 @@ describe('Collection Routes', () => {
     });
   });
 
+  describe('Collection packages deduplication', () => {
+    let dedupePackagesServer: FastifyInstance;
+
+    beforeAll(async () => {
+      dedupePackagesServer = Fastify();
+
+      // Mock authenticate decorator
+      dedupePackagesServer.decorate('authenticate', async () => {});
+
+      // Mock Redis
+      (dedupePackagesServer as any).decorate('redis', {
+        get: async () => null,
+        set: async () => 'OK',
+        del: async () => 1,
+      });
+
+      // Create mock query function that simulates:
+      // - A collection with 4 packages
+      // - Each package has multiple versions in package_versions
+      // - The LATERAL JOIN should ensure only 1 row per package
+      const mockQuery = async (sql: string, params?: unknown[]) => {
+        // Mock collection lookup by name_slug (GET /:name_slug endpoint)
+        // The query uses: SELECT c.*, ... WHERE c.name_slug = $1
+        if (sql.includes('SELECT c.*') && sql.includes('WHERE c.name_slug = $1') && !sql.includes('c.version = $2')) {
+          if (params?.[0] === 'multi-version-packages') {
+            return {
+              rows: [{
+                id: 'collection-uuid',
+                scope: 'collection',
+                name_slug: 'multi-version-packages',
+                name: 'Multi Version Packages Collection',
+                description: 'A collection where packages have multiple versions',
+                version: '1.0.0',
+                author: 'test-author',
+                official: true,
+                verified: true,
+                category: 'development',
+                tags: ['test'],
+                downloads: 100,
+                stars: 10,
+                package_count: 4,
+                created_at: new Date(),
+                updated_at: new Date()
+              }],
+              command: 'SELECT',
+              rowCount: 1,
+              oid: 0,
+              fields: []
+            };
+          }
+          return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] };
+        }
+
+        // Mock collection packages query with LATERAL JOIN
+        // This simulates the fixed query that uses LATERAL to get only 1 version per package
+        // Before the fix, LEFT JOIN package_versions would create N rows per package (where N = number of versions)
+        // NOTE: We specifically require LEFT JOIN LATERAL to ensure the deduplication fix is present
+        if (sql.includes('FROM collection_packages cp') &&
+            sql.includes('LEFT JOIN LATERAL')) {
+          // Return exactly 4 unique packages, each with their latest version
+          // This is the correct behavior after the LATERAL JOIN fix
+          // Fields match the actual query: cp.*, p.name as package_name, p.description as package_description, etc.
+          return {
+            rows: [
+              {
+                package_id: 'pkg-1',
+                package_version: '^1.0.0',
+                required: true,
+                reason: 'Core TypeScript support',
+                install_order: 1,
+                format_override: null,
+                package_name: '@test/typescript-rules',
+                package_description: 'TypeScript coding rules',
+                package_format: 'cursor',
+                package_subtype: 'rule',
+                latest_version: '2.5.0'  // Has versions: 1.0.0, 1.1.0, 2.0.0, 2.5.0
+              },
+              {
+                package_id: 'pkg-2',
+                package_version: '^1.0.0',
+                required: true,
+                reason: 'React patterns',
+                install_order: 2,
+                format_override: null,
+                package_name: '@test/react-patterns',
+                package_description: 'React best practices',
+                package_format: 'claude',
+                package_subtype: 'skill',
+                latest_version: '3.0.0'  // Has versions: 1.0.0, 2.0.0, 3.0.0
+              },
+              {
+                package_id: 'pkg-3',
+                package_version: '^2.0.0',
+                required: false,
+                reason: 'Optional testing utilities',
+                install_order: 3,
+                format_override: null,
+                package_name: '@test/testing-utils',
+                package_description: 'Testing utilities',
+                package_format: 'claude',
+                package_subtype: 'agent',
+                latest_version: '2.1.0'  // Has versions: 1.0.0, 1.5.0, 2.0.0, 2.1.0
+              },
+              {
+                package_id: 'pkg-4',
+                package_version: 'latest',
+                required: true,
+                reason: 'Code formatting',
+                install_order: 4,
+                format_override: null,
+                package_name: '@test/prettier-config',
+                package_description: 'Prettier configuration',
+                package_format: 'cursor',
+                package_subtype: 'rule',
+                latest_version: '1.2.3'  // Has versions: 1.0.0, 1.1.0, 1.2.0, 1.2.3
+              }
+            ],
+            command: 'SELECT',
+            rowCount: 4,
+            oid: 0,
+            fields: []
+          };
+        }
+
+        return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] };
+      };
+
+      // Mock database
+      (dedupePackagesServer as any).decorate('pg', {
+        query: mockQuery,
+        connect: async () => ({
+          query: mockQuery,
+          release: () => {}
+        })
+      } as any);
+
+      await dedupePackagesServer.register(collectionRoutes, { prefix: '/api/v1/collections' });
+      await dedupePackagesServer.ready();
+    });
+
+    afterAll(async () => {
+      await dedupePackagesServer.close();
+    });
+
+    it('should return each package only once even when packages have multiple versions', async () => {
+      // Use GET /:name_slug endpoint (not /:name_slug/:version)
+      // This endpoint has the LATERAL JOIN fix that prevents duplicate packages
+      const response = await dedupePackagesServer.inject({
+        method: 'GET',
+        url: '/api/v1/collections/multi-version-packages'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // Should have exactly 4 packages, not 14 (which would be 4+3+4+3 if each version created a row)
+      expect(body.packages).toHaveLength(4);
+
+      // Verify no duplicate packageIds (response uses camelCase)
+      const packageIds = body.packages.map((p: any) => p.packageId);
+      const uniqueIds = [...new Set(packageIds)];
+      expect(packageIds.length).toBe(uniqueIds.length);
+    });
+
+    it('should return the latest version info for each package', async () => {
+      const response = await dedupePackagesServer.inject({
+        method: 'GET',
+        url: '/api/v1/collections/multi-version-packages'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // Check each package has the correct packageId (package name)
+      // Response maps package_name -> packageId in camelCase
+      const typescriptPkg = body.packages.find((p: any) => p.packageId === '@test/typescript-rules');
+      expect(typescriptPkg).toBeDefined();
+      expect(typescriptPkg.package.name).toBe('@test/typescript-rules');
+
+      const reactPkg = body.packages.find((p: any) => p.packageId === '@test/react-patterns');
+      expect(reactPkg).toBeDefined();
+      expect(reactPkg.package.name).toBe('@test/react-patterns');
+
+      const testingPkg = body.packages.find((p: any) => p.packageId === '@test/testing-utils');
+      expect(testingPkg).toBeDefined();
+      expect(testingPkg.package.name).toBe('@test/testing-utils');
+
+      const prettierPkg = body.packages.find((p: any) => p.packageId === '@test/prettier-config');
+      expect(prettierPkg).toBeDefined();
+      expect(prettierPkg.package.name).toBe('@test/prettier-config');
+    });
+
+    it('should preserve package metadata correctly after deduplication', async () => {
+      const response = await dedupePackagesServer.inject({
+        method: 'GET',
+        url: '/api/v1/collections/multi-version-packages'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // Verify required/optional flags are preserved
+      const requiredPackages = body.packages.filter((p: any) => p.required === true);
+      const optionalPackages = body.packages.filter((p: any) => p.required === false);
+
+      expect(requiredPackages).toHaveLength(3);
+      expect(optionalPackages).toHaveLength(1);
+
+      // Verify installOrder is preserved (camelCase in response)
+      const orders = body.packages.map((p: any) => p.installOrder).sort((a: number, b: number) => a - b);
+      expect(orders).toEqual([1, 2, 3, 4]);
+
+      // Verify package subtypes are preserved
+      const subtypes = body.packages.map((p: any) => p.package.subtype);
+      expect(subtypes).toContain('rule');
+      expect(subtypes).toContain('skill');
+      expect(subtypes).toContain('agent');
+    });
+  });
+
   describe('Collection Install - Always Resolves to Latest Version', () => {
     let installServer: FastifyInstance;
 

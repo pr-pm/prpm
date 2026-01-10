@@ -45,6 +45,10 @@ export const claudeAgentSchema = loadSchema('claude-agent.schema.json');
 export const claudeHookSchema = loadSchema('claude-hook.schema.json');
 export const claudeSkillSchema = loadSchema('claude-skill.schema.json');
 export const claudeSlashCommandSchema = loadSchema('claude-slash-command.schema.json');
+export const agentSkillsSchema = loadSchema('agent-skills.schema.json');
+// Aliases for backwards compatibility - both formats use the shared Agent Skills schema
+export const copilotSkillSchema = agentSkillsSchema;
+export const codexSkillSchema = agentSkillsSchema;
 export const cursorCommandSchema = loadSchema('cursor-command.schema.json');
 export const cursorHooksSchema = loadSchema('cursor-hooks.schema.json');
 export const droidHookSchema = loadSchema('droid-hook.schema.json');

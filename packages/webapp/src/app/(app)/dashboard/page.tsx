@@ -890,7 +890,7 @@ export default function DashboardPage() {
               <p className="text-white leading-relaxed">
                 Just connected my GitHub to @prpmdev 🚀
                 <br /><br />
-                Check out my AI prompts, agents, and coding tools at prpm.dev/@{user?.username}
+                Check out my AI prompts, agents, and coding tools at prpm.dev/authors?username={user?.username}
                 <br /><br />
                 #AI #DevTools #Prompts #prpm
               </p>
@@ -898,7 +898,7 @@ export default function DashboardPage() {
 
             <div className="flex gap-3">
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just connected my GitHub to @prpmdev 🚀\n\nCheck out my AI prompts, agents, and coding tools at prpm.dev/@${user?.username}\n\n#AI #DevTools #Prompts`)}`}
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just connected my GitHub to @prpmdev 🚀\n\nCheck out my AI prompts, agents, and coding tools at prpm.dev/authors?username=${user?.username}\n\n#AI #DevTools #Prompts`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 px-6 py-3 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"

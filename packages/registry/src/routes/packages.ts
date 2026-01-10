@@ -37,6 +37,7 @@ import {
   fromAgentsMd,
 } from "@pr-pm/converters";
 import { uploadCanonicalPackage } from "../storage/canonical.js";
+import { toOrganizationSlug } from "../utils/org-slug.js";
 
 // Reusable enum constants for schema validation
 const FORMAT_ENUM = [
@@ -162,8 +163,8 @@ export async function packageRoutes(server: FastifyInstance) {
         return cached;
       }
 
-      // Build WHERE clause
-      const conditions: string[] = ["visibility = 'public'"];
+      // Build WHERE clause (exclude deprecated packages)
+      const conditions: string[] = ["visibility = 'public'", "(deprecated = false OR deprecated IS NULL)"];
       const params: unknown[] = [];
       let paramIndex = 1;
 
@@ -936,18 +937,92 @@ export async function packageRoutes(server: FastifyInstance) {
           }
         }
 
-        // Auto-prefix package name with scope and validate ownership
-        // If organization is specified, use @org-name/, otherwise use @username/
+        // Lookup organization if specified (case-insensitive) and prefer slug for scope
+        let orgId: string | undefined;
+        let orgVerified: boolean = false;
+        let orgSlug: string | undefined;
+        let orgDisplayName: string | undefined;
         if (organization) {
-          // Organization packages: @org-name/package
-          const orgNameLowercase = organization.toLowerCase();
-          const expectedPrefix = `@${orgNameLowercase}/`;
-          if (!packageName.startsWith(expectedPrefix)) {
-            // Auto-prefix the package name
-            packageName = `${expectedPrefix}${packageName}`;
+          const organizationSlug = toOrganizationSlug(organization);
+          // Check if organization is a UUID to use index-friendly query
+          const isOrgUUID =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+              organization,
+            );
+          const org = await queryOne<{
+            id: string;
+            name: string;
+            slug: string;
+            verified: boolean;
+          }>(
+            server,
+            isOrgUUID
+              ? `SELECT id, name, slug, is_verified as verified
+                 FROM organizations
+                 WHERE id = $1`
+              : `SELECT id, name, slug, is_verified as verified
+                 FROM organizations
+                 WHERE LOWER(slug) = LOWER($1)
+                    OR LOWER(name) = LOWER($1)
+                    OR LOWER(slug) = LOWER($2)
+                    OR LOWER(name) = LOWER($2)`,
+            isOrgUUID ? [organization] : [organization, organizationSlug],
+          );
+
+          if (!org) {
+            return reply.status(404).send({
+              error: "Organization not found",
+              message: `Organization '${organization}' does not exist`,
+            });
+          }
+
+          orgId = org.id;
+          orgSlug = org.slug;
+          orgDisplayName = org.name;
+          orgVerified = org.verified || false;
+
+          // Verify user has permission to publish to this org
+          const orgMembership = await queryOne<{ role: string }>(
+            server,
+            `SELECT role FROM organization_members
+           WHERE org_id = $1 AND user_id = $2`,
+            [orgId, userId],
+          );
+
+          if (!orgMembership) {
+            return reply.status(403).send({
+              error: "Forbidden",
+              message: `You are not a member of the '${orgDisplayName}' organization`,
+            });
+          }
+
+          if (!["owner", "admin", "maintainer"].includes(orgMembership.role)) {
+            return reply.status(403).send({
+              error: "Forbidden",
+              message: `You do not have permission to publish packages for the '${orgDisplayName}' organization. Required role: owner, admin, or maintainer. Your role: ${orgMembership.role}`,
+            });
+          }
+
+          // Check if trying to publish private package with unverified organization
+          if (isPrivate && !orgVerified) {
+            return reply.status(403).send({
+              error: "Forbidden",
+              message: `Cannot publish private packages for unverified organization '${orgDisplayName}'. Only verified organizations can publish private packages. Please contact support to verify your organization.`,
+            });
+          }
+        }
+
+        // Auto-prefix package name with scope and validate ownership
+        // If organization is specified, use @org-slug/, otherwise use @username/
+        if (orgSlug) {
+          const sanitizedOrgScope = toOrganizationSlug(orgSlug);
+          const expectedPrefix = `@${sanitizedOrgScope}/`;
+          const unscopedName = packageName.replace(/^@[a-z0-9-]+\//, "");
+          packageName = `${expectedPrefix}${unscopedName}`;
+          if (process.env.DEBUG) {
             server.log.info(
-              { originalName: manifest.name, newName: packageName },
-              "Auto-prefixed package name with organization",
+              { originalName: manifest.name, newName: packageName, orgSlug: sanitizedOrgScope },
+              "Auto-prefixed package name with organization slug",
             );
           }
         } else if (!packageName.startsWith("@")) {
@@ -959,7 +1034,6 @@ export async function packageRoutes(server: FastifyInstance) {
           );
         } else {
           // Package already has a scope - validate the user owns this scope
-          // Extract scope from package name (e.g., "@alice/package" -> "alice")
           const scopeMatch = packageName.match(/^@([a-z0-9-]+)\//);
           if (scopeMatch) {
             const scopeUsername = scopeMatch[1];
@@ -989,57 +1063,6 @@ export async function packageRoutes(server: FastifyInstance) {
             error: "Invalid version",
             message: "Version must be valid semver (e.g., 1.0.0)",
           });
-        }
-
-        // Lookup organization if specified (case-insensitive)
-        let orgId: string | undefined;
-        let orgVerified: boolean = false;
-        if (organization) {
-          const org = await queryOne<{ id: string; verified: boolean }>(
-            server,
-            "SELECT id, is_verified as verified FROM organizations WHERE LOWER(name) = LOWER($1)",
-            [organization],
-          );
-
-          if (!org) {
-            return reply.status(404).send({
-              error: "Organization not found",
-              message: `Organization '${organization}' does not exist`,
-            });
-          }
-
-          orgId = org.id;
-          orgVerified = org.verified || false;
-
-          // Verify user has permission to publish to this org
-          const orgMembership = await queryOne<{ role: string }>(
-            server,
-            `SELECT role FROM organization_members
-           WHERE org_id = $1 AND user_id = $2`,
-            [orgId, userId],
-          );
-
-          if (!orgMembership) {
-            return reply.status(403).send({
-              error: "Forbidden",
-              message: `You are not a member of the '${organization}' organization`,
-            });
-          }
-
-          if (!["owner", "admin", "maintainer"].includes(orgMembership.role)) {
-            return reply.status(403).send({
-              error: "Forbidden",
-              message: `You do not have permission to publish packages for the '${organization}' organization. Required role: owner, admin, or maintainer. Your role: ${orgMembership.role}`,
-            });
-          }
-
-          // Check if trying to publish private package with unverified organization
-          if (isPrivate && !orgVerified) {
-            return reply.status(403).send({
-              error: "Forbidden",
-              message: `Cannot publish private packages for unverified organization '${organization}'. Only verified organizations can publish private packages. Please contact support to verify your organization.`,
-            });
-          }
         }
 
         // 2. Check if package exists and user has permission
@@ -1772,13 +1795,14 @@ export async function packageRoutes(server: FastifyInstance) {
         return cached;
       }
 
-      // Calculate trending score based on recent downloads vs historical average
+      // Calculate trending score based on recent downloads vs historical average (exclude deprecated)
       const result = await query<Package>(
         server,
         `SELECT ${LIST_COLUMNS},
         p.downloads_last_7_days as recent_downloads
        FROM packages p
        WHERE p.visibility = 'public'
+         AND (p.deprecated = false OR p.deprecated IS NULL)
          AND p.downloads_last_7_days > 0
        ORDER BY p.trending_score DESC, p.downloads_last_7_days DESC
        LIMIT $1`,
@@ -1830,7 +1854,7 @@ export async function packageRoutes(server: FastifyInstance) {
         return cached;
       }
 
-      const conditions: string[] = ["visibility = 'public'"];
+      const conditions: string[] = ["visibility = 'public'", "(deprecated = false OR deprecated IS NULL)"];
       const params: unknown[] = [limit];
       let paramIndex = 2;
 
@@ -2599,6 +2623,233 @@ export async function packageRoutes(server: FastifyInstance) {
   );
 
   /**
+   * POST /api/v1/packages/:packageId/deprecate
+   * Deprecate a package (owner only)
+   */
+  server.post(
+    "/:packageId/deprecate",
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: "Deprecate or undeprecate a package",
+        tags: ["packages"],
+        params: {
+          type: "object",
+          required: ["packageId"],
+          properties: {
+            packageId: { type: "string", description: "Package ID (UUID) or name" },
+          },
+        },
+        body: {
+          type: "object",
+          properties: {
+            deprecated: { type: "boolean", default: true },
+            reason: { type: "string" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { packageId } = request.params as { packageId: string };
+      const { deprecated = true, reason } = request.body as { deprecated?: boolean; reason?: string };
+      const user = request.user;
+
+      try {
+        // Get package and verify ownership - support both UUID and name lookup
+        const packageResult = await server.pg.query(
+          `SELECT id, name, display_name, author_id, org_id FROM packages
+           WHERE id::text = $1 OR name = $1
+           ORDER BY created_at DESC LIMIT 1`,
+          [packageId]
+        );
+
+        if (packageResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: "Package not found",
+          });
+        }
+
+        const pkg = packageResult.rows[0];
+
+        // Check if user owns this package (either directly or via organization)
+        let isOwner = pkg.author_id === user.user_id;
+
+        if (!isOwner && pkg.org_id) {
+          // Check if user is a member of the owning organization
+          const orgMemberResult = await server.pg.query(
+            `SELECT 1 FROM organization_members
+             WHERE org_id = $1 AND user_id = $2`,
+            [pkg.org_id, user.user_id]
+          );
+          isOwner = orgMemberResult.rows.length > 0;
+        }
+
+        // Allow admins to deprecate any package
+        if (!isOwner && !user.is_admin) {
+          return reply.code(403).send({
+            error: "Forbidden",
+            message: "Only the package owner or an admin can deprecate this package",
+          });
+        }
+
+        // Update the package deprecation status
+        await server.pg.query(
+          `UPDATE packages
+           SET deprecated = $1, deprecated_reason = $2, updated_at = NOW()
+           WHERE id = $3`,
+          [deprecated, reason || null, pkg.id]
+        );
+
+        server.log.info({
+          package: pkg.name,
+          packageId: pkg.id,
+          deprecated,
+          reason,
+          user_id: user.user_id,
+        }, "Package deprecation status updated");
+
+        return reply.send({
+          success: true,
+          package: pkg.name,
+          deprecated,
+          reason: reason || null,
+          message: deprecated
+            ? `Package "${pkg.display_name || pkg.name}" has been deprecated${reason ? `: ${reason}` : ""}`
+            : `Package "${pkg.display_name || pkg.name}" deprecation has been removed`,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.code(500).send({
+          error: "Failed to update package deprecation status",
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /api/v1/packages/:packageId/visibility
+   * Change package visibility (owner only)
+   */
+  server.post(
+    "/:packageId/visibility",
+    {
+      onRequest: [server.authenticate],
+      schema: {
+        description: "Change package visibility (public/private)",
+        tags: ["packages"],
+        params: {
+          type: "object",
+          required: ["packageId"],
+          properties: {
+            packageId: { type: "string", description: "Package ID (UUID) or name" },
+          },
+        },
+        body: {
+          type: "object",
+          required: ["visibility"],
+          properties: {
+            visibility: { type: "string", enum: ["public", "private"] },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { packageId } = request.params as { packageId: string };
+      const { visibility } = request.body as { visibility: "public" | "private" };
+      const user = request.user;
+
+      try {
+        // Get package and verify ownership - support both UUID and name lookup
+        const packageResult = await server.pg.query(
+          `SELECT id, name, display_name, author_id, org_id, visibility FROM packages
+           WHERE id::text = $1 OR name = $1
+           ORDER BY created_at DESC LIMIT 1`,
+          [packageId]
+        );
+
+        if (packageResult.rows.length === 0) {
+          return reply.code(404).send({
+            error: "Package not found",
+          });
+        }
+
+        const pkg = packageResult.rows[0];
+
+        // Check if user owns this package (either directly or via organization with proper role)
+        let isOwner = pkg.author_id === user.user_id;
+
+        if (!isOwner && pkg.org_id) {
+          // Check if user has owner/admin/maintainer role in the organization
+          const orgMemberResult = await server.pg.query(
+            `SELECT role FROM organization_members
+             WHERE org_id = $1 AND user_id = $2`,
+            [pkg.org_id, user.user_id]
+          );
+
+          if (orgMemberResult.rows.length > 0) {
+            const role = orgMemberResult.rows[0].role;
+            if (["owner", "admin", "maintainer"].includes(role)) {
+              isOwner = true;
+            }
+          }
+        }
+
+        // Allow admins to change visibility of any package
+        if (!isOwner && !user.is_admin) {
+          return reply.code(403).send({
+            error: "Forbidden",
+            message: "Only the package owner, organization owner/admin/maintainer, or a site admin can change visibility",
+          });
+        }
+
+        // Private packages require org membership
+        if (visibility === "private" && !pkg.org_id) {
+          return reply.code(400).send({
+            error: "Bad Request",
+            message: "Private packages must belong to an organization",
+          });
+        }
+
+        // Update the package visibility
+        await server.pg.query(
+          `UPDATE packages
+           SET visibility = $1, updated_at = NOW()
+           WHERE id = $2`,
+          [visibility, pkg.id]
+        );
+
+        // Invalidate caches for this package
+        await cacheDelete(server, `package:${pkg.name}`);
+        await cacheDeletePattern(server, `package:${pkg.name}:*`);
+        await cacheDeletePattern(server, `packages:list:*`);
+        await cacheDeletePattern(server, `search:*`);
+
+        server.log.info({
+          package: pkg.name,
+          packageId: pkg.id,
+          oldVisibility: pkg.visibility,
+          newVisibility: visibility,
+          user_id: user.user_id,
+        }, "Package visibility updated");
+
+        return reply.send({
+          success: true,
+          package: pkg.name,
+          visibility,
+          message: `Package "${pkg.display_name || pkg.name}" is now ${visibility}`,
+        });
+      } catch (error) {
+        server.log.error(error);
+        return reply.code(500).send({
+          error: "Failed to update package visibility",
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
+
+  /**
    * GET /api/v1/packages/starred
    * Get user's starred packages
    */
@@ -2635,6 +2886,7 @@ export async function packageRoutes(server: FastifyInstance) {
             u.verified_author,
             u.avatar_url as author_avatar_url,
             o.name as org_name,
+            o.slug as org_slug,
             o.is_verified as org_verified,
             o.avatar_url as org_avatar_url
           FROM package_stars ps
@@ -2659,6 +2911,7 @@ export async function packageRoutes(server: FastifyInstance) {
             : null,
           organization: row.org_name
             ? {
+                slug: row.org_slug,
                 name: row.org_name,
                 is_verified: row.org_verified,
                 avatar_url: row.org_avatar_url,

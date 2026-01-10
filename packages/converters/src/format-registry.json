@@ -120,7 +120,7 @@
     },
     "copilot": {
       "name": "GitHub Copilot",
-      "description": "GitHub Copilot instructions and chat modes",
+      "description": "GitHub Copilot instructions, chat modes, and skills",
       "documentationUrl": "https://docs.github.com/en/copilot",
       "subtypes": {
         "rule": {
@@ -132,6 +132,14 @@
           "directory": ".github/chatmodes",
           "filePatterns": ["*.chatmode.md"],
           "fileExtension": ".chatmode.md"
+        },
+        "skill": {
+          "directory": ".github/skills",
+          "filePatterns": ["SKILL.md"],
+          "nested": true,
+          "nestedIndicator": "SKILL.md",
+          "usesPackageSubdirectory": true,
+          "fileExtension": ".md"
         }
       }
     },
@@ -180,12 +188,20 @@
     },
     "opencode": {
       "name": "OpenCode",
-      "description": "OpenCode agents, commands, tools, and plugins",
+      "description": "OpenCode agents, commands, tools, plugins, and skills",
       "documentationUrl": "https://opencode.ai",
       "subtypes": {
         "agent": {
           "directory": ".opencode/agent",
           "filePatterns": ["*.md"],
+          "fileExtension": ".md"
+        },
+        "skill": {
+          "directory": ".opencode/skill",
+          "filePatterns": ["SKILL.md"],
+          "nested": true,
+          "nestedIndicator": "SKILL.md",
+          "usesPackageSubdirectory": true,
           "fileExtension": ".md"
         },
         "slash-command": {
@@ -293,7 +309,8 @@
     },
     "codex": {
       "name": "OpenAI Codex CLI",
-      "description": "OpenAI Codex CLI using AGENTS.md for project instructions",
+      "description": "OpenAI Codex CLI skills and AGENTS.md project instructions",
+      "documentationUrl": "https://developers.openai.com/codex/skills",
       "subtypes": {
         "rule": {
           "directory": ".",
@@ -306,7 +323,7 @@
           "fileExtension": ".md"
         },
         "skill": {
-          "directory": ".openskills",
+          "directory": ".codex/skills",
           "filePatterns": ["SKILL.md"],
           "nested": true,
           "nestedIndicator": "SKILL.md",

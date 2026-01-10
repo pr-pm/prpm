@@ -34,6 +34,7 @@ export { fromAider } from './from-aider.js';
 export { fromZencoder } from './from-zencoder.js';
 export { fromReplit } from './from-replit.js';
 export { fromZed, isZedFormat } from './from-zed.js';
+export { fromCodex } from './from-codex.js';
 export { fromMCPServer, parseMCPServerJson, extractMCPServers as extractMCPServersFromCanonical, type MCPServerJson } from './from-mcp-server.js';
 
 // To converters (canonical → target format)
@@ -57,7 +58,7 @@ export { toAider, isAiderFormat } from './to-aider.js';
 export { toZencoder, isZencoderFormat, type ZencoderConfig } from './to-zencoder.js';
 export { toReplit, isReplitFormat } from './to-replit.js';
 export { toZed, isZedFormat as isZedFormatTo, generateFilename as generateZedFilename, type ZedConfig } from './to-zed.js';
-export { toCodex, generateFilename as generateCodexFilename, type CodexConfig } from './to-codex.js';
+export { toCodex, generateFilename as generateCodexFilename, isCodexSkillFormat, type CodexConfig } from './to-codex.js';
 export { toMCPServer, generateMCPServerPackage, type MCPServerConversionResult } from './to-mcp-server.js';
 
 // Utilities

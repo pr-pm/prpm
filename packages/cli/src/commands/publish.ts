@@ -27,6 +27,13 @@ import {
 import { createTarball, formatTarballSize } from "../utils/tarball-creator";
 import { smartInit } from "./init.js";
 
+const toOrgSlug = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-+/g, "-");
+
 interface PublishOptions {
   access?: "public" | "private";
   tag?: string;
@@ -357,6 +364,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
       let lastError: Error | null = null;
       let retryCount = 0;
       let publishSuccess = false;
+      let sawGatewayLikeError = false;
 
       while (retryCount <= MAX_RETRIES && !publishSuccess) {
         try {
@@ -408,13 +416,21 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
           let selectedOrgId: string | undefined;
           let selectedOrgName: string | undefined;
+          let selectedOrgSlug: string | undefined;
 
           // Check if organization is specified in manifest
           if (manifest.organization && userInfo) {
+            const manifestOrgSlug = toOrgSlug(manifest.organization);
             const orgFromManifest = userInfo.organizations?.find(
               (org: any) =>
+                org.id === manifest.organization ||
                 org.name === manifest.organization ||
-                org.id === manifest.organization,
+                (org.slug &&
+                  typeof org.slug === "string" &&
+                  org.slug.toLowerCase() === manifestOrgSlug) ||
+                (org.name &&
+                  toOrgSlug(typeof org.name === "string" ? org.name : "") ===
+                    manifestOrgSlug),
             );
 
             if (!orgFromManifest) {
@@ -435,6 +451,13 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
 
             selectedOrgId = orgFromManifest.id;
             selectedOrgName = orgFromManifest.name;
+            selectedOrgSlug =
+              (typeof orgFromManifest.slug === "string"
+                ? orgFromManifest.slug
+                : undefined) ||
+              (orgFromManifest.name
+                ? toOrgSlug(String(orgFromManifest.name))
+                : undefined);
           }
 
           // Check if admin should override author (check early so it shows in package info)
@@ -451,7 +474,7 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           const scopedPackageName = predictScopedPackageName(
             manifest.name,
             userInfo?.username || config.username || "unknown",
-            selectedOrgName || manifest.organization,
+            selectedOrgSlug || manifest.organization,
           );
 
           console.log(`   Source: ${source}`);
@@ -520,9 +543,12 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           validateLicenseInfo(licenseInfo, scopedPackageName);
           console.log("");
 
-          // Extract content snippet (for display validation only - not stored in manifest)
-          console.log("📝 Extracting content snippet...");
+          // Extract content preview snippet
+          console.log("📝 Extracting content preview...");
           const contentPreview = await extractSnippet(manifest);
+          if (contentPreview) {
+            (manifest as any).contentPreview = contentPreview;
+          }
           validateSnippet(contentPreview, scopedPackageName);
           console.log("");
 
@@ -625,8 +651,65 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
             packageName,
           );
 
+          // If we previously saw a gateway-like failure, a subsequent "already exists"
+          // often means the first publish succeeded but the response was lost.
+          if (
+            sawGatewayLikeError &&
+            pkgError.toLowerCase().includes("version already exists")
+          ) {
+            const assumedName = predictScopedPackageName(
+              manifest.name,
+              userInfo?.username || config.username || "unknown",
+              manifest.organization,
+            );
+
+            // Determine the webapp URL based on registry URL
+            let webappUrl: string;
+            const registryUrl = config.registryUrl || "https://registry.prpm.dev";
+            if (
+              registryUrl.includes("localhost") ||
+              registryUrl.includes("127.0.0.1")
+            ) {
+              webappUrl = "http://localhost:5173";
+            } else if (registryUrl.includes("registry.prpm.dev")) {
+              webappUrl = "https://prpm.dev";
+            } else {
+              webappUrl = registryUrl;
+            }
+
+            const packageSlug = assumedName.startsWith("@")
+              ? assumedName.slice(1)
+              : assumedName;
+            const packagePath = packageSlug
+              .split("/")
+              .map((segment) => encodeURIComponent(segment))
+              .join("/");
+            const packageUrl = `${webappUrl}/packages/${packagePath}`;
+
+            console.log(
+              `\n✅ ${displayName}@${manifest.version} now exists on the registry after a transient gateway error; assuming publish succeeded.`,
+            );
+
+            publishedPackages.push({
+              name: assumedName,
+              version: manifest.version,
+              url: packageUrl,
+            });
+            publishSuccess = true;
+            break;
+          }
+
           // Check if error is retriable
           if (isRetriableError(pkgError) && retryCount < MAX_RETRIES) {
+            if (
+              pkgError.includes("Bad Gateway") ||
+              pkgError.includes("Service Unavailable") ||
+              pkgError.includes("502") ||
+              pkgError.includes("503") ||
+              pkgError.includes("504")
+            ) {
+              sawGatewayLikeError = true;
+            }
             console.error(
               `\n⚠️  Temporary error publishing ${displayName}: ${pkgError}`,
             );

@@ -13,7 +13,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
    */
   fastify.get<{
     Params: { username: string };
-    Querystring: { sort?: string; limit?: number; offset?: number };
+    Querystring: { sort?: string; limit?: number; offset?: number; include_deprecated?: boolean };
   }>(
     '/:username',
     {
@@ -38,13 +38,14 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             },
             limit: { type: 'number', default: 100, minimum: 1, maximum: 500 },
             offset: { type: 'number', default: 0, minimum: 0 },
+            include_deprecated: { type: 'boolean', default: false },
           },
         },
       },
     },
     async (request, reply) => {
       const { username } = request.params;
-      const { sort = 'downloads', limit = 100, offset = 0 } = request.query;
+      const { sort = 'downloads', limit = 100, offset = 0, include_deprecated = false } = request.query;
 
       try {
         // Get user info
@@ -78,6 +79,10 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
           ? `visibility IN ('public', 'private')`  // Show all packages if viewing own profile
           : `visibility = 'public'`;                // Show only public packages otherwise
 
+        // Only allow including deprecated packages for own profile
+        const showDeprecated = include_deprecated && isOwnProfile;
+        const deprecatedFilter = showDeprecated ? '' : 'AND (deprecated = false OR deprecated IS NULL)';
+
         // Get total stats for ALL packages (not limited)
         const statsResult = await fastify.pg.query(
           `SELECT
@@ -86,7 +91,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
              SUM(rating_count) as total_ratings,
              SUM(rating_average * rating_count) as weighted_rating_sum
            FROM packages
-           WHERE author_id = $1 AND ${visibilityFilter}`,
+           WHERE author_id = $1 AND ${visibilityFilter} ${deprecatedFilter}`,
           [user.id]
         );
 
@@ -111,6 +116,8 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
              license_url,
              subtype,
              visibility,
+             deprecated,
+             deprecated_reason,
              total_downloads,
              weekly_downloads,
              monthly_downloads,
@@ -121,7 +128,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
              updated_at,
              tags
            FROM packages
-           WHERE author_id = $1 AND ${visibilityFilter}
+           WHERE author_id = $1 AND ${visibilityFilter} ${deprecatedFilter}
            ORDER BY ${orderBy}
            LIMIT $2 OFFSET $3`,
           [user.id, limit, offset]
@@ -152,6 +159,8 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             license_url: pkg.license_url,
             subtype: pkg.subtype,
             visibility: pkg.visibility,
+            deprecated: pkg.deprecated || false,
+            deprecated_reason: pkg.deprecated_reason || null,
             snippet: pkg.snippet,
             total_downloads: pkg.total_downloads || 0,
             weekly_downloads: pkg.weekly_downloads || 0,
@@ -169,6 +178,7 @@ export default async function authorsRoutes(fastify: FastifyInstance) {
             offset: offset,
             hasMore: offset + limit < stats.total_packages,
           },
+          is_own_profile: isOwnProfile,
         });
       } catch (error) {
         fastify.log.error(error);

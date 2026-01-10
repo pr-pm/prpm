@@ -2,6 +2,7 @@
  * Tests for multi-package manifest utilities
  */
 
+import { describe, it, expect } from 'vitest';
 import {
   mergePackageFields,
   getPackagesWithInheritance,

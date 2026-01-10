@@ -5,7 +5,7 @@
   "lastVerified": "2025-12-06",
   "verificationSources": {
     "claude": "https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview",
-    "copilot": "https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/",
+    "copilot": "https://code.visualstudio.com/docs/copilot/customization/agent-skills",
     "cursor": "https://docs.cursor.com/context/rules",
     "continue": "https://docs.continue.dev/reference",
     "windsurf": "https://docs.codeium.com/windsurf/cascade",
@@ -58,13 +58,13 @@
     },
     "copilot": {
       "name": "GitHub Copilot",
-      "supportsSkills": false,
+      "supportsSkills": true,
       "supportsPlugins": false,
       "supportsExtensions": false,
       "supportsAgents": true,
       "supportsAgentsMd": true,
       "markdownFallback": "copilot-instructions.md",
-      "notes": "GitHub Copilot coding agent supports AGENTS.md, CLAUDE.md, GEMINI.md, and .instructions.md custom instructions (as of August 2025). Full agents.md support."
+      "notes": "GitHub Copilot supports skills in .github/skills/<name>/SKILL.md (VS Code Insiders with chat.useAgentSkills setting). Also supports AGENTS.md, CLAUDE.md, GEMINI.md, and .instructions.md custom instructions."
     },
     "kiro": {
       "name": "Kiro AI",
@@ -89,14 +89,14 @@
     },
     "opencode": {
       "name": "OpenCode",
-      "supportsSkills": false,
+      "supportsSkills": true,
       "supportsPlugins": true,
       "supportsExtensions": false,
       "supportsAgents": true,
       "supportsAgentsMd": true,
       "supportsSlashCommands": true,
       "markdownFallback": "opencode-agent.md",
-      "notes": "OpenCode supports agents with mode/model/temperature config. Plugins are JavaScript/TypeScript modules in .opencode/plugin with 40+ event hooks. Slash commands available. Full agents.md support."
+      "notes": "OpenCode supports agents, skills, plugins, and slash commands. Skills use Agent Skills spec in .opencode/skill/${name}/SKILL.md. Plugins are JavaScript/TypeScript modules in .opencode/plugin with 40+ event hooks. Full agents.md support."
     },
     "ruler": {
       "name": "Ruler",

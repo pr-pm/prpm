@@ -11,6 +11,7 @@ import { CLIError } from '../core/errors';
 import { removeSkillFromManifest } from '../core/agents-md-progressive.js';
 import { promptYesNo } from '../core/prompts';
 import { removeMCPServers } from '../core/mcp.js';
+import { uninstallSnippet } from '../core/snippet.js';
 import * as readline from 'readline';
 
 /**
@@ -202,6 +203,17 @@ async function uninstallSinglePackage(
       }
     } catch (error) {
       // Silently continue - settings may have been modified manually
+    }
+
+    return;
+  }
+
+  // Special handling for snippets
+  if (pkg.subtype === 'snippet' && pkg.snippetMetadata) {
+    try {
+      await uninstallSnippet(pkg.snippetMetadata.targetPath, parsed.packageId);
+    } catch (error) {
+      // Silently continue - file may have been modified manually
     }
 
     return;
@@ -423,6 +435,25 @@ export async function handleUninstall(name: string, options: { format?: string; 
         } else {
           throw new Error(`Failed to remove hooks from settings: ${error}`);
         }
+      }
+
+      console.log(`✅ Successfully uninstalled ${name}${formatDisplay}`);
+      continue; // Move to next package if multiple
+    }
+
+    // Special handling for snippets
+    if (pkg.subtype === 'snippet' && pkg.snippetMetadata) {
+      console.log(`   📎 Uninstalling snippet...`);
+
+      try {
+        const removed = await uninstallSnippet(pkg.snippetMetadata.targetPath, name);
+        if (removed) {
+          console.log(`   🗑️  Removed snippet from: ${pkg.snippetMetadata.targetPath}`);
+        } else {
+          console.warn(`   ⚠️  Snippet not found in ${pkg.snippetMetadata.targetPath} (may have been removed manually)`);
+        }
+      } catch (error) {
+        console.warn(`   ⚠️  Failed to remove snippet: ${error}`);
       }
 
       console.log(`✅ Successfully uninstalled ${name}${formatDisplay}`);

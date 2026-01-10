@@ -70,7 +70,7 @@ Every supported AI IDE has a base schema:
 | **Cursor** | `cursor.schema.json` | MDC format with YAML frontmatter |
 | **Continue** | `continue.schema.json` | Rules with glob/regex matching |
 | **Windsurf** | `windsurf.schema.json` | Plain markdown (12k char limit) |
-| **GitHub Copilot** | `copilot.schema.json` | Path-specific instructions |
+| **GitHub Copilot** | `copilot.schema.json` | Instructions, chat modes, and skills |
 | **Kiro** | `kiro-steering.schema.json` | Steering files with frontmatter |
 | **Factory Droid** | `droid.schema.json` | Base schema for Droid packages |
 | **OpenCode** | `opencode.schema.json` | Agent configuration with tools |
@@ -99,6 +99,9 @@ Formats with multiple package types have specialized schemas:
 #### Kiro
 - `kiro-agent.schema.json` - Custom AI agents (JSON)
 - `kiro-hooks.schema.json` - Event hooks (JSON)
+
+#### GitHub Copilot
+- `copilot-skill.schema.json` - Reusable skills with name and description
 
 #### Cursor
 - `cursor-command.schema.json` - Cursor slash commands

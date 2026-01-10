@@ -452,6 +452,23 @@
       ]
     },
     {
+      "name": "creating-claude-rules-skill",
+      "version": "1.0.0",
+      "description": "Use when creating or fixing .claude/rules/ files - provides correct paths frontmatter (not globs), glob patterns, and avoids Cursor-specific fields like alwaysApply",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": [
+        "meta",
+        "claude-code",
+        "rules",
+        "documentation",
+        "best-practices"
+      ],
+      "files": [
+        ".claude/skills/creating-claude-rules/SKILL.md"
+      ]
+    },
+    {
       "name": "creating-claude-hooks-skill",
       "version": "1.0.0",
       "description": "Expert guidance for creating Claude Code hooks - covers executable files, events, JSON I/O, exit codes, security, and best practices",

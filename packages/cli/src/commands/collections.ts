@@ -464,6 +464,93 @@ export async function handleCollectionPublish(
 }
 
 /**
+ * Deprecate a collection
+ */
+export async function handleCollectionDeprecate(
+  collectionSpec: string,
+  options: {
+    reason?: string;
+    undo?: boolean;
+  }
+): Promise<void> {
+  const startTime = Date.now();
+
+  try {
+    // Parse collection spec: name or name@version
+    const cleanSpec = collectionSpec.replace(/^collections\//, '').trim();
+    const name_slug = cleanSpec.split('@')[0]; // Ignore version for deprecation
+
+    // Validate name_slug
+    if (!name_slug || name_slug.length === 0) {
+      throw new CLIError('Collection name cannot be empty', 1);
+    }
+
+    // Validate format: must be lowercase alphanumeric with hyphens
+    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(name_slug)) {
+      throw new CLIError(
+        `Invalid collection name "${name_slug}". Must be lowercase alphanumeric with hyphens (e.g., "my-collection")`,
+        1
+      );
+    }
+
+    const config = await getConfig();
+
+    // Check authentication
+    if (!config.token) {
+      console.error('\n❌ Authentication required. Run `prpm login` first.\n');
+      throw new CLIError('Authentication required. Run `prpm login` first.', 1);
+    }
+
+    const client = getRegistryClient(config);
+
+    const action = options.undo ? 'Undeprecating' : 'Deprecating';
+    console.log(`⚠️  ${action} collection: ${name_slug}...\n`);
+
+    const result = await client.deprecateCollection(name_slug, {
+      deprecated: !options.undo,
+      reason: options.reason,
+    });
+
+    if (result.success) {
+      console.log(`✅ ${result.message}`);
+      console.log('');
+      if (result.deprecated && result.reason) {
+        console.log(`   Reason: ${result.reason}`);
+        console.log('');
+      }
+      if (result.deprecated) {
+        console.log('💡 To undo: prpm collections deprecate --undo ' + name_slug);
+      }
+    } else {
+      throw new Error('Failed to update deprecation status');
+    }
+
+    await telemetry.track({
+      command: 'collections:deprecate',
+      success: true,
+      duration: Date.now() - startTime,
+      data: {
+        name_slug,
+        deprecated: result.deprecated,
+        reason: result.reason,
+      },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`\n❌ Failed to deprecate collection: ${errorMessage}\n`);
+    await telemetry.track({
+      command: 'collections:deprecate',
+      success: false,
+      error: errorMessage,
+      duration: Date.now() - startTime,
+    });
+    throw new CLIError(`Failed to deprecate collection: ${errorMessage}`, 1);
+  } finally {
+    await telemetry.shutdown();
+  }
+}
+
+/**
  * Install a collection
  */
 export async function handleCollectionInstall(
@@ -682,6 +769,16 @@ export function createCollectionsCommand(): Command {
     .description('Publish a collection from collection.json')
     .action(async (manifest?: string) => {
       await handleCollectionPublish(manifest);
+    });
+
+  // Deprecate subcommand
+  command
+    .command('deprecate <collection>')
+    .description('Deprecate a collection (owner only)')
+    .option('--reason <reason>', 'Reason for deprecation')
+    .option('--undo', 'Remove deprecation status')
+    .action(async (collection: string, options: { reason?: string; undo?: boolean }) => {
+      await handleCollectionDeprecate(collection, options);
     });
 
   // Install handled by main install command with @scope/id syntax

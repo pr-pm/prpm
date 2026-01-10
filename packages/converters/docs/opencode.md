@@ -2,6 +2,7 @@
 
 **File Locations:**
 - Agents: `.opencode/agent/*.md` or `~/.config/opencode/agent/*.md`
+- Skills: `.opencode/skill/${name}/SKILL.md` or `~/.opencode/skill/${name}/SKILL.md`
 - Slash Commands: `.opencode/command/*.md` or `~/.config/opencode/command/*.md`
 - Config: `opencode.json` or `opencode.jsonc` (JSON format alternative)
 
@@ -15,6 +16,7 @@ OpenCode is an AI coding assistant that uses specialized agents and slash comman
 **Key Features:**
 - **Primary agents**: Main assistants for direct interaction (switchable via Tab key)
 - **Subagents**: Specialized assistants invoked by primary agents or @ mentions
+- **Skills**: Reusable instruction sets using Agent Skills spec (compatible with Codex, Copilot)
 - **Slash commands**: Quick commands with template placeholders and dynamic content injection
 - **Fine-grained permissions**: Tool access control with ask/allow/deny modes
 - **Model flexibility**: Per-agent and per-command model overrides
@@ -39,6 +41,7 @@ OpenCode is an AI coding assistant that uses specialized agents and slash comman
   - 0.6-1.0: Creative work
   - Defaults to model-specific values (typically 0, or 0.55 for Qwen models)
 - **`prompt`** (string): Path to custom system prompt file using `{file:./path}` syntax
+- **`maxSteps`** (number): Maximum number of iterations the agent can run. Unlimited if not set.
 - **`tools`** (object): Enable/disable specific tools
   - Supports wildcards: `"mymcp_*": false` disables all MCP tools starting with `mymcp_`
   - Example: `{ "write": true, "edit": false, "bash": false }`
@@ -88,6 +91,55 @@ You are an expert code reviewer with deep knowledge of software engineering prin
 - [ ] Tests are comprehensive
 - [ ] No security vulnerabilities
 - [ ] Documentation is clear
+```
+
+## Skill Format
+
+OpenCode skills use the **Agent Skills spec** (shared with Codex and GitHub Copilot). Skills are reusable instruction sets discovered on-demand via the native skill tool.
+
+**Directory:** `.opencode/skill/${name}/SKILL.md`
+
+### Frontmatter Fields
+
+#### Required Fields
+
+- **`name`** (string): Skill identifier (1-64 chars)
+  - Lowercase alphanumeric and hyphens only
+  - Must match parent directory name
+  - Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`
+- **`description`** (string): Explains what the skill does and when to use it (1-1024 chars)
+
+#### Optional Fields
+
+- **`license`** (string): Licensing terms (e.g., `"MIT"`)
+- **`compatibility`** (string): Environment requirements (e.g., `"Requires git, docker"`)
+- **`allowed-tools`** (string): Space-delimited list of pre-approved tools
+- **`metadata`** (object): Arbitrary string key-value pairs
+
+### Example Skill
+
+```markdown
+---
+name: code-review
+description: Reviews code for best practices, security issues, and improvements. Use when analyzing pull requests or conducting security audits.
+license: MIT
+compatibility: Requires git
+allowed-tools: Bash(git:*) Read
+metadata:
+  category: development
+  version: "1.0.0"
+---
+
+# Code Review Skill
+
+You are an expert code reviewer.
+
+## Instructions
+
+- Check for code smells and anti-patterns
+- Verify test coverage
+- Identify security vulnerabilities
+- Suggest improvements with examples
 ```
 
 ## Slash Command Format
@@ -211,12 +263,66 @@ OpenCode includes built-in agents:
 - **<Leader>+Right/Left**: Navigate parent/child sessions created by subagents
 - **Slash commands**: Type `/` to see available commands
 
+## Plugins (Non-Convertible)
+
+OpenCode supports plugins - JavaScript/TypeScript modules that hook into various events. **Plugins are not convertible** between formats due to fundamental architectural differences.
+
+### Why Plugins Don't Convert
+
+| Aspect | Claude Hooks | OpenCode Plugins |
+|--------|--------------|------------------|
+| **Format** | Executable scripts (bash/node) | JS/TS modules |
+| **Events** | 4 types (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`) | 32+ granular events |
+| **File Location** | `.claude/hooks/*` | `.opencode/plugin/*` |
+
+### OpenCode Plugin Events
+
+Plugins can hook into events across multiple categories:
+- **command**: `command.executed`
+- **file**: `file.edited`, `file.watcher.updated`
+- **lsp**: `lsp.client.diagnostics`, `lsp.updated`
+- **message**: `message.part.removed`, `message.part.updated`, `message.removed`, `message.updated`
+- **permission**: `permission.replied`, `permission.updated`
+- **session**: `session.created`, `session.idle`, `session.error`, etc.
+- **tool**: `tool.execute.before`, `tool.execute.after`
+- **tui**: `tui.prompt.append`, `tui.command.execute`, `tui.toast.show`
+
+### Plugin Example
+
+```typescript
+import type { Plugin } from "@opencode-ai/plugin"
+
+export const EnvProtection: Plugin = async ({ project, client, $, directory }) => {
+  return {
+    "tool.execute.before": async (input, output) => {
+      if (input.tool === "read" && output.args.filePath.includes(".env")) {
+        throw new Error("Do not read .env files")
+      }
+    },
+  }
+}
+```
+
+### Claude Code Event Mapping
+
+For plugins that need Claude Code-like behavior, these event mappings apply:
+
+| Claude Hook | OpenCode Event |
+|-------------|----------------|
+| `PreToolUse` | `tool.execute.before` |
+| `PostToolUse` | `tool.execute.after` |
+| `UserPromptSubmit` | Custom handling via `message.*` events |
+| `SessionEnd` | `session.idle` |
+
+While PRPM can't directly convert Claude hooks to OpenCode plugins due to architectural differences, understanding these mappings helps when manually porting functionality.
+
 ## Limitations
 
 - Agent mode cannot be changed after creation (requires recreation)
 - Slash commands execute in project root directory
 - Custom commands override built-in commands with same name
 - File locations are fixed (`.opencode/agent/` and `.opencode/command/`)
+- **Plugins are non-convertible** - different event models and formats prevent cross-platform conversion
 
 ## PRPM Integration
 
@@ -269,12 +375,19 @@ prpm convert agent.md --from claude --to opencode
 ## Related Documentation
 
 - [OpenCode Agents](https://opencode.ai/docs/agents/)
+- [OpenCode Skills](https://opencode.ai/docs/skills/)
 - [OpenCode Slash Commands](https://opencode.ai/docs/commands/)
 - [OpenCode Tools](https://opencode.ai/docs/tools/)
 - [PRPM Format Guide](../../docs/formats.mdx)
 
 ## Changelog
 
+- **2025-12**: Added native skill support
+  - Skills use Agent Skills spec (same as Codex, Copilot)
+  - Directory: `.opencode/skill/${name}/SKILL.md`
+  - Required fields: `name`, `description`
+  - Optional fields: `license`, `compatibility`, `allowed-tools`, `metadata`
+  - Uses `agent-skills.schema.json` for validation
 - **2025-01**: Initial OpenCode format support
   - Added fromOpencode and toOpencode converters
   - Support for agents and slash commands

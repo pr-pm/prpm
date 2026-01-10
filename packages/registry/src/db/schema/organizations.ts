@@ -9,6 +9,7 @@ import { pgTable, uuid, varchar, text, boolean, timestamp } from 'drizzle-orm/pg
 export const organizations = pgTable('organizations', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 100 }).unique().notNull(),
+  slug: varchar('slug', { length: 120 }).unique().notNull(),
   description: text('description'),
   avatarUrl: text('avatar_url'),
   websiteUrl: text('website_url'),

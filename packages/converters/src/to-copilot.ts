@@ -1,13 +1,15 @@
 /**
  * GitHub Copilot Format Converter
- * Converts canonical format to GitHub Copilot instructions
+ * Converts canonical format to GitHub Copilot instructions and skills
  *
  * File structure:
  * - Repository-wide: .github/copilot-instructions.md
  * - Path-specific: .github/instructions/NAME.instructions.md
+ * - Skills: .github/skills/<skill-name>/SKILL.md
  *
  * Format:
- * - Optional YAML frontmatter with applyTo for path-specific
+ * - Instructions: Optional YAML frontmatter with applyTo for path-specific
+ * - Skills: YAML frontmatter with name and description (required)
  * - Natural language markdown
  * - Simple, clear instructions
  */
@@ -24,6 +26,9 @@ export interface CopilotConfig {
   instructionName?: string; // Name for the instruction file (e.g., "react-components")
   applyTo?: string; // REQUIRED for path-specific - glob pattern
   repositoryWide?: boolean; // Whether this is repository-wide (default: true if no applyTo)
+  isSkill?: boolean; // Whether this is a skill (uses .github/skills/)
+  skillName?: string; // Skill identifier (lowercase, hyphens, max 64 chars)
+  skillDescription?: string; // Skill description (max 1024 chars)
 }
 
 /**
@@ -38,7 +43,15 @@ export function toCopilot(
 
   try {
     const config = options.copilotConfig || {};
-    const isPathSpecific = !!config.applyTo;
+
+    // Detect if this is a skill based on subtype or explicit config
+    const isSkill = config.isSkill || pkg.subtype === 'skill';
+    const isPathSpecific = !!config.applyTo && !isSkill;
+
+    if (isSkill) {
+      // Handle skill conversion
+      return convertToSkill(pkg, config, warnings);
+    }
 
     // Validate path-specific requirements
     if (isPathSpecific && !config.applyTo) {
@@ -52,7 +65,7 @@ export function toCopilot(
     // Add frontmatter for path-specific instructions
     let fullContent: string;
     if (isPathSpecific && config.applyTo) {
-      const frontmatter = generateFrontmatter(config);
+      const frontmatter = generateInstructionFrontmatter(config);
       fullContent = `${frontmatter}\n\n${content}`;
     } else {
       fullContent = content;
@@ -87,9 +100,195 @@ export function toCopilot(
 }
 
 /**
+ * Convert canonical package to Copilot skill format
+ * Uses Agent Skills standard (agentskills.io)
+ */
+function convertToSkill(
+  pkg: CanonicalPackage,
+  config: CopilotConfig,
+  warnings: string[]
+): ConversionResult {
+  let qualityScore = 100;
+
+  // Extract metadata section for Agent Skills data
+  const metadataSection = pkg.content.sections.find(s => s.type === 'metadata');
+  const agentSkillsData = metadataSection?.type === 'metadata' ? metadataSection.data.agentSkills : undefined;
+
+  // Derive skill name from agentSkills metadata, config, package name, or ID
+  const skillName = agentSkillsData?.name ||
+    config.skillName ||
+    pkg.name?.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 64) ||
+    pkg.id.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 64);
+
+  // Derive description from config, package description, or metadata
+  const skillDescription = config.skillDescription ||
+    pkg.description ||
+    pkg.metadata?.description ||
+    '';
+
+  if (!skillDescription) {
+    warnings.push('Skill requires a description - using empty string');
+    qualityScore -= 20;
+  }
+
+  // Validate skill name format per Agent Skills spec
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(skillName)) {
+    warnings.push('Skill name should be lowercase alphanumeric with single hyphens (no start/end/consecutive hyphens)');
+    qualityScore -= 10;
+  }
+
+  // Build frontmatter with Agent Skills fields
+  const frontmatter = generateSkillFrontmatter(skillName, skillDescription, pkg, agentSkillsData);
+
+  // Generate skill content (similar to instruction content but optimized for skills)
+  const content = convertSkillContent(pkg, warnings);
+
+  const fullContent = `${frontmatter}\n\n${content}`;
+
+  // Check for lossy conversion
+  const lossyConversion = warnings.some(w =>
+    w.includes('not supported') || w.includes('skipped')
+  );
+
+  if (lossyConversion) {
+    qualityScore -= 10;
+  }
+
+  return {
+    content: fullContent,
+    format: 'copilot',
+    warnings: warnings.length > 0 ? warnings : undefined,
+    lossyConversion,
+    qualityScore,
+  };
+}
+
+/**
+ * Agent Skills metadata interface
+ */
+interface AgentSkillsMetadata {
+  name?: string;
+  license?: string;
+  compatibility?: string;
+  allowedTools?: string;
+  metadata?: Record<string, string>;
+}
+
+/**
+ * Escape a string for use in YAML double-quoted strings
+ * Handles backslashes, quotes, newlines, and carriage returns
+ */
+function escapeYamlString(str: string): string {
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n');
+}
+
+/**
+ * Generate YAML frontmatter for skills per Agent Skills spec
+ */
+function generateSkillFrontmatter(
+  name: string,
+  description: string,
+  pkg: CanonicalPackage,
+  agentSkillsData?: AgentSkillsMetadata
+): string {
+  const lines: string[] = ['---'];
+  lines.push(`name: ${name}`);
+
+  // Truncate description to 1024 chars if needed
+  const truncatedDesc = description.length > 1024
+    ? description.slice(0, 1021) + '...'
+    : description;
+  // Quote description to handle special YAML characters
+  lines.push(`description: "${escapeYamlString(truncatedDesc)}"`);
+
+  // Add optional Agent Skills fields (all quoted for YAML safety)
+  const license = agentSkillsData?.license || pkg.license;
+  if (license) {
+    lines.push(`license: "${escapeYamlString(license)}"`);
+  }
+
+  if (agentSkillsData?.compatibility) {
+    lines.push(`compatibility: "${escapeYamlString(agentSkillsData.compatibility)}"`);
+  }
+
+  if (agentSkillsData?.allowedTools) {
+    lines.push(`allowed-tools: "${escapeYamlString(agentSkillsData.allowedTools)}"`);
+  }
+
+  if (agentSkillsData?.metadata && Object.keys(agentSkillsData.metadata).length > 0) {
+    lines.push('metadata:');
+    for (const [key, value] of Object.entries(agentSkillsData.metadata)) {
+      // Escape both key and value for YAML safety
+      const safeKey = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key) ? key : `"${escapeYamlString(key)}"`;
+      lines.push(`  ${safeKey}: "${escapeYamlString(value)}"`);
+    }
+  }
+
+  lines.push('---');
+  return lines.join('\n');
+}
+
+/**
+ * Convert canonical content to skill-optimized markdown
+ */
+function convertSkillContent(
+  pkg: CanonicalPackage,
+  warnings: string[]
+): string {
+  const lines: string[] = [];
+
+  // Add skill title
+  const title = pkg.metadata?.title || pkg.name || pkg.id;
+  lines.push(`# ${title}`);
+  lines.push('');
+
+  // Add description if available
+  if (pkg.description || pkg.metadata?.description) {
+    lines.push(pkg.description || pkg.metadata?.description || '');
+    lines.push('');
+  }
+
+  // Convert sections (same as instructions but skip tools/persona warnings are softer)
+  for (const section of pkg.content.sections) {
+    if (section.type === 'metadata') {
+      continue; // Skip metadata section
+    }
+
+    if (section.type === 'tools') {
+      // Skills can reference tools but don't configure them
+      warnings.push('Tools section converted to reference list');
+      continue;
+    }
+
+    if (section.type === 'persona') {
+      // Convert persona to "When to Use" section for skills
+      if (section.data?.role) {
+        lines.push('## When to Use');
+        lines.push('');
+        lines.push(section.data.role);
+        lines.push('');
+      }
+      continue;
+    }
+
+    const sectionContent = convertSection(section, warnings);
+    if (sectionContent) {
+      lines.push(sectionContent);
+      lines.push('');
+    }
+  }
+
+  return lines.join('\n').trim();
+}
+
+/**
  * Generate YAML frontmatter for path-specific instructions
  */
-function generateFrontmatter(config: CopilotConfig): string {
+function generateInstructionFrontmatter(config: CopilotConfig): string {
   const lines: string[] = ['---'];
 
   if (config.applyTo) {

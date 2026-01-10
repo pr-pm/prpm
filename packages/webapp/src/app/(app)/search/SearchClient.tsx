@@ -840,6 +840,7 @@ function SearchPageContent() {
         if (selectedUseCase) params.use_case = selectedUseCase;
         if (selectedTags.length > 0 && selectedTags[0])
           params.tag = selectedTags[0];
+        if (selectedAuthor) params.author = selectedAuthor;
 
         const result = await searchCollections(params);
         setCollections(result.collections);
@@ -1472,6 +1473,7 @@ function SearchPageContent() {
                       <option value="gemini">Gemini CLI</option>
                       <option value="opencode">OpenCode</option>
                       <option value="droid">Droid</option>
+                      <option value="codex">Codex</option>
                       <option value="trae">Trae</option>
                       <option value="aider">Aider</option>
                       <option value="zencoder">Zencoder</option>
@@ -1591,6 +1593,7 @@ function SearchPageContent() {
                           plugin: "Plugin",
                           extension: "Extension",
                           server: "Server",
+                          snippet: "Snippet",
                         };
                         return (
                           <option key={subtype} value={subtype}>
