@@ -9,9 +9,9 @@ on:
       - 'packages/converters/**'
       - 'packages/webapp/**'
   schedule:
-    # Rebuild webapp every hour to regenerate static pages with latest data from registry API
-    # With smart caching, builds are fast (~5s) when no new packages added
-    - cron: '0 * * * *'
+    # Rebuild webapp every 6 hours to regenerate static pages with latest data from registry API
+    # Reduced from hourly to save ~$58/month in S3 request costs
+    - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
       environment:
@@ -495,36 +495,90 @@ jobs:
           find packages/webapp/out -type f 2>/dev/null | head -20 || true
 
       - name: Deploy to S3
+        id: s3-deploy
         run: |
-          # Sync new files (without delete) to ensure all chunks are uploaded
-          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ \
+          CHANGED_FILES=""
+
+          # Sync static assets (without delete) - use --size-only to skip unchanged files
+          # Capture output to track changed files
+          echo "Syncing static assets..."
+          SYNC_OUTPUT=$(aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ \
             --cache-control "public, max-age=31536000, immutable" \
             --exclude "*.html" \
-            --exclude "_next/data/*"
+            --exclude "_next/data/*" \
+            --size-only 2>&1) || true
+          echo "$SYNC_OUTPUT"
 
-          # Sync HTML files with NO CACHE
-          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ \
+          # Extract changed file paths from sync output
+          CHANGED_FILES="$CHANGED_FILES $(echo "$SYNC_OUTPUT" | grep -oE 'upload: .* to s3://[^/]+/(.*)' | sed 's|.*s3://[^/]*/|/|' || true)"
+
+          # Sync HTML files with NO CACHE - use --size-only
+          echo "Syncing HTML files..."
+          SYNC_OUTPUT=$(aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ \
             --cache-control "no-cache, no-store, must-revalidate" \
             --exclude "*" \
             --include "*.html" \
-            --include "_next/data/*"
+            --include "_next/data/*" \
+            --size-only 2>&1) || true
+          echo "$SYNC_OUTPUT"
 
-          # Delete old files after everything is uploaded
-          aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --delete
+          CHANGED_FILES="$CHANGED_FILES $(echo "$SYNC_OUTPUT" | grep -oE 'upload: .* to s3://[^/]+/(.*)' | sed 's|.*s3://[^/]*/|/|' || true)"
+
+          # Delete old files after everything is uploaded - use --size-only
+          echo "Cleaning up old files..."
+          SYNC_OUTPUT=$(aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --delete --size-only 2>&1) || true
+          echo "$SYNC_OUTPUT"
+
+          # Add deleted files to changed list
+          CHANGED_FILES="$CHANGED_FILES $(echo "$SYNC_OUTPUT" | grep -oE 'delete: s3://[^/]+/(.*)' | sed 's|.*s3://[^/]*/|/|' || true)"
+
+          # Deduplicate and clean up paths
+          CHANGED_FILES=$(echo "$CHANGED_FILES" | tr ' ' '\n' | grep -v '^$' | sort -u | head -100)
+
+          # Count changed files
+          CHANGE_COUNT=$(echo "$CHANGED_FILES" | grep -c . || echo "0")
+          echo "Changed files: $CHANGE_COUNT"
+
+          # Save to output for CloudFront invalidation
+          if [ "$CHANGE_COUNT" -gt 0 ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            # For many changes, just invalidate common paths instead of all
+            if [ "$CHANGE_COUNT" -gt 50 ]; then
+              echo "invalidation_paths=/index.html /search/* /packages/* /authors/* /blog/*" >> $GITHUB_OUTPUT
+            else
+              echo "invalidation_paths=$CHANGED_FILES" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "invalidation_paths=" >> $GITHUB_OUTPUT
+          fi
 
           echo "✓ WebApp deployed to S3"
 
       - name: Invalidate CloudFront
+        if: steps.s3-deploy.outputs.has_changes == 'true'
         run: |
           DIST_ID=$(aws cloudfront list-distributions \
             --query "DistributionList.Items[?Aliases.Items[?contains(@, 'prpm.dev')]].Id" \
             --output text)
 
-          echo "Creating CloudFront invalidation for distribution: $DIST_ID"
+          PATHS="${{ steps.s3-deploy.outputs.invalidation_paths }}"
+
+          if [ -z "$PATHS" ]; then
+            echo "No paths to invalidate, skipping"
+            exit 0
+          fi
+
+          # Convert space-separated paths to JSON array format
+          PATHS_ARRAY=$(echo "$PATHS" | tr ' ' '\n' | grep -v '^$' | head -15 | jq -R . | jq -s .)
+          PATH_COUNT=$(echo "$PATHS_ARRAY" | jq 'length')
+
+          echo "Creating CloudFront invalidation for $PATH_COUNT paths in distribution: $DIST_ID"
+          echo "Paths: $PATHS_ARRAY"
 
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
             --distribution-id $DIST_ID \
-            --paths "/*" \
+            --invalidation-batch "{\"Paths\":{\"Quantity\":$PATH_COUNT,\"Items\":$PATHS_ARRAY},\"CallerReference\":\"deploy-$(date +%s)\"}" \
             --query 'Invalidation.Id' \
             --output text)
 
@@ -536,6 +590,10 @@ jobs:
             --id $INVALIDATION_ID
 
           echo "✓ CloudFront invalidation completed"
+
+      - name: Skip invalidation notice
+        if: steps.s3-deploy.outputs.has_changes != 'true'
+        run: echo "✓ No changes detected, skipping CloudFront invalidation"
 
       - name: Health check
         run: |

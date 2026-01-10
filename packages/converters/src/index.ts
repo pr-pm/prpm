@@ -89,3 +89,23 @@ export {
   type FormatCapability,
   type FormatCapabilitiesData,
 } from './utils/progressive-disclosure.js';
+
+// MCP Cross-format Transformers
+export {
+  geminiToClaudeMCP,
+  claudeToGeminiMCP,
+  kiroToClaudeMCP,
+  claudeToKiroMCP,
+  kiroToGeminiMCP,
+  geminiToKiroMCP,
+  validateMCPServer,
+  mergeMCPServers as mergeMCPServerConfigs,
+  translateEnvVar,
+  translateMCPServerEnv,
+  type MCPServerConfig,
+  type KiroMCPServerConfig,
+  type GeminiMCPServers,
+  type ClaudeMCPServers,
+  type KiroMCPServers,
+  type TransformResult,
+} from './cross-converters/mcp-transformer.js';

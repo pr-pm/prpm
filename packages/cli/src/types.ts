@@ -5,7 +5,7 @@
 import type { Format, Subtype } from '@pr-pm/types';
 
 // Re-export types and constants from @pr-pm/types for backwards compatibility
-export type { Format, Subtype } from '@pr-pm/types';
+export type { Format, Subtype, SnippetConfig } from '@pr-pm/types';
 export { FORMATS, SUBTYPES, FORMAT_NATIVE_SUBTYPES } from '@pr-pm/types';
 
 export interface Package {

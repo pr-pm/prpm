@@ -78,7 +78,8 @@ export type Subtype =
   | "hook"
   | "plugin"
   | "extension"
-  | "server";
+  | "server"
+  | "snippet";
 
 /**
  * Available subtypes as a constant array
@@ -99,6 +100,7 @@ export const SUBTYPES: readonly Subtype[] = [
   "plugin",
   "extension",
   "server",
+  "snippet",
 ] as const;
 
 /**
@@ -155,7 +157,7 @@ export const FORMAT_NATIVE_SUBTYPES: Partial<Record<Format, readonly Subtype[]>>
   copilot: ["rule", "chatmode", "skill"],  // Native skill support via .github/skills/
   kiro: ["rule", "hook", "agent"],  // No native skill - uses AGENTS.md
   gemini: ["slash-command", "extension"],  // Full native support
-  opencode: ["agent", "slash-command", "tool", "plugin"],  // No native skill - uses AGENTS.md
+  opencode: ["agent", "slash-command", "tool", "plugin", "skill"],  // Native skill support in .opencode/skill/
   droid: ["skill", "slash-command", "hook"],  // No native agent - uses AGENTS.md
   zed: ["rule", "slash-command", "extension"],  // No native skill/agent - uses AGENTS.md
   amp: ["skill", "slash-command"],  // Native skills (.agents/skills/) and commands (.agents/commands/)
@@ -334,6 +336,38 @@ export interface PackageManifest {
    * Used to improve quality when converting to other formats
    */
   conversion?: ConversionHints;
+
+  /**
+   * Snippet configuration - for subtype: "snippet"
+   * Snippets are appended to existing files rather than installed as standalone files
+   */
+  snippet?: SnippetConfig;
+}
+
+/**
+ * Configuration for snippet packages
+ * Snippets are content that gets appended to existing files (AGENTS.md, CLAUDE.md, etc.)
+ */
+export interface SnippetConfig {
+  /**
+   * Target file to append the snippet to
+   * Examples: "AGENTS.md", "CLAUDE.md", ".cursorrules", "CONVENTIONS.md"
+   */
+  target: string;
+
+  /**
+   * Where to insert the snippet in the target file
+   * - "append": Add to end of file (default)
+   * - "prepend": Add to beginning of file
+   * - "section:## Section Name": Insert after a specific section header
+   */
+  position?: "append" | "prepend" | `section:${string}`;
+
+  /**
+   * Optional section header to wrap the snippet content
+   * If provided, content will be wrapped: ## {header}\n{content}
+   */
+  header?: string;
 }
 
 /**

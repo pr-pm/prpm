@@ -252,7 +252,41 @@
         "skillsDir": ".openskills/prpm-development",
         "skillName": "prpm-development"
       }
+    },
+    "@agent-relay/agent-relay-snippet#agents.md:AGENTS.md": {
+      "version": "1.0.2",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.0.2.tar.gz",
+      "integrity": "sha256-d62856dc5535e7dfa9e730d0b665720ec162e578b115d1e57847bd84fb06c1f8",
+      "format": "agents.md",
+      "subtype": "snippet",
+      "sourceFormat": "generic",
+      "sourceSubtype": "snippet",
+      "installedPath": "AGENTS.md",
+      "snippetMetadata": {
+        "targetPath": "AGENTS.md",
+        "config": {
+          "target": "AGENTS.md",
+          "position": "append"
+        }
+      }
+    },
+    "@agent-relay/agent-relay-snippet#agents.md:CLAUDE.md": {
+      "version": "1.0.2",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.0.2.tar.gz",
+      "integrity": "sha256-d62856dc5535e7dfa9e730d0b665720ec162e578b115d1e57847bd84fb06c1f8",
+      "format": "agents.md",
+      "subtype": "snippet",
+      "sourceFormat": "generic",
+      "sourceSubtype": "snippet",
+      "installedPath": "CLAUDE.md",
+      "snippetMetadata": {
+        "targetPath": "CLAUDE.md",
+        "config": {
+          "target": "CLAUDE.md",
+          "position": "append"
+        }
+      }
     }
   },
-  "generated": "2025-11-27T11:47:59.213Z"
+  "generated": "2026-01-01T21:26:39.281Z"
 }

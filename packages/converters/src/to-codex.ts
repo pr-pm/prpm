@@ -198,21 +198,25 @@ function truncateDescription(desc: string, maxLength: number): string {
 
 /**
  * Convert a skill name to a slug (lowercase, hyphens)
- * Per Agent Skills spec: 1-64 characters, lowercase alphanumeric and hyphens
+ * Per Agent Skills spec: 1-64 chars, lowercase alphanumeric and hyphens
  */
 function slugify(name: string): string {
-  const slug = name
+  let slug = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-  // If slug is empty (e.g., input was only special characters), use a fallback
+  // Handle edge case: empty result (e.g., input was '!!!')
   if (!slug) {
     return 'unnamed-skill';
   }
 
-  // Truncate to 64 characters per Agent Skills spec
-  return slug.slice(0, 64);
+  // Enforce max length of 64 chars per Agent Skills spec
+  if (slug.length > 64) {
+    slug = slug.substring(0, 64).replace(/-$/, '');
+  }
+
+  return slug;
 }
 
 /**
@@ -579,15 +583,21 @@ export function generateFilename(pkg?: CanonicalPackage): string {
 
 /**
  * Check if content appears to be in Codex SKILL.md format
+ * Handles both Unix (\n) and Windows (\r\n) line endings
+ * Tolerates trailing spaces after ---
  */
 export function isCodexSkillFormat(content: string): boolean {
   // Normalize line endings (handle Windows CRLF)
   const normalizedContent = content.replace(/\r\n/g, '\n');
 
   // Check for YAML frontmatter with name and description
-  const match = normalizedContent.match(/^---\n([\s\S]*?)\n---/);
+  // Lenient regex: allows trailing spaces after ---
+  const match = normalizedContent.match(/^---[ \t]*\n([\s\S]*?)\n---/);
   if (!match) return false;
 
   const frontmatterText = match[1];
-  return frontmatterText.includes('name:') && frontmatterText.includes('description:');
+  // Check for required Agent Skills fields (handles both quoted and unquoted keys)
+  const hasName = /^[ \t]*name\s*:/m.test(frontmatterText);
+  const hasDescription = /^[ \t]*description\s*:/m.test(frontmatterText);
+  return hasName && hasDescription;
 }

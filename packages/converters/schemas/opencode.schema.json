@@ -35,6 +35,11 @@
           "type": "string",
           "description": "Path to custom system prompt file using {file:./path} syntax"
         },
+        "maxSteps": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of iterations the agent can run. Unlimited if not set."
+        },
         "tools": {
           "type": "object",
           "description": "Enable/disable specific tools. Supports wildcards (e.g., 'mymcp_*')",

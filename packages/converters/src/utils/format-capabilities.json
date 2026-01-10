@@ -89,14 +89,14 @@
     },
     "opencode": {
       "name": "OpenCode",
-      "supportsSkills": false,
+      "supportsSkills": true,
       "supportsPlugins": true,
       "supportsExtensions": false,
       "supportsAgents": true,
       "supportsAgentsMd": true,
       "supportsSlashCommands": true,
       "markdownFallback": "opencode-agent.md",
-      "notes": "OpenCode supports agents with mode/model/temperature config. Plugins are JavaScript/TypeScript modules in .opencode/plugin with 40+ event hooks. Slash commands available. Full agents.md support."
+      "notes": "OpenCode supports agents, skills, plugins, and slash commands. Skills use Agent Skills spec in .opencode/skill/${name}/SKILL.md. Plugins are JavaScript/TypeScript modules in .opencode/plugin with 40+ event hooks. Full agents.md support."
     },
     "ruler": {
       "name": "Ruler",

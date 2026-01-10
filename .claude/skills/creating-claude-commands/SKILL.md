@@ -27,6 +27,35 @@ Activate this skill when:
 | `disable-model-invocation` | No | boolean | Prevent SlashCommand tool from calling this |
 | `commandType` | No | string | Set to `"slash-command"` for round-trip conversion |
 
+## Special Features
+
+### File Referencing with `@`
+Reference files directly in command prompts using `@` prefix:
+```markdown
+Review the implementation in @src/utils/helpers.js
+Compare @src/old-version.js with @src/new-version.js
+```
+
+### Bash Execution with `!`
+Execute bash commands inline using `!` prefix (requires Bash in `allowed-tools`):
+```markdown
+---
+allowed-tools: Bash(git *)
+---
+
+Current git status: !`git status`
+Last 5 commits: !`git log --oneline -5`
+```
+
+### Arguments
+- `$ARGUMENTS` - All arguments passed to command
+- `$1`, `$2`, `$3`... `$9` - Individual positional arguments
+
+### Namespacing
+- Use subdirectories in `.claude/commands/` to organize commands
+- Commands appear as `/subdirectory.command-name`
+- Example: `.claude/commands/git/quick-commit.md` → `/git.quick-commit`
+
 ## File Location
 
 Slash commands must be saved as Markdown files:
@@ -80,9 +109,54 @@ Manage tags for project files.
 
 ## Usage
 
-- `/tags add <tagId>` - Add a tag
-- `/tags remove <tagId>` - Remove a tag
+- `/tags add <tagId>` - Add a tag (use $1 for tagId)
+- `/tags remove <tagId>` - Remove a tag (use $1 for tagId)
 - `/tags list` - List all tags
+
+## Implementation
+
+Action: $1
+Tag ID: $2
+All arguments: $ARGUMENTS
+```
+
+### With File References
+
+```markdown
+---
+description: Compare two files and suggest improvements
+allowed-tools: Read, Edit
+argument-hint: <file1> <file2>
+---
+
+# File Comparator
+
+Compare @$1 with @$2 and identify:
+- Differences in approach
+- Which implementation is better
+- Suggested improvements
+```
+
+### With Bash Execution
+
+```markdown
+---
+description: Create commit with git status context
+argument-hint: <commit-message>
+allowed-tools: Bash(git *)
+---
+
+# Smart Git Commit
+
+## Current Status
+!`git status --short`
+
+## Recent Changes
+!`git diff --stat`
+
+Create a commit with message: $ARGUMENTS
+
+Ensure the commit message follows conventional commit format.
 ```
 
 ### Minimal Command
@@ -410,6 +484,42 @@ Add emoji to H1 heading for quick recognition:
 # 🔧 Refactoring Assistant
 # 🐛 Bug Finder
 ```
+
+### Namespaced Commands
+
+Organize related commands using subdirectories:
+
+**File:** `.claude/commands/git/status.md`
+```markdown
+---
+description: Show enhanced git status
+allowed-tools: Bash(git *)
+---
+
+# Git Status
+
+!`git status`
+
+Branch: !`git branch --show-current`
+Recent commits: !`git log --oneline -3`
+```
+**Invoke with:** `/git.status`
+
+**File:** `.claude/commands/git/quick-commit.md`
+```markdown
+---
+description: Quick commit with conventional format
+argument-hint: <type> <message>
+allowed-tools: Bash(git *)
+---
+
+# Quick Commit
+
+Create conventional commit: $1($2): $ARGUMENTS
+
+!`git add -A && git commit -m "$1: $ARGUMENTS"`
+```
+**Invoke with:** `/git.quick-commit feat "add user auth"`
 
 ## Common Patterns
 

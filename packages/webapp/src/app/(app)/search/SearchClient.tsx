@@ -1594,6 +1594,7 @@ function SearchPageContent() {
                           plugin: "Plugin",
                           extension: "Extension",
                           server: "Server",
+                          snippet: "Snippet",
                         };
                         return (
                           <option key={subtype} value={subtype}>
