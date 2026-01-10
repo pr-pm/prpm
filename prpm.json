@@ -805,6 +805,77 @@
       ]
     },
     {
+      "name": "claude-hook-writer-skill",
+      "version": "1.0.0",
+      "description": "Expert guidance for writing secure, reliable, and performant Claude Code hooks - validates design decisions, enforces best practices, and prevents common pitfalls",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": [
+        "meta",
+        "claude-code",
+        "hooks",
+        "security",
+        "best-practices",
+        "automation"
+      ],
+      "files": [
+        ".claude/skills/claude-hook-writer/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-opencode-agents-skill",
+      "version": "1.0.0",
+      "description": "Use when creating OpenCode agents - provides markdown format with YAML frontmatter, mode/tools/permission configuration, and best practices for specialized AI assistants",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": [
+        "meta",
+        "opencode",
+        "agents",
+        "configuration",
+        "best-practices"
+      ],
+      "files": [
+        ".claude/skills/creating-opencode-agents/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-opencode-plugins-skill",
+      "version": "1.0.0",
+      "description": "Use when creating OpenCode plugins that hook into command, file, LSP, message, permission, server, session, todo, tool, or TUI events - provides plugin structure, event API specifications, and implementation patterns for JavaScript/TypeScript event-driven modules",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": [
+        "meta",
+        "opencode",
+        "plugins",
+        "events",
+        "javascript",
+        "typescript"
+      ],
+      "files": [
+        ".claude/skills/creating-opencode-plugins/SKILL.md"
+      ]
+    },
+    {
+      "name": "creating-zed-extensions-skill",
+      "version": "1.0.0",
+      "description": "Use when creating Zed extensions with custom slash commands, language support, themes, or MCP servers - provides Rust/WASM extension structure, slash command API (run_slash_command, SlashCommandOutput), and development workflow for compiled extensions",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": [
+        "meta",
+        "zed",
+        "extensions",
+        "rust",
+        "wasm",
+        "slash-commands"
+      ],
+      "files": [
+        ".claude/skills/creating-zed-extensions/SKILL.md"
+      ]
+    },
+    {
       "name": "karen-compare",
       "version": "1.0.2",
       "description": "Karen comparative analysis between two projects with brutally honest head-to-head scoring and recommendations",

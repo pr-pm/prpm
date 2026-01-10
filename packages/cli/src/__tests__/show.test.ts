@@ -9,10 +9,7 @@ import { handleShow } from '../commands/show';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { CLIError } from '../core/errors';
-import { gzipSync } from 'zlib';
 import * as tar from 'tar';
-import { Readable } from 'stream';
-import { pipeline } from 'stream/promises';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -26,57 +23,6 @@ vi.mock('../core/telemetry', () => ({
     shutdown: vi.fn(),
   },
 }));
-
-/**
- * Helper to create a gzipped tarball from files
- */
-async function createTarball(files: Array<{ name: string; content: string | Buffer }>): Promise<Buffer> {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'prpm-test-'));
-
-  try {
-    // Write files to temp directory
-    for (const file of files) {
-      const filePath = path.join(tmpDir, file.name);
-      await fs.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.writeFile(filePath, file.content);
-    }
-
-    // Create tarball
-    const chunks: Buffer[] = [];
-    await tar.create(
-      {
-        gzip: true,
-        cwd: tmpDir,
-      },
-      files.map(f => f.name)
-    ).pipe({
-      write(chunk: Buffer) {
-        chunks.push(chunk);
-        return true;
-      },
-      end() {},
-      on() { return this; },
-      once() { return this; },
-      emit() { return true; },
-    } as any);
-
-    // Wait a bit for tar to finish
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    return Buffer.concat(chunks);
-  } finally {
-    await fs.rm(tmpDir, { recursive: true, force: true });
-  }
-}
-
-/**
- * Helper to create a simple gzipped tarball
- */
-function createSimpleTarball(content: string): Buffer {
-  // For simple tests, just gzip the content
-  // The show command will handle tar extraction
-  return gzipSync(content);
-}
 
 describe('show command', () => {
   const mockClient = {
