@@ -129,7 +129,7 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 - `opencode-slash-command.schema.json` - Template-based commands
 
 **Amp Subtypes:**
-- `amp-skill.schema.json` - Reusable skills with bundled tools
+- `agent-skills.schema.json` - Reusable skills (shared Agent Skills standard)
 - `amp-command.schema.json` - Custom slash commands
 
 **Gemini CLI Subtypes:**

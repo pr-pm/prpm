@@ -332,7 +332,7 @@ prpm convert skill.md --from claude --to amp
 
 ## Changelog
 
-- **2025-12**: Initial Amp format support
+- **2026-01**: Initial Amp format support
   - Added fromAmp and toAmp converters
   - Support for skills and commands
   - AGENTS.md with glob-based filtering
