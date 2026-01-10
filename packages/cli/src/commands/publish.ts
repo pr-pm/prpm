@@ -520,13 +520,10 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           validateLicenseInfo(licenseInfo, scopedPackageName);
           console.log("");
 
-          // Extract content snippet
+          // Extract content snippet (for display validation only - not stored in manifest)
           console.log("📝 Extracting content snippet...");
-          const snippet = await extractSnippet(manifest);
-          if (snippet) {
-            manifest.snippet = snippet;
-          }
-          validateSnippet(snippet, scopedPackageName);
+          const contentPreview = await extractSnippet(manifest);
+          validateSnippet(contentPreview, scopedPackageName);
           console.log("");
 
           // Create tarball

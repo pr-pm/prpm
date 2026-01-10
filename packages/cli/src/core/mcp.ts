@@ -293,28 +293,32 @@ export function mergeGeminiMCPServers(
   }
 
   // Read existing extension config
-  let config: any = { mcpServers: {} };
+  let config: MCPConfig = { mcpServers: {} };
+  // Track mcpServers separately to satisfy TypeScript's type narrowing
+  let mcpServers: Record<string, MCPServer> = {};
 
   if (existsSync(extensionPath)) {
     try {
       const content = readFileSync(extensionPath, 'utf-8');
-      config = JSON.parse(content);
-      if (!config.mcpServers) {
-        config.mcpServers = {};
-      }
+      const parsed = JSON.parse(content) as MCPConfig;
+      config = parsed;
+      mcpServers = parsed.mcpServers ?? {};
+      config.mcpServers = mcpServers;
     } catch (error) {
       result.warnings.push(`Failed to read extension file: ${error instanceof Error ? error.message : String(error)}`);
       return result;
     }
+  } else {
+    mcpServers = config.mcpServers!;
   }
 
   // Merge servers
   for (const [name, server] of Object.entries(servers)) {
-    if (config.mcpServers[name]) {
+    if (mcpServers[name]) {
       result.skipped.push(name);
       result.warnings.push(`MCP server '${name}' already exists in extension, keeping existing configuration`);
     } else {
-      config.mcpServers[name] = server;
+      mcpServers[name] = server;
       result.added.push(name);
     }
   }

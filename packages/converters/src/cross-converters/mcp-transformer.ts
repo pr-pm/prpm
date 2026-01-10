@@ -98,7 +98,7 @@ export function geminiToClaudeMCP(
       }
     }
 
-    if (config.disabled) {
+    if (config.disabled !== undefined) {
       servers[name].disabled = config.disabled;
     }
   }
@@ -149,7 +149,7 @@ export function claudeToGeminiMCP(
       }
     }
 
-    if (config.disabled) {
+    if (config.disabled !== undefined) {
       servers[name].disabled = config.disabled;
     }
   }
@@ -249,7 +249,7 @@ export function kiroToClaudeMCP(
       servers[name].env = { ...config.env };
     }
 
-    if (config.disabled) {
+    if (config.disabled !== undefined) {
       servers[name].disabled = config.disabled;
     }
 
@@ -295,7 +295,7 @@ export function claudeToKiroMCP(
       servers[name].env = { ...config.env };
     }
 
-    if (config.disabled) {
+    if (config.disabled !== undefined) {
       servers[name].disabled = config.disabled;
     }
 
@@ -336,7 +336,7 @@ export function kiroToGeminiMCP(
       servers[name].env = { ...config.env };
     }
 
-    if (config.disabled) {
+    if (config.disabled !== undefined) {
       servers[name].disabled = config.disabled;
     }
 
@@ -395,7 +395,7 @@ export function geminiToKiroMCP(
       }
     }
 
-    if (config.disabled) {
+    if (config.disabled !== undefined) {
       servers[name].disabled = config.disabled;
     }
 
@@ -412,6 +412,9 @@ export function geminiToKiroMCP(
 
 /**
  * Environment variable translation mappings
+ *
+ * Kiro uses standard env vars similar to Claude (${HOME}, etc.)
+ * Gemini uses its own syntax (${extensionPath}, ${home})
  */
 const ENV_VAR_MAPPINGS: Record<string, Record<string, string>> = {
   'gemini-to-claude': {
@@ -422,6 +425,23 @@ const ENV_VAR_MAPPINGS: Record<string, Record<string, string>> = {
     '${CLAUDE_EXTENSIONS_PATH}': '${extensionPath}',
     '${HOME}': '${home}',
     '%APPDATA%': '${home}',
+  },
+  // Kiro uses standard env vars similar to Claude
+  'gemini-to-kiro': {
+    '${extensionPath}': '${KIRO_EXTENSIONS_PATH}',
+    '${home}': '${HOME}',
+  },
+  'kiro-to-gemini': {
+    '${KIRO_EXTENSIONS_PATH}': '${extensionPath}',
+    '${HOME}': '${home}',
+    '%APPDATA%': '${home}',
+  },
+  // Claude and Kiro use similar env var conventions, minimal translation needed
+  'kiro-to-claude': {
+    '${KIRO_EXTENSIONS_PATH}': '${CLAUDE_EXTENSIONS_PATH}',
+  },
+  'claude-to-kiro': {
+    '${CLAUDE_EXTENSIONS_PATH}': '${KIRO_EXTENSIONS_PATH}',
   },
 };
 
