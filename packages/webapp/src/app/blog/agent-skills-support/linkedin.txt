@@ -1,0 +1,29 @@
+Anthropic released Agent Skills—an open format for packaging procedural knowledge, company patterns, and domain expertise into reusable, discoverable folders. It's already adopted by GitHub Copilot, Claude Code, VS Code, and more.
+
+The problem? Each tool uses a different directory structure. GitHub Copilot uses `.github/skills/`, Claude Code uses `.claude/skills/`, Factory Droid uses `.factory/skills/`. Same format concept, different locations.
+
+PRPM now adds native Agent Skills support with:
+
+✓ JSON schema validation for Copilot, Claude, and Factory Droid skills
+✓ Bidirectional format conversion (skills to Cursor rules, Windsurf rules, etc.)
+✓ Registry integration with search, versioning, and quality scores
+✓ Automatic installation to the right directory for your AI editor
+
+Real scenario: Your team uses different editors. Frontend devs use Cursor, backend uses Claude Code, DevOps uses GitHub Copilot.
+
+You publish a testing skill once:
+`prpm publish @acme/api-testing-skill`
+
+Team members install for their editor:
+- `prpm install @acme/api-testing-skill --format cursor`
+- `prpm install @acme/api-testing-skill --format claude --subtype skill`
+- `prpm install @acme/api-testing-skill --format copilot --subtype skill`
+
+PRPM converts automatically. Same knowledge, tailored structure, zero manual work.
+
+This is what we mean by "write once, deploy everywhere." Package authors support all editors without extra effort. Teams capture institutional knowledge in portable, versioned packages. AI agents get the procedural knowledge they need, in the format they expect.
+
+Learn more and browse skills:
+https://prpm.dev/blog/agent-skills-support
+
+#AI #DeveloperTools #AgentSkills #Anthropic #PRPM #SoftwareEngineering
