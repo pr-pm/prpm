@@ -1,0 +1,7 @@
+{
+  "last_failure": "2026-01-11T18:26:28.480965-03:00",
+  "failure_count": 1,
+  "backoff_until": "2026-01-11T18:26:58.480965-03:00",
+  "needs_manual_sync": false,
+  "failure_reason": "git pull failed in worktree: signal: killed\nFrom github.com:pr-pm/prpm\n * branch              claude-plugin-and-github-rule -\u003e FETCH_HEAD\n"
+}
