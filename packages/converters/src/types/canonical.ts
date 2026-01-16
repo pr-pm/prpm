@@ -140,6 +140,8 @@ export interface CanonicalPackage {
       mode?: 'subagent' | 'primary' | 'all';
       model?: string;
       temperature?: number;
+      prompt?: string; // Path to custom system prompt file using {file:./path} syntax
+      maxSteps?: number; // Iteration limit - unlimited if unset
       permission?: Record<string, any>;
       disable?: boolean;
     };
@@ -153,6 +155,11 @@ export interface CanonicalPackage {
     droid?: {
       argumentHint?: string; // Usage hint for slash commands
       allowedTools?: string[]; // Reserved for future use
+    };
+    amp?: {
+      globs?: string[]; // File patterns for conditional inclusion
+      argumentHint?: string; // Hint shown for skill invocation
+      disableModelInvocation?: boolean; // Prevent model from auto-invoking
     };
     zencoderConfig?: {
       globs?: string[]; // File patterns where the rule applies
@@ -274,6 +281,8 @@ export interface MetadataSection {
       mode?: 'subagent' | 'primary' | 'all';
       model?: string;
       temperature?: number;
+      prompt?: string; // Path to custom system prompt file using {file:./path} syntax
+      maxSteps?: number; // Iteration limit - unlimited if unset
       permission?: Record<string, any>;
       disable?: boolean;
     };
@@ -295,6 +304,11 @@ export interface MetadataSection {
     droid?: {
       argumentHint?: string; // Usage hint for slash commands
       allowedTools?: string[]; // Reserved for future use
+    };
+    amp?: {
+      globs?: string[]; // File patterns for conditional inclusion
+      argumentHint?: string; // Hint shown for skill invocation
+      disableModelInvocation?: boolean; // Prevent model from auto-invoking
     };
     zencoderConfig?: {
       globs?: string[]; // File patterns where the rule applies
@@ -466,7 +480,7 @@ export interface FileReferenceSection {
  */
 export interface CustomSection {
   type: 'custom';
-  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini' | 'zed' | 'codex';
+  editorType?: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini' | 'zed' | 'codex' | 'amp';
   title?: string;
   content: string;
   metadata?: Record<string, any>;
@@ -476,7 +490,7 @@ export interface CustomSection {
  * Format conversion options
  */
 export interface ConversionOptions {
-  targetFormat: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini' | 'canonical';
+  targetFormat: 'cursor' | 'claude' | 'continue' | 'windsurf' | 'copilot' | 'kiro' | 'gemini' | 'amp' | 'canonical';
   preserveComments?: boolean;
   optimizeForEditor?: boolean; // Use editor-specific features
   includeMetadata?: boolean;

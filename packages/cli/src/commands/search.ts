@@ -30,7 +30,7 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
     'plugin': '🔌',
     'extension': '📦',
     'server': '🖥️',
-    'snippet': '📝',
+    'snippet': '📎',
   };
 
   // Format-specific icons for rules/defaults

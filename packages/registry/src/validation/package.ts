@@ -31,7 +31,7 @@ export const packageManifestSchema = z.object({
   repository: z.string().url().optional(),
   homepage: z.string().url().optional(),
   documentation: z.string().url().optional(),
-  format: z.enum(['cursor', 'claude', 'claude-plugin', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'generic', 'mcp']),
+  format: z.enum(['cursor', 'claude', 'claude-plugin', 'continue', 'windsurf', 'copilot', 'kiro', 'agents.md', 'gemini', 'ruler', 'droid', 'opencode', 'codex', 'amp', 'trae', 'aider', 'zencoder', 'replit', 'generic', 'mcp']),
   subtype: z.enum(['rule', 'agent', 'skill', 'slash-command', 'prompt', 'collection', 'chatmode', 'hook', 'tool', 'plugin', 'server']).optional(),
   organization: z.string().optional(), // Organization name to publish under
   private: z.boolean().optional(), // Whether the package is private (defaults to false/public)

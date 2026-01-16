@@ -125,6 +125,52 @@ Shows package name, version, description, author, format, subtype, dependencies,
 
 ---
 
+### show
+
+Preview package contents before installing. Downloads and extracts the package to display its files without modifying your project.
+
+```bash
+prpm show <package> [options]
+```
+
+**Arguments:**
+- `package` - Package ID to show (e.g., `@username/package` or `@username/package@1.0.0`)
+
+**Options:**
+- `--full` - Show complete file contents (not just file list)
+- `--file <name>` - Show contents of a specific file
+- `--json` - Output in JSON format (for programmatic use)
+
+**Examples:**
+
+```bash
+# Preview package files
+prpm show @username/typescript-rules
+
+# View complete file contents
+prpm show @username/typescript-rules --full
+
+# View a specific file
+prpm show @username/typescript-rules --file SKILL.md
+
+# View specific version
+prpm show @username/typescript-rules@2.0.0
+
+# JSON output for scripting
+prpm show @username/typescript-rules --json
+```
+
+**Output:**
+Displays package metadata (name, version, format, subtype), a list of all files with their sizes, and optionally the full file contents. Binary files are detected and marked as `[binary]`.
+
+**Use Cases:**
+- Inspect package contents before installing
+- Verify package structure and file organization
+- Review code/rules before adding to your project
+- Audit packages for security or quality
+
+---
+
 ### trending
 
 View trending packages from the registry.

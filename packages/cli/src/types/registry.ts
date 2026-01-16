@@ -2,31 +2,10 @@
  * Registry API types for CLI
  */
 
-import { Format, Subtype } from '../types';
+import { Format, Subtype, SnippetConfig } from '../types';
 
-/**
- * Configuration for snippet packages
- * Snippets are content that gets appended to existing files (AGENTS.md, CLAUDE.md, etc.)
- */
-export interface SnippetConfig {
-  /**
-   * Target file to append the snippet to
-   * Examples: "AGENTS.md", "CLAUDE.md", ".cursorrules", "CONVENTIONS.md"
-   */
-  target: string;
-  /**
-   * Where to insert the snippet in the target file
-   * - "append": Add to end of file (default)
-   * - "prepend": Add to beginning of file
-   * - "section:## Section Name": Insert after a specific section header
-   */
-  position?: 'append' | 'prepend' | `section:${string}`;
-  /**
-   * Optional section header to wrap the snippet content
-   * If provided, content will be wrapped: ## {header}\n{content}
-   */
-  header?: string;
-}
+// Re-export SnippetConfig for consumers
+export type { SnippetConfig };
 
 /**
  * Enhanced file metadata for collection packages
@@ -52,8 +31,8 @@ export interface PackageManifest {
   license?: string;
   license_text?: string;
   license_url?: string;
-  /** Content snippet preview (string) or snippet package config (SnippetConfig) */
-  snippet?: string | SnippetConfig;
+  /** Snippet configuration - for subtype: "snippet" */
+  snippet?: SnippetConfig;
   repository?: string;
   homepage?: string;
   documentation?: string;

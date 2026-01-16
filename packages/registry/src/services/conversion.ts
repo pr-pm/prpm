@@ -22,6 +22,7 @@ import {
   toAider,
   toZencoder,
   toReplit,
+  toCodex,
 } from '@pr-pm/converters';
 import type { Format } from '@pr-pm/types';
 
@@ -122,6 +123,10 @@ export async function convertToFormat(
         result = toReplit(canonicalPkg);
         break;
 
+      case 'codex':
+        result = toCodex(canonicalPkg);
+        break;
+
       case 'generic':
         // Generic markdown - use the most compatible format
         result = toCursor(canonicalPkg);
@@ -205,6 +210,10 @@ function getFilenameForFormat(format: Format, packageName: string, subtype?: str
     case 'replit':
       return 'replit_agent_instructions.md';
 
+    case 'codex':
+      // Skills use SKILL.md, other subtypes use AGENTS.md
+      return subtype === 'skill' ? 'SKILL.md' : 'AGENTS.md';
+
     case 'generic':
     case 'mcp':
     default:
@@ -237,6 +246,7 @@ function getContentTypeForFormat(format: Format, subtype?: string): string {
     case 'aider':
     case 'zencoder':
     case 'replit':
+    case 'codex':
     case 'generic':
     case 'mcp':
     default:

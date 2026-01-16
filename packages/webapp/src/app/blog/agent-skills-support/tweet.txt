@@ -1,0 +1,5 @@
+Agent Skills is Anthropic's open format for packaging procedural knowledge. Now it's a first-class format in PRPM.
+
+Write skills once. Convert to Cursor, Claude, Copilot, Windsurf—any AI editor. One package, universal portability.
+
+https://prpm.dev/blog/agent-skills-support

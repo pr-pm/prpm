@@ -543,13 +543,13 @@ export async function handlePublish(options: PublishOptions): Promise<void> {
           validateLicenseInfo(licenseInfo, scopedPackageName);
           console.log("");
 
-          // Extract content snippet
-          console.log("📝 Extracting content snippet...");
-          const snippet = await extractSnippet(manifest);
-          if (snippet) {
-            manifest.snippet = snippet;
+          // Extract content preview snippet
+          console.log("📝 Extracting content preview...");
+          const contentPreview = await extractSnippet(manifest);
+          if (contentPreview) {
+            (manifest as any).contentPreview = contentPreview;
           }
-          validateSnippet(snippet, scopedPackageName);
+          validateSnippet(contentPreview, scopedPackageName);
           console.log("");
 
           // Create tarball

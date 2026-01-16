@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/amp.json",
+  "$comment": "https://ampcode.com/manual#agents-md",
+  "title": "Amp AGENTS.md Format",
+  "description": "JSON Schema for Amp agent files - plain markdown with optional YAML frontmatter for glob patterns",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "properties": {
+        "globs": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Single glob pattern for file matching"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of glob patterns for file matching"
+            }
+          ],
+          "description": "Glob patterns - file is only included when matching file types are accessed"
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "string",
+      "description": "Plain markdown content with project-specific instructions. Supports @-mentions for including other files (e.g., @doc/*.md)"
+    }
+  },
+  "examples": [
+    {
+      "content": "# Backend Guidelines\n\n## Architecture\n\nWe use a clean architecture pattern with dependency injection.\n\n## Database\n\nPostgreSQL with Prisma ORM.\n\n## Coding Standards\n\n- Use TypeScript strict mode\n- Write unit tests for all services\n- Follow @docs/api-conventions.md"
+    },
+    {
+      "frontmatter": {
+        "globs": ["**/*.ts", "**/*.tsx"]
+      },
+      "content": "# TypeScript Guidelines\n\nThese rules apply only to TypeScript files:\n\n- Use strict null checks\n- Prefer interfaces over type aliases\n- Export types explicitly"
+    }
+  ]
+}
