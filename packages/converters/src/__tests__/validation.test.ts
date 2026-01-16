@@ -70,6 +70,27 @@ You are a test agent.
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should include property name in additionalProperties error', () => {
+      const invalidClaude = `---
+name: test-agent
+description: "Test agent"
+allowed-tools: Read, Write, Bash
+---
+
+# Test Agent
+
+You are a test agent.
+`;
+
+      const result = validateMarkdown('claude', invalidClaude, 'agent');
+      expect(result.valid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+      // The error should include the invalid property name
+      const errorMessage = result.errors[0].message;
+      expect(errorMessage).toContain('allowed-tools');
+      expect(errorMessage).toContain('must NOT have additional properties');
+    });
   });
 
   describe('validateFormat', () => {
