@@ -160,8 +160,20 @@ export function validateFormat(
 
     if (!valid && validate.errors) {
       for (const error of validate.errors) {
-        const path = error.instancePath || '/' + (error.params as { missingProperty?: string }).missingProperty || '/';
-        const message = error.message || 'Validation error';
+        const params = error.params as {
+          missingProperty?: string;
+          additionalProperty?: string;
+          allowedValues?: unknown[];
+        };
+        const path = error.instancePath || '/' + (params.missingProperty || '');
+        let message = error.message || 'Validation error';
+
+        // Enhance error messages with additional context
+        if (error.keyword === 'additionalProperties' && params.additionalProperty) {
+          message = `${message}: '${params.additionalProperty}'`;
+        } else if (error.keyword === 'enum' && params.allowedValues) {
+          message = `${message}. Allowed values: ${params.allowedValues.join(', ')}`;
+        }
 
         // Categorize as error or warning based on severity
         const validationError: ValidationError = {
