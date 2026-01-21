@@ -15,7 +15,7 @@ import { Package, PackageVersion, PackageInfo } from "../types.js";
 import { toError } from "../types/errors.js";
 import { config } from "../config.js";
 import { optionalAuth, ciModeAuth } from "../middleware/auth.js";
-import { createPublishRateLimiter } from "../middleware/rate-limit.js";
+import { createPublishRateLimiter, createGlobalPublishRateLimiter, createDailyPublishQuota } from "../middleware/rate-limit.js";
 import { createConcurrencyController } from "../middleware/concurrency-control.js";
 import type { AIMetadataResult } from "../scoring/ai-evaluator.js";
 import type {
@@ -770,8 +770,14 @@ export async function packageRoutes(server: FastifyInstance) {
   );
 
   // Publish package (authenticated)
-  // Protected by rate limiting (10 req/min) and concurrency control (5 concurrent)
+  // Protected by multiple layers of rate limiting and concurrency control:
+  // 1. Global rate limit: 50 publishes/min system-wide (prevents DDoS)
+  // 2. Per-user rate limit: token bucket (20 burst, 10/min refill)
+  // 3. Daily quota: 50-500/day depending on user tier
+  // 4. Concurrency control: 5 concurrent operations (distributed via Redis)
+  const globalPublishRateLimiter = createGlobalPublishRateLimiter();
   const publishRateLimiter = createPublishRateLimiter();
+  const dailyPublishQuota = createDailyPublishQuota();
   const publishConcurrencyControl = createConcurrencyController();
 
   server.post(
@@ -780,7 +786,13 @@ export async function packageRoutes(server: FastifyInstance) {
       preHandler: [
         // Use ciModeAuth which allows CI_MODE bypass or falls back to JWT auth
         ciModeAuth,
+        // Global system-wide rate limit (50/min) - prevents system overload from many users
+        globalPublishRateLimiter,
+        // Per-user token bucket rate limit (20 burst, 10/min refill)
         publishRateLimiter,
+        // Per-user daily quota (50-500/day depending on tier)
+        dailyPublishQuota,
+        // Distributed concurrency control (5 concurrent across all instances)
         publishConcurrencyControl,
       ],
       // No schema - multipart doesn't set request.body for validation
