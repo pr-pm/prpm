@@ -283,9 +283,13 @@ export function createPublishRateLimiter() {
       return; // Proceed with request
 
     } catch (error) {
-      // FALLBACK: If Redis fails, log error but allow request (fail open)
-      request.server.log.error({ error, userId }, 'Publish rate limiting Redis error - allowing request');
-      return;
+      // SECURITY: Fail closed on Redis errors - reject the request
+      request.server.log.error({ error, userId }, 'Publish rate limiting Redis error - rejecting request');
+      return reply.code(503).send({
+        error: 'Service Unavailable',
+        message: 'Rate limiting service temporarily unavailable. Please try again.',
+        retryAfter: 30,
+      });
     }
   };
 }
@@ -346,6 +350,216 @@ export function createPurchaseRateLimiter() {
       // FALLBACK: If Redis fails, log error but allow request
       request.server.log.error({ error, userId }, 'Purchase rate limiting Redis error - allowing request');
       return;
+    }
+  };
+}
+
+/**
+ * Global system-wide rate limiter for package publishing
+ * SECURITY: Prevents system overload from multiple users publishing simultaneously
+ *
+ * Uses a sliding window counter approach:
+ * - Shared across ALL users (not per-user)
+ * - Limit: 50 publishes per minute system-wide (1000 in CI mode)
+ * - Fails CLOSED on Redis errors to prevent abuse during outages
+ *
+ * @returns Fastify middleware function
+ */
+export function createGlobalPublishRateLimiter() {
+  return async function globalPublishRateLimitMiddleware(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const key = 'ratelimit:publish:global';
+    const now = Date.now();
+
+    // Check for CI_MODE to allow higher limits for testing
+    const isCI = process.env.CI_MODE === 'true';
+
+    // Global rate limit parameters
+    const maxRequestsPerMinute = isCI ? 1000 : 50;
+    const windowSeconds = 60;
+
+    try {
+      const redis = request.server.redis;
+
+      // Use atomic INCR to prevent race conditions under high concurrency
+      const newCount = await redis.incr(key);
+
+      // Set TTL on first request in window (when count becomes 1)
+      if (newCount === 1) {
+        await redis.expire(key, windowSeconds);
+      }
+
+      // Get TTL to calculate reset time
+      const ttl = await redis.ttl(key);
+      const resetAt = ttl > 0 ? now + (ttl * 1000) : now + (windowSeconds * 1000);
+
+      // Add rate limit headers
+      reply.header('X-Global-RateLimit-Limit', maxRequestsPerMinute);
+      reply.header('X-Global-RateLimit-Remaining', Math.max(0, maxRequestsPerMinute - newCount));
+      reply.header('X-Global-RateLimit-Reset', Math.ceil(resetAt / 1000));
+
+      // Check if limit exceeded
+      if (newCount > maxRequestsPerMinute) {
+        const retryAfter = Math.ceil((resetAt - now) / 1000);
+
+        reply.header('Retry-After', retryAfter);
+
+        request.server.log.warn({
+          count: newCount,
+          limit: maxRequestsPerMinute,
+        }, 'Global publish rate limit exceeded');
+
+        return reply.code(429).send({
+          error: 'rate_limit_exceeded',
+          message: 'System publish rate limit exceeded. The registry is experiencing high traffic. Please try again shortly.',
+          retryAfter,
+        });
+      }
+    } catch (error) {
+      // SECURITY: Fail closed on Redis errors - reject the request
+      request.server.log.error({ error }, 'Global rate limiting Redis error - rejecting request');
+      return reply.code(503).send({
+        error: 'Service Unavailable',
+        message: 'Rate limiting service temporarily unavailable. Please try again.',
+        retryAfter: 30,
+      });
+    }
+  };
+}
+
+/**
+ * Daily quota limiter for package publishing
+ * SECURITY: Enforces per-user daily publish limits to prevent abuse
+ *
+ * Quota tiers:
+ * - Free users: 50 packages per day
+ * - PRPM+ subscribers (prpm_plus_status = 'active'): 200 packages per day
+ * - Verified organization members: 500 packages per day
+ *
+ * Uses Redis INCR with daily keys (YYYY-MM-DD format)
+ * TTL of 48 hours allows for timezone differences
+ * Fails CLOSED on Redis errors
+ *
+ * @returns Fastify middleware function
+ */
+export function createDailyPublishQuota() {
+  // Check for CI_MODE to allow higher limits for testing
+  const isCI = process.env.CI_MODE === 'true';
+
+  return async function dailyPublishQuotaMiddleware(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    const userId = (request.user as any)?.user_id;
+
+    if (!userId) {
+      return; // Auth middleware will handle this
+    }
+
+    // CI_MODE: Skip quota checks entirely for integration testing
+    if (isCI) {
+      return;
+    }
+
+    // Get current date in YYYY-MM-DD format (UTC)
+    const today = new Date().toISOString().split('T')[0];
+    const key = `quota:publish:daily:${userId}:${today}`;
+
+    // TTL of 48 hours (172800 seconds) to handle timezone differences
+    const ttlSeconds = 172800;
+
+    try {
+      const redis = request.server.redis;
+
+      // Determine user's quota tier
+      let dailyLimit = 50; // Default: free tier
+      let tier = 'free';
+
+      // Check if user has PRPM+ subscription
+      const userResult = await request.server.pg.query(
+        `SELECT prpm_plus_status FROM users WHERE id = $1`,
+        [userId]
+      );
+
+      const isSubscriber = userResult.rows[0]?.prpm_plus_status === 'active';
+
+      if (isSubscriber) {
+        dailyLimit = 200;
+        tier = 'prpm_plus';
+      }
+
+      // Check if user is member of verified organization (higher priority)
+      const orgResult = await request.server.pg.query(
+        `SELECT o.id, o.is_verified
+         FROM organization_members om
+         JOIN organizations o ON om.org_id = o.id
+         WHERE om.user_id = $1 AND o.is_verified = TRUE
+         LIMIT 1`,
+        [userId]
+      );
+
+      const isOrgMember = orgResult.rows.length > 0;
+
+      if (isOrgMember) {
+        dailyLimit = 500;
+        tier = 'organization';
+      }
+
+      // Use atomic INCR to prevent race conditions under high concurrency
+      const newCount = await redis.incr(key);
+
+      // Set TTL on first request (when count becomes 1)
+      if (newCount === 1) {
+        await redis.expire(key, ttlSeconds);
+      }
+
+      // Check if quota exceeded AFTER atomic increment
+      if (newCount > dailyLimit) {
+        // Decrement since we're rejecting this request
+        await redis.decr(key);
+
+        request.server.log.warn({
+          userId,
+          count: newCount - 1, // Actual count before this rejected request
+          dailyLimit,
+          tier,
+        }, 'Daily publish quota exceeded');
+
+        reply.header('X-Quota-Limit', dailyLimit);
+        reply.header('X-Quota-Remaining', 0);
+        reply.header('X-Quota-Tier', tier);
+
+        return reply.code(429).send({
+          error: 'quota_exceeded',
+          message: `Daily publish quota exceeded. You have published ${newCount - 1}/${dailyLimit} packages today. Quota resets at midnight UTC.`,
+          quotaLimit: dailyLimit,
+          quotaUsed: newCount - 1,
+          tier,
+        });
+      }
+
+      // Add quota headers
+      reply.header('X-Quota-Limit', dailyLimit);
+      reply.header('X-Quota-Remaining', Math.max(0, dailyLimit - newCount));
+      reply.header('X-Quota-Tier', tier);
+
+      request.server.log.debug({
+        userId,
+        count: newCount,
+        dailyLimit,
+        tier,
+      }, 'Daily publish quota check passed');
+
+    } catch (error) {
+      // SECURITY: Fail closed on Redis errors - reject the request
+      request.server.log.error({ error, userId }, 'Daily quota Redis error - rejecting request');
+      return reply.code(503).send({
+        error: 'Service Unavailable',
+        message: 'Rate limiting service temporarily unavailable. Please try again.',
+        retryAfter: 30,
+      });
     }
   };
 }

@@ -103,7 +103,9 @@ async function buildServer() {
   await server.register(rateLimit, {
     max: 100, // 100 requests
     timeWindow: '1 minute',
-    skipOnError: true,
+    // SECURITY: Fail closed - if Redis is unavailable, reject requests with 503
+    // rather than allowing unlimited requests through (skipOnError: true is dangerous)
+    skipOnError: false,
     redis: server.redis, // Use Redis for distributed rate limiting
     // Generate unique key per IP address or authenticated user
     keyGenerator: (request) => {
@@ -126,12 +128,11 @@ async function buildServer() {
       message: 'Rate limit exceeded. Please try again later.',
       statusCode: 429,
     }),
-    // Exempt requests from official webapp, CLI, and specific endpoints
+    // Exempt requests from official webapp and specific build-time endpoints
     allowList: (request) => {
       const path = request.url || '';
       const origin = request.headers.origin || '';
       const referer = request.headers.referer || '';
-      const userAgent = request.headers['user-agent'] || '';
 
       // NEVER rate limit requests from official webapp domains
       const webappDomains = [
@@ -149,13 +150,8 @@ async function buildServer() {
         return true; // Exempt all webapp requests
       }
 
-      // NEVER rate limit requests from official CLI
-      // CLI identifies itself with User-Agent: prpm-cli/version
-      const isCliRequest = userAgent.startsWith('prpm-cli/');
-
-      if (isCliRequest) {
-        return true; // Exempt all CLI requests
-      }
+      // NOTE: CLI requests are NOT exempted - User-Agent can be easily spoofed
+      // All CLI users should be rate limited like everyone else
 
       // Also exempt build-time and SEO endpoints
       // These endpoints are authenticated via tokens and used for:
