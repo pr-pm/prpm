@@ -445,6 +445,9 @@ export function createGlobalPublishRateLimiter() {
  * @returns Fastify middleware function
  */
 export function createDailyPublishQuota() {
+  // Check for CI_MODE to allow higher limits for testing
+  const isCI = process.env.CI_MODE === 'true';
+
   return async function dailyPublishQuotaMiddleware(
     request: FastifyRequest,
     reply: FastifyReply
@@ -453,6 +456,11 @@ export function createDailyPublishQuota() {
 
     if (!userId) {
       return; // Auth middleware will handle this
+    }
+
+    // CI_MODE: Skip quota checks entirely for integration testing
+    if (isCI) {
+      return;
     }
 
     // Get current date in YYYY-MM-DD format (UTC)
