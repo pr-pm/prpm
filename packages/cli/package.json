@@ -55,6 +55,7 @@
     "jsonwebtoken": "^9.0.2",
     "posthog-node": "^5.10.0",
     "semver": "^7.7.3",
+    "smol-toml": "^1.6.0",
     "tar": "^6.2.1"
   },
   "devDependencies": {

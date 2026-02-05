@@ -3,6 +3,7 @@
  *
  * Handles merging and removing MCP server configurations from:
  * - Claude: Project-local .mcp.json or Global ~/.claude/settings.json
+ * - Codex: Project-local codex.toml or Global ~/.codex/config.toml
  * - Gemini: Extension-specific gemini-extension.json files
  * - Kiro: Agent-specific .kiro/agents/*.json files
  */
@@ -10,6 +11,17 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
+import * as TOML from 'smol-toml';
+
+/**
+ * Supported editors for MCP server installation
+ */
+export type MCPEditor = 'claude' | 'codex';
+
+/**
+ * List of supported MCP editors
+ */
+export const MCP_EDITORS: readonly MCPEditor[] = ['claude', 'codex'] as const;
 
 /**
  * MCP Server configuration - compatible with converter types
@@ -21,6 +33,25 @@ export interface MCPServer {
   args?: string[];
   url?: string;
   env?: Record<string, string>;
+  // Codex-specific fields
+  cwd?: string;
+  env_vars?: string[];
+  bearer_token_env_var?: string;
+  http_headers?: Record<string, string>;
+  env_http_headers?: Record<string, string>;
+  enabled?: boolean;
+  enabled_tools?: string[];
+  disabled_tools?: string[];
+  startup_timeout_sec?: number;
+  tool_timeout_sec?: number;
+}
+
+/**
+ * Codex TOML configuration structure
+ */
+export interface CodexConfig {
+  mcp_servers?: Record<string, MCPServer>;
+  [key: string]: unknown;
 }
 
 /**
@@ -50,7 +81,7 @@ export interface MCPRemoveResult {
 }
 
 /**
- * Get the path to the MCP config file
+ * Get the path to the MCP config file for Claude
  *
  * @param global - If true, return global config path (~/.claude/settings.json)
  * @param projectDir - Project directory (default: cwd)
@@ -60,6 +91,40 @@ export function getMCPConfigPath(global: boolean = false, projectDir: string = p
     return join(homedir(), '.claude', 'settings.json');
   }
   return join(projectDir, '.mcp.json');
+}
+
+/**
+ * Get the path to the Codex MCP config file
+ *
+ * @param global - If true, return global config path (~/.codex/config.toml)
+ * @param projectDir - Project directory (default: cwd)
+ */
+export function getCodexMCPConfigPath(global: boolean = false, projectDir: string = process.cwd()): string {
+  if (global) {
+    return join(homedir(), '.codex', 'config.toml');
+  }
+  return join(projectDir, 'codex.toml');
+}
+
+/**
+ * Get the path to the MCP config file for a specific editor
+ *
+ * @param editor - Target editor (claude, codex)
+ * @param global - If true, return global config path
+ * @param projectDir - Project directory (default: cwd)
+ */
+export function getEditorMCPConfigPath(
+  editor: MCPEditor,
+  global: boolean = false,
+  projectDir: string = process.cwd()
+): string {
+  switch (editor) {
+    case 'codex':
+      return getCodexMCPConfigPath(global, projectDir);
+    case 'claude':
+    default:
+      return getMCPConfigPath(global, projectDir);
+  }
 }
 
 /**
@@ -96,6 +161,265 @@ export function writeMCPConfig(configPath: string, config: MCPConfig): void {
   }
 
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+}
+
+/**
+ * Read Codex TOML configuration from file
+ *
+ * @param configPath - Path to config.toml file
+ * @returns Parsed config or empty config if file doesn't exist
+ */
+export function readCodexConfig(configPath: string): CodexConfig {
+  if (!existsSync(configPath)) {
+    return { mcp_servers: {} };
+  }
+
+  try {
+    const content = readFileSync(configPath, 'utf-8');
+    const parsed = TOML.parse(content) as CodexConfig;
+    return parsed;
+  } catch (error) {
+    // If file is empty or invalid TOML, return empty config
+    return { mcp_servers: {} };
+  }
+}
+
+/**
+ * Write Codex TOML configuration to file
+ *
+ * @param configPath - Path to config.toml file
+ * @param config - Config to write
+ */
+export function writeCodexConfig(configPath: string, config: CodexConfig): void {
+  // Ensure directory exists
+  const dir = dirname(configPath);
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+
+  writeFileSync(configPath, TOML.stringify(config as Record<string, unknown>) + '\n');
+}
+
+/**
+ * Convert Claude/standard MCP server config to Codex format
+ *
+ * Codex uses different field names:
+ * - stdio servers: command, args, cwd, env
+ * - http servers: url, bearer_token_env_var, http_headers
+ */
+function toCodexServerConfig(server: MCPServer): Record<string, unknown> {
+  const codexServer: Record<string, unknown> = {};
+
+  // Handle stdio servers (command-based)
+  if (server.command) {
+    codexServer.command = server.command;
+    if (server.args && server.args.length > 0) {
+      codexServer.args = server.args;
+    }
+    if (server.cwd) {
+      codexServer.cwd = server.cwd;
+    }
+    if (server.env && Object.keys(server.env).length > 0) {
+      codexServer.env = server.env;
+    }
+  }
+
+  // Handle http servers (url-based)
+  if (server.url) {
+    codexServer.url = server.url;
+    if (server.bearer_token_env_var) {
+      codexServer.bearer_token_env_var = server.bearer_token_env_var;
+    }
+    if (server.http_headers && Object.keys(server.http_headers).length > 0) {
+      codexServer.http_headers = server.http_headers;
+    }
+    if (server.env_http_headers && Object.keys(server.env_http_headers).length > 0) {
+      codexServer.env_http_headers = server.env_http_headers;
+    }
+  }
+
+  // Common optional fields
+  if (server.enabled !== undefined) {
+    codexServer.enabled = server.enabled;
+  }
+  if (server.enabled_tools && server.enabled_tools.length > 0) {
+    codexServer.enabled_tools = server.enabled_tools;
+  }
+  if (server.disabled_tools && server.disabled_tools.length > 0) {
+    codexServer.disabled_tools = server.disabled_tools;
+  }
+  if (server.startup_timeout_sec !== undefined) {
+    codexServer.startup_timeout_sec = server.startup_timeout_sec;
+  }
+  if (server.tool_timeout_sec !== undefined) {
+    codexServer.tool_timeout_sec = server.tool_timeout_sec;
+  }
+
+  return codexServer;
+}
+
+/**
+ * Merge MCP servers into Codex TOML configuration
+ *
+ * @param servers - MCP servers to merge
+ * @param global - If true, merge into global config (~/.codex/config.toml)
+ * @param projectDir - Project directory for local config
+ */
+export function mergeCodexMCPServers(
+  servers: Record<string, MCPServer>,
+  global: boolean = false,
+  projectDir: string = process.cwd()
+): MCPMergeResult {
+  const result: MCPMergeResult = {
+    added: [],
+    skipped: [],
+    warnings: [],
+  };
+
+  if (!servers || Object.keys(servers).length === 0) {
+    return result;
+  }
+
+  const configPath = getCodexMCPConfigPath(global, projectDir);
+  const config = readCodexConfig(configPath);
+
+  // Ensure mcp_servers object exists (Codex uses underscore, not camelCase)
+  if (!config.mcp_servers) {
+    config.mcp_servers = {};
+  }
+
+  for (const [name, server] of Object.entries(servers)) {
+    if (config.mcp_servers[name]) {
+      // Server already exists - skip and warn
+      result.skipped.push(name);
+      result.warnings.push(`MCP server '${name}' already exists in Codex config, keeping existing configuration`);
+    } else {
+      // Convert to Codex format and add
+      config.mcp_servers[name] = toCodexServerConfig(server) as MCPServer;
+      result.added.push(name);
+    }
+  }
+
+  // Only write if we added something
+  if (result.added.length > 0) {
+    writeCodexConfig(configPath, config);
+  }
+
+  return result;
+}
+
+/**
+ * Remove MCP servers from Codex TOML configuration
+ *
+ * @param servers - MCP servers that were installed (original config for comparison)
+ * @param global - If true, remove from global config
+ * @param projectDir - Project directory for local config
+ */
+export function removeCodexMCPServers(
+  servers: Record<string, MCPServer>,
+  global: boolean = false,
+  projectDir: string = process.cwd()
+): MCPRemoveResult {
+  const result: MCPRemoveResult = {
+    removed: [],
+    kept: [],
+    warnings: [],
+  };
+
+  if (!servers || Object.keys(servers).length === 0) {
+    return result;
+  }
+
+  const configPath = getCodexMCPConfigPath(global, projectDir);
+
+  if (!existsSync(configPath)) {
+    return result;
+  }
+
+  const config = readCodexConfig(configPath);
+
+  if (!config.mcp_servers) {
+    return result;
+  }
+
+  for (const [name, originalServer] of Object.entries(servers)) {
+    const currentServer = config.mcp_servers[name];
+
+    if (!currentServer) {
+      // Server doesn't exist (already removed or never installed)
+      continue;
+    }
+
+    // Convert original to Codex format for comparison
+    const originalCodexServer = toCodexServerConfig(originalServer);
+    if (serversEqual(currentServer as MCPServer, originalCodexServer as MCPServer)) {
+      // Config unchanged - safe to remove
+      delete config.mcp_servers[name];
+      result.removed.push(name);
+    } else {
+      // Config modified by user - keep it
+      result.kept.push(name);
+      result.warnings.push(`Keeping modified MCP server '${name}' in Codex config`);
+    }
+  }
+
+  // Clean up empty mcp_servers object
+  if (Object.keys(config.mcp_servers).length === 0) {
+    delete config.mcp_servers;
+  }
+
+  // Only write if we removed something
+  if (result.removed.length > 0) {
+    writeCodexConfig(configPath, config);
+  }
+
+  return result;
+}
+
+/**
+ * Merge MCP servers into configuration for any supported editor
+ *
+ * @param servers - MCP servers to merge
+ * @param editor - Target editor (claude, codex)
+ * @param global - If true, merge into global config
+ * @param projectDir - Project directory for local config
+ */
+export function mergeEditorMCPServers(
+  servers: Record<string, MCPServer>,
+  editor: MCPEditor = 'claude',
+  global: boolean = false,
+  projectDir: string = process.cwd()
+): MCPMergeResult {
+  switch (editor) {
+    case 'codex':
+      return mergeCodexMCPServers(servers, global, projectDir);
+    case 'claude':
+    default:
+      return mergeMCPServers(servers, global, projectDir);
+  }
+}
+
+/**
+ * Remove MCP servers from configuration for any supported editor
+ *
+ * @param servers - MCP servers that were installed
+ * @param editor - Target editor (claude, codex)
+ * @param global - If true, remove from global config
+ * @param projectDir - Project directory for local config
+ */
+export function removeEditorMCPServers(
+  servers: Record<string, MCPServer>,
+  editor: MCPEditor = 'claude',
+  global: boolean = false,
+  projectDir: string = process.cwd()
+): MCPRemoveResult {
+  switch (editor) {
+    case 'codex':
+      return removeCodexMCPServers(servers, global, projectDir);
+    case 'claude':
+    default:
+      return removeMCPServers(servers, global, projectDir);
+  }
 }
 
 /**

@@ -1,46 +1,54 @@
 ---
 name: osgrep
-description: Semantic search for local files. Backed by a background osgrep server with live indexing. Always use osgrep instead of grep/find.
+description: Semantic code search using natural language queries. Use when users ask "where is X implemented", "how does Y work", "find the logic for Z", or need to locate code by concept rather than exact text. Returns file paths with line numbers and code snippets.
+allowed-tools: "Bash(osgrep:*), Read"
 license: Apache-2.0
 ---
+## When to Use
+Use this to find code by **concept** or **behavior** (e.g., "where is auth validated", "how are plugins loaded").
+*Note: This tool prioritizes finding the right files and locations in the code. Snippets are truncated (max 16 lines) and are often just previews.*
 
-## When to use
-
-Use `osgrep` for all code and concept discovery. Do not use `grep` or `find` unless you must match an exact string and `osgrep` fails.
-
-## How to use
-
-**Always use the `--json` flag.** The server auto-starts and keeps the index fresh.
-
-### Basic Search
-
-Ask a natural language question. Do not `ls` first.
-
+Example:
 ```bash
-osgrep --json "How are user authentication tokens validated?"
-osgrep --json "Where do we handle retries or backoff?"
+osgrep "how are plugins loaded"
+osgrep "how are plugins loaded" packages/transformers.js/src
 ```
 
-### Scoped Search
+## Strategy for Different Query Types
 
-Limit search to a specific directory.
+### For **Architectural/System-Level Questions** (auth, LSP integration, file watching)
+1. **Search Broadly First:** Use a conceptual query to map the landscape.
+   * `osgrep "authentication authorization checks"`
+2. **Survey the Results:** Look for patterns across multiple files:
+   * Are checks in middleware? Decorators? Multiple services?
+   * Do file paths suggest different layers (gateway, handlers, utils)?
+3. **Read Strategically:** Pick 2-4 files that represent different aspects:
+   * Read the main entry point
+   * Read representative middleware/util files
+   * Follow imports if architecture is unclear
+4. **Refine with Specific Searches:** If one aspect is unclear:
+   * `osgrep "session validation logic"`
+   * `osgrep "API authentication middleware"`
 
-```bash
-osgrep --json "auth middleware" src/api
-```
+### For **Targeted Implementation Details** (specific function, algorithm)
+1. **Search Specifically:** Ask about the precise logic.
+   * `osgrep "logic for merging user and default configuration"`
+2. **Evaluate the Semantic Match:**
+   * Does the snippet look relevant?
+   * **Crucial:** If it ends in `...` or cuts off mid-logic, **read the file**.
+3. **One Search, One Read:** Use osgrep to pinpoint the best file, then read it fully.
 
-### Helpful flags
+## Output Format
 
-- `--json`: **Required.** Returns structured data (path, line, score, content).
-- `-m <n>`: Max total results (default: 25).
-- `--per-file <n>`: Max matches per file (default: 1). Use `--per-file 5` when exploring a specific file.
+Returns: `path/to/file:line [Tags] Code Snippet`
 
-### Strategy
+- `[Definition]`: Semantic search detected a class/function here. High relevance.
+- `...`: **Truncation Marker**. Snippet is incomplete—use `read_file` for full context.
 
-1. Run `osgrep --json "<question>" [path]`.
-2. The output is a dense JSON snippet. If it answers the question, stop.
-3. Only use `Read` if you need the full file context for a returned path.
-4. If results are vague, refine the query or increase `-m`.
+## Tips
 
-## Keywords
-semantic search, code search, local search, grep alternative, find code, explore codebase, understand code, search by meaning
+- **Trust the Semantics:** You don't need exact names. `osgrep "how does the server start"` works better than guessing `osgrep "server.init"`.
+- **Watch for Distributed Patterns:** If results span 5+ files in different directories, the feature is likely architectural—survey before diving deep.
+- **Scope When Possible:** Use path constraints to focus: `osgrep "auth" src/server/`
+- **Don't Over-Rely on Snippets:** For architectural questions, snippets are signposts, not answers. Read the key files.
+- **"Still Indexing...":** If you see this, please stop, alert the user that the index is ongoing and ask them if they wish to proceed. Results will be partial until the index is complete.

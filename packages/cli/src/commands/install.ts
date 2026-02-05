@@ -35,7 +35,7 @@ import {
 import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-config';
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
 import { addSkillToManifest, type SkillManifestEntry } from '../core/agents-md-progressive.js';
-import { mergeMCPServers, type MCPServer } from '../core/mcp.js';
+import { mergeEditorMCPServers, type MCPServer, type MCPEditor, MCP_EDITORS } from '../core/mcp.js';
 import { installSnippet, type SnippetConfig } from '../core/snippet.js';
 import {
   fromCursor,
@@ -78,6 +78,19 @@ import {
   type CanonicalPackage,
   type HookMappingStrategy,
 } from '@pr-pm/converters';
+
+/**
+ * Get a human-readable config location string for MCP servers
+ */
+function getMCPConfigLocation(editor: MCPEditor, global: boolean): string {
+  switch (editor) {
+    case 'codex':
+      return global ? '~/.codex/config.toml' : 'codex.toml';
+    case 'claude':
+    default:
+      return global ? '~/.claude/settings.json' : '.mcp.json';
+  }
+}
 
 /**
  * Get icon for package format and subtype
@@ -272,7 +285,8 @@ export async function handleInstall(
     location?: string;
     noAppend?: boolean; // Skip manifest file update for skills
     manifestFile?: string; // Custom manifest filename (default: AGENTS.md)
-    global?: boolean; // Install MCP servers to global ~/.claude/settings.json
+    global?: boolean; // Install MCP servers to global config
+    editor?: MCPEditor; // Target editor for MCP server installation (claude, codex)
     hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion
     eager?: boolean; // Force skill/agent to always activate (not on-demand)
     fromCollection?: {
@@ -808,7 +822,7 @@ export async function handleInstall(
     let destDir = ''; // Destination directory (needed for progressive disclosure)
     let fileCount = 0;
     let hookMetadata: { events: string[]; hookId: string } | undefined = undefined;
-    let pluginMetadata: { files: string[]; mcpServers?: Record<string, MCPServer>; mcpGlobal?: boolean } | undefined = undefined;
+    let pluginMetadata: { files: string[]; mcpServers?: Record<string, MCPServer>; mcpGlobal?: boolean; mcpEditor?: MCPEditor } | undefined = undefined;
     let snippetMetadata: { targetPath: string; config: SnippetConfig } | undefined = undefined;
 
     // Special handling for Claude plugins (bundles of agents, skills, commands, and MCP servers)
@@ -885,14 +899,17 @@ export async function handleInstall(
 
       // Merge MCP servers if present
       if (pluginConfig.mcpServers && Object.keys(pluginConfig.mcpServers).length > 0) {
-        const mcpResult = mergeMCPServers(
+        const editor = options.editor || 'claude';
+        const mcpResult = mergeEditorMCPServers(
           pluginConfig.mcpServers,
+          editor,
           options.global || false,
           process.cwd()
         );
 
         if (mcpResult.added.length > 0) {
-          console.log(`   ✓ Added MCP servers: ${mcpResult.added.join(', ')}`);
+          const location = getMCPConfigLocation(editor, options.global || false);
+          console.log(`   ✓ Added MCP servers to ${location}: ${mcpResult.added.join(', ')}`);
         }
         if (mcpResult.skipped.length > 0) {
           console.log(`   ⚠️  Skipped existing MCP servers: ${mcpResult.skipped.join(', ')}`);
@@ -903,6 +920,7 @@ export async function handleInstall(
           files: installedFiles,
           mcpServers: pluginConfig.mcpServers,
           mcpGlobal: options.global || false,
+          mcpEditor: editor,
         };
       } else {
         pluginMetadata = {
@@ -935,11 +953,16 @@ export async function handleInstall(
         throw new Error(`Failed to parse MCP server config: ${error instanceof Error ? error.message : error}`);
       }
 
-      // Merge MCP servers into .mcp.json (or global settings)
-      const mcpResult = mergeMCPServers(mcpServerConfig.mcpServers, options.global || false);
+      // Merge MCP servers into config (supports Claude, Codex, etc.)
+      const editor = options.editor || 'claude';
+      const mcpResult = mergeEditorMCPServers(
+        mcpServerConfig.mcpServers,
+        editor,
+        options.global || false
+      );
 
       if (mcpResult.added.length > 0) {
-        const location = options.global ? '~/.claude/settings.json' : '.mcp.json';
+        const location = getMCPConfigLocation(editor, options.global || false);
         console.log(`   ✓ Added MCP servers to ${location}: ${mcpResult.added.join(', ')}`);
       }
 
@@ -956,9 +979,10 @@ export async function handleInstall(
         files: [], // No files to track for MCP server packages
         mcpServers: mcpServerConfig.mcpServers,
         mcpGlobal: options.global || false,
+        mcpEditor: editor,
       };
 
-      destPath = options.global ? '~/.claude/settings.json' : '.mcp.json';
+      destPath = getMCPConfigLocation(editor, options.global || false);
       fileCount = Object.keys(mcpServerConfig.mcpServers).length;
     }
     // Special handling for snippet packages (append content to existing files)
@@ -1903,13 +1927,22 @@ export function createInstallCommand(): Command {
     .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure')
     .option('--eager', 'Force skill/agent to always activate (not on-demand)')
     .option('--lazy', 'Use default on-demand activation (overrides package eager setting)')
-    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; yes?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean }) => {
+    .option('--global', 'Install MCP servers to global config (e.g., ~/.claude/settings.json or ~/.codex/config.toml)')
+    .option('--editor <editor>', 'Target editor for MCP server installation (claude, codex)', 'claude')
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; yes?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean; global?: boolean; editor?: string }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = (options.format || options.as) as Format | undefined;
       const validFormats = FORMATS;
 
       if (convertTo && !validFormats.includes(convertTo)) {
         throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format claude.md # Convert to Claude.md format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package --format gemini.md # Convert to Gemini format\n   prpm install my-package                   # Install in native format`, 1);
+      }
+
+      // Validate editor for MCP server installation
+      if (options.editor && !MCP_EDITORS.includes(options.editor as MCPEditor)) {
+        throw new CLIError(
+          `Invalid MCP editor: ${options.editor}\n\nSupported editors: ${MCP_EDITORS.join(', ')}\n\n💡 Examples:\n   prpm install my-mcp-server --editor claude  # Install to .mcp.json\n   prpm install my-mcp-server --editor codex   # Install to codex.toml`
+        );
       }
 
       // Validate hook mapping strategy
@@ -1945,6 +1978,8 @@ export function createInstallCommand(): Command {
         manifestFile: options.manifestFile,
         hookMapping: options.hookMapping as HookMappingStrategy | undefined,
         eager,
+        global: options.global,
+        editor: options.editor as MCPEditor | undefined,
       });
     });
 
