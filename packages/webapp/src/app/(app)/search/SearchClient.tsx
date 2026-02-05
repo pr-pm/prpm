@@ -122,19 +122,10 @@ function SearchPageContent() {
   const isUrlSyncRef = useRef(false);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
-  // AI Search state - load from URL param first, then localStorage
-  const [aiSearchEnabled, setAiSearchEnabled] = useState(() => {
-    // Check URL parameter first (for deep links like from use case pages)
-    const aiParam = searchParams.get("ai") === "true";
-    if (aiParam) {
-      return true;
-    }
-    // Fall back to localStorage for user preference
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("aiSearchEnabled") === "true";
-    }
-    return false;
-  });
+  // AI Search state - initialize from URL param only (localStorage deferred to useEffect to avoid hydration mismatch)
+  const [aiSearchEnabled, setAiSearchEnabled] = useState(
+    () => searchParams.get("ai") === "true",
+  );
   const [aiResults, setAiResults] = useState<AISearchResult[]>([]);
   const [aiExecutionTime, setAiExecutionTime] = useState(0);
 
@@ -161,11 +152,19 @@ function SearchPageContent() {
 
   const limit = 20;
 
+  // Load AI search preference from localStorage after mount (deferred to avoid hydration mismatch)
+  useEffect(() => {
+    if (!searchParams.get("ai")) {
+      const stored = localStorage.getItem("aiSearchEnabled");
+      if (stored === "true") {
+        setAiSearchEnabled(true);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Save AI search toggle to localStorage
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("aiSearchEnabled", String(aiSearchEnabled));
-    }
+    localStorage.setItem("aiSearchEnabled", String(aiSearchEnabled));
   }, [aiSearchEnabled]);
 
   // Sync URL parameters to state when URL changes (e.g., from navigation)
