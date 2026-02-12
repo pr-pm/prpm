@@ -841,6 +841,141 @@ Follow TypeScript best practices.
     });
   });
 
+  describe('MCP server packages', () => {
+    const mcpServerJson = JSON.stringify({
+      name: 'Test MCP Server',
+      mcpServers: {
+        'test-server': {
+          command: 'npx',
+          args: ['-y', '@test/mcp-server'],
+          env: { API_URL: 'https://api.test.dev' },
+        },
+      },
+    });
+
+    // Helper to create a proper gzipped tar archive with a JSON file inside
+    async function createMCPTarball(content: string): Promise<Buffer> {
+      const tmpDir = path.join(testDir, '.tmp-tar');
+      await fs.mkdir(tmpDir, { recursive: true });
+      await fs.writeFile(path.join(tmpDir, 'mcp-server.json'), content);
+      const tar = await import('tar');
+      const tarPath = path.join(testDir, '.tmp-archive.tar.gz');
+      await tar.create({ gzip: true, file: tarPath, cwd: tmpDir }, ['mcp-server.json']);
+      const tarball = await fs.readFile(tarPath);
+      await fs.rm(tmpDir, { recursive: true, force: true });
+      await fs.rm(tarPath, { force: true });
+      return tarball;
+    }
+
+    it('installs MCP server (subtype: server) to codex.toml with --editor codex', async () => {
+      const mockPackage = {
+        id: '@test/mcp-server',
+        name: '@test/mcp-server',
+        format: 'mcp',
+        subtype: 'server',
+        tags: ['mcp'],
+        total_downloads: 5,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(await createMCPTarball(mcpServerJson));
+
+      await handleInstall('@test/mcp-server', { editor: 'codex' });
+
+      // Should write to codex.toml, not agents.md or any other format
+      const codexConfig = await fs.readFile(path.join(testDir, 'codex.toml'), 'utf-8');
+      expect(codexConfig).toContain('[mcp_servers.test-server]');
+      expect(codexConfig).toContain('command = "npx"');
+    });
+
+    it('installs MCP tool (subtype: tool) to codex.toml with --editor codex', async () => {
+      const mockPackage = {
+        id: '@test/mcp-tool',
+        name: '@test/mcp-tool',
+        format: 'mcp',
+        subtype: 'tool',
+        tags: ['mcp'],
+        total_downloads: 5,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(await createMCPTarball(mcpServerJson));
+
+      await handleInstall('@test/mcp-tool', { editor: 'codex' });
+
+      // subtype: tool should also use the MCP install path
+      const codexConfig = await fs.readFile(path.join(testDir, 'codex.toml'), 'utf-8');
+      expect(codexConfig).toContain('[mcp_servers.test-server]');
+    });
+
+    it('installs MCP package to .mcp.json with default editor (claude)', async () => {
+      const mockPackage = {
+        id: '@test/mcp-default',
+        name: '@test/mcp-default',
+        format: 'mcp',
+        subtype: 'tool',
+        tags: ['mcp'],
+        total_downloads: 5,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(await createMCPTarball(mcpServerJson));
+
+      await handleInstall('@test/mcp-default', {});
+
+      // Default editor is claude, which writes to .mcp.json
+      const mcpConfig = JSON.parse(await fs.readFile(path.join(testDir, '.mcp.json'), 'utf-8'));
+      expect(mcpConfig.mcpServers['test-server']).toBeDefined();
+      expect(mcpConfig.mcpServers['test-server'].command).toBe('npx');
+    });
+
+    it('preserves MCP format even when auto-detection would pick agents.md', async () => {
+      // Create .agents.md directory to trigger auto-detection
+      await fs.mkdir(path.join(testDir, '.agents.md'), { recursive: true });
+
+      const mockPackage = {
+        id: '@test/mcp-autodetect',
+        name: '@test/mcp-autodetect',
+        format: 'mcp',
+        subtype: 'tool',
+        tags: ['mcp'],
+        total_downloads: 5,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(await createMCPTarball(mcpServerJson));
+
+      await handleInstall('@test/mcp-autodetect', { editor: 'codex' });
+
+      // Should install as MCP server, NOT as agents.md
+      const codexConfig = await fs.readFile(path.join(testDir, 'codex.toml'), 'utf-8');
+      expect(codexConfig).toContain('[mcp_servers.test-server]');
+
+      // Should NOT have created/modified AGENTS.md
+      expect(saveFile).not.toHaveBeenCalledWith('AGENTS.md', expect.any(String));
+    });
+  });
+
   describe('Lockfile metadata', () => {
     it('should record both installed and source formats in lockfile', async () => {
       const mockPackage = {

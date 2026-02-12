@@ -479,9 +479,18 @@ export async function handleInstall(
     // 2. defaultFormat from .prpmrc config
     // 3. Auto-detection based on existing directories
     // 4. Package native format (fallback)
+    //
+    // Note: MCP server packages and Claude plugins always use their native format
+    // since they have dedicated install paths that shouldn't be overridden by
+    // auto-detection or config defaults.
+    const isMCPServerPackage = pkg.format === 'mcp';
+    const isPluginPackage = pkg.format === 'claude' && pkg.subtype === 'plugin';
     let format: string | undefined = options.as;
 
-    if (!format) {
+    if (isMCPServerPackage || isPluginPackage) {
+      // MCP servers and plugins have dedicated install paths — preserve native format
+      format = format || pkg.format;
+    } else if (!format) {
       // Check for config default format
       if (config.defaultFormat) {
         format = config.defaultFormat;
@@ -928,7 +937,7 @@ export async function handleInstall(
       fileCount = installedFiles.length;
     }
     // Special handling for MCP server packages (install server configs to .mcp.json)
-    else if (effectiveFormat === 'mcp' && effectiveSubtype === 'server') {
+    else if (effectiveFormat === 'mcp' && (effectiveSubtype === 'server' || effectiveSubtype === 'tool')) {
       console.log(`   🔧 Installing MCP Server...`);
 
       // Find and parse the MCP server config file
@@ -1589,7 +1598,7 @@ export async function handleInstall(
       console.log(`   📦 Installed ${pluginMetadata.files.length} file(s)`);
       if (pluginMetadata.mcpServers && Object.keys(pluginMetadata.mcpServers).length > 0) {
         const serverCount = Object.keys(pluginMetadata.mcpServers).length;
-        const location = pluginMetadata.mcpGlobal ? '~/.claude/settings.json' : '.mcp.json';
+        const location = getMCPConfigLocation(pluginMetadata.mcpEditor || 'claude', pluginMetadata.mcpGlobal || false);
         console.log(`   🔧 Configured ${serverCount} MCP server(s) in ${location}`);
       }
     }
