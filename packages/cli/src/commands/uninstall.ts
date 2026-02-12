@@ -10,7 +10,7 @@ import { promises as fs } from 'fs';
 import { CLIError } from '../core/errors';
 import { removeSkillFromManifest } from '../core/agents-md-progressive.js';
 import { promptYesNo } from '../core/prompts';
-import { removeMCPServers } from '../core/mcp.js';
+import { removeEditorMCPServers, getMCPConfigLocation, type MCPEditor } from '../core/mcp.js';
 import { uninstallSnippet } from '../core/snippet.js';
 import * as readline from 'readline';
 
@@ -158,7 +158,12 @@ async function uninstallSinglePackage(
 
   // Special handling for Claude plugins and MCP server packages
   if (pkg.pluginMetadata) {
-    const { files, mcpServers, mcpGlobal } = pkg.pluginMetadata;
+    const { files, mcpServers, mcpGlobal, mcpEditor } = pkg.pluginMetadata as {
+      files: string[];
+      mcpServers?: Record<string, unknown>;
+      mcpGlobal?: boolean;
+      mcpEditor?: MCPEditor;
+    };
 
     for (const filePath of files) {
       try {
@@ -172,7 +177,7 @@ async function uninstallSinglePackage(
     }
 
     if (mcpServers && Object.keys(mcpServers).length > 0) {
-      removeMCPServers(mcpServers, mcpGlobal || false);
+      removeEditorMCPServers(mcpServers as Record<string, any>, mcpEditor || 'claude', mcpGlobal || false);
     }
 
     return;
@@ -354,10 +359,16 @@ export async function handleUninstall(name: string, options: { format?: string; 
     // Special handling for Claude plugins and MCP server packages
     if (pkg.pluginMetadata) {
       const isMCPServerOnly = pkg.pluginMetadata.files.length === 0 && pkg.pluginMetadata.mcpServers;
-      console.log(isMCPServerOnly ? `   🔧 Uninstalling MCP server...` : `   🔌 Uninstalling Claude plugin...`);
+      console.log(isMCPServerOnly ? `   🔧 Uninstalling MCP server...` : `   🔌 Uninstalling plugin...`);
 
       // Remove installed files
-      const { files, mcpServers, mcpGlobal } = pkg.pluginMetadata;
+      const { files, mcpServers, mcpGlobal, mcpEditor } = pkg.pluginMetadata as {
+        files: string[];
+        mcpServers?: Record<string, unknown>;
+        mcpGlobal?: boolean;
+        mcpEditor?: MCPEditor;
+      };
+      const editor = mcpEditor || 'claude';
       let filesRemoved = 0;
 
       for (const filePath of files) {
@@ -379,10 +390,10 @@ export async function handleUninstall(name: string, options: { format?: string; 
 
       // Remove MCP servers (only if unchanged from original)
       if (mcpServers && Object.keys(mcpServers).length > 0) {
-        const mcpResult = removeMCPServers(mcpServers, mcpGlobal || false);
+        const mcpResult = removeEditorMCPServers(mcpServers as Record<string, any>, editor, mcpGlobal || false);
 
         if (mcpResult.removed.length > 0) {
-          const location = mcpGlobal ? '~/.claude/settings.json' : '.mcp.json';
+          const location = getMCPConfigLocation(editor, mcpGlobal || false);
           console.log(`   🔧 Removed ${mcpResult.removed.length} MCP server(s) from ${location}`);
         }
 

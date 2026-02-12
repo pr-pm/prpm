@@ -206,9 +206,9 @@
       "installedPath": "AGENTS.md"
     },
     "@ryandonofrio3/osgrep-skill#claude": {
-      "version": "0.3.2",
-      "resolved": "https://registry.prpm.dev/api/v1/packages/%40ryandonofrio3%2Fosgrep-skill/0.3.2.tar.gz",
-      "integrity": "sha256-6e02f98c6a08e0dbda71c4f24269daedc1e1b52596401e5ddfb37ebdae68b0e1",
+      "version": "0.4.7",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40ryandonofrio3%2Fosgrep-skill/0.4.7.tar.gz",
+      "integrity": "sha256-fb03b8f4fac3ea73663aa01d8f05679fe2b6f609a157fd118807b211e2a9e157",
       "format": "claude",
       "subtype": "skill",
       "sourceFormat": "claude",
@@ -254,9 +254,9 @@
       }
     },
     "@agent-relay/agent-relay-snippet#agents.md:AGENTS.md": {
-      "version": "1.0.2",
-      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.0.2.tar.gz",
-      "integrity": "sha256-d62856dc5535e7dfa9e730d0b665720ec162e578b115d1e57847bd84fb06c1f8",
+      "version": "1.1.4",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.1.4.tar.gz",
+      "integrity": "sha256-8ef5f570144dc7d6861e0714458ff64c579205404e6e4a348fc2d32dba58d1af",
       "format": "agents.md",
       "subtype": "snippet",
       "sourceFormat": "generic",
@@ -288,5 +288,5 @@
       }
     }
   },
-  "generated": "2026-01-01T21:26:39.281Z"
+  "generated": "2026-02-05T09:01:57.806Z"
 }
