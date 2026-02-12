@@ -429,6 +429,12 @@ export async function addPackage(packageInfo: {
   sourceFormat?: string;
   sourceSubtype?: string;
   installedPath?: string;
+  pluginMetadata?: {
+    files: string[];
+    mcpServers?: Record<string, LockfileMCPServer>;
+    mcpGlobal?: boolean;
+    mcpEditor?: string;
+  };
 }): Promise<void> {
   const lockfile = (await readLockfile()) || createLockfile();
   addToLockfile(lockfile, packageInfo.id, {
@@ -440,6 +446,7 @@ export async function addPackage(packageInfo: {
     sourceFormat: packageInfo.sourceFormat,
     sourceSubtype: packageInfo.sourceSubtype,
     installedPath: packageInfo.installedPath,
+    pluginMetadata: packageInfo.pluginMetadata,
   });
   await writeLockfile(lockfile);
 }
