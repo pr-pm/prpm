@@ -697,7 +697,11 @@ export class RegistryClient {
           }
 
           // Build error message with details if available
-          let errorMessage = error.error || error.message || `HTTP ${response.status}: ${response.statusText}`;
+          // Prefer message (specific reason) over error (generic label), and include both when available
+          let errorMessage = error.message || error.error || `HTTP ${response.status}: ${response.statusText}`;
+          if (error.error && error.message && error.error !== error.message) {
+            errorMessage = `${error.error}: ${error.message}`;
+          }
           if (error.details && error.details.length > 0) {
             errorMessage += '\n  - ' + error.details.join('\n  - ');
           }

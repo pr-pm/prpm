@@ -66,6 +66,30 @@ Extensions support:
 - Tool exclusions
 - Experimental settings
 
+### MCP Format Details
+
+The `mcp` format is for MCP (Model Context Protocol) server packages. Use `subtype: tool`.
+
+When installed, PRPM reads the `mcpServers` object from your package's JSON file and merges each server entry into the user's editor config. This works across 11 editors — Claude Code, Cursor, VS Code, Codex, Windsurf, Gemini, Kiro, OpenCode, Trae, Amp, and Zed.
+
+Your package file should be a JSON file with a `mcpServers` object:
+
+```json mcp-server.json
+{
+  "name": "My MCP Server",
+  "description": "What this server does",
+  "version": "1.0.0",
+  "mcpServers": {
+    "my-server": {
+      "command": "npx",
+      "args": ["-y", "@my-org/my-mcp-server"]
+    }
+  }
+}
+```
+
+See the [MCP Servers guide](/guides/mcp-servers) for full publishing and installation details.
+
 ## Installing for Specific Formats
 
 Auto-detect format from your project:

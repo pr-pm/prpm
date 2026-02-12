@@ -16,7 +16,8 @@ type FormatType =
   | 'copilot'
   | 'kiro'
   | 'agents.md'
-  | 'canonical';
+  | 'canonical'
+  | 'mcp';
 
 type SubtypeType =
   | 'rule'
