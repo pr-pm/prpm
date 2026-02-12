@@ -343,8 +343,12 @@ export function getMCPConfigLocation(editor: MCPEditor, global: boolean): string
       return global ? '~/.cursor/mcp.json' : '.cursor/mcp.json';
     case 'windsurf':
       return '~/.codeium/windsurf/mcp_config.json';
-    case 'vscode':
-      return global ? '~/Library/Application Support/Code/User/mcp.json' : '.vscode/mcp.json';
+    case 'vscode': {
+      if (!global) return '.vscode/mcp.json';
+      if (process.platform === 'win32') return '%APPDATA%/Code/User/mcp.json';
+      if (process.platform === 'darwin') return '~/Library/Application Support/Code/User/mcp.json';
+      return '~/.config/Code/User/mcp.json';
+    }
     case 'gemini':
       return global ? '~/.gemini/settings.json' : '.gemini/settings.json';
     case 'opencode':

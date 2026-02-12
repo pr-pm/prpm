@@ -80,7 +80,7 @@ describe('MCP utilities', () => {
 
     it('returns global path when global is true', () => {
       const path = getMCPConfigPath(true, tempDir);
-      expect(path).toContain('.claude/settings.json');
+      expect(path).toContain(join('.claude', 'settings.json'));
     });
   });
 
@@ -92,7 +92,7 @@ describe('MCP utilities', () => {
 
     it('returns global path when global is true', () => {
       const path = getCodexMCPConfigPath(true, tempDir);
-      expect(path).toContain('.codex/config.toml');
+      expect(path).toContain(join('.codex', 'config.toml'));
     });
   });
 
@@ -104,14 +104,14 @@ describe('MCP utilities', () => {
 
     it('returns global path when global is true', () => {
       const path = getCursorMCPConfigPath(true, tempDir);
-      expect(path).toContain('.cursor/mcp.json');
+      expect(path).toContain(join('.cursor', 'mcp.json'));
     });
   });
 
   describe('getWindsurfMCPConfigPath', () => {
     it('always returns global path', () => {
       const path = getWindsurfMCPConfigPath();
-      expect(path).toContain('.codeium/windsurf/mcp_config.json');
+      expect(path).toContain(join('.codeium', 'windsurf', 'mcp_config.json'));
     });
   });
 
@@ -135,7 +135,7 @@ describe('MCP utilities', () => {
 
     it('returns global path when global is true', () => {
       const path = getGeminiMCPConfigPath(true, tempDir);
-      expect(path).toContain('.gemini/settings.json');
+      expect(path).toContain(join('.gemini', 'settings.json'));
     });
   });
 
@@ -147,7 +147,7 @@ describe('MCP utilities', () => {
 
     it('returns global path when global is true', () => {
       const path = getOpenCodeMCPConfigPath(true, tempDir);
-      expect(path).toContain('.config/opencode/opencode.json');
+      expect(path).toContain(join('.config', 'opencode', 'opencode.json'));
     });
   });
 
@@ -159,7 +159,7 @@ describe('MCP utilities', () => {
 
     it('returns global path when global is true', () => {
       const path = getKiroMCPConfigPath(true, tempDir);
-      expect(path).toContain('.kiro/settings/mcp.json');
+      expect(path).toContain(join('.kiro', 'settings', 'mcp.json'));
     });
   });
 
@@ -178,14 +178,14 @@ describe('MCP utilities', () => {
 
     it('returns global path when global is true', () => {
       const path = getAmpMCPConfigPath(true, tempDir);
-      expect(path).toContain('.amp/settings.json');
+      expect(path).toContain(join('.amp', 'settings.json'));
     });
   });
 
   describe('getZedMCPConfigPath', () => {
     it('returns global settings.json path', () => {
       const path = getZedMCPConfigPath();
-      expect(path).toContain('zed/settings.json');
+      expect(path).toContain(join('zed', 'settings.json'));
     });
   });
 
@@ -207,7 +207,7 @@ describe('MCP utilities', () => {
 
     it('returns Windsurf path for windsurf editor', () => {
       const path = getEditorMCPConfigPath('windsurf', false, tempDir);
-      expect(path).toContain('.codeium/windsurf/mcp_config.json');
+      expect(path).toContain(join('.codeium', 'windsurf', 'mcp_config.json'));
     });
 
     it('returns VS Code path for vscode editor', () => {
@@ -242,7 +242,7 @@ describe('MCP utilities', () => {
 
     it('returns Zed path for zed editor', () => {
       const path = getEditorMCPConfigPath('zed', false, tempDir);
-      expect(path).toContain('zed/settings.json');
+      expect(path).toContain(join('zed', 'settings.json'));
     });
   });
 
