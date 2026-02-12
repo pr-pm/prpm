@@ -54,6 +54,7 @@ export interface LockfilePackage {
     files: string[]; // List of installed file paths (relative to project root)
     mcpServers?: Record<string, LockfileMCPServer>; // MCP servers that were installed
     mcpGlobal?: boolean; // Whether MCP servers were installed globally
+    mcpEditor?: string; // Editor target used for MCP server installation
   };
   // For snippet packages: track where content was appended
   snippetMetadata?: {
@@ -205,6 +206,7 @@ export function addToLockfile(
       files: string[];
       mcpServers?: Record<string, LockfileMCPServer>;
       mcpGlobal?: boolean;
+      mcpEditor?: string;
     };
     snippetMetadata?: {
       targetPath: string;

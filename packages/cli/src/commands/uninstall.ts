@@ -10,20 +10,7 @@ import { promises as fs } from 'fs';
 import { CLIError } from '../core/errors';
 import { removeSkillFromManifest } from '../core/agents-md-progressive.js';
 import { promptYesNo } from '../core/prompts';
-import { removeEditorMCPServers, type MCPEditor } from '../core/mcp.js';
-
-/**
- * Get a human-readable config location string for MCP servers
- */
-function getMCPConfigLocation(editor: MCPEditor, global: boolean): string {
-  switch (editor) {
-    case 'codex':
-      return global ? '~/.codex/config.toml' : 'codex.toml';
-    case 'claude':
-    default:
-      return global ? '~/.claude/settings.json' : '.mcp.json';
-  }
-}
+import { removeEditorMCPServers, getMCPConfigLocation, type MCPEditor } from '../core/mcp.js';
 import { uninstallSnippet } from '../core/snippet.js';
 import * as readline from 'readline';
 

@@ -35,7 +35,7 @@ import {
 import { applyCursorConfig, hasMDCHeader, addMDCHeader } from '../core/cursor-config';
 import { applyClaudeConfig, hasClaudeHeader } from '../core/claude-config';
 import { addSkillToManifest, type SkillManifestEntry } from '../core/agents-md-progressive.js';
-import { mergeEditorMCPServers, type MCPServer, type MCPEditor, MCP_EDITORS } from '../core/mcp.js';
+import { mergeEditorMCPServers, getMCPConfigLocation, type MCPServer, type MCPEditor, MCP_EDITORS } from '../core/mcp.js';
 import { installSnippet, type SnippetConfig } from '../core/snippet.js';
 import {
   fromCursor,
@@ -78,19 +78,6 @@ import {
   type CanonicalPackage,
   type HookMappingStrategy,
 } from '@pr-pm/converters';
-
-/**
- * Get a human-readable config location string for MCP servers
- */
-function getMCPConfigLocation(editor: MCPEditor, global: boolean): string {
-  switch (editor) {
-    case 'codex':
-      return global ? '~/.codex/config.toml' : 'codex.toml';
-    case 'claude':
-    default:
-      return global ? '~/.claude/settings.json' : '.mcp.json';
-  }
-}
 
 /**
  * Get icon for package format and subtype
@@ -900,15 +887,24 @@ export async function handleInstall(
       // Merge MCP servers if present
       if (pluginConfig.mcpServers && Object.keys(pluginConfig.mcpServers).length > 0) {
         const editor = options.editor || 'claude';
+        const globalOnlyEditors = ['windsurf', 'zed'];
+        const localOnlyEditors = ['trae'];
+        const isGlobal = globalOnlyEditors.includes(editor) ? true : (options.global || false);
+        if (globalOnlyEditors.includes(editor)) {
+          console.log(`   Note: ${editor.charAt(0).toUpperCase() + editor.slice(1)} only supports global MCP configuration`);
+        }
+        if (localOnlyEditors.includes(editor) && options.global) {
+          console.log(`   Note: ${editor.charAt(0).toUpperCase() + editor.slice(1)} only supports project-local MCP configuration, ignoring --global`);
+        }
         const mcpResult = mergeEditorMCPServers(
           pluginConfig.mcpServers,
           editor,
-          options.global || false,
+          isGlobal,
           process.cwd()
         );
 
         if (mcpResult.added.length > 0) {
-          const location = getMCPConfigLocation(editor, options.global || false);
+          const location = getMCPConfigLocation(editor, isGlobal);
           console.log(`   ✓ Added MCP servers to ${location}: ${mcpResult.added.join(', ')}`);
         }
         if (mcpResult.skipped.length > 0) {
@@ -919,7 +915,7 @@ export async function handleInstall(
         pluginMetadata = {
           files: installedFiles,
           mcpServers: pluginConfig.mcpServers,
-          mcpGlobal: options.global || false,
+          mcpGlobal: isGlobal,
           mcpEditor: editor,
         };
       } else {
@@ -955,14 +951,23 @@ export async function handleInstall(
 
       // Merge MCP servers into config (supports Claude, Codex, etc.)
       const editor = options.editor || 'claude';
+      const globalOnlyEditors = ['windsurf', 'zed'];
+      const localOnlyEditors = ['trae'];
+      const isGlobal = globalOnlyEditors.includes(editor) ? true : (options.global || false);
+      if (globalOnlyEditors.includes(editor)) {
+        console.log(`   Note: ${editor.charAt(0).toUpperCase() + editor.slice(1)} only supports global MCP configuration`);
+      }
+      if (localOnlyEditors.includes(editor) && options.global) {
+        console.log(`   Note: ${editor.charAt(0).toUpperCase() + editor.slice(1)} only supports project-local MCP configuration, ignoring --global`);
+      }
       const mcpResult = mergeEditorMCPServers(
         mcpServerConfig.mcpServers,
         editor,
-        options.global || false
+        isGlobal
       );
 
       if (mcpResult.added.length > 0) {
-        const location = getMCPConfigLocation(editor, options.global || false);
+        const location = getMCPConfigLocation(editor, isGlobal);
         console.log(`   ✓ Added MCP servers to ${location}: ${mcpResult.added.join(', ')}`);
       }
 
@@ -978,11 +983,11 @@ export async function handleInstall(
       pluginMetadata = {
         files: [], // No files to track for MCP server packages
         mcpServers: mcpServerConfig.mcpServers,
-        mcpGlobal: options.global || false,
+        mcpGlobal: isGlobal,
         mcpEditor: editor,
       };
 
-      destPath = getMCPConfigLocation(editor, options.global || false);
+      destPath = getMCPConfigLocation(editor, isGlobal);
       fileCount = Object.keys(mcpServerConfig.mcpServers).length;
     }
     // Special handling for snippet packages (append content to existing files)
@@ -1927,8 +1932,8 @@ export function createInstallCommand(): Command {
     .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure')
     .option('--eager', 'Force skill/agent to always activate (not on-demand)')
     .option('--lazy', 'Use default on-demand activation (overrides package eager setting)')
-    .option('--global', 'Install MCP servers to global config (e.g., ~/.claude/settings.json or ~/.codex/config.toml)')
-    .option('--editor <editor>', 'Target editor for MCP server installation (claude, codex)', 'claude')
+    .option('--global', 'Install MCP servers to global config (e.g., ~/.claude/settings.json, ~/.codex/config.toml, ~/.cursor/mcp.json, ~/.kiro/settings/mcp.json)')
+    .option('--editor <editor>', 'Target editor for MCP server installation (claude, codex, cursor, windsurf, vscode, gemini, opencode, kiro, trae, amp, zed)', 'claude')
     .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; yes?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean; global?: boolean; editor?: string }) => {
       // Support both --as and --format (format is alias for as)
       const convertTo = (options.format || options.as) as Format | undefined;
@@ -1941,7 +1946,7 @@ export function createInstallCommand(): Command {
       // Validate editor for MCP server installation
       if (options.editor && !MCP_EDITORS.includes(options.editor as MCPEditor)) {
         throw new CLIError(
-          `Invalid MCP editor: ${options.editor}\n\nSupported editors: ${MCP_EDITORS.join(', ')}\n\n💡 Examples:\n   prpm install my-mcp-server --editor claude  # Install to .mcp.json\n   prpm install my-mcp-server --editor codex   # Install to codex.toml`
+          `Invalid MCP editor: ${options.editor}\n\nSupported editors: ${MCP_EDITORS.join(', ')}\n\n💡 Examples:\n   prpm install my-mcp-server --editor claude    # Install to .mcp.json\n   prpm install my-mcp-server --editor codex     # Install to codex.toml\n   prpm install my-mcp-server --editor cursor    # Install to .cursor/mcp.json\n   prpm install my-mcp-server --editor windsurf  # Install to ~/.codeium/windsurf/mcp_config.json\n   prpm install my-mcp-server --editor vscode    # Install to .vscode/mcp.json\n   prpm install my-mcp-server --editor gemini    # Install to .gemini/settings.json\n   prpm install my-mcp-server --editor opencode  # Install to opencode.json\n   prpm install my-mcp-server --editor kiro      # Install to .kiro/settings/mcp.json\n   prpm install my-mcp-server --editor trae      # Install to .trae/mcp.json\n   prpm install my-mcp-server --editor amp       # Install to .amp/settings.json\n   prpm install my-mcp-server --editor zed       # Install to ~/.config/zed/settings.json`
         );
       }
 
