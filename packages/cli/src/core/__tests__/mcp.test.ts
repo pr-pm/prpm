@@ -85,9 +85,9 @@ describe('MCP utilities', () => {
   });
 
   describe('getCodexMCPConfigPath', () => {
-    it('returns local codex.toml by default', () => {
+    it('returns local .codex/config.toml by default', () => {
       const path = getCodexMCPConfigPath(false, tempDir);
-      expect(path).toBe(join(tempDir, 'codex.toml'));
+      expect(path).toBe(join(tempDir, '.codex', 'config.toml'));
     });
 
     it('returns global path when global is true', () => {
@@ -197,7 +197,7 @@ describe('MCP utilities', () => {
 
     it('returns Codex path for codex editor', () => {
       const path = getEditorMCPConfigPath('codex', false, tempDir);
-      expect(path).toBe(join(tempDir, 'codex.toml'));
+      expect(path).toBe(join(tempDir, '.codex', 'config.toml'));
     });
 
     it('returns Cursor path for cursor editor', () => {
@@ -297,7 +297,7 @@ describe('MCP utilities', () => {
   });
 
   describe('mergeCodexMCPServers', () => {
-    it('creates new codex.toml with servers', async () => {
+    it('creates new .codex/config.toml with servers', async () => {
       const servers: Record<string, MCPServer> = {
         'test-server': {
           command: 'npx',
@@ -311,7 +311,7 @@ describe('MCP utilities', () => {
       expect(result.added).toContain('test-server');
       expect(result.skipped).toHaveLength(0);
 
-      const configPath = join(tempDir, 'codex.toml');
+      const configPath = join(tempDir, '.codex', 'config.toml');
       const content = await readFile(configPath, 'utf-8');
 
       // Verify TOML format
@@ -331,7 +331,7 @@ describe('MCP utilities', () => {
 
       expect(result.added).toContain('http-server');
 
-      const configPath = join(tempDir, 'codex.toml');
+      const configPath = join(tempDir, '.codex', 'config.toml');
       const content = await readFile(configPath, 'utf-8');
 
       expect(content).toContain('url = "https://example.com/mcp"');
@@ -340,7 +340,8 @@ describe('MCP utilities', () => {
 
     it('skips existing servers in Codex config', async () => {
       // Create initial Codex config
-      const configPath = join(tempDir, 'codex.toml');
+      const configPath = join(tempDir, '.codex', 'config.toml');
+      await mkdir(join(tempDir, '.codex'), { recursive: true });
       await writeFile(configPath, `[mcp_servers.existing-server]
 command = "existing"
 `);
@@ -485,7 +486,7 @@ command = "existing"
 
       expect(result.added).toContain('test-server');
 
-      const configPath = join(tempDir, 'codex.toml');
+      const configPath = join(tempDir, '.codex', 'config.toml');
       const content = await readFile(configPath, 'utf-8');
       expect(content).toContain('mcp_servers');
     });
@@ -567,7 +568,7 @@ command = "existing"
 
       expect(result.removed).toContain('test-server');
 
-      const configPath = join(tempDir, 'codex.toml');
+      const configPath = join(tempDir, '.codex', 'config.toml');
       const content = await readFile(configPath, 'utf-8');
 
       // Should not contain the server anymore

@@ -3,7 +3,7 @@
  *
  * Handles merging and removing MCP server configurations from:
  * - Claude: Project-local .mcp.json or Global ~/.claude/settings.json
- * - Codex: Project-local codex.toml or Global ~/.codex/config.toml
+ * - Codex: Project-local .codex/config.toml or Global ~/.codex/config.toml
  * - Cursor: Project-local .cursor/mcp.json or Global ~/.cursor/mcp.json
  * - Windsurf: Global ~/.codeium/windsurf/mcp_config.json (global only)
  * - VS Code: Project-local .vscode/mcp.json or Global platform-specific mcp.json
@@ -175,7 +175,7 @@ export function getCodexMCPConfigPath(global: boolean = false, projectDir: strin
   if (global) {
     return join(homedir(), '.codex', 'config.toml');
   }
-  return join(projectDir, 'codex.toml');
+  return join(projectDir, '.codex', 'config.toml');
 }
 
 /**
@@ -338,7 +338,7 @@ export function getEditorMCPConfigPath(
 export function getMCPConfigLocation(editor: MCPEditor, global: boolean): string {
   switch (editor) {
     case 'codex':
-      return global ? '~/.codex/config.toml' : 'codex.toml';
+      return global ? '~/.codex/config.toml' : '.codex/config.toml';
     case 'cursor':
       return global ? '~/.cursor/mcp.json' : '.cursor/mcp.json';
     case 'windsurf':
