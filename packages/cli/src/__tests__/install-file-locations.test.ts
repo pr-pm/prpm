@@ -867,7 +867,7 @@ Follow TypeScript best practices.
       return tarball;
     }
 
-    it('installs MCP server (subtype: server) to codex.toml with --editor codex', async () => {
+    it('installs MCP server (subtype: server) to .codex/config.toml with --editor codex', async () => {
       const mockPackage = {
         id: '@test/mcp-server',
         name: '@test/mcp-server',
@@ -887,13 +887,13 @@ Follow TypeScript best practices.
 
       await handleInstall('@test/mcp-server', { editor: 'codex' });
 
-      // Should write to codex.toml, not agents.md or any other format
-      const codexConfig = await fs.readFile(path.join(testDir, 'codex.toml'), 'utf-8');
+      // Should write to .codex/config.toml, not agents.md or any other format
+      const codexConfig = await fs.readFile(path.join(testDir, '.codex', 'config.toml'), 'utf-8');
       expect(codexConfig).toContain('[mcp_servers.test-server]');
       expect(codexConfig).toContain('command = "npx"');
     });
 
-    it('installs MCP tool (subtype: tool) to codex.toml with --editor codex', async () => {
+    it('installs MCP tool (subtype: tool) to .codex/config.toml with --editor codex', async () => {
       const mockPackage = {
         id: '@test/mcp-tool',
         name: '@test/mcp-tool',
@@ -914,7 +914,7 @@ Follow TypeScript best practices.
       await handleInstall('@test/mcp-tool', { editor: 'codex' });
 
       // subtype: tool should also use the MCP install path
-      const codexConfig = await fs.readFile(path.join(testDir, 'codex.toml'), 'utf-8');
+      const codexConfig = await fs.readFile(path.join(testDir, '.codex', 'config.toml'), 'utf-8');
       expect(codexConfig).toContain('[mcp_servers.test-server]');
     });
 
@@ -968,7 +968,7 @@ Follow TypeScript best practices.
       await handleInstall('@test/mcp-autodetect', { editor: 'codex' });
 
       // Should install as MCP server, NOT as agents.md
-      const codexConfig = await fs.readFile(path.join(testDir, 'codex.toml'), 'utf-8');
+      const codexConfig = await fs.readFile(path.join(testDir, '.codex', 'config.toml'), 'utf-8');
       expect(codexConfig).toContain('[mcp_servers.test-server]');
 
       // Should NOT have created/modified AGENTS.md
