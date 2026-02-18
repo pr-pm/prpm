@@ -22,6 +22,11 @@
           "directory": ".cursor/commands",
           "filePatterns": ["*.md"],
           "fileExtension": ".md"
+        },
+        "plugin": {
+          "directory": ".cursor-plugin",
+          "filePatterns": ["plugin.json"],
+          "fileExtension": ".json"
         }
       }
     },

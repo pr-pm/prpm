@@ -94,6 +94,7 @@ Returns the JSON Schema for a specific subtype within a format.
 |---------|------------|-------------|
 | `command` | `/api/v1/schemas/cursor/command.json` | Cursor slash commands |
 | `hooks` | `/api/v1/schemas/cursor/hooks.json` | Cursor hooks configuration |
+| `plugin` | `/api/v1/schemas/cursor/plugin.json` | Cursor plugins (`.cursor-plugin/plugin.json`) |
 
 ### Kiro Subtypes
 
@@ -129,10 +130,11 @@ Returns directory structures and file patterns for all AI editor formats.
 ```json
 {
   "cursor": {
-    "directories": [".cursor", ".cursor/rules", ".cursor/commands"],
+    "directories": [".cursor", ".cursor/rules", ".cursor/commands", ".cursor-plugin"],
     "files": {
       "rules": ".cursor/rules/*.mdc",
-      "commands": ".cursor/commands/*.md"
+      "commands": ".cursor/commands/*.md",
+      "plugins": ".cursor-plugin/plugin.json"
     }
   },
   "claude": {

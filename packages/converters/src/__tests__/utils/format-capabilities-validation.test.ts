@@ -186,11 +186,11 @@ describe('Format Capabilities JSON Validation', () => {
       expect(gemini.supportsAgentsMd).toBe(false);
     });
 
-    it('cursor should support agents.md but not other advanced features', () => {
+    it('cursor should support plugins and agents.md but not standalone skills/agents', () => {
       const cursor = allCapabilities.formats.cursor;
 
       expect(cursor.supportsSkills).toBe(false);
-      expect(cursor.supportsPlugins).toBe(false);
+      expect(cursor.supportsPlugins).toBe(true);
       expect(cursor.supportsExtensions).toBe(false);
       expect(cursor.supportsAgents).toBe(false);
       expect(cursor.supportsAgentsMd).toBe(true);

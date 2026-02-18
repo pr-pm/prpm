@@ -12,7 +12,7 @@ PRPM supports multiple AI tool formats, allowing you to install packages for dif
 | Format | Tool | Description |
 |--------|------|-------------|
 | `claude` | Claude Code | Agents and skills for Claude Code |
-| `cursor` | Cursor IDE | Rules and configurations for Cursor |
+| `cursor` | Cursor IDE | Rules, plugins, commands, and configurations for Cursor |
 | `continue` | Continue.dev | Prompts for Continue extension |
 | `windsurf` | Windsurf IDE | Rules for Windsurf |
 | `copilot` | GitHub Copilot | Instructions, chat modes, and skills for Copilot |
@@ -35,6 +35,36 @@ Some formats have aliases for compatibility:
 
 - `claude.md` → `claude`
 - `gemini.md` → installs `GEMINI.md` (Gemini markdown); `gemini` installs Gemini CLI commands into `.gemini/commands`
+
+### Cursor Format Details
+
+The `cursor` format supports multiple subtypes:
+
+- **Rules** (`subtype: rule`): Project guidelines in `.cursor/rules/*.mdc` with MDC frontmatter (`description`, `globs`, `alwaysApply`)
+- **Slash Commands** (`subtype: slash-command`): Custom commands in `.cursor/commands/*.md`
+- **Hooks** (`subtype: hook`): Event-triggered scripts configured in `hooks.json`
+- **Plugins** (`subtype: plugin`): Bundles of rules, skills, agents, commands, hooks, and MCP servers defined by a `.cursor-plugin/plugin.json` manifest
+
+Plugins are the most comprehensive package type for Cursor, containing multiple components in a single distributable unit. The `plugin.json` manifest requires only a `name` field and optionally includes `description`, `version`, `author`, `keywords`, `logo`, and paths to component directories.
+
+```json
+{
+  "name": "my-plugin",
+  "description": "Development toolkit with linting and testing",
+  "version": "1.0.0",
+  "author": { "name": "Jane Doe" },
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }
+  }
+}
+```
+
+<Note>
+Cursor plugins are available via the [Cursor Marketplace](https://cursor.com/marketplace). See the [official plugin docs](https://cursor.com/docs/plugins/building) for full details.
+</Note>
 
 ### Copilot Format Details
 
@@ -130,7 +160,7 @@ Each format has a standard installation path:
 | Format | Directory | Example |
 |--------|-----------|---------|
 | `claude` | `.claude/agents/`, `.claude/skills/`, or `.claude/commands/` | `.claude/skills/my-skill/SKILL.md` |
-| `cursor` | `.cursor/rules/` | `.cursor/rules/typescript.mdc` |
+| `cursor` | `.cursor/rules/`, `.cursor/commands/`, or `.cursor-plugin/` | `.cursor/rules/typescript.mdc` or `.cursor-plugin/plugin.json` |
 | `continue` | `.continue/prompts/` | `.continue/prompts/refactor.md` |
 | `windsurf` | `.windsurf/rules/` | `.windsurf/rules/python.md` |
 | `copilot` | `.github/instructions/`, `.github/chatmodes/`, or `.github/skills/` | `.github/skills/my-skill/SKILL.md` |

@@ -118,6 +118,9 @@ Different formats support different subtypes:
 
 ### Cursor Subtypes
 - **rule** - Project guidelines (`.cursor/rules/`)
+- **slash-command** - Custom commands (`.cursor/commands/`)
+- **hook** - Event-triggered scripts (`hooks.json`)
+- **plugin** - Bundles of rules, skills, agents, commands, hooks, and MCP servers (`.cursor-plugin/plugin.json`)
 
 ### Continue Subtypes
 - **prompt** - Custom prompts (`.continue/config.json`)
@@ -226,6 +229,7 @@ Some features don't translate across formats:
 **Cursor-specific:**
 - MDC headers with `ruleType` and `alwaysApply`
 - Cursor-specific markdown extensions
+- Plugin manifest fields (`logo`, component paths, MCP servers)
 
 **Claude-specific:**
 - Multi-file skill structure

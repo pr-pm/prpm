@@ -260,18 +260,17 @@ describe('Progressive Disclosure', () => {
         expect(strategy.warnings[0]).toContain('Progressive disclosure');
       });
 
-      it('Gemini extension → Claude should use native (plugin)', () => {
+      it('Gemini extension → Claude should use progressive disclosure', () => {
         const strategy = getConversionStrategy('claude', 'extension');
 
-        // Claude supports plugins/extensions
-        expect(strategy.strategy).toBe('native');
+        // Claude supports plugins but not extensions as a separate subtype
+        expect(strategy.strategy).toBe('progressive');
       });
 
-      it('Claude plugin → Cursor should use progressive disclosure', () => {
+      it('Claude plugin → Cursor should use native (cursor supports plugins)', () => {
         const strategy = getConversionStrategy('cursor', 'plugin');
 
-        expect(strategy.strategy).toBe('progressive');
-        expect(strategy.primaryFilename).toBe('cursor-rules.md');
+        expect(strategy.strategy).toBe('native');
       });
 
       it('Any agent → agents.md should use native', () => {

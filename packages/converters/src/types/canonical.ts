@@ -197,6 +197,21 @@ export interface CanonicalPackage {
       excludeTools?: string[];
       experimentalSettings?: Record<string, any>;
     };
+    cursorPlugin?: {
+      logo?: string;
+      mcpServers?: Record<string, {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+      }>;
+      contents?: {
+        rules?: string[];
+        agents?: string[];
+        skills?: string[];
+        commands?: string[];
+        hooks?: string;
+      };
+    };
     fileStructure?: {
       mainFile: string;
       files: Array<{
@@ -313,6 +328,21 @@ export interface MetadataSection {
     zencoderConfig?: {
       globs?: string[]; // File patterns where the rule applies
       alwaysApply?: boolean; // Whether rule should always be active
+    };
+    cursorPlugin?: {
+      logo?: string;
+      mcpServers?: Record<string, {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+      }>;
+      contents?: {
+        rules?: string[];
+        agents?: string[];
+        skills?: string[];
+        commands?: string[];
+        hooks?: string;
+      };
     };
     claudePlugin?: {
       mcpServers?: Record<string, {
