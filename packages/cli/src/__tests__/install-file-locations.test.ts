@@ -867,7 +867,7 @@ Follow TypeScript best practices.
       return tarball;
     }
 
-    it('installs MCP server (subtype: server) to .codex/config.toml with --editor codex', async () => {
+    it('installs MCP server (subtype: server) to .codex/config.toml with --as codex (via editor option)', async () => {
       const mockPackage = {
         id: '@test/mcp-server',
         name: '@test/mcp-server',
@@ -893,7 +893,7 @@ Follow TypeScript best practices.
       expect(codexConfig).toContain('command = "npx"');
     });
 
-    it('installs MCP tool (subtype: tool) to .codex/config.toml with --editor codex', async () => {
+    it('installs MCP tool (subtype: tool) to .codex/config.toml with --as codex (via editor option)', async () => {
       const mockPackage = {
         id: '@test/mcp-tool',
         name: '@test/mcp-tool',
