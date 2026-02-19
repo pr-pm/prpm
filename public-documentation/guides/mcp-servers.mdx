@@ -139,8 +139,8 @@ prpm install @org/my-mcp-server
 prpm install @org/my-mcp-server --global
 
 # Install for a specific editor
-prpm install @org/my-mcp-server --editor cursor
-prpm install @org/my-mcp-server --editor vscode --global
+prpm install @org/my-mcp-server --as cursor
+prpm install @org/my-mcp-server --as vscode --global
 ```
 
 ## MCP Servers + PRPM Collections
@@ -185,7 +185,7 @@ If you're looking for existing MCP servers to use (not publish), these catalogs 
   </Accordion>
 
   <Accordion title="Which editors are supported?">
-    PRPM can install MCP server configs for Claude Code, Cursor, VS Code, Codex, Windsurf, Gemini, Kiro, OpenCode, Trae, Amp, and Zed. Use the `--editor` flag to target a specific editor.
+    PRPM can install MCP server configs for Claude Code, Cursor, VS Code, Codex, Windsurf, Gemini, Kiro, OpenCode, Trae, Amp, and Zed. Use the `--as` flag to target a specific editor (e.g., `--as cursor`).
   </Accordion>
 
   <Accordion title="Do I need MCP servers to use PRPM?">

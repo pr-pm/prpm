@@ -1942,20 +1942,27 @@ export function createInstallCommand(): Command {
     .option('--eager', 'Force skill/agent to always activate (not on-demand)')
     .option('--lazy', 'Use default on-demand activation (overrides package eager setting)')
     .option('--global', 'Install MCP servers to global config (e.g., ~/.claude/settings.json, ~/.codex/config.toml, ~/.cursor/mcp.json, ~/.kiro/settings/mcp.json)')
-    .option('--editor <editor>', 'Target editor for MCP server installation (claude, codex, cursor, windsurf, vscode, gemini, opencode, kiro, trae, amp, zed)', 'claude')
+    .option('--editor <editor>', '[Deprecated: use --as] Target editor for MCP server installation')
     .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; yes?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean; global?: boolean; editor?: string }) => {
       // Support both --as and --format (format is alias for as)
-      const convertTo = (options.format || options.as) as Format | undefined;
+      const rawAs = (options.format || options.as) as string | undefined;
       const validFormats = FORMATS;
 
+      // If --as value is an MCP editor but not a valid format, treat it as editor-only
+      const isMCPEditorOnly = rawAs && !validFormats.includes(rawAs as Format) && MCP_EDITORS.includes(rawAs as MCPEditor);
+      const convertTo = isMCPEditorOnly ? undefined : rawAs as Format | undefined;
+
       if (convertTo && !validFormats.includes(convertTo)) {
-        throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format claude.md # Convert to Claude.md format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package --format gemini.md # Convert to Gemini format\n   prpm install my-package                   # Install in native format`, 1);
+        throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format claude.md # Convert to Claude.md format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package --format gemini.md # Convert to Gemini format\n   prpm install my-mcp-server --as codex     # Install MCP server to Codex\n   prpm install my-package                   # Install in native format`, 1);
       }
+
+      // Resolve MCP editor: --editor (deprecated) takes precedence, then --as
+      const mcpEditor = (options.editor || rawAs) as MCPEditor | undefined;
 
       // Validate editor for MCP server installation
       if (options.editor && !MCP_EDITORS.includes(options.editor as MCPEditor)) {
         throw new CLIError(
-          `Invalid MCP editor: ${options.editor}\n\nSupported editors: ${MCP_EDITORS.join(', ')}\n\n💡 Examples:\n   prpm install my-mcp-server --editor claude    # Install to .mcp.json\n   prpm install my-mcp-server --editor codex     # Install to .codex/config.toml\n   prpm install my-mcp-server --editor cursor    # Install to .cursor/mcp.json\n   prpm install my-mcp-server --editor windsurf  # Install to ~/.codeium/windsurf/mcp_config.json\n   prpm install my-mcp-server --editor vscode    # Install to .vscode/mcp.json\n   prpm install my-mcp-server --editor gemini    # Install to .gemini/settings.json\n   prpm install my-mcp-server --editor opencode  # Install to opencode.json\n   prpm install my-mcp-server --editor kiro      # Install to .kiro/settings/mcp.json\n   prpm install my-mcp-server --editor trae      # Install to .trae/mcp.json\n   prpm install my-mcp-server --editor amp       # Install to .amp/settings.json\n   prpm install my-mcp-server --editor zed       # Install to ~/.config/zed/settings.json`
+          `Invalid MCP editor: ${options.editor}\n\nSupported editors: ${MCP_EDITORS.join(', ')}\n\n💡 Examples:\n   prpm install my-mcp-server --as claude      # Install to .mcp.json\n   prpm install my-mcp-server --as codex       # Install to .codex/config.toml\n   prpm install my-mcp-server --as cursor      # Install to .cursor/mcp.json\n   prpm install my-mcp-server --as windsurf    # Install to ~/.codeium/windsurf/mcp_config.json\n   prpm install my-mcp-server --as vscode      # Install to .vscode/mcp.json\n   prpm install my-mcp-server --as gemini      # Install to .gemini/settings.json\n   prpm install my-mcp-server --as opencode    # Install to opencode.json\n   prpm install my-mcp-server --as kiro        # Install to .kiro/settings/mcp.json\n   prpm install my-mcp-server --as trae        # Install to .trae/mcp.json\n   prpm install my-mcp-server --as amp         # Install to .amp/settings.json\n   prpm install my-mcp-server --as zed         # Install to ~/.config/zed/settings.json`
         );
       }
 
@@ -1993,7 +2000,7 @@ export function createInstallCommand(): Command {
         hookMapping: options.hookMapping as HookMappingStrategy | undefined,
         eager,
         global: options.global,
-        editor: options.editor as MCPEditor | undefined,
+        editor: mcpEditor as MCPEditor | undefined,
       });
     });
 

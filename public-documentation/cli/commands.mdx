@@ -316,10 +316,11 @@ prpm install <package-name> [additional-packages...] [options]
 
 **Options:**
 - `--version <version>` - Install a specific version
-- `--as <format>` - Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical)
+- `--as <format>` - Convert and install in specific format (cursor, claude, continue, windsurf, copilot, kiro, agents.md, canonical). For MCP servers, specifies the target editor (claude, codex, cursor, windsurf, vscode, gemini, opencode, kiro, trae, amp, zed)
 - `--format <format>` - Alias for `--as`
 - `--subtype <subtype>` - Specify subtype when converting (skill, agent, rule, etc.)
 - `--location <path>` - Custom installation location (Cursor and agents.md only)
+- `--global` - Install MCP servers to global config (e.g., `~/.claude/settings.json`)
 - `--frozen-lockfile` - Fail if lock file needs to be updated (for CI)
 - `--eager` - Force skill/agent to always activate at session start (not on-demand)
 - `--lazy` - Use default on-demand activation (overrides package eager setting)
@@ -356,6 +357,13 @@ prpm install @username/code-style --as agents.md --eager
 
 # Install with lazy activation (on-demand, default)
 prpm install @username/debugging-helper --as agents.md --lazy
+
+# Install MCP server for a specific editor
+prpm install @org/my-mcp-server --as cursor
+prpm install @org/my-mcp-server --as codex
+
+# Install MCP server globally
+prpm install @org/my-mcp-server --as vscode --global
 ```
 
 **What happens during installation:**
