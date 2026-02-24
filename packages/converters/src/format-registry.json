@@ -323,7 +323,7 @@
           "fileExtension": ".md"
         },
         "skill": {
-          "directory": ".codex/skills",
+          "directory": ".agents/skills",
           "filePatterns": ["SKILL.md"],
           "nested": true,
           "nestedIndicator": "SKILL.md",
@@ -331,7 +331,7 @@
           "fileExtension": ".md"
         },
         "agent": {
-          "directory": ".openagents",
+          "directory": ".agents/agents",
           "filePatterns": ["AGENT.md"],
           "nested": true,
           "nestedIndicator": "AGENT.md",

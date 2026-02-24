@@ -5,10 +5,10 @@
  * Based on the Agent Skills specification at agentskills.io
  *
  * Directory structure:
- * - .codex/skills/{skill-name}/SKILL.md (required)
- * - .codex/skills/{skill-name}/scripts/ (optional)
- * - .codex/skills/{skill-name}/references/ (optional)
- * - .codex/skills/{skill-name}/assets/ (optional)
+ * - .agents/skills/{skill-name}/SKILL.md (required)
+ * - .agents/skills/{skill-name}/scripts/ (optional)
+ * - .agents/skills/{skill-name}/references/ (optional)
+ * - .agents/skills/{skill-name}/assets/ (optional)
  *
  * @see https://agentskills.io/specification
  * @see https://developers.openai.com/codex/skills

@@ -7,7 +7,7 @@
 
 | Tool | File Location | Documentation |
 |------|--------------|---------------|
-| **OpenAI Codex** | `.codex/skills/{skill-name}/SKILL.md` | [Codex Skills](https://developers.openai.com/codex/skills) |
+| **OpenAI Codex** | `.agents/skills/{skill-name}/SKILL.md` | [Codex Skills](https://developers.openai.com/codex/skills) |
 | **GitHub Copilot** | `.github/skills/{skill-name}/SKILL.md` | [Copilot Skills](https://code.visualstudio.com/docs/copilot/customization/agent-skills) |
 
 ## Overview
@@ -17,9 +17,9 @@ Agent Skills is an open standard for giving AI agents new capabilities and exper
 ### Codex Discovery Locations
 
 OpenAI Codex CLI discovers skills from these locations (in order of precedence):
-1. **REPO**: `$CWD/.codex/skills` - Project-specific skills
-2. **REPO**: `$CWD/../.codex/skills` - Parent folder organization skills
-3. **REPO**: `$REPO_ROOT/.codex/skills` - Repository-wide skills
+1. **REPO**: `$CWD/.agents/skills` - Project-specific skills
+2. **REPO**: `$CWD/../.agents/skills` - Parent folder organization skills
+3. **REPO**: `$REPO_ROOT/.agents/skills` - Repository-wide skills
 4. **USER**: `$CODEX_HOME/skills` - User-personal skills
 5. **ADMIN**: `/etc/codex/skills` - System-level defaults
 6. **SYSTEM**: Bundled - Built-in skills
@@ -210,8 +210,8 @@ The converter generates SKILL.md with:
 ### Cross-Format Conversion
 
 Skills authored for one tool can be converted for another:
-- Codex skill → Copilot skill: Change directory from `.codex/skills/` to `.github/skills/`
-- Copilot skill → Codex skill: Change directory from `.github/skills/` to `.codex/skills/`
+- Codex skill → Copilot skill: Change directory from `.agents/skills/` to `.github/skills/`
+- Copilot skill → Codex skill: Change directory from `.github/skills/` to `.agents/skills/`
 
 The content format is identical between implementations.
 
@@ -220,7 +220,7 @@ The content format is identical between implementations.
 For Codex subtypes not natively supported as skills:
 - **Rules**: Use `AGENTS.md` in project root
 - **Slash commands**: Use `.opencommands/{name}.md`
-- **Agents**: Use `.openagents/{name}/AGENT.md`
+- **Agents**: Use `.agents/agents/{name}/AGENT.md`
 
 ## Related Documentation
 

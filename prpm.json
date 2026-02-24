@@ -576,6 +576,35 @@
       ]
     },
     {
+      "name": "creating-agent-skills-skill",
+      "version": "1.0.0",
+      "description": "Use when creating Agent Skills packages (SKILL.md format) for Codex CLI, GitHub Copilot, or Amp - provides the agentskills.io specification with frontmatter constraints, directory structure, and validation rules",
+      "format": "claude",
+      "subtype": "skill",
+      "tags": [
+        "meta",
+        "agent-skills",
+        "codex",
+        "copilot",
+        "amp",
+        "agentskills-io",
+        "package-creation"
+      ],
+      "files": [
+        ".agents/skills/creating-agent-skills/SKILL.md"
+      ],
+      "conversion": {
+        "cursor": {
+          "alwaysApply": false,
+          "globs": [
+            "**/.agents/skills/**/SKILL.md",
+            "**/.github/skills/**/SKILL.md",
+            "**/.codex/skills/**/SKILL.md"
+          ]
+        }
+      }
+    },
+    {
       "name": "creating-kiro-agents-skill",
       "version": "1.0.0",
       "description": "Use when building custom Kiro AI agents or when user asks for agent configurations - provides JSON structure, tool configuration, prompt patterns, and security best practices for specialized development assistants",

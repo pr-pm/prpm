@@ -147,7 +147,7 @@ This skill helps you write comprehensive API tests.
               <li><strong className="text-white">GitHub Copilot:</strong> <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-[0.9em] font-mono border border-prpm-border/30">.github/skills/&lt;name&gt;/SKILL.md</code> (VS Code Insiders with <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-[0.9em] font-mono border border-prpm-border/30">chat.useAgentSkills</code> enabled)</li>
               <li><strong className="text-white">Claude Code:</strong> <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-[0.9em] font-mono border border-prpm-border/30">.claude/skills/&lt;name&gt;/SKILL.md</code></li>
               <li><strong className="text-white">Factory Droid:</strong> <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-[0.9em] font-mono border border-prpm-border/30">.factory/skills/&lt;name&gt;/SKILL.md</code></li>
-              <li><strong className="text-white">OpenAI Codex CLI:</strong> <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-[0.9em] font-mono border border-prpm-border/30">.codex/skills/&lt;name&gt;/SKILL.md</code></li>
+              <li><strong className="text-white">OpenAI Codex CLI:</strong> <code className="text-prpm-accent bg-prpm-dark-card/50 px-2 py-1 rounded text-[0.9em] font-mono border border-prpm-border/30">.agents/skills/&lt;name&gt;/SKILL.md</code></li>
               <li><strong className="text-white">VS Code:</strong> Native support in progress</li>
             </ul>
 
@@ -381,7 +381,7 @@ prpm install @acme/api-testing --format copilot --subtype skill`}</code>
                   </tr>
                   <tr>
                     <td className="px-4 py-4 border border-prpm-border"><strong className="text-white">Codex CLI</strong></td>
-                    <td className="px-4 py-4 border border-prpm-border"><code className="text-prpm-accent text-sm">.codex/skills/&lt;name&gt;/SKILL.md</code></td>
+                    <td className="px-4 py-4 border border-prpm-border"><code className="text-prpm-accent text-sm">.agents/skills/&lt;name&gt;/SKILL.md</code></td>
                     <td className="px-4 py-4 border border-prpm-border">Subdirectory with SKILL.md</td>
                   </tr>
                   <tr>
