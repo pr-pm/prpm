@@ -163,9 +163,13 @@ function getDefaultPath(format: string, filename: string, subtype?: string, cust
     case 'droid':
       return join(process.cwd(), '.factory', `${baseName}.md`);
     case 'codex':
-      // Codex skills go to .codex/skills/{name}/SKILL.md
+      // Codex skills go to .agents/skills/{name}/SKILL.md
       if (subtype === 'skill') {
-        return join(process.cwd(), '.codex', 'skills', baseName, 'SKILL.md');
+        return join(process.cwd(), '.agents', 'skills', baseName, 'SKILL.md');
+      }
+      // Codex agents go to .agents/agents/{name}/AGENT.md
+      if (subtype === 'agent') {
+        return join(process.cwd(), '.agents', 'agents', baseName, 'AGENT.md');
       }
       // Other subtypes use AGENTS.md
       return join(process.cwd(), 'AGENTS.md');
@@ -217,8 +221,11 @@ function detectFormat(content: string, filepath: string): string | null {
   if (filepath.includes('.zed/extensions') || filepath.includes('.zed/slash_commands')) {
     return 'zed';
   }
-  if (filepath.includes('.codex/skills')) {
-    return 'codex';
+  if (filepath.includes('.agents/skills')) {
+    return 'codex-skill';
+  }
+  if (filepath.includes('.agents/agents')) {
+    return 'codex-agent';
   }
 
   // Use robust content detection from converters

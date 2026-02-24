@@ -2,13 +2,16 @@
  * Codex Format Converter
  * Converts canonical format to OpenAI Codex CLI format
  *
- * Codex supports two output formats:
- * 1. Native SKILL.md format for skills:
- *    - Directory: .codex/skills/{skill-name}/SKILL.md
+ * Codex supports native formats:
+ * 1. SKILL.md format for skills:
+ *    - Directory: .agents/skills/{skill-name}/SKILL.md
  *    - YAML frontmatter with name, description, optional metadata
  *    - Based on Agent Skills standard (agentskills.io)
  *
- * 2. AGENTS.md fallback for other subtypes (rules, slash-commands, agents):
+ * 2. AGENT.md format for agents:
+ *    - Directory: .agents/agents/{agent-name}/AGENT.md
+ *
+ * 3. AGENTS.md fallback for other subtypes (rules, slash-commands):
  *    - Progressive disclosure via named sections
  *    - Users invoke by saying the command/skill name
  *
@@ -571,12 +574,16 @@ function parseArgumentHint(hint: string | string[]): string[] {
 /**
  * Generate suggested filename for Codex
  *
- * For skills: SKILL.md (inside .codex/skills/{name}/ directory)
+ * For skills: SKILL.md (inside .agents/skills/{name}/ directory)
+ * For agents: AGENT.md (inside .agents/agents/{name}/ directory)
  * For other subtypes: AGENTS.md
  */
 export function generateFilename(pkg?: CanonicalPackage): string {
   if (pkg?.subtype === 'skill') {
     return 'SKILL.md';
+  }
+  if (pkg?.subtype === 'agent') {
+    return 'AGENT.md';
   }
   return 'AGENTS.md';
 }

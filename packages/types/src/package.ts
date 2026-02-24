@@ -161,6 +161,7 @@ export const FORMAT_NATIVE_SUBTYPES: Partial<Record<Format, readonly Subtype[]>>
   droid: ["skill", "slash-command", "hook"],  // No native agent - uses AGENTS.md
   zed: ["rule", "slash-command", "extension"],  // No native skill/agent - uses AGENTS.md
   amp: ["skill", "slash-command"],  // Native skills (.agents/skills/) and commands (.agents/commands/)
+  codex: ["skill", "agent"],  // Native skills (.agents/skills/) and agents (.agents/agents/)
   // Formats not listed use progressive disclosure for all skill/agent/command subtypes
 } as const;
 
