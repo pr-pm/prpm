@@ -221,8 +221,11 @@ function detectFormat(content: string, filepath: string): string | null {
   if (filepath.includes('.zed/extensions') || filepath.includes('.zed/slash_commands')) {
     return 'zed';
   }
-  if (filepath.includes('.agents/skills') || filepath.includes('.agents/agents')) {
-    return 'codex';
+  if (filepath.includes('.agents/skills')) {
+    return 'codex-skill';
+  }
+  if (filepath.includes('.agents/agents')) {
+    return 'codex-agent';
   }
 
   // Use robust content detection from converters

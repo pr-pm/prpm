@@ -582,6 +582,9 @@ export function generateFilename(pkg?: CanonicalPackage): string {
   if (pkg?.subtype === 'skill') {
     return 'SKILL.md';
   }
+  if (pkg?.subtype === 'agent') {
+    return 'AGENT.md';
+  }
   return 'AGENTS.md';
 }
 
