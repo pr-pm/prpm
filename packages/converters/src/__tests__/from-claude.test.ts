@@ -412,4 +412,94 @@ description: Test
       expect(result.subtype).toBe('rule');
     });
   });
+
+  describe('Agent Skills frontmatter preservation (for codex conversion)', () => {
+    const skillMetadata = { id: 'self-improving', name: 'self-improving', version: '1.0.0', author: 'prpm' };
+
+    const claudeSkillContent = `---
+name: self-improving
+description: Searches PRPM registry for relevant expertise packages.
+license: MIT
+compatibility: Designed for Claude Code
+allowed-tools: Read, Write, Bash
+metadata:
+  author: prpm
+  version: "1.1.0"
+---
+
+# Self-Improving with PRPM
+
+Automatically search and install PRPM packages.
+`;
+
+    it('should store agentSkills metadata for skill subtype', () => {
+      const result = fromClaude(claudeSkillContent, skillMetadata, 'claude', 'skill');
+
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+      expect(metadataSection?.type).toBe('metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.agentSkills).toBeDefined();
+        expect(metadataSection.data.agentSkills?.name).toBe('self-improving');
+      }
+    });
+
+    it('should normalize allowed-tools from comma-separated to space-delimited', () => {
+      // Agent Skills spec requires space-delimited; Claude frontmatter uses comma-separated
+      const result = fromClaude(claudeSkillContent, skillMetadata, 'claude', 'skill');
+
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.agentSkills?.allowedTools).toBe('Read Write Bash');
+        expect(metadataSection.data.agentSkills?.allowedTools).not.toContain(',');
+      }
+    });
+
+    it('should preserve license and compatibility fields', () => {
+      const result = fromClaude(claudeSkillContent, skillMetadata, 'claude', 'skill');
+
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.agentSkills?.license).toBe('MIT');
+        expect(metadataSection.data.agentSkills?.compatibility).toBe('Designed for Claude Code');
+      }
+    });
+
+    it('should guard against non-object metadata field', () => {
+      const contentWithStringMetadata = `---
+name: my-skill
+description: A skill.
+metadata: "this is a string not an object"
+---
+Content.
+`;
+      expect(() => fromClaude(contentWithStringMetadata, skillMetadata, 'claude', 'skill')).not.toThrow();
+
+      const result = fromClaude(contentWithStringMetadata, skillMetadata, 'claude', 'skill');
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.agentSkills?.metadata).toBeUndefined();
+      }
+    });
+
+    it('should not set agentSkills for non-skill subtypes', () => {
+      const result = fromClaude(claudeSkillContent, skillMetadata, 'claude', 'agent');
+
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.agentSkills).toBeUndefined();
+      }
+    });
+
+    it('should produce correct name in codex SKILL.md when converted via toCodex', async () => {
+      // Regression: H1 title "Self-Improving with PRPM" was used as skill name
+      // instead of the frontmatter name "self-improving"
+      const { toCodex } = await import('../to-codex.js');
+
+      const canonical = fromClaude(claudeSkillContent, skillMetadata, 'claude', 'skill');
+      const result = toCodex(canonical);
+
+      expect(result.content).toContain('name: self-improving');
+      expect(result.content).not.toContain('name: self-improving-with-prpm');
+    });
+  });
 });
