@@ -1,6 +1,6 @@
 {
   "name": "@pr-pm/registry-client",
-  "version": "2.3.29",
+  "version": "2.3.30",
   "description": "Registry client library for PRPM",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,7 +33,7 @@
   "author": "khaliqgant",
   "license": "MIT",
   "dependencies": {
-    "@pr-pm/types": "^2.1.30"
+    "@pr-pm/types": "^2.1.31"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",
