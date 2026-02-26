@@ -128,7 +128,10 @@ export function fromClaude(
       name: frontmatter.name,
       license: frontmatter.license,
       compatibility: frontmatter.compatibility,
-      allowedTools: frontmatter['allowed-tools'],
+      // Normalize to space-delimited per Agent Skills spec (Claude uses comma-separated)
+      allowedTools: frontmatter['allowed-tools']
+        ? frontmatter['allowed-tools'].split(',').map((t: string) => t.trim()).filter(Boolean).join(' ')
+        : undefined,
       metadata: frontmatter.metadata,
     };
   }

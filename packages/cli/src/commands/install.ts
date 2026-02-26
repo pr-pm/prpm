@@ -1095,7 +1095,8 @@ export async function handleInstall(
         // Claude hooks are merged into settings.json
         destPath = `${destDir}/settings.json`;
       } else if (effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md' || effectiveFormat === 'codex') {
-        // For manifest formats, use progressive disclosure (install to .openskills/ or .openagents/)
+        // For codex/manifest formats: native subtypes use their registry paths,
+        // other subtypes use progressive disclosure (install to .openskills/ or .openagents/)
         if (effectiveSubtype === 'skill') {
           // Skills go to .openskills/package-name/ directory
           destPath = `${destDir}/SKILL.md`;
