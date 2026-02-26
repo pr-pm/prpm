@@ -690,7 +690,9 @@ function SearchPageContent() {
         };
 
         if (debouncedQuery.trim()) params.q = debouncedQuery;
-        if (selectedFormat) params.format = selectedFormat;
+        // Skills are universal (agentskills.io) — installable to any supporting format.
+        // Don't filter by format when skill subtype is selected so all skills are shown.
+        if (selectedFormat && selectedSubtype !== 'skill') params.format = selectedFormat;
         if (selectedSubtype) params.subtype = selectedSubtype;
         if (selectedCategory) params.category = selectedCategory;
         if (selectedUseCase) params.use_case = selectedUseCase;
@@ -949,7 +951,8 @@ function SearchPageContent() {
         {
           query: debouncedQuery,
           filters: {
-            format: selectedFormat || undefined,
+            // Skills are universal — don't pass format filter when skill subtype is active
+            format: (selectedSubtype === 'skill' ? undefined : selectedFormat) || undefined,
             subtype: selectedSubtype || undefined,
             language: selectedLanguage || undefined,
             framework: selectedFramework || undefined,
@@ -1483,6 +1486,28 @@ function SearchPageContent() {
                       <option value="agents.md">Agents.md</option>
                       <option value="generic">Generic</option>
                     </select>
+
+                    {/* Skills are universal — show cross-format note when skill subtype is active */}
+                    {selectedSubtype === "skill" && (
+                      <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <p className="text-xs text-green-400 font-medium mb-1">
+                          Showing all skills
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Skills follow the open{" "}
+                          <a
+                            href="https://agentskills.io"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-400 hover:underline"
+                          >
+                            agentskills.io
+                          </a>{" "}
+                          standard and can be installed to any format that
+                          supports them — format filter is ignored.
+                        </p>
+                      </div>
+                    )}
 
                     {/* Format compatibility info */}
                     {selectedFormat === "agents.md" && (
