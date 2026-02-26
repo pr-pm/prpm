@@ -20,8 +20,8 @@
     },
     "sandbox_mode": {
       "type": "string",
-      "enum": ["strict", "workspace"],
-      "description": "Sandbox isolation mode: strict (no network/filesystem) or workspace (project files only)"
+      "enum": ["read-only", "workspace-write", "danger-full-access"],
+      "description": "Filesystem/network sandbox policy: read-only (default), workspace-write, or danger-full-access (no sandbox)"
     }
   },
   "additionalProperties": false

@@ -132,7 +132,9 @@ export function fromClaude(
       allowedTools: frontmatter['allowed-tools']
         ? frontmatter['allowed-tools'].split(',').map((t: string) => t.trim()).filter(Boolean).join(' ')
         : undefined,
-      metadata: frontmatter.metadata,
+      metadata: typeof frontmatter.metadata === 'object' && frontmatter.metadata !== null
+        ? frontmatter.metadata as Record<string, string>
+        : undefined,
     };
   }
 

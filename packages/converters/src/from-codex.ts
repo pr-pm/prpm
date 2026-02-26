@@ -182,7 +182,7 @@ interface CodexAgentRoleToml {
   model?: string;
   model_reasoning_effort?: 'low' | 'medium' | 'high';
   developer_instructions?: string;
-  sandbox_mode?: 'strict' | 'workspace';
+  sandbox_mode?: 'read-only' | 'workspace-write' | 'danger-full-access';
 }
 
 /**

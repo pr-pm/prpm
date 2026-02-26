@@ -155,7 +155,7 @@ export interface CanonicalPackage {
     codexAgent?: {
       model?: string; // Model to use for this agent role
       modelReasoningEffort?: 'low' | 'medium' | 'high'; // Reasoning effort level
-      sandboxMode?: 'strict' | 'workspace'; // Sandbox isolation mode
+      sandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access'; // Sandbox isolation mode
     };
     droid?: {
       argumentHint?: string; // Usage hint for slash commands
@@ -301,7 +301,7 @@ export interface MetadataSection {
     codexAgent?: {
       model?: string; // Model to use for this agent role
       modelReasoningEffort?: 'low' | 'medium' | 'high'; // Reasoning effort level
-      sandboxMode?: 'strict' | 'workspace'; // Sandbox isolation mode
+      sandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access'; // Sandbox isolation mode
     };
     opencodeSlashCommand?: {
       description?: string; // Description of the slash command
