@@ -23,6 +23,7 @@ import type {
 } from './types/canonical.js';
 import { setTaxonomy } from './taxonomy-utils.js';
 import yaml from 'js-yaml';
+import toml from '@iarna/toml';
 
 /**
  * Agent Skills frontmatter per agentskills.io specification
@@ -170,5 +171,91 @@ export function fromCodex(
   };
 
   setTaxonomy(pkg, 'codex', 'skill');
+  return pkg;
+}
+
+/**
+ * Codex agent role TOML fields
+ * @see https://developers.openai.com/codex/multi-agent/#agent-roles
+ */
+interface CodexAgentRoleToml {
+  model?: string;
+  model_reasoning_effort?: 'low' | 'medium' | 'high';
+  developer_instructions?: string;
+  sandbox_mode?: 'read-only' | 'workspace-write' | 'danger-full-access';
+}
+
+/**
+ * Convert Codex agent role TOML format to canonical format
+ *
+ * Parses TOML files installed at ~/.codex/agents/<name>.toml
+ * These configure specialized agent roles for Codex multi-agent workflows.
+ *
+ * @param content - TOML content of the agent role file
+ * @param metadata - Package metadata
+ * @see https://developers.openai.com/codex/multi-agent/#agent-roles
+ */
+export function fromCodexAgentRole(
+  content: string,
+  metadata: Partial<PackageMetadata> & Pick<PackageMetadata, 'id' | 'name' | 'version' | 'author'>
+): CanonicalPackage {
+  let role: CodexAgentRoleToml = {};
+
+  try {
+    role = toml.parse(content) as CodexAgentRoleToml;
+  } catch {
+    // If TOML parsing fails, treat as empty role with no fields
+  }
+
+  const sections: Section[] = [];
+
+  const metadataSection: MetadataSection = {
+    type: 'metadata',
+    data: {
+      title: metadata.name || metadata.id,
+      description: metadata.description || '',
+      version: metadata.version || '1.0.0',
+      author: metadata.author,
+    },
+  };
+
+  // Store codex-specific fields for roundtrip conversion
+  metadataSection.data.codexAgent = {
+    model: role.model,
+    modelReasoningEffort: role.model_reasoning_effort,
+    sandboxMode: role.sandbox_mode,
+  };
+
+  sections.push(metadataSection);
+
+  // Map developer_instructions to an instructions section
+  if (role.developer_instructions?.trim()) {
+    sections.push({
+      type: 'instructions',
+      title: 'Instructions',
+      content: role.developer_instructions.trim(),
+    });
+  }
+
+  const canonicalContent: CanonicalPackage['content'] = {
+    format: 'canonical',
+    version: '1.0',
+    sections,
+  };
+
+  const pkg: CanonicalPackage = {
+    ...metadata,
+    id: metadata.id,
+    name: metadata.name || metadata.id,
+    version: metadata.version,
+    author: metadata.author,
+    description: metadata.description || '',
+    tags: metadata.tags || [],
+    format: 'codex',
+    subtype: 'agent',
+    content: canonicalContent,
+  };
+
+  setTaxonomy(pkg, 'codex', 'agent');
   return pkg;
 }

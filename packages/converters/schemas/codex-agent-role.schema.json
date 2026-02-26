@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/codex/agent-role.json",
+  "title": "Codex Agent Role Format",
+  "description": "JSON Schema for OpenAI Codex CLI agent role configuration (TOML format, installed to ~/.codex/agents/)",
+  "type": "object",
+  "properties": {
+    "model": {
+      "type": "string",
+      "description": "Model identifier to use for this agent role"
+    },
+    "model_reasoning_effort": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "Reasoning effort level for the model"
+    },
+    "developer_instructions": {
+      "type": "string",
+      "description": "System prompt / developer instructions for this agent role"
+    },
+    "sandbox_mode": {
+      "type": "string",
+      "enum": ["read-only", "workspace-write", "danger-full-access"],
+      "description": "Filesystem/network sandbox policy: read-only (default), workspace-write, or danger-full-access (no sandbox)"
+    }
+  },
+  "additionalProperties": false
+}

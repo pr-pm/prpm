@@ -121,6 +121,23 @@ export function fromClaude(
   // Detect subtype - use explicit if provided, otherwise detect from frontmatter
   const subtype = detectSubtypeFromFrontmatter(frontmatter, explicitSubtype);
 
+  // For skills, preserve Agent Skills frontmatter fields for proper roundtrip conversion
+  // (agentskills.io spec: name, description, license, compatibility, allowed-tools, metadata)
+  if (subtype === 'skill' && (frontmatter.name || frontmatter['allowed-tools'] || frontmatter.compatibility || frontmatter.license)) {
+    metadataSection.data.agentSkills = {
+      name: frontmatter.name,
+      license: frontmatter.license,
+      compatibility: frontmatter.compatibility,
+      // Normalize to space-delimited per Agent Skills spec (Claude uses comma-separated)
+      allowedTools: frontmatter['allowed-tools']
+        ? frontmatter['allowed-tools'].split(',').map((t: string) => t.trim()).filter(Boolean).join(' ')
+        : undefined,
+      metadata: typeof frontmatter.metadata === 'object' && frontmatter.metadata !== null
+        ? frontmatter.metadata as Record<string, string>
+        : undefined,
+    };
+  }
+
   // Create package with new taxonomy
   // pkg.name is for registry/package system, pkg.metadata.title is for display
   const pkg: Partial<CanonicalPackage> = {

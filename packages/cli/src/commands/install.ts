@@ -1095,15 +1095,24 @@ export async function handleInstall(
         // Claude hooks are merged into settings.json
         destPath = `${destDir}/settings.json`;
       } else if (effectiveFormat === 'agents.md' || effectiveFormat === 'gemini.md' || effectiveFormat === 'claude.md' || effectiveFormat === 'codex') {
-        // For manifest formats, use progressive disclosure (install to .openskills/ or .openagents/)
+        // For codex/manifest formats: native subtypes use their registry paths,
+        // other subtypes use progressive disclosure (install to .openskills/ or .openagents/)
         if (effectiveSubtype === 'skill') {
           // Skills go to .openskills/package-name/ directory
           destPath = `${destDir}/SKILL.md`;
           console.log(`   📦 Installing skill to ${destDir}/ for progressive disclosure`);
         } else if (effectiveSubtype === 'agent') {
-          // Agents go to .openagents/package-name/ directory
-          destPath = `${destDir}/AGENT.md`;
-          console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+          if (effectiveFormat === 'codex') {
+            // Codex agent roles: project-local .codex/agents/<name>.toml
+            // config_file paths in .codex/config.toml are relative to the config file,
+            // so ./agents/<name>.toml resolves to .codex/agents/<name>.toml
+            destPath = `${destDir}/${packageName}.toml`;
+            console.log(`   🤖 Installing Codex agent role to ${destPath}`);
+          } else {
+            // Other formats (agents.md, gemini.md, claude.md) use AGENT.md progressive disclosure
+            destPath = `${destDir}/AGENT.md`;
+            console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+          }
         } else if (effectiveSubtype === 'slash-command') {
           // Commands go to .opencommands/ directory (no subdirectory, just the file)
           destPath = `${destDir}/${packageName}.md`;

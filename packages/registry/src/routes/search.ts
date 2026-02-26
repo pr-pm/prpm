@@ -110,10 +110,17 @@ export async function searchRoutes(server: FastifyInstance) {
       return cached;
     }
 
+    // Skills are universal via the agentskills.io open standard — any skill can be
+    // installed to any format that supports them (codex, claude, amp, opencode, etc.).
+    // When filtering by skill subtype, ignore the format filter so the full skill
+    // catalogue is returned regardless of which format the user has selected.
+    const isSkillSubtype = subtype === 'skill' || (Array.isArray(subtype) && subtype.includes('skill'));
+    const effectiveFormat = isSkillSubtype ? undefined : format;
+
     // Use search provider (PostgreSQL or OpenSearch)
     const searchProvider = getSearchProvider(server);
     let response = await searchProvider.search(q || '', {
-      format,
+      format: effectiveFormat,
       subtype,
       tags,
       category,
@@ -130,7 +137,7 @@ export async function searchRoutes(server: FastifyInstance) {
 
     // If no results, show top 10 popular packages
     // BUT only if format or subtype filters are applied
-    if (response.packages.length === 0 && (format || subtype)) {
+    if (response.packages.length === 0 && (effectiveFormat || subtype)) {
       const fallbackOptions: Record<string, unknown> = {
         sort: 'downloads' as const,
         limit: 10,

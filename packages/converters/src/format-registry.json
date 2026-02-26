@@ -331,12 +331,9 @@
           "fileExtension": ".md"
         },
         "agent": {
-          "directory": ".agents/agents",
-          "filePatterns": ["AGENT.md"],
-          "nested": true,
-          "nestedIndicator": "AGENT.md",
-          "usesPackageSubdirectory": true,
-          "fileExtension": ".md"
+          "directory": ".codex/agents",
+          "filePatterns": ["*.toml"],
+          "fileExtension": ".toml"
         }
       }
     },

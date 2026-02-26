@@ -20,6 +20,7 @@
  */
 
 import yaml from 'js-yaml';
+import toml from '@iarna/toml';
 import type {
   CanonicalPackage,
   ConversionResult,
@@ -53,6 +54,7 @@ export function toCodex(
   try {
     const config = options.codexConfig || {};
     const isSkill = pkg.subtype === 'skill';
+    const isAgent = pkg.subtype === 'agent';
     const isSlashCommand = pkg.subtype === 'slash-command';
 
     let content: string;
@@ -60,6 +62,9 @@ export function toCodex(
     if (isSkill && !config.forceAgentsMd) {
       // Native SKILL.md format for skills
       content = convertToSkillMd(pkg, warnings);
+    } else if (isAgent) {
+      // Native TOML format for agent roles (~/.codex/agents/<name>.toml)
+      content = convertToAgentRoleToml(pkg, warnings);
     } else if (isSlashCommand) {
       // Convert slash command to AGENTS.md section
       content = convertSlashCommandToSection(pkg, warnings);
@@ -102,6 +107,61 @@ export function toCodex(
 }
 
 /**
+ * Convert canonical package to Codex agent role TOML format
+ *
+ * Outputs a TOML file suitable for ~/.codex/agents/<name>.toml
+ * Fields: model, model_reasoning_effort, developer_instructions, sandbox_mode
+ *
+ * @see https://developers.openai.com/codex/multi-agent/#agent-roles
+ */
+function convertToAgentRoleToml(
+  pkg: CanonicalPackage,
+  warnings: string[]
+): string {
+  const metadataSection = pkg.content.sections.find(s => s.type === 'metadata');
+  const instructionsSection = pkg.content.sections.find(s => s.type === 'instructions');
+
+  // Build the TOML object
+  const role: Record<string, unknown> = {};
+
+  // Restore codex-specific metadata for roundtrip
+  const codexAgent = metadataSection?.type === 'metadata'
+    ? metadataSection.data.codexAgent
+    : undefined;
+
+  if (codexAgent?.model) {
+    role['model'] = codexAgent.model;
+  }
+  if (codexAgent?.modelReasoningEffort) {
+    role['model_reasoning_effort'] = codexAgent.modelReasoningEffort;
+  }
+  if (codexAgent?.sandboxMode) {
+    role['sandbox_mode'] = codexAgent.sandboxMode;
+  }
+
+  // Map instructions section to developer_instructions
+  if (instructionsSection?.type === 'instructions') {
+    role['developer_instructions'] = instructionsSection.content;
+  } else if (pkg.description) {
+    // Fall back to package description
+    role['developer_instructions'] = pkg.description;
+  }
+
+  // Warn about unsupported sections
+  for (const section of pkg.content.sections) {
+    if (section.type === 'tools') {
+      warnings.push('Tools section skipped (not supported by Codex agent role TOML)');
+    } else if (section.type === 'persona') {
+      warnings.push('Persona section skipped (not supported by Codex agent role TOML)');
+    } else if (section.type === 'rules') {
+      warnings.push('Rules section skipped (not supported by Codex agent role TOML - use developer_instructions)');
+    }
+  }
+
+  return toml.stringify(role as toml.JsonMap);
+}
+
+/**
  * Convert canonical package to native SKILL.md format
  * Per Agent Skills specification at agentskills.io
  *
@@ -123,12 +183,13 @@ function convertToSkillMd(
   const metadataSection = pkg.content.sections.find(s => s.type === 'metadata');
   const toolsSection = pkg.content.sections.find(s => s.type === 'tools');
 
-  const title = pkg.metadata?.title || pkg.name;
   const description = pkg.description || '';
 
   // Build frontmatter per Agent Skills spec
+  // IMPORTANT: name must be the slug (lowercase, hyphens) matching the parent directory name.
+  // Priority: preserved agentSkills.name > slugified package name (NOT display title/H1)
   const frontmatter: Record<string, any> = {
-    name: slugify(title),
+    name: slugify(stripNamespace(pkg.name)),
     description: truncateDescription(description, 1024),
   };
 
@@ -197,6 +258,13 @@ function convertToSkillMd(
 function truncateDescription(desc: string, maxLength: number): string {
   if (desc.length <= maxLength) return desc;
   return desc.substring(0, maxLength - 3) + '...';
+}
+
+/**
+ * Strip author namespace from package name (e.g., @prpm/self-improving → self-improving)
+ */
+function stripNamespace(name: string): string {
+  return name.replace(/^@[^/]+\//, '');
 }
 
 /**
@@ -578,12 +646,14 @@ function parseArgumentHint(hint: string | string[]): string[] {
  * For agents: AGENT.md (inside .agents/agents/{name}/ directory)
  * For other subtypes: AGENTS.md
  */
-export function generateFilename(pkg?: CanonicalPackage): string {
+export function generateFilename(pkg?: CanonicalPackage, name?: string): string {
   if (pkg?.subtype === 'skill') {
     return 'SKILL.md';
   }
   if (pkg?.subtype === 'agent') {
-    return 'AGENT.md';
+    // Agent roles use <name>.toml (installed to ~/.codex/agents/<name>.toml)
+    const roleName = name || pkg?.name || 'agent';
+    return `${roleName}.toml`;
   }
   return 'AGENTS.md';
 }

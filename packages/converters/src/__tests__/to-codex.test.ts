@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { toCodex } from '../to-codex.js';
+import { fromCodexAgentRole } from '../from-codex.js';
 import { minimalCanonicalPackage } from './setup.js';
 import type { CanonicalPackage } from '../types/canonical.js';
 
@@ -697,6 +698,231 @@ Old content for my-command
       const result = toCodex(skillPkg);
 
       expect(result.content).toContain('name: my-cool-skill');
+    });
+
+    it('should use package name slug (not H1 title) for skill name', () => {
+      // Regression: H1 title was incorrectly used instead of pkg.name,
+      // violating the Agent Skills spec (name must match parent directory name)
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'self-improving',
+        subtype: 'skill',
+        description: 'Searches PRPM registry for relevant packages.',
+        metadata: {
+          title: 'Self-Improving with PRPM',  // H1 — should NOT become the name slug
+          description: 'Searches PRPM registry for relevant packages.',
+        },
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Self-Improving with PRPM',
+                description: 'Searches PRPM registry for relevant packages.',
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      expect(result.content).toContain('name: self-improving');
+      expect(result.content).not.toContain('name: self-improving-with-prpm');
+    });
+
+    it('should strip author namespace from skill name', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: '@prpm/self-improving',
+        subtype: 'skill',
+        description: 'Test.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [{ type: 'metadata', data: { title: 'Test', description: 'Test.' } }],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      expect(result.content).toContain('name: self-improving');
+      expect(result.content).not.toContain('name: prpm-self-improving');
+    });
+
+    it('should prefer agentSkills.name over pkg.name for roundtrip fidelity', () => {
+      const skillPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'different-registry-name',
+        subtype: 'skill',
+        description: 'Test.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Test',
+                description: 'Test.',
+                agentSkills: { name: 'original-skill-name' },
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(skillPkg);
+
+      expect(result.content).toContain('name: original-skill-name');
+    });
+  });
+
+  describe('agent role TOML conversion', () => {
+    it('should produce TOML output for agent subtype', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'reviewer',
+        subtype: 'agent',
+        description: 'Find security issues.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            { type: 'metadata', data: { title: 'Reviewer', description: 'Find security issues.' } },
+            { type: 'instructions', title: 'Instructions', content: 'Focus on security vulnerabilities.' },
+          ],
+        },
+      };
+
+      const result = toCodex(agentPkg);
+
+      expect(result.format).toBe('codex');
+      // TOML output — no YAML frontmatter delimiters
+      expect(result.content).not.toContain('---');
+      expect(result.content).toContain('developer_instructions');
+      expect(result.content).toContain('Focus on security vulnerabilities.');
+    });
+
+    it('should include model field in TOML when set', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'explorer',
+        subtype: 'agent',
+        description: 'Fast codebase explorer.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Explorer',
+                description: 'Fast codebase explorer.',
+                codexAgent: { model: 'o3-mini', modelReasoningEffort: 'low' },
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(agentPkg);
+
+      expect(result.content).toContain('model = ');
+      expect(result.content).toContain('o3-mini');
+      expect(result.content).toContain('model_reasoning_effort = ');
+      expect(result.content).toContain('low');
+    });
+
+    it('should include sandbox_mode with correct enum values', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'safe-agent',
+        subtype: 'agent',
+        description: 'Read-only agent.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Safe Agent',
+                description: 'Read-only agent.',
+                codexAgent: { sandboxMode: 'read-only' },
+              },
+            },
+          ],
+        },
+      };
+
+      const result = toCodex(agentPkg);
+
+      expect(result.content).toContain('sandbox_mode = ');
+      expect(result.content).toContain('read-only');
+    });
+
+    it('should warn and not crash when unsupported sections are present', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'agent-with-tools',
+        subtype: 'agent',
+        description: 'Agent with tools.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            { type: 'metadata', data: { title: 'Agent', description: 'Agent with tools.' } },
+            { type: 'tools', tools: ['Read', 'Write'] },
+          ],
+        },
+      };
+
+      const result = toCodex(agentPkg);
+
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings?.some(w => w.includes('Tools section skipped'))).toBe(true);
+      expect(result.lossyConversion).toBe(true);
+    });
+
+    it('should produce a roundtrip-stable agent role', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'reviewer',
+        subtype: 'agent',
+        description: 'Find security issues.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Reviewer',
+                description: 'Find security issues.',
+                codexAgent: { model: 'o3', modelReasoningEffort: 'high', sandboxMode: 'read-only' },
+              },
+            },
+            { type: 'instructions', title: 'Instructions', content: 'Focus on security.' },
+          ],
+        },
+      };
+
+      const tomlOutput = toCodex(agentPkg).content;
+      const reparsed = fromCodexAgentRole(tomlOutput, {
+        id: 'reviewer', name: 'reviewer', version: '1.0.0', author: 'test',
+      });
+
+      const meta = reparsed.content.sections.find(s => s.type === 'metadata');
+      if (meta?.type === 'metadata') {
+        expect(meta.data.codexAgent?.model).toBe('o3');
+        expect(meta.data.codexAgent?.modelReasoningEffort).toBe('high');
+        expect(meta.data.codexAgent?.sandboxMode).toBe('read-only');
+      }
+      const instr = reparsed.content.sections.find(s => s.type === 'instructions');
+      expect(instr?.type === 'instructions' && instr.content).toContain('Focus on security.');
     });
   });
 });

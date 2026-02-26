@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { fromCodex } from '../from-codex.js';
+import { fromCodex, fromCodexAgentRole } from '../from-codex.js';
 import type { CanonicalPackage } from '../types/canonical.js';
 
 const baseMetadata = {
@@ -367,6 +367,125 @@ Roundtrip test skill content.
       expect(agentSkills?.allowedTools).toBe('Bash(npm:*) Bash(node:*) Read Write');
       expect(agentSkills?.metadata?.version).toBe('1.2.3');
       expect(agentSkills?.metadata?.maintainer).toBe('devteam');
+    });
+  });
+});
+
+describe('fromCodexAgentRole', () => {
+  const baseMetadata = {
+    id: 'reviewer',
+    name: 'reviewer',
+    version: '1.0.0',
+    author: 'testauthor',
+    description: 'Find security and correctness issues in code.',
+  };
+
+  describe('basic TOML parsing', () => {
+    it('should parse a minimal agent role with no fields', () => {
+      const result = fromCodexAgentRole('', baseMetadata);
+
+      expect(result.format).toBe('codex');
+      expect(result.subtype).toBe('agent');
+      expect(result.name).toBe('reviewer');
+    });
+
+    it('should parse model field', () => {
+      const content = `model = "o3"`;
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+
+      expect(metadataSection?.type).toBe('metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.codexAgent?.model).toBe('o3');
+      }
+    });
+
+    it('should parse model_reasoning_effort field', () => {
+      const content = `model_reasoning_effort = "high"`;
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.codexAgent?.modelReasoningEffort).toBe('high');
+      }
+    });
+
+    it('should parse sandbox_mode field', () => {
+      const content = `sandbox_mode = "workspace-write"`;
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.codexAgent?.sandboxMode).toBe('workspace-write');
+      }
+    });
+
+    it('should map developer_instructions to an instructions section', () => {
+      const content = `developer_instructions = "Focus on security vulnerabilities and unsafe code patterns."`;
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+      const instructionsSection = result.content.sections.find(s => s.type === 'instructions');
+
+      expect(instructionsSection?.type).toBe('instructions');
+      if (instructionsSection?.type === 'instructions') {
+        expect(instructionsSection.content).toBe('Focus on security vulnerabilities and unsafe code patterns.');
+      }
+    });
+
+    it('should parse a full agent role with all fields', () => {
+      const content = `
+model = "o3"
+model_reasoning_effort = "high"
+sandbox_mode = "read-only"
+developer_instructions = "Find security, correctness, and test risks in code."
+`.trim();
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+      const instructionsSection = result.content.sections.find(s => s.type === 'instructions');
+
+      expect(result.format).toBe('codex');
+      expect(result.subtype).toBe('agent');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.codexAgent?.model).toBe('o3');
+        expect(metadataSection.data.codexAgent?.modelReasoningEffort).toBe('high');
+        expect(metadataSection.data.codexAgent?.sandboxMode).toBe('read-only');
+      }
+      if (instructionsSection?.type === 'instructions') {
+        expect(instructionsSection.content).toContain('security');
+      }
+    });
+
+    it('should handle invalid TOML gracefully without throwing', () => {
+      const content = `this is not valid toml :::`;
+
+      expect(() => fromCodexAgentRole(content, baseMetadata)).not.toThrow();
+      const result = fromCodexAgentRole(content, baseMetadata);
+      expect(result.format).toBe('codex');
+      expect(result.subtype).toBe('agent');
+    });
+  });
+
+  describe('roundtrip metadata', () => {
+    it('should preserve all codexAgent fields for roundtrip', () => {
+      const content = `
+model = "o3-mini"
+model_reasoning_effort = "medium"
+sandbox_mode = "danger-full-access"
+developer_instructions = "You are a code explorer."
+`.trim();
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.codexAgent?.model).toBe('o3-mini');
+        expect(metadataSection.data.codexAgent?.modelReasoningEffort).toBe('medium');
+        expect(metadataSection.data.codexAgent?.sandboxMode).toBe('danger-full-access');
+      }
     });
   });
 });
