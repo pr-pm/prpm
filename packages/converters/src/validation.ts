@@ -74,6 +74,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'opencode:plugin': 'opencode-plugin.schema.json',
       'opencode:skill': 'agent-skills.schema.json',
       'codex:skill': 'agent-skills.schema.json',
+      'codex:agent': 'codex-agent-role.schema.json',
       'gemini:extension': 'gemini-extension.schema.json',
       'amp:skill': 'agent-skills.schema.json',
       'amp:slash-command': 'amp-command.schema.json',

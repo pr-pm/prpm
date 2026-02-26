@@ -34,7 +34,7 @@ export { fromAider } from './from-aider.js';
 export { fromZencoder } from './from-zencoder.js';
 export { fromReplit } from './from-replit.js';
 export { fromZed, isZedFormat } from './from-zed.js';
-export { fromCodex } from './from-codex.js';
+export { fromCodex, fromCodexAgentRole } from './from-codex.js';
 export { fromAmp } from './from-amp.js';
 export { fromMCPServer, parseMCPServerJson, extractMCPServers as extractMCPServersFromCanonical, type MCPServerJson } from './from-mcp-server.js';
 

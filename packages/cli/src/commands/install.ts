@@ -1100,10 +1100,12 @@ export async function handleInstall(
           // Skills go to .openskills/package-name/ directory
           destPath = `${destDir}/SKILL.md`;
           console.log(`   📦 Installing skill to ${destDir}/ for progressive disclosure`);
-        } else if (effectiveSubtype === 'agent') {
-          // Agents go to .openagents/package-name/ directory
-          destPath = `${destDir}/AGENT.md`;
-          console.log(`   🤖 Installing agent to ${destDir}/ for progressive disclosure`);
+        } else if (effectiveFormat === 'codex' && effectiveSubtype === 'agent') {
+          // Codex agent roles: project-local .codex/agents/<name>.toml
+          // config_file paths in .codex/config.toml are relative to the config file,
+          // so ./agents/<name>.toml resolves to .codex/agents/<name>.toml
+          destPath = `${destDir}/${packageName}.toml`;
+          console.log(`   🤖 Installing Codex agent role to ${destPath}`);
         } else if (effectiveSubtype === 'slash-command') {
           // Commands go to .opencommands/ directory (no subdirectory, just the file)
           destPath = `${destDir}/${packageName}.md`;
