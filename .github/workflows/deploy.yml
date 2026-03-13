@@ -1,17 +1,20 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'packages/registry/**'
-      - 'packages/types/**'
-      - 'packages/converters/**'
-      - 'packages/webapp/**'
-  schedule:
-    # Rebuild webapp every 6 hours to regenerate static pages with latest data from registry API
-    # Reduced from hourly to save ~$58/month in S3 request costs
-    - cron: '0 */6 * * *'
+  # Auto-deploy on push and scheduled rebuilds paused to prevent ChunkLoadError
+  # When a new deploy generates new chunk hashes and --delete removes old ones,
+  # users with cached manifests get ChunkLoadError trying to load deleted chunks.
+  # TODO: Fix by keeping old chunks during deploy (remove --delete or use versioned paths)
+  #
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'packages/registry/**'
+  #     - 'packages/types/**'
+  #     - 'packages/converters/**'
+  #     - 'packages/webapp/**'
+  # schedule:
+  #   - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
       environment:
