@@ -511,14 +511,15 @@ jobs:
           # Extract changed file paths from sync output
           CHANGED_FILES="$CHANGED_FILES $(echo "$SYNC_OUTPUT" | grep -oE 'upload: .* to s3://[^/]+/(.*)' | sed 's|.*s3://[^/]*/|/|' || true)"
 
-          # Sync HTML files with NO CACHE - use --size-only
+          # Sync HTML files with NO CACHE - always upload (no --size-only)
+          # HTML files are entry points that reference hashed chunks, so they must
+          # always be up-to-date even if the file size hasn't changed
           echo "Syncing HTML files..."
           SYNC_OUTPUT=$(aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ \
             --cache-control "no-cache, no-store, must-revalidate" \
             --exclude "*" \
             --include "*.html" \
-            --include "_next/data/*" \
-            --size-only 2>&1) || true
+            --include "_next/data/*" 2>&1) || true
           echo "$SYNC_OUTPUT"
 
           CHANGED_FILES="$CHANGED_FILES $(echo "$SYNC_OUTPUT" | grep -oE 'upload: .* to s3://[^/]+/(.*)' | sed 's|.*s3://[^/]*/|/|' || true)"
