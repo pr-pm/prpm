@@ -1,19 +1,15 @@
 name: Deploy
 
 on:
-  # Auto-deploy on push and scheduled rebuilds paused to prevent ChunkLoadError
-  # When a new deploy generates new chunk hashes and --delete removes old ones,
-  # users with cached manifests get ChunkLoadError trying to load deleted chunks.
-  # TODO: Fix by keeping old chunks during deploy (remove --delete or use versioned paths)
-  #
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - 'packages/registry/**'
-  #     - 'packages/types/**'
-  #     - 'packages/converters/**'
-  #     - 'packages/webapp/**'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/registry/**'
+      - 'packages/types/**'
+      - 'packages/converters/**'
+      - 'packages/webapp/**'
   # schedule:
+  #   # Rebuild webapp every 6 hours to regenerate static pages with latest data from registry API
   #   - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
@@ -527,14 +523,6 @@ jobs:
 
           CHANGED_FILES="$CHANGED_FILES $(echo "$SYNC_OUTPUT" | grep -oE 'upload: .* to s3://[^/]+/(.*)' | sed 's|.*s3://[^/]*/|/|' || true)"
 
-          # Delete old files after everything is uploaded - use --size-only
-          echo "Cleaning up old files..."
-          SYNC_OUTPUT=$(aws s3 sync packages/webapp/out/ s3://prpm-prod-webapp/ --delete --size-only 2>&1) || true
-          echo "$SYNC_OUTPUT"
-
-          # Add deleted files to changed list
-          CHANGED_FILES="$CHANGED_FILES $(echo "$SYNC_OUTPUT" | grep -oE 'delete: s3://[^/]+/(.*)' | sed 's|.*s3://[^/]*/|/|' || true)"
-
           # Deduplicate and clean up paths
           CHANGED_FILES=$(echo "$CHANGED_FILES" | tr ' ' '\n' | grep -v '^$' | sort -u | head -100)
 
@@ -597,6 +585,32 @@ jobs:
       - name: Skip invalidation notice
         if: steps.s3-deploy.outputs.has_changes != 'true'
         run: echo "✓ No changes detected, skipping CloudFront invalidation"
+
+      - name: Clean up stale chunks (older than 7 days)
+        run: |
+          echo "Finding S3 objects older than 7 days to clean up..."
+          CUTOFF=$(date -u -d '7 days ago' '+%Y-%m-%dT%H:%M:%S' 2>/dev/null || date -u -v-7d '+%Y-%m-%dT%H:%M:%S')
+
+          # List all _next/static files in S3 and delete ones older than 7 days
+          # that don't exist in the current build output
+          STALE_COUNT=0
+          aws s3api list-objects-v2 \
+            --bucket prpm-prod-webapp \
+            --prefix "_next/static/" \
+            --query "Contents[?LastModified<'${CUTOFF}'].[Key]" \
+            --output text | while read -r KEY; do
+              if [ "$KEY" != "None" ] && [ -n "$KEY" ]; then
+                # Check if this file exists in the current build
+                LOCAL_PATH="packages/webapp/out/${KEY}"
+                if [ ! -f "$LOCAL_PATH" ]; then
+                  echo "Deleting stale: $KEY"
+                  aws s3 rm "s3://prpm-prod-webapp/${KEY}"
+                  STALE_COUNT=$((STALE_COUNT + 1))
+                fi
+              fi
+            done
+
+          echo "✓ Stale chunk cleanup complete"
 
       - name: Health check
         run: |
