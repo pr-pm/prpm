@@ -537,7 +537,9 @@ jobs:
             if [ "$CHANGE_COUNT" -gt 50 ]; then
               echo "invalidation_paths=/index.html /search/* /packages/* /authors/* /blog/*" >> $GITHUB_OUTPUT
             else
-              echo "invalidation_paths=$CHANGED_FILES" >> $GITHUB_OUTPUT
+              # Use space-separated paths on a single line to avoid multi-line output issues
+              PATHS_SINGLE_LINE=$(echo "$CHANGED_FILES" | tr '\n' ' ' | sed 's/  */ /g; s/^ //; s/ $//')
+              echo "invalidation_paths=$PATHS_SINGLE_LINE" >> $GITHUB_OUTPUT
             fi
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
