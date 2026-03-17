@@ -887,6 +887,193 @@ Old content for my-command
       expect(result.lossyConversion).toBe(true);
     });
 
+    it('should include name and description in TOML output', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'security-reviewer',
+        subtype: 'agent',
+        description: 'Find security issues.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Security Reviewer',
+                description: 'Find security issues.',
+                codexAgent: { name: 'Security Reviewer', description: 'Find security issues in code changes' },
+              },
+            },
+            { type: 'instructions', title: 'Instructions', content: 'Focus on OWASP.' },
+          ],
+        },
+      };
+
+      const result = toCodex(agentPkg);
+
+      expect(result.content).toContain('name = ');
+      expect(result.content).toContain('Security Reviewer');
+      expect(result.content).toContain('description = ');
+      expect(result.content).toContain('Find security issues in code changes');
+    });
+
+    it('should include nickname_candidates in TOML output', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'reviewer',
+        subtype: 'agent',
+        description: 'Review code.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Reviewer',
+                description: 'Review code.',
+                codexAgent: {
+                  name: 'Reviewer',
+                  description: 'Review code.',
+                  nicknameCandidates: ['rev', 'code-review'],
+                },
+              },
+            },
+            { type: 'instructions', title: 'Instructions', content: 'Review.' },
+          ],
+        },
+      };
+
+      const result = toCodex(agentPkg);
+
+      expect(result.content).toContain('nickname_candidates');
+      expect(result.content).toContain('rev');
+      expect(result.content).toContain('code-review');
+    });
+
+    it('should include mcp_servers in TOML output', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'mcp-agent',
+        subtype: 'agent',
+        description: 'Agent with MCP.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'MCP Agent',
+                description: 'Agent with MCP.',
+                codexAgent: {
+                  name: 'MCP Agent',
+                  description: 'Agent with MCP.',
+                  mcpServers: {
+                    github: { command: 'npx', args: ['-y', '@mcp/server-github'] },
+                  },
+                },
+              },
+            },
+            { type: 'instructions', title: 'Instructions', content: 'Use MCP.' },
+          ],
+        },
+      };
+
+      const result = toCodex(agentPkg);
+
+      expect(result.content).toContain('mcp_servers');
+      expect(result.content).toContain('github');
+      expect(result.content).toContain('npx');
+    });
+
+    it('should include skills.config in TOML output', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'skilled-agent',
+        subtype: 'agent',
+        description: 'Agent with skills.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Skilled Agent',
+                description: 'Agent with skills.',
+                codexAgent: {
+                  name: 'Skilled Agent',
+                  description: 'Agent with skills.',
+                  skillsConfig: { focus: 'security' },
+                },
+              },
+            },
+            { type: 'instructions', title: 'Instructions', content: 'Use skills.' },
+          ],
+        },
+      };
+
+      const result = toCodex(agentPkg);
+
+      expect(result.content).toContain('skills');
+      expect(result.content).toContain('config');
+      expect(result.content).toContain('security');
+    });
+
+    it('should roundtrip full subagent with all new fields', () => {
+      const agentPkg: CanonicalPackage = {
+        ...minimalCanonicalPackage,
+        name: 'full-subagent',
+        subtype: 'agent',
+        description: 'Full subagent.',
+        content: {
+          format: 'canonical',
+          version: '1.0',
+          sections: [
+            {
+              type: 'metadata',
+              data: {
+                title: 'Full Subagent',
+                description: 'Full subagent.',
+                codexAgent: {
+                  name: 'Full Subagent',
+                  description: 'Full subagent with all fields.',
+                  nicknameCandidates: ['full', 'sub'],
+                  model: 'o3',
+                  modelReasoningEffort: 'high',
+                  sandboxMode: 'read-only',
+                  mcpServers: { test: { command: 'echo', args: ['hello'] } },
+                  skillsConfig: { key: 'value' },
+                },
+              },
+            },
+            { type: 'instructions', title: 'Instructions', content: 'Do everything.' },
+          ],
+        },
+      };
+
+      const tomlOutput = toCodex(agentPkg).content;
+      const reparsed = fromCodexAgentRole(tomlOutput, {
+        id: 'full-subagent', name: 'full-subagent', version: '1.0.0', author: 'test',
+      });
+
+      const meta = reparsed.content.sections.find(s => s.type === 'metadata');
+      if (meta?.type === 'metadata') {
+        expect(meta.data.codexAgent?.name).toBe('Full Subagent');
+        expect(meta.data.codexAgent?.description).toBe('Full subagent with all fields.');
+        expect(meta.data.codexAgent?.nicknameCandidates).toEqual(['full', 'sub']);
+        expect(meta.data.codexAgent?.model).toBe('o3');
+        expect(meta.data.codexAgent?.modelReasoningEffort).toBe('high');
+        expect(meta.data.codexAgent?.sandboxMode).toBe('read-only');
+        expect(meta.data.codexAgent?.mcpServers?.test?.command).toBe('echo');
+        expect(meta.data.codexAgent?.skillsConfig?.key).toBe('value');
+      }
+      const instr = reparsed.content.sections.find(s => s.type === 'instructions');
+      expect(instr?.type === 'instructions' && instr.content).toContain('Do everything.');
+    });
+
     it('should produce a roundtrip-stable agent role', () => {
       const agentPkg: CanonicalPackage = {
         ...minimalCanonicalPackage,

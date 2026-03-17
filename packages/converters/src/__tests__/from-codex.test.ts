@@ -469,6 +469,120 @@ developer_instructions = "Find security, correctness, and test risks in code."
     });
   });
 
+  describe('subagent fields', () => {
+    it('should parse name and description fields', () => {
+      const content = `
+name = "Security Reviewer"
+description = "Find security vulnerabilities in code"
+developer_instructions = "Focus on OWASP Top 10."
+`.trim();
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+
+      expect(result.name).toBe('Security Reviewer');
+      expect(result.description).toBe('Find security vulnerabilities in code');
+
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.codexAgent?.name).toBe('Security Reviewer');
+        expect(metadataSection.data.codexAgent?.description).toBe('Find security vulnerabilities in code');
+      }
+    });
+
+    it('should parse nickname_candidates array', () => {
+      const content = `
+name = "Reviewer"
+description = "Reviews code."
+developer_instructions = "Review code."
+nickname_candidates = ["sec-review", "security"]
+`.trim();
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.codexAgent?.nicknameCandidates).toEqual(['sec-review', 'security']);
+      }
+    });
+
+    it('should parse mcp_servers configuration', () => {
+      const content = `
+name = "MCP Agent"
+description = "Agent with MCP servers."
+developer_instructions = "Use MCP tools."
+
+[mcp_servers.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+`.trim();
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.codexAgent?.mcpServers).toBeDefined();
+        expect(metadataSection.data.codexAgent?.mcpServers?.github?.command).toBe('npx');
+        expect(metadataSection.data.codexAgent?.mcpServers?.github?.args).toEqual(['-y', '@modelcontextprotocol/server-github']);
+      }
+    });
+
+    it('should parse skills.config', () => {
+      const content = `
+name = "Skilled Agent"
+description = "Agent with skills config."
+developer_instructions = "Use skills."
+
+[skills.config]
+focus_areas = "security,auth"
+`.trim();
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+
+      if (metadataSection?.type === 'metadata') {
+        expect(metadataSection.data.codexAgent?.skillsConfig).toBeDefined();
+        expect(metadataSection.data.codexAgent?.skillsConfig?.focus_areas).toBe('security,auth');
+      }
+    });
+
+    it('should parse a full subagent with all fields', () => {
+      const content = `
+name = "Security Auditor"
+description = "Deep security analysis of code changes"
+nickname_candidates = ["sec-audit", "security-check"]
+model = "o3"
+model_reasoning_effort = "high"
+sandbox_mode = "read-only"
+developer_instructions = "Focus on OWASP Top 10 vulnerabilities."
+
+[mcp_servers.semgrep]
+command = "npx"
+args = ["-y", "semgrep-mcp-server"]
+
+[skills.config]
+severity_threshold = "medium"
+`.trim();
+
+      const result = fromCodexAgentRole(content, baseMetadata);
+
+      expect(result.name).toBe('Security Auditor');
+      expect(result.description).toBe('Deep security analysis of code changes');
+
+      const metadataSection = result.content.sections.find(s => s.type === 'metadata');
+      if (metadataSection?.type === 'metadata') {
+        const ca = metadataSection.data.codexAgent;
+        expect(ca?.name).toBe('Security Auditor');
+        expect(ca?.description).toBe('Deep security analysis of code changes');
+        expect(ca?.nicknameCandidates).toEqual(['sec-audit', 'security-check']);
+        expect(ca?.model).toBe('o3');
+        expect(ca?.modelReasoningEffort).toBe('high');
+        expect(ca?.sandboxMode).toBe('read-only');
+        expect(ca?.mcpServers?.semgrep?.command).toBe('npx');
+        expect(ca?.skillsConfig?.severity_threshold).toBe('medium');
+      }
+    });
+  });
+
   describe('roundtrip metadata', () => {
     it('should preserve all codexAgent fields for roundtrip', () => {
       const content = `

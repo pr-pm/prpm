@@ -209,7 +209,12 @@ describe('Codex Agent Role — schema validation', () => {
     const validModes = ['read-only', 'workspace-write', 'danger-full-access'];
 
     for (const mode of validModes) {
-      const result = validateFormat('codex', { sandbox_mode: mode }, 'agent');
+      const result = validateFormat('codex', {
+        name: 'test-agent',
+        description: 'Test agent',
+        developer_instructions: 'Do something.',
+        sandbox_mode: mode,
+      }, 'agent');
       expect(result.valid).toBe(true);
     }
   });
@@ -222,9 +227,122 @@ describe('Codex Agent Role — schema validation', () => {
     }
   });
 
-  it('should accept an agent role with no fields (all optional)', () => {
-    const result = validateFormat('codex', {}, 'agent');
+  it('should accept an agent role with only required fields', () => {
+    const result = validateFormat('codex', {
+      name: 'test-agent',
+      description: 'A test agent',
+      developer_instructions: 'Follow instructions.',
+    }, 'agent');
     expect(result.valid).toBe(true);
+  });
+
+  it('should reject an agent role missing required fields', () => {
+    const result = validateFormat('codex', {}, 'agent');
+    expect(result.valid).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Subagent-specific fields: nickname_candidates, mcp_servers, skills.config
+// ---------------------------------------------------------------------------
+
+describe('Codex Agent Role — subagent fields', () => {
+  it('should roundtrip nickname_candidates through conversion', () => {
+    const tomlContent = `
+name = "reviewer"
+description = "Code reviewer"
+developer_instructions = "Review code."
+nickname_candidates = ["rev", "code-review"]
+`.trim();
+
+    const canonical = fromCodexAgentRole(tomlContent, baseMetadata);
+    const meta = canonical.content.sections.find(s => s.type === 'metadata');
+    expect(meta?.type === 'metadata' && meta.data.codexAgent?.nicknameCandidates).toEqual(['rev', 'code-review']);
+
+    const result = toCodex(canonical);
+    expect(result.content).toContain('nickname_candidates');
+    expect(result.content).toContain('rev');
+    expect(result.content).toContain('code-review');
+  });
+
+  it('should roundtrip mcp_servers through conversion', () => {
+    const tomlContent = `
+name = "agent-with-mcp"
+description = "Agent with MCP"
+developer_instructions = "Use MCP tools."
+
+[mcp_servers.filesystem]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem"]
+
+[mcp_servers.filesystem.env]
+ROOT_DIR = "/tmp"
+`.trim();
+
+    const canonical = fromCodexAgentRole(tomlContent, baseMetadata);
+    const meta = canonical.content.sections.find(s => s.type === 'metadata');
+    expect(meta?.type === 'metadata' && meta.data.codexAgent?.mcpServers).toBeDefined();
+
+    const result = toCodex(canonical);
+    expect(result.content).toContain('mcp_servers');
+    expect(result.content).toContain('filesystem');
+  });
+
+  it('should roundtrip skills.config through conversion', () => {
+    const tomlContent = `
+name = "skilled-agent"
+description = "Agent with skills"
+developer_instructions = "Use skills."
+
+[skills.config]
+search = true
+analyze = false
+`.trim();
+
+    const canonical = fromCodexAgentRole(tomlContent, baseMetadata);
+    const meta = canonical.content.sections.find(s => s.type === 'metadata');
+    expect(meta?.type === 'metadata' && meta.data.codexAgent?.skillsConfig).toBeDefined();
+
+    const result = toCodex(canonical);
+    expect(result.content).toContain('skills');
+    expect(result.content).toContain('config');
+  });
+
+  it('should validate a full subagent with all fields against schema', () => {
+    const parsed = {
+      name: 'full-agent',
+      description: 'A fully configured subagent',
+      developer_instructions: 'Do everything.',
+      nickname_candidates: ['fa', 'full'],
+      model: 'o3',
+      model_reasoning_effort: 'high',
+      sandbox_mode: 'workspace-write',
+      mcp_servers: {
+        fs: { command: 'npx', args: ['-y', 'fs-server'] },
+      },
+      skills: { config: { linting: true } },
+    };
+
+    const result = validateFormat('codex', parsed, 'agent');
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('should preserve name and description through roundtrip', () => {
+    const tomlContent = `
+name = "My Custom Agent"
+description = "Does custom things"
+developer_instructions = "Be custom."
+`.trim();
+
+    const canonical = fromCodexAgentRole(tomlContent, baseMetadata);
+    const meta = canonical.content.sections.find(s => s.type === 'metadata');
+    expect(meta?.type === 'metadata' && meta.data.codexAgent?.name).toBe('My Custom Agent');
+    expect(meta?.type === 'metadata' && meta.data.codexAgent?.description).toBe('Does custom things');
+
+    const result = toCodex(canonical);
+    expect(result.content).toContain('My Custom Agent');
+    expect(result.content).toContain('Does custom things');
   });
 });
 
