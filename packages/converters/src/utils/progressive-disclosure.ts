@@ -134,8 +134,9 @@ export function formatSupportsSubtype(format: Format, subtype: Subtype): boolean
     case 'skill':
       return capabilities.supportsSkills || false;
     case 'plugin':
+      return capabilities.supportsPlugins || false;
     case 'extension':
-      return capabilities.supportsPlugins || capabilities.supportsExtensions || false;
+      return capabilities.supportsExtensions || false;
     case 'agent':
       return capabilities.supportsAgents || false;
     default:

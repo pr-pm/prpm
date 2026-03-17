@@ -18,13 +18,13 @@
     "cursor": {
       "name": "Cursor",
       "supportsSkills": false,
-      "supportsPlugins": false,
+      "supportsPlugins": true,
       "supportsExtensions": false,
       "supportsAgents": false,
       "supportsAgentsMd": true,
       "supportsSlashCommands": true,
       "markdownFallback": "cursor-rules.md",
-      "notes": "Cursor supports AGENTS.md files for project instructions. Custom slash commands in .cursor/commands/*.md (introduced v1.6, Sept 2025). Built-in /summarize command. Rules are appended automatically, slash commands are explicit prompts with more weight. No native agent/skill/plugin packages."
+      "notes": "Cursor supports plugins (.cursor-plugin/plugin.json) that bundle rules, skills, agents, commands, hooks, and MCP servers. Custom slash commands in .cursor/commands/*.md. AGENTS.md for project instructions. Plugin marketplace at cursor.com/marketplace. No native standalone agent/skill packages."
     },
     "claude": {
       "name": "Claude Code",

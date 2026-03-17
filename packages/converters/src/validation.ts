@@ -65,6 +65,7 @@ function loadSchema(format: FormatType, subtype?: SubtypeType): ReturnType<typeo
       'copilot:skill': 'agent-skills.schema.json',
       'cursor:slash-command': 'cursor-command.schema.json',
       'cursor:hook': 'cursor-hooks.schema.json', // cursor + hook subtype uses cursor-hooks schema
+      'cursor:plugin': 'cursor-plugin.schema.json',
       'kiro:hook': 'kiro-hook.schema.json',
       'kiro:agent': 'kiro-agent.schema.json',
       'droid:skill': 'droid-skill.schema.json',

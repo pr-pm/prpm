@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/cursor-plugin.json",
+  "$comment": "https://cursor.com/docs/plugins/building",
+  "title": "Cursor Plugin Format",
+  "description": "JSON Schema for Cursor plugins - bundles of rules, skills, agents, commands, hooks, and MCP server configurations",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Plugin identifier (lowercase, kebab-case with alphanumerics, hyphens, and periods)",
+      "pattern": "^[a-z0-9][a-z0-9.-]*[a-z0-9]$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief explanation of plugin functionality"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (e.g., '1.0.0')",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?(\\+[a-zA-Z0-9.]+)?$"
+    },
+    "author": {
+      "type": "object",
+      "description": "Plugin author information",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Author name"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Author email address"
+        }
+      },
+      "additionalProperties": false
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Plugin homepage URL"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "description": "Repository URL"
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g., 'MIT', 'Apache-2.0')"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords for discovery and categorization"
+    },
+    "logo": {
+      "type": "string",
+      "description": "Relative path to SVG logo or absolute URL"
+    },
+    "rules": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "Path(s) to rule files or directories"
+    },
+    "agents": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "Path(s) to agent files or directories"
+    },
+    "skills": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "Path(s) to skill directories"
+    },
+    "commands": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "Path(s) to command files or directories"
+    },
+    "hooks": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "hooks": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["command"],
+                  "properties": {
+                    "command": { "type": "string" },
+                    "matcher": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "Path to hooks.json or inline hooks configuration"
+    },
+    "mcpServers": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "description": "MCP server configurations",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["command"],
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "Command to run the MCP server"
+              },
+              "args": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Arguments for the command"
+              },
+              "env": {
+                "type": "object",
+                "additionalProperties": { "type": "string" },
+                "description": "Environment variables"
+              }
+            }
+          }
+        },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ],
+      "description": "Path to .mcp.json, inline MCP config, or array of paths"
+    }
+  },
+  "examples": [
+    {
+      "name": "my-cursor-plugin",
+      "description": "A plugin with rules, agents, and MCP servers",
+      "version": "1.0.0",
+      "author": { "name": "Jane Doe", "email": "jane@example.com" },
+      "keywords": ["typescript", "testing"],
+      "mcpServers": {
+        "playwright": {
+          "command": "npx",
+          "args": ["-y", "@playwright/mcp@latest"]
+        }
+      }
+    }
+  ]
+}

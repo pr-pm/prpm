@@ -108,7 +108,7 @@ export const SUBTYPES: readonly Subtype[] = [
  * Defines which subtypes are valid/available for each format (can be installed as)
  */
 export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
-  cursor: ["rule", "slash-command", "hook", "skill", "agent"],  // skill/agent via progressive disclosure
+  cursor: ["rule", "slash-command", "hook", "skill", "agent", "plugin"],  // skill/agent via progressive disclosure, plugin for .cursor-plugin/
   claude: ["skill", "agent", "slash-command", "tool", "hook", "plugin"],
   "claude.md": ["skill", "agent"],
   continue: ["rule", "prompt"],
@@ -149,7 +149,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
  * or to .openskills/.openagents/.opencommands with AGENTS.md reference
  */
 export const FORMAT_NATIVE_SUBTYPES: Partial<Record<Format, readonly Subtype[]>> = {
-  cursor: ["rule", "slash-command", "hook"],  // No native agent/skill - uses AGENTS.md
+  cursor: ["rule", "slash-command", "hook", "plugin"],  // No native agent/skill - uses AGENTS.md; plugin for .cursor-plugin/
   claude: ["skill", "agent", "slash-command", "tool", "hook", "plugin"],  // Full native support
   // Note: claude.md is NOT listed - it uses progressive disclosure (.openskills/.openagents with manifest)
   continue: ["rule", "prompt"],  // Full native support
