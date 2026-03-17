@@ -129,6 +129,27 @@ function convertToAgentRoleToml(
     ? metadataSection.data.codexAgent
     : undefined;
 
+  // Required subagent fields: name, description, developer_instructions
+  const agentName = codexAgent?.name || pkg.name;
+  role['name'] = agentName;
+
+  const agentDescription = codexAgent?.description
+    || (metadataSection?.type === 'metadata' ? metadataSection.data.description : '')
+    || pkg.description || '';
+  role['description'] = agentDescription;
+
+  // Map instructions section to developer_instructions
+  if (instructionsSection?.type === 'instructions') {
+    role['developer_instructions'] = instructionsSection.content;
+  } else if (pkg.description) {
+    // Fall back to package description
+    role['developer_instructions'] = pkg.description;
+  }
+
+  // Optional subagent fields
+  if (codexAgent?.nicknameCandidates && codexAgent.nicknameCandidates.length > 0) {
+    role['nickname_candidates'] = codexAgent.nicknameCandidates;
+  }
   if (codexAgent?.model) {
     role['model'] = codexAgent.model;
   }
@@ -138,13 +159,11 @@ function convertToAgentRoleToml(
   if (codexAgent?.sandboxMode) {
     role['sandbox_mode'] = codexAgent.sandboxMode;
   }
-
-  // Map instructions section to developer_instructions
-  if (instructionsSection?.type === 'instructions') {
-    role['developer_instructions'] = instructionsSection.content;
-  } else if (pkg.description) {
-    // Fall back to package description
-    role['developer_instructions'] = pkg.description;
+  if (codexAgent?.mcpServers && Object.keys(codexAgent.mcpServers).length > 0) {
+    role['mcp_servers'] = codexAgent.mcpServers;
+  }
+  if (codexAgent?.skillsConfig && Object.keys(codexAgent.skillsConfig).length > 0) {
+    role['skills'] = { config: codexAgent.skillsConfig };
   }
 
   // Warn about unsupported sections

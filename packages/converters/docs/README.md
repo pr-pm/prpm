@@ -26,6 +26,9 @@ Complete overview of all supported formats, their subtypes, and official documen
 | **Factory Droid** | `skill` | Reusable workflows with YAML frontmatter | [docs.factory.ai](https://docs.factory.ai/cli/configuration/skills) |
 | | `slash-command` | Custom slash commands with argument hints | [docs.factory.ai](https://docs.factory.ai/cli/configuration/custom-slash-commands) |
 | | `agents-md` | Agent configurations in markdown | [docs.factory.ai](https://docs.factory.ai/cli/configuration/agents-md) |
+| **Codex** | `skill` | Agent Skills SKILL.md format | [developers.openai.com](https://developers.openai.com/codex/skills) |
+| | `agent` | Subagent TOML configs with MCP and skills | [developers.openai.com](https://developers.openai.com/codex/multi-agent/) |
+| | `rule` | AGENTS.md project instructions | [developers.openai.com](https://developers.openai.com/codex/skills) |
 | **OpenCode** | `agent` | AI agents with mode, tools, and permissions | [opencode.ai](https://opencode.ai/docs/agents/) |
 | | `slash-command` | User-triggered prompts with templates and placeholders | [opencode.ai](https://opencode.ai/docs/commands/) |
 | **Gemini CLI** | `slash-command` | Custom slash commands in TOML format | [geminicli.com](https://geminicli.com/docs/commands/) |
@@ -67,6 +70,7 @@ This directory contains detailed specifications for each AI IDE/tool format that
 | **Kiro Agents** | [kiro-agents.md](./kiro-agents.md) | Custom AI agent configurations (JSON) | [kiro.dev/docs](https://kiro.dev/docs/cli/custom-agents/) |
 | **Ruler** | [ruler.md](./ruler.md) | Plain markdown rules, centralized management | [okigu.com/ruler](https://okigu.com/ruler) |
 | **Factory Droid** | [factory-droid.md](./factory-droid.md) | Skills, slash commands, and hooks | [docs.factory.ai](https://docs.factory.ai/) |
+| **Codex** | [codex.md](./codex.md) | Skills, subagents, and AGENTS.md instructions | [developers.openai.com](https://developers.openai.com/codex/multi-agent/) |
 | **OpenCode** | [opencode.md](./opencode.md) | Agents and slash commands with YAML frontmatter | [opencode.ai/docs](https://opencode.ai/docs/) |
 | **Gemini CLI** | [gemini-plugin.md](./gemini-plugin.md) | Extensions with MCP servers and custom commands | [geminicli.com/docs](https://geminicli.com/docs/extensions/) |
 | **agents.md** | [agents-md.md](./agents-md.md) | OpenAI format, plain markdown | [github.com/openai/agents.md](https://github.com/openai/agents.md) |
@@ -124,6 +128,10 @@ Each format has a corresponding JSON Schema in `../schemas/` that defines the st
 - `droid-skill.schema.json` - Reusable workflows
 - `droid-slash-command.schema.json` - Custom slash commands
 - `droid-hook.schema.json` - Event-driven automations (JSON)
+
+**Codex Subtypes:**
+- `codex-agent-role.schema.json` - Subagent TOML configurations
+- `agent-skills.schema.json` - Agent Skills SKILL.md (shared standard)
 
 **OpenCode Subtypes:**
 - `opencode-slash-command.schema.json` - Template-based commands
@@ -198,6 +206,7 @@ These specifications serve as the source of truth for:
 | Copilot | Markdown headers | none | `applyTo`, `excludeAgent` |
 | Kiro | YAML (optional) | none | `inclusion`, `fileMatchPattern`, `domain` |
 | Factory Droid | YAML (required) | `name`, `description` | `argument-hint`, `allowed-tools` |
+| Codex Agents | TOML (required) | `name`, `description`, `developer_instructions` | `model`, `model_reasoning_effort`, `sandbox_mode`, `nickname_candidates`, `mcp_servers`, `skills.config` |
 | OpenCode Agents | YAML (required) | `description`, `mode` | `model`, `temperature`, `prompt`, `tools`, `permission`, `disable` |
 | OpenCode Commands | YAML (required) | `template` | `description`, `agent`, `model`, `subtask` |
 | Gemini Extension | JSON (required) | `name`, `version` | `description`, `author`, `mcpServers`, `contextFileName`, `excludeTools`, `experimentalSettings` |
@@ -221,6 +230,7 @@ These specifications serve as the source of truth for:
 | Kiro | `.kiro/steering/*.md` | Multiple files |
 | Kiro Hooks | `.kiro/hooks/*.json` | Multiple JSON files |
 | Factory Droid | `.factory/skills/*/SKILL.md`, `.factory/commands/*.md` | Skills in subdirs, commands as files |
+| Codex | `.codex/agents/*.toml`, `.agents/skills/*/SKILL.md` | Agents as TOML, skills in subdirs |
 | OpenCode | `.opencode/agent/*.md`, `.opencode/command/*.md` | Agents and commands as separate files |
 | Gemini CLI | `.gemini/extensions/*/gemini-extension.json` | Extensions in subdirectories with JSON config |
 | agents.md | `agents.md` | Single file |

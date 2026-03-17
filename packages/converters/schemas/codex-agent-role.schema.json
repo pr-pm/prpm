@@ -1,10 +1,28 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://registry.prpm.dev/api/v1/schemas/codex/agent-role.json",
-  "title": "Codex Agent Role Format",
-  "description": "JSON Schema for OpenAI Codex CLI agent role configuration (TOML format, installed to ~/.codex/agents/)",
+  "title": "Codex Agent Role / Subagent Format",
+  "description": "JSON Schema for OpenAI Codex CLI agent role and subagent configuration (TOML format, installed to ~/.codex/agents/ or .codex/agents/)",
   "type": "object",
+  "required": ["name", "description", "developer_instructions"],
   "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the agent/subagent"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of what this agent does and when to use it"
+    },
+    "developer_instructions": {
+      "type": "string",
+      "description": "System prompt / developer instructions for this agent role"
+    },
+    "nickname_candidates": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Alternative names the agent can be referred to as"
+    },
     "model": {
       "type": "string",
       "description": "Model identifier to use for this agent role"
@@ -14,14 +32,40 @@
       "enum": ["low", "medium", "high"],
       "description": "Reasoning effort level for the model"
     },
-    "developer_instructions": {
-      "type": "string",
-      "description": "System prompt / developer instructions for this agent role"
-    },
     "sandbox_mode": {
       "type": "string",
       "enum": ["read-only", "workspace-write", "danger-full-access"],
       "description": "Filesystem/network sandbox policy: read-only (default), workspace-write, or danger-full-access (no sandbox)"
+    },
+    "mcp_servers": {
+      "type": "object",
+      "description": "MCP server configurations available to this agent",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "command": { "type": "string" },
+          "args": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      }
+    },
+    "skills": {
+      "type": "object",
+      "description": "Skills configuration for this agent",
+      "properties": {
+        "config": {
+          "type": "object",
+          "description": "Skill-specific configuration key-value pairs",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": false

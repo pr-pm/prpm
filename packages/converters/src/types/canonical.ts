@@ -156,6 +156,11 @@ export interface CanonicalPackage {
       model?: string; // Model to use for this agent role
       modelReasoningEffort?: 'low' | 'medium' | 'high'; // Reasoning effort level
       sandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access'; // Sandbox isolation mode
+      name?: string; // Display name of the subagent
+      description?: string; // Short description of what this agent does
+      nicknameCandidates?: string[]; // Alternative names for the agent
+      mcpServers?: Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>; // MCP server configs
+      skillsConfig?: Record<string, unknown>; // Skills configuration
     };
     droid?: {
       argumentHint?: string; // Usage hint for slash commands
@@ -302,6 +307,11 @@ export interface MetadataSection {
       model?: string; // Model to use for this agent role
       modelReasoningEffort?: 'low' | 'medium' | 'high'; // Reasoning effort level
       sandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access'; // Sandbox isolation mode
+      name?: string; // Display name of the subagent
+      description?: string; // Short description of what this agent does
+      nicknameCandidates?: string[]; // Alternative names for the agent
+      mcpServers?: Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>; // MCP server configs
+      skillsConfig?: Record<string, unknown>; // Skills configuration
     };
     opencodeSlashCommand?: {
       description?: string; // Description of the slash command

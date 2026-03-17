@@ -179,10 +179,15 @@ export function fromCodex(
  * @see https://developers.openai.com/codex/multi-agent/#agent-roles
  */
 interface CodexAgentRoleToml {
+  name?: string;
+  description?: string;
+  developer_instructions?: string;
+  nickname_candidates?: string[];
   model?: string;
   model_reasoning_effort?: 'low' | 'medium' | 'high';
-  developer_instructions?: string;
   sandbox_mode?: 'read-only' | 'workspace-write' | 'danger-full-access';
+  mcp_servers?: Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>;
+  skills?: { config?: Record<string, unknown>; [key: string]: unknown };
 }
 
 /**
@@ -212,8 +217,8 @@ export function fromCodexAgentRole(
   const metadataSection: MetadataSection = {
     type: 'metadata',
     data: {
-      title: metadata.name || metadata.id,
-      description: metadata.description || '',
+      title: role.name || metadata.name || metadata.id,
+      description: role.description || metadata.description || '',
       version: metadata.version || '1.0.0',
       author: metadata.author,
     },
@@ -224,6 +229,11 @@ export function fromCodexAgentRole(
     model: role.model,
     modelReasoningEffort: role.model_reasoning_effort,
     sandboxMode: role.sandbox_mode,
+    name: role.name,
+    description: role.description,
+    nicknameCandidates: role.nickname_candidates,
+    mcpServers: role.mcp_servers as Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>,
+    skillsConfig: role.skills?.config as Record<string, unknown>,
   };
 
   sections.push(metadataSection);
@@ -246,10 +256,10 @@ export function fromCodexAgentRole(
   const pkg: CanonicalPackage = {
     ...metadata,
     id: metadata.id,
-    name: metadata.name || metadata.id,
+    name: role.name || metadata.name || metadata.id,
     version: metadata.version,
     author: metadata.author,
-    description: metadata.description || '',
+    description: role.description || metadata.description || '',
     tags: metadata.tags || [],
     format: 'codex',
     subtype: 'agent',
