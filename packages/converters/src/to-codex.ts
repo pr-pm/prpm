@@ -36,6 +36,8 @@ export interface CodexConfig {
   existingContent?: string;
   /** Force output to AGENTS.md format even for skills */
   forceAgentsMd?: boolean;
+  /** Override allowed tools for Agent Skills outputs */
+  allowedTools?: string;
 }
 
 /**
@@ -61,7 +63,7 @@ export function toCodex(
 
     if (isSkill && !config.forceAgentsMd) {
       // Native SKILL.md format for skills
-      content = convertToSkillMd(pkg, warnings);
+      content = convertToSkillMd(pkg, warnings, config);
     } else if (isAgent) {
       // Native TOML format for agent roles (~/.codex/agents/<name>.toml)
       content = convertToAgentRoleToml(pkg, warnings);
@@ -194,7 +196,8 @@ function convertToAgentRoleToml(
  */
 function convertToSkillMd(
   pkg: CanonicalPackage,
-  warnings: string[]
+  warnings: string[],
+  config?: CodexConfig
 ): string {
   const lines: string[] = [];
 
@@ -246,6 +249,10 @@ function convertToSkillMd(
     frontmatter['allowed-tools'] = toolsSection.tools.join(' ');
   }
 
+  if (config?.allowedTools) {
+    frontmatter['allowed-tools'] = normalizeAllowedTools(config.allowedTools);
+  }
+
   // Generate YAML frontmatter
   lines.push('---');
   lines.push(yaml.dump(frontmatter, { indent: 2, lineWidth: -1 }).trim());
@@ -277,6 +284,14 @@ function convertToSkillMd(
 function truncateDescription(desc: string, maxLength: number): string {
   if (desc.length <= maxLength) return desc;
   return desc.substring(0, maxLength - 3) + '...';
+}
+
+function normalizeAllowedTools(tools: string): string {
+  return tools
+    .split(/[,\s]+/)
+    .map(tool => tool.trim())
+    .filter(Boolean)
+    .join(' ');
 }
 
 /**

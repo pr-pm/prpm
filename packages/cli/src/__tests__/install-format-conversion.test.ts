@@ -201,6 +201,89 @@ description: Test for windsurf conversion
       );
     });
 
+    it('should preserve skill frontmatter when converting Claude skills to Codex', async () => {
+      const mockPackage = {
+        id: '@agent-relay/writing-agent-relay-workflows',
+        name: '@agent-relay/writing-agent-relay-workflows',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 11,
+        verified: true,
+        latest_version: {
+          version: '1.0.3',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      const claudeContent = `---
+name: writing-agent-relay-workflows
+description: Use when building multi-agent workflows with the relay broker-sdk.
+---
+
+# Writing Agent Relay Workflows
+
+Use when building multi-agent workflows with the relay broker-sdk.
+
+## Instructions
+
+Build the workflow with explicit step dependencies.`;
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(claudeContent));
+
+      await handleInstall('@agent-relay/writing-agent-relay-workflows', { as: 'codex' });
+
+      expect(saveFile).toHaveBeenCalledWith(
+        '.agents/skills/writing-agent-relay-workflows/SKILL.md',
+        expect.any(String)
+      );
+
+      const savedContent = (saveFile as Mock).mock.calls[0][1];
+      expect(savedContent).toContain('---');
+      expect(savedContent).toContain('name: writing-agent-relay-workflows');
+      expect(savedContent).toContain('description: Use when building multi-agent workflows with the relay broker-sdk.');
+      expect(savedContent).not.toContain('# Writing Agent Relay Workflows\n\nUse when building multi-agent workflows with the relay broker-sdk.\n');
+    });
+
+    it('should apply --tools override when converting a Claude skill to Codex', async () => {
+      const mockPackage = {
+        id: '@agent-relay/writing-agent-relay-workflows',
+        name: '@agent-relay/writing-agent-relay-workflows',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 11,
+        verified: true,
+        latest_version: {
+          version: '1.0.3',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      const claudeContent = `---
+name: writing-agent-relay-workflows
+description: Use when building multi-agent workflows with the relay broker-sdk.
+tools: Read, Write
+---
+
+# Writing Agent Relay Workflows
+
+Build the workflow with explicit step dependencies.`;
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(claudeContent));
+
+      await handleInstall('@agent-relay/writing-agent-relay-workflows', {
+        as: 'codex',
+        tools: 'Read WebSearch Bash(git:*)',
+      });
+
+      const savedContent = (saveFile as Mock).mock.calls[0][1];
+      expect(savedContent).toContain('allowed-tools: Read WebSearch Bash(git:*)');
+      expect(savedContent).not.toContain('allowed-tools: Read Write');
+    });
+
     it('should convert to Continue format using --as', async () => {
       const mockPackage = {
         id: 'claude-agent',
@@ -344,6 +427,41 @@ description: Test for copilot
         '.claude/skills/claude-skill/SKILL.md',
         expect.any(String)
       );
+    });
+
+    it('should apply --tools override when installing Claude content', async () => {
+      const mockPackage = {
+        id: 'claude-skill',
+        name: 'claude-skill',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      const claudeContent = `---
+name: claude-skill
+description: Native Claude skill
+tools: Read, Write
+---
+
+# Claude Skill
+
+Content`;
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(claudeContent));
+
+      await handleInstall('claude-skill', { tools: 'Read, Grep, Bash' });
+
+      const savedContent = (saveFile as Mock).mock.calls[0][1];
+      expect(savedContent).toContain('tools: Read, Grep, Bash');
+      expect(savedContent).not.toContain('tools: Read, Write');
     });
 
     it('should install Cursor rule in native format', async () => {
