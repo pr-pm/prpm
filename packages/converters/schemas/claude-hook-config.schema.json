@@ -1,0 +1,353 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://registry.prpm.dev/api/v1/schemas/claude/hook-config.json",
+  "$comment": "https://code.claude.com/docs/en/hooks",
+  "title": "Claude Hook Configuration",
+  "description": "JSON Schema for Claude Code hook.json configuration files. Defines hooks that execute on specific events.",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "description": "Optional description of this hook configuration"
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Hook event configurations",
+      "properties": {
+        "PreToolUse": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires after Claude creates tool parameters, before processing. Exit 2 blocks the tool call."
+        },
+        "PermissionRequest": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires when user is shown a permission dialog. Exit 2 denies permission."
+        },
+        "PostToolUse": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires immediately after a tool completes successfully. Cannot block (tool already ran)."
+        },
+        "Notification": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires when Claude Code sends notifications. Matcher matches notification_type."
+        },
+        "UserPromptSubmit": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires when user submits a prompt, before Claude processes it. Exit 2 blocks and erases prompt."
+        },
+        "Stop": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires when main Claude Code agent finishes responding. Exit 2 blocks stoppage."
+        },
+        "SubagentStop": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires when a Claude Code subagent (Task tool) finishes. Exit 2 blocks stoppage."
+        },
+        "PreCompact": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires before Claude Code runs a compact operation."
+        },
+        "SessionStart": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires when Claude Code starts or resumes a session."
+        },
+        "SessionEnd": {
+          "$ref": "#/$defs/hookEventConfig",
+          "description": "Fires when a Claude Code session ends."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["hooks"],
+  "$defs": {
+    "hookEventConfig": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "matcher": {
+            "type": "string",
+            "description": "Pattern to match tool names (PreToolUse/PostToolUse), notification types (Notification), etc. Use regex patterns like 'Write|Edit' or wildcards like '*'. Empty string matches all."
+          },
+          "hooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/hookDefinition"
+            },
+            "description": "Array of hooks to execute when matcher matches"
+          }
+        },
+        "required": ["hooks"]
+      }
+    },
+    "hookDefinition": {
+      "type": "object",
+      "oneOf": [
+        {
+          "properties": {
+            "type": {
+              "const": "command",
+              "description": "Command hook - executes a bash command"
+            },
+            "command": {
+              "type": "string",
+              "description": "Bash command to execute. Use ${CLAUDE_PLUGIN_ROOT} for plugin-relative paths."
+            },
+            "timeout": {
+              "type": "number",
+              "default": 60,
+              "description": "Timeout in seconds (default: 60)"
+            }
+          },
+          "required": ["type", "command"]
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "prompt",
+              "description": "Prompt hook - uses LLM reasoning (Stop/SubagentStop events only)"
+            },
+            "prompt": {
+              "type": "string",
+              "description": "LLM prompt text. Use $ARGUMENTS placeholder for context. Response must be { ok: boolean, reason: string }."
+            },
+            "timeout": {
+              "type": "number",
+              "default": 30,
+              "description": "Timeout in seconds (default: 30)"
+            }
+          },
+          "required": ["type", "prompt"]
+        }
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["command", "prompt"],
+          "description": "Hook type"
+        },
+        "timeout": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 300,
+          "description": "Timeout in seconds"
+        },
+        "once": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run only once per session (skills/slash commands only)"
+        },
+        "systemMessage": {
+          "type": "string",
+          "description": "Message shown to user when hook executes"
+        }
+      }
+    },
+    "hookInput": {
+      "type": "object",
+      "description": "JSON structure sent to hooks via stdin",
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "description": "Current session identifier"
+        },
+        "transcript_path": {
+          "type": "string",
+          "description": "Path to session transcript file"
+        },
+        "cwd": {
+          "type": "string",
+          "description": "Current working directory"
+        },
+        "permission_mode": {
+          "type": "string",
+          "enum": ["default", "plan", "acceptEdits", "dontAsk", "bypassPermissions"],
+          "description": "Current permission mode"
+        },
+        "hook_event_name": {
+          "type": "string",
+          "enum": ["PreToolUse", "PermissionRequest", "PostToolUse", "Notification", "UserPromptSubmit", "Stop", "SubagentStop", "PreCompact", "SessionStart", "SessionEnd"],
+          "description": "Name of the hook event"
+        },
+        "tool_name": {
+          "type": "string",
+          "description": "Name of the tool (PreToolUse/PostToolUse only)"
+        },
+        "tool_input": {
+          "type": "object",
+          "description": "Input parameters for the tool (PreToolUse/PostToolUse only)"
+        },
+        "tool_use_id": {
+          "type": "string",
+          "description": "Unique identifier for this tool use (PreToolUse/PostToolUse only)"
+        },
+        "tool_response": {
+          "type": "object",
+          "description": "Response from the tool (PostToolUse only)"
+        },
+        "message": {
+          "type": "string",
+          "description": "Notification message (Notification only)"
+        },
+        "notification_type": {
+          "type": "string",
+          "enum": ["permission_prompt", "idle_prompt", "auth_success", "elicitation_dialog"],
+          "description": "Type of notification (Notification only)"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "User's prompt text (UserPromptSubmit only)"
+        },
+        "stop_hook_active": {
+          "type": "boolean",
+          "description": "Whether stop hook is active (Stop/SubagentStop only)"
+        },
+        "trigger": {
+          "type": "string",
+          "enum": ["manual", "auto"],
+          "description": "What triggered the compact (PreCompact only)"
+        },
+        "custom_instructions": {
+          "type": "string",
+          "description": "Custom instructions for compact (PreCompact only)"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["startup", "resume", "clear", "compact"],
+          "description": "How the session started (SessionStart only)"
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["clear", "logout", "prompt_input_exit", "other"],
+          "description": "Why the session ended (SessionEnd only)"
+        }
+      }
+    },
+    "hookOutput": {
+      "type": "object",
+      "description": "JSON structure hooks can output via stdout (exit code 0 only)",
+      "properties": {
+        "continue": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether Claude should continue after hook"
+        },
+        "stopReason": {
+          "type": "string",
+          "description": "Message when continue is false"
+        },
+        "suppressOutput": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hide stdout from transcript"
+        },
+        "systemMessage": {
+          "type": "string",
+          "description": "Warning message to show user"
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["block"],
+          "description": "Set to 'block' to block the operation"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for the decision"
+        },
+        "hookSpecificOutput": {
+          "type": "object",
+          "description": "Event-specific output fields",
+          "properties": {
+            "hookEventName": {
+              "type": "string"
+            },
+            "permissionDecision": {
+              "type": "string",
+              "enum": ["allow", "deny", "ask"],
+              "description": "PreToolUse: permission decision"
+            },
+            "permissionDecisionReason": {
+              "type": "string",
+              "description": "PreToolUse: reason for decision"
+            },
+            "updatedInput": {
+              "type": "object",
+              "description": "PreToolUse/PermissionRequest: modified tool input"
+            },
+            "additionalContext": {
+              "type": "string",
+              "description": "Additional context to add"
+            }
+          }
+        }
+      }
+    },
+    "promptHookResponse": {
+      "type": "object",
+      "description": "Response format for prompt-based hooks",
+      "properties": {
+        "ok": {
+          "type": "boolean",
+          "description": "Whether the check passed"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Explanation (required when ok is false)"
+        }
+      },
+      "required": ["ok"]
+    }
+  },
+  "examples": [
+    {
+      "description": "Format files on save",
+      "hooks": {
+        "PostToolUse": [
+          {
+            "matcher": "Write|Edit",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "${CLAUDE_PLUGIN_ROOT}/scripts/format.sh",
+                "timeout": 5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "Block sensitive file access",
+      "hooks": {
+        "PreToolUse": [
+          {
+            "matcher": "Write|Edit|Read",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "${CLAUDE_PLUGIN_ROOT}/scripts/block-sensitive.sh"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "Verify task completion",
+      "hooks": {
+        "Stop": [
+          {
+            "matcher": "*",
+            "hooks": [
+              {
+                "type": "prompt",
+                "prompt": "Verify all requested tasks were completed. $ARGUMENTS",
+                "timeout": 30
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

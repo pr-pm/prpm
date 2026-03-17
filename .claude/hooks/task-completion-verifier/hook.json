@@ -1,0 +1,57 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Before completing, verify the following:\n\n1. **Tests**: Were tests run? Did they pass?\n2. **Types**: If TypeScript, do types check?\n3. **Linting**: Were there any linting errors?\n4. **Task Completion**: Was the original request fully addressed?\n5. **Edge Cases**: Were edge cases considered?\n\nIf any issues were found that weren't addressed, list them clearly.\n\nReturn your verification in the specified schema format.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "verified": {
+                  "type": "boolean",
+                  "description": "Whether all checks passed"
+                },
+                "checks": {
+                  "type": "object",
+                  "properties": {
+                    "tests": {
+                      "type": "string",
+                      "enum": ["passed", "failed", "not_run", "not_applicable"]
+                    },
+                    "types": {
+                      "type": "string",
+                      "enum": ["passed", "failed", "not_run", "not_applicable"]
+                    },
+                    "linting": {
+                      "type": "string",
+                      "enum": ["passed", "failed", "not_run", "not_applicable"]
+                    },
+                    "task_complete": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of unresolved issues"
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "Brief summary of verification results"
+                }
+              },
+              "required": ["verified", "summary"]
+            },
+            "systemMessage": "✅ Verifying task completion..."
+          }
+        ]
+      }
+    ]
+  }
+}

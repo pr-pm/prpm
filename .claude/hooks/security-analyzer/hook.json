@@ -1,0 +1,56 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Analyze the code being written to ${input.file_path} for security vulnerabilities.\n\nCheck for:\n1. Hardcoded secrets (API keys, passwords, tokens)\n2. SQL injection vulnerabilities\n3. Command injection risks\n4. Path traversal vulnerabilities\n5. Insecure deserialization\n6. XSS vulnerabilities in frontend code\n\nReturn your analysis in the specified schema format.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": ["allow", "block"],
+                  "description": "Whether to allow or block the file write"
+                },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "Type of security issue"
+                      },
+                      "severity": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high", "critical"]
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Description of the issue"
+                      },
+                      "line": {
+                        "type": "number",
+                        "description": "Approximate line number if known"
+                      }
+                    },
+                    "required": ["type", "severity", "description"]
+                  }
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "Brief summary of the security analysis"
+                }
+              },
+              "required": ["decision", "summary"]
+            },
+            "systemMessage": "🔒 Running LLM-powered security analysis..."
+          }
+        ]
+      }
+    ]
+  }
+}

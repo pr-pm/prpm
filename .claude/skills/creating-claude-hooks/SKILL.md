@@ -18,89 +18,302 @@ Activate this skill when:
 
 ## Quick Reference
 
-### Hook File Format
+### Two Hook Configuration Methods
 
-| Aspect | Requirement |
-|--------|-------------|
-| **Location** | `.claude/hooks/<event-name>` |
-| **Format** | Executable file (shell, TypeScript, Python, etc.) |
-| **Permissions** | Must be executable (`chmod +x`) |
-| **Shebang** | Required (`#!/bin/bash` or `#!/usr/bin/env node`) |
-| **Input** | JSON via stdin |
-| **Output** | Text via stdout (shown to user) |
-| **Exit Codes** | `0` = success, `2` = block, other = error |
+**Method 1: JSON Configuration** (Recommended)
+- Configure in `.claude/settings.json`, `~/.claude/settings.json`, or plugin's `hooks.json`
+- Supports both command hooks and prompt hooks
+- More flexible, supports matchers and timeouts
+
+**Method 2: Executable Files** (Legacy)
+- Place executables in `.claude/hooks/<event-name>`
+- Simpler but less configurable
+
+### Hook Types
+
+| Type | Description | Speed | Use Case |
+|------|-------------|-------|----------|
+| **Command** | Runs external script | Fast (ms) | Formatting, logging, file checks |
+| **Prompt** | Uses LLM reasoning | Slow (2-10s) | Complex validation, security analysis |
 
 ### Available Events
 
-| Event | When It Fires | Common Use Cases |
-|-------|---------------|------------------|
-| `session-start` | New session begins | Environment setup, logging, checks |
-| `user-prompt-submit` | Before user input processes | Validation, enhancement, filtering |
-| `tool-call` | Before tool execution | Permission checks, logging, modification |
-| `assistant-response` | After assistant responds | Formatting, logging, cleanup |
+| Event | When It Fires | Can Block? | Common Use Cases |
+|-------|---------------|------------|------------------|
+| `PreToolUse` | Before tool execution | Yes (exit 2) | Validation, permission checks, input modification |
+| `PostToolUse` | After tool completes | No | Formatting, logging, cleanup |
+| `UserPromptSubmit` | Before user input processes | Yes | Prompt validation, enhancement |
+| `SessionStart` | New session begins | No | Environment setup, context loading |
+| `Stop` | When assistant finishes | No | Cleanup, summary, verification |
+| `SubagentStop` | When subagent finishes | No | Subagent result processing |
+| `PreCompact` | Before context compaction | No | Save important context |
+| `Notification` | During alerts | No | Desktop notifications, logging |
+| `PermissionRequest` | When permission needed | Yes | Custom permission handling |
 
-## Hook Format Requirements
+### Exit Codes
+
+| Code | Meaning | Behavior |
+|------|---------|----------|
+| `0` | Success | Continue normally |
+| `2` | Block | Stop operation (PreToolUse only) |
+| `1` or other | Error | Log error, continue |
+
+## JSON Hook Configuration
+
+### Settings-Based Hooks
+
+Configure hooks in `.claude/settings.json` (project) or `~/.claude/settings.json` (global):
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write|Edit",
+      "hooks": [{
+        "type": "command",
+        "command": "/path/to/validate-write.sh",
+        "timeout": 5000
+      }]
+    }],
+    "PostToolUse": [{
+      "matcher": "Write|Edit",
+      "hooks": [{
+        "type": "command",
+        "command": "/path/to/format-file.sh"
+      }]
+    }],
+    "Stop": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "prompt",
+        "prompt": "Verify all requested changes were completed."
+      }]
+    }]
+  }
+}
+```
+
+### Plugin hooks.json
+
+For PRPM packages, use `hook.json`:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write",
+      "hooks": [{
+        "type": "command",
+        "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate.sh",
+        "timeout": 5000
+      }]
+    }]
+  }
+}
+```
+
+### Matcher Patterns
+
+| Pattern | Matches |
+|---------|---------|
+| `"Write"` | Only Write tool |
+| `"Write\|Edit"` | Write OR Edit tools |
+| `"Bash"` | Only Bash tool |
+| `"mcp__github__*"` | All GitHub MCP tools |
+| `"*"` | All tools (use sparingly) |
+
+### Hook Options
+
+```json
+{
+  "type": "command",
+  "command": "./my-hook.sh",
+  "timeout": 5000,
+  "once": true,
+  "continue": true,
+  "stopReason": "Message when blocked",
+  "suppressOutput": false,
+  "systemMessage": "Warning to show user"
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `timeout` | number | 60000 | Max execution time in ms |
+| `once` | boolean | false | Run only once per session |
+| `continue` | boolean | true | Continue after hook completes |
+| `stopReason` | string | - | Message when continue=false |
+| `suppressOutput` | boolean | false | Hide stdout from transcript |
+| `systemMessage` | string | - | Warning message to user |
+
+## Command Hooks
+
+Command hooks run external scripts. They're fast and deterministic.
+
+### Shell Script Hook
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# Read JSON input
+INPUT=$(cat)
+FILE=$(echo "$INPUT" | jq -r '.input.file_path // empty')
+
+# Validate
+[[ -n "$FILE" ]] || exit 0
+[[ -f "$FILE" ]] || exit 0
+
+# Block sensitive files
+case "$FILE" in
+  *.env|*.pem|*.key)
+    echo "Blocked: $FILE is sensitive" >&2
+    exit 2
+    ;;
+esac
+
+exit 0
+```
+
+### TypeScript Hook
+
+```typescript
+#!/usr/bin/env node
+import { readFileSync } from 'fs';
+
+const input = JSON.parse(readFileSync(0, 'utf-8'));
+const filePath = input.input?.file_path;
+
+if (!filePath) process.exit(0);
+
+// Block .env files
+if (filePath.endsWith('.env')) {
+  console.error('Blocked: Cannot modify .env files');
+  process.exit(2);
+}
+
+process.exit(0);
+```
+
+## Prompt Hooks
+
+Prompt hooks use LLM reasoning for complex validation. Use sparingly - they take 2-10 seconds.
+
+### Basic Prompt Hook
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write",
+      "hooks": [{
+        "type": "prompt",
+        "prompt": "Check if the content being written contains hardcoded secrets, API keys, or credentials. If found, block the operation."
+      }]
+    }]
+  }
+}
+```
+
+### Prompt Hook with Schema Validation
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write|Edit",
+      "hooks": [{
+        "type": "prompt",
+        "prompt": "Analyze the file content for security issues. Return your decision.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "decision": {
+              "type": "string",
+              "enum": ["allow", "block"]
+            },
+            "reason": {
+              "type": "string"
+            },
+            "severity": {
+              "type": "string",
+              "enum": ["low", "medium", "high", "critical"]
+            }
+          },
+          "required": ["decision"]
+        }
+      }]
+    }]
+  }
+}
+```
+
+### When to Use Prompt Hooks
+
+**Good use cases:**
+- Security analysis that requires understanding code context
+- Detecting logic errors or anti-patterns
+- Validating architectural decisions
+- Complex permission checks
+
+**Avoid for:**
+- Simple pattern matching (use command hooks)
+- File extension checks
+- Path validation
+- Anything that can be done with regex
+
+## File-Based Hooks (Legacy)
+
+Simpler approach - place executables directly in hooks directory.
 
 ### File Location
 
 **Project hooks:**
 ```
-.claude/hooks/session-start
-.claude/hooks/user-prompt-submit
+.claude/hooks/PreToolUse
+.claude/hooks/PostToolUse
+.claude/hooks/SessionStart
 ```
 
 **User-global hooks:**
 ```
-~/.claude/hooks/session-start
-~/.claude/hooks/tool-call
+~/.claude/hooks/PreToolUse
+~/.claude/hooks/Stop
 ```
 
-### Executable Requirements
+### Requirements
 
-Every hook MUST:
+Every file-based hook MUST:
 
 1. **Have a shebang line:**
 ```bash
 #!/bin/bash
-# or
 #!/usr/bin/env node
-# or
 #!/usr/bin/env python3
 ```
 
 2. **Be executable:**
 ```bash
-chmod +x .claude/hooks/session-start
+chmod +x .claude/hooks/PreToolUse
 ```
 
-3. **Handle JSON input from stdin:**
-```bash
-#!/bin/bash
-INPUT=$(cat)
-FILE=$(echo "$INPUT" | jq -r '.input.file_path // empty')
-```
+3. **Handle JSON input from stdin**
 
-4. **Exit with appropriate code:**
-```bash
-exit 0  # Success
-exit 2  # Block operation
-exit 1  # Error (logs but continues)
-```
+4. **Exit with appropriate code**
 
-## Input/Output Format
+## JSON Input Structure
 
-### JSON Input Structure
-
-Hooks receive JSON via stdin with event-specific data:
+Hooks receive JSON via stdin:
 
 ```json
 {
-  "event": "tool-call",
-  "timestamp": "2025-01-15T10:30:00Z",
   "session_id": "abc123",
+  "transcript_path": "/path/to/transcript.jsonl",
   "current_dir": "/path/to/project",
+  "tool_name": "Write",
   "input": {
     "file_path": "/path/to/file.ts",
+    "content": "file contents...",
     "command": "npm test",
     "old_string": "...",
     "new_string": "..."
@@ -108,32 +321,121 @@ Hooks receive JSON via stdin with event-specific data:
 }
 ```
 
-### Stdout Output
+### Tool-Specific Input Fields
 
-- Normal output shows in transcript
-- Empty output runs silently
-- Use stderr (`>&2`) for errors
+| Tool | Available Fields |
+|------|------------------|
+| Write | `file_path`, `content` |
+| Edit | `file_path`, `old_string`, `new_string` |
+| Read | `file_path` |
+| Bash | `command` |
+| Glob | `pattern`, `path` |
+| Grep | `pattern`, `path` |
 
-### Exit Codes
+## Environment Variables
 
-| Code | Meaning | Behavior |
-|------|---------|----------|
-| `0` | Success | Continue normally |
-| `2` | Block | Stop operation, show error |
-| `1` or other | Error | Log error, continue |
+Available in hook execution:
 
-## Schema Validation
+| Variable | Description |
+|----------|-------------|
+| `CLAUDE_PROJECT_DIR` | Project root directory |
+| `CLAUDE_CURRENT_DIR` | Current working directory |
+| `CLAUDE_PLUGIN_ROOT` | Hook installation directory |
+| `CLAUDE_ENV_FILE` | File for persisting variables |
+| `SESSION_ID` | Current session identifier |
 
-Hooks should validate against the JSON schema:
+## Common Patterns
 
-**Schema URL:** https://github.com/pr-pm/prpm/blob/main/packages/converters/schemas/claude-hook.schema.json
+### Pattern 1: Format on Save
 
-**Required frontmatter fields:**
-- `name` - Hook identifier (lowercase, hyphens only)
-- `description` - What the hook does
-- `event` - Event type (optional, inferred from filename)
-- `language` - bash, typescript, javascript, python, binary (optional)
-- `hookType: "hook"` - For round-trip conversion
+```json
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Write|Edit",
+      "hooks": [{
+        "type": "command",
+        "command": "${CLAUDE_PLUGIN_ROOT}/scripts/format.sh",
+        "timeout": 5000
+      }]
+    }]
+  }
+}
+```
+
+### Pattern 2: Block Sensitive Files
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write|Edit|Read",
+      "hooks": [{
+        "type": "command",
+        "command": "${CLAUDE_PLUGIN_ROOT}/scripts/block-sensitive.sh"
+      }]
+    }]
+  }
+}
+```
+
+### Pattern 3: Test Verification Before Stop
+
+```json
+{
+  "hooks": {
+    "Stop": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "prompt",
+        "prompt": "Before finishing, verify: 1) All tests pass 2) No linting errors 3) Types check. If any issues, list them."
+      }]
+    }]
+  }
+}
+```
+
+### Pattern 4: Session Context Loading
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "${CLAUDE_PLUGIN_ROOT}/scripts/load-context.sh",
+        "once": true
+      }]
+    }]
+  }
+}
+```
+
+### Pattern 5: Multi-Stage Validation
+
+Combine PreToolUse (validate) with PostToolUse (verify):
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write",
+      "hooks": [{
+        "type": "command",
+        "command": "./validate-before.sh"
+      }]
+    }],
+    "PostToolUse": [{
+      "matcher": "Write",
+      "hooks": [{
+        "type": "command",
+        "command": "./verify-after.sh"
+      }]
+    }]
+  }
+}
+```
 
 ## Common Mistakes
 
@@ -146,50 +448,9 @@ Hooks should validate against the JSON schema:
 | Wrong exit code | Doesn't block when needed | Use `exit 2` to block |
 | No input validation | Security risk | Always validate JSON fields |
 | Slow operations | Blocks Claude | Run in background or use PostToolUse |
-| Absolute paths missing | Can't find scripts | Use `$CLAUDE_PLUGIN_ROOT` |
-
-## Basic Hook Examples
-
-### Shell Script Hook
-
-```bash
-#!/bin/bash
-# .claude/hooks/session-start
-
-# Log session start
-echo "Session started at $(date)" >> ~/.claude/session.log
-
-# Check environment
-if ! command -v node &> /dev/null; then
-  echo "Warning: Node.js not installed" >&2
-fi
-
-# Output to user
-echo "Development environment ready"
-exit 0
-```
-
-### TypeScript Hook
-
-```typescript
-#!/usr/bin/env node
-// .claude/hooks/user-prompt-submit
-
-import { readFileSync } from 'fs';
-
-// Read JSON from stdin
-const input = readFileSync(0, 'utf-8');
-const data = JSON.parse(input);
-
-// Validate prompt
-if (data.prompt.includes('API_KEY')) {
-  console.error('Warning: Prompt may contain secrets');
-  process.exit(2); // Block
-}
-
-console.log('Prompt validated');
-process.exit(0);
-```
+| Absolute paths missing | Can't find scripts | Use `${CLAUDE_PLUGIN_ROOT}` |
+| Using `*` matcher | Runs on everything | Be specific: `Write\|Edit` |
+| Prompt hooks everywhere | Slow experience | Use only for complex logic |
 
 ## Best Practices
 
