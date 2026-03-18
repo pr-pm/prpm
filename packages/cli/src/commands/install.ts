@@ -144,6 +144,15 @@ function normalizeAllowedTools(tools: string): string {
     .join(' ');
 }
 
+/** Normalize tools input to Claude's comma-separated format */
+function normalizeToolsForClaude(tools: string): string {
+  return tools
+    .split(/[,\s]+/)
+    .map(tool => tool.trim())
+    .filter(Boolean)
+    .join(', ');
+}
+
 function applyAgentSkillsTools(content: string, tools: string): string {
   if (!content.startsWith('---\n')) {
     return content;
@@ -736,7 +745,7 @@ export async function handleInstall(
       const targetFormat = format?.toLowerCase();
       const effectiveClaudeConfig = {
         ...config.claude,
-        ...(options.tools ? { tools: options.tools } : {}),
+        ...(options.tools ? { tools: normalizeToolsForClaude(options.tools) } : {}),
       };
 
       try {
@@ -1264,7 +1273,7 @@ export async function handleInstall(
       if (format === 'claude' && hasClaudeHeader(mainFile)) {
         const effectiveClaudeConfig = {
           ...config.claude,
-          ...(options.tools ? { tools: options.tools } : {}),
+          ...(options.tools ? { tools: normalizeToolsForClaude(options.tools) } : {}),
         };
 
         if (hasConfigValues(effectiveClaudeConfig)) {
@@ -1486,6 +1495,13 @@ export async function handleInstall(
           else {
             fileName = fileName.split('/').pop() || fileName;
           }
+        }
+
+        // Apply Codex tools override to the main skill file (SKILL.md) in multi-file packages
+        if (effectiveFormat === 'codex' && effectiveSubtype === 'skill' && options.tools &&
+            (fileName === 'SKILL.md' || fileName.endsWith('/SKILL.md'))) {
+          console.log(`   ⚙️  Applying Codex skill tools override (multi-file)...`);
+          fileContent = applyAgentSkillsTools(fileContent, options.tools);
         }
 
         const filePath = `${packageDir}/${fileName}`;
@@ -2042,6 +2058,9 @@ export function createInstallCommand(): Command {
 
       // If no package specified, install from lockfile
       if (!packageSpec) {
+        if (options.tools) {
+          console.warn('⚠️  --tools is ignored when installing from prpm.lock (no package specified)');
+        }
         await installFromLockfile({
           as: convertTo,
           subtype: options.subtype as Subtype | undefined,
