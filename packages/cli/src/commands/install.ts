@@ -132,6 +132,56 @@ function getPackageIcon(format: Format, subtype: Subtype): string {
   return subtypeIcons[subtype] || formatIcons[format] || '📦';
 }
 
+function hasConfigValues(config: { tools?: string; model?: string }): boolean {
+  return Boolean(config.tools || config.model);
+}
+
+function normalizeAllowedTools(tools: string): string {
+  return tools
+    .split(/[,\s]+/)
+    .map(tool => tool.trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
+/** Normalize tools input to Claude's comma-separated format.
+ *  Preserves parenthesized arguments like Bash(git add:*) */
+function normalizeToolsForClaude(tools: string): string {
+  // If already comma-separated, just clean up
+  if (tools.includes(',')) {
+    return tools.split(',').map(t => t.trim()).filter(Boolean).join(', ');
+  }
+  // Match tool tokens: word optionally followed by parenthesized args
+  const parsed = tools.match(/[^\s,()]+(?:\([^)]*\))?/g) || [];
+  return parsed.map(t => t.trim()).filter(Boolean).join(', ');
+}
+
+function applyAgentSkillsTools(content: string, tools: string): string {
+  if (!content.startsWith('---\n')) {
+    return content;
+  }
+
+  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!match) {
+    return content;
+  }
+
+  const [, frontmatterText, body] = match;
+  const lines = frontmatterText.split('\n');
+  const normalizedTools = normalizeAllowedTools(tools);
+
+  const allowedToolsIndex = lines.findIndex(line => line.startsWith('allowed-tools:'));
+  if (allowedToolsIndex >= 0) {
+    lines[allowedToolsIndex] = `allowed-tools: ${normalizedTools}`;
+  } else {
+    const descriptionIndex = lines.findIndex(line => line.startsWith('description:'));
+    const insertAt = descriptionIndex >= 0 ? descriptionIndex + 1 : lines.length;
+    lines.splice(insertAt, 0, `allowed-tools: ${normalizedTools}`);
+  }
+
+  return `---\n${lines.join('\n')}\n---\n${body}`;
+}
+
 /**
  * Get human-readable label for package format and subtype
  */
@@ -276,6 +326,7 @@ export async function handleInstall(
     editor?: MCPEditor; // Target editor for MCP server installation (claude, codex)
     hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion
     eager?: boolean; // Force skill/agent to always activate (not on-demand)
+    tools?: string; // Override tool list for supported Claude/Codex outputs
     fromCollection?: {
       scope?: string;
       name_slug: string;
@@ -657,10 +708,10 @@ export async function handleInstall(
       try {
         switch (sourceFormat) {
           case 'cursor':
-            canonicalPkg = fromCursor(sourceContent, metadata);
+            canonicalPkg = fromCursor(sourceContent, metadata, pkg.subtype);
             break;
           case 'claude':
-            canonicalPkg = fromClaude(sourceContent, metadata);
+            canonicalPkg = fromClaude(sourceContent, metadata, 'claude', pkg.subtype);
             break;
           case 'windsurf':
             canonicalPkg = fromWindsurf(sourceContent, metadata);
@@ -695,6 +746,10 @@ export async function handleInstall(
       // Convert from canonical to target format
       let convertedContent: string;
       const targetFormat = format?.toLowerCase();
+      const effectiveClaudeConfig = {
+        ...config.claude,
+        ...(options.tools ? { tools: normalizeToolsForClaude(options.tools) } : {}),
+      };
 
       try {
         switch (targetFormat) {
@@ -712,7 +767,9 @@ export async function handleInstall(
             break;
           case 'claude':
           case 'claude.md':
-            const claudeResult = toClaude(canonicalPkg);
+            const claudeResult = toClaude(canonicalPkg, hasConfigValues(effectiveClaudeConfig)
+              ? { claudeConfig: effectiveClaudeConfig }
+              : {});
             convertedContent = claudeResult.content;
             break;
           case 'continue':
@@ -775,7 +832,9 @@ export async function handleInstall(
             break;
           case 'codex':
             // Codex uses AGENTS.md with section-based slash commands
-            convertedContent = toCodex(canonicalPkg).content;
+            convertedContent = toCodex(canonicalPkg, options.tools
+              ? { codexConfig: { allowedTools: options.tools } }
+              : {}).content;
             break;
           case 'generic':
             convertedContent = toCursor(canonicalPkg).content;
@@ -1215,10 +1274,20 @@ export async function handleInstall(
 
       // Apply Claude config if downloading in Claude format
       if (format === 'claude' && hasClaudeHeader(mainFile)) {
-        if (config.claude) {
+        const effectiveClaudeConfig = {
+          ...config.claude,
+          ...(options.tools ? { tools: normalizeToolsForClaude(options.tools) } : {}),
+        };
+
+        if (hasConfigValues(effectiveClaudeConfig)) {
           console.log(`   ⚙️  Applying Claude agent config...`);
-          mainFile = applyClaudeConfig(mainFile, config.claude);
+          mainFile = applyClaudeConfig(mainFile, effectiveClaudeConfig);
         }
+      }
+
+      if (effectiveFormat === 'codex' && effectiveSubtype === 'skill' && options.tools) {
+        console.log(`   ⚙️  Applying Codex skill tools override...`);
+        mainFile = applyAgentSkillsTools(mainFile, options.tools);
       }
 
       // Special handling for Claude hooks - merge into settings.json
@@ -1429,6 +1498,13 @@ export async function handleInstall(
           else {
             fileName = fileName.split('/').pop() || fileName;
           }
+        }
+
+        // Apply Codex tools override to the main skill file (SKILL.md) in multi-file packages
+        if (effectiveFormat === 'codex' && effectiveSubtype === 'skill' && options.tools &&
+            (fileName === 'SKILL.md' || fileName.endsWith('/SKILL.md'))) {
+          console.log(`   ⚙️  Applying Codex skill tools override (multi-file)...`);
+          fileContent = applyAgentSkillsTools(fileContent, options.tools);
         }
 
         const filePath = `${packageDir}/${fileName}`;
@@ -1950,9 +2026,10 @@ export function createInstallCommand(): Command {
     .option('--manifest-file <filename>', 'Custom manifest filename for progressive disclosure')
     .option('--eager', 'Force skill/agent to always activate (not on-demand)')
     .option('--lazy', 'Use default on-demand activation (overrides package eager setting)')
+    .option('--tools <tools>', 'Override Claude/Codex tool list for this install (comma- or space-separated)')
     .option('--global', 'Install MCP servers to global config (e.g., ~/.claude/settings.json, ~/.codex/config.toml, ~/.cursor/mcp.json, ~/.kiro/settings/mcp.json)')
     .option('--editor <editor>', '[Deprecated: use --as] Target editor for MCP server installation')
-    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; yes?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean; global?: boolean; editor?: string }) => {
+    .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; yes?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean; tools?: string; global?: boolean; editor?: string }) => {
       // Support both --as and --format (format is alias for as)
       const rawAs = (options.format || options.as) as string | undefined;
       const validFormats = FORMATS;
@@ -1984,6 +2061,9 @@ export function createInstallCommand(): Command {
 
       // If no package specified, install from lockfile
       if (!packageSpec) {
+        if (options.tools) {
+          console.warn('⚠️  --tools is ignored when installing from prpm.lock (no package specified)');
+        }
         await installFromLockfile({
           as: convertTo,
           subtype: options.subtype as Subtype | undefined,
@@ -2008,6 +2088,7 @@ export function createInstallCommand(): Command {
         manifestFile: options.manifestFile,
         hookMapping: options.hookMapping as HookMappingStrategy | undefined,
         eager,
+        tools: options.tools,
         global: options.global,
         editor: mcpEditor as MCPEditor | undefined,
       });

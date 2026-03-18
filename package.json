@@ -49,7 +49,7 @@
   },
   "lint-staged": {
     "packages/cli/src/**/*.ts": [
-      "bash -c 'cd packages/cli && npx tsc --noEmit'"
+      "bash -c 'cd packages/cli && npx tsc -p tsconfig.typecheck.json'"
     ],
     "packages/registry/src/**/*.ts": [
       "bash -c 'cd packages/registry && npx tsc --noEmit'"
@@ -58,7 +58,7 @@
       "bash -c 'cd packages/registry-client && npx tsc --noEmit'"
     ],
     "packages/converters/src/**/*.ts": [
-      "bash -c 'cd packages/converters && npx tsc --noEmit'"
+      "bash -c 'cd packages/converters && npx tsc -p tsconfig.typecheck.json'"
     ],
     "packages/types/src/**/*.ts": [
       "bash -c 'cd packages/types && npx tsc --noEmit'"

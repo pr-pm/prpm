@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "..",
+    "module": "esnext",
+    "baseUrl": ".",
+    "paths": {
+      "@pr-pm/types": ["../types/src/index.ts"],
+      "@pr-pm/converters": ["../converters/src/index.ts"],
+      "@pr-pm/registry-client": ["../registry-client/src/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "../types/src/**/*",
+    "../converters/src/**/*",
+    "../registry-client/src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "../converters/src/**/*.test.ts",
+    "../registry-client/src/**/*.test.ts"
+  ]
+}
