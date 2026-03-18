@@ -144,13 +144,16 @@ function normalizeAllowedTools(tools: string): string {
     .join(' ');
 }
 
-/** Normalize tools input to Claude's comma-separated format */
+/** Normalize tools input to Claude's comma-separated format.
+ *  Preserves parenthesized arguments like Bash(git add:*) */
 function normalizeToolsForClaude(tools: string): string {
-  return tools
-    .split(/[,\s]+/)
-    .map(tool => tool.trim())
-    .filter(Boolean)
-    .join(', ');
+  // If already comma-separated, just clean up
+  if (tools.includes(',')) {
+    return tools.split(',').map(t => t.trim()).filter(Boolean).join(', ');
+  }
+  // Match tool tokens: word optionally followed by parenthesized args
+  const parsed = tools.match(/[^\s,()]+(?:\([^)]*\))?/g) || [];
+  return parsed.map(t => t.trim()).filter(Boolean).join(', ');
 }
 
 function applyAgentSkillsTools(content: string, tools: string): string {
