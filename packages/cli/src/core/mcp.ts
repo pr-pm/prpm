@@ -489,14 +489,18 @@ function toCodexServerConfig(server: MCPServer): Record<string, unknown> {
   // Handle stdio servers (command-based)
   if (server.command) {
     codexServer.command = server.command;
-    if (server.args && server.args.length > 0) {
-      codexServer.args = server.args;
+    // Codex expects env vars as --env KEY=VALUE args, not as a nested env object
+    const envArgs: string[] = [];
+    if (server.env && Object.keys(server.env).length > 0) {
+      for (const [key, value] of Object.entries(server.env)) {
+        envArgs.push('--env', `${key}=${value}`);
+      }
+    }
+    if (server.args && server.args.length > 0 || envArgs.length > 0) {
+      codexServer.args = [...(server.args || []), ...envArgs];
     }
     if (server.cwd) {
       codexServer.cwd = server.cwd;
-    }
-    if (server.env && Object.keys(server.env).length > 0) {
-      codexServer.env = server.env;
     }
   }
 
