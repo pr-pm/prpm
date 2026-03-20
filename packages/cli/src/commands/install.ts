@@ -47,6 +47,7 @@ import {
   fromAgentsMd,
   fromGemini,
   fromGeminiPlugin,
+  fromMCPServer,
   parsePluginJson,
   parseMCPServerJson,
   toCursor,
@@ -727,6 +728,9 @@ export async function handleInstall(
             break;
           case 'agents.md':
             canonicalPkg = fromAgentsMd(sourceContent, metadata);
+            break;
+          case 'mcp':
+            canonicalPkg = fromMCPServer(JSON.parse(sourceContent), metadata);
             break;
           case 'gemini':
             // Check subtype: extension uses fromGeminiPlugin, slash-command uses fromGemini
