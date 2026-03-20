@@ -944,6 +944,62 @@ Follow TypeScript best practices.
       expect(mcpConfig.mcpServers['test-server'].command).toBe('npx');
     });
 
+    it('installs MCP server to .codex/config.toml when --as codex is used (as + editor)', async () => {
+      // This tests the real CLI path: --as codex sets both as: 'codex' and editor: 'codex'
+      const mockPackage = {
+        id: '@test/mcp-as-codex',
+        name: '@test/mcp-as-codex',
+        format: 'mcp',
+        subtype: 'server',
+        tags: ['mcp'],
+        total_downloads: 5,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(await createMCPTarball(mcpServerJson));
+
+      // The CLI passes both as and editor when --as codex is used
+      await handleInstall('@test/mcp-as-codex', { as: 'codex', editor: 'codex' });
+
+      // Should write to .codex/config.toml, NOT to AGENTS.md
+      const codexConfig = await fs.readFile(path.join(testDir, '.codex', 'config.toml'), 'utf-8');
+      expect(codexConfig).toContain('[mcp_servers.test-server]');
+      expect(codexConfig).toContain('command = "npx"');
+
+      // Should NOT have saved any AGENTS.md content
+      expect(saveFile).not.toHaveBeenCalledWith(expect.stringContaining('AGENTS.md'), expect.any(String));
+    });
+
+    it('installs MCP tool to .cursor/mcp.json when --as cursor is used (as + editor)', async () => {
+      const mockPackage = {
+        id: '@test/mcp-as-cursor',
+        name: '@test/mcp-as-cursor',
+        format: 'mcp',
+        subtype: 'tool',
+        tags: ['mcp'],
+        total_downloads: 5,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(await createMCPTarball(mcpServerJson));
+
+      await handleInstall('@test/mcp-as-cursor', { as: 'cursor', editor: 'cursor' });
+
+      const cursorConfig = JSON.parse(await fs.readFile(path.join(testDir, '.cursor', 'mcp.json'), 'utf-8'));
+      expect(cursorConfig.mcpServers['test-server']).toBeDefined();
+      expect(cursorConfig.mcpServers['test-server'].command).toBe('npx');
+    });
+
     it('preserves MCP format even when auto-detection would pick agents.md', async () => {
       // Create .agents.md directory to trigger auto-detection
       await fs.mkdir(path.join(testDir, '.agents.md'), { recursive: true });

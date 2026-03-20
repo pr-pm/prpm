@@ -667,7 +667,9 @@ export async function handleInstall(
 
     // Client-side format conversion (if --as flag is specified)
     // Skip conversion for snippets - they're raw content that doesn't need format conversion
-    if (options.as && format && format !== pkg.format && effectiveSubtype !== 'snippet') {
+    // Skip conversion for MCP server packages targeting an MCP editor — they use the dedicated MCP install path
+    const isMCPToEditor = isMCPServerPackage && MCP_EDITORS.includes(format as MCPEditor);
+    if (options.as && format && format !== pkg.format && effectiveSubtype !== 'snippet' && !isMCPToEditor) {
       console.log(`   🔄 Converting from ${pkg.format} to ${format}...`);
 
       // Find the main file to convert
@@ -999,8 +1001,10 @@ export async function handleInstall(
       destPath = '.claude/';
       fileCount = installedFiles.length;
     }
-    // Special handling for MCP server packages (install server configs to .mcp.json)
-    else if (effectiveFormat === 'mcp' && (effectiveSubtype === 'server' || effectiveSubtype === 'tool')) {
+    // Special handling for MCP server packages (install server configs to .mcp.json or editor config)
+    // Match when: native MCP format, OR source is MCP and --as targets an MCP editor (e.g., --as codex)
+    else if ((effectiveFormat === 'mcp' && (effectiveSubtype === 'server' || effectiveSubtype === 'tool')) ||
+             (isMCPServerPackage && (pkg.subtype === 'server' || pkg.subtype === 'tool') && isMCPToEditor)) {
       console.log(`   🔧 Installing MCP Server...`);
 
       // Find and parse the MCP server config file
