@@ -317,6 +317,73 @@ describe('MCP utilities', () => {
       // Verify TOML format
       expect(content).toContain('[mcp_servers.test-server]');
       expect(content).toContain('command = "npx"');
+      // Env vars should be passed as --env KEY=VALUE args, not as nested [env] section
+      expect(content).toContain('--env');
+      expect(content).toContain('API_KEY=test-key');
+      expect(content).not.toContain('[mcp_servers.test-server.env]');
+    });
+
+    it('passes env vars as --env KEY=VALUE args appended to args array', async () => {
+      const servers: Record<string, MCPServer> = {
+        'relaycast': {
+          command: 'npx',
+          args: ['-y', '@relaycast/mcp'],
+          env: { RELAY_BASE_URL: 'https://api.relaycast.dev' },
+        },
+      };
+
+      const result = mergeCodexMCPServers(servers, false, tempDir);
+      expect(result.added).toContain('relaycast');
+
+      const configPath = join(tempDir, '.codex', 'config.toml');
+      const content = await readFile(configPath, 'utf-8');
+
+      // Should have args with --env appended
+      expect(content).toContain('[mcp_servers.relaycast]');
+      expect(content).toContain('command = "npx"');
+      expect(content).toContain('"--env"');
+      expect(content).toContain('"RELAY_BASE_URL=https://api.relaycast.dev"');
+      // Must NOT have a nested env section
+      expect(content).not.toContain('[mcp_servers.relaycast.env]');
+    });
+
+    it('handles multiple env vars as multiple --env args', async () => {
+      const servers: Record<string, MCPServer> = {
+        'multi-env': {
+          command: 'node',
+          args: ['server.js'],
+          env: { API_KEY: 'key123', DB_URL: 'postgres://localhost' },
+        },
+      };
+
+      const result = mergeCodexMCPServers(servers, false, tempDir);
+      expect(result.added).toContain('multi-env');
+
+      const configPath = join(tempDir, '.codex', 'config.toml');
+      const content = await readFile(configPath, 'utf-8');
+
+      expect(content).toContain('"API_KEY=key123"');
+      expect(content).toContain('"DB_URL=postgres://localhost"');
+      expect(content).not.toContain('[mcp_servers.multi-env.env]');
+    });
+
+    it('handles env vars when args array is empty', async () => {
+      const servers: Record<string, MCPServer> = {
+        'env-only': {
+          command: 'my-server',
+          env: { TOKEN: 'abc' },
+        },
+      };
+
+      const result = mergeCodexMCPServers(servers, false, tempDir);
+      expect(result.added).toContain('env-only');
+
+      const configPath = join(tempDir, '.codex', 'config.toml');
+      const content = await readFile(configPath, 'utf-8');
+
+      expect(content).toContain('"--env"');
+      expect(content).toContain('"TOKEN=abc"');
+      expect(content).not.toContain('[mcp_servers.env-only.env]');
     });
 
     it('handles HTTP servers', async () => {
