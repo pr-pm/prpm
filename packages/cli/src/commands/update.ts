@@ -85,12 +85,12 @@ export async function handleUpdate(
           `\n📦 Updating ${packageId}: ${currentVersion} → ${latestVersion}`,
         );
 
-        // Install new version, preserving the installed format if it was converted
-        const installOptions: { as?: string } = {};
-        if (installedFormat && installedFormat !== pkg.sourceFormat) {
-          installOptions.as = installedFormat;
-        }
-        await handleInstall(`${packageId}@${latestVersion}`, installOptions);
+        // Always pass the installed format to prevent auto-detection
+        // Use pkg.format (entry data) with installedFormat (from key suffix) as fallback
+        const targetFormat = pkg.format || installedFormat;
+        await handleInstall(`${packageId}@${latestVersion}`, {
+          as: targetFormat,
+        });
 
         updatedCount++;
       } catch (err) {
