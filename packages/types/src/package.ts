@@ -118,7 +118,7 @@ export const FORMAT_SUBTYPES: Record<Format, readonly Subtype[]> = {
   gemini: ["slash-command", "extension"],
   "gemini-extension": ["extension", "plugin"],
   "gemini.md": ["skill", "agent"],
-  opencode: ["agent", "slash-command", "tool", "plugin", "skill"],  // skill via progressive disclosure
+  opencode: ["agent", "slash-command", "tool", "plugin", "skill"],  // Native skills via .opencode/skills/
   ruler: ["rule"],
   droid: ["skill", "slash-command", "hook", "agent"],  // agent via progressive disclosure
   trae: ["rule"],
@@ -157,7 +157,7 @@ export const FORMAT_NATIVE_SUBTYPES: Partial<Record<Format, readonly Subtype[]>>
   copilot: ["rule", "chatmode", "skill"],  // Native skill support via .github/skills/
   kiro: ["rule", "hook", "agent"],  // No native skill - uses AGENTS.md
   gemini: ["slash-command", "extension"],  // Full native support
-  opencode: ["agent", "slash-command", "tool", "plugin", "skill"],  // Native skill support in .opencode/skill/
+  opencode: ["agent", "slash-command", "tool", "plugin", "skill"],  // Native skill support in .opencode/skills/
   droid: ["skill", "slash-command", "hook"],  // No native agent - uses AGENTS.md
   zed: ["rule", "slash-command", "extension"],  // No native skill/agent - uses AGENTS.md
   amp: ["skill", "slash-command"],  // Native skills (.agents/skills/) and commands (.agents/commands/)

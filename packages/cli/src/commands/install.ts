@@ -71,6 +71,7 @@ import {
   toCodex,
   toCursorHooks,
   validateFormat,
+  getSubtypeConfig,
   getNestedIndicator,
   getFilePatterns,
   getFileExtension,
@@ -1150,6 +1151,7 @@ export async function handleInstall(
       }
       // Strip leading dot if present, default to 'md'
       const fileExtension = registryExtension?.replace(/^\./, '') || 'md';
+      const nestedIndicator = getNestedIndicator(effectiveFormat, effectiveSubtype);
       const packageName = stripAuthorNamespace(packageId);
 
       // For Claude skills, use SKILL.md filename in the package directory
@@ -1239,6 +1241,9 @@ export async function handleInstall(
       } else if (effectiveFormat === 'copilot' && effectiveSubtype === 'skill') {
         // GitHub Copilot skills use SKILL.md inside the skill directory
         destPath = `${destDir}/SKILL.md`;
+      } else if (nestedIndicator) {
+        // Native nested package formats define their required entry file in the registry.
+        destPath = `${destDir}/${nestedIndicator}`;
       } else {
         // Check if this format/subtype needs progressive disclosure
         // (format supports the subtype but doesn't have native file location for it)
@@ -1409,12 +1414,16 @@ export async function handleInstall(
       // For Claude skills, destDir already includes package name, so use it directly
       // For Cursor rules converted from Claude skills, use flat structure
       const isCursorConversion = (effectiveFormat === 'cursor' && pkg.format === 'claude' && pkg.subtype === 'skill');
+      const nativeSubtypeConfig = getSubtypeConfig(effectiveFormat, effectiveSubtype);
+      const usesNativePackageSubdirectory = !needsProgressiveDisclosureMulti && Boolean(nativeSubtypeConfig?.usesPackageSubdirectory);
       const packageDir = (effectiveFormat === 'claude' && effectiveSubtype === 'skill')
         ? destDir
         : isCursorConversion
         ? destDir // Cursor uses flat structure
         : needsProgressiveDisclosureMulti
         ? destDir // Progressive disclosure already includes package name
+        : usesNativePackageSubdirectory
+        ? destDir // Native nested formats already include the package name
         : `${destDir}/${packageName}`;
       destPath = packageDir;
       console.log(`   📁 Multi-file package - creating directory: ${packageDir}`);
@@ -1464,8 +1473,8 @@ export async function handleInstall(
         // We want to strip everything up to and including the package-name directory
         let relativeFileName = file.name;
 
-        // Find the skills directory index
-        const skillsDirIndex = pathParts.indexOf('skills');
+        // Find the skills directory index. OpenCode used to use singular "skill".
+        const skillsDirIndex = pathParts.findIndex(part => part === 'skills' || part === 'skill');
         if (skillsDirIndex !== -1 && pathParts.length > skillsDirIndex + 2) {
           // Skip: .claude/skills/package-name/ and keep the rest
           relativeFileName = pathParts.slice(skillsDirIndex + 2).join('/');

@@ -241,7 +241,7 @@ PRPM supports all major AI coding assistants:
 | `copilot` | [GitHub Copilot](https://github.com/features/copilot) | tool, chatmode | `.github/instructions/`, `.github/chatmodes/` | [Copilot Docs](https://docs.github.com/copilot) |
 | `kiro` | [Kiro](https://kiro.ai) | rule, agent, tool, hook | `.kiro/steering/`, `.kiro/agents/`, `.kiro/hooks/` | [Kiro Docs](https://docs.kiro.ai) |
 | `gemini` | [Gemini CLI](https://ai.google.dev/gemini-api/docs) | slash-command | `.gemini/commands/` | [Gemini Docs](https://ai.google.dev/gemini-api/docs) |
-| `opencode` | [OpenCode](https://opencode.ai) | agent, slash-command, tool | `.opencode/agent/`, `.opencode/command/`, `.opencode/tool/` | [OpenCode Docs](https://opencode.ai/docs) |
+| `opencode` | [OpenCode](https://opencode.ai) | agent, skill, slash-command, tool | `.opencode/agent/`, `.opencode/skills/`, `.opencode/command/`, `.opencode/tool/` | [OpenCode Docs](https://opencode.ai/docs) |
 | `ruler` | [Ruler](https://ruler.sh) | rule, agent, tool | `.ruler/rules/` | [Ruler Docs](https://ruler.sh/docs) |
 | `droid` | [Factory Droid](https://factory.ai) | skill, slash-command, hook | `.factory/skills/`, `.factory/commands/`, `.factory/hooks/` | [Factory Droid Docs](https://docs.factory.ai) |
 | `agents.md` | [Agents.md](https://github.com/agentsmd) | agent, tool | `.agents/`, `AGENTS.md` | [Agents.md Docs](https://github.com/agentsmd) |

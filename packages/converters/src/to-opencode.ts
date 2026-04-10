@@ -4,7 +4,7 @@
  *
  * OpenCode stores:
  * - Agents in .opencode/agent/${name}.md with YAML frontmatter
- * - Skills in .opencode/skill/${name}/SKILL.md with YAML frontmatter (Agent Skills spec)
+ * - Skills in .opencode/skills/${name}/SKILL.md with YAML frontmatter (Agent Skills spec)
  * - Slash commands in .opencode/command/${name}.md with YAML frontmatter
  *
  * @see https://opencode.ai/docs/agents/
