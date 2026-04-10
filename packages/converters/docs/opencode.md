@@ -2,7 +2,7 @@
 
 **File Locations:**
 - Agents: `.opencode/agent/*.md` or `~/.config/opencode/agent/*.md`
-- Skills: `.opencode/skill/${name}/SKILL.md` or `~/.opencode/skill/${name}/SKILL.md`
+- Skills: `.opencode/skills/${name}/SKILL.md` or `~/.config/opencode/skills/${name}/SKILL.md`
 - Slash Commands: `.opencode/command/*.md` or `~/.config/opencode/command/*.md`
 - Config: `opencode.json` or `opencode.jsonc` (JSON format alternative)
 
@@ -97,7 +97,7 @@ You are an expert code reviewer with deep knowledge of software engineering prin
 
 OpenCode skills use the **Agent Skills spec** (shared with Codex and GitHub Copilot). Skills are reusable instruction sets discovered on-demand via the native skill tool.
 
-**Directory:** `.opencode/skill/${name}/SKILL.md`
+**Directory:** `.opencode/skills/${name}/SKILL.md`
 
 ### Frontmatter Fields
 
@@ -384,7 +384,7 @@ prpm convert agent.md --from claude --to opencode
 
 - **2025-12**: Added native skill support
   - Skills use Agent Skills spec (same as Codex, Copilot)
-  - Directory: `.opencode/skill/${name}/SKILL.md`
+  - Directory: `.opencode/skills/${name}/SKILL.md`
   - Required fields: `name`, `description`
   - Optional fields: `license`, `compatibility`, `allowed-tools`, `metadata`
   - Uses `agent-skills.schema.json` for validation

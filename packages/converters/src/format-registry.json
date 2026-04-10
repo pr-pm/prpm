@@ -202,7 +202,7 @@
           "fileExtension": ".md"
         },
         "skill": {
-          "directory": ".opencode/skill",
+          "directory": ".opencode/skills",
           "filePatterns": ["SKILL.md"],
           "nested": true,
           "nestedIndicator": "SKILL.md",

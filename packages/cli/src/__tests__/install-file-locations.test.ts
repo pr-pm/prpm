@@ -727,7 +727,7 @@ Follow TypeScript best practices.
       );
     });
 
-    it('installs opencode skill to native .opencode/skill/<name>/<name>.md (native skill support)', async () => {
+    it('installs opencode skill to native .opencode/skills/<name>/SKILL.md (native skill support)', async () => {
       // OpenCode has native skill support - should NOT use progressive disclosure
       const mockPackage = {
         id: 'test-opencode-skill',
@@ -748,8 +748,10 @@ Follow TypeScript best practices.
 
       await handleInstall('test-opencode-skill', { as: 'opencode' });
 
-      // OpenCode has native skill support - installs to .opencode/skill/<name>/
-      expect(saveFile).toHaveBeenCalledWith('.opencode/skill/test-opencode-skill/test-opencode-skill.md', expect.any(String));
+      // OpenCode has native skill support - installs to .opencode/skills/<name>/
+      expect(saveFile).toHaveBeenCalledWith('.opencode/skills/test-opencode-skill/SKILL.md', expect.any(String));
+      const destDir = getDestinationDir('opencode', 'skill', 'test-opencode-skill');
+      expect(destDir).toBe('.opencode/skills/test-opencode-skill');
       // No progressive disclosure manifest update for native format
       expect(addSkillToManifestMock).not.toHaveBeenCalled();
     });
