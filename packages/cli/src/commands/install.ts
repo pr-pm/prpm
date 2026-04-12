@@ -2032,7 +2032,7 @@ export function createInstallCommand(): Command {
     .description('Install a package from the registry, or install all packages from prpm.lock if no package specified')
     .argument('[package]', 'Package to install (e.g., react-rules or react-rules@1.2.0). If omitted, installs all packages from prpm.lock')
     .option('--version <version>', 'Specific version to install')
-    .option('--as <format>', `Convert and install in specific format (${FORMATS.join(', ')})`)
+    .option('--as <format>', `Convert and install in specific format. Accepts a comma-separated list to install to multiple formats in one command (${FORMATS.join(', ')})`)
     .option('--format <format>', 'Alias for --as')
     .option('--location <path>', 'Custom location for installed files (Agents.md or nested Cursor rules)')
     .option('--subtype <subtype>', 'Specify subtype when converting (skill, agent, rule, etc.)')
@@ -2051,16 +2051,20 @@ export function createInstallCommand(): Command {
       const rawAs = (options.format || options.as) as string | undefined;
       const validFormats = FORMATS;
 
-      // If --as value is an MCP editor but not a valid format, treat it as editor-only
-      const isMCPEditorOnly = rawAs && !validFormats.includes(rawAs as Format) && MCP_EDITORS.includes(rawAs as MCPEditor);
-      const convertTo = isMCPEditorOnly ? undefined : rawAs as Format | undefined;
+      // Parse comma-separated list so users can install into multiple formats at once:
+      //   prpm install @scope/pkg --as codex,claude
+      const asTokens = rawAs
+        ? Array.from(new Set(rawAs.split(',').map(s => s.trim()).filter(Boolean)))
+        : [];
 
-      if (convertTo && !validFormats.includes(convertTo)) {
-        throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}\n\n💡 Examples:\n   prpm install my-package --as cursor       # Convert to Cursor format\n   prpm install my-package --format claude   # Convert to Claude format\n   prpm install my-package --format claude.md # Convert to Claude.md format\n   prpm install my-package --format kiro     # Convert to Kiro format\n   prpm install my-package --format agents.md # Convert to Agents.md format\n   prpm install my-package --format gemini.md # Convert to Gemini format\n   prpm install my-mcp-server --as codex     # Install MCP server to Codex\n   prpm install my-package                   # Install in native format`, 1);
+      // Validate every token up front — each must be a recognized format or MCP editor.
+      for (const token of asTokens) {
+        const isFormat = validFormats.includes(token as Format);
+        const isMCPEditor = MCP_EDITORS.includes(token as MCPEditor);
+        if (!isFormat && !isMCPEditor) {
+          throw new CLIError(`❌ Format must be one of: ${validFormats.join(', ')}\n\n💡 Examples:\n   prpm install my-package --as cursor            # Convert to Cursor format\n   prpm install my-package --as claude,codex      # Install to both Claude and Codex\n   prpm install my-package --format claude.md     # Convert to Claude.md format\n   prpm install my-package --format kiro          # Convert to Kiro format\n   prpm install my-package --format agents.md     # Convert to Agents.md format\n   prpm install my-package --format gemini.md     # Convert to Gemini format\n   prpm install my-mcp-server --as codex          # Install MCP server to Codex\n   prpm install my-package                        # Install in native format`, 1);
+        }
       }
-
-      // Resolve MCP editor: --editor (deprecated) takes precedence, then --as
-      const mcpEditor = (options.editor || rawAs) as MCPEditor | undefined;
 
       // Validate editor for MCP server installation
       if (options.editor && !MCP_EDITORS.includes(options.editor as MCPEditor)) {
@@ -2081,8 +2085,18 @@ export function createInstallCommand(): Command {
         if (options.tools) {
           console.warn('⚠️  --tools is ignored when installing from prpm.lock (no package specified)');
         }
+        if (asTokens.length > 1) {
+          throw new CLIError(
+            `❌ Multi-format --as is not supported when installing from prpm.lock.\n\n` +
+            `The lockfile already records the target format for each package. ` +
+            `Run prpm install <package> --as ${asTokens.join(',')} for specific packages instead.`,
+            1,
+          );
+        }
+        const [singleAs] = asTokens;
+        const isMCPEditorOnly = singleAs && !validFormats.includes(singleAs as Format) && MCP_EDITORS.includes(singleAs as MCPEditor);
         await installFromLockfile({
-          as: convertTo,
+          as: isMCPEditorOnly ? undefined : (singleAs as Format | undefined),
           subtype: options.subtype as Subtype | undefined,
           frozenLockfile: options.frozenLockfile,
           location: options.location,
@@ -2094,21 +2108,81 @@ export function createInstallCommand(): Command {
       // Determine eager setting: --eager flag takes precedence, then --lazy, then undefined (use package default)
       const eager = options.eager ? true : options.lazy ? false : undefined;
 
-      await handleInstall(packageSpec, {
-        version: options.version,
-        as: convertTo,
-        subtype: options.subtype as Subtype | undefined,
-        frozenLockfile: options.frozenLockfile,
-        force: options.yes,
-        location: options.location,
-        noAppend: options.noAppend,
-        manifestFile: options.manifestFile,
-        hookMapping: options.hookMapping as HookMappingStrategy | undefined,
-        eager,
-        tools: options.tools,
-        global: options.global,
-        editor: mcpEditor as MCPEditor | undefined,
-      });
+      // Single-target install (no --as, or exactly one token) — preserve the original code path.
+      if (asTokens.length <= 1) {
+        const [singleAs] = asTokens;
+        const isMCPEditorOnly = singleAs && !validFormats.includes(singleAs as Format) && MCP_EDITORS.includes(singleAs as MCPEditor);
+        const convertTo = isMCPEditorOnly ? undefined : (singleAs as Format | undefined);
+        const mcpEditor = (options.editor || singleAs) as MCPEditor | undefined;
+
+        await handleInstall(packageSpec, {
+          version: options.version,
+          as: convertTo,
+          subtype: options.subtype as Subtype | undefined,
+          frozenLockfile: options.frozenLockfile,
+          force: options.yes,
+          location: options.location,
+          noAppend: options.noAppend,
+          manifestFile: options.manifestFile,
+          hookMapping: options.hookMapping as HookMappingStrategy | undefined,
+          eager,
+          tools: options.tools,
+          global: options.global,
+          editor: mcpEditor as MCPEditor | undefined,
+        });
+        return;
+      }
+
+      // Multi-target install: loop over each format and install independently.
+      // Each iteration re-runs the full install pipeline (download, convert, write),
+      // so one target failing doesn't stop the others.
+      console.log(`📦 Installing ${packageSpec} to ${asTokens.length} targets: ${asTokens.join(', ')}\n`);
+      let successCount = 0;
+      const failures: { target: string; error: string }[] = [];
+      const isCollectionSpec = packageSpec.startsWith('collections/');
+
+      for (const token of asTokens) {
+        const isMCPEditorOnly = !validFormats.includes(token as Format) && MCP_EDITORS.includes(token as MCPEditor);
+        const convertTo = isMCPEditorOnly ? undefined : (token as Format);
+        const mcpEditor = token as MCPEditor;
+
+        console.log(chalk.cyan(`\n━━ [${token}] ━━`));
+        try {
+          await handleInstall(packageSpec, {
+            version: options.version,
+            as: convertTo,
+            subtype: options.subtype as Subtype | undefined,
+            frozenLockfile: options.frozenLockfile,
+            force: options.yes,
+            location: options.location,
+            noAppend: options.noAppend,
+            manifestFile: options.manifestFile,
+            hookMapping: options.hookMapping as HookMappingStrategy | undefined,
+            eager,
+            tools: options.tools,
+            global: options.global,
+            editor: (options.editor as MCPEditor | undefined) || mcpEditor,
+          });
+          successCount++;
+        } catch (err) {
+          // Collection installs throw CLIError with exitCode 0 on success — treat those as success.
+          if (err instanceof CLIError && err.exitCode === 0) {
+            successCount++;
+            continue;
+          }
+          const message = err instanceof Error ? err.message : String(err);
+          failures.push({ target: token, error: message });
+          console.error(chalk.red(`❌ Failed to install ${packageSpec} as ${token}: ${message}`));
+        }
+      }
+
+      console.log(`\n✅ Installed ${packageSpec} to ${successCount}/${asTokens.length} targets` +
+        (isCollectionSpec ? ' (collection)' : ''));
+
+      if (failures.length > 0) {
+        const detail = failures.map(f => `   • ${f.target}: ${f.error}`).join('\n');
+        throw new CLIError(`❌ ${failures.length} target${failures.length === 1 ? '' : 's'} failed:\n${detail}`, 1);
+      }
     });
 
   return command;
