@@ -2057,6 +2057,19 @@ export function createInstallCommand(): Command {
         ? Array.from(new Set(rawAs.split(',').map(s => s.trim()).filter(Boolean)))
         : [];
 
+      // Reject `--as ""`, `--as ","`, `--as " , "` etc. — the flag was passed but
+      // contained no usable tokens. Silently treating this as "no format" would
+      // mask typos.
+      if (rawAs !== undefined && asTokens.length === 0) {
+        throw new CLIError(
+          `❌ --as requires at least one format. Got: "${rawAs}"\n\n` +
+          `💡 Examples:\n` +
+          `   prpm install my-package --as claude\n` +
+          `   prpm install my-package --as claude,codex`,
+          1,
+        );
+      }
+
       // Validate every token up front — each must be a recognized format or MCP editor.
       for (const token of asTokens) {
         const isFormat = validFormats.includes(token as Format);
