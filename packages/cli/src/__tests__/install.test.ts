@@ -3,7 +3,7 @@ import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, t
  * Tests for install command
  */
 
-import { handleInstall } from '../commands/install';
+import { handleInstall, createInstallCommand } from '../commands/install';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile } from '../core/filesystem';
@@ -23,6 +23,7 @@ vi.mock('../core/filesystem', () => ({
   generateId: vi.fn((name) => name),
   stripAuthorNamespace: vi.fn((name) => name.split('/').pop() || name),
   autoDetectFormat: vi.fn(() => Promise.resolve('cursor')),
+  getManifestFilename: vi.fn(() => 'AGENTS.md'),
 }));
 vi.mock('../core/lockfile', () => ({
   readLockfile: vi.fn(),
@@ -303,6 +304,98 @@ describe('install command', () => {
           sourceFormat: 'cursor',
           version: '1.0.0',
         })
+      );
+    });
+  });
+
+  describe('multi-format --as dispatch', () => {
+    const mockPackage = {
+      id: 'test-package',
+      name: 'test-package',
+      format: 'cursor',
+      subtype: 'rule',
+      tags: [],
+      total_downloads: 100,
+      verified: true,
+      latest_version: {
+        version: '1.0.0',
+        tarball_url: 'https://example.com/package.tar.gz',
+      },
+    };
+
+    beforeEach(() => {
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('test-content'));
+    });
+
+    it('installs the package once per unique format token', async () => {
+      const cmd = createInstallCommand();
+      cmd.exitOverride();
+
+      await cmd.parseAsync(
+        ['test-package', '--as', 'claude,codex'],
+        { from: 'user' },
+      );
+
+      // One download per target format (no shared cache today — if that changes,
+      // update this assertion to match the new behavior).
+      expect(mockClient.downloadPackage).toHaveBeenCalledTimes(2);
+
+      // Lockfile should record an entry for each format.
+      const recordedFormats = (addToLockfile as Mock).mock.calls
+        .map(call => call[2]?.format)
+        .filter(Boolean);
+      expect(recordedFormats).toEqual(expect.arrayContaining(['claude', 'codex']));
+    });
+
+    it('deduplicates repeated format tokens', async () => {
+      const cmd = createInstallCommand();
+      cmd.exitOverride();
+
+      await cmd.parseAsync(
+        ['test-package', '--as', 'claude,claude,codex'],
+        { from: 'user' },
+      );
+
+      // 'claude' appears twice in the flag but should only install once.
+      expect(mockClient.downloadPackage).toHaveBeenCalledTimes(2);
+    });
+
+    it('continues installing remaining formats after one fails, then throws with summary', async () => {
+      const cmd = createInstallCommand();
+      cmd.exitOverride();
+
+      // First call (claude) succeeds, second call (codex) fails.
+      mockClient.downloadPackage
+        .mockResolvedValueOnce(gzipSync('test-content'))
+        .mockRejectedValueOnce(new Error('boom'));
+
+      const run = cmd.parseAsync(
+        ['test-package', '--as', 'claude,codex'],
+        { from: 'user' },
+      );
+
+      await expect(run).rejects.toThrow(CLIError);
+      await expect(run).rejects.toThrow(/1 target failed/);
+
+      // Both targets were attempted.
+      expect(mockClient.downloadPackage).toHaveBeenCalledTimes(2);
+    });
+
+    it('preserves single-format behavior when only one token is passed', async () => {
+      const cmd = createInstallCommand();
+      cmd.exitOverride();
+
+      await cmd.parseAsync(
+        ['test-package', '--as', 'claude'],
+        { from: 'user' },
+      );
+
+      expect(mockClient.downloadPackage).toHaveBeenCalledTimes(1);
+      expect(addToLockfile).toHaveBeenCalledWith(
+        expect.any(Object),
+        'test-package',
+        expect.objectContaining({ format: 'claude' }),
       );
     });
   });
