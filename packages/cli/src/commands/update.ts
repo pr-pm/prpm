@@ -90,6 +90,7 @@ export async function handleUpdate(
         const targetFormat = pkg.format || installedFormat;
         await handleInstall(`${packageId}@${latestVersion}`, {
           as: targetFormat,
+          global: pkg.global,
         });
 
         updatedCount++;

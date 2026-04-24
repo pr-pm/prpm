@@ -4,7 +4,7 @@ import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, t
  * Tests that packages are installed to the correct directories based on type and format
  */
 
-import { handleInstall } from '../commands/install';
+import { handleInstall, createInstallCommand } from '../commands/install';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir } from '../core/filesystem';
@@ -12,6 +12,7 @@ import { readLockfile, writeLockfile, addToLockfile, createLockfile, setPackageI
 import { gzipSync } from 'zlib';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import os from 'os';
 import { promptYesNo } from '../core/prompts';
 import { addSkillToManifest } from '../core/agents-md-progressive.js';
 
@@ -350,6 +351,62 @@ Follow TypeScript best practices.
 
       const destDir = getDestinationDir('claude', 'slash-command');
       expect(destDir).toBe('.claude/commands');
+    });
+  });
+
+  describe('Global installs', () => {
+    it('installs multi-target Claude and Codex skills to user-level directories', async () => {
+      vi.spyOn(os, 'homedir').mockReturnValue(testDir);
+
+      const mockPackage = {
+        id: '@agent-relay/running-headless-orchestrator',
+        name: '@agent-relay/running-headless-orchestrator',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(`---
+name: running-headless-orchestrator
+description: Run headless orchestration
+---
+
+# Running Headless Orchestrator
+`));
+
+      const cmd = createInstallCommand();
+      cmd.exitOverride();
+
+      await cmd.parseAsync(
+        ['@agent-relay/running-headless-orchestrator', '--as', 'claude,codex', '--global'],
+        { from: 'user' },
+      );
+
+      expect(saveFile).toHaveBeenCalledWith(
+        path.join(testDir, '.claude', 'skills', 'running-headless-orchestrator', 'SKILL.md'),
+        expect.any(String),
+      );
+      expect(saveFile).toHaveBeenCalledWith(
+        path.join(testDir, '.agents', 'skills', 'running-headless-orchestrator', 'SKILL.md'),
+        expect.any(String),
+      );
+      expect(addToLockfile).toHaveBeenCalledWith(
+        expect.any(Object),
+        '@agent-relay/running-headless-orchestrator',
+        expect.objectContaining({ format: 'claude', global: true }),
+      );
+      expect(addToLockfile).toHaveBeenCalledWith(
+        expect.any(Object),
+        '@agent-relay/running-headless-orchestrator',
+        expect.objectContaining({ format: 'codex', global: true }),
+      );
     });
   });
 
