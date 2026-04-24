@@ -23,8 +23,9 @@ vi.mock('../core/lockfile', () => ({
   readLockfile: vi.fn(),
   writeLockfile: vi.fn(),
   parseLockfileKey: vi.fn((key: string) => {
-    const parts = key.split('#');
-    return { packageId: parts[0], format: parts[1] };
+    const [packageId, rest] = key.split('#');
+    const [format, location] = (rest || '').split(':');
+    return { packageId, format: format || undefined, location };
   }),
 }));
 vi.mock('../core/telemetry', () => ({
@@ -155,6 +156,56 @@ describe('update command', () => {
       expect(handleInstall).toHaveBeenCalledWith(
         'some-package@1.0.1',
         { as: undefined }
+      );
+    });
+
+    it('should preserve explicit global installs when updating', async () => {
+      (listPackages as Mock).mockResolvedValue([
+        {
+          id: '@scope/global-skill#codex:global',
+          version: '1.0.0',
+          format: 'codex',
+          global: true,
+        },
+      ]);
+
+      mockClient.getPackage.mockResolvedValue({
+        id: '@scope/global-skill',
+        latest_version: { version: '1.0.1' },
+      });
+
+      await handleUpdate();
+
+      expect(handleInstall).toHaveBeenCalledWith(
+        '@scope/global-skill@1.0.1',
+        { as: 'codex', global: true }
+      );
+    });
+
+    it('should preserve legacy global MCP editor metadata when updating', async () => {
+      (listPackages as Mock).mockResolvedValue([
+        {
+          id: '@scope/mcp-server#mcp',
+          version: '1.0.0',
+          format: 'mcp',
+          pluginMetadata: {
+            files: [],
+            mcpGlobal: true,
+            mcpEditor: 'windsurf',
+          },
+        },
+      ]);
+
+      mockClient.getPackage.mockResolvedValue({
+        id: '@scope/mcp-server',
+        latest_version: { version: '1.0.1' },
+      });
+
+      await handleUpdate();
+
+      expect(handleInstall).toHaveBeenCalledWith(
+        '@scope/mcp-server@1.0.1',
+        { as: 'mcp', global: true, editor: 'windsurf' }
       );
     });
   });

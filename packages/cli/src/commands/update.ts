@@ -9,6 +9,17 @@ import { listPackages, parseLockfileKey } from "../core/lockfile";
 import { handleInstall } from "./install";
 import { telemetry } from "../core/telemetry";
 import { CLIError } from "../core/errors";
+import type { MCPEditor } from "../core/mcp";
+
+type InstalledPackage = Awaited<ReturnType<typeof listPackages>>[number];
+
+function getPreservedGlobal(pkg: InstalledPackage, location?: string): boolean | undefined {
+  return pkg.global ?? pkg.pluginMetadata?.mcpGlobal ?? (location === "global" ? true : undefined);
+}
+
+function getPreservedEditor(pkg: InstalledPackage): MCPEditor | undefined {
+  return pkg.pluginMetadata?.mcpEditor as MCPEditor | undefined;
+}
 
 /**
  * Update packages to latest minor/patch versions
@@ -51,7 +62,7 @@ export async function handleUpdate(
 
     for (const pkg of packagesToUpdate) {
       // Parse the lockfile key to get the actual package ID (without #format suffix)
-      const { packageId, format: installedFormat } = parseLockfileKey(pkg.id);
+      const { packageId, format: installedFormat, location } = parseLockfileKey(pkg.id);
 
       try {
         // Get package info from registry using the base package ID
@@ -88,9 +99,18 @@ export async function handleUpdate(
         // Always pass the installed format to prevent auto-detection
         // Use pkg.format (entry data) with installedFormat (from key suffix) as fallback
         const targetFormat = pkg.format || installedFormat;
-        await handleInstall(`${packageId}@${latestVersion}`, {
-          as: targetFormat,
-        });
+        const installOptions: Parameters<typeof handleInstall>[1] = { as: targetFormat };
+        const preservedGlobal = getPreservedGlobal(pkg, location);
+        const preservedEditor = getPreservedEditor(pkg);
+
+        if (preservedGlobal !== undefined) {
+          installOptions.global = preservedGlobal;
+        }
+        if (preservedEditor) {
+          installOptions.editor = preservedEditor;
+        }
+
+        await handleInstall(`${packageId}@${latestVersion}`, installOptions);
 
         updatedCount++;
       } catch (err) {

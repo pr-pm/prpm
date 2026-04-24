@@ -296,8 +296,17 @@ export async function handleUninstall(name: string, options: { format?: string; 
       // Specific format requested
       const requestedKey = getLockfileKey(name, requestedFormat);
       if (!lockfile.packages[requestedKey]) {
+        const matchingFormatKeys = matchingKeys.filter((key) => {
+          const parsed = parseLockfileKey(key);
+          const pkg = lockfile.packages[key];
+          return parsed.format === requestedFormat || pkg.format === requestedFormat;
+        });
+
+        if (matchingFormatKeys.length > 0) {
+          keysToUninstall = matchingFormatKeys;
+        }
         // Check if package exists without format suffix
-        if (lockfile.packages[name] && lockfile.packages[name].format === requestedFormat) {
+        else if (lockfile.packages[name] && lockfile.packages[name].format === requestedFormat) {
           keysToUninstall = [name];
         } else {
           throw new CLIError(`❌ Package "${name}" with format "${requestedFormat}" not found`, 1);

@@ -4,14 +4,15 @@ import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, t
  * Tests that packages are installed to the correct directories based on type and format
  */
 
-import { handleInstall } from '../commands/install';
+import { handleInstall, createInstallCommand } from '../commands/install';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
 import { saveFile, getDestinationDir } from '../core/filesystem';
-import { readLockfile, writeLockfile, addToLockfile, createLockfile, setPackageIntegrity } from '../core/lockfile';
+import { readLockfile, writeLockfile, addToLockfile, createLockfile, setPackageIntegrity, parseLockfileKey } from '../core/lockfile';
 import { gzipSync } from 'zlib';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import os from 'os';
 import { promptYesNo } from '../core/prompts';
 import { addSkillToManifest } from '../core/agents-md-progressive.js';
 
@@ -79,7 +80,7 @@ describe('install command - file locations', () => {
     const dirs = [
       '.claude', '.cursor', '.continue', '.windsurf', '.prompts', '.agents',
       '.github', '.kiro', '.gemini', '.opencode', '.factory', '.droid',
-      '.trae', '.zencoder', '.mcp', '.openskills', '.openagents', '.opencommands',
+      '.trae', '.vscode', '.zencoder', '.mcp', '.openskills', '.openagents', '.opencommands',
       'AGENTS.md', 'GEMINI.md', 'CLAUDE.md', 'CONVENTIONS.md', 'replit.md', 'custom'
     ];
     for (const dir of dirs) {
@@ -96,6 +97,11 @@ describe('install command - file locations', () => {
     (addToLockfile as Mock).mockImplementation(() => {});
     (createLockfile as Mock).mockReturnValue({ packages: {} });
     (setPackageIntegrity as Mock).mockImplementation(() => {});
+    (parseLockfileKey as Mock).mockImplementation((key: string) => {
+      const [packageId, formatAndLocation] = key.split('#');
+      const [format, location] = (formatAndLocation || '').split(':');
+      return { packageId, format: format || undefined, location };
+    });
     mockClient.trackDownload.mockResolvedValue(undefined);
 
     // Mock console methods
@@ -350,6 +356,62 @@ Follow TypeScript best practices.
 
       const destDir = getDestinationDir('claude', 'slash-command');
       expect(destDir).toBe('.claude/commands');
+    });
+  });
+
+  describe('Global installs', () => {
+    it('installs multi-target Claude and Codex skills to user-level directories', async () => {
+      vi.spyOn(os, 'homedir').mockReturnValue(testDir);
+
+      const mockPackage = {
+        id: '@agent-relay/running-headless-orchestrator',
+        name: '@agent-relay/running-headless-orchestrator',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(`---
+name: running-headless-orchestrator
+description: Run headless orchestration
+---
+
+# Running Headless Orchestrator
+`));
+
+      const cmd = createInstallCommand();
+      cmd.exitOverride();
+
+      await cmd.parseAsync(
+        ['@agent-relay/running-headless-orchestrator', '--as', 'claude,codex', '--global'],
+        { from: 'user' },
+      );
+
+      expect(saveFile).toHaveBeenCalledWith(
+        path.join(testDir, '.claude', 'skills', 'running-headless-orchestrator', 'SKILL.md'),
+        expect.any(String),
+      );
+      expect(saveFile).toHaveBeenCalledWith(
+        path.join(testDir, '.agents', 'skills', 'running-headless-orchestrator', 'SKILL.md'),
+        expect.any(String),
+      );
+      expect(addToLockfile).toHaveBeenCalledWith(
+        expect.any(Object),
+        '@agent-relay/running-headless-orchestrator',
+        expect.objectContaining({ format: 'claude', global: true }),
+      );
+      expect(addToLockfile).toHaveBeenCalledWith(
+        expect.any(Object),
+        '@agent-relay/running-headless-orchestrator',
+        expect.objectContaining({ format: 'codex', global: true }),
+      );
     });
   });
 
@@ -1031,6 +1093,62 @@ Follow TypeScript best practices.
 
       // Should NOT have created/modified AGENTS.md
       expect(saveFile).not.toHaveBeenCalledWith('AGENTS.md', expect.any(String));
+    });
+
+    it('uses editor-only --as values when installing MCP packages from prpm.lock', async () => {
+      const lockfile = {
+        version: '1.0.0',
+        lockfileVersion: 1,
+        packages: {
+          '@test/mcp-lockfile#mcp': {
+            version: '1.0.0',
+            resolved: 'https://example.com/package.tar.gz',
+            integrity: '',
+            format: 'mcp',
+            subtype: 'server',
+          },
+        },
+        generated: new Date().toISOString(),
+      };
+      const mockPackage = {
+        id: '@test/mcp-lockfile',
+        name: '@test/mcp-lockfile',
+        format: 'mcp',
+        subtype: 'server',
+        tags: ['mcp'],
+        total_downloads: 5,
+        verified: false,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      (readLockfile as Mock).mockResolvedValue(lockfile);
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.getPackageVersion.mockResolvedValue({
+        version: '1.0.0',
+        tarball_url: 'https://example.com/package.tar.gz',
+      });
+      mockClient.downloadPackage.mockResolvedValue(await createMCPTarball(mcpServerJson));
+
+      const cmd = createInstallCommand();
+      cmd.exitOverride();
+
+      await cmd.parseAsync(['--as', 'vscode'], { from: 'user' });
+
+      const vscodeConfig = JSON.parse(await fs.readFile(path.join(testDir, '.vscode', 'mcp.json'), 'utf-8'));
+      expect(vscodeConfig.servers['test-server']).toBeDefined();
+      expect(addToLockfile).toHaveBeenCalledWith(
+        expect.any(Object),
+        '@test/mcp-lockfile',
+        expect.objectContaining({
+          format: 'mcp',
+          pluginMetadata: expect.objectContaining({
+            mcpEditor: 'vscode',
+          }),
+        }),
+      );
     });
   });
 

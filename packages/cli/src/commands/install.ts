@@ -184,6 +184,47 @@ function applyAgentSkillsTools(content: string, tools: string): string {
   return `---\n${lines.join('\n')}\n---\n${body}`;
 }
 
+function replaceLeadingDirectory(filePath: string, from: string, to: string): string {
+  const normalizedPath = filePath.startsWith('./') ? filePath.slice(2) : filePath;
+
+  if (normalizedPath === from) {
+    return to;
+  }
+
+  if (normalizedPath.startsWith(`${from}/`)) {
+    return path.join(to, normalizedPath.slice(from.length + 1));
+  }
+
+  return filePath;
+}
+
+function getGlobalDestinationDir(format: Format, destDir: string): string {
+  const homeDir = os.homedir();
+
+  if (format === 'claude') {
+    return replaceLeadingDirectory(destDir, '.claude', path.join(homeDir, '.claude'));
+  }
+
+  if (format === 'codex') {
+    if (destDir === '.' || destDir === './') {
+      return path.join(homeDir, '.codex');
+    }
+
+    const codexPath = replaceLeadingDirectory(destDir, '.codex', path.join(homeDir, '.codex'));
+    if (codexPath !== destDir) {
+      return codexPath;
+    }
+
+    return replaceLeadingDirectory(destDir, '.agents', path.join(homeDir, '.agents'));
+  }
+
+  return destDir;
+}
+
+function getLockfileLocationKey(options: { global?: boolean }): string | undefined {
+  return options.global ? 'global' : undefined;
+}
+
 /**
  * Get human-readable label for package format and subtype
  */
@@ -324,7 +365,7 @@ export async function handleInstall(
     location?: string;
     noAppend?: boolean; // Skip manifest file update for skills
     manifestFile?: string; // Custom manifest filename (default: AGENTS.md)
-    global?: boolean; // Install MCP servers to global config
+    global?: boolean; // Install to user-level/global locations where supported
     editor?: MCPEditor; // Target editor for MCP server installation (claude, codex)
     hookMapping?: HookMappingStrategy; // Hook mapping strategy for cross-format hook conversion
     eager?: boolean; // Force skill/agent to always activate (not on-demand)
@@ -387,7 +428,8 @@ export async function handleInstall(
     }
 
     // Get locked version for the specific format if available
-    const lockedVersion = getLockedVersion(lockfile, packageId, targetFormat);
+    const lockfileLocationKey = getLockfileLocationKey(options);
+    const lockedVersion = getLockedVersion(lockfile, packageId, targetFormat, lockfileLocationKey);
 
     // Determine version to install
     let version: string;
@@ -420,7 +462,7 @@ export async function handleInstall(
 
       // If not found as snippet, check for non-snippet installation
       if (!installedPkg) {
-        const standardKey = getLockfileKey(packageId, targetFormat);
+        const standardKey = getLockfileKey(packageId, targetFormat, lockfileLocationKey);
         if (lockfile.packages[standardKey]) {
           installedPkg = lockfile.packages[standardKey];
           matchedKey = standardKey;
@@ -637,11 +679,11 @@ export async function handleInstall(
 
     // Verify integrity if we have a lockfile with integrity hash for this package
     // Only verify if the version matches - different versions will have different hashes
-    const lockfileKeyForVerification = getLockfileKey(packageId, targetFormat);
+    const lockfileKeyForVerification = getLockfileKey(packageId, targetFormat, lockfileLocationKey);
     const existingEntry = lockfile?.packages[lockfileKeyForVerification];
     if (existingEntry?.integrity && existingEntry.version === actualVersion) {
       console.log(`   🔒 Verifying integrity...`);
-      const isValid = verifyPackageIntegrity(lockfile!, packageId, tarball, targetFormat);
+      const isValid = verifyPackageIntegrity(lockfile!, packageId, tarball, targetFormat, lockfileLocationKey);
       if (!isValid) {
         throw new CLIError(
           `❌ Integrity verification failed for ${packageId}\n\n` +
@@ -892,6 +934,7 @@ export async function handleInstall(
     const isClaudePlugin = (pkg.format === 'claude' && pkg.subtype === 'plugin');
     if (isClaudePlugin) {
       console.log(`   🔌 Installing Claude Plugin...`);
+      const claudeRoot = options.global ? path.join(os.homedir(), '.claude') : '.claude';
 
       // Find and parse plugin.json
       const pluginJsonFile = extractedFiles.find(f =>
@@ -917,14 +960,15 @@ export async function handleInstall(
         f.name.startsWith('agents/') && f.name.endsWith('.md')
       );
       if (agentFiles.length > 0) {
-        await fs.mkdir('.claude/agents', { recursive: true });
+        const agentDir = path.join(claudeRoot, 'agents');
+        await fs.mkdir(agentDir, { recursive: true });
         for (const file of agentFiles) {
           const filename = path.basename(file.name);
-          const destFile = `.claude/agents/${filename}`;
+          const destFile = path.join(agentDir, filename);
           await saveFile(destFile, file.content);
           installedFiles.push(destFile);
         }
-        console.log(`   ✓ Installed ${agentFiles.length} agents to .claude/agents/`);
+        console.log(`   ✓ Installed ${agentFiles.length} agents to ${agentDir}/`);
       }
 
       // Install skills to .claude/skills/
@@ -935,13 +979,13 @@ export async function handleInstall(
         for (const file of skillFiles) {
           // Preserve skill directory structure (e.g., skills/my-skill/SKILL.md)
           const relativePath = file.name.replace(/^skills\//, '');
-          const destFile = `.claude/skills/${relativePath}`;
+          const destFile = path.join(claudeRoot, 'skills', relativePath);
           const destFileDir = path.dirname(destFile);
           await fs.mkdir(destFileDir, { recursive: true });
           await saveFile(destFile, file.content);
           installedFiles.push(destFile);
         }
-        console.log(`   ✓ Installed ${skillFiles.length} skill files to .claude/skills/`);
+        console.log(`   ✓ Installed ${skillFiles.length} skill files to ${path.join(claudeRoot, 'skills')}/`);
       }
 
       // Install commands to .claude/commands/
@@ -949,14 +993,15 @@ export async function handleInstall(
         f.name.startsWith('commands/') && f.name.endsWith('.md')
       );
       if (commandFiles.length > 0) {
-        await fs.mkdir('.claude/commands', { recursive: true });
+        const commandDir = path.join(claudeRoot, 'commands');
+        await fs.mkdir(commandDir, { recursive: true });
         for (const file of commandFiles) {
           const filename = path.basename(file.name);
-          const destFile = `.claude/commands/${filename}`;
+          const destFile = path.join(commandDir, filename);
           await saveFile(destFile, file.content);
           installedFiles.push(destFile);
         }
-        console.log(`   ✓ Installed ${commandFiles.length} commands to .claude/commands/`);
+        console.log(`   ✓ Installed ${commandFiles.length} commands to ${commandDir}/`);
       }
 
       // Merge MCP servers if present
@@ -999,7 +1044,7 @@ export async function handleInstall(
         };
       }
 
-      destPath = '.claude/';
+      destPath = `${claudeRoot}/`;
       fileCount = installedFiles.length;
     }
     // Special handling for MCP server packages (install server configs to .mcp.json or editor config)
@@ -1123,7 +1168,7 @@ export async function handleInstall(
       }
 
       let mainFile = extractedFiles[0].content;
-      destPath = 'CLAUDE.md';
+      destPath = options.global ? path.join(os.homedir(), '.claude', 'CLAUDE.md') : 'CLAUDE.md';
 
       await saveFile(destPath, mainFile);
       fileCount = 1;
@@ -1131,6 +1176,13 @@ export async function handleInstall(
     // Check if this is a multi-file package
     else if (extractedFiles.length === 1) {
       destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      if (options.global) {
+        const globalDestDir = getGlobalDestinationDir(effectiveFormat, destDir);
+        if (globalDestDir !== destDir) {
+          destDir = globalDestDir;
+          console.log(`   🌐 Installing globally to ${destDir}`);
+        }
+      }
 
       if (locationOverride && effectiveFormat === 'cursor') {
         const relativeDestDir = destDir.startsWith('./') ? destDir.slice(2) : destDir;
@@ -1169,7 +1221,11 @@ export async function handleInstall(
         if (effectiveSubtype === 'skill') {
           // Skills go to .openskills/package-name/ directory
           destPath = `${destDir}/SKILL.md`;
-          console.log(`   📦 Installing skill to ${destDir}/ for progressive disclosure`);
+          if (effectiveFormat === 'codex') {
+            console.log(`   📦 Installing Codex skill to ${destDir}/`);
+          } else {
+            console.log(`   📦 Installing skill to ${destDir}/ for progressive disclosure`);
+          }
         } else if (effectiveSubtype === 'agent') {
           if (effectiveFormat === 'codex') {
             // Codex agent roles: project-local .codex/agents/<name>.toml
@@ -1402,6 +1458,14 @@ export async function handleInstall(
       } else {
         // Use format's native directory
         destDir = getDestinationDir(effectiveFormat, effectiveSubtype, pkg.name);
+      }
+
+      if (options.global) {
+        const globalDestDir = getGlobalDestinationDir(effectiveFormat, destDir);
+        if (globalDestDir !== destDir) {
+          destDir = globalDestDir;
+          console.log(`   🌐 Installing globally to ${destDir}`);
+        }
       }
 
       if (locationOverride && effectiveFormat === 'cursor') {
@@ -1655,11 +1719,13 @@ export async function handleInstall(
       progressiveDisclosure: progressiveDisclosureMetadata,
       pluginMetadata, // Track plugin installation metadata for uninstall
       snippetMetadata, // Track snippet installation metadata for uninstall
+      global: options.global,
     });
 
     // For snippets, include the target path in the key
     const snippetTargetPath = effectiveSubtype === 'snippet' ? snippetMetadata?.targetPath : undefined;
-    setPackageIntegrity(updatedLockfile, packageId, tarball, effectiveFormat, snippetTargetPath);
+    const integrityLocationKey = lockfileLocationKey || snippetTargetPath;
+    setPackageIntegrity(updatedLockfile, packageId, tarball, effectiveFormat, integrityLocationKey);
     await writeLockfile(updatedLockfile);
 
     // Update lockfile (already done above via addToLockfile + writeLockfile)
@@ -1931,6 +1997,8 @@ export async function installFromLockfile(options: {
   frozenLockfile?: boolean;
   location?: string;
   hookMapping?: HookMappingStrategy;
+  global?: boolean;
+  editor?: MCPEditor;
 }): Promise<void> {
   try {
     // Read lockfile
@@ -1957,7 +2025,7 @@ export async function installFromLockfile(options: {
       const lockEntry = lockfile.packages[lockfileKey];
 
       // Parse lockfile key to get package ID and format (outside try block for error handling)
-      const { packageId, format } = parseLockfileKey(lockfileKey);
+      const { packageId, format, location } = parseLockfileKey(lockfileKey);
       const displayName = format ? `${packageId} (${format})` : packageId;
 
       try {
@@ -1981,6 +2049,8 @@ export async function installFromLockfile(options: {
 
         // Preserve manifest file from lockfile for progressive disclosure
         const manifestFile = lockEntry.progressiveDisclosure?.manifestPath;
+        const preservedGlobal = options.global ?? lockEntry.global ?? lockEntry.pluginMetadata?.mcpGlobal ?? (location === 'global' ? true : undefined);
+        const preservedEditor = options.editor ?? (lockEntry.pluginMetadata?.mcpEditor as MCPEditor | undefined);
 
         await handleInstall(packageSpec, {
           version: lockEntry.version,
@@ -1992,6 +2062,8 @@ export async function installFromLockfile(options: {
           manifestFile,
           hookMapping: options.hookMapping,
           fromCollection: lockEntry.fromCollection, // Preserve collection metadata
+          global: preservedGlobal,
+          editor: preservedEditor,
         });
 
         successCount++;
@@ -2044,7 +2116,7 @@ export function createInstallCommand(): Command {
     .option('--eager', 'Force skill/agent to always activate (not on-demand)')
     .option('--lazy', 'Use default on-demand activation (overrides package eager setting)')
     .option('--tools <tools>', 'Override Claude/Codex tool list for this install (comma- or space-separated)')
-    .option('--global', 'Install MCP servers to global config (e.g., ~/.claude/settings.json, ~/.codex/config.toml, ~/.cursor/mcp.json, ~/.kiro/settings/mcp.json)')
+    .option('--global', 'Install to user-level/global locations where supported (e.g., ~/.claude/skills, ~/.agents/skills, ~/.codex/agents, or global MCP config)')
     .option('--editor <editor>', '[Deprecated: use --as] Target editor for MCP server installation')
     .action(async (packageSpec: string | undefined, options: { version?: string; as?: string; format?: string; subtype?: string; hookMapping?: string; frozenLockfile?: boolean; yes?: boolean; location?: string; noAppend?: boolean; manifestFile?: string; eager?: boolean; lazy?: boolean; tools?: string; global?: boolean; editor?: string }) => {
       // Support both --as and --format (format is alias for as)
@@ -2114,6 +2186,8 @@ export function createInstallCommand(): Command {
           frozenLockfile: options.frozenLockfile,
           location: options.location,
           hookMapping: options.hookMapping as HookMappingStrategy | undefined,
+          global: options.global,
+          editor: (options.editor as MCPEditor | undefined) ?? (isMCPEditorOnly ? (singleAs as MCPEditor) : undefined),
         });
         return;
       }

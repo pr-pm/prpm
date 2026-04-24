@@ -292,6 +292,54 @@ describe('install from lockfile', () => {
       expect(mockClient.getPackage).toHaveBeenCalledWith('@test/claude-skill');
       expect(mockClient.downloadPackage).toHaveBeenCalled();
     });
+
+    it('should preserve global installs from lockfile entries', async () => {
+      const lockfile: Lockfile = {
+        version: '1.0.0',
+        lockfileVersion: 1,
+        packages: {
+          '@test/global-skill#claude:global': {
+            version: '1.0.0',
+            resolved: 'https://registry.prpm.dev/packages/@test/global-skill/1.0.0/download',
+            integrity: '',
+            format: 'claude',
+            subtype: 'skill',
+            global: true,
+          },
+        },
+        generated: new Date().toISOString(),
+      };
+      mockReadLockfile.mockResolvedValue(lockfile);
+
+      mockClient.getPackage.mockResolvedValue({
+        id: '@test/global-skill',
+        name: '@test/global-skill',
+        author: 'test',
+        version: '1.0.0',
+        format: 'claude',
+        subtype: 'skill',
+        files: ['SKILL.md'],
+        description: 'Global skill',
+        total_downloads: 0,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://registry.prpm.dev/packages/@test/global-skill/1.0.0/download',
+        },
+      } as any);
+      mockClient.getPackageVersion.mockResolvedValue({
+        version: '1.0.0',
+        tarball_url: 'https://registry.prpm.dev/packages/@test/global-skill/1.0.0/download',
+      } as any);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync('# Global Skill'));
+
+      await installFromLockfile({});
+
+      expect(mockAddToLockfile).toHaveBeenCalledWith(
+        expect.any(Object),
+        '@test/global-skill',
+        expect.objectContaining({ format: 'claude', global: true }),
+      );
+    });
   });
 
   describe('multiple packages installation', () => {

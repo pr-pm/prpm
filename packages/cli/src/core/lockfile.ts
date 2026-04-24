@@ -25,6 +25,7 @@ export interface LockfilePackage {
   dependencies?: Record<string, string>;
   format?: string; // Installed format
   subtype?: string; // Installed subtype
+  global?: boolean; // Whether package was installed to a user-level/global location
   sourceFormat?: string; // Original package format from registry
   sourceSubtype?: string; // Original subtype from registry
   installedPath?: string; // Path where the package was installed
@@ -183,6 +184,7 @@ export function addToLockfile(
     sourceFormat?: string;
     sourceSubtype?: string;
     installedPath?: string;
+    global?: boolean;
     fromCollection?: {
       scope?: string;
       name_slug: string;
@@ -221,7 +223,8 @@ export function addToLockfile(
   // Use format-specific key if format is provided (enables multiple formats per package)
   // For snippets, include target path in key to allow multiple installations to different files
   const snippetLocation = packageInfo.subtype === 'snippet' ? packageInfo.snippetMetadata?.targetPath : undefined;
-  const lockfileKey = getLockfileKey(packageId, packageInfo.format, snippetLocation);
+  const locationKey = packageInfo.global ? 'global' : snippetLocation;
+  const lockfileKey = getLockfileKey(packageId, packageInfo.format, locationKey);
 
   lockfile.packages[lockfileKey] = {
     version: packageInfo.version,
@@ -230,6 +233,7 @@ export function addToLockfile(
     dependencies: packageInfo.dependencies,
     format: packageInfo.format,
     subtype: packageInfo.subtype,
+    global: packageInfo.global,
     sourceFormat: packageInfo.sourceFormat,
     sourceSubtype: packageInfo.sourceSubtype,
     installedPath: packageInfo.installedPath,
@@ -291,7 +295,8 @@ export function verifyPackageIntegrity(
 export function getLockedVersion(
   lockfile: Lockfile | null,
   packageId: string,
-  format?: string
+  format?: string,
+  location?: string
 ): string | null {
   if (!lockfile) {
     return null;
@@ -299,7 +304,7 @@ export function getLockedVersion(
 
   // If format specified, check specific key
   if (format) {
-    const lockfileKey = getLockfileKey(packageId, format);
+    const lockfileKey = getLockfileKey(packageId, format, location);
     return lockfile.packages[lockfileKey]?.version || null;
   }
 
