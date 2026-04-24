@@ -2187,7 +2187,7 @@ export function createInstallCommand(): Command {
           location: options.location,
           hookMapping: options.hookMapping as HookMappingStrategy | undefined,
           global: options.global,
-          editor: options.editor as MCPEditor | undefined,
+          editor: (options.editor as MCPEditor | undefined) ?? (isMCPEditorOnly ? (singleAs as MCPEditor) : undefined),
         });
         return;
       }
