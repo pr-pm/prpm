@@ -1997,6 +1997,8 @@ export async function installFromLockfile(options: {
   frozenLockfile?: boolean;
   location?: string;
   hookMapping?: HookMappingStrategy;
+  global?: boolean;
+  editor?: MCPEditor;
 }): Promise<void> {
   try {
     // Read lockfile
@@ -2023,7 +2025,7 @@ export async function installFromLockfile(options: {
       const lockEntry = lockfile.packages[lockfileKey];
 
       // Parse lockfile key to get package ID and format (outside try block for error handling)
-      const { packageId, format } = parseLockfileKey(lockfileKey);
+      const { packageId, format, location } = parseLockfileKey(lockfileKey);
       const displayName = format ? `${packageId} (${format})` : packageId;
 
       try {
@@ -2047,6 +2049,8 @@ export async function installFromLockfile(options: {
 
         // Preserve manifest file from lockfile for progressive disclosure
         const manifestFile = lockEntry.progressiveDisclosure?.manifestPath;
+        const preservedGlobal = options.global ?? lockEntry.global ?? lockEntry.pluginMetadata?.mcpGlobal ?? (location === 'global' ? true : undefined);
+        const preservedEditor = options.editor ?? (lockEntry.pluginMetadata?.mcpEditor as MCPEditor | undefined);
 
         await handleInstall(packageSpec, {
           version: lockEntry.version,
@@ -2058,6 +2062,8 @@ export async function installFromLockfile(options: {
           manifestFile,
           hookMapping: options.hookMapping,
           fromCollection: lockEntry.fromCollection, // Preserve collection metadata
+          global: preservedGlobal,
+          editor: preservedEditor,
         });
 
         successCount++;
@@ -2180,6 +2186,8 @@ export function createInstallCommand(): Command {
           frozenLockfile: options.frozenLockfile,
           location: options.location,
           hookMapping: options.hookMapping as HookMappingStrategy | undefined,
+          global: options.global,
+          editor: options.editor as MCPEditor | undefined,
         });
         return;
       }
