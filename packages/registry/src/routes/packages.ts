@@ -1131,11 +1131,36 @@ export async function packageRoutes(server: FastifyInstance) {
             });
           }
 
-          // Update eager field for existing package if it changed in the manifest
+          // Keep mutable package metadata aligned with the latest published manifest.
           await query(
             server,
-            "UPDATE packages SET eager = $1 WHERE id = $2",
-            [eager, pkg.id],
+            `UPDATE packages SET
+              display_name = $1,
+              description = $2,
+              format = $3,
+              subtype = $4,
+              license = $5,
+              tags = $6,
+              keywords = $7,
+              language = $8,
+              framework = $9,
+              eager = $10,
+              ai_enrichment_needed = TRUE,
+              updated_at = NOW()
+             WHERE id = $11`,
+            [
+              displayName || null,
+              description,
+              format,
+              subtype,
+              license || null,
+              tags,
+              keywords,
+              language || null,
+              framework || null,
+              eager,
+              pkg.id,
+            ],
           );
         } else {
           // New package - create it
