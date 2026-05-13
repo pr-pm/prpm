@@ -14,7 +14,7 @@ prpm install collections/nextjs-pro  # Entire Next.js setup in one command
 ```
 Installs 20 packages: backend-architect, cloud-architect, database-architect, and more
 
-7,5000+ cross platform packages
+7,500+ cross platform packages
 
 [Docs](https://docs.prpm.dev) | [Search Packages](https://prpm.dev/search) | [Search Collections](https://prpm.dev/search?tab=collections)
 
