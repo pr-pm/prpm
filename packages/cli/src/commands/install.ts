@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists, getManifestFilename } from '../core/filesystem';
+import { saveFile, getDestinationDir, stripAuthorNamespace, autoDetectFormat, fileExists, getManifestFilename, createSymlink, ensureDirectoryExists } from '../core/filesystem';
 import { addPackage } from '../core/lockfile';
 import { telemetry } from '../core/telemetry';
 import { Package, Format, Subtype, FORMATS, FORMAT_NATIVE_SUBTYPES } from '../types';
@@ -80,6 +80,160 @@ import {
   type CanonicalPackage,
   type HookMappingStrategy,
 } from '@pr-pm/converters';
+
+/**
+ * Track installed paths for multi-format symlink support
+ */
+interface InstallResult {
+  format: Format;
+  subtype: Subtype;
+  installedPaths: string[];  // All files/directories installed
+  destPath: string;          // Main destination path (for display)
+}
+
+/**
+ * Define symlink-compatible format groups.
+ * Formats in the same group with matching subtypes can share files via symlinks.
+ * The first format listed in each group is the "canonical" one (files are written there,
+ * others symlink to it).
+ */
+const SYMLINK_COMPATIBLE_GROUPS: Record<Subtype, Format[][]> = {
+  'skill': [
+    ['claude', 'codex', 'amp'],  // Claude, Codex, and Amp all use similar skill structures
+  ],
+  'agent': [],  // Different agent formats (claude uses .md, codex uses .toml)
+  'slash-command': [],
+  'rule': [],
+  'prompt': [],
+  'collection': [],
+  'chatmode': [],
+  'tool': [],
+  'hook': [],
+  'workflow': [],
+  'template': [],
+  'plugin': [],
+  'extension': [],
+  'server': [],
+  'snippet': [],
+};
+
+/**
+ * Check if two formats are symlink-compatible for a given subtype
+ */
+function areFormatsSymlinkCompatible(format1: Format, format2: Format, subtype: Subtype): boolean {
+  const groups = SYMLINK_COMPATIBLE_GROUPS[subtype] || [];
+  for (const group of groups) {
+    if (group.includes(format1) && group.includes(format2)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Get the canonical format from a symlink-compatible group
+ */
+function getCanonicalFormat(formats: Format[], subtype: Subtype): Format | undefined {
+  const groups = SYMLINK_COMPATIBLE_GROUPS[subtype] || [];
+  for (const group of groups) {
+    // Return the first format from the group that's in our list
+    for (const canonicalFormat of group) {
+      if (formats.includes(canonicalFormat)) {
+        return canonicalFormat;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Create a symlink-based installation for a format that's compatible with an existing installation.
+ * Returns the symlink path if successful, null if failed.
+ */
+async function createSymlinkInstall(
+  packageSpec: string,
+  sourceInstall: InstallResult,
+  targetFormat: Format,
+  subtype: Subtype,
+  options: {
+    manifestFile?: string;
+    noAppend?: boolean;
+    eager?: boolean;
+  }
+): Promise<string | null> {
+  try {
+    // Get the source and target directories
+    // Parse package spec properly: @scope/name@version or name@version
+    let packageId: string;
+    if (packageSpec.startsWith('@')) {
+      // Scoped package: @scope/name or @scope/name@version
+      const match = packageSpec.match(/^(@[^/]+\/[^@]+)(?:@.+)?$/);
+      packageId = match ? match[1] : packageSpec;
+    } else {
+      // Unscoped: name or name@version
+      packageId = packageSpec.split('@')[0];
+    }
+    const packageName = stripAuthorNamespace(packageId);
+
+    // Determine target directory based on format and subtype
+    const targetDir = getDestinationDir(targetFormat, subtype, packageName);
+
+    // For skills, the source is the skill directory (e.g., .claude/skills/my-skill)
+    // and we symlink the skill directory to the target format's skill directory
+    if (subtype === 'skill' && sourceInstall.installedPaths.length > 0) {
+      // Find the skill directory (parent of SKILL.md)
+      const skillFile = sourceInstall.installedPaths.find(p => p.includes('SKILL.md'));
+      if (skillFile) {
+        const sourceDir = path.dirname(skillFile);
+        const fullSourceDir = path.resolve(sourceDir);
+
+        // targetDir is the full path including package name (e.g., .agents/skills/my-skill)
+        // We need to ensure the parent directory exists and create symlink to the skill dir
+        const targetParentDir = path.dirname(targetDir);
+        await ensureDirectoryExists(targetParentDir);
+
+        const fullTargetDir = path.resolve(targetDir);
+
+        // Create symlink for the skill directory (targetDir -> sourceDir)
+        // e.g., .agents/skills/my-skill -> .claude/skills/my-skill
+        const result = await createSymlink(fullSourceDir, fullTargetDir, true);
+
+        if (result.symlinked) {
+          console.log(`   ✓ Created symlink: ${targetDir} -> ${sourceDir}`);
+        } else {
+          console.log(`   ✓ Copied files to: ${targetDir} (symlinks not supported)`);
+        }
+
+        // Handle progressive disclosure manifest if needed
+        if (!options.noAppend) {
+          const nativeSubtypes = FORMAT_NATIVE_SUBTYPES[targetFormat];
+          const hasNativeSupport = nativeSubtypes?.includes(subtype) ?? false;
+          if (!hasNativeSupport) {
+            const manifestPath = options.manifestFile || getManifestFilename(targetFormat);
+            const manifestEntry: SkillManifestEntry = {
+              name: packageName,
+              description: `${packageName} skill`,
+              skillPath: targetDir,
+              mainFile: 'SKILL.md',
+              resourceType: 'skill',
+              eager: options.eager,
+            };
+            await addSkillToManifest(manifestEntry, manifestPath);
+            console.log(`   ✓ Added skill to ${manifestPath} manifest`);
+          }
+        }
+
+        return targetDir;
+      }
+    }
+
+    // For other subtypes or if skill directory not found, fall back to null (full install)
+    return null;
+  } catch (error) {
+    console.error(`   ⚠️  Symlink creation failed: ${error instanceof Error ? error.message : error}`);
+    return null;
+  }
+}
 
 /**
  * Get icon for package format and subtype
@@ -375,8 +529,9 @@ export async function handleInstall(
       name_slug: string;
       version?: string;
     };
+    symlinkFrom?: InstallResult; // If provided, create symlinks to this installation instead of writing files
   }
-): Promise<void> {
+): Promise<InstallResult | void> {
   const startTime = Date.now();
   let success = false;
   let error: string | undefined;
@@ -921,10 +1076,11 @@ export async function handleInstall(
       locationOverride = undefined;
     }
 
-    // Track where files were saved for user feedback
+    // Track where files were saved for user feedback and symlink support
     let destPath = ''; // Will be set based on format/subtype before saving
     let destDir = ''; // Destination directory (needed for progressive disclosure)
     let fileCount = 0;
+    const allInstalledPaths: string[] = []; // Track all installed files for symlink support
     let hookMetadata: { events: string[]; hookId: string } | undefined = undefined;
     let pluginMetadata: { files: string[]; mcpServers?: Record<string, MCPServer>; mcpGlobal?: boolean; mcpEditor?: MCPEditor } | undefined = undefined;
     let snippetMetadata: { targetPath: string; config: SnippetConfig } | undefined = undefined;
@@ -1046,6 +1202,7 @@ export async function handleInstall(
 
       destPath = `${claudeRoot}/`;
       fileCount = installedFiles.length;
+      allInstalledPaths.push(...installedFiles);
     }
     // Special handling for MCP server packages (install server configs to .mcp.json or editor config)
     // Match when: native MCP format, OR source is MCP and --as targets an MCP editor (e.g., --as codex)
@@ -1171,6 +1328,7 @@ export async function handleInstall(
       destPath = options.global ? path.join(os.homedir(), '.claude', 'CLAUDE.md') : 'CLAUDE.md';
 
       await saveFile(destPath, mainFile);
+      allInstalledPaths.push(destPath);
       fileCount = 1;
     }
     // Check if this is a multi-file package
@@ -1431,6 +1589,7 @@ export async function handleInstall(
       }
 
       await saveFile(destPath, mainFile);
+      allInstalledPaths.push(destPath);
       fileCount = 1;
     } else {
       // Multi-file package handling
@@ -1590,6 +1749,7 @@ export async function handleInstall(
 
         const filePath = `${packageDir}/${fileName}`;
         await saveFile(filePath, fileContent);
+        allInstalledPaths.push(filePath);
         fileCount++;
       }
 
@@ -1774,6 +1934,14 @@ export async function handleInstall(
     console.log(`\n💡 This package has been downloaded ${newDownloadCount.toLocaleString()} times`);
 
     success = true;
+
+    // Return install result for symlink support in multi-format installs
+    return {
+      format: effectiveFormat as Format,
+      subtype: effectiveSubtype as Subtype,
+      installedPaths: allInstalledPaths,
+      destPath,
+    };
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
     throw new CLIError(`\n❌ Installation failed: ${error}\n\n💡 Tips:\n   - Check package name: prpm search <query>\n   - Get package info: prpm info <package>`, 1);
@@ -2223,10 +2391,17 @@ export function createInstallCommand(): Command {
       // Multi-target install: loop over each format and install independently.
       // Each iteration re-runs the full install pipeline (download, convert, write),
       // so one target failing doesn't stop the others.
+      //
+      // Symlink optimization: For symlink-compatible format pairs (e.g., claude/codex skills),
+      // we install the first format normally and create symlinks for subsequent formats.
       console.log(`📦 Installing ${packageSpec} to ${asTokens.length} targets: ${asTokens.join(', ')}\n`);
       let successCount = 0;
       const failures: { target: string; error: string }[] = [];
       const isCollectionSpec = packageSpec.startsWith('collections/');
+
+      // Track first successful installation for each subtype (for symlink support)
+      const installedBySubtype: Map<Subtype, { format: Format; result: InstallResult }> = new Map();
+      const resolvedSubtype = (options.subtype as Subtype) || 'skill'; // Default to skill if not specified
 
       for (const token of asTokens) {
         const isMCPEditorOnly = !validFormats.includes(token as Format) && MCP_EDITORS.includes(token as MCPEditor);
@@ -2235,7 +2410,27 @@ export function createInstallCommand(): Command {
 
         console.log(chalk.cyan(`\n━━ [${token}] ━━`));
         try {
-          await handleInstall(packageSpec, {
+          // Check if we can use symlinks instead of full installation
+          const existingInstall = installedBySubtype.get(resolvedSubtype);
+          if (convertTo && existingInstall && areFormatsSymlinkCompatible(existingInstall.format, convertTo, resolvedSubtype)) {
+            // Use symlinks instead of full installation
+            const symlinkResult = await createSymlinkInstall(
+              packageSpec,
+              existingInstall.result,
+              convertTo,
+              resolvedSubtype,
+              options
+            );
+            if (symlinkResult) {
+              console.log(`   🔗 Symlinked from ${existingInstall.format} installation`);
+              successCount++;
+              continue;
+            }
+            // Fall through to full install if symlink failed
+            console.log(`   ⚠️  Symlink failed, performing full install...`);
+          }
+
+          const result = await handleInstall(packageSpec, {
             version: options.version,
             as: convertTo,
             subtype: options.subtype as Subtype | undefined,
@@ -2250,6 +2445,12 @@ export function createInstallCommand(): Command {
             global: options.global,
             editor: (options.editor as MCPEditor | undefined) || mcpEditor,
           });
+
+          // Track successful installation for potential symlink targets
+          if (result && convertTo && !installedBySubtype.has(resolvedSubtype)) {
+            installedBySubtype.set(resolvedSubtype, { format: convertTo, result });
+          }
+
           successCount++;
         } catch (err) {
           // Collection installs throw CLIError with exitCode 0 on success — treat those as success.

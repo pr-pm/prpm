@@ -7,7 +7,7 @@ import { vi, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, t
 import { handleInstall, createInstallCommand } from '../commands/install';
 import { getRegistryClient } from '@pr-pm/registry-client';
 import { getConfig } from '../core/user-config';
-import { saveFile, getDestinationDir } from '../core/filesystem';
+import { saveFile, getDestinationDir, createSymlink } from '../core/filesystem';
 import { readLockfile, writeLockfile, addToLockfile, createLockfile, setPackageIntegrity, parseLockfileKey } from '../core/lockfile';
 import { gzipSync } from 'zlib';
 import * as fs from 'fs/promises';
@@ -41,6 +41,7 @@ vi.mock('../core/filesystem', async () => {
     ...actual,
     saveFile: vi.fn(actual.saveFile),
     ensureDirectoryExists: vi.fn(actual.ensureDirectoryExists),
+    createSymlink: vi.fn().mockResolvedValue({ symlinked: true, path: '' }),
   };
 });
 
@@ -394,23 +395,79 @@ description: Run headless orchestration
         { from: 'user' },
       );
 
+      // First format (claude) uses saveFile
       expect(saveFile).toHaveBeenCalledWith(
         path.join(testDir, '.claude', 'skills', 'running-headless-orchestrator', 'SKILL.md'),
         expect.any(String),
       );
-      expect(saveFile).toHaveBeenCalledWith(
-        path.join(testDir, '.agents', 'skills', 'running-headless-orchestrator', 'SKILL.md'),
-        expect.any(String),
+      // Second format (codex) uses symlink (claude and codex are symlink-compatible for skills)
+      expect(createSymlink).toHaveBeenCalledWith(
+        expect.stringContaining('.claude/skills/running-headless-orchestrator'),
+        expect.stringContaining('.agents/skills/running-headless-orchestrator'),
+        true,
       );
       expect(addToLockfile).toHaveBeenCalledWith(
         expect.any(Object),
         '@agent-relay/running-headless-orchestrator',
         expect.objectContaining({ format: 'claude', global: true }),
       );
+      // Note: addToLockfile is NOT called for symlinked format (codex) since it reuses claude's installation
+    });
+
+    it('creates symlinks for claude,codex skill installs (symlink-compatible formats)', async () => {
+      // Mock homedir for global install and reset symlink mock
+      vi.spyOn(os, 'homedir').mockReturnValue(testDir);
+      vi.mocked(createSymlink).mockResolvedValue({ symlinked: true, path: '' });
+
+      const mockPackage = {
+        id: '@test/multi-format-skill',
+        name: '@test/multi-format-skill',
+        format: 'claude',
+        subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(gzipSync(`---
+name: multi-format-skill
+description: Test multi-format skill
+---
+
+# Multi-Format Skill Test
+`));
+
+      const cmd = createInstallCommand();
+      cmd.exitOverride();
+
+      await cmd.parseAsync(
+        ['@test/multi-format-skill', '--as', 'claude,codex', '--global'],
+        { from: 'user' },
+      );
+
+      // First format (claude) saves files normally
+      expect(saveFile).toHaveBeenCalledWith(
+        path.join(testDir, '.claude', 'skills', 'multi-format-skill', 'SKILL.md'),
+        expect.any(String),
+      );
+
+      // Codex uses symlinks to claude installation (claude and codex are symlink-compatible for skills)
+      expect(createSymlink).toHaveBeenCalledWith(
+        expect.stringContaining('.claude/skills/multi-format-skill'),
+        expect.stringContaining('.agents/skills/multi-format-skill'),
+        true,
+      );
+
+      // Only claude installation adds to lockfile
       expect(addToLockfile).toHaveBeenCalledWith(
         expect.any(Object),
-        '@agent-relay/running-headless-orchestrator',
-        expect.objectContaining({ format: 'codex', global: true }),
+        '@test/multi-format-skill',
+        expect.objectContaining({ format: 'claude', global: true }),
       );
     });
   });

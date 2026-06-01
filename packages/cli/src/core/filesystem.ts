@@ -4,6 +4,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import os from 'os';
 import { Format, Subtype } from '../types';
 import { getDestinationDirectory, getSubtypeConfig, getSubtypes, getDefaultSubtype } from '@pr-pm/converters';
 
@@ -65,6 +66,87 @@ export async function saveFile(filePath: string, content: string): Promise<void>
     await fs.writeFile(filePath, content, 'utf-8');
   } catch (error) {
     throw new Error(`Failed to save file ${filePath}: ${error}`);
+  }
+}
+
+/**
+ * Create a symbolic link from source to target
+ * Falls back to copying if symlinks are not supported (Windows without admin)
+ *
+ * @param target - The path the symlink points to (the existing file)
+ * @param linkPath - The path where the symlink will be created
+ * @param forceRelative - If true, converts target to relative path from linkPath's directory
+ */
+export async function createSymlink(
+  target: string,
+  linkPath: string,
+  forceRelative: boolean = true
+): Promise<{ symlinked: boolean; path: string }> {
+  try {
+    // Ensure parent directory exists
+    const linkDir = path.dirname(linkPath);
+    await ensureDirectoryExists(linkDir);
+
+    // Convert to relative path if requested (better for portability)
+    let symlinkTarget = target;
+    if (forceRelative) {
+      symlinkTarget = path.relative(linkDir, target);
+    }
+
+    // Remove existing file/symlink if present
+    try {
+      await fs.unlink(linkPath);
+    } catch {
+      // File doesn't exist, that's fine
+    }
+
+    // Create symlink (use 'junction' on Windows for directories, 'file' for files)
+    const targetStat = await fs.stat(target);
+    const type = os.platform() === 'win32' && targetStat.isDirectory() ? 'junction' : undefined;
+    await fs.symlink(symlinkTarget, linkPath, type);
+
+    return { symlinked: true, path: linkPath };
+  } catch (error) {
+    // Symlinks may not be supported (Windows without developer mode)
+    // Fall back to copying
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === 'EPERM' || err.code === 'ENOTSUP') {
+      await copyFileOrDirectory(target, linkPath);
+      return { symlinked: false, path: linkPath };
+    }
+    throw new Error(`Failed to create symlink ${linkPath} -> ${target}: ${error}`);
+  }
+}
+
+/**
+ * Copy a file or directory recursively
+ */
+async function copyFileOrDirectory(source: string, dest: string): Promise<void> {
+  const stat = await fs.stat(source);
+
+  if (stat.isDirectory()) {
+    await fs.mkdir(dest, { recursive: true });
+    const entries = await fs.readdir(source, { withFileTypes: true });
+    for (const entry of entries) {
+      const srcPath = path.join(source, entry.name);
+      const destPath = path.join(dest, entry.name);
+      await copyFileOrDirectory(srcPath, destPath);
+    }
+  } else {
+    await ensureDirectoryExists(path.dirname(dest));
+    await fs.copyFile(source, dest);
+  }
+}
+
+/**
+ * Check if a path is a symbolic link
+ */
+export async function isSymlink(filePath: string): Promise<boolean> {
+  try {
+    const stat = await fs.lstat(filePath);
+    return stat.isSymbolicLink();
+  } catch {
+    return false;
   }
 }
 
