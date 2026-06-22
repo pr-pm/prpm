@@ -212,6 +212,53 @@ describe('install command - multi-file packages', () => {
       );
     });
 
+    it('should preserve supporting files when converting a multi-file skill to codex (--as codex)', async () => {
+      // Regression: converting a multi-file package used to collapse extractedFiles
+      // down to the converted main file, dropping references/, helpers/, etc.
+      const mockPackage = {
+        id: 'complex-skill',
+        name: 'complex-skill',
+        format: 'claude', subtype: 'skill',
+        tags: [],
+        total_downloads: 100,
+        verified: true,
+        latest_version: {
+          version: '1.0.0',
+          tarball_url: 'https://example.com/package.tar.gz',
+        },
+      };
+
+      const tarGz = await createTarGz({
+        'SKILL.md': '---\nname: complex-skill\ndescription: A complex skill\n---\n\n# Main Skill File\n\nBody content here.',
+        'helpers/utils.md': '# Utility Functions',
+        'references/guide.md': '# Reference Guide',
+      }, { format: 'claude', subtype: 'skill', packageName: 'complex-skill' });
+
+      mockClient.getPackage.mockResolvedValue(mockPackage);
+      mockClient.downloadPackage.mockResolvedValue(tarGz);
+
+      await handleInstall('complex-skill', { as: 'codex' });
+
+      // All three files must land in the codex skill directory
+      expect(saveFile).toHaveBeenCalledTimes(3);
+
+      // Main file is converted (content regenerated) but still written as SKILL.md
+      expect(saveFile).toHaveBeenCalledWith(
+        '.agents/skills/complex-skill/SKILL.md',
+        expect.stringContaining('Body content here.')
+      );
+
+      // Supporting files are copied verbatim, preserving subdirectories
+      expect(saveFile).toHaveBeenCalledWith(
+        '.agents/skills/complex-skill/helpers/utils.md',
+        '# Utility Functions'
+      );
+      expect(saveFile).toHaveBeenCalledWith(
+        '.agents/skills/complex-skill/references/guide.md',
+        '# Reference Guide'
+      );
+    });
+
     it('should reject tampered tarballs with corrupted headers (security)', async () => {
       // Security: tampered archives should be rejected with strict mode enabled
       const mockPackage = {
@@ -394,12 +441,17 @@ describe('install command - multi-file packages', () => {
       // Should succeed and convert only the main file (SKILL.md)
       await handleInstall('complex-skill', { as: 'cursor' });
 
-      // Cursor doesn't have native skill support - uses progressive disclosure
-      // Should save to .openskills/ with AGENTS.md reference
-      expect(saveFile).toHaveBeenCalledTimes(1);
+      // Cursor doesn't have native skill support - uses progressive disclosure.
+      // The main file is converted and kept as SKILL.md; supporting files are
+      // preserved verbatim alongside it (not dropped).
+      expect(saveFile).toHaveBeenCalledTimes(2);
       expect(saveFile).toHaveBeenCalledWith(
         '.openskills/complex-skill/SKILL.md',
         expect.stringContaining('Main Skill')
+      );
+      expect(saveFile).toHaveBeenCalledWith(
+        '.openskills/complex-skill/helper.md',
+        '# Helper'
       );
     });
 
