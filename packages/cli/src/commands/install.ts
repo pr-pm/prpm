@@ -719,6 +719,10 @@ export async function handleInstall(
       // For single-file packages, use the only file
       // For multi-file packages, find the main file based on format/subtype conventions
       let sourceContent: string;
+      // Index of the main entry point within extractedFiles. Only this file is
+      // format-converted; for multi-file packages the remaining (supporting)
+      // files are copied verbatim so the full directory tree is preserved.
+      let mainFileIndex = 0;
 
       if (extractedFiles.length === 1) {
         sourceContent = extractedFiles[0].content;
@@ -731,6 +735,7 @@ export async function handleInstall(
             `Expected files like SKILL.md, agent.md, or similar main entry points.`
           );
         }
+        mainFileIndex = extractedFiles.indexOf(mainFile);
         console.log(`   📄 Using main file: ${mainFile.name}`);
         sourceContent = mainFile.content;
       }
@@ -902,11 +907,25 @@ export async function handleInstall(
         throw new CLIError('Conversion failed: No content generated');
       }
 
-      // Replace extracted content with converted content
-      extractedFiles = [{
-        name: extractedFiles[0].name,
-        content: convertedContent
-      }];
+      // Replace the main file's content with the converted content.
+      // For multi-file packages (e.g. skills with references/, agents/, etc.),
+      // preserve every other file so the full directory tree is installed —
+      // only the main entry point needs format conversion; supporting files are
+      // copied verbatim by the multi-file install loop below. Collapsing to a
+      // single file here would silently drop all supporting files in the target
+      // format (the cause of codex installs only receiving SKILL.md).
+      if (extractedFiles.length === 1) {
+        extractedFiles = [{
+          name: extractedFiles[0].name,
+          content: convertedContent,
+        }];
+      } else {
+        extractedFiles = extractedFiles.map((file, index) =>
+          index === mainFileIndex
+            ? { ...file, content: convertedContent }
+            : file
+        );
+      }
 
       console.log(`   ✓ Converted from ${pkg.format} to ${format}`);
     }
@@ -1476,8 +1495,11 @@ export async function handleInstall(
 
       // Multi-file package - create directory for package
       // For Claude skills, destDir already includes package name, so use it directly
-      // For Cursor rules converted from Claude skills, use flat structure
-      const isCursorConversion = (effectiveFormat === 'cursor' && pkg.format === 'claude' && pkg.subtype === 'skill');
+      // For Cursor rules converted from Claude skills, use flat structure.
+      // Skip the Cursor .mdc rename when the skill is installed via progressive
+      // disclosure (.openskills/) — there it stays a SKILL.md, matching the
+      // single-file install path, and supporting files are preserved verbatim.
+      const isCursorConversion = (effectiveFormat === 'cursor' && pkg.format === 'claude' && pkg.subtype === 'skill') && !needsProgressiveDisclosureMulti;
       const nativeSubtypeConfig = getSubtypeConfig(effectiveFormat, effectiveSubtype);
       const usesNativePackageSubdirectory = !needsProgressiveDisclosureMulti && Boolean(nativeSubtypeConfig?.usesPackageSubdirectory);
       const packageDir = (effectiveFormat === 'claude' && effectiveSubtype === 'skill')
