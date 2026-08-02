@@ -26,7 +26,7 @@ Activate this skill when:
 description: Brief description shown in autocomplete
 argument-hint: [arg1] [arg2] <optional-arg>
 allowed-tools: Bash(git *), Read, Write
-model: claude-3-5-sonnet-20241022
+model: claude-sonnet-4-6
 disable-model-invocation: false
 ---
 
@@ -145,7 +145,7 @@ description: What this command does
 description: Complete command with all options
 argument-hint: [required] <optional>
 allowed-tools: Bash(git *), Read(**/*.ts), Write
-model: claude-3-5-sonnet-20241022
+model: claude-sonnet-4-6
 disable-model-invocation: false
 ---
 ```
@@ -229,16 +229,16 @@ Override default model for specific commands:
 ```markdown
 ---
 description: Quick syntax fix
-model: claude-3-5-haiku-20241022
+model: claude-haiku-4-5-20251001
 ---
 
 Fix syntax errors in the current file quickly.
 ```
 
 **When to use different models:**
-- `claude-3-5-haiku-20241022` - Fast, simple tasks
-- `claude-3-5-sonnet-20241022` - General purpose (default)
-- `claude-opus-4-20250514` - Complex reasoning
+- `claude-haiku-4-5-20251001` - Fast, simple tasks
+- `claude-sonnet-4-6` - General purpose (default)
+- `claude-opus-4-8` - Complex reasoning
 
 ### Disable Auto-Invocation
 

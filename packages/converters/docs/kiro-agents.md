@@ -105,7 +105,7 @@ Example:
 ### Additional Fields
 
 - **`model`** (string, optional): Preferred model for this agent
-  - Example: `"claude-3-5-sonnet-20241022"`
+  - Example: `"claude-sonnet-4-6"`
 
 - **`useLegacyMcpJson`** (boolean, optional): Use legacy MCP JSON format
   - Default: `false`
@@ -135,7 +135,7 @@ Example:
     "agentSpawn": ["echo 'Analyst agent ready'"],
     "userPromptSubmit": ["git status"]
   },
-  "model": "claude-3-5-sonnet-20241022"
+  "model": "claude-sonnet-4-6"
 }
 ```
 

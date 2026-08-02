@@ -1,7 +1,7 @@
 ---
 description: Quick Karen score without full review
 allowed-tools: Glob, Grep, Read
-model: claude-3-5-haiku-20241022
+model: claude-haiku-4-5-20251001
 ---
 
 # Quick Karen Score

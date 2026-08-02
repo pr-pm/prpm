@@ -43,7 +43,7 @@ System prompt content here...
 | Field | Type | Description |
 |-------|------|-------------|
 | `mode` | `primary` \| `subagent` \| `all` | How agent can be used (default: `all`) |
-| `model` | string | Override model (e.g., `anthropic/claude-sonnet-4-20250514`) |
+| `model` | string | Override model (e.g., `anthropic/claude-sonnet-4-6`) |
 | `temperature` | number | Response randomness 0.0-1.0 |
 | `prompt` | string | Path to prompt file: `{file:./path/to/prompt.txt}` |
 | `maxSteps` | number | Maximum iterations (unlimited if unset) |
@@ -63,7 +63,7 @@ System prompt content here...
 ---
 description: Reviews code for best practices and security
 mode: subagent
-model: anthropic/claude-sonnet-4-20250514
+model: anthropic/claude-sonnet-4-6
 temperature: 0.1
 tools:
   write: false

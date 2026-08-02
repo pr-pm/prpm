@@ -23,7 +23,7 @@
         },
         "model": {
           "type": "string",
-          "description": "Override default model (e.g., 'anthropic/claude-sonnet-4-20250514')"
+          "description": "Override default model (e.g., 'anthropic/claude-sonnet-4-6')"
         },
         "temperature": {
           "type": "number",
@@ -98,7 +98,7 @@
       "frontmatter": {
         "description": "Reviews code for best practices",
         "mode": "subagent",
-        "model": "anthropic/claude-sonnet-4-20250514",
+        "model": "anthropic/claude-sonnet-4-6",
         "temperature": 0.7,
         "tools": {
           "write": false,
