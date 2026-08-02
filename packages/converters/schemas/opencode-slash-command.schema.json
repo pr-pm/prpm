@@ -25,7 +25,7 @@
         },
         "model": {
           "type": "string",
-          "description": "Overrides default model for this command (e.g., 'anthropic/claude-sonnet-4-20250514')"
+          "description": "Overrides default model for this command (e.g., 'anthropic/claude-sonnet-4-6')"
         },
         "subtask": {
           "type": "boolean",

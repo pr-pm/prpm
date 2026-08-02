@@ -236,9 +236,9 @@ Fix syntax errors in the current file quickly.
 ```
 
 **When to use different models:**
-- `claude-3-5-haiku-20241022` - Fast, simple tasks
-- `claude-3-5-sonnet-20241022` - General purpose (default)
-- `claude-opus-4-20250514` - Complex reasoning
+- `claude-haiku-4-5-20251001` - Fast, simple tasks
+- `claude-sonnet-4-6` - General purpose (default)
+- `claude-opus-4-8` - Complex reasoning
 
 ### Disable Auto-Invocation
 

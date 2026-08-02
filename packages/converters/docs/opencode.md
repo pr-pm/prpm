@@ -35,7 +35,7 @@ OpenCode is an AI coding assistant that uses specialized agents and slash comman
 
 #### Optional Fields
 
-- **`model`** (string): Override default model (e.g., `"anthropic/claude-sonnet-4-20250514"`)
+- **`model`** (string): Override default model (e.g., `"anthropic/claude-sonnet-4-6"`)
 - **`temperature`** (number): Controls response randomness (0.0-1.0)
   - 0.0-0.2: Focused, analytical tasks
   - 0.6-1.0: Creative work

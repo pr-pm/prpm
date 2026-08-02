@@ -146,9 +146,9 @@ allowed-tools: Bash(git *), Bash(npm *), Read, Write
 **Format:** Model identifier string
 
 **Available Models:**
-- `claude-3-5-haiku-20241022` - Fast, low-cost (simple tasks)
-- `claude-3-5-sonnet-20241022` - Balanced (default for most commands)
-- `claude-opus-4-20250514` - Powerful, expensive (complex reasoning)
+- `claude-haiku-4-5-20251001` - Fast, low-cost (simple tasks)
+- `claude-sonnet-4-6` - Balanced (default for most commands)
+- `claude-opus-4-8` - Powerful, expensive (complex reasoning)
 
 **When to Override:**
 

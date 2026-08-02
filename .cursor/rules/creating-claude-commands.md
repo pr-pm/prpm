@@ -315,7 +315,7 @@ Before finalizing a slash command:
 - [ ] File saved to `.claude/commands/*.md`
 - [ ] Frontmatter uses correct field names
 - [ ] `allowed-tools` is comma-separated string (not array)
-- [ ] `model` uses short values (`sonnet`, not `claude-3-5-sonnet-20241022`)
+- [ ] `model` uses short values (`sonnet`, not `claude-sonnet-4-6`)
 - [ ] Icon (if used) is in H1 heading, not frontmatter
 - [ ] Description is specific and actionable
 - [ ] Tool permissions are minimal

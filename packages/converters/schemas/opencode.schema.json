@@ -23,7 +23,7 @@
         },
         "model": {
           "type": "string",
-          "description": "Override default model (e.g., 'anthropic/claude-sonnet-4-20250514')"
+          "description": "Override default model (e.g., 'anthropic/claude-sonnet-4-6')"
         },
         "temperature": {
           "type": "number",
