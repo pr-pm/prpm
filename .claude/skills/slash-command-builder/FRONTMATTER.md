@@ -171,13 +171,13 @@ allowed-tools: Bash(git *), Bash(npm *), Read, Write
 **Examples:**
 ```yaml
 # Fast formatting
-model: claude-3-5-haiku-20241022
+model: claude-haiku-4-5-20251001
 
 # Default (can omit)
-model: claude-3-5-sonnet-20241022
+model: claude-sonnet-4-6
 
 # Complex analysis
-model: claude-opus-4-20250514
+model: claude-opus-4-8
 ```
 
 **Cost Consideration:** Opus is ~15x more expensive than Haiku. Use appropriately.
@@ -271,7 +271,7 @@ Show current changes:
 ```markdown
 ---
 description: Fix ESLint errors
-model: claude-3-5-haiku-20241022
+model: claude-haiku-4-5-20251001
 allowed-tools: Read, Edit
 ---
 
@@ -299,7 +299,7 @@ allowed-tools: Bash(npm run db:reset:*)
 description: Deploy to production environment
 argument-hint: [environment: staging|prod] <version>
 allowed-tools: Bash(git *), Bash(npm *), Bash(docker *)
-model: claude-3-5-sonnet-20241022
+model: claude-sonnet-4-6
 disable-model-invocation: true
 ---
 

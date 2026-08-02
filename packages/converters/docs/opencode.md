@@ -63,7 +63,7 @@ Note: Any additional fields not listed above will be passed to the model provide
 ---
 description: Expert code reviewer focused on best practices and security
 mode: subagent
-model: anthropic/claude-sonnet-4-20250514
+model: anthropic/claude-sonnet-4-6
 temperature: 0.1
 tools:
   write: false

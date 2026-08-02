@@ -52,7 +52,7 @@
     {
       "frontmatter": {
         "template": "Review the following code for best practices:\n\n@$1",
-        "model": "anthropic/claude-sonnet-4-20250514"
+        "model": "anthropic/claude-sonnet-4-6"
       },
       "content": ""
     }

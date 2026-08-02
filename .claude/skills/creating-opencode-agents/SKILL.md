@@ -63,7 +63,7 @@ System prompt content here...
 ---
 description: Reviews code for best practices and security
 mode: subagent
-model: anthropic/claude-sonnet-4-20250514
+model: anthropic/claude-sonnet-4-6
 temperature: 0.1
 tools:
   write: false
