@@ -65,7 +65,7 @@ Provide specific file:line references for all issues found.
 ```markdown
 ---
 description: Analyze code quality in current file
-model: claude-3-5-haiku-20241022
+model: claude-haiku-4-5-20251001
 ---
 
 Analyze current file for:
@@ -685,7 +685,7 @@ Format @current-file as JSON with ${1:-2}-space indentation.
 description: Format JSON
 argument-hint: <indent: 2|4>
 allowed-tools: Read, Write
-model: claude-3-5-haiku-20241022
+model: claude-haiku-4-5-20251001
 ---
 
 Format @current-file as JSON with ${1:-2}-space indentation.
