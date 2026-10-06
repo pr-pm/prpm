@@ -766,6 +766,23 @@ describe('collections command', () => {
       );
     });
 
+    it('should propagate --global to every child package install', async () => {
+      await handleCollectionInstall('test-collection', { global: true });
+
+      expect(handleInstall).toHaveBeenCalledTimes(2);
+      for (const [, opts] of (handleInstall as Mock).mock.calls) {
+        expect(opts).toEqual(expect.objectContaining({ global: true }));
+      }
+    });
+
+    it('should not set global on child installs when --global is omitted', async () => {
+      await handleCollectionInstall('test-collection', {});
+
+      for (const [, opts] of (handleInstall as Mock).mock.calls) {
+        expect(opts).not.toHaveProperty('global');
+      }
+    });
+
     it('should install all packages in collection', async () => {
       await handleCollectionInstall('test-collection', {});
 

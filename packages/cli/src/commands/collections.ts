@@ -560,6 +560,7 @@ export async function handleCollectionInstall(
     skipOptional?: boolean;
     dryRun?: boolean;
     eager?: boolean; // Apply eager loading to all packages in collection
+    global?: boolean; // Install all packages to user-level/global locations
   }
 ): Promise<void> {
   const startTime = Date.now();
@@ -639,6 +640,11 @@ export async function handleCollectionInstall(
         // Pass eager flag to apply to all packages in collection
         if (options.eager !== undefined) {
           installOptions.eager = options.eager;
+        }
+
+        // Propagate --global so children don't fall back to project-local paths
+        if (options.global) {
+          installOptions.global = true;
         }
 
         // Track if this collection contains Claude hooks

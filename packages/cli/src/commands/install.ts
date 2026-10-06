@@ -391,6 +391,7 @@ export async function handleInstall(
         skipOptional: false,
         dryRun: false,
         eager: options.eager,
+        global: options.global,
       });
     }
 
@@ -541,6 +542,8 @@ export async function handleInstall(
         format: options.as,
         skipOptional: false,
         dryRun: false,
+        eager: options.eager,
+        global: options.global,
       });
     } catch (err) {
       // Not a collection, continue with package install
