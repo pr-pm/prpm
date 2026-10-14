@@ -1,6 +1,6 @@
 {
   "name": "prpm",
-  "version": "2.1.40",
+  "version": "2.1.41",
   "description": "Prompt Package Manager CLI - Install and manage prompt-based files",
   "main": "dist/index.js",
   "bin": {
