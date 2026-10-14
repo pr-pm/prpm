@@ -6,6 +6,8 @@ Complete guide to installing and setting up PRPM (Prompt Package Manager).
 
 ### NPM (Recommended)
 
+Requires Node.js 18 or newer.
+
 ```bash
 npm install -g prpm
 ```

@@ -22,7 +22,7 @@ export default defineConfig({
     'chalk', // ESM-only since v5, must be bundled
   ],
   platform: 'node',
-  target: 'node16',
+  target: 'node18',
   onSuccess: async () => {
     // Copy schema files to dist
     try {

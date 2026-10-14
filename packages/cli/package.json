@@ -56,12 +56,11 @@
     "posthog-node": "^5.10.0",
     "semver": "^7.7.3",
     "smol-toml": "^1.6.0",
-    "tar": "^6.2.1"
+    "tar": "^7.5.22"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.10.0",
-    "@types/tar": "^6.1.13",
     "nodemon": "^3.0.2",
     "tsup": "^8.5.1",
     "tsx": "^4.20.6",
@@ -69,7 +68,7 @@
     "vitest": "^3.2.4"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "files": [
     "dist",
